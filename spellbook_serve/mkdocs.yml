@@ -1,0 +1,122 @@
+site_name: Spellbook Serve
+site_description: The fastest, cheapest, and easiest way to deploy and scale your foundation models.
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: indigo
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue grey
+      accent: indigo
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+  features:
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotate
+    - navigation.expand
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github-alt
+  logo: _static/launch-logo.svg
+  favicon: _static/favicon-32x32.png
+  language: en
+
+repo_name: spellbook-serve
+repo_url: https://github.com/scaleapi/models/tree/master/spellbook_serve
+edit_uri: ""
+nav:
+  - Introduction: index.md
+  - "Getting Started": getting_started.md
+  - "FAQ": faq.md
+  - "Concepts":
+      - "Model Bundles": concepts/bundles.md
+      - "Model Endpoints": concepts/endpoints.md
+  - "Integrations":
+      - "Huggingface": integrations/huggingface.md
+      - "Langchain": integrations/langchain.md
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - attr_list
+  - md_in_html
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - mdx_include
+  - def_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.striphtml:
+      strip_comments: true
+      strip_js_on_attributes: false
+  - neoteroi.cards
+  - footnotes
+
+plugins:
+  - search
+  - mkdocstrings:
+      # watch: [launch]
+      handlers:
+        python:
+          rendering:
+            show_root_heading: true
+            show_root_full_path: false
+            show_source: false
+            heading_level: 2
+            merge_init_into_class: true
+            show_signature_annotations: true
+            separate_signature: true
+#  - mkdocs-simple-hooks:
+#      hooks:
+#        on_pre_build: "docs.plugins:on_pre_build"
+#        on_files: "docs.plugins:on_files"
+#        on_page_markdown: "docs.plugins:on_page_markdown"
+
+extra_css:
+  - assets/css/extra.css
+  - assets/css/neoteroi.css
+
+extra:
+  analytics:
+    provider: google
+    property: G-N54ZLW5PGC
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: >-
+            Thanks for your feedback! Help us improve this page by
+            using our <a href="..." target="_blank" rel="noopener">feedback form</a>.
+
