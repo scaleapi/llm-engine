@@ -1,0 +1,12 @@
+mdx-include~=1.4.2
+mkdocs~=1.4.2
+mkdocs-material~=9.1.6
+mkdocs-material-extensions==1.1.1
+mkdocs-render-swagger-plugin~=0.0.4
+mkdocs-simple-hooks~=0.1.5
+mkdocs-video~=1.5.0
+mkdocstrings[python]~=0.20.0
+pydantic~=1.10.0
+neoteroi-mkdocs~=1.0.0
+tabulate~=0.9.0
+scale-llm-engine

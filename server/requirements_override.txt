@@ -1,0 +1,4 @@
+# Consists of packages that are incompatible with requirements.txt
+aioboto3==10.0.0
+aiobotocore[boto3]~=2.3.4
+urllib3==1.26.11

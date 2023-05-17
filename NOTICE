@@ -1,0 +1,4 @@
+This project contains client code that was copied and modified from OpenAI's python client library: 
+https://github.com/openai/openai-python
+
+The copied client code lives in clients/python/llmengine/api_engine.py.

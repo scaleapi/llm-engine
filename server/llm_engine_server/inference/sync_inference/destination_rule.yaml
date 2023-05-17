@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: ${DEPLOYMENT_NAME}
+  namespace: ${NAMESPACE}
+  labels:
+    team: ${TEAM}
+    product: ${PRODUCT}
+    user_id: ${USER_ID}
+    endpoint_id: ${ENDPOINT_ID}
+    endpoint_name: ${ENDPOINT_NAME}
+    deployment_name: ${DEPLOYMENT_NAME}
+spec:
+  host: "${DEPLOYMENT_NAME}.${NAMESPACE}.svc.cluster.local"
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_REQUEST

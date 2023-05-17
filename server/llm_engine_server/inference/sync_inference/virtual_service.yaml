@@ -1,0 +1,23 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ${DEPLOYMENT_NAME}
+  namespace: ${NAMESPACE}
+  labels:
+    team: ${TEAM}
+    product: ${PRODUCT}
+    user_id: ${USER_ID}
+    endpoint_id: ${ENDPOINT_ID}
+    endpoint_name: ${ENDPOINT_NAME}
+    deployment_name: ${DEPLOYMENT_NAME}
+spec:
+  hosts:
+    - ${DEPLOYMENT_NAME}.${DNS_HOST_DOMAIN}
+  gateways:
+    - default/internal-gateway
+  http:
+    - route:
+        - destination:
+            host: "${DEPLOYMENT_NAME}.${NAMESPACE}.svc.cluster.local"
+            port:
+              number: 80
