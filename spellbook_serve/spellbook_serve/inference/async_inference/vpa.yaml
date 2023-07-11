@@ -1,0 +1,29 @@
+apiVersion: "autoscaling.k8s.io/v1"
+kind: VerticalPodAutoscaler
+metadata:
+  name: ${DEPLOYMENT_NAME}
+  labels:
+    user_id: ${USER_ID}
+    endpoint_id: ${ENDPOINT_ID}
+    endpoint_name: ${ENDPOINT_NAME}
+    team: ${TEAM}
+    product: ${PRODUCT}
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: ${DEPLOYMENT_NAME}
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: istio-proxy
+        mode: "Off"
+      - containerName: main
+        minAllowed:
+          cpu: 100m
+          memory: 128Mi
+        maxAllowed:
+          cpu: ${CPUS}
+          memory: ${MEMORY}
+        controlledResources: ["cpu", "memory"]

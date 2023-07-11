@@ -1,0 +1,51 @@
+#@data/values
+---
+deployment:
+  # pod-level options shared amongst all deployed containers
+  pod:
+    # k8s Service Tags
+    service_name: ${endpoint_name}
+    team: ${team}
+    product: ${product}
+
+    # k8s Infra Tags
+    namespace: ${namespace}
+    k8s_node_selector: node.kubernetes.io
+
+    # Backend options, shared
+    concurrency: ${per_worker}
+    fail_on_concurrency_limit: false
+
+    # Autoscaling
+    min_workers: ${min_workers}
+    max_workers: ${max_workers}
+
+    # Hardware Options
+    lifecycle_type: normal
+    num_cpu: ${cpus}
+    memory: ${memory}
+    num_gpu: ${gpus}
+    machine_type: ${gpu_type}
+    storage: ${storage}
+
+  user_service:
+    repo: ${repository}
+    tag: ${tag}
+
+    env: ${environment}
+
+    # TODO: Make this configurable
+    readiness_initial_delay: 120
+
+    command: ${command}
+
+  # Forwarder-specific options
+  forwarder:
+    repo: launch_rearch
+    commit: ${forwarder_image_tag}
+    suffix: cpu
+    queue: ${queue}
+    sqs_url: ${queue_url}
+    task_visibility: 'VISIBILITY_24H'
+    s3_bucket: ${celery_s3_bucket}
+    service_config: /install/launch_rearch/config/service--forwarder.yaml

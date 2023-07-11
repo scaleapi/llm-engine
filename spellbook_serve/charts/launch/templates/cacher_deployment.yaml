@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "launch.cachername" . }}
+  labels:
+    {{- include "launch.selectorLabels.cacher" . | nindent 4 }}
+    {{- include "launch.labels" . | nindent 4 }}
+    tags.datadoghq.com/service: {{ include "launch.cachername" . }}
+spec:
+  replicas: {{ .Values.replicaCount.cacher }}
+  selector:
+    matchLabels:
+      {{- include "launch.selectorLabels.cacher" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        ad.datadoghq.com/main.logs: |
+          [{
+            "service": {{ include "launch.cachername" . | quote }},
+            "source": "python"
+          }]
+      labels:
+        {{- include "launch.selectorLabels.cacher" . | nindent 8 }}
+        {{- include "launch.labels" . | nindent 8 }}
+        tags.datadoghq.com/service: {{ include "launch.cachername" . }}
+        sidecar.istio.io/inject: "false"
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "launch.cachername" . }}
+          image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/readyz
+          command:
+            - dumb-init
+            - --
+            - ddtrace-run
+          args:
+            - python
+            - -m
+            - spellbook_serve.entrypoints.k8s_cache
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- include "launch.cacherEnv" . | indent 10 }}
+          {{- include "launch.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "launch.fullname" . }}
+      {{- include "launch.volumes" . | indent 6 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

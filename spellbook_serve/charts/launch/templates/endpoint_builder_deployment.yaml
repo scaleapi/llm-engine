@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "launch.buildername" . }}
+  labels:
+    {{- include "launch.selectorLabels.builder" . | nindent 4 }}
+    {{- include "launch.labels" . | nindent 4 }}
+    tags.datadoghq.com/service: {{ include "launch.buildername" . }}
+spec:
+  replicas: {{ .Values.replicaCount.builder }}
+  selector:
+    matchLabels:
+      {{- include "launch.selectorLabels.builder" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+        ad.datadoghq.com/main.logs: |
+          [{
+            "service": {{ include "launch.buildername" . | quote }},
+            "source": "python"
+          }]
+      labels:
+        {{- include "launch.selectorLabels.builder" . | nindent 8 }}
+        {{- include "launch.labels" . | nindent 8 }}
+        tags.datadoghq.com/service: {{ include "launch.buildername" . }}
+        sidecar.istio.io/inject: "false"
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "launch.buildername" . }}
+          image: "{{ .Values.image.builderRepository }}:{{ .Values.tag}}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/readyz
+          command:
+            - dumb-init
+            - --
+            - ddtrace-run
+          args:
+            - celery
+            - --app=spellbook_serve.service_builder
+            - worker
+            - --loglevel=INFO
+            - --concurrency=2
+            {{- if .Values.serviceIdentifier }}
+            - --queues=hosted-model-inference-{{ .Values.serviceIdentifier }}.service-builder
+            {{- else }}
+            - --queues=hosted-model-inference.service-builder
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- include "launch.builderEnv" . | indent 10 }}
+          {{- include "launch.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "launch.fullname" . }}
+      {{- include "launch.volumes" . | indent 6 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,6 @@
+FROM openapitools/openapi-generator-cli:v6.4.0 as openapi
+RUN apt-get update && apt-get install -y npm && rm -rf /var/lib/apt/lists/*
+RUN npm install @openapitools/openapi-generator-cli -g
+RUN openapi-generator-cli version-manager set 6.4.0
+WORKDIR /local
+ENTRYPOINT ["openapi-generator-cli"]

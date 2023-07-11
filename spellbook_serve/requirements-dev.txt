@@ -1,0 +1,6 @@
+# Make sure to update .pre-commit-config.yaml to match versions!
+black==22.12.0
+flake8==6.0.0
+isort==5.12.0
+mypy==1.3.0
+pip-tools==6.6.2

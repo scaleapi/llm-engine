@@ -1,0 +1,55 @@
+{{- if .Values.secrets.kubernetesDatabaseSecretName }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "launch.fullname" . }}-spellbook-setup
+  labels:
+    {{- include "launch.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        sidecar.istio.io/inject: "false"
+        {{- include "launch.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "launch.fullname" . }}
+          image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - dumb-init
+            - --
+          args:
+            - python
+            - -m
+            - spellbook_serve.entrypoints.init_spellbook_models
+            - --gateway-url
+            - 'http://{{- include "launch.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}'
+          {{- include "launch.serviceEnv" . | indent 10 }}
+          {{- include "launch.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "launch.fullname" . }}
+      {{- include "launch.volumes" . | indent 6 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

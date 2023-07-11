@@ -1,0 +1,27 @@
+{{- if .Values.autoscaling.vertical.enabled }}
+apiVersion: "autoscaling.k8s.io/v1"
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "launch.fullname" . }}
+  labels:
+    {{- include "launch.labels" . | nindent 4 }}
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: {{ include "launch.fullname" . }}
+  updatePolicy:
+    updateMode: {{ .Values.autoscaling.vertical.updateMode }}
+  resourcePolicy:
+    containerPolicies:
+      - containerName: istio-proxy
+        mode: "Off"
+      - containerName: {{ include "launch.fullname" . }}
+        minAllowed:
+          cpu: {{ .Values.autoscaling.vertical.minAllowed.cpu }}
+          memory: {{ .Values.autoscaling.vertical.minAllowed.memory }}
+        maxAllowed:
+          cpu: {{ .Values.autoscaling.vertical.maxAllowed.cpu }}
+          memory: {{ .Values.autoscaling.vertical.maxAllowed.memory }}
+        controlledResources: ["cpu", "memory"]
+{{- end }}

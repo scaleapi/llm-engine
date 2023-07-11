@@ -1,0 +1,52 @@
+model_endpoint_record:
+  id: end_123456789
+  name: echo-test
+  created_by: 62bc820451dbea002b1c5421
+  owner: 62bc820451dbea002b1c5421
+  created_at: '2023-05-10 11:07:06.351378'
+  last_updated_at: '2023-05-10 11:07:06.351378'
+  endpoint_type: async
+  destination: unused
+  status: UPDATE_PENDING
+  current_model_bundle:
+    id: bun_123456789
+    name: echo-test
+    created_by: 62bc820451dbea002b1c5421
+    owner: 62bc820451dbea002b1c5421
+    created_at: '2023-05-10 11:07:06.351378'
+    metadata: {}
+    model_artifact_ids: []
+    flavor:
+      flavor: runnable_image
+      repository: launch_rearch
+      tag: fb01f90a15f2826792d75c0ae0eaefa4215eb975-cpu
+      command:
+        - dumb-init
+        - --
+        - ddtrace-run
+        - run-service
+        - --config
+        - /install/launch_rearch/config/service--user_defined_code.yaml
+        - --concurrency
+        - "1"
+        - --http
+        - production
+        - --port
+        - "5005"
+      env:
+        TEST_KEY: test_value
+      protocol: http
+      readiness_initial_delay_seconds: 2
+deployment_name: echo-test
+min_workers: 1
+max_workers: 2
+per_worker: 10
+cpus: 500m
+gpus: 0
+memory: 500Mi
+aws_role: ml-worker
+results_s3_bucket: scale-ml
+labels:
+  team: infra
+  product: launch-integration-test
+optimize_costs: true

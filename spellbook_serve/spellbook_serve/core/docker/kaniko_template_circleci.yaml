@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: $NAME
+  namespace: $NAMESPACE
+  labels:
+    app: kaniko
+    team: infra
+    product: common
+spec:
+  ttlSecondsAfterFinished: 259200 # 3 days
+  activeDeadlineSeconds: 43200
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: $NAME
+        team: infra
+        product: common
+    spec:
+      containers:
+        - name: kaniko
+          image: gcr.io/kaniko-project/executor:v1.9.1
+          args:
+            - "--dockerfile=$DOCKERFILE"
+            - "--context=s3://$S3_BUCKET/$S3_FILE"
+            - "--cache=$USE_CACHE"
+            - "--cache-copy-layers=$USE_CACHE"
+            - "--cache-run-layers=$USE_CACHE"
+            - "--cache-repo=692474966980.dkr.ecr.us-west-2.amazonaws.com/kaniko-cache"
+            - "--cleanup"
+            - "--snapshot-mode=redo"
+            - "--use-new-run"
+            - "--log-format=json"
+          # The --use-new-run flag should fix docker builds eating up a lot of memory and consequently oom/failing
+          env:
+            - name: AWS_REGION
+              value: us-west-2
+            - name: AWS_ACCESS_KEY_ID
+              value: $AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              value: $AWS_SECRET_ACCESS_KEY
+          volumeMounts:
+            - name: pipconf
+              mountPath: /kaniko/pip
+          resources:
+            requests:
+              cpu: 1
+              memory: 2Gi
+              ephemeral-storage: 10G
+            limits:
+              cpu: 4
+              memory: 30Gi
+              ephemeral-storage: 80G
+      volumes:
+        - name: pipconf
+          secret:
+            secretName: codeartifact-pip-conf
+      restartPolicy: Never
+      serviceAccountName: kaniko

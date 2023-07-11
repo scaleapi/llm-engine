@@ -1,0 +1,95 @@
+repos:
+  - repo: https://github.com/psf/black
+    # Make sure to update requirements-dev-extra.txt to match versions!
+    rev: 22.12.0
+    hooks:
+      - id: black
+        name: "python:black"
+        entry: black --config .black.toml
+        additional_dependencies: ['click<=8.0.4']  # Pinned to resolve https://github.com/psf/black/issues/2964
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        name: "python:flake8"
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: "python:isort"
+  - repo: https://github.com/jazzband/pip-tools
+    rev: 6.6.2
+    hooks:
+      - id: pip-compile
+        files: scaleml/requirements\.(in|txt)
+        args:
+          [
+            scaleml/requirements.in,
+            --allow-unsafe,
+            --no-emit-index-url,
+            --no-emit-trusted-host,
+          ]
+  - repo: https://github.com/jazzband/pip-tools
+    rev: 6.6.2
+    hooks:
+      # This has to be first because snowflake has the strictest requirements
+      - id: pip-compile
+        files: scaleml-core/requirements_snowflake\.(in|txt)
+        args:
+          [
+            scaleml-core/requirements_snowflake.in,
+            --allow-unsafe,
+            --no-emit-index-url,
+            --no-emit-trusted-host,
+          ]
+      - id: pip-compile
+        files: scaleml-core/requirements_mlflow\.(in|txt)
+        args:
+          [
+            scaleml-core/requirements_mlflow.in,
+            --allow-unsafe,
+            --no-emit-index-url,
+            --no-emit-trusted-host,
+          ]
+      - id: pip-compile
+        files: scaleml-core/requirements\.(in|txt)
+        args:
+          [
+            scaleml-core/requirements.in,
+            --allow-unsafe,
+            --no-emit-index-url,
+            --no-emit-trusted-host,
+          ]
+      - id: pip-compile
+        files: scaleml-core/requirements_kubernetes\.(in|txt)
+        args:
+          [
+            scaleml-core/requirements_kubernetes.in,
+            --allow-unsafe,
+            --no-emit-index-url,
+            --no-emit-trusted-host,
+          ]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0  # https://github.com/pre-commit/pre-commit-hooks/releases
+    hooks:
+      - id: check-added-large-files
+        args:
+          - '--maxkb=1024' # no more than 1 MB, which is already quite generous!
+      - id: check-ast
+        language: python
+      - id: check-case-conflict
+        language: python
+      - id: check-json
+        language: python
+      - id: check-merge-conflict
+        language: python
+      - id: check-shebang-scripts-are-executable
+        language: python
+      - id: check-symlinks
+        language: python
+      - id: check-toml
+        language: python
+      - id: check-yaml
+        language: python
+        args:
+          - '--allow-multiple-documents'
