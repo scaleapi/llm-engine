@@ -137,7 +137,7 @@ def validate_labels(labels: Dict[str, str]) -> None:
 
 def validate_post_inference_hooks(user: User, post_inference_hooks: Optional[List[str]]) -> None:
     # We're going to ask for user-specified auth for callbacks instead of providing default auth
-    # from Launch. Otherwise, we'd want to prevent non-privileged users from using the
+    # from SpellbookServe. Otherwise, we'd want to prevent non-privileged users from using the
     # callback post-inference hook.
     if post_inference_hooks is None:
         return

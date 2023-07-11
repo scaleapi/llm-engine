@@ -19,8 +19,8 @@ from spellbook_serve.common.config import hmi_config
 from spellbook_serve.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from spellbook_serve.common.env_vars import (
     CIRCLECI,
-    LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH,
-    LAUNCH_SERVICE_TEMPLATE_FOLDER,
+    SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH,
+    SPELLBOOK_SERVE_SERVICE_TEMPLATE_FOLDER,
 )
 from spellbook_serve.common.serialization_utils import b64_to_python_json, str_to_bool
 from spellbook_serve.core.config import ml_infra_config
@@ -42,7 +42,7 @@ from spellbook_serve.infra.gateways.k8s_resource_parser import (
     get_per_worker_value_from_target_concurrency,
 )
 from spellbook_serve.infra.gateways.resources.k8s_resource_types import (
-    LAUNCH_HIGH_PRIORITY_CLASS,
+    SPELLBOOK_SERVE_HIGH_PRIORITY_CLASS,
     CommonEndpointParams,
     HorizontalAutoscalingEndpointParams,
     ResourceArguments,
@@ -134,11 +134,11 @@ def get_kubernetes_custom_objects_client():  # pragma: no cover
 
 
 def _endpoint_id_to_k8s_resource_group_name(endpoint_id: str) -> str:
-    return f"launch-endpoint-id-{endpoint_id}".replace("_", "-")
+    return f"spellbook-serve-endpoint-id-{endpoint_id}".replace("_", "-")
 
 
 def _k8s_resource_group_name_to_endpoint_id(k8s_resource_group_name: str) -> str:
-    return k8s_resource_group_name.replace("launch-endpoint-id-", "").replace("-", "_")
+    return k8s_resource_group_name.replace("spellbook-serve-endpoint-id-", "").replace("-", "_")
 
 
 _kube_config_loaded = False
@@ -159,11 +159,11 @@ async def maybe_load_kube_config():
 
 
 def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str, Any]:
-    if LAUNCH_SERVICE_TEMPLATE_FOLDER is not None:
-        with open(os.path.join(LAUNCH_SERVICE_TEMPLATE_FOLDER, key), "r") as f:
+    if SPELLBOOK_SERVE_SERVICE_TEMPLATE_FOLDER is not None:
+        with open(os.path.join(SPELLBOOK_SERVE_SERVICE_TEMPLATE_FOLDER, key), "r") as f:
             template_str = f.read()
     else:
-        with open(LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH, "r") as f:
+        with open(SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH, "r") as f:
             config_map_str = yaml.safe_load(f.read())
         template_str = config_map_str["data"][key]
 
@@ -303,7 +303,7 @@ class K8SEndpointResourceDelegate:
             Dictionary with detected values
         """
         main_container = self._get_main_container(deployment_config)
-        launch_container = self._get_launch_container(deployment_config)
+        spellbook_serve_container = self._get_spellbook_serve_container(deployment_config)
         resources = main_container.resources
         image = main_container.image
 
@@ -312,7 +312,7 @@ class K8SEndpointResourceDelegate:
         gpus = int((resources.limits or dict()).get("nvidia.com/gpu", 0))
         storage = resources.requests.get("ephemeral-storage")
 
-        envlist = launch_container.env
+        envlist = spellbook_serve_container.env
         # Hack: for LIRA since the bundle_url isn't really a real env var
         # we use the `image` for now. This may change if we allow for unpickling
         # in LIRA.
@@ -364,7 +364,7 @@ class K8SEndpointResourceDelegate:
         return name_to_container["main"]
 
     @staticmethod
-    def _get_launch_container(deployment_config: V1Deployment) -> V1Container:
+    def _get_spellbook_serve_container(deployment_config: V1Deployment) -> V1Container:
         pod_containers = deployment_config.spec.template.spec.containers
         name_to_container = {container.name: container for container in pod_containers}
 
@@ -1202,14 +1202,15 @@ class K8SEndpointResourceDelegate:
         config_maps = await self._get_config_maps(
             endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
         )
-        launch_container = self._get_launch_container(deployment_config)
-        envlist = launch_container.env
+        spellbook_serve_container = self._get_spellbook_serve_container(deployment_config)
+        envlist = spellbook_serve_container.env
         # Note: the env var PREWARM is either "true" or "false" string (or doesn't exist for legacy)
         # Convert this as early as possible to Optional[bool] to avoid bugs
         prewarm = str_to_bool(self._get_env_value_from_envlist(envlist, "PREWARM"))
 
         high_priority = (
-            deployment_config.spec.template.spec.priority_class_name == LAUNCH_HIGH_PRIORITY_CLASS
+            deployment_config.spec.template.spec.priority_class_name
+            == SPELLBOOK_SERVE_HIGH_PRIORITY_CLASS
         )
 
         infra_state = ModelEndpointInfraState(
@@ -1276,7 +1277,7 @@ class K8SEndpointResourceDelegate:
         hpas_by_name = {hpa.metadata.name: hpa for hpa in hpas}
         vpas_by_name = {vpa["metadata"]["name"]: vpa for vpa in vpas}
         all_config_maps = await self._get_all_config_maps()
-        # can safely assume hpa with same name as deployment corresponds to the same Launch Endpoint
+        # can safely assume hpa with same name as deployment corresponds to the same SpellbookServe Endpoint
         logger.info(f"Orphaned hpas: {set(hpas_by_name).difference(set(deployments_by_name))}")
         logger.info(f"Orphaned vpas: {set(vpas_by_name).difference(set(deployments_by_name))}")
         infra_states = {}
@@ -1286,15 +1287,15 @@ class K8SEndpointResourceDelegate:
                 hpa_config = hpas_by_name.get(name, None)
                 vpa_config = vpas_by_name.get(name, None)
                 common_params = self._get_common_endpoint_params(deployment_config)
-                launch_container = self._get_launch_container(deployment_config)
+                spellbook_serve_container = self._get_spellbook_serve_container(deployment_config)
 
-                envlist = launch_container.env
+                envlist = spellbook_serve_container.env
                 # Convert as early as possible to Optional[bool] to avoid bugs
                 prewarm = str_to_bool(self._get_env_value_from_envlist(envlist, "PREWARM"))
 
                 high_priority = (
                     deployment_config.spec.template.spec.priority_class_name
-                    == LAUNCH_HIGH_PRIORITY_CLASS
+                    == SPELLBOOK_SERVE_HIGH_PRIORITY_CLASS
                 )
 
                 if hpa_config:
@@ -1339,7 +1340,7 @@ class K8SEndpointResourceDelegate:
                     image=common_params["image"],
                     num_queued_items=None,
                 )
-                if name.startswith("launch-endpoint-id-"):
+                if name.startswith("spellbook-serve-endpoint-id-"):
                     key = _k8s_resource_group_name_to_endpoint_id(name)
                     is_key_an_endpoint_id = True
                 else:

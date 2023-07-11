@@ -1,0 +1,42 @@
+{{- if not .Values.serviceIdentifier }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spellbook-serve-balloon-cpu
+  labels:
+    team: infra
+    product: common-warm-nodes
+spec:
+  replicas: {{ .Values.replicaCount.balloonCpu }}
+  selector:
+    matchLabels:
+      app: spellbook-serve-balloon-cpu
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: spellbook-serve-balloon-cpu
+        product: common-warm-nodes
+        team: infra
+        env: {{ .Values.context }}
+        version: v1
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      nodeSelector:
+        node-lifecycle: normal
+      containers:
+        - image: public.ecr.aws/ubuntu/ubuntu:latest
+          imagePullPolicy: IfNotPresent
+          name: main
+          resources:
+            limits:
+              memory: 28Gi
+              cpu: 8
+          command:
+            - /bin/bash
+            - -c
+            - "while true; do sleep 30; done"
+      terminationGracePeriodSeconds: 0
+      priorityClassName: spellbook-serve-low-priority
+{{- end }}

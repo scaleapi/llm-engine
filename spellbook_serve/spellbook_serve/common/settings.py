@@ -2,30 +2,13 @@
 #
 
 import hashlib
-from typing import List, Tuple
+from typing import List
 
-from spellbook_serve.common.config import hmi_config
 from spellbook_serve.core.config import ml_infra_config
 
-DEPLOYMENT_PREFIX = "launch"
-LEGACY_DEPLOYMENT_PREFIX = "hmi"
-SERVICE_BUILDER_QUEUE_PREFIX = "hosted-model-inference"
+DEPLOYMENT_PREFIX = "spellbook-serve"
+SERVICE_BUILDER_QUEUE_PREFIX = "spellbook-serve"
 SERVICE_BUILDER_QUEUE_SUFFIX = "service-builder"
-HOSTED_INFERENCE_SERVER_NAME = "hostedinference"
-LAUNCH_SERVER_NAME = "launch"
-SERVICE_BUILDER_NAME = "hosted-model-inference-service-builder"
-K8S_CACHER_NAME = "launch-k8s-cacher"
-PYSPARK_DEFAULT_ENDPOINT_PARAMS = dict(
-    cpus=3,
-    memory="12Gi",
-    gpus=1,
-    gpu_type="nvidia-tesla-t4",
-    min_workers=0,
-    max_workers=50,
-    per_worker=40,
-)  # TODO: we could probably determine an appropriate value for max_workers based on the size of the batch
-PYSPARK_DEFAULT_MAX_EXECUTORS = 50
-PYSPARK_DEFAULT_PARTITION_SIZE = 500
 
 RESTRICTED_ENDPOINT_LABELS = set(
     [
@@ -71,20 +54,6 @@ def _generate_deployment_name_parts(user_id: str, endpoint_name: str) -> List[st
     ]
 
 
-def generate_batch_job_name(user_id: str, endpoint_name: str):
-    batch_job_partial_name = "-".join(_generate_deployment_name_parts(user_id, endpoint_name))
-    return f"batch-job-{batch_job_partial_name}"
-
-
-def get_sync_endpoint_hostname_and_url(deployment_name: str) -> Tuple[str, str]:
-    hostname = f"{deployment_name}.{hmi_config.endpoint_namespace}"
-    return hostname, f"http://{hostname}/predict"
-
-
-def get_sync_endpoint_elb_url(deployment_name: str) -> str:
-    return f"http://{deployment_name}.{ml_infra_config().dns_host_domain}/predict"
-
-
 def get_service_builder_queue(service_identifier=None):
     return (
         f"{SERVICE_BUILDER_QUEUE_PREFIX}-{service_identifier}.{SERVICE_BUILDER_QUEUE_SUFFIX}"
@@ -93,31 +62,5 @@ def get_service_builder_queue(service_identifier=None):
     )
 
 
-def get_quart_server_name(service_identifier=None):
-    return (
-        f"{HOSTED_INFERENCE_SERVER_NAME}-{service_identifier}"
-        if service_identifier
-        else HOSTED_INFERENCE_SERVER_NAME
-    )
-
-
-def get_gateway_server_name(service_identifier=None):
-    return (
-        f"{LAUNCH_SERVER_NAME}-{service_identifier}" if service_identifier else LAUNCH_SERVER_NAME
-    )
-
-
-def get_service_builder_name(service_identifier=None):
-    return (
-        f"{SERVICE_BUILDER_NAME}-{service_identifier}"
-        if service_identifier
-        else SERVICE_BUILDER_NAME
-    )
-
-
 def get_service_builder_logs_location(user_id: str, endpoint_name: str):
     return f"s3://{ml_infra_config().s3_bucket}/service_builder_logs/{user_id}_{endpoint_name}"
-
-
-def get_k8s_cacher_service_name(service_identifier=None):
-    return f"{K8S_CACHER_NAME}-{service_identifier}" if service_identifier else K8S_CACHER_NAME

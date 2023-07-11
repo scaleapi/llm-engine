@@ -7,8 +7,6 @@ model_primitive_host: "none"
 # K8s namespace the endpoints will be created in
 endpoint_namespace: scale-deploy
 
-forwarder_image_tag: fb01f90a15f2826792d75c0ae0eaefa4215eb975-cpu
-
 # Asynchronous endpoints
 # TODO: Try out localstack once e2e tests have been updated to use sqs as a broker_type
 sqs_profile: nonexistent_sqs_profile
@@ -47,14 +45,14 @@ sqs_queue_policy_template: >
 
 sqs_queue_tag_template: >
   {
-    "infra.scale.com/product": "MLInfraLaunchSQS",
+    "infra.scale.com/product": "MLInfraSpellbookServeSQS",
     "infra.scale.com/team": "${team}",
     "infra.scale.com/contact": "yi.xu@scale.com",
     "infra.scale.com/customer": "AllCustomers",
     "infra.scale.com/financialOwner": "yi.xu@scale.com",
-    "Launch-Endpoint-Id": "${endpoint_id}",
-    "Launch-Endpoint-Name": "${endpoint_name}",
-    "Launch-Endpoint-Created-By": "${endpoint_created_by}"
+    "Spellbook-Serve-Endpoint-Id": "${endpoint_id}",
+    "Spellbook-Serve-Endpoint-Name": "${endpoint_name}",
+    "Spellbook-Serve-Endpoint-Created-By": "${endpoint_created_by}"
   }
 
 # resultsS3Bucket (i.e. where HMI will store model inference results) is currently determined on endpoint creation

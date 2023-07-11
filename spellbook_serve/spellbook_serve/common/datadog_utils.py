@@ -7,4 +7,4 @@ def add_trace_resource_name(tag: str):
     """
     current_span = tracer.current_span()
     if current_span:
-        current_span.set_tag("launch.resource_name", tag)
+        current_span.set_tag("spellbook_serve.resource_name", tag)

@@ -80,7 +80,7 @@ def post_inference_hooks_handler():
 def test_forwarders(post_inference_hooks_handler):
     fwd = Forwarder(
         "ignored",
-        launch_unwrap=True,
+        spellbook_serve_unwrap=True,
         serialize_results_as_string=False,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -116,7 +116,7 @@ def _check_streaming_serialized(streaming_response) -> None:
 def test_forwarders_serialize_results_as_string(post_inference_hooks_handler):
     fwd = Forwarder(
         "ignored",
-        launch_unwrap=True,
+        spellbook_serve_unwrap=True,
         serialize_results_as_string=True,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -136,7 +136,7 @@ def _check_serialized(json_response) -> None:
 def test_forwarders_override_serialize_results(post_inference_hooks_handler):
     fwd = Forwarder(
         "ignored",
-        launch_unwrap=True,
+        spellbook_serve_unwrap=True,
         serialize_results_as_string=True,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -147,7 +147,7 @@ def test_forwarders_override_serialize_results(post_inference_hooks_handler):
 
     fwd = Forwarder(
         "ignored",
-        launch_unwrap=True,
+        spellbook_serve_unwrap=True,
         serialize_results_as_string=False,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -161,7 +161,7 @@ def test_forwarders_override_serialize_results(post_inference_hooks_handler):
 def test_forwarder_does_not_wrap_response(post_inference_hooks_handler):
     fwd = Forwarder(
         "ignored",
-        launch_unwrap=True,
+        spellbook_serve_unwrap=True,
         serialize_results_as_string=False,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=False,
@@ -211,10 +211,10 @@ def test_forwarder_loader_env_serialize_behavior(post_inference_hooks_handler):
 @mock.patch("requests.post", mocked_post)
 @mock.patch("requests.get", mocked_get)
 def test_forwarder_serialize_within_args(post_inference_hooks_handler):
-    # standard Launch-created forwarder
+    # standard Spellbook-Serve-created forwarder
     fwd = Forwarder(
         "ignored",
-        launch_unwrap=True,
+        spellbook_serve_unwrap=True,
         serialize_results_as_string=True,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -232,7 +232,7 @@ def test_forwarder_serialize_within_args(post_inference_hooks_handler):
     # w/o unwrapping it won't "find" the `"serialize_results_as_string": False` directive
     fwd = Forwarder(
         "ignored",
-        launch_unwrap=False,
+        spellbook_serve_unwrap=False,
         serialize_results_as_string=True,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -247,7 +247,7 @@ def test_forwarder_serialize_within_args(post_inference_hooks_handler):
 def test_streaming_forwarders(post_inference_hooks_handler):
     fwd = StreamingForwarder(
         "ignored",
-        launch_unwrap=True,
+        spellbook_serve_unwrap=True,
         serialize_results_as_string=False,
         post_inference_hooks_handler=post_inference_hooks_handler,
     )

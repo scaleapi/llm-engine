@@ -28,7 +28,7 @@ class RedisFeatureFlagRepository(FeatureFlagRepository):
 
     @staticmethod
     def _to_redis_key(key: str):
-        return f"launch-feature-flag:{key}"
+        return f"spellbook-serve-feature-flag:{key}"
 
     async def write_feature_flag_bool(self, key: str, value: bool):
         if not isinstance(value, bool):

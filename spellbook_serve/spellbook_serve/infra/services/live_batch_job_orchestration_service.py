@@ -373,8 +373,8 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
 
     @staticmethod
     def _get_pending_task_ids_location(job_id: str) -> str:
-        return f"s3://{ml_infra_config().s3_bucket}/launch/batch-jobs/{job_id}/pending_task_ids.txt"
+        return f"s3://{ml_infra_config().s3_bucket}/spellbook-serve/batch-jobs/{job_id}/pending_task_ids.txt"
 
     @staticmethod
     def _get_job_result_location(job_id: str) -> str:
-        return f"s3://{ml_infra_config().s3_bucket}/launch/batch-jobs/{job_id}/result.json"
+        return f"s3://{ml_infra_config().s3_bucket}/spellbook-serve/batch-jobs/{job_id}/result.json"

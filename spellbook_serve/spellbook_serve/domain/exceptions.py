@@ -37,7 +37,7 @@ class EndpointInfraStateNotFound(DomainException):
 class EndpointResourceInfraException(DomainException):
     """
     Thrown if the endpoint resource request passes validation, but failed for unhandled reasons.
-    This corresponds to a 503 error and requires investigation by the Launch team.
+    This corresponds to a 503 error and requires investigation by the SpellbookServe team.
     """
 
 

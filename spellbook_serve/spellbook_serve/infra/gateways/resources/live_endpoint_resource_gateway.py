@@ -69,7 +69,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[SqsQueueInfo]):
             queue_url: Optional[str] = q.queue_url
             destination: str = q.queue_name
         else:
-            destination = f"launch-endpoint-id-{endpoint_record.id.replace('_', '-')}"
+            destination = f"spellbook-serve-endpoint-id-{endpoint_record.id.replace('_', '-')}"
             queue_name = None
             queue_url = None
 

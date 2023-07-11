@@ -340,7 +340,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         image_tag: str,
     ) -> None:
         """
-        With Launch Inference Re-Architecture, we want to deploy endpoints with ArtifactLike bundle using
+        With SpellbookServe Inference Re-Architecture, we want to deploy endpoints with ArtifactLike bundle using
         multi-container architecture, which RunnableImageFlavor has already adopted.
 
         This function mutates the build_endpoint_request by converting the ArtifactLike bundle flavor into
@@ -454,7 +454,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         base_path: str = os.getenv("WORKSPACE")  # type: ignore
 
         return BuildImageRequest(
-            repo="launch/inference",
+            repo="spellbook-serve",
             image_tag=resulting_image_tag[:MAX_IMAGE_TAG_LEN],
             aws_profile=ECR_AWS_PROFILE,  # type: ignore
             base_path=base_path,
@@ -683,7 +683,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         )
                     else:
                         help_url = (
-                            "https://app.datadoghq.com/logs?query=service%3Alaunch-"
+                            "https://app.datadoghq.com/logs?query=service%3Aspellbook-serve-"
                             f"endpoint-builder%20env%3A{ENV}&cols=host%2Cservice&"
                             "index=%2A&messageDisplay=inline&stream_sort=time%2C"
                             "desc&viz=stream&live=true"
@@ -699,7 +699,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     )
 
                     self.notification_gateway.send_notification(
-                        title="Launch Endpoint Build Failed",
+                        title="SpellbookServe Endpoint Build Failed",
                         description=message,
                         help_url=help_url,
                         notification_apps=[

@@ -411,7 +411,7 @@ class CreateModelBundleV2UseCase:
             )
             app_config = request.flavor.app_config
         else:
-            location = "unused"  # Nonempty to support legacy Launch
+            location = "unused"  # Nonempty to support legacy SpellbookServe
             requirements = []
             env_params = {
                 "framework_type": ModelBundleFrameworkType.CUSTOM,

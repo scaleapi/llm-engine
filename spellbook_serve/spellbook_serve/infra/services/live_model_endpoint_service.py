@@ -37,8 +37,8 @@ from spellbook_serve.infra.repositories.model_endpoint_record_repository import 
 
 logger = make_logger(filename_wo_ext(__file__))
 
-STATSD_CACHE_HIT_NAME = "launch.get_infra_state.cache_hit"
-STATSD_CACHE_MISS_NAME = "launch.get_infra_state.cache_miss"
+STATSD_CACHE_HIT_NAME = "spellbook_serve.get_infra_state.cache_hit"
+STATSD_CACHE_MISS_NAME = "spellbook_serve.get_infra_state.cache_miss"
 
 
 class LiveModelEndpointService(ModelEndpointService):

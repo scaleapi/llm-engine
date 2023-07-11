@@ -25,7 +25,7 @@ theme:
     - content.code.copy
   icon:
     repo: fontawesome/brands/github-alt
-  logo: _static/launch-logo.svg
+  logo: _static/spellbook-serve-logo.svg
   favicon: _static/favicon-32x32.png
   language: en
 
@@ -80,7 +80,7 @@ markdown_extensions:
 plugins:
   - search
   - mkdocstrings:
-      # watch: [launch]
+      # watch: [spellbook_serve]
       handlers:
         python:
           rendering:

@@ -33,7 +33,7 @@ class RedisModelEndpointCacheRepository(ModelEndpointCacheRepository):
 
     @staticmethod
     def _find_redis_key(key: str):
-        return f"launch-k8s-cache:{key}"
+        return f"spellbook-serve-k8s-cache:{key}"
 
     async def write_endpoint_info(
         self,

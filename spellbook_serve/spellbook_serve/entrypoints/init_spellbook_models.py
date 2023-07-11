@@ -2,8 +2,9 @@ import argparse
 from typing import Any, Dict
 
 import requests
-from launch.api_client.model.model_endpoint_type import ModelEndpointType
 from tenacity import retry, stop_after_attempt, wait_fixed
+
+from spellbook_serve.api_client.model.model_endpoint_type import ModelEndpointType
 
 DEFAULT_NETWORK_TIMEOUT_SEC = 10
 
@@ -120,7 +121,7 @@ def spellbook_bundle_payload(
         "flavor": {
             "flavor": "runnable_image",
             "repository": "instant-llm",
-            "tag": f"launch_llm_cuda_image_{git_commit}",
+            "tag": f"spellbook_serve_llm_cuda_image_{git_commit}",
             "command": [
                 "dumb-init",
                 "--",

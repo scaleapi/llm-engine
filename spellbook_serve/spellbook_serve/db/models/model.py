@@ -106,7 +106,7 @@ class ModelVersion(Base):
         Column("model_id", Text, ForeignKey("model.models.id"), index=True, nullable=False),
         Column("version_number", Integer, index=True, nullable=False),
         Column(
-            "launch_model_bundle_id",
+            "spellbook_serve_model_bundle_id",
             Text,
             # ForeignKey("spellbook_serve.bundles.id"), # This is currently breaking tests.
             index=True,
@@ -118,7 +118,9 @@ class ModelVersion(Base):
         Column("created_by", String(SHORT_STRING), index=True, nullable=False),
         Column("created_at", DateTime(timezone=True), server_default=func.now(), nullable=False),
         UniqueConstraint("model_id", "version_number", name="model_id_version_number_uc"),
-        UniqueConstraint("launch_model_bundle_id", name="launch_model_bundle_id_uc"),
+        UniqueConstraint(
+            "spellbook_serve_model_bundle_id", name="spellbook_serve_model_bundle_id_uc"
+        ),
         UniqueConstraint("nucleus_model_id", name="nucleus_model_id_uc"),
         schema="model",
     )
@@ -127,7 +129,7 @@ class ModelVersion(Base):
         self,
         model_id: Optional[str] = None,
         version_number: Optional[int] = None,
-        launch_model_bundle_id: Optional[str] = None,
+        spellbook_serve_model_bundle_id: Optional[str] = None,
         nucleus_model_id: Optional[str] = None,
         tags: Optional[List[str]] = None,
         metadata: Optional[Any] = None,
@@ -137,7 +139,7 @@ class ModelVersion(Base):
         self.id = f"mov_{get_xid()}"
         self.model_id = model_id
         self.version_number = version_number
-        self.launch_model_bundle_id = launch_model_bundle_id
+        self.spellbook_serve_model_bundle_id = spellbook_serve_model_bundle_id
         self.nucleus_model_id = nucleus_model_id
         self.tags = tags or []
         self.metadata = metadata
@@ -170,11 +172,13 @@ class ModelVersion(Base):
         return models
 
     @staticmethod
-    def select_by_launch_model_bundle_id(
-        session: Session, launch_model_bundle_id: str
+    def select_by_spellbook_serve_model_bundle_id(
+        session: Session, spellbook_serve_model_bundle_id: str
     ) -> Optional["ModelVersion"]:
         model_version = session.execute(
-            select(ModelVersion).filter_by(launch_model_bundle_id=launch_model_bundle_id)
+            select(ModelVersion).filter_by(
+                spellbook_serve_model_bundle_id=spellbook_serve_model_bundle_id
+            )
         ).scalar_one_or_none()
         return model_version
 

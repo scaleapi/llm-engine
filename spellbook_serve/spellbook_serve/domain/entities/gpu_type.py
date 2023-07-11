@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class GpuType(str, Enum):
-    """Lists allowed GPU types for Launch."""
+    """Lists allowed GPU types for SpellbookServe."""
 
     NVIDIA_TESLA_T4 = "nvidia-tesla-t4"
     NVIDIA_AMPERE_A10 = "nvidia-ampere-a10"

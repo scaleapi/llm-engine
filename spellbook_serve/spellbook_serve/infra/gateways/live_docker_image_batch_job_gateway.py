@@ -28,9 +28,9 @@ from spellbook_serve.infra.gateways.resources.k8s_resource_types import (
     DockerImageBatchJobGpuArguments,
 )
 
-DEFAULT_MOUNT_LOCATION = "/restricted_launch/batch_payload.json"
+DEFAULT_MOUNT_LOCATION = "/restricted_spellbook_serve/batch_payload.json"
 # Must match resources/docker...{cpu,gpu}.yaml's label selector
-LAUNCH_JOB_ID_LABEL_SELECTOR = "launch_job_id"
+SPELLBOOK_SERVE_JOB_ID_LABEL_SELECTOR = "spellbook_serve_job_id"
 
 
 ENV: str = os.environ.get("DD_ENV")  # type: ignore
@@ -82,7 +82,7 @@ def _add_list_values(
 
 def _k8s_job_name_from_id(job_id: str):
     # "di" stands for "docker image" btw
-    return f"launch-di-batch-job-{job_id}"
+    return f"spellbook-serve-di-batch-job-{job_id}"
 
 
 class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
@@ -239,7 +239,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
         try:
             jobs = await batch_client.list_namespaced_job(
                 namespace=hmi_config.endpoint_namespace,
-                label_selector=f"{LAUNCH_JOB_ID_LABEL_SELECTOR}={batch_job_id}",
+                label_selector=f"{SPELLBOOK_SERVE_JOB_ID_LABEL_SELECTOR}={batch_job_id}",
             )
             if len(jobs.items) == 0:
                 logger.info(f"Job id {batch_job_id} not found")

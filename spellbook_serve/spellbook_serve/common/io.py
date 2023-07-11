@@ -1,4 +1,4 @@
-"""Launch Input/Output utils."""
+"""SpellbookServe Input/Output utils."""
 import os
 
 import boto3

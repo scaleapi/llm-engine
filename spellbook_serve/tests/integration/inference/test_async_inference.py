@@ -46,7 +46,7 @@ def redis_available() -> bool:
 )
 def test_submit_and_get_tasks(
     queue: str,
-    launch_celery_app: subprocess.Popen,
+    spellbook_serve_celery_app: subprocess.Popen,
     callback_app: FastAPI,
     task_args: List[Any],
     cloudpickle: bool,
@@ -95,7 +95,7 @@ def test_async_callbacks(
     queue: str,
     callback_port: int,
     test_user_id: str,
-    launch_celery_app: subprocess.Popen,
+    spellbook_serve_celery_app: subprocess.Popen,
     callback_app: FastAPI,
     callback_version: Optional[str],
     expected_callback_payload: Any,

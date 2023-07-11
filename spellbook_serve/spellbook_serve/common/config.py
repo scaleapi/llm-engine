@@ -36,7 +36,6 @@ class HostedModelInferenceServiceConfig:
     sqs_queue_policy_template: str
     sqs_queue_tag_template: str
     model_primitive_host: str
-    forwarder_image_tag: str
 
     @classmethod
     def from_yaml(cls, yaml_path):

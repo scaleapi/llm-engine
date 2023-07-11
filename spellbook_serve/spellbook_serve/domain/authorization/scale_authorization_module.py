@@ -8,7 +8,7 @@ from spellbook_serve.domain.entities import CustomFramework, ModelBundleFramewor
 from spellbook_serve.domain.entities.model_bundle_entity import RunnableImageLike
 from spellbook_serve.domain.entities.model_endpoint_entity import ModelEndpointRecord
 
-LAUNCH_INTEGRATION_TEST_USER: str = "62bc820451dbea002b1c5421"
+SPELLBOOK_SERVE_INTEGRATION_TEST_USER: str = "62bc820451dbea002b1c5421"
 
 
 class ScaleAuthorizationModule:
@@ -31,7 +31,7 @@ class ScaleAuthorizationModule:
         # External customers cannot use custom images.
         return (
             user.is_privileged_user
-            or user.user_id == LAUNCH_INTEGRATION_TEST_USER
+            or user.user_id == SPELLBOOK_SERVE_INTEGRATION_TEST_USER
             or (
                 not isinstance(request.flavor, RunnableImageLike)
                 and not isinstance(request.flavor.framework, CustomFramework)

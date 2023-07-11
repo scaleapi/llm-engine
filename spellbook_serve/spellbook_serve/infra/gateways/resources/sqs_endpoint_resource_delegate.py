@@ -45,4 +45,4 @@ class SQSEndpointResourceDelegate(ABC):
 
     @staticmethod
     def endpoint_id_to_queue_name(endpoint_id: str) -> str:
-        return f"launch-endpoint-id-{endpoint_id}"
+        return f"spellbook-serve-endpoint-id-{endpoint_id}"

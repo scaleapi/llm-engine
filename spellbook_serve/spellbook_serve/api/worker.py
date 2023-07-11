@@ -5,7 +5,7 @@ from uvicorn.workers import UvicornWorker
 CONCURRENCY_LIMIT = 32
 
 
-class LaunchWorker(UvicornWorker):
+class SpellbookServeWorker(UvicornWorker):
     """Overrides the configuration of the Uvicorn Worker."""
 
     # uvloop and httptools are both faster than their alternatives, but they are not compatible

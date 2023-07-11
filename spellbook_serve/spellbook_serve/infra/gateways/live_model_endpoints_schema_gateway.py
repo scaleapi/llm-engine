@@ -32,7 +32,7 @@ from . import FilesystemGateway
 # Caches the default model definition so we don't need to recompute every time
 _default_model_definitions = None
 
-API_REFERENCE_TITLE = "Launch Endpoints API Reference"
+API_REFERENCE_TITLE = "SpellbookServe Endpoints API Reference"
 API_REFERENCE_VERSION = "1.0.0"
 
 

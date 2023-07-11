@@ -22,7 +22,7 @@ def start_gunicorn_server(port: int, num_workers: int, debug: bool) -> None:
         "--keep-alive",
         "2",
         "--worker-class",
-        "spellbook_serve.api.worker.LaunchWorker",
+        "spellbook_serve.api.worker.SpellbookServeWorker",
         "--workers",
         f"{num_workers}",
         *additional_args,

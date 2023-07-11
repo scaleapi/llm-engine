@@ -1,0 +1,8 @@
+{{- if not .Values.serviceIdentifier }}
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: "{{ include "spellbookServe.fullname" . }}-high-priority"
+value: 100000
+description: "High Priority Class for SpellbookServe"
+{{- end }}

@@ -9,16 +9,16 @@ class DatadogMonitoringMetricsGateway(MonitoringMetricsGateway):
         self.tags = [f"env:{ml_infra_config().env}"]
 
     def emit_attempted_build_metric(self):
-        statsd.increment("scale_launch.service_builder.attempt", tags=self.tags)
+        statsd.increment("scale_spellbook_serve.service_builder.attempt", tags=self.tags)
 
     def emit_successful_build_metric(self):
-        statsd.increment("scale_launch.service_builder.success", tags=self.tags)
+        statsd.increment("scale_spellbook_serve.service_builder.success", tags=self.tags)
 
     def emit_docker_failed_build_metric(self):
-        statsd.increment("scale_launch.service_builder.docker_failed", tags=self.tags)
+        statsd.increment("scale_spellbook_serve.service_builder.docker_failed", tags=self.tags)
 
     def emit_database_cache_hit_metric(self):
-        statsd.increment("scale_launch.database_cache.hit", tags=self.tags)
+        statsd.increment("scale_spellbook_serve.database_cache.hit", tags=self.tags)
 
     def emit_database_cache_miss_metric(self):
-        statsd.increment("scale_launch.database_cache.miss", tags=self.tags)
+        statsd.increment("scale_spellbook_serve.database_cache.miss", tags=self.tags)

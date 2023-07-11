@@ -392,7 +392,7 @@ async def model_versions(
     model_version2 = ModelVersion(
         model_id=models[0].id,
         version_number=1,
-        launch_model_bundle_id=bundles[0].id,
+        spellbook_serve_model_bundle_id=bundles[0].id,
         tags=["test_tag_1", "test_tag_3"],
         metadata={"key1": "value2"},
         created_by="test_user_id_1",
@@ -400,7 +400,7 @@ async def model_versions(
     model_version3 = ModelVersion(
         model_id=models[2].id,
         version_number=0,
-        launch_model_bundle_id=bundles[1].id,
+        spellbook_serve_model_bundle_id=bundles[1].id,
         nucleus_model_id="test_nucleus_model_id_1",
         tags=["test_tag_1", "test_tag_2"],
         metadata={"key2": "value3"},

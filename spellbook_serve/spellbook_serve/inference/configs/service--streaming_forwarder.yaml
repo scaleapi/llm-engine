@@ -6,5 +6,5 @@ forwarder:
     predict_route: "/stream"
     healthcheck_route: "/readyz"
     batch_route: null
-    launch_unwrap: true
+    spellbook_serve_unwrap: true
     serialize_results_as_string: false

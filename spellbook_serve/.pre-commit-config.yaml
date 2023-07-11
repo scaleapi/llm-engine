@@ -89,7 +89,3 @@ repos:
         language: python
       - id: check-toml
         language: python
-      - id: check-yaml
-        language: python
-        args:
-          - '--allow-multiple-documents'

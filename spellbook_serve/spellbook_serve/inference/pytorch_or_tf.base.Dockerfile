@@ -35,29 +35,29 @@ RUN python3 -m venv /venv
 ENV PATH=/venv/bin:$PATH
 
 # Run everything as not-root user
-RUN useradd -m scalelaunch -s /bin/bash
-RUN chown -R scalelaunch /venv
-RUN chown -R scalelaunch /app
+RUN useradd -m spellbookserve -s /bin/bash
+RUN chown -R spellbookserve /venv
+RUN chown -R spellbookserve /app
 # Limits for nproc and consequently number of files open
 ADD spellbook_serve/spellbook_serve/inference/limits.conf /etc/security/limits.conf
-USER scalelaunch
+USER spellbookserve
 
 RUN mkdir -p /app/ml_infra_core/spellbook_serve.core
-RUN chown -R scalelaunch /app/ml_infra_core
+RUN chown -R spellbookserve /app/ml_infra_core
 
-COPY --chown=scalelaunch ml_infra_core/spellbook_serve.core/requirements.txt ml_infra_core/spellbook_serve.core/requirements.txt
+COPY --chown=spellbookserve ml_infra_core/spellbook_serve.core/requirements.txt ml_infra_core/spellbook_serve.core/requirements.txt
 RUN --mount=type=secret,id=codeartifact-pip-conf,target=/etc/pip.conf,mode=0444 \
     PIP_CONFIG_FILE=/kaniko/pip/codeartifact_pip_conf \
     pip install -r ml_infra_core/spellbook_serve.core/requirements.txt --no-cache-dir
-COPY --chown=scalelaunch ml_infra_core/spellbook_serve.core ml_infra_core/spellbook_serve.core
+COPY --chown=spellbookserve ml_infra_core/spellbook_serve.core ml_infra_core/spellbook_serve.core
 RUN pip install -e ml_infra_core/spellbook_serve.core
 
 RUN mkdir -p /app/insight
-RUN chown -R scalelaunch /app/insight
+RUN chown -R spellbookserve /app/insight
 
-COPY --chown=scalelaunch insight/client/requirements.txt insight/client/requirements.txt
+COPY --chown=spellbookserve insight/client/requirements.txt insight/client/requirements.txt
 RUN pip install -r insight/client/requirements.txt --no-cache-dir
-COPY --chown=scalelaunch insight/client insight/client
+COPY --chown=spellbookserve insight/client insight/client
 RUN pip install -e insight/client
 
 # Not good for layer caching oh well
@@ -67,20 +67,20 @@ RUN pip install -e insight/client
 RUN mkdir -p /app/spellbook_serve
 RUN mkdir -p /app/spellbook_serve/spellbook_serve
 
-RUN chown -R scalelaunch /app/spellbook_serve
+RUN chown -R spellbookserve /app/spellbook_serve
 
-COPY --chown=scalelaunch \
+COPY --chown=spellbookserve \
     spellbook_serve/spellbook_serve/inference/requirements_base.txt \
     /app/spellbook_serve/spellbook_serve/inference/requirements_base.txt
 RUN pip install -r /app/spellbook_serve/spellbook_serve/inference/requirements_base.txt
 
-COPY --chown=scalelaunch spellbook_serve/setup.py /app/spellbook_serve/setup.py
-COPY --chown=scalelaunch spellbook_serve/spellbook_serve.egg-info /app/spellbook_serve/spellbook_serve.egg-info
-COPY --chown=scalelaunch spellbook_serve/spellbook_serve/__init__.py /app/spellbook_serve/spellbook_serve/__init__.py
-COPY --chown=scalelaunch spellbook_serve/spellbook_serve/common /app/spellbook_serve/spellbook_serve/common
-COPY --chown=scalelaunch spellbook_serve/spellbook_serve/domain /app/spellbook_serve/spellbook_serve/domain
-COPY --chown=scalelaunch spellbook_serve/spellbook_serve/infra /app/spellbook_serve/spellbook_serve/infra
-COPY --chown=scalelaunch spellbook_serve/spellbook_serve/inference /app/spellbook_serve/spellbook_serve/inference
+COPY --chown=spellbookserve spellbook_serve/setup.py /app/spellbook_serve/setup.py
+COPY --chown=spellbookserve spellbook_serve/spellbook_serve.egg-info /app/spellbook_serve/spellbook_serve.egg-info
+COPY --chown=spellbookserve spellbook_serve/spellbook_serve/__init__.py /app/spellbook_serve/spellbook_serve/__init__.py
+COPY --chown=spellbookserve spellbook_serve/spellbook_serve/common /app/spellbook_serve/spellbook_serve/common
+COPY --chown=spellbookserve spellbook_serve/spellbook_serve/domain /app/spellbook_serve/spellbook_serve/domain
+COPY --chown=spellbookserve spellbook_serve/spellbook_serve/infra /app/spellbook_serve/spellbook_serve/infra
+COPY --chown=spellbookserve spellbook_serve/spellbook_serve/inference /app/spellbook_serve/spellbook_serve/inference
 WORKDIR /app/spellbook_serve
 RUN pip install -e .
 WORKDIR /app

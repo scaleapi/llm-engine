@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:experimental
 
-FROM python:3.8.8-slim as launch
+FROM python:3.8.8-slim as spellbook-serve
 WORKDIR /workspace
 
 RUN apt-get update && apt-get install -y \

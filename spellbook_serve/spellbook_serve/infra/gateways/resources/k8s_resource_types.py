@@ -57,8 +57,8 @@ __all__: Sequence[str] = (
     "HorizontalAutoscalingEndpointParams",
     "HorizontalPodAutoscalerArguments",
     "ImageCacheArguments",
-    "LAUNCH_DEFAULT_PRIORITY_CLASS",
-    "LAUNCH_HIGH_PRIORITY_CLASS",
+    "SPELLBOOK_SERVE_DEFAULT_PRIORITY_CLASS",
+    "SPELLBOOK_SERVE_HIGH_PRIORITY_CLASS",
     "ResourceArguments",
     "ServiceArguments",
     "UserConfigArguments",
@@ -68,15 +68,15 @@ __all__: Sequence[str] = (
     "get_endpoint_resource_arguments_from_request",
 )
 
-# Constants for Launch priority classes
-LAUNCH_HIGH_PRIORITY_CLASS = "launch-high-priority"
-LAUNCH_DEFAULT_PRIORITY_CLASS = "launch-default-priority"
+# Constants for SpellbookServe priority classes
+SPELLBOOK_SERVE_HIGH_PRIORITY_CLASS = "spellbook-serve-high-priority"
+SPELLBOOK_SERVE_DEFAULT_PRIORITY_CLASS = "spellbook-serve-default-priority"
 
 KUBERNETES_MAX_LENGTH = 64
 FORWARDER_PORT = 5000
 USER_CONTAINER_PORT = 5005
 ARTIFACT_LIKE_CONTAINER_PORT = FORWARDER_PORT
-FORWARDER_IMAGE_TAG = "fb01f90a15f2826792d75c0ae0eaefa4215eb975"
+FORWARDER_IMAGE_TAG = "54f8f73bfb1cce62a2b42326ccf9f49b5b145126"
 
 
 class _BaseResourceArguments(TypedDict):
@@ -511,9 +511,9 @@ def get_endpoint_resource_arguments_from_request(
         f"endpoint ID: {model_endpoint_record.id}"
     )
 
-    priority = LAUNCH_DEFAULT_PRIORITY_CLASS
+    priority = SPELLBOOK_SERVE_DEFAULT_PRIORITY_CLASS
     if build_endpoint_request.high_priority:
-        priority = LAUNCH_HIGH_PRIORITY_CLASS
+        priority = SPELLBOOK_SERVE_HIGH_PRIORITY_CLASS
 
     image_hash = str(hashlib.md5(str(request.image).encode()).hexdigest())[:KUBERNETES_MAX_LENGTH]
 

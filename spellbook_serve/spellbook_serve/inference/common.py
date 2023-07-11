@@ -269,14 +269,14 @@ def get_endpoint_config():
 
 
 def is_sensitive_envvar(var):
-    return var.startswith("LAUNCH_") or var.startswith("HMI_")
+    return var.startswith("SPELLBOOK_SERVE_") or var.startswith("HMI_")
 
 
 def unset_sensitive_envvars():
     # Since all the pods are in the same namespace as of now, there are env vars e.g.
-    # `LAUNCH_<USER_ID>_...` that store the IPs of various services (and also leak that the services exist)
+    # `SPELLBOOK_SERVE_<USER_ID>_...` that store the IPs of various services (and also leak that the services exist)
     # Let's unset them here
-    # The names seem to be the name of the deployment, which always starts with `LAUNCH_` or `HMI_`.
+    # The names seem to be the name of the deployment, which always starts with `SPELLBOOK_SERVE_` or `HMI_`.
     logger.info("Unsetting environment variables...")
     sensitive_envvars = [var for var in os.environ if is_sensitive_envvar(var)]
     for var in sensitive_envvars:

@@ -1,21 +1,21 @@
 version: "3.8"
 
 services:
-  launch:
+  spellbook-serve:
     build:
       context: ..
       dockerfile: spellbook_serve/Dockerfile
       secrets:
         - codeartifact-pip-conf
-      target: launch
+      target: spellbook-serve
     image: "${ECR_HOST:-local}/spellbook-serve:${GIT_SHA:-latest}"
-  launch-gateway-dev:
+  spellbook-serve-gateway-dev:
     build:
       context: ..
       dockerfile: spellbook_serve/Dockerfile
       secrets:
         - codeartifact-pip-conf
-      target: launch
+      target: spellbook-serve
     command:
       - python
       - -m
@@ -34,7 +34,7 @@ services:
       - "GIT_TAG=${GIT_SHA}"
       - DD_ENV=training
       - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/hosted_model_inference/service_configs/service_config_${ENV}.yaml"
-      - "LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
+      - "SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
       - "ML_INFRA_SERVICES_CONFIG_PATH=/workspace/ml_infra_core/ml_infra_services/ml_infra_services/configs/${ENV}.yaml"
       - "DB_SECRET_NAME=${DB_SECRET_NAME:-}"
       - "ML_INFRA_DATABASE_URL=${ML_INFRA_DATABASE_URL:-}"
@@ -52,20 +52,14 @@ services:
       - "${HOME}/.minikube:/workspace/.minikube"
       - "${HOME}/.minikube:/home/circleci/.minikube"
       - "${HOME}/.aws-mountable:/creds/.aws"
-      - "../hosted_model_inference:/workspace/hosted_model_inference"
-      - "../launch_integration_tests:/workspace/launch_integration_tests"
-      - "../ml_infra_core:/workspace/ml_infra_core"
-      - "../std-ml-srv:/workspace/std-ml-srv"
-      - "../launch_rearch:/workspace/launch_rearch"
-      - "../launch_internal:/workspace/launch_internal"
       - "../spellbook_serve:/workspace/spellbook_serve"
-  launch-service-builder-dev:
+  spellbook-serve-service-builder-dev:
     build:
       context: ..
       dockerfile: spellbook_serve/Dockerfile
       secrets:
         - codeartifact-pip-conf
-      target: launch
+      target: spellbook-serve
     command:
       - celery
       - --app=hosted_model_inference.service_builder
@@ -80,7 +74,7 @@ services:
       - DB_SECRET_AWS_PROFILE
       - "S3_BUCKET=${S3_BUCKET:-scale-ml}"
       - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/hosted_model_inference/service_configs/service_config_${ENV}.yaml"
-      - "LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
+      - "SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
       - "ML_INFRA_SERVICES_CONFIG_PATH=/workspace/ml_infra_core/ml_infra_services/ml_infra_services/configs/${ENV}.yaml"
       - "GIT_TAG=${GIT_SHA}"
       - DD_ENV=training
@@ -104,20 +98,14 @@ services:
       - "${HOME}/.minikube:/workspace/.minikube"
       - "${HOME}/.minikube:/home/circleci/.minikube"
       - "${HOME}/.aws-mountable:/creds/.aws"
-      - "../hosted_model_inference:/workspace/hosted_model_inference"
-      - "../launch_integration_tests:/workspace/launch_integration_tests"
-      - "../ml_infra_core:/workspace/ml_infra_core"
-      - "../std-ml-srv:/workspace/std-ml-srv"
-      - "../launch_rearch:/workspace/launch_rearch"
-      - "../launch_internal:/workspace/launch_internal"
       - "../spellbook_serve:/workspace/spellbook_serve"
-  launch-bash:
+  spellbook-serve-bash:
     build:
       context: ..
       dockerfile: spellbook_serve/Dockerfile
       secrets:
         - codeartifact-pip-conf
-      target: launch
+      target: spellbook-serve
     command:
       - /bin/bash
       - -c
@@ -128,7 +116,7 @@ services:
       - ECR_READ_AWS_PROFILE
       - DB_SECRET_AWS_PROFILE
       - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/hosted_model_inference/service_configs/service_config_${ENV}.yaml"
-      - "LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
+      - "SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
       - "ML_INFRA_SERVICES_CONFIG_PATH=/workspace/ml_infra_core/ml_infra_services/ml_infra_services/configs/${ENV}.yaml"
       - "GIT_TAG=${GIT_SHA}"
       - DD_ENV=training
@@ -150,12 +138,6 @@ services:
       - "${HOME}/.minikube:/workspace/.minikube"
       - "${HOME}/.minikube:/home/circleci/.minikube"
       - "${HOME}/.aws-mountable:/creds/.aws"
-      - "../hosted_model_inference:/workspace/hosted_model_inference"
-      - "../launch_integration_tests:/workspace/launch_integration_tests"
-      - "../ml_infra_core:/workspace/ml_infra_core"
-      - "../std-ml-srv:/workspace/std-ml-srv"
-      - "../launch_rearch:/workspace/launch_rearch"
-      - "../launch_internal:/workspace/launch_internal"
       - "../spellbook_serve:/workspace/spellbook_serve"
   db:
     image: "cimg/postgres:12.8-postgis"
@@ -176,7 +158,7 @@ services:
       dockerfile: ml_infra_core/Dockerfile.openapi
       target: base
     volumes:
-      - "../hosted_model_inference/clients:/local"
+      - "../spellbook_serve/clients:/local"
     command:
       - generate
 

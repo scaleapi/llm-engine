@@ -14,7 +14,6 @@ setup(
             "start-batch-job-orchestration=spellbook_serve.entrypoints.start_batch_job_orchestration:entrypoint",
             "hosted-inference-server=spellbook_serve.entrypoints.hosted_inference_server:entrypoint",
             "autogen=spellbook_serve.scripts.autogenerate_client_and_docs:entrypoint",
-            "launch-admin=spellbook_serve.cli.bin:entrypoint",
         ],
     },
 )

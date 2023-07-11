@@ -1,5 +1,5 @@
 """
-A place for defining, setting, and referencing all environment variables used in Launch.
+A place for defining, setting, and referencing all environment variables used in SpellbookServe.
 """
 import os
 from typing import Optional, Sequence
@@ -9,8 +9,8 @@ from spellbook_serve.core.loggers import logger_name, make_logger
 
 __all__: Sequence[str] = (
     "CIRCLECI",
-    "LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
-    "LAUNCH_SERVICE_TEMPLATE_FOLDER",
+    "SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
+    "SPELLBOOK_SERVE_SERVICE_TEMPLATE_FOLDER",
     "LOCAL",
     "WORKSPACE",
     "get_boolean_env_var",
@@ -38,27 +38,29 @@ def get_boolean_env_var(name: str) -> bool:
 CIRCLECI: bool = get_boolean_env_var("CIRCLECI")
 
 LOCAL: bool = get_boolean_env_var("LOCAL")
-"""Indicates that Launch is running in a local development environment. Also used for local testing.
+"""Indicates that SpellbookServe is running in a local development environment. Also used for local testing.
 """
 
 WORKSPACE: str = os.environ.get("WORKSPACE", "~/models")
 """The working directory where spellbook_serve is installed.
 """
 
-LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH: str = os.environ.get(
-    "LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
+SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH: str = os.environ.get(
+    "SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
     os.path.join(
         PROJECT_ROOT,
         "spellbook_serve/infra/gateways/resources/templates",
         "service_template_config_map_circleci.yaml",
     ),
 )
-"""The path to the config map containing the Launch service template.
+"""The path to the config map containing the SpellbookServe service template.
 """
 
-LAUNCH_SERVICE_TEMPLATE_FOLDER: Optional[str] = os.environ.get("LAUNCH_SERVICE_TEMPLATE_FOLDER")
-"""The path to the folder containing the Launch service template. If set, this overrides
-LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH.
+SPELLBOOK_SERVE_SERVICE_TEMPLATE_FOLDER: Optional[str] = os.environ.get(
+    "SPELLBOOK_SERVE_SERVICE_TEMPLATE_FOLDER"
+)
+"""The path to the folder containing the SpellbookServe service template. If set, this overrides
+SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH.
 """
 
 if LOCAL:

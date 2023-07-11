@@ -15,7 +15,7 @@ from spellbook_serve.api.model_endpoints_docs_v1 import model_endpoints_docs_rou
 from spellbook_serve.api.model_endpoints_v1 import model_endpoint_router_v1
 from spellbook_serve.api.tasks_v1 import inference_task_router_v1
 
-app = FastAPI(title="launch", version="1.0.0", redoc_url="/api")
+app = FastAPI(title="spellbook_serve", version="1.0.0", redoc_url="/api")
 
 app.include_router(batch_job_router_v1)
 app.include_router(inference_task_router_v1)
@@ -25,13 +25,6 @@ app.include_router(model_endpoint_router_v1)
 app.include_router(model_endpoints_docs_router_v1)
 app.include_router(docker_image_batch_job_bundle_router_v1)
 app.include_router(llm_router_v1)
-
-app.mount(
-    "/python-docs",
-    StaticFiles(directory=str(Path(__file__).parents[3] / "launch_internal/site"), html=True),
-    name="python-docs",
-)
-
 
 app.mount(
     "/spellbook-serve",

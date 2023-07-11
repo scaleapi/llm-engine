@@ -1,0 +1,189 @@
+# This is a YAML-formatted file.
+
+replicaCount:
+  gateway: 1
+  cacher: 1
+  builder: 1
+  balloonA10: 0
+  balloonA100: 0
+  balloonCpu: 0
+  balloonT4: 0
+
+# tag needs to be set dynamically every time. Usually it is set to the SHA1 hash of the git
+# commit from which the image was built.
+# tag:
+context: circleci
+image:
+  gatewayRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
+  builderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
+  cacherRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
+  forwarderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
+  pullPolicy: Always
+
+# serviceIdentifier:
+
+secrets:
+  awsDatabaseSecretName: prod/spellbook_serve.db
+
+service:
+  type: ClusterIP
+  port: 80
+
+virtualservice:
+  enabled: true
+  annotations: { }
+  hostDomains:
+    - ml-internal.scale.com
+  gateways:
+    - default/internal-gateway
+
+destinationrule:
+  enabled: true
+  annotations: { }
+
+autoscaling:
+  horizontal:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 10
+    targetConcurrency: 30
+  vertical:
+    enabled: false
+    minAllowed:
+      cpu: 100m
+      memory: 128Mi
+    maxAllowed:
+      cpu: 10
+      memory: 8Gi
+    updateMode: Auto
+  prewarming:
+    enabled: false
+
+resources:
+  requests:
+    cpu: 2
+
+nodeSelector: { }
+
+tolerations: [ ]
+
+affinity: { }
+
+config:
+  values:
+    infra:
+      k8s_cluster_name: minikube
+      dns_host_domain: localhost
+      default_region: us-west-2
+      ml_account_id: "692474966980"
+      docker_repo_prefix: "692474966980.dkr.ecr.us-west-2.amazonaws.com"
+      redis_host: redis-message-broker-master.default
+      s3_bucket: "scale-ml-circleci"
+      profile_ml_worker: "default"
+      profile_ml_inference_worker: "default"
+    spellbook_serve:
+      model_primitive_host: none
+
+      # Endpoint config
+      # K8s namespace the endpoints will be created in
+      endpoint_namespace: scale-deploy
+
+      # Asynchronous endpoints
+      sqs_profile: default
+      sqs_queue_policy_template: >
+        {
+            "Version": "2012-10-17",
+            "Id": "__default_policy_ID",
+            "Statement": [
+              {
+                "Sid": "__owner_statement",
+                "Effect": "Allow",
+                "Principal": {
+                  "AWS": "arn:aws:iam::692474966980:root"
+                },
+                "Action": "sqs:*",
+                "Resource": "arn:aws:sqs:us-west-2:692474966980:${queue_name}"
+              },
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "AWS": "arn:aws:iam::307185671274:role/ml-worker"
+                },
+                "Action": "sqs:*",
+                "Resource": "arn:aws:sqs:us-west-2:692474966980:${queue_name}"
+              },
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "AWS": "arn:aws:iam::307185671274:role/ml_spellbook_serve"
+                },
+                "Action": "sqs:*",
+                "Resource": "arn:aws:sqs:us-west-2:692474966980:${queue_name}"
+              }
+            ]
+          }
+      sqs_queue_tag_template: >
+        {
+          "Spellbook-Serve-Endpoint-Id": "${endpoint_id}",
+          "Spellbook-Serve-Endpoint-Name": "${endpoint_name}",
+          "Spellbook-Serve-Endpoint-Created-By": "${endpoint_created_by}"
+        }
+
+      cache_redis_url: redis://redis-message-broker-master.default/15
+
+# Service Account
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::692474966980:role/eks-ml-worker2
+
+aws:
+  configMap:
+    name: ml-worker-config
+    create: false
+  profileName: default
+
+forwarder:
+  forceUseIPv4: true
+
+triton:
+  image:
+    repository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv
+    tag: e83eccbc8959f90ebbe4bda618b61ec6ee2d8394-triton
+
+serviceTemplate:
+  securityContext:
+    capabilities:
+      drop:
+        - all
+  mountInfraConfig: true
+  serviceAccountName: ml-worker
+  awsConfigMapName: ml-worker-config
+
+imageCache:
+  devices:
+    - name: cpu
+      nodeSelector:
+        cpu-only: "true"
+    - name: a10
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-ampere-a10
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: a100
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-ampere-a100
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: t4
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-tesla-t4
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+
+celeryBrokerType: redis

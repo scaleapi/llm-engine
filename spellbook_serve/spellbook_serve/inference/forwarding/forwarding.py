@@ -32,10 +32,10 @@ ENV_SERIALIZE_RESULTS_AS_STRING: str = "SERIALIZE_RESULTS_AS_STRING"
 DEFAULT_PORT: int = 5005
 
 
-class LaunchSerializationMixin:
-    """Mixin class for optionally wrapping Launch requests."""
+class SpellbookServeSerializationMixin:
+    """Mixin class for optionally wrapping SpellbookServe requests."""
 
-    launch_unwrap: bool
+    spellbook_serve_unwrap: bool
     serialize_results_as_string: bool
 
     def _get_serialize_results_as_string_value(
@@ -69,18 +69,15 @@ class LaunchSerializationMixin:
     def unwrap_json_payload(self, json_payload: Any) -> Tuple[Any, bool]:
         # TODO: eventually delete
         serialize_results_as_string: Optional[bool] = None
-        # IF we get a feature update in launch where it's able to allow a user to
-        # request this from the API, then we can determine that here.
-        # (NOTE: This is _potential_ future behavior)
         serialize_results_as_string = self._get_serialize_results_as_string_value(
             serialize_results_as_string,
             json_payload,  # type: ignore
         )
 
-        if self.launch_unwrap:
+        if self.spellbook_serve_unwrap:
             logger.info(f"Unwrapping {json_payload.keys()=}")
             json_payload = json_payload["args"]
-            # TODO: eventually delete - https://app.shortcut.com/scaleai/story/751406/launch-responses-are-returned-as-jsons-not-strings
+            # TODO: eventually delete
             serialize_results_as_string = self._get_serialize_results_as_string_value(
                 serialize_results_as_string,
                 json_payload,  # type: ignore
@@ -95,7 +92,7 @@ class LaunchSerializationMixin:
 
     @staticmethod
     def get_response_payload(using_serialize_results_as_string: bool, response: Any):
-        # Launch expects a JSON object with a "result" key.
+        # SpellbookServe expects a JSON object with a "result" key.
         if using_serialize_results_as_string:
             response_as_string: str = json.dumps(response)
             return {"result": response_as_string}
@@ -104,7 +101,7 @@ class LaunchSerializationMixin:
 
 
 @dataclass
-class Forwarder(LaunchSerializationMixin):
+class Forwarder(SpellbookServeSerializationMixin):
     """Forwards inference requests to another service via HTTP POST.
 
     Expects this user-defined inference service to be running on localhost. However,
@@ -119,8 +116,8 @@ class Forwarder(LaunchSerializationMixin):
     """
 
     predict_endpoint: str
-    launch_unwrap: bool
-    # TODO: eventually delete - https://app.shortcut.com/scaleai/story/751406/launch-responses-are-returned-as-jsons-not-strings
+    spellbook_serve_unwrap: bool
+    # TODO: eventually delete - https://app.shortcut.com/scaleai/story/751406/spellbook-serve-responses-are-returned-as-jsons-not-strings
     serialize_results_as_string: bool
     post_inference_hooks_handler: PostInferenceHooksHandler
     wrap_response: bool
@@ -179,10 +176,10 @@ class LoadForwarder:
     predict_route: str = "/predict"
     healthcheck_route: str = "/readyz"
     batch_route: Optional[str] = None
-    launch_unwrap: bool = True
+    spellbook_serve_unwrap: bool = True
     # TODO: this is a workaround
-    # It will eventually be removed once https://app.shortcut.com/scaleai/story/751406/launch-responses-are-returned-as-jsons-not-strings
-    # is implemented (aka Launch API is fixed, no longer double-encoding JSON data as strings).
+    # It will eventually be removed once https://app.shortcut.com/scaleai/story/751406/spellbook-serve-responses-are-returned-as-jsons-not-strings
+    # is implemented (aka SpellbookServe API is fixed, no longer double-encoding JSON data as strings).
     serialize_results_as_string: bool = True
     wrap_response: bool = True
 
@@ -243,7 +240,7 @@ class LoadForwarder:
             logger.info(f"Waiting for user-defined service to be ready at {hc}...")
             time.sleep(1)
 
-        logger.info(f"Unwrapping launch payload formatting?: {self.launch_unwrap}")
+        logger.info(f"Unwrapping spellbook payload formatting?: {self.spellbook_serve_unwrap}")
 
         logger.info(f"Serializing result as string?: {self.serialize_results_as_string}")
         if ENV_SERIALIZE_RESULTS_AS_STRING in os.environ:
@@ -277,7 +274,7 @@ class LoadForwarder:
 
         return Forwarder(
             predict_endpoint=pred,
-            launch_unwrap=self.launch_unwrap,
+            spellbook_serve_unwrap=self.spellbook_serve_unwrap,
             serialize_results_as_string=serialize_results_as_string,
             post_inference_hooks_handler=handler,
             wrap_response=self.wrap_response,
@@ -285,7 +282,7 @@ class LoadForwarder:
 
 
 @dataclass
-class StreamingForwarder(LaunchSerializationMixin):
+class StreamingForwarder(SpellbookServeSerializationMixin):
     """Forwards inference requests to another service via HTTP POST.
 
     Expects this user-defined inference service to be running on localhost. However,
@@ -301,8 +298,8 @@ class StreamingForwarder(LaunchSerializationMixin):
     """
 
     predict_endpoint: str
-    launch_unwrap: bool
-    # TODO: eventually delete - https://app.shortcut.com/scaleai/story/751406/launch-responses-are-returned-as-jsons-not-strings
+    spellbook_serve_unwrap: bool
+    # TODO: eventually delete - https://app.shortcut.com/scaleai/story/751406/spellbook-serve-responses-are-returned-as-jsons-not-strings
     serialize_results_as_string: bool
     post_inference_hooks_handler: PostInferenceHooksHandler  # unused for now
 
@@ -353,7 +350,7 @@ class LoadStreamingForwarder:
     predict_route: str = "/predict"
     healthcheck_route: str = "/readyz"
     batch_route: Optional[str] = None
-    launch_unwrap: bool = True
+    spellbook_serve_unwrap: bool = True
     serialize_results_as_string: bool = False
 
     def load(self, resources: Path, cache: Any) -> StreamingForwarder:
@@ -413,7 +410,7 @@ class LoadStreamingForwarder:
             logger.info(f"Waiting for user-defined service to be ready at {hc}...")
             time.sleep(1)
 
-        logger.info(f"Unwrapping launch payload formatting?: {self.launch_unwrap}")
+        logger.info(f"Unwrapping spellbook payload formatting?: {self.spellbook_serve_unwrap}")
 
         logger.info(f"Serializing result as string?: {self.serialize_results_as_string}")
         if ENV_SERIALIZE_RESULTS_AS_STRING in os.environ:
@@ -447,7 +444,7 @@ class LoadStreamingForwarder:
 
         return StreamingForwarder(
             predict_endpoint=pred,
-            launch_unwrap=self.launch_unwrap,
+            spellbook_serve_unwrap=self.spellbook_serve_unwrap,
             serialize_results_as_string=serialize_results_as_string,
             post_inference_hooks_handler=handler,
         )

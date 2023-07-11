@@ -49,7 +49,7 @@ def get_s3_client():
 
 def _read_function_to_network_endpoint_info():
     # Dictionary format: {servable_id: {remote: true/false, endpoint_type: "sync"/"async", destination: <str>},...}
-    # destination is either a celery queue name, i.e. launch.<something>, or the full url for an http request,
+    # destination is either a celery queue name, i.e. spellbook_serve.<something>, or the full url for an http request,
     # i.e. http://<svc>.ml-internal.scale.com/predict.
     details_json = os.getenv("CHILD_FN_INFO")
     if details_json is None:
@@ -63,7 +63,7 @@ child_fn_info = _read_function_to_network_endpoint_info()
 
 def make_request(servable_id: str, local_fn: Callable, args: List[Any], kwargs: Dict[str, Any]):
     # This is the external-facing entrypoint. Reads in details and decides to make a network request or not
-    # This function gets imported and called by the Launch client.
+    # This function gets imported and called by the SpellbookServe client.
     current_fn_info = child_fn_info[servable_id]
     use_remote = current_fn_info["remote"]
     if use_remote:

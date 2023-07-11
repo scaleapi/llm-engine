@@ -76,7 +76,7 @@ def endpoint_config_location(callback_port: int, test_user_id: str) -> Iterator[
 
 
 @pytest.fixture(scope="session")
-def launch_celery_app(
+def spellbook_serve_celery_app(
     queue: str, user_config_location: str, endpoint_config_location: str
 ) -> Iterator[subprocess.Popen]:
     env = dict(

@@ -177,9 +177,11 @@ def _verify_deployment_labels(
     labels = build_endpoint_request.labels
     endpoint_name = model_endpoint_record.name
     env = "circleci"
-    git_tag = "fb01f90a15f2826792d75c0ae0eaefa4215eb975"
+    git_tag = "54f8f73bfb1cce62a2b42326ccf9f49b5b145126"
 
-    k8s_resource_group_name = f"launch-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
+    k8s_resource_group_name = (
+        f"spellbook-serve-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
+    )
 
     assert body["metadata"]["name"] == k8s_resource_group_name
     assert body["metadata"]["namespace"] == hmi_config.endpoint_namespace
@@ -190,7 +192,7 @@ def _verify_deployment_labels(
         "user_id": user_id,
         "endpoint_id": model_endpoint_record.id,
         "endpoint_name": endpoint_name,
-        "managed-by": "launch",
+        "managed-by": "spellbook-serve",
         "owner": user_id,
         "team": labels["team"],
         "product": labels["product"],
@@ -198,7 +200,7 @@ def _verify_deployment_labels(
         "tags.datadoghq.com/env": env,
         "tags.datadoghq.com/service": endpoint_name,
         "tags.datadoghq.com/version": git_tag,
-        "use_scale_launch_endpoint_network_policy": "true",
+        "use_scale_spellbook_serve_endpoint_network_policy": "true",
     }
     assert body["metadata"]["labels"] == expected_labels
 
@@ -208,7 +210,7 @@ def _verify_deployment_labels(
         "user_id": user_id,
         "endpoint_id": model_endpoint_record.id,
         "endpoint_name": endpoint_name,
-        "managed-by": "launch",
+        "managed-by": "spellbook-serve",
         "owner": user_id,
         "team": labels["team"],
         "product": labels["product"],
@@ -217,7 +219,7 @@ def _verify_deployment_labels(
         "tags.datadoghq.com/env": env,
         "tags.datadoghq.com/service": endpoint_name,
         "tags.datadoghq.com/version": git_tag,
-        "use_scale_launch_endpoint_network_policy": "true",
+        "use_scale_spellbook_serve_endpoint_network_policy": "true",
     }
 
     if model_endpoint_record.endpoint_type == ModelEndpointType.ASYNC:
@@ -236,9 +238,11 @@ def _verify_non_deployment_labels(
     labels = build_endpoint_request.labels
     endpoint_name = model_endpoint_record.name
     env = "circleci"
-    git_tag = "fb01f90a15f2826792d75c0ae0eaefa4215eb975"
+    git_tag = "54f8f73bfb1cce62a2b42326ccf9f49b5b145126"
 
-    k8s_resource_group_name = f"launch-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
+    k8s_resource_group_name = (
+        f"spellbook-serve-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
+    )
 
     assert k8s_resource_group_name in body["metadata"]["name"]
     assert body["metadata"]["namespace"] == hmi_config.endpoint_namespace
@@ -246,7 +250,7 @@ def _verify_non_deployment_labels(
 
     expected_labels = {
         "created_by": user_id,
-        "managed-by": "launch",
+        "managed-by": "spellbook-serve",
         "owner": user_id,
         "user_id": user_id,
         "endpoint_id": model_endpoint_record.id,
@@ -257,7 +261,7 @@ def _verify_non_deployment_labels(
         "tags.datadoghq.com/env": env,
         "tags.datadoghq.com/service": endpoint_name,
         "tags.datadoghq.com/version": git_tag,
-        "use_scale_launch_endpoint_network_policy": "true",
+        "use_scale_spellbook_serve_endpoint_network_policy": "true",
     }
     assert body["metadata"]["labels"] == expected_labels
 
@@ -559,7 +563,7 @@ async def test_get_resources_async_success(
         Mock(return_value=FakeK8sDeploymentContainer(env=[])),
     )
     k8s_endpoint_resource_delegate.__setattr__(
-        "_get_launch_container",
+        "_get_spellbook_serve_container",
         Mock(
             return_value=FakeK8sDeploymentContainer(
                 env=[FakeK8sEnvVar(name="PREWARM", value="true")]
@@ -617,7 +621,7 @@ async def test_get_resources_sync_success(
         "_get_main_container", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
     )
     k8s_endpoint_resource_delegate.__setattr__(
-        "_get_launch_container", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
+        "_get_spellbook_serve_container", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
     )
     k8s_endpoint_resource_delegate.__setattr__(
         "_translate_k8s_config_maps_to_user_config_data",

@@ -26,7 +26,7 @@ EXPECTED_QUEUE_POLICY = """
         "AWS": "arn:aws:iam::692474966980:root"
       },
       "Action": "sqs:*",
-      "Resource": "arn:aws:sqs:us-west-2:692474966980:launch-endpoint-id-test_model_endpoint_id_3"
+      "Resource": "arn:aws:sqs:us-west-2:692474966980:spellbook-serve-endpoint-id-test_model_endpoint_id_3"
     },
     {
       "Effect": "Allow",
@@ -34,7 +34,7 @@ EXPECTED_QUEUE_POLICY = """
         "AWS": "arn:aws:iam::307185671274:role/ml-worker"
       },
       "Action": "sqs:*",
-      "Resource": "arn:aws:sqs:us-west-2:692474966980:launch-endpoint-id-test_model_endpoint_id_3"
+      "Resource": "arn:aws:sqs:us-west-2:692474966980:spellbook-serve-endpoint-id-test_model_endpoint_id_3"
     },
     {
       "Effect": "Allow",
@@ -42,21 +42,21 @@ EXPECTED_QUEUE_POLICY = """
         "AWS": "arn:aws:iam::307185671274:role/ml_spellbook_serve"
       },
       "Action": "sqs:*",
-      "Resource": "arn:aws:sqs:us-west-2:692474966980:launch-endpoint-id-test_model_endpoint_id_3"
+      "Resource": "arn:aws:sqs:us-west-2:692474966980:spellbook-serve-endpoint-id-test_model_endpoint_id_3"
     }
   ]
 }
 """
 
 EXPECTED_QUEUE_TAGS = {
-    "infra.scale.com/product": "MLInfraLaunchSQS",
+    "infra.scale.com/product": "MLInfraSpellbookServeSQS",
     "infra.scale.com/team": "test_team",
     "infra.scale.com/contact": "yi.xu@scale.com",
     "infra.scale.com/customer": "AllCustomers",
     "infra.scale.com/financialOwner": "yi.xu@scale.com",
-    "Launch-Endpoint-Id": "test_model_endpoint_id_3",
-    "Launch-Endpoint-Name": "test_model_endpoint_name_3",
-    "Launch-Endpoint-Created-By": "test_user_id",
+    "Spellbook-Serve-Endpoint-Id": "test_model_endpoint_id_3",
+    "Spellbook-Serve-Endpoint-Name": "test_model_endpoint_name_3",
+    "Spellbook-Serve-Endpoint-Created-By": "test_user_id",
 }
 
 
@@ -76,7 +76,7 @@ def _get_fake_botocore_exception():
 @pytest.fixture
 def mock_create_async_sqs_client_create_queue():
     create_queue_response = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/launch-endpoint-id-test_model_endpoint_id_3",
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-test_model_endpoint_id_3",
         "ResponseMetadata": {
             "RequestId": "9c05b1cc-d806-5cbd-bd4a-ea339c90e25f",
             "HTTPStatusCode": 200,
@@ -109,7 +109,7 @@ def mock_create_async_sqs_client_create_queue():
 @pytest.fixture
 def mock_create_async_sqs_client_get_queue_url():
     get_queue_response = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/launch-endpoint-id-test_model_endpoint_id_3",
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-test_model_endpoint_id_3",
     }
 
     mock_sqs_client_session_val = AsyncMock()
@@ -180,7 +180,7 @@ def mock_create_async_sqs_client_delete_queue():
 
     mock_sqs_client_session_val.get_queue_url = AsyncMock()
     mock_sqs_client_session_val.get_queue_url.return_value = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/launch-endpoint-id-model_endpoint_id_1"
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-model_endpoint_id_1"
     }
 
     delete_response = {
@@ -214,7 +214,7 @@ def mock_create_async_sqs_client_delete_queue_returns_non_200():
 
     mock_sqs_client_session_val.get_queue_url = AsyncMock()
     mock_sqs_client_session_val.get_queue_url.return_value = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/launch-endpoint-id-model_endpoint_id_1"
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-model_endpoint_id_1"
     }
 
     delete_response = {
@@ -248,7 +248,7 @@ def mock_create_async_sqs_client_delete_queue_throws_exception():
 
     mock_sqs_client_session_val.get_queue_url = AsyncMock()
     mock_sqs_client_session_val.get_queue_url.return_value = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/launch-endpoint-id-model_endpoint_id_1"
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-model_endpoint_id_1"
     }
 
     mock_sqs_client_session_val.delete_queue = AsyncMock(side_effect=_get_fake_botocore_exception())
@@ -269,12 +269,12 @@ def mock_create_async_sqs_client_get_queue_attributes():
 
     mock_sqs_client_session_val.get_queue_url = AsyncMock()
     mock_sqs_client_session_val.get_queue_url.return_value = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/launch-endpoint-id-model_endpoint_id_1"
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-model_endpoint_id_1"
     }
 
     get_queue_attributes_response = {
         "Attributes": {
-            "QueueArn": "arn:aws:sqs:us-west-2:692474966980:launch-endpoint-id-model_endpoint_id_1",
+            "QueueArn": "arn:aws:sqs:us-west-2:692474966980:spellbook-serve-endpoint-id-model_endpoint_id_1",
             "ApproximateNumberOfMessages": "0",
             "ApproximateNumberOfMessagesNotVisible": "0",
             "ApproximateNumberOfMessagesDelayed": "0",
@@ -327,7 +327,7 @@ def mock_create_async_sqs_client_get_queue_attributes_queue_throws_exception():
 
     mock_sqs_client_session_val.get_queue_url = AsyncMock()
     mock_sqs_client_session_val.get_queue_url.return_value = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/launch-endpoint-id-model_endpoint_id_1"
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-model_endpoint_id_1"
     }
 
     mock_sqs_client_session_val.get_queue_attributes = AsyncMock(
@@ -361,7 +361,7 @@ async def test_sqs_create_or_update_resources_endpoint_exists(
     mock_create_async_sqs_client_get_queue_url.__aenter__.assert_called_once()
 
     expected_get_queue_url_args: Dict[str, Any] = {
-        "QueueName": "launch-endpoint-id-test_model_endpoint_id_3",
+        "QueueName": "spellbook-serve-endpoint-id-test_model_endpoint_id_3",
     }
     actual_get_queue_kwargs = (
         mock_create_async_sqs_client_get_queue_url.__aenter__.return_value.get_queue_url.call_args.kwargs
@@ -389,7 +389,7 @@ async def test_sqs_create_or_update_resources(
     mock_create_async_sqs_client_create_queue.__aenter__.assert_called_once()
 
     expected_create_queue_args: Dict[str, Any] = {
-        "QueueName": "launch-endpoint-id-test_model_endpoint_id_3",
+        "QueueName": "spellbook-serve-endpoint-id-test_model_endpoint_id_3",
         "Attributes": {
             "VisibilityTimeout": "3600",
             "Policy": EXPECTED_QUEUE_POLICY,
@@ -451,13 +451,15 @@ async def test_sqs_delete_resources(mock_create_async_sqs_client_delete_queue):
 
     mock_create_async_sqs_client_delete_queue.__aenter__.assert_called_once()
     mock_create_async_sqs_client_delete_queue.__aenter__.return_value.get_queue_url.assert_called_once_with(
-        QueueName="launch-endpoint-id-model_endpoint_id_1"
+        QueueName="spellbook-serve-endpoint-id-model_endpoint_id_1"
     )
 
     delete_call_kwargs = (
         mock_create_async_sqs_client_delete_queue.__aenter__.return_value.delete_queue.call_args.kwargs
     )
-    assert delete_call_kwargs["QueueUrl"].endswith("launch-endpoint-id-model_endpoint_id_1")
+    assert delete_call_kwargs["QueueUrl"].endswith(
+        "spellbook-serve-endpoint-id-model_endpoint_id_1"
+    )
 
 
 @pytest.mark.asyncio
@@ -485,17 +487,19 @@ async def test_sqs_get_queue_attributes(mock_create_async_sqs_client_get_queue_a
 
     mock_create_async_sqs_client_get_queue_attributes.__aenter__.assert_called_once()
     mock_create_async_sqs_client_get_queue_attributes.__aenter__.return_value.get_queue_url.assert_called_once_with(
-        QueueName="launch-endpoint-id-model_endpoint_id_1"
+        QueueName="spellbook-serve-endpoint-id-model_endpoint_id_1"
     )
 
     get_queue_attributes_call_kwargs = (
         mock_create_async_sqs_client_get_queue_attributes.__aenter__.return_value.get_queue_attributes.call_args.kwargs
     )
     assert get_queue_attributes_call_kwargs["QueueUrl"].endswith(
-        "launch-endpoint-id-model_endpoint_id_1"
+        "spellbook-serve-endpoint-id-model_endpoint_id_1"
     )
 
-    assert response["Attributes"]["QueueArn"].endswith("launch-endpoint-id-model_endpoint_id_1")
+    assert response["Attributes"]["QueueArn"].endswith(
+        "spellbook-serve-endpoint-id-model_endpoint_id_1"
+    )
 
 
 @pytest.mark.asyncio

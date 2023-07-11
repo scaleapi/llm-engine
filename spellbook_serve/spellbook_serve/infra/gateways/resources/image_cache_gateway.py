@@ -22,7 +22,7 @@ class CachedImages(TypedDict):
 
 
 KUBERNETES_MAX_LENGTH = 64
-LAUNCH_DEFAULT_NAMESPACE = "scale-deploy"
+SPELLBOOK_SERVE_DEFAULT_NAMESPACE = "scale-deploy"
 
 
 class ImageCacheGateway:
@@ -36,7 +36,7 @@ class ImageCacheGateway:
         base_path = os.getenv("WORKSPACE")
         if base_path is None:
             raise EnvironmentError("WORKSPACE env variable not found")
-        base_name = "launch-image-cache"
+        base_name = "spellbook-serve-image-cache"
 
         for compute_type, images in cached_images.items():
             # Required for mypy TypedDict
@@ -46,7 +46,7 @@ class ImageCacheGateway:
             name = f"{base_name}-{compute_type}"
             substitution_kwargs = ImageCacheArguments(
                 RESOURCE_NAME=name,
-                NAMESPACE=LAUNCH_DEFAULT_NAMESPACE,
+                NAMESPACE=SPELLBOOK_SERVE_DEFAULT_NAMESPACE,
             )
             resource_key = f"image-cache-{compute_type}.yaml"
             image_cache = load_k8s_yaml(resource_key, substitution_kwargs)
