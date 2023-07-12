@@ -17,7 +17,7 @@ pip install spellbook-serve-client
 ```python
 from spellbook_serve_client import Client
 
-client = Client("https://api.spellbook.scale.com", "flan-t5-xxl-deepspeed-sync")
+client = Client("flan-t5-xxl-deepspeed-sync")
 client.generate("Why is the sky blue?").outputs[0].text
 # ' Rayleigh scattering'
 
@@ -34,7 +34,7 @@ or with the asynchronous client:
 ```python
 from spellbook_serve_client import AsyncClient
 
-client = AsyncClient("https://api.spellbook.scale.com", "flan-t5-xxl-deepspeed-sync")
+client = AsyncClient("flan-t5-xxl-deepspeed-sync")
 response = await client.generate("Why is the sky blue?")
 print(response.outputs[0].text)
 # ' Rayleigh scattering'

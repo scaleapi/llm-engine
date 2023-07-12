@@ -13,6 +13,16 @@ from spellbook_serve_client.types import (
     CompletionSyncV1Response,
 )
 
+SPELLBOOK_API_URL = "https://api.spellbook.scale.com"
+
+
+def get_sync_inference_url(base_url, model_name):
+    return os.path.join(base_url, f"v1/llm/completions-sync?model_endpoint_name={model_name}")
+
+
+def get_stream_inference_url(base_url, model_name):
+    return os.path.join(base_url, f"v1/llm/completions-stream?model_endpoint_name={model_name}")
+
 
 class Client:
     """Client to make calls to a spellbook-serve-client instance
@@ -22,7 +32,7 @@ class Client:
      ```python
      >>> from spellbook_serve_client import Client
 
-     >>> client = Client("https://api.spellbook.scale.com", "flan-t5-xxl-deepspeed-sync")
+     >>> client = Client("flan-t5-xxl-deepspeed-sync")
      >>> client.generate("Why is the sky blue?").outputs[0].text
      ' Rayleigh scattering'
 
@@ -37,8 +47,7 @@ class Client:
 
     def __init__(
         self,
-        base_url: str,
-        model_name: str,
+        base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         timeout: int = 10,
     ):
@@ -46,21 +55,12 @@ class Client:
         Args:
             base_url (`str`):
                 spellbook-serve-client instance base url
-            model_name (`str`):
-                Model name to use for inference
             api_key (`str`):
                 API key to use for authentication
             timeout (`int`):
                 Timeout in seconds
         """
         self.base_url = base_url
-        self.model_name = model_name
-        self.sync_inference_url = os.path.join(
-            self.base_url, f"v1/llm/completions-sync?model_endpoint_name={self.model_name}"
-        )
-        self.stream_inference_url = os.path.join(
-            self.base_url, f"v1/llm/completions-stream?model_endpoint_name={self.model_name}"
-        )
         self.timeout = timeout
         if api_key is not None:
             self.api_key = api_key
@@ -73,6 +73,7 @@ class Client:
 
     def generate(
         self,
+        model_name: str,
         prompt: str,
         max_new_tokens: int = 20,
         temperature: float = 0.2,
@@ -81,6 +82,8 @@ class Client:
         Given a prompt, generate the following text
 
         Args:
+            model_name (`str`):
+                Model name to use for inference
             prompt (`str`):
                 Input text
             max_new_tokens (`int`):
@@ -97,7 +100,7 @@ class Client:
         )
 
         resp = requests.post(
-            self.sync_inference_url,
+            get_sync_inference_url(self.base_url, model_name),
             json=request.dict(),
             auth=(self.api_key, ""),
             timeout=self.timeout,
@@ -109,6 +112,7 @@ class Client:
 
     def generate_stream(
         self,
+        model_name: str,
         prompt: str,
         max_new_tokens: int = 20,
         temperature: float = 0.2,
@@ -117,6 +121,8 @@ class Client:
         Given a prompt, generate the following stream of tokens
 
         Args:
+            model_name (`str`):
+                Model name to use for inference
             prompt (`str`):
                 Input text
             max_new_tokens (`int`):
@@ -132,7 +138,7 @@ class Client:
         )
 
         resp = requests.post(
-            self.stream_inference_url,
+            get_stream_inference_url(self.base_url, model_name),
             json=request.dict(),
             auth=(self.api_key, ""),
             timeout=self.timeout,
@@ -171,7 +177,7 @@ class AsyncClient:
      ```python
      >>> from spellbook_serve_client import AsyncClient
 
-     >>> client = AsyncClient("https://api.spellbook.scale.com", "flan-t5-xxl-deepspeed-sync")
+     >>> client = AsyncClient("flan-t5-xxl-deepspeed-sync")
      >>> response = await client.generate("Why is the sky blue?")
      >>> response.outputs[0].text
      ' Rayleigh scattering'
@@ -187,8 +193,7 @@ class AsyncClient:
 
     def __init__(
         self,
-        base_url: str,
-        model_name: str,
+        base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         timeout: int = 10,
     ):
@@ -196,21 +201,12 @@ class AsyncClient:
         Args:
             base_url (`str`):
                 spellbook-serve-client instance base url
-            model_name (`str`):
-                Model name to use for inference
             api_key (`str`):
                 API key to use for authentication
             timeout (`int`):
                 Timeout in seconds
         """
-        self.base_url = base_url
-        self.model_name = model_name
-        self.sync_inference_url = os.path.join(
-            self.base_url, f"v1/llm/completions-sync?model_endpoint_name={self.model_name}"
-        )
-        self.stream_inference_url = os.path.join(
-            self.base_url, f"v1/llm/completions-stream?model_endpoint_name={self.model_name}"
-        )
+        self.base_url = base_url or SPELLBOOK_API_URL
         self.timeout = timeout
         if api_key is not None:
             self.api_key = api_key
@@ -223,6 +219,7 @@ class AsyncClient:
 
     async def generate(
         self,
+        model_name: str,
         prompt: str,
         max_new_tokens: int = 20,
         temperature: float = 0.2,
@@ -231,6 +228,8 @@ class AsyncClient:
         Given a prompt, generate the following text asynchronously
 
         Args:
+            model_name (`str`):
+                Model name to use for inference
             prompt (`str`):
                 Input text
             max_new_tokens (`int`):
@@ -248,7 +247,9 @@ class AsyncClient:
         async with ClientSession(
             timeout=self.timeout, auth=BasicAuth(login=self.api_key)
         ) as session:
-            async with session.post(self.sync_inference_url, json=request.dict()) as resp:
+            async with session.post(
+                get_sync_inference_url(self.base_url, model_name), json=request.dict()
+            ) as resp:
                 payload = await resp.json()
 
                 if resp.status != 200:
@@ -257,6 +258,7 @@ class AsyncClient:
 
     async def generate_stream(
         self,
+        model_name: str,
         prompt: str,
         max_new_tokens: int = 20,
         temperature: float = 0.2,
@@ -265,6 +267,8 @@ class AsyncClient:
         Given a prompt, generate the following stream of tokens asynchronously
 
         Args:
+            model_name (`str`):
+                Model name to use for inference
             prompt (`str`):
                 Input text
             max_new_tokens (`int`):
@@ -282,7 +286,9 @@ class AsyncClient:
         async with ClientSession(
             timeout=self.timeout, auth=BasicAuth(login=self.api_key)
         ) as session:
-            async with session.post(self.stream_inference_url, json=request.dict()) as resp:
+            async with session.post(
+                get_stream_inference_url(self.base_url, model_name), json=request.dict()
+            ) as resp:
 
                 if resp.status != 200:
                     raise parse_error(resp.status, await resp.json())
