@@ -3,7 +3,7 @@ import os
 from typing import AsyncIterator, Iterator, Optional
 
 import requests
-from aiohttp import BasicAuth, ClientSession
+from aiohttp import BasicAuth, ClientSession, ClientTimeout
 from pydantic import ValidationError
 from spellbook_serve_client.errors import parse_error
 from spellbook_serve_client.types import (
@@ -245,7 +245,7 @@ class AsyncClient:
         )
 
         async with ClientSession(
-            timeout=self.timeout, auth=BasicAuth(login=self.api_key)
+            timeout=ClientTimeout(self.timeout), auth=BasicAuth(login=self.api_key)
         ) as session:
             async with session.post(
                 get_sync_inference_url(self.base_url, model_name), json=request.dict()
@@ -254,7 +254,7 @@ class AsyncClient:
 
                 if resp.status != 200:
                     raise parse_error(resp.status, payload)
-                return CompletionSyncV1Response(**payload[0])
+                return CompletionSyncV1Response.parse_obj(payload)
 
     async def generate_stream(
         self,
@@ -284,7 +284,7 @@ class AsyncClient:
         )
 
         async with ClientSession(
-            timeout=self.timeout, auth=BasicAuth(login=self.api_key)
+            timeout=ClientTimeout(self.timeout), auth=BasicAuth(login=self.api_key)
         ) as session:
             async with session.post(
                 get_stream_inference_url(self.base_url, model_name), json=request.dict()
