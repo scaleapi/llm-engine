@@ -11,29 +11,18 @@ To start using Spellbook Serve with public inference APIs, simply run the follow
     conda install spellbook-serve -c conda-forge
     ```
 
-You can generate an API key using the CLI command
-
-```commandline
-spellbook-serve generate-api-key
-```
+Navigate to [https://spellbook.scale.com](https://spellbook.scale.com) where
+you will get a Scale API key.
 
 With the API key, you can now send requests to Spellbook Serve public inference
 APIs using the CLI or Python client:
 
 === "Using the CLI"
     ```commandline
-    spellbook-serve endpoints list
-
-    # Expected output:
-    #
-    # public-flan-t5-xxl
-    # public-stablelm-2
-    # public-dolly-2
-
-    spellbook-serve endpoints send public-flan-t5-xxl \
-        --input "Hello, my name is"
+    spellbook-serve generate flan-t5-xxl \
+        --prompt "Hello, my name is"
         --temperature 0.5
-        --top_p 0.9
+        --max-tokens 20
 
     # Expected output:
     #
@@ -41,23 +30,22 @@ APIs using the CLI or Python client:
     ```
 === "Using the Python Client"
     ```py
-    import spellbook_serve as ss
+    from spellbook_serve_client import Client
 
-    client = ss.Client()
-    request = ss.EndpointRequest(
-        input="Hello, my name is",
+    client = Client()
+    response = client.generate(
+        model_name="flan-t5-xxl",
+        prompt="Hello, my name is",
         temperature=0.5,
-        top_p=0.9,
+        max_tokens=20,
     )
-    endpoint = client.get_model_endpoint("public-flan-t5-xxl")
-    future = endpoint.send(request)
-    response = future.get()
     print(response)
     ```
 
 ## 💻 Installation on Kubernetes
 
-To install Spellbook Serve on Kubernetes, you can use the Helm chart:
+To install Spellbook Serve on your infrastructure in Kubernetes, you can use the
+Helm chart:
 
 ```commandline
 helm repo add spellbook https://spellbook.github.io/helm-charts

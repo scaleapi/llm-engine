@@ -27,22 +27,21 @@ def get_stream_inference_url(base_url, model_name):
 class Client:
     """Client to make calls to a spellbook-serve-client instance
 
-     Example:
+    Example:
+        ```python
+        from spellbook_serve_client import Client
 
-     ```python
-     >>> from spellbook_serve_client import Client
+        client = Client("flan-t5-xxl-deepspeed-sync")
+        client.generate("Why is the sky blue?").outputs[0].text
+        # ' Rayleigh scattering'
 
-     >>> client = Client("flan-t5-xxl-deepspeed-sync")
-     >>> client.generate("Why is the sky blue?").outputs[0].text
-     ' Rayleigh scattering'
-
-     >>> result = ""
-     >>> for response in client.generate_stream("Why is the sky blue?"):
-     >>>     if response.output:
-     >>>         result += response.output.text
-     >>> result
-    ' Rayleigh scattering'
-     ```
+        result = ""
+        for response in client.generate_stream("Why is the sky blue?"):
+            if response.output:
+                result += response.output.text
+        result
+        # ' Rayleigh scattering'
+        ```
     """
 
     def __init__(

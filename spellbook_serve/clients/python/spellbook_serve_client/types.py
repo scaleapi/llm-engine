@@ -188,8 +188,13 @@ class CompletionSyncV1Request(BaseModel):
 
 class CompletionOutput(BaseModel):
     text: str
+    """Text"""
+
     num_prompt_tokens: int
+    """Number of tokens in the prompt."""
+
     num_completion_tokens: int
+    """Number of tokens in the completion."""
 
 
 class CompletionSyncV1Response(BaseModel):
@@ -198,8 +203,13 @@ class CompletionSyncV1Response(BaseModel):
     """
 
     status: TaskStatus
+    """Task status."""
+
     outputs: List[CompletionOutput]
+    """List of completion outputs."""
+
     traceback: Optional[str] = None
+    """Traceback if the task failed."""
 
 
 class CompletionStreamV1Request(BaseModel):
@@ -214,9 +224,16 @@ class CompletionStreamV1Request(BaseModel):
 
 class CompletionStreamOutput(BaseModel):
     text: str
+    """Text"""
+
     finished: bool
+    """Whether the completion is finished."""
+
     num_prompt_tokens: Optional[int] = None
+    """Number of tokens in the prompt."""
+
     num_completion_tokens: Optional[int] = None
+    """Number of tokens in the completion."""
 
 
 class CompletionStreamV1Response(BaseModel):
@@ -225,5 +242,10 @@ class CompletionStreamV1Response(BaseModel):
     """
 
     status: TaskStatus
+    """Task status."""
+
     output: Optional[CompletionStreamOutput] = None
+    """Completion output."""
+
     traceback: Optional[str] = None
+    """Traceback if the task failed."""

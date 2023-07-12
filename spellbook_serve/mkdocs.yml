@@ -35,13 +35,10 @@ edit_uri: ""
 nav:
   - Introduction: index.md
   - "Getting Started": getting_started.md
-  - "FAQ": faq.md
-  - "Concepts":
-      - "Model Bundles": concepts/bundles.md
-      - "Model Endpoints": concepts/endpoints.md
-  - "Integrations":
-      - "Huggingface": integrations/huggingface.md
-      - "Langchain": integrations/langchain.md
+  - "API":
+      - "Python Client API Reference": api/python_client.md
+      - "Langchain": api/langchain.md
+#  - "FAQ": faq.md
 
 markdown_extensions:
   - toc:
@@ -80,7 +77,8 @@ markdown_extensions:
 plugins:
   - search
   - mkdocstrings:
-      # watch: [spellbook_serve]
+      watch:
+        - clients/python/spellbook_serve_client
       handlers:
         python:
           rendering:

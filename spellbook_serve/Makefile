@@ -9,10 +9,13 @@ install-test:
 install-dev:
 	pip install -r requirements-dev.txt
 
+install-docs:
+	pip install -r requirements-docs.txt
+
 requirements: install-dev
 	pip-compile --allow-unsafe --no-emit-index-url --no-emit-trusted-host --output-file=requirements.txt requirements.in
 
-install-all: install install-test install-dev
+install-all: install install-test install-dev install-docs
 
 test:
 	WORKSPACE=.. pytest
@@ -31,3 +34,9 @@ build:
 dev:
 	# TODO: add env variables to make this work.
 	docker-compose up spellbook-serve-gateway-dev spellbook-serve-service-builder-dev
+
+build-docs:
+	mkdocs build
+
+dev-docs:
+	mkdocs serve
