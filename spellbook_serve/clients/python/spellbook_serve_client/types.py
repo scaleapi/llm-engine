@@ -249,3 +249,42 @@ class CompletionStreamV1Response(BaseModel):
 
     traceback: Optional[str] = None
     """Traceback if the task failed."""
+
+
+# everything below copied from hosted_model_inference/hosted_model_inference/common/dtos/llms.py
+
+
+class CreateFineTuneJobRequest(BaseModel):
+    training_file: str
+    validation_file: str
+    model_name: str
+    base_model: str  # TODO enum
+    fine_tuning_method: str  # TODO enum
+    hyperparameters: Dict[str, str]  # TODO validated somewhere else
+
+
+class CreateFineTuneJobResponse(BaseModel):
+    fine_tune_id: str
+
+
+class BatchJobStatus(str, Enum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
+    CANCELLED = "CANCELLED"
+    UNDEFINED = "UNDEFINED"
+    TIMEOUT = "TIMEOUT"
+
+
+class GetFineTuneJobResponse(BaseModel):
+    fine_tune_id: str
+    status: BatchJobStatus
+
+
+class ListFineTuneJobResponse(BaseModel):
+    jobs: List[GetFineTuneJobResponse]
+
+
+class CancelFineTuneJobResponse(BaseModel):
+    success: bool
