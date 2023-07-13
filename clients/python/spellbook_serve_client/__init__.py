@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.3.0"
+__version__ = "0.0.0"
 
-from spellbook_serve_client.client import AsyncClient, Client
-from spellbook_serve_client.types import (
+from spellbook_serve_client.completion import Completion
+from spellbook_serve_client.data_types import (
     CancelFineTuneJobResponse,
     CompletionOutput,
     CompletionStreamOutput,
@@ -27,3 +27,4 @@ from spellbook_serve_client.types import (
     ListFineTuneJobResponse,
     TaskStatus,
 )
+from spellbook_serve_client.fine_tuning import FineTune
