@@ -1,6 +1,8 @@
 # Python Client API Reference
 
-::: spellbook_serve_client.Client
+::: spellbook_serve_client.Completion
+
+::: spellbook_serve_client.FineTune
 
 ::: spellbook_serve_client.CompletionSyncV1Response
 

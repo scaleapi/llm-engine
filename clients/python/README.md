@@ -14,37 +14,22 @@ pip install spellbook-serve-client
 
 ### Usage
 
-```python
-from spellbook_serve_client import Client
+If you are using Scale Spellbook Serve, you can get your API key from
+[https://spellbook.scale.com/settings](https://spellbook.scale.com/settings). 
+Set the `SCALE_API_KEY` environment variable to your API key.
 
-client = Client()
-client.generate("flan-t5-xxl-deepspeed-sync", "Why is the sky blue?").outputs[0].text
-# ' Rayleigh scattering'
-
-result = ""
-for response in client.generate_stream("Why is the sky blue?"):
-    if response.output:
-        result += response.output.text
-result
-# ' Rayleigh scattering'
-```
-
-or with the asynchronous client:
+If you are using your own infrastructure, you can set the
+`SPELLBOOK_SERVE_BASE_PATH` environment variable to the base URL of your
+self-hosted `spellbook-serve` endpoint.
 
 ```python
-from spellbook_serve_client import AsyncClient
+from spellbook_serve_client import Completion
 
-client = AsyncClient()
-response = await client.generate("flan-t5-xxl-deepspeed-sync", "Why is the sky blue?")
+response = Completion.create(
+    model_name="llama-7b-text-generation-inference",
+    prompt="Hello, my name is",
+    max_new_tokens=10,
+    temperature=0.2,
+)
 print(response.outputs[0].text)
-# ' Rayleigh scattering'
-
-# Token Streaming
-text = ""
-async for response in client.generate_stream("Why is the sky blue?"):
-    if not response.token.special:
-        text += response.token.text
-
-print(text)
-# ' Rayleigh scattering'
 ```
