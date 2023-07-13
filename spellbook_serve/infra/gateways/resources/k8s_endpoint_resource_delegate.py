@@ -2,6 +2,7 @@ import os
 from string import Template
 from typing import Any, Dict, List, Optional, Tuple
 
+import kubernetes
 import kubernetes_asyncio
 import yaml
 from kubernetes_asyncio import config as kube_config
@@ -13,6 +14,7 @@ from kubernetes_asyncio.client.models.v2beta2_horizontal_pod_autoscaler import (
 )
 from kubernetes_asyncio.client.rest import ApiException
 from kubernetes_asyncio.config import ConfigException
+from packaging import version
 from pydantic.utils import deep_update
 
 from spellbook_serve.common.config import hmi_config
@@ -66,6 +68,7 @@ _kubernetes_core_api = None
 _kubernetes_autoscaling_api = None
 _kubernetes_batch_api = None
 _kubernetes_custom_objects_api = None
+_kubernetes_cluster_version = None
 
 
 # --- K8s client caching functions
@@ -81,6 +84,19 @@ def set_lazy_load_kubernetes_clients(
     former = _lazy_load_kubernetes_clients
     _lazy_load_kubernetes_clients = should_lazy_load
     return former
+
+def get_kubernetes_cluster_version():  # pragma: no cover
+    if _lazy_load_kubernetes_clients:
+        global _kubernetes_cluster_version
+    else:
+        _kubernetes_cluster_version = None
+    if not _kubernetes_cluster_version:
+        version_info = kubernetes.client.VersionApi().get_code()
+        # kuberentes will use `+` instead of specifying a patch version. This confuses version comparisons so we remove it.
+        minor_version = version_info.minor.replace("+", "")
+        major_version = version_info.major
+        _kubernetes_cluster_version = f"{major_version}.{minor_version}"
+    return _kubernetes_cluster_version
 
 
 def get_kubernetes_apps_client():  # pragma: no cover
@@ -109,7 +125,13 @@ def get_kubernetes_autoscaling_client():  # pragma: no cover
     else:
         _kubernetes_autoscaling_api = None
     if not _kubernetes_autoscaling_api:
-        _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2beta2Api()
+        cluster_version = get_kubernetes_cluster_version()
+        # For k8s cluster versions 1.23 - 1.25 we need to use the v2beta2 api
+        # For 1.26+ v2beta2 has been deperecated and merged into v2
+        if version.parse(cluster_version) >= version.parse("1.26"):
+            _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2Api()
+        else:
+            _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2beta2Api()
     return _kubernetes_autoscaling_api
 
 

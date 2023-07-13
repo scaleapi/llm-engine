@@ -4,7 +4,7 @@ from typing import Any, Dict
 import requests
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-from spellbook_serve.api_client.model.model_endpoint_type import ModelEndpointType
+from spellbook_serve.domain.entities import ModelEndpointType
 
 DEFAULT_NETWORK_TIMEOUT_SEC = 10
 
@@ -120,7 +120,7 @@ def spellbook_bundle_payload(
         "schema_location": "unused",
         "flavor": {
             "flavor": "runnable_image",
-            "repository": "instant-llm",
+            "repository": "spellbook-serve",
             "tag": f"spellbook_serve_llm_cuda_image_{git_commit}",
             "command": [
                 "dumb-init",
@@ -148,7 +148,7 @@ def spellbook_endpoint_payload(
     *,
     endpoint_name: str,
     bundle_name: str,
-    endpoint_type: ModelEndpointType = "async",
+    endpoint_type: ModelEndpointType = ModelEndpointType.SYNC,
     min_workers: int = 0,
     max_workers: int = 1,
     memory: str = "185Gi",

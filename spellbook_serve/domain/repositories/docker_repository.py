@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -47,3 +48,11 @@ class DockerRepository(ABC):
         Returns: The status and logs of the image building.
         """
         pass
+    
+    def is_repo_name(self, repo_name: str):
+        # We assume repository names must start with a letter and can only contain lowercase letters, numbers, hyphens, underscores, and forward slashes.
+        # Based-off ECR naming standards
+        # https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_CreateRepository.html#API_CreateRepository_RequestSyntax
+        pattern = r"^[a-z0-9\-_/]*$"
+        match = re.fullmatch(pattern, repo_name)
+        return match is not None
