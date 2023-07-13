@@ -330,7 +330,7 @@ volumeMounts:
     mountPath: /workspace/spellbook_serve/spellbook_serve/infra/gateways/resources/templates
   {{- if .Values.aws }}
   - name: config-volume
-    mountPath: /root/.aws/config
+    mountPath: /home/user/.aws/config
     subPath: config
   {{- end }}
   {{- if .Values.config.values }}
