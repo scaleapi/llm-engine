@@ -368,12 +368,16 @@ class CreateModelBundleV2UseCase:
                 repository=request.flavor.framework.image_repository,
                 tag=request.flavor.framework.image_tag,
             )
-        elif isinstance(
-            request.flavor, RunnableImageLike
-        ) and not self.docker_repository.image_exists(
-            image_tag=request.flavor.tag,
-            repository_name=request.flavor.repository,
+        elif (
+            isinstance(request.flavor, RunnableImageLike)
+            and self.docker_repository.is_repo_name(request.flavor.repository)
+            and not self.docker_repository.image_exists(
+                image_tag=request.flavor.tag,
+                repository_name=request.flavor.repository,
+            )
         ):
+            # only check image existance if repository is specified as just repo name
+            # if a full image registry is specified, we skip this check to enable pass through of images from private registries
             raise DockerImageNotFoundException(
                 repository=request.flavor.repository,
                 tag=request.flavor.tag,
