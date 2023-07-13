@@ -116,7 +116,6 @@ config:
           "Spellbook-Serve-Endpoint-Created-By": "${endpoint_created_by}"
         }
 
-      # Billing
       cache_redis_url: redis://spellbook-prod-cache-001.nu2e0g.0001.usw2.cache.amazonaws.com:6379/15
 
 # Service Account
