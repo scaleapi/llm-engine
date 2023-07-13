@@ -256,15 +256,22 @@ class CompletionStreamV1Response(BaseModel):
 
 class CreateFineTuneJobRequest(BaseModel):
     training_file: str
+    """Path to file of training dataset"""
     validation_file: str
+    """Path to file of validation dataset"""
     model_name: str
+    """Name of the fine-tuned model"""
     base_model: str  # TODO enum
+    """Base model to train from"""
     fine_tuning_method: str  # TODO enum
+    """Fine-tuning method"""
     hyperparameters: Dict[str, str]  # TODO validated somewhere else
+    """Hyperparameters"""
 
 
 class CreateFineTuneJobResponse(BaseModel):
     fine_tune_id: str
+    """ID of the created fine-tuning job"""
 
 
 class BatchJobStatus(str, Enum):
@@ -279,12 +286,16 @@ class BatchJobStatus(str, Enum):
 
 class GetFineTuneJobResponse(BaseModel):
     fine_tune_id: str
+    """ID of the requested job"""
     status: BatchJobStatus
+    """Status of the requested job"""
 
 
 class ListFineTuneJobResponse(BaseModel):
     jobs: List[GetFineTuneJobResponse]
+    """List of fine-tuning jobs and their statuses"""
 
 
 class CancelFineTuneJobResponse(BaseModel):
     success: bool
+    """Whether cancellation was successful"""

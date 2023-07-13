@@ -16,9 +16,14 @@ __version__ = "0.3.0"
 
 from spellbook_serve_client.client import AsyncClient, Client
 from spellbook_serve_client.types import (
+    CancelFineTuneJobResponse,
     CompletionOutput,
     CompletionStreamOutput,
     CompletionStreamV1Response,
     CompletionSyncV1Response,
+    CreateFineTuneJobRequest,
+    CreateFineTuneJobResponse,
+    GetFineTuneJobResponse,
+    ListFineTuneJobResponse,
     TaskStatus,
 )

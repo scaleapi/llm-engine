@@ -12,3 +12,13 @@
 
 ::: spellbook_serve_client.TaskStatus
 
+::: spellbook_serve_client.CreateFineTuneJobRequest
+
+::: spellbook_serve_client.CreateFineTuneJobResponse
+
+::: spellbook_serve_client.GetFineTuneJobResponse
+
+::: spellbook_serve_client.ListFineTuneJobResponse
+
+::: spellbook_serve_client.CancelFineTuneJobResponse
+
