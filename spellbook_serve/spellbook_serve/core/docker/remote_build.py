@@ -143,7 +143,8 @@ def start_build_job(
     custom_tags_serialized = json.dumps(custom_tags)
 
     destination_template = Template(
-        "--destination=692474966980.dkr.ecr.us-west-2.amazonaws.com/$REPO_AND_TAG"
+        f"--destination={ml_infra_config().ml_account_id}.dkr.ecr."
+        f"{ml_infra_config().default_region}.amazonaws.com/$REPO_AND_TAG"
     )
 
     job_name = f"kaniko-{str(uuid.uuid4())[:8]}"

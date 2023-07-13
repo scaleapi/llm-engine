@@ -80,7 +80,7 @@ def spellbook_serve_celery_app(
     queue: str, user_config_location: str, endpoint_config_location: str
 ) -> Iterator[subprocess.Popen]:
     env = dict(
-        AWS_PROFILE="default" if os.getenv("CIRCLECI") else "ml-worker",
+        AWS_PROFILE="default",
         BROKER_TYPE="redis",
         USE_REDIS_LOCALHOST=1,
         CELERY_S3_BUCKET=ml_infra_config().s3_bucket,

@@ -8,7 +8,6 @@ model_primitive_host: "none"
 endpoint_namespace: scale-deploy
 
 # Asynchronous endpoints
-# TODO: Try out localstack once e2e tests have been updated to use sqs as a broker_type
 sqs_profile: nonexistent_sqs_profile
 sqs_queue_policy_template: >
   {
@@ -19,26 +18,26 @@ sqs_queue_policy_template: >
         "Sid": "__owner_statement",
         "Effect": "Allow",
         "Principal": {
-          "AWS": "arn:aws:iam::692474966980:root"
+          "AWS": "arn:aws:iam::000000000000:root"
         },
         "Action": "sqs:*",
-        "Resource": "arn:aws:sqs:us-west-2:692474966980:${queue_name}"
+        "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
       },
       {
         "Effect": "Allow",
         "Principal": {
-          "AWS": "arn:aws:iam::307185671274:role/ml-worker"
+          "AWS": "arn:aws:iam::000000000000:role/default"
         },
         "Action": "sqs:*",
-        "Resource": "arn:aws:sqs:us-west-2:692474966980:${queue_name}"
+        "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
       },
       {
         "Effect": "Allow",
         "Principal": {
-          "AWS": "arn:aws:iam::307185671274:role/ml_spellbook_serve"
+          "AWS": "arn:aws:iam::000000000000:role/ml_spellbook_serve"
         },
         "Action": "sqs:*",
-        "Resource": "arn:aws:sqs:us-west-2:692474966980:${queue_name}"
+        "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
       }
     ]
   }

@@ -357,7 +357,7 @@ def celery_app(
 
     :param broker_type: [defaults to "redis"] The broker type. We currently support "redis" and "sqs".
 
-    :param aws_role: [optional] AWS role to use. If none, will default to ml-worker for s3 backends,
+    :param aws_role: [optional] AWS role to use. If none, will default to default for s3 backends,
 
     :param extra_changes: Extra keyword arguments to Celery app.
     Visit https://docs.celeryproject.org/en/stable/userguide/configuration.html to see options.

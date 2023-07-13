@@ -14,10 +14,10 @@ replicaCount:
 # tag:
 context: circleci
 image:
-  gatewayRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  builderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  cacherRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  forwarderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
+  gatewayRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
+  builderRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
+  cacherRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
+  forwarderRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
   pullPolicy: Always
 
 # serviceIdentifier:
@@ -75,8 +75,8 @@ config:
       k8s_cluster_name: minikube
       dns_host_domain: localhost
       default_region: us-west-2
-      ml_account_id: "692474966980"
-      docker_repo_prefix: "692474966980.dkr.ecr.us-west-2.amazonaws.com"
+      ml_account_id: "000000000000"
+      docker_repo_prefix: "000000000000.dkr.ecr.us-west-2.amazonaws.com"
       redis_host: redis-message-broker-master.default
       s3_bucket: "scale-ml-circleci"
       profile_ml_worker: "default"
@@ -99,26 +99,26 @@ config:
                 "Sid": "__owner_statement",
                 "Effect": "Allow",
                 "Principal": {
-                  "AWS": "arn:aws:iam::692474966980:root"
+                  "AWS": "arn:aws:iam::000000000000:root"
                 },
                 "Action": "sqs:*",
-                "Resource": "arn:aws:sqs:us-west-2:692474966980:${queue_name}"
+                "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
               },
               {
                 "Effect": "Allow",
                 "Principal": {
-                  "AWS": "arn:aws:iam::307185671274:role/ml-worker"
+                  "AWS": "arn:aws:iam::000000000000:role/default"
                 },
                 "Action": "sqs:*",
-                "Resource": "arn:aws:sqs:us-west-2:692474966980:${queue_name}"
+                "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
               },
               {
                 "Effect": "Allow",
                 "Principal": {
-                  "AWS": "arn:aws:iam::307185671274:role/ml_spellbook_serve"
+                  "AWS": "arn:aws:iam::000000000000:role/ml_spellbook_serve"
                 },
                 "Action": "sqs:*",
-                "Resource": "arn:aws:sqs:us-west-2:692474966980:${queue_name}"
+                "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
               }
             ]
           }
@@ -134,11 +134,11 @@ config:
 # Service Account
 serviceAccount:
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::692474966980:role/eks-ml-worker2
+    eks.amazonaws.com/role-arn: arn:aws:iam::000000000000:role/eks-default2
 
 aws:
   configMap:
-    name: ml-worker-config
+    name: default-config
     create: false
   profileName: default
 
@@ -147,7 +147,7 @@ forwarder:
 
 triton:
   image:
-    repository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv
+    repository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv
     tag: e83eccbc8959f90ebbe4bda618b61ec6ee2d8394-triton
 
 serviceTemplate:
@@ -156,8 +156,8 @@ serviceTemplate:
       drop:
         - all
   mountInfraConfig: true
-  serviceAccountName: ml-worker
-  awsConfigMapName: ml-worker-config
+  serviceAccountName: default
+  awsConfigMapName: default-config
 
 imageCache:
   devices:

@@ -491,7 +491,7 @@ def get_endpoint_resource_arguments_from_request(
     product = k8s_labels.get("product", "")
     storage = build_endpoint_request.storage
     prewarm = bool_to_str(build_endpoint_request.prewarm) or "false"
-    sqs_profile = "eks-ml-worker"  # TODO: Make this configurable
+    sqs_profile = "default"  # TODO: Make this configurable
     s3_bucket = ml_infra_config().s3_bucket
 
     load_predict_fn_module_path = ""

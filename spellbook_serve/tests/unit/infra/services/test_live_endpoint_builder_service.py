@@ -92,7 +92,7 @@ def endpoint_builder_service_empty_docker_builds_dont_work(
 
 @pytest.fixture(autouse=True)
 def set_env_vars():
-    live_endpoint_builder_service.ECR_AWS_PROFILE = "ml-worker"
+    live_endpoint_builder_service.ECR_AWS_PROFILE = "default"
     live_endpoint_builder_service.GIT_TAG = "test_tag"
     live_endpoint_builder_service.ENV = "test_env"
     live_endpoint_builder_service.open = mock_open()

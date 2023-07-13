@@ -100,13 +100,13 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -176,7 +176,7 @@ data:
                 - name: infra-service-config-volume
                   mountPath: /workspace/ml_infra_core/spellbook_serve.core/spellbook_serve.core/configs
             - name: tritonserver
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -270,7 +270,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -369,13 +369,13 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -495,7 +495,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -594,7 +594,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
           priorityClassName: ${PRIORITY}
@@ -700,7 +700,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -791,13 +791,13 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -872,7 +872,7 @@ data:
                 - containerPort: ${FORWARDER_PORT}
                   name: http
             - name: tritonserver
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -966,7 +966,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -1057,13 +1057,13 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -1188,7 +1188,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -1279,7 +1279,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
           priorityClassName: ${PRIORITY}
@@ -1368,7 +1368,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -1459,13 +1459,13 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -1594,7 +1594,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -1693,7 +1693,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
@@ -1704,7 +1704,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -1774,7 +1774,7 @@ data:
                 - name: infra-service-config-volume
                   mountPath: /workspace/ml_infra_core/spellbook_serve.core/spellbook_serve.core/configs
             - name: tritonserver
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -1869,7 +1869,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -1968,7 +1968,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
@@ -1979,7 +1979,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -2100,7 +2100,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -2199,7 +2199,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
@@ -2311,7 +2311,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -2402,7 +2402,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
@@ -2413,7 +2413,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -2488,7 +2488,7 @@ data:
                 - containerPort: ${FORWARDER_PORT}
                   name: http
             - name: tritonserver
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -2583,7 +2583,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -2674,7 +2674,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
@@ -2685,7 +2685,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -2811,7 +2811,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -2902,7 +2902,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
@@ -2997,7 +2997,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -3088,7 +3088,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: ml-worker
+          serviceAccount: default
           nodeSelector:
             node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
@@ -3099,7 +3099,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:${FORWARDER_IMAGE_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -3229,7 +3229,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config  
+                name: default-config  
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -3498,10 +3498,10 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config
+                name: default-config
           containers:
             - name: main
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:54f8f73bfb1cce62a2b42326ccf9f49b5b145126
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:54f8f73bfb1cce62a2b42326ccf9f49b5b145126
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
@@ -3611,11 +3611,11 @@ data:
           restartPolicy: Never
           nodeSelector:
             node-lifecycle: normal
-          serviceAccountName: ml-worker
+          serviceAccountName: default
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config
+                name: default-config
             - name: workdir
               emptyDir: {}
             - name: dshm
@@ -3679,7 +3679,7 @@ data:
                   name: dshm
           initContainers:
             - name: input-downloader
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:54f8f73bfb1cce62a2b42326ccf9f49b5b145126
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:54f8f73bfb1cce62a2b42326ccf9f49b5b145126
               command:
                 - python
                 - -m
@@ -3754,11 +3754,11 @@ data:
             - key: "nvidia.com/gpu"
               operator: "Exists"
               effect: "NoSchedule"
-          serviceAccountName: ml-worker
+          serviceAccountName: default
           volumes:
             - name: config-volume
               configMap:
-                name: ml-worker-config
+                name: default-config
             - name: workdir
               emptyDir: {}
             - name: dshm
@@ -3823,7 +3823,7 @@ data:
                   name: dshm
           initContainers:
             - name: input-downloader
-              image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:54f8f73bfb1cce62a2b42326ccf9f49b5b145126
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve:54f8f73bfb1cce62a2b42326ccf9f49b5b145126
               command:
                 - python
                 - -m

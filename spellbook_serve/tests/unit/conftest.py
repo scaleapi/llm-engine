@@ -874,7 +874,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
                     default_callback_auth=default_callback_auth,
                 ),
             ),
-            image="692474966980.dkr.ecr.us-west-2.amazonaws.com/non-existent-repo:fake-tag",
+            image="000000000000.dkr.ecr.us-west-2.amazonaws.com/non-existent-repo:fake-tag",
         )
         self.in_flight_infra[in_flight.deployment_name] = in_flight
         return "test_creation_task_id"
@@ -1338,7 +1338,7 @@ class FakeModelEndpointService(ModelEndpointService):
                         default_callback_auth=default_callback_auth,
                     ),
                 ),
-                image="692474966980.dkr.ecr.us-west-2.amazonaws.com/non-existent-repo:fake-tag",
+                image="000000000000.dkr.ecr.us-west-2.amazonaws.com/non-existent-repo:fake-tag",
             ),
         )
         self.db[model_endpoint.record.id] = model_endpoint
@@ -2052,7 +2052,7 @@ def model_endpoint_1(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEnd
                     post_inference_hooks=None,
                 ),
             ),
-            image="692474966980.dkr.ecr.us-west-2.amazonaws.com/non-existent-repo:fake-tag",
+            image="000000000000.dkr.ecr.us-west-2.amazonaws.com/non-existent-repo:fake-tag",
         ),
     )
     return model_endpoint
@@ -2107,7 +2107,7 @@ def model_endpoint_2(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEnd
                     post_inference_hooks=None,
                 ),
             ),
-            image="692474966980.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:40d3b5fb06d1a8c3d14903390a3b23ae388bdb19",
+            image="000000000000.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:40d3b5fb06d1a8c3d14903390a3b23ae388bdb19",
         ),
     )
     return model_endpoint
@@ -2162,7 +2162,7 @@ def model_endpoint_3(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEnd
                     post_inference_hooks=None,
                 ),
             ),
-            image="692474966980.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:e4ea48ddccfb9ca3ef6d846ae9b2d146d7e30b0f",
+            image="000000000000.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:e4ea48ddccfb9ca3ef6d846ae9b2d146d7e30b0f",
         ),
     )
     return model_endpoint
@@ -2217,7 +2217,7 @@ def model_endpoint_4(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEnd
                     post_inference_hooks=None,
                 ),
             ),
-            image="692474966980.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:9a319cd9b897f02291f3242b1395f2b669993cdf-fd",
+            image="000000000000.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:9a319cd9b897f02291f3242b1395f2b669993cdf-fd",
         ),
     )
     return model_endpoint
@@ -2272,7 +2272,7 @@ def model_endpoint_public(test_api_key: str, model_bundle_1: ModelBundle) -> Mod
                     post_inference_hooks=None,
                 ),
             ),
-            image="692474966980.dkr.ecr.us-west-2.amazonaws.com/non-existent-repo:fake-tag",
+            image="000000000000.dkr.ecr.us-west-2.amazonaws.com/non-existent-repo:fake-tag",
         ),
     )
     return model_endpoint
@@ -2327,7 +2327,7 @@ def model_endpoint_public_sync(test_api_key: str, model_bundle_1: ModelBundle) -
                     post_inference_hooks=None,
                 ),
             ),
-            image="692474966980.dkr.ecr.us-west-2.amazonaws.com/non-existent-repo:fake-tag",
+            image="000000000000.dkr.ecr.us-west-2.amazonaws.com/non-existent-repo:fake-tag",
         ),
     )
     return model_endpoint
@@ -2383,7 +2383,7 @@ def model_endpoint_runnable(test_api_key: str, model_bundle_4: ModelBundle) -> M
                     post_inference_hooks=None,
                 ),
             ),
-            image="692474966980.dkr.ecr.us-west-2.amazonaws.com/hello:there",
+            image="000000000000.dkr.ecr.us-west-2.amazonaws.com/hello:there",
         ),
     )
     return model_endpoint
@@ -2439,7 +2439,7 @@ def model_endpoint_streaming(test_api_key: str, model_bundle_5: ModelBundle) -> 
                     post_inference_hooks=None,
                 ),
             ),
-            image="692474966980.dkr.ecr.us-west-2.amazonaws.com/hello:there",
+            image="000000000000.dkr.ecr.us-west-2.amazonaws.com/hello:there",
         ),
     )
     return model_endpoint

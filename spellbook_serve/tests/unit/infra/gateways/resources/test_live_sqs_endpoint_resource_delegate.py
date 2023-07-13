@@ -23,26 +23,26 @@ EXPECTED_QUEUE_POLICY = """
       "Sid": "__owner_statement",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::692474966980:root"
+        "AWS": "arn:aws:iam::000000000000:root"
       },
       "Action": "sqs:*",
-      "Resource": "arn:aws:sqs:us-west-2:692474966980:spellbook-serve-endpoint-id-test_model_endpoint_id_3"
+      "Resource": "arn:aws:sqs:us-west-2:000000000000:spellbook-serve-endpoint-id-test_model_endpoint_id_3"
     },
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::307185671274:role/ml-worker"
+        "AWS": "arn:aws:iam::000000000000:role/default"
       },
       "Action": "sqs:*",
-      "Resource": "arn:aws:sqs:us-west-2:692474966980:spellbook-serve-endpoint-id-test_model_endpoint_id_3"
+      "Resource": "arn:aws:sqs:us-west-2:000000000000:spellbook-serve-endpoint-id-test_model_endpoint_id_3"
     },
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::307185671274:role/ml_spellbook_serve"
+        "AWS": "arn:aws:iam::000000000000:role/ml_spellbook_serve"
       },
       "Action": "sqs:*",
-      "Resource": "arn:aws:sqs:us-west-2:692474966980:spellbook-serve-endpoint-id-test_model_endpoint_id_3"
+      "Resource": "arn:aws:sqs:us-west-2:000000000000:spellbook-serve-endpoint-id-test_model_endpoint_id_3"
     }
   ]
 }
@@ -76,7 +76,7 @@ def _get_fake_botocore_exception():
 @pytest.fixture
 def mock_create_async_sqs_client_create_queue():
     create_queue_response = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-test_model_endpoint_id_3",
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/000000000000/spellbook-serve-endpoint-id-test_model_endpoint_id_3",
         "ResponseMetadata": {
             "RequestId": "9c05b1cc-d806-5cbd-bd4a-ea339c90e25f",
             "HTTPStatusCode": 200,
@@ -109,7 +109,7 @@ def mock_create_async_sqs_client_create_queue():
 @pytest.fixture
 def mock_create_async_sqs_client_get_queue_url():
     get_queue_response = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-test_model_endpoint_id_3",
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/000000000000/spellbook-serve-endpoint-id-test_model_endpoint_id_3",
     }
 
     mock_sqs_client_session_val = AsyncMock()
@@ -180,7 +180,7 @@ def mock_create_async_sqs_client_delete_queue():
 
     mock_sqs_client_session_val.get_queue_url = AsyncMock()
     mock_sqs_client_session_val.get_queue_url.return_value = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-model_endpoint_id_1"
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/000000000000/spellbook-serve-endpoint-id-model_endpoint_id_1"
     }
 
     delete_response = {
@@ -214,7 +214,7 @@ def mock_create_async_sqs_client_delete_queue_returns_non_200():
 
     mock_sqs_client_session_val.get_queue_url = AsyncMock()
     mock_sqs_client_session_val.get_queue_url.return_value = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-model_endpoint_id_1"
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/000000000000/spellbook-serve-endpoint-id-model_endpoint_id_1"
     }
 
     delete_response = {
@@ -248,7 +248,7 @@ def mock_create_async_sqs_client_delete_queue_throws_exception():
 
     mock_sqs_client_session_val.get_queue_url = AsyncMock()
     mock_sqs_client_session_val.get_queue_url.return_value = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-model_endpoint_id_1"
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/000000000000/spellbook-serve-endpoint-id-model_endpoint_id_1"
     }
 
     mock_sqs_client_session_val.delete_queue = AsyncMock(side_effect=_get_fake_botocore_exception())
@@ -269,12 +269,12 @@ def mock_create_async_sqs_client_get_queue_attributes():
 
     mock_sqs_client_session_val.get_queue_url = AsyncMock()
     mock_sqs_client_session_val.get_queue_url.return_value = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-model_endpoint_id_1"
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/000000000000/spellbook-serve-endpoint-id-model_endpoint_id_1"
     }
 
     get_queue_attributes_response = {
         "Attributes": {
-            "QueueArn": "arn:aws:sqs:us-west-2:692474966980:spellbook-serve-endpoint-id-model_endpoint_id_1",
+            "QueueArn": "arn:aws:sqs:us-west-2:000000000000:spellbook-serve-endpoint-id-model_endpoint_id_1",
             "ApproximateNumberOfMessages": "0",
             "ApproximateNumberOfMessagesNotVisible": "0",
             "ApproximateNumberOfMessagesDelayed": "0",
@@ -327,7 +327,7 @@ def mock_create_async_sqs_client_get_queue_attributes_queue_throws_exception():
 
     mock_sqs_client_session_val.get_queue_url = AsyncMock()
     mock_sqs_client_session_val.get_queue_url.return_value = {
-        "QueueUrl": "https://us-west-2.queue.amazonaws.com/692474966980/spellbook-serve-endpoint-id-model_endpoint_id_1"
+        "QueueUrl": "https://us-west-2.queue.amazonaws.com/000000000000/spellbook-serve-endpoint-id-model_endpoint_id_1"
     }
 
     mock_sqs_client_session_val.get_queue_attributes = AsyncMock(

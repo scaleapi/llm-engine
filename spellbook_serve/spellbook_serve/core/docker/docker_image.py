@@ -24,8 +24,8 @@ from .remote_build import MODELS_ROOT, build_remote_wrapper
 
 logger = make_logger("spellbook_serve.core.docker.docker_image", log_level=logging.INFO)
 
-REGISTRY_ID = "692474966980"
-ECR_REGION = "us-west-2"
+REGISTRY_ID = ml_infra_config().ml_account_id
+ECR_REGION = ml_infra_config().default_region
 ECR_REPO = f"{REGISTRY_ID}.dkr.ecr.{ECR_REGION}.amazonaws.com"
 
 

@@ -33,7 +33,7 @@ spec:
             - "--cache=$USE_CACHE"
             - "--cache-copy-layers=$USE_CACHE"
             - "--cache-run-layers=$USE_CACHE"
-            - "--cache-repo=692474966980.dkr.ecr.us-west-2.amazonaws.com/kaniko-cache"
+            - "--cache-repo=000000000000.dkr.ecr.us-west-2.amazonaws.com/kaniko-cache"
             - "--cleanup"
             - "--snapshot-mode=redo"
             - "--use-new-run"

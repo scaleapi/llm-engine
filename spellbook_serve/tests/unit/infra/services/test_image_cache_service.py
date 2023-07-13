@@ -32,8 +32,8 @@ async def test_image_cache_success(
         "a100": [],
         "cpu": [],
         "t4": [
-            "692474966980.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:40d3b5fb06d1a8c3d14903390a3b23ae388bdb19",
-            "692474966980.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:e4ea48ddccfb9ca3ef6d846ae9b2d146d7e30b0f",
-            "692474966980.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:9a319cd9b897f02291f3242b1395f2b669993cdf-fd",
+            "000000000000.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:40d3b5fb06d1a8c3d14903390a3b23ae388bdb19",
+            "000000000000.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:e4ea48ddccfb9ca3ef6d846ae9b2d146d7e30b0f",
+            "000000000000.dkr.ecr.us-west-2.amazonaws.com/catalog-gpu:9a319cd9b897f02291f3242b1395f2b669993cdf-fd",
         ],
     }
