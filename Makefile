@@ -11,6 +11,7 @@ install-dev:
 
 install-docs:
 	pip install -r requirements-docs.txt
+	pip install -e clients/python/
 
 requirements: install-dev
 	pip-compile --allow-unsafe --no-emit-index-url --no-emit-trusted-host --output-file=requirements.txt requirements.in
