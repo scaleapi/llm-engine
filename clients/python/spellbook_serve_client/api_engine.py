@@ -4,7 +4,7 @@ from functools import wraps
 from typing import Any, AsyncIterable, Dict, Iterator, Optional
 
 import requests
-from aiohttp import BasicAuth, ClientSession, ClientTimeout
+from aiohttp import ClientSession, ClientTimeout
 from spellbook_serve_client.errors import parse_error
 
 SCALE_API_KEY = os.getenv("SCALE_API_KEY")
@@ -43,7 +43,7 @@ class APIEngine:
         response = requests.get(
             os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name),
             timeout=timeout,
-            auth=(api_key, ""),
+            headers={"x-api-key": api_key},
         )
         payload = response.json()
         if response.status_code != 200:
@@ -59,7 +59,7 @@ class APIEngine:
             os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name),
             json=data,
             timeout=timeout,
-            auth=(api_key, ""),
+            headers={"x-api-key": api_key},
         )
         payload = response.json()
         if response.status_code != 200:
@@ -73,7 +73,7 @@ class APIEngine:
             os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name),
             json=data,
             timeout=timeout,
-            auth=(api_key, ""),
+            headers={"x-api-key": api_key},
         )
         payload = response.json()
         if response.status_code != 200:
@@ -89,7 +89,7 @@ class APIEngine:
             os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name),
             json=data,
             timeout=timeout,
-            auth=(api_key, ""),
+            headers={"x-api-key": api_key},
             stream=True,
         )
         if response.status_code != 200:
@@ -117,7 +117,7 @@ class APIEngine:
     ) -> Dict[str, Any]:
         api_key = get_api_key()
         async with ClientSession(
-            timeout=ClientTimeout(timeout), auth=BasicAuth(login=api_key)
+            timeout=ClientTimeout(timeout), headers={"x-api-key": api_key}
         ) as session:
             async with session.post(
                 os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name), json=data
@@ -134,7 +134,7 @@ class APIEngine:
     ) -> AsyncIterable[Dict[str, Any]]:
         api_key = get_api_key()
         async with ClientSession(
-            timeout=ClientTimeout(timeout), auth=BasicAuth(login=api_key)
+            timeout=ClientTimeout(timeout), headers={"x-api-key": api_key}
         ) as session:
             async with session.post(
                 os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name), json=data
