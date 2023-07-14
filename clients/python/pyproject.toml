@@ -6,7 +6,7 @@ license = "Apache-2.0"
 authors = ["Phil Chen <phil.chen@scale.com>"]
 maintainers = ["Phil Chen <phil.chen@scale.com>"]
 readme = "README.md"
-homepage = "https://github.com/scaleapi/spellbook-serve"
+homepage = "https://scaleapi.github.io/spellbook-serve/"
 repository = "https://github.com/scaleapi/spellbook-serve"
 
 
