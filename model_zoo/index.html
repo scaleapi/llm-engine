@@ -11,17 +11,17 @@
       
       
       
-        <link rel="prev" href="..">
+        <link rel="prev" href="../getting_started/">
       
       
-        <link rel="next" href="../model_zoo/">
+        <link rel="next" href="../api/python_client/">
       
       <link rel="icon" href="../_static/favicon-32x32.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
     
     
       
-        <title>Getting Started - Spellbook Serve</title>
+        <title>Model Zoo - Spellbook Serve</title>
       
     
     
@@ -91,7 +91,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#getting-started" class="md-skip">
+        <a href="#public-model-zoo" class="md-skip">
           Skip to content
         </a>
       
@@ -125,7 +125,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Getting Started
+              Model Zoo
             
           </span>
         </div>
@@ -275,6 +275,21 @@
 
   
   
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/" class="md-nav__link">
+        Getting Started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
     
   
   
@@ -287,24 +302,9 @@
       
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Getting Started
-      </a>
-      
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../model_zoo/" class="md-nav__link">
         Model Zoo
       </a>
+      
     </li>
   
 
@@ -407,40 +407,51 @@
                   
 
 
-<h1 id="getting-started">🚀 Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
-<p>To start using Spellbook Serve with public inference APIs, simply run the following:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Install using pip</label><label for="__tabbed_1_2">Install using conda</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip install spellbook-serve
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>conda install spellbook-serve -c conda-forge
-</code></pre></div>
-</div>
-</div>
-</div>
-<p>Navigate to <a href="https://spellbook.scale.com">https://spellbook.scale.com</a> where
-you will get a Scale API key.</p>
-<p>With the API key, you can now send requests to Spellbook Serve public inference
-APIs using Python client:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Using the Python Client</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">spellbook_serve_client</span> <span class="kn">import</span> <span class="n">Completion</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">Completion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Hello, my name is&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">)</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-</code></pre></div>
-</div>
-</div>
-</div>
+<h1 id="public-model-zoo">🦙 Public Model Zoo<a class="headerlink" href="#public-model-zoo" title="Permanent link">&para;</a></h1>
+<p>Scale hosts the following models in a model zoo:</p>
+<table>
+<thead>
+<tr>
+<th>Model Name</th>
+<th>Inference APIs Available</th>
+<th>Fine-tuning APIs Available</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>llama-7b</code></td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>falcon-7b</code></td>
+<td>✅</td>
+<td></td>
+</tr>
+<tr>
+<td><code>falcon-7b-instruct</code></td>
+<td>✅</td>
+<td></td>
+</tr>
+<tr>
+<td><code>mpt-7b</code></td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>mpt-7b-instruct</code></td>
+<td>✅</td>
+<td></td>
+</tr>
+<tr>
+<td><code>flan-t5-xxl</code></td>
+<td>✅</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Each of these models can be used with the
+<a href="/api/python_client/#spellbook_serve_client.Completion">Completion API</a>.</p>
 
 
   
