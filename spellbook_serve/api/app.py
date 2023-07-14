@@ -26,12 +26,6 @@ app.include_router(model_endpoints_docs_router_v1)
 app.include_router(docker_image_batch_job_bundle_router_v1)
 app.include_router(llm_router_v1)
 
-app.mount(
-    "/spellbook-serve",
-    StaticFiles(directory=str(Path(__file__).parents[3] / "spellbook_serve/site"), html=True),
-    name="spellbook-serve",
-)
-
 
 @app.on_event("startup")
 def load_redis():
