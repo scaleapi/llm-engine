@@ -15,31 +15,19 @@ Navigate to [https://spellbook.scale.com](https://spellbook.scale.com) where
 you will get a Scale API key.
 
 With the API key, you can now send requests to Spellbook Serve public inference
-APIs using the CLI or Python client:
+APIs using Python client:
 
-=== "Using the CLI"
-    ```commandline
-    spellbook-serve generate flan-t5-xxl \
-        --prompt "Hello, my name is"
-        --temperature 0.5
-        --max-tokens 20
-
-    # Expected output:
-    #
-    # Hello, my name is Flan.
-    ```
 === "Using the Python Client"
     ```py
-    from spellbook_serve_client import Client
+    from spellbook_serve_client import Completion
 
-    client = Client()
-    response = client.generate(
-        model_name="flan-t5-xxl",
+    response = Completion.create(
+        model_name="llama-7b-text-generation-inference",
         prompt="Hello, my name is",
-        temperature=0.5,
-        max_tokens=20,
+        max_new_tokens=10,
+        temperature=0.2,
     )
-    print(response)
+    print(response.outputs[0].text)
     ```
 
 ## 💻 Installation on Kubernetes
