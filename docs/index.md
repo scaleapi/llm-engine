@@ -20,9 +20,9 @@ everything you need to deploy your foundation models to the cloud using
 Kubernetes. Key features include:
 
 🚀 **Ready-to-use Inference APIs for your favorite models**: Spellbook Serve
-comes with ready-to-use inference APIs for your favorite open-source models,
-including MPT, Falcon, and LLaMA. Use scale-hosted endpoints or deploy to your
-own infrastructure.
+comes with ready-to-use [inference APIs](/model_zoo/) for your favorite
+open-source models, including MPT, Falcon, and LLaMA. Use scale-hosted endpoints
+or deploy to your own infrastructure.
 
 🐳 **Deploying from any docker image**: Turn any Docker image into an
 auto-scaling deployment with simple APIs.

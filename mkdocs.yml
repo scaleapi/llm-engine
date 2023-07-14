@@ -30,11 +30,12 @@ theme:
   language: en
 
 repo_name: spellbook-serve
-repo_url: https://github.com/scaleapi/models/tree/master/spellbook_serve
+repo_url: https://github.com/scaleapi/spellbook-serve
 edit_uri: ""
 nav:
   - Introduction: index.md
   - "Getting Started": getting_started.md
+  - "Model Zoo": model_zoo.md
   - "API":
       - "Python Client API Reference": api/python_client.md
       - "Langchain": api/langchain.md
