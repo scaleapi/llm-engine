@@ -17,7 +17,7 @@
         <link rel="next" href="../langchain/">
       
       <link rel="icon" href="../../_static/favicon-32x32.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.8">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
     
     
       
@@ -25,10 +25,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ded33207.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.a0c5b2b5.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
       
       
 
@@ -1165,7 +1165,7 @@
   
       <p>Completion API. This API is used to generate text completions.</p>
 
-<details class="example">
+<details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">spellbook_serve_client</span> <span class="kn">import</span> <span class="n">Completion</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
@@ -1178,7 +1178,7 @@
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 </code></pre></div>
 </details>
-<details class="example">
+<details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">spellbook_serve_client</span> <span class="kn">import</span> <span class="n">Completion</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
@@ -1193,7 +1193,7 @@
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 </code></pre></div>
 </details>
-<details class="example">
+<details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">spellbook_serve_client</span> <span class="kn">import</span> <span class="n">Completion</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
@@ -1237,17 +1237,7 @@
   </span>
 
 <a href="#spellbook_serve_client.completion.Completion.acreate" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">acreate</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">CompletionSyncV1Response</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">AsyncIterable</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">],</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">acreate</span><span class="p">(</span><span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">CompletionSyncV1Response</span><span class="p">,</span> <span class="n">AsyncIterable</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">]]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1270,7 +1260,11 @@
           <td>
                 <code>str</code>
           </td>
-          <td><p>Model name to use for inference</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Model name to use for inference</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1280,7 +1274,11 @@
           <td>
                 <code>str</code>
           </td>
-          <td><p>Input text</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Input text</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1290,7 +1288,11 @@
           <td>
                 <code>int</code>
           </td>
-          <td><p>Maximum number of generated tokens</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Maximum number of generated tokens</p>
+            </div>
+          </td>
           <td>
                 <code>20</code>
           </td>
@@ -1300,7 +1302,11 @@
           <td>
                 <code>float</code>
           </td>
-          <td><p>The value used to module the logits distribution.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The value used to module the logits distribution.</p>
+            </div>
+          </td>
           <td>
                 <code>0.2</code>
           </td>
@@ -1310,7 +1316,11 @@
           <td>
                 <code>int</code>
           </td>
-          <td><p>Timeout in seconds</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Timeout in seconds</p>
+            </div>
+          </td>
           <td>
                 <code>10</code>
           </td>
@@ -1320,8 +1330,12 @@
           <td>
                 <code>bool</code>
           </td>
-          <td><p>Whether to stream the response. If true, the return type is an
-<code>Iterator[CompletionStreamV1Response]</code>.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to stream the response. If true, the return type is an
+<code>Iterator[CompletionStreamV1Response]</code>.</p>
+            </div>
+          </td>
           <td>
                 <code>False</code>
           </td>
@@ -1342,7 +1356,11 @@
 <td><code>response</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="spellbook_serve_client.data_types.CompletionStreamV1Response" href="#spellbook_serve_client.CompletionStreamV1Response">CompletionStreamV1Response</a></code>
           </td>
-          <td><p>generated response or iterator of response chunks</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>generated response or iterator of response chunks</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
@@ -1364,17 +1382,7 @@
   </span>
 
 <a href="#spellbook_serve_client.completion.Completion.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">CompletionSyncV1Response</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">Iterator</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">],</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span><span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">CompletionSyncV1Response</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">]]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1397,7 +1405,11 @@
           <td>
                 <code>str</code>
           </td>
-          <td><p>Model name to use for inference</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Model name to use for inference</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1407,7 +1419,11 @@
           <td>
                 <code>str</code>
           </td>
-          <td><p>Input text</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Input text</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1417,7 +1433,11 @@
           <td>
                 <code>int</code>
           </td>
-          <td><p>Maximum number of generated tokens</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Maximum number of generated tokens</p>
+            </div>
+          </td>
           <td>
                 <code>20</code>
           </td>
@@ -1427,7 +1447,11 @@
           <td>
                 <code>float</code>
           </td>
-          <td><p>The value used to module the logits distribution.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The value used to module the logits distribution.</p>
+            </div>
+          </td>
           <td>
                 <code>0.2</code>
           </td>
@@ -1437,7 +1461,11 @@
           <td>
                 <code>int</code>
           </td>
-          <td><p>Timeout in seconds</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Timeout in seconds</p>
+            </div>
+          </td>
           <td>
                 <code>10</code>
           </td>
@@ -1447,7 +1475,11 @@
           <td>
                 <code>bool</code>
           </td>
-          <td><p>Whether to stream the response. If true, the return type is an <code>Iterator</code>.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to stream the response. If true, the return type is an <code>Iterator</code>.</p>
+            </div>
+          </td>
           <td>
                 <code>False</code>
           </td>
@@ -1468,7 +1500,11 @@
 <td><code>response</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="spellbook_serve_client.data_types.CompletionStreamV1Response" href="#spellbook_serve_client.CompletionStreamV1Response">CompletionStreamV1Response</a></code>
           </td>
-          <td><p>generated response or iterator of response chunks</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>generated response or iterator of response chunks</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
@@ -1553,7 +1589,11 @@
           <td>
                 <code>`str`</code>
           </td>
-          <td><p>ID of the fine-tuning job</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>ID of the fine-tuning job</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1574,7 +1614,11 @@
 <td><code>CancelFineTuneJobResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="spellbook_serve_client.data_types.CancelFineTuneJobResponse" href="#spellbook_serve_client.CancelFineTuneJobResponse">CancelFineTuneJobResponse</a></code>
           </td>
-          <td><p>whether the cancellation was successful</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>whether the cancellation was successful</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
@@ -1596,14 +1640,7 @@
   </span>
 
 <a href="#spellbook_serve_client.fine_tuning.FineTune.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">training_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">validation_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">base_model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">fine_tuning_method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">hyperparameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CreateFineTuneJobResponse</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span><span class="n">training_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">validation_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">base_model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fine_tuning_method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">hyperparameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">CreateFineTuneJobResponse</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1626,7 +1663,11 @@
           <td>
                 <code>`str`</code>
           </td>
-          <td><p>Path to file of training dataset</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Path to file of training dataset</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1636,7 +1677,11 @@
           <td>
                 <code>`str`</code>
           </td>
-          <td><p>Path to file of validation dataset</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Path to file of validation dataset</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1646,7 +1691,11 @@
           <td>
                 <code>`str`</code>
           </td>
-          <td><p>Name of the fine-tuned model</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Name of the fine-tuned model</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1656,7 +1705,11 @@
           <td>
                 <code>`str`</code>
           </td>
-          <td><p>Base model to train from</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Base model to train from</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1666,7 +1719,11 @@
           <td>
                 <code>`str`</code>
           </td>
-          <td><p>Fine-tuning method</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Fine-tuning method</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1676,7 +1733,11 @@
           <td>
                 <code>`str`</code>
           </td>
-          <td><p>Hyperparameters</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Hyperparameters</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1697,7 +1758,11 @@
 <td><code>CreateFineTuneJobResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="spellbook_serve_client.data_types.CreateFineTuneJobResponse" href="#spellbook_serve_client.CreateFineTuneJobResponse">CreateFineTuneJobResponse</a></code>
           </td>
-          <td><p>ID of the created fine-tuning job</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>ID of the created fine-tuning job</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
@@ -1739,7 +1804,11 @@
 <td><code>ListFineTuneJobResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="spellbook_serve_client.data_types.ListFineTuneJobResponse" href="#spellbook_serve_client.ListFineTuneJobResponse">ListFineTuneJobResponse</a></code>
           </td>
-          <td><p>list of all fine-tuning jobs and their statuses</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>list of all fine-tuning jobs and their statuses</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
@@ -1784,7 +1853,11 @@
           <td>
                 <code>`str`</code>
           </td>
-          <td><p>ID of the fine-tuning job</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>ID of the fine-tuning job</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1805,7 +1878,11 @@
 <td><code>GetFineTuneJobResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="spellbook_serve_client.data_types.GetFineTuneJobResponse" href="#spellbook_serve_client.GetFineTuneJobResponse">GetFineTuneJobResponse</a></code>
           </td>
-          <td><p>ID and status of the requested job</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>ID and status of the requested job</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
@@ -1861,7 +1938,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionSyncV1Response.outputs" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1884,7 +1961,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionSyncV1Response.status" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1908,6 +1985,7 @@
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionSyncV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1971,6 +2049,7 @@
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionStreamV1Response.output" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1993,7 +2072,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionStreamV1Response.status" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2017,6 +2096,7 @@
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionStreamV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2077,7 +2157,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionOutput.num_completion_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2100,7 +2180,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionOutput.num_prompt_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2123,7 +2203,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionOutput.text" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2184,7 +2264,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionStreamOutput.finished" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2208,6 +2288,7 @@
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionStreamOutput.num_completion_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2231,6 +2312,7 @@
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionStreamOutput.num_prompt_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2253,7 +2335,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CompletionStreamOutput.text" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2352,7 +2434,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CreateFineTuneJobRequest.base_model" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2375,7 +2457,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CreateFineTuneJobRequest.fine_tuning_method" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2398,7 +2480,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CreateFineTuneJobRequest.hyperparameters" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2421,7 +2503,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CreateFineTuneJobRequest.model_name" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2444,7 +2526,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CreateFineTuneJobRequest.training_file" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2467,7 +2549,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CreateFineTuneJobRequest.validation_file" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2528,7 +2610,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CreateFineTuneJobResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2589,7 +2671,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.GetFineTuneJobResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2612,7 +2694,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.GetFineTuneJobResponse.status" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2673,7 +2755,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.ListFineTuneJobResponse.jobs" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2734,7 +2816,7 @@
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#spellbook_serve_client.data_types.CancelFineTuneJobResponse.success" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2838,10 +2920,10 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.74e28a9f.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.51198bba.min.js"></script>
+      <script src="../../assets/javascripts/bundle.220ee61c.min.js"></script>
       
     
   </body>
