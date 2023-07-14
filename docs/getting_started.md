@@ -8,7 +8,7 @@ To start using Spellbook Serve with public inference APIs, simply run the follow
     ```
 === "Install using conda"
     ```commandline
-    conda install spellbook-serve -c conda-forge
+    conda install spellbook-serve-client -c conda-forge
     ```
 
 Navigate to [https://spellbook.scale.com](https://spellbook.scale.com) where
