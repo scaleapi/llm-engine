@@ -1,6 +1,6 @@
 fastapi==0.78.0
 uvicorn==0.17.6
-waitress==2.0.0
+waitress==2.1.2
 smart_open==5.1.0
 # Pin typing-extensions so aioitertools doesn't break
 typing-extensions>=4.1.1
