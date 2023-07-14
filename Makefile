@@ -30,11 +30,11 @@ autogen-templates:
 	&& popd
 
 build:
-	docker-compose build spellbook-serve
+	docker compose build spellbook-serve
 
 dev:
 	# TODO: add env variables to make this work.
-	docker-compose up spellbook-serve-gateway-dev spellbook-serve-service-builder-dev
+	docker compose up spellbook-serve-gateway-dev spellbook-serve-service-builder-dev
 
 build-docs:
 	mkdocs build
