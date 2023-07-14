@@ -1,4 +1,4 @@
-# Python Client API Reference
+# 🐍 Python Client API Reference
 
 ::: spellbook_serve_client.Completion
 

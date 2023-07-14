@@ -18,17 +18,17 @@ Spellbook Serve is a Python library, CLI, and Helm chart that provides
 everything you need to deploy your foundation models to the cloud using
 Kubernetes. Key features include:
 
-🚀 **Ready-to-use Inference APIs for your favorite models**: Spellbook Serve
-comes with ready-to-use inference APIs for your favorite open-source models,
-including MPT, Falcon, and LLaMA. Use scale-hosted endpoints or deploy to your
-own infrastructure.
+🚀 **Ready-to-use Inference and Fine-Tuning APIs for your favorite models**:
+Spellbook Serve comes with ready-to-use inference APIs for your favorite
+open-source models, including MPT, Falcon, and LLaMA. Use scale-hosted endpoints
+or deploy to your own infrastructure.
 
 🐳 **Deploying from any docker image**: Turn any Docker image into an
 auto-scaling deployment with simple APIs.
 
-🎙️**Language-Model Specific Features**: Spellbook Serve provides APIs for
-streaming responses and dynamically batching inputs for higher throughput and
-lower latency.
+🎙️**Language-Model Specific Features**: Spellbook Serve provides inference APIs
+for streaming responses and dynamically batching inputs for higher throughput
+and lower latency.
 
 🤗 **Open-Source Integrations**: Deploy any [Huggingface](https://huggingface.co/)
 model with a single command. Integrate seamlessly with
