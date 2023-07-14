@@ -26,7 +26,27 @@ class FineTune(APIEngine):
         hyperparameters: Dict[str, str],
     ) -> CreateFineTuneJobResponse:
         """
-        Create a fine-tuning job
+        Create a fine-tuning job.
+
+        Example:
+            ```python
+            from spellbook_serve_client import FineTune
+
+            response = FineTune.create(
+                training_file="s3://my-bucket/path/to/training-file.csv",
+                validation_file="s3://my-bucket/path/to/validation-file.csv",
+                model_name="llama-7b-ft-2023-07-18",
+                base_model="llama-7b",
+                fine_tuning_method="ia3",
+                hyperparameters={},
+            )
+
+            print(response)
+            ```
+
+        JSON Response:
+            ```json
+            ```
 
         Args:
             training_file (`str`):
@@ -68,6 +88,22 @@ class FineTune(APIEngine):
         """
         Get status of a fine-tuning job
 
+        Example:
+            ```python
+            from spellbook_serve_client import FineTune
+
+            response = FineTune.retrieve(
+                fine_tune_id="ft_abc123...",
+            )
+
+            print(response)
+            ```
+
+        JSON Response:
+            ```json
+            ```
+
+
         Args:
             fine_tune_id (`str`):
                 ID of the fine-tuning job
@@ -83,6 +119,18 @@ class FineTune(APIEngine):
         """
         List fine-tuning jobs
 
+        Example:
+            ```python
+            from spellbook_serve_client import FineTune
+
+            response = FineTune.list()
+            print(response)
+            ```
+
+        JSON Response:
+            ```json
+            ```
+
         Returns:
             ListFineTuneJobResponse: list of all fine-tuning jobs and their statuses
         """
@@ -93,6 +141,7 @@ class FineTune(APIEngine):
     def cancel(cls, fine_tune_id: str) -> CancelFineTuneJobResponse:
         """
         Cancel a fine-tuning job
+
 
         Args:
             fine_tune_id (`str`):
