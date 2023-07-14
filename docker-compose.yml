@@ -4,17 +4,13 @@ services:
   spellbook-serve:
     build:
       context: ..
-      dockerfile: spellbook_serve/Dockerfile
-      secrets:
-        - codeartifact-pip-conf
+      dockerfile: spellbook-serve/Dockerfile
       target: spellbook-serve
     image: "${ECR_HOST:-local}/spellbook-serve:${GIT_SHA:-latest}"
   spellbook-serve-gateway-dev:
     build:
       context: ..
       dockerfile: spellbook_serve/Dockerfile
-      secrets:
-        - codeartifact-pip-conf
       target: spellbook-serve
     command:
       - python
@@ -57,8 +53,6 @@ services:
     build:
       context: ..
       dockerfile: spellbook_serve/Dockerfile
-      secrets:
-        - codeartifact-pip-conf
       target: spellbook-serve
     command:
       - celery
@@ -103,8 +97,6 @@ services:
     build:
       context: ..
       dockerfile: spellbook_serve/Dockerfile
-      secrets:
-        - codeartifact-pip-conf
       target: spellbook-serve
     command:
       - /bin/bash
@@ -161,7 +153,3 @@ services:
       - "../spellbook_serve/clients:/local"
     command:
       - generate
-
-secrets:
-  codeartifact-pip-conf:
-    file: ../.codeartifact-pip-conf
