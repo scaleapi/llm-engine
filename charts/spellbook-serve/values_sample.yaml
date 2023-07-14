@@ -26,7 +26,7 @@ service:
   port: 80
 
 virtualservice:
-  enabled: true
+  enabled: false
   annotations: { }
   hostDomains:
     - egp-test.scale.com
@@ -34,7 +34,7 @@ virtualservice:
     - default/internal-gateway
 
 destinationrule:
-  enabled: true
+  enabled: false
   annotations: { }
 
 autoscaling:
@@ -70,17 +70,18 @@ config:
     infra:
       k8s_cluster_name: main_cluster
       dns_host_domain: egp-test.scale.com
-      default_region: us-west-2
+      # default_region: us-west-2
+      default_region: us-east-1
       ml_account_id: "692474966980"
-      docker_repo_prefix: "692474966980.dkr.ecr.us-west-2.amazonaws.com"
-      redis_host: spellbook-prod-cache-001.nu2e0g.0001.usw2.cache.amazonaws.com
+      docker_repo_prefix: "692474966980.dkr.ecr.us-east-1.amazonaws.com"
+      redis_host: spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com:6379
       s3_bucket: "scale-ml-egp-test"
     spellbook_serve:
       model_primitive_host: none
 
       # Endpoint config
       # K8s namespace the endpoints will be created in
-      endpoint_namespace: spellbook-serve
+      endpoint_namespace: launch
 
       # Asynchronous endpoints
       sqs_profile: default
@@ -96,15 +97,15 @@ config:
                 "AWS": "arn:aws:iam::985572151633:root"
               },
               "Action": "sqs:*",
-              "Resource": "arn:aws:sqs:us-west-2:985572151633:${queue_name}"
+              "Resource": "arn:aws:sqs:us-east-1:985572151633:${queue_name}"
             },
             {
               "Effect": "Allow",
               "Principal": {
-                "AWS": "arn:aws:iam::985572151633:role/k8s-main-spellbook-serve"
+                "AWS": "arn:aws:iam::985572151633:role/k8s-main-launch-us-east-1"
               },
               "Action": "sqs:*",
-              "Resource": "arn:aws:sqs:us-west-2:985572151633:${queue_name}"
+              "Resource": "arn:aws:sqs:us-east-1:985572151633:${queue_name}"
             }
           ]
         }
@@ -121,7 +122,7 @@ config:
 # Service Account
 serviceAccount:
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::985572151633:role/k8s-main-spellbook-serve
+    eks.amazonaws.com/role-arn: arn:aws:iam::985572151633:role/k8s-main-launch-us-east-1
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-2"
   namespaces: []
