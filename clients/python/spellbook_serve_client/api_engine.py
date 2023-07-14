@@ -1,5 +1,6 @@
 import json
 import os
+from functools import wraps
 from typing import Any, AsyncIterable, Dict, Iterator, Optional
 
 import requests
@@ -9,10 +10,23 @@ from spellbook_serve_client.errors import parse_error
 SCALE_API_KEY = os.getenv("SCALE_API_KEY")
 SPELLBOOK_API_URL = "https://api.spellbook.scale.com"
 SPELLBOOK_SERVE_BASE_PATH = os.getenv("SPELLBOOK_SERVE_BASE_PATH", SPELLBOOK_API_URL)
+DEFAULT_TIMEOUT: int = 10
 
 
 def get_api_key() -> str:
     return SCALE_API_KEY or "root"
+
+
+def assert_self_hosted(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        if SPELLBOOK_API_URL == SPELLBOOK_SERVE_BASE_PATH:
+            raise ValueError(
+                "This feature is only available for self-hosted users."
+            )
+        return func(*args, **kwargs)
+
+    return inner
 
 
 class APIEngine:

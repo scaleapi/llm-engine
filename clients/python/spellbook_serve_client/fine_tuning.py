@@ -1,6 +1,6 @@
 from typing import Dict
 
-from spellbook_serve_client.api_engine import APIEngine
+from spellbook_serve_client.api_engine import APIEngine, DEFAULT_TIMEOUT
 from spellbook_serve_client.data_types import (
     CancelFineTuneJobResponse,
     CreateFineTuneJobRequest,
@@ -8,8 +8,6 @@ from spellbook_serve_client.data_types import (
     GetFineTuneJobResponse,
     ListFineTuneJobResponse,
 )
-
-DEFAULT_TIMEOUT = 10
 
 
 class FineTune(APIEngine):

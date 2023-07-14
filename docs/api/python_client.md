@@ -4,6 +4,8 @@
 
 ::: spellbook_serve_client.FineTune
 
+::: spellbook_serve_client.Model
+
 ::: spellbook_serve_client.CompletionSyncV1Response
 
 ::: spellbook_serve_client.CompletionStreamV1Response

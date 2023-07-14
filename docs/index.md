@@ -8,11 +8,7 @@ The fastest, cheapest, and easiest way to deploy and scale your custom foundatio
     ```commandline
     pip install spellbook-serve-client
     ```
-=== "Install using conda"
-    ```commandline
-    conda install spellbook-serve-client -c conda-forge
-    ```
-
+ 
 ## 🤔 About
 
 Foundation models are emerging as the building blocks of AI. However, deploying
@@ -22,6 +18,11 @@ expensive.
 Spellbook Serve is a Python library, CLI, and Helm chart that provides
 everything you need to deploy your foundation models to the cloud using
 Kubernetes. Key features include:
+
+🚀 **Ready-to-use Inference APIs for your favorite models**: Spellbook Serve
+comes with ready-to-use inference APIs for your favorite open-source models,
+including MPT, Falcon, and LLaMA. Use scale-hosted endpoints or deploy to your
+own infrastructure.
 
 🐳 **Deploying from any docker image**: Turn any Docker image into an
 auto-scaling deployment with simple APIs.
