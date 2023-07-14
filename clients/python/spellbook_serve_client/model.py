@@ -8,8 +8,6 @@ class Model(APIEngine):
     """
     Model API. This API is used to retrieve, list, and create models.
 
-    Note:
-        This feature is only available for self-hosted users.
 
     Example:
         ```python
@@ -26,14 +24,14 @@ class Model(APIEngine):
         model_name: str,
     ) -> CreateLLMModelEndpointV1Response:
         """
-        Create a fine-tuning job
+        Create a Model Endpoint. Note: This feature is only available for self-hosted users.
 
         Args:
             model_name (`str`):
                 Name of the model
 
         Returns:
-            response: ID of the created fine-tuning job
+            response: ID of the created Model Endpoint.
         """
         request = CreateLLMModelEndpointV1Request(
             model_name=model_name,
@@ -46,7 +44,6 @@ class Model(APIEngine):
         return CreateLLMModelEndpointV1Response.parse_obj(response)
 
     @classmethod
-    @assert_self_hosted
     def retrieve(
         cls,
         model_name: str,
@@ -65,7 +62,6 @@ class Model(APIEngine):
         return GetLLMModelEndpointV1Response.parse_obj(response)
 
     @classmethod
-    @assert_self_hosted
     def list(cls) -> ListLLMModelEndpointsV1Response:
         """
         List model endpoints
