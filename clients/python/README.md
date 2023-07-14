@@ -26,10 +26,15 @@ self-hosted `spellbook-serve` endpoint.
 from spellbook_serve_client import Completion
 
 response = Completion.create(
-    model_name="llama-7b-text-generation-inference",
+    model_name="llama-7b",
     prompt="Hello, my name is",
     max_new_tokens=10,
     temperature=0.2,
 )
 print(response.outputs[0].text)
 ```
+
+## Documentation
+
+Documentation is available at
+[https://scaleapi.github.io/spellbook-serve/](https://scaleapi.github.io/spellbook-serve/).

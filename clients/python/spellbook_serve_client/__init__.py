@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0"
+__version__ = "0.0.0.alpha1"
 
 from spellbook_serve_client.completion import Completion
 from spellbook_serve_client.data_types import (
@@ -28,3 +28,4 @@ from spellbook_serve_client.data_types import (
     TaskStatus,
 )
 from spellbook_serve_client.fine_tuning import FineTune
+from spellbook_serve_client.model import Model
