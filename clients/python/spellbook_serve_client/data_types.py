@@ -181,9 +181,9 @@ class CompletionSyncV1Request(BaseModel):
     Request object for a synchronous prompt completion task.
     """
 
-    prompts: List[str]
-    max_new_tokens: int
-    temperature: float
+    prompts: List[str] = Field(..., min_items=1)
+    max_new_tokens: int = Field(..., gt=0)
+    temperature: float = Field(..., ge=0.0)
 
 
 class CompletionOutput(BaseModel):
@@ -217,9 +217,9 @@ class CompletionStreamV1Request(BaseModel):
     Request object for a stream prompt completion task.
     """
 
-    prompt: str
-    max_new_tokens: int
-    temperature: float
+    prompt: str = Field(..., min_length=1)
+    max_new_tokens: int = Field(..., gt=0)
+    temperature: float = Field(..., ge=0.0)
 
 
 class CompletionStreamOutput(BaseModel):
