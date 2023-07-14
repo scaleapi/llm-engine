@@ -33,3 +33,8 @@ response = Completion.create(
 )
 print(response.outputs[0].text)
 ```
+
+## Documentation
+
+Documentation is available at
+[https://scaleapi.github.io/spellbook-serve/](https://scaleapi.github.io/spellbook-serve/).
