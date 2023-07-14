@@ -12,7 +12,8 @@ To start using Spellbook Serve with public inference APIs, simply run the follow
     ```
 
 Navigate to [https://spellbook.scale.com](https://spellbook.scale.com) where
-you will get a Scale API key.
+you will get a Scale API key. Set this API key as the `SCALE_API_KEY`
+environment variable.
 
 With the API key, you can now send requests to Spellbook Serve public inference
 APIs using Python client:

@@ -46,7 +46,6 @@ RUN --mount=type=secret,id=codeartifact-pip-conf,target=/etc/pip.conf \
 RUN pip install -r requirements_override.txt --no-cache-dir
 COPY spellbook_serve/pyproject.toml /workspace/spellbook_serve/pyproject.toml
 COPY spellbook_serve/setup.py /workspace/spellbook_serve/setup.py
-COPY spellbook_serve/site /workspace/spellbook_serve/site
 COPY spellbook_serve/spellbook_serve /workspace/spellbook_serve/spellbook_serve
 RUN pip install -e .
 
