@@ -2,7 +2,7 @@
 
 The Spellbook Serve Python library provides a convenient way of interfacing with a
 `spellbook-serve` endpoint running on
-[Scale Spellbook Serve](https://spellbook.readme.io/docs/) or on your own infrastructure.
+[Scale Spellbook Serve](https://scaleapi.github.io/spellbook-serve/) or on your own infrastructure.
 
 ## Get Started
 
