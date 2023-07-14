@@ -9,7 +9,7 @@ replicaCount:
   balloonCpu: 0
   balloonT4: 0
 
-tag: 60079212318ffce4945f7c6fac0a88c7c0e1e4d8
+tag: 31e907b1e1850883c53613800bf69048035c77f6
 context: production
 image:
   gatewayRepository: public.ecr.aws/b2z8n5q1/spellbook-serve
