@@ -1352,8 +1352,8 @@ stream token responses or not.</p>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
   </span>
 
 <a href="#spellbook_serve_client.completion.Completion.acreate" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2161,10 +2161,6 @@ stream token responses or not.</p>
   
       <p>Model API. This API is used to retrieve, list, and create models.</p>
 
-<details class="note" open>
-  <summary>Note</summary>
-  <p>This feature is only available for self-hosted users.</p>
-</details>
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">spellbook_serve_client</span> <span class="kn">import</span> <span class="n">Model</span>
@@ -2205,7 +2201,7 @@ stream token responses or not.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Create a fine-tuning job</p>
+      <p>Create a Model Endpoint. Note: This feature is only available for self-hosted users.</p>
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2250,7 +2246,7 @@ stream token responses or not.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>ID of the created fine-tuning job</p>
+              <p>ID of the created Model Endpoint.</p>
             </div>
           </td>
         </tr>
