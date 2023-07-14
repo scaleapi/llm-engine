@@ -18,7 +18,7 @@ class Completion(APIEngine):
         from spellbook_serve_client import Completion
 
         response = Completion.create(
-            model_name="llama-7b-text-generation-inference",
+            model_name="llama-7b",
             prompt="Hello, my name is",
             max_new_tokens=10,
             temperature=0.2,
@@ -31,7 +31,7 @@ class Completion(APIEngine):
         from spellbook_serve_client import Completion
 
         response_stream = Completion.create(
-            model_name="llama-7b-text-generation-inference",
+            model_name="llama-7b",
             prompt="Hello, my name is",
             max_new_tokens=10,
             temperature=0.2,
@@ -47,7 +47,7 @@ class Completion(APIEngine):
 
         async def main():
             response_stream = await Completion.acreate(
-                model_name="llama-7b-text-generation-inference",
+                model_name="llama-7b",
                 prompt="Hello, my name is",
                 max_new_tokens=10,
                 temperature=0.2,
