@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spellbook-serve-client"
-version = "0.0.0.alpha0"
+version = "0.0.0.alpha1"
 description = "Spellbok Serve Python Client"
 license = "Apache-2.0"
 authors = ["Phil Chen <phil.chen@scale.com>"]
