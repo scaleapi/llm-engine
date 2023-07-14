@@ -9,13 +9,13 @@ replicaCount:
   balloonCpu: 0
   balloonT4: 0
 
-tag: 579319016a0d1ce7eaded5148c0059b2a1c86e41
+tag: 60079212318ffce4945f7c6fac0a88c7c0e1e4d8
 context: production
 image:
-  gatewayRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  builderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  cacherRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  forwarderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
+  gatewayRepository: public.ecr.aws/b2z8n5q1/spellbook-serve
+  builderRepository: public.ecr.aws/b2z8n5q1/spellbook-serve
+  cacherRepository: public.ecr.aws/b2z8n5q1/spellbook-serve
+  forwarderRepository: public.ecr.aws/b2z8n5q1/spellbook-serve
   pullPolicy: Always
 
 secrets:
