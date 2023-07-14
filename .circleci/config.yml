@@ -1,29 +1,37 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
-# See: https://circleci.com/docs/configuration-reference
 version: 2.1
-
 orbs:
-  python: circleci/python@1.5.0
+  python: circleci/python@2.1.0
 
 jobs:
-  build-and-test: # This is the name of the job, feel free to change it to better match what you're trying to do!
+  build_test:
     docker:
-      - image: cimg/python:3.10.2
+      - image: python:3.11-bookworm
+    resource_class: small
+    parallelism: 1
     steps:
-      - checkout
-      - python/install-packages:
-          pkg-manager: pip
-          # app-dir: ~/project/package-directory/  # If your requirements.txt isn't in the root directory.
-          # pip-dependency-file: test-requirements.txt  # if you have a different name for your requirements file, maybe one that combines your runtime and test requirements.
+      - checkout # checkout source code to working directory
       - run:
-          name: Run tests
-          # This assumes pytest is installed via the install-package step above
-          command: pytest
+          name: Install Basic Environment Dependencies
+          command: | # install dependencies
+            echo $PWD
+            apt-get update
+            apt-get -y install curl libgeos-dev
+            pip install --upgrade pip
+            pip install poetry
+            pip install black
+      - python/install-packages:
+          pkg-manager: poetry
+          include-python-in-cache-key: false
+      - run:
+          name: python3 Version
+          command: | # Make sure that the workflow is working
+            python3 --version
+      - run:
+          name: Black Formatting Check # Only validation, without re-formatting
+          command: |
+            poetry run black --check --config .black.toml .
 
-# Invoke jobs via workflows
-# See: https://circleci.com/docs/configuration-reference/#workflows
 workflows:
-  sample: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+  build_and_test:
     jobs:
-      - build-and-test
+      - build_test

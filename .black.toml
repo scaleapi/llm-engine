@@ -1,0 +1,31 @@
+# DO NOT USE PYPROJECT.TOML ON PAIN OF MASSIVE PACKAGING PROBLEMS
+[tool.black]
+# Independently enforced in .flake8 and .isort.cfg
+line-length = 100
+target-version = ['py38']
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+)
+'''
+force-exclude = '''
+/(
+  | image_builder/clients
+  | scaletrain/clients
+  | scaletrain/v1/clients
+  | torchscale
+)/
+'''
