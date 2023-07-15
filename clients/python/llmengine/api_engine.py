@@ -47,9 +47,9 @@ class APIEngine:
             timeout=timeout,
             headers={"x-api-key": api_key},
         )
-        payload = response.json()
         if response.status_code != 200:
-            raise parse_error(response.status_code, payload)
+            raise parse_error(response.status_code, response.content)
+        payload = response.json()
         return payload
 
     @classmethod
@@ -63,9 +63,9 @@ class APIEngine:
             timeout=timeout,
             headers={"x-api-key": api_key},
         )
-        payload = response.json()
         if response.status_code != 200:
-            raise parse_error(response.status_code, payload)
+            raise parse_error(response.status_code, response.content)
+        payload = response.json()
         return payload
 
     @classmethod
@@ -77,9 +77,9 @@ class APIEngine:
             timeout=timeout,
             headers={"x-api-key": api_key},
         )
-        payload = response.json()
         if response.status_code != 200:
-            raise parse_error(response.status_code, payload)
+            raise parse_error(response.status_code, response.content)
+        payload = response.json()
         return payload
 
     @classmethod
@@ -95,7 +95,7 @@ class APIEngine:
             stream=True,
         )
         if response.status_code != 200:
-            raise parse_error(response.status_code, response.json())
+            raise parse_error(response.status_code, response.content)
         for byte_payload in response.iter_lines():
             # Skip line
             if byte_payload == b"\n":
@@ -124,10 +124,9 @@ class APIEngine:
             async with session.post(
                 os.path.join(LLM_ENGINE_BASE_PATH, resource_name), json=data
             ) as resp:
-                payload = await resp.json()
-
                 if resp.status != 200:
-                    raise parse_error(resp.status, payload)
+                    raise parse_error(resp.status, await resp.read())
+                payload = await resp.json()
                 return payload
 
     @classmethod
@@ -142,7 +141,7 @@ class APIEngine:
                 os.path.join(LLM_ENGINE_BASE_PATH, resource_name), json=data
             ) as resp:
                 if resp.status != 200:
-                    raise parse_error(resp.status, await resp.json())
+                    raise parse_error(resp.status, await resp.read())
                 async for byte_payload in resp.content:
                     # Skip line
                     if byte_payload == b"\n":

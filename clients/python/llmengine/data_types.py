@@ -183,7 +183,7 @@ class CompletionSyncV1Request(BaseModel):
 
     prompts: List[str] = Field(..., min_items=1)
     max_new_tokens: int = Field(..., gt=0)
-    temperature: float = Field(..., ge=0.0)
+    temperature: float = Field(..., gt=0.0)
 
 
 class CompletionOutput(BaseModel):
@@ -219,7 +219,7 @@ class CompletionStreamV1Request(BaseModel):
 
     prompt: str = Field(..., min_length=1)
     max_new_tokens: int = Field(..., gt=0)
-    temperature: float = Field(..., ge=0.0)
+    temperature: float = Field(..., gt=0.0)
 
 
 class CompletionStreamOutput(BaseModel):
