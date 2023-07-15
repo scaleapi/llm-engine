@@ -20,7 +20,6 @@ following line to your `.zshrc` or `.bash_profile`:
     ```commandline
     export SCALE_API_KEY = "[Your API key]"
 
-
 With your API key set, you can now send requests to the public LLM Engine
 APIs using the Python client:
 
