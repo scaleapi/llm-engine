@@ -1,3 +1,4 @@
+import json
 from typing import Dict
 
 
@@ -34,22 +35,26 @@ class UnknownError(Exception):
         super().__init__(message)
 
 
-def parse_error(status_code: int, payload: Dict[str, str]) -> Exception:
+def parse_error(status_code: int, content: bytes) -> Exception:
     """
-    Parse error given an HTTP status code and a json payload
+    Parse error given an HTTP status code and a bytes payload
 
     Args:
         status_code (`int`):
             HTTP status code
-        payload (`Dict[str, str]`):
-            Json payload
+        content (`bytes`):
+            payload
 
     Returns:
         Exception: parsed exception
 
     """
     # Try to parse a LLM Engine error
-    message = payload["detail"]
+    try:
+        payload = json.loads(content)
+        message = payload["detail"]
+    except json.JSONDecodeError:
+        message = content.decode("utf-8")
 
     # Try to parse a APIInference error
     if status_code == 400:
