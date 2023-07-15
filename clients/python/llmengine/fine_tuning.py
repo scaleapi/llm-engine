@@ -74,7 +74,7 @@ class FineTune(APIEngine):
             hyperparameters=hyperparameters,
         )
         response = cls.post_sync(
-            resource_name="v1/fine-tunes",
+            resource_name="v1/llm/fine-tunes",
             data=request.dict(),
             timeout=DEFAULT_TIMEOUT,
         )
@@ -111,7 +111,7 @@ class FineTune(APIEngine):
         Returns:
             GetFineTuneJobResponse: ID and status of the requested job
         """
-        response = cls.get(f"v1/fine-tunes/{fine_tune_id}", timeout=DEFAULT_TIMEOUT)
+        response = cls.get(f"v1/llm/fine-tunes/{fine_tune_id}", timeout=DEFAULT_TIMEOUT)
         return GetFineTuneJobResponse.parse_obj(response)
 
     @classmethod
@@ -134,7 +134,7 @@ class FineTune(APIEngine):
         Returns:
             ListFineTuneJobResponse: list of all fine-tuning jobs and their statuses
         """
-        response = cls.get("v1/fine-tunes", timeout=DEFAULT_TIMEOUT)
+        response = cls.get("v1/llm/fine-tunes", timeout=DEFAULT_TIMEOUT)
         return ListFineTuneJobResponse.parse_obj(response)
 
     @classmethod
@@ -151,6 +151,6 @@ class FineTune(APIEngine):
             CancelFineTuneJobResponse: whether the cancellation was successful
         """
         response = cls.put(
-            f"v1/fine-tunes/{fine_tune_id}/cancel", data=None, timeout=DEFAULT_TIMEOUT
+            f"v1/llm/fine-tunes/{fine_tune_id}/cancel", data=None, timeout=DEFAULT_TIMEOUT
         )
         return CancelFineTuneJobResponse.parse_obj(response)

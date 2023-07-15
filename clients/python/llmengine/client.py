@@ -30,7 +30,7 @@ def get_stream_inference_url(base_url, model_name):
 
 
 def get_fine_tune_url(base_url):
-    return os.path.join(base_url, "v1/fine-tunes")
+    return os.path.join(base_url, "v1/llm/fine-tunes")
 
 
 class Client:
