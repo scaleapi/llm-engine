@@ -7,7 +7,7 @@ from typing import Any, AsyncIterable, Dict, Iterator, Optional
 
 import requests
 from aiohttp import ClientSession, ClientTimeout
-from spellbook_serve_client.errors import parse_error
+from llmengine.errors import parse_error
 
 SCALE_API_KEY = os.getenv("SCALE_API_KEY")
 SPELLBOOK_API_URL = "https://api.spellbook.scale.com"

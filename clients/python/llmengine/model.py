@@ -1,5 +1,5 @@
-from spellbook_serve_client.api_engine import APIEngine, DEFAULT_TIMEOUT, assert_self_hosted
-from spellbook_serve_client.data_types import (
+from llmengine.api_engine import APIEngine, DEFAULT_TIMEOUT, assert_self_hosted
+from llmengine.data_types import (
     ListLLMModelEndpointsV1Response, GetLLMModelEndpointV1Response, CreateLLMModelEndpointV1Response, CreateLLMModelEndpointV1Request
 )
 
@@ -11,7 +11,7 @@ class Model(APIEngine):
 
     Example:
         ```python
-        from spellbook_serve_client import Model
+        from llmengine import Model
 
         response = Model.list()
         print(response)

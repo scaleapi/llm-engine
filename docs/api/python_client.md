@@ -1,12 +1,12 @@
 # 🐍 Python Client API Reference
 
-::: spellbook_serve_client.Completion
-    selection:
+::: llmengine.Completion
+	selection:
         members:
             - create
             - acreate
 
-::: spellbook_serve_client.FineTune
+::: llmengine.FineTune
     selection:
         members:
             - create
@@ -14,20 +14,20 @@
             - retrieve
             - cancel
 
-::: spellbook_serve_client.Model
+::: llmengine.Model
 
-::: spellbook_serve_client.CompletionSyncV1Response
+::: llmengine.CompletionSyncV1Response
 
-::: spellbook_serve_client.CompletionStreamV1Response
+::: llmengine.CompletionStreamV1Response
 
-::: spellbook_serve_client.CompletionOutput
+::: llmengine.CompletionOutput
     selection:
         members:
             - text
             - num_prompt_tokens
             - num_completion_tokens
 
-::: spellbook_serve_client.CompletionStreamOutput
+::: llmengine.CompletionStreamOutput
     selection:
         members:
             - text
@@ -35,9 +35,9 @@
             - num_prompt_tokens
             - num_completion_tokens
 
-::: spellbook_serve_client.TaskStatus
+::: llmengine.TaskStatus
 
-::: spellbook_serve_client.CreateFineTuneJobRequest
+::: llmengine.CreateFineTuneJobRequest
     selection:
         members:
             - base_model
@@ -47,11 +47,11 @@
             - hyperparameters
             - model_name
 
-::: spellbook_serve_client.CreateFineTuneJobResponse
+::: llmengine.CreateFineTuneJobResponse
 
-::: spellbook_serve_client.GetFineTuneJobResponse
+::: llmengine.GetFineTuneJobResponse
 
-::: spellbook_serve_client.ListFineTuneJobResponse
+::: llmengine.ListFineTuneJobResponse
 
-::: spellbook_serve_client.CancelFineTuneJobResponse
+::: llmengine.CancelFineTuneJobResponse
 
