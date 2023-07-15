@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "llmengine"
+name = "llm-engine"
 version = "0.0.0.alpha2"
 description = "Scale LLM Engine Python client"
 license = "Apache-2.0"
