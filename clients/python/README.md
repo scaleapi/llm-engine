@@ -9,7 +9,7 @@ The LLM Engine Python library provides a convenient way of interfacing with a
 ### Install
 
 ```shell
-pip install llmengine
+pip install scale-llm-engine
 ```
 
 ### Usage
