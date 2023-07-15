@@ -1,8 +1,8 @@
-# Scale LLM Engine
+# LLM Engine
 
-The Scale LLM Engine Python library provides a convenient way of interfacing with a
+The LLM Engine Python library provides a convenient way of interfacing with a
 `llmengine` endpoint running on
-[Scale LLM Engine](https://scaleapi.github.io/llm-engine/) or on your own infrastructure.
+[LLM Engine](https://scaleapi.github.io/llm-engine/) or on your own infrastructure.
 
 ## Get Started
 
@@ -14,7 +14,7 @@ pip install llmengine
 
 ### Usage
 
-If you are using Scale LLM Engine, you can get your API key from
+If you are using LLM Engine, you can get your API key from
 [https://spellbook.scale.com/settings](https://spellbook.scale.com/settings). 
 Set the `SCALE_API_KEY` environment variable to your API key.
 
