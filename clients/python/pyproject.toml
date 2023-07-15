@@ -1,13 +1,14 @@
 [tool.poetry]
-name = "spellbook-serve-client"
-version = "0.0.0.alpha2"
-description = "Spellbok Serve Python Client"
+name = "scale-llm-engine"
+version = "1.0.1"
+description = "Scale LLM Engine Python client"
 license = "Apache-2.0"
 authors = ["Phil Chen <phil.chen@scale.com>"]
 maintainers = ["Phil Chen <phil.chen@scale.com>"]
 readme = "README.md"
-homepage = "https://scaleapi.github.io/spellbook-serve/"
-repository = "https://github.com/scaleapi/spellbook-serve"
+homepage = "https://scaleapi.github.io/llm-engine/"
+repository = "https://github.com/scaleapi/llm-engine"
+packages = [{include = "llmengine"}]
 
 
 [tool.poetry.dependencies]

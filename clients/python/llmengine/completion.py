@@ -1,7 +1,7 @@
 from typing import AsyncIterable, Iterator, Union
 
-from spellbook_serve_client.api_engine import APIEngine
-from spellbook_serve_client.data_types import (
+from llmengine.api_engine import APIEngine
+from llmengine.data_types import (
     CompletionStreamV1Request,
     CompletionStreamV1Response,
     CompletionSyncV1Request,
@@ -31,7 +31,7 @@ class Completion(APIEngine):
 
         Example without token streaming:
             ```python
-            from spellbook_serve_client import Completion
+            from llmengine import Completion
 
             async def main():
                 response_stream = await Completion.acreate(
@@ -117,7 +117,7 @@ class Completion(APIEngine):
 
         Example request without token streaming:
             ```python
-            from spellbook_serve_client import Completion
+            from llmengine import Completion
 
             response = Completion.create(
                 model_name="llama-7b",
@@ -145,7 +145,7 @@ class Completion(APIEngine):
 
         Example request with token streaming:
             ```python
-            from spellbook_serve_client import Completion
+            from llmengine import Completion
 
             stream = Completion.create(
                 model_name="llama-7b",

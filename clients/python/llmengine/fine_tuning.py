@@ -1,7 +1,7 @@
 from typing import Dict
 
-from spellbook_serve_client.api_engine import APIEngine, DEFAULT_TIMEOUT
-from spellbook_serve_client.data_types import (
+from llmengine.api_engine import APIEngine, DEFAULT_TIMEOUT
+from llmengine.data_types import (
     CancelFineTuneJobResponse,
     CreateFineTuneJobRequest,
     CreateFineTuneJobResponse,
@@ -30,7 +30,7 @@ class FineTune(APIEngine):
 
         Example:
             ```python
-            from spellbook_serve_client import FineTune
+            from llmengine import FineTune
 
             response = FineTune.create(
                 training_file="s3://my-bucket/path/to/training-file.csv",
@@ -90,7 +90,7 @@ class FineTune(APIEngine):
 
         Example:
             ```python
-            from spellbook_serve_client import FineTune
+            from llmengine import FineTune
 
             response = FineTune.retrieve(
                 fine_tune_id="ft_abc123...",
@@ -121,7 +121,7 @@ class FineTune(APIEngine):
 
         Example:
             ```python
-            from spellbook_serve_client import FineTune
+            from llmengine import FineTune
 
             response = FineTune.list()
             print(response)
