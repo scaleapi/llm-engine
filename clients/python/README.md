@@ -1,29 +1,29 @@
-# Spellbook Serve
+# Scale LLM Engine
 
-The Spellbook Serve Python library provides a convenient way of interfacing with a
-`spellbook-serve` endpoint running on
-[Scale Spellbook Serve](https://scaleapi.github.io/spellbook-serve/) or on your own infrastructure.
+The Scale LLM Engine Python library provides a convenient way of interfacing with a
+`llmengine` endpoint running on
+[Scale LLM Engine](https://scaleapi.github.io/llm-engine/) or on your own infrastructure.
 
 ## Get Started
 
 ### Install
 
 ```shell
-pip install spellbook-serve-client
+pip install llmengine
 ```
 
 ### Usage
 
-If you are using Scale Spellbook Serve, you can get your API key from
+If you are using Scale LLM Engine, you can get your API key from
 [https://spellbook.scale.com/settings](https://spellbook.scale.com/settings). 
 Set the `SCALE_API_KEY` environment variable to your API key.
 
 If you are using your own infrastructure, you can set the
-`SPELLBOOK_SERVE_BASE_PATH` environment variable to the base URL of your
-self-hosted `spellbook-serve` endpoint.
+`LLM_ENGINE_SERVE_BASE_PATH` environment variable to the base URL of your
+self-hosted `llmengine` endpoint.
 
 ```python
-from spellbook_serve_client import Completion
+from llmengine import Completion
 
 response = Completion.create(
     model_name="llama-7b",
@@ -37,4 +37,4 @@ print(response.outputs[0].text)
 ## Documentation
 
 Documentation is available at
-[https://scaleapi.github.io/spellbook-serve/](https://scaleapi.github.io/spellbook-serve/).
+[https://scaleapi.github.io/llm-engine/](https://scaleapi.github.io/llm-engine/).

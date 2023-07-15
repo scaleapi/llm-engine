@@ -5,8 +5,8 @@ from typing import AsyncIterator, Dict, Iterator, Optional
 import requests
 from aiohttp import BasicAuth, ClientSession, ClientTimeout
 from pydantic import ValidationError
-from spellbook_serve_client.errors import parse_error
-from spellbook_serve_client.types import (
+from llmengine.errors import parse_error
+from llmengine.types import (
     CancelFineTuneJobResponse,
     CompletionStreamV1Request,
     CompletionStreamV1Response,
@@ -34,11 +34,11 @@ def get_fine_tune_url(base_url):
 
 
 class Client:
-    """Client to make calls to a spellbook-serve-client instance
+    """Client to make calls to a llmengine instance
 
     Example:
         ```python
-        from spellbook_serve_client import Client
+        from llmengine import Client
 
         client = Client("flan-t5-xxl-deepspeed-sync")
         client.generate("Why is the sky blue?").outputs[0].text
@@ -62,7 +62,7 @@ class Client:
         """
         Args:
             base_url (`str`):
-                spellbook-serve-client instance base url
+                llmengine instance base url
             api_key (`str`):
                 API key to use for authentication
             timeout (`int`):
@@ -295,12 +295,12 @@ class Client:
 
 
 class AsyncClient:
-    """Asynchronous Client to make calls to a spellbook-serve-client instance
+    """Asynchronous Client to make calls to a llmengine instance
 
      Example:
 
      ```python
-     >>> from spellbook_serve_client import AsyncClient
+     >>> from llmengine import AsyncClient
 
      >>> client = AsyncClient("flan-t5-xxl-deepspeed-sync")
      >>> response = await client.generate("Why is the sky blue?")
@@ -325,7 +325,7 @@ class AsyncClient:
         """
         Args:
             base_url (`str`):
-                spellbook-serve-client instance base url
+                llmengine instance base url
             api_key (`str`):
                 API key to use for authentication
             timeout (`int`):
