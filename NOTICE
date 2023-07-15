@@ -1,0 +1,4 @@
+This project contains client code that was copied and modified from Hugging Face's text-generation-inference client
+library: https://github.com/huggingface/text-generation-inference/tree/main/clients/python
+
+The copied client code lives in clients/python/spellbook_serve_client/api_engine.py.
