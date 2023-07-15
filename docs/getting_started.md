@@ -1,6 +1,6 @@
 # 🚀 Getting Started
 
-To start using LLM Engine with public inference APIs, simply run the following:
+To start using LLM Engine's public inference and fine-tuning APIs, simply run the following:
 
 === "Install using pip"
     ```commandline
@@ -15,6 +15,7 @@ Navigate to [https://spellbook.scale.com](https://spellbook.scale.com) where
 you will get a Scale API key on the [settings](https://spellbook.scale.com/settings) page.
 Set this API key as the `SCALE_API_KEY` environment variable by adding the
 following line to your `.zshrc` or `.bash_profile`:
+
 === "Set API key"
     ```commandline
     export SCALE_API_KEY = "[Your API key]"
