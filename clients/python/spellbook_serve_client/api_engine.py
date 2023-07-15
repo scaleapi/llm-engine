@@ -1,3 +1,5 @@
+# NOTICE - per Apache 2.0 license:
+# This file was copied and modified from the Hugging Face text-generation-inference client library.
 import json
 import os
 from functools import wraps
