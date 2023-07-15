@@ -5,10 +5,9 @@ Use Scale's hosted version or run it in your own cloud.
 
 ## 💻 Quick Install
 
-=== "Install using pip"
-    ```commandline
-    pip install scale-llm-engine
-    ```
+```commandline
+pip install scale-llm-engine
+```
 
 ## 🤔 About
 
