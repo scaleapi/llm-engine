@@ -38,7 +38,7 @@ nav:
   - "Model Zoo": model_zoo.md
   - "How-To Guides":
       "Completions": guides/completions.md
-      "Token streaming": guides/token_streaming.md
+#      "Token streaming": guides/token_streaming.md
       "Fine-tuning": guides/fine_tuning.md
   - "API":
       - "Python Client API Reference": api/python_client.md
