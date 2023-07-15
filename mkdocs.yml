@@ -1,5 +1,5 @@
-site_name: Spellbook Serve
-site_description: The fastest, cheapest, and easiest way to deploy and scale your foundation models.
+site_name: LLM Engine
+site_description: The open source engine for fine-tuning large language models.
 
 theme:
   name: material
@@ -29,8 +29,8 @@ theme:
   favicon: _static/favicon-32x32.png
   language: en
 
-repo_name: spellbook-serve
-repo_url: https://github.com/scaleapi/spellbook-serve
+repo_name: llm-engine
+repo_url: https://github.com/scaleapi/llm-engine
 edit_uri: ""
 nav:
   - Introduction: index.md
