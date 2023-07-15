@@ -1,7 +1,7 @@
 # 🐍 Python Client API Reference
 
 ::: llmengine.Completion
-	selection:
+    selection:
         members:
             - create
             - acreate
