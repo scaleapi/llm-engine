@@ -1,5 +1,5 @@
 test:
-	python -m pytest --cov=spellbook_serve_client tests
+	python -m pytest --cov=llmengine tests
 
 install:
 	pip install pip --upgrade

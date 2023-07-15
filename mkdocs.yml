@@ -83,7 +83,7 @@ plugins:
   - search
   - mkdocstrings:
       watch:
-        - clients/python/spellbook_serve_client
+        - clients/python/llmengine
       handlers:
         python:
           rendering:

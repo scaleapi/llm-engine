@@ -1,28 +1,28 @@
 # 🐍 Python Client API Reference
 
-::: spellbook_serve_client.Completion
+::: llmengine.Completion
 
-::: spellbook_serve_client.FineTune
+::: llmengine.FineTune
 
-::: spellbook_serve_client.Model
+::: llmengine.Model
 
-::: spellbook_serve_client.CompletionSyncV1Response
+::: llmengine.CompletionSyncV1Response
 
-::: spellbook_serve_client.CompletionStreamV1Response
+::: llmengine.CompletionStreamV1Response
 
-::: spellbook_serve_client.CompletionOutput
+::: llmengine.CompletionOutput
 
-::: spellbook_serve_client.CompletionStreamOutput
+::: llmengine.CompletionStreamOutput
 
-::: spellbook_serve_client.TaskStatus
+::: llmengine.TaskStatus
 
-::: spellbook_serve_client.CreateFineTuneJobRequest
+::: llmengine.CreateFineTuneJobRequest
 
-::: spellbook_serve_client.CreateFineTuneJobResponse
+::: llmengine.CreateFineTuneJobResponse
 
-::: spellbook_serve_client.GetFineTuneJobResponse
+::: llmengine.GetFineTuneJobResponse
 
-::: spellbook_serve_client.ListFineTuneJobResponse
+::: llmengine.ListFineTuneJobResponse
 
-::: spellbook_serve_client.CancelFineTuneJobResponse
+::: llmengine.CancelFineTuneJobResponse
 

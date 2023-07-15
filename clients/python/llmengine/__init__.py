@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0.alpha2"
+__version__ = "1.0.1"
 
-from spellbook_serve_client.completion import Completion
-from spellbook_serve_client.data_types import (
+from llmengine.completion import Completion
+from llmengine.data_types import (
     CancelFineTuneJobResponse,
     CompletionOutput,
     CompletionStreamOutput,
@@ -27,5 +27,5 @@ from spellbook_serve_client.data_types import (
     ListFineTuneJobResponse,
     TaskStatus,
 )
-from spellbook_serve_client.fine_tuning import FineTune
-from spellbook_serve_client.model import Model
+from llmengine.fine_tuning import FineTune
+from llmengine.model import Model
