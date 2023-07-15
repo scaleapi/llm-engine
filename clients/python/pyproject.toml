@@ -8,6 +8,7 @@ maintainers = ["Phil Chen <phil.chen@scale.com>"]
 readme = "README.md"
 homepage = "https://scaleapi.github.io/llm-engine/"
 repository = "https://github.com/scaleapi/llm-engine"
+packages = [{include = "llmengine"}]
 
 
 [tool.poetry.dependencies]
