@@ -1,7 +1,7 @@
 from typing import Dict
 
 
-# Spellbook Serve Errors
+# LLM Engine Errors
 class ValidationError(Exception):
     def __init__(self, message: str):
         super().__init__(message)
@@ -48,7 +48,7 @@ def parse_error(status_code: int, payload: Dict[str, str]) -> Exception:
         Exception: parsed exception
 
     """
-    # Try to parse a Spellbook Serve error
+    # Try to parse a LLM Engine error
     message = payload["detail"]
 
     # Try to parse a APIInference error
