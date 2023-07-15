@@ -1,3 +1,5 @@
+# NOTICE - per Apache 2.0 license:
+# This file was copied and modified from the OpenAI Python client library: https://github.com/openai/openai-python
 import json
 import os
 from functools import wraps
