@@ -1,12 +1,13 @@
 # ⚡ LLM Engine ⚡
 
-The easiest way to fine-tune and serve custom foundation models.
+**The open source engine for fine-tuning large language models**. LLM Engine is the easiest way to customize and serve LLMs.
+Use Scale's hosted version or run it in your own cloud.
 
 ## 💻 Quick Install
 
 === "Install using pip"
     ```commandline
-    pip install llm-engine
+    pip install scale-llm-engine
     ```
 
 ## 🤔 About
