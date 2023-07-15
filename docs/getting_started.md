@@ -1,26 +1,31 @@
 # 🚀 Getting Started
 
-To start using Spellbook Serve with public inference APIs, simply run the following:
+To start using LLM Engine's public inference and fine-tuning APIs:
 
 === "Install using pip"
     ```commandline
-    pip install spellbook-serve-client
+    pip install scale-llm-engine
     ```
 === "Install using conda"
     ```commandline
-    conda install spellbook-serve-client -c conda-forge
+    conda install scale-llm-engine -c conda-forge
     ```
 
 Navigate to [https://spellbook.scale.com](https://spellbook.scale.com) where
-you will get a Scale API key. Set this API key as the `SCALE_API_KEY`
-environment variable.
+you will get a Scale API key on the [settings](https://spellbook.scale.com/settings) page.
+Set this API key as the `SCALE_API_KEY` environment variable by adding the
+following line to your `.zshrc` or `.bash_profile`:
 
-With the API key, you can now send requests to Spellbook Serve public inference
-APIs using Python client:
+=== "Set API key"
+    ```commandline
+    export SCALE_API_KEY = "[Your API key]"
+    ```
+
+With your API key set, you can now send LLM Engine requests using the Python client:
 
 === "Using the Python Client"
     ```py
-    from spellbook_serve_client import Completion
+    from llmengine import Completion
 
     response = Completion.create(
         model_name="llama-7b",
