@@ -11,7 +11,7 @@ from llmengine.errors import parse_error
 
 SCALE_API_KEY = os.getenv("SCALE_API_KEY")
 SPELLBOOK_API_URL = "https://api.spellbook.scale.com"
-SPELLBOOK_SERVE_BASE_PATH = os.getenv("SPELLBOOK_SERVE_BASE_PATH", SPELLBOOK_API_URL)
+LLM_ENGINE_BASE_PATH = os.getenv("LLM_ENGINE_BASE_PATH", SPELLBOOK_API_URL)
 DEFAULT_TIMEOUT: int = 10
 
 
@@ -22,7 +22,7 @@ def get_api_key() -> str:
 def assert_self_hosted(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        if SPELLBOOK_API_URL == SPELLBOOK_SERVE_BASE_PATH:
+        if SPELLBOOK_API_URL == LLM_ENGINE_BASE_PATH:
             raise ValueError(
                 "This feature is only available for self-hosted users."
             )
@@ -34,16 +34,16 @@ def assert_self_hosted(func):
 class APIEngine:
     @classmethod
     def validate_api_key(cls):
-        if SPELLBOOK_API_URL == SPELLBOOK_SERVE_BASE_PATH and not SCALE_API_KEY:
+        if SPELLBOOK_API_URL == LLM_ENGINE_BASE_PATH and not SCALE_API_KEY:
             raise ValueError(
-                "You must set SCALE_API_KEY in your environment to to use the Spellbook Serve API."
+                "You must set SCALE_API_KEY in your environment to to use the LLM Engine API."
             )
 
     @classmethod
     def get(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
         api_key = get_api_key()
         response = requests.get(
-            os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name),
+            os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
             timeout=timeout,
             headers={"x-api-key": api_key},
         )
@@ -58,7 +58,7 @@ class APIEngine:
     ) -> Dict[str, Any]:
         api_key = get_api_key()
         response = requests.put(
-            os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name),
+            os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
@@ -72,7 +72,7 @@ class APIEngine:
     def post_sync(cls, resource_name: str, data: Dict[str, Any], timeout: int) -> Dict[str, Any]:
         api_key = get_api_key()
         response = requests.post(
-            os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name),
+            os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
@@ -88,7 +88,7 @@ class APIEngine:
     ) -> Iterator[Dict[str, Any]]:
         api_key = get_api_key()
         response = requests.post(
-            os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name),
+            os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
@@ -122,7 +122,7 @@ class APIEngine:
             timeout=ClientTimeout(timeout), headers={"x-api-key": api_key}
         ) as session:
             async with session.post(
-                os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name), json=data
+                os.path.join(LLM_ENGINE_BASE_PATH, resource_name), json=data
             ) as resp:
                 payload = await resp.json()
 
@@ -139,7 +139,7 @@ class APIEngine:
             timeout=ClientTimeout(timeout), headers={"x-api-key": api_key}
         ) as session:
             async with session.post(
-                os.path.join(SPELLBOOK_SERVE_BASE_PATH, resource_name), json=data
+                os.path.join(LLM_ENGINE_BASE_PATH, resource_name), json=data
             ) as resp:
                 if resp.status != 200:
                     raise parse_error(resp.status, await resp.json())
