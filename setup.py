@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="llm-engine",
+    name="scale-llm-engine",
     version="1.0.0",
     packages=[p for p in find_packages() if "tests" not in p],
     install_requires=[],
