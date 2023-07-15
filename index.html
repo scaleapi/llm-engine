@@ -89,7 +89,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#spellbook-serve" class="md-skip">
+        <a href="#llm-engine" class="md-skip">
           Skip to content
         </a>
       
@@ -570,42 +570,42 @@
                   
 
 
-<h1 id="spellbook-serve">⚡ Spellbook Serve ⚡<a class="headerlink" href="#spellbook-serve" title="Permanent link">&para;</a></h1>
-<p>The fastest, cheapest, and easiest way to deploy and scale your custom foundation models.</p>
+<h1 id="llm-engine">⚡ LLM Engine ⚡<a class="headerlink" href="#llm-engine" title="Permanent link">&para;</a></h1>
+<p><strong>The open source engine for fine-tuning large language models</strong>. LLM Engine is the easiest way to customize and serve LLMs.
+Use Scale's hosted version or run it in your own cloud.</p>
 <h2 id="quick-install">💻 Quick Install<a class="headerlink" href="#quick-install" title="Permanent link">&para;</a></h2>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Install using pip</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip install spellbook-serve-client
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip install scale-llm-engine
 </code></pre></div>
 </div>
 </div>
 </div>
 <h2 id="about">🤔 About<a class="headerlink" href="#about" title="Permanent link">&para;</a></h2>
 <p>Foundation models are emerging as the building blocks of AI. However, deploying
-these models to the cloud still requires infrastructure expertise, and can be
-expensive.</p>
-<p>Spellbook Serve is a Python library, CLI, and Helm chart that provides
-everything you need to deploy your foundation models to the cloud using
-Kubernetes. Key features include:</p>
-<p>🚀 <strong>Ready-to-use Inference and Fine-Tuning APIs for your favorite models</strong>:
-Spellbook Serve comes with ready-to-use inference APIs for your favorite
-open-source models, including MPT, Falcon, and LLaMA. Use scale-hosted endpoints
+these models to the cloud and fine-tuning them still requires infrastructure and
+ML expertise, and can be expensive.</p>
+<p>LLM Engine is a Python library, CLI, and Helm chart that provides
+everything you need to fine-tune and serve foundation models in the cloud
+using Kubernetes. Key features include:</p>
+<p>🚀 <strong>Ready-to-use Fine-Tuning and Inference APIs for your favorite models</strong>:
+LLM Engine comes with ready-to-use APIs for your favorite
+open-source models, including MPT, Falcon, and LLaMA. Use Scale-hosted endpoints
 or deploy to your own infrastructure.</p>
 <p>🐳 <strong>Deploying from any docker image</strong>: Turn any Docker image into an
 auto-scaling deployment with simple APIs.</p>
-<p>🎙️<strong>Language-Model Specific Features</strong>: Spellbook Serve provides inference APIs
+<p>🎙️<strong>Optimized Inference</strong>: LLM Engine provides inference APIs
 for streaming responses and dynamically batching inputs for higher throughput
 and lower latency.</p>
 <p>🤗 <strong>Open-Source Integrations</strong>: Deploy any <a href="https://huggingface.co/">Huggingface</a>
-model with a single command. Integrate seamlessly with
-<a href="https://github.com/hwchase17/langchain">Langchain</a> chat applications.</p>
+model with a single command.</p>
 <h3 id="features-coming-soon">🔥 Features Coming Soon<a class="headerlink" href="#features-coming-soon" title="Permanent link">&para;</a></h3>
-<p>❄ <strong>Fast Cold-Start Times</strong>: To prevent GPUs from idling, Spellbook Serve
+<p>❄ <strong>Fast Cold-Start Times</strong>: To prevent GPUs from idling, LLM Engine
 automatically scales your model to zero when it's not in use and scales up
 within seconds, even for large foundation models.</p>
-<p>💸 <strong>Cost-Optimized</strong>: Deploy AI models an order of magnitude cheaper than
-OpenAI APIs, including cold-start and warm-down times.</p>
+<p>💸 <strong>Cost-Optimized</strong>: Deploy AI models cheaper than commercial ones,
+including cold-start and warm-down times.</p>
 
 
   
