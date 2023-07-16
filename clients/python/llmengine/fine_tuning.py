@@ -6,7 +6,7 @@ from llmengine.data_types import (
     CreateFineTuneRequest,
     CreateFineTuneResponse,
     GetFineTuneResponse,
-    ListFineTuneResponse,
+    ListFineTunesResponse,
 )
 
 
@@ -113,7 +113,7 @@ class FineTune(APIEngine):
         return GetFineTuneResponse.parse_obj(response)
 
     @classmethod
-    def list(cls) -> ListFineTuneResponse:
+    def list(cls) -> ListFineTunesResponse:
         """
         List fine-tuning jobs
 
@@ -130,10 +130,10 @@ class FineTune(APIEngine):
             ```
 
         Returns:
-            ListFineTuneResponse: list of all fine-tuning jobs and their statuses
+            ListFineTunesResponse: list of all fine-tuning jobs and their statuses
         """
         response = cls.get("v1/llm/fine-tunes", timeout=DEFAULT_TIMEOUT)
-        return ListFineTuneResponse.parse_obj(response)
+        return ListFineTunesResponse.parse_obj(response)
 
     @classmethod
     def cancel(cls, fine_tune_id: str) -> CancelFineTuneResponse:

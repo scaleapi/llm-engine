@@ -38,7 +38,7 @@
 
 ::: llmengine.GetFineTuneResponse
 
-::: llmengine.ListFineTuneResponse
+::: llmengine.ListFineTunesResponse
 
 ::: llmengine.CancelFineTuneResponse
 

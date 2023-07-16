@@ -26,7 +26,7 @@ from llmengine.data_types import (
     CreateFineTuneRequest,
     CreateFineTuneResponse,
     GetFineTuneResponse,
-    ListFineTuneResponse,
+    ListFineTunesResponse,
     TaskStatus,
 )
 from llmengine.fine_tuning import FineTune
@@ -43,7 +43,7 @@ __all__: Sequence[str] = (
     "CreateFineTuneResponse",
     "FineTune",
     "GetFineTuneResponse",
-    "ListFineTuneResponse",
+    "ListFineTunesResponse",
     "Model",
     "TaskStatus",
 )

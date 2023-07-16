@@ -281,7 +281,7 @@ class GetFineTuneResponse(BaseModel):
     status: BatchJobStatus = Field(..., description="Status of the requested job.")
 
 
-class ListFineTuneResponse(BaseModel):
+class ListFineTunesResponse(BaseModel):
     jobs: List[GetFineTuneResponse] = Field(..., description="List of fine-tuning jobs and their statuses.")
 
 

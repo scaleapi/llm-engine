@@ -14,7 +14,7 @@ from llmengine.types import (
     CreateFineTuneRequest,
     CreateFineTuneResponse,
     GetFineTuneResponse,
-    ListFineTuneResponse,
+    ListFineTunesResponse,
 )
 from pydantic import ValidationError
 
@@ -252,12 +252,12 @@ class Client:
 
     def list_fine_tune_jobs(
         self,
-    ) -> ListFineTuneResponse:
+    ) -> ListFineTunesResponse:
         """
         List fine-tuning jobs
 
         Returns:
-            ListFineTuneResponse: list of all fine-tuning jobs and their statuses
+            ListFineTunesResponse: list of all fine-tuning jobs and their statuses
         """
         resp = requests.get(
             get_fine_tune_url(self.base_url),
@@ -267,7 +267,7 @@ class Client:
         payload = resp.json()
         if resp.status_code != 200:
             raise parse_error(resp.status_code, payload)
-        return ListFineTuneResponse.parse_obj(payload)
+        return ListFineTunesResponse.parse_obj(payload)
 
     def cancel_fine_tune_job(
         self,
@@ -513,12 +513,12 @@ class AsyncClient:
 
     async def list_fine_tune_jobs(
         self,
-    ) -> ListFineTuneResponse:
+    ) -> ListFineTunesResponse:
         """
         List fine-tuning jobs
 
         Returns:
-            ListFineTuneResponse: list of all fine-tuning jobs and their statuses
+            ListFineTunesResponse: list of all fine-tuning jobs and their statuses
         """
         async with ClientSession(
             timeout=self.timeout, auth=BasicAuth(login=self.api_key)
@@ -528,7 +528,7 @@ class AsyncClient:
 
                 if resp.status != 200:
                     raise parse_error(resp.status, payload)
-                return ListFineTuneResponse.parse_obj(payload)
+                return ListFineTunesResponse.parse_obj(payload)
 
     async def cancel_fine_tune_job(
         self,
