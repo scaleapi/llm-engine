@@ -5,11 +5,12 @@ orbs:
 workflows:
   ci:
     jobs:
-      - test_server
+      - run_unit_tests_server
+      - integration_tests
       - build_image
 
 jobs:
-  test_server:
+  run_unit_tests_server:
     docker:
       - image: python:3.8-bookworm
         environment:
@@ -22,28 +23,71 @@ jobs:
     parallelism: 1
     steps:
       - checkout # checkout source code to working directory
-      - run:
-          name: Install Basic Environment Dependencies
-          command: | # install dependencies
-            apt-get update
-            apt-get -y install curl
-            pip install --upgrade pip
-            pip install -r requirements-dev.txt
-      - python/install-packages:
-          pkg-manager: pip
-          app-dir: server
-      - python/install-packages:
-          pkg-manager: pip
-          app-dir: server
-          pip-dependency-file: requirements-test.txt
-      - python/install-packages:
-          pkg-manager: pip
-          app-dir: server
-          pip-dependency-file: requirements_override.txt
+      - environment_setup
+      - install_server
       - run:
           name: python3 Version
           command: | # Make sure that the workflow is working
             python3 --version
+      - run_unit_tests_server
+  build_image:
+    executor: ubuntu-large
+    steps:
+      - checkout
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build . -f server/Dockerfile -t llm-engine:$CIRCLE_SHA1
+  integration_tests:
+    executor: ubuntu-large
+    steps:
+      - checkout
+      - run:
+          name: Install minikube
+            cd $HOME
+            curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
+            sudo dpkg -i minikube_latest_amd64.deb
+            minikube start --vm-driver=docker --kubernetes-version=v1.23.0 --memory=14336 --cpus=8
+      - run:
+          name: Install helm chart
+          command: |
+            cd $HOME/project/charts
+            helm install llm-engine llm-engine --values llm-engine/values_sample.yaml
+
+executors:
+  ubuntu-large:
+    machine:
+      image: "ubuntu-2004:202201-02"
+    resource_class: xlarge
+
+commands:
+  environment_setup:
+    description: Basic Environment setup
+    steps:
+      - run:
+        name: Install Basic Environment Dependencies
+        command: | # install dependencies
+          apt-get update
+          apt-get -y install curl
+          pip install --upgrade pip
+          pip install -r $HOME/project/requirements-dev.txt
+  install_server:
+    description: Installs LLM Engine server
+    steps:
+     - python/install-packages:
+         pkg-manager: pip
+         app-dir: server
+     - python/install-packages:
+         pkg-manager: pip
+         app-dir: server
+         pip-dependency-file: requirements-test.txt
+     - python/install-packages:
+         pkg-manager: pip
+         app-dir: server
+         pip-dependency-file: requirements_override.txt
+  run_unit_tests_server:
+    description: Unit tests of the server
+    steps:
       - run:
           name: Black Formatting Check # Only validation, without re-formatting
           command: |
@@ -62,18 +106,3 @@ jobs:
             cd server
             pip install -e .
             WORKSPACE=.. pytest
-  build_image:
-    executor: docker-builder
-    steps:
-      - checkout
-      - run:
-          name: Build Docker Image
-          command: |
-            docker build . -f server/Dockerfile -t llm-engine:$CIRCLE_SHA1
-
-executors:
-  docker-builder:
-    machine:
-      image: "ubuntu-2004:202201-02"
-    resource_class: large
-
