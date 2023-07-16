@@ -1,0 +1,4 @@
+# Same as Black.
+line-length = 100
+
+ignore = ["E501"]

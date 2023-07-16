@@ -25,6 +25,7 @@ __all__: Sequence[str] = [
     "CeleryTaskQueueGateway",
     "DatadogMonitoringMetricsGateway",
     "FakeMonitoringMetricsGateway",
+    "FilesystemGateway",
     "LiveAsyncModelEndpointInferenceGateway",
     "LiveBatchJobOrchestrationGateway",
     "LiveBatchJobProgressGateway",

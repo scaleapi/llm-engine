@@ -219,7 +219,7 @@ class TqdmLoggingHandler(logging.Handler):
             self.flush()
         except (KeyboardInterrupt, SystemExit):
             raise
-        except:  # pylint: disable=bare-except
+        except:  # noqa: E722
             self.handleError(record)
 
 
@@ -246,8 +246,8 @@ def silence_chatty_logger(*logger_names, quieter=logging.FATAL) -> None:
 
     Accepts a variable number of logger names.
     """
-    for l in logger_names:
-        log = logging.getLogger(l)
+    for name in logger_names:
+        log = logging.getLogger(name)
         log.setLevel(quieter)
 
 

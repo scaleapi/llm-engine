@@ -1,37 +1,138 @@
 version: 2.1
 orbs:
-  python: circleci/python@2.1.0
+  python: circleci/python@2.1.1
+
+workflows:
+  ci:
+    jobs:
+      - run_unit_tests_server
+      - integration_tests
+      - build_image
+      - build_docs
 
 jobs:
-  build_test:
+  run_unit_tests_server:
     docker:
-      - image: python:3.11-bookworm
+      - image: python:3.8-bookworm
+        environment:
+          ML_INFRA_DATABASE_URL: postgresql://postgres@localhost/circle_test
+      - image: circleci/postgres:12.9-postgis-ram
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
     resource_class: small
     parallelism: 1
     steps:
       - checkout # checkout source code to working directory
-      - run:
-          name: Install Basic Environment Dependencies
-          command: | # install dependencies
-            echo $PWD
-            apt-get update
-            apt-get -y install curl libgeos-dev
-            pip install --upgrade pip
-            pip install poetry
-            pip install black
-      - python/install-packages:
-          pkg-manager: poetry
-          include-python-in-cache-key: false
+      - environment_setup
+      - install_server
       - run:
           name: python3 Version
           command: | # Make sure that the workflow is working
             python3 --version
+      - run_unit_tests_server
+  build_docs:
+    docker:
+      - image: python:3.8-bookworm
+    resource_class: small
+    parallelism: 1
+    steps:
+      - checkout # checkout source code to working directory
+      - environment_setup
+      - install_client
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements-docs.txt
+      - run:
+          name: Build Docs
+          command: |
+            mkdocs build --strict
+  build_image:
+    executor: ubuntu-large
+    steps:
+      - checkout
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build . -f server/Dockerfile -t llm-engine:$CIRCLE_SHA1
+  integration_tests:
+    executor: ubuntu-large
+    steps:
+      - checkout
+      - run:
+          name: Install minikube
+          command: |
+            cd $HOME
+            curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
+            sudo dpkg -i minikube_latest_amd64.deb
+            minikube start --vm-driver=docker --kubernetes-version=v1.23.0 --memory=14336 --cpus=8
+      - run:
+          name: Install helm
+          command: |
+            cd $HOME
+            curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - run:
+          name: Install helm chart
+          command: |
+            cd $HOME/project/charts
+            helm install llm-engine llm-engine --values llm-engine/values_sample.yaml
+
+executors:
+  ubuntu-large:
+    machine:
+      image: "ubuntu-2004:202201-02"
+    resource_class: xlarge
+
+commands:
+  environment_setup:
+    description: Basic Environment setup
+    steps:
+      - run:
+          name: Install Basic Environment Dependencies
+          command: | # install dependencies
+            apt-get update
+            apt-get -y install curl
+            pip install --upgrade pip
+            pip install -r $HOME/project/requirements-dev.txt
+  install_server:
+    description: Installs LLM Engine server
+    steps:
+     - python/install-packages:
+         pkg-manager: pip
+         app-dir: server
+     - python/install-packages:
+         pkg-manager: pip
+         app-dir: server
+         pip-dependency-file: requirements-test.txt
+     - python/install-packages:
+         pkg-manager: pip
+         app-dir: server
+         pip-dependency-file: requirements_override.txt
+  install_client:
+    description: Install LLM Engine client
+    steps:
+      - run:
+          name: Install LLM Engine client
+          command: |
+            pip install -e $HOME/project/clients/python
+  run_unit_tests_server:
+    description: Unit tests of the server
+    steps:
       - run:
           name: Black Formatting Check # Only validation, without re-formatting
           command: |
-            poetry run black --check --config .black.toml .
-
-workflows:
-  build_and_test:
-    jobs:
-      - build_test
+            black --check --config .black.toml .
+      - run:
+          name: Isort Formatting Check # Only validation, without re-formatting
+          command: |
+            isort . --check-only --verbose
+      - run:
+          name: Ruff Lint Check
+          command: |
+            ruff .
+      - run:
+          name: Unit Tests
+          command: |
+            cd server
+            pip install -e .
+            WORKSPACE=.. pytest
