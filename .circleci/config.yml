@@ -26,6 +26,7 @@ jobs:
       - python/install-packages:
           pkg-manager: pip
           app-dir: server
+          module-src-dir: llm_engine_server
       - python/install-packages:
           pkg-manager: pip
           app-dir: server
