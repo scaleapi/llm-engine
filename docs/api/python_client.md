@@ -34,12 +34,12 @@
             - retrieve
             - cancel
 
-::: llmengine.CreateFineTuneJobResponse
+::: llmengine.CreateFineTuneResponse
 
-::: llmengine.GetFineTuneJobResponse
+::: llmengine.GetFineTuneResponse
 
-::: llmengine.ListFineTuneJobResponse
+::: llmengine.ListFineTunesResponse
 
-::: llmengine.CancelFineTuneJobResponse
+::: llmengine.CancelFineTuneResponse
 
 ::: llmengine.Model

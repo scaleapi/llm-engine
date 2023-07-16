@@ -1,12 +1,12 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine
 from llmengine.data_types import (
-    CancelFineTuneJobResponse,
-    CreateFineTuneJobRequest,
-    CreateFineTuneJobResponse,
-    GetFineTuneJobResponse,
-    ListFineTuneJobResponse,
+    CancelFineTuneResponse,
+    CreateFineTuneRequest,
+    CreateFineTuneResponse,
+    GetFineTuneResponse,
+    ListFineTunesResponse,
 )
 
 
@@ -18,13 +18,12 @@ class FineTune(APIEngine):
     @classmethod
     def create(
         cls,
+        model: str,
         training_file: str,
-        validation_file: str,
-        model_name: str,
-        base_model: str,
-        fine_tuning_method: str,
-        hyperparameters: Dict[str, str],
-    ) -> CreateFineTuneJobResponse:
+        validation_file: Optional[str] = None,
+        hyperparameters: Optional[Dict[str, str]] = None,
+        suffix: Optional[str] = None,
+    ) -> CreateFineTuneResponse:
         """
         Create a fine-tuning job.
 
@@ -63,28 +62,27 @@ class FineTune(APIEngine):
                 Hyperparameters
 
         Returns:
-            CreateFineTuneJobResponse: ID of the created fine-tuning job
+            CreateFineTuneResponse: ID of the created fine-tuning job
         """
-        request = CreateFineTuneJobRequest(
+        request = CreateFineTuneRequest(
+            model=model,
             training_file=training_file,
             validation_file=validation_file,
-            model_name=model_name,
-            base_model=base_model,
-            fine_tuning_method=fine_tuning_method,
             hyperparameters=hyperparameters,
+            suffix=suffix,
         )
         response = cls.post_sync(
             resource_name="v1/llm/fine-tunes",
             data=request.dict(),
             timeout=DEFAULT_TIMEOUT,
         )
-        return CreateFineTuneJobResponse.parse_obj(response)
+        return CreateFineTuneResponse.parse_obj(response)
 
     @classmethod
     def retrieve(
         cls,
         fine_tune_id: str,
-    ) -> GetFineTuneJobResponse:
+    ) -> GetFineTuneResponse:
         """
         Get status of a fine-tuning job
 
@@ -109,13 +107,13 @@ class FineTune(APIEngine):
                 ID of the fine-tuning job
 
         Returns:
-            GetFineTuneJobResponse: ID and status of the requested job
+            GetFineTuneResponse: ID and status of the requested job
         """
         response = cls.get(f"v1/llm/fine-tunes/{fine_tune_id}", timeout=DEFAULT_TIMEOUT)
-        return GetFineTuneJobResponse.parse_obj(response)
+        return GetFineTuneResponse.parse_obj(response)
 
     @classmethod
-    def list(cls) -> ListFineTuneJobResponse:
+    def list(cls) -> ListFineTunesResponse:
         """
         List fine-tuning jobs
 
@@ -132,13 +130,13 @@ class FineTune(APIEngine):
             ```
 
         Returns:
-            ListFineTuneJobResponse: list of all fine-tuning jobs and their statuses
+            ListFineTunesResponse: list of all fine-tuning jobs and their statuses
         """
         response = cls.get("v1/llm/fine-tunes", timeout=DEFAULT_TIMEOUT)
-        return ListFineTuneJobResponse.parse_obj(response)
+        return ListFineTunesResponse.parse_obj(response)
 
     @classmethod
-    def cancel(cls, fine_tune_id: str) -> CancelFineTuneJobResponse:
+    def cancel(cls, fine_tune_id: str) -> CancelFineTuneResponse:
         """
         Cancel a fine-tuning job
 
@@ -148,11 +146,11 @@ class FineTune(APIEngine):
                 ID of the fine-tuning job
 
         Returns:
-            CancelFineTuneJobResponse: whether the cancellation was successful
+            CancelFineTuneResponse: whether the cancellation was successful
         """
         response = cls.put(
             f"v1/llm/fine-tunes/{fine_tune_id}/cancel",
             data=None,
             timeout=DEFAULT_TIMEOUT,
         )
-        return CancelFineTuneJobResponse.parse_obj(response)
+        return CancelFineTuneResponse.parse_obj(response)
