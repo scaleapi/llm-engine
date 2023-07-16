@@ -15,10 +15,10 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
 
-from spellbook_serve.common.constants import READYZ_FPATH
-from spellbook_serve.common.serialization_utils import python_json_to_b64
-from spellbook_serve.core.config import ml_infra_config
-from spellbook_serve.domain.entities import CallbackAuth, CallbackBasicAuth, ModelEndpointConfig
+from llm_engine_server.common.constants import READYZ_FPATH
+from llm_engine_server.common.serialization_utils import python_json_to_b64
+from llm_engine_server.core.config import ml_infra_config
+from llm_engine_server.domain.entities import CallbackAuth, CallbackBasicAuth, ModelEndpointConfig
 
 MODULE_PATH = Path(__file__).resolve()
 BASE_PATH = MODULE_PATH.parents[4]
@@ -76,7 +76,7 @@ def endpoint_config_location(callback_port: int, test_user_id: str) -> Iterator[
 
 
 @pytest.fixture(scope="session")
-def spellbook_serve_celery_app(
+def llm_engine_celery_app(
     queue: str, user_config_location: str, endpoint_config_location: str
 ) -> Iterator[subprocess.Popen]:
     env = dict(
@@ -95,7 +95,7 @@ def spellbook_serve_celery_app(
 
     env_str = " ".join(f"{k}={v}" for k, v in env.items())
     command = (
-        f"{env_str} exec celery --app=spellbook_serve.inference.async_inference worker "
+        f"{env_str} exec celery --app=llm_engine_server.inference.async_inference worker "
         f"--loglevel=INFO --concurrency=1 --queues={queue}"
     )
     # Wait up to 10 seconds for process to start and be ready.

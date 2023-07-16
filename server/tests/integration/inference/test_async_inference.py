@@ -11,15 +11,15 @@ import requests
 from fastapi import FastAPI
 from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
 
-from spellbook_serve.common.dtos.model_endpoints import BrokerType
-from spellbook_serve.common.dtos.tasks import (
+from llm_engine_server.common.dtos.model_endpoints import BrokerType
+from llm_engine_server.common.dtos.tasks import (
     CallbackAuth,
     EndpointPredictV1Request,
     ResponseSchema,
     TaskStatus,
 )
-from spellbook_serve.common.env_vars import CIRCLECI
-from spellbook_serve.infra.gateways import (
+from llm_engine_server.common.env_vars import CIRCLECI
+from llm_engine_server.infra.gateways import (
     CeleryTaskQueueGateway,
     LiveAsyncModelEndpointInferenceGateway,
 )
@@ -46,7 +46,7 @@ def redis_available() -> bool:
 )
 def test_submit_and_get_tasks(
     queue: str,
-    spellbook_serve_celery_app: subprocess.Popen,
+    llm_engine_celery_app: subprocess.Popen,
     callback_app: FastAPI,
     task_args: List[Any],
     cloudpickle: bool,
@@ -95,7 +95,7 @@ def test_async_callbacks(
     queue: str,
     callback_port: int,
     test_user_id: str,
-    spellbook_serve_celery_app: subprocess.Popen,
+    llm_engine_celery_app: subprocess.Popen,
     callback_app: FastAPI,
     callback_version: Optional[str],
     expected_callback_payload: Any,

@@ -2,21 +2,21 @@
 apiVersion: "autoscaling.k8s.io/v1"
 kind: VerticalPodAutoscaler
 metadata:
-  name: {{ include "spellbookServe.fullname" . }}
+  name: {{ include "llmEngine.fullname" . }}
   labels:
-    {{- include "spellbookServe.labels" . | nindent 4 }}
+    {{- include "llmEngine.labels" . | nindent 4 }}
 spec:
   targetRef:
     apiVersion: "apps/v1"
     kind: Deployment
-    name: {{ include "spellbookServe.fullname" . }}
+    name: {{ include "llmEngine.fullname" . }}
   updatePolicy:
     updateMode: {{ .Values.autoscaling.vertical.updateMode }}
   resourcePolicy:
     containerPolicies:
       - containerName: istio-proxy
         mode: "Off"
-      - containerName: {{ include "spellbookServe.fullname" . }}
+      - containerName: {{ include "llmEngine.fullname" . }}
         minAllowed:
           cpu: {{ .Values.autoscaling.vertical.minAllowed.cpu }}
           memory: {{ .Values.autoscaling.vertical.minAllowed.memory }}

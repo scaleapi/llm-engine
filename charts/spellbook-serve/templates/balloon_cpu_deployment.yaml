@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: spellbook-serve-balloon-cpu
+  name: llm-engine-balloon-cpu
   labels:
     team: infra
     product: common-warm-nodes
@@ -10,12 +10,12 @@ spec:
   replicas: {{ .Values.replicaCount.balloonCpu }}
   selector:
     matchLabels:
-      app: spellbook-serve-balloon-cpu
+      app: llm-engine-balloon-cpu
       version: v1
   template:
     metadata:
       labels:
-        app: spellbook-serve-balloon-cpu
+        app: llm-engine-balloon-cpu
         product: common-warm-nodes
         team: infra
         env: {{ .Values.context }}
@@ -38,5 +38,5 @@ spec:
             - -c
             - "while true; do sleep 30; done"
       terminationGracePeriodSeconds: 0
-      priorityClassName: spellbook-serve-low-priority
+      priorityClassName: llm-engine-low-priority
 {{- end }}

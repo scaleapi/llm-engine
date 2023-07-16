@@ -1,6 +1,6 @@
 from typing import Any, Tuple
 
-from spellbook_serve.domain.entities import ModelBundle, ModelEndpoint
+from llm_engine_server.domain.entities import ModelBundle, ModelEndpoint
 
 
 def test_model_endpoints_schema_success(

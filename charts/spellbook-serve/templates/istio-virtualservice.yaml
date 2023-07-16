@@ -1,11 +1,11 @@
 {{- if .Values.virtualservice.enabled -}}
-{{- $fullName := include "spellbookServe.fullname" . -}}
+{{- $fullName := include "llmEngine.fullname" . -}}
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "spellbookServe.labels" . | nindent 4 }}
+    {{- include "llmEngine.labels" . | nindent 4 }}
   {{- with .Values.virtualservice.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}

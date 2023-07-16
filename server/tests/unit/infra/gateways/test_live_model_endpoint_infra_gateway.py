@@ -3,8 +3,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from spellbook_serve.domain.entities import ModelEndpoint
-from spellbook_serve.infra.gateways import (
+from llm_engine_server.domain.entities import ModelEndpoint
+from llm_engine_server.infra.gateways import (
     LiveModelEndpointInfraGateway,
     live_model_endpoint_infra_gateway,
 )

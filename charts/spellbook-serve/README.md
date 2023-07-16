@@ -1,3 +1,3 @@
-# Spellbook Serve Helm Chart
+# LLM Engine Helm Chart
 
-This chart contains k8s templates for deploying Spellbook Serve to a k8s cluster.
+This chart contains k8s templates for deploying LLM Engine to a k8s cluster.

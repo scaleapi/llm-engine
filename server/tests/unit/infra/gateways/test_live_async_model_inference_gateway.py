@@ -3,8 +3,8 @@ from typing import Any
 
 import pytest
 
-from spellbook_serve.common.dtos.tasks import GetAsyncTaskV1Response, TaskStatus
-from spellbook_serve.infra.gateways import LiveAsyncModelEndpointInferenceGateway
+from llm_engine_server.common.dtos.tasks import GetAsyncTaskV1Response, TaskStatus
+from llm_engine_server.infra.gateways import LiveAsyncModelEndpointInferenceGateway
 
 
 @pytest.fixture

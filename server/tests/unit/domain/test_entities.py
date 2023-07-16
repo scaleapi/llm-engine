@@ -1,6 +1,6 @@
 import pytest
 
-from spellbook_serve.domain.entities import (
+from llm_engine_server.domain.entities import (
     CallbackAuth,
     CallbackBasicAuth,
     ModelBundle,

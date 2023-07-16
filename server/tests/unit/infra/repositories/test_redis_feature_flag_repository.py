@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import aioredis
 import pytest
 
-from spellbook_serve.infra.repositories.redis_feature_flag_repository import (
+from llm_engine_server.infra.repositories.redis_feature_flag_repository import (
     RedisFeatureFlagRepository,
 )
 

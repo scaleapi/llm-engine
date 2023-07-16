@@ -3,21 +3,21 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from spellbook_serve.core.domain_exceptions import (
+from llm_engine_server.core.domain_exceptions import (
     ObjectAlreadyExistsException,
     ObjectNotFoundException,
 )
-from spellbook_serve.domain.entities import (
+from llm_engine_server.domain.entities import (
     ModelBundle,
     ModelEndpoint,
     ModelEndpointRecord,
     ModelEndpointStatus,
 )
-from spellbook_serve.domain.exceptions import (
+from llm_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
     ExistingEndpointOperationInProgressException,
 )
-from spellbook_serve.infra.services import LiveModelEndpointService
+from llm_engine_server.infra.services import LiveModelEndpointService
 
 
 async def _create_model_endpoint_helper(

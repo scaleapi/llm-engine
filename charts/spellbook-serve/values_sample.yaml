@@ -12,10 +12,10 @@ replicaCount:
 tag: 579319016a0d1ce7eaded5148c0059b2a1c86e41
 context: production
 image:
-  gatewayRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  builderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  cacherRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  forwarderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
+  gatewayRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/llm-engine
+  builderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/llm-engine
+  cacherRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/llm-engine
+  forwarderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/llm-engine
   pullPolicy: Always
 
 secrets:
@@ -75,12 +75,12 @@ config:
       docker_repo_prefix: "692474966980.dkr.ecr.us-west-2.amazonaws.com"
       redis_host: spellbook-prod-cache-001.nu2e0g.0001.usw2.cache.amazonaws.com
       s3_bucket: "scale-ml-egp-test"
-    spellbook_serve:
+    llm_engine:
       model_primitive_host: none
 
       # Endpoint config
       # K8s namespace the endpoints will be created in
-      endpoint_namespace: spellbook-serve
+      endpoint_namespace: llm-engine
 
       # Asynchronous endpoints
       sqs_profile: default
@@ -101,7 +101,7 @@ config:
             {
               "Effect": "Allow",
               "Principal": {
-                "AWS": "arn:aws:iam::985572151633:role/k8s-main-spellbook-serve"
+                "AWS": "arn:aws:iam::985572151633:role/k8s-main-llm-engine"
               },
               "Action": "sqs:*",
               "Resource": "arn:aws:sqs:us-west-2:985572151633:${queue_name}"
@@ -122,7 +122,7 @@ config:
 # Service Account
 serviceAccount:
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::985572151633:role/k8s-main-spellbook-serve
+    eks.amazonaws.com/role-arn: arn:aws:iam::985572151633:role/k8s-main-llm-engine
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-2"
   namespaces: []

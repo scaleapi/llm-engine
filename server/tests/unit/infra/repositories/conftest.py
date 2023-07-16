@@ -4,10 +4,10 @@ from typing import Callable, Optional, Union
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from spellbook_serve.db.models import BatchJob, Bundle
-from spellbook_serve.db.models import DockerImageBatchJobBundle as OrmDockerImageBatchJobBundle
-from spellbook_serve.db.models import Endpoint
-from spellbook_serve.domain.entities import (
+from llm_engine_server.db.models import BatchJob, Bundle
+from llm_engine_server.db.models import DockerImageBatchJobBundle as OrmDockerImageBatchJobBundle
+from llm_engine_server.db.models import Endpoint
+from llm_engine_server.domain.entities import (
     BatchJobRecord,
     GpuType,
     ModelBundle,

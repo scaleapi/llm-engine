@@ -1,6 +1,6 @@
 import pytest
 
-from spellbook_serve.infra.services.model_endpoint_cache_service import (
+from llm_engine_server.infra.services.model_endpoint_cache_service import (
     ModelEndpointCacheWriteService,
 )
 

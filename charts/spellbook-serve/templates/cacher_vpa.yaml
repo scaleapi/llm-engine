@@ -2,19 +2,19 @@
 apiVersion: "autoscaling.k8s.io/v1"
 kind: VerticalPodAutoscaler
 metadata:
-  name: {{ include "spellbookServe.cachername" . }}
+  name: {{ include "llmEngine.cachername" . }}
   labels:
-    {{- include "spellbookServe.labels" . | nindent 4 }}
+    {{- include "llmEngine.labels" . | nindent 4 }}
 spec:
   targetRef:
     apiVersion: "apps/v1"
     kind: Deployment
-    name: {{ include "spellbookServe.cachername" . }}
+    name: {{ include "llmEngine.cachername" . }}
   updatePolicy:
     updateMode: "Auto"
   resourcePolicy:
     containerPolicies:
-      - containerName: {{ include "spellbookServe.cachername" . }}
+      - containerName: {{ include "llmEngine.cachername" . }}
         minAllowed:
           cpu: {{ .Values.autoscaling.vertical.minAllowed.cpu }}
           memory: {{ .Values.autoscaling.vertical.minAllowed.memory }}

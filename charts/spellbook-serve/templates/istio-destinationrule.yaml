@@ -1,11 +1,11 @@
 {{- if .Values.destinationrule.enabled -}}
-{{- $fullName := include "spellbookServe.fullname" . -}}
+{{- $fullName := include "llmEngine.fullname" . -}}
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "spellbookServe.labels" . | nindent 4}}
+    {{- include "llmEngine.labels" . | nindent 4}}
   {{- with .Values.destinationrule.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}

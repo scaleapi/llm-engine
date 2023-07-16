@@ -10,9 +10,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from spellbook_serve.db.base import Session, SessionAsync
-from spellbook_serve.db.local_setup import init_database, init_database_and_engine
-from spellbook_serve.db.models import (
+from llm_engine_server.db.base import Session, SessionAsync
+from llm_engine_server.db.local_setup import init_database, init_database_and_engine
+from llm_engine_server.db.models import (
     BatchJob,
     Bundle,
     DockerImageBatchJobBundle,
@@ -392,7 +392,7 @@ async def model_versions(
     model_version2 = ModelVersion(
         model_id=models[0].id,
         version_number=1,
-        spellbook_serve_model_bundle_id=bundles[0].id,
+        llm_engine_model_bundle_id=bundles[0].id,
         tags=["test_tag_1", "test_tag_3"],
         metadata={"key1": "value2"},
         created_by="test_user_id_1",
@@ -400,7 +400,7 @@ async def model_versions(
     model_version3 = ModelVersion(
         model_id=models[2].id,
         version_number=0,
-        spellbook_serve_model_bundle_id=bundles[1].id,
+        llm_engine_model_bundle_id=bundles[1].id,
         nucleus_model_id="test_nucleus_model_id_1",
         tags=["test_tag_1", "test_tag_2"],
         metadata={"key2": "value3"},

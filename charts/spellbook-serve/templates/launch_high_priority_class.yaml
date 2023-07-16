@@ -2,7 +2,7 @@
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
-  name: "{{ include "spellbookServe.fullname" . }}-high-priority"
+  name: "{{ include "llmEngine.fullname" . }}-high-priority"
 value: 100000
-description: "High Priority Class for SpellbookServe"
+description: "High Priority Class for LLMEngine"
 {{- end }}

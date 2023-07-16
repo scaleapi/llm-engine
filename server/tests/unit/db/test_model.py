@@ -1,7 +1,7 @@
 from typing import List
 
-from spellbook_serve.db.base import Session
-from spellbook_serve.db.models import Bundle, Model, ModelArtifact, ModelVersion
+from llm_engine_server.db.base import Session
+from llm_engine_server.db.models import Bundle, Model, ModelArtifact, ModelVersion
 
 
 def test_model_select(dbsession: Session, models: List[Model]):
@@ -65,11 +65,11 @@ def test_model_version_select_by_model_id(
     models: List[Model],
     model_versions: List[ModelVersion],
 ):
-    model_version_by_bundle_id = ModelVersion.select_by_spellbook_serve_model_bundle_id(
+    model_version_by_bundle_id = ModelVersion.select_by_llm_engine_model_bundle_id(
         dbsession, bundles[0].id
     )
     assert model_version_by_bundle_id is not None
-    assert model_version_by_bundle_id.spellbook_serve_model_bundle_id == bundles[0].id
+    assert model_version_by_bundle_id.llm_engine_model_bundle_id == bundles[0].id
 
     model_version_by_nucleus_model_id = ModelVersion.select_by_nucleus_model_id(
         dbsession, model_versions[2].nucleus_model_id  # type: ignore

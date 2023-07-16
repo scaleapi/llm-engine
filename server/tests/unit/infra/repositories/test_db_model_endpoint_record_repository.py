@@ -6,13 +6,13 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from spellbook_serve.common.dtos.model_endpoints import ModelEndpointOrderBy
-from spellbook_serve.core.domain_exceptions import ReadOnlyDatabaseException
-from spellbook_serve.db.models import Bundle, Endpoint
-from spellbook_serve.domain.entities import ModelEndpointRecord
-from spellbook_serve.infra.gateways import FakeMonitoringMetricsGateway
-from spellbook_serve.infra.repositories import db_model_endpoint_record_repository
-from spellbook_serve.infra.repositories.db_model_endpoint_record_repository import (
+from llm_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
+from llm_engine_server.core.domain_exceptions import ReadOnlyDatabaseException
+from llm_engine_server.db.models import Bundle, Endpoint
+from llm_engine_server.domain.entities import ModelEndpointRecord
+from llm_engine_server.infra.gateways import FakeMonitoringMetricsGateway
+from llm_engine_server.infra.repositories import db_model_endpoint_record_repository
+from llm_engine_server.infra.repositories.db_model_endpoint_record_repository import (
     DbModelEndpointRecordRepository,
     OrmModelEndpoint,
 )
@@ -141,7 +141,7 @@ async def test_list_llm_model_endpoint_records(
     orm_model_bundle: Bundle,
     fake_monitoring_metrics_gateway: FakeMonitoringMetricsGateway,
 ):
-    filter_content = "endpoint_metadata ? '_llm' AND spellbook_serve.endpoints.name = :name_1 AND (spellbook_serve.endpoints.owner = :owner_1 OR spellbook_serve.endpoints.public_inference = true)"
+    filter_content = "endpoint_metadata ? '_llm' AND llm_engine.endpoints.name = :name_1 AND (llm_engine.endpoints.owner = :owner_1 OR llm_engine.endpoints.public_inference = true)"
 
     def mock_llm_model_endpoint_select_all_by_filters(
         session: AsyncSession, filters: Any
@@ -170,7 +170,7 @@ async def test_list_llm_model_endpoint_records(
         order_by=ModelEndpointOrderBy.NEWEST,
     )
 
-    filter_content = "endpoint_metadata ? '_llm' AND (spellbook_serve.endpoints.owner = :owner_1 OR spellbook_serve.endpoints.public_inference = true)"
+    filter_content = "endpoint_metadata ? '_llm' AND (llm_engine.endpoints.owner = :owner_1 OR llm_engine.endpoints.public_inference = true)"
     await repo.list_llm_model_endpoint_records(
         owner="test_user_id",
         name=None,

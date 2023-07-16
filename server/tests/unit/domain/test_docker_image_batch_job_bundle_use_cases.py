@@ -1,17 +1,17 @@
 import pytest
 
-from spellbook_serve.common.dtos.batch_jobs import (
+from llm_engine_server.common.dtos.batch_jobs import (
     CreateDockerImageBatchJobBundleV1Request,
     CreateDockerImageBatchJobBundleV1Response,
 )
-from spellbook_serve.common.dtos.model_bundles import ModelBundleOrderBy
-from spellbook_serve.core.auth.authentication_repository import User
-from spellbook_serve.core.domain_exceptions import (
+from llm_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
+from llm_engine_server.core.auth.authentication_repository import User
+from llm_engine_server.core.domain_exceptions import (
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from spellbook_serve.domain.repositories import DockerImageBatchJobBundleRepository
-from spellbook_serve.domain.use_cases.docker_image_batch_job_bundle_use_cases import (
+from llm_engine_server.domain.repositories import DockerImageBatchJobBundleRepository
+from llm_engine_server.domain.use_cases.docker_image_batch_job_bundle_use_cases import (
     CreateDockerImageBatchJobBundleV1UseCase,
     GetDockerImageBatchJobBundleByIdV1UseCase,
     GetLatestDockerImageBatchJobBundleByNameV1UseCase,

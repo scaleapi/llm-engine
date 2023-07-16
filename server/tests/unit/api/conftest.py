@@ -6,16 +6,16 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBasicCredentials
 from fastapi.testclient import TestClient
 
-from spellbook_serve.api.app import app
-from spellbook_serve.api.dependencies import (
+from llm_engine_server.api.app import app
+from llm_engine_server.api.dependencies import (
     AUTH,
     get_external_interfaces,
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from spellbook_serve.core.auth.authentication_repository import AuthenticationRepository, User
-from spellbook_serve.core.auth.fake_authentication_repository import FakeAuthenticationRepository
-from spellbook_serve.domain.entities import (
+from llm_engine_server.core.auth.authentication_repository import AuthenticationRepository, User
+from llm_engine_server.core.auth.fake_authentication_repository import FakeAuthenticationRepository
+from llm_engine_server.domain.entities import (
     BatchJob,
     BatchJobProgress,
     BatchJobRecord,
@@ -42,8 +42,8 @@ from spellbook_serve.domain.entities import (
     TensorflowFramework,
     ZipArtifactFlavor,
 )
-from spellbook_serve.domain.entities.batch_job_entity import DockerImageBatchJob
-from spellbook_serve.domain.entities.docker_image_batch_job_bundle_entity import (
+from llm_engine_server.domain.entities.batch_job_entity import DockerImageBatchJob
+from llm_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
     DockerImageBatchJobBundle,
 )
 

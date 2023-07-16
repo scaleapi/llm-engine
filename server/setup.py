@@ -8,12 +8,12 @@ setup(
     install_requires=[],
     entry_points={
         "console_scripts": [
-            "start-service-builder=spellbook_serve.start_service_builder:entrypoint",
-            "start-server=spellbook_serve.start_server:entrypoint",
-            "start-fastapi-server=spellbook_serve.entrypoints.start_fastapi_server:entrypoint",
-            "start-batch-job-orchestration=spellbook_serve.entrypoints.start_batch_job_orchestration:entrypoint",
-            "hosted-inference-server=spellbook_serve.entrypoints.hosted_inference_server:entrypoint",
-            "autogen=spellbook_serve.scripts.autogenerate_client_and_docs:entrypoint",
+            "start-service-builder=llm_engine_server.start_service_builder:entrypoint",
+            "start-server=llm_engine_server.start_server:entrypoint",
+            "start-fastapi-server=llm_engine_server.entrypoints.start_fastapi_server:entrypoint",
+            "start-batch-job-orchestration=llm_engine_server.entrypoints.start_batch_job_orchestration:entrypoint",
+            "hosted-inference-server=llm_engine_server.entrypoints.hosted_inference_server:entrypoint",
+            "autogen=llm_engine_server.scripts.autogenerate_client_and_docs:entrypoint",
         ],
     },
 )

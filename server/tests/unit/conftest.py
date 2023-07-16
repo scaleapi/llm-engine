@@ -18,34 +18,34 @@ from uuid import uuid4
 
 import pytest
 
-from spellbook_serve.api.dependencies import ExternalInterfaces
-from spellbook_serve.common.constants import DEFAULT_CELERY_TASK_NAME
-from spellbook_serve.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
-from spellbook_serve.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
-from spellbook_serve.common.dtos.endpoint_builder import BuildEndpointRequest
-from spellbook_serve.common.dtos.model_bundles import ModelBundleOrderBy
-from spellbook_serve.common.dtos.model_endpoints import (
+from llm_engine_server.api.dependencies import ExternalInterfaces
+from llm_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME
+from llm_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
+from llm_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
+from llm_engine_server.common.dtos.endpoint_builder import BuildEndpointRequest
+from llm_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
+from llm_engine_server.common.dtos.model_endpoints import (
     BrokerType,
     CpuSpecificationType,
     GpuType,
     ModelEndpointOrderBy,
     StorageSpecificationType,
 )
-from spellbook_serve.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
-from spellbook_serve.common.dtos.tasks import (
+from llm_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
+from llm_engine_server.common.dtos.tasks import (
     CreateAsyncTaskV1Response,
     EndpointPredictV1Request,
     GetAsyncTaskV1Response,
     SyncEndpointPredictV1Response,
     TaskStatus,
 )
-from spellbook_serve.common.settings import generate_destination
-from spellbook_serve.core.domain_exceptions import ObjectNotFoundException
-from spellbook_serve.core.fake_notification_gateway import FakeNotificationGateway
-from spellbook_serve.db.endpoint_row_lock import get_lock_key
-from spellbook_serve.db.models import BatchJob as OrmBatchJob
-from spellbook_serve.db.models import Endpoint as OrmModelEndpoint
-from spellbook_serve.domain.entities import (
+from llm_engine_server.common.settings import generate_destination
+from llm_engine_server.core.domain_exceptions import ObjectNotFoundException
+from llm_engine_server.core.fake_notification_gateway import FakeNotificationGateway
+from llm_engine_server.db.endpoint_row_lock import get_lock_key
+from llm_engine_server.db.models import BatchJob as OrmBatchJob
+from llm_engine_server.db.models import Endpoint as OrmModelEndpoint
+from llm_engine_server.domain.entities import (
     BatchJob,
     BatchJobProgress,
     BatchJobRecord,
@@ -77,57 +77,57 @@ from spellbook_serve.domain.entities import (
     TritonEnhancedRunnableImageFlavor,
     ZipArtifactFlavor,
 )
-from spellbook_serve.domain.entities.batch_job_entity import DockerImageBatchJob
-from spellbook_serve.domain.entities.docker_image_batch_job_bundle_entity import (
+from llm_engine_server.domain.entities.batch_job_entity import DockerImageBatchJob
+from llm_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
     DockerImageBatchJobBundle,
 )
-from spellbook_serve.domain.exceptions import EndpointResourceInfraException
-from spellbook_serve.domain.gateways import (
+from llm_engine_server.domain.exceptions import EndpointResourceInfraException
+from llm_engine_server.domain.gateways import (
     AsyncModelEndpointInferenceGateway,
     DockerImageBatchJobGateway,
     StreamingModelEndpointInferenceGateway,
     SyncModelEndpointInferenceGateway,
     TaskQueueGateway,
 )
-from spellbook_serve.domain.repositories import (
+from llm_engine_server.domain.repositories import (
     DockerImageBatchJobBundleRepository,
     DockerRepository,
     ModelBundleRepository,
 )
-from spellbook_serve.domain.services import LLMModelEndpointService, ModelEndpointService
-from spellbook_serve.infra.gateways import (
+from llm_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
+from llm_engine_server.infra.gateways import (
     BatchJobOrchestrationGateway,
     FilesystemGateway,
     LiveBatchJobProgressGateway,
     LiveModelEndpointsSchemaGateway,
     ModelEndpointInfraGateway,
 )
-from spellbook_serve.infra.gateways.fake_model_primitive_gateway import FakeModelPrimitiveGateway
-from spellbook_serve.infra.gateways.fake_monitoring_metrics_gateway import (
+from llm_engine_server.infra.gateways.fake_model_primitive_gateway import FakeModelPrimitiveGateway
+from llm_engine_server.infra.gateways.fake_monitoring_metrics_gateway import (
     FakeMonitoringMetricsGateway,
 )
-from spellbook_serve.infra.gateways.resources.endpoint_resource_gateway import (
+from llm_engine_server.infra.gateways.resources.endpoint_resource_gateway import (
     EndpointResourceGateway,
     EndpointResourceGatewayCreateOrUpdateResourcesResponse,
     QueueInfo,
 )
-from spellbook_serve.infra.gateways.resources.image_cache_gateway import (
+from llm_engine_server.infra.gateways.resources.image_cache_gateway import (
     CachedImages,
     ImageCacheGateway,
 )
-from spellbook_serve.infra.repositories import (
+from llm_engine_server.infra.repositories import (
     BatchJobRecordRepository,
     FeatureFlagRepository,
     ModelEndpointCacheRepository,
     ModelEndpointRecordRepository,
 )
-from spellbook_serve.infra.repositories.db_model_bundle_repository import (
+from llm_engine_server.infra.repositories.db_model_bundle_repository import (
     translate_kwargs_to_model_bundle_orm,
     translate_model_bundle_orm_to_model_bundle,
 )
-from spellbook_serve.infra.services import LiveBatchJobService, LiveModelEndpointService
-from spellbook_serve.infra.services.image_cache_service import ImageCacheService
-from spellbook_serve.infra.services.live_llm_model_endpoint_service import (
+from llm_engine_server.infra.services import LiveBatchJobService, LiveModelEndpointService
+from llm_engine_server.infra.services.image_cache_service import ImageCacheService
+from llm_engine_server.infra.services.live_llm_model_endpoint_service import (
     LiveLLMModelEndpointService,
 )
 

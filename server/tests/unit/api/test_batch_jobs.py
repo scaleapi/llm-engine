@@ -3,9 +3,9 @@ from typing import Any, Dict, Tuple
 import pytest
 from fastapi.testclient import TestClient
 
-from spellbook_serve.domain.entities import BatchJob, GpuType, ModelBundle, ModelEndpoint
-from spellbook_serve.domain.entities.batch_job_entity import DockerImageBatchJob
-from spellbook_serve.domain.entities.docker_image_batch_job_bundle_entity import (
+from llm_engine_server.domain.entities import BatchJob, GpuType, ModelBundle, ModelEndpoint
+from llm_engine_server.domain.entities.batch_job_entity import DockerImageBatchJob
+from llm_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
     DockerImageBatchJobBundle,
 )
 
@@ -34,32 +34,6 @@ def test_create_batch_job_success(
     )
     assert response.status_code == 200
     assert "job_id" in response.json()
-
-
-def test_create_batch_job_invalid_team_returns_400(
-    model_bundle_1_v1: Tuple[ModelBundle, Any],
-    create_batch_job_request: Dict[str, Any],
-    test_api_key: str,
-    get_test_client_wrapper,
-):
-    client = get_test_client_wrapper(
-        fake_docker_repository_image_always_exists=True,
-        fake_model_bundle_repository_contents={
-            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
-        },
-        fake_model_endpoint_record_repository_contents={},
-        fake_model_endpoint_infra_gateway_contents={},
-        fake_batch_job_record_repository_contents={},
-        fake_batch_job_progress_gateway_contents={},
-        fake_docker_image_batch_job_bundle_repository_contents={},
-    )
-    create_batch_job_request["labels"]["team"] = "invalid_team"
-    response = client.post(
-        "/v1/batch-jobs",
-        auth=(test_api_key, ""),
-        json=create_batch_job_request,
-    )
-    assert response.status_code == 400
 
 
 def test_create_batch_job_bundle_not_found_returns_404(

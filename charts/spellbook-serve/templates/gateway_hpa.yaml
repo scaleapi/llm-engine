@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "spellbookServe.fullname" . }}
+  name: {{ include "llmEngine.fullname" . }}
   labels:
-    {{- include "spellbookServe.labels" . | nindent 4 }}
+    {{- include "llmEngine.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "spellbookServe.fullname" . }}
+    name: {{ include "llmEngine.fullname" . }}
   minReplicas: {{ .Values.autoscaling.horizontal.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.horizontal.maxReplicas }}
   metrics:

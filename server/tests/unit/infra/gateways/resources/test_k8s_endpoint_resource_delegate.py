@@ -5,28 +5,28 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from kubernetes_asyncio.client.rest import ApiException
 
-from spellbook_serve.common.config import hmi_config
-from spellbook_serve.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
-from spellbook_serve.domain.entities import (
+from llm_engine_server.common.config import hmi_config
+from llm_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
+from llm_engine_server.domain.entities import (
     ModelEndpointConfig,
     ModelEndpointType,
     ModelEndpointUserConfigState,
 )
-from spellbook_serve.domain.exceptions import EndpointResourceInfraException
-from spellbook_serve.infra.gateways.resources.k8s_endpoint_resource_delegate import (
+from llm_engine_server.domain.exceptions import EndpointResourceInfraException
+from llm_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     DATADOG_ENV_VAR,
     K8SEndpointResourceDelegate,
     add_datadog_env_to_main_container,
     get_main_container_from_deployment_template,
     load_k8s_yaml,
 )
-from spellbook_serve.infra.gateways.resources.k8s_resource_types import (
+from llm_engine_server.infra.gateways.resources.k8s_resource_types import (
     DictStrInt,
     DictStrStr,
     ResourceArguments,
 )
 
-MODULE_PATH = "spellbook_serve.infra.gateways.resources.k8s_endpoint_resource_delegate"
+MODULE_PATH = "llm_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate"
 
 
 @dataclass
@@ -180,7 +180,7 @@ def _verify_deployment_labels(
     git_tag = "54f8f73bfb1cce62a2b42326ccf9f49b5b145126"
 
     k8s_resource_group_name = (
-        f"spellbook-serve-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
+        f"llm-engine-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
     )
 
     assert body["metadata"]["name"] == k8s_resource_group_name
@@ -192,7 +192,7 @@ def _verify_deployment_labels(
         "user_id": user_id,
         "endpoint_id": model_endpoint_record.id,
         "endpoint_name": endpoint_name,
-        "managed-by": "spellbook-serve",
+        "managed-by": "llm-engine",
         "owner": user_id,
         "team": labels["team"],
         "product": labels["product"],
@@ -200,7 +200,7 @@ def _verify_deployment_labels(
         "tags.datadoghq.com/env": env,
         "tags.datadoghq.com/service": endpoint_name,
         "tags.datadoghq.com/version": git_tag,
-        "use_scale_spellbook_serve_endpoint_network_policy": "true",
+        "use_scale_llm_engine_endpoint_network_policy": "true",
     }
     assert body["metadata"]["labels"] == expected_labels
 
@@ -210,7 +210,7 @@ def _verify_deployment_labels(
         "user_id": user_id,
         "endpoint_id": model_endpoint_record.id,
         "endpoint_name": endpoint_name,
-        "managed-by": "spellbook-serve",
+        "managed-by": "llm-engine",
         "owner": user_id,
         "team": labels["team"],
         "product": labels["product"],
@@ -219,7 +219,7 @@ def _verify_deployment_labels(
         "tags.datadoghq.com/env": env,
         "tags.datadoghq.com/service": endpoint_name,
         "tags.datadoghq.com/version": git_tag,
-        "use_scale_spellbook_serve_endpoint_network_policy": "true",
+        "use_scale_llm_engine_endpoint_network_policy": "true",
     }
 
     if model_endpoint_record.endpoint_type == ModelEndpointType.ASYNC:
@@ -241,7 +241,7 @@ def _verify_non_deployment_labels(
     git_tag = "54f8f73bfb1cce62a2b42326ccf9f49b5b145126"
 
     k8s_resource_group_name = (
-        f"spellbook-serve-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
+        f"llm-engine-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
     )
 
     assert k8s_resource_group_name in body["metadata"]["name"]
@@ -250,7 +250,7 @@ def _verify_non_deployment_labels(
 
     expected_labels = {
         "created_by": user_id,
-        "managed-by": "spellbook-serve",
+        "managed-by": "llm-engine",
         "owner": user_id,
         "user_id": user_id,
         "endpoint_id": model_endpoint_record.id,
@@ -261,7 +261,7 @@ def _verify_non_deployment_labels(
         "tags.datadoghq.com/env": env,
         "tags.datadoghq.com/service": endpoint_name,
         "tags.datadoghq.com/version": git_tag,
-        "use_scale_spellbook_serve_endpoint_network_policy": "true",
+        "use_scale_llm_engine_endpoint_network_policy": "true",
     }
     assert body["metadata"]["labels"] == expected_labels
 
@@ -563,7 +563,7 @@ async def test_get_resources_async_success(
         Mock(return_value=FakeK8sDeploymentContainer(env=[])),
     )
     k8s_endpoint_resource_delegate.__setattr__(
-        "_get_spellbook_serve_container",
+        "_get_llm_engine_container",
         Mock(
             return_value=FakeK8sDeploymentContainer(
                 env=[FakeK8sEnvVar(name="PREWARM", value="true")]
@@ -621,7 +621,7 @@ async def test_get_resources_sync_success(
         "_get_main_container", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
     )
     k8s_endpoint_resource_delegate.__setattr__(
-        "_get_spellbook_serve_container", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
+        "_get_llm_engine_container", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
     )
     k8s_endpoint_resource_delegate.__setattr__(
         "_translate_k8s_config_maps_to_user_config_data",

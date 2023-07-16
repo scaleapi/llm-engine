@@ -1,5 +1,5 @@
-from spellbook_serve.domain.entities import BatchJobProgress
-from spellbook_serve.infra.gateways import LiveBatchJobProgressGateway
+from llm_engine_server.domain.entities import BatchJobProgress
+from llm_engine_server.infra.gateways import LiveBatchJobProgressGateway
 
 
 def test_get_progress_empty(test_api_key: str, fake_filesystem_gateway):

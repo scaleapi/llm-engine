@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "spellbookServe.name" -}}
+{{- define "llmEngine.name" -}}
 {{- default .Chart.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 40 chars because some Kubernetes name fields are limited to 63 (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "spellbookServe.fullname" -}}
+{{- define "llmEngine.fullname" -}}
 {{- if .Values.serviceIdentifier }}
 {{- printf "%s-%s" .Chart.Name .Values.serviceIdentifier | trunc 40 | trimSuffix "-" }}
 {{- else }}
@@ -18,73 +18,73 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 {{- end }}
 
-{{- define "spellbookServe.buildername" -}}
-"{{ include "spellbookServe.fullname" . }}-endpoint-builder"
+{{- define "llmEngine.buildername" -}}
+"{{ include "llmEngine.fullname" . }}-endpoint-builder"
 {{- end }}
 
-{{- define "spellbookServe.cachername" -}}
-"{{ include "spellbookServe.fullname" . }}-cacher"
+{{- define "llmEngine.cachername" -}}
+"{{ include "llmEngine.fullname" . }}-cacher"
 {{- end }}
 
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "spellbookServe.chart" -}}
+{{- define "llmEngine.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "spellbookServe.labels" -}}
+{{- define "llmEngine.labels" -}}
 team: infra
-product: spellbook-serve
-helm.sh/chart: {{ include "spellbookServe.chart" . }}
+product: llm-engine
+helm.sh/chart: {{ include "llmEngine.chart" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/version: {{ .Values.tag }}
 tags.datadoghq.com/version: {{ .Values.tag }}
 tags.datadoghq.com/env: {{ .Values.context }}
 {{- end }}
 
-{{- define "spellbookServe.selectorLabels.builder" -}}
-app: {{ include "spellbookServe.buildername" . }}
+{{- define "llmEngine.selectorLabels.builder" -}}
+app: {{ include "llmEngine.buildername" . }}
 {{- end }}
 
-{{- define "spellbookServe.selectorLabels.cacher" -}}
-app: {{ include "spellbookServe.cachername" . }}
+{{- define "llmEngine.selectorLabels.cacher" -}}
+app: {{ include "llmEngine.cachername" . }}
 {{- end }}
 
-{{- define "spellbookServe.selectorLabels.gateway" -}}
-app: {{ include "spellbookServe.fullname" . -}}
+{{- define "llmEngine.selectorLabels.gateway" -}}
+app: {{ include "llmEngine.fullname" . -}}
 {{- end }}
 
-{{- define "spellbookServe.baseTemplateLabels" -}}
+{{- define "llmEngine.baseTemplateLabels" -}}
 user_id: ${OWNER}
 team: ${TEAM}
 product: ${PRODUCT}
 created_by: ${CREATED_BY}
 owner: ${OWNER}
 env: {{- .Values.context | printf " %s" }}
-managed-by: {{- include "spellbookServe.fullname" . | printf " %s\n" -}}
-use_scale_spellbook_serve_endpoint_network_policy: "true"
+managed-by: {{- include "llmEngine.fullname" . | printf " %s\n" -}}
+use_scale_llm_engine_endpoint_network_policy: "true"
 tags.datadoghq.com/env: {{- .Values.context | printf " %s" }}
 tags.datadoghq.com/version: {{- .Values.tag | printf " %s" }}
 {{- end }}
 
-{{- define "spellbookServe.serviceTemplateLabels" -}}
-{{- include "spellbookServe.baseTemplateLabels" . | printf "%s\n" -}}
+{{- define "llmEngine.serviceTemplateLabels" -}}
+{{- include "llmEngine.baseTemplateLabels" . | printf "%s\n" -}}
 tags.datadoghq.com/service: ${ENDPOINT_NAME}
 endpoint_id: ${ENDPOINT_ID}
 endpoint_name: ${ENDPOINT_NAME}
 {{- end }}
 
-{{- define "spellbookServe.jobTemplateLabels" -}}
-{{- include "spellbookServe.baseTemplateLabels" . | printf "%s\n" -}}
-spellbook_serve_job_id: ${JOB_ID}
+{{- define "llmEngine.jobTemplateLabels" -}}
+{{- include "llmEngine.baseTemplateLabels" . | printf "%s\n" -}}
+llm_engine_job_id: ${JOB_ID}
 tags.datadoghq.com/service: ${JOB_ID}
 {{- end }}
 
-{{- define "spellbookServe.serviceTemplateAsyncAnnotations" -}}
+{{- define "llmEngine.serviceTemplateAsyncAnnotations" -}}
 celery.scaleml.autoscaler/queue: ${QUEUE}
 celery.scaleml.autoscaler/broker: ${BROKER_NAME}
 celery.scaleml.autoscaler/taskVisibility: "VISIBILITY_24H"
@@ -93,7 +93,7 @@ celery.scaleml.autoscaler/minWorkers: "${MIN_WORKERS}"
 celery.scaleml.autoscaler/maxWorkers: "${MAX_WORKERS}"
 {{- end }}
 
-{{- define "spellbookServe.serviceTemplateAffinity" -}}
+{{- define "llmEngine.serviceTemplateAffinity" -}}
 podAffinity:
   preferredDuringSchedulingIgnoredDuringExecution:
   - weight: 1
@@ -116,7 +116,7 @@ podAffinity:
       topologyKey: kubernetes.io/hostname
 {{- end }}
 
-{{- define "spellbookServe.baseServiceTemplateEnv" -}}
+{{- define "llmEngine.baseServiceTemplateEnv" -}}
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "${DATADOG_TRACE_ENABLED}"
@@ -150,20 +150,20 @@ env:
     value: "${PREWARM}"
   - name: ML_INFRA_SERVICES_CONFIG_PATH
   {{- if .Values.config.file }}
-    value: "${BASE_PATH}/ml_infra_core/spellbook_serve.core/spellbook_serve.core/configs/{{ .Values.config.file.infra }}"
+    value: "${BASE_PATH}/ml_infra_core/llm_engine.core/llm_engine.core/configs/{{ .Values.config.file.infra }}"
   {{- else }}
-    value: "${BASE_PATH}/ml_infra_core/spellbook_serve.core/spellbook_serve.core/configs/config.yaml"
+    value: "${BASE_PATH}/ml_infra_core/llm_engine.core/llm_engine.core/configs/config.yaml"
   {{- end }}
 {{- end }}
 
-{{- define "spellbookServe.syncServiceTemplateEnv" -}}
-{{- include "spellbookServe.baseServiceTemplateEnv" . }}
+{{- define "llmEngine.syncServiceTemplateEnv" -}}
+{{- include "llmEngine.baseServiceTemplateEnv" . }}
   - name: PORT
     value: "${ARTIFACT_LIKE_CONTAINER_PORT}"
 {{- end }}
 
-{{- define "spellbookServe.asyncServiceTemplateEnv" -}}
-{{- include "spellbookServe.baseServiceTemplateEnv" . }}
+{{- define "llmEngine.asyncServiceTemplateEnv" -}}
+{{- include "llmEngine.baseServiceTemplateEnv" . }}
   - name: CELERY_S3_BUCKET
     value: "${CELERY_S3_BUCKET}"
   - name: BROKER_TYPE
@@ -176,7 +176,7 @@ env:
     value: "${SQS_QUEUE_URL}"
 {{- end }}
 
-{{- define "spellbookServe.baseForwarderTemplateEnv" -}}
+{{- define "llmEngine.baseForwarderTemplateEnv" -}}
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "${DATADOG_TRACE_ENABLED}"
@@ -198,22 +198,22 @@ env:
     value: "/workspace"
   - name: ML_INFRA_SERVICES_CONFIG_PATH
   {{- if .Values.config.file }}
-    value: "/workspace/ml_infra_core/spellbook_serve.core/spellbook_serve.core/configs/{{ .Values.config.file.infra }}"
+    value: "/workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs/{{ .Values.config.file.infra }}"
   {{- else }}
-    value: "/workspace/ml_infra_core/spellbook_serve.core/spellbook_serve.core/configs/config.yaml"
+    value: "/workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs/config.yaml"
   {{- end }}
 {{- end }}
 
-{{- define "spellbookServe.syncForwarderTemplateEnv" -}}
-{{- include "spellbookServe.baseForwarderTemplateEnv" . }}
+{{- define "llmEngine.syncForwarderTemplateEnv" -}}
+{{- include "llmEngine.baseForwarderTemplateEnv" . }}
 {{- if and .Values.forwarder .Values.forwarder.forceUseIPv4 }}
   - name: HTTP_HOST
     value: "0.0.0.0"
 {{- end }}
 {{- end }}
 
-{{- define "spellbookServe.asyncForwarderTemplateEnv" -}}
-{{- include "spellbookServe.baseForwarderTemplateEnv" . }}
+{{- define "llmEngine.asyncForwarderTemplateEnv" -}}
+{{- include "llmEngine.baseForwarderTemplateEnv" . }}
   - name: CELERY_QUEUE
     value: "${QUEUE}"
   - name: CELERY_TASK_VISIBILITY
@@ -222,7 +222,7 @@ env:
     value: "${CELERY_S3_BUCKET}"
 {{- end }}
 
-{{- define "spellbookServe.serviceEnv" }}
+{{- define "llmEngine.serviceEnv" }}
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "true"
@@ -260,88 +260,88 @@ env:
   {{- end }}
   {{- if .Values.config.file }}
   - name: DEPLOY_SERVICE_CONFIG_PATH
-    value: "/workspace/spellbook_serve/service_configs/{{ .Values.config.file.spellbook_serve }}"
+    value: "/workspace/llm_engine/service_configs/{{ .Values.config.file.llm_engine }}"
   - name: ML_INFRA_SERVICES_CONFIG_PATH
-    value: "/workspace/ml_infra_core/spellbook_serve.core/spellbook_serve.core/configs/{{ .Values.config.file.infra }}"
+    value: "/workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs/{{ .Values.config.file.infra }}"
   {{- else }}
   - name: DEPLOY_SERVICE_CONFIG_PATH
-    value: "/workspace/spellbook_serve/service_configs/service_config.yaml"
+    value: "/workspace/llm_engine/service_configs/service_config.yaml"
   - name: ML_INFRA_SERVICES_CONFIG_PATH
-    value: "/workspace/ml_infra_core/spellbook_serve.core/spellbook_serve.core/configs/config.yaml"
+    value: "/workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs/config.yaml"
   {{- end }}
   - name: CELERY_ELASTICACHE_ENABLED
     value: "true"
-  - name: SPELLBOOK_SERVE_SERVICE_TEMPLATE_FOLDER
-    value: "/workspace/spellbook_serve/spellbook_serve/infra/gateways/resources/templates"
+  - name: LLM_ENGINE_SERVICE_TEMPLATE_FOLDER
+    value: "/workspace/llm_engine/llm_engine/infra/gateways/resources/templates"
 {{- end }}
 
-{{- define "spellbookServe.gatewayEnv" }}
-{{- include "spellbookServe.serviceEnv" . }}
+{{- define "llmEngine.gatewayEnv" }}
+{{- include "llmEngine.serviceEnv" . }}
   - name: DD_SERVICE
-    value: {{- printf " %s" (include "spellbookServe.fullname" .) }}
+    value: {{- printf " %s" (include "llmEngine.fullname" .) }}
 {{- end }}
 
-{{- define "spellbookServe.builderEnv" }}
-{{- include "spellbookServe.serviceEnv" . }}
+{{- define "llmEngine.builderEnv" }}
+{{- include "llmEngine.serviceEnv" . }}
   - name: DD_SERVICE
-    value: {{- printf " %s" (include "spellbookServe.buildername" .) }}
+    value: {{- printf " %s" (include "llmEngine.buildername" .) }}
 {{- end }}
 
-{{- define "spellbookServe.cacherEnv" }}
-{{- include "spellbookServe.serviceEnv" . }}
+{{- define "llmEngine.cacherEnv" }}
+{{- include "llmEngine.serviceEnv" . }}
   - name: DD_SERVICE
-    value: {{- printf " %s" (include "spellbookServe.cachername" .) }}
+    value: {{- printf " %s" (include "llmEngine.cachername" .) }}
 {{- end }}
 
-{{- define "spellbookServe.volumes" }}
+{{- define "llmEngine.volumes" }}
 volumes:
   - name: dshm
     emptyDir:
       medium: Memory
   - name: service-template-config
     configMap:
-      name: {{ include "spellbookServe.fullname" . }}-service-template-config
+      name: {{ include "llmEngine.fullname" . }}-service-template-config
   {{- if .Values.aws }}
   - name: config-volume
     configMap:
       name: {{ .Values.aws.configMap.name }}
   {{- end }}
   {{- if .Values.config.values }}
-  - name: spellbook-serve-service-config-volume
+  - name: llm-engine-service-config-volume
     configMap:
-      name: {{ include "spellbookServe.fullname" . }}-service-config
+      name: {{ include "llmEngine.fullname" . }}-service-config
       items:
-        - key: spellbook_serve_service_config
+        - key: llm_engine_service_config
           path: service_config.yaml
   - name: infra-service-config-volume
     configMap:
-      name: {{ include "spellbookServe.fullname" . }}-service-config
+      name: {{ include "llmEngine.fullname" . }}-service-config
       items:
         - key: infra_service_config
           path: config.yaml
   {{- end }}
 {{- end }}
 
-{{- define "spellbookServe.volumeMounts" }}
+{{- define "llmEngine.volumeMounts" }}
 volumeMounts:
   - name: dshm
     mountPath: /dev/shm
   - name: service-template-config
-    mountPath: /workspace/spellbook_serve/spellbook_serve/infra/gateways/resources/templates
+    mountPath: /workspace/llm_engine/llm_engine/infra/gateways/resources/templates
   {{- if .Values.aws }}
   - name: config-volume
     mountPath: /root/.aws/config
     subPath: config
   {{- end }}
   {{- if .Values.config.values }}
-  - name: spellbook-serve-service-config-volume
-    mountPath: /workspace/spellbook_serve/service_configs
+  - name: llm-engine-service-config-volume
+    mountPath: /workspace/llm_engine/service_configs
   - name: infra-service-config-volume
-    mountPath: /workspace/ml_infra_core/spellbook_serve.core/spellbook_serve.core/configs
+    mountPath: /workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs
   {{- end }}
 {{- end }}
 
-{{- define "spellbookServe.forwarderVolumeMounts" }}
+{{- define "llmEngine.forwarderVolumeMounts" }}
 volumeMounts:
   - name: config-volume
     mountPath: /root/.aws/config
@@ -354,11 +354,11 @@ volumeMounts:
     subPath: raw_data
   {{- if .Values.config.values }}
   - name: infra-service-config-volume
-    mountPath: /workspace/ml_infra_core/spellbook_serve.core/spellbook_serve.core/configs
+    mountPath: /workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs
   {{- end }}
 {{- end }}
 
-{{- define "spellbookServe.serviceAccountNamespaces" }}
+{{- define "llmEngine.serviceAccountNamespaces" }}
 namespaces:
   - {{ .Release.Namespace }}
 {{- range .Values.serviceAccount.namespaces }}

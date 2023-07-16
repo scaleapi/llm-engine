@@ -1,6 +1,6 @@
 import pytest
 
-from spellbook_serve.common.dtos.model_endpoints import (
+from llm_engine_server.common.dtos.model_endpoints import (
     CreateModelEndpointV1Request,
     CreateModelEndpointV1Response,
     DeleteModelEndpointV1Response,
@@ -10,19 +10,18 @@ from spellbook_serve.common.dtos.model_endpoints import (
     UpdateModelEndpointV1Request,
     UpdateModelEndpointV1Response,
 )
-from spellbook_serve.core.auth.authentication_repository import User
-from spellbook_serve.core.domain_exceptions import (
+from llm_engine_server.core.auth.authentication_repository import User
+from llm_engine_server.core.domain_exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from spellbook_serve.domain.entities import ModelBundle, ModelEndpoint
-from spellbook_serve.domain.exceptions import (
+from llm_engine_server.domain.entities import ModelBundle, ModelEndpoint
+from llm_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointResourceInvalidRequestException,
 )
-from spellbook_serve.domain.use_cases.model_endpoint_use_cases import (
-    ALLOWED_TEAMS,
+from llm_engine_server.domain.use_cases.model_endpoint_use_cases import (
     CreateModelEndpointV1UseCase,
     DeleteModelEndpointByIdV1UseCase,
     GetModelEndpointByIdV1UseCase,
@@ -177,95 +176,6 @@ async def test_create_model_endpoint_use_case_raises_resource_request_exception(
     request = create_model_endpoint_request_async.copy()
     request.gpu_type = "invalid_gpu_type"
     with pytest.raises(EndpointResourceInvalidRequestException):
-        await use_case.execute(user=user, request=request)
-
-
-@pytest.mark.asyncio
-async def test_create_model_endpoint_use_case_raises_endpoint_labels_exception(
-    fake_model_bundle_repository,
-    fake_model_endpoint_service,
-    model_bundle_1: ModelBundle,
-    create_model_endpoint_request_async: CreateModelEndpointV1Request,
-):
-    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
-    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
-    use_case = CreateModelEndpointV1UseCase(
-        model_bundle_repository=fake_model_bundle_repository,
-        model_endpoint_service=fake_model_endpoint_service,
-    )
-    user_id = model_bundle_1.created_by
-    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
-
-    request = create_model_endpoint_request_async.copy()
-    request.labels = None  # type: ignore
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(user=user, request=request)
-
-    request = create_model_endpoint_request_async.copy()
-    request.labels = {}
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(user=user, request=request)
-
-    request = create_model_endpoint_request_async.copy()
-    request.labels = {"team": "infra"}
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(user=user, request=request)
-
-    request = create_model_endpoint_request_async.copy()
-    request.labels = {"product": "my_product"}
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(user=user, request=request)
-
-    request = create_model_endpoint_request_async.copy()
-    request.labels = {
-        "team": "infra",
-        "product": "my_product",
-        "user_id": "test_labels_user",
-    }
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(user=user, request=request)
-
-    request = create_model_endpoint_request_async.copy()
-    request.labels = {
-        "team": "infra",
-        "product": "my_product",
-        "endpoint_name": "test_labels_endpoint_name",
-    }
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(user=user, request=request)
-
-
-@pytest.mark.asyncio
-async def test_create_model_endpoint_use_case_invalid_team_raises_endpoint_labels_exception(
-    fake_model_bundle_repository,
-    fake_model_endpoint_service,
-    model_bundle_1: ModelBundle,
-    create_model_endpoint_request_async: CreateModelEndpointV1Request,
-):
-    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
-    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
-    use_case = CreateModelEndpointV1UseCase(
-        model_bundle_repository=fake_model_bundle_repository,
-        model_endpoint_service=fake_model_endpoint_service,
-    )
-    user_id = model_bundle_1.created_by
-    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
-
-    request = create_model_endpoint_request_async.copy()
-    request.labels = {
-        "team": "unknown_team",
-        "product": "my_product",
-    }
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(user=user, request=request)
-
-    for team in ALLOWED_TEAMS:
-        # Conversely, make sure that all the ALLOWED_TEAMS are, well, allowed.
-        request = create_model_endpoint_request_async.copy()
-        request.labels = {
-            "team": team,
-            "product": "my_product",
-        }
         await use_case.execute(user=user, request=request)
 
 
@@ -755,115 +665,6 @@ async def test_update_model_endpoint_raises_not_authorized(
             user=user2,
             model_endpoint_id=model_endpoint_1.record.id,
             request=update_model_endpoint_request,
-        )
-
-
-@pytest.mark.asyncio
-async def test_update_model_endpoint_raises_endpoint_labels_exception(
-    fake_model_bundle_repository,
-    fake_model_endpoint_service,
-    model_bundle_1: ModelBundle,
-    model_bundle_2: ModelBundle,
-    model_endpoint_1: ModelEndpoint,
-    update_model_endpoint_request: UpdateModelEndpointV1Request,
-):
-    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
-    fake_model_bundle_repository.add_model_bundle(model_bundle_2)
-    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
-    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
-    use_case = UpdateModelEndpointByIdV1UseCase(
-        model_bundle_repository=fake_model_bundle_repository,
-        model_endpoint_service=fake_model_endpoint_service,
-    )
-
-    request = update_model_endpoint_request.copy()
-    request.labels = {"team": "infra"}
-    user_id = model_endpoint_1.record.created_by
-    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(
-            user=user,
-            model_endpoint_id=model_endpoint_1.record.id,
-            request=request,
-        )
-
-    request = update_model_endpoint_request.copy()
-    request.labels = {"product": "my_product"}
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(
-            user=user,
-            model_endpoint_id=model_endpoint_1.record.id,
-            request=request,
-        )
-
-    request = update_model_endpoint_request.copy()
-    request.labels = {
-        "team": "infra",
-        "product": "my_product",
-        "user_id": "test_labels_user",
-    }
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(
-            user=user,
-            model_endpoint_id=model_endpoint_1.record.id,
-            request=request,
-        )
-
-    request = update_model_endpoint_request.copy()
-    request.labels = {
-        "team": "infra",
-        "product": "my_product",
-        "endpoint_name": "test_labels_endpoint_name",
-    }
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(
-            user=user,
-            model_endpoint_id=model_endpoint_1.record.id,
-            request=request,
-        )
-
-
-@pytest.mark.asyncio
-async def test_update_model_endpoint_invalid_team_raises_endpoint_labels_exception(
-    fake_model_bundle_repository,
-    fake_model_endpoint_service,
-    model_bundle_1: ModelBundle,
-    model_bundle_2: ModelBundle,
-    model_endpoint_1: ModelEndpoint,
-    update_model_endpoint_request: UpdateModelEndpointV1Request,
-):
-    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
-    fake_model_bundle_repository.add_model_bundle(model_bundle_2)
-    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
-    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
-    use_case = UpdateModelEndpointByIdV1UseCase(
-        model_bundle_repository=fake_model_bundle_repository,
-        model_endpoint_service=fake_model_endpoint_service,
-    )
-
-    request = update_model_endpoint_request.copy()
-    request.labels = {
-        "team": "invalid_team",
-        "product": "some_product",
-    }
-    user_id = model_endpoint_1.record.created_by
-    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
-    with pytest.raises(EndpointLabelsException):
-        await use_case.execute(
-            user=user,
-            model_endpoint_id=model_endpoint_1.record.id,
-            request=request,
-        )
-
-    for team in ALLOWED_TEAMS:
-        # Conversely, make sure that all the ALLOWED_TEAMS are, well, allowed.
-        request = update_model_endpoint_request.copy()
-        request.labels = {
-            "team": team,
-            "product": "my_product",
-        }
-        await use_case.execute(
-            user=user, model_endpoint_id=model_endpoint_1.record.id, request=request
         )
 
 

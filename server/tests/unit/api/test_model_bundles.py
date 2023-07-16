@@ -3,7 +3,7 @@ from typing import Any, Dict, Tuple
 import pytest
 from fastapi.testclient import TestClient
 
-from spellbook_serve.domain.entities import ModelBundle
+from llm_engine_server.domain.entities import ModelBundle
 
 
 @pytest.mark.parametrize("version", ["v1", "v2"])

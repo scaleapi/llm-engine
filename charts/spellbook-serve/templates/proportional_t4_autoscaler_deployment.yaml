@@ -3,19 +3,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: spellbook-serve-proportional-t4-autoscaler-deployment
+  name: llm-engine-proportional-t4-autoscaler-deployment
   labels:
     team: infra
     product: common-warm-nodes
 spec:
   selector:
     matchLabels:
-      app: spellbook-serve-proportional-t4-autoscaler-deployment
+      app: llm-engine-proportional-t4-autoscaler-deployment
       version: v1
   template:
     metadata:
       labels:
-        app: spellbook-serve-proportional-t4-autoscaler-deployment
+        app: llm-engine-proportional-t4-autoscaler-deployment
         product: common-warm-nodes
         team: infra
         env: {{ .Values.context }}
@@ -38,12 +38,12 @@ spec:
             - /cluster-proportional-autoscaler
             - --namespace={{ .Release.Namespace }}
             - --configmap=cluster-proportional-autoscaler
-            - --target=deployment/spellbook-serve-balloon-t4
+            - --target=deployment/llm-engine-balloon-t4
             - --default-params={"linear":{"nodesPerReplica":10,"preventSinglePointFailure":false,"includeUnschedulableNodes":false}}
             - --nodelabels=k8s.amazonaws.com/accelerator=nvidia-tesla-t4
             - --logtostderr=true
             - --v=2
       priorityClassName: system-cluster-critical
-      serviceAccountName: {{ include "spellbookServe.fullname" . }}
+      serviceAccountName: {{ include "llmEngine.fullname" . }}
 {{- end }}
 {{- end }}

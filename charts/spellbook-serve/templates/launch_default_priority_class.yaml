@@ -2,10 +2,10 @@
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
-  name: "{{ include "spellbookServe.fullname" . }}-default-priority"
+  name: "{{ include "llmEngine.fullname" . }}-default-priority"
 value: 1
-# This ensures that the default spellbook-serve pods will never preempt any pods, which means
+# This ensures that the default llm-engine pods will never preempt any pods, which means
 # they cannot take advantage of the dummy nodes.
 preemptionPolicy: Never
-description: "Default Priority Class for SpellbookServe"
+description: "Default Priority Class for LLMEngine"
 {{- end }}

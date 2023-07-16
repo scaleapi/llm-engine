@@ -2,27 +2,27 @@ from typing import Any, Tuple
 
 import pytest
 
-from spellbook_serve.common.dtos.llms import (
+from llm_engine_server.common.dtos.llms import (
     CompletionOutput,
     CompletionSyncV1Request,
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
 )
-from spellbook_serve.common.dtos.tasks import SyncEndpointPredictV1Response, TaskStatus
-from spellbook_serve.core.auth.authentication_repository import User
-from spellbook_serve.core.domain_exceptions import (
+from llm_engine_server.common.dtos.tasks import SyncEndpointPredictV1Response, TaskStatus
+from llm_engine_server.core.auth.authentication_repository import User
+from llm_engine_server.core.domain_exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from spellbook_serve.domain.entities import ModelEndpoint, ModelEndpointType
-from spellbook_serve.domain.exceptions import EndpointUnsupportedInferenceTypeException
-from spellbook_serve.domain.use_cases.llm_model_endpoint_use_cases import (
+from llm_engine_server.domain.entities import ModelEndpoint, ModelEndpointType
+from llm_engine_server.domain.exceptions import EndpointUnsupportedInferenceTypeException
+from llm_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CompletionSyncV1UseCase,
     CreateLLMModelEndpointV1UseCase,
     GetLLMModelEndpointByNameV1UseCase,
 )
-from spellbook_serve.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
+from llm_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
 
 @pytest.mark.asyncio

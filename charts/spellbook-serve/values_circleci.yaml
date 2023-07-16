@@ -14,16 +14,16 @@ replicaCount:
 # tag:
 context: circleci
 image:
-  gatewayRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  builderRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  cacherRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
-  forwarderRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/spellbook-serve
+  gatewayRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/llm-engine
+  builderRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/llm-engine
+  cacherRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/llm-engine
+  forwarderRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/llm-engine
   pullPolicy: Always
 
 # serviceIdentifier:
 
 secrets:
-  awsDatabaseSecretName: prod/spellbook_serve.db
+  awsDatabaseSecretName: prod/llm_engine.db
 
 service:
   type: ClusterIP
@@ -81,7 +81,7 @@ config:
       s3_bucket: "scale-ml-circleci"
       profile_ml_worker: "default"
       profile_ml_inference_worker: "default"
-    spellbook_serve:
+    llm_engine:
       model_primitive_host: none
 
       # Endpoint config
@@ -115,7 +115,7 @@ config:
               {
                 "Effect": "Allow",
                 "Principal": {
-                  "AWS": "arn:aws:iam::000000000000:role/ml_spellbook_serve"
+                  "AWS": "arn:aws:iam::000000000000:role/ml_llm_engine"
                 },
                 "Action": "sqs:*",
                 "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"

@@ -1,7 +1,7 @@
 import pytest
 
-from spellbook_serve.common.dtos.endpoint_builder import BuildEndpointRequest
-from spellbook_serve.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
+from llm_engine_server.common.dtos.endpoint_builder import BuildEndpointRequest
+from llm_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 
 
 @pytest.fixture

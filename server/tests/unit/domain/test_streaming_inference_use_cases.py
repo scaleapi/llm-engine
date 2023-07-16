@@ -2,15 +2,15 @@ from typing import Any, Dict, Tuple
 
 import pytest
 
-from spellbook_serve.common.dtos.tasks import EndpointPredictV1Request
-from spellbook_serve.core.auth.authentication_repository import User
-from spellbook_serve.core.domain_exceptions import (
+from llm_engine_server.common.dtos.tasks import EndpointPredictV1Request
+from llm_engine_server.core.auth.authentication_repository import User
+from llm_engine_server.core.domain_exceptions import (
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from spellbook_serve.domain.entities import ModelEndpoint
-from spellbook_serve.domain.exceptions import EndpointUnsupportedInferenceTypeException
-from spellbook_serve.domain.use_cases.streaming_inference_use_cases import (
+from llm_engine_server.domain.entities import ModelEndpoint
+from llm_engine_server.domain.exceptions import EndpointUnsupportedInferenceTypeException
+from llm_engine_server.domain.use_cases.streaming_inference_use_cases import (
     CreateStreamingInferenceTaskV1UseCase,
 )
 

@@ -1,17 +1,17 @@
-{{- $spellbook_serve_name := include "spellbookServe.fullname" . }}
+{{- $llm_engine_name := include "llmEngine.fullname" . }}
 {{- $config_values := .Values.config.values }}
 {{- $forwarder_repository := .Values.image.forwarderRepository -}}
 {{- $triton_repository := .Values.triton.image.repository -}}
 {{- $triton_tag := .Values.triton.image.tag -}}
 {{- $env := .Values.context -}}
-{{- $service_template_labels := include "spellbookServe.serviceTemplateLabels" . }}
-{{- $job_template_labels := include "spellbookServe.jobTemplateLabels" . }}
-{{- $service_env := include "spellbookServe.serviceEnv" . }}
-{{- $async_service_template_env := include "spellbookServe.asyncServiceTemplateEnv" . }}
-{{- $sync_service_template_env := include "spellbookServe.syncServiceTemplateEnv" . }}
-{{- $async_forwarder_template_env := include "spellbookServe.asyncForwarderTemplateEnv" . }}
-{{- $sync_forwarder_template_env := include "spellbookServe.syncForwarderTemplateEnv" . }}
-{{- $forwarder_volume_mounts := include "spellbookServe.forwarderVolumeMounts" . }}
+{{- $service_template_labels := include "llmEngine.serviceTemplateLabels" . }}
+{{- $job_template_labels := include "llmEngine.jobTemplateLabels" . }}
+{{- $service_env := include "llmEngine.serviceEnv" . }}
+{{- $async_service_template_env := include "llmEngine.asyncServiceTemplateEnv" . }}
+{{- $sync_service_template_env := include "llmEngine.syncServiceTemplateEnv" . }}
+{{- $async_forwarder_template_env := include "llmEngine.asyncForwarderTemplateEnv" . }}
+{{- $sync_forwarder_template_env := include "llmEngine.syncForwarderTemplateEnv" . }}
+{{- $forwarder_volume_mounts := include "llmEngine.forwarderVolumeMounts" . }}
 {{- $gateway_repository := .Values.image.gatewayRepository -}}
 {{- $tag := .Values.tag -}}
 {{- $aws_config_map_name := .Values.aws.configMap.name }}
@@ -27,9 +27,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ $spellbook_serve_name }}-service-template-config
+  name: {{ $llm_engine_name }}-service-template-config
   labels:
-    {{- include "spellbookServe.labels" . | nindent 4 }}
+    {{- include "llmEngine.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-2"
@@ -48,7 +48,7 @@ data:
         {{- $service_template_labels | nindent 8 }}
       {{- if eq $mode "async" }}
       annotations:
-        {{- include "spellbookServe.serviceTemplateAsyncAnnotations" . | nindent 8 }}
+        {{- include "llmEngine.serviceTemplateAsyncAnnotations" . | nindent 8 }}
       {{- end }}
     spec:
       strategy:
@@ -75,12 +75,12 @@ data:
             kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
         spec:
           affinity:
-            {{- include "spellbookServe.serviceTemplateAffinity" . | nindent 12 }}
+            {{- include "llmEngine.serviceTemplateAffinity" . | nindent 12 }}
           terminationGracePeriodSeconds: 600
           {{- if $service_template_service_account_name }}
           serviceAccount: {{ $service_template_service_account_name }}
           {{- else }}
-          serviceAccount: {{ $spellbook_serve_name }}
+          serviceAccount: {{ $llm_engine_name }}
           {{- end }}
           nodeSelector:
             node-lifecycle: normal
@@ -127,7 +127,7 @@ data:
               # failed, which should get rid of infinite task retries
               args:
                 - celery
-                - --app=spellbook_serve.inference.async_inference
+                - --app=llm_engine.inference.async_inference
                 - worker
                 - --loglevel=INFO
                 - --concurrency=1
@@ -138,7 +138,7 @@ data:
               args:
                 - python
                 - -m
-                - spellbook_serve.inference.sync_inference.start_fastapi_server
+                - llm_engine.inference.sync_inference.start_fastapi_server
               {{- end }}
               resources:
                 requests:
@@ -157,7 +157,7 @@ data:
                   mountPath: /root/.aws/config
                   subPath: config
                 - name: config-volume
-                  mountPath: /home/spellbookserve/.aws/config
+                  mountPath: /home/llmengine/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: ${BASE_PATH}/user_config
@@ -167,7 +167,7 @@ data:
                   subPath: raw_data
                 {{- if $config_values }}
                 - name: infra-service-config-volume
-                  mountPath: ${BASE_PATH}/ml_infra_core/spellbook_serve.core/spellbook_serve.core/configs
+                  mountPath: ${BASE_PATH}/ml_infra_core/llm_engine.core/llm_engine.core/configs
                 {{- end }}
             {{- else if contains "runnable-image" $flavor }}
             {{- if eq $mode "sync" }}
@@ -180,7 +180,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/spellbook_serve/spellbook_serve/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/llm_engine/llm_engine/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --http
                 - production_threads
                 - --port
@@ -221,9 +221,9 @@ data:
                 - ddtrace-run
                 - python
                 - -m
-                - spellbook_serve.inference.forwarding.http_forwarder
+                - llm_engine.inference.forwarding.http_forwarder
                 - --config
-                - /workspace/spellbook_serve/spellbook_serve/inference/configs/service--http_forwarder.yaml
+                - /workspace/llm_engine/llm_engine/inference/configs/service--http_forwarder.yaml
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
@@ -266,7 +266,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/spellbook_serve/spellbook_serve/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/llm_engine/llm_engine/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --queue
                 - "${QUEUE}"
                 - --task-visibility
@@ -378,7 +378,7 @@ data:
                 {{- end }}
                 # LIRA: For compatibility with runnable image converted from artifactlike bundle
                 - name: config-volume
-                  mountPath: /home/spellbookserve/.aws/config
+                  mountPath: /home/llmengine/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /app/user_config
@@ -413,7 +413,7 @@ data:
             {{- if $config_values }}
             - name: infra-service-config-volume
               configMap:
-                name: {{ $spellbook_serve_name }}-service-config
+                name: {{ $llm_engine_name }}-service-config
                 items:
                   - key: infra_service_config
                     path: config.yaml
@@ -559,13 +559,13 @@ data:
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
-            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "spellbook_serve_job_id:${JOB_ID}"]}]'
+            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "llm_engine_job_id:${JOB_ID}"]}]'
             cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
           restartPolicy: Never
           nodeSelector:
             node-lifecycle: normal
-          serviceAccountName: {{ $spellbook_serve_name }}
+          serviceAccountName: {{ $llm_engine_name }}
           volumes:
             - name: config-volume
               configMap:
@@ -576,7 +576,7 @@ data:
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
-                {{- $env_vars := include "spellbookServe.serviceEnv" . | fromYaml }}
+                {{- $env_vars := include "llmEngine.serviceEnv" . | fromYaml }}
                 {{- range $env_var := index $env_vars "env" }}
                 {{- $env_var_name := index $env_var "name" }}
                 {{- if ne $env_var_name "DD_SERVICE" }}
@@ -591,7 +591,7 @@ data:
               args:
                 - python
                 - -m
-                - spellbook_serve.entrypoints.start_batch_job_orchestration
+                - llm_engine.entrypoints.start_batch_job_orchestration
                 - --job-id
                 - ${JOB_ID}
                 - --owner
@@ -633,7 +633,7 @@ data:
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
-            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "spellbook_serve_job_id:${JOB_ID}"]}]'
+            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "llm_engine_job_id:${JOB_ID}"]}]'
         spec:
           restartPolicy: Never
           nodeSelector:
@@ -648,7 +648,7 @@ data:
           {{- if $service_template_service_account_name }}
           serviceAccountName: {{ $service_template_service_account_name }}
           {{- else }}
-          serviceAccountName: {{ $spellbook_serve_name }}
+          serviceAccountName: {{ $llm_engine_name }}
           {{- end }}
           volumes:
             - name: config-volume
@@ -701,7 +701,7 @@ data:
               command:
                 - python
                 - -m
-                - spellbook_serve.entrypoints.start_docker_image_batch_job_init_container
+                - llm_engine.entrypoints.start_docker_image_batch_job_init_container
                 - ${INPUT_LOCATION}
                 - --remote-file
                 - ${S3_FILE}
@@ -734,8 +734,8 @@ data:
       namespace: ${NAMESPACE}
       labels:
         team: infra
-        product: spellbook-serve
-        use_scale_spellbook_serve_endpoint_network_policy: "true"
+        product: llm-engine
+        use_scale_llm_engine_endpoint_network_policy: "true"
         tags.datadoghq.com/service: ${RESOURCE_NAME}
     spec:
       selector:
@@ -749,8 +749,8 @@ data:
           labels:
             app: ${RESOURCE_NAME}
             team: infra
-            product: spellbook-serve
-            use_scale_spellbook_serve_endpoint_network_policy: "true"
+            product: llm-engine
+            use_scale_llm_engine_endpoint_network_policy: "true"
             tags.datadoghq.com/service: ${RESOURCE_NAME}
             version: v1
             sidecar.istio.io/inject: "false"

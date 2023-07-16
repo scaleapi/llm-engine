@@ -1,11 +1,11 @@
-{{- $serviceAccountName := include "spellbookServe.fullname" . }}
-{{- $serviceAccountNamespaces := (include "spellbookServe.serviceAccountNamespaces" . | fromYaml) }}
+{{- $serviceAccountName := include "llmEngine.fullname" . }}
+{{- $serviceAccountNamespaces := (include "llmEngine.serviceAccountNamespaces" . | fromYaml) }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "spellbookServe.fullname" . }}
+  name: {{ include "llmEngine.fullname" . }}
   labels:
-    {{- include "spellbookServe.labels" . | nindent 4 }}
+    {{- include "llmEngine.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

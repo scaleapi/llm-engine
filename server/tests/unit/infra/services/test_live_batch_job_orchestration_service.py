@@ -5,10 +5,10 @@ from unittest.mock import patch
 
 import pytest
 
-from spellbook_serve.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
-from spellbook_serve.common.dtos.tasks import GetAsyncTaskV1Response, ResponseSchema, TaskStatus
-from spellbook_serve.core.domain_exceptions import ObjectNotFoundException
-from spellbook_serve.domain.entities import (
+from llm_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
+from llm_engine_server.common.dtos.tasks import GetAsyncTaskV1Response, ResponseSchema, TaskStatus
+from llm_engine_server.core.domain_exceptions import ObjectNotFoundException
+from llm_engine_server.domain.entities import (
     BatchJob,
     BatchJobSerializationFormat,
     BatchJobStatus,
@@ -16,12 +16,12 @@ from spellbook_serve.domain.entities import (
     ModelEndpoint,
     ModelEndpointStatus,
 )
-from spellbook_serve.infra.gateways import LiveBatchJobProgressGateway
-from spellbook_serve.infra.services import (
+from llm_engine_server.infra.gateways import LiveBatchJobProgressGateway
+from llm_engine_server.infra.services import (
     LiveBatchJobOrchestrationService,
     LiveModelEndpointService,
 )
-from spellbook_serve.infra.services.live_batch_job_orchestration_service import (
+from llm_engine_server.infra.services.live_batch_job_orchestration_service import (
     BatchEndpointInferencePredictionResponse,
     BatchEndpointInProgressTask,
 )
@@ -236,7 +236,7 @@ async def test_run_batch_job_wait_for_endpoint(
 ):
     model_endpoint_1.record.status = ModelEndpointStatus.UPDATE_PENDING
     with patch(
-        "spellbook_serve.infra.services.live_batch_job_orchestration_service.asyncio.sleep"
+        "llm_engine_server.infra.services.live_batch_job_orchestration_service.asyncio.sleep"
     ) as mock_sleep:
 
         def set_record_ready(*args, **kwargs):

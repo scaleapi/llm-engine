@@ -2,9 +2,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "spellbookServe.fullname" . }}-spellbook-setup
+  name: {{ include "llmEngine.fullname" . }}-spellbook-setup
   labels:
-    {{- include "spellbookServe.labels" . | nindent 4 }}
+    {{- include "llmEngine.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": post-install
     "helm.sh/hook-weight": "0"
@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         sidecar.istio.io/inject: "false"
-        {{- include "spellbookServe.labels" . | nindent 8 }}
+        {{- include "llmEngine.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
       {{- with .Values.imagePullSecrets }}
@@ -24,7 +24,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: {{ include "spellbookServe.fullname" . }}
+        - name: {{ include "llmEngine.fullname" . }}
           image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
@@ -33,13 +33,13 @@ spec:
           args:
             - python
             - -m
-            - spellbook_serve.entrypoints.init_spellbook_models
+            - llm_engine.entrypoints.init_spellbook_models
             - --gateway-url
-            - 'http://{{- include "spellbookServe.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}'
-          {{- include "spellbookServe.serviceEnv" . | indent 10 }}
-          {{- include "spellbookServe.volumeMounts" . | indent 10 }}
-      serviceAccountName: {{ include "spellbookServe.fullname" . }}
-      {{- include "spellbookServe.volumes" . | indent 6 }}
+            - 'http://{{- include "llmEngine.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}'
+          {{- include "llmEngine.serviceEnv" . | indent 10 }}
+          {{- include "llmEngine.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "llmEngine.fullname" . }}
+      {{- include "llmEngine.volumes" . | indent 6 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

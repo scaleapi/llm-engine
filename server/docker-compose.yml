@@ -1,21 +1,21 @@
 version: "3.8"
 
 services:
-  spellbook-serve:
+  llm-engine:
     build:
       context: ..
-      dockerfile: spellbook_serve/Dockerfile
+      dockerfile: llm_engine/Dockerfile
       secrets:
         - codeartifact-pip-conf
-      target: spellbook-serve
-    image: "${ECR_HOST:-local}/spellbook-serve:${GIT_SHA:-latest}"
-  spellbook-serve-gateway-dev:
+      target: llm-engine
+    image: "${ECR_HOST:-local}/llm-engine:${GIT_SHA:-latest}"
+  llm-engine-gateway-dev:
     build:
       context: ..
-      dockerfile: spellbook_serve/Dockerfile
+      dockerfile: llm_engine/Dockerfile
       secrets:
         - codeartifact-pip-conf
-      target: spellbook-serve
+      target: llm-engine
     command:
       - python
       - -m
@@ -34,7 +34,7 @@ services:
       - "GIT_TAG=${GIT_SHA}"
       - DD_ENV=training
       - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/hosted_model_inference/service_configs/service_config_${ENV}.yaml"
-      - "SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
+      - "LLM_ENGINE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
       - "ML_INFRA_SERVICES_CONFIG_PATH=/workspace/ml_infra_core/ml_infra_services/ml_infra_services/configs/${ENV}.yaml"
       - "DB_SECRET_NAME=${DB_SECRET_NAME:-}"
       - "ML_INFRA_DATABASE_URL=${ML_INFRA_DATABASE_URL:-}"
@@ -52,14 +52,14 @@ services:
       - "${HOME}/.minikube:/workspace/.minikube"
       - "${HOME}/.minikube:/home/circleci/.minikube"
       - "${HOME}/.aws-mountable:/creds/.aws"
-      - "../spellbook_serve:/workspace/spellbook_serve"
-  spellbook-serve-service-builder-dev:
+      - "../llm_engine:/workspace/llm_engine"
+  llm-engine-service-builder-dev:
     build:
       context: ..
-      dockerfile: spellbook_serve/Dockerfile
+      dockerfile: llm_engine/Dockerfile
       secrets:
         - codeartifact-pip-conf
-      target: spellbook-serve
+      target: llm-engine
     command:
       - celery
       - --app=hosted_model_inference.service_builder
@@ -74,7 +74,7 @@ services:
       - DB_SECRET_AWS_PROFILE
       - "S3_BUCKET=${S3_BUCKET:-scale-ml}"
       - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/hosted_model_inference/service_configs/service_config_${ENV}.yaml"
-      - "SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
+      - "LLM_ENGINE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
       - "ML_INFRA_SERVICES_CONFIG_PATH=/workspace/ml_infra_core/ml_infra_services/ml_infra_services/configs/${ENV}.yaml"
       - "GIT_TAG=${GIT_SHA}"
       - DD_ENV=training
@@ -98,14 +98,14 @@ services:
       - "${HOME}/.minikube:/workspace/.minikube"
       - "${HOME}/.minikube:/home/circleci/.minikube"
       - "${HOME}/.aws-mountable:/creds/.aws"
-      - "../spellbook_serve:/workspace/spellbook_serve"
-  spellbook-serve-bash:
+      - "../llm_engine:/workspace/llm_engine"
+  llm-engine-bash:
     build:
       context: ..
-      dockerfile: spellbook_serve/Dockerfile
+      dockerfile: llm_engine/Dockerfile
       secrets:
         - codeartifact-pip-conf
-      target: spellbook-serve
+      target: llm-engine
     command:
       - /bin/bash
       - -c
@@ -116,7 +116,7 @@ services:
       - ECR_READ_AWS_PROFILE
       - DB_SECRET_AWS_PROFILE
       - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/hosted_model_inference/service_configs/service_config_${ENV}.yaml"
-      - "SPELLBOOK_SERVE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
+      - "LLM_ENGINE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
       - "ML_INFRA_SERVICES_CONFIG_PATH=/workspace/ml_infra_core/ml_infra_services/ml_infra_services/configs/${ENV}.yaml"
       - "GIT_TAG=${GIT_SHA}"
       - DD_ENV=training
@@ -138,7 +138,7 @@ services:
       - "${HOME}/.minikube:/workspace/.minikube"
       - "${HOME}/.minikube:/home/circleci/.minikube"
       - "${HOME}/.aws-mountable:/creds/.aws"
-      - "../spellbook_serve:/workspace/spellbook_serve"
+      - "../llm_engine:/workspace/llm_engine"
   db:
     image: "cimg/postgres:12.8-postgis"
     ports:
@@ -158,7 +158,7 @@ services:
       dockerfile: ml_infra_core/Dockerfile.openapi
       target: base
     volumes:
-      - "../spellbook_serve/clients:/local"
+      - "../llm_engine/clients:/local"
     command:
       - generate
 
