@@ -4,7 +4,6 @@ from typing import Mapping
 from unittest import mock
 
 import pytest
-
 from llm_engine_server.core.utils.env import environment
 from llm_engine_server.domain.entities import ModelEndpointConfig
 from llm_engine_server.inference.forwarding.forwarding import (

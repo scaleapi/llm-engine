@@ -1,11 +1,10 @@
 from typing import Any, Dict, Sequence
 
-from mypy_boto3_sqs.type_defs import GetQueueAttributesResultTypeDef
-
 from llm_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
     SQSEndpointResourceDelegate,
     SQSQueueInfo,
 )
+from mypy_boto3_sqs.type_defs import GetQueueAttributesResultTypeDef
 
 __all__: Sequence[str] = ("FakeSQSEndpointResourceDelegate",)
 

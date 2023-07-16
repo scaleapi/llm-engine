@@ -3,9 +3,6 @@ from typing import Any, Callable, Dict, List, Optional
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from llm_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from llm_engine_server.core.domain_exceptions import ReadOnlyDatabaseException
 from llm_engine_server.db.models import Bundle, Endpoint
@@ -16,6 +13,8 @@ from llm_engine_server.infra.repositories.db_model_endpoint_record_repository im
     DbModelEndpointRecordRepository,
     OrmModelEndpoint,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

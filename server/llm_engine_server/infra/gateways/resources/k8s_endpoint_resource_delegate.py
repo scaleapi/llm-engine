@@ -13,8 +13,6 @@ from kubernetes_asyncio.client.models.v2beta2_horizontal_pod_autoscaler import (
 )
 from kubernetes_asyncio.client.rest import ApiException
 from kubernetes_asyncio.config import ConfigException
-from pydantic.utils import deep_update
-
 from llm_engine_server.common.config import hmi_config
 from llm_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from llm_engine_server.common.env_vars import (
@@ -49,6 +47,7 @@ from llm_engine_server.infra.gateways.resources.k8s_resource_types import (
     VerticalAutoscalingEndpointParams,
     get_endpoint_resource_arguments_from_request,
 )
+from pydantic.utils import deep_update
 
 logger = make_logger(filename_wo_ext(__file__))
 
@@ -58,7 +57,13 @@ HTTP_PORT = 5000
 # and where the user actually owns the files
 BASE_PATH_IN_ENDPOINT = "/app"
 
-DATADOG_ENV_VAR = {"DATADOG_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
+DATADOG_ENV_VAR = {
+    "DATADOG_TRACE_ENABLED",
+    "DD_SERVICE",
+    "DD_ENV",
+    "DD_VERSION",
+    "DD_AGENT_HOST",
+}
 
 _lazy_load_kubernetes_clients = True
 _kubernetes_apps_api = None

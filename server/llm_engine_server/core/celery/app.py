@@ -9,8 +9,6 @@ from celery import Celery
 from celery.app import backends
 from celery.app.control import Inspect
 from celery.result import AsyncResult
-from redis import Redis, StrictRedis
-
 from llm_engine_server.core.aws.roles import session
 from llm_engine_server.core.config import ml_infra_config
 from llm_engine_server.core.loggers import (
@@ -19,6 +17,7 @@ from llm_engine_server.core.loggers import (
     make_logger,
     silence_chatty_logger,
 )
+from redis import Redis, StrictRedis
 
 logger = make_logger(logger_name())
 

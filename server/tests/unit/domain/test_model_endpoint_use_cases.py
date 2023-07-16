@@ -1,5 +1,4 @@
 import pytest
-
 from llm_engine_server.common.dtos.model_endpoints import (
     CreateModelEndpointV1Request,
     CreateModelEndpointV1Response,

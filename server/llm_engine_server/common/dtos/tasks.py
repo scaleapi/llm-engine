@@ -5,9 +5,8 @@ DTOs for the task abstraction.
 from enum import Enum
 from typing import Any, Optional
 
-from pydantic import BaseModel
-
 from llm_engine_server.domain.entities import CallbackAuth
+from pydantic import BaseModel
 
 
 class ResponseSchema(BaseModel):

@@ -1,5 +1,4 @@
 import pytest
-
 from llm_engine_server.common.dtos.batch_jobs import (
     CreateDockerImageBatchJobBundleV1Request,
     CreateDockerImageBatchJobResourceRequests,

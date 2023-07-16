@@ -4,11 +4,10 @@ import hashlib
 import time
 from contextlib import AbstractContextManager
 
+from llm_engine_server.core.loggers import filename_wo_ext, make_logger
 from sqlalchemy import BIGINT, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.session import Session
-
-from llm_engine_server.core.loggers import filename_wo_ext, make_logger
 
 logger = make_logger(filename_wo_ext(__file__))
 
@@ -18,10 +17,14 @@ BLOCKING_LOCK_TIMEOUT_POLL_FREQ_SECONDS = 0.5
 
 def get_lock_key(user_id: str, endpoint_name: str) -> int:
     uid_hash = int.from_bytes(
-        hashlib.sha256(bytes(user_id, "utf-8")).digest()[:4], byteorder="little", signed=False
+        hashlib.sha256(bytes(user_id, "utf-8")).digest()[:4],
+        byteorder="little",
+        signed=False,
     )
     endpoint_name_hash = int.from_bytes(
-        hashlib.sha256(bytes(endpoint_name, "utf-8")).digest()[:4], byteorder="little", signed=False
+        hashlib.sha256(bytes(endpoint_name, "utf-8")).digest()[:4],
+        byteorder="little",
+        signed=False,
     )
     return 2**32 * uid_hash + endpoint_name_hash - 2**63
 

@@ -2,12 +2,11 @@
 import os
 
 import psycopg2
+from llm_engine_server.db.base import Base
+from llm_engine_server.db.models import *
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from tenacity import Retrying, stop_after_attempt, wait_exponential
-
-from llm_engine_server.db.base import Base
-from llm_engine_server.db.models import *
 
 SCHEMAS = ["llm_engine", "model"]
 

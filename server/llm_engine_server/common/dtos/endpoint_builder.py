@@ -1,8 +1,6 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel
-
 from llm_engine_server.domain.entities import (
     CallbackAuth,
     CpuSpecificationType,
@@ -10,6 +8,7 @@ from llm_engine_server.domain.entities import (
     ModelEndpointRecord,
     StorageSpecificationType,
 )
+from pydantic import BaseModel
 
 
 class BuildEndpointRequest(BaseModel):

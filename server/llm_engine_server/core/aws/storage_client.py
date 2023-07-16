@@ -3,7 +3,6 @@ from typing import IO, Callable, Iterable, Optional, Sequence
 
 import smart_open
 from botocore.client import BaseClient
-
 from llm_engine_server.core.aws.roles import session
 from llm_engine_server.core.config import ml_infra_config
 from llm_engine_server.core.loggers import logger_name, make_logger
@@ -31,7 +30,10 @@ def open(uri: str, mode: str = "rt", **kwargs) -> IO:  # pylint: disable=redefin
 
 
 def sync_storage_client_keepalive(
-    s3_client: BaseClient, buckets: Iterable[str], interval: int, is_cancelled: Callable[[], bool]
+    s3_client: BaseClient,
+    buckets: Iterable[str],
+    interval: int,
+    is_cancelled: Callable[[], bool],
 ) -> None:
     """Keeps connection pool warmed up for access on list of S3 buckets.
 

@@ -1,5 +1,4 @@
 import pytest
-
 from llm_engine_server.infra.services.model_endpoint_cache_service import (
     ModelEndpointCacheWriteService,
 )
@@ -19,7 +18,9 @@ async def test_model_endpoint_write_success(
     )
 
     cache_write_service = ModelEndpointCacheWriteService(
-        fake_model_endpoint_cache_repository, fake_resource_gateway, fake_image_cache_service
+        fake_model_endpoint_cache_repository,
+        fake_resource_gateway,
+        fake_image_cache_service,
     )
     await cache_write_service.execute(42)
     infra_state = await fake_model_endpoint_cache_repository.read_endpoint_info(

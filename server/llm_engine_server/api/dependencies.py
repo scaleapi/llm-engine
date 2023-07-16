@@ -6,8 +6,6 @@ from typing import Callable, Iterator, Optional
 import aioredis
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
-
 from llm_engine_server.common.config import hmi_config
 from llm_engine_server.common.dtos.model_endpoints import BrokerType
 from llm_engine_server.common.env_vars import CIRCLECI
@@ -71,6 +69,7 @@ from llm_engine_server.infra.services import LiveBatchJobService, LiveModelEndpo
 from llm_engine_server.infra.services.live_llm_model_endpoint_service import (
     LiveLLMModelEndpointService,
 )
+from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 
 AUTH = HTTPBasic(auto_error=False)
 

@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from typing import Generic, Optional, Sequence, TypeVar
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from llm_engine_server.db.base import Base
 from llm_engine_server.db.models.common.query import Query
 from llm_engine_server.db.models.exceptions import EntityNotFoundError
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 T = TypeVar("T", bound="Record")
 

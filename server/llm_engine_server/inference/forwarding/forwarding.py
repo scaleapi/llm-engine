@@ -7,7 +7,6 @@ from typing import Any, Iterator, Optional, Sequence, Tuple
 
 import requests
 import sseclient
-
 from llm_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from llm_engine_server.core.loggers import logger_name, make_logger
 from llm_engine_server.inference.common import get_endpoint_config

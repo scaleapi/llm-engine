@@ -7,7 +7,6 @@ from logging import LoggerAdapter
 from typing import List, Optional, Sequence
 
 from datadog import statsd
-
 from llm_engine_server.common.constants import (
     FEATURE_FLAG_USE_MULTI_CONTAINER_ARCHITECTURE_FOR_ARTIFACTLIKE_BUNDLE,
 )

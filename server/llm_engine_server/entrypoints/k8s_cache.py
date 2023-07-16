@@ -10,7 +10,6 @@ from typing import Any
 
 from kubernetes import config as kube_config
 from kubernetes.config.config_exception import ConfigException
-
 from llm_engine_server.common.config import hmi_config
 from llm_engine_server.common.constants import READYZ_FPATH
 from llm_engine_server.common.env_vars import CIRCLECI

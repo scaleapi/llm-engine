@@ -1,5 +1,4 @@
 import pytest
-
 from llm_engine_server.domain.entities import (
     CallbackAuth,
     CallbackBasicAuth,
@@ -31,7 +30,9 @@ from llm_engine_server.domain.entities import (
         ),
     ],
 )
-def test_model_endpoint_config_serialization(model_endpoint_config: ModelEndpointConfig):
+def test_model_endpoint_config_serialization(
+    model_endpoint_config: ModelEndpointConfig,
+):
     serialized_config = model_endpoint_config.serialize()
     deserialized_config = ModelEndpointConfig.deserialize(serialized_config)
     assert model_endpoint_config == deserialized_config

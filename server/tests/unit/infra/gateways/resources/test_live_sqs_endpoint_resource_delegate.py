@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, patch
 
 import botocore.exceptions
 import pytest
-
 from llm_engine_server.common.dtos.endpoint_builder import BuildEndpointRequest
 from llm_engine_server.domain.entities import ModelEndpointRecord
 from llm_engine_server.domain.exceptions import EndpointResourceInfraException
@@ -457,9 +456,7 @@ async def test_sqs_delete_resources(mock_create_async_sqs_client_delete_queue):
     delete_call_kwargs = (
         mock_create_async_sqs_client_delete_queue.__aenter__.return_value.delete_queue.call_args.kwargs
     )
-    assert delete_call_kwargs["QueueUrl"].endswith(
-        "llm-engine-endpoint-id-model_endpoint_id_1"
-    )
+    assert delete_call_kwargs["QueueUrl"].endswith("llm-engine-endpoint-id-model_endpoint_id_1")
 
 
 @pytest.mark.asyncio
@@ -481,7 +478,9 @@ async def test_sqs_delete_resources_non_200(
 
 
 @pytest.mark.asyncio
-async def test_sqs_get_queue_attributes(mock_create_async_sqs_client_get_queue_attributes):
+async def test_sqs_get_queue_attributes(
+    mock_create_async_sqs_client_get_queue_attributes,
+):
     delegate = LiveSQSEndpointResourceDelegate(sqs_profile="foobar")
     response = await delegate.get_queue_attributes(endpoint_id="model_endpoint_id_1")
 
@@ -497,9 +496,7 @@ async def test_sqs_get_queue_attributes(mock_create_async_sqs_client_get_queue_a
         "llm-engine-endpoint-id-model_endpoint_id_1"
     )
 
-    assert response["Attributes"]["QueueArn"].endswith(
-        "llm-engine-endpoint-id-model_endpoint_id_1"
-    )
+    assert response["Attributes"]["QueueArn"].endswith("llm-engine-endpoint-id-model_endpoint_id_1")
 
 
 @pytest.mark.asyncio

@@ -20,7 +20,6 @@ from kubernetes import client
 from kubernetes import config as kube_config
 from kubernetes import watch
 from kubernetes.config.config_exception import ConfigException
-
 from llm_engine_server.core.aws import storage_client
 from llm_engine_server.core.config import ml_infra_config
 from llm_engine_server.core.loggers import logger_name, make_logger
@@ -158,11 +157,15 @@ def start_build_job(
         aws_secret_access_key = ""
         if os.getenv("CIRCLECI"):
             aws_access_key_id_result = subprocess.run(
-                ["aws", "configure", "get", "aws_access_key_id"], check=False, stdout=PIPE
+                ["aws", "configure", "get", "aws_access_key_id"],
+                check=False,
+                stdout=PIPE,
             )
             aws_access_key_id = aws_access_key_id_result.stdout.decode().strip()
             aws_secret_access_key_result = subprocess.run(
-                ["aws", "configure", "get", "aws_secret_access_key"], check=False, stdout=PIPE
+                ["aws", "configure", "get", "aws_secret_access_key"],
+                check=False,
+                stdout=PIPE,
             )
             aws_secret_access_key = aws_secret_access_key_result.stdout.decode().strip()
         job = Template(template_f.read()).substitute(
@@ -206,7 +209,13 @@ def start_build_job(
             pip_conf_base64 = b64encode(f_conf.read().encode("utf-8")).decode("utf-8")
         data = {"data": {"codeartifact_pip_conf": pip_conf_base64}}
         subprocess.check_output(
-            ["kubectl", "patch", "secret", "codeartifact-pip-conf", f"-p={json.dumps(data)}"]
+            [
+                "kubectl",
+                "patch",
+                "secret",
+                "codeartifact-pip-conf",
+                f"-p={json.dumps(data)}",
+            ]
         ).decode("utf-8")
 
         print(f"Executing Kaniko build command:\n{container_spec}")

@@ -2,7 +2,6 @@ from typing import Any, Dict, Tuple
 
 import pytest
 from fastapi.testclient import TestClient
-
 from llm_engine_server.domain.entities import ModelBundle
 
 
@@ -85,7 +84,10 @@ def test_clone_model_bundle_success(
     response = client.post(
         f"/{version}/model-bundles/clone-with-changes",
         auth=(test_api_key, ""),
-        json={"original_model_bundle_id": model_bundle_1_v1[0].id, "app_config": {"foo": "bar"}},
+        json={
+            "original_model_bundle_id": model_bundle_1_v1[0].id,
+            "app_config": {"foo": "bar"},
+        },
     )
     assert response.status_code == 200
     response_json = response.json()
@@ -114,7 +116,10 @@ def test_clone_model_bundle_unauthorized_returns_404(
     response = client.post(
         f"/{version}/model-bundles/clone-with-changes",
         auth=(test_api_key_2, ""),  # Not the owner, should be unauthorized
-        json={"original_model_bundle_id": model_bundle_1_v1[0].id, "app_config": {"foo": "bar"}},
+        json={
+            "original_model_bundle_id": model_bundle_1_v1[0].id,
+            "app_config": {"foo": "bar"},
+        },
     )
     assert response.status_code == 404
 
@@ -141,7 +146,10 @@ def test_clone_model_bundle_not_found_returns_404(
     response = client.post(
         f"/{version}/model-bundles/clone-with-changes",
         auth=(test_api_key, ""),
-        json={"original_model_bundle_id": "unknown model bundle id", "app_config": {"foo": "bar"}},
+        json={
+            "original_model_bundle_id": "unknown model bundle id",
+            "app_config": {"foo": "bar"},
+        },
     )
     assert response.status_code == 404
 

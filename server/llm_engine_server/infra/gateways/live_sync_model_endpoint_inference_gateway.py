@@ -3,15 +3,6 @@ from typing import Any, Dict
 import aiohttp
 import orjson
 import requests
-from orjson import JSONDecodeError
-from tenacity import (
-    AsyncRetrying,
-    RetryError,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
-
 from llm_engine_server.common.config import hmi_config
 from llm_engine_server.common.dtos.tasks import (
     EndpointPredictV1Request,
@@ -26,6 +17,14 @@ from llm_engine_server.domain.gateways.sync_model_endpoint_inference_gateway imp
     SyncModelEndpointInferenceGateway,
 )
 from llm_engine_server.infra.gateways.k8s_resource_parser import get_node_port
+from orjson import JSONDecodeError
+from tenacity import (
+    AsyncRetrying,
+    RetryError,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 logger = make_logger(filename_wo_ext(__file__))
 

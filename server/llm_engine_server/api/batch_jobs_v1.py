@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-
 from llm_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
@@ -152,14 +151,16 @@ async def create_docker_image_batch_job(
         ) from exc
     except EndpointResourceInvalidRequestException as exc:
         raise HTTPException(
-            status_code=400, detail=f"Final endpoint resources requested is invalid: {exc}"
+            status_code=400,
+            detail=f"Final endpoint resources requested is invalid: {exc}",
         ) from exc
     except EndpointLabelsException as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @batch_job_router_v1.get(
-    "/docker-image-batch-jobs/{batch_job_id}", response_model=GetDockerImageBatchJobV1Response
+    "/docker-image-batch-jobs/{batch_job_id}",
+    response_model=GetDockerImageBatchJobV1Response,
 )
 async def get_docker_image_batch_job(
     batch_job_id: str,
@@ -180,7 +181,8 @@ async def get_docker_image_batch_job(
 
 
 @batch_job_router_v1.put(
-    "/docker-image-batch-jobs/{batch_job_id}", response_model=UpdateDockerImageBatchJobV1Response
+    "/docker-image-batch-jobs/{batch_job_id}",
+    response_model=UpdateDockerImageBatchJobV1Response,
 )
 async def update_docker_image_batch_job(
     batch_job_id: str,

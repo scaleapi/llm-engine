@@ -1,6 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sse_starlette.sse import EventSourceResponse
-
 from llm_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces_read_only,
@@ -34,6 +32,7 @@ from llm_engine_server.domain.use_cases.streaming_inference_use_cases import (
 from llm_engine_server.domain.use_cases.sync_inference_use_cases import (
     CreateSyncInferenceTaskV1UseCase,
 )
+from sse_starlette.sse import EventSourceResponse
 
 inference_task_router_v1 = APIRouter(prefix="/v1")
 logger = make_logger(filename_wo_ext(__name__))

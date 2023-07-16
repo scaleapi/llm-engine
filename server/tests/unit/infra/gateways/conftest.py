@@ -1,5 +1,4 @@
 import pytest
-
 from llm_engine_server.common.dtos.endpoint_builder import BuildEndpointRequest
 from llm_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 
@@ -50,7 +49,8 @@ def create_resources_request_sync_custom(
 
 @pytest.fixture
 def create_resources_request_streaming_runnable_image(
-    test_api_key: str, build_endpoint_request_streaming_runnable_image: BuildEndpointRequest
+    test_api_key: str,
+    build_endpoint_request_streaming_runnable_image: BuildEndpointRequest,
 ) -> CreateOrUpdateResourcesRequest:
     create_resources_request = CreateOrUpdateResourcesRequest(
         build_endpoint_request=build_endpoint_request_streaming_runnable_image,

@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from kubernetes_asyncio.client.rest import ApiException
-
 from llm_engine_server.common.config import hmi_config
 from llm_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from llm_engine_server.domain.entities import (
@@ -120,7 +119,9 @@ def k8s_endpoint_resource_delegate(
 
 
 @pytest.mark.parametrize("resource_arguments_type", ResourceArguments.__args__)
-def test_resource_arguments_type_and_add_datadog_env_to_main_container(resource_arguments_type):
+def test_resource_arguments_type_and_add_datadog_env_to_main_container(
+    resource_arguments_type,
+):
     # Convert the name of the type to a kebab case string
     # e.g. "BatchJobOrchestrationJobArguments" -> "batch-job-orchestration-job-arguments"
     resource_arguments_type_name = resource_arguments_type.__name__
@@ -179,9 +180,7 @@ def _verify_deployment_labels(
     env = "circleci"
     git_tag = "54f8f73bfb1cce62a2b42326ccf9f49b5b145126"
 
-    k8s_resource_group_name = (
-        f"llm-engine-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
-    )
+    k8s_resource_group_name = f"llm-engine-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
 
     assert body["metadata"]["name"] == k8s_resource_group_name
     assert body["metadata"]["namespace"] == hmi_config.endpoint_namespace
@@ -240,9 +239,7 @@ def _verify_non_deployment_labels(
     env = "circleci"
     git_tag = "54f8f73bfb1cce62a2b42326ccf9f49b5b145126"
 
-    k8s_resource_group_name = (
-        f"llm-engine-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
-    )
+    k8s_resource_group_name = f"llm-engine-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
 
     assert k8s_resource_group_name in body["metadata"]["name"]
     assert body["metadata"]["namespace"] == hmi_config.endpoint_namespace
@@ -388,7 +385,11 @@ async def test_create_streaming_endpoint_has_correct_labels(
     if optimize_costs:
         _verify_custom_object_plurals(
             call_args_list=create_custom_object_call_args_list,
-            expected_plurals=["verticalpodautoscalers", "virtualservices", "destinationrules"],
+            expected_plurals=[
+                "verticalpodautoscalers",
+                "virtualservices",
+                "destinationrules",
+            ],
         )
     if build_endpoint_request.model_endpoint_record.endpoint_type == ModelEndpointType.SYNC:
         _verify_custom_object_plurals(
@@ -458,7 +459,11 @@ async def test_create_sync_endpoint_has_correct_labels(
         if optimize_costs:
             _verify_custom_object_plurals(
                 call_args_list=create_custom_object_call_args_list,
-                expected_plurals=["verticalpodautoscalers", "virtualservices", "destinationrules"],
+                expected_plurals=[
+                    "verticalpodautoscalers",
+                    "virtualservices",
+                    "destinationrules",
+                ],
             )
         if build_endpoint_request.model_endpoint_record.endpoint_type == ModelEndpointType.SYNC:
             _verify_custom_object_plurals(
@@ -621,7 +626,8 @@ async def test_get_resources_sync_success(
         "_get_main_container", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
     )
     k8s_endpoint_resource_delegate.__setattr__(
-        "_get_llm_engine_container", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
+        "_get_llm_engine_container",
+        Mock(return_value=FakeK8sDeploymentContainer(env=[])),
     )
     k8s_endpoint_resource_delegate.__setattr__(
         "_translate_k8s_config_maps_to_user_config_data",

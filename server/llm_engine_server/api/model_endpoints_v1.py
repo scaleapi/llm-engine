@@ -6,7 +6,6 @@ Read model endpoint creation logs: GET model-endpoints/<endpoint id>/creation-lo
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-
 from llm_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,

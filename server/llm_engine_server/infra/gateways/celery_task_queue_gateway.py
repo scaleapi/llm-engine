@@ -29,7 +29,11 @@ celery_sqs = celery_app(
 class CeleryTaskQueueGateway(TaskQueueGateway):
     def __init__(self, broker_type: BrokerType):
         self.broker_type = broker_type
-        assert self.broker_type in [BrokerType.SQS, BrokerType.REDIS, BrokerType.REDIS_24H]
+        assert self.broker_type in [
+            BrokerType.SQS,
+            BrokerType.REDIS,
+            BrokerType.REDIS_24H,
+        ]
 
     def _get_celery_dest(self):
         if self.broker_type == BrokerType.SQS:

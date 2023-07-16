@@ -5,8 +5,6 @@ from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
 
 from kubernetes_asyncio.client.models.v1_job import V1Job
 from kubernetes_asyncio.client.rest import ApiException
-from xid import XID
-
 from llm_engine_server.common.config import hmi_config
 from llm_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from llm_engine_server.common.serialization_utils import python_json_to_b64
@@ -27,6 +25,7 @@ from llm_engine_server.infra.gateways.resources.k8s_resource_types import (
     DockerImageBatchJobCpuArguments,
     DockerImageBatchJobGpuArguments,
 )
+from xid import XID
 
 DEFAULT_MOUNT_LOCATION = "/restricted_llm_engine/batch_payload.json"
 # Must match resources/docker...{cpu,gpu}.yaml's label selector

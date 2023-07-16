@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Generic, Sequence, Tuple, TypeVar
 
-from pydantic import BaseModel
-
 from llm_engine_server.common.dtos.model_endpoints import BrokerType
 from llm_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from llm_engine_server.domain.entities import (
@@ -10,6 +8,7 @@ from llm_engine_server.domain.entities import (
     ModelEndpointRecord,
     ModelEndpointType,
 )
+from pydantic import BaseModel
 
 __all__: Sequence[str] = (
     "EndpointResourceGateway",

@@ -13,7 +13,9 @@ from llm_engine_server.domain.entities import (
 from llm_engine_server.domain.exceptions import EndpointResourceInvalidRequestException
 from llm_engine_server.domain.services import BatchJobService, ModelEndpointService
 from llm_engine_server.infra.gateways import BatchJobOrchestrationGateway, BatchJobProgressGateway
-from llm_engine_server.infra.repositories.batch_job_record_repository import BatchJobRecordRepository
+from llm_engine_server.infra.repositories.batch_job_record_repository import (
+    BatchJobRecordRepository,
+)
 
 logger = make_logger(filename_wo_ext(__file__))
 

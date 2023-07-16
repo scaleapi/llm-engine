@@ -4,10 +4,12 @@ from typing import Any, Dict
 
 import aioredis
 from celery.signals import worker_process_init
-
 from llm_engine_server.common.config import hmi_config
 from llm_engine_server.common.constants import READYZ_FPATH
-from llm_engine_server.common.dtos.endpoint_builder import BuildEndpointRequest, BuildEndpointResponse
+from llm_engine_server.common.dtos.endpoint_builder import (
+    BuildEndpointRequest,
+    BuildEndpointResponse,
+)
 from llm_engine_server.common.env_vars import CIRCLECI
 from llm_engine_server.core.fake_notification_gateway import FakeNotificationGateway
 from llm_engine_server.core.notification_gateway import NotificationGateway
@@ -66,7 +68,9 @@ async def _build_endpoint(
         resource_gateway=LiveEndpointResourceGateway(sqs_delegate=sqs_delegate),
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         model_endpoint_record_repository=DbModelEndpointRecordRepository(
-            monitoring_metrics_gateway=monitoring_metrics_gateway, session=session, read_only=False
+            monitoring_metrics_gateway=monitoring_metrics_gateway,
+            session=session,
+            read_only=False,
         ),
         model_endpoint_cache_repository=RedisModelEndpointCacheRepository(redis_client=redis),
         filesystem_gateway=S3FilesystemGateway(),

@@ -41,4 +41,9 @@ if __name__ == "__main__":
     parser.add_argument("--remote-file", type=str)
     parser.add_argument("--file-contents-b64encoded", type=str)
     args = parser.parse_args()
-    main(args.input_local, args.local_file, args.remote_file, args.file_contents_b64encoded)
+    main(
+        args.input_local,
+        args.local_file,
+        args.remote_file,
+        args.file_contents_b64encoded,
+    )

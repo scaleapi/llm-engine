@@ -5,9 +5,6 @@ from typing import Any, Callable, Dict, Sequence, Set, Type, Union
 from fastapi import routing
 from fastapi.openapi.utils import get_openapi_path
 from fastapi.utils import get_model_definitions
-from pydantic import BaseModel
-from starlette.routing import BaseRoute
-
 from llm_engine_server.common.dtos.tasks import (
     EndpointPredictV1Request,
     GetAsyncTaskV1Response,
@@ -26,6 +23,8 @@ from llm_engine_server.domain.entities import (
     ModelEndpointType,
 )
 from llm_engine_server.domain.gateways import ModelEndpointsSchemaGateway
+from pydantic import BaseModel
+from starlette.routing import BaseRoute
 
 from . import FilesystemGateway
 
@@ -40,7 +39,9 @@ def predict_stub_async(payload: EndpointPredictV1Request) -> GetAsyncTaskV1Respo
     raise NotImplementedError
 
 
-def predict_stub_sync(payload: EndpointPredictV1Request) -> SyncEndpointPredictV1Response:
+def predict_stub_sync(
+    payload: EndpointPredictV1Request,
+) -> SyncEndpointPredictV1Response:
     raise NotImplementedError
 
 
@@ -122,7 +123,9 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
                 prefix = model_endpoint_name
                 model_name_map = LiveModelEndpointsSchemaGateway.get_model_name_map(prefix)
                 result = get_openapi_path(
-                    route=route, model_name_map=model_name_map, operation_ids=operation_ids
+                    route=route,
+                    model_name_map=model_name_map,
+                    operation_ids=operation_ids,
                 )
                 if result:
                     path, security_schemes, path_definitions = result
@@ -188,7 +191,9 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
                         LiveModelEndpointsSchemaGateway.update_schema_refs_with_prefix(item, prefix)
 
     @staticmethod
-    def get_model_name_map(prefix: str) -> Dict[Union[Type[BaseModel], Type[Enum]], str]:
+    def get_model_name_map(
+        prefix: str,
+    ) -> Dict[Union[Type[BaseModel], Type[Enum]], str]:
         return {
             CallbackAuth: "CallbackAuth",
             CallbackBasicAuth: "CallbackBasicAuth",
@@ -218,7 +223,9 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
         try:
             if schema_location is not None:
                 with self.filesystem_gateway.open(
-                    schema_location, "rb", aws_profile=ml_infra_config().profile_ml_worker
+                    schema_location,
+                    "rb",
+                    aws_profile=ml_infra_config().profile_ml_worker,
                 ) as f:
                     schema = json.load(f)
         finally:

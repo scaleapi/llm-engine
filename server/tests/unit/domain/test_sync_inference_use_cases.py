@@ -1,7 +1,6 @@
 from typing import Any, Dict, Tuple
 
 import pytest
-
 from llm_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from llm_engine_server.core.auth.authentication_repository import User
 from llm_engine_server.core.domain_exceptions import (

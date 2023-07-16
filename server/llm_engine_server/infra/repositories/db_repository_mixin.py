@@ -2,9 +2,8 @@ from dataclasses import dataclass
 from functools import wraps
 from typing import Callable
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from llm_engine_server.core.domain_exceptions import ReadOnlyDatabaseException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def raise_if_read_only(func: Callable):

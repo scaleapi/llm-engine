@@ -251,7 +251,9 @@ class DeploymentRunnableImageSyncCpuArguments(
 
 
 class DeploymentRunnableImageSyncGpuArguments(
-    _RunnableImageDeploymentArguments, _SyncRunnableImageDeploymentArguments, _GpuArguments
+    _RunnableImageDeploymentArguments,
+    _SyncRunnableImageDeploymentArguments,
+    _GpuArguments,
 ):
     """Keyword-arguments for substituting into GPU sync deployment templates for runnable images."""
 
@@ -281,7 +283,9 @@ class DeploymentRunnableImageAsyncGpuArguments(
 
 
 class DeploymentTritonEnhancedRunnableImageSyncCpuArguments(
-    _RunnableImageDeploymentArguments, _SyncRunnableImageDeploymentArguments, _TritonArguments
+    _RunnableImageDeploymentArguments,
+    _SyncRunnableImageDeploymentArguments,
+    _TritonArguments,
 ):
     """Keyword-arguments for substituting into CPU sync deployment templates for triton-enhanced
     runnable images.
@@ -308,7 +312,10 @@ class DeploymentTritonEnhancedRunnableImageAsyncCpuArguments(
 
 
 class DeploymentTritonEnhancedRunnableImageAsyncGpuArguments(
-    _RunnableImageDeploymentArguments, _AsyncDeploymentArguments, _GpuArguments, _TritonArguments
+    _RunnableImageDeploymentArguments,
+    _AsyncDeploymentArguments,
+    _GpuArguments,
+    _TritonArguments,
 ):
     """Keyword-arguments for substituting GPU async deployment templates for triton-enhanced
     runnable images.

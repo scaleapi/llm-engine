@@ -116,11 +116,14 @@ class ModelVersion(Base):
         Column("tags", ARRAY(Text), index=True, nullable=False),
         Column("metadata", JSON, index=False, server_default="{}"),
         Column("created_by", String(SHORT_STRING), index=True, nullable=False),
-        Column("created_at", DateTime(timezone=True), server_default=func.now(), nullable=False),
-        UniqueConstraint("model_id", "version_number", name="model_id_version_number_uc"),
-        UniqueConstraint(
-            "llm_engine_model_bundle_id", name="llm_engine_model_bundle_id_uc"
+        Column(
+            "created_at",
+            DateTime(timezone=True),
+            server_default=func.now(),
+            nullable=False,
         ),
+        UniqueConstraint("model_id", "version_number", name="model_id_version_number_uc"),
+        UniqueConstraint("llm_engine_model_bundle_id", name="llm_engine_model_bundle_id_uc"),
         UniqueConstraint("nucleus_model_id", name="nucleus_model_id_uc"),
         schema="model",
     )
@@ -176,9 +179,7 @@ class ModelVersion(Base):
         session: Session, llm_engine_model_bundle_id: str
     ) -> Optional["ModelVersion"]:
         model_version = session.execute(
-            select(ModelVersion).filter_by(
-                llm_engine_model_bundle_id=llm_engine_model_bundle_id
-            )
+            select(ModelVersion).filter_by(llm_engine_model_bundle_id=llm_engine_model_bundle_id)
         ).scalar_one_or_none()
         return model_version
 

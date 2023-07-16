@@ -1,7 +1,6 @@
 from typing import Any
 
 import pytest
-
 from llm_engine_server.infra.services.image_cache_service import ImageCacheService
 
 

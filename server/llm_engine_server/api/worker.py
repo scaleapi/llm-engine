@@ -10,4 +10,8 @@ class LLMEngineWorker(UvicornWorker):
 
     # uvloop and httptools are both faster than their alternatives, but they are not compatible
     # with Windows or PyPy.
-    CONFIG_KWARGS = {"loop": "uvloop", "http": "httptools", "limit_concurrency": CONCURRENCY_LIMIT}
+    CONFIG_KWARGS = {
+        "loop": "uvloop",
+        "http": "httptools",
+        "limit_concurrency": CONCURRENCY_LIMIT,
+    }

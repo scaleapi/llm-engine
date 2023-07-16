@@ -21,7 +21,9 @@ from llm_engine_server.core.domain_exceptions import (
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from llm_engine_server.domain.authorization.scale_authorization_module import ScaleAuthorizationModule
+from llm_engine_server.domain.authorization.scale_authorization_module import (
+    ScaleAuthorizationModule,
+)
 from llm_engine_server.domain.entities import (
     ArtifactLike,
     CloudpickleArtifactFlavor,

@@ -4,8 +4,6 @@ DTOs for LLM APIs.
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, HttpUrl
-
 from llm_engine_server.common.dtos.model_endpoints import (
     CpuSpecificationType,
     GetModelEndpointV1Response,
@@ -14,6 +12,7 @@ from llm_engine_server.common.dtos.model_endpoints import (
     StorageSpecificationType,
 )
 from llm_engine_server.domain.entities import CallbackAuth, LLMInferenceFramework, LLMSource
+from pydantic import BaseModel, HttpUrl
 
 from .tasks import TaskStatus
 

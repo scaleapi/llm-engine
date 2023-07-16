@@ -1,5 +1,4 @@
 import pytest
-
 from llm_engine_server.infra.gateways.k8s_resource_parser import (
     get_per_worker_value_from_target_concurrency,
     get_target_concurrency_from_per_worker_value,

@@ -1,5 +1,4 @@
 import pytest
-
 from llm_engine_server.common.dtos.batch_jobs import CreateBatchJobResourceRequests
 from llm_engine_server.domain.entities import BatchJobSerializationFormat, GpuType, ModelBundle
 from llm_engine_server.domain.exceptions import EndpointResourceInvalidRequestException

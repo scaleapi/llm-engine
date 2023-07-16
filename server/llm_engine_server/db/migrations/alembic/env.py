@@ -3,9 +3,8 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
-
 from llm_engine_server.db.base import get_engine_url
+from sqlalchemy import engine_from_config, pool
 
 env = os.environ.get("ENV")
 assert env is not None, "Expected ENV to be a nonempty environment variable."

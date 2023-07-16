@@ -6,10 +6,6 @@ import psycopg2
 import pytest
 import pytest_asyncio
 import testing.postgresql
-from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine
-from sqlalchemy.ext.asyncio import create_async_engine
-
 from llm_engine_server.db.base import Session, SessionAsync
 from llm_engine_server.db.local_setup import init_database, init_database_and_engine
 from llm_engine_server.db.models import (
@@ -21,6 +17,9 @@ from llm_engine_server.db.models import (
     ModelArtifact,
     ModelVersion,
 )
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
+from sqlalchemy.ext.asyncio import create_async_engine
 
 
 def init_testing_postgresql(postgresql: testing.postgresql.Postgresql) -> None:

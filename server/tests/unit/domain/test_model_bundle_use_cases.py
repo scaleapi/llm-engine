@@ -1,5 +1,4 @@
 import pytest
-
 from llm_engine_server.common.dtos.model_bundles import (
     CloneModelBundleV1Request,
     CreateModelBundleV1Request,
@@ -353,7 +352,9 @@ async def test_create_list_model_bundles_team(
     test_api_key_team: str,
 ):
     user_1 = User(
-        user_id=test_api_key_user_on_other_team, team_id=test_api_key_team, is_privileged_user=True
+        user_id=test_api_key_user_on_other_team,
+        team_id=test_api_key_team,
+        is_privileged_user=True,
     )
     user_2 = User(
         user_id=test_api_key_user_on_other_team_2,

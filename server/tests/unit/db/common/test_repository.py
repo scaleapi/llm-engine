@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from llm_engine_server.db.models.common.record import Record
 
 

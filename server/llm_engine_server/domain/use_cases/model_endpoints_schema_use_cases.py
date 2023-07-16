@@ -1,6 +1,8 @@
 from llm_engine_server.common.dtos.model_endpoints import GetModelEndpointsSchemaV1Response
 from llm_engine_server.core.auth.authentication_repository import User
-from llm_engine_server.domain.authorization.scale_authorization_module import ScaleAuthorizationModule
+from llm_engine_server.domain.authorization.scale_authorization_module import (
+    ScaleAuthorizationModule,
+)
 from llm_engine_server.domain.services import ModelEndpointService
 
 

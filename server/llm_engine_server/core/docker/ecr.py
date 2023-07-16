@@ -1,7 +1,6 @@
 from typing import Dict, List, Optional
 
 import boto3
-
 from llm_engine_server.core.config import ml_infra_config
 from llm_engine_server.core.utils.git import tag
 
@@ -12,7 +11,8 @@ def repository_exists(repository_name: str):
     ecr = boto3.client("ecr", region_name=ml_infra_config().default_region)
     try:
         response = ecr.describe_repositories(
-            registryId=ml_infra_config().ml_account_id, repositoryNames=[repository_name]
+            registryId=ml_infra_config().ml_account_id,
+            repositoryNames=[repository_name],
         )
         if response.get("repositories"):
             return True

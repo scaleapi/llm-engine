@@ -3,8 +3,6 @@ from typing import Callable, List, Optional
 from unittest.mock import AsyncMock
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from llm_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
 from llm_engine_server.core.domain_exceptions import ReadOnlyDatabaseException
 from llm_engine_server.db.models import Bundle
@@ -18,6 +16,7 @@ from llm_engine_server.infra.repositories.db_model_bundle_repository import (
     DbModelBundleRepository,
     OrmModelBundle,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

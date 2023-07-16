@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 import requests
-from tenacity import Retrying, stop_after_attempt, wait_exponential
-
 from llm_engine_server.common.constants import CALLBACK_POST_INFERENCE_HOOK
 from llm_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from llm_engine_server.core.loggers import filename_wo_ext, make_logger
@@ -12,6 +10,7 @@ from llm_engine_server.inference.common import _write_to_s3
 from llm_engine_server.inference.domain.gateways.inference_monitoring_metrics_gateway import (
     InferenceMonitoringMetricsGateway,
 )
+from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 logger = make_logger(filename_wo_ext(__file__))
 

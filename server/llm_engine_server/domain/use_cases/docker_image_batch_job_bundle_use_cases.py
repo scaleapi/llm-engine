@@ -12,7 +12,9 @@ from llm_engine_server.core.domain_exceptions import (
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from llm_engine_server.domain.authorization.scale_authorization_module import ScaleAuthorizationModule
+from llm_engine_server.domain.authorization.scale_authorization_module import (
+    ScaleAuthorizationModule,
+)
 from llm_engine_server.domain.repositories import DockerImageBatchJobBundleRepository
 
 
@@ -67,7 +69,10 @@ class ListDockerImageBatchJobBundleV1UseCase:
         self.docker_image_batch_job_bundle_repo = docker_image_batch_job_bundle_repo
 
     async def execute(
-        self, user: User, bundle_name: Optional[str], order_by: Optional[ModelBundleOrderBy]
+        self,
+        user: User,
+        bundle_name: Optional[str],
+        order_by: Optional[ModelBundleOrderBy],
     ) -> ListDockerImageBatchJobBundleV1Response:
         batch_bundles = (
             await self.docker_image_batch_job_bundle_repo.list_docker_image_batch_job_bundles(

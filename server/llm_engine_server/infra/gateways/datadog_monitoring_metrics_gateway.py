@@ -1,5 +1,4 @@
 from datadog import statsd
-
 from llm_engine_server.core.config import ml_infra_config
 from llm_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
 

@@ -1,5 +1,4 @@
 import pytest
-
 from llm_engine_server.domain.entities import ModelEndpoint
 from llm_engine_server.infra.gateways.live_model_endpoints_schema_gateway import (
     LiveModelEndpointsSchemaGateway,
@@ -7,7 +6,9 @@ from llm_engine_server.infra.gateways.live_model_endpoints_schema_gateway import
 
 
 @pytest.fixture
-def live_model_endpoints_schema_gateway(fake_filesystem_gateway) -> LiveModelEndpointsSchemaGateway:
+def live_model_endpoints_schema_gateway(
+    fake_filesystem_gateway,
+) -> LiveModelEndpointsSchemaGateway:
     return LiveModelEndpointsSchemaGateway(filesystem_gateway=fake_filesystem_gateway)
 
 

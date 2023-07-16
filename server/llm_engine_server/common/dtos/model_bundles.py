@@ -5,13 +5,12 @@ import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
-
 from llm_engine_server.domain.entities import (
     ModelBundleEnvironmentParams,
     ModelBundleFlavors,
     ModelBundlePackagingType,
 )
+from pydantic import BaseModel, Field
 
 
 class CreateModelBundleV1Request(BaseModel):

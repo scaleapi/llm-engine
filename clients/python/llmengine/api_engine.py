@@ -23,9 +23,7 @@ def assert_self_hosted(func):
     @wraps(func)
     def inner(*args, **kwargs):
         if SPELLBOOK_API_URL == LLM_ENGINE_BASE_PATH:
-            raise ValueError(
-                "This feature is only available for self-hosted users."
-            )
+            raise ValueError("This feature is only available for self-hosted users.")
         return func(*args, **kwargs)
 
     return inner

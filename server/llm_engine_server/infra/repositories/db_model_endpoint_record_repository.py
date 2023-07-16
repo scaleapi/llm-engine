@@ -3,9 +3,6 @@ from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 from cachetools import TTLCache
-from sqlalchemy import or_, text
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from llm_engine_server.common import dict_not_none
 from llm_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from llm_engine_server.core.loggers import filename_wo_ext, make_logger
@@ -23,6 +20,8 @@ from llm_engine_server.infra.repositories.db_repository_mixin import (
 from llm_engine_server.infra.repositories.model_endpoint_record_repository import (
     ModelEndpointRecordRepository,
 )
+from sqlalchemy import or_, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = make_logger(filename_wo_ext(__file__))
 

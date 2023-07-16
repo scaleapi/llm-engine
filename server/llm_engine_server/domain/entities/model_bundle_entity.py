@@ -3,11 +3,10 @@ from abc import ABC
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, root_validator
-from typing_extensions import Literal
-
 from llm_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
 from llm_engine_server.domain.entities.owned_entity import OwnedEntity
+from pydantic import BaseModel, Field, root_validator
+from typing_extensions import Literal
 
 
 class ModelBundlePackagingType(str, Enum):

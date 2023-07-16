@@ -1,5 +1,4 @@
 import pytest
-
 from llm_engine_server.domain.entities import ModelBundle, ModelEndpoint
 from llm_engine_server.infra.gateways import (
     LiveBatchJobProgressGateway,

@@ -1,5 +1,4 @@
 from datadog import statsd
-
 from llm_engine_server.inference.domain.gateways.inference_monitoring_metrics_gateway import (
     InferenceMonitoringMetricsGateway,
 )

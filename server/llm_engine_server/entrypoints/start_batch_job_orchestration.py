@@ -4,7 +4,6 @@ import os
 from datetime import timedelta
 
 import aioredis
-
 from llm_engine_server.common.config import hmi_config
 from llm_engine_server.common.dtos.model_endpoints import BrokerType
 from llm_engine_server.common.env_vars import CIRCLECI
@@ -58,7 +57,9 @@ async def run_batch_job(
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
     monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
     model_endpoint_record_repo = DbModelEndpointRecordRepository(
-        monitoring_metrics_gateway=monitoring_metrics_gateway, session=session, read_only=False
+        monitoring_metrics_gateway=monitoring_metrics_gateway,
+        session=session,
+        read_only=False,
     )
 
     sqs_delegate: SQSEndpointResourceDelegate
@@ -123,7 +124,10 @@ def entrypoint():
     parser = argparse.ArgumentParser()
     parser.add_argument("--job-id", "-j", required=True, help="The ID of the batch job to run.")
     parser.add_argument(
-        "--owner", "-o", required=True, help="The ID of the user who owns the batch job."
+        "--owner",
+        "-o",
+        required=True,
+        help="The ID of the user who owns the batch job.",
     )
     parser.add_argument("--input-path", "-i", required=True, help="The path to the input data.")
     parser.add_argument(

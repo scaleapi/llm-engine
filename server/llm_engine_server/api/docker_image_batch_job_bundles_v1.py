@@ -1,7 +1,6 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-
 from llm_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
@@ -35,7 +34,8 @@ logger = make_logger(filename_wo_ext(__name__))
 
 
 @docker_image_batch_job_bundle_router_v1.post(
-    "/docker-image-batch-job-bundles", response_model=CreateDockerImageBatchJobBundleV1Response
+    "/docker-image-batch-job-bundles",
+    response_model=CreateDockerImageBatchJobBundleV1Response,
 )
 async def create_docker_image_batch_job_bundle(
     request: CreateDockerImageBatchJobBundleV1Request,
@@ -60,7 +60,8 @@ async def create_docker_image_batch_job_bundle(
 
 
 @docker_image_batch_job_bundle_router_v1.get(
-    "/docker-image-batch-job-bundles", response_model=ListDockerImageBatchJobBundleV1Response
+    "/docker-image-batch-job-bundles",
+    response_model=ListDockerImageBatchJobBundleV1Response,
 )
 async def list_docker_image_batch_job_model_bundles(
     bundle_name: Optional[str] = Query(default=None),
@@ -83,7 +84,8 @@ async def list_docker_image_batch_job_model_bundles(
 
 
 @docker_image_batch_job_bundle_router_v1.get(
-    "/docker-image-batch-job-bundles/latest", response_model=DockerImageBatchJobBundleV1Response
+    "/docker-image-batch-job-bundles/latest",
+    response_model=DockerImageBatchJobBundleV1Response,
 )
 async def get_latest_docker_image_batch_job_bundle(
     bundle_name: str,

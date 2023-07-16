@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Sequence
 
 import yaml
-
 from llm_engine_server.core.loggers import filename_wo_ext, make_logger
 
 logger = make_logger(filename_wo_ext(__file__))

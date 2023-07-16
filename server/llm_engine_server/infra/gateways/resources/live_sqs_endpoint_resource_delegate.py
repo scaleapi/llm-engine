@@ -5,8 +5,6 @@ from typing import Any, Dict, Optional, Sequence
 import botocore.exceptions
 from aioboto3 import Session as AioSession
 from aiobotocore.client import AioBaseClient
-from mypy_boto3_sqs.type_defs import GetQueueAttributesResultTypeDef
-
 from llm_engine_server.common.config import hmi_config
 from llm_engine_server.core.aws.roles import session
 from llm_engine_server.core.loggers import filename_wo_ext, make_logger
@@ -15,6 +13,7 @@ from llm_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate i
     SQSEndpointResourceDelegate,
     SQSQueueInfo,
 )
+from mypy_boto3_sqs.type_defs import GetQueueAttributesResultTypeDef
 
 logger = make_logger(filename_wo_ext(__file__))
 

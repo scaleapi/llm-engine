@@ -27,9 +27,13 @@ from llm_engine_server.domain.entities import (
 )
 from llm_engine_server.domain.gateways import AsyncModelEndpointInferenceGateway
 from llm_engine_server.domain.services import ModelEndpointService
-from llm_engine_server.domain.use_cases.async_inference_use_cases import DEFAULT_TASK_TIMEOUT_SECONDS
+from llm_engine_server.domain.use_cases.async_inference_use_cases import (
+    DEFAULT_TASK_TIMEOUT_SECONDS,
+)
 from llm_engine_server.infra.gateways import BatchJobProgressGateway, FilesystemGateway
-from llm_engine_server.infra.repositories.batch_job_record_repository import BatchJobRecordRepository
+from llm_engine_server.infra.repositories.batch_job_record_repository import (
+    BatchJobRecordRepository,
+)
 from llm_engine_server.infra.services.batch_job_orchestration_service import (
     BatchJobOrchestrationService,
 )
@@ -161,7 +165,10 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
         )
 
         results = self._poll_tasks(
-            owner=owner, job_id=job_id, task_ids=task_ids, timeout_timestamp=timeout_timestamp
+            owner=owner,
+            job_id=job_id,
+            task_ids=task_ids,
+            timeout_timestamp=timeout_timestamp,
         )
 
         result_location = batch_job_record.result_location
@@ -197,7 +204,10 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
         model_endpoint = await self.model_endpoint_service.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id,
         )
-        updating = {ModelEndpointStatus.UPDATE_PENDING, ModelEndpointStatus.UPDATE_IN_PROGRESS}
+        updating = {
+            ModelEndpointStatus.UPDATE_PENDING,
+            ModelEndpointStatus.UPDATE_IN_PROGRESS,
+        }
 
         assert model_endpoint
         while model_endpoint.status in updating:
@@ -235,7 +245,9 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
             pending_task_ids_location = batch_job_record.task_ids_location
             if pending_task_ids_location is not None:
                 with self.filesystem_gateway.open(
-                    pending_task_ids_location, "r", aws_profile=ml_infra_config().profile_ml_worker
+                    pending_task_ids_location,
+                    "r",
+                    aws_profile=ml_infra_config().profile_ml_worker,
                 ) as f:
                     task_ids_serialized = f.read().splitlines()
                     task_ids = [
@@ -249,7 +261,9 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
                 task_ids = await self._submit_tasks(queue_name, input_path, task_name)
                 pending_task_ids_location = self._get_pending_task_ids_location(job_id)
                 with self.filesystem_gateway.open(
-                    pending_task_ids_location, "w", aws_profile=ml_infra_config().profile_ml_worker
+                    pending_task_ids_location,
+                    "w",
+                    aws_profile=ml_infra_config().profile_ml_worker,
                 ) as f:
                     f.write("\n".join([tid.serialize() for tid in task_ids]))
                 await self.batch_job_record_repository.update_batch_job_record(
@@ -323,7 +337,8 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
         self.batch_job_progress_gateway.update_progress(owner, job_id, progress)
         while pending_task_ids_set:
             new_results = executor.map(
-                self.async_model_endpoint_inference_gateway.get_task, pending_task_ids_set
+                self.async_model_endpoint_inference_gateway.get_task,
+                pending_task_ids_set,
             )
             has_new_ready_tasks = False
             curr_timestamp = datetime.utcnow()
@@ -347,7 +362,8 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
 
         results = [
             BatchEndpointInferencePredictionResponse(
-                response=task_id_to_result[task_id], reference_id=task_id_to_ref_id_map[task_id]
+                response=task_id_to_result[task_id],
+                reference_id=task_id_to_ref_id_map[task_id],
             )
             for task_id in task_ids_only
         ]

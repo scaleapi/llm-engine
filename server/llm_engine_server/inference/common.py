@@ -9,7 +9,6 @@ from uuid import uuid4
 
 import boto3
 import cloudpickle
-
 from llm_engine_server.common.dtos.tasks import EndpointPredictV1Request, RequestSchema
 from llm_engine_server.common.io import open_wrapper
 from llm_engine_server.common.serialization_utils import b64_to_python_json

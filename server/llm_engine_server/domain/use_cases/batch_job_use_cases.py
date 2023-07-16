@@ -22,7 +22,9 @@ from llm_engine_server.core.domain_exceptions import (
     ObjectNotFoundException,
 )
 from llm_engine_server.core.loggers import filename_wo_ext, make_logger
-from llm_engine_server.domain.authorization.scale_authorization_module import ScaleAuthorizationModule
+from llm_engine_server.domain.authorization.scale_authorization_module import (
+    ScaleAuthorizationModule,
+)
 from llm_engine_server.domain.entities import ModelEndpointType
 from llm_engine_server.domain.gateways.docker_image_batch_job_gateway import (
     DockerImageBatchJobGateway,
@@ -194,7 +196,8 @@ class CreateDockerImageBatchJobV1UseCase:
             )
 
         if not self.docker_repository.image_exists(
-            image_tag=batch_bundle.image_tag, repository_name=batch_bundle.image_repository
+            image_tag=batch_bundle.image_tag,
+            repository_name=batch_bundle.image_repository,
         ):
             raise DockerImageNotFoundException(
                 repository=batch_bundle.image_repository,

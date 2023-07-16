@@ -17,7 +17,6 @@ from unittest.mock import mock_open
 from uuid import uuid4
 
 import pytest
-
 from llm_engine_server.api.dependencies import ExternalInterfaces
 from llm_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME
 from llm_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests

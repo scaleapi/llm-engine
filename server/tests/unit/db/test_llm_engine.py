@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import List
 
 import pytest
-
 from llm_engine_server.db.base import SessionAsync
 from llm_engine_server.db.models import BatchJob, Bundle, DockerImageBatchJobBundle, Endpoint
 
@@ -104,7 +103,9 @@ async def test_batch_job_select(dbsession_async: SessionAsync, batch_jobs: List[
     assert len(batch_jobs_by_owner) == 2
 
     batch_jobs_by_owner = await BatchJob.select_all_by_bundle_owner(
-        dbsession_async, model_bundle_id=batch_jobs[0].model_bundle_id, owner="test_user_1"
+        dbsession_async,
+        model_bundle_id=batch_jobs[0].model_bundle_id,
+        owner="test_user_1",
     )
     assert len(batch_jobs_by_owner) == 2
 
@@ -123,7 +124,8 @@ async def test_batch_job_update(dbsession_async: SessionAsync, batch_jobs: List[
 
 @pytest.mark.asyncio
 async def test_docker_image_batch_job_bundle_select(
-    dbsession_async: SessionAsync, docker_image_batch_job_bundles: List[DockerImageBatchJobBundle]
+    dbsession_async: SessionAsync,
+    docker_image_batch_job_bundles: List[DockerImageBatchJobBundle],
 ):
     batch_job_by_id = await DockerImageBatchJobBundle.select_by_id(
         dbsession_async, batch_bundle_id=docker_image_batch_job_bundles[0].id
@@ -136,17 +138,23 @@ async def test_docker_image_batch_job_bundle_select(
     assert len(batch_jobs_by_owner) == 2
 
     batch_jobs_by_owner = await DockerImageBatchJobBundle.select_all_by_name_owner(
-        dbsession_async, name=docker_image_batch_job_bundles[0].name, owner="test_user_1"
+        dbsession_async,
+        name=docker_image_batch_job_bundles[0].name,
+        owner="test_user_1",
     )
     assert len(batch_jobs_by_owner) == 2
 
     batch_jobs_by_owner = await DockerImageBatchJobBundle.select_all_by_name_owner(
-        dbsession_async, name=docker_image_batch_job_bundles[2].name, owner="test_user_2"
+        dbsession_async,
+        name=docker_image_batch_job_bundles[2].name,
+        owner="test_user_2",
     )
     assert len(batch_jobs_by_owner) == 1
 
     batch_job_latest_by_name_owner = await DockerImageBatchJobBundle.select_latest_by_name_owner(
-        dbsession_async, name=docker_image_batch_job_bundles[0].name, owner="test_user_1"
+        dbsession_async,
+        name=docker_image_batch_job_bundles[0].name,
+        owner="test_user_1",
     )
     assert batch_job_latest_by_name_owner is not None
     assert batch_job_latest_by_name_owner.id == docker_image_batch_job_bundles[1].id

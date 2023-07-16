@@ -2,7 +2,6 @@ from typing import Any
 from unittest.mock import Mock, mock_open
 
 import pytest
-
 from llm_engine_server.common.dtos.docker_repository import BuildImageResponse
 from llm_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointRequest,
@@ -18,7 +17,10 @@ from llm_engine_server.infra.gateways.fake_monitoring_metrics_gateway import (
     FakeMonitoringMetricsGateway,
 )
 from llm_engine_server.infra.repositories import ModelEndpointCacheRepository
-from llm_engine_server.infra.services import LiveEndpointBuilderService, live_endpoint_builder_service
+from llm_engine_server.infra.services import (
+    LiveEndpointBuilderService,
+    live_endpoint_builder_service,
+)
 
 
 @pytest.fixture

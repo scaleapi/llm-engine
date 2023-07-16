@@ -5,7 +5,6 @@ from multiprocessing.synchronize import BoundedSemaphore as BoundedSemaphoreType
 from typing import Optional
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Response, status
-
 from llm_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from llm_engine_server.core.loggers import filename_wo_ext, make_logger
 from llm_engine_server.inference.common import (

@@ -4,8 +4,6 @@ DTOs for the batch job abstraction.
 from datetime import datetime, timedelta
 from typing import Any, Collection, Dict, List, Optional
 
-from pydantic import BaseModel, root_validator
-
 from llm_engine_server.common import dict_not_none
 from llm_engine_server.domain.entities import (
     BatchJobSerializationFormat,
@@ -14,6 +12,7 @@ from llm_engine_server.domain.entities import (
     GpuType,
     StorageSpecificationType,
 )
+from pydantic import BaseModel, root_validator
 
 
 class CreateBatchJobResourceRequests(BaseModel):

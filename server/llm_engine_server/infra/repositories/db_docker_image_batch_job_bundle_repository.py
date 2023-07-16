@@ -1,7 +1,5 @@
 from typing import Dict, List, Optional, Sequence
 
-from pydantic.error_wrappers import ValidationError
-
 from llm_engine_server.common import dict_not_none
 from llm_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
 from llm_engine_server.db.models import DockerImageBatchJobBundle as OrmDockerImageBatchJobBundle
@@ -17,6 +15,7 @@ from llm_engine_server.infra.repositories.db_repository_mixin import (
     DbRepositoryMixin,
     raise_if_read_only,
 )
+from pydantic.error_wrappers import ValidationError
 
 
 class DbDockerImageBatchJobBundleRepository(DockerImageBatchJobBundleRepository, DbRepositoryMixin):

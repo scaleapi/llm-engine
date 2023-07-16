@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 
-from llm_engine_server.common.dtos.endpoint_builder import BuildEndpointRequest, BuildEndpointResponse
+from llm_engine_server.common.dtos.endpoint_builder import (
+    BuildEndpointRequest,
+    BuildEndpointResponse,
+)
 
 
 class EndpointBuilderService(ABC):

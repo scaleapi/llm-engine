@@ -13,12 +13,11 @@ import uvicorn
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
-
 from llm_engine_server.common.constants import READYZ_FPATH
 from llm_engine_server.common.serialization_utils import python_json_to_b64
 from llm_engine_server.core.config import ml_infra_config
 from llm_engine_server.domain.entities import CallbackAuth, CallbackBasicAuth, ModelEndpointConfig
+from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 MODULE_PATH = Path(__file__).resolve()
 BASE_PATH = MODULE_PATH.parents[4]

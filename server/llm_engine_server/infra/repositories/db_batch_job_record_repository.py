@@ -4,7 +4,9 @@ from typing import Any, Dict, List, Optional
 from llm_engine_server.common import dict_not_none
 from llm_engine_server.db.models import BatchJob as OrmBatchJob
 from llm_engine_server.domain.entities import BatchJobRecord, BatchJobStatus
-from llm_engine_server.infra.repositories.batch_job_record_repository import BatchJobRecordRepository
+from llm_engine_server.infra.repositories.batch_job_record_repository import (
+    BatchJobRecordRepository,
+)
 from llm_engine_server.infra.repositories.db_model_bundle_repository import (
     translate_model_bundle_orm_to_model_bundle,
 )
@@ -14,7 +16,9 @@ from llm_engine_server.infra.repositories.db_repository_mixin import (
 )
 
 
-def translate_batch_job_orm_to_batch_job_record(batch_job_orm: OrmBatchJob) -> BatchJobRecord:
+def translate_batch_job_orm_to_batch_job_record(
+    batch_job_orm: OrmBatchJob,
+) -> BatchJobRecord:
     return BatchJobRecord(
         id=batch_job_orm.id,
         created_at=batch_job_orm.created_at,

@@ -3,7 +3,6 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-
 from llm_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
@@ -119,7 +118,8 @@ async def list_model_endpoints(
 
 
 @llm_router_v1.get(
-    "/model-endpoints/{model_endpoint_name}", response_model=GetLLMModelEndpointV1Response
+    "/model-endpoints/{model_endpoint_name}",
+    response_model=GetLLMModelEndpointV1Response,
 )
 async def get_model_endpoint(
     model_endpoint_name: str,

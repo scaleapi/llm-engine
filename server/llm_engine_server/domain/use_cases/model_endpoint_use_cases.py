@@ -25,7 +25,9 @@ from llm_engine_server.core.domain_exceptions import (
     ObjectNotFoundException,
 )
 from llm_engine_server.core.loggers import filename_wo_ext, make_logger
-from llm_engine_server.domain.authorization.scale_authorization_module import ScaleAuthorizationModule
+from llm_engine_server.domain.authorization.scale_authorization_module import (
+    ScaleAuthorizationModule,
+)
 from llm_engine_server.domain.entities import (
     ModelEndpoint,
     ModelEndpointType,

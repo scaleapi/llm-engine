@@ -7,11 +7,10 @@ from typing import Any, List
 
 import yaml
 from fastapi import Depends, FastAPI
-from sse_starlette.sse import EventSourceResponse
-
 from llm_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from llm_engine_server.core.loggers import logger_name, make_logger
 from llm_engine_server.inference.forwarding.forwarding import LoadForwarder, LoadStreamingForwarder
+from sse_starlette.sse import EventSourceResponse
 
 logger = make_logger(logger_name())
 app = FastAPI()

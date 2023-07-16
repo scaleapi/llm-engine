@@ -9,8 +9,6 @@ import pytest
 import redis
 import requests
 from fastapi import FastAPI
-from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
-
 from llm_engine_server.common.dtos.model_endpoints import BrokerType
 from llm_engine_server.common.dtos.tasks import (
     CallbackAuth,
@@ -23,6 +21,7 @@ from llm_engine_server.infra.gateways import (
     CeleryTaskQueueGateway,
     LiveAsyncModelEndpointInferenceGateway,
 )
+from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 
 @lru_cache(1)

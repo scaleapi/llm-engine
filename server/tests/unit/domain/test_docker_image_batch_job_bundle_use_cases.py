@@ -1,5 +1,4 @@
 import pytest
-
 from llm_engine_server.common.dtos.batch_jobs import (
     CreateDockerImageBatchJobBundleV1Request,
     CreateDockerImageBatchJobBundleV1Response,
@@ -57,7 +56,9 @@ async def test_create_list_docker_image_batch_job_bundle_use_case(
         user=user, request=create_docker_image_batch_job_bundle_request
     )
     response_2 = await use_case_list.execute(
-        user=user, bundle_name=create_docker_image_batch_job_bundle_request.name, order_by=None
+        user=user,
+        bundle_name=create_docker_image_batch_job_bundle_request.name,
+        order_by=None,
     )
     assert len(response_2.docker_image_batch_job_bundles) == 1
     assert (
@@ -102,7 +103,9 @@ async def test_create_list_docker_image_batch_job_bundle_team_use_case(
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     user_other_team_1 = User(
-        user_id=test_api_key_user_on_other_team, team_id=test_api_key_team, is_privileged_user=True
+        user_id=test_api_key_user_on_other_team,
+        team_id=test_api_key_team,
+        is_privileged_user=True,
     )
     user_other_team_2 = User(
         user_id=test_api_key_user_on_other_team_2,
@@ -118,7 +121,9 @@ async def test_create_list_docker_image_batch_job_bundle_team_use_case(
     )
     await use_case_create.execute(user=user, request=create_docker_image_batch_job_bundle_request)
     response_2 = await use_case_list.execute(
-        user=user, bundle_name=create_docker_image_batch_job_bundle_request.name, order_by=None
+        user=user,
+        bundle_name=create_docker_image_batch_job_bundle_request.name,
+        order_by=None,
     )
     assert len(response_2.docker_image_batch_job_bundles) == 1
     response_3 = await use_case_list.execute(
@@ -204,7 +209,9 @@ async def test_create_get_docker_image_batch_job_bundle_by_id_unauthorized_use_c
 ):
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     user_other_team_1 = User(
-        user_id=test_api_key_user_on_other_team, team_id=test_api_key_team, is_privileged_user=True
+        user_id=test_api_key_user_on_other_team,
+        team_id=test_api_key_team,
+        is_privileged_user=True,
     )
     use_case_create = CreateDockerImageBatchJobBundleV1UseCase(
         docker_image_batch_job_bundle_repo=fake_docker_image_batch_job_bundle_repository

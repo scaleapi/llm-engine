@@ -9,7 +9,9 @@ from llm_engine_server.core.domain_exceptions import (
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from llm_engine_server.domain.authorization.scale_authorization_module import ScaleAuthorizationModule
+from llm_engine_server.domain.authorization.scale_authorization_module import (
+    ScaleAuthorizationModule,
+)
 from llm_engine_server.domain.entities import ModelEndpointType
 from llm_engine_server.domain.exceptions import EndpointUnsupportedInferenceTypeException
 from llm_engine_server.domain.services.model_endpoint_service import ModelEndpointService

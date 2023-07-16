@@ -1,6 +1,10 @@
 from typing import Optional
 
-from llm_engine_server.domain.entities import CpuSpecificationType, GpuType, StorageSpecificationType
+from llm_engine_server.domain.entities import (
+    CpuSpecificationType,
+    GpuType,
+    StorageSpecificationType,
+)
 from llm_engine_server.domain.exceptions import EndpointResourceInvalidRequestException
 from llm_engine_server.infra.gateways.k8s_resource_parser import (
     parse_mem_request,

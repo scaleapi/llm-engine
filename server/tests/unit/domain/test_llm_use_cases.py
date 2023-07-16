@@ -1,7 +1,6 @@
 from typing import Any, Tuple
 
 import pytest
-
 from llm_engine_server.common.dtos.llms import (
     CompletionOutput,
     CompletionSyncV1Request,

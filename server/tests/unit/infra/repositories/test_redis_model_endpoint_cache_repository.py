@@ -2,7 +2,6 @@ from unittest.mock import Mock
 
 import aioredis
 import pytest
-
 from llm_engine_server.infra.repositories.redis_model_endpoint_cache_repository import (
     RedisModelEndpointCacheRepository,
 )

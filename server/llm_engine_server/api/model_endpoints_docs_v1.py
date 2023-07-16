@@ -2,8 +2,6 @@ from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.openapi.docs import get_redoc_html
 from fastapi.responses import JSONResponse
-from starlette.responses import HTMLResponse
-
 from llm_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces_read_only,
@@ -14,6 +12,7 @@ from llm_engine_server.core.loggers import filename_wo_ext, make_logger
 from llm_engine_server.domain.use_cases.model_endpoints_schema_use_cases import (
     GetModelEndpointsSchemaV1UseCase,
 )
+from starlette.responses import HTMLResponse
 
 model_endpoints_docs_router_v1 = APIRouter(prefix="/v1")
 logger = make_logger(filename_wo_ext(__name__))

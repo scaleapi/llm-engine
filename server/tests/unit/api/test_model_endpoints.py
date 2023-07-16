@@ -3,7 +3,6 @@ from typing import Any, Dict, Tuple
 
 import pytest
 from fastapi.testclient import TestClient
-
 from llm_engine_server.common.dtos.model_endpoints import GetModelEndpointV1Response
 from llm_engine_server.domain.entities import ModelBundle, ModelEndpoint, ModelEndpointStatus
 

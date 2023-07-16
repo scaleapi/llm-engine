@@ -2,9 +2,8 @@ import argparse
 from typing import Any, Dict
 
 import requests
-from tenacity import retry, stop_after_attempt, wait_fixed
-
 from llm_engine_server.api_client.model.model_endpoint_type import ModelEndpointType
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 DEFAULT_NETWORK_TIMEOUT_SEC = 10
 

@@ -2,7 +2,6 @@ from typing import Any, Dict, Tuple
 
 import pytest
 from fastapi.testclient import TestClient
-
 from llm_engine_server.domain.entities import BatchJob, GpuType, ModelBundle, ModelEndpoint
 from llm_engine_server.domain.entities.batch_job_entity import DockerImageBatchJob
 from llm_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (

@@ -2,7 +2,6 @@ import json
 from typing import Optional
 
 import aioredis
-
 from llm_engine_server.domain.entities import ModelEndpointInfraState
 from llm_engine_server.infra.repositories.model_endpoint_cache_repository import (
     ModelEndpointCacheRepository,

@@ -10,8 +10,6 @@ import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, HttpUrl
-
 from llm_engine_server.domain.entities import (
     CallbackAuth,
     CpuSpecificationType,
@@ -23,6 +21,7 @@ from llm_engine_server.domain.entities import (
     ModelEndpointType,
     StorageSpecificationType,
 )
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class BrokerType(str, Enum):

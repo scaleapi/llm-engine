@@ -2,7 +2,6 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
-
 from llm_engine_server.domain.entities import ModelEndpoint
 from llm_engine_server.infra.gateways import (
     LiveModelEndpointInfraGateway,

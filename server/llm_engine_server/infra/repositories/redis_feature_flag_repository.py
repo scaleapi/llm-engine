@@ -1,7 +1,6 @@
 from typing import Optional
 
 import aioredis
-
 from llm_engine_server.infra.repositories.feature_flag_repository import FeatureFlagRepository
 
 

@@ -1,7 +1,7 @@
 from typing import Sequence
 
-from .model import Model, ModelArtifact, ModelVersion
 from .llm_engine import BatchJob, Bundle, DockerImageBatchJobBundle, Endpoint
+from .model import Model, ModelArtifact, ModelVersion
 
 __all__: Sequence[str] = [
     "BatchJob",

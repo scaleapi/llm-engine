@@ -7,11 +7,11 @@ install-test:
 	pip install -r requirements-test.txt
 
 install-dev:
-	pip install -r requirements-dev.txt
+	pip install -r ../requirements-dev.txt
 
 install-docs:
-	pip install -r requirements-docs.txt
-	pip install -e clients/python/
+	pip install -r ../requirements-docs.txt
+	pip install -e ../clients/python/
 
 requirements: install-dev
 	pip-compile --allow-unsafe --no-emit-index-url --no-emit-trusted-host --output-file=requirements.txt requirements.in

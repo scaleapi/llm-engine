@@ -11,7 +11,7 @@ class ValidationError(Exception):
 # API Inference Errors
 class BadRequestError(Exception):
     """
-    Corresponds to HTTP 400. Indicates that the request had inputs that were invalid. The user should not 
+    Corresponds to HTTP 400. Indicates that the request had inputs that were invalid. The user should not
     attempt to retry the request without changing the inputs.
     """
 
@@ -31,8 +31,8 @@ class UnauthorizedError(Exception):
 class NotFoundError(Exception):
     """
     Corresponds to HTTP 404. This means that the resource (e.g. a Model, FineTune, etc.) could not be found.
-    Note that this can also be returned in some cases where the object might exist, but the user does not have access 
-    to the object. This is done to avoid leaking information about the existence or nonexistence of said object that 
+    Note that this can also be returned in some cases where the object might exist, but the user does not have access
+    to the object. This is done to avoid leaking information about the existence or nonexistence of said object that
     the user does not have access to.
     """
 
