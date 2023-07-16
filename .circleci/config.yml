@@ -59,9 +59,7 @@ jobs:
             pip install -e .
             WORKSPACE=.. pytest
   build_image:
-    machine: docker-builder
-    resource_class: small
-    parallelism: 1
+    executor: docker-builder
     steps:
       - checkout
       - run:
