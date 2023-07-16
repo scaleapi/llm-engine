@@ -30,6 +30,21 @@ jobs:
           command: | # Make sure that the workflow is working
             python3 --version
       - run_unit_tests_server
+  build_docs:
+    docker:
+      - image: python:3.8-bookworm
+    resource_class: small
+    parallelism: 1
+    steps:
+      - checkout # checkout source code to working directory
+      - install_client
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements-docs.txt
+      - run:
+          name: Build Docs
+          command: |
+            mkdocs build
   build_image:
     executor: ubuntu-large
     steps:
@@ -91,6 +106,12 @@ commands:
          pkg-manager: pip
          app-dir: server
          pip-dependency-file: requirements_override.txt
+  install_client:
+    description: Install LLM Engine client
+    steps:
+      - python/install-packages:
+          pkg-manager: poetry
+          app-dir: clients/python
   run_unit_tests_server:
     description: Unit tests of the server
     steps:
