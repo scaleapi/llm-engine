@@ -13,15 +13,10 @@ jobs:
       - run:
           name: Install Basic Environment Dependencies
           command: | # install dependencies
-            echo $PWD
             apt-get update
-            apt-get -y install curl libgeos-dev
+            apt-get -y install curl
             pip install --upgrade pip
-            pip install poetry
-            pip install black
-      - python/install-packages:
-          pkg-manager: poetry
-          include-python-in-cache-key: false
+            pip install -r requirements-dev.txt
       - run:
           name: python3 Version
           command: | # Make sure that the workflow is working
