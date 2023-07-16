@@ -188,7 +188,7 @@ class LiveBatchJobService(BatchJobService):
                 batch_job_id=batch_job_id, status=BatchJobStatus.CANCELLED
             )
             success = True
-        except:
+        except:  # noqa: E722
             logger.exception(f"Failed to cancel batch job {batch_job_id}")
         finally:
             return success

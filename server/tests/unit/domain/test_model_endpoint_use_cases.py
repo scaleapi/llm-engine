@@ -16,10 +16,7 @@ from llm_engine_server.core.domain_exceptions import (
     ObjectNotFoundException,
 )
 from llm_engine_server.domain.entities import ModelBundle, ModelEndpoint
-from llm_engine_server.domain.exceptions import (
-    EndpointLabelsException,
-    EndpointResourceInvalidRequestException,
-)
+from llm_engine_server.domain.exceptions import EndpointResourceInvalidRequestException
 from llm_engine_server.domain.use_cases.model_endpoint_use_cases import (
     CreateModelEndpointV1UseCase,
     DeleteModelEndpointByIdV1UseCase,

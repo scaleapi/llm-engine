@@ -40,9 +40,7 @@ COPY server/requirements-test.txt /workspace/server/requirements-test.txt
 COPY server/requirements.txt /workspace/server/requirements.txt
 COPY server/requirements_override.txt /workspace/server/requirements_override.txt
 RUN pip install -r requirements-test.txt --no-cache-dir
-RUN --mount=type=secret,id=codeartifact-pip-conf,target=/etc/pip.conf \
-    PIP_CONFIG_FILE=/kaniko/pip/codeartifact_pip_conf \
-    pip install -r requirements.txt --no-cache-dir
+RUN pip install -r requirements.txt --no-cache-dir
 RUN pip install -r requirements_override.txt --no-cache-dir
 COPY server/pyproject.toml /workspace/server/pyproject.toml
 COPY server/setup.py /workspace/server/setup.py
