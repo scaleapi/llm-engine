@@ -41,5 +41,3 @@
 ::: llmengine.ListFineTunesResponse
 
 ::: llmengine.CancelFineTuneResponse
-
-::: llmengine.Model
