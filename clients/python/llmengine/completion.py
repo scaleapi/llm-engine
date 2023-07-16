@@ -49,13 +49,16 @@ class Completion(APIEngine):
         JSON response:
             ```json
             {
-                "outputs": [
+                "status": "SUCCESS",
+                "outputs":
+                [
                     {
-                        "text": "_______ and I am a _______",
+                        "text": "_______, and I am a _____",
                         "num_prompt_tokens": null,
                         "num_completion_tokens": 10
                     }
-                ]
+                ],
+                "traceback": null
             }
             ```
 
@@ -82,13 +85,11 @@ class Completion(APIEngine):
 
         JSON responses:
             ```json
-            [
-                {"output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1}},
-                {"output": {"text": "The", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2}},
-                {"output": {"text": " sky", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3}},
-                {"output": {"text": " is", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4}},
-                {"output": {"text": " blue", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5}}
-            ]
+            {"status": "SUCCESS", "output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1}, "traceback": null}
+            {"status": "SUCCESS", "output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2}, "traceback": null}
+            {"status": "SUCCESS", "output": {"text": " think", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3}, "traceback": null}
+            {"status": "SUCCESS", "output": {"text": " the", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4}, "traceback": null}
+            {"status": "SUCCESS", "output": {"text": " sky", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5}, "traceback": null}
             ```
 
 
@@ -176,13 +177,16 @@ class Completion(APIEngine):
         JSON Response:
             ```json
             {
-                "outputs": [
+                "status": "SUCCESS",
+                "outputs":
+                [
                     {
-                        "text": "\\nThe sky is blue because of the way the light is reflected off the molecules in the air.\\nWhat is the sky blue?\\nThe sky is blue because of the way the light is reflected off the molecules in the air.\\nWhat is the sky blue?\\nThe sky is blue because of the way the light is reflected off the molecules in the air. The sky is blue because of the way the light is reflected off the molecules in the air.\\nWhat is",
+                        "text": "_______ and I am a _______",
                         "num_prompt_tokens": null,
-                        "num_completion_tokens": 100
+                        "num_completion_tokens": 10
                     }
-                ]
+                ],
+                "traceback": null
             }
             ```
 
@@ -205,13 +209,11 @@ class Completion(APIEngine):
 
         JSON responses:
             ```json
-            [
-                {"output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1}},
-                {"output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2}},
-                {"output": {"text": "'", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3}},
-                {"output": {"text": "m", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4}},
-                {"output": {"text": " not", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5}}
-            ]
+            {"status": "SUCCESS", "output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1 }, "traceback": null }
+            {"status": "SUCCESS", "output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2 }, "traceback": null }
+            {"status": "SUCCESS", "output": {"text": " don", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3 }, "traceback": null }
+            {"status": "SUCCESS", "output": {"text": "’", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4 }, "traceback": null }
+            {"status": "SUCCESS", "output": {"text": "t", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5 }, "traceback": null }
             ```
 
         Args:
