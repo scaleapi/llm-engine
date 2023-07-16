@@ -23,6 +23,10 @@ jobs:
       - python/install-packages:
           pkg-manager: pip
           app-dir: server
+          pip-dependency-file: requirements-test.txt
+      - python/install-packages:
+          pkg-manager: pip
+          app-dir: server
           pip-dependency-file: requirements_override.txt
       - run:
           name: python3 Version
