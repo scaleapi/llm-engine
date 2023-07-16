@@ -50,6 +50,11 @@ jobs:
             sudo dpkg -i minikube_latest_amd64.deb
             minikube start --vm-driver=docker --kubernetes-version=v1.23.0 --memory=14336 --cpus=8
       - run:
+          name: Install helm
+          command: |
+            cd $HOME
+            curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - run:
           name: Install helm chart
           command: |
             cd $HOME/project/charts
