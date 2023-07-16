@@ -4,7 +4,7 @@ services:
   llm-engine:
     build:
       context: ..
-      dockerfile: llm_engine/Dockerfile
+      dockerfile: server/Dockerfile
       secrets:
         - codeartifact-pip-conf
       target: llm-engine
@@ -12,14 +12,14 @@ services:
   llm-engine-gateway-dev:
     build:
       context: ..
-      dockerfile: llm_engine/Dockerfile
+      dockerfile: server/Dockerfile
       secrets:
         - codeartifact-pip-conf
       target: llm-engine
     command:
       - python
       - -m
-      - hosted_model_inference.entrypoints.start_fastapi_server
+      - llm_engine_server.entrypoints.start_fastapi_server
       - --port=5001
       - --debug
       - --num-workers=1
@@ -56,13 +56,13 @@ services:
   llm-engine-service-builder-dev:
     build:
       context: ..
-      dockerfile: llm_engine/Dockerfile
+      dockerfile: server/Dockerfile
       secrets:
         - codeartifact-pip-conf
       target: llm-engine
     command:
       - celery
-      - --app=hosted_model_inference.service_builder
+      - --app=llm_engine_server.service_builder
       - worker
       - --loglevel=INFO
       - --concurrency=4
@@ -102,7 +102,7 @@ services:
   llm-engine-bash:
     build:
       context: ..
-      dockerfile: llm_engine/Dockerfile
+      dockerfile: server/Dockerfile
       secrets:
         - codeartifact-pip-conf
       target: llm-engine

@@ -34,19 +34,19 @@ RUN curl -LO "https://dl.k8s.io/release/v1.17.9/bin/linux/amd64/kubectl" \
 RUN pip install pip==23.0.1
 RUN chmod -R 777 /workspace
 
-## grab llm_engine project (w/ requirements install layer caching)
-WORKDIR /workspace/llm_engine/
-COPY llm_engine/requirements-test.txt /workspace/llm_engine/requirements-test.txt
-COPY llm_engine/requirements.txt /workspace/llm_engine/requirements.txt
-COPY llm_engine/requirements_override.txt /workspace/llm_engine/requirements_override.txt
+## grab llm_engine_server project (w/ requirements install layer caching)
+WORKDIR /workspace/server/
+COPY server/requirements-test.txt /workspace/server/requirements-test.txt
+COPY server/requirements.txt /workspace/server/requirements.txt
+COPY server/requirements_override.txt /workspace/server/requirements_override.txt
 RUN pip install -r requirements-test.txt --no-cache-dir
 RUN --mount=type=secret,id=codeartifact-pip-conf,target=/etc/pip.conf \
     PIP_CONFIG_FILE=/kaniko/pip/codeartifact_pip_conf \
     pip install -r requirements.txt --no-cache-dir
 RUN pip install -r requirements_override.txt --no-cache-dir
-COPY llm_engine/pyproject.toml /workspace/llm_engine/pyproject.toml
-COPY llm_engine/setup.py /workspace/llm_engine/setup.py
-COPY llm_engine/llm_engine /workspace/llm_engine/llm_engine
+COPY server/pyproject.toml /workspace/server/pyproject.toml
+COPY server/setup.py /workspace/server/setup.py
+COPY server/llm_engine_server /workspace/server/llm_engine_server
 RUN pip install -e .
 
 WORKDIR /workspace
