@@ -1,8 +1,7 @@
 from typing import Any
 
 import pytest
-
-from spellbook_serve.infra.services.image_cache_service import ImageCacheService
+from llm_engine_server.infra.services.image_cache_service import ImageCacheService
 
 
 @pytest.mark.asyncio

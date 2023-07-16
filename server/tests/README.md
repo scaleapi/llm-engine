@@ -2,6 +2,6 @@
 
 ```shell
 pushd ../
-PYTHONPATH=spellbook_serve WORKSPACE=. python3 -m pytest spellbook_serve/tests --cov=spellbook_serve
+PYTHONPATH=llm_engine WORKSPACE=. python3 -m pytest llm_engine/tests --cov=llm_engine
 popd
 ```

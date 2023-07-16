@@ -1,0 +1,25 @@
+{{- if .Values.autoscaling.vertical.enabled }}
+apiVersion: "autoscaling.k8s.io/v1"
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "llmEngine.cachername" . }}
+  labels:
+    {{- include "llmEngine.labels" . | nindent 4 }}
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: {{ include "llmEngine.cachername" . }}
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: {{ include "llmEngine.cachername" . }}
+        minAllowed:
+          cpu: {{ .Values.autoscaling.vertical.minAllowed.cpu }}
+          memory: {{ .Values.autoscaling.vertical.minAllowed.memory }}
+        maxAllowed:
+          cpu: {{ .Values.autoscaling.vertical.maxAllowed.cpu }}
+          memory: {{ .Values.autoscaling.vertical.maxAllowed.memory }}
+        controlledResources: ["cpu", "memory"]
+{{- end }}

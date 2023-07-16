@@ -1,8 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-from spellbook_serve.db.models.common.record import Record
+from llm_engine_server.db.models.common.record import Record
 
 
 @pytest.fixture
@@ -26,7 +25,7 @@ class TestRecord:
         mock_session.add.assert_called_once_with(item)
         mock_session.commit.assert_called_once_with()
 
-    @patch("spellbook_serve.db.models.common.record.select")
+    @patch("llm_engine_server.db.models.common.record.select")
     def test_select_all(self, mock_select, mock_session, mock_query):
         mock_query.to_sqlalchemy_query.return_value = {"id": "123", "name": "test"}
         mock_select_obj = MagicMock()
@@ -38,7 +37,7 @@ class TestRecord:
         mock_session.execute.return_value.scalars.assert_called_once_with()
         mock_session.execute.return_value.scalars.return_value.all.assert_called_once_with()
 
-    @patch("spellbook_serve.db.models.common.record.select")
+    @patch("llm_engine_server.db.models.common.record.select")
     def test_select_by_id(self, mock_select, mock_session):
         mock_select_obj = MagicMock()
         mock_select.return_value = mock_select_obj
@@ -48,7 +47,7 @@ class TestRecord:
         mock_session.execute.assert_called_once_with(mock_select_obj.filter_by.return_value)
         mock_session.execute.return_value.scalar_one_or_none.assert_called_once_with()
 
-    @patch("spellbook_serve.db.models.common.record.select")
+    @patch("llm_engine_server.db.models.common.record.select")
     def test_update(self, mock_select, mock_session, mock_query):
         mock_select_obj = MagicMock()
         mock_select.return_value = mock_select_obj

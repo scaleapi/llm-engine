@@ -34,7 +34,7 @@ sqs_queue_policy_template: >
       {
         "Effect": "Allow",
         "Principal": {
-          "AWS": "arn:aws:iam::000000000000:role/ml_spellbook_serve"
+          "AWS": "arn:aws:iam::000000000000:role/ml_llm_engine"
         },
         "Action": "sqs:*",
         "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
@@ -44,7 +44,7 @@ sqs_queue_policy_template: >
 
 sqs_queue_tag_template: >
   {
-    "infra.scale.com/product": "MLInfraSpellbookServeSQS",
+    "infra.scale.com/product": "MLInfraLLMEngineSQS",
     "infra.scale.com/team": "${team}",
     "infra.scale.com/contact": "yi.xu@scale.com",
     "infra.scale.com/customer": "AllCustomers",

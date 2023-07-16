@@ -1,13 +1,14 @@
 import pytest
-
-from spellbook_serve.domain.entities import ModelEndpoint
-from spellbook_serve.infra.gateways.live_model_endpoints_schema_gateway import (
+from llm_engine_server.domain.entities import ModelEndpoint
+from llm_engine_server.infra.gateways.live_model_endpoints_schema_gateway import (
     LiveModelEndpointsSchemaGateway,
 )
 
 
 @pytest.fixture
-def live_model_endpoints_schema_gateway(fake_filesystem_gateway) -> LiveModelEndpointsSchemaGateway:
+def live_model_endpoints_schema_gateway(
+    fake_filesystem_gateway,
+) -> LiveModelEndpointsSchemaGateway:
     return LiveModelEndpointsSchemaGateway(filesystem_gateway=fake_filesystem_gateway)
 
 

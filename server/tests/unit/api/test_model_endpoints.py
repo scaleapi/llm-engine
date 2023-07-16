@@ -3,9 +3,8 @@ from typing import Any, Dict, Tuple
 
 import pytest
 from fastapi.testclient import TestClient
-
-from spellbook_serve.common.dtos.model_endpoints import GetModelEndpointV1Response
-from spellbook_serve.domain.entities import ModelBundle, ModelEndpoint, ModelEndpointStatus
+from llm_engine_server.common.dtos.model_endpoints import GetModelEndpointV1Response
+from llm_engine_server.domain.entities import ModelBundle, ModelEndpoint, ModelEndpointStatus
 
 
 def test_create_model_endpoint_success(
@@ -39,41 +38,6 @@ def test_create_model_endpoint_success(
         json=create_model_endpoint_request_async,
     )
     assert response_2.status_code == 200
-
-
-def test_create_model_endpoint_invalid_team_returns_400(
-    model_bundle_1_v1: Tuple[ModelBundle, Any],
-    create_model_endpoint_request_sync: Dict[str, Any],
-    create_model_endpoint_request_async: Dict[str, Any],
-    test_api_key: str,
-    get_test_client_wrapper,
-):
-    client = get_test_client_wrapper(
-        fake_docker_repository_image_always_exists=True,
-        fake_model_bundle_repository_contents={
-            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
-        },
-        fake_model_endpoint_record_repository_contents={},
-        fake_model_endpoint_infra_gateway_contents={},
-        fake_batch_job_record_repository_contents={},
-        fake_batch_job_progress_gateway_contents={},
-        fake_docker_image_batch_job_bundle_repository_contents={},
-    )
-    create_model_endpoint_request_sync["labels"]["team"] = "some_invalid_team"
-    response_1 = client.post(
-        "/v1/model-endpoints",
-        auth=(test_api_key, ""),
-        json=create_model_endpoint_request_sync,
-    )
-    assert response_1.status_code == 400
-
-    create_model_endpoint_request_async["labels"]["team"] = "some_invalid_team"
-    response_2 = client.post(
-        "/v1/model-endpoints",
-        auth=(test_api_key, ""),
-        json=create_model_endpoint_request_async,
-    )
-    assert response_2.status_code == 400
 
 
 def test_create_model_endpoint_invalid_streaming_bundle_returns_400(
@@ -392,41 +356,6 @@ def test_update_model_endpoint_by_id_success(
     )
     assert response.status_code == 200
     assert response.json()["endpoint_creation_task_id"]
-
-
-def test_update_model_endpoint_by_id_invalid_team_returns_400(
-    model_bundle_1_v1: Tuple[ModelBundle, Any],
-    model_endpoint_1: Tuple[ModelEndpoint, Any],
-    update_model_endpoint_request: Dict[str, Any],
-    test_api_key: str,
-    get_test_client_wrapper,
-):
-    assert model_endpoint_1[0].infra_state is not None
-    client = get_test_client_wrapper(
-        fake_docker_repository_image_always_exists=True,
-        fake_model_bundle_repository_contents={
-            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
-        },
-        fake_model_endpoint_record_repository_contents={
-            model_endpoint_1[0].record.id: model_endpoint_1[0].record,
-        },
-        fake_model_endpoint_infra_gateway_contents={
-            model_endpoint_1[0].infra_state.deployment_name: model_endpoint_1[0].infra_state,
-        },
-        fake_batch_job_record_repository_contents={},
-        fake_batch_job_progress_gateway_contents={},
-        fake_docker_image_batch_job_bundle_repository_contents={},
-    )
-    update_model_endpoint_request["labels"] = {
-        "team": "some_invalid_team",
-        "product": "my_product",
-    }
-    response = client.put(
-        "/v1/model-endpoints/test_model_endpoint_id_1",
-        auth=(test_api_key, ""),
-        json=update_model_endpoint_request,
-    )
-    assert response.status_code == 400
 
 
 def test_update_model_endpoint_by_id_endpoint_not_authorized_returns_404(

@@ -1,6 +1,6 @@
 from typing import Dict
 
-from llmengine.api_engine import APIEngine, DEFAULT_TIMEOUT
+from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine
 from llmengine.data_types import (
     CancelFineTuneJobResponse,
     CreateFineTuneJobRequest,
@@ -151,6 +151,8 @@ class FineTune(APIEngine):
             CancelFineTuneJobResponse: whether the cancellation was successful
         """
         response = cls.put(
-            f"v1/llm/fine-tunes/{fine_tune_id}/cancel", data=None, timeout=DEFAULT_TIMEOUT
+            f"v1/llm/fine-tunes/{fine_tune_id}/cancel",
+            data=None,
+            timeout=DEFAULT_TIMEOUT,
         )
         return CancelFineTuneJobResponse.parse_obj(response)

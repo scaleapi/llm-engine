@@ -1,6 +1,5 @@
 import pytest
-
-from spellbook_serve.common.dtos.model_bundles import (
+from llm_engine_server.common.dtos.model_bundles import (
     CloneModelBundleV1Request,
     CreateModelBundleV1Request,
     CreateModelBundleV1Response,
@@ -8,15 +7,15 @@ from spellbook_serve.common.dtos.model_bundles import (
     ModelBundleOrderBy,
     ModelBundleV1Response,
 )
-from spellbook_serve.core.auth.authentication_repository import User
-from spellbook_serve.core.domain_exceptions import (
+from llm_engine_server.core.auth.authentication_repository import User
+from llm_engine_server.core.domain_exceptions import (
     DockerImageNotFoundException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from spellbook_serve.domain.gateways import ModelPrimitiveGateway
-from spellbook_serve.domain.repositories import DockerRepository, ModelBundleRepository
-from spellbook_serve.domain.use_cases.model_bundle_use_cases import (
+from llm_engine_server.domain.gateways import ModelPrimitiveGateway
+from llm_engine_server.domain.repositories import DockerRepository, ModelBundleRepository
+from llm_engine_server.domain.use_cases.model_bundle_use_cases import (
     CloneModelBundleV1UseCase,
     CreateModelBundleV1UseCase,
     GetLatestModelBundleByNameV1UseCase,
@@ -353,7 +352,9 @@ async def test_create_list_model_bundles_team(
     test_api_key_team: str,
 ):
     user_1 = User(
-        user_id=test_api_key_user_on_other_team, team_id=test_api_key_team, is_privileged_user=True
+        user_id=test_api_key_user_on_other_team,
+        team_id=test_api_key_team,
+        is_privileged_user=True,
     )
     user_2 = User(
         user_id=test_api_key_user_on_other_team_2,

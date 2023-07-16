@@ -3,15 +3,14 @@ from typing import Any, Callable, Dict, List, Optional
 from unittest.mock import AsyncMock
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from spellbook_serve.core.domain_exceptions import ReadOnlyDatabaseException
-from spellbook_serve.db.models import BatchJob, Bundle
-from spellbook_serve.domain.entities import BatchJobRecord
-from spellbook_serve.infra.repositories.db_batch_job_record_repository import (
+from llm_engine_server.core.domain_exceptions import ReadOnlyDatabaseException
+from llm_engine_server.db.models import BatchJob, Bundle
+from llm_engine_server.domain.entities import BatchJobRecord
+from llm_engine_server.infra.repositories.db_batch_job_record_repository import (
     DbBatchJobRecordRepository,
     OrmBatchJob,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

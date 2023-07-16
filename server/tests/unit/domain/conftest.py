@@ -1,19 +1,18 @@
 import pytest
-
-from spellbook_serve.common.dtos.batch_jobs import (
+from llm_engine_server.common.dtos.batch_jobs import (
     CreateDockerImageBatchJobBundleV1Request,
     CreateDockerImageBatchJobResourceRequests,
 )
-from spellbook_serve.common.dtos.llms import (
+from llm_engine_server.common.dtos.llms import (
     CompletionSyncV1Request,
     CreateLLMModelEndpointV1Request,
 )
-from spellbook_serve.common.dtos.model_bundles import CreateModelBundleV1Request
-from spellbook_serve.common.dtos.model_endpoints import (
+from llm_engine_server.common.dtos.model_bundles import CreateModelBundleV1Request
+from llm_engine_server.common.dtos.model_endpoints import (
     CreateModelEndpointV1Request,
     UpdateModelEndpointV1Request,
 )
-from spellbook_serve.domain.entities import (
+from llm_engine_server.domain.entities import (
     GpuType,
     ModelBundle,
     ModelBundleEnvironmentParams,

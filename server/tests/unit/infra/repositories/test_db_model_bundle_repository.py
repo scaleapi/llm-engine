@@ -3,21 +3,20 @@ from typing import Callable, List, Optional
 from unittest.mock import AsyncMock
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from spellbook_serve.common.dtos.model_bundles import ModelBundleOrderBy
-from spellbook_serve.core.domain_exceptions import ReadOnlyDatabaseException
-from spellbook_serve.db.models import Bundle
-from spellbook_serve.domain.entities import (
+from llm_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
+from llm_engine_server.core.domain_exceptions import ReadOnlyDatabaseException
+from llm_engine_server.db.models import Bundle
+from llm_engine_server.domain.entities import (
     CloudpickleArtifactFlavor,
     ModelBundle,
     ModelBundlePackagingType,
     PytorchFramework,
 )
-from spellbook_serve.infra.repositories.db_model_bundle_repository import (
+from llm_engine_server.infra.repositories.db_model_bundle_repository import (
     DbModelBundleRepository,
     OrmModelBundle,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

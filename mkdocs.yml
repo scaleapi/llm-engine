@@ -25,7 +25,7 @@ theme:
     - content.code.copy
   icon:
     repo: fontawesome/brands/github-alt
-  logo: _static/spellbook-serve-logo.svg
+  logo: _static/llm-engine-logo.svg
   favicon: _static/favicon-32x32.png
   language: en
 

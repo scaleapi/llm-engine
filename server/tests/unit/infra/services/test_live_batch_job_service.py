@@ -1,10 +1,9 @@
 import pytest
-
-from spellbook_serve.common.dtos.batch_jobs import CreateBatchJobResourceRequests
-from spellbook_serve.domain.entities import BatchJobSerializationFormat, GpuType, ModelBundle
-from spellbook_serve.domain.exceptions import EndpointResourceInvalidRequestException
-from spellbook_serve.infra.services import LiveBatchJobService
-from spellbook_serve.infra.services.live_batch_job_service import (
+from llm_engine_server.common.dtos.batch_jobs import CreateBatchJobResourceRequests
+from llm_engine_server.domain.entities import BatchJobSerializationFormat, GpuType, ModelBundle
+from llm_engine_server.domain.exceptions import EndpointResourceInvalidRequestException
+from llm_engine_server.infra.services import LiveBatchJobService
+from llm_engine_server.infra.services.live_batch_job_service import (
     DEFAULT_ENDPOINT_CPUS_BATCH_JOB,
     DEFAULT_ENDPOINT_GPU_TYPE_BATCH_JOB,
     DEFAULT_ENDPOINT_GPUS_BATCH_JOB,

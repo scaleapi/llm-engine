@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:experimental
 
-FROM python:3.8.8-slim as spellbook-serve
+FROM python:3.8.8-slim as llm-engine
 WORKDIR /workspace
 
 RUN apt-get update && apt-get install -y \
@@ -34,19 +34,19 @@ RUN curl -LO "https://dl.k8s.io/release/v1.17.9/bin/linux/amd64/kubectl" \
 RUN pip install pip==23.0.1
 RUN chmod -R 777 /workspace
 
-## grab spellbook_serve project (w/ requirements install layer caching)
-WORKDIR /workspace/spellbook_serve/
-COPY spellbook_serve/requirements-test.txt /workspace/spellbook_serve/requirements-test.txt
-COPY spellbook_serve/requirements.txt /workspace/spellbook_serve/requirements.txt
-COPY spellbook_serve/requirements_override.txt /workspace/spellbook_serve/requirements_override.txt
+## grab llm_engine_server project (w/ requirements install layer caching)
+WORKDIR /workspace/server/
+COPY server/requirements-test.txt /workspace/server/requirements-test.txt
+COPY server/requirements.txt /workspace/server/requirements.txt
+COPY server/requirements_override.txt /workspace/server/requirements_override.txt
 RUN pip install -r requirements-test.txt --no-cache-dir
 RUN --mount=type=secret,id=codeartifact-pip-conf,target=/etc/pip.conf \
     PIP_CONFIG_FILE=/kaniko/pip/codeartifact_pip_conf \
     pip install -r requirements.txt --no-cache-dir
 RUN pip install -r requirements_override.txt --no-cache-dir
-COPY spellbook_serve/pyproject.toml /workspace/spellbook_serve/pyproject.toml
-COPY spellbook_serve/setup.py /workspace/spellbook_serve/setup.py
-COPY spellbook_serve/spellbook_serve /workspace/spellbook_serve/spellbook_serve
+COPY server/pyproject.toml /workspace/server/pyproject.toml
+COPY server/setup.py /workspace/server/setup.py
+COPY server/llm_engine_server /workspace/server/llm_engine_server
 RUN pip install -e .
 
 WORKDIR /workspace
