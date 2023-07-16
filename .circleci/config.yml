@@ -44,7 +44,7 @@ jobs:
       - run:
           name: Build Docs
           command: |
-            mkdocs build
+            mkdocs build --strict
   build_image:
     executor: ubuntu-large
     steps:
