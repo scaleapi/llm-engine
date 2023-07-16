@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0.alpha1"
+__version__ = "0.0.0.beta0"
 
 from llmengine.completion import Completion
 from llmengine.data_types import (
