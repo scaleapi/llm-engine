@@ -99,9 +99,9 @@ dataclasses-json==0.5.9
     # via -r requirements.in
 datadog-api-client==2.11.0
     # via -r requirements.in
-datadog-scale==0.44.1.dev0
+datadog==0.44.1
     # via -r requirements.in
-ddtrace-scale==0.49.3.dev0
+ddtrace==0.49.3
     # via -r requirements.in
 deprecation==2.1.0
     # via -r requirements.in
