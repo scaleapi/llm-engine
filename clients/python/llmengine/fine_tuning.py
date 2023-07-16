@@ -32,6 +32,7 @@ class FineTune(APIEngine):
             from llmengine import FineTune
 
             response = FineTune.create(
+                model="llama-7b",
                 training_file="s3://my-bucket/path/to/training-file.csv",
             )
 
@@ -54,6 +55,13 @@ class FineTune(APIEngine):
 
             validation_file (`Optional[str]`):
                 Path to file of validation dataset
+
+            hyperparameters (`str`):
+                Hyperparameters
+                
+            suffix (`Optional[str]`):
+                A string that will be added to your fine-tuned model name.
+
 
         Returns:
             CreateFineTuneResponse: an object that contains the ID of the created fine-tuning job
@@ -98,7 +106,6 @@ class FineTune(APIEngine):
                 "status": "RUNNING"
             }
             ```
-
 
         Args:
             fine_tune_id (`str`):
