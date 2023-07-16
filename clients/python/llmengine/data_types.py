@@ -255,18 +255,16 @@ class CompletionStreamV1Response(BaseModel):
 
 
 class CreateFineTuneJobRequest(BaseModel):
+    model: str
+    """Identifier of base model to train from."""
     training_file: str
-    """Path to file of training dataset"""
-    validation_file: str
-    """Path to file of validation dataset"""
-    model_name: str
-    """Name of the fine-tuned model"""
-    base_model: str  # TODO enum
-    """Base model to train from"""
-    fine_tuning_method: str  # TODO enum
-    """Fine-tuning method"""
-    hyperparameters: Dict[str, str]  # TODO validated somewhere else
-    """Hyperparameters"""
+    """Path to file of training dataset. Dataset must be a csv with columns 'prompt' and 'response'."""
+    validation_file: Optional[str]
+    """Path to file of validation dataset. Has the same format as training_file. If not provided, we will generate a split from the training dataset."""
+    hyperparameters: Optional[Dict[str, Any]]
+    """Hyperparameters to pass in to training job."""
+    suffix: Optional[str]
+    """Optional user-provided identifier suffix for the fine-tuned model."""
 
 
 class CreateFineTuneJobResponse(BaseModel):

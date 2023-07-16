@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine
 from llmengine.data_types import (
@@ -18,12 +18,11 @@ class FineTune(APIEngine):
     @classmethod
     def create(
         cls,
+        model: str,
         training_file: str,
-        validation_file: str,
-        model_name: str,
-        base_model: str,
-        fine_tuning_method: str,
-        hyperparameters: Dict[str, str],
+        validation_file: Optional[str] = None,
+        hyperparameters: Optional[Dict[str, str]] = None,
+        suffix: Optional[str] = None,
     ) -> CreateFineTuneJobResponse:
         """
         Create a fine-tuning job.
@@ -66,12 +65,11 @@ class FineTune(APIEngine):
             CreateFineTuneJobResponse: ID of the created fine-tuning job
         """
         request = CreateFineTuneJobRequest(
+            model=model,
             training_file=training_file,
             validation_file=validation_file,
-            model_name=model_name,
-            base_model=base_model,
-            fine_tuning_method=fine_tuning_method,
             hyperparameters=hyperparameters,
+            suffix=suffix,
         )
         response = cls.post_sync(
             resource_name="v1/llm/fine-tunes",
