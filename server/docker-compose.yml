@@ -33,9 +33,9 @@ services:
       - CELERY_ELASTICACHE_ENABLED=true
       - "GIT_TAG=${GIT_SHA}"
       - DD_ENV=training
-      - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/hosted_model_inference/service_configs/service_config_${ENV}.yaml"
-      - "LLM_ENGINE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
-      - "ML_INFRA_SERVICES_CONFIG_PATH=/workspace/ml_infra_core/ml_infra_services/ml_infra_services/configs/${ENV}.yaml"
+      - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/server/service_configs/service_config_${ENV}.yaml"
+      - "LLM_ENGINE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/server/llm_engine_server/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
+      - "ML_INFRA_SERVICES_CONFIG_PATH=/workspace/server/llm_engine_server/core/configs/${ENV}.yaml"
       - "DB_SECRET_NAME=${DB_SECRET_NAME:-}"
       - "ML_INFRA_DATABASE_URL=${ML_INFRA_DATABASE_URL:-}"
       - "USE_REDIS_LOCALHOST=${USE_REDIS_LOCALHOST:-}"
@@ -73,8 +73,8 @@ services:
       - ECR_READ_AWS_PROFILE
       - DB_SECRET_AWS_PROFILE
       - "S3_BUCKET=${S3_BUCKET:-scale-ml}"
-      - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/hosted_model_inference/service_configs/service_config_${ENV}.yaml"
-      - "LLM_ENGINE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
+      - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/server/service_configs/service_config_${ENV}.yaml"
+      - "LLM_ENGINE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/server/llm_engine_server/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
       - "ML_INFRA_SERVICES_CONFIG_PATH=/workspace/ml_infra_core/ml_infra_services/ml_infra_services/configs/${ENV}.yaml"
       - "GIT_TAG=${GIT_SHA}"
       - DD_ENV=training
@@ -115,8 +115,8 @@ services:
       - SQS_PROFILE
       - ECR_READ_AWS_PROFILE
       - DB_SECRET_AWS_PROFILE
-      - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/hosted_model_inference/service_configs/service_config_${ENV}.yaml"
-      - "LLM_ENGINE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/hosted_model_inference/hosted_model_inference/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
+      - "DEPLOY_SERVICE_CONFIG_PATH=/workspace/server/service_configs/service_config_${ENV}.yaml"
+      - "LLM_ENGINE_SERVICE_TEMPLATE_CONFIG_MAP_PATH=/workspace/server/llm_engine_server/infra/gateways/resources/templates/service_template_config_map_${ENV}.yaml"
       - "ML_INFRA_SERVICES_CONFIG_PATH=/workspace/ml_infra_core/ml_infra_services/ml_infra_services/configs/${ENV}.yaml"
       - "GIT_TAG=${GIT_SHA}"
       - DD_ENV=training
