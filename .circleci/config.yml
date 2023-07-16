@@ -52,8 +52,19 @@ jobs:
             cd server
             pip install -e .
             WORKSPACE=.. pytest
+  build_image:
+    executor: docker-builder
+    resource_class: small
+    parallelism: 1
+    steps:
+      - checkout
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build . -f server/Dockerfile -t llm-engine:$CIRCLE_SHA1
 
 workflows:
   build_and_test:
     jobs:
       - test_server
+      - build_image
