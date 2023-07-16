@@ -31,22 +31,65 @@ class Completion(APIEngine):
 
         Example without token streaming:
             ```python
+            import asyncio
             from llmengine import Completion
 
             async def main():
-                response_stream = await Completion.acreate(
+                response = await Completion.acreate(
                     model_name="llama-7b",
                     prompt="Hello, my name is",
                     max_new_tokens=10,
                     temperature=0.2,
                 )
-                async for response in response_stream:
-                    print(response.output.text)
+                print(response.json())
+
+            asyncio.run(main())
             ```
 
-        JSON Response:
-        ```json
-        ```
+        JSON response:
+            ```json
+            {
+                "outputs": [
+                    {
+                        "text": "_______ and I am a _______",
+                        "num_prompt_tokens": null,
+                        "num_completion_tokens": 10
+                    }
+                ]
+            }
+            ```
+
+        Example with token streaming:
+            ```python
+            import asyncio
+            from llmengine import Completion
+
+            async def main():
+                stream = await Completion.acreate(
+                    model_name="llama-7b",
+                    prompt="why is the sky blue?",
+                    max_new_tokens=5,
+                    temperature=0.2,
+                    stream=True,
+                )
+
+                async for response in stream:
+                    if response.output:
+                        print(response.json())
+
+            asyncio.run(main())
+            ```
+
+        JSON responses:
+            ```json
+            [
+                {"output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1}},
+                {"output": {"text": "The", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2}},
+                {"output": {"text": " sky", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3}},
+                {"output": {"text": " is", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4}},
+                {"output": {"text": " blue", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5}}
+            ]
+            ```
 
 
         Args:
@@ -127,21 +170,19 @@ class Completion(APIEngine):
                 max_new_tokens=10,
                 temperature=0.2,
             )
-            print(response)
+            print(response.json())
             ```
 
         JSON Response:
             ```json
             {
-                "status": "SUCCESS",
                 "outputs": [
                     {
                         "text": "\\nThe sky is blue because of the way the light is reflected off the molecules in the air.\\nWhat is the sky blue?\\nThe sky is blue because of the way the light is reflected off the molecules in the air.\\nWhat is the sky blue?\\nThe sky is blue because of the way the light is reflected off the molecules in the air. The sky is blue because of the way the light is reflected off the molecules in the air.\\nWhat is",
                         "num_prompt_tokens": null,
                         "num_completion_tokens": 100
                     }
-                ],
-                "traceback": null
+                ]
             }
             ```
 
@@ -159,17 +200,17 @@ class Completion(APIEngine):
 
             for response in stream:
                 if response.output:
-                    print(response.output)
+                    print(response.json())
             ```
 
-        Stream response JSONs:
+        JSON responses:
             ```json
             [
-                {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1},
-                {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2},
-                {"text": "'", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3},
-                {"text": "m", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4},
-                {"text": " not", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5}
+                {"output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1}},
+                {"output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2}},
+                {"output": {"text": "'", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3}},
+                {"output": {"text": "m", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4}},
+                {"output": {"text": " not", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5}}
             ]
             ```
 
