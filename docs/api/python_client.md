@@ -6,26 +6,14 @@
             - create
             - acreate
 
-::: llmengine.FineTune
-    selection:
-        members:
-            - create
-            - list
-            - retrieve
-            - cancel
-
-::: llmengine.Model
-
-::: llmengine.CompletionSyncV1Response
-
-::: llmengine.CompletionStreamV1Response
-
 ::: llmengine.CompletionOutput
     selection:
         members:
             - text
             - num_prompt_tokens
             - num_completion_tokens
+
+::: llmengine.CompletionSyncV1Response
 
 ::: llmengine.CompletionStreamOutput
     selection:
@@ -35,17 +23,16 @@
             - num_prompt_tokens
             - num_completion_tokens
 
-::: llmengine.TaskStatus
 
-::: llmengine.CreateFineTuneJobRequest
+::: llmengine.CompletionStreamV1Response
+
+::: llmengine.FineTune
     selection:
         members:
-            - base_model
-            - training_file
-            - validation_file
-            - fine_tuning_method
-            - hyperparameters
-            - model_name
+            - create
+            - list
+            - retrieve
+            - cancel
 
 ::: llmengine.CreateFineTuneJobResponse
 
@@ -55,3 +42,4 @@
 
 ::: llmengine.CancelFineTuneJobResponse
 
+::: llmengine.Model
