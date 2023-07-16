@@ -109,7 +109,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="LLM Engine" class="md-header__button md-logo" aria-label="LLM Engine" data-md-component="logo">
       
-  <img src="../../_static/spellbook-serve-logo.svg" alt="logo">
+  <img src="../../_static/llm-engine-logo.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -234,7 +234,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="LLM Engine" class="md-nav__button md-logo" aria-label="LLM Engine" data-md-component="logo">
       
-  <img src="../../_static/spellbook-serve-logo.svg" alt="logo">
+  <img src="../../_static/llm-engine-logo.svg" alt="logo">
 
     </a>
     LLM Engine
@@ -614,7 +614,7 @@ and handled by the user accordingly.</p>
         Bases: <code>Exception</code></p>
 
   
-      <p>Corresponds to HTTP 400. Indicates that the request had inputs that were invalid. The user should not 
+      <p>Corresponds to HTTP 400. Indicates that the request had inputs that were invalid. The user should not
 attempt to retry the request without changing the inputs.</p>
 
 
@@ -698,8 +698,8 @@ attempt to retry the request without changing the inputs.</p>
 
   
       <p>Corresponds to HTTP 404. This means that the resource (e.g. a Model, FineTune, etc.) could not be found.
-Note that this can also be returned in some cases where the object might exist, but the user does not have access 
-to the object. This is done to avoid leaking information about the existence or nonexistence of said object that 
+Note that this can also be returned in some cases where the object might exist, but the user does not have access
+to the object. This is done to avoid leaking information about the existence or nonexistence of said object that
 the user does not have access to.</p>
 
 
