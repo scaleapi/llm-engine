@@ -2,6 +2,12 @@ version: 2.1
 orbs:
   python: circleci/python@2.1.1
 
+workflows:
+  ci:
+    jobs:
+      - test_server
+      - build_image
+
 jobs:
   test_server:
     docker:
@@ -53,7 +59,7 @@ jobs:
             pip install -e .
             WORKSPACE=.. pytest
   build_image:
-    executor: docker-builder
+    machine: docker-builder
     resource_class: small
     parallelism: 1
     steps:
@@ -63,8 +69,9 @@ jobs:
           command: |
             docker build . -f server/Dockerfile -t llm-engine:$CIRCLE_SHA1
 
-workflows:
-  build_and_test:
-    jobs:
-      - test_server
-      - build_image
+executors:
+  docker-builder:
+    machine:
+      image: "ubuntu-2004:202201-02"
+    resource_class: large
+
