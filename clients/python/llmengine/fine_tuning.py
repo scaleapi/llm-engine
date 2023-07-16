@@ -25,7 +25,7 @@ class FineTune(APIEngine):
         suffix: Optional[str] = None,
     ) -> CreateFineTuneResponse:
         """
-        Create a fine-tuning job.
+        Creates a job that fine-tunes a specified model from a given dataset.
 
         Example:
             ```python
@@ -33,36 +33,30 @@ class FineTune(APIEngine):
 
             response = FineTune.create(
                 training_file="s3://my-bucket/path/to/training-file.csv",
-                validation_file="s3://my-bucket/path/to/validation-file.csv",
-                model_name="llama-7b-ft-2023-07-18",
-                base_model="llama-7b",
-                fine_tuning_method="ia3",
-                hyperparameters={},
             )
 
-            print(response)
+            print(response.json())
             ```
 
         JSON Response:
             ```json
+            {
+                "fine_tune_id": "ft_abc123"
+            }
             ```
 
         Args:
+            model (`str`):
+                The name of the base model to fine-tune. See #model_zoo for the list of available models to fine-tune.
+
             training_file (`str`):
                 Path to file of training dataset
-            validation_file (`str`):
+
+            validation_file (`Optional[str]`):
                 Path to file of validation dataset
-            model_name (`str`):
-                Name of the fine-tuned model
-            base_model (`str`):
-                Base model to train from
-            fine_tuning_method (`str`):
-                Fine-tuning method
-            hyperparameters (`str`):
-                Hyperparameters
 
         Returns:
-            CreateFineTuneResponse: ID of the created fine-tuning job
+            CreateFineTuneResponse: an object that contains the ID of the created fine-tuning job
         """
         request = CreateFineTuneRequest(
             model=model,
@@ -91,14 +85,18 @@ class FineTune(APIEngine):
             from llmengine import FineTune
 
             response = FineTune.retrieve(
-                fine_tune_id="ft_abc123...",
+                fine_tune_id="ft_abc123",
             )
 
-            print(response)
+            print(response.json())
             ```
 
         JSON Response:
             ```json
+            {
+                "fine_tune_id": "ft_abc123",
+                "status": "RUNNING"
+            }
             ```
 
 
@@ -107,7 +105,7 @@ class FineTune(APIEngine):
                 ID of the fine-tuning job
 
         Returns:
-            GetFineTuneResponse: ID and status of the requested job
+            GetFineTuneResponse: an object that contains the ID and status of the requested job
         """
         response = cls.get(f"v1/llm/fine-tunes/{fine_tune_id}", timeout=DEFAULT_TIMEOUT)
         return GetFineTuneResponse.parse_obj(response)
@@ -122,15 +120,25 @@ class FineTune(APIEngine):
             from llmengine import FineTune
 
             response = FineTune.list()
-            print(response)
+            print(response.json())
             ```
 
         JSON Response:
             ```json
+            [
+                {
+                    "fine_tune_id": "ft_abc123",
+                    "status": "RUNNING"
+                },
+                {
+                    "fine_tune_id": "ft_def456",
+                    "status": "SUCCESS"
+                }
+            ]
             ```
 
         Returns:
-            ListFineTunesResponse: list of all fine-tuning jobs and their statuses
+            ListFineTunesResponse: an object that contains a list of all fine-tuning jobs and their statuses
         """
         response = cls.get("v1/llm/fine-tunes", timeout=DEFAULT_TIMEOUT)
         return ListFineTunesResponse.parse_obj(response)
@@ -140,13 +148,28 @@ class FineTune(APIEngine):
         """
         Cancel a fine-tuning job
 
+        Example:
+            ```python
+            from llmengine import FineTune
+
+            response = FineTune.cancel(fine_tune_id="ft_abc123")
+            print(response.json())
+            ```
+
+        JSON Response:
+            ```json
+            {
+                "success": "true"
+            }
+            ```
+
 
         Args:
             fine_tune_id (`str`):
                 ID of the fine-tuning job
 
         Returns:
-            CancelFineTuneResponse: whether the cancellation was successful
+            CancelFineTuneResponse: an object that contains whether the cancellation was successful
         """
         response = cls.put(
             f"v1/llm/fine-tunes/{fine_tune_id}/cancel",
