@@ -1639,8 +1639,8 @@ stream token responses or not.</p>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionSyncV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1747,8 +1747,8 @@ stream token responses or not.</p>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1771,8 +1771,8 @@ stream token responses or not.</p>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1835,8 +1835,8 @@ stream token responses or not.</p>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamV1Response.output" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1882,8 +1882,8 @@ stream token responses or not.</p>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1957,7 +1957,7 @@ stream token responses or not.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Create a fine-tuning job.</p>
+      <p>Creates a job that fine-tunes a specified model from a given dataset.</p>
 
 <details class="example" open>
   <summary>Example</summary>
@@ -1965,19 +1965,16 @@ stream token responses or not.</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">FineTune</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">training_file</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/path/to/training-file.csv&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">validation_file</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/path/to/validation-file.csv&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;llama-7b-ft-2023-07-18&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">base_model</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">fine_tuning_method</span><span class="o">=</span><span class="s2">&quot;ia3&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">hyperparameters</span><span class="o">=</span><span class="p">{},</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">)</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
 </code></pre></div>
 </details>
 <details class="json-response" open>
   <summary>JSON Response</summary>
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="nt">&quot;fine_tune_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ft_abc123&quot;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">}</span>
 </code></pre></div>
 </details>
   <p><strong>Parameters:</strong></p>
@@ -1991,6 +1988,20 @@ stream token responses or not.</p>
       </tr>
     </thead>
     <tbody>
+        <tr>
+          <td><code>model</code></td>
+          <td>
+                <code>`str`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The name of the base model to fine-tune. See #model_zoo for the list of available models to fine-tune.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
         <tr>
           <td><code>training_file</code></td>
           <td>
@@ -2008,67 +2019,11 @@ stream token responses or not.</p>
         <tr>
           <td><code>validation_file</code></td>
           <td>
-                <code>`str`</code>
+                <code>`Optional[str]`</code>
           </td>
           <td>
             <div class="doc-md-description">
               <p>Path to file of validation dataset</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>model_name</code></td>
-          <td>
-                <code>`str`</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the fine-tuned model</p>
-            </div>
-          </td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>base_model</code></td>
-          <td>
-                <code>`str`</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Base model to train from</p>
-            </div>
-          </td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>fine_tuning_method</code></td>
-          <td>
-                <code>`str`</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Fine-tuning method</p>
-            </div>
-          </td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>hyperparameters</code></td>
-          <td>
-                <code>`str`</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Hyperparameters</p>
             </div>
           </td>
           <td>
@@ -2093,7 +2048,7 @@ stream token responses or not.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>ID of the created fine-tuning job</p>
+              <p>an object that contains the ID of the created fine-tuning job</p>
             </div>
           </td>
         </tr>
@@ -2129,12 +2084,21 @@ stream token responses or not.</p>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">FineTune</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">FineTune</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
 </code></pre></div>
 </details>
 <details class="json-response" open>
   <summary>JSON Response</summary>
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">[</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">        </span><span class="nt">&quot;fine_tune_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ft_abc123&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">        </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;RUNNING&quot;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">        </span><span class="nt">&quot;fine_tune_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ft_def456&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">        </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SUCCESS&quot;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">]</span>
 </code></pre></div>
 </details>
   <p><strong>Returns:</strong></p>
@@ -2152,7 +2116,7 @@ stream token responses or not.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>list of all fine-tuning jobs and their statuses</p>
+              <p>an object that contains a list of all fine-tuning jobs and their statuses</p>
             </div>
           </td>
         </tr>
@@ -2188,15 +2152,18 @@ stream token responses or not.</p>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">FineTune</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">FineTune</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">fine_tune_id</span><span class="o">=</span><span class="s2">&quot;ft_abc123...&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">fine_tune_id</span><span class="o">=</span><span class="s2">&quot;ft_abc123&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
 </code></pre></div>
 </details>
 <details class="json-response" open>
   <summary>JSON Response</summary>
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="nt">&quot;fine_tune_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ft_abc123&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;RUNNING&quot;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">}</span>
 </code></pre></div>
 </details>
   <p><strong>Parameters:</strong></p>
@@ -2242,7 +2209,7 @@ stream token responses or not.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>ID and status of the requested job</p>
+              <p>an object that contains the ID and status of the requested job</p>
             </div>
           </td>
         </tr>
@@ -2273,6 +2240,21 @@ stream token responses or not.</p>
   
       <p>Cancel a fine-tuning job</p>
 
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">FineTune</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">FineTune</span><span class="o">.</span><span class="n">cancel</span><span class="p">(</span><span class="n">fine_tune_id</span><span class="o">=</span><span class="s2">&quot;ft_abc123&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+</code></pre></div>
+</details>
+<details class="json-response" open>
+  <summary>JSON Response</summary>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;true&quot;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">}</span>
+</code></pre></div>
+</details>
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2316,7 +2298,7 @@ stream token responses or not.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>whether the cancellation was successful</p>
+              <p>an object that contains whether the cancellation was successful</p>
             </div>
           </td>
         </tr>
