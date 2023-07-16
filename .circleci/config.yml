@@ -8,6 +8,7 @@ workflows:
       - run_unit_tests_server
       - integration_tests
       - build_image
+      - build_docs
 
 jobs:
   run_unit_tests_server:
