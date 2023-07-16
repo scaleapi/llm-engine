@@ -4,7 +4,6 @@ from typing import AsyncIterator, Dict, Iterator, Optional
 
 import requests
 from aiohttp import BasicAuth, ClientSession, ClientTimeout
-from pydantic import ValidationError
 from llmengine.errors import parse_error
 from llmengine.types import (
     CancelFineTuneJobResponse,
@@ -17,6 +16,7 @@ from llmengine.types import (
     GetFineTuneJobResponse,
     ListFineTuneJobResponse,
 )
+from pydantic import ValidationError
 
 SPELLBOOK_API_URL = "https://api.spellbook.scale.com"
 

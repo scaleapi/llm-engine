@@ -25,7 +25,7 @@ theme:
     - content.code.copy
   icon:
     repo: fontawesome/brands/github-alt
-  logo: _static/spellbook-serve-logo.svg
+  logo: _static/llm-engine-logo.svg
   favicon: _static/favicon-32x32.png
   language: en
 
@@ -37,9 +37,9 @@ nav:
   - "Getting Started": getting_started.md
   - "Model Zoo": model_zoo.md
   - "How-To Guides":
-      "Completions": guides/completions.md
-#      "Token streaming": guides/token_streaming.md
-      "Fine-tuning": guides/fine_tuning.md
+      - "Completions": guides/completions.md
+#      - "Token streaming": guides/token_streaming.md
+      - "Fine-tuning": guides/fine_tuning.md
   - "API":
       - "Error handling": api/error_handling.md
       - "Python Client API Reference": api/python_client.md
