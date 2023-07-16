@@ -42,6 +42,15 @@ jobs:
           name: Black Formatting Check # Only validation, without re-formatting
           command: |
             black --check --config .black.toml .
+      - run:
+          name: Isort Formatting Check # Only validation, without re-formatting
+          command: |
+            isort . --check-only --verbose
+      - run:
+          name: Unit Tests
+          command: |
+            cd server
+            WORKSPACE=.. pytest
 
 workflows:
   build_and_test:
