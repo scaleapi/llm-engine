@@ -111,9 +111,10 @@ commands:
   install_client:
     description: Install LLM Engine client
     steps:
-      - python/install-packages:
-          pkg-manager: pip
-          app-dir: clients/python
+      - run:
+          name: Install LLM Engine client
+          command: |
+            pip install -e $HOME/project/clients/python
   run_unit_tests_server:
     description: Unit tests of the server
     steps:
