@@ -6,6 +6,12 @@ jobs:
   test_server:
     docker:
       - image: python:3.11-bookworm
+        environment:
+          ML_INFRA_DATABASE_URL: postgresql://postgres@localhost/circle_test
+      - image: circleci/postgres:12.9-postgis-ram
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
     resource_class: small
     parallelism: 1
     steps:
