@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "llmEngine.fullname" . }}-spellbook-setup
+  name: {{ include "llmEngine.fullname" . }}-init-models
   labels:
     {{- include "llmEngine.labels" . | nindent 4 }}
   annotations:
