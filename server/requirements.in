@@ -13,8 +13,8 @@ click~=8.1
 cloudpickle==2.1.0
 dataclasses-json>=0.5.7
 datadog-api-client==2.11.0
-datadog==0.44.1
-ddtrace==0.49.3
+datadog~=0.46.0
+ddtrace~=0.49.2
 deprecation~=2.1
 docker~=5.0
 fastapi==0.78.0
