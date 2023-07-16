@@ -41,5 +41,3 @@
 ::: llmengine.ListFineTuneJobResponse
 
 ::: llmengine.CancelFineTuneJobResponse
-
-::: llmengine.Model
