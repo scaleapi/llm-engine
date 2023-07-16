@@ -38,6 +38,7 @@ jobs:
     parallelism: 1
     steps:
       - checkout # checkout source code to working directory
+      - environment_setup
       - install_client
       - python/install-packages:
           pkg-manager: pip
