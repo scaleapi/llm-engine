@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from spellbook_serve.db.models.common.query import Query
+from llm_engine_server.db.models.common.query import Query
 
 
 @dataclass

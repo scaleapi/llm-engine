@@ -1,4 +1,4 @@
-from spellbook_serve.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
+from llm_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 
 
 def test_create_docker_image_batch_job_resource_requests_merge_requests():

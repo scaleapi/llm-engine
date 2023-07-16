@@ -1,8 +1,8 @@
 import json
 from typing import Any, Dict, Tuple
 
-from spellbook_serve.common.dtos.llms import GetLLMModelEndpointV1Response
-from spellbook_serve.domain.entities import ModelEndpoint
+from llm_engine_server.common.dtos.llms import GetLLMModelEndpointV1Response
+from llm_engine_server.domain.entities import ModelEndpoint
 
 
 def test_create_llm_model_endpoint_success(

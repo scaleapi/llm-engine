@@ -1,13 +1,13 @@
 from typing import Any, Dict, Tuple
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from spellbook_serve.common.dtos.tasks import EndpointPredictV1Request
-from spellbook_serve.core.domain_exceptions import (
+from llm_engine_server.common.dtos.tasks import EndpointPredictV1Request
+from llm_engine_server.core.domain_exceptions import (
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from spellbook_serve.domain.entities import ModelBundle, ModelEndpoint
-from spellbook_serve.domain.exceptions import UpstreamServiceError
+from llm_engine_server.domain.entities import ModelBundle, ModelEndpoint
+from llm_engine_server.domain.exceptions import UpstreamServiceError
 
 
 def test_create_async_task_success(
@@ -158,7 +158,7 @@ def test_get_async_task_raises_404_object_not_found(
     mock_use_case = MagicMock()
     mock_use_case.return_value.execute = MagicMock(side_effect=ObjectNotFoundException)
     with patch(
-        "spellbook_serve.api.tasks_v1.GetAsyncInferenceTaskV1UseCase",
+        "llm_engine_server.api.tasks_v1.GetAsyncInferenceTaskV1UseCase",
         mock_use_case,
     ):
         response = client.get(
@@ -193,7 +193,7 @@ def test_get_async_task_raises_404_object_not_authorized(
     mock_use_case = MagicMock()
     mock_use_case.return_value.execute = MagicMock(side_effect=ObjectNotAuthorizedException)
     with patch(
-        "spellbook_serve.api.tasks_v1.GetAsyncInferenceTaskV1UseCase",
+        "llm_engine_server.api.tasks_v1.GetAsyncInferenceTaskV1UseCase",
         mock_use_case,
     ):
         response = client.get(
@@ -325,7 +325,7 @@ def test_create_sync_task_returns_failure(
         side_effect=UpstreamServiceError(400, b"test_content")
     )
     with patch(
-        "spellbook_serve.api.tasks_v1.CreateSyncInferenceTaskV1UseCase",
+        "llm_engine_server.api.tasks_v1.CreateSyncInferenceTaskV1UseCase",
         mock_use_case,
     ):
         response = client.post(

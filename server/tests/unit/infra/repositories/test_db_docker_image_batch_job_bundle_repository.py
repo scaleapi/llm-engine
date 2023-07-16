@@ -3,20 +3,19 @@ from typing import Callable
 from unittest.mock import AsyncMock
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from spellbook_serve.common.dtos.model_bundles import ModelBundleOrderBy
-from spellbook_serve.core.domain_exceptions import ReadOnlyDatabaseException
-from spellbook_serve.db.models import DockerImageBatchJobBundle as OrmDockerImageBatchJobBundle
-from spellbook_serve.domain.entities import GpuType
-from spellbook_serve.domain.entities.docker_image_batch_job_bundle_entity import (
+from llm_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
+from llm_engine_server.core.domain_exceptions import ReadOnlyDatabaseException
+from llm_engine_server.db.models import DockerImageBatchJobBundle as OrmDockerImageBatchJobBundle
+from llm_engine_server.domain.entities import GpuType
+from llm_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
     DockerImageBatchJobBundle,
 )
-from spellbook_serve.domain.exceptions import CorruptRecordInfraStateException
-from spellbook_serve.infra.repositories import DbDockerImageBatchJobBundleRepository
-from spellbook_serve.infra.repositories.db_docker_image_batch_job_bundle_repository import (
+from llm_engine_server.domain.exceptions import CorruptRecordInfraStateException
+from llm_engine_server.infra.repositories import DbDockerImageBatchJobBundleRepository
+from llm_engine_server.infra.repositories.db_docker_image_batch_job_bundle_repository import (
     translate_docker_image_batch_job_bundle_orm_to_entity,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
@@ -126,7 +125,10 @@ async def test_list_docker_image_batch_job_bundles(
 
     def mock_batch_bundle_select_all_by_owner(session: AsyncSession, owner: str):
         if owner == test_api_key:
-            return [orm_docker_image_batch_job_bundle_1_v1, orm_docker_image_batch_job_bundle_2_v1]
+            return [
+                orm_docker_image_batch_job_bundle_1_v1,
+                orm_docker_image_batch_job_bundle_2_v1,
+            ]
         elif owner == test_api_key_team:
             return [orm_docker_image_batch_job_bundle_1_v2]
         else:

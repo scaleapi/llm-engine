@@ -1,8 +1,8 @@
 # Since the bulk of the file involves actually connecting to postgres, we're only gonna test that the
 # `get_lock_key` function doesn't error and returns nonnegative ints from 0 to 2**64-1
 
-from spellbook_serve.db.base import Session
-from spellbook_serve.db.endpoint_row_lock import AdvisoryLockContextManager, get_lock_key
+from llm_engine_server.db.base import Session
+from llm_engine_server.db.endpoint_row_lock import AdvisoryLockContextManager, get_lock_key
 
 
 def test_get_lock_key():

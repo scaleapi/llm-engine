@@ -4,10 +4,9 @@ from typing import Mapping
 from unittest import mock
 
 import pytest
-
-from spellbook_serve.core.utils.env import environment
-from spellbook_serve.domain.entities import ModelEndpointConfig
-from spellbook_serve.inference.forwarding.forwarding import (
+from llm_engine_server.core.utils.env import environment
+from llm_engine_server.domain.entities import ModelEndpointConfig
+from llm_engine_server.inference.forwarding.forwarding import (
     ENV_SERIALIZE_RESULTS_AS_STRING,
     KEY_SERIALIZE_RESULTS_AS_STRING,
     Forwarder,
@@ -15,10 +14,10 @@ from spellbook_serve.inference.forwarding.forwarding import (
     LoadStreamingForwarder,
     StreamingForwarder,
 )
-from spellbook_serve.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
+from llm_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
     DatadogInferenceMonitoringMetricsGateway,
 )
-from spellbook_serve.inference.post_inference_hooks import PostInferenceHooksHandler
+from llm_engine_server.inference.post_inference_hooks import PostInferenceHooksHandler
 
 PAYLOAD: Mapping[str, Mapping[str, str]] = {"hello": "world"}
 
@@ -80,7 +79,7 @@ def post_inference_hooks_handler():
 def test_forwarders(post_inference_hooks_handler):
     fwd = Forwarder(
         "ignored",
-        spellbook_serve_unwrap=True,
+        llm_engine_unwrap=True,
         serialize_results_as_string=False,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -116,7 +115,7 @@ def _check_streaming_serialized(streaming_response) -> None:
 def test_forwarders_serialize_results_as_string(post_inference_hooks_handler):
     fwd = Forwarder(
         "ignored",
-        spellbook_serve_unwrap=True,
+        llm_engine_unwrap=True,
         serialize_results_as_string=True,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -136,7 +135,7 @@ def _check_serialized(json_response) -> None:
 def test_forwarders_override_serialize_results(post_inference_hooks_handler):
     fwd = Forwarder(
         "ignored",
-        spellbook_serve_unwrap=True,
+        llm_engine_unwrap=True,
         serialize_results_as_string=True,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -147,7 +146,7 @@ def test_forwarders_override_serialize_results(post_inference_hooks_handler):
 
     fwd = Forwarder(
         "ignored",
-        spellbook_serve_unwrap=True,
+        llm_engine_unwrap=True,
         serialize_results_as_string=False,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -161,7 +160,7 @@ def test_forwarders_override_serialize_results(post_inference_hooks_handler):
 def test_forwarder_does_not_wrap_response(post_inference_hooks_handler):
     fwd = Forwarder(
         "ignored",
-        spellbook_serve_unwrap=True,
+        llm_engine_unwrap=True,
         serialize_results_as_string=False,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=False,
@@ -173,7 +172,7 @@ def test_forwarder_does_not_wrap_response(post_inference_hooks_handler):
 @mock.patch("requests.post", mocked_post)
 @mock.patch("requests.get", mocked_get)
 @mock.patch(
-    "spellbook_serve.inference.forwarding.forwarding.get_endpoint_config",
+    "llm_engine_server.inference.forwarding.forwarding.get_endpoint_config",
     mocked_get_endpoint_config,
 )
 def test_forwarder_loader():
@@ -193,7 +192,7 @@ def test_forwarder_loader():
 @mock.patch("requests.post", mocked_post)
 @mock.patch("requests.get", mocked_get)
 @mock.patch(
-    "spellbook_serve.inference.forwarding.forwarding.get_endpoint_config",
+    "llm_engine_server.inference.forwarding.forwarding.get_endpoint_config",
     mocked_get_endpoint_config,
 )
 def test_forwarder_loader_env_serialize_behavior(post_inference_hooks_handler):
@@ -214,7 +213,7 @@ def test_forwarder_serialize_within_args(post_inference_hooks_handler):
     # standard Spellbook-Serve-created forwarder
     fwd = Forwarder(
         "ignored",
-        spellbook_serve_unwrap=True,
+        llm_engine_unwrap=True,
         serialize_results_as_string=True,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -232,7 +231,7 @@ def test_forwarder_serialize_within_args(post_inference_hooks_handler):
     # w/o unwrapping it won't "find" the `"serialize_results_as_string": False` directive
     fwd = Forwarder(
         "ignored",
-        spellbook_serve_unwrap=False,
+        llm_engine_unwrap=False,
         serialize_results_as_string=True,
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
@@ -247,7 +246,7 @@ def test_forwarder_serialize_within_args(post_inference_hooks_handler):
 def test_streaming_forwarders(post_inference_hooks_handler):
     fwd = StreamingForwarder(
         "ignored",
-        spellbook_serve_unwrap=True,
+        llm_engine_unwrap=True,
         serialize_results_as_string=False,
         post_inference_hooks_handler=post_inference_hooks_handler,
     )
@@ -259,7 +258,7 @@ def test_streaming_forwarders(post_inference_hooks_handler):
 @mock.patch("requests.get", mocked_get)
 @mock.patch("sseclient.SSEClient", mocked_sse_client)
 @mock.patch(
-    "spellbook_serve.inference.forwarding.forwarding.get_endpoint_config",
+    "llm_engine_server.inference.forwarding.forwarding.get_endpoint_config",
     mocked_get_endpoint_config,
 )
 def test_streaming_forwarder_loader():

@@ -69,7 +69,9 @@ class Completion(APIEngine):
         """
         if stream:
 
-            async def _acreate_stream(**kwargs) -> AsyncIterable[CompletionStreamV1Response]:
+            async def _acreate_stream(
+                **kwargs,
+            ) -> AsyncIterable[CompletionStreamV1Response]:
                 data = CompletionStreamV1Request(**kwargs).dict()
                 response = cls.apost_stream(
                     resource_name=f"v1/llm/completions-stream?model_endpoint_name={model_name}",
@@ -154,7 +156,7 @@ class Completion(APIEngine):
                 temperature=0.2,
                 stream=True,
             )
-    
+
             for response in stream:
                 if response.output:
                     print(response.output)

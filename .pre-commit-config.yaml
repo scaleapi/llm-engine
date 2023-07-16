@@ -6,7 +6,6 @@ repos:
       - id: black
         name: "python:black"
         entry: black --config .black.toml
-        additional_dependencies: ['click<=8.0.4']  # Pinned to resolve https://github.com/psf/black/issues/2964
   - repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
     hooks:
@@ -21,50 +20,10 @@ repos:
     rev: 6.6.2
     hooks:
       - id: pip-compile
-        files: scaleml/requirements\.(in|txt)
+        files: server/requirements\.(in|txt)
         args:
           [
-            scaleml/requirements.in,
-            --allow-unsafe,
-            --no-emit-index-url,
-            --no-emit-trusted-host,
-          ]
-  - repo: https://github.com/jazzband/pip-tools
-    rev: 6.6.2
-    hooks:
-      # This has to be first because snowflake has the strictest requirements
-      - id: pip-compile
-        files: scaleml-core/requirements_snowflake\.(in|txt)
-        args:
-          [
-            scaleml-core/requirements_snowflake.in,
-            --allow-unsafe,
-            --no-emit-index-url,
-            --no-emit-trusted-host,
-          ]
-      - id: pip-compile
-        files: scaleml-core/requirements_mlflow\.(in|txt)
-        args:
-          [
-            scaleml-core/requirements_mlflow.in,
-            --allow-unsafe,
-            --no-emit-index-url,
-            --no-emit-trusted-host,
-          ]
-      - id: pip-compile
-        files: scaleml-core/requirements\.(in|txt)
-        args:
-          [
-            scaleml-core/requirements.in,
-            --allow-unsafe,
-            --no-emit-index-url,
-            --no-emit-trusted-host,
-          ]
-      - id: pip-compile
-        files: scaleml-core/requirements_kubernetes\.(in|txt)
-        args:
-          [
-            scaleml-core/requirements_kubernetes.in,
+            server/requirements.in,
             --allow-unsafe,
             --no-emit-index-url,
             --no-emit-trusted-host,

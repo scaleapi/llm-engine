@@ -1,11 +1,10 @@
 import pytest
-
-from spellbook_serve.domain.entities import ModelBundle, ModelEndpoint
-from spellbook_serve.infra.gateways import (
+from llm_engine_server.domain.entities import ModelBundle, ModelEndpoint
+from llm_engine_server.infra.gateways import (
     LiveBatchJobProgressGateway,
     LiveModelEndpointsSchemaGateway,
 )
-from spellbook_serve.infra.services import LiveBatchJobService, LiveModelEndpointService
+from llm_engine_server.infra.services import LiveBatchJobService, LiveModelEndpointService
 
 
 @pytest.fixture

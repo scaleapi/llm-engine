@@ -5,17 +5,16 @@ import pytest
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBasicCredentials
 from fastapi.testclient import TestClient
-
-from spellbook_serve.api.app import app
-from spellbook_serve.api.dependencies import (
+from llm_engine_server.api.app import app
+from llm_engine_server.api.dependencies import (
     AUTH,
     get_external_interfaces,
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from spellbook_serve.core.auth.authentication_repository import AuthenticationRepository, User
-from spellbook_serve.core.auth.fake_authentication_repository import FakeAuthenticationRepository
-from spellbook_serve.domain.entities import (
+from llm_engine_server.core.auth.authentication_repository import AuthenticationRepository, User
+from llm_engine_server.core.auth.fake_authentication_repository import FakeAuthenticationRepository
+from llm_engine_server.domain.entities import (
     BatchJob,
     BatchJobProgress,
     BatchJobRecord,
@@ -42,8 +41,8 @@ from spellbook_serve.domain.entities import (
     TensorflowFramework,
     ZipArtifactFlavor,
 )
-from spellbook_serve.domain.entities.batch_job_entity import DockerImageBatchJob
-from spellbook_serve.domain.entities.docker_image_batch_job_bundle_entity import (
+from llm_engine_server.domain.entities.batch_job_entity import DockerImageBatchJob
+from llm_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
     DockerImageBatchJobBundle,
 )
 
@@ -239,7 +238,8 @@ def model_bundle_1_v1(test_api_key: str) -> Tuple[ModelBundle, Any]:
         location="test_location",
         requirements=["numpy==0.0.0"],
         env_params=ModelBundleEnvironmentParams(
-            framework_type=ModelBundleFrameworkType.PYTORCH, pytorch_image_tag="test_tag"
+            framework_type=ModelBundleFrameworkType.PYTORCH,
+            pytorch_image_tag="test_tag",
         ),
         packaging_type=ModelBundlePackagingType.CLOUDPICKLE,
         app_config=None,
@@ -313,7 +313,8 @@ def model_bundle_1_v2(test_api_key: str) -> Tuple[ModelBundle, Any]:
         location="test_location",
         requirements=["numpy==0.0.0"],
         env_params=ModelBundleEnvironmentParams(
-            framework_type=ModelBundleFrameworkType.TENSORFLOW, tensorflow_version="2.0.4"
+            framework_type=ModelBundleFrameworkType.TENSORFLOW,
+            tensorflow_version="2.0.4",
         ),
         packaging_type=ModelBundlePackagingType.ZIP,
         app_config=None,
@@ -387,7 +388,8 @@ def model_bundle_2_v1(test_api_key: str) -> Tuple[ModelBundle, Any]:
         location="test_location",
         requirements=["numpy==0.0.0"],
         env_params=ModelBundleEnvironmentParams(
-            framework_type=ModelBundleFrameworkType.PYTORCH, pytorch_image_tag="test_tag"
+            framework_type=ModelBundleFrameworkType.PYTORCH,
+            pytorch_image_tag="test_tag",
         ),
         packaging_type=ModelBundlePackagingType.CLOUDPICKLE,
         app_config=None,
@@ -457,7 +459,8 @@ def model_bundle_3_v1(test_api_key: str) -> Tuple[ModelBundle, Any]:
         location="test_location",
         requirements=["numpy==0.0.0"],
         env_params=ModelBundleEnvironmentParams(
-            framework_type=ModelBundleFrameworkType.PYTORCH, pytorch_image_tag="test_tag"
+            framework_type=ModelBundleFrameworkType.PYTORCH,
+            pytorch_image_tag="test_tag",
         ),
         packaging_type=ModelBundlePackagingType.CLOUDPICKLE,
         app_config=None,
@@ -931,7 +934,9 @@ def create_docker_image_batch_job_bundle_request() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def docker_image_batch_job_bundle_1_v1(test_api_key) -> Tuple[DockerImageBatchJobBundle, Any]:
+def docker_image_batch_job_bundle_1_v1(
+    test_api_key,
+) -> Tuple[DockerImageBatchJobBundle, Any]:
     batch_bundle = DockerImageBatchJobBundle(
         id="test_docker_image_batch_job_bundle_id_11",
         created_at=datetime.datetime(2022, 1, 1),
@@ -968,7 +973,9 @@ def docker_image_batch_job_bundle_1_v1(test_api_key) -> Tuple[DockerImageBatchJo
 
 
 @pytest.fixture
-def docker_image_batch_job_bundle_1_v2(test_api_key) -> Tuple[DockerImageBatchJobBundle, Any]:
+def docker_image_batch_job_bundle_1_v2(
+    test_api_key,
+) -> Tuple[DockerImageBatchJobBundle, Any]:
     batch_bundle = DockerImageBatchJobBundle(
         id="test_docker_image_batch_job_bundle_id_12",
         created_at=datetime.datetime(2022, 1, 3),
@@ -1005,7 +1012,9 @@ def docker_image_batch_job_bundle_1_v2(test_api_key) -> Tuple[DockerImageBatchJo
 
 
 @pytest.fixture
-def docker_image_batch_job_bundle_2_v1(test_api_key) -> Tuple[DockerImageBatchJobBundle, Any]:
+def docker_image_batch_job_bundle_2_v1(
+    test_api_key,
+) -> Tuple[DockerImageBatchJobBundle, Any]:
     batch_bundle = DockerImageBatchJobBundle(
         id="test_docker_image_batch_job_bundle_id_21",
         created_at=datetime.datetime(2022, 1, 2),

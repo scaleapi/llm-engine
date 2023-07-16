@@ -1,4 +1,4 @@
-from spellbook_serve.infra.gateways.live_docker_image_batch_job_gateway import (
+from llm_engine_server.infra.gateways.live_docker_image_batch_job_gateway import (
     K8sEnvDict,
     _add_list_values,
     _check_batch_job_id_valid,

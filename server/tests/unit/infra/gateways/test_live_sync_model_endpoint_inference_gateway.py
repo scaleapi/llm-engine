@@ -4,13 +4,12 @@ from typing import Any, Dict, Tuple
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from spellbook_serve.common.dtos.tasks import (
+from llm_engine_server.common.dtos.tasks import (
     EndpointPredictV1Request,
     SyncEndpointPredictV1Response,
 )
-from spellbook_serve.domain.exceptions import UpstreamServiceError
-from spellbook_serve.infra.gateways.live_sync_model_endpoint_inference_gateway import (
+from llm_engine_server.domain.exceptions import UpstreamServiceError
+from llm_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway import (
     LiveSyncModelEndpointInferenceGateway,
 )
 
@@ -46,7 +45,7 @@ async def test_make_request_with_retries_success():
     mock_client_session = _get_mock_client_session(fake_response)
 
     with patch(
-        "spellbook_serve.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
+        "llm_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
         response = await gateway.make_request_with_retries("test_request_url", {}, 0.05, 2)
@@ -61,7 +60,7 @@ async def test_make_request_with_retries_failed_429():
     mock_client_session = _get_mock_client_session(fake_response)
 
     with pytest.raises(UpstreamServiceError), patch(
-        "spellbook_serve.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
+        "llm_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
         await gateway.make_request_with_retries("test_request_url", {}, 0.05, 2)
@@ -75,7 +74,7 @@ async def test_make_request_with_retries_failed_traceback():
     mock_client_session = _get_mock_client_session(fake_response)
 
     with pytest.raises(UpstreamServiceError), patch(
-        "spellbook_serve.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
+        "llm_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
         await gateway.make_request_with_retries("test_request_url", {}, 0.05, 2)
@@ -90,7 +89,7 @@ async def test_predict_success(
     fake_response = FakeResponse(status=200, body={"test_key": "test_value"})
     mock_client_session = _get_mock_client_session(fake_response)
     with patch(
-        "spellbook_serve.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
+        "llm_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
         response = await gateway.predict(
@@ -114,7 +113,7 @@ async def test_predict_raises_traceback_json(
     fake_response = FakeResponse(status=500, content=content)
     mock_client_session = _get_mock_client_session(fake_response)
     with patch(
-        "spellbook_serve.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
+        "llm_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
         response = await gateway.predict(
@@ -138,7 +137,7 @@ async def test_predict_raises_traceback_not_json(
     fake_response = FakeResponse(status=500, content=content)
     mock_client_session = _get_mock_client_session(fake_response)
     with patch(
-        "spellbook_serve.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
+        "llm_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
         response = await gateway.predict(

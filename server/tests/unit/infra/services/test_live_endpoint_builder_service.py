@@ -2,23 +2,25 @@ from typing import Any
 from unittest.mock import Mock, mock_open
 
 import pytest
-
-from spellbook_serve.common.dtos.docker_repository import BuildImageResponse
-from spellbook_serve.common.dtos.endpoint_builder import (
+from llm_engine_server.common.dtos.docker_repository import BuildImageResponse
+from llm_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointRequest,
     BuildEndpointResponse,
     BuildEndpointStatus,
 )
-from spellbook_serve.core.domain_exceptions import DockerBuildFailedException
-from spellbook_serve.core.fake_notification_gateway import FakeNotificationGateway
-from spellbook_serve.core.notification_gateway import NotificationApp
-from spellbook_serve.domain.entities.model_bundle_entity import RunnableImageFlavor
-from spellbook_serve.domain.exceptions import EndpointResourceInfraException
-from spellbook_serve.infra.gateways.fake_monitoring_metrics_gateway import (
+from llm_engine_server.core.domain_exceptions import DockerBuildFailedException
+from llm_engine_server.core.fake_notification_gateway import FakeNotificationGateway
+from llm_engine_server.core.notification_gateway import NotificationApp
+from llm_engine_server.domain.entities.model_bundle_entity import RunnableImageFlavor
+from llm_engine_server.domain.exceptions import EndpointResourceInfraException
+from llm_engine_server.infra.gateways.fake_monitoring_metrics_gateway import (
     FakeMonitoringMetricsGateway,
 )
-from spellbook_serve.infra.repositories import ModelEndpointCacheRepository
-from spellbook_serve.infra.services import LiveEndpointBuilderService, live_endpoint_builder_service
+from llm_engine_server.infra.repositories import ModelEndpointCacheRepository
+from llm_engine_server.infra.services import (
+    LiveEndpointBuilderService,
+    live_endpoint_builder_service,
+)
 
 
 @pytest.fixture

@@ -2,12 +2,10 @@ import datetime
 from typing import Callable, Optional, Union
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from spellbook_serve.db.models import BatchJob, Bundle
-from spellbook_serve.db.models import DockerImageBatchJobBundle as OrmDockerImageBatchJobBundle
-from spellbook_serve.db.models import Endpoint
-from spellbook_serve.domain.entities import (
+from llm_engine_server.db.models import BatchJob, Bundle
+from llm_engine_server.db.models import DockerImageBatchJobBundle as OrmDockerImageBatchJobBundle
+from llm_engine_server.db.models import Endpoint
+from llm_engine_server.domain.entities import (
     BatchJobRecord,
     GpuType,
     ModelBundle,
@@ -19,6 +17,7 @@ from spellbook_serve.domain.entities import (
     ModelEndpointType,
     ModelEndpointUserConfigState,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class FakeRedis:
@@ -325,7 +324,9 @@ def entity_batch_job_record(
 
 
 @pytest.fixture
-def orm_docker_image_batch_job_bundle_1_v1(test_api_key: str) -> OrmDockerImageBatchJobBundle:
+def orm_docker_image_batch_job_bundle_1_v1(
+    test_api_key: str,
+) -> OrmDockerImageBatchJobBundle:
     batch_bundle = OrmDockerImageBatchJobBundle(
         name="test_docker_image_batch_job_bundle_1",
         created_by=test_api_key,
@@ -347,7 +348,9 @@ def orm_docker_image_batch_job_bundle_1_v1(test_api_key: str) -> OrmDockerImageB
 
 
 @pytest.fixture
-def orm_docker_image_batch_job_bundle_1_v2(test_api_key: str) -> OrmDockerImageBatchJobBundle:
+def orm_docker_image_batch_job_bundle_1_v2(
+    test_api_key: str,
+) -> OrmDockerImageBatchJobBundle:
     batch_bundle = OrmDockerImageBatchJobBundle(
         name="test_docker_image_batch_job_bundle_1",
         created_by=test_api_key,
@@ -369,7 +372,9 @@ def orm_docker_image_batch_job_bundle_1_v2(test_api_key: str) -> OrmDockerImageB
 
 
 @pytest.fixture
-def orm_docker_image_batch_job_bundle_2_v1(test_api_key: str) -> OrmDockerImageBatchJobBundle:
+def orm_docker_image_batch_job_bundle_2_v1(
+    test_api_key: str,
+) -> OrmDockerImageBatchJobBundle:
     batch_bundle = OrmDockerImageBatchJobBundle(
         name="test_docker_image_batch_job_bundle_2",
         created_by=test_api_key,

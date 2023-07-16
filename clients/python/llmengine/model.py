@@ -1,6 +1,9 @@
-from llmengine.api_engine import APIEngine, DEFAULT_TIMEOUT, assert_self_hosted
+from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine, assert_self_hosted
 from llmengine.data_types import (
-    ListLLMModelEndpointsV1Response, GetLLMModelEndpointV1Response, CreateLLMModelEndpointV1Response, CreateLLMModelEndpointV1Request
+    CreateLLMModelEndpointV1Request,
+    CreateLLMModelEndpointV1Response,
+    GetLLMModelEndpointV1Response,
+    ListLLMModelEndpointsV1Response,
 )
 
 
@@ -17,6 +20,7 @@ class Model(APIEngine):
         print(response)
         ```
     """
+
     @classmethod
     @assert_self_hosted
     def create(
