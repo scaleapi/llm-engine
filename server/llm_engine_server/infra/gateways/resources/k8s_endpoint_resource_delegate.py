@@ -158,7 +158,7 @@ async def maybe_load_kube_config():
     except ConfigException:
         try:
             await kube_config.load_kube_config()
-        except:
+        except:  # noqa: E722
             logger.warning("Could not load kube config.")
     _kube_config_loaded = True
 

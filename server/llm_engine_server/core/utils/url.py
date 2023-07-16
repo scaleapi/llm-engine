@@ -98,7 +98,8 @@ def parse_attachment_url(url: str) -> ParsedURL:
             "Invalid attachment URL: no bucket or key specified: \n" f"'{url}'"
         )
 
-    clean = lambda v: (v and v.strip("/"))
+    def clean(val):
+        return val and val.strip("/")
 
     return ParsedURL(
         protocol=clean(protocol),

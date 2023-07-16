@@ -30,7 +30,7 @@ def redis_available() -> bool:
         return False
     try:
         return redis.Redis().ping()
-    except:
+    except:  # noqa: E722
         return False
 
 

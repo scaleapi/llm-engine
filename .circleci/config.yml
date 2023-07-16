@@ -53,6 +53,10 @@ jobs:
           command: |
             isort . --check-only --verbose
       - run:
+          name: Ruff Lint Check
+          command: |
+            ruff .
+      - run:
           name: Unit Tests
           command: |
             cd server
