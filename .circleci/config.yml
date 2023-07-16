@@ -65,12 +65,12 @@ commands:
     description: Basic Environment setup
     steps:
       - run:
-        name: Install Basic Environment Dependencies
-        command: | # install dependencies
-          apt-get update
-          apt-get -y install curl
-          pip install --upgrade pip
-          pip install -r $HOME/project/requirements-dev.txt
+          name: Install Basic Environment Dependencies
+          command: | # install dependencies
+            apt-get update
+            apt-get -y install curl
+            pip install --upgrade pip
+            pip install -r $HOME/project/requirements-dev.txt
   install_server:
     description: Installs LLM Engine server
     steps:
