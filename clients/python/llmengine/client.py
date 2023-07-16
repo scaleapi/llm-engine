@@ -6,15 +6,15 @@ import requests
 from aiohttp import BasicAuth, ClientSession, ClientTimeout
 from llmengine.errors import parse_error
 from llmengine.types import (
-    CancelFineTuneJobResponse,
+    CancelFineTuneResponse,
     CompletionStreamV1Request,
     CompletionStreamV1Response,
     CompletionSyncV1Request,
     CompletionSyncV1Response,
-    CreateFineTuneJobRequest,
-    CreateFineTuneJobResponse,
-    GetFineTuneJobResponse,
-    ListFineTuneJobResponse,
+    CreateFineTuneRequest,
+    CreateFineTuneResponse,
+    GetFineTuneResponse,
+    ListFineTuneResponse,
 )
 from pydantic import ValidationError
 
@@ -184,7 +184,7 @@ class Client:
         base_model: str,
         fine_tuning_method: str,
         hyperparameters: Dict[str, str],
-    ) -> CreateFineTuneJobResponse:
+    ) -> CreateFineTuneResponse:
         """
         Create a fine-tuning job
 
@@ -203,10 +203,10 @@ class Client:
                 Hyperparameters
 
         Returns:
-            CreateFineTuneJobResponse: ID of the created fine-tuning job
+            CreateFineTuneResponse: ID of the created fine-tuning job
         """
         # Validate parameters
-        request = CreateFineTuneJobRequest(
+        request = CreateFineTuneRequest(
             training_file=training_file,
             validation_file=validation_file,
             model_name=model_name,
@@ -224,12 +224,12 @@ class Client:
         payload = resp.json()
         if resp.status_code != 200:
             raise parse_error(resp.status_code, payload)
-        return CreateFineTuneJobResponse.parse_obj(payload)
+        return CreateFineTuneResponse.parse_obj(payload)
 
     def get_fine_tune_job(
         self,
         fine_tune_id: str,
-    ) -> GetFineTuneJobResponse:
+    ) -> GetFineTuneResponse:
         """
         Get status of a fine-tuning job
 
@@ -238,7 +238,7 @@ class Client:
                 ID of the fine-tuning job
 
         Returns:
-            GetFineTuneJobResponse: ID and status of the requested job
+            GetFineTuneResponse: ID and status of the requested job
         """
         resp = requests.get(
             f"{get_fine_tune_url(self.base_url)}/{fine_tune_id}",
@@ -248,16 +248,16 @@ class Client:
         payload = resp.json()
         if resp.status_code != 200:
             raise parse_error(resp.status_code, payload)
-        return GetFineTuneJobResponse.parse_obj(payload)
+        return GetFineTuneResponse.parse_obj(payload)
 
     def list_fine_tune_jobs(
         self,
-    ) -> ListFineTuneJobResponse:
+    ) -> ListFineTuneResponse:
         """
         List fine-tuning jobs
 
         Returns:
-            ListFineTuneJobResponse: list of all fine-tuning jobs and their statuses
+            ListFineTuneResponse: list of all fine-tuning jobs and their statuses
         """
         resp = requests.get(
             get_fine_tune_url(self.base_url),
@@ -267,12 +267,12 @@ class Client:
         payload = resp.json()
         if resp.status_code != 200:
             raise parse_error(resp.status_code, payload)
-        return ListFineTuneJobResponse.parse_obj(payload)
+        return ListFineTuneResponse.parse_obj(payload)
 
     def cancel_fine_tune_job(
         self,
         fine_tune_id: str,
-    ) -> CancelFineTuneJobResponse:
+    ) -> CancelFineTuneResponse:
         """
         Cancel a fine-tuning job
 
@@ -281,7 +281,7 @@ class Client:
                 ID of the fine-tuning job
 
         Returns:
-            CancelFineTuneJobResponse: whether the cancellation was successful
+            CancelFineTuneResponse: whether the cancellation was successful
         """
         resp = requests.put(
             f"{get_fine_tune_url(self.base_url)}/{fine_tune_id}/cancel",
@@ -291,7 +291,7 @@ class Client:
         payload = resp.json()
         if resp.status_code != 200:
             raise parse_error(resp.status_code, payload)
-        return CancelFineTuneJobResponse.parse_obj(payload)
+        return CancelFineTuneResponse.parse_obj(payload)
 
 
 class AsyncClient:
@@ -446,7 +446,7 @@ class AsyncClient:
         base_model: str,
         fine_tuning_method: str,
         hyperparameters: Dict[str, str],
-    ) -> CreateFineTuneJobResponse:
+    ) -> CreateFineTuneResponse:
         """
         Create a fine-tuning job
 
@@ -465,10 +465,10 @@ class AsyncClient:
                 Hyperparameters
 
         Returns:
-            CreateFineTuneJobResponse: ID of the created fine-tuning job
+            CreateFineTuneResponse: ID of the created fine-tuning job
         """
         # Validate parameters
-        request = CreateFineTuneJobRequest(
+        request = CreateFineTuneRequest(
             training_file=training_file,
             validation_file=validation_file,
             model_name=model_name,
@@ -485,12 +485,12 @@ class AsyncClient:
 
                 if resp.status != 200:
                     raise parse_error(resp.status, payload)
-                return CreateFineTuneJobResponse.parse_obj(payload)
+                return CreateFineTuneResponse.parse_obj(payload)
 
     async def get_fine_tune_job(
         self,
         fine_tune_id: str,
-    ) -> GetFineTuneJobResponse:
+    ) -> GetFineTuneResponse:
         """
         Get status of a fine-tuning job
 
@@ -499,7 +499,7 @@ class AsyncClient:
                 ID of the fine-tuning job
 
         Returns:
-            GetFineTuneJobResponse: ID and status of the requested job
+            GetFineTuneResponse: ID and status of the requested job
         """
         async with ClientSession(
             timeout=self.timeout, auth=BasicAuth(login=self.api_key)
@@ -509,16 +509,16 @@ class AsyncClient:
 
                 if resp.status != 200:
                     raise parse_error(resp.status, payload)
-                return GetFineTuneJobResponse.parse_obj(payload)
+                return GetFineTuneResponse.parse_obj(payload)
 
     async def list_fine_tune_jobs(
         self,
-    ) -> ListFineTuneJobResponse:
+    ) -> ListFineTuneResponse:
         """
         List fine-tuning jobs
 
         Returns:
-            ListFineTuneJobResponse: list of all fine-tuning jobs and their statuses
+            ListFineTuneResponse: list of all fine-tuning jobs and their statuses
         """
         async with ClientSession(
             timeout=self.timeout, auth=BasicAuth(login=self.api_key)
@@ -528,12 +528,12 @@ class AsyncClient:
 
                 if resp.status != 200:
                     raise parse_error(resp.status, payload)
-                return ListFineTuneJobResponse.parse_obj(payload)
+                return ListFineTuneResponse.parse_obj(payload)
 
     async def cancel_fine_tune_job(
         self,
         fine_tune_id: str,
-    ) -> CancelFineTuneJobResponse:
+    ) -> CancelFineTuneResponse:
         """
         Cancel a fine-tuning job
 
@@ -542,7 +542,7 @@ class AsyncClient:
                 ID of the fine-tuning job
 
         Returns:
-            CancelFineTuneJobResponse: whether the cancellation was successful
+            CancelFineTuneResponse: whether the cancellation was successful
         """
         async with ClientSession(
             timeout=self.timeout, auth=BasicAuth(login=self.api_key)
@@ -554,4 +554,4 @@ class AsyncClient:
 
                 if resp.status != 200:
                     raise parse_error(resp.status, payload)
-                return CancelFineTuneJobResponse.parse_obj(payload)
+                return CancelFineTuneResponse.parse_obj(payload)

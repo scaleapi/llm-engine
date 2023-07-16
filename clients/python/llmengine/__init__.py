@@ -18,32 +18,32 @@ from typing import Sequence
 
 from llmengine.completion import Completion
 from llmengine.data_types import (
-    CancelFineTuneJobResponse,
+    CancelFineTuneResponse,
     CompletionOutput,
     CompletionStreamOutput,
     CompletionStreamV1Response,
     CompletionSyncV1Response,
-    CreateFineTuneJobRequest,
-    CreateFineTuneJobResponse,
-    GetFineTuneJobResponse,
-    ListFineTuneJobResponse,
+    CreateFineTuneRequest,
+    CreateFineTuneResponse,
+    GetFineTuneResponse,
+    ListFineTuneResponse,
     TaskStatus,
 )
 from llmengine.fine_tuning import FineTune
 from llmengine.model import Model
 
 __all__: Sequence[str] = (
-    "CancelFineTuneJobResponse",
+    "CancelFineTuneResponse",
     "Completion",
     "CompletionOutput",
     "CompletionStreamOutput",
     "CompletionStreamV1Response",
     "CompletionSyncV1Response",
-    "CreateFineTuneJobRequest",
-    "CreateFineTuneJobResponse",
+    "CreateFineTuneRequest",
+    "CreateFineTuneResponse",
     "FineTune",
-    "GetFineTuneJobResponse",
-    "ListFineTuneJobResponse",
+    "GetFineTuneResponse",
+    "ListFineTuneResponse",
     "Model",
     "TaskStatus",
 )

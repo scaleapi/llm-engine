@@ -251,25 +251,19 @@ class CompletionStreamV1Response(BaseModel):
     """Traceback if the task failed."""
 
 
-# everything below copied from hosted_model_inference/hosted_model_inference/common/dtos/llms.py
+# everything below copied from scaleapi/packages/spellbook-backend/server/spellbook_server/dtos.py
 
 
-class CreateFineTuneJobRequest(BaseModel):
-    model: str
-    """Identifier of base model to train from."""
-    training_file: str
-    """Path to file of training dataset. Dataset must be a csv with columns 'prompt' and 'response'."""
-    validation_file: Optional[str]
-    """Path to file of validation dataset. Has the same format as training_file. If not provided, we will generate a split from the training dataset."""
-    hyperparameters: Optional[Dict[str, Any]]
-    """Hyperparameters to pass in to training job."""
-    suffix: Optional[str]
-    """Optional user-provided identifier suffix for the fine-tuned model."""
+class CreateFineTuneRequest(BaseModel):
+    model: str = Field(..., description="Identifier of base model to train from.")
+    training_file: str = Field(..., description="Path to file of training dataset. Dataset must be a csv with columns 'prompt' and 'response'.")
+    validation_file: Optional[str] = Field(default=None, description="Path to file of validation dataset. Has the same format as training_file. If not provided, we will generate a split from the training dataset.")
+    hyperparameters: Optional[Dict[str, Any]] = Field(default=None, description="Hyperparameters to pass in to training job.")
+    suffix: Optional[str] = Field(default=None, description="Optional user-provided identifier suffix for the fine-tuned model.")
 
 
-class CreateFineTuneJobResponse(BaseModel):
-    fine_tune_id: str
-    """ID of the created fine-tuning job"""
+class CreateFineTuneResponse(BaseModel):
+    fine_tune_id: str = Field(..., description="ID of the created fine-tuning job.")
 
 
 class BatchJobStatus(str, Enum):
@@ -282,18 +276,14 @@ class BatchJobStatus(str, Enum):
     TIMEOUT = "TIMEOUT"
 
 
-class GetFineTuneJobResponse(BaseModel):
-    fine_tune_id: str
-    """ID of the requested job"""
-    status: BatchJobStatus
-    """Status of the requested job"""
+class GetFineTuneResponse(BaseModel):
+    fine_tune_id: str = Field(..., description="ID of the requested job.")
+    status: BatchJobStatus = Field(..., description="Status of the requested job.")
 
 
-class ListFineTuneJobResponse(BaseModel):
-    jobs: List[GetFineTuneJobResponse]
-    """List of fine-tuning jobs and their statuses"""
+class ListFineTuneResponse(BaseModel):
+    jobs: List[GetFineTuneResponse] = Field(..., description="List of fine-tuning jobs and their statuses.")
 
 
-class CancelFineTuneJobResponse(BaseModel):
-    success: bool
-    """Whether cancellation was successful"""
+class CancelFineTuneResponse(BaseModel):
+    success: bool = Field(..., description="Whether cancellation was successful.")
