@@ -41,6 +41,7 @@ nav:
 #      "Token streaming": guides/token_streaming.md
       "Fine-tuning": guides/fine_tuning.md
   - "API":
+      - "Error handling": api/error_handling.md
       - "Python Client API Reference": api/python_client.md
       - "Langchain": api/langchain.md
 #  - "FAQ": faq.md
