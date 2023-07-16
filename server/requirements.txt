@@ -197,8 +197,6 @@ marshmallow==3.19.0
     #   marshmallow-enum
 marshmallow-enum==1.5.1
     # via dataclasses-json
-model-service-client==1.0.6
-    # via -r requirements.in
 more-itertools==9.1.0
     # via jaraco-classes
 multidict==6.0.4
@@ -274,7 +272,6 @@ python-dateutil==2.8.2
     #   datadog-api-client
     #   kubernetes
     #   kubernetes-asyncio
-    #   model-service-client
     #   pg8000
 pyyaml==6.0
     # via
@@ -407,7 +404,6 @@ urllib3==1.26.16
     #   google-auth
     #   kubernetes
     #   kubernetes-asyncio
-    #   model-service-client
     #   requests
 uvicorn==0.17.6
     # via -r requirements.in

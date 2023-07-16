@@ -25,7 +25,6 @@ json-log-formatter~=0.3
 kubeconfig~=1.1
 kubernetes-asyncio==24.2.2
 kubernetes~=25.3.0
-model-service-client==1.0.6
 orjson==3.8.6
 protobuf~=3.20
 psycopg2-binary==2.9.3
