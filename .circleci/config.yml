@@ -5,7 +5,7 @@ orbs:
 jobs:
   test_server:
     docker:
-      - image: cimg/python:3.8
+      - image: python:3.8-bookworm
         environment:
           ML_INFRA_DATABASE_URL: postgresql://postgres@localhost/circle_test
       - image: circleci/postgres:12.9-postgis-ram
