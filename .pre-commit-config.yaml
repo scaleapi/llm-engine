@@ -6,7 +6,6 @@ repos:
       - id: black
         name: "python:black"
         entry: black --config .black.toml
-        additional_dependencies: ['click<=8.0.4']  # Pinned to resolve https://github.com/psf/black/issues/2964
   - repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
     hooks:
