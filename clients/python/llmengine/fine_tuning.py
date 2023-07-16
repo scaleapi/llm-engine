@@ -43,10 +43,6 @@ class FineTune(APIEngine):
             print(response)
             ```
 
-        JSON Response:
-            ```json
-            ```
-
         Args:
             training_file (`str`):
                 Path to file of training dataset
@@ -97,11 +93,6 @@ class FineTune(APIEngine):
             print(response)
             ```
 
-        JSON Response:
-            ```json
-            ```
-
-
         Args:
             fine_tune_id (`str`):
                 ID of the fine-tuning job
@@ -123,10 +114,6 @@ class FineTune(APIEngine):
 
             response = FineTune.list()
             print(response)
-            ```
-
-        JSON Response:
-            ```json
             ```
 
         Returns:
