@@ -112,7 +112,7 @@ commands:
     description: Install LLM Engine client
     steps:
       - python/install-packages:
-          pkg-manager: poetry
+          pkg-manager: pip
           app-dir: clients/python
   run_unit_tests_server:
     description: Unit tests of the server
