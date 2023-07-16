@@ -28,9 +28,6 @@ jobs:
           app-dir: server
       - python/install-packages:
           pkg-manager: pip
-          module-src-dir: server
-      - python/install-packages:
-          pkg-manager: pip
           app-dir: server
           pip-dependency-file: requirements-test.txt
       - python/install-packages:
@@ -53,6 +50,7 @@ jobs:
           name: Unit Tests
           command: |
             cd server
+            pip install -e .
             WORKSPACE=.. pytest
 
 workflows:
