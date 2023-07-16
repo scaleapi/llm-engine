@@ -3,7 +3,7 @@ orbs:
   python: circleci/python@2.1.0
 
 jobs:
-  build_test:
+  test_server:
     docker:
       - image: python:3.11-bookworm
     resource_class: small
@@ -17,6 +17,13 @@ jobs:
             apt-get -y install curl
             pip install --upgrade pip
             pip install -r requirements-dev.txt
+      - python/install-packages:
+          pkg-manager: pip
+          app-dir: server
+      - python/install-packages:
+          pkg-manager: pip
+          app-dir: server
+          pip-dependency-file: requirements_override.txt
       - run:
           name: python3 Version
           command: | # Make sure that the workflow is working
@@ -24,9 +31,9 @@ jobs:
       - run:
           name: Black Formatting Check # Only validation, without re-formatting
           command: |
-            poetry run black --check --config .black.toml .
+            black --check --config .black.toml .
 
 workflows:
   build_and_test:
     jobs:
-      - build_test
+      - test_server
