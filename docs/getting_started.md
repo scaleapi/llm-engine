@@ -28,7 +28,7 @@ With your API key set, you can now send LLM Engine requests using the Python cli
     from llmengine import Completion
 
     response = Completion.create(
-        model_name="llama-7b",
+        model="llama-7b",
         prompt="Hello, my name is",
         max_new_tokens=10,
         temperature=0.2,
