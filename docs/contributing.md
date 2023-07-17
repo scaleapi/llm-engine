@@ -18,7 +18,7 @@ pip install -r requirements-docs.txt
 
 ### Step 3: Run Locally
 
-To run the documentation service locally, execute the following command.
+To run the documentation service locally, execute the following command:
 
 ```
 mkdocs serve
