@@ -168,7 +168,7 @@ class Completion(APIEngine):
                 return CompletionSyncV1Response.parse_obj(response)
 
             return await _acreate_sync(
-                prompts=[prompt], max_new_tokens=max_new_tokens, temperature=temperature
+                prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
             )
 
     @classmethod
@@ -294,7 +294,7 @@ class Completion(APIEngine):
 
         else:
             data = CompletionSyncV1Request(
-                prompts=[prompt], max_new_tokens=max_new_tokens, temperature=temperature
+                prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
             ).dict()
             response = cls.post_sync(
                 resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",
