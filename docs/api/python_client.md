@@ -16,7 +16,6 @@
 ::: llmengine.CompletionSyncV1Response
     selection:
         members:
-            - status
             - outputs
 
 ::: llmengine.CompletionStreamOutput
@@ -31,7 +30,6 @@
 ::: llmengine.CompletionStreamV1Response
     selection:
         members:
-            - status
             - output
 
 ::: llmengine.FineTune
@@ -49,6 +47,4 @@
 ::: llmengine.ListFineTunesResponse
 
 ::: llmengine.CancelFineTuneResponse
-
-::: llmengine.TaskStatus
 

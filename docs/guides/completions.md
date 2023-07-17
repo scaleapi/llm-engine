@@ -61,8 +61,6 @@ For synchronous calls like the ones above, the response is of type `CompletionSy
 
 The full reference of that class is [here](/api/python_client/#llmengine.CompletionSyncV1Response).
 
-The `status` field says whether the operation was successful. It contains one value from an enumeration of [states](/api/python_client/#llmengine.TaskStatus)
-
 The `outputs` field contains a list of elements of type [`CompletionOutput`](/api/python_client/#llmengine.CompletionOutput), each element of which contains a `text` string with the completion, and optional elements for the number of tokens in the prompt and in the completion.
 
 === "Response Format"
@@ -72,11 +70,9 @@ from llmengine import Completion
 response = Completion.create(
   model_name="falcon-7b-instruct",
   prompt="Suggest a name for an icecream shop")
-print(response.status)
 print(response.outputs)
 
 # The output of this command is
-# TaskStatus.SUCCESS
 # [CompletionOutput(text='\nIcy Creamery', num_prompt_tokens=None, num_completion_tokens=6)]
 ```
 
@@ -101,11 +97,11 @@ for response in stream:
         print(response.json())
 
 # JSON responses here are of this form:
-# {"status": "SUCCESS", "output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1 }, "traceback": null }
-# {"status": "SUCCESS", "output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2 }, "traceback": null }
-# {"status": "SUCCESS", "output": {"text": " don", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3 }, "traceback": null }
-# {"status": "SUCCESS", "output": {"text": "’", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4 }, "traceback": null }
-# {"status": "SUCCESS", "output": {"text": "t", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5 }, "traceback": null }
+# {"output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1 }, "traceback": null }
+# {"output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2 }, "traceback": null }
+# {"output": {"text": " don", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3 }, "traceback": null }
+# {"output": {"text": "’", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4 }, "traceback": null }
+# {"output": {"text": "t", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5 }, "traceback": null }
 ```
 
 ## Async API
@@ -126,7 +122,7 @@ async def main():
 asyncio.run(main())
 
 # JSON response here is:
-# {"status": "SUCCESS", "outputs": [{"text": "\nI scream, you scream, we all scream for ice cream!", "num_prompt_tokens": null, "num_completion_tokens": 15}], "traceback": null}
+# {"outputs": [{"text": "\nI scream, you scream, we all scream for ice cream!", "num_prompt_tokens": null, "num_completion_tokens": 15}], "traceback": null}
 ```
 
 ### Async API with streaming responses
@@ -150,12 +146,12 @@ async def main():
 asyncio.run(main())
 
 # JSON responses:
-# {"status": "SUCCESS", "output": {"text": "\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1}, "traceback": null}
-# {"status": "SUCCESS", "output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2}, "traceback": null}
-# {"status": "SUCCESS", "output": {"text": "gl", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3}, "traceback": null}
-# {"status": "SUCCESS", "output": {"text": "oo", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4}, "traceback": null}
-# {"status": "SUCCESS", "output": {"text": " Cream", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 5}, "traceback": null}
-# {"status": "SUCCESS", "output": {"text": "ery", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 6}, "traceback": null}
-# {"status": "SUCCESS", "output": {"text": "<|endoftext|>", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 7}, "traceback": null}
+# {"output": {"text": "\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1}, "traceback": null}
+# {"output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2}, "traceback": null}
+# {"output": {"text": "gl", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3}, "traceback": null}
+# {"output": {"text": "oo", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4}, "traceback": null}
+# {"output": {"text": " Cream", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 5}, "traceback": null}
+# {"output": {"text": "ery", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 6}, "traceback": null}
+# {"output": {"text": "<|endoftext|>", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 7}, "traceback": null}
 ```
 
