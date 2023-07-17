@@ -19,6 +19,15 @@
 
 ::: llmengine.CompletionStreamV1Response
 
+::: llmengine.CreateFineTuneRequest
+    selection:
+        members:
+            - model
+            - training_file
+            - validation_file
+            - hyperparameters
+            - suffix
+
 ::: llmengine.CreateFineTuneResponse
 
 ::: llmengine.GetFineTuneResponse
@@ -26,3 +35,17 @@
 ::: llmengine.ListFineTunesResponse
 
 ::: llmengine.CancelFineTuneResponse
+
+::: llmengine.GetLLMEndpointResponse
+    selection:
+        members:
+            - id
+            - name
+            - model_name
+            - source
+            - inference_framework
+            - num_shards
+
+::: llmengine.ListLLMEndpointsResponse
+
+::: llmengine.DeleteLLMEndpointResponse
