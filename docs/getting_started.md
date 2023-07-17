@@ -17,7 +17,7 @@ To leverage Scale's hosted versions of these models, you will need a Scale Spell
 
 ### Retrieving your API Key
 
-To retreive your API key, head to [Scale Spellbook](https://spellbook.scale.com) where
+To retrieve your API key, head to [Scale Spellbook](https://spellbook.scale.com) where
 you will get a Scale API key on the [settings](https://spellbook.scale.com/settings) page.
 
 !!! note "Different API Keys for different Scale Products"
