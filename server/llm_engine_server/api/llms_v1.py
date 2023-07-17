@@ -11,11 +11,18 @@ from llm_engine_server.api.dependencies import (
 )
 from llm_engine_server.common.datadog_utils import add_trace_resource_name
 from llm_engine_server.common.dtos.llms import (
+    CancelFineTuneJobResponse,
+    CompletionStreamV1Request,
+    CompletionStreamV1Response,
     CompletionSyncV1Request,
     CompletionSyncV1Response,
+    CreateFineTuneJobRequest,
+    CreateFineTuneJobResponse,
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
+    GetFineTuneJobResponse,
     GetLLMModelEndpointV1Response,
+    ListFineTuneJobResponse,
     ListLLMModelEndpointsV1Response,
 )
 from llm_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
@@ -33,15 +40,25 @@ from llm_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointResourceInvalidRequestException,
     EndpointUnsupportedInferenceTypeException,
+    InvalidRequestException,
+    LLMFineTuningMethodNotImplementedException,
     UpstreamServiceError,
 )
+from llm_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
+    CancelFineTuneJobV1UseCase,
+    CreateFineTuneJobV1UseCase,
+    GetFineTuneJobV1UseCase,
+    ListFineTuneJobV1UseCase,
+)
 from llm_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
+    CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateLLMModelEndpointV1UseCase,
     GetLLMModelEndpointByNameV1UseCase,
     ListLLMModelEndpointsV1UseCase,
 )
 from llm_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
+from sse_starlette.sse import EventSourceResponse
 
 llm_router_v1 = APIRouter(prefix="/v1/llm")
 logger = make_logger(filename_wo_ext(__name__))
@@ -143,86 +160,7 @@ async def get_model_endpoint(
         ) from exc
 
 
-# @llm_router_v1.put(
-#     "/model-endpoints/{model_endpoint_id}", response_model=UpdateModelEndpointV1Response
-# )
-# async def update_model_endpoint(
-#     model_endpoint_id: str,
-#     request: UpdateModelEndpointV1Request,
-#     auth: User = Depends(verify_authentication),
-#     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
-# ) -> UpdateModelEndpointV1Response:
-#     """
-#     Lists the Models owned by the current owner.
-#     """
-#     add_trace_resource_name("model_endpoints_id_put")
-#     logger.info(f"PUT /model-endpoints/{model_endpoint_id} with {request} for {auth}")
-#     try:
-#         use_case = UpdateModelEndpointByIdV1UseCase(
-#             model_bundle_repository=external_interfaces.model_bundle_repository,
-#             model_endpoint_service=external_interfaces.model_endpoint_service,
-#         )
-#         return await use_case.execute(
-#             user=auth, model_endpoint_id=model_endpoint_id, request=request
-#         )
-#     except ObjectNotApprovedException as exc:
-#         raise HTTPException(
-#             status_code=403,
-#             detail="The specified model bundle was not approved yet.",
-#         ) from exc
-#     except EndpointLabelsException as exc:
-#         raise HTTPException(
-#             status_code=400,
-#             detail=str(exc),
-#         ) from exc
-#     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
-#         raise HTTPException(
-#             status_code=404,
-#             detail="The specified model endpoint or model bundle was not found.",
-#         ) from exc
-#     except ExistingEndpointOperationInProgressException as exc:
-#         raise HTTPException(
-#             status_code=409,
-#             detail="Existing operation on endpoint in progress, try again later.",
-#         ) from exc
-
-
-# @llm_router_v1.delete(
-#     "/model-endpoints/{model_endpoint_id}", response_model=DeleteModelEndpointV1Response
-# )
-# async def delete_model_endpoint(
-#     model_endpoint_id: str,
-#     auth: User = Depends(verify_authentication),
-#     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
-# ) -> DeleteModelEndpointV1Response:
-#     """
-#     Lists the Models owned by the current owner.
-#     """
-#     add_trace_resource_name("model_endpoints_id_delete")
-#     logger.info(f"DELETE /model-endpoints/{model_endpoint_id} for {auth}")
-#     try:
-#         use_case = DeleteModelEndpointByIdV1UseCase(
-#             model_endpoint_service=external_interfaces.model_endpoint_service,
-#         )
-#         return await use_case.execute(user=auth, model_endpoint_id=model_endpoint_id)
-#     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
-#         raise HTTPException(
-#             status_code=404,
-#             detail=f"Model Endpoint {model_endpoint_id}  was not found.",
-#         ) from exc
-#     except ExistingEndpointOperationInProgressException as exc:
-#         raise HTTPException(
-#             status_code=409,
-#             detail="Existing operation on endpoint in progress, try again later.",
-#         ) from exc
-#     except EndpointDeleteFailedException as exc:  # pragma: no cover
-#         raise HTTPException(
-#             status_code=500,
-#             detail="deletion of endpoint failed, compute resources still exist.",
-#         ) from exc
-
-
-@llm_router_v1.post("/completion-sync", response_model=CompletionSyncV1Response)
+@llm_router_v1.post("/completions-sync", response_model=CompletionSyncV1Response)
 async def create_completion_sync_task(
     model_endpoint_name: str,
     request: CompletionSyncV1Request,
@@ -259,4 +197,129 @@ async def create_completion_sync_task(
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported inference type: {str(exc)}",
+        ) from exc
+
+
+@llm_router_v1.post("/completions-stream", response_model=CompletionStreamV1Response)
+async def create_completion_stream_task(
+    model_endpoint_name: str,
+    request: CompletionStreamV1Request,
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
+) -> EventSourceResponse:
+    """
+    Runs a stream prompt completion on an LLM.
+    """
+    add_trace_resource_name("llm_completion_stream_post")
+    logger.info(
+        f"POST /completion_stream with {request} to endpoint {model_endpoint_name} for {auth}"
+    )
+    try:
+        use_case = CompletionStreamV1UseCase(
+            model_endpoint_service=external_interfaces.model_endpoint_service,
+            llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+        )
+        response = use_case.execute(
+            user=auth, model_endpoint_name=model_endpoint_name, request=request
+        )
+
+        async def event_generator():
+            async for message in response:
+                yield {"data": message.json()}
+
+        return EventSourceResponse(event_generator())
+    except UpstreamServiceError as exc:
+        return EventSourceResponse(
+            iter(
+                (
+                    CompletionStreamV1Response(
+                        status=TaskStatus.FAILURE, traceback=exc.content.decode()
+                    ).json(),
+                )
+            )
+        )
+    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The specified endpoint could not be found.",
+        ) from exc
+    except ObjectHasInvalidValueException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except EndpointUnsupportedInferenceTypeException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported inference type: {str(exc)}",
+        ) from exc
+
+
+@llm_router_v1.post("/fine-tunes", response_model=CreateFineTuneJobResponse)
+async def create_fine_tune_job(
+    request: CreateFineTuneJobRequest,
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
+) -> CreateFineTuneJobResponse:
+    add_trace_resource_name("fine_tunes_create")
+    logger.info(f"POST /fine-tunes with {request} for {auth}")
+    try:
+        use_case = CreateFineTuneJobV1UseCase(
+            llm_fine_tuning_service=external_interfaces.llm_fine_tuning_service,
+        )
+        return await use_case.execute(user=auth, request=request)
+    except (LLMFineTuningMethodNotImplementedException, InvalidRequestException) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+
+@llm_router_v1.get("/fine-tunes/{fine_tune_id}", response_model=GetFineTuneJobResponse)
+async def get_fine_tune_job(
+    fine_tune_id: str,
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
+) -> GetFineTuneJobResponse:
+    add_trace_resource_name("fine_tunes_get")
+    logger.info(f"GET /fine-tunes/{fine_tune_id} for {auth}")
+    try:
+        use_case = GetFineTuneJobV1UseCase(
+            llm_fine_tuning_service=external_interfaces.llm_fine_tuning_service,
+        )
+        return await use_case.execute(user=auth, fine_tune_id=fine_tune_id)
+    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The specified fine-tune job could not be found.",
+        ) from exc
+
+
+@llm_router_v1.get("/fine-tunes", response_model=ListFineTuneJobResponse)
+async def list_fine_tune_jobs(
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
+) -> ListFineTuneJobResponse:
+    add_trace_resource_name("fine_tunes_list")
+    logger.info(f"GET /fine-tunes for {auth}")
+    use_case = ListFineTuneJobV1UseCase(
+        llm_fine_tuning_service=external_interfaces.llm_fine_tuning_service,
+    )
+    return await use_case.execute(user=auth)
+
+
+@llm_router_v1.put("/fine-tunes/{fine_tune_id}/cancel", response_model=CancelFineTuneJobResponse)
+async def cancel_fine_tune_job(
+    fine_tune_id: str,
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
+) -> CancelFineTuneJobResponse:
+    add_trace_resource_name("fine_tunes_cancel")
+    logger.info(f"PUT /fine-tunes/{fine_tune_id}/cancel for {auth}")
+    try:
+        use_case = CancelFineTuneJobV1UseCase(
+            llm_fine_tuning_service=external_interfaces.llm_fine_tuning_service,
+        )
+        return await use_case.execute(user=auth, fine_tune_id=fine_tune_id)
+    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The specified fine-tune job could not be found.",
         ) from exc

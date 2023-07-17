@@ -1,14 +1,21 @@
-from typing import Optional
+from typing import Optional, Union, cast
 
+from llm_engine_server.core.loggers import filename_wo_ext, make_logger
 from llm_engine_server.domain.entities import (
     CpuSpecificationType,
     GpuType,
+    ModelBundle,
     StorageSpecificationType,
+    TritonEnhancedRunnableImageFlavor,
+)
+from llm_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
+    DockerImageBatchJobBundle,
 )
 from llm_engine_server.domain.exceptions import EndpointResourceInvalidRequestException
 from llm_engine_server.infra.gateways.k8s_resource_parser import (
+    format_bytes,
+    parse_cpu_request,
     parse_mem_request,
-    validate_mem_request,
 )
 
 MAX_ENDPOINT_SIZE = (
@@ -39,8 +46,11 @@ FORWARDER_CPU_USAGE = 0.5
 FORWARDER_MEMORY_USAGE = "1Gi"
 FORWARDER_STORAGE_USAGE = "1G"
 
+logger = make_logger(filename_wo_ext(__name__))
+
 
 def validate_resource_requests(
+    bundle: Union[ModelBundle, DockerImageBatchJobBundle],
     cpus: Optional[CpuSpecificationType],
     memory: Optional[StorageSpecificationType],
     storage: Optional[StorageSpecificationType],
@@ -63,31 +73,103 @@ def validate_resource_requests(
     resource_limits = REQUESTS_BY_GPU_TYPE[gpu_type]
 
     if cpus is not None:
-        # TODO: there should be a parse_cpu_request fn analagous to parse_mem_request.
-        if float(cpus) <= 0:
-            raise EndpointResourceInvalidRequestException("Must provide positive cpus")
-        if float(cpus) > resource_limits["cpus"]:  # type: ignore
-            raise EndpointResourceInvalidRequestException(f"Requested cpus {cpus} too high")
-    if memory is not None:
-        if isinstance(memory, str):
-            if not validate_mem_request(memory):
-                raise EndpointResourceInvalidRequestException(
-                    f"Requested memory {memory} is incorrectly formatted"
-                )
-            requested_memory = parse_mem_request(memory)
-        else:
-            requested_memory = memory
+        try:
+            cpus = parse_cpu_request(cpus) / 1000.0 if isinstance(cpus, str) else cpus
+        except ValueError:
+            raise EndpointResourceInvalidRequestException(
+                f"Requested {cpus=} is incorrectly formatted"
+            )
 
-        if requested_memory > parse_mem_request(resource_limits["memory"]):  # type: ignore
-            raise EndpointResourceInvalidRequestException(f"Requested memory {memory} too high")
+        if cpus <= 0:
+            raise EndpointResourceInvalidRequestException("Requested cpus must be positive")
+
+        available_cpus_for_user = cast(float, resource_limits["cpus"])
+
+        if isinstance(bundle, ModelBundle):
+            cpus += FORWARDER_CPU_USAGE
+            available_cpus_for_user -= FORWARDER_CPU_USAGE
+            if isinstance(bundle.flavor, TritonEnhancedRunnableImageFlavor):
+                if bundle.flavor.triton_num_cpu is None or bundle.flavor.triton_num_cpu < 1:
+                    raise EndpointResourceInvalidRequestException(
+                        "Triton deployments require at least one CPU"
+                    )
+                cpus += bundle.flavor.triton_num_cpu
+
+        if cpus > cast(float, resource_limits["cpus"]):
+            raise EndpointResourceInvalidRequestException(
+                f"Requested {cpus=} too high. The maximum for {gpu_type=} is {available_cpus_for_user}"
+            )
+
+    if memory is not None:
+        try:
+            memory = parse_mem_request(memory) if isinstance(memory, str) else memory
+        except ValueError:
+            raise EndpointResourceInvalidRequestException(
+                f"Requested {memory=} is incorrectly formatted"
+            )
+
+        if memory <= 0:
+            raise EndpointResourceInvalidRequestException("Requested memory must be positive")
+
+        available_memory_for_user = parse_mem_request(cast(str, resource_limits["memory"]))
+
+        if isinstance(bundle, ModelBundle):
+            memory += parse_mem_request(FORWARDER_MEMORY_USAGE)
+            available_memory_for_user -= parse_mem_request(FORWARDER_MEMORY_USAGE)
+            if bundle and isinstance(bundle.flavor, TritonEnhancedRunnableImageFlavor):
+                if bundle.flavor.triton_memory is None:
+                    logger.warning(
+                        "No specified memory resources for Triton container! "
+                        "You may experience eviction if scheduled onto pods with memory contention!\n"
+                        "Set the `memory` and `triton_memory` values to guarantee memory resources!"
+                    )
+                else:
+                    memory += parse_mem_request(bundle.flavor.triton_memory)
+
+        if memory > parse_mem_request(cast(str, resource_limits["memory"])):
+            raise EndpointResourceInvalidRequestException(
+                f"Requested {memory=} too high. The maximum for {gpu_type=} is {format_bytes(available_memory_for_user)}"
+            )
+
     if storage is not None:
-        if isinstance(storage, str):
-            if not validate_mem_request(storage):
-                raise EndpointResourceInvalidRequestException(
-                    f"Requested storage {storage} is incorrectly formatted"
-                )
-            requested_storage = parse_mem_request(storage)
-        else:
-            requested_storage = storage
-        if requested_storage > parse_mem_request(STORAGE_LIMIT):
-            raise EndpointResourceInvalidRequestException(f"Requested storage {storage} too high.")
+        try:
+            storage = parse_mem_request(storage) if isinstance(storage, str) else storage
+        except ValueError:
+            raise EndpointResourceInvalidRequestException(
+                f"Requested {storage=} is incorrectly formatted"
+            )
+
+        if storage <= 0:
+            raise EndpointResourceInvalidRequestException("Requested storage must be positive")
+
+        available_storage_for_user = parse_mem_request(STORAGE_LIMIT)
+
+        if isinstance(bundle, ModelBundle):
+            storage += parse_mem_request(FORWARDER_STORAGE_USAGE)
+            available_storage_for_user -= parse_mem_request(FORWARDER_STORAGE_USAGE)
+            if bundle and isinstance(bundle.flavor, TritonEnhancedRunnableImageFlavor):
+                if bundle.flavor.triton_storage is None:
+                    logger.warning(
+                        "No specified Triton storage resources for deployment! "
+                        "You may experience eviction if scheduled onto pods with disk space contention!\n"
+                        "Set the `triton_storage` value to guarantee ephemeral-storage for the Triton container!"
+                    )
+                else:
+                    storage += parse_mem_request(bundle.flavor.triton_storage)
+
+        if storage > parse_mem_request(STORAGE_LIMIT):
+            raise EndpointResourceInvalidRequestException(
+                f"Requested {storage=} too high. The maximum for {gpu_type=} is {format_bytes(available_storage_for_user)}"
+            )
+
+    if isinstance(bundle, ModelBundle) and isinstance(
+        bundle.flavor, TritonEnhancedRunnableImageFlavor
+    ):
+        if gpus is None or gpus < 1:
+            raise EndpointResourceInvalidRequestException(
+                "Triton deployments require at least one GPU"
+            )
+        if gpu_type is None:
+            raise EndpointResourceInvalidRequestException(
+                "Triton deployments require a specific GPU machine type"
+            )

@@ -49,7 +49,7 @@ def parse_mem_request(req: str):
     """Returns the nearest integer in bytes corresponding to the request"""
     match = re.match(memoryRegex, req)
     if match is None:
-        raise ValueError(f"{req} isn't a valid k8s cpu request")
+        raise ValueError(f"{req} isn't a valid k8s memory request")
     multiplier = memoryMultipliers[match.group("suffix")]
     number = float(match.group("number"))
     return int(round(number * multiplier))
@@ -77,3 +77,12 @@ def get_per_worker_value_from_target_concurrency(concurrency: Union[str, int, fl
             / 1000.0
         )
     )
+
+
+def format_bytes(num_bytes) -> str:
+    """Convert bytes to human-readable format"""
+    for unit in ("", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"):
+        if abs(num_bytes) < 1024.0:
+            return f"{num_bytes:3.1f}{unit}"
+        num_bytes /= 1024.0
+    return f"{num_bytes:.1f}Yi"

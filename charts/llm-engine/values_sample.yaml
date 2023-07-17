@@ -76,8 +76,6 @@ config:
       redis_host: spellbook-prod-cache-001.nu2e0g.0001.usw2.cache.amazonaws.com
       s3_bucket: "scale-ml-egp-test"
     llm_engine:
-      model_primitive_host: none
-
       # Endpoint config
       # K8s namespace the endpoints will be created in
       endpoint_namespace: llm-engine

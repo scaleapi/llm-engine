@@ -25,8 +25,8 @@ theme:
     - content.code.copy
   icon:
     repo: fontawesome/brands/github-alt
-  logo: _static/llm-engine-logo.svg
-  favicon: _static/favicon-32x32.png
+  logo: https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/launch-logo.svg
+  favicon: https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png
   language: en
 
 repo_name: llm-engine
@@ -36,10 +36,10 @@ nav:
   - Introduction: index.md
   - "Getting Started": getting_started.md
   - "Model Zoo": model_zoo.md
-  - "How-To Guides":
+  - "Guides":
       - "Completions": guides/completions.md
-#      - "Token streaming": guides/token_streaming.md
       - "Fine-tuning": guides/fine_tuning.md
+      - "Rate limits": guides/rate_limits.md
   - "API":
       - "Error handling": api/error_handling.md
       - "Python Client API Reference": api/python_client.md

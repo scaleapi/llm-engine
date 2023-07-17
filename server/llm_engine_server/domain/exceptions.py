@@ -69,3 +69,15 @@ class UpstreamServiceError(DomainException):
     def __init__(self, status_code: int, content: bytes):
         self.status_code = status_code
         self.content = content
+
+
+class LLMFineTuningMethodNotImplementedException(DomainException):
+    """
+    Thrown if the requested fine-tuning model/method pair is not implemented.
+    """
+
+
+class InvalidRequestException(DomainException):
+    """
+    Thrown if the user request is invalid.
+    """

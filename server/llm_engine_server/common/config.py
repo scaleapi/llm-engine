@@ -34,7 +34,7 @@ class HostedModelInferenceServiceConfig:
     sqs_profile: str
     sqs_queue_policy_template: str
     sqs_queue_tag_template: str
-    model_primitive_host: str
+    s3_file_llm_fine_tuning_job_repository: str
 
     @classmethod
     def from_yaml(cls, yaml_path):
