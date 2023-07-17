@@ -181,7 +181,7 @@ class CompletionSyncV1Request(BaseModel):
     Request object for a synchronous prompt completion task.
     """
 
-    prompts: List[str] = Field(..., min_items=1)
+    prompt: str = Field(..., min_length=1)
     max_new_tokens: int = Field(..., gt=0)
     temperature: float = Field(..., gt=0.0)
 
@@ -206,14 +206,11 @@ class CompletionSyncV1Response(BaseModel):
     Response object for a synchronous prompt completion.
     """
 
-    status: TaskStatus
-    """Task status."""
+    output: CompletionOutput
+    """Completion output."""
 
-    outputs: List[CompletionOutput]
-    """List of completion outputs."""
-
-    traceback: Optional[str] = None
-    """Traceback if the task failed."""
+    request_id: str
+    """A unique ID for this request."""
 
 
 class CompletionStreamV1Request(BaseModel):
