@@ -10,7 +10,7 @@ from llmengine.data_types import (
 
 class Model(APIEngine):
     """
-    Model API. This API is used to retrieve, list, and create models.
+    Model API. This API is used to retrieve, list, remove, and (in the self-hosted case) create models. When using Scale Spellbook, create models using FineTune.create().
 
 
     Example:

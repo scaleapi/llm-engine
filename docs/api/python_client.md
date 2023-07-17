@@ -30,8 +30,8 @@
     selection:
         members:
             - create
-            - list
             - retrieve
+            - list
             - cancel
 
 ::: llmengine.CreateFineTuneResponse
@@ -41,3 +41,17 @@
 ::: llmengine.ListFineTunesResponse
 
 ::: llmengine.CancelFineTuneResponse
+
+
+::: llmengine.Model
+    selection:
+        members:
+            - retrieve
+            - list
+            - remove
+
+::: llmengine.GetLLMEndpointResponse
+
+::: llmengine.ListLLMEndpointsResponse
+
+::: llmengine.DeleteLLMEndpointResponse
