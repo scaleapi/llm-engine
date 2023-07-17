@@ -26,6 +26,7 @@ class DockerImageBatchJobBundleRepository(ABC):
         storage: Optional[str],
         gpus: Optional[int],
         gpu_type: Optional[GpuType],
+        public: Optional[bool],
     ) -> DockerImageBatchJobBundle:
         """
         Creates a batch bundle.
@@ -43,6 +44,7 @@ class DockerImageBatchJobBundleRepository(ABC):
             storage: Optional default amount of storage for the underlying k8s job
             gpus: Optional default number of gpus
             gpu_type: Optional default gpu_type
+            public: Optional "should bundle be publicly used by others"
 
         Returns:
             A batch bundle entity

@@ -57,6 +57,7 @@ class CreateDockerImageBatchJobBundleV1UseCase:
                 storage=request.resource_requests.storage,
                 gpus=request.resource_requests.gpus,
                 gpu_type=request.resource_requests.gpu_type,
+                public=request.public,
             )
         )
         return CreateDockerImageBatchJobBundleV1Response(
@@ -69,10 +70,7 @@ class ListDockerImageBatchJobBundleV1UseCase:
         self.docker_image_batch_job_bundle_repo = docker_image_batch_job_bundle_repo
 
     async def execute(
-        self,
-        user: User,
-        bundle_name: Optional[str],
-        order_by: Optional[ModelBundleOrderBy],
+        self, user: User, bundle_name: Optional[str], order_by: Optional[ModelBundleOrderBy]
     ) -> ListDockerImageBatchJobBundleV1Response:
         batch_bundles = (
             await self.docker_image_batch_job_bundle_repo.list_docker_image_batch_job_bundles(

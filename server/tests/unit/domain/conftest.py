@@ -4,10 +4,14 @@ from llm_engine_server.common.dtos.batch_jobs import (
     CreateDockerImageBatchJobResourceRequests,
 )
 from llm_engine_server.common.dtos.llms import (
+    CompletionStreamV1Request,
     CompletionSyncV1Request,
     CreateLLMModelEndpointV1Request,
 )
-from llm_engine_server.common.dtos.model_bundles import CreateModelBundleV1Request
+from llm_engine_server.common.dtos.model_bundles import (
+    CreateModelBundleV1Request,
+    CreateModelBundleV2Request,
+)
 from llm_engine_server.common.dtos.model_endpoints import (
     CreateModelEndpointV1Request,
     UpdateModelEndpointV1Request,
@@ -19,6 +23,8 @@ from llm_engine_server.domain.entities import (
     ModelBundleFrameworkType,
     ModelBundlePackagingType,
     ModelEndpointType,
+    Quantization,
+    StreamingEnhancedRunnableImageFlavor,
 )
 
 
@@ -37,6 +43,26 @@ def create_model_bundle_request() -> CreateModelBundleV1Request:
         packaging_type=ModelBundlePackagingType.CLOUDPICKLE,
         metadata=None,
         app_config=None,
+    )
+
+
+@pytest.fixture
+def create_model_bundle_v2_request() -> CreateModelBundleV2Request:
+    return CreateModelBundleV2Request(
+        name="test_bundle_name",
+        metadata=None,
+        schema_location="s3://test-bucket/test-key",
+        flavor=StreamingEnhancedRunnableImageFlavor(
+            flavor="streaming_enhanced_runnable_image",
+            repository="test_repo",
+            tag="test_tag",
+            command=["test_command"],
+            env={"test_key": "test_value"},
+            protocol="http",
+            readiness_initial_delay_seconds=30,
+            streaming_command=["test_streaming_command"],
+            streaming_predict_route="/test_streaming_predict_route",
+        ),
     )
 
 
@@ -221,6 +247,64 @@ def create_llm_model_endpoint_request_streaming() -> CreateLLMModelEndpointV1Req
 
 
 @pytest.fixture
+def create_llm_model_endpoint_text_generation_inference_request_streaming() -> (
+    CreateLLMModelEndpointV1Request
+):
+    return CreateLLMModelEndpointV1Request(
+        name="test_llm_endpoint_name_tgi_streaming",
+        model_name="mpt-7b",
+        source="hugging_face",
+        inference_framework="deepspeed",
+        inference_framework_image_tag="test_tag",
+        num_shards=2,
+        quantize=Quantization.BITSANDBYTES,
+        endpoint_type=ModelEndpointType.STREAMING,
+        metadata={},
+        post_inference_hooks=[],
+        cpus=1,
+        gpus=2,
+        memory="8G",
+        gpu_type=GpuType.NVIDIA_TESLA_T4,
+        storage=None,
+        min_workers=1,
+        max_workers=3,
+        per_worker=2,
+        labels={"team": "infra", "product": "my_product"},
+        aws_role="test_aws_role",
+        results_s3_bucket="test_s3_bucket",
+    )
+
+
+@pytest.fixture
+def create_llm_model_endpoint_text_generation_inference_request_async() -> (
+    CreateLLMModelEndpointV1Request
+):
+    return CreateLLMModelEndpointV1Request(
+        name="test_llm_endpoint_name_tgi_async",
+        model_name="mpt-7b",
+        source="hugging_face",
+        inference_framework="text_generation_inference",
+        inference_framework_image_tag="test_tag",
+        num_shards=2,
+        quantize=Quantization.BITSANDBYTES,
+        endpoint_type=ModelEndpointType.ASYNC,
+        metadata={},
+        post_inference_hooks=[],
+        cpus=1,
+        gpus=2,
+        memory="8G",
+        gpu_type=GpuType.NVIDIA_TESLA_T4,
+        storage=None,
+        min_workers=1,
+        max_workers=3,
+        per_worker=2,
+        labels={"team": "infra", "product": "my_product"},
+        aws_role="test_aws_role",
+        results_s3_bucket="test_s3_bucket",
+    )
+
+
+@pytest.fixture
 def create_llm_model_endpoint_request_invalid_model_name() -> CreateLLMModelEndpointV1Request:
     return CreateLLMModelEndpointV1Request(
         name="test_llm_endpoint_name_1",
@@ -250,6 +334,15 @@ def create_llm_model_endpoint_request_invalid_model_name() -> CreateLLMModelEndp
 def completion_sync_request() -> CompletionSyncV1Request:
     return CompletionSyncV1Request(
         prompts=["test_prompt_1", "test_prompt_2"],
+        max_new_tokens=10,
+        temperature=0.5,
+    )
+
+
+@pytest.fixture
+def completion_stream_request() -> CompletionStreamV1Request:
+    return CompletionStreamV1Request(
+        prompt="test_prompt_1",
         max_new_tokens=10,
         temperature=0.5,
     )

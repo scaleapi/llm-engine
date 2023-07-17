@@ -144,6 +144,7 @@ class CreateDockerImageBatchJobBundleV1Request(BaseModel):
     resource_requests: CreateDockerImageBatchJobResourceRequests = (
         CreateDockerImageBatchJobResourceRequests()
     )
+    public: Optional[bool] = False
 
 
 class CreateDockerImageBatchJobBundleV1Response(BaseModel):
@@ -164,6 +165,7 @@ class DockerImageBatchJobBundleV1Response(BaseModel):
     storage: Optional[str]
     gpus: Optional[int]
     gpu_type: Optional[str]
+    public: Optional[bool]
 
     class Config:
         orm_mode = True

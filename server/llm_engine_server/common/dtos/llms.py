@@ -11,8 +11,14 @@ from llm_engine_server.common.dtos.model_endpoints import (
     ModelEndpointType,
     StorageSpecificationType,
 )
-from llm_engine_server.domain.entities import CallbackAuth, LLMInferenceFramework, LLMSource
-from pydantic import BaseModel, HttpUrl
+from llm_engine_server.domain.entities import (
+    BatchJobStatus,
+    CallbackAuth,
+    LLMInferenceFramework,
+    LLMSource,
+    Quantization,
+)
+from pydantic import BaseModel, Field, HttpUrl
 
 from .tasks import TaskStatus
 
@@ -25,9 +31,19 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     source: LLMSource = LLMSource.HUGGING_FACE
     inference_framework: LLMInferenceFramework = LLMInferenceFramework.DEEPSPEED
     inference_framework_image_tag: str
-    num_shards: int
+    num_shards: int = 1
     """
-    Number of shards to distribute the model onto GPUs.
+    Number of shards to distribute the model onto GPUs. Only affects behavior for text-generation-inference models
+    """
+
+    quantize: Optional[Quantization] = None
+    """
+    Whether to quantize the model. Only affect behavior for text-generation-inference models
+    """
+
+    checkpoint_path: Optional[str] = None
+    """
+    Path to the checkpoint to load the model from. Only affects behavior for text-generation-inference models
     """
 
     # General endpoint fields
@@ -67,6 +83,7 @@ class GetLLMModelEndpointV1Response(BaseModel):
     inference_framework: LLMInferenceFramework
     inference_framework_image_tag: str
     num_shards: int
+    quantize: Optional[Quantization] = None
     spec: GetModelEndpointV1Response
 
 
@@ -84,12 +101,12 @@ class CompletionSyncV1Request(BaseModel):
 
     prompts: List[str]
     max_new_tokens: int
-    temperature: float
+    temperature: float = Field(gt=0, le=100)
 
 
 class CompletionOutput(BaseModel):
     text: str
-    num_prompt_tokens: int
+    num_prompt_tokens: Optional[int] = None
     num_completion_tokens: int
 
 
@@ -101,3 +118,56 @@ class CompletionSyncV1Response(BaseModel):
     status: TaskStatus
     outputs: List[CompletionOutput]
     traceback: Optional[str] = None
+
+
+class CompletionStreamV1Request(BaseModel):
+    """
+    Request object for a stream prompt completion task.
+    """
+
+    prompt: str
+    max_new_tokens: int
+    temperature: float = Field(gt=0, le=100)
+
+
+class CompletionStreamOutput(BaseModel):
+    text: str
+    finished: bool
+    num_prompt_tokens: Optional[int] = None
+    num_completion_tokens: Optional[int] = None
+
+
+class CompletionStreamV1Response(BaseModel):
+    """
+    Response object for a stream prompt completion task.
+    """
+
+    status: TaskStatus
+    output: Optional[CompletionStreamOutput] = None
+    traceback: Optional[str] = None
+
+
+class CreateFineTuneJobRequest(BaseModel):
+    training_file: str
+    validation_file: str
+    model_name: str
+    base_model: str  # TODO enum
+    fine_tuning_method: str  # TODO enum
+    hyperparameters: Dict[str, str]  # TODO validated somewhere else
+
+
+class CreateFineTuneJobResponse(BaseModel):
+    fine_tune_id: str
+
+
+class GetFineTuneJobResponse(BaseModel):
+    fine_tune_id: str
+    status: BatchJobStatus
+
+
+class ListFineTuneJobResponse(BaseModel):
+    jobs: List[GetFineTuneJobResponse]
+
+
+class CancelFineTuneJobResponse(BaseModel):
+    success: bool

@@ -308,6 +308,7 @@ async def docker_image_batch_job_bundles(
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=None,
     )
     batch_bundle_2 = DockerImageBatchJobBundle(
         name="test_docker_image_batch_job_bundle_1",
@@ -323,6 +324,7 @@ async def docker_image_batch_job_bundles(
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=None,
     )
     batch_bundle_3 = DockerImageBatchJobBundle(
         name="test_docker_image_batch_job_bundle_2",
@@ -338,6 +340,7 @@ async def docker_image_batch_job_bundles(
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=None,
     )
     batch_bundle_1.created_at = datetime.datetime(2022, 1, 1)
     batch_bundle_2.created_at = datetime.datetime(2022, 1, 3)

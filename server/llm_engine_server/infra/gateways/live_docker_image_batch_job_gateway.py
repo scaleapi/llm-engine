@@ -30,6 +30,7 @@ from xid import XID
 DEFAULT_MOUNT_LOCATION = "/restricted_llm_engine/batch_payload.json"
 # Must match resources/docker...{cpu,gpu}.yaml's label selector
 LLM_ENGINE_JOB_ID_LABEL_SELECTOR = "llm_engine_job_id"
+OWNER_LABEL_SELECTOR = "owner"
 
 
 ENV: str = os.environ.get("DD_ENV")  # type: ignore
@@ -262,6 +263,30 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
             completed_at=job.status.completion_time,
             status=status,
         )
+
+    async def list_docker_image_batch_jobs(self, owner: str) -> List[DockerImageBatchJob]:
+        await maybe_load_kube_config()
+        batch_client = get_kubernetes_batch_client()
+        try:
+            jobs = await batch_client.list_namespaced_job(
+                namespace=hmi_config.endpoint_namespace,
+                label_selector=f"{OWNER_LABEL_SELECTOR}={owner}",
+            )
+        except ApiException as exc:
+            logger.exception("Got an exception when trying to list the Jobs")
+            raise EndpointResourceInfraException from exc
+
+        return [
+            DockerImageBatchJob(
+                id=job.metadata.labels.get(LLM_ENGINE_JOB_ID_LABEL_SELECTOR),
+                created_by=job.metadata.labels.get("created_by"),
+                owner=owner,
+                created_at=job.metadata.creation_timestamp,
+                completed_at=job.status.completion_time,
+                status=self._parse_job_status_from_k8s_obj(job),
+            )
+            for job in jobs.items
+        ]
 
     async def update_docker_image_batch_job(self, batch_job_id: str, cancel: bool) -> bool:
         if cancel:
