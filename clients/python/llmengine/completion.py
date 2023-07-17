@@ -103,11 +103,11 @@ class Completion(APIEngine):
             max_new_tokens (int):
                 The maximum number of tokens to generate in the completion.
 
-                The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See 
+                The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
                 [Model Zoo](/model_zoo/) for information on each supported model's context length.
 
             temperature (float):
-                What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output 
+                What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
                 more random, while lower values like 0.2 will make it more focused and deterministic.
 
             timeout (int):
@@ -236,11 +236,11 @@ class Completion(APIEngine):
             max_new_tokens (int):
                 The maximum number of tokens to generate in the completion.
 
-                The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See 
+                The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
                 [Model Zoo](/model_zoo/) for information on each supported model's context length.
 
             temperature (float):
-                What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output 
+                What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
                 more random, while lower values like 0.2 will make it more focused and deterministic.
 
             timeout (int):

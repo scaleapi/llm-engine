@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
 
 
 class LLMSource(str, Enum):
@@ -8,6 +9,11 @@ class LLMSource(str, Enum):
 
 class LLMInferenceFramework(str, Enum):
     DEEPSPEED = "deepspeed"
+    TEXT_GENERATION_INFERENCE = "text_generation_inference"
+
+
+class Quantization(str, Enum):
+    BITSANDBYTES = "bitsandbytes"
 
 
 @dataclass
@@ -17,3 +23,4 @@ class LLMMetadata:
     inference_framework: LLMInferenceFramework
     inference_framework_image_tag: str
     num_shards: int
+    quantize: Optional[Quantization] = None

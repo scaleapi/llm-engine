@@ -64,8 +64,13 @@ from llm_engine_server.infra.repositories import (
     DbModelEndpointRecordRepository,
     ECRDockerRepository,
     RedisModelEndpointCacheRepository,
+    S3FileLLMFineTuningJobRepository,
 )
-from llm_engine_server.infra.services import LiveBatchJobService, LiveModelEndpointService
+from llm_engine_server.infra.services import (
+    DockerImageBatchJobLLMFineTuningService,
+    LiveBatchJobService,
+    LiveModelEndpointService,
+)
 from llm_engine_server.infra.services.live_llm_model_endpoint_service import (
     LiveLLMModelEndpointService,
 )
@@ -87,6 +92,7 @@ class ExternalInterfaces:
     model_endpoint_service: ModelEndpointService
     batch_job_service: BatchJobService
     llm_model_endpoint_service: LLMModelEndpointService
+    llm_fine_tuning_service: DockerImageBatchJobLLMFineTuningService
 
     resource_gateway: EndpointResourceGateway
     endpoint_creation_task_queue_gateway: TaskQueueGateway
@@ -179,6 +185,18 @@ def _get_external_interfaces(
 
     docker_image_batch_job_gateway = LiveDockerImageBatchJobGateway()
 
+    llm_fine_tuning_job_repository = S3FileLLMFineTuningJobRepository(
+        file_path=os.getenv(
+            "S3_FILE_LLM_FINE_TUNING_JOB_REPOSITORY",
+            hmi_config.s3_file_llm_fine_tuning_job_repository,
+        ),
+    )
+    llm_fine_tuning_service = DockerImageBatchJobLLMFineTuningService(
+        docker_image_batch_job_gateway=docker_image_batch_job_gateway,
+        docker_image_batch_job_bundle_repo=docker_image_batch_job_bundle_repository,
+        llm_fine_tuning_job_repository=llm_fine_tuning_job_repository,
+    )
+
     external_interfaces = ExternalInterfaces(
         docker_repository=ECRDockerRepository(),
         model_bundle_repository=model_bundle_repository,
@@ -192,6 +210,7 @@ def _get_external_interfaces(
         model_primitive_gateway=model_primitive_gateway,
         docker_image_batch_job_bundle_repository=docker_image_batch_job_bundle_repository,
         docker_image_batch_job_gateway=docker_image_batch_job_gateway,
+        llm_fine_tuning_service=llm_fine_tuning_service,
     )
     return external_interfaces
 

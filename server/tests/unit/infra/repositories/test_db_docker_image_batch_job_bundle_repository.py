@@ -51,6 +51,7 @@ async def test_create_docker_image_batch_job(
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=False,
     )
     assert batch_bundle
 
@@ -89,6 +90,7 @@ async def test_create_docker_image_batch_job_raises_if_read_only(
             storage=None,
             gpus=None,
             gpu_type=None,
+            public=False,
         )
 
 
@@ -125,10 +127,7 @@ async def test_list_docker_image_batch_job_bundles(
 
     def mock_batch_bundle_select_all_by_owner(session: AsyncSession, owner: str):
         if owner == test_api_key:
-            return [
-                orm_docker_image_batch_job_bundle_1_v1,
-                orm_docker_image_batch_job_bundle_2_v1,
-            ]
+            return [orm_docker_image_batch_job_bundle_1_v1, orm_docker_image_batch_job_bundle_2_v1]
         elif owner == test_api_key_team:
             return [orm_docker_image_batch_job_bundle_1_v2]
         else:
@@ -263,6 +262,7 @@ def test_translate_orm_to_entity():
         storage="1Gi",
         gpus="1",
         gpu_type="nvidia-tesla-t4",
+        public=False,
     )
     orm.id = "id"
     orm.created_at = datetime.datetime(2020, 1, 1)
@@ -282,17 +282,22 @@ def test_translate_orm_to_entity():
         storage="1Gi",
         gpus=1,
         gpu_type=GpuType.NVIDIA_TESLA_T4,
+        public=False,
     )
     actual = translate_docker_image_batch_job_bundle_orm_to_entity(orm)
     assert expected == actual
 
     orm.gpus = None
     expected.gpus = None
+    orm.public = None
+    expected.public = None
     actual = translate_docker_image_batch_job_bundle_orm_to_entity(orm)
     assert expected == actual
 
     orm.gpu_type = None
     expected.gpu_type = None
+    orm.public = True
+    expected.public = True
     actual = translate_docker_image_batch_job_bundle_orm_to_entity(orm)
     assert expected == actual
 

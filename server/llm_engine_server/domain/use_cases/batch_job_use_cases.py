@@ -66,13 +66,6 @@ class CreateBatchJobV1UseCase:
             max_workers=request.resource_requests.max_workers,
             endpoint_type=ModelEndpointType.ASYNC,
         )
-        validate_resource_requests(
-            cpus=request.resource_requests.cpus,
-            memory=request.resource_requests.memory,
-            storage=None,
-            gpus=request.resource_requests.gpus,
-            gpu_type=request.resource_requests.gpu_type,
-        )
 
         bundle = await self.model_bundle_repository.get_model_bundle(
             model_bundle_id=request.model_bundle_id
@@ -81,6 +74,15 @@ class CreateBatchJobV1UseCase:
             raise ObjectNotFoundException
         if not self.authz_module.check_access_read_owned_entity(user, bundle):
             raise ObjectNotAuthorizedException
+
+        validate_resource_requests(
+            bundle=bundle,
+            cpus=request.resource_requests.cpus,
+            memory=request.resource_requests.memory,
+            storage=None,
+            gpus=request.resource_requests.gpus,
+            gpu_type=request.resource_requests.gpu_type,
+        )
 
         aws_role = self.authz_module.get_aws_role_for_user(user)
         results_s3_bucket = self.authz_module.get_s3_bucket_for_user(user)
@@ -196,8 +198,7 @@ class CreateDockerImageBatchJobV1UseCase:
             )
 
         if not self.docker_repository.image_exists(
-            image_tag=batch_bundle.image_tag,
-            repository_name=batch_bundle.image_repository,
+            image_tag=batch_bundle.image_tag, repository_name=batch_bundle.image_repository
         ):
             raise DockerImageNotFoundException(
                 repository=batch_bundle.image_repository,
@@ -230,6 +231,7 @@ class CreateDockerImageBatchJobV1UseCase:
             raise ObjectHasInvalidValueException("Must specify value for cpus and memory")
         # check they're valid for the cluster also
         validate_resource_requests(
+            bundle=batch_bundle,
             cpus=final_requests.cpus,
             memory=final_requests.memory,
             storage=final_requests.storage,

@@ -1,11 +1,8 @@
-# Config for scale-hosted Hosted Model Inference in the training cluster, plus a bunch of other config-ish notes
-# NOTE: If you add/change values inside this file that need to apply to all clusters, please make changes in
-# service_config_prod.yaml + service_config_staging.yaml as well.
-model_primitive_host: model-server.default.svc.cluster.local
+# Default Configs
 
 # Endpoint config
 # K8s namespace the endpoints will be created in
-endpoint_namespace: scale-deploy
+endpoint_namespace: llm-engine
 
 # Asynchronous endpoints
 sqs_profile: default
@@ -65,3 +62,4 @@ sqs_queue_tag_template: >
 
 # There's a separate piece of infra that caches k8s state onto redis, so we need a url to it
 cache_redis_url: redis://redis-elasticache-message-broker.ml-internal.scale.com:6379/15
+s3_file_llm_fine_tuning_job_repository: "s3://scale-ml/hosted-model-inference/llm-ft-job-repository/circleci"

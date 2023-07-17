@@ -27,6 +27,7 @@ repos:
             --allow-unsafe,
             --no-emit-index-url,
             --no-emit-trusted-host,
+            --index-url=https://pypi.org/simple,
           ]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0  # https://github.com/pre-commit/pre-commit-hooks/releases

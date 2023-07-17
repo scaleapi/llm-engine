@@ -36,6 +36,7 @@ class DbDockerImageBatchJobBundleRepository(DockerImageBatchJobBundleRepository,
         storage: Optional[str],
         gpus: Optional[int],
         gpu_type: Optional[GpuType],
+        public: Optional[bool],
     ) -> DockerImageBatchJobBundle:
         docker_image_batch_job_record = translate_kwargs_to_batch_bundle_orm(
             name=name,
@@ -51,6 +52,7 @@ class DbDockerImageBatchJobBundleRepository(DockerImageBatchJobBundleRepository,
             storage=storage,
             gpus=gpus,
             gpu_type=gpu_type,
+            public=public,
         )
         async with self.session() as session:
             await OrmDockerImageBatchJobBundle.create(session, docker_image_batch_job_record)
@@ -126,6 +128,7 @@ def translate_docker_image_batch_job_bundle_orm_to_entity(
         storage=batch_bundle_orm.storage,
         gpus=batch_bundle_orm.gpus,
         gpu_type=batch_bundle_orm.gpu_type,
+        public=batch_bundle_orm.public,
     )
     try:
         return DockerImageBatchJobBundle.parse_obj(kwargs)  # auto-translates str to int/GpuType
@@ -147,6 +150,7 @@ def translate_kwargs_to_batch_bundle_orm(
     storage: Optional[str],
     gpus: Optional[int],
     gpu_type: Optional[GpuType],
+    public: Optional[bool],
 ) -> OrmDockerImageBatchJobBundle:
     return OrmDockerImageBatchJobBundle(
         name=name,
@@ -162,4 +166,5 @@ def translate_kwargs_to_batch_bundle_orm(
         storage=storage,
         gpus=gpus,
         gpu_type=gpu_type,
+        public=public,
     )

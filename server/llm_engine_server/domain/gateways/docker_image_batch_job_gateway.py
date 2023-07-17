@@ -60,6 +60,18 @@ class DockerImageBatchJobGateway(ABC):
         pass
 
     @abstractmethod
+    async def list_docker_image_batch_jobs(self, owner: str) -> List[DockerImageBatchJob]:
+        """
+        List all docker image batch jobs for a given owner.
+        Args:
+            owner: The owner whose batch jobs to list.
+
+        Returns:
+            The list of batch jobs.
+        """
+        pass
+
+    @abstractmethod
     async def update_docker_image_batch_job(self, batch_job_id: str, cancel: bool) -> bool:
         """
         Update a batch job.
