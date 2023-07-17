@@ -27,7 +27,7 @@ class Completion(APIEngine):
         stream: bool = False,
     ) -> Union[CompletionSyncV1Response, AsyncIterable[CompletionStreamV1Response]]:
         """
-        Create a completion task asynchronously.
+        Creates a completion for the provided prompt and parameters asynchronously (with `asyncio`).
 
         Example without token streaming:
             ```python
@@ -95,21 +95,31 @@ class Completion(APIEngine):
 
         Args:
             model_name (str):
-                Model name to use for inference
+                Name of the model to use. See [Model Zoo](/model_zoo/) for a list of Models that are supported.
+
             prompt (str):
-                Input text
+                The prompt to generate completions for, encoded as a string.
+
             max_new_tokens (int):
-                Maximum number of generated tokens
+                The maximum number of tokens to generate in the completion.
+
+                The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See 
+                [Model Zoo](/model_zoo/) for information on each supported model's context length.
+
             temperature (float):
-                The value used to module the logits distribution.
+                What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output 
+                more random, while lower values like 0.2 will make it more focused and deterministic.
+
             timeout (int):
-                Timeout in seconds
+                Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
+
             stream (bool):
                 Whether to stream the response. If true, the return type is an
-                `Iterator[CompletionStreamV1Response]`.
+                `Iterator[CompletionStreamV1Response]`. Otherwise, the return type is a `CompletionSyncV1Response`.
+                When streaming, tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
 
         Returns:
-            response (Union[CompletionSyncV1Response, AsyncIterable[CompletionStreamV1Response]]): generated response or iterator of response chunks
+            response (Union[CompletionSyncV1Response, AsyncIterable[CompletionStreamV1Response]]): The generated response (if `streaming=False`) or iterator of response chunks (if `streaming=True`)
         """
         if stream:
 
@@ -159,7 +169,7 @@ class Completion(APIEngine):
         stream: bool = False,
     ) -> Union[CompletionSyncV1Response, Iterator[CompletionStreamV1Response]]:
         """
-        Create a completion task synchronously.
+        Creates a completion for the provided prompt and parameters synchronously.
 
         Example request without token streaming:
             ```python
@@ -218,20 +228,32 @@ class Completion(APIEngine):
 
         Args:
             model_name (str):
-                Model name to use for inference
+                Name of the model to use. See [Model Zoo](/model_zoo/) for a list of Models that are supported.
+
             prompt (str):
-                Input text
+                The prompt to generate completions for, encoded as a string.
+
             max_new_tokens (int):
-                Maximum number of generated tokens
+                The maximum number of tokens to generate in the completion.
+
+                The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See 
+                [Model Zoo](/model_zoo/) for information on each supported model's context length.
+
             temperature (float):
-                The value used to module the logits distribution.
+                What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output 
+                more random, while lower values like 0.2 will make it more focused and deterministic.
+
             timeout (int):
-                Timeout in seconds
+                Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
+
             stream (bool):
-                Whether to stream the response. If true, the return type is an `Iterator`.
+                Whether to stream the response. If true, the return type is an
+                `Iterator[CompletionStreamV1Response]`. Otherwise, the return type is a `CompletionSyncV1Response`.
+                When streaming, tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
+
 
         Returns:
-            response (Union[CompletionSyncV1Response, Iterator[CompletionStreamV1Response]]): generated response or iterator of response chunks
+            response (Union[CompletionSyncV1Response, AsyncIterable[CompletionStreamV1Response]]): The generated response (if `streaming=False`) or iterator of response chunks (if `streaming=True`)
         """
         if stream:
 
