@@ -520,16 +520,13 @@ class CompletionSyncV1UseCase:
 
         if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
             completion_token_count = len(model_output["token_probs"]["tokens"])
-            total_token_count = model_output["tokens_consumed"]
             return CompletionOutput(
                 text=model_output["text"],
-                num_prompt_tokens=total_token_count - completion_token_count,
                 num_completion_tokens=completion_token_count,
             )
         elif model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
             return CompletionOutput(
                 text=model_output["generated_text"],
-                num_prompt_tokens=None,
                 # len(model_output["details"]["prefill"]) does not return the correct value reliably
                 num_completion_tokens=model_output["details"]["generated_tokens"],
             )
@@ -762,7 +759,6 @@ class CompletionStreamV1UseCase:
                             output=CompletionStreamOutput(
                                 text=result["result"]["token"],
                                 finished=False,
-                                num_prompt_tokens=None,
                                 num_completion_tokens=None,
                             ),
                         )
@@ -770,13 +766,11 @@ class CompletionStreamV1UseCase:
                         completion_token_count = len(
                             result["result"]["response"][0]["token_probs"]["tokens"]
                         )
-                        total_token_count = result["result"]["response"][0]["tokens_consumed"]
                         yield CompletionStreamV1Response(
                             status=res.status,
                             output=CompletionStreamOutput(
                                 text=result["result"]["response"][0]["text"],
                                 finished=True,
-                                num_prompt_tokens=total_token_count - completion_token_count,
                                 num_completion_tokens=completion_token_count,
                             ),
                         )
@@ -802,7 +796,6 @@ class CompletionStreamV1UseCase:
                         output=CompletionStreamOutput(
                             text=result["result"]["token"]["text"],
                             finished=finished,
-                            num_prompt_tokens=None,
                             num_completion_tokens=num_completion_tokens,
                         ),
                     )

@@ -108,14 +108,6 @@ class GetModelEndpointV1Response(BaseModel):
     public_inference: Optional[bool] = Field(default=None)
 
 
-class TaskStatus(str, Enum):
-    PENDING = "PENDING"
-    STARTED = "STARTED"
-    SUCCESS = "SUCCESS"
-    FAILURE = "FAILURE"
-    UNDEFINED = "UNDEFINED"
-
-
 class CreateLLMModelEndpointV1Request(BaseModel):
     name: str
 
@@ -194,9 +186,6 @@ class CompletionOutput(BaseModel):
     text: str
     """The text of the completion."""
 
-    num_prompt_tokens: Optional[int]
-    """Number of tokens in the prompt."""
-
     num_completion_tokens: int
     """Number of tokens in the completion."""
 
@@ -206,11 +195,11 @@ class CompletionSyncV1Response(BaseModel):
     Response object for a synchronous prompt completion.
     """
 
+    request_id: str
+    """Unique ID of request."""
+
     output: CompletionOutput
     """Completion output."""
-
-    request_id: str
-    """A unique ID for this request."""
 
 
 class CompletionStreamV1Request(BaseModel):
@@ -230,9 +219,6 @@ class CompletionStreamOutput(BaseModel):
     finished: bool
     """Whether the completion is finished."""
 
-    num_prompt_tokens: Optional[int] = None
-    """Number of tokens in the prompt."""
-
     num_completion_tokens: Optional[int] = None
     """Number of tokens in the completion."""
 
@@ -242,14 +228,11 @@ class CompletionStreamV1Response(BaseModel):
     Response object for a stream prompt completion task.
     """
 
-    status: TaskStatus
-    """Task status."""
+    request_id: str
+    """Unique ID of request."""
 
     output: Optional[CompletionStreamOutput] = None
     """Completion output."""
-
-    traceback: Optional[str] = None
-    """Traceback if the task failed."""
 
 
 class CreateFineTuneRequest(BaseModel):
