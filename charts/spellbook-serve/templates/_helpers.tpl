@@ -225,7 +225,7 @@ env:
 {{- define "spellbookServe.serviceEnv" }}
 env:
   - name: DATADOG_TRACE_ENABLED
-    value: "true"
+    value: "false"
   - name: DD_ENV
     value: {{ .Values.context }}
   - name: DD_VERSION
