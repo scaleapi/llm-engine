@@ -131,8 +131,15 @@ commands:
           command: |
             ruff .
       - run:
+          name: Type Check
+          command: |
+            pushd server
+            mypy .
+            popd
+      - run:
           name: Unit Tests
           command: |
-            cd server
+            pushd server
             pip install -e .
             WORKSPACE=.. pytest
+            popd
