@@ -14,4 +14,7 @@ Scale hosts the following models in a model zoo:
 | `flan-t5-xxl` | ✅ |  |
 
 Each of these models can be used with the
-[Completion API](../api/python_client/#llmengine.Completion).
+[Completion](../api/python_client/#llmengine.Completion) API.
+
+The specified models can be fine-tuned with the
+[FineTune](../api/python_client/#llmengine.FineTune) API.
