@@ -41,7 +41,7 @@ nav:
       - "Fine-tuning": guides/fine_tuning.md
       - "Rate limits": guides/rate_limits.md
   - "API":
-      - "Python Client API Reference": api/python_client.md
+      - "API Reference": api/python_client.md
       - "Data Type Reference": api/data_types.md
       - "Error handling": api/error_handling.md
 #  - "FAQ": faq.md
