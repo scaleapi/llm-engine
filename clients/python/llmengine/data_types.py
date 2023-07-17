@@ -187,8 +187,12 @@ class CompletionSyncV1Request(BaseModel):
 
 
 class CompletionOutput(BaseModel):
+    """
+    Represents the output of a completion request to a model.
+    """
+
     text: str
-    """Text"""
+    """The text of the completion."""
 
     num_prompt_tokens: Optional[int]
     """Number of tokens in the prompt."""
@@ -199,7 +203,7 @@ class CompletionOutput(BaseModel):
 
 class CompletionSyncV1Response(BaseModel):
     """
-    Response object for a synchronous prompt completion task.
+    Response object for a synchronous prompt completion.
     """
 
     status: TaskStatus
@@ -214,7 +218,7 @@ class CompletionSyncV1Response(BaseModel):
 
 class CompletionStreamV1Request(BaseModel):
     """
-    Request object for a stream prompt completion task.
+    Request object for a streaming prompt completion.
     """
 
     prompt: str = Field(..., min_length=1)
@@ -224,7 +228,7 @@ class CompletionStreamV1Request(BaseModel):
 
 class CompletionStreamOutput(BaseModel):
     text: str
-    """Text"""
+    """The text of the completion."""
 
     finished: bool
     """Whether the completion is finished."""
