@@ -112,7 +112,7 @@ print(response.json())
 ```
 </details>
 
-See the [Model Zoo](../model_zoo) to see which models have fine-tuning support.
+See the [Model Zoo](../../model_zoo) to see which models have fine-tuning support.
 
 Once the fine-tune is launched, you can also [get the status of your fine-tune](../../api/python_client/#llmengine.fine_tuning.FineTune.retrieve).
 
