@@ -18,3 +18,6 @@ Each of these models can be used with the
 
 The specified models can be fine-tuned with the
 [FineTune](../api/python_client/#llmengine.FineTune) API.
+
+More information about the model endpoints can be found using the
+[Model](../api/python_client/#llmengine.Model) API.

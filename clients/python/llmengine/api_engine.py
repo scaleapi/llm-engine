@@ -38,7 +38,7 @@ class APIEngine:
             )
 
     @classmethod
-    def get(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
+    def _get(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
         api_key = get_api_key()
         response = requests.get(
             os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
@@ -58,6 +58,19 @@ class APIEngine:
         response = requests.put(
             os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
             json=data,
+            timeout=timeout,
+            headers={"x-api-key": api_key},
+        )
+        if response.status_code != 200:
+            raise parse_error(response.status_code, response.content)
+        payload = response.json()
+        return payload
+
+    @classmethod
+    def _delete(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
+        api_key = get_api_key()
+        response = requests.delete(
+            os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
             timeout=timeout,
             headers={"x-api-key": api_key},
         )
