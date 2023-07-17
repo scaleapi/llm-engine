@@ -1789,8 +1789,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionSyncV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1897,8 +1897,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1921,8 +1921,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1985,8 +1985,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamV1Response.output" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2032,8 +2032,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2129,7 +2129,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
           </td>
           <td>
             <div class="doc-md-description">
-              <p>The name of the base model to fine-tune. See #model_zoo for the list of available models to fine-tune.</p>
+              <p>The name of the base model to fine-tune. See <a href="../../model_zoo">Model Zoo</a> for the list of available models to fine-tune.</p>
             </div>
           </td>
           <td>
@@ -2216,9 +2216,33 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
         </tr>
     </tbody>
   </table>
+      <p>The <em>model</em> is the name of base model (<a href="../../model_zoo">Model Zoo</a> for available models) to fine. The training
+file should consist of prompt and response pairs. Your data must be formatted as a CSV file
+that includes two columns: <code>prompt</code> and <code>response</code>. A maximum of 100,000 rows of data is
+currently supported. At least 200 rows of data is recommended to start to see benefits from
+fine-tuning.</p>
+<p>Here is an example script to create a 5-row CSV of properly formatted data for fine-tuning
+an airline question answering bot:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">csv</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Define data</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  <span class="p">(</span><span class="s2">&quot;What is your policy on carry-on luggage?&quot;</span><span class="p">,</span> <span class="s2">&quot;Our policy allows each passenger to bring one piece of carry-on luggage and one personal item such as a purse or briefcase. The maximum size for carry-on luggage is 22 x 14 x 9 inches.&quot;</span><span class="p">),</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  <span class="p">(</span><span class="s2">&quot;How can I change my flight?&quot;</span><span class="p">,</span> <span class="s2">&quot;You can change your flight through our website or mobile app. Go to &#39;Manage my booking&#39; section, enter your booking reference and last name, then follow the prompts to change your flight.&quot;</span><span class="p">),</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  <span class="p">(</span><span class="s2">&quot;What meals are available on my flight?&quot;</span><span class="p">,</span> <span class="s2">&quot;We offer a variety of meals depending on the flight&#39;s duration and route. These can range from snacks and light refreshments to full-course meals on long-haul flights. Specific meal options can be viewed during the booking process.&quot;</span><span class="p">),</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  <span class="p">(</span><span class="s2">&quot;How early should I arrive at the airport before my flight?&quot;</span><span class="p">,</span> <span class="s2">&quot;We recommend arriving at least two hours before domestic flights and three hours before international flights.&quot;</span><span class="p">),</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  <span class="s2">&quot;Can I select my seat in advance?&quot;</span><span class="p">,</span> <span class="s2">&quot;Yes, you can select your seat during the booking process or afterwards via the &#39;Manage my booking&#39; section on our website or mobile app.&quot;</span><span class="p">),</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  <span class="p">]</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1"># Write data to a CSV file</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;customer_service_data.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="s2">&quot;prompt&quot;</span><span class="p">,</span> <span class="s2">&quot;response&quot;</span><span class="p">])</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">writer</span><span class="o">.</span><span class="n">writerows</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
 
-<details class="example" open>
-  <summary>Example</summary>
+<details class="example-code-for-fine-tuning" open>
+  <summary>Example code for fine-tuning</summary>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">FineTune</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">FineTune</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
@@ -2537,8 +2561,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CreateFineTuneResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2601,8 +2625,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetFineTuneResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2625,8 +2649,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetFineTuneResponse.status" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2689,8 +2713,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.ListFineTunesResponse.jobs" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2753,8 +2777,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CancelFineTuneResponse.success" class="headerlink" title="Permanent link">&para;</a></h3>

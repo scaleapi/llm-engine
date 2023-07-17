@@ -391,6 +391,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#producing-high-quality-data-for-fine-tuning" class="md-nav__link">
+    Producing high quality data for fine-tuning
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#preparing-data" class="md-nav__link">
     Preparing data
   </a>
@@ -560,6 +567,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#producing-high-quality-data-for-fine-tuning" class="md-nav__link">
+    Producing high quality data for fine-tuning
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#preparing-data" class="md-nav__link">
     Preparing data
   </a>
@@ -615,9 +629,14 @@
 <li>The chance to show an LLM more examples than can fit in a single context window</li>
 </ol>
 <p>LLM Engine's fine-tuning API lets you fine-tune various open source LLMs on your own data and then make inference calls to the resulting LLM. For more specific details, see the <a href="../../api/python_client/#llmengine.FineTune">fine-tuning API Python client reference</a>.</p>
-<h2 id="preparing-data">Preparing data<a class="headerlink" href="#preparing-data" title="Permanent link">&para;</a></h2>
-<p>Your training data should consist of prompt and response pairs. Your data must be formatted as a CSV file that includes two columns: <code>prompt</code> and <code>response</code>. A maximum of 100,000 rows of data is currently supported. At least 200 rows of data is recommended to start to see benefits from fine-tuning.</p>
+<h2 id="producing-high-quality-data-for-fine-tuning">Producing high quality data for fine-tuning<a class="headerlink" href="#producing-high-quality-data-for-fine-tuning" title="Permanent link">&para;</a></h2>
+<p>The training data for fine-tuning should consist of prompt and response pairs.</p>
 <p>As a rule of thumb, you should expect to see linear improvements in your fine-tuned model's quality with each doubling of the dataset size. Having high-quality data is also essential to improving performance. For every linear increase in the error rate in your training data, you may encounter a roughly quadratic increase in your fine-tuned model's error rate.</p>
+<p>High quality data is critical to achieve improved model performance, and in several cases will require <em>experts</em> to 
+generate and prepare data - the breadth and diversity of the data is highly critical. Scale's Data Engine can help 
+prepare such high quality, diverse data sets - more information <a href="https://scale.com/rlhf">here</a>.</p>
+<h2 id="preparing-data">Preparing data<a class="headerlink" href="#preparing-data" title="Permanent link">&para;</a></h2>
+<p>Your data must be formatted as a CSV file that includes two columns: <code>prompt</code> and <code>response</code>. A maximum of 100,000 rows of data is currently supported. At least 200 rows of data is recommended to start to see benefits from fine-tuning.</p>
 <p>Here is an example script to create a 50-row CSV of properly formatted data for fine-tuning an airline question answering bot:</p>
 <details>
 <summary>Creating a sample dataset</summary>
