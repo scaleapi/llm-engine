@@ -49,10 +49,11 @@ class FineTune(APIEngine):
                 Publicly accessible URL to a CSV file for validation.
 
             hyperparameters (`Optional[Dict[str, str]]`):
-                Hyperparameters to customize fine-tuning behavior.
+                A dict of hyperparameters to customize fine-tuning behavior.
 
                 Currently supported hyperparameters:
-                    "n_epochs" (`int`): number of epochs to fine-tune for.
+
+                * `n_epochs`: Number of epochs to fine-tune for.
 
             suffix (`Optional[str]`):
                 A string that will be added to your fine-tuned model name.
