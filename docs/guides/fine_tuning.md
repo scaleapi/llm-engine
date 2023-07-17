@@ -17,4 +17,4 @@ Once the fine tune is launched, you can also get the status of your fine tune.
 
 ## Making inference calls to your fine tune
 
-Once the fine tune is finished, you will be able to start making requests to the model. First, you can list the LLMs that you can make inference requests to in order to get the name of your fine tuned model. From that name, you can then make inference requests.
+Once the fine tune is finished, you will be able to start making requests to the model. First, you can list the LLMs that you can make inference requests to in order to get the name of your fine tuned model. You can then use that name to direct your inference requests.
