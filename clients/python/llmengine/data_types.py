@@ -263,7 +263,14 @@ class CreateFineTuneRequest(BaseModel):
 
 
 class CreateFineTuneResponse(BaseModel):
+    """
+    Response object for creating a FineTune.
+    """
+
     fine_tune_id: str = Field(..., description="ID of the created fine-tuning job.")
+    """
+    The ID of the FineTune.
+    """
 
 
 class BatchJobStatus(str, Enum):
@@ -277,13 +284,38 @@ class BatchJobStatus(str, Enum):
 
 
 class GetFineTuneResponse(BaseModel):
+    """
+    Response object for retrieving a FineTune.
+    """
+
     fine_tune_id: str = Field(..., description="ID of the requested job.")
+    """
+    The ID of the FineTune.
+    """
+
     status: BatchJobStatus = Field(..., description="Status of the requested job.")
+    """
+    The status of the FineTune job.
+    """
 
 
 class ListFineTunesResponse(BaseModel):
+    """
+    Response object for listing FineTunes.
+    """
+
     jobs: List[GetFineTuneResponse] = Field(..., description="List of fine-tuning jobs and their statuses.")
+    """
+    A list of FineTunes, represented as `GetFineTuneResponse`s.
+    """
 
 
 class CancelFineTuneResponse(BaseModel):
+    """
+    Response object for cancelling a FineTune.
+    """
+
     success: bool = Field(..., description="Whether cancellation was successful.")
+    """
+    Whether the cancellation succeeded.
+    """
