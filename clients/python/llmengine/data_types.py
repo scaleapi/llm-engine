@@ -256,7 +256,12 @@ class CompletionStreamV1Response(BaseModel):
 
 
 class CreateFineTuneRequest(BaseModel):
+    """
+    Request object for creating a FineTune.
+    """
+
     model: str = Field(..., description="Identifier of base model to train from.")
+    """Identifier of base model to train from."""
 
     training_file: str = Field(
         ...,
