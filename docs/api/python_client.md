@@ -6,26 +6,6 @@
             - create
             - acreate
 
-::: llmengine.CompletionOutput
-    selection:
-        members:
-            - text
-            - num_prompt_tokens
-            - num_completion_tokens
-
-::: llmengine.CompletionSyncV1Response
-
-::: llmengine.CompletionStreamOutput
-    selection:
-        members:
-            - text
-            - finished
-            - num_prompt_tokens
-            - num_completion_tokens
-
-
-::: llmengine.CompletionStreamV1Response
-
 ::: llmengine.FineTune
     selection:
         members:
@@ -33,11 +13,3 @@
             - list
             - retrieve
             - cancel
-
-::: llmengine.CreateFineTuneResponse
-
-::: llmengine.GetFineTuneResponse
-
-::: llmengine.ListFineTunesResponse
-
-::: llmengine.CancelFineTuneResponse
