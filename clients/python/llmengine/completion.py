@@ -13,7 +13,6 @@ class Completion(APIEngine):
     """
     Completion API. This API is used to generate text completions.
 
-    _What are completions?_
     Language models are trained to understand natural language and predict text outputs as a response to
     their inputs. The inputs are called _prompts_ and the outputs are referred to as _completions_.
     LLMs take the input prompts and chunk them into smaller units called _tokens_ to process and generate
