@@ -1,6 +1,6 @@
 Language Models are trained to understand natural language and provide text outputs as a response to their inputs. The inputs are called _prompts_ and outputs are referred to as _completions_. LLMs take the input _prompts_ and chunk them smaller units called _tokens_ to process and generate language. Tokens may include trailing spaces and even sub-words, this process is language dependent.
 
-Scale llm-engine provides access to open source language models (see [Model Zoo](../../model_zoo)) that can be used for producing completions to prompts.
+Scale LLM Engine provides access to open source language models (see [Model Zoo](../../model_zoo)) that can be used for producing completions to prompts.
 
 ## Completion API call
 
