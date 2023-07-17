@@ -253,4 +253,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ensure_gateway_ready(args.gateway_url)
-    create_spellbook_deployments(args.gateway_url)
+    # create_spellbook_deployments(args.gateway_url)
