@@ -452,9 +452,15 @@ class AsyncClient:
 
         Args:
             training_file (`str`):
-                Path to file of training dataset
+                Path to file of training dataset.
+                Dataset must be a csv with columns 'prompt' and 'response'.
+                Must be the URI publicly accessible file on bulk storage, e.g.
+                s3://{public_s3_bucket}/{public_s3_key}
             validation_file (`str`):
-                Path to file of validation dataset
+                Path to file of validation dataset.
+                Has the same format as training_file.
+                If not provided, we will generate a split
+                from the training dataset.
             model_name (`str`):
                 Name of the fine-tuned model
             base_model (`str`):
