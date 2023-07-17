@@ -106,7 +106,6 @@ class CompletionSyncV1Request(BaseModel):
 
 class CompletionOutput(BaseModel):
     text: str
-    num_prompt_tokens: Optional[int] = None
     num_completion_tokens: int
 
 

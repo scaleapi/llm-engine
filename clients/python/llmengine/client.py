@@ -41,7 +41,7 @@ class Client:
         from llmengine import Client
 
         client = Client("flan-t5-xxl-deepspeed-sync")
-        client.generate("Why is the sky blue?").outputs[0].text
+        client.generate("Why is the sky blue?").output.text
         # ' Rayleigh scattering'
 
         result = ""
@@ -104,7 +104,7 @@ class Client:
         """
         # Validate parameters
         request = CompletionSyncV1Request(
-            prompts=[prompt], max_new_tokens=max_new_tokens, temperature=temperature
+            prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
         )
 
         resp = requests.post(
@@ -304,7 +304,7 @@ class AsyncClient:
 
      >>> client = AsyncClient("flan-t5-xxl-deepspeed-sync")
      >>> response = await client.generate("Why is the sky blue?")
-     >>> response.outputs[0].text
+     >>> response.output.text
      ' Rayleigh scattering'
 
      >>> result = ""
@@ -366,7 +366,7 @@ class AsyncClient:
             CompletionSyncV1Response: generated response
         """
         request = CompletionSyncV1Request(
-            prompts=[prompt], max_new_tokens=max_new_tokens, temperature=temperature
+            prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
         )
 
         async with ClientSession(
@@ -414,7 +414,6 @@ class AsyncClient:
             async with session.post(
                 get_stream_inference_url(self.base_url, model_name), json=request.dict()
             ) as resp:
-
                 if resp.status != 200:
                     raise parse_error(resp.status, await resp.json())
 
