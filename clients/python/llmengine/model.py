@@ -2,8 +2,9 @@ from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine, assert_self_hosted
 from llmengine.data_types import (
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
-    GetLLMModelEndpointV1Response,
-    ListLLMModelEndpointsV1Response,
+    DeleteLLMEndpointResponse,
+    GetLLMEndpointResponse,
+    ListLLMEndpointsResponse,
 )
 
 
@@ -41,7 +42,7 @@ class Model(APIEngine):
             model_name=model_name,
         )
         response = cls.post_sync(
-            resource_name="v1/model-endpoints",
+            resource_name="v1/llm/model-endpoints",
             data=request.dict(),
             timeout=DEFAULT_TIMEOUT,
         )
@@ -51,7 +52,7 @@ class Model(APIEngine):
     def retrieve(
         cls,
         model_name: str,
-    ) -> GetLLMModelEndpointV1Response:
+    ) -> GetLLMEndpointResponse:
         """
         Get an LLM model endpoint
 
@@ -62,16 +63,31 @@ class Model(APIEngine):
         Returns:
             response: object representing the LLM endpoint and configurations
         """
-        response = cls.get(f"v1/model-endpoints/{model_name}", timeout=DEFAULT_TIMEOUT)
-        return GetLLMModelEndpointV1Response.parse_obj(response)
+        response = cls.get(f"v1/llm/model-endpoints/{model_name}", timeout=DEFAULT_TIMEOUT)
+        return GetLLMEndpointResponse.parse_obj(response)
 
     @classmethod
-    def list(cls) -> ListLLMModelEndpointsV1Response:
+    def list(cls) -> ListLLMEndpointsResponse:
         """
         List model endpoints
 
         Returns:
             response: list of model endpoints
         """
-        response = cls.get("v1/model-endpoints", timeout=DEFAULT_TIMEOUT)
-        return ListLLMModelEndpointsV1Response.parse_obj(response)
+        response = cls.get("v1/llm/model-endpoints", timeout=DEFAULT_TIMEOUT)
+        return ListLLMEndpointsResponse.parse_obj(response)
+
+    @classmethod
+    def remove(cls, model_name: str) -> DeleteLLMEndpointResponse:
+        """
+        Deletes an LLM model endpoint
+
+        Args:
+            model_name (`str`):
+                Name of the model
+
+        Returns:
+            response: whether the model was successfully deleted
+        """
+        response = cls.delete(f"v1/llm/model-endpoints/{model_name}", timeout=DEFAULT_TIMEOUT)
+        return DeleteLLMEndpointResponse.parse_obj(response)
