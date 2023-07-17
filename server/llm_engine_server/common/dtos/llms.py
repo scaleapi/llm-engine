@@ -132,7 +132,6 @@ class CompletionStreamV1Request(BaseModel):
 class CompletionStreamOutput(BaseModel):
     text: str
     finished: bool
-    num_prompt_tokens: Optional[int] = None
     num_completion_tokens: Optional[int] = None
 
 

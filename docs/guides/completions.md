@@ -10,7 +10,7 @@ An example API call looks as follows:
 from llmengine import Completion
 
 response = Completion.create(
-    model_name="llama-7b",
+    model="llama-7b",
     prompt="Hello, my name is",
     max_new_tokens=10,
     temperature=0.2,
@@ -58,7 +58,7 @@ An example of token streaming using the synchronous Completions API looks as fol
 from llmengine import Completion
 
 stream = Completion.create(
-    model_name="llama-7b",
+    model="llama-7b",
     prompt="why is the sky blue?",
     max_new_tokens=5,
     temperature=0.2,
@@ -83,7 +83,7 @@ from llmengine import Completion
 
 async def main():
     response = await Completion.acreate(
-        model_name="llama-7b",
+        model="llama-7b",
         prompt="Hello, my name is",
         max_new_tokens=10,
         temperature=0.2,

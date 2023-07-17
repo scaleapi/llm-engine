@@ -46,7 +46,7 @@ With your API key set, you can now send LLM Engine requests using the Python cli
     from llmengine import Completion
 
     response = Completion.create(
-        model_name="falcon-7b-instruct",
+        model="falcon-7b-instruct",
         prompt="I'm opening a pancake restaurant that specializes in unique pancake shapes, colors, and flavors. List 3 quirky names I could name my restaurant.",
         max_new_tokens=100,
         temperature=0.2,
@@ -63,7 +63,7 @@ With your API key set, you can now send LLM Engine requests using the Python cli
     import sys
 
     stream = Completion.create(
-        model_name="falcon-7b-instruct",
+        model="falcon-7b-instruct",
         prompt="Give me a 200 word summary on the current economic events in the US.",
         max_new_tokens=1000,
         temperature=0.2,
