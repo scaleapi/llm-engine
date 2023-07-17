@@ -74,7 +74,7 @@ config:
       default_region: us-east-1
       ml_account_id: "692474966980"
       docker_repo_prefix: "692474966980.dkr.ecr.us-east-1.amazonaws.com"
-      redis_host: spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com:6379
+      redis_host: spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com
       s3_bucket: "scale-ml-egp-test"
     spellbook_serve:
       model_primitive_host: none
