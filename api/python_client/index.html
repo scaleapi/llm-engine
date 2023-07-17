@@ -11,17 +11,17 @@
       
       
       
-        <link rel="prev" href="../error_handling/">
+        <link rel="prev" href="../../guides/rate_limits/">
       
       
-        <link rel="next" href="../langchain/">
+        <link rel="next" href="../data_types/">
       
       <link rel="icon" href="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
     
     
       
-        <title>Python Client API Reference - LLM Engine</title>
+        <title>API Reference - LLM Engine</title>
       
     
     
@@ -125,7 +125,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Python Client API Reference
+              API Reference
             
           </span>
         </div>
@@ -413,20 +413,6 @@
               
   
   
-  
-    <li class="md-nav__item">
-      <a href="../error_handling/" class="md-nav__link">
-        Error handling
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
     
   
   
@@ -439,12 +425,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Python Client API Reference
+          API Reference
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Python Client API Reference
+        API Reference
       </a>
       
         
@@ -480,149 +466,6 @@
           <li class="md-nav__item">
   <a href="#llmengine.completion.Completion.acreate" class="md-nav__link">
     acreate()
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CompletionOutput" class="md-nav__link">
-    CompletionOutput
-  </a>
-  
-    <nav class="md-nav" aria-label="CompletionOutput">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionOutput.text" class="md-nav__link">
-    text
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionOutput.num_prompt_tokens" class="md-nav__link">
-    num_prompt_tokens
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionOutput.num_completion_tokens" class="md-nav__link">
-    num_completion_tokens
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CompletionSyncV1Response" class="md-nav__link">
-    CompletionSyncV1Response
-  </a>
-  
-    <nav class="md-nav" aria-label="CompletionSyncV1Response">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.outputs" class="md-nav__link">
-    outputs
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.status" class="md-nav__link">
-    status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.traceback" class="md-nav__link">
-    traceback
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CompletionStreamOutput" class="md-nav__link">
-    CompletionStreamOutput
-  </a>
-  
-    <nav class="md-nav" aria-label="CompletionStreamOutput">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamOutput.text" class="md-nav__link">
-    text
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamOutput.finished" class="md-nav__link">
-    finished
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="md-nav__link">
-    num_prompt_tokens
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="md-nav__link">
-    num_completion_tokens
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CompletionStreamV1Response" class="md-nav__link">
-    CompletionStreamV1Response
-  </a>
-  
-    <nav class="md-nav" aria-label="CompletionStreamV1Response">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamV1Response.output" class="md-nav__link">
-    output
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamV1Response.status" class="md-nav__link">
-    status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamV1Response.traceback" class="md-nav__link">
-    traceback
   </a>
   
 </li>
@@ -673,93 +516,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#llmengine.CreateFineTuneResponse" class="md-nav__link">
-    CreateFineTuneResponse
-  </a>
-  
-    <nav class="md-nav" aria-label="CreateFineTuneResponse">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneResponse.fine_tune_id" class="md-nav__link">
-    fine_tune_id
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.GetFineTuneResponse" class="md-nav__link">
-    GetFineTuneResponse
-  </a>
-  
-    <nav class="md-nav" aria-label="GetFineTuneResponse">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.GetFineTuneResponse.fine_tune_id" class="md-nav__link">
-    fine_tune_id
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.GetFineTuneResponse.status" class="md-nav__link">
-    status
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.ListFineTunesResponse" class="md-nav__link">
-    ListFineTunesResponse
-  </a>
-  
-    <nav class="md-nav" aria-label="ListFineTunesResponse">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.ListFineTunesResponse.jobs" class="md-nav__link">
-    jobs
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CancelFineTuneResponse" class="md-nav__link">
-    CancelFineTuneResponse
-  </a>
-  
-    <nav class="md-nav" aria-label="CancelFineTuneResponse">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CancelFineTuneResponse.success" class="md-nav__link">
-    success
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -775,8 +531,22 @@
   
   
     <li class="md-nav__item">
-      <a href="../langchain/" class="md-nav__link">
-        Langchain
+      <a href="../data_types/" class="md-nav__link">
+        Data Type Reference
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../error_handling/" class="md-nav__link">
+        Error handling
       </a>
     </li>
   
@@ -843,149 +613,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#llmengine.CompletionOutput" class="md-nav__link">
-    CompletionOutput
-  </a>
-  
-    <nav class="md-nav" aria-label="CompletionOutput">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionOutput.text" class="md-nav__link">
-    text
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionOutput.num_prompt_tokens" class="md-nav__link">
-    num_prompt_tokens
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionOutput.num_completion_tokens" class="md-nav__link">
-    num_completion_tokens
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CompletionSyncV1Response" class="md-nav__link">
-    CompletionSyncV1Response
-  </a>
-  
-    <nav class="md-nav" aria-label="CompletionSyncV1Response">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.outputs" class="md-nav__link">
-    outputs
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.status" class="md-nav__link">
-    status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.traceback" class="md-nav__link">
-    traceback
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CompletionStreamOutput" class="md-nav__link">
-    CompletionStreamOutput
-  </a>
-  
-    <nav class="md-nav" aria-label="CompletionStreamOutput">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamOutput.text" class="md-nav__link">
-    text
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamOutput.finished" class="md-nav__link">
-    finished
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="md-nav__link">
-    num_prompt_tokens
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="md-nav__link">
-    num_completion_tokens
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CompletionStreamV1Response" class="md-nav__link">
-    CompletionStreamV1Response
-  </a>
-  
-    <nav class="md-nav" aria-label="CompletionStreamV1Response">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamV1Response.output" class="md-nav__link">
-    output
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamV1Response.status" class="md-nav__link">
-    status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamV1Response.traceback" class="md-nav__link">
-    traceback
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#llmengine.FineTune" class="md-nav__link">
     FineTune
   </a>
@@ -1017,93 +644,6 @@
           <li class="md-nav__item">
   <a href="#llmengine.fine_tuning.FineTune.cancel" class="md-nav__link">
     cancel()
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CreateFineTuneResponse" class="md-nav__link">
-    CreateFineTuneResponse
-  </a>
-  
-    <nav class="md-nav" aria-label="CreateFineTuneResponse">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneResponse.fine_tune_id" class="md-nav__link">
-    fine_tune_id
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.GetFineTuneResponse" class="md-nav__link">
-    GetFineTuneResponse
-  </a>
-  
-    <nav class="md-nav" aria-label="GetFineTuneResponse">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.GetFineTuneResponse.fine_tune_id" class="md-nav__link">
-    fine_tune_id
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.GetFineTuneResponse.status" class="md-nav__link">
-    status
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.ListFineTunesResponse" class="md-nav__link">
-    ListFineTunesResponse
-  </a>
-  
-    <nav class="md-nav" aria-label="ListFineTunesResponse">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.ListFineTunesResponse.jobs" class="md-nav__link">
-    jobs
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CancelFineTuneResponse" class="md-nav__link">
-    CancelFineTuneResponse
-  </a>
-  
-    <nav class="md-nav" aria-label="CancelFineTuneResponse">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CancelFineTuneResponse.success" class="md-nav__link">
-    success
   </a>
   
 </li>
@@ -1183,7 +723,17 @@ stream token responses or not.</p>
   </span>
 
 <a href="#llmengine.completion.Completion.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span><span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">CompletionSyncV1Response</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">]]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">CompletionSyncV1Response</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">Iterator</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">],</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1308,7 +858,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
     <tbody>
         <tr>
 <td><code>response</code></td>          <td>
-                <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncV1Response" href="#llmengine.CompletionSyncV1Response">CompletionSyncV1Response</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamV1Response" href="#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>]]</code>
+                <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncV1Response" href="../data_types/#llmengine.CompletionSyncV1Response">CompletionSyncV1Response</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamV1Response" href="../data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>]]</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -1393,7 +943,17 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
   </span>
 
 <a href="#llmengine.completion.Completion.acreate" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">acreate</span><span class="p">(</span><span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">CompletionSyncV1Response</span><span class="p">,</span> <span class="n">AsyncIterable</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">]]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">acreate</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">CompletionSyncV1Response</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">AsyncIterable</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">],</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1518,7 +1078,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
     <tbody>
         <tr>
 <td><code>response</code></td>          <td>
-                <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncV1Response" href="#llmengine.CompletionSyncV1Response">CompletionSyncV1Response</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamV1Response" href="#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>]]</code>
+                <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncV1Response" href="../data_types/#llmengine.CompletionSyncV1Response">CompletionSyncV1Response</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamV1Response" href="../data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>]]</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -1608,464 +1168,6 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 
-<h2 id="llmengine.CompletionOutput" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionOutput</span>
-
-
-<a href="#llmengine.CompletionOutput" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-  <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
-
-  
-      <p>Represents the output of a completion request to a model.</p>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionOutput.text" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">text</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionOutput.text" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>The text of the completion.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionOutput.num_prompt_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_prompt_tokens</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionOutput.num_prompt_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">num_prompt_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Number of tokens in the prompt.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionOutput.num_completion_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionOutput.num_completion_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">num_completion_tokens</span><span class="p">:</span> <span class="nb">int</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Number of tokens in the completion.</p>
-  </div>
-
-</div>
-
-
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="llmengine.CompletionSyncV1Response" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionSyncV1Response</span>
-
-
-<a href="#llmengine.CompletionSyncV1Response" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-  <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
-
-  
-      <p>Response object for a synchronous prompt completion.</p>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionSyncV1Response.outputs" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">outputs</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionSyncV1Response.outputs" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">outputs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">CompletionOutput</span><span class="p">]</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>List of completion outputs.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionSyncV1Response.status" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">status</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionSyncV1Response.status" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">status</span><span class="p">:</span> <span class="n">TaskStatus</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Task status.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionSyncV1Response.traceback" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">traceback</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionSyncV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">traceback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Traceback if the task failed.</p>
-  </div>
-
-</div>
-
-
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="llmengine.CompletionStreamOutput" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionStreamOutput</span>
-
-
-<a href="#llmengine.CompletionStreamOutput" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-  <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
-
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionStreamOutput.text" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">text</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionStreamOutput.text" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>The text of the completion.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionStreamOutput.finished" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">finished</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionStreamOutput.finished" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">finished</span><span class="p">:</span> <span class="nb">bool</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Whether the completion is finished.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_prompt_tokens</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">num_prompt_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Number of tokens in the prompt.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">num_completion_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Number of tokens in the completion.</p>
-  </div>
-
-</div>
-
-
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="llmengine.CompletionStreamV1Response" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionStreamV1Response</span>
-
-
-<a href="#llmengine.CompletionStreamV1Response" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-  <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
-
-  
-      <p>Response object for a stream prompt completion task.</p>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionStreamV1Response.output" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">output</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionStreamV1Response.output" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CompletionStreamOutput</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Completion output.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionStreamV1Response.status" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">status</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionStreamV1Response.status" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">status</span><span class="p">:</span> <span class="n">TaskStatus</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Task status.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionStreamV1Response.traceback" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">traceback</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionStreamV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">traceback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Traceback if the task failed.</p>
-  </div>
-
-</div>
-
-
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
 <h2 id="llmengine.FineTune" class="doc doc-heading">
           <span class="doc doc-object-name doc-class-name">FineTune</span>
 
@@ -2109,7 +1211,13 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
   </span>
 
 <a href="#llmengine.fine_tuning.FineTune.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">training_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">validation_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">hyperparameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CreateFineTuneResponse</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">training_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">validation_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">hyperparameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CreateFineTuneResponse</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2215,7 +1323,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
     <tbody>
         <tr>
 <td><code>CreateFineTuneResponse</code></td>          <td>
-                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CreateFineTuneResponse" href="#llmengine.CreateFineTuneResponse">CreateFineTuneResponse</a></code>
+                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CreateFineTuneResponse" href="../data_types/#llmengine.CreateFineTuneResponse">CreateFineTuneResponse</a></code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2307,7 +1415,7 @@ an airline question answering bot:</p>
     <tbody>
         <tr>
 <td><code>ListFineTunesResponse</code></td>          <td>
-                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.ListFineTunesResponse" href="#llmengine.ListFineTunesResponse">ListFineTunesResponse</a></code>
+                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.ListFineTunesResponse" href="../data_types/#llmengine.ListFineTunesResponse">ListFineTunesResponse</a></code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2408,7 +1516,7 @@ an airline question answering bot:</p>
     <tbody>
         <tr>
 <td><code>GetFineTuneResponse</code></td>          <td>
-                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.GetFineTuneResponse" href="#llmengine.GetFineTuneResponse">GetFineTuneResponse</a></code>
+                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.GetFineTuneResponse" href="../data_types/#llmengine.GetFineTuneResponse">GetFineTuneResponse</a></code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2506,7 +1614,7 @@ an airline question answering bot:</p>
     <tbody>
         <tr>
 <td><code>CancelFineTuneResponse</code></td>          <td>
-                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CancelFineTuneResponse" href="#llmengine.CancelFineTuneResponse">CancelFineTuneResponse</a></code>
+                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CancelFineTuneResponse" href="../data_types/#llmengine.CancelFineTuneResponse">CancelFineTuneResponse</a></code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2535,282 +1643,6 @@ an airline question answering bot:</p>
   </div>
 
 </div>
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="llmengine.CreateFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CreateFineTuneResponse</span>
-
-
-<a href="#llmengine.CreateFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-  <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
-
-  
-      <p>Response object for creating a FineTune.</p>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CreateFineTuneResponse.fine_tune_id" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CreateFineTuneResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;ID of the created fine-tuning job.&#39;</span><span class="p">)</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>The ID of the FineTune.</p>
-  </div>
-
-</div>
-
-
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="llmengine.GetFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">GetFineTuneResponse</span>
-
-
-<a href="#llmengine.GetFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-  <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
-
-  
-      <p>Response object for retrieving a FineTune.</p>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.GetFineTuneResponse.fine_tune_id" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.GetFineTuneResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;ID of the requested job.&#39;</span><span class="p">)</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>The ID of the FineTune.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.GetFineTuneResponse.status" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">status</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.GetFineTuneResponse.status" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">status</span><span class="p">:</span> <span class="n">BatchJobStatus</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Status of the requested job.&#39;</span><span class="p">)</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>The status of the FineTune job.</p>
-  </div>
-
-</div>
-
-
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="llmengine.ListFineTunesResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">ListFineTunesResponse</span>
-
-
-<a href="#llmengine.ListFineTunesResponse" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-  <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
-
-  
-      <p>Response object for listing FineTunes.</p>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.ListFineTunesResponse.jobs" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">jobs</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.ListFineTunesResponse.jobs" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">jobs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GetFineTuneResponse</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;List of fine-tuning jobs and their statuses.&#39;</span><span class="p">)</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>A list of FineTunes, represented as <code>GetFineTuneResponse</code>s.</p>
-  </div>
-
-</div>
-
-
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="llmengine.CancelFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CancelFineTuneResponse</span>
-
-
-<a href="#llmengine.CancelFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-  <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
-
-  
-      <p>Response object for cancelling a FineTune.</p>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CancelFineTuneResponse.success" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">success</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CancelFineTuneResponse.success" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Whether cancellation was successful.&#39;</span><span class="p">)</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Whether the cancellation succeeded.</p>
-  </div>
-
-</div>
-
-
 
 
 
