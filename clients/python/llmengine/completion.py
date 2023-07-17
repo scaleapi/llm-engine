@@ -2,10 +2,10 @@ from typing import AsyncIterable, Iterator, Union
 
 from llmengine.api_engine import APIEngine
 from llmengine.data_types import (
+    CompletionStreamResponse,
     CompletionStreamV1Request,
-    CompletionStreamV1Response,
+    CompletionSyncResponse,
     CompletionSyncV1Request,
-    CompletionSyncV1Response,
 )
 
 
@@ -32,7 +32,7 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         timeout: int = 10,
         stream: bool = False,
-    ) -> Union[CompletionSyncV1Response, AsyncIterable[CompletionStreamV1Response]]:
+    ) -> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]:
         """
         Creates a completion for the provided prompt and parameters asynchronously (with `asyncio`).
 
@@ -58,11 +58,11 @@ class Completion(APIEngine):
 
             stream (bool):
                 Whether to stream the response. If true, the return type is an
-                `Iterator[CompletionStreamV1Response]`. Otherwise, the return type is a `CompletionSyncV1Response`.
+                `Iterator[CompletionStreamResponse]`. Otherwise, the return type is a `CompletionSyncResponse`.
                 When streaming, tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
 
         Returns:
-            response (Union[CompletionSyncV1Response, AsyncIterable[CompletionStreamV1Response]]): The generated response (if `streaming=False`) or iterator of response chunks (if `streaming=True`)
+            response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `streaming=False`) or iterator of response chunks (if `streaming=True`)
 
         Example without token streaming:
             ```python
@@ -129,7 +129,7 @@ class Completion(APIEngine):
 
             async def _acreate_stream(
                 **kwargs,
-            ) -> AsyncIterable[CompletionStreamV1Response]:
+            ) -> AsyncIterable[CompletionStreamResponse]:
                 data = CompletionStreamV1Request(**kwargs).dict()
                 response = cls.apost_stream(
                     resource_name=f"v1/llm/completions-stream?model_endpoint_name={model}",
@@ -137,7 +137,7 @@ class Completion(APIEngine):
                     timeout=timeout,
                 )
                 async for chunk in response:
-                    yield CompletionStreamV1Response.parse_obj(chunk)
+                    yield CompletionStreamResponse.parse_obj(chunk)
 
             return _acreate_stream(
                 model=model,
@@ -149,14 +149,14 @@ class Completion(APIEngine):
 
         else:
 
-            async def _acreate_sync(**kwargs) -> CompletionSyncV1Response:
+            async def _acreate_sync(**kwargs) -> CompletionSyncResponse:
                 data = CompletionSyncV1Request(**kwargs).dict()
                 response = await cls.apost_sync(
                     resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",
                     data=data,
                     timeout=timeout,
                 )
-                return CompletionSyncV1Response.parse_obj(response)
+                return CompletionSyncResponse.parse_obj(response)
 
             return await _acreate_sync(
                 prompts=[prompt], max_new_tokens=max_new_tokens, temperature=temperature
@@ -171,7 +171,7 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         timeout: int = 10,
         stream: bool = False,
-    ) -> Union[CompletionSyncV1Response, Iterator[CompletionStreamV1Response]]:
+    ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
         """
         Creates a completion for the provided prompt and parameters synchronously.
 
@@ -197,12 +197,12 @@ class Completion(APIEngine):
 
             stream (bool):
                 Whether to stream the response. If true, the return type is an
-                `Iterator[CompletionStreamV1Response]`. Otherwise, the return type is a `CompletionSyncV1Response`.
+                `Iterator[CompletionStreamResponse]`. Otherwise, the return type is a `CompletionSyncResponse`.
                 When streaming, tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
 
 
         Returns:
-            response (Union[CompletionSyncV1Response, AsyncIterable[CompletionStreamV1Response]]): The generated response (if `streaming=False`) or iterator of response chunks (if `streaming=True`)
+            response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `streaming=False`) or iterator of response chunks (if `streaming=True`)
 
         Example request without token streaming:
             ```python
@@ -268,7 +268,7 @@ class Completion(APIEngine):
                     timeout=timeout,
                 )
                 for chunk in response_stream:
-                    yield CompletionStreamV1Response.parse_obj(chunk)
+                    yield CompletionStreamResponse.parse_obj(chunk)
 
             return _create_stream(
                 prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
@@ -283,4 +283,4 @@ class Completion(APIEngine):
                 data=data,
                 timeout=timeout,
             )
-            return CompletionSyncV1Response.parse_obj(response)
+            return CompletionSyncResponse.parse_obj(response)
