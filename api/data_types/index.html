@@ -478,13 +478,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionOutput.num_prompt_tokens" class="md-nav__link">
-    num_prompt_tokens
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#llmengine.data_types.CompletionOutput.num_completion_tokens" class="md-nav__link">
     num_completion_tokens
   </a>
@@ -519,13 +512,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="md-nav__link">
-    num_prompt_tokens
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="md-nav__link">
     num_completion_tokens
   </a>
@@ -546,22 +532,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.outputs" class="md-nav__link">
-    outputs
+  <a href="#llmengine.data_types.CompletionSyncV1Response.output" class="md-nav__link">
+    output
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.status" class="md-nav__link">
-    status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.traceback" class="md-nav__link">
-    traceback
+  <a href="#llmengine.data_types.CompletionSyncV1Response.request_id" class="md-nav__link">
+    request_id
   </a>
   
 </li>
@@ -587,15 +566,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamV1Response.status" class="md-nav__link">
-    status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamV1Response.traceback" class="md-nav__link">
-    traceback
+  <a href="#llmengine.data_types.CompletionStreamV1Response.request_id" class="md-nav__link">
+    request_id
   </a>
   
 </li>
@@ -763,13 +735,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionOutput.num_prompt_tokens" class="md-nav__link">
-    num_prompt_tokens
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#llmengine.data_types.CompletionOutput.num_completion_tokens" class="md-nav__link">
     num_completion_tokens
   </a>
@@ -804,13 +769,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="md-nav__link">
-    num_prompt_tokens
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="md-nav__link">
     num_completion_tokens
   </a>
@@ -831,22 +789,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.outputs" class="md-nav__link">
-    outputs
+  <a href="#llmengine.data_types.CompletionSyncV1Response.output" class="md-nav__link">
+    output
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.status" class="md-nav__link">
-    status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionSyncV1Response.traceback" class="md-nav__link">
-    traceback
+  <a href="#llmengine.data_types.CompletionSyncV1Response.request_id" class="md-nav__link">
+    request_id
   </a>
   
 </li>
@@ -872,15 +823,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamV1Response.status" class="md-nav__link">
-    status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CompletionStreamV1Response.traceback" class="md-nav__link">
-    traceback
+  <a href="#llmengine.data_types.CompletionStreamV1Response.request_id" class="md-nav__link">
+    request_id
   </a>
   
 </li>
@@ -1000,18 +944,19 @@
 
 
 <h2 id="llmengine.CompletionOutput" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionOutput</span>
+        <span class="doc doc-object-name doc-class-name">CompletionOutput</span>
 
 
 <a href="#llmengine.CompletionOutput" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Represents the output of a completion request to a model.</p>
+
 
 
   
@@ -1029,7 +974,7 @@
 
 
 <h3 id="llmengine.data_types.CompletionOutput.text" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">text</span>
+        <span class="doc doc-object-name doc-attribute-name">text</span>
 
   
   <span class="doc doc-labels">
@@ -1051,31 +996,8 @@
 
 
 
-<h3 id="llmengine.data_types.CompletionOutput.num_prompt_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_prompt_tokens</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionOutput.num_prompt_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">num_prompt_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Number of tokens in the prompt.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
 <h3 id="llmengine.data_types.CompletionOutput.num_completion_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
+        <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
 
   
   <span class="doc doc-labels">
@@ -1108,15 +1030,16 @@
 
 
 <h2 id="llmengine.CompletionStreamOutput" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionStreamOutput</span>
+        <span class="doc doc-object-name doc-class-name">CompletionStreamOutput</span>
 
 
 <a href="#llmengine.CompletionStreamOutput" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+
 
 
 
@@ -1135,7 +1058,7 @@
 
 
 <h3 id="llmengine.data_types.CompletionStreamOutput.text" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">text</span>
+        <span class="doc doc-object-name doc-attribute-name">text</span>
 
   
   <span class="doc doc-labels">
@@ -1158,7 +1081,7 @@
 
 
 <h3 id="llmengine.data_types.CompletionStreamOutput.finished" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">finished</span>
+        <span class="doc doc-object-name doc-attribute-name">finished</span>
 
   
   <span class="doc doc-labels">
@@ -1180,32 +1103,8 @@
 
 
 
-<h3 id="llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_prompt_tokens</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">num_prompt_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Number of tokens in the prompt.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
 <h3 id="llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
+        <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
 
   
   <span class="doc doc-labels">
@@ -1239,18 +1138,19 @@
 
 
 <h2 id="llmengine.CompletionSyncV1Response" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionSyncV1Response</span>
+        <span class="doc doc-object-name doc-class-name">CompletionSyncV1Response</span>
 
 
 <a href="#llmengine.CompletionSyncV1Response" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for a synchronous prompt completion.</p>
+
 
 
   
@@ -1267,21 +1167,21 @@
 
 
 
-<h3 id="llmengine.data_types.CompletionSyncV1Response.outputs" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">outputs</span>
+<h3 id="llmengine.data_types.CompletionSyncV1Response.output" class="doc doc-heading">
+        <span class="doc doc-object-name doc-attribute-name">output</span>
 
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
-<a href="#llmengine.data_types.CompletionSyncV1Response.outputs" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">outputs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">CompletionOutput</span><span class="p">]</span>
+<a href="#llmengine.data_types.CompletionSyncV1Response.output" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">output</span><span class="p">:</span> <span class="n">CompletionOutput</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
   
-      <p>List of completion outputs.</p>
+      <p>Completion output.</p>
   </div>
 
 </div>
@@ -1290,45 +1190,21 @@
 
 
 
-<h3 id="llmengine.data_types.CompletionSyncV1Response.status" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">status</span>
+<h3 id="llmengine.data_types.CompletionSyncV1Response.request_id" class="doc doc-heading">
+        <span class="doc doc-object-name doc-attribute-name">request_id</span>
 
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
-<a href="#llmengine.data_types.CompletionSyncV1Response.status" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">status</span><span class="p">:</span> <span class="n">TaskStatus</span>
+<a href="#llmengine.data_types.CompletionSyncV1Response.request_id" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">request_id</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
   
-      <p>Task status.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionSyncV1Response.traceback" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">traceback</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionSyncV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">traceback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Traceback if the task failed.</p>
+      <p>Unique ID of request.</p>
   </div>
 
 </div>
@@ -1348,18 +1224,19 @@
 
 
 <h2 id="llmengine.CompletionStreamV1Response" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionStreamV1Response</span>
+        <span class="doc doc-object-name doc-class-name">CompletionStreamV1Response</span>
 
 
 <a href="#llmengine.CompletionStreamV1Response" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for a stream prompt completion task.</p>
+
 
 
   
@@ -1377,7 +1254,7 @@
 
 
 <h3 id="llmengine.data_types.CompletionStreamV1Response.output" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">output</span>
+        <span class="doc doc-object-name doc-attribute-name">output</span>
 
   
   <span class="doc doc-labels">
@@ -1400,45 +1277,21 @@
 
 
 
-<h3 id="llmengine.data_types.CompletionStreamV1Response.status" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">status</span>
+<h3 id="llmengine.data_types.CompletionStreamV1Response.request_id" class="doc doc-heading">
+        <span class="doc doc-object-name doc-attribute-name">request_id</span>
 
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
-<a href="#llmengine.data_types.CompletionStreamV1Response.status" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">status</span><span class="p">:</span> <span class="n">TaskStatus</span>
+<a href="#llmengine.data_types.CompletionStreamV1Response.request_id" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">request_id</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
   
-      <p>Task status.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CompletionStreamV1Response.traceback" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">traceback</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CompletionStreamV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">traceback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Traceback if the task failed.</p>
+      <p>Unique ID of request.</p>
   </div>
 
 </div>
@@ -1458,18 +1311,19 @@
 
 
 <h2 id="llmengine.CreateFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CreateFineTuneResponse</span>
+        <span class="doc doc-object-name doc-class-name">CreateFineTuneResponse</span>
 
 
 <a href="#llmengine.CreateFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for creating a FineTune.</p>
+
 
 
   
@@ -1487,7 +1341,7 @@
 
 
 <h3 id="llmengine.data_types.CreateFineTuneResponse.fine_tune_id" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
+        <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
 
   
   <span class="doc doc-labels">
@@ -1496,9 +1350,7 @@
   </span>
 
 <a href="#llmengine.data_types.CreateFineTuneResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ID of the created fine-tuning job.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="bp">Ellipsis</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;ID of the created fine-tuning job.&#39;</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1523,18 +1375,19 @@
 
 
 <h2 id="llmengine.GetFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">GetFineTuneResponse</span>
+        <span class="doc doc-object-name doc-class-name">GetFineTuneResponse</span>
 
 
 <a href="#llmengine.GetFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for retrieving a FineTune.</p>
+
 
 
   
@@ -1552,7 +1405,7 @@
 
 
 <h3 id="llmengine.data_types.GetFineTuneResponse.fine_tune_id" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
+        <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
 
   
   <span class="doc doc-labels">
@@ -1561,9 +1414,7 @@
   </span>
 
 <a href="#llmengine.data_types.GetFineTuneResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ID of the requested job.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="bp">Ellipsis</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;ID of the requested job.&#39;</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1578,7 +1429,7 @@
 
 
 <h3 id="llmengine.data_types.GetFineTuneResponse.status" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">status</span>
+        <span class="doc doc-object-name doc-attribute-name">status</span>
 
   
   <span class="doc doc-labels">
@@ -1587,9 +1438,7 @@
   </span>
 
 <a href="#llmengine.data_types.GetFineTuneResponse.status" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">status</span><span class="p">:</span> <span class="n">BatchJobStatus</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Status of the requested job.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">status</span><span class="p">:</span> <span class="n">BatchJobStatus</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="bp">Ellipsis</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Status of the requested job.&#39;</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1614,18 +1463,19 @@
 
 
 <h2 id="llmengine.ListFineTunesResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">ListFineTunesResponse</span>
+        <span class="doc doc-object-name doc-class-name">ListFineTunesResponse</span>
 
 
 <a href="#llmengine.ListFineTunesResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for listing FineTunes.</p>
+
 
 
   
@@ -1643,7 +1493,7 @@
 
 
 <h3 id="llmengine.data_types.ListFineTunesResponse.jobs" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">jobs</span>
+        <span class="doc doc-object-name doc-attribute-name">jobs</span>
 
   
   <span class="doc doc-labels">
@@ -1652,10 +1502,7 @@
   </span>
 
 <a href="#llmengine.data_types.ListFineTunesResponse.jobs" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">jobs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GetFineTuneResponse</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;List of fine-tuning jobs and their statuses.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">jobs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GetFineTuneResponse</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="bp">Ellipsis</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;List of fine-tuning jobs and their statuses.&#39;</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1680,18 +1527,19 @@
 
 
 <h2 id="llmengine.CancelFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CancelFineTuneResponse</span>
+        <span class="doc doc-object-name doc-class-name">CancelFineTuneResponse</span>
 
 
 <a href="#llmengine.CancelFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for cancelling a FineTune.</p>
+
 
 
   
@@ -1709,7 +1557,7 @@
 
 
 <h3 id="llmengine.data_types.CancelFineTuneResponse.success" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">success</span>
+        <span class="doc doc-object-name doc-attribute-name">success</span>
 
   
   <span class="doc doc-labels">
@@ -1718,9 +1566,7 @@
   </span>
 
 <a href="#llmengine.data_types.CancelFineTuneResponse.success" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether cancellation was successful.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="bp">Ellipsis</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Whether cancellation was successful.&#39;</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">

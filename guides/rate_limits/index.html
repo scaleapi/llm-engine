@@ -405,13 +405,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-do-we-have-rate-limits" class="md-nav__link">
-    Why do we have rate limits?
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#how-do-i-know-if-i-am-rate-limited" class="md-nav__link">
     How do I know if I am rate limited?
   </a>
@@ -553,13 +546,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-do-we-have-rate-limits" class="md-nav__link">
-    Why do we have rate limits?
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#how-do-i-know-if-i-am-rate-limited" class="md-nav__link">
     How do I know if I am rate limited?
   </a>
@@ -590,23 +576,7 @@
 
 <h1 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h1>
 <h2 id="what-are-rate-limits">What are rate limits?<a class="headerlink" href="#what-are-rate-limits" title="Permanent link">&para;</a></h2>
-<p>A rate limit is a restriction that an API imposes on the number of times a user or client can access the server within 
-a specified period of time.</p>
-<h2 id="why-do-we-have-rate-limits">Why do we have rate limits?<a class="headerlink" href="#why-do-we-have-rate-limits" title="Permanent link">&para;</a></h2>
-<p>Rate limits are a common practice for APIs, and they're put in place for a few different reasons:</p>
-<ul>
-<li><strong>They help protect against abuse or misuse of the API.</strong> For example, a malicious actor could flood the API with 
-requests in an attempt to overload it or cause disruptions in the service. By setting rate limits, the LLM Engine 
-server can prevent this kind of activity.</li>
-<li><strong>Rate limits help ensure that everyone has fair access to API.</strong> If one person or organization makes an excessive 
-number of requests, it could bog down the API for everyone else. By throttling the number of requests that a single 
-user can make, LLM Engine ensures that the most number of people have an opportunity to use the API without 
-experiencing slowdowns. This also applies when self-hosting LLM Engine, as all internal users within an organization 
-would have fair access.</li>
-<li><strong>Rate limits can help manage the aggregate load on the server infrastructure.</strong> If requests to the API increase 
-dramatically, it could tax the servers and cause performance issues. By setting rate limits, LLM Engine can help 
-maintain a smooth and consistent experience for all users. This is especially important when self-hosting LLM Engine.</li>
-</ul>
+<p>A rate limit is a restriction that an API imposes on the number of times a user or client can access the server within a specified period of time.</p>
 <h2 id="how-do-i-know-if-i-am-rate-limited">How do I know if I am rate limited?<a class="headerlink" href="#how-do-i-know-if-i-am-rate-limited" title="Permanent link">&para;</a></h2>
 <p>Per standard HTTP practices, your request will receive a response with HTTP status code of <code>429</code>, <code>Too Many Requests</code>.</p>
 <h2 id="what-are-the-rate-limits-for-our-api">What are the rate limits for our API?<a class="headerlink" href="#what-are-the-rate-limits-for-our-api" title="Permanent link">&para;</a></h2>
@@ -641,7 +611,7 @@ request.</p>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">def</span> <span class="nf">completion_with_backoff</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="k">return</span> <span class="n">llmengine</span><span class="o">.</span><span class="n">Completion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">completion_with_backoff</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Why is the sky blue?&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">completion_with_backoff</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Why is the sky blue?&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="example-2-using-the-backoff-library">Example #2: Using the <code>backoff</code> library<a class="headerlink" href="#example-2-using-the-backoff-library" title="Permanent link">&para;</a></h3>
 <p>Another python library that provides function decorators for backoff and retry is backoff:</p>
@@ -651,7 +621,7 @@ request.</p>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">def</span> <span class="nf">completions_with_backoff</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="k">return</span> <span class="n">llmengine</span><span class="o">.</span><span class="n">Completion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">completions_with_backoff</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Why is the sky blue?&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">completions_with_backoff</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Why is the sky blue?&quot;</span><span class="p">)</span>
 </code></pre></div>
 
 
