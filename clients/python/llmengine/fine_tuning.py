@@ -14,9 +14,9 @@ class FineTune(APIEngine):
     """
     FineTune API. This API is used to fine-tune models.
 
-    Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning involves the supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM.
+    Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning is a supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM.
 
-    Scale llm-engine provides APIs to create fine-tunes on a base-model with training & validation data-sets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.
+    LLM Engine provides APIs to create fine-tunes on a base model with training & validation datasets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.
     """
 
     @classmethod
