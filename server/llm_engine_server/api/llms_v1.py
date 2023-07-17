@@ -135,7 +135,8 @@ async def list_model_endpoints(
 
 
 @llm_router_v1.get(
-    "/model-endpoints/{model_endpoint_name}", response_model=GetLLMModelEndpointV1Response
+    "/model-endpoints/{model_endpoint_name}",
+    response_model=GetLLMModelEndpointV1Response,
 )
 async def get_model_endpoint(
     model_endpoint_name: str,
