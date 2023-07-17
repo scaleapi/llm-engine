@@ -94,6 +94,7 @@ from llm_engine_server.domain.repositories import (
     ModelBundleRepository,
 )
 from llm_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
+from llm_engine_server.domain.services.llm_fine_tuning_service import LLMFineTuningService
 from llm_engine_server.infra.gateways import (
     BatchJobOrchestrationGateway,
     FilesystemGateway,
@@ -575,6 +576,7 @@ class FakeDockerImageBatchJobBundleRepository(DockerImageBatchJobBundleRepositor
         storage: Optional[str],
         gpus: Optional[int],
         gpu_type: Optional[GpuType],
+        public: Optional[bool],
     ) -> DockerImageBatchJobBundle:
         bun_id = self._get_new_id()
         batch_bundle = DockerImageBatchJobBundle(
@@ -593,6 +595,7 @@ class FakeDockerImageBatchJobBundleRepository(DockerImageBatchJobBundleRepositor
             storage=storage,
             gpus=gpus,
             gpu_type=gpu_type,
+            public=public,
         )
         self.db[bun_id] = batch_bundle
         return batch_bundle
@@ -1102,6 +1105,9 @@ class FakeDockerImageBatchJobGateway(DockerImageBatchJobGateway):
     async def get_docker_image_batch_job(self, batch_job_id: str) -> Optional[DockerImageBatchJob]:
         return self.db.get(batch_job_id)
 
+    async def list_docker_image_batch_jobs(self, owner: str) -> List[DockerImageBatchJob]:
+        return [job for job in self.db.values() if job["owner"] == owner]
+
     async def update_docker_image_batch_job(self, batch_job_id: str, cancel: bool) -> bool:
         if batch_job_id not in self.db:
             return False
@@ -1112,18 +1118,73 @@ class FakeDockerImageBatchJobGateway(DockerImageBatchJobGateway):
         return cancel
 
 
+class FakeLLMFineTuningService(LLMFineTuningService):
+    def __init__(self, contents=None):
+        self.db: Dict[str, DockerImageBatchJob] = {} if contents is None else contents
+        self.id = 0
+
+    async def create_fine_tune_job(
+        self,
+        created_by: str,
+        owner: str,
+        training_file: str,
+        validation_file: str,
+        model_name: str,
+        base_model: str,
+        fine_tuning_method: str,
+        hyperparameters: Dict[str, str],
+    ) -> str:
+        job_id = f"job-{self.id}"
+        self.id += 1
+
+        self.db[job_id] = DockerImageBatchJob(
+            id=job_id,
+            created_by=created_by,
+            owner=owner,
+            created_at=datetime.now(),
+            completed_at=None,
+            status=BatchJobStatus.RUNNING,
+        )
+
+        return job_id
+
+    async def get_fine_tune_job(
+        self, owner: str, fine_tune_id: str
+    ) -> Optional[DockerImageBatchJob]:
+        di_batch_job = self.db.get(fine_tune_id)
+        if di_batch_job is None or di_batch_job["owner"] != owner:
+            return None
+        return di_batch_job
+
+    async def list_fine_tune_jobs(self, owner: str) -> List[DockerImageBatchJob]:
+        return [job for job in self.db.values() if job["owner"] == owner]
+
+    async def cancel_fine_tune_job(self, owner: str, fine_tune_id: str) -> bool:
+        if fine_tune_id not in self.db or self.db.get(fine_tune_id)["owner"] != owner:
+            return False
+
+        del self.db[fine_tune_id]
+        return True
+
+
 class FakeStreamingModelEndpointInferenceGateway(StreamingModelEndpointInferenceGateway):
+    def __init__(self):
+        self.responses = [
+            SyncEndpointPredictV1Response(
+                status=TaskStatus.SUCCESS,
+                result=None,
+                traceback=None,
+            )
+        ]
+
     async def streaming_predict(
         self, topic: str, predict_request: EndpointPredictV1Request
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
         """
         Runs a prediction request and returns a response.
         """
-        yield SyncEndpointPredictV1Response(
-            status=TaskStatus.SUCCESS,
-            result=None,
-            traceback=None,
-        )
+        for response in self.responses:
+            yield response
 
 
 class FakeSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
@@ -1668,6 +1729,7 @@ def get_repositories_generator_wrapper():
         fake_batch_job_progress_gateway_contents,
         fake_docker_image_batch_job_bundle_repository_contents,
         fake_docker_image_batch_job_gateway_contents,
+        fake_llm_fine_tuning_service_contents,
     ):
         def get_test_repositories() -> Iterator[ExternalInterfaces]:
             fake_model_bundle_repository = FakeModelBundleRepository(
@@ -1722,6 +1784,9 @@ def get_repositories_generator_wrapper():
                 model_endpoint_record_repository=fake_model_endpoint_record_repository,
                 model_endpoint_service=fake_model_endpoint_service,
             )
+            fake_llm_fine_tuning_service = FakeLLMFineTuningService(
+                fake_llm_fine_tuning_service_contents
+            )
             repositories = ExternalInterfaces(
                 docker_repository=FakeDockerRepository(
                     fake_docker_repository_image_always_exists, False
@@ -1737,6 +1802,7 @@ def get_repositories_generator_wrapper():
                 model_primitive_gateway=FakeModelPrimitiveGateway(),
                 docker_image_batch_job_bundle_repository=fake_docker_image_batch_job_bundle_repository,
                 docker_image_batch_job_gateway=fake_docker_image_batch_job_gateway,
+                llm_fine_tuning_service=fake_llm_fine_tuning_service,
             )
             try:
                 yield repositories
@@ -1988,6 +2054,51 @@ def model_bundle_6(test_api_key: str) -> ModelBundle:
             triton_commit_tag="test_commit_tag",
             triton_storage="1G",
             triton_memory="1G",
+        ),
+        # LEGACY FIELDS
+        location="test_location",
+        requirements=["numpy==0.0.0"],
+        env_params=ModelBundleEnvironmentParams(
+            framework_type=ModelBundleFrameworkType.CUSTOM,
+            ecr_repo="test_repo",
+            image_tag="test_tag",
+        ),
+        packaging_type=ModelBundlePackagingType.CLOUDPICKLE,
+        app_config=None,
+    )
+    return model_bundle
+
+
+@pytest.fixture
+def model_bundle_triton_enhanced_runnable_image_0_cpu_None_memory_storage(
+    test_api_key: str,
+) -> ModelBundle:
+    model_bundle = ModelBundle(
+        id="test_model_bundle_id_triton_enhanced_runnable_image_0_cpu_None_memory_storage",
+        name="test_model_bundle_name_triton_enhanced_runnable_image_0_cpu_None_memory_storage",
+        created_by=test_api_key,
+        owner=test_api_key,
+        created_at=datetime(2022, 1, 3),
+        model_artifact_ids=[
+            "test_model_artifact_id_triton_enhanced_runnable_image_0_cpu_None_memory_storage"
+        ],
+        metadata={
+            "test_key_2": "test_value_2",
+        },
+        flavor=TritonEnhancedRunnableImageFlavor(
+            flavor="triton_enhanced_runnable_image",
+            repository="test_repo",
+            tag="test_tag",
+            command=["test_command"],
+            env={"test_key": "test_value"},
+            protocol="http",
+            readiness_initial_delay_seconds=30,
+            triton_model_repository="test_triton_model_repository",
+            triton_model_replicas=None,
+            triton_num_cpu=0,
+            triton_commit_tag="test_commit_tag",
+            triton_storage=None,
+            triton_memory=None,
         ),
         # LEGACY FIELDS
         location="test_location",
@@ -2510,6 +2621,7 @@ def docker_image_batch_job_bundle_1_v1(test_api_key: str) -> DockerImageBatchJob
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=False,
     )
     return batch_bundle
 
@@ -2532,6 +2644,7 @@ def docker_image_batch_job_bundle_1_v2(test_api_key: str) -> DockerImageBatchJob
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=True,
     )
     return batch_bundle
 
@@ -2554,6 +2667,7 @@ def docker_image_batch_job_bundle_2_v1(test_api_key: str) -> DockerImageBatchJob
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=None,
     )
     return batch_bundle
 
@@ -3139,3 +3253,141 @@ def llm_model_endpoint_sync(
         },
     }
     return model_endpoint, model_endpoint_json
+
+
+@pytest.fixture
+def llm_model_endpoint_streaming(test_api_key: str, model_bundle_5: ModelBundle) -> ModelEndpoint:
+    # model_bundle_5 is a runnable bundle
+    model_endpoint = ModelEndpoint(
+        record=ModelEndpointRecord(
+            id="test_model_endpoint_id_streaming",
+            name="test_model_endpoint_name_streaming",
+            created_by=test_api_key,
+            created_at=datetime(2022, 1, 4),
+            last_updated_at=datetime(2022, 1, 4),
+            metadata={
+                "_llm": {
+                    "model_name": "llama-7b",
+                    "source": "hugging_face",
+                    "inference_framework": "deepspeed",
+                    "inference_framework_image_tag": "123",
+                    "num_shards": 4,
+                }
+            },
+            creation_task_id="test_creation_task_id",
+            endpoint_type=ModelEndpointType.STREAMING,
+            destination="test_destination",
+            status=ModelEndpointStatus.READY,
+            current_model_bundle=model_bundle_5,
+            owner=test_api_key,
+            public_inference=True,
+        ),
+        infra_state=ModelEndpointInfraState(
+            deployment_name=f"{test_api_key}-test_model_endpoint_name_streaming",
+            aws_role="default",
+            results_s3_bucket="test_s3_bucket",
+            child_fn_info=None,
+            post_inference_hooks=None,
+            labels=dict(team="test_team", product="test_product"),
+            prewarm=False,
+            high_priority=True,
+            deployment_state=ModelEndpointDeploymentState(
+                min_workers=1,
+                max_workers=3,
+                per_worker=2,
+                available_workers=1,
+                unavailable_workers=1,
+            ),
+            resource_state=ModelEndpointResourceState(
+                cpus=1,
+                gpus=1,
+                memory="1G",
+                gpu_type=GpuType.NVIDIA_TESLA_T4,
+                storage="10G",
+                optimize_costs=False,
+            ),
+            user_config_state=ModelEndpointUserConfigState(
+                app_config=model_bundle_5.app_config,
+                endpoint_config=ModelEndpointConfig(
+                    bundle_name=model_bundle_5.name,
+                    endpoint_name="test_model_endpoint_name_streaming",
+                    post_inference_hooks=None,
+                ),
+            ),
+            image="000000000000.dkr.ecr.us-west-2.amazonaws.com/hello:there",
+        ),
+    )
+    return model_endpoint
+
+
+@pytest.fixture
+def llm_model_endpoint_text_generation_inference(
+    test_api_key: str, model_bundle_1: ModelBundle
+) -> Tuple[ModelEndpoint, Any]:
+    return ModelEndpoint(
+        record=ModelEndpointRecord(
+            id="test_llm_model_endpoint_id_3",
+            name="test_llm_model_endpoint_name_tgi",
+            created_by=test_api_key,
+            created_at=datetime(2022, 1, 3),
+            last_updated_at=datetime(2022, 1, 3),
+            metadata={
+                "_llm": {
+                    "model_name": "llama-7b",
+                    "source": "hugging_face",
+                    "inference_framework": "text_generation_inference",
+                    "inference_framework_image_tag": "123",
+                    "num_shards": 4,
+                }
+            },
+            creation_task_id="test_creation_task_id",
+            endpoint_type=ModelEndpointType.STREAMING,
+            destination="test_destination",
+            status=ModelEndpointStatus.READY,
+            current_model_bundle=model_bundle_1,
+            owner=test_api_key,
+            public_inference=True,
+        ),
+        infra_state=ModelEndpointInfraState(
+            deployment_name=f"{test_api_key}-test_llm_model_endpoint_name_tgi",
+            aws_role="test_aws_role",
+            results_s3_bucket="test_s3_bucket",
+            child_fn_info=None,
+            labels={},
+            prewarm=True,
+            high_priority=False,
+            deployment_state=ModelEndpointDeploymentState(
+                min_workers=1,
+                max_workers=3,
+                per_worker=2,
+                available_workers=1,
+                unavailable_workers=1,
+            ),
+            resource_state=ModelEndpointResourceState(
+                cpus=1,
+                gpus=1,
+                memory="1G",
+                gpu_type=GpuType.NVIDIA_TESLA_T4,
+                storage="10G",
+                optimize_costs=True,
+            ),
+            user_config_state=ModelEndpointUserConfigState(
+                app_config=model_bundle_1.app_config,
+                endpoint_config=ModelEndpointConfig(
+                    bundle_name=model_bundle_1.name,
+                    endpoint_name="test_llm_model_endpoint_name_1",
+                    post_inference_hooks=["callback"],
+                    default_callback_url="http://www.example.com",
+                    default_callback_auth=CallbackAuth(
+                        __root__=CallbackBasicAuth(
+                            kind="basic",
+                            username="test_username",
+                            password="test_password",
+                        ),
+                    ),
+                ),
+            ),
+            num_queued_items=1,
+            image="test_image",
+        ),
+    )

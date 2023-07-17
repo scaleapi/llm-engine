@@ -324,9 +324,7 @@ def entity_batch_job_record(
 
 
 @pytest.fixture
-def orm_docker_image_batch_job_bundle_1_v1(
-    test_api_key: str,
-) -> OrmDockerImageBatchJobBundle:
+def orm_docker_image_batch_job_bundle_1_v1(test_api_key: str) -> OrmDockerImageBatchJobBundle:
     batch_bundle = OrmDockerImageBatchJobBundle(
         name="test_docker_image_batch_job_bundle_1",
         created_by=test_api_key,
@@ -341,6 +339,7 @@ def orm_docker_image_batch_job_bundle_1_v1(
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=False,
     )
     batch_bundle.id = "test_docker_image_batch_job_bundle_id_11"
     batch_bundle.created_at = datetime.datetime(2022, 1, 1)
@@ -348,9 +347,7 @@ def orm_docker_image_batch_job_bundle_1_v1(
 
 
 @pytest.fixture
-def orm_docker_image_batch_job_bundle_1_v2(
-    test_api_key: str,
-) -> OrmDockerImageBatchJobBundle:
+def orm_docker_image_batch_job_bundle_1_v2(test_api_key: str) -> OrmDockerImageBatchJobBundle:
     batch_bundle = OrmDockerImageBatchJobBundle(
         name="test_docker_image_batch_job_bundle_1",
         created_by=test_api_key,
@@ -365,6 +362,7 @@ def orm_docker_image_batch_job_bundle_1_v2(
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=True,
     )
     batch_bundle.id = "test_docker_image_batch_job_bundle_id_12"
     batch_bundle.created_at = datetime.datetime(2022, 1, 3)
@@ -372,9 +370,7 @@ def orm_docker_image_batch_job_bundle_1_v2(
 
 
 @pytest.fixture
-def orm_docker_image_batch_job_bundle_2_v1(
-    test_api_key: str,
-) -> OrmDockerImageBatchJobBundle:
+def orm_docker_image_batch_job_bundle_2_v1(test_api_key: str) -> OrmDockerImageBatchJobBundle:
     batch_bundle = OrmDockerImageBatchJobBundle(
         name="test_docker_image_batch_job_bundle_2",
         created_by=test_api_key,
@@ -389,6 +385,7 @@ def orm_docker_image_batch_job_bundle_2_v1(
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=None,
     )
     batch_bundle.id = "test_docker_image_batch_job_bundle_id_21"
     batch_bundle.created_at = datetime.datetime(2022, 1, 2)

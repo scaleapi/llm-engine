@@ -3,6 +3,8 @@ from llm_engine_server.common.dtos.model_bundles import (
     CloneModelBundleV1Request,
     CreateModelBundleV1Request,
     CreateModelBundleV1Response,
+    CreateModelBundleV2Request,
+    CreateModelBundleV2Response,
     ListModelBundlesV1Response,
     ModelBundleOrderBy,
     ModelBundleV1Response,
@@ -18,6 +20,7 @@ from llm_engine_server.domain.repositories import DockerRepository, ModelBundleR
 from llm_engine_server.domain.use_cases.model_bundle_use_cases import (
     CloneModelBundleV1UseCase,
     CreateModelBundleV1UseCase,
+    CreateModelBundleV2UseCase,
     GetLatestModelBundleByNameV1UseCase,
     GetModelBundleByIdV1UseCase,
     ListModelBundlesV1UseCase,
@@ -352,9 +355,7 @@ async def test_create_list_model_bundles_team(
     test_api_key_team: str,
 ):
     user_1 = User(
-        user_id=test_api_key_user_on_other_team,
-        team_id=test_api_key_team,
-        is_privileged_user=True,
+        user_id=test_api_key_user_on_other_team, team_id=test_api_key_team, is_privileged_user=True
     )
     user_2 = User(
         user_id=test_api_key_user_on_other_team_2,
@@ -411,3 +412,42 @@ async def test_create_list_model_bundles_team(
         order_by=ModelBundleOrderBy.NEWEST,
     )
     assert len(response_5.model_bundles) == 3
+
+
+@pytest.mark.asyncio
+async def test_create_model_bundle_v2_use_case_docker_not_found(
+    test_api_key: str,
+    fake_model_bundle_repository: ModelBundleRepository,
+    create_model_bundle_v2_request: CreateModelBundleV2Request,
+    fake_docker_repository_image_never_exists: DockerRepository,
+    fake_model_primitive_gateway: ModelPrimitiveGateway,
+):
+    use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_never_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    with pytest.raises(DockerImageNotFoundException):
+        await use_case.execute(user=user, request=create_model_bundle_v2_request)
+
+
+@pytest.mark.asyncio
+async def test_create_model_bundle_v2_full_url_use_case_success(
+    test_api_key: str,
+    fake_model_bundle_repository: ModelBundleRepository,
+    create_model_bundle_v2_request: CreateModelBundleV2Request,
+    fake_docker_repository_image_never_exists: DockerRepository,
+    fake_model_primitive_gateway: ModelPrimitiveGateway,
+):
+    use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_never_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    # will a full uri specification, image existence is not checked
+    create_model_bundle_v2_request.flavor.repository = "registry.hub.docker.com/library/busybox"
+    response = await use_case.execute(user=user, request=create_model_bundle_v2_request)
+    assert response.model_bundle_id
+    assert isinstance(response, CreateModelBundleV2Response)

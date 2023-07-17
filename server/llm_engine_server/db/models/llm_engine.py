@@ -723,6 +723,7 @@ class DockerImageBatchJobBundle(Base):
     storage = Column("storage", Text, nullable=True)
     gpus = Column("gpus", Integer, nullable=True)
     gpu_type = Column("gpu_type", Text, nullable=True)
+    public = Column("public", Boolean, nullable=True)
 
     def __init__(
         self,
@@ -740,6 +741,7 @@ class DockerImageBatchJobBundle(Base):
         storage: Optional[str],
         gpus: Optional[str],
         gpu_type: Optional[str],
+        public: Optional[bool] = False,
     ):
         self.id = f"batbun_{get_xid()}"
         self.name = name
@@ -755,6 +757,7 @@ class DockerImageBatchJobBundle(Base):
         self.storage = storage
         self.gpus = gpus
         self.gpu_type = gpu_type
+        self.public = public
 
     @classmethod
     async def create(cls, session: AsyncSession, batch_bundle: "DockerImageBatchJobBundle") -> None:

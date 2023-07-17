@@ -21,6 +21,7 @@ class DockerImageBatchJobBundle(OwnedEntity):
     storage: Optional[str]
     gpus: Optional[int]
     gpu_type: Optional[GpuType]
+    public: Optional[bool]
 
     class Config:
         orm_mode = True
