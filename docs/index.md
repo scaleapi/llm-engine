@@ -12,18 +12,17 @@ Use Scale's hosted version or run it in your own cloud.
 
 ## 🤔 About
 
-Foundation models are emerging as the building blocks of AI. However, deploying
-these models to the cloud and fine-tuning them still requires infrastructure and
-ML expertise, and can be expensive.
+Foundation models are emerging as the building blocks of AI. However, 
+fine-tuning these models and deploying them to the cloud are expensive 
+operations that require infrastructure and ML expertise.
 
 LLM Engine is a Python library, CLI, and Helm chart that provides
 everything you need to fine-tune and serve foundation models in the cloud
 using Kubernetes. Key features include:
 
-🚀 **Ready-to-use Fine-Tuning and Inference APIs for your favorite models**:
-LLM Engine comes with ready-to-use APIs for your favorite
-open-source models, including MPT, Falcon, and LLaMA. Use Scale-hosted endpoints
-or deploy to your own infrastructure.
+🎁 **Ready-to-use APIs for your favorite models**:
+Fine-tune and serve open-source foundation models, including MPT, Falcon,
+and LLaMA. Use Scale-hosted endpoints or deploy to your own infrastructure.
 
 🐳 **Deploying from any docker image**: Turn any Docker image into an
 auto-scaling deployment with simple APIs.
@@ -32,7 +31,7 @@ auto-scaling deployment with simple APIs.
 for streaming responses and dynamically batching inputs for higher throughput
 and lower latency.
 
-🤗 **Open-Source Integrations**: Deploy any [Huggingface](https://huggingface.co/)
+🤗 **Open-Source Integrations**: Deploy any [Hugging Face](https://huggingface.co/)
 model with a single command.
 
 ### 🔥 Features Coming Soon
@@ -41,5 +40,5 @@ model with a single command.
 automatically scales your model to zero when it's not in use and scales up
 within seconds, even for large foundation models.
 
-💸 **Cost-Optimized**: Deploy AI models cheaper than commercial ones,
+💸 **Cost Optimization**: Deploy AI models cheaper than commercial ones,
 including cold-start and warm-down times.
