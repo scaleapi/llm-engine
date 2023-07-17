@@ -14,6 +14,10 @@
             - num_completion_tokens
 
 ::: llmengine.CompletionSyncV1Response
+    selection:
+        members:
+            - status
+            - outputs
 
 ::: llmengine.CompletionStreamOutput
     selection:
@@ -25,6 +29,10 @@
 
 
 ::: llmengine.CompletionStreamV1Response
+    selection:
+        members:
+            - status
+            - output
 
 ::: llmengine.FineTune
     selection:
@@ -41,3 +49,6 @@
 ::: llmengine.ListFineTunesResponse
 
 ::: llmengine.CancelFineTuneResponse
+
+::: llmengine.TaskStatus
+

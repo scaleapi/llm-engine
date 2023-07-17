@@ -109,6 +109,12 @@ class GetModelEndpointV1Response(BaseModel):
 
 
 class TaskStatus(str, Enum):
+    """
+    Specifies the status of a request as an enumeration.
+
+    Valid values are one of PENDING, STARTED, SUCCESS, FAILURE, and UNDEFINED
+    """
+
     PENDING = "PENDING"
     STARTED = "STARTED"
     SUCCESS = "SUCCESS"

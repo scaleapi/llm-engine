@@ -1,6 +1,6 @@
 # 🦙 Public Model Zoo
 
-Scale hosts the following models in a model zoo:
+LLMEngine hosts the following models for use:
 
 | Model Name | Inference APIs Available | Fine-tuning APIs Available |
 | --- | --- | --- |
