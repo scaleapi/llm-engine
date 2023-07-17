@@ -9,6 +9,13 @@ from llm_engine_server.common.dtos.model_endpoints import (
     UpdateModelEndpointV1Request,
     UpdateModelEndpointV1Response,
 )
+from llm_engine_server.common.resource_limits import (
+    FORWARDER_CPU_USAGE,
+    FORWARDER_MEMORY_USAGE,
+    FORWARDER_STORAGE_USAGE,
+    REQUESTS_BY_GPU_TYPE,
+    STORAGE_LIMIT,
+)
 from llm_engine_server.core.auth.authentication_repository import User
 from llm_engine_server.core.domain_exceptions import (
     ObjectHasInvalidValueException,
@@ -24,6 +31,7 @@ from llm_engine_server.domain.use_cases.model_endpoint_use_cases import (
     ListModelEndpointsV1UseCase,
     UpdateModelEndpointByIdV1UseCase,
 )
+from llm_engine_server.infra.gateways.k8s_resource_parser import parse_mem_request
 
 
 @pytest.mark.asyncio
@@ -107,10 +115,18 @@ async def test_create_model_endpoint_use_case_raises_resource_request_exception(
     fake_model_bundle_repository,
     fake_model_endpoint_service,
     model_bundle_1: ModelBundle,
+    model_bundle_4: ModelBundle,
+    model_bundle_6: ModelBundle,
+    model_bundle_triton_enhanced_runnable_image_0_cpu_None_memory_storage: ModelBundle,
     create_model_endpoint_request_async: CreateModelEndpointV1Request,
     create_model_endpoint_request_sync: CreateModelEndpointV1Request,
 ):
     fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_bundle_repository.add_model_bundle(model_bundle_4)
+    fake_model_bundle_repository.add_model_bundle(model_bundle_6)
+    fake_model_bundle_repository.add_model_bundle(
+        model_bundle_triton_enhanced_runnable_image_0_cpu_None_memory_storage
+    )
     fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
     use_case = CreateModelEndpointV1UseCase(
         model_bundle_repository=fake_model_bundle_repository,
@@ -171,6 +187,94 @@ async def test_create_model_endpoint_use_case_raises_resource_request_exception(
 
     request = create_model_endpoint_request_async.copy()
     request.gpu_type = "invalid_gpu_type"
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_1.id
+    # Test that request.cpus + FORWARDER_CPU_USAGE > REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"] should fail
+    request.cpus = REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"]
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_1.id
+    # Test that request.memory + FORWARDER_MEMORY_USAGE > REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"] should fail
+    request.memory = REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"]
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_1.id
+    # Test that request.storage + FORWARDER_STORAGE_USAGE > STORAGE_LIMIT should fail
+    request.storage = STORAGE_LIMIT
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_4.id
+    # Test that request.cpus + FORWARDER_CPU_USAGE > REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"] should fail
+    request.cpus = REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"]
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_4.id
+    # Test that request.memory + FORWARDER_MEMORY_USAGE > REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"] should fail
+    request.memory = REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"]
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_4.id
+    # Test that request.storage + FORWARDER_STORAGE_USAGE > STORAGE_LIMIT should fail
+    request.storage = STORAGE_LIMIT
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    # Test TritonEnhancedRunnableImageFlavor specific validation logic
+    request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_6.id
+    # TritonEnhancedRunnableImageFlavor requires gpu >= 1
+    request.gpus = 0.9
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_6.id
+    # TritonEnhancedRunnableImageFlavor requires gpu_type be specified
+    request.gpu_type = None
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_6.id
+    # Test that request.cpus + FORWARDER_CPU_USAGE + triton_num_cpu > REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpu"] should fail
+    request.cpus = REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"] - FORWARDER_CPU_USAGE
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_6.id
+    # Test that request.memory + FORWARDER_MEMORY_USAGE + triton_memory > REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"] should fail
+    request.memory = parse_mem_request(
+        REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"]
+    ) - parse_mem_request(FORWARDER_MEMORY_USAGE)
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_6.id
+    # Test that request.storage + FORWARDER_STORAGE_USAGE + triton_storage > STORAGE_LIMIT should fail
+    request.storage = parse_mem_request(STORAGE_LIMIT) - parse_mem_request(FORWARDER_STORAGE_USAGE)
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+    request = create_model_endpoint_request_async.copy()
+    # Test triton_num_cpu >= 1
+    request.model_bundle_id = (
+        model_bundle_triton_enhanced_runnable_image_0_cpu_None_memory_storage.id
+    )
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(user=user, request=request)
 

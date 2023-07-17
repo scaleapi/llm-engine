@@ -261,15 +261,30 @@ class CompletionStreamV1Response(BaseModel):
     """Traceback if the task failed."""
 
 
-# everything below copied from scaleapi/packages/spellbook-backend/server/spellbook_server/dtos.py
-
-
 class CreateFineTuneRequest(BaseModel):
     model: str = Field(..., description="Identifier of base model to train from.")
-    training_file: str = Field(..., description="Path to file of training dataset. Dataset must be a csv with columns 'prompt' and 'response'.")
-    validation_file: Optional[str] = Field(default=None, description="Path to file of validation dataset. Has the same format as training_file. If not provided, we will generate a split from the training dataset.")
-    hyperparameters: Optional[Dict[str, Any]] = Field(default=None, description="Hyperparameters to pass in to training job.")
-    suffix: Optional[str] = Field(default=None, description="Optional user-provided identifier suffix for the fine-tuned model.")
+
+    training_file: str = Field(
+        ...,
+        description="Path to file of training dataset. Dataset must be a csv with columns 'prompt' and 'response'.",
+    )
+    """Path to file of training dataset"""
+
+    validation_file: Optional[str] = Field(
+        default=None,
+        description="Path to file of validation dataset. Has the same format as training_file. If not provided, we will generate a split from the training dataset.",
+    )
+    """Path to file of validation dataset"""
+
+    hyperparameters: Optional[Dict[str, Any]] = Field(
+        default=None, description="Hyperparameters to pass in to training job."
+    )
+    """Hyperparameters"""
+
+    suffix: Optional[str] = Field(
+        default=None,
+        description="Optional user-provided identifier suffix for the fine-tuned model.",
+    )
 
 
 class CreateFineTuneResponse(BaseModel):
@@ -314,7 +329,9 @@ class ListFineTunesResponse(BaseModel):
     Response object for listing FineTunes.
     """
 
-    jobs: List[GetFineTuneResponse] = Field(..., description="List of fine-tuning jobs and their statuses.")
+    jobs: List[GetFineTuneResponse] = Field(
+        ..., description="List of fine-tuning jobs and their statuses."
+    )
     """
     A list of FineTunes, represented as `GetFineTuneResponse`s.
     """

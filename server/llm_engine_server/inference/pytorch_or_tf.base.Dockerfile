@@ -52,14 +52,6 @@ RUN --mount=type=secret,id=codeartifact-pip-conf,target=/etc/pip.conf,mode=0444 
 COPY --chown=llmengine ml_infra_core/llm_engine.core ml_infra_core/llm_engine.core
 RUN pip install -e ml_infra_core/llm_engine.core
 
-RUN mkdir -p /app/insight
-RUN chown -R llmengine /app/insight
-
-COPY --chown=llmengine insight/client/requirements.txt insight/client/requirements.txt
-RUN pip install -r insight/client/requirements.txt --no-cache-dir
-COPY --chown=llmengine insight/client insight/client
-RUN pip install -e insight/client
-
 # Not good for layer caching oh well
 # The inference code should only need these few files/directories to function (hopefully)
 # Don't copy the entire folder for security reasons

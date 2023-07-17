@@ -112,7 +112,7 @@ def validate_deployment_resources(
 
 def validate_post_inference_hooks(user: User, post_inference_hooks: Optional[List[str]]) -> None:
     # We're going to ask for user-specified auth for callbacks instead of providing default auth
-    # from LLMEngine. Otherwise, we'd want to prevent non-privileged users from using the
+    # from Launch. Otherwise, we'd want to prevent non-privileged users from using the
     # callback post-inference hook.
     if post_inference_hooks is None:
         return
@@ -137,13 +137,6 @@ class CreateModelEndpointV1UseCase:
     async def execute(
         self, user: User, request: CreateModelEndpointV1Request
     ) -> CreateModelEndpointV1Response:
-        validate_resource_requests(
-            cpus=request.cpus,
-            memory=request.memory,
-            storage=request.storage,
-            gpus=request.gpus,
-            gpu_type=request.gpu_type,
-        )
         validate_deployment_resources(
             min_workers=request.min_workers,
             max_workers=request.max_workers,
@@ -181,6 +174,14 @@ class CreateModelEndpointV1UseCase:
             raise ObjectHasInvalidValueException(
                 f"{CONVERTED_FROM_ARTIFACT_LIKE_KEY} is a reserved metadata key and cannot be used by user."
             )
+        validate_resource_requests(
+            bundle=bundle,
+            cpus=request.cpus,
+            memory=request.memory,
+            storage=request.storage,
+            gpus=request.gpus,
+            gpu_type=request.gpu_type,
+        )
 
         prewarm = request.prewarm
         if prewarm is None:
@@ -244,17 +245,7 @@ class UpdateModelEndpointByIdV1UseCase:
     async def execute(
         self, user: User, model_endpoint_id: str, request: UpdateModelEndpointV1Request
     ) -> UpdateModelEndpointV1Response:
-
         validate_post_inference_hooks(user, request.post_inference_hooks)
-
-        if request.model_bundle_id is not None:
-            bundle = await self.model_bundle_repository.get_model_bundle(
-                model_bundle_id=request.model_bundle_id
-            )
-            if bundle is None:
-                raise ObjectNotFoundException
-            if not self.authz_module.check_access_read_owned_entity(user, bundle):
-                raise ObjectNotAuthorizedException
 
         endpoint = await self.model_endpoint_service.get_model_endpoint(
             model_endpoint_id=model_endpoint_id
@@ -274,6 +265,17 @@ class UpdateModelEndpointByIdV1UseCase:
             )
             raise ObjectNotAuthorizedException
 
+        bundle = endpoint_record.current_model_bundle
+        if request.model_bundle_id is not None:
+            new_bundle = await self.model_bundle_repository.get_model_bundle(
+                model_bundle_id=request.model_bundle_id
+            )
+            if new_bundle is None:
+                raise ObjectNotFoundException
+            if not self.authz_module.check_access_read_owned_entity(user, new_bundle):
+                raise ObjectNotAuthorizedException
+            bundle = new_bundle
+
         # TODO: We may want to consider what happens if an endpoint gets stuck in UPDATE_PENDING
         #  on first creating it, and we need to find a way to get it unstuck. This would end up
         # causing endpoint.infra_state to be None.
@@ -289,6 +291,7 @@ class UpdateModelEndpointByIdV1UseCase:
         # E.g. If user only want to update gpus and leave gpu_type as None, we use the existing gpu_type
         # from infra_state to avoid passing in None to validate_resource_requests.
         validate_resource_requests(
+            bundle=bundle,
             cpus=request.cpus or infra_state.resource_state.cpus,
             memory=request.memory or infra_state.resource_state.memory,
             storage=request.storage or infra_state.resource_state.storage,

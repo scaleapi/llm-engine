@@ -98,6 +98,7 @@ def get_test_client_wrapper(get_repositories_generator_wrapper):
         fake_batch_job_progress_gateway_contents=None,
         fake_docker_image_batch_job_bundle_repository_contents=None,
         fake_docker_image_batch_job_gateway_contents=None,
+        fake_llm_fine_tuning_service_contents=None,
     ) -> TestClient:
         if fake_docker_image_batch_job_gateway_contents is None:
             fake_docker_image_batch_job_gateway_contents = {}
@@ -113,6 +114,8 @@ def get_test_client_wrapper(get_repositories_generator_wrapper):
             fake_model_endpoint_record_repository_contents = {}
         if fake_model_bundle_repository_contents is None:
             fake_model_bundle_repository_contents = {}
+        if fake_llm_fine_tuning_service_contents is None:
+            fake_llm_fine_tuning_service_contents = {}
         app.dependency_overrides[get_external_interfaces] = get_repositories_generator_wrapper(
             fake_docker_repository_image_always_exists=fake_docker_repository_image_always_exists,
             fake_model_bundle_repository_contents=fake_model_bundle_repository_contents,
@@ -122,6 +125,7 @@ def get_test_client_wrapper(get_repositories_generator_wrapper):
             fake_batch_job_progress_gateway_contents=fake_batch_job_progress_gateway_contents,
             fake_docker_image_batch_job_bundle_repository_contents=fake_docker_image_batch_job_bundle_repository_contents,
             fake_docker_image_batch_job_gateway_contents=fake_docker_image_batch_job_gateway_contents,
+            fake_llm_fine_tuning_service_contents=fake_llm_fine_tuning_service_contents,
         )
         app.dependency_overrides[get_external_interfaces_read_only] = app.dependency_overrides[
             get_external_interfaces
@@ -238,8 +242,7 @@ def model_bundle_1_v1(test_api_key: str) -> Tuple[ModelBundle, Any]:
         location="test_location",
         requirements=["numpy==0.0.0"],
         env_params=ModelBundleEnvironmentParams(
-            framework_type=ModelBundleFrameworkType.PYTORCH,
-            pytorch_image_tag="test_tag",
+            framework_type=ModelBundleFrameworkType.PYTORCH, pytorch_image_tag="test_tag"
         ),
         packaging_type=ModelBundlePackagingType.CLOUDPICKLE,
         app_config=None,
@@ -313,8 +316,7 @@ def model_bundle_1_v2(test_api_key: str) -> Tuple[ModelBundle, Any]:
         location="test_location",
         requirements=["numpy==0.0.0"],
         env_params=ModelBundleEnvironmentParams(
-            framework_type=ModelBundleFrameworkType.TENSORFLOW,
-            tensorflow_version="2.0.4",
+            framework_type=ModelBundleFrameworkType.TENSORFLOW, tensorflow_version="2.0.4"
         ),
         packaging_type=ModelBundlePackagingType.ZIP,
         app_config=None,
@@ -388,8 +390,7 @@ def model_bundle_2_v1(test_api_key: str) -> Tuple[ModelBundle, Any]:
         location="test_location",
         requirements=["numpy==0.0.0"],
         env_params=ModelBundleEnvironmentParams(
-            framework_type=ModelBundleFrameworkType.PYTORCH,
-            pytorch_image_tag="test_tag",
+            framework_type=ModelBundleFrameworkType.PYTORCH, pytorch_image_tag="test_tag"
         ),
         packaging_type=ModelBundlePackagingType.CLOUDPICKLE,
         app_config=None,
@@ -459,8 +460,7 @@ def model_bundle_3_v1(test_api_key: str) -> Tuple[ModelBundle, Any]:
         location="test_location",
         requirements=["numpy==0.0.0"],
         env_params=ModelBundleEnvironmentParams(
-            framework_type=ModelBundleFrameworkType.PYTORCH,
-            pytorch_image_tag="test_tag",
+            framework_type=ModelBundleFrameworkType.PYTORCH, pytorch_image_tag="test_tag"
         ),
         packaging_type=ModelBundlePackagingType.CLOUDPICKLE,
         app_config=None,
@@ -934,9 +934,7 @@ def create_docker_image_batch_job_bundle_request() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def docker_image_batch_job_bundle_1_v1(
-    test_api_key,
-) -> Tuple[DockerImageBatchJobBundle, Any]:
+def docker_image_batch_job_bundle_1_v1(test_api_key) -> Tuple[DockerImageBatchJobBundle, Any]:
     batch_bundle = DockerImageBatchJobBundle(
         id="test_docker_image_batch_job_bundle_id_11",
         created_at=datetime.datetime(2022, 1, 1),
@@ -953,6 +951,7 @@ def docker_image_batch_job_bundle_1_v1(
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=False,
     )
     batch_bundle_json = {
         "id": "test_docker_image_batch_job_bundle_id_11",
@@ -968,14 +967,13 @@ def docker_image_batch_job_bundle_1_v1(
         "storage": None,
         "gpus": None,
         "gpu_type": None,
+        "public": False,
     }
     return batch_bundle, batch_bundle_json
 
 
 @pytest.fixture
-def docker_image_batch_job_bundle_1_v2(
-    test_api_key,
-) -> Tuple[DockerImageBatchJobBundle, Any]:
+def docker_image_batch_job_bundle_1_v2(test_api_key) -> Tuple[DockerImageBatchJobBundle, Any]:
     batch_bundle = DockerImageBatchJobBundle(
         id="test_docker_image_batch_job_bundle_id_12",
         created_at=datetime.datetime(2022, 1, 3),
@@ -992,6 +990,7 @@ def docker_image_batch_job_bundle_1_v2(
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=True,
     )
     batch_bundle_json = {
         "id": "test_docker_image_batch_job_bundle_id_12",
@@ -1007,14 +1006,13 @@ def docker_image_batch_job_bundle_1_v2(
         "storage": None,
         "gpus": None,
         "gpu_type": None,
+        "public": True,
     }
     return batch_bundle, batch_bundle_json
 
 
 @pytest.fixture
-def docker_image_batch_job_bundle_2_v1(
-    test_api_key,
-) -> Tuple[DockerImageBatchJobBundle, Any]:
+def docker_image_batch_job_bundle_2_v1(test_api_key) -> Tuple[DockerImageBatchJobBundle, Any]:
     batch_bundle = DockerImageBatchJobBundle(
         id="test_docker_image_batch_job_bundle_id_21",
         created_at=datetime.datetime(2022, 1, 2),
@@ -1031,6 +1029,7 @@ def docker_image_batch_job_bundle_2_v1(
         storage=None,
         gpus=None,
         gpu_type=None,
+        public=None,
     )
     batch_bundle_json = {
         "id": "test_docker_image_batch_job_bundle_id_21",
@@ -1046,6 +1045,7 @@ def docker_image_batch_job_bundle_2_v1(
         "storage": None,
         "gpus": None,
         "gpu_type": None,
+        "public": None,
     }
     return batch_bundle, batch_bundle_json
 
@@ -1114,4 +1114,14 @@ def create_llm_model_endpoint_request_sync() -> Dict[str, Any]:
 
 @pytest.fixture
 def completion_sync_request() -> Dict[str, Any]:
+    return {"prompts": ["what is 1+1?"], "max_new_tokens": 10, "temperature": 0.1}
+
+
+@pytest.fixture
+def completion_sync_request_temperature_zero() -> Dict[str, Any]:
     return {"prompts": ["what is 1+1?"], "max_new_tokens": 10, "temperature": 0}
+
+
+@pytest.fixture
+def completion_stream_request() -> Dict[str, Any]:
+    return {"prompt": "what is 1+1?", "max_new_tokens": 10, "temperature": 0.1}

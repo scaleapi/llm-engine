@@ -58,7 +58,7 @@ class FineTune(APIEngine):
 
             hyperparameters (`str`):
                 Hyperparameters
-                
+
             suffix (`Optional[str]`):
                 A string that will be added to your fine-tuned model name.
 

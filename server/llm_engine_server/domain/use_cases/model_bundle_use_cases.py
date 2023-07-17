@@ -32,6 +32,7 @@ from llm_engine_server.domain.entities import (
     ModelBundleFlavorType,
     ModelBundleFrameworkType,
     PytorchFramework,
+    RunnableImageFlavor,
     RunnableImageLike,
     TensorflowFramework,
     ZipArtifactFlavor,
@@ -132,7 +133,7 @@ class CreateModelBundleV1UseCase:
                 load_predict_fn=metadata.get("load_predict_fn", ""),
                 load_model_fn=metadata.get("load_model_fn", ""),
             )
-        else:  # if request.packaging_type == ModelBundlePackagingType.ZIP
+        elif request.packaging_type == ModelBundlePackagingType.ZIP:
             assert framework is not None
             metadata = request.metadata or {}
             flavor = ZipArtifactFlavor(
@@ -143,6 +144,16 @@ class CreateModelBundleV1UseCase:
                 location=request.location,
                 load_predict_fn_module_path=metadata.get("load_predict_fn_module_path", ""),
                 load_model_fn_module_path=metadata.get("load_model_fn_module_path", ""),
+            )
+        else:  # request.packaging_type == ModelBundlePackagingType.CLOUDPICKLE:
+            flavor = RunnableImageFlavor(
+                flavor=ModelBundleFlavorType.RUNNABLE_IMAGE,
+                repository="",  # stub value, not used
+                tag="",  # stub value, not used
+                command=[],  # stub value, not used
+                env=None,  # stub value, not used
+                protocol="http",
+                readiness_initial_delay_seconds=30,  # stub value, not used
             )
 
         model_bundle = await self.model_bundle_repository.create_model_bundle(
@@ -370,12 +381,16 @@ class CreateModelBundleV2UseCase:
                 repository=request.flavor.framework.image_repository,
                 tag=request.flavor.framework.image_tag,
             )
-        elif isinstance(
-            request.flavor, RunnableImageLike
-        ) and not self.docker_repository.image_exists(
-            image_tag=request.flavor.tag,
-            repository_name=request.flavor.repository,
+        elif (
+            isinstance(request.flavor, RunnableImageLike)
+            and self.docker_repository.is_repo_name(request.flavor.repository)
+            and not self.docker_repository.image_exists(
+                image_tag=request.flavor.tag,
+                repository_name=request.flavor.repository,
+            )
         ):
+            # only check image existance if repository is specified as just repo name
+            # if a full image registry is specified, we skip this check to enable pass through of images from private registries
             raise DockerImageNotFoundException(
                 repository=request.flavor.repository,
                 tag=request.flavor.tag,

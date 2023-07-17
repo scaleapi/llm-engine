@@ -9,7 +9,7 @@ from .batch_job_entity import (
 )
 from .common_types import CpuSpecificationType, StorageSpecificationType
 from .gpu_type import GpuType
-from .llm_entity import LLMInferenceFramework, LLMMetadata, LLMSource
+from .llm_entity import LLMInferenceFramework, LLMMetadata, LLMSource, Quantization
 from .model_bundle_entity import (
     ArtifactLike,
     CloudpickleArtifactFlavor,
@@ -45,7 +45,7 @@ from .model_endpoint_entity import (
 )
 from .owned_entity import OwnedEntity
 
-__all__: Sequence[str] = [
+__all__: Sequence[str] = (
     "ArtifactLike",
     "BatchJob",
     "BatchJobProgress",
@@ -80,6 +80,7 @@ __all__: Sequence[str] = [
     "ModelEndpointUserConfigState",
     "OwnedEntity",
     "PytorchFramework",
+    "Quantization",
     "RunnableImageFlavor",
     "RunnableImageLike",
     "StorageSpecificationType",
@@ -87,4 +88,4 @@ __all__: Sequence[str] = [
     "TensorflowFramework",
     "TritonEnhancedRunnableImageFlavor",
     "ZipArtifactFlavor",
-]
+)

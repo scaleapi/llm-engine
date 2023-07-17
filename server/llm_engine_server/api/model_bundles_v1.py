@@ -1,4 +1,4 @@
-"""Model Bundle v1 routes for the hosted model inference service."""
+"""Model Bundle v1 routes for the LLMEngine service."""
 
 from typing import Optional
 
