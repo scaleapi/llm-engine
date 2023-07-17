@@ -1,5 +1,5 @@
-site_name: LLM Engine
-site_description: The open source engine for fine-tuning large language models.
+site_name: LLMEngine
+site_description: The k8s based open source engine for inference and fine-tuning of large language models.
 
 theme:
   name: material
@@ -41,9 +41,8 @@ nav:
       - "Fine-tuning": guides/fine_tuning.md
       - "Rate limits": guides/rate_limits.md
   - "API":
-      - "Error handling": api/error_handling.md
       - "Python Client API Reference": api/python_client.md
-      - "Langchain": api/langchain.md
+      - "Error handling": api/error_handling.md
 #  - "FAQ": faq.md
 
 markdown_extensions:

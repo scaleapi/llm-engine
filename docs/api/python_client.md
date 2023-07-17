@@ -1,38 +1,28 @@
 # 🐍 Python Client API Reference
 
 ::: llmengine.Completion
-    selection:
-        members:
-            - create
-            - acreate
+selection:
+members: - create - acreate
 
 ::: llmengine.CompletionOutput
-    selection:
-        members:
-            - text
-            - num_prompt_tokens
-            - num_completion_tokens
+selection:
+members: - text - num_prompt_tokens - num_completion_tokens
 
 ::: llmengine.CompletionSyncV1Response
+selection:
+members: - output
 
 ::: llmengine.CompletionStreamOutput
-    selection:
-        members:
-            - text
-            - finished
-            - num_prompt_tokens
-            - num_completion_tokens
-
+selection:
+members: - text - finished - num_prompt_tokens - num_completion_tokens
 
 ::: llmengine.CompletionStreamV1Response
+selection:
+members: - output
 
 ::: llmengine.FineTune
-    selection:
-        members:
-            - create
-            - list
-            - retrieve
-            - cancel
+selection:
+members: - create - list - retrieve - cancel
 
 ::: llmengine.CreateFineTuneResponse
 
