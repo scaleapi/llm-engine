@@ -123,6 +123,12 @@ commands:
          pkg-manager: pip
          app-dir: server
          pip-dependency-file: requirements_override.txt
+     - run:
+         name: Install Server
+         command: |
+           pushd server
+           pip install -e .
+           popd
   install_client:
     description: Install LLM Engine client
     steps:
@@ -133,12 +139,6 @@ commands:
   run_unit_tests_python_client:
     description: Unit tests of the python client
     steps:
-      - run:
-          name: Install Python Client
-          command: |
-            pushd clients/python
-            pip install -e .
-            popd
       - run:
           name: Type Check
           command: |
@@ -160,12 +160,6 @@ commands:
           name: Ruff Lint Check
           command: |
             ruff .
-      - run:
-          name: Install Server
-          command: |
-            pushd server
-            pip install -e .
-            popd
       - run:
           name: Type Check
           command: |
