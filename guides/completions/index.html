@@ -584,7 +584,7 @@
 
   <h1>Completions</h1>
 
-<p>LLM Engine provides access to open source language models (see <a href="/model_zoo">Model Zoo</a>) that can be used for producing 
+<p>LLM Engine provides access to open source language models (see <a href="../../model_zoo">Model Zoo</a>) that can be used for producing
 Completions.  An example API call looks as follows:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">Completion</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
@@ -595,7 +595,7 @@ Completions.  An example API call looks as follows:
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
 </code></pre></div></p>
-<p>See the full <a href="/api/python_client/#llmengine.Completion">API reference documentation</a> to learn more.</p>
+<p>See the full <a href="../../api/python_client/#llmengine.Completion">API reference documentation</a> to learn more.</p>
 <h2 id="completions-response-format">Completions response format<a class="headerlink" href="#completions-response-format" title="Permanent link">&para;</a></h2>
 <p>An example Completions API response looks as follows:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
@@ -608,7 +608,7 @@ Completions.  An example API call looks as follows:
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="p">],</span>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="p">}</span>
 </code></pre></div>
-<p>In Python, the response is of type <a href="/api/python_client/#llmengine.CompletionSyncV1Response">CompletionSyncV1Response</a>, 
+<p>In Python, the response is of type <a href="../../api/python_client/#llmengine.CompletionSyncV1Response">CompletionSyncV1Response</a>,
 which maps to the above JSON structure.</p>
 <h2 id="token-streaming">Token streaming<a class="headerlink" href="#token-streaming" title="Permanent link">&para;</a></h2>
 <p>The Completions API support token streaming to reduce perceived latency for certain applications. When streaming, 
@@ -648,7 +648,7 @@ to utilize async processing. The function signatures are otherwise identical.</p
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </code></pre></div></p>
 <h2 id="which-model-should-i-use">Which model should I use?<a class="headerlink" href="#which-model-should-i-use" title="Permanent link">&para;</a></h2>
-<p>See the <a href="/model_zoo">Model Zoo</a> for more information on best practices for which model to use for Completions.</p>
+<p>See the <a href="../../model_zoo">Model Zoo</a> for more information on best practices for which model to use for Completions.</p>
 
 
   
