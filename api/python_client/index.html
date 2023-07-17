@@ -1136,15 +1136,15 @@
 
 
 <h2 id="llmengine.Completion" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">Completion</span>
+        <span class="doc doc-object-name doc-class-name">Completion</span>
 
 
 <a href="#llmengine.Completion" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>Completion API. This API is used to generate text completions.</p>
@@ -1155,6 +1155,7 @@ language. Tokens may include trailing spaces and even sub-words; this process is
 <p>The Completions API can be run either
 synchronous or asynchronously (via Python <code>asyncio</code>); for each of these modes, you can also choose to
 stream token responses or not.</p>
+
 
 
   
@@ -1169,13 +1170,12 @@ stream token responses or not.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.completion.Completion.create" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">create</span>
+        <span class="doc doc-object-name doc-function-name">create</span>
 
   
   <span class="doc doc-labels">
@@ -1183,24 +1183,12 @@ stream token responses or not.</p>
   </span>
 
 <a href="#llmengine.completion.Completion.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">CompletionSyncV1Response</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">Iterator</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">],</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span><span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">CompletionSyncV1Response</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">]]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
   
       <p>Creates a completion for the provided prompt and parameters synchronously.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1304,8 +1292,6 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1388,13 +1374,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.completion.Completion.acreate" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">acreate</span>
+        <span class="doc doc-object-name doc-function-name">acreate</span>
 
   
   <span class="doc doc-labels">
@@ -1403,24 +1388,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
   </span>
 
 <a href="#llmengine.completion.Completion.acreate" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">acreate</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">CompletionSyncV1Response</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">AsyncIterable</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">],</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">acreate</span><span class="p">(</span><span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">CompletionSyncV1Response</span><span class="p">,</span> <span class="n">AsyncIterable</span><span class="p">[</span><span class="n">CompletionStreamV1Response</span><span class="p">]]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
   
       <p>Creates a completion for the provided prompt and parameters asynchronously (with <code>asyncio</code>).</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1524,8 +1497,6 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1629,18 +1600,19 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h2 id="llmengine.CompletionOutput" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionOutput</span>
+        <span class="doc doc-object-name doc-class-name">CompletionOutput</span>
 
 
 <a href="#llmengine.CompletionOutput" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Represents the output of a completion request to a model.</p>
+
 
 
   
@@ -1658,7 +1630,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionOutput.text" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">text</span>
+        <span class="doc doc-object-name doc-attribute-name">text</span>
 
   
   <span class="doc doc-labels">
@@ -1681,7 +1653,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionOutput.num_prompt_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_prompt_tokens</span>
+        <span class="doc doc-object-name doc-attribute-name">num_prompt_tokens</span>
 
   
   <span class="doc doc-labels">
@@ -1704,7 +1676,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionOutput.num_completion_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
+        <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
 
   
   <span class="doc doc-labels">
@@ -1737,18 +1709,19 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h2 id="llmengine.CompletionSyncV1Response" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionSyncV1Response</span>
+        <span class="doc doc-object-name doc-class-name">CompletionSyncV1Response</span>
 
 
 <a href="#llmengine.CompletionSyncV1Response" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for a synchronous prompt completion.</p>
+
 
 
   
@@ -1766,7 +1739,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionSyncV1Response.outputs" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">outputs</span>
+        <span class="doc doc-object-name doc-attribute-name">outputs</span>
 
   
   <span class="doc doc-labels">
@@ -1789,7 +1762,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionSyncV1Response.status" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">status</span>
+        <span class="doc doc-object-name doc-attribute-name">status</span>
 
   
   <span class="doc doc-labels">
@@ -1812,12 +1785,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionSyncV1Response.traceback" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">traceback</span>
+        <span class="doc doc-object-name doc-attribute-name">traceback</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionSyncV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1846,15 +1819,16 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h2 id="llmengine.CompletionStreamOutput" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionStreamOutput</span>
+        <span class="doc doc-object-name doc-class-name">CompletionStreamOutput</span>
 
 
 <a href="#llmengine.CompletionStreamOutput" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+
 
 
 
@@ -1873,7 +1847,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionStreamOutput.text" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">text</span>
+        <span class="doc doc-object-name doc-attribute-name">text</span>
 
   
   <span class="doc doc-labels">
@@ -1896,7 +1870,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionStreamOutput.finished" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">finished</span>
+        <span class="doc doc-object-name doc-attribute-name">finished</span>
 
   
   <span class="doc doc-labels">
@@ -1919,12 +1893,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_prompt_tokens</span>
+        <span class="doc doc-object-name doc-attribute-name">num_prompt_tokens</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamOutput.num_prompt_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1943,12 +1917,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
+        <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -1977,18 +1951,19 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h2 id="llmengine.CompletionStreamV1Response" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionStreamV1Response</span>
+        <span class="doc doc-object-name doc-class-name">CompletionStreamV1Response</span>
 
 
 <a href="#llmengine.CompletionStreamV1Response" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for a stream prompt completion task.</p>
+
 
 
   
@@ -2006,12 +1981,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionStreamV1Response.output" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">output</span>
+        <span class="doc doc-object-name doc-attribute-name">output</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamV1Response.output" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2030,7 +2005,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionStreamV1Response.status" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">status</span>
+        <span class="doc doc-object-name doc-attribute-name">status</span>
 
   
   <span class="doc doc-labels">
@@ -2053,12 +2028,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h3 id="llmengine.data_types.CompletionStreamV1Response.traceback" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">traceback</span>
+        <span class="doc doc-object-name doc-attribute-name">traceback</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamV1Response.traceback" class="headerlink" title="Permanent link">&para;</a></h3>
@@ -2087,20 +2062,21 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h2 id="llmengine.FineTune" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">FineTune</span>
+        <span class="doc doc-object-name doc-class-name">FineTune</span>
 
 
 <a href="#llmengine.FineTune" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>FineTune API. This API is used to fine-tune models.</p>
 <p>Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning involves the supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM.</p>
 <p>Scale llm-engine provides APIs to create fine-tunes on a base-model with training &amp; validation data-sets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.</p>
+
 
 
   
@@ -2115,13 +2091,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.create" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">create</span>
+        <span class="doc doc-object-name doc-function-name">create</span>
 
   
   <span class="doc doc-labels">
@@ -2129,20 +2104,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
   </span>
 
 <a href="#llmengine.fine_tuning.FineTune.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">training_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">validation_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">hyperparameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CreateFineTuneResponse</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">training_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">validation_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">hyperparameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CreateFineTuneResponse</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
   
       <p>Creates a job that fine-tunes a specified model from a given dataset.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2228,8 +2195,6 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
     </tbody>
   </table>
 
-
-
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -2299,13 +2264,12 @@ an airline question answering bot:</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.list" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">list</span>
+        <span class="doc doc-object-name doc-function-name">list</span>
 
   
   <span class="doc doc-labels">
@@ -2319,8 +2283,6 @@ an airline question answering bot:</p>
   <div class="doc doc-contents ">
   
       <p>List fine-tuning jobs</p>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2370,13 +2332,12 @@ an airline question answering bot:</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.retrieve" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">retrieve</span>
+        <span class="doc doc-object-name doc-function-name">retrieve</span>
 
   
   <span class="doc doc-labels">
@@ -2390,8 +2351,6 @@ an airline question answering bot:</p>
   <div class="doc doc-contents ">
   
       <p>Get status of a fine-tuning job</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2420,8 +2379,6 @@ an airline question answering bot:</p>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2468,13 +2425,12 @@ an airline question answering bot:</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.cancel" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">cancel</span>
+        <span class="doc doc-object-name doc-function-name">cancel</span>
 
   
   <span class="doc doc-labels">
@@ -2488,8 +2444,6 @@ an airline question answering bot:</p>
   <div class="doc doc-contents ">
   
       <p>Cancel a fine-tuning job</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2518,8 +2472,6 @@ an airline question answering bot:</p>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2575,18 +2527,19 @@ an airline question answering bot:</p>
 
 
 <h2 id="llmengine.CreateFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CreateFineTuneResponse</span>
+        <span class="doc doc-object-name doc-class-name">CreateFineTuneResponse</span>
 
 
 <a href="#llmengine.CreateFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for creating a FineTune.</p>
+
 
 
   
@@ -2604,18 +2557,16 @@ an airline question answering bot:</p>
 
 
 <h3 id="llmengine.data_types.CreateFineTuneResponse.fine_tune_id" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
+        <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CreateFineTuneResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ID of the created fine-tuning job.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="bp">Ellipsis</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;ID of the created fine-tuning job.&#39;</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2640,18 +2591,19 @@ an airline question answering bot:</p>
 
 
 <h2 id="llmengine.GetFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">GetFineTuneResponse</span>
+        <span class="doc doc-object-name doc-class-name">GetFineTuneResponse</span>
 
 
 <a href="#llmengine.GetFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for retrieving a FineTune.</p>
+
 
 
   
@@ -2669,18 +2621,16 @@ an airline question answering bot:</p>
 
 
 <h3 id="llmengine.data_types.GetFineTuneResponse.fine_tune_id" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
+        <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetFineTuneResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ID of the requested job.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="bp">Ellipsis</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;ID of the requested job.&#39;</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2695,18 +2645,16 @@ an airline question answering bot:</p>
 
 
 <h3 id="llmengine.data_types.GetFineTuneResponse.status" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">status</span>
+        <span class="doc doc-object-name doc-attribute-name">status</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetFineTuneResponse.status" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">status</span><span class="p">:</span> <span class="n">BatchJobStatus</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Status of the requested job.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">status</span><span class="p">:</span> <span class="n">BatchJobStatus</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="bp">Ellipsis</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Status of the requested job.&#39;</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2731,18 +2679,19 @@ an airline question answering bot:</p>
 
 
 <h2 id="llmengine.ListFineTunesResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">ListFineTunesResponse</span>
+        <span class="doc doc-object-name doc-class-name">ListFineTunesResponse</span>
 
 
 <a href="#llmengine.ListFineTunesResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for listing FineTunes.</p>
+
 
 
   
@@ -2760,19 +2709,16 @@ an airline question answering bot:</p>
 
 
 <h3 id="llmengine.data_types.ListFineTunesResponse.jobs" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">jobs</span>
+        <span class="doc doc-object-name doc-attribute-name">jobs</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.ListFineTunesResponse.jobs" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">jobs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GetFineTuneResponse</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;List of fine-tuning jobs and their statuses.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">jobs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GetFineTuneResponse</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="bp">Ellipsis</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;List of fine-tuning jobs and their statuses.&#39;</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2797,18 +2743,19 @@ an airline question answering bot:</p>
 
 
 <h2 id="llmengine.CancelFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CancelFineTuneResponse</span>
+        <span class="doc doc-object-name doc-class-name">CancelFineTuneResponse</span>
 
 
 <a href="#llmengine.CancelFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for cancelling a FineTune.</p>
+
 
 
   
@@ -2826,18 +2773,16 @@ an airline question answering bot:</p>
 
 
 <h3 id="llmengine.data_types.CancelFineTuneResponse.success" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">success</span>
+        <span class="doc doc-object-name doc-attribute-name">success</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CancelFineTuneResponse.success" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether cancellation was successful.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="bp">Ellipsis</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Whether cancellation was successful.&#39;</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
