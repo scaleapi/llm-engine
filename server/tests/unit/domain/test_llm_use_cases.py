@@ -283,7 +283,6 @@ async def test_completion_sync_use_case_success(
     assert response_1.outputs == [
         CompletionOutput(
             text="I am a newbie to the world of programming.",
-            num_prompt_tokens=14,
             num_completion_tokens=11,
         )
     ]
@@ -379,12 +378,10 @@ async def test_completion_sync_text_generation_inference_use_case_success(
     assert response_1.outputs == [
         CompletionOutput(
             text=" Deep Learning is a new type of machine learning",
-            num_prompt_tokens=None,
             num_completion_tokens=9,
         ),
         CompletionOutput(
             text=" Deep Learning is a new type of machine learning",
-            num_prompt_tokens=None,
             num_completion_tokens=9,
         ),
     ]
@@ -525,7 +522,6 @@ async def test_completion_stream_use_case_success(
         assert message.dict()["status"] == "SUCCESS"
         assert message.dict()["output"]["text"] == output_texts[i]
         if i == 6:
-            assert message.dict()["output"]["num_prompt_tokens"] == 19
             assert message.dict()["output"]["num_completion_tokens"] == 6
         i += 1
 

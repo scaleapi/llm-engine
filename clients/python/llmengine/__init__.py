@@ -30,7 +30,6 @@ from llmengine.data_types import (
     GetLLMEndpointResponse,
     ListFineTunesResponse,
     ListLLMEndpointsResponse,
-    TaskStatus,
 )
 from llmengine.fine_tuning import FineTune
 from llmengine.model import Model
@@ -51,5 +50,4 @@ __all__: Sequence[str] = (
     "ListFineTunesResponse",
     "ListLLMEndpointsResponse",
     "Model",
-    "TaskStatus",
 )

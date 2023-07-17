@@ -109,14 +109,6 @@ class GetModelEndpointV1Response(BaseModel):
     public_inference: Optional[bool] = Field(default=None)
 
 
-class TaskStatus(str, Enum):
-    PENDING = "PENDING"
-    STARTED = "STARTED"
-    SUCCESS = "SUCCESS"
-    FAILURE = "FAILURE"
-    UNDEFINED = "UNDEFINED"
-
-
 class CreateLLMEndpointRequest(BaseModel):
     name: str
 
@@ -218,7 +210,7 @@ class CompletionSyncV1Request(BaseModel):
     Request object for a synchronous prompt completion task.
     """
 
-    prompts: List[str] = Field(..., min_items=1)
+    prompt: str = Field(..., min_length=1)
     max_new_tokens: int = Field(..., gt=0)
     temperature: float = Field(..., gt=0.0)
 
@@ -231,9 +223,6 @@ class CompletionOutput(BaseModel):
     text: str
     """The text of the completion."""
 
-    num_prompt_tokens: Optional[int]
-    """Number of tokens in the prompt."""
-
     num_completion_tokens: int
     """Number of tokens in the completion."""
 
@@ -243,14 +232,11 @@ class CompletionSyncV1Response(BaseModel):
     Response object for a synchronous prompt completion.
     """
 
-    status: TaskStatus
-    """Task status."""
+    request_id: str
+    """Unique ID of request."""
 
-    outputs: List[CompletionOutput]
-    """List of completion outputs."""
-
-    traceback: Optional[str] = None
-    """Traceback if the task failed."""
+    output: CompletionOutput
+    """Completion output."""
 
 
 class CompletionStreamV1Request(BaseModel):
@@ -270,9 +256,6 @@ class CompletionStreamOutput(BaseModel):
     finished: bool
     """Whether the completion is finished."""
 
-    num_prompt_tokens: Optional[int] = None
-    """Number of tokens in the prompt."""
-
     num_completion_tokens: Optional[int] = None
     """Number of tokens in the completion."""
 
@@ -282,14 +265,11 @@ class CompletionStreamV1Response(BaseModel):
     Response object for a stream prompt completion task.
     """
 
-    status: TaskStatus
-    """Task status."""
+    request_id: str
+    """Unique ID of request."""
 
     output: Optional[CompletionStreamOutput] = None
     """Completion output."""
-
-    traceback: Optional[str] = None
-    """Traceback if the task failed."""
 
 
 class CreateFineTuneRequest(BaseModel):
