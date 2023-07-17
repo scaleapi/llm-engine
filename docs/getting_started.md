@@ -1,6 +1,6 @@
 # 🚀 Getting Started
 
-The fastest way to get started with LLMEngine is to use the python client in this repository to run inference and fine-tuning on Scale's infrastructure. This path does not require you to install anything on your infrastructure, and Scale's free tier gives you access to experimentation using open source LLMs.
+The fastest way to get started with LLM Engine is to use the python client in this repository to run inference and fine-tuning on Scale's infrastructure. This path does not require you to install anything on your infrastructure, and Scale's free tier gives you access to experimentation using open source LLMs.
 
 To start with, install LLM Engine via pip or conda:
 
