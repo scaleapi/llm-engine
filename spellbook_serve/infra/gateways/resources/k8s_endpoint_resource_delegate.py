@@ -2,7 +2,7 @@ import os
 from string import Template
 from typing import Any, Dict, List, Optional, Tuple
 
-import kubernetes
+from kubernetes import client, config
 import kubernetes_asyncio
 import yaml
 from kubernetes_asyncio import config as kube_config
@@ -91,7 +91,10 @@ def get_kubernetes_cluster_version():  # pragma: no cover
     else:
         _kubernetes_cluster_version = None
     if not _kubernetes_cluster_version:
-        version_info = kubernetes.client.VersionApi().get_code()
+        in_kubernetes = os.getenv("KUBERNETES_SERVICE_HOST")
+        if in_kubernetes:
+            config.load_incluster_config()
+        version_info = client.VersionApi().get_code()
         # kuberentes will use `+` instead of specifying a patch version. This confuses version comparisons so we remove it.
         minor_version = version_info.minor.replace("+", "")
         major_version = version_info.major
