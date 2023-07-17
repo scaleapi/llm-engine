@@ -5,6 +5,7 @@ orbs:
 workflows:
   ci:
     jobs:
+      - run_unit_tests_python_client
       - run_unit_tests_server
       - integration_tests
       - build_image
