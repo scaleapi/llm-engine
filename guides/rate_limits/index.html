@@ -11,15 +11,17 @@
       
       
       
-        <link rel="prev" href="../python_client/">
+        <link rel="prev" href="../fine_tuning/">
       
+      
+        <link rel="next" href="../../api/error_handling/">
       
       <link rel="icon" href="../../_static/favicon-32x32.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
     
     
       
-        <title>Langchain - LLM Engine</title>
+        <title>Rate limits - LLM Engine</title>
       
     
     
@@ -89,7 +91,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#langchain" class="md-skip">
+        <a href="#overview" class="md-skip">
           Skip to content
         </a>
       
@@ -123,7 +125,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Langchain
+              Rate limits
             
           </span>
         </div>
@@ -303,16 +305,16 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-        
-      
-      <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
       
       
       
@@ -321,7 +323,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_4">
           <span class="md-nav__icon md-icon"></span>
           Guides
@@ -334,7 +336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/completions/" class="md-nav__link">
+      <a href="../completions/" class="md-nav__link">
         Completions
       </a>
     </li>
@@ -348,87 +350,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/fine_tuning/" class="md-nav__link">
+      <a href="../fine_tuning/" class="md-nav__link">
         Fine-tuning
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/rate_limits/" class="md-nav__link">
-        Rate limits
-      </a>
-    </li>
-  
-
-            
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-    
-  
-  
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-      
-      
-      
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
-      
-      
-      
-        <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-          API
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
-        <label class="md-nav__title" for="__nav_5">
-          <span class="md-nav__icon md-icon"></span>
-          API
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../error_handling/" class="md-nav__link">
-        Error handling
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../python_client/" class="md-nav__link">
-        Python Client API Reference
       </a>
     </li>
   
@@ -450,10 +373,141 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Rate limits
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
-        Langchain
+        Rate limits
       </a>
       
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-are-rate-limits" class="md-nav__link">
+    What are rate limits?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-do-we-have-rate-limits" class="md-nav__link">
+    Why do we have rate limits?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-do-i-know-if-i-am-rate-limited" class="md-nav__link">
+    How do I know if I am rate limited?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-are-the-rate-limits-for-our-api" class="md-nav__link">
+    What are the rate limits for our API?
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+        
+      
+      <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          API
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/error_handling/" class="md-nav__link">
+        Error handling
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/python_client/" class="md-nav__link">
+        Python Client API Reference
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/langchain/" class="md-nav__link">
+        Langchain
+      </a>
     </li>
   
 
@@ -485,6 +539,42 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-are-rate-limits" class="md-nav__link">
+    What are rate limits?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-do-we-have-rate-limits" class="md-nav__link">
+    Why do we have rate limits?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-do-i-know-if-i-am-rate-limited" class="md-nav__link">
+    How do I know if I am rate limited?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-are-the-rate-limits-for-our-api" class="md-nav__link">
+    What are the rate limits for our API?
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -498,8 +588,71 @@
                   
 
 
-<h1 id="langchain">🦜 Langchain<a class="headerlink" href="#langchain" title="Permanent link">&para;</a></h1>
-<p>Coming soon!</p>
+<h1 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h1>
+<h2 id="what-are-rate-limits">What are rate limits?<a class="headerlink" href="#what-are-rate-limits" title="Permanent link">&para;</a></h2>
+<p>A rate limit is a restriction that an API imposes on the number of times a user or client can access the server within 
+a specified period of time.</p>
+<h2 id="why-do-we-have-rate-limits">Why do we have rate limits?<a class="headerlink" href="#why-do-we-have-rate-limits" title="Permanent link">&para;</a></h2>
+<p>Rate limits are a common practice for APIs, and they're put in place for a few different reasons:</p>
+<ul>
+<li><strong>They help protect against abuse or misuse of the API.</strong> For example, a malicious actor could flood the API with 
+requests in an attempt to overload it or cause disruptions in the service. By setting rate limits, the LLM Engine 
+server can prevent this kind of activity.</li>
+<li><strong>Rate limits help ensure that everyone has fair access to API.</strong> If one person or organization makes an excessive 
+number of requests, it could bog down the API for everyone else. By throttling the number of requests that a single 
+user can make, LLM Engine ensures that the most number of people have an opportunity to use the API without 
+experiencing slowdowns. This also applies when self-hosting LLM Engine, as all internal users within an organization 
+would have fair access.</li>
+<li><strong>Rate limits can help manage the aggregate load on the server infrastructure.</strong> If requests to the API increase 
+dramatically, it could tax the servers and cause performance issues. By setting rate limits, LLM Engine can help 
+maintain a smooth and consistent experience for all users. This is especially important when self-hosting LLM Engine.</li>
+</ul>
+<h2 id="how-do-i-know-if-i-am-rate-limited">How do I know if I am rate limited?<a class="headerlink" href="#how-do-i-know-if-i-am-rate-limited" title="Permanent link">&para;</a></h2>
+<p>Per standard HTTP practices, your request will receive a response with HTTP status code of <code>429</code>, <code>Too Many Requests</code>.</p>
+<h2 id="what-are-the-rate-limits-for-our-api">What are the rate limits for our API?<a class="headerlink" href="#what-are-the-rate-limits-for-our-api" title="Permanent link">&para;</a></h2>
+<p>The LLM Engine API is currently in a preview mode, and therefore we currently do not have any advertised rate limits.
+As the API moves towards a production release, we will update this section with specific rate limits. For now, the API
+will return HTTP 429 on an as-needed basis.</p>
+<h1 id="error-mitigation">Error mitigation<a class="headerlink" href="#error-mitigation" title="Permanent link">&para;</a></h1>
+<h2 id="retrying-with-exponential-backoff">Retrying with exponential backoff<a class="headerlink" href="#retrying-with-exponential-backoff" title="Permanent link">&para;</a></h2>
+<p>One easy way to avoid rate limit errors is to automatically retry requests with a random exponential backoff. 
+Retrying with exponential backoff means performing a short sleep when a rate limit error is hit, then retrying the 
+unsuccessful request. If the request is still unsuccessful, the sleep length is increased and the process is repeated. 
+This continues until the request is successful or until a maximum number of retries is reached. This approach has many benefits:</p>
+<ul>
+<li>Automatic retries means you can recover from rate limit errors without crashes or missing data</li>
+<li>Exponential backoff means that your first retries can be tried quickly, while still benefiting from longer delays if your first few retries fail</li>
+<li>Adding random jitter to the delay helps retries from all hitting at the same time.</li>
+</ul>
+<p>Below are a few example solutions <strong>for Python</strong> that use exponential backoff.</p>
+<h3 id="example-1-using-the-tenacity-library">Example #1: Using the <code>tenacity</code> library<a class="headerlink" href="#example-1-using-the-tenacity-library" title="Permanent link">&para;</a></h3>
+<p>Tenacity is an Apache 2.0 licensed general-purpose retrying library, written in Python, to simplify the task of adding 
+retry behavior to just about anything. To add exponential backoff to your requests, you can use the tenacity.retry 
+decorator. The below example uses the tenacity.wait_random_exponential function to add random exponential backoff to a 
+request.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">llmengine</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">tenacity</span> <span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">retry</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">stop_after_attempt</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">wait_random_exponential</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>  <span class="c1"># for exponential backoff</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nd">@retry</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="n">wait_random_exponential</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">60</span><span class="p">),</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop_after_attempt</span><span class="p">(</span><span class="mi">6</span><span class="p">))</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">def</span> <span class="nf">completion_with_backoff</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="k">return</span> <span class="n">llmengine</span><span class="o">.</span><span class="n">Completion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">completion_with_backoff</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Why is the sky blue?&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="example-2-using-the-backoff-library">Example #2: Using the <code>backoff</code> library<a class="headerlink" href="#example-2-using-the-backoff-library" title="Permanent link">&para;</a></h3>
+<p>Another python library that provides function decorators for backoff and retry is backoff:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span> <span class="nn">llmengine</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">import</span> <span class="nn">backoff</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nd">@backoff</span><span class="o">.</span><span class="n">on_exception</span><span class="p">(</span><span class="n">backoff</span><span class="o">.</span><span class="n">expo</span><span class="p">,</span> <span class="n">llmengine</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">RateLimitError</span><span class="p">)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">def</span> <span class="nf">completions_with_backoff</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="k">return</span> <span class="n">llmengine</span><span class="o">.</span><span class="n">Completion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">completions_with_backoff</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Why is the sky blue?&quot;</span><span class="p">)</span>
+</code></pre></div>
 
 
   

@@ -14,7 +14,7 @@
         <link rel="prev" href="../completions/">
       
       
-        <link rel="next" href="../../api/error_handling/">
+        <link rel="next" href="../rate_limits/">
       
       <link rel="icon" href="../../_static/favicon-32x32.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
@@ -91,7 +91,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#fine-tuning" class="md-skip">
+        <a href="#fine-tuning-api" class="md-skip">
           Skip to content
         </a>
       
@@ -319,14 +319,14 @@
       
       
         <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
-          How-To Guides
+          Guides
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_4">
           <span class="md-nav__icon md-icon"></span>
-          How-To Guides
+          Guides
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -359,10 +359,69 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Fine-tuning
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Fine-tuning
       </a>
       
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#preparing-data" class="md-nav__link">
+    Preparing Data
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#launching-the-fine-tune" class="md-nav__link">
+    Launching the Fine Tune
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#making-inference-calls-to-your-fine-tune" class="md-nav__link">
+    Making inference calls to your fine tune
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rate_limits/" class="md-nav__link">
+        Rate limits
+      </a>
     </li>
   
 
@@ -473,6 +532,35 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#preparing-data" class="md-nav__link">
+    Preparing Data
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#launching-the-fine-tune" class="md-nav__link">
+    Launching the Fine Tune
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#making-inference-calls-to-your-fine-tune" class="md-nav__link">
+    Making inference calls to your fine tune
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -486,8 +574,16 @@
                   
 
 
-<h1 id="fine-tuning">Fine-Tuning<a class="headerlink" href="#fine-tuning" title="Permanent link">&para;</a></h1>
-<p>Coming soon!</p>
+<h1 id="fine-tuning-api">Fine Tuning API<a class="headerlink" href="#fine-tuning-api" title="Permanent link">&para;</a></h1>
+<p>The Fine Tuning API allows you to fine tune various open source LLMs on your own data, then make inference calls to the resulting LLM. For more specific details, see the <a href="../../api/python_client/">python client docs</a>.</p>
+<h2 id="preparing-data">Preparing Data<a class="headerlink" href="#preparing-data" title="Permanent link">&para;</a></h2>
+<p>Your data must be formatted as a CSV file that includes two columns: <code>prompt</code> and <code>response</code>. The data needs to be uploaded to somewhere publicly accessible, so that we can read the data to fine tune on it. For example, you can upload your data to a public s3 bucket.</p>
+<h2 id="launching-the-fine-tune">Launching the Fine Tune<a class="headerlink" href="#launching-the-fine-tune" title="Permanent link">&para;</a></h2>
+<p>Once you have uploaded your data, you can use our API to launch a Fine Tune. You will need to provide the base model to train off of, the locations of the training and validation files, an optional set of hyperparameters to override, and an optional suffix to append to the name of the fine tune. </p>
+<p>See the <a href="../model_zoo">Model Zoo</a> to see which models have fine tuning support.</p>
+<p>Once the fine tune is launched, you can also get the status of your fine tune.</p>
+<h2 id="making-inference-calls-to-your-fine-tune">Making inference calls to your fine tune<a class="headerlink" href="#making-inference-calls-to-your-fine-tune" title="Permanent link">&para;</a></h2>
+<p>Once the fine tune is finished, you will be able to start making requests to the model. First, you can list the available LLMs in order to get the name of your fine tuned model. See the <a href="completions">completions API</a> for more details. You can then use that name to direct your inference requests.</p>
 
 
   
