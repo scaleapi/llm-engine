@@ -44,6 +44,7 @@ nav:
       - "API Reference": api/python_client.md
       - "Data Type Reference": api/data_types.md
       - "Error handling": api/error_handling.md
+  - "Contributing": contributing.md
 #  - "FAQ": faq.md
 
 markdown_extensions:
