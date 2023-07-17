@@ -25,8 +25,11 @@ from llmengine.data_types import (
     CompletionSyncV1Response,
     CreateFineTuneRequest,
     CreateFineTuneResponse,
+    DeleteLLMEndpointResponse,
     GetFineTuneResponse,
+    GetLLMEndpointResponse,
     ListFineTunesResponse,
+    ListLLMEndpointsResponse,
 )
 from llmengine.fine_tuning import FineTune
 from llmengine.model import Model
@@ -40,8 +43,11 @@ __all__: Sequence[str] = (
     "CompletionSyncV1Response",
     "CreateFineTuneRequest",
     "CreateFineTuneResponse",
+    "DeleteLLMEndpointResponse",
     "FineTune",
     "GetFineTuneResponse",
+    "GetLLMEndpointResponse",
     "ListFineTunesResponse",
+    "ListLLMEndpointsResponse",
     "Model",
 )

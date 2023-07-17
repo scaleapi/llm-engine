@@ -16,7 +16,9 @@ class FineTune(APIEngine):
 
     Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning involves the supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM.
 
-    Scale LLM Engine provides APIs to create fine-tunes on a base-model with training & validation data-sets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.
+    Scale LLMEngine provides APIs to create fine-tunes on a base-model with training & validation data-sets. APIs are also provided to get, list and cancel fine-tuning jobs.and cancel fine-tuning jobs.
+
+    Creating a fine-tune will end with the creation of a Model, which you can view using `Model.get(model_name)` or delete using `Model.delete(model_name)`.
     """
 
     @classmethod
@@ -113,7 +115,7 @@ class FineTune(APIEngine):
         return CreateFineTuneResponse.parse_obj(response)
 
     @classmethod
-    def retrieve(
+    def get(
         cls,
         fine_tune_id: str,
     ) -> GetFineTuneResponse:
@@ -131,7 +133,7 @@ class FineTune(APIEngine):
             ```python
             from llmengine import FineTune
 
-            response = FineTune.retrieve(
+            response = FineTune.get(
                 fine_tune_id="ft_abc123",
             )
 
@@ -145,9 +147,8 @@ class FineTune(APIEngine):
                 "status": "RUNNING"
             }
             ```
-
         """
-        response = cls.get(f"v1/llm/fine-tunes/{fine_tune_id}", timeout=DEFAULT_TIMEOUT)
+        response = cls._get(f"v1/llm/fine-tunes/{fine_tune_id}", timeout=DEFAULT_TIMEOUT)
         return GetFineTuneResponse.parse_obj(response)
 
     @classmethod
@@ -157,6 +158,7 @@ class FineTune(APIEngine):
 
         Returns:
             ListFineTunesResponse: an object that contains a list of all fine-tuning jobs and their statuses
+
         Example:
             ```python
             from llmengine import FineTune
@@ -167,19 +169,21 @@ class FineTune(APIEngine):
 
         JSON Response:
             ```json
-            [
-                {
-                    "fine_tune_id": "ft_abc123",
-                    "status": "RUNNING"
-                },
-                {
-                    "fine_tune_id": "ft_def456",
-                    "status": "SUCCESS"
-                }
-            ]
+            {
+                "jobs": [
+                    {
+                        "fine_tune_id": "ft_abc123",
+                        "status": "RUNNING"
+                    },
+                    {
+                        "fine_tune_id": "ft_def456",
+                        "status": "SUCCESS"
+                    }
+                ]
+            }
             ```
         """
-        response = cls.get("v1/llm/fine-tunes", timeout=DEFAULT_TIMEOUT)
+        response = cls._get("v1/llm/fine-tunes", timeout=DEFAULT_TIMEOUT)
         return ListFineTunesResponse.parse_obj(response)
 
     @classmethod
@@ -205,10 +209,9 @@ class FineTune(APIEngine):
         JSON Response:
             ```json
             {
-                "success": "true"
+                "success": true
             }
             ```
-
         """
         response = cls.put(
             f"v1/llm/fine-tunes/{fine_tune_id}/cancel",
