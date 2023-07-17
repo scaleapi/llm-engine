@@ -14,9 +14,11 @@ class FineTune(APIEngine):
     """
     FineTune API. This API is used to fine-tune models.
 
-    Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning involves the supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM.
+    Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning is a supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM.
 
-    Scale llm-engine provides APIs to create fine-tunes on a base-model with training & validation data-sets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.
+    LLM Engine provides APIs to create fine-tunes on a base model with training & validation datasets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.
+
+    Creating a fine-tune will end with the creation of a Model, which you can view using `Model.get(model_name)` or delete using `Model.delete(model_name)`.
     """
 
     @classmethod
@@ -31,30 +33,35 @@ class FineTune(APIEngine):
         """
         Creates a job that fine-tunes a specified model from a given dataset.
 
+        This API can be used to fine-tune a model. The _model_ is the name of base model
+        ([Model Zoo](../../model_zoo) for available models) to fine-tune. The training
+        file should consist of prompt and response pairs. Your data must be formatted as a CSV file
+        that includes two columns: `prompt` and `response`. A maximum of 100,000 rows of data is
+        currently supported. At least 200 rows of data is recommended to start to see benefits from
+        fine-tuning.
+
         Args:
             model (`str`):
                 The name of the base model to fine-tune. See [Model Zoo](../../model_zoo) for the list of available models to fine-tune.
 
             training_file (`str`):
-                Path to file of training dataset
+                Publicly accessible URL to a CSV file for training.
 
             validation_file (`Optional[str]`):
-                Path to file of validation dataset
+                Publicly accessible URL to a CSV file for validation.
 
-            hyperparameters (`str`):
-                Hyperparameters
+            hyperparameters (`Optional[Dict[str, str]]`):
+                A dict of hyperparameters to customize fine-tuning behavior.
+
+                Currently supported hyperparameters:
+
+                * `n_epochs`: Number of epochs to fine-tune for.
 
             suffix (`Optional[str]`):
                 A string that will be added to your fine-tuned model name.
 
         Returns:
             CreateFineTuneResponse: an object that contains the ID of the created fine-tuning job
-
-        The _model_ is the name of base model ([Model Zoo](../../model_zoo) for available models) to fine. The training
-        file should consist of prompt and response pairs. Your data must be formatted as a CSV file
-        that includes two columns: `prompt` and `response`. A maximum of 100,000 rows of data is
-        currently supported. At least 200 rows of data is recommended to start to see benefits from
-        fine-tuning.
 
         Here is an example script to create a 5-row CSV of properly formatted data for fine-tuning
         an airline question answering bot:
@@ -84,7 +91,7 @@ class FineTune(APIEngine):
 
             response = FineTune.create(
                 model="llama-7b",
-                training_file="s3://my-bucket/path/to/training-file.csv",
+                training_file="https://my-bucket.s3.us-west-2.amazonaws.com/path/to/training-file.csv",
             )
 
             print(response.json())
@@ -113,12 +120,19 @@ class FineTune(APIEngine):
         return CreateFineTuneResponse.parse_obj(response)
 
     @classmethod
-    def retrieve(
+    def get(
         cls,
         fine_tune_id: str,
     ) -> GetFineTuneResponse:
         """
-        Get status of a fine-tuning job
+        Get status of a fine-tuning job.
+
+        This API can be used to retrieve the status of an already running
+        fine-tuning job. It takes as a single parameter the `fine_tune_id`
+        and returns a
+        [GetFineTuneResponse](../../api/data_types/#llmengine.GetFineTuneResponse)
+        object with the id and status (`PENDING`, `STARTED`,
+        `UNDEFINED`, `FAILURE` or `SUCCESS`).
 
         Args:
             fine_tune_id (`str`):
@@ -131,7 +145,7 @@ class FineTune(APIEngine):
             ```python
             from llmengine import FineTune
 
-            response = FineTune.retrieve(
+            response = FineTune.get(
                 fine_tune_id="ft_abc123",
             )
 
@@ -142,21 +156,25 @@ class FineTune(APIEngine):
             ```json
             {
                 "fine_tune_id": "ft_abc123",
-                "status": "RUNNING"
+                "status": "STARTED"
             }
             ```
-
         """
-        response = cls.get(f"v1/llm/fine-tunes/{fine_tune_id}", timeout=DEFAULT_TIMEOUT)
+        response = cls._get(f"v1/llm/fine-tunes/{fine_tune_id}", timeout=DEFAULT_TIMEOUT)
         return GetFineTuneResponse.parse_obj(response)
 
     @classmethod
     def list(cls) -> ListFineTunesResponse:
         """
-        List fine-tuning jobs
+        List fine-tuning jobs.
+
+        This API can be used to list all the fine-tuning jobs.
+        It returns a list of pairs of `fine_tune_id` and `status` for
+        all existing jobs.
 
         Returns:
             ListFineTunesResponse: an object that contains a list of all fine-tuning jobs and their statuses
+
         Example:
             ```python
             from llmengine import FineTune
@@ -167,25 +185,32 @@ class FineTune(APIEngine):
 
         JSON Response:
             ```json
-            [
-                {
-                    "fine_tune_id": "ft_abc123",
-                    "status": "RUNNING"
-                },
-                {
-                    "fine_tune_id": "ft_def456",
-                    "status": "SUCCESS"
-                }
-            ]
+            {
+                "jobs": [
+                    {
+                        "fine_tune_id": "ft_abc123",
+                        "status": "STARTED"
+                    },
+                    {
+                        "fine_tune_id": "ft_def456",
+                        "status": "SUCCESS"
+                    }
+                ]
+            }
             ```
         """
-        response = cls.get("v1/llm/fine-tunes", timeout=DEFAULT_TIMEOUT)
+        response = cls._get("v1/llm/fine-tunes", timeout=DEFAULT_TIMEOUT)
         return ListFineTunesResponse.parse_obj(response)
 
     @classmethod
     def cancel(cls, fine_tune_id: str) -> CancelFineTuneResponse:
         """
-        Cancel a fine-tuning job
+        Cancel a fine-tuning job.
+
+        This API can be used to cancel an existing fine-tuning job if
+        it's no longer required. It takes as parameter the `fine_tune_id`
+        and returns a response object which has a `success` field
+        confirming if the cancellation was successful.
 
         Args:
             fine_tune_id (`str`):
@@ -205,10 +230,9 @@ class FineTune(APIEngine):
         JSON Response:
             ```json
             {
-                "success": "true"
+                "success": true
             }
             ```
-
         """
         response = cls.put(
             f"v1/llm/fine-tunes/{fine_tune_id}/cancel",
