@@ -1,4 +1,4 @@
-LLM Engine provides access to open source language models (see [Model Zoo](/model_zoo)) that can be used for producing 
+LLM Engine provides access to open source language models (see [Model Zoo](../../model_zoo)) that can be used for producing
 Completions.  An example API call looks as follows:
 ```python
 from llmengine import Completion
@@ -11,7 +11,7 @@ response = Completion.create(
 )
 ```
 
-See the full [API reference documentation](/api/python_client/#llmengine.Completion) to learn more.
+See the full [API reference documentation](../../api/python_client/#llmengine.Completion) to learn more.
 
 ## Completions response format
 
@@ -29,7 +29,7 @@ An example Completions API response looks as follows:
 }
 ```
 
-In Python, the response is of type [CompletionSyncV1Response](/api/python_client/#llmengine.CompletionSyncV1Response), 
+In Python, the response is of type [CompletionSyncV1Response](../../api/python_client/#llmengine.CompletionSyncV1Response),
 which maps to the above JSON structure.
 
 ## Token streaming
@@ -80,4 +80,4 @@ asyncio.run(main())
 
 ## Which model should I use?
 
-See the [Model Zoo](/model_zoo) for more information on best practices for which model to use for Completions.
+See the [Model Zoo](../../model_zoo) for more information on best practices for which model to use for Completions.
