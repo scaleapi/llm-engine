@@ -1,4 +1,4 @@
-LLM Engine provides a list of open source language models (see [Model Zoo](/model_zoo)) that can be used for producing 
+LLM Engine provides access to open source language models (see [Model Zoo](/model_zoo)) that can be used for producing 
 Completions.  An example API call looks as follows:
 ```python
 from llmengine import Completion
@@ -15,7 +15,7 @@ See the full [API reference documentation](/api/python_client/#llmengine.Complet
 
 ## Completions response format
 
-An example completions API response looks as follows:
+An example Completions API response looks as follows:
 
 ```json
 {
