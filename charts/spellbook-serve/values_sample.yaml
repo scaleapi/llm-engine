@@ -11,7 +11,7 @@ replicaCount:
   balloonT4: 0
 
 # tag is the LLM Engine docker image tag
-tag: 31e907b1e1850883c53613800bf69048035c77f6
+tag: 3d8bed9ac5ba940997917f15285ef67c82562017
 context: production
 image:
   # gatewayRepository is the docker repository to pull the LLM Engine gateway image from
@@ -128,7 +128,7 @@ config:
           "Spellbook-Serve-Endpoint-Created-By": "${endpoint_created_by}"
         }
 
-      cache_redis_url: redis://spellbook-prod-cache-001.nu2e0g.0001.usw2.cache.amazonaws.com:6379/15
+      cache_redis_url: redis://spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com:6379/15
 
 # Service Account
 serviceAccount:
