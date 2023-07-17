@@ -5,7 +5,7 @@ model_primitive_host: model-server.default.svc.cluster.local
 
 # Endpoint config
 # K8s namespace the endpoints will be created in
-endpoint_namespace: scale-deploy
+endpoint_namespace: launch
 
 # Asynchronous endpoints
 sqs_profile: default

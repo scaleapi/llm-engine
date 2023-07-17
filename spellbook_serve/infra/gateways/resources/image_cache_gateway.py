@@ -22,7 +22,7 @@ class CachedImages(TypedDict):
 
 
 KUBERNETES_MAX_LENGTH = 64
-SPELLBOOK_SERVE_DEFAULT_NAMESPACE = "scale-deploy"
+SPELLBOOK_SERVE_DEFAULT_NAMESPACE = "launch"
 
 
 class ImageCacheGateway:
@@ -93,7 +93,7 @@ class ImageCacheGateway:
 
         try:
             await apps_api.create_namespaced_daemon_set(
-                namespace="scale-deploy",
+                namespace=SPELLBOOK_SERVE_DEFAULT_NAMESPACE,
                 body=image_cache,
             )
             logger.info(f"Created image cache daemonset {name}")
@@ -101,7 +101,7 @@ class ImageCacheGateway:
             if exc.status == 409:
                 # Do not update existing daemonset if the cache is unchanged
                 existing_daemonsets = await apps_api.list_namespaced_daemon_set(
-                    namespace="scale-deploy"
+                    namespace=SPELLBOOK_SERVE_DEFAULT_NAMESPACE
                 )
                 for daemonset in existing_daemonsets.items:
                     if daemonset.metadata.name == name:
@@ -117,7 +117,7 @@ class ImageCacheGateway:
                     f"Image cache daemonset {name} already exists, replacing with new values"
                 )
                 await apps_api.replace_namespaced_daemon_set(
-                    name=name, namespace="scale-deploy", body=image_cache
+                    name=name, namespace=SPELLBOOK_SERVE_DEFAULT_NAMESPACE, body=image_cache
                 )
             elif exc.status == 404:
                 logger.exception("ImageCache API not found. Is the ImageCache CRD installed?")
