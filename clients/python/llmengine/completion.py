@@ -16,7 +16,7 @@ class Completion(APIEngine):
     Language Models are trained to understand natural language and provide text outputs as a response to
     their inputs. The inputs are called _prompts_ and outputs are referred to as _completions_.
     LLMs take the input _prompts_ and chunk them smaller units called _tokens_ to process and generate
-    language. Tokens may include trailing spaces and even sub-words, this process is language dependent.
+    language. Tokens may include trailing spaces and even sub-words; this process is language dependent.
 
     The Completions API can be run either
     synchronous or asynchronously (via Python `asyncio`); for each of these modes, you can also choose to
@@ -38,7 +38,7 @@ class Completion(APIEngine):
 
         Args:
             model_name (str):
-                Name of the model to use. See [Model Zoo](/model_zoo/) for a list of Models that are supported.
+                Name of the model to use. See [Model Zoo](../model_zoo/) for a list of Models that are supported.
 
             prompt (str):
                 The prompt to generate completions for, encoded as a string.
@@ -47,7 +47,7 @@ class Completion(APIEngine):
                 The maximum number of tokens to generate in the completion.
 
                 The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
-                [Model Zoo](/model_zoo/) for information on each supported model's context length.
+                [Model Zoo](../model_zoo/) for information on each supported model's context length.
 
             temperature (float):
                 What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
@@ -181,7 +181,7 @@ class Completion(APIEngine):
 
         Args:
             model_name (str):
-                Name of the model to use. See [Model Zoo](/model_zoo/) for a list of Models that are supported.
+                Name of the model to use. See [Model Zoo](../model_zoo/) for a list of Models that are supported.
 
             prompt (str):
                 The prompt to generate completions for, encoded as a string.
@@ -190,7 +190,7 @@ class Completion(APIEngine):
                 The maximum number of tokens to generate in the completion.
 
                 The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
-                [Model Zoo](/model_zoo/) for information on each supported model's context length.
+                [Model Zoo](../model_zoo/) for information on each supported model's context length.
 
             temperature (float):
                 What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
