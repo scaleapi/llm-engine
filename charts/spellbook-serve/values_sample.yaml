@@ -1,5 +1,6 @@
 # This is a YAML-formatted file.
 
+# replicaCount specifies the amount of replica pods for each deployment
 replicaCount:
   gateway: 2
   cacher: 1
@@ -9,27 +10,36 @@ replicaCount:
   balloonCpu: 0
   balloonT4: 0
 
+# tag is the LLM Engine docker image tag
 tag: 31e907b1e1850883c53613800bf69048035c77f6
 context: production
 image:
+  # gatewayRepository is the docker repository to pull the LLM Engine gateway image from
   gatewayRepository: public.ecr.aws/b2z8n5q1/spellbook-serve
+  # builderRepository is the docker repository to pull the LLM Engine endpoint builder image from
   builderRepository: public.ecr.aws/b2z8n5q1/spellbook-serve
+  # cacherRepository is the docker repository to pull the LLM Engine cacher image from
   cacherRepository: public.ecr.aws/b2z8n5q1/spellbook-serve
+  # forwarderRepository is the docker repository to pull the LLM Engine forwarder image from
   forwarderRepository: public.ecr.aws/b2z8n5q1/spellbook-serve
   pullPolicy: Always
 
 secrets:
+  # kubernetesDatabaseSecretName is the name of the secret that contains the database credentials
   kubernetesDatabaseSecretName: ml-infra-pg
 
 service:
   type: ClusterIP
   port: 80
 
+# TODO: This is related to networking.istio.io/v1alpha3
 virtualservice:
   enabled: false
   annotations: { }
+  # TODO: Document 
   hostDomains:
-    - egp-test.scale.com
+    - egp-test.scale.com 
+  # TODO: Document 
   gateways:
     - default/internal-gateway
 
@@ -45,6 +55,7 @@ autoscaling:
     targetConcurrency: 50
   vertical:
     enabled: false
+# TODO: Why is this commented out?
 #    minAllowed:
 #      cpu: 100m
 #      memory: 128Mi
@@ -83,7 +94,7 @@ config:
       # K8s namespace the endpoints will be created in
       endpoint_namespace: launch
 
-      # Asynchronous endpoints
+      # Asynchronous endpoints (coming soon)
       sqs_profile: default
       sqs_queue_policy_template: >
         {
@@ -133,6 +144,7 @@ aws:
     create: true
   profileName: default
 
+# Triton enhanced endpoints (coming soon)
 triton:
   image:
     repository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv
