@@ -19,7 +19,7 @@ class Completion(APIEngine):
     @classmethod
     async def acreate(
         cls,
-        model_name: str,
+        model: str,
         prompt: str,
         max_new_tokens: int = 20,
         temperature: float = 0.2,
@@ -36,7 +36,7 @@ class Completion(APIEngine):
 
             async def main():
                 response = await Completion.acreate(
-                    model_name="llama-7b",
+                    model="llama-7b",
                     prompt="Hello, my name is",
                     max_new_tokens=10,
                     temperature=0.2,
@@ -54,7 +54,6 @@ class Completion(APIEngine):
                 [
                     {
                         "text": "_______, and I am a _____",
-                        "num_prompt_tokens": null,
                         "num_completion_tokens": 10
                     }
                 ],
@@ -68,7 +67,7 @@ class Completion(APIEngine):
 
             async def main():
                 stream = await Completion.acreate(
-                    model_name="llama-7b",
+                    model="llama-7b",
                     prompt="why is the sky blue?",
                     max_new_tokens=5,
                     temperature=0.2,
@@ -84,16 +83,16 @@ class Completion(APIEngine):
 
         JSON responses:
             ```json
-            {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1}}
-            {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2}}
-            {"request_id": "0123456789", "output": {"text": " think", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3}}
-            {"request_id": "0123456789", "output": {"text": " the", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4}}
-            {"request_id": "0123456789", "output": {"text": " sky", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5}}
+            {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1}}
+            {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_completion_tokens": 2}}
+            {"request_id": "0123456789", "output": {"text": " think", "finished": false, "num_completion_tokens": 3}}
+            {"request_id": "0123456789", "output": {"text": " the", "finished": false, "num_completion_tokens": 4}}
+            {"request_id": "0123456789", "output": {"text": " sky", "finished": true, "num_completion_tokens": 5}}
             ```
 
 
         Args:
-            model_name (str):
+            model (str):
                 Name of the model to use. See [Model Zoo](/model_zoo/) for a list of Models that are supported.
 
             prompt (str):
@@ -127,7 +126,7 @@ class Completion(APIEngine):
             ) -> AsyncIterable[CompletionStreamV1Response]:
                 data = CompletionStreamV1Request(**kwargs).dict()
                 response = cls.apost_stream(
-                    resource_name=f"v1/llm/completions-stream?model_endpoint_name={model_name}",
+                    resource_name=f"v1/llm/completions-stream?model_endpoint_name={model}",
                     data=data,
                     timeout=timeout,
                 )
@@ -135,7 +134,7 @@ class Completion(APIEngine):
                     yield CompletionStreamV1Response.parse_obj(chunk)
 
             return _acreate_stream(
-                model_name=model_name,
+                model=model,
                 prompt=prompt,
                 max_new_tokens=max_new_tokens,
                 temperature=temperature,
@@ -147,7 +146,7 @@ class Completion(APIEngine):
             async def _acreate_sync(**kwargs) -> CompletionSyncV1Response:
                 data = CompletionSyncV1Request(**kwargs).dict()
                 response = await cls.apost_sync(
-                    resource_name=f"v1/llm/completions-sync?model_endpoint_name={model_name}",
+                    resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",
                     data=data,
                     timeout=timeout,
                 )
@@ -160,7 +159,7 @@ class Completion(APIEngine):
     @classmethod
     def create(
         cls,
-        model_name: str,
+        model: str,
         prompt: str,
         max_new_tokens: int = 20,
         temperature: float = 0.2,
@@ -175,7 +174,7 @@ class Completion(APIEngine):
             from llmengine import Completion
 
             response = Completion.create(
-                model_name="llama-7b",
+                model="llama-7b",
                 prompt="Hello, my name is",
                 max_new_tokens=10,
                 temperature=0.2,
@@ -191,7 +190,6 @@ class Completion(APIEngine):
                 [
                     {
                         "text": "_______ and I am a _______",
-                        "num_prompt_tokens": null,
                         "num_completion_tokens": 10
                     }
                 ],
@@ -204,7 +202,7 @@ class Completion(APIEngine):
             from llmengine import Completion
 
             stream = Completion.create(
-                model_name="llama-7b",
+                model="llama-7b",
                 prompt="why is the sky blue?",
                 max_new_tokens=5,
                 temperature=0.2,
@@ -218,15 +216,15 @@ class Completion(APIEngine):
 
         JSON responses:
             ```json
-            {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1 } }
-            {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2 } }
-            {"request_id": "0123456789", "output": {"text": " don", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3 } }
-            {"request_id": "0123456789", "output": {"text": "’", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4 } }
-            {"request_id": "0123456789", "output": {"text": "t", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5 } }
+            {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1 } }
+            {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_completion_tokens": 2 } }
+            {"request_id": "0123456789", "output": {"text": " don", "finished": false, "num_completion_tokens": 3 } }
+            {"request_id": "0123456789", "output": {"text": "’", "finished": false, "num_completion_tokens": 4 } }
+            {"request_id": "0123456789", "output": {"text": "t", "finished": true, "num_completion_tokens": 5 } }
             ```
 
         Args:
-            model_name (str):
+            model (str):
                 Name of the model to use. See [Model Zoo](/model_zoo/) for a list of Models that are supported.
 
             prompt (str):
@@ -259,7 +257,7 @@ class Completion(APIEngine):
             def _create_stream(**kwargs):
                 data_stream = CompletionStreamV1Request(**kwargs).dict()
                 response_stream = cls.post_stream(
-                    resource_name=f"v1/llm/completions-stream?model_endpoint_name={model_name}",
+                    resource_name=f"v1/llm/completions-stream?model_endpoint_name={model}",
                     data=data_stream,
                     timeout=timeout,
                 )
@@ -275,7 +273,7 @@ class Completion(APIEngine):
                 prompts=[prompt], max_new_tokens=max_new_tokens, temperature=temperature
             ).dict()
             response = cls.post_sync(
-                resource_name=f"v1/llm/completions-sync?model_endpoint_name={model_name}",
+                resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",
                 data=data,
                 timeout=timeout,
             )

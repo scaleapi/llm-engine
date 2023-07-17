@@ -186,9 +186,6 @@ class CompletionOutput(BaseModel):
     text: str
     """The text of the completion."""
 
-    num_prompt_tokens: Optional[int]
-    """Number of tokens in the prompt."""
-
     num_completion_tokens: int
     """Number of tokens in the completion."""
 
@@ -224,9 +221,6 @@ class CompletionStreamOutput(BaseModel):
 
     finished: bool
     """Whether the completion is finished."""
-
-    num_prompt_tokens: Optional[int] = None
-    """Number of tokens in the prompt."""
 
     num_completion_tokens: Optional[int] = None
     """Number of tokens in the completion."""

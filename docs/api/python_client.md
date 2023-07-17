@@ -10,7 +10,6 @@
     selection:
         members:
             - text
-            - num_prompt_tokens
             - num_completion_tokens
 
 ::: llmengine.CompletionSyncV1Response
@@ -20,7 +19,6 @@
         members:
             - text
             - finished
-            - num_prompt_tokens
             - num_completion_tokens
 
 
