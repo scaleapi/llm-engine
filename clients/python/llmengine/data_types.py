@@ -117,7 +117,7 @@ class TaskStatus(str, Enum):
     UNDEFINED = "UNDEFINED"
 
 
-class CreateLLMModelEndpointV1Request(BaseModel):
+class CreateLLMEndpointRequest(BaseModel):
     name: str
 
     # LLM specific fields
@@ -151,7 +151,7 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     public_inference: Optional[bool] = True  # LLM endpoints are public by default.
 
 
-class CreateLLMModelEndpointV1Response(BaseModel):
+class CreateLLMEndpointResponse(BaseModel):
     endpoint_creation_task_id: str
 
 
@@ -201,7 +201,7 @@ class ListLLMEndpointsResponse(BaseModel):
 
 class DeleteLLMEndpointResponse(BaseModel):
     """
-    Response object for removing a Model.
+    Response object for deleting a Model.
     """
 
     deleted: bool = Field(..., description="Whether deletion was successful.")

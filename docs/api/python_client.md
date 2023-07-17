@@ -10,6 +10,13 @@
     selection:
         members:
             - create
-            - retrieve
+            - get
             - list
             - cancel
+
+::: llmengine.Model
+    selection:
+        members:
+            - get
+            - list
+            - delete

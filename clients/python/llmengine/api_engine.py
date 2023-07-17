@@ -38,7 +38,7 @@ class APIEngine:
             )
 
     @classmethod
-    def get(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
+    def _get(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
         api_key = get_api_key()
         response = requests.get(
             os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
@@ -67,7 +67,7 @@ class APIEngine:
         return payload
 
     @classmethod
-    def delete(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
+    def _delete(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
         api_key = get_api_key()
         response = requests.delete(
             os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
