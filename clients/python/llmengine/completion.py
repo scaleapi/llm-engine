@@ -45,7 +45,7 @@ class Completion(APIEngine):
             max_new_tokens (int):
                 The maximum number of tokens to generate in the completion.
 
-                The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See the
+                The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
                 [Model Zoo](../../model_zoo) for information on each supported model's context length.
 
             temperature (float):
@@ -188,7 +188,7 @@ class Completion(APIEngine):
             max_new_tokens (int):
                 The maximum number of tokens to generate in the completion.
 
-                The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See the
+                The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
                 [Model Zoo](../../model_zoo) for information on each supported model's context length.
 
             temperature (float):
