@@ -1,8 +1,12 @@
-An LLM is a Machine Learning model that is given an initial text prompt and then generates a completion for that prompt. LLMs generate completions in different ways - foundation models pick the most likely completion based on their training over a large corpus of documents, instruction-tuned models complete text by trying to follow instructions provided in the prompt, and other models can be fine-tuned to respond in distinct ways.
 
-The LLMEngine repository contains a `Completion` API that is used to get a response from an LLM.
+Large Language Models are trained to understand natural language and provide text outputs as a response to
+their inputs. The inputs are called _prompts_ and outputs are referred to as _completions_.
+LLMs take the input _prompts_ and chunk them smaller units called _tokens_ to process and generate
+language. Tokens may include trailing spaces and even sub-words, this process is language dependent.
 
-A full reference of the Completions API is [here](/api/python_client/#llmengine.Completion)
+The LLMEngine repository contains a `Completion` API that is used to send a prompt to an LLM and get back a completion.
+
+A full reference of the `Completion` API is [here](/api/python_client/#llmengine.Completion)
 
 There are two primary entry points to the API - `Completion.create` for synchronous calls and `Completion.acreate` for asynchronous calls via python `asyncio`.
 
