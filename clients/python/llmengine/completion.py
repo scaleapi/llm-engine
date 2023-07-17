@@ -49,7 +49,7 @@ class Completion(APIEngine):
         JSON response:
             ```json
             {
-                "status": "SUCCESS",
+                "request_id": "b1b2c3d4e5f6g7h8i9j0",
                 "outputs":
                 [
                     {
@@ -58,7 +58,6 @@ class Completion(APIEngine):
                         "num_completion_tokens": 10
                     }
                 ],
-                "traceback": null
             }
             ```
 
@@ -85,11 +84,11 @@ class Completion(APIEngine):
 
         JSON responses:
             ```json
-            {"status": "SUCCESS", "output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1}, "traceback": null}
-            {"status": "SUCCESS", "output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2}, "traceback": null}
-            {"status": "SUCCESS", "output": {"text": " think", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3}, "traceback": null}
-            {"status": "SUCCESS", "output": {"text": " the", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4}, "traceback": null}
-            {"status": "SUCCESS", "output": {"text": " sky", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5}, "traceback": null}
+            {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1}}
+            {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2}}
+            {"request_id": "0123456789", "output": {"text": " think", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3}}
+            {"request_id": "0123456789", "output": {"text": " the", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4}}
+            {"request_id": "0123456789", "output": {"text": " sky", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5}}
             ```
 
 
@@ -187,7 +186,7 @@ class Completion(APIEngine):
         JSON Response:
             ```json
             {
-                "status": "SUCCESS",
+                "request_id": "0123456789",
                 "outputs":
                 [
                     {
@@ -219,11 +218,11 @@ class Completion(APIEngine):
 
         JSON responses:
             ```json
-            {"status": "SUCCESS", "output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1 }, "traceback": null }
-            {"status": "SUCCESS", "output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2 }, "traceback": null }
-            {"status": "SUCCESS", "output": {"text": " don", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3 }, "traceback": null }
-            {"status": "SUCCESS", "output": {"text": "’", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4 }, "traceback": null }
-            {"status": "SUCCESS", "output": {"text": "t", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5 }, "traceback": null }
+            {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 1 } }
+            {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 2 } }
+            {"request_id": "0123456789", "output": {"text": " don", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 3 } }
+            {"request_id": "0123456789", "output": {"text": "’", "finished": false, "num_prompt_tokens": null, "num_completion_tokens": 4 } }
+            {"request_id": "0123456789", "output": {"text": "t", "finished": true, "num_prompt_tokens": null, "num_completion_tokens": 5 } }
             ```
 
         Args:
