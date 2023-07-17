@@ -143,7 +143,7 @@ commands:
           name: Type Check
           command: |
             pushd clients/python
-            mypy . --non-interactive
+            mypy . --install-types --non-interactive
             popd
   run_unit_tests_server:
     description: Unit tests of the server
@@ -164,7 +164,7 @@ commands:
           name: Type Check
           command: |
             pushd server
-            mypy . --non-interactive
+            mypy . --install-types --non-interactive
             popd
       - run:
           name: Unit Tests
