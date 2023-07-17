@@ -36,6 +36,15 @@ class Completion(APIEngine):
         """
         Creates a completion for the provided prompt and parameters asynchronously (with `asyncio`).
 
+        This API can be used to get the LLM to generate a completion *asynchronously*.
+        It takes as parameters the `model`[see Model Zoo](../model_zoo/) and the `prompt`.
+        Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
+        It returns
+        [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
+        if `stream=False` or an async iterator of
+        [CompletionStreamV1Response](../../api/data_types/#llmengine.CompletionStreamV1Response)
+        with `request_id` and `outputs` fields.
+
         Args:
             model (str):
                 Name of the model to use. See [Model Zoo](../model_zoo/) for a list of Models that are supported.
@@ -62,7 +71,7 @@ class Completion(APIEngine):
                 When streaming, tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
 
         Returns:
-            response (Union[CompletionSyncV1Response, AsyncIterable[CompletionStreamV1Response]]): The generated response (if `streaming=False`) or iterator of response chunks (if `streaming=True`)
+            response (Union[CompletionSyncV1Response, AsyncIterable[CompletionStreamV1Response]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
 
         Example without token streaming:
             ```python
@@ -159,7 +168,7 @@ class Completion(APIEngine):
                 return CompletionSyncV1Response.parse_obj(response)
 
             return await _acreate_sync(
-                prompts=[prompt], max_new_tokens=max_new_tokens, temperature=temperature
+                prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
             )
 
     @classmethod
@@ -174,6 +183,15 @@ class Completion(APIEngine):
     ) -> Union[CompletionSyncV1Response, Iterator[CompletionStreamV1Response]]:
         """
         Creates a completion for the provided prompt and parameters synchronously.
+
+        This API can be used to get the LLM to generate a completion *synchronously*.
+        It takes as parameters the `model`[see Model Zoo](../model_zoo/) and the `prompt`.
+        Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
+        It returns
+        [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
+        if `stream=False` or an async iterator of
+        [CompletionStreamV1Response](../../api/data_types/#llmengine.CompletionStreamV1Response)
+        with `request_id` and `outputs` fields.
 
         Args:
             model (str):
@@ -202,7 +220,7 @@ class Completion(APIEngine):
 
 
         Returns:
-            response (Union[CompletionSyncV1Response, AsyncIterable[CompletionStreamV1Response]]): The generated response (if `streaming=False`) or iterator of response chunks (if `streaming=True`)
+            response (Union[CompletionSyncV1Response, AsyncIterable[CompletionStreamV1Response]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
 
         Example request without token streaming:
             ```python
@@ -276,7 +294,7 @@ class Completion(APIEngine):
 
         else:
             data = CompletionSyncV1Request(
-                prompts=[prompt], max_new_tokens=max_new_tokens, temperature=temperature
+                prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
             ).dict()
             response = cls.post_sync(
                 resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",
