@@ -16,12 +16,22 @@ Fine-tuning allows for:
 
 LLM Engine's fine-tuning API lets you fine-tune various open source LLMs on your own data and then make inference calls to the resulting LLM. For more specific details, see the [fine-tuning API Python client reference](../../api/python_client/#llmengine.FineTune).
 
-## Preparing data
-Your training data should consist of prompt and response pairs. Your data must be formatted as a CSV file that includes two columns: `prompt` and `response`. A maximum of 100,000 rows of data is currently supported. At least 200 rows of data is recommended to start to see benefits from fine-tuning.
+## Producing high quality data for fine-tuning
+
+The training data for fine-tuning should consist of prompt and response pairs.
 
 As a rule of thumb, you should expect to see linear improvements in your fine-tuned model's quality with each doubling of the dataset size. Having high-quality data is also essential to improving performance. For every linear increase in the error rate in your training data, you may encounter a roughly quadratic increase in your fine-tuned model's error rate.
 
+High quality data is critical to achieve improved model performance, and in several cases will require _experts_ to 
+generate and prepare data - the breadth and diversity of the data is highly critical. Scale's Data Engine can help 
+prepare such high quality, diverse data sets - more information [here](https://scale.com/rlhf).
+
+## Preparing data
+Your data must be formatted as a CSV file that includes two columns: `prompt` and `response`. A maximum of 100,000 rows of data is currently supported. At least 200 rows of data is recommended to start to see benefits from fine-tuning.
+
 Here is an example script to create a 50-row CSV of properly formatted data for fine-tuning an airline question answering bot:
+
+
 
 <details>
 <summary>Creating a sample dataset</summary>
@@ -92,7 +102,7 @@ with open('customer_service_data.csv', 'w', newline='') as file:
 </details>
 
 ## Making your data accessible to LLM Engine
-Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read for fine-tuning. Publicly accessible HTTP, HTTPS, and S3 URLs are currently supported. Support for privately sharing data with the LLM Engine API is coming shortly.
+Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read for fine-tuning. Publicly accessible HTTP, HTTPS, and S3 URLs are currently supported. Support for privately sharing data with the LLM Engine API is coming shortly. For quick iteration, you can look into tools like Pastebin or Github Gists to quickly host your CSV files in a public manner. We created an example Github Gist you can see [here](https://gist.github.com/tigss/7cec73251a37de72756a3b15eace9965). To use the gist, you can just use the URL given when you click the “Raw” button ([URL](https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv)).
 
 ## Launching the fine-tune
 Once you have uploaded your data, you can use the LLM Engine API to launch a fine-tune. You will need to specify which base model to fine-tune, the locations of the training file and optional validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, and an optional suffix to append to the name of the fine-tune.

@@ -173,7 +173,7 @@ class CompletionSyncV1Request(BaseModel):
     Request object for a synchronous prompt completion task.
     """
 
-    prompts: List[str] = Field(..., min_items=1)
+    prompt: str = Field(..., min_length=1)
     max_new_tokens: int = Field(..., gt=0)
     temperature: float = Field(..., gt=0.0)
 
@@ -198,11 +198,8 @@ class CompletionSyncV1Response(BaseModel):
     request_id: str
     """Unique ID of request."""
 
-    outputs: List[CompletionOutput]
-    """List of completion outputs."""
-
-    traceback: Optional[str] = None
-    """Traceback if the task failed."""
+    output: CompletionOutput
+    """Completion output."""
 
 
 class CompletionStreamV1Request(BaseModel):
@@ -239,7 +236,12 @@ class CompletionStreamV1Response(BaseModel):
 
 
 class CreateFineTuneRequest(BaseModel):
+    """
+    Request object for creating a FineTune.
+    """
+
     model: str = Field(..., description="Identifier of base model to train from.")
+    """Identifier of base model to train from."""
 
     training_file: str = Field(
         ...,

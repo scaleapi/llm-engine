@@ -1,35 +1,23 @@
 # Overview
 
 ## What are rate limits?
-A rate limit is a restriction that an API imposes on the number of times a user or client can access the server within 
-a specified period of time.
 
-## Why do we have rate limits?
-Rate limits are a common practice for APIs, and they're put in place for a few different reasons:
-
-* **They help protect against abuse or misuse of the API.** For example, a malicious actor could flood the API with 
-requests in an attempt to overload it or cause disruptions in the service. By setting rate limits, the LLM Engine 
-server can prevent this kind of activity.
-* **Rate limits help ensure that everyone has fair access to API.** If one person or organization makes an excessive 
-number of requests, it could bog down the API for everyone else. By throttling the number of requests that a single 
-user can make, LLM Engine ensures that the most number of people have an opportunity to use the API without 
-experiencing slowdowns. This also applies when self-hosting LLM Engine, as all internal users within an organization 
-would have fair access.
-* **Rate limits can help manage the aggregate load on the server infrastructure.** If requests to the API increase 
-dramatically, it could tax the servers and cause performance issues. By setting rate limits, LLM Engine can help 
-maintain a smooth and consistent experience for all users. This is especially important when self-hosting LLM Engine.
+A rate limit is a restriction that an API imposes on the number of times a user or client can access the server within a specified period of time.
 
 ## How do I know if I am rate limited?
+
 Per standard HTTP practices, your request will receive a response with HTTP status code of `429`, `Too Many Requests`.
 
-
 ## What are the rate limits for our API?
+
 The LLM Engine API is currently in a preview mode, and therefore we currently do not have any advertised rate limits.
 As the API moves towards a production release, we will update this section with specific rate limits. For now, the API
 will return HTTP 429 on an as-needed basis.
 
 # Error mitigation
+
 ## Retrying with exponential backoff
+
 One easy way to avoid rate limit errors is to automatically retry requests with a random exponential backoff. 
 Retrying with exponential backoff means performing a short sleep when a rate limit error is hit, then retrying the 
 unsuccessful request. If the request is still unsuccessful, the sleep length is increased and the process is repeated. 
@@ -64,6 +52,7 @@ completion_with_backoff(model="llama-7b", prompt="Why is the sky blue?")
 ```
 
 ### Example #2: Using the `backoff` library
+
 Another python library that provides function decorators for backoff and retry is backoff:
 
 ```python
