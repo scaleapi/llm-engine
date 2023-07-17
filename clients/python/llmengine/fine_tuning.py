@@ -48,8 +48,11 @@ class FineTune(APIEngine):
             validation_file (`Optional[str]`):
                 Publicly accessible URL to a CSV file for validation.
 
-            hyperparameters (`str`):
-                Hyperparameters
+            hyperparameters (`Optional[Dict[str, str]]`):
+                Hyperparameters to customize fine-tuning behavior.
+
+                Currently supported hyperparameters:
+                    "n_epochs" (`int`): number of epochs to fine-tune for.
 
             suffix (`Optional[str]`):
                 A string that will be added to your fine-tuned model name.
