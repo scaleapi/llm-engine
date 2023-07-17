@@ -54,9 +54,9 @@ spec:
             - --loglevel=INFO
             - --concurrency=2
             {{- if .Values.serviceIdentifier }}
-            - --queues=hosted-model-inference-{{ .Values.serviceIdentifier }}.service-builder
+            - --queues=spellbook-serve-{{ .Values.serviceIdentifier }}.service-builder
             {{- else }}
-            - --queues=hosted-model-inference.service-builder
+            - --queues=spellbook-serve.service-builder
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
