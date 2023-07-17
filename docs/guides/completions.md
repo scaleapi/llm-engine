@@ -1,7 +1,7 @@
 Large Language Models are trained to understand natural language and provide text outputs as a response to
 their inputs. The inputs are called _prompts_ and outputs are referred to as _completions_.
 LLMs take the input _prompts_ and chunk them smaller units called _tokens_ to process and generate
-language. Tokens may include trailing spaces and even sub-words, this process is language dependent.
+language. Tokens may include trailing spaces and even sub-words; this process is language dependent.
 
 The LLMEngine provides access to open source language models (see [Model Zoo](../../model_zoo)) that can be used for producing completions to prompts.
 
@@ -17,7 +17,7 @@ Optional parameters can be specified for max_new_tokens, temperature, timeout in
 
 ## Sync API
 
-In the [Getting Started](./getting_started) guide, we provided a very simple way of using the Completion API to make a call to a model:
+In the [Getting Started](../../getting_started) guide, we provided a very simple way of using the Completion API to make a call to a model:
 
 === "Basic example"
 
@@ -37,7 +37,7 @@ The _prompt_ is the main input for the LLM to respond to.
 The _max_new_tokens_ parameter is the maximum number of tokens to generate in the chat completion.
 The _temperature_ is the sampling temperature to use. Higher values make the output more random, while lower values will make it more focussed and deterministic.
 
-Different models from the [Model Zoo](./model_zoo) can be referenced in a similar manner:
+Different models from the [Model Zoo](../../model_zoo) can be referenced in a similar manner:
 
 === "Using different LLMs"
 
