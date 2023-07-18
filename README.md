@@ -31,10 +31,10 @@ Kubernetes.
 open-source foundation models - including LLaMA, MPT and Falcon.
 Use Scale-hosted models or deploy to your own infrastructure.
 
-**Fine-tune foundation models**: Fine-tune open-source foundation
+🔧 **Fine-tune foundation models**: Fine-tune open-source foundation
 models like LLaMA, MPT etc. with your own data for optimized performance.
 
-🎙️**Optimized Inference**: LLM Engine provides inference APIs
+🎙️ **Optimized Inference**: LLM Engine provides inference APIs
 for streaming responses and dynamically batching inputs for higher throughput
 and lower latency.
 
@@ -55,7 +55,7 @@ within seconds, even for large foundation models.
 💸 **Cost Optimization**: Deploy AI models cheaper than commercial ones,
 including cold-start and warm-down times.
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
 Navigate to [Scale Spellbook](https://spellbook.scale.com/) to first create 
 an account, and then grab your API key on the [Settings](https://spellbook.scale.com/settings) 
