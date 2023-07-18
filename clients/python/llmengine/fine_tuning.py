@@ -39,7 +39,8 @@ class FineTune(APIEngine):
         file should consist of prompt and response pairs. Your data must be formatted as a CSV file
         that includes two columns: `prompt` and `response`. A maximum of 100,000 rows of data is
         currently supported. At least 200 rows of data is recommended to start to see benefits from
-        fine-tuning.
+        fine-tuning. For sequences longer than the native `max_seq_length` of the model, the sequences
+        will be truncated.
 
         Args:
             model (`str`):
@@ -60,7 +61,6 @@ class FineTune(APIEngine):
                 * `warmup_ratio`: Ratio of training steps used for learning rate warmup. (Default: 0.03)
                 * `epochs`: Number of fine-tuning epochs. This should be less than 20. (Default: 5)
                 * `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
-                * The `max_seq_length` length of the model is decided based on the architecture and input data.
 
             suffix (`Optional[str]`):
                 A string that will be added to your fine-tuned model name.
