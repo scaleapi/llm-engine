@@ -5,7 +5,7 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | Model Name            | Inference APIs Available | Fine-tuning APIs Available |
 | --------------------- | ------------------------ | -------------------------- |
 | `llama-7b`            | ✅                       | ✅                         |
-| `llama-7b-2`          | ✅                       | ✅                         |
+| `llama-2-7b`          | ✅                       | ✅                         |
 | `falcon-7b`           | ✅                       |                            |
 | `falcon-7b-instruct`  | ✅                       |                            |
 | `falcon-40b`          | ✅                       |                            |
