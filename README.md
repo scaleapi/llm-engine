@@ -31,10 +31,10 @@ Kubernetes.
 open-source foundation models - including LLaMA, MPT and Falcon.
 Use Scale-hosted models or deploy to your own infrastructure.
 
-**Fine-tune foundation models**: Fine-tune open-source foundation
-models like LLaMA, MPT etc. with your own data for optimized performance.
+🔧 **Fine-tune foundation models**: Fine-tune open-source foundation
+models on your own data for optimized performance.
 
-🎙️**Optimized Inference**: LLM Engine provides inference APIs
+🎙️ **Optimized Inference**: LLM Engine provides inference APIs
 for streaming responses and dynamically batching inputs for higher throughput
 and lower latency.
 
