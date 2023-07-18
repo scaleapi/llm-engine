@@ -36,17 +36,17 @@ class Completion(APIEngine):
         Creates a completion for the provided prompt and parameters asynchronously (with `asyncio`).
 
         This API can be used to get the LLM to generate a completion *asynchronously*.
-        It takes as parameters the `model` ([see Model Zoo](../../model_zoo)) and the `prompt`.
+        It takes as parameters the `model` ([see Model Zoo](../../../model_zoo)) and the `prompt`.
         Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
-        It returns
-        [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
+        It returns a
+        [CompletionSyncResponse](../../api/data_types/#llmengine.CompletionSyncResponse)
         if `stream=False` or an async iterator of
-        [CompletionStreamV1Response](../../api/data_types/#llmengine.CompletionStreamV1Response)
+        [CompletionStreamResponse](../../api/data_types/#llmengine.CompletionStreamResponse)
         with `request_id` and `outputs` fields.
 
         Args:
             model (str):
-                Name of the model to use. See [Model Zoo](../../model_zoo) for a list of Models that are supported.
+                Name of the model to use. See [Model Zoo](../../../model_zoo) for a list of Models that are supported.
             prompt (str):
                 The prompt to generate completions for, encoded as a string.
 
@@ -54,7 +54,7 @@ class Completion(APIEngine):
                 The maximum number of tokens to generate in the completion.
 
                 The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
-                [Model Zoo](../../model_zoo) for information on each supported model's context length.
+                [Model Zoo](../../../model_zoo) for information on each supported model's context length.
 
             temperature (float):
                 What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
@@ -71,9 +71,7 @@ class Completion(APIEngine):
         Returns:
             response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
 
-        Token streaming can be used to reduce _percieved_ latency for applications:
-
-        === "Asynchronous completion without token streaming in python"
+        === "Asynchronous completion without token streaming in Python"
             ```python
             import asyncio
             from llmengine import Completion
@@ -90,23 +88,20 @@ class Completion(APIEngine):
             asyncio.run(main())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {
-                "request_id": "b1b2c3d4e5f6g7h8i9j0",
-                "outputs":
-                [
-                    {
-                        "text": "_______, and I am a _____",
-                        "num_completion_tokens": 10
-                    }
-                ],
+                "request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0",
+                "output": {
+                    "text": "_______ and I am a _______",
+                    "num_completion_tokens": 10
+                }
             }
             ```
 
-        Here is how applications can use streaming:
+        Token streaming can be used to reduce _perceived_ latency for applications. Here is how applications can use streaming:
 
-        === "Asynchronous completion with token streaming in python"
+        === "Asynchronous completion with token streaming in Python"
             ```python
             import asyncio
             from llmengine import Completion
@@ -127,13 +122,13 @@ class Completion(APIEngine):
             asyncio.run(main())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
-            {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1}}
-            {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_completion_tokens": 2}}
-            {"request_id": "0123456789", "output": {"text": " think", "finished": false, "num_completion_tokens": 3}}
-            {"request_id": "0123456789", "output": {"text": " the", "finished": false, "num_completion_tokens": 4}}
-            {"request_id": "0123456789", "output": {"text": " sky", "finished": true, "num_completion_tokens": 5}}
+            {"request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1}}
+            {"request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0", "output": {"text": "I", "finished": false, "num_completion_tokens": 2}}
+            {"request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0", "output": {"text": " think", "finished": false, "num_completion_tokens": 3}}
+            {"request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0", "output": {"text": " the", "finished": false, "num_completion_tokens": 4}}
+            {"request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0", "output": {"text": " sky", "finished": true, "num_completion_tokens": 5}}
             ```
         """
         if stream:
@@ -187,17 +182,17 @@ class Completion(APIEngine):
         Creates a completion for the provided prompt and parameters synchronously.
 
         This API can be used to get the LLM to generate a completion *synchronously*.
-        It takes as parameters the `model` ([see Model Zoo](../../model_zoo)) and the `prompt`.
+        It takes as parameters the `model` ([see Model Zoo](../../../model_zoo)) and the `prompt`.
         Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
-        It returns
-        [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
+        It returns a
+        [CompletionSyncResponse](../../api/data_types/#llmengine.CompletionSyncResponse)
         if `stream=False` or an async iterator of
-        [CompletionStreamV1Response](../../api/data_types/#llmengine.CompletionStreamV1Response)
+        [CompletionStreamResponse](../../api/data_types/#llmengine.CompletionStreamResponse)
         with `request_id` and `outputs` fields.
 
         Args:
             model (str):
-                Name of the model to use. See [Model Zoo](../../model_zoo) for a list of Models that are supported.
+                Name of the model to use. See [Model Zoo](../../../model_zoo) for a list of Models that are supported.
 
             prompt (str):
                 The prompt to generate completions for, encoded as a string.
@@ -206,7 +201,7 @@ class Completion(APIEngine):
                 The maximum number of tokens to generate in the completion.
 
                 The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
-                [Model Zoo](../../model_zoo) for information on each supported model's context length.
+                [Model Zoo](../../../model_zoo) for information on each supported model's context length.
 
             temperature (float):
                 What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
@@ -224,9 +219,7 @@ class Completion(APIEngine):
         Returns:
             response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
 
-        Token streaming can be used to reduce _percieved_ latency for applications:
-
-        === "Synchronous completion without token streaming in python"
+        === "Synchronous completion without token streaming in Python"
             ```python
             from llmengine import Completion
 
@@ -239,24 +232,20 @@ class Completion(APIEngine):
             print(response.json())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {
-                "request_id": "0123456789",
-                "outputs":
-                [
-                    {
-                        "text": "_______ and I am a _______",
-                        "num_completion_tokens": 10
-                    }
-                ],
-                "traceback": null
+                "request_id": "8bbd0e83-f94c-465b-a12b-aabad45750a9",
+                "output": {
+                    "text": "_______ and I am a _______",
+                    "num_completion_tokens": 10
+                }
             }
             ```
 
-        Here is how applications can use streaming:
+        Token streaming can be used to reduce _perceived_ latency for applications. Here is how applications can use streaming:
 
-        === "Synchronous completion with token streaming in python"
+        === "Synchronous completion with token streaming in Python"
             ```python
             from llmengine import Completion
 
@@ -273,13 +262,13 @@ class Completion(APIEngine):
                     print(response.json())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
-            {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1 } }
-            {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_completion_tokens": 2 } }
-            {"request_id": "0123456789", "output": {"text": " don", "finished": false, "num_completion_tokens": 3 } }
-            {"request_id": "0123456789", "output": {"text": "’", "finished": false, "num_completion_tokens": 4 } }
-            {"request_id": "0123456789", "output": {"text": "t", "finished": true, "num_completion_tokens": 5 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "I", "finished": false, "num_completion_tokens": 2 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": " don", "finished": false, "num_completion_tokens": 3 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "’", "finished": false, "num_completion_tokens": 4 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "t", "finished": true, "num_completion_tokens": 5 } }
             ```
         """
         if stream:
