@@ -10,11 +10,11 @@ from llmengine.data_types import (
 
 class Model(APIEngine):
     """
-    Model API. This API is used to get, list, and delete models. Models can be created using [FineTune.create()](./#llmengine.fine_tuning.FineTune.create).
+    Model API. This API is used to get, list, and delete models. Models include both base
+    models built into LLM Engine, and fine-tuned models that you create through the
+    [FineTune.create()](./#llmengine.fine_tuning.FineTune.create) API.
 
-    Our DTOs mention "endpoint"s, which are our concept of a physical running instance of a Model. There is a 1:1 correspondence between Models and endpoints, so you can think of them as equivalent.
-
-    See [Model Zoo](../../model_zoo) for the list of publicly available models.
+    See [Model Zoo](../../model_zoo) for the list of publicly available base models.
     """
 
     @classmethod
@@ -98,7 +98,7 @@ class Model(APIEngine):
         List LLM models available to call inference on.
 
         This API can be used to list all available models, including both publicly
-        available models and user-specific fine-tuned models.
+        available models and user-created fine-tuned models.
         It returns a list of
         [GetLLMEndpointResponse](../../api/data_types/#llmengine.GetLLMEndpointResponse)
         objects for all models. The most important field is the model `name`.
@@ -174,10 +174,11 @@ class Model(APIEngine):
         """
         Deletes an LLM model.
 
-        This API can be used to delete a fine-tuned model if
-        it's no longer required. It takes as parameter the name of the `model`
-        and returns a response object which has a `deleted` field
-        confirming if the deletion was successful.
+        This API can be used to delete a fine-tuned model. It takes
+        as parameter the name of the `model` and returns a response
+        object which has a `deleted` field confirming if the deletion
+        was successful. If called on a base model included with LLM
+        Engine, an error will be thrown.
 
         Args:
             model (`str`):
