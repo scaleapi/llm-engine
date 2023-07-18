@@ -13,13 +13,17 @@ This section describes assumptions about existing AWS resources required run to 
 ### EKS 
 The LLM Engine server must be deployed in an EKS cluster environment. Currently only versions `1.23+` are supported. Below are the assumed requirements for the EKS cluster: 
 
-Creating node groups
-One will need to provision EKS node groups to schedule model pods. 
-The node groups must be of the g5 family and have the labels:
-- k8s.amazonaws.com/accelerator=nvidia-ampere-a10
-- node-lifecycle: normal
+One will need to provision EKS node groups with GPUs to schedule model pods. These node groups must have the `node-lifecycle: normal` label on them.
+Additionally, they must have the `k8s.amazonaws.com/accelerator` label set appropriately depending on the instance type:
 
-We also recommend setting the following taint:
+| Instance family | `k8s.amazonaws.com/accelerator` label |
+| --- | --- |
+| g4dn | nvidia-tesla-t4 |
+| g5 | nvidia-tesla-a10 |
+| p4d | nvidia-tesla-a100 |
+| p4de | nvidia-tesla-a100e |
+
+We also recommend setting the following taint on your GPU nodes to prevent pods requiring GPU resources from being scheduled on them:
 - { key = "nvidia.com/gpu", value = "true", effect = "NO_SCHEDULE" }
 
 
@@ -51,7 +55,7 @@ LLMEngine utilizes Amazon SQS to keep track of jobs. LLMEngine will create and u
 
 ### Identity and Access Management (IAM)
 
-The LLMEngine server will an IAM role to perform various AWS operations. The ARN of this role needs to be provided to the helm chart, and the role needs to be provided the following permissions:
+The LLMEngine server will an IAM role to perform various AWS operations. This role will be assumed by the serviceaccount `llm-engine` in the `launch` namespace in the EKS cluster. The ARN of this role needs to be provided to the helm chart, and the role needs to be provided the following permissions: 
 
 | Action | Resource |
 | --- | --- |
