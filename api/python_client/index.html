@@ -500,6 +500,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#llmengine.fine_tuning.FineTune.get_events" class="md-nav__link">
+    get_events()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#llmengine.fine_tuning.FineTune.list" class="md-nav__link">
     list()
   </a>
@@ -603,6 +610,21 @@
   
   
     <li class="md-nav__item">
+      <a href="../../pricing/" class="md-nav__link">
+        Pricing
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../contributing/" class="md-nav__link">
         Contributing
       </a>
@@ -681,6 +703,13 @@
           <li class="md-nav__item">
   <a href="#llmengine.fine_tuning.FineTune.get" class="md-nav__link">
     get()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.fine_tuning.FineTune.get_events" class="md-nav__link">
+    get_events()
   </a>
   
 </li>
@@ -1625,6 +1654,127 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 
 
 
+<h3 id="llmengine.fine_tuning.FineTune.get_events" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">get_events</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#llmengine.fine_tuning.FineTune.get_events" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>get_events(fine_tune_id: <span style="color: #008000">str</span>) <span style="color: #666666">-&gt;</span> GetFineTuneEventsResponse
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Get events of a fine-tuning job.</p>
+<p>This API can be used to get the list of detailed events for a fine-tuning job.
+It takes the <code>fine_tune_id</code> as a parameter and returns a response object
+which has a list of events that has happened for the fine-tuning job. Two events
+are logged periodically: an evaluation of the training loss, and an
+evaluation of the eval loss. This API will return all events for the fine-tuning job.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>fine_tune_id</code></td>
+          <td>
+                <code>`str`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>ID of the fine-tuning job</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>GetFineTuneEventsResponse</code></td>          <td>
+                <code><span title="llmengine.data_types.GetFineTuneEventsResponse">GetFineTuneEventsResponse</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>an object that contains the list of events for the fine-tuning job</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> FineTune<span style="color: #666666">.</span>get_events(fine_tune_id<span style="color: #666666">=</span><span style="color: #BA2121">&quot;ft-cir3eevt71r003ks6il0&quot;</span>)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+</code></pre></div>
+</details>
+<details class="json-response" open>
+  <summary>JSON Response</summary>
+  <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;events&quot;</span>:
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span style="color: #bbbbbb">    </span>[
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;timestamp&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">1689665099.6704428</span>,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;message&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;{&#39;loss&#39;: 2.108, &#39;learning_rate&#39;: 0.002, &#39;epoch&#39;: 0.7}&quot;</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;level&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;info&quot;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span style="color: #bbbbbb">        </span>},
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;timestamp&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">1689665100.1966307</span>,
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;message&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;{&#39;eval_loss&#39;: 1.67730712890625, &#39;eval_runtime&#39;: 0.2023, &#39;eval_samples_per_second&#39;: 24.717, &#39;eval_steps_per_second&#39;: 4.943, &#39;epoch&#39;: 0.7}&quot;</span>,
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;level&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;info&quot;</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span style="color: #bbbbbb">        </span>},
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;timestamp&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">1689665105.6544185</span>,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;message&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;{&#39;loss&#39;: 1.8961, &#39;learning_rate&#39;: 0.0017071067811865474, &#39;epoch&#39;: 1.39}&quot;</span>,
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;level&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;info&quot;</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span style="color: #bbbbbb">        </span>},
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;timestamp&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">1689665106.159139</span>,
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;message&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;{&#39;eval_loss&#39;: 1.513688564300537, &#39;eval_runtime&#39;: 0.2025, &#39;eval_samples_per_second&#39;: 24.696, &#39;eval_steps_per_second&#39;: 4.939, &#39;epoch&#39;: 1.39}&quot;</span>,
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;level&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;info&quot;</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span style="color: #bbbbbb">        </span>}
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span style="color: #bbbbbb">    </span>]
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>}
+</code></pre></div>
+</details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
 <h3 id="llmengine.fine_tuning.FineTune.list" class="doc doc-heading">
           <span class="doc doc-object-name doc-function-name">list</span>
 
@@ -1719,7 +1869,7 @@ all existing jobs.</p>
   
       <p>Cancel a fine-tuning job.</p>
 <p>This API can be used to cancel an existing fine-tuning job if
-it's no longer required. It takes as parameter the <code>fine_tune_id</code>
+it's no longer required. It takes the <code>fine_tune_id</code> as a parameter
 and returns a response object which has a <code>success</code> field
 confirming if the cancellation was successful.</p>
 
