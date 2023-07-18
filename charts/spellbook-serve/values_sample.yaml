@@ -11,7 +11,7 @@ replicaCount:
   balloonT4: 0
 
 # tag is the LLM Engine docker image tag
-tag: 3d8bed9ac5ba940997917f15285ef67c82562017
+tag: 0b7ff9d0cdfb27033dd5385c7247a3a38f2829bd
 context: production
 image:
   # gatewayRepository is the docker repository to pull the LLM Engine gateway image from
