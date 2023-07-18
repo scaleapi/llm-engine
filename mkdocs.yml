@@ -4,7 +4,7 @@ site_description: The open source engine for fine-tuning large language models.
 theme:
   name: material
   palette:
-    - scheme: default
+    - scheme: slate
       primary: blue grey
       accent: indigo
       toggle:
@@ -44,6 +44,7 @@ nav:
       - "API Reference": api/python_client.md
       - "Data Type Reference": api/data_types.md
       - "Error handling": api/error_handling.md
+  - "Contributing": contributing.md
 #  - "FAQ": faq.md
 
 markdown_extensions:
@@ -53,6 +54,9 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
+      use_pygments: true
+      noclasses: true
+      pygments_style : 'monokai'
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.critic
@@ -105,8 +109,7 @@ plugins:
 #        on_page_markdown: "docs.plugins:on_page_markdown"
 
 extra_css:
-  - assets/css/extra.css
-  - assets/css/neoteroi.css
+  - custom/css/extra.css
 
 extra:
   analytics:

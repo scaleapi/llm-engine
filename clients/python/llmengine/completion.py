@@ -13,14 +13,13 @@ class Completion(APIEngine):
     """
     Completion API. This API is used to generate text completions.
 
-    Language Models are trained to understand natural language and provide text outputs as a response to
-    their inputs. The inputs are called _prompts_ and outputs are referred to as _completions_.
-    LLMs take the input _prompts_ and chunk them smaller units called _tokens_ to process and generate
+    Language models are trained to understand natural language and predict text outputs as a response to
+    their inputs. The inputs are called _prompts_ and the outputs are referred to as _completions_.
+    LLMs take the input prompts and chunk them into smaller units called _tokens_ to process and generate
     language. Tokens may include trailing spaces and even sub-words; this process is language dependent.
 
-    The Completions API can be run either
-    synchronous or asynchronously (via Python `asyncio`); for each of these modes, you can also choose to
-    stream token responses or not.
+    The Completion API can be run either synchronous or asynchronously (via Python `asyncio`).
+    For each of these modes, you can also choose whether to stream token responses or not.
     """
 
     @classmethod
@@ -36,10 +35,18 @@ class Completion(APIEngine):
         """
         Creates a completion for the provided prompt and parameters asynchronously (with `asyncio`).
 
+        This API can be used to get the LLM to generate a completion *asynchronously*.
+        It takes as parameters the `model`[see Model Zoo](../model_zoo/) and the `prompt`.
+        Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
+        It returns
+        [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
+        if `stream=False` or an async iterator of
+        [CompletionStreamV1Response](../../api/data_types/#llmengine.CompletionStreamV1Response)
+        with `request_id` and `outputs` fields.
+
         Args:
             model (str):
-                Name of the model to use. See [Model Zoo](../model_zoo/) for a list of Models that are supported.
-
+                Name of the model to use. See [Model Zoo](../../model_zoo) for a list of Models that are supported.
             prompt (str):
                 The prompt to generate completions for, encoded as a string.
 
@@ -47,7 +54,7 @@ class Completion(APIEngine):
                 The maximum number of tokens to generate in the completion.
 
                 The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
-                [Model Zoo](../model_zoo/) for information on each supported model's context length.
+                [Model Zoo](../../model_zoo) for information on each supported model's context length.
 
             temperature (float):
                 What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
@@ -62,7 +69,7 @@ class Completion(APIEngine):
                 When streaming, tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
 
         Returns:
-            response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `streaming=False`) or iterator of response chunks (if `streaming=True`)
+            response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
 
         Example without token streaming:
             ```python
@@ -159,7 +166,7 @@ class Completion(APIEngine):
                 return CompletionSyncResponse.parse_obj(response)
 
             return await _acreate_sync(
-                prompts=[prompt], max_new_tokens=max_new_tokens, temperature=temperature
+                prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
             )
 
     @classmethod
@@ -175,9 +182,18 @@ class Completion(APIEngine):
         """
         Creates a completion for the provided prompt and parameters synchronously.
 
+        This API can be used to get the LLM to generate a completion *synchronously*.
+        It takes as parameters the `model`[see Model Zoo](../model_zoo/) and the `prompt`.
+        Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
+        It returns
+        [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
+        if `stream=False` or an async iterator of
+        [CompletionStreamV1Response](../../api/data_types/#llmengine.CompletionStreamV1Response)
+        with `request_id` and `outputs` fields.
+
         Args:
             model (str):
-                Name of the model to use. See [Model Zoo](../model_zoo/) for a list of Models that are supported.
+                Name of the model to use. See [Model Zoo](../../model_zoo) for a list of Models that are supported.
 
             prompt (str):
                 The prompt to generate completions for, encoded as a string.
@@ -186,7 +202,7 @@ class Completion(APIEngine):
                 The maximum number of tokens to generate in the completion.
 
                 The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
-                [Model Zoo](../model_zoo/) for information on each supported model's context length.
+                [Model Zoo](../../model_zoo) for information on each supported model's context length.
 
             temperature (float):
                 What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
@@ -202,7 +218,7 @@ class Completion(APIEngine):
 
 
         Returns:
-            response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `streaming=False`) or iterator of response chunks (if `streaming=True`)
+            response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
 
         Example request without token streaming:
             ```python
@@ -276,7 +292,7 @@ class Completion(APIEngine):
 
         else:
             data = CompletionSyncV1Request(
-                prompts=[prompt], max_new_tokens=max_new_tokens, temperature=temperature
+                prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
             ).dict()
             response = cls.post_sync(
                 resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",
