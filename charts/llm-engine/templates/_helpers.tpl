@@ -225,7 +225,7 @@ env:
 {{- define "llmEngine.serviceEnv" }}
 env:
   - name: DATADOG_TRACE_ENABLED
-    value: {{ .Values.datadog_trace_enabled }}
+    value: "{{ .Values.datadog_trace_enabled }}"
   - name: DD_ENV
     value: {{ .Values.context }}
   - name: DD_VERSION
