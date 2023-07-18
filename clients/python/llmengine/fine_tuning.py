@@ -5,6 +5,7 @@ from llmengine.data_types import (
     CancelFineTuneResponse,
     CreateFineTuneRequest,
     CreateFineTuneResponse,
+    GetFineTuneEventsResponse,
     GetFineTuneResponse,
     ListFineTunesResponse,
 )
@@ -240,3 +241,53 @@ class FineTune(APIEngine):
             timeout=DEFAULT_TIMEOUT,
         )
         return CancelFineTuneResponse.parse_obj(response)
+
+    @classmethod
+    def get_events(cls, fine_tune_id: str) -> GetFineTuneEventsResponse:
+        """
+        Get events of a fine-tuning job.
+
+        This API can be used to get the list of events for a fine-tuning job.
+        It takes as parameter the `fine_tune_id` and returns a response object
+        which has a list of events that has happened for the fine-tuning job.
+
+        Args:
+            fine_tune_id (`str`):
+                ID of the fine-tuning job
+
+        Returns:
+            GetFineTuneEventsResponse: an object that contains the list of events for the fine-tuning job
+
+        Example:
+            ```python
+            from llmengine import FineTune
+
+            response = FineTune.get_events(fine_tune_id="ft_abc123")
+            print(response.json())
+            ```
+
+        JSON Response:
+            ```json
+            {
+                [
+                    {
+                        "timestamp": 1689644480.0,
+                        "message": "Fine-tune job created",
+                        "level": "INFO"
+                    }
+                ],
+                [
+                    {
+                        "timestamp": 1689645480.0,
+                        "message": "Fine-tune job finished",
+                        "level": "INFO"
+                    }
+                ]
+            }
+            ```
+        """
+        response = cls._get(
+            f"v1/llm/fine-tunes/{fine_tune_id}/events",
+            timeout=DEFAULT_TIMEOUT,
+        )
+        return GetFineTuneEventsResponse.parse_obj(response)
