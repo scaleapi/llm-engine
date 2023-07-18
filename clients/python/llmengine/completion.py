@@ -99,7 +99,7 @@ class Completion(APIEngine):
             }
             ```
 
-        Token streaming can be used to reduce _percieved_ latency for applications. Here is how applications can use streaming:
+        Token streaming can be used to reduce _perceived_ latency for applications. Here is how applications can use streaming:
 
         === "Asynchronous completion with token streaming in Python"
             ```python
@@ -243,7 +243,7 @@ class Completion(APIEngine):
             }
             ```
 
-        Token streaming can be used to reduce _percieved_ latency for applications. Here is how applications can use streaming:
+        Token streaming can be used to reduce _perceived_ latency for applications. Here is how applications can use streaming:
 
         === "Synchronous completion with token streaming in Python"
             ```python
