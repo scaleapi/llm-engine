@@ -639,6 +639,11 @@ language dependent.</p>
 that can be used for producing completions to prompts.</p>
 <h2 id="completion-api-call">Completion API call<a class="headerlink" href="#completion-api-call" title="Permanent link">&para;</a></h2>
 <p>An example API call looks as follows:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Completion call in Python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
@@ -664,7 +669,7 @@ while lower values will make it more focused and deterministic.  </li>
 <p>See the full <a href="../../api/python_client/#llmengine.Completion">Completion API reference documentation</a> to learn more.</p>
 <h2 id="completion-api-response">Completion API response<a class="headerlink" href="#completion-api-response" title="Permanent link">&para;</a></h2>
 <p>An example Completion API response looks as follows:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Response in JSON</label><label for="__tabbed_1_2">Response in Python</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Response in JSON</label><label for="__tabbed_2_2">Response in Python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #666666">&gt;&gt;&gt;</span> <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
@@ -694,7 +699,7 @@ applications. When streaming, tokens will be sent as data-only
 <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-side events</a>.</p>
 <p>To enable token streaming, pass <code>stream=True</code> to either <a href="../../api/python_client/#llmengine.completion.Completion.create">Completion.create</a> or <a href="../../api/python_client/#llmengine.completion.Completion.acreate">Completion.acreate</a>.</p>
 <p>An example of token streaming using the synchronous Completions API looks as follows:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Token streaming with synchronous API in python</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Token streaming with synchronous API in python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block"></div>
 </div>
@@ -720,7 +725,7 @@ applications. When streaming, tokens will be sent as data-only
 <p>The Python client supports <code>asyncio</code> for creating Completions. Use <a href="../../api/python_client/#llmengine.completion.Completion.acreate">Completion.acreate</a> instead of <a href="../../api/python_client/#llmengine.completion.Completion.create">Completion.create</a>
 to utilize async processing. The function signatures are otherwise identical.</p>
 <p>An example of async Completions looks as follows:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Completions with asynchronous API in python</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:1"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Completions with asynchronous API in python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block"></div>
 </div>

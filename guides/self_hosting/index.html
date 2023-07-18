@@ -93,7 +93,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#experimental-self-hosting" class="md-skip">
+        <a href="#self-hosting-experimental" class="md-skip">
           Skip to content
         </a>
       
@@ -461,6 +461,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#helm-chart" class="md-nav__link">
+    Helm Chart
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -673,6 +680,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#helm-chart" class="md-nav__link">
+    Helm Chart
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -688,9 +702,9 @@
                   
 
 
-<h1 id="experimental-self-hosting">[Experimental] Self Hosting<a class="headerlink" href="#experimental-self-hosting" title="Permanent link">&para;</a></h1>
+<h1 id="self-hosting-experimental">Self Hosting <em>[Experimental]</em><a class="headerlink" href="#self-hosting-experimental" title="Permanent link">&para;</a></h1>
 <p><strong>This guide is currently highly experimental. Instructions are subject to change as we improve support for self-hosting.</strong></p>
-<p>We provide a Helm chart that deploys LLM Engine to an <a href="https://aws.amazon.com/eks/">Elastic Kubernetes Cluster</a>. This Helm chart should be configured to connect to dependencies (such as a PostgreSQL database) that you may already have available in your environment.</p>
+<p>We provide a Helm chart that deploys LLM Engine to an <a href="https://aws.amazon.com/eks/">Elastic Kubernetes Cluster</a> (EKS) in <a href="https://aws.amazon.com/">AWS</a>. This Helm chart should be configured to connect to dependencies (such as a PostgreSQL database) that you may already have available in your environment.</p>
 <p>The only portions of the Helm chart that are production ready are the parts that configure and manage LLM Server itself (not PostgreSQL, IAM, etc.)</p>
 <p>We first go over required AWS dependencies that are required to exist before we can run <code>helm install</code> in your EKS cluster.</p>
 <h2 id="aws-dependencies">AWS Dependencies<a class="headerlink" href="#aws-dependencies" title="Permanent link">&para;</a></h2>
@@ -780,7 +794,7 @@ Create a Redis cluster (e.g. AWS Elasticache for Redis) if you do not have an ex
 </tr>
 </tbody>
 </table>
-<h1 id="helm-chart">Helm Chart<a class="headerlink" href="#helm-chart" title="Permanent link">&para;</a></h1>
+<h2 id="helm-chart">Helm Chart<a class="headerlink" href="#helm-chart" title="Permanent link">&para;</a></h2>
 <p>Now that all dependencies have been installed and configured, we can run the provided Helm chart. The values in the Helm chart will need to correspond with the resources described in the Dependencies section. </p>
 <p>Ensure that Helm V3 is installed <a href="https://helm.sh/docs/intro/install/">instructions</a> and can connect to the EKS cluster. Users should be able to install the chart with <code>helm install llm-engine llm-engine -f llm-engine/values_sample.yaml -n &lt;DESIRED_NAMESPACE&gt;</code>.
 Below are the configurations to specify in the <code>values_sample.yaml</code> file. </p>
