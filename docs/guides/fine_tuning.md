@@ -113,6 +113,16 @@ If you specify a suffix, the fine-tune will be named `model:suffix:<timestamp>`.
 the fine-tune will be named `model:<timestamp>`. The timestamp will be the time the fine-tune was 
 launched.
 
+<details>
+<summary>Hyper-parameters for fine-tune</summary>
+
+* `lr`: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-5)
+* `warmup_ratio`: Ratio of training steps used for learning rate warmup. (Default: 0.03)
+* `epochs`: Number of fine-tuning epochs. (Default: 5)
+* `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
+* `max_seq_length`: Maximum number of tokens per sequence in the dataset. (Default: 1024)
+</details>
+
 === "Create a fine-tune in python" 
 
 ```python
