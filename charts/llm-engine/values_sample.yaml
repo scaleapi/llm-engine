@@ -11,7 +11,7 @@ replicaCount:
   balloonT4: 0
 
 # tag is the LLM Engine docker image tag
-tag: 579319016a0d1ce7eaded5148c0059b2a1c86e41
+tag: b144dd4e5371484be1889c76e70baec375127b52
 context: production
 image:
   # gatewayRepository is the docker repository to pull the LLM Engine gateway image from
@@ -127,6 +127,7 @@ config:
         }
 
       cache_redis_url: redis://spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com:6379/15
+      s3_file_llm_fine_tuning_job_repository: "s3://scale-ml/hosted-model-inference/llm-ft-job-repository/circleci"
 
 serviceAccount:
   annotations:

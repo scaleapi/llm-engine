@@ -3543,7 +3543,7 @@ data:
               args:
                 - python
                 - -m
-                - llm_engine.entrypoints.start_batch_job_orchestration
+                - server.llm_engine_server.entrypoints.start_batch_job_orchestration
                 - --job-id
                 - ${JOB_ID}
                 - --owner
@@ -3683,7 +3683,7 @@ data:
               command:
                 - python
                 - -m
-                - llm_engine.entrypoints.start_docker_image_batch_job_init_container
+                - server.llm_engine_server.entrypoints.start_docker_image_batch_job_init_container
                 - ${INPUT_LOCATION}
                 - --remote-file
                 - ${S3_FILE}
@@ -3827,7 +3827,7 @@ data:
               command:
                 - python
                 - -m
-                - llm_engine.entrypoints.start_docker_image_batch_job_init_container
+                - server.llm_engine_server.entrypoints.start_docker_image_batch_job_init_container
                 - ${INPUT_LOCATION}
                 - --remote-file
                 - ${S3_FILE}

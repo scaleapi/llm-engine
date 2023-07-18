@@ -63,7 +63,7 @@ spec:
           args:
             - python
             - -m
-            - llm_engine.entrypoints.start_fastapi_server
+            - server.llm_engine_server.entrypoints.start_fastapi_server
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- include "llmEngine.gatewayEnv" . | indent 10 }}

@@ -33,7 +33,7 @@ spec:
           args:
             - python
             - -m
-            - llm_engine.entrypoints.init_database
+            - server.llm_engine_server.entrypoints.init_database
           {{- include "llmEngine.serviceEnv" . | indent 10 }}
           {{- include "llmEngine.volumeMounts" . | indent 10 }}
       serviceAccountName: {{ include "llmEngine.fullname" . }}
