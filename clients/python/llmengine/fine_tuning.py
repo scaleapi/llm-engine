@@ -55,7 +55,13 @@ class FineTune(APIEngine):
 
                 Currently supported hyperparameters:
 
-                * `n_epochs`: Number of epochs to fine-tune for.
+                * `lr`: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-5)
+                * `warmup_ratio`: Ratio of training steps used for learning rate warmup. (Default: 0.03)
+                * `epochs`: Number of fine-tuning epochs. (Default: 10)
+                * `per_device_train_batch_size`: Batch size per GPU. For a context length of 1024, this can be up to 2. (Default: 2)
+                * `gradient_accumulation_steps`: Gradients are added before optimizer steps to increase the effective batch size. (Default: 1)
+                * `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
+                * `max_seq_length`: Maximum number of tokens per sequence in the dataset. (Default: 1024)
 
             suffix (`Optional[str]`):
                 A string that will be added to your fine-tuned model name.
