@@ -37,7 +37,7 @@ class Model(APIEngine):
         Returns:
             GetLLMEndpointResponse: object representing the LLM and configurations
 
-        === "Accessing model in python"
+        === "Accessing model in Python"
             ```python
             from llmengine import Model
 
@@ -46,7 +46,7 @@ class Model(APIEngine):
             print(response.json())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {
                 "id": null,
@@ -78,7 +78,7 @@ class Model(APIEngine):
         Returns:
             ListLLMEndpointsResponse: list of models
 
-        === "Listing available modes in python"
+        === "Listing available modes in Python"
             ```python
             from llmengine import Model
 
@@ -86,7 +86,7 @@ class Model(APIEngine):
             print(response.json())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {
                 "model_endpoints": [
@@ -159,7 +159,7 @@ class Model(APIEngine):
         Returns:
             response: whether the model was successfully deleted
 
-        === "Deleting model in python"
+        === "Deleting model in Python"
             ```python
             from llmengine import Model
 
@@ -167,7 +167,7 @@ class Model(APIEngine):
             print(response.json())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {
                 "deleted": true
