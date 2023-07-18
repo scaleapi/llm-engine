@@ -16,6 +16,7 @@ __version__ = "0.0.0.beta2"
 
 from typing import Sequence
 
+from llmengine.api_engine import api_key
 from llmengine.completion import Completion
 from llmengine.data_types import (
     CancelFineTuneResponse,
@@ -35,6 +36,7 @@ from llmengine.fine_tuning import FineTune
 from llmengine.model import Model
 
 __all__: Sequence[str] = (
+    "api_key",
     "CancelFineTuneResponse",
     "Completion",
     "CompletionOutput",

@@ -9,14 +9,16 @@ import requests
 from aiohttp import ClientSession, ClientTimeout
 from llmengine.errors import parse_error
 
-SCALE_API_KEY = os.getenv("SCALE_API_KEY")
 SPELLBOOK_API_URL = "https://api.spellbook.scale.com"
 LLM_ENGINE_BASE_PATH = os.getenv("LLM_ENGINE_BASE_PATH", SPELLBOOK_API_URL)
 DEFAULT_TIMEOUT: int = 10
 
+api_key = os.getenv("SCALE_API_KEY")
+
 
 def get_api_key() -> str:
-    return SCALE_API_KEY or "root"
+    print(f"noglobal api_key={api_key}")
+    return api_key
 
 
 def assert_self_hosted(func):
