@@ -853,7 +853,7 @@ For each of these modes, you can also choose whether to stream token responses o
   
       <p>Creates a completion for the provided prompt and parameters synchronously.</p>
 <p>This API can be used to get the LLM to generate a completion <em>synchronously</em>.
-It takes as parameters the <code>model</code> (<a href="../../../model_zoo">see Model Zoo</a>) and the <code>prompt</code>.
+It takes as parameters the <code>model</code> (<a href="../../model_zoo">see Model Zoo</a>) and the <code>prompt</code>.
 Optionally it takes <code>max_new_tokens</code>, <code>temperature</code>, <code>timeout</code> and <code>stream</code>.
 It returns a
 <a href="../../api/data_types/#llmengine.CompletionSyncResponse">CompletionSyncResponse</a>
@@ -881,7 +881,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Name of the model to use. See <a href="../../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
+              <p>Name of the model to use. See <a href="../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
             </div>
           </td>
           <td>
@@ -911,7 +911,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
             <div class="doc-md-description">
               <p>The maximum number of tokens to generate in the completion.</p>
 <p>The token count of your prompt plus <code>max_new_tokens</code> cannot exceed the model's context length. See
-<a href="../../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
+<a href="../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
             </div>
           </td>
           <td>
@@ -1081,7 +1081,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
   
       <p>Creates a completion for the provided prompt and parameters asynchronously (with <code>asyncio</code>).</p>
 <p>This API can be used to get the LLM to generate a completion <em>asynchronously</em>.
-It takes as parameters the <code>model</code> (<a href="../../../model_zoo">see Model Zoo</a>) and the <code>prompt</code>.
+It takes as parameters the <code>model</code> (<a href="../../model_zoo">see Model Zoo</a>) and the <code>prompt</code>.
 Optionally it takes <code>max_new_tokens</code>, <code>temperature</code>, <code>timeout</code> and <code>stream</code>.
 It returns a
 <a href="../../api/data_types/#llmengine.CompletionSyncResponse">CompletionSyncResponse</a>
@@ -1109,7 +1109,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Name of the model to use. See <a href="../../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
+              <p>Name of the model to use. See <a href="../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
             </div>
           </td>
           <td>
@@ -1139,7 +1139,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
             <div class="doc-md-description">
               <p>The maximum number of tokens to generate in the completion.</p>
 <p>The token count of your prompt plus <code>max_new_tokens</code> cannot exceed the model's context length. See
-<a href="../../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
+<a href="../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
             </div>
           </td>
           <td>

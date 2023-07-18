@@ -689,8 +689,8 @@
 
 
 <h1 id="experimental-self-hosting">[Experimental] Self Hosting<a class="headerlink" href="#experimental-self-hosting" title="Permanent link">&para;</a></h1>
-<p><strong>This guide is currently highly experimental. Instructions are subject to change as we improve support for self-hosting</strong></p>
-<p>We provide a Helm chart that deploys LLM Engine to an Elastic Kubernetes Cluster (https://aws.amazon.com/eks/). This Helm chart should be configured to connect to dependencies (such as a PostgreSQLql database) that you may already have available in your environment.</p>
+<p><strong>This guide is currently highly experimental. Instructions are subject to change as we improve support for self-hosting.</strong></p>
+<p>We provide a Helm chart that deploys LLM Engine to an <a href="https://aws.amazon.com/eks/">Elastic Kubernetes Cluster</a>. This Helm chart should be configured to connect to dependencies (such as a PostgreSQL database) that you may already have available in your environment.</p>
 <p>The only portions of the Helm chart that are production ready are the parts that configure and manage LLM Server itself (not PostgreSQL, IAM, etc.)</p>
 <p>We first go over required AWS dependencies that are required to exist before we can run <code>helm install</code> in your EKS cluster.</p>
 <h2 id="aws-dependencies">AWS Dependencies<a class="headerlink" href="#aws-dependencies" title="Permanent link">&para;</a></h2>
