@@ -2,7 +2,7 @@ import argparse
 from typing import Any, Dict
 
 import requests
-from llm_engine_server.api_client.model.model_endpoint_type import ModelEndpointType
+from llm_engine_server.domain.entities import ModelEndpointType
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 DEFAULT_NETWORK_TIMEOUT_SEC = 10
@@ -147,7 +147,7 @@ def spellbook_endpoint_payload(
     *,
     endpoint_name: str,
     bundle_name: str,
-    endpoint_type: ModelEndpointType = "async",
+    endpoint_type: ModelEndpointType = ModelEndpointType.SYNC,
     min_workers: int = 0,
     max_workers: int = 1,
     memory: str = "185Gi",
