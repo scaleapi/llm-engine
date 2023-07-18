@@ -15,67 +15,51 @@ The LLM Engine server must be deployed in an EKS cluster environment. Currently 
 
 Creating node groups
 One will need to provision EKS node groups to schedule model pods. 
-- "k8s.amazonaws.com/accelerator"= "nvidia-ampere-a10"
+The node groups must be of the g5 family and have the labels:
+- k8s.amazonaws.com/accelerator=nvidia-ampere-a10
 - node-lifecycle: normal
-- Required node taints
-- Gpu taints - [{ key = "nvidia.com/gpu", value = "true", effect = "NO_SCHEDULE" }]
+
+We also recommend setting the following taint:
+- { key = "nvidia.com/gpu", value = "true", effect = "NO_SCHEDULE" }
 
 
-### Postgresql
+### PostgreSQL
 
-The LLMEngine server requires a PostgreSQL database to back data. LLM Engine currently supports postgres version 14.
-Create a Postgresql database (we use AWS RDS Postgresql) if you do not have an existing one you wish to connect LLM Engine to. 
+The LLMEngine server requires a PostgreSQL database to back data. LLMEngine currently supports Postgres version 14.
+Create a PostgreSQL database (e.g. AWS RDS PostgreSQL) if you do not have an existing one you wish to connect LLMEngine to. 
 
-To enable LLM Engine to connect to the postgres engine, we create a kubernetes secret with the postgres url. An example yaml is provided below:
+To enable LLM Engine to connect to the postgres engine, fill out the helm chart values with the postgres database's username, password, database name, and hostname.
 
-```
-apiVersion: v1
-kind: Secret
-metadata:
-  name: llm-engine-pg  # this name will be an input to our Helm Chart
-data:
-    database_url = "postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]"
-```
+### Redis
 
+The LLMEngine server requires Redis for various caching/queue functionality. LLMEngine currently supports Redis version 6.
+Create a Redis cluster (e.g. AWS Elasticache for Redis) if you do not have an existing one you wish to connect LLMEngine to.
 
-### Amazon ElastiCache for Redis
-
-The LLMEngine server requires Redis for various caching/queue functionality
-
-## Amazon VPC
-
-You will need to have a VPC with the following configuration:
-
-- CIDR block: `10.53.0.0/16`
-- Subnets: At least two private subnets for the RDS and ElastiCache resources
+To enable LLM Engine to connect to the postgres engine, fill out the helm chart values with the redis database's username, password, and hostname.
 
 ### Amazon S3
 
-You will need to have an S3 bucket for the `launch` deployment. The ARN of this bucket should be provided to the `launch` IAM role.
-
-### Amazon SQS
-
-You will need to have SQS queues in your account. The `launch` IAM role should have full access to these queues.
+You will need to have an S3 bucket for LLMEngine to store [TODO]. The ARN of this bucket should be provided in the helm chart values.
 
 ### Amazon ECR
 
-You will need to have ECR repositories in your account. The `launch` IAM role should have read access to these repositories.
+You will need to provide an ECR repository for the deployment to store fine-tuned models. The ARN of this repository should be provided in the helm chart values.
+
+### Amazon SQS
+
+LLMEngine utilizes Amazon SQS to keep track of jobs. LLMEngine will create and use SQS queues as needed.
 
 ### Identity and Access Management (IAM)
 
-The LLMEngine server will required IAM permissions to run some operations (e.g endpoint creation)
-
-IAM roles are used to grant permissions to AWS services. The following IAM role is required:
-
-- **Role Name**: `k8s-main-launch-${region}`
-
-This role requires the following permissions:
+The LLMEngine server will an IAM role to perform various AWS operations. The ARN of this role needs to be provided to the helm chart, and the role needs to be provided the following permissions:
 
 | Action | Resource |
 | --- | --- |
-| `s3:Get*`, `s3:List*`, `s3:Put*` | `${s3_bucket_arn}/*` |
-| `sqs:*` | `arn:aws:sqs:${region}:${scale_account_id}:*` |
-| `ecr:BatchGetImage`, `ecr:DescribeImages`, `ecr:GetDownloadUrlForLayer`, `ecr:ListImages` | `*` |
+| `s3:Get*`, `s3:Put*` | `${s3_bucket_arn}/*` |
+| `s3:List*` | `${s3_bucket_arn}` |
+| `sqs:*` | `arn:aws:sqs:${region}:${account_id}:llm-engine-endpoint-id-*` |
+| `sqs:ListQueues` | `*` |
+| `ecr:BatchGetImage`, `ecr:DescribeImages`, `ecr:GetDownloadUrlForLayer`, `ecr:ListImages` | `${ecr_repository_arn}` |
 
 # Helm Chart
 Now that all dependencies have been installed and configured, we can run the provided Helm chart. The values in the Helm chart will need to correspond with the resources described in the Dependencies section. 
