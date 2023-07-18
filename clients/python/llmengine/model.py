@@ -31,7 +31,7 @@ class Model(APIEngine):
         Returns:
             CreateLLMEndpointResponse: ID of the created Model Endpoint.
         """
-        request = CreateLLMEndpointRequest(
+        request = CreateLLMEndpointRequest(  # type: ignore
             model_name=model_name,
         )
         response = cls.post_sync(
