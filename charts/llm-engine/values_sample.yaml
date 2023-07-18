@@ -1,7 +1,7 @@
 # This is a YAML-formatted file.
 
 # tag [required] is the LLM Engine docker image tag
-tag: b144dd4e5371484be1889c76e70baec375127b52
+tag: b28b10d42e7490714f0c26635695d8f078420120
 # context is a user-specified deployment tag. Can be used to 
 context: production
 image:
