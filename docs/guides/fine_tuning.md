@@ -158,7 +158,7 @@ before you can plug it into the Completions API. You can check the status of you
 from llmengine import Completion
 
 response = Completion.create(
-    model_name="llama-7b.airlines.2023-07-17-08-30-45",
+    model="llama-7b.airlines.2023-07-17-08-30-45",
     prompt="Do you offer in-flight Wi-fi?",
     max_new_tokens=100,
     temperature=0.2,
