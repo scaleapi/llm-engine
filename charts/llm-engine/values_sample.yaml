@@ -1,5 +1,6 @@
 # This is a YAML-formatted file.
 
+# replicaCount specifies the amount of replica pods for each deployment
 replicaCount:
   gateway: 2
   cacher: 1
@@ -9,34 +10,42 @@ replicaCount:
   balloonCpu: 0
   balloonT4: 0
 
+# tag is the LLM Engine docker image tag
 tag: 579319016a0d1ce7eaded5148c0059b2a1c86e41
 context: production
 image:
-  gatewayRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/llm-engine
-  builderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/llm-engine
-  cacherRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/llm-engine
-  forwarderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/llm-engine
+  # gatewayRepository is the docker repository to pull the LLM Engine gateway image from
+  gatewayRepository: public.ecr.aws/b2z8n5q1/llm-engine
+  # builderRepository is the docker repository to pull the LLM Engine endpoint builder image from
+  builderRepository: public.ecr.aws/b2z8n5q1/llm-engine
+  # cacherRepository is the docker repository to pull the LLM Engine cacher image from
+  cacherRepository: public.ecr.aws/b2z8n5q1/llm-engine
+  # forwarderRepository is the docker repository to pull the LLM Engine forwarder image from
+  forwarderRepository: public.ecr.aws/b2z8n5q1/llm-engine
   pullPolicy: Always
 
 datadog_trace_enabled: false
 
 secrets:
+  # kubernetesDatabaseSecretName is the name of the secret that contains the database credentials
   kubernetesDatabaseSecretName: ml-infra-pg
 
 service:
   type: ClusterIP
   port: 80
 
+# TODO: This is related to istio. Maybe delete it
 virtualservice:
-  enabled: true
+  enabled: false
   annotations: { }
   hostDomains:
     - egp-test.scale.com
   gateways:
     - default/internal-gateway
 
+# TODO: This is related to istio. Maybe delete it
 destinationrule:
-  enabled: true
+  enabled: false
   annotations: { }
 
 autoscaling:
@@ -47,6 +56,7 @@ autoscaling:
     targetConcurrency: 50
   vertical:
     enabled: false
+# TODO: Why is this commented out?
 #    minAllowed:
 #      cpu: 100m
 #      memory: 128Mi
@@ -72,17 +82,17 @@ config:
     infra:
       k8s_cluster_name: main_cluster
       dns_host_domain: egp-test.scale.com
-      default_region: us-west-2
+      default_region: us-east-1
       ml_account_id: "692474966980"
-      docker_repo_prefix: "692474966980.dkr.ecr.us-west-2.amazonaws.com"
-      redis_host: spellbook-prod-cache-001.nu2e0g.0001.usw2.cache.amazonaws.com
+      docker_repo_prefix: "692474966980.dkr.ecr.us-east-1.amazonaws.com"
+      redis_host: spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com
       s3_bucket: "scale-ml-egp-test"
     llm_engine:
       # Endpoint config
       # K8s namespace the endpoints will be created in
       endpoint_namespace: llm-engine
 
-      # Asynchronous endpoints
+      # Asynchronous endpoints (coming soon)
       sqs_profile: default
       sqs_queue_policy_template: >
         {
@@ -96,7 +106,7 @@ config:
                 "AWS": "arn:aws:iam::985572151633:root"
               },
               "Action": "sqs:*",
-              "Resource": "arn:aws:sqs:us-west-2:985572151633:${queue_name}"
+              "Resource": "arn:aws:sqs:us-east-1:985572151633:${queue_name}"
             },
             {
               "Effect": "Allow",
@@ -104,7 +114,7 @@ config:
                 "AWS": "arn:aws:iam::985572151633:role/k8s-main-llm-engine"
               },
               "Action": "sqs:*",
-              "Resource": "arn:aws:sqs:us-west-2:985572151633:${queue_name}"
+              "Resource": "arn:aws:sqs:us-east-1:985572151633:${queue_name}"
             }
           ]
         }
@@ -116,10 +126,8 @@ config:
           "Spellbook-Serve-Endpoint-Created-By": "${endpoint_created_by}"
         }
 
-      # Billing
-      cache_redis_url: redis://spellbook-prod-cache-001.nu2e0g.0001.usw2.cache.amazonaws.com:6379/15
+      cache_redis_url: redis://spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com:6379/15
 
-# Service Account
 serviceAccount:
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::985572151633:role/k8s-main-llm-engine
@@ -133,6 +141,7 @@ aws:
     create: true
   profileName: default
 
+# Triton enhanced endpoints (coming soon)
 triton:
   image:
     repository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv
