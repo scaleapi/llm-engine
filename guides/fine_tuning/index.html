@@ -718,13 +718,10 @@ files in a public manner. An example Github Gist can be found
 you can use the URL given when you click the “Raw” button
 (<a href="https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv">URL</a>).</p>
 <h2 id="launching-the-fine-tune">Launching the fine-tune<a class="headerlink" href="#launching-the-fine-tune" title="Permanent link">&para;</a></h2>
-<p>Once you have uploaded your data, you can use the LLM Engine API to launch a fine-tune. You will 
-need to specify which base model to fine-tune, the locations of the training file and optional 
-validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, 
-and an optional suffix to append to the name of the fine-tune. For sequences longer than the native 
+<p>Once you have uploaded your data, you can use the LLM Engine's <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.create">FineTune.Create</a> API to launch a fine-tune. You will need to specify which base model to fine-tune, the locations of the training file and optional validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, and an optional suffix to append to the name of the fine-tune. For sequences longer than the native 
 <code>max_seq_length</code> of the model, the sequences will be truncated.</p>
-<p>If you specify a suffix, the fine-tune will be named <code>model:suffix:&lt;timestamp&gt;</code>. If you do not, 
-the fine-tune will be named <code>model:&lt;timestamp&gt;</code>. The timestamp will be the time the fine-tune was 
+<p>If you specify a suffix, the fine-tune will be named <code>model.suffix.&lt;timestamp&gt;</code>. If you do not, 
+the fine-tune will be named <code>model.&lt;timestamp&gt;</code>. The timestamp will be the time the fine-tune was 
 launched.</p>
 <details>
 <summary>Hyper-parameters for fine-tune</summary>
@@ -750,7 +747,7 @@ launched.</p>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 <p>See the <a href="../../model_zoo">Model Zoo</a> to see which models have fine-tuning support.</p>
-<p>Once the fine-tune is launched, you can also <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.get">get the status of your fine-tune</a>.</p>
+<p>Once the fine-tune is launched, you can also <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.get">get the status of your fine-tune</a>. You can also <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.get_events">list events that your fine-tune produces</a>.</p>
 <h2 id="making-inference-calls-to-your-fine-tune">Making inference calls to your fine-tune<a class="headerlink" href="#making-inference-calls-to-your-fine-tune" title="Permanent link">&para;</a></h2>
 <p>Once your fine-tune is finished, you will be able to start making inference requests to the 
 model. You can use the <code>fine_tuned_model</code> returned from your 
@@ -769,7 +766,7 @@ before you can plug it into the Completions API. You can check the status of you
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    model_name<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b:airlines:2023-07-17-08-30-45&quot;</span>,
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b.airlines.2023-07-17-08-30-45&quot;</span>,
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Do you offer in-flight Wi-fi?&quot;</span>,
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    max_new_tokens<span style="color: #666666">=100</span>,
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    temperature<span style="color: #666666">=0.2</span>,
