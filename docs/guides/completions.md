@@ -28,22 +28,22 @@ See the full [API reference documentation](../../api/python_client/#llmengine.Co
 
 An example Completion API response looks as follows:
 
-```json
-{
-  "outputs": [
+=== "Response in json"
+    ```json
     {
-      "text": "_______ and I am a _______",
-      "num_completion_tokens": 10
+      "outputs": [
+        {
+          "text": "_______ and I am a _______",
+          "num_completion_tokens": 10
+        }
+      ]
     }
-  ]
-}
-```
-
-In Python, the response is of type [CompletionSyncResponse](../../api/python_client/#llmengine.CompletionSyncResponse), which maps to the above JSON structure.
-
-```python
-print( response.outputs[0].text )
-```
+    ```
+=== "Response in python"
+    ```python
+    >>> print( response.outputs[0].text )
+    ________. Hello, my name is _
+    ```
 
 ## Token streaming
 
@@ -52,8 +52,9 @@ tokens will be sent as data-only [server-side events](https://developer.mozilla.
 
 To enable token streaming, pass `stream=True` to either `Completion.create` or `Completion.acreate`.
 
-An example of token streaming using the synchronous Completions API looks as follows:
+An example of token streaming using the synchronous Completions API looks as follows
 
+=== "Token streaming with synchronous API in python"
 ```python
 from llmengine import Completion
 
@@ -75,8 +76,9 @@ for response in stream:
 The Python client supports `asyncio` for creating Completions. Use `Completion.acreate` instead of `Completion.create`
 to utilize async processing. The function signatures are otherwise identical.
 
-An example of async Completions looks as follows:
+An example of async Completions looks as follows
 
+=== "Completions with asynchronous API in python"
 ```python
 import asyncio
 from llmengine import Completion

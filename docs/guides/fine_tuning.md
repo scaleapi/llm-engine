@@ -29,8 +29,7 @@ prepare such high quality, diverse data sets - more information [here](https://s
 ## Preparing data
 Your data must be formatted as a CSV file that includes two columns: `prompt` and `response`. A maximum of 100,000 rows of data is currently supported. At least 200 rows of data is recommended to start to see benefits from fine-tuning.
 
-Here is an example script to create a 50-row CSV of properly formatted data for fine-tuning an airline question answering bot:
-
+Here is an example script to create a 50-row CSV of properly formatted data for fine-tuning an airline question answering bot
 
 
 <details>
@@ -124,8 +123,7 @@ launched.
 * `max_seq_length`: Maximum number of tokens per sequence in the dataset. (Default: 1024)
 </details>
 
-<details>
-<summary>Create a fine-tune</summary>
+=== "Create a fine-tune in python" 
 
 ```python
 from llmengine import FineTune
@@ -137,7 +135,6 @@ response = FineTune.create(
 
 print(response.json())
 ```
-</details>
 
 See the [Model Zoo](../../model_zoo) to see which models have fine-tuning support.
 
@@ -155,8 +152,7 @@ use that name to direct your completion requests.  You must wait until your fine
 before you can plug it into the Completions API. You can check the status of your fine-tune with 
 [FineTune.get](../../api/python_client/#llmengine.fine_tuning.FineTune.get).
 
-<details>
-<summary>Inference with a fine-tuned model</summary>
+=== "Inference with a fine-tuned model in python"
 
 ```python
 from llmengine import Completion
@@ -169,4 +165,3 @@ response = Completion.create(
 )
 print(response.json())
 ```
-</details>
