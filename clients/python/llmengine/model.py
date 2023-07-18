@@ -1,17 +1,18 @@
+from typing import Dict, List, Optional
+
 from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine, assert_self_hosted
 from llmengine.data_types import (
     CreateLLMEndpointRequest,
     CreateLLMEndpointResponse,
     DeleteLLMEndpointResponse,
     GetLLMEndpointResponse,
-    ListLLMEndpointsResponse,
-    LLMSource,
-    LLMInferenceFramework,
-    PostInferenceHooks,
-    ModelEndpointType,
     GpuType,
+    ListLLMEndpointsResponse,
+    LLMInferenceFramework,
+    LLMSource,
+    ModelEndpointType,
+    PostInferenceHooks,
 )
-from typing import Dict, List, Optional
 
 
 class Model(APIEngine):
@@ -139,6 +140,7 @@ class Model(APIEngine):
             public_inference (`Optional[bool]`):
                 If ``True``, this endpoint will be available to all user IDs for
                 inference
+
 
             labels (`Optional[Dict[str, str]]`):
                 An optional dictionary of key/value pairs to associate with this endpoint
