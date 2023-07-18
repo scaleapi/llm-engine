@@ -132,7 +132,7 @@ def get_kubernetes_autoscaling_client():  # pragma: no cover
     else:
         _kubernetes_autoscaling_api = None
     if not _kubernetes_autoscaling_api:
-        cluster_version = get_kubernetes_cluster_version()
+        cluster_version = get_kubernetes_cluster_version() if not CIRCLECI else "1.26"
         # For k8s cluster versions 1.23 - 1.25 we need to use the v2beta2 api
         # For 1.26+ v2beta2 has been deperecated and merged into v2
         if version.parse(cluster_version) >= version.parse("1.26"):
@@ -1081,7 +1081,7 @@ class K8SEndpointResourceDelegate:
             ModelEndpointType.SYNC,
             ModelEndpointType.STREAMING,
         }:
-            cluster_version = get_kubernetes_cluster_version()
+            cluster_version = get_kubernetes_cluster_version() if not CIRCLECI else "1.26"
             # For k8s cluster versions 1.23 - 1.25 we need to use the v2beta2 api
             # For 1.26+ v2beta2 has been deperecated and merged into v2
             if version.parse(cluster_version) >= version.parse("1.26"):
