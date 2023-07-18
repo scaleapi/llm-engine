@@ -1104,35 +1104,35 @@ class K8SEndpointResourceDelegate:
                 name=k8s_resource_group_name,
             )
 
-            virtual_service_arguments = get_endpoint_resource_arguments_from_request(
-                k8s_resource_group_name=k8s_resource_group_name,
-                request=request,
-                sqs_queue_name=sqs_queue_name_str,
-                sqs_queue_url=sqs_queue_url_str,
-                endpoint_resource_name="virtual-service",
-            )
-            virtual_service_template = load_k8s_yaml(
-                "virtual-service.yaml", virtual_service_arguments
-            )
-            await self._create_virtual_service(
-                virtual_service=virtual_service_template,
-                name=k8s_resource_group_name,
-            )
+            # virtual_service_arguments = get_endpoint_resource_arguments_from_request(
+            #     k8s_resource_group_name=k8s_resource_group_name,
+            #     request=request,
+            #     sqs_queue_name=sqs_queue_name_str,
+            #     sqs_queue_url=sqs_queue_url_str,
+            #     endpoint_resource_name="virtual-service",
+            # )
+            # virtual_service_template = load_k8s_yaml(
+            #     "virtual-service.yaml", virtual_service_arguments
+            # )
+            # await self._create_virtual_service(
+            #     virtual_service=virtual_service_template,
+            #     name=k8s_resource_group_name,
+            # )
 
-            destination_rule_arguments = get_endpoint_resource_arguments_from_request(
-                k8s_resource_group_name=k8s_resource_group_name,
-                request=request,
-                sqs_queue_name=sqs_queue_name_str,
-                sqs_queue_url=sqs_queue_url_str,
-                endpoint_resource_name="destination-rule",
-            )
-            destination_rule_template = load_k8s_yaml(
-                "destination-rule.yaml", destination_rule_arguments
-            )
-            await self._create_destination_rule(
-                destination_rule=destination_rule_template,
-                name=k8s_resource_group_name,
-            )
+            # destination_rule_arguments = get_endpoint_resource_arguments_from_request(
+            #     k8s_resource_group_name=k8s_resource_group_name,
+            #     request=request,
+            #     sqs_queue_name=sqs_queue_name_str,
+            #     sqs_queue_url=sqs_queue_url_str,
+            #     endpoint_resource_name="destination-rule",
+            # )
+            # destination_rule_template = load_k8s_yaml(
+            #     "destination-rule.yaml", destination_rule_arguments
+            # )
+            # await self._create_destination_rule(
+            #     destination_rule=destination_rule_template,
+            #     name=k8s_resource_group_name,
+            # )
 
     @staticmethod
     def _get_vertical_autoscaling_params(
