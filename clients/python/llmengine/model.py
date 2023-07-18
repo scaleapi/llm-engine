@@ -10,7 +10,7 @@ from llmengine.data_types import (
 
 class Model(APIEngine):
     """
-    Model API. This API is used to get, list, delete, and (in the self-hosted case) create models. When using Scale Spellbook, create models using FineTune.create().
+    Model API. This API is used to get, list, and delete models. Models can be created using [FineTune.create()](./#llmengine.fine_tuning.FineTune.create).
 
     See [Model Zoo](../../model_zoo) for the list of publicly available models.
     """
@@ -31,7 +31,7 @@ class Model(APIEngine):
         Returns:
             CreateLLMEndpointResponse: ID of the created Model Endpoint.
         """
-        request = CreateLLMEndpointRequest(
+        request = CreateLLMEndpointRequest(  # type: ignore
             model_name=model_name,
         )
         response = cls.post_sync(
