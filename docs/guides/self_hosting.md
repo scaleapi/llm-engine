@@ -1,20 +1,20 @@
 # [Experimental] Self Hosting
-**This guide is currently experimental. Instructions are subject to change as we improve self-hosting capabilities.**
+**This guide is currently highly experimental. Instructions are subject to change as we improve support for self-hosting**
 
-We provide a Helm chart that deploys LLM Engine to an Elastic Kubernetes Cluster (https://aws.amazon.com/eks/). This Helm chart should be configured to connect to dependencies (such as a postgresql database) that you may already have available in your environment.
+We provide a Helm chart that deploys LLM Engine to an Elastic Kubernetes Cluster (https://aws.amazon.com/eks/). This Helm chart should be configured to connect to dependencies (such as a PostgreSQLql database) that you may already have available in your environment.
 
-The only portions of the helm chart that are production ready are the parts that configure and manage LLM Server itself—not Postgres, IAM, etc.
+The only portions of the Helm chart that are production ready are the parts that configure and manage LLM Server itself (not PostgreSQL, IAM, etc.)
 
-We first go over required AWS Dependencies that are required to exist before we can run `helm install` in your EKS cluster.
+We first go over required AWS dependencies that are required to exist before we can run `helm install` in your EKS cluster.
 
 ## AWS Dependencies 
 
-This section describes assumptions about existing AWS resources required run to the LLMEngine Server
+This section describes assumptions about existing AWS resources required run to the LLM Engine Server
 
 ### EKS 
 The LLM Engine server must be deployed in an EKS cluster environment. Currently only versions `1.23+` are supported. Below are the assumed requirements for the EKS cluster: 
 
-One will need to provision EKS node groups with GPUs to schedule model pods. These node groups must have the `node-lifecycle: normal` label on them.
+You will need to provision EKS node groups with GPUs to schedule model pods. These node groups must have the `node-lifecycle: normal` label on them.
 Additionally, they must have the `k8s.amazonaws.com/accelerator` label set appropriately depending on the instance type:
 
 | Instance family | `k8s.amazonaws.com/accelerator` label |
@@ -30,10 +30,10 @@ We also recommend setting the following taint on your GPU nodes to prevent pods 
 
 ### PostgreSQL
 
-The LLMEngine server requires a PostgreSQL database to back data. LLMEngine currently supports Postgres version 14.
-Create a PostgreSQL database (e.g. AWS RDS PostgreSQL) if you do not have an existing one you wish to connect LLMEngine to. 
+The LLM Engine server requires a PostgreSQL database to back data. LLM Engine currently supports PostgreSQL version 14.
+Create a PostgreSQL database (e.g. AWS RDS PostgreSQL) if you do not have an existing one you wish to connect LLM Engine to.
 
-To enable LLM Engine to connect to the postgres engine, we create a kubernetes secret with the postgres url. An example yaml is provided below:
+To enable LLM Engine to connect to the PostgreSQL engine, we create a Kubernetes secret with the PostgreSQL url. An example YAML is provided below:
 ```
 apiVersion: v1
 kind: Secret
@@ -45,26 +45,26 @@ data:
 
 ### Redis
 
-The LLMEngine server requires Redis for various caching/queue functionality. LLMEngine currently supports Redis version 6.
-Create a Redis cluster (e.g. AWS Elasticache for Redis) if you do not have an existing one you wish to connect LLMEngine to.
+The LLM Engine server requires Redis for various caching/queue functionality. LLM Engine currently supports Redis version 6.
+Create a Redis cluster (e.g. AWS Elasticache for Redis) if you do not have an existing one you wish to connect LLM Engine to.
 
-To enable LLM Engine to connect redis, fill out the helm chart values with the redis host and url.
+To enable LLM Engine to connect redis, fill out the Helm chart values with the redis host and url.
 
 ### Amazon S3
 
-You will need to have an S3 bucket for LLMEngine to store various assets (e.g model weigts, prediction restuls). The ARN of this bucket should be provided in the helm chart values.
+You will need to have an S3 bucket for LLM Engine to store various assets (e.g model weigts, prediction restuls). The ARN of this bucket should be provided in the Helm chart values.
 
 ### Amazon ECR
 
-You will need to provide an ECR repository for the deployment to store model containers. The ARN of this repository should be provided in the helm chart values.
+You will need to provide an ECR repository for the deployment to store model containers. The ARN of this repository should be provided in the Helm chart values.
 
 ### Amazon SQS
 
-LLMEngine utilizes Amazon SQS to keep track of jobs. LLMEngine will create and use SQS queues as needed.
+LLM Engine utilizes Amazon SQS to keep track of jobs. LLM Engine will create and use SQS queues as needed.
 
 ### Identity and Access Management (IAM)
 
-The LLMEngine server will an IAM role to perform various AWS operations. This role will be assumed by the serviceaccount `llm-engine` in the `launch` namespace in the EKS cluster. The ARN of this role needs to be provided to the helm chart, and the role needs to be provided the following permissions: 
+The LLM Engine server will an IAM role to perform various AWS operations. This role will be assumed by the serviceaccount `llm-engine` in the `launch` namespace in the EKS cluster. The ARN of this role needs to be provided to the Helm chart, and the role needs to be provided the following permissions:
 
 | Action | Resource |
 | --- | --- |
@@ -99,7 +99,6 @@ Below are the configurations to specify in the `values_sample.yaml` file.
 | nodeSelector | The node selector for LLM Engine server deployments | No |
 | tolerations | The tolerations for LLM Engine server deployments | No |
 | affinity | The affinity for LLM Engine server deployments | No |
-| datadog_trace_enabled | Whether to enable datadog tracing, datadog must be installed in the cluster | No |
 | aws.configMap.name | The AWS configurations (by configMap) for LLM Engine server deployments | No |
 | aws.configMap.create | The AWS configurations (by configMap) for LLM Engine server deployments | No |
 | aws.profileName | The AWS configurations (by configMap) for LLM Engine server deployments | No |
@@ -115,3 +114,4 @@ Below are the configurations to specify in the `values_sample.yaml` file.
 | config.values.llm_engine.endpoint_namespace | K8s namespace the endpoints will be created in | Yes |
 | config.values.llm_engine.cache_redis_url | The full url for the redis cluster you wish to connect | Yes |
 | config.values.llm_engine.s3_file_llm_fine_tuning_job_repository | The S3 URI for the S3 bucket/key that you wish to save fine-tuned assets | Yes |
+| config.values.datadog_trace_enabled | Whether to enable datadog tracing, datadog must be installed in the cluster | No |
