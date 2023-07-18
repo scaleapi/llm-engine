@@ -11,7 +11,7 @@ that can be used for producing completions to prompts.
 
 An example API call looks as follows:
 
-=== "Completion call in python"
+=== "Completion call in Python"
 ```python
 from llmengine import Completion
 
