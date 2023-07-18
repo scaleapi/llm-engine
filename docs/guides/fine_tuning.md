@@ -107,7 +107,8 @@ Currently, data needs to be uploaded to a publicly accessible web URL so that it
 Once you have uploaded your data, you can use the LLM Engine API to launch a fine-tune. You will 
 need to specify which base model to fine-tune, the locations of the training file and optional 
 validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, 
-and an optional suffix to append to the name of the fine-tune.
+and an optional suffix to append to the name of the fine-tune. For sequences longer than the native 
+`max_seq_length` of the model, the sequences will be truncated.
 
 If you specify a suffix, the fine-tune will be named `model:suffix:<timestamp>`. If you do not, 
 the fine-tune will be named `model:<timestamp>`. The timestamp will be the time the fine-tune was 
@@ -116,11 +117,10 @@ launched.
 <details>
 <summary>Hyper-parameters for fine-tune</summary>
 
-* `lr`: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-5)
+* `lr`: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-3)
 * `warmup_ratio`: Ratio of training steps used for learning rate warmup. (Default: 0.03)
-* `epochs`: Number of fine-tuning epochs. (Default: 5)
+* `epochs`: Number of fine-tuning epochs. This should be less than 20. (Default: 5)
 * `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
-* `max_seq_length`: Maximum number of tokens per sequence in the dataset. (Default: 1024)
 </details>
 
 === "Create a fine-tune in python" 
