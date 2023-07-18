@@ -89,7 +89,7 @@ class ModelEndpointResourceState(BaseModel):
     optimize_costs: Optional[bool]
 
 
-class GetModelEndpointV1Response(BaseModel):
+class GetModelEndpointResponse(BaseModel):
     id: str
     name: str
     endpoint_type: ModelEndpointType
@@ -227,7 +227,7 @@ class CompletionOutput(BaseModel):
     """Number of tokens in the completion."""
 
 
-class CompletionSyncV1Response(BaseModel):
+class CompletionSyncResponse(BaseModel):
     """
     Response object for a synchronous prompt completion.
     """
@@ -260,7 +260,7 @@ class CompletionStreamOutput(BaseModel):
     """Number of tokens in the completion."""
 
 
-class CompletionStreamV1Response(BaseModel):
+class CompletionStreamResponse(BaseModel):
     """
     Response object for a stream prompt completion task.
     """

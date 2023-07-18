@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0.beta1"
+__version__ = "0.0.0.beta2"
 
 from typing import Sequence
 
@@ -21,8 +21,8 @@ from llmengine.data_types import (
     CancelFineTuneResponse,
     CompletionOutput,
     CompletionStreamOutput,
-    CompletionStreamV1Response,
-    CompletionSyncV1Response,
+    CompletionStreamResponse,
+    CompletionSyncResponse,
     CreateFineTuneRequest,
     CreateFineTuneResponse,
     DeleteLLMEndpointResponse,
@@ -39,8 +39,8 @@ __all__: Sequence[str] = (
     "Completion",
     "CompletionOutput",
     "CompletionStreamOutput",
-    "CompletionStreamV1Response",
-    "CompletionSyncV1Response",
+    "CompletionStreamResponse",
+    "CompletionSyncResponse",
     "CreateFineTuneRequest",
     "CreateFineTuneResponse",
     "DeleteLLMEndpointResponse",

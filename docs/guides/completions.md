@@ -39,7 +39,7 @@ An example Completion API response looks as follows:
 }
 ```
 
-In Python, the response is of type [CompletionSyncV1Response](../../api/python_client/#llmengine.CompletionSyncV1Response), which maps to the above JSON structure.
+In Python, the response is of type [CompletionSyncResponse](../../api/python_client/#llmengine.CompletionSyncResponse), which maps to the above JSON structure.
 
 ```python
 print( response.outputs[0].text )

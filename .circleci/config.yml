@@ -5,12 +5,27 @@ orbs:
 workflows:
   ci:
     jobs:
+      - run_unit_tests_python_client
       - run_unit_tests_server
       - integration_tests
       - build_image
       - build_docs
 
 jobs:
+  run_unit_tests_python_client:
+    docker:
+      - image: python:3.8-bookworm
+    resource_class: small
+    parallelism: 1
+    steps:
+      - checkout # checkout source code to working directory
+      - environment_setup
+      - install_client
+      - run:
+          name: python3 Version
+          command: | # Make sure that the workflow is working
+            python3 --version
+      - run_unit_tests_python_client
   run_unit_tests_server:
     docker:
       - image: python:3.8-bookworm
@@ -108,6 +123,12 @@ commands:
          pkg-manager: pip
          app-dir: server
          pip-dependency-file: requirements_override.txt
+     - run:
+         name: Install Server
+         command: |
+           pushd server
+           pip install -e .
+           popd
   install_client:
     description: Install LLM Engine client
     steps:
@@ -115,6 +136,15 @@ commands:
           name: Install LLM Engine client
           command: |
             pip install -e $HOME/project/clients/python
+  run_unit_tests_python_client:
+    description: Unit tests of the python client
+    steps:
+      - run:
+          name: Type Check
+          command: |
+            pushd clients/python
+            mypy . --install-types --non-interactive
+            popd
   run_unit_tests_server:
     description: Unit tests of the server
     steps:
@@ -131,8 +161,14 @@ commands:
           command: |
             ruff .
       - run:
+          name: Type Check
+          command: |
+            pushd server
+            mypy . --install-types --non-interactive
+            popd
+      - run:
           name: Unit Tests
           command: |
-            cd server
-            pip install -e .
+            pushd server
             WORKSPACE=.. pytest
+            popd

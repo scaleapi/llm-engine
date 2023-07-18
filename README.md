@@ -55,6 +55,7 @@ export SCALE_API_KEY="[Your API key]"
 
 You may need to run the `. ~/.zshrc` command to re-read your updated `.zshrc`.
 
+
 With your API key set, you can now send LLM Engine requests using the Python client. 
 Try out this starter code:
 
@@ -74,4 +75,4 @@ print(response.outputs[0].text)
 You should see a successful completion of your given prompt!
 
 Next, visit our [documentation site](https://scaleapi.github.io/llm-engine/) for more on
-the Completion and FineTune APIs and how to use them.
+the `Completion` and `FineTune` APIs and how to use them.
