@@ -10,9 +10,11 @@ from llmengine.data_types import (
 
 class Model(APIEngine):
     """
-    Model API. This API is used to get, list, and delete models. Models can be created using [FineTune.create()](./#llmengine.fine_tuning.FineTune.create).
+    Model API. This API is used to get, list, and delete models. Models include both base
+    models built into LLM Engine, and fine-tuned models that you create through the
+    [FineTune.create()](./#llmengine.fine_tuning.FineTune.create) API.
 
-    See [Model Zoo](../../model_zoo) for the list of publicly available models.
+    See [Model Zoo](../../model_zoo) for the list of publicly available base models.
     """
 
     @classmethod
@@ -83,10 +85,11 @@ class Model(APIEngine):
     @classmethod
     def list(cls) -> ListLLMEndpointsResponse:
         """
-        List LLM model endpoints available to call inference on. This includes publicly available endpoints as well as your fine-tuned model endpoints.
+        List LLM models available to call inference on. This includes base models
+        included with LLM Engine as well as your fine-tuned models.
 
         Returns:
-            ListLLMEndpointsResponse: list of model endpoints
+            ListLLMEndpointsResponse: list of models
 
         Example:
             ```python
@@ -142,7 +145,8 @@ class Model(APIEngine):
     @classmethod
     def delete(cls, model_name: str) -> DeleteLLMEndpointResponse:
         """
-        Deletes an LLM model endpoint.
+        Deletes an LLM model. If called on a fine-tuned model, the model is deleted.
+        If called on a base model included with LLM Engine, an error will be thrown.
 
         Args:
             model_name (`str`):
