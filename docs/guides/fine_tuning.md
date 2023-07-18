@@ -14,7 +14,7 @@ Fine-tuning allows for:
 4. Lower latency at inference time
 5. The chance to show an LLM more examples than can fit in a single context window
 
-LLM Engine's fine-tuning API lets you fine-tune various open source LLMs on your own data and then make inference calls to the resulting LLM. For more specific details, see the [fine-tuning API Python client reference](../../api/python_client/#llmengine.FineTune).
+LLM Engine's fine-tuning API lets you fine-tune various open source LLMs on your own data and then make inference calls to the resulting LLM. For more specific details, see the [fine-tuning API reference](../../api/python_client/#llmengine.FineTune).
 
 ## Producing high quality data for fine-tuning
 
