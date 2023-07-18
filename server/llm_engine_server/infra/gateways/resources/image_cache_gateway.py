@@ -92,7 +92,7 @@ class ImageCacheGateway:
 
         try:
             await apps_api.create_namespaced_daemon_set(
-                namespace="llm-engine",
+                namespace=LLM_ENGINE_DEFAULT_NAMESPACE,
                 body=image_cache,
             )
             logger.info(f"Created image cache daemonset {name}")
@@ -100,7 +100,7 @@ class ImageCacheGateway:
             if exc.status == 409:
                 # Do not update existing daemonset if the cache is unchanged
                 existing_daemonsets = await apps_api.list_namespaced_daemon_set(
-                    namespace="llm-engine"
+                    namespace=LLM_ENGINE_DEFAULT_NAMESPACE
                 )
                 for daemonset in existing_daemonsets.items:
                     if daemonset.metadata.name == name:
@@ -116,7 +116,7 @@ class ImageCacheGateway:
                     f"Image cache daemonset {name} already exists, replacing with new values"
                 )
                 await apps_api.replace_namespaced_daemon_set(
-                    name=name, namespace="llm-engine", body=image_cache
+                    name=name, namespace=LLM_ENGINE_DEFAULT_NAMESPACE, body=image_cache
                 )
             elif exc.status == 404:
                 logger.exception("ImageCache API not found. Is the ImageCache CRD installed?")
