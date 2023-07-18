@@ -232,7 +232,7 @@ class FineTune(APIEngine):
         Cancel a fine-tuning job.
 
         This API can be used to cancel an existing fine-tuning job if
-        it's no longer required. It takes as parameter the `fine_tune_id`
+        it's no longer required. It takes the `fine_tune_id` as a parameter
         and returns a response object which has a `success` field
         confirming if the cancellation was successful.
 
@@ -271,7 +271,7 @@ class FineTune(APIEngine):
         Get events of a fine-tuning job.
 
         This API can be used to get the list of detailed events for a fine-tuning job.
-        It takes as parameter the `fine_tune_id` and returns a response object
+        It takes the `fine_tune_id` as a parameter and returns a response object
         which has a list of events that has happened for the fine-tuning job. Two events
         are logged periodically: an evaluation of the training loss, and an
         evaluation of the eval loss. This API will return all events for the fine-tuning job.

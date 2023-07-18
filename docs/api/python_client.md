@@ -11,6 +11,7 @@
         members:
             - create
             - get
+            - get_events
             - list
             - cancel
 
