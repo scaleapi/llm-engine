@@ -2,9 +2,7 @@
 
 **The open source engine for fine-tuning large language models**. 
 
-LLM Engine is the easiest way to customize and serve LLMs.
-
-LLMs can be accessed via Scale's hosted version or by using the helm charts in this repository to run model inference and fine-tuning in your own infrastructure.
+LLM Engine is the easiest way to customize and serve LLMs. In LLM Engine, models can be accessed via Scale's hosted version or by using the helm charts in this repository to run model inference and fine-tuning in your own infrastructure.
 
 ## 💻 Quick Install
 
@@ -28,7 +26,7 @@ Kubernetes.
 ### Key Features
 
 🎁 **Ready-to-use APIs for your favorite models**: Deploy and serve
-open-source foundation models - including LLaMA, MPT and Falcon.
+open-source foundation models— including LLaMA, MPT and Falcon.
 Use Scale-hosted models or deploy to your own infrastructure.
 
 🔧 **Fine-tune foundation models**: Fine-tune open-source foundation
@@ -43,7 +41,7 @@ model with a single command.
 
 ### Features Coming Soon
 
-🐳 **k8s Installation Documentation**: We are working hard to document installation and
+🐳 **K8s Installation Documentation**: We are working hard to document installation and
 maintenance of inference and fine-tuning functionality on your own infrastructure.
 For now, our documentation covers using our client libraries to access Scale's
 hosted infrastructure.
@@ -66,7 +64,8 @@ following line to your `.zshrc` or `.bash_profile`:
 export SCALE_API_KEY="[Your API key]"
 ```
 
-You may need to run the `. ~/.zshrc` command to re-read your updated `.zshrc`.
+If you run into an "Invalid API Key" error, you may need to run the `. ~/.zshrc` command to 
+re-read your updated `.zshrc`.
 
 
 With your API key set, you can now send LLM Engine requests using the Python client. 
@@ -87,5 +86,5 @@ print(response.output.text)
 
 You should see a successful completion of your given prompt!
 
-Next, visit our [documentation site](https://scaleapi.github.io/llm-engine/) for more on
+_What's next?_ Visit the [LLM Engine documentation pages](https://scaleapi.github.io/llm-engine/) for more on
 the `Completion` and `FineTune` APIs and how to use them.
