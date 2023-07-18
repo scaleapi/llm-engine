@@ -3290,7 +3290,7 @@ data:
     data:
       raw_data: ${ENDPOINT_CONFIG_SERIALIZED}
   horizontal-pod-autoscaler.yaml: |-
-    apiVersion: autoscaling/v2beta2
+    apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
     metadata:
       name: ${RESOURCE_NAME}
