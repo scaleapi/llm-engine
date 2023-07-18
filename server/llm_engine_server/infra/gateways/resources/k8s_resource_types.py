@@ -527,7 +527,7 @@ def get_endpoint_resource_arguments_from_request(
     # In Circle CI, we use Redis on localhost instead of SQS
     broker_name = BrokerName.SQS.value if not CIRCLECI else BrokerName.REDIS.value
     broker_type = BrokerType.SQS.value if not CIRCLECI else BrokerType.REDIS.value
-    datadog_trace_enabled = "true" if not CIRCLECI else "false"
+    datadog_trace_enabled = "false" # TODO: Make datadog_trace_enabled configurable for endpoints
     if broker_type == BrokerType.REDIS.value:
         sqs_queue_url = ""
 
