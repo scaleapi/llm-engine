@@ -71,7 +71,9 @@ class Completion(APIEngine):
         Returns:
             response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
 
-        Example without token streaming:
+        Token streaming can be used to reduce _percieved_ latency for applications:
+
+        === "Asynchronous completion without token streaming in python"
             ```python
             import asyncio
             from llmengine import Completion
@@ -88,7 +90,7 @@ class Completion(APIEngine):
             asyncio.run(main())
             ```
 
-        JSON response:
+        === "Response in json"
             ```json
             {
                 "request_id": "b1b2c3d4e5f6g7h8i9j0",
@@ -102,7 +104,9 @@ class Completion(APIEngine):
             }
             ```
 
-        Example with token streaming:
+        Here is how applications can use streaming:
+
+        === "Asynchronous completion with token streaming in python"
             ```python
             import asyncio
             from llmengine import Completion
@@ -123,7 +127,7 @@ class Completion(APIEngine):
             asyncio.run(main())
             ```
 
-        JSON responses:
+        === "Response in json"
             ```json
             {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1}}
             {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_completion_tokens": 2}}
@@ -131,7 +135,7 @@ class Completion(APIEngine):
             {"request_id": "0123456789", "output": {"text": " the", "finished": false, "num_completion_tokens": 4}}
             {"request_id": "0123456789", "output": {"text": " sky", "finished": true, "num_completion_tokens": 5}}
             ```
-        """
+      """
         if stream:
 
             async def _acreate_stream(
@@ -220,7 +224,9 @@ class Completion(APIEngine):
         Returns:
             response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
 
-        Example request without token streaming:
+        Token streaming can be used to reduce _percieved_ latency for applications:
+
+        === "Synchronous completion without token streaming in python"
             ```python
             from llmengine import Completion
 
@@ -233,7 +239,7 @@ class Completion(APIEngine):
             print(response.json())
             ```
 
-        JSON Response:
+        === "Response in json"
             ```json
             {
                 "request_id": "0123456789",
@@ -248,7 +254,9 @@ class Completion(APIEngine):
             }
             ```
 
-        Example request with token streaming:
+        Here is how applications can use streaming:
+
+        === "Synchronous completion with token streaming in python"
             ```python
             from llmengine import Completion
 
@@ -265,7 +273,7 @@ class Completion(APIEngine):
                     print(response.json())
             ```
 
-        JSON responses:
+        === "Response in json"
             ```json
             {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1 } }
             {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_completion_tokens": 2 } }
