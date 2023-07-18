@@ -36,7 +36,8 @@ class FineTune(APIEngine):
 
         This API can be used to fine-tune a model. The _model_ is the name of base model
         ([Model Zoo](../../model_zoo) for available models) to fine-tune. The training
-        file should consist of prompt and response pairs. Your data must be formatted as a CSV file
+        and validation files should consist of prompt and response pairs. `training_file`
+        and `validation_file` must be publicly accessible HTTP or HTTPS URLs to a CSV file
         that includes two columns: `prompt` and `response`. A maximum of 100,000 rows of data is
         currently supported. At least 200 rows of data is recommended to start to see benefits from
         fine-tuning. For sequences longer than the native `max_seq_length` of the model, the sequences
@@ -63,7 +64,11 @@ class FineTune(APIEngine):
                 * `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
 
             suffix (`Optional[str]`):
-                A string that will be added to your fine-tuned model name.
+                A string that will be added to your fine-tuned model name. If present, the fine-tuned model name
+                will be formatted like "[model].[suffix].[YYYY-MM-DD-HH-MM-SS]". If absent, the
+                fine-tuned model name will be formatted like "[model].[YYYY-MM-DD-HH-MM-SS]".
+                For example, if `suffix` is "my-experiment", the fine-tuned model name could be
+                "llame-7b.my-experiment.2023-07-17-23-01-50".
 
         Returns:
             CreateFineTuneResponse: an object that contains the ID of the created fine-tuning job
@@ -91,6 +96,15 @@ class FineTune(APIEngine):
             writer.writerows(data)
         ```
 
+        Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read
+        for fine-tuning. Publicly accessible HTTP and HTTPS URLs are currently supported.
+        Support for privately sharing data with the LLM Engine API is coming shortly. For quick
+        iteration, you can look into tools like Pastebin or GitHub Gists to quickly host your CSV
+        files in a public manner. An example Github Gist can be found
+        [here](https://gist.github.com/tigss/7cec73251a37de72756a3b15eace9965). To use the gist,
+        you can use the URL given when you click the “Raw” button
+        ([URL](https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv)).
+
         Example code for fine-tuning:
         === "Fine-tuning in python"
             ```python
@@ -107,7 +121,7 @@ class FineTune(APIEngine):
         === "Response in json"
             ```json
             {
-                "fine_tune_id": "ft_abc123"
+                "fine_tune_id": "ft-cir3eevt71r003ks6il0"
             }
             ```
 
@@ -153,7 +167,7 @@ class FineTune(APIEngine):
             from llmengine import FineTune
 
             response = FineTune.get(
-                fine_tune_id="ft_abc123",
+                fine_tune_id="ft-cir3eevt71r003ks6il0",
             )
 
             print(response.json())
@@ -162,7 +176,7 @@ class FineTune(APIEngine):
         === "Response in json"
             ```json
             {
-                "fine_tune_id": "ft_abc123",
+                "fine_tune_id": "ft-cir3eevt71r003ks6il0",
                 "status": "STARTED"
             }
             ```
@@ -195,7 +209,7 @@ class FineTune(APIEngine):
             {
                 "jobs": [
                     {
-                        "fine_tune_id": "ft_abc123",
+                        "fine_tune_id": "ft-cir3eevt71r003ks6il0",
                         "status": "STARTED"
                     },
                     {
@@ -230,7 +244,7 @@ class FineTune(APIEngine):
             ```python
             from llmengine import FineTune
 
-            response = FineTune.cancel(fine_tune_id="ft_abc123")
+            response = FineTune.cancel(fine_tune_id="ft-cir3eevt71r003ks6il0")
             print(response.json())
             ```
 
@@ -253,7 +267,7 @@ class FineTune(APIEngine):
         """
         Get events of a fine-tuning job.
 
-        This API can be used to get the list of events for a fine-tuning job.
+        This API can be used to get the list of detailed events for a fine-tuning job.
         It takes as parameter the `fine_tune_id` and returns a response object
         which has a list of events that has happened for the fine-tuning job.
 
@@ -268,7 +282,7 @@ class FineTune(APIEngine):
             ```python
             from llmengine import FineTune
 
-            response = FineTune.get_events(fine_tune_id="ft_abc123")
+            response = FineTune.get_events(fine_tune_id="ft-cir3eevt71r003ks6il0")
             print(response.json())
             ```
 
