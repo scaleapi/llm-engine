@@ -101,17 +101,22 @@ with open('customer_service_data.csv', 'w', newline='') as file:
 </details>
 
 ## Making your data accessible to LLM Engine
-Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read for fine-tuning. Publicly accessible HTTP, HTTPS, and S3 URLs are currently supported. Support for privately sharing data with the LLM Engine API is coming shortly. For quick iteration, you can look into tools like Pastebin or Github Gists to quickly host your CSV files in a public manner. We created an example Github Gist you can see [here](https://gist.github.com/tigss/7cec73251a37de72756a3b15eace9965). To use the gist, you can just use the URL given when you click the “Raw” button ([URL](https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv)).
+Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read
+for fine-tuning. Publicly accessible HTTP and HTTPS URLs are currently supported.
+Support for privately sharing data with the LLM Engine API is coming shortly. For quick
+iteration, you can look into tools like Pastebin or GitHub Gists to quickly host your CSV
+files in a public manner. An example Github Gist can be found
+[here](https://gist.github.com/tigss/7cec73251a37de72756a3b15eace9965). To use the gist,
+you can use the URL given when you click the “Raw” button
+([URL](https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv)).
+
 
 ## Launching the fine-tune
-Once you have uploaded your data, you can use the LLM Engine API to launch a fine-tune. You will 
-need to specify which base model to fine-tune, the locations of the training file and optional 
-validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, 
-and an optional suffix to append to the name of the fine-tune. For sequences longer than the native 
+Once you have uploaded your data, you can use the LLM Engine's [FineTune.Create](../../api/python_client/#llmengine.fine_tuning.FineTune.create) API to launch a fine-tune. You will need to specify which base model to fine-tune, the locations of the training file and optional validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, and an optional suffix to append to the name of the fine-tune. For sequences longer than the native 
 `max_seq_length` of the model, the sequences will be truncated.
 
-If you specify a suffix, the fine-tune will be named `model:suffix:<timestamp>`. If you do not, 
-the fine-tune will be named `model:<timestamp>`. The timestamp will be the time the fine-tune was 
+If you specify a suffix, the fine-tune will be named `model.suffix.<timestamp>`. If you do not, 
+the fine-tune will be named `model.<timestamp>`. The timestamp will be the time the fine-tune was 
 launched.
 
 <details>
@@ -138,7 +143,7 @@ print(response.json())
 
 See the [Model Zoo](../../model_zoo) to see which models have fine-tuning support.
 
-Once the fine-tune is launched, you can also [get the status of your fine-tune](../../api/python_client/#llmengine.fine_tuning.FineTune.get).
+Once the fine-tune is launched, you can also [get the status of your fine-tune](../../api/python_client/#llmengine.fine_tuning.FineTune.get). You can also [list events that your fine-tune produces](../../api/python_client/#llmengine.fine_tuning.FineTune.get_events).
 
 ## Making inference calls to your fine-tune
 
@@ -158,7 +163,7 @@ before you can plug it into the Completions API. You can check the status of you
 from llmengine import Completion
 
 response = Completion.create(
-    model_name="llama-7b:airlines:2023-07-17-08-30-45",
+    model="llama-7b.airlines.2023-07-17-08-30-45",
     prompt="Do you offer in-flight Wi-fi?",
     max_new_tokens=100,
     temperature=0.2,
