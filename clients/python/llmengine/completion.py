@@ -38,10 +38,10 @@ class Completion(APIEngine):
         This API can be used to get the LLM to generate a completion *asynchronously*.
         It takes as parameters the `model` ([see Model Zoo](../../../model_zoo)) and the `prompt`.
         Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
-        It returns
-        [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
+        It returns a
+        [CompletionSyncResponse](../../api/data_types/#llmengine.CompletionSyncResponse)
         if `stream=False` or an async iterator of
-        [CompletionStreamV1Response](../../api/data_types/#llmengine.CompletionStreamV1Response)
+        [CompletionStreamResponse](../../api/data_types/#llmengine.CompletionStreamResponse)
         with `request_id` and `outputs` fields.
 
         Args:
@@ -71,9 +71,7 @@ class Completion(APIEngine):
         Returns:
             response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
 
-        Token streaming can be used to reduce _percieved_ latency for applications:
-
-        === "Asynchronous completion without token streaming in python"
+        === "Asynchronous completion without token streaming in Python"
             ```python
             import asyncio
             from llmengine import Completion
@@ -90,7 +88,7 @@ class Completion(APIEngine):
             asyncio.run(main())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {
                 "request_id": "b1b2c3d4e5f6g7h8i9j0",
@@ -104,9 +102,9 @@ class Completion(APIEngine):
             }
             ```
 
-        Here is how applications can use streaming:
+        Token streaming can be used to reduce _percieved_ latency for applications. Here is how applications can use streaming:
 
-        === "Asynchronous completion with token streaming in python"
+        === "Asynchronous completion with token streaming in Python"
             ```python
             import asyncio
             from llmengine import Completion
@@ -127,7 +125,7 @@ class Completion(APIEngine):
             asyncio.run(main())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1}}
             {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_completion_tokens": 2}}
@@ -189,10 +187,10 @@ class Completion(APIEngine):
         This API can be used to get the LLM to generate a completion *synchronously*.
         It takes as parameters the `model` ([see Model Zoo](../../../model_zoo)) and the `prompt`.
         Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
-        It returns
-        [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
+        It returns a
+        [CompletionSyncResponse](../../api/data_types/#llmengine.CompletionSyncResponse)
         if `stream=False` or an async iterator of
-        [CompletionStreamV1Response](../../api/data_types/#llmengine.CompletionStreamV1Response)
+        [CompletionStreamResponse](../../api/data_types/#llmengine.CompletionStreamResponse)
         with `request_id` and `outputs` fields.
 
         Args:
@@ -224,9 +222,7 @@ class Completion(APIEngine):
         Returns:
             response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
 
-        Token streaming can be used to reduce _percieved_ latency for applications:
-
-        === "Synchronous completion without token streaming in python"
+        === "Synchronous completion without token streaming in Python"
             ```python
             from llmengine import Completion
 
@@ -239,7 +235,7 @@ class Completion(APIEngine):
             print(response.json())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {
                 "request_id": "0123456789",
@@ -254,9 +250,9 @@ class Completion(APIEngine):
             }
             ```
 
-        Here is how applications can use streaming:
+        Token streaming can be used to reduce _percieved_ latency for applications. Here is how applications can use streaming:
 
-        === "Synchronous completion with token streaming in python"
+        === "Synchronous completion with token streaming in Python"
             ```python
             from llmengine import Completion
 
@@ -273,7 +269,7 @@ class Completion(APIEngine):
                     print(response.json())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1 } }
             {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_completion_tokens": 2 } }

@@ -32,7 +32,7 @@ class FineTune(APIEngine):
         suffix: Optional[str] = None,
     ) -> CreateFineTuneResponse:
         """
-        Creates a job that fine-tunes a specified model from a given dataset.
+        Creates a job that fine-tunes a specified model with a given dataset.
 
         This API can be used to fine-tune a model. The _model_ is the name of base model
         ([Model Zoo](../../model_zoo) for available models) to fine-tune. The training
