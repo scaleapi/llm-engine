@@ -228,7 +228,7 @@ def create_model_endpoint(
     return response.json()
 
 
-def create_spellbook_deployments(gateway_url: str):
+def create_llm_engine_deployments(gateway_url: str):
     for model_name, service_config in SERVICE_CONFIGS.items():
         bundle_payload = spellbook_bundle_payload(
             model_name=model_name,
@@ -252,4 +252,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ensure_gateway_ready(args.gateway_url)
-    create_spellbook_deployments(args.gateway_url)
+    # TODO: Uncomment this when we're ready to deploy the initial models
+    # create_llm_engine_deployments(args.gateway_url)
