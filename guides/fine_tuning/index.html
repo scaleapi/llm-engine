@@ -641,7 +641,7 @@
 <li>Lower latency at inference time</li>
 <li>The chance to show an LLM more examples than can fit in a single context window</li>
 </ol>
-<p>LLM Engine's fine-tuning API lets you fine-tune various open source LLMs on your own data and then make inference calls to the resulting LLM. For more specific details, see the <a href="../../api/python_client/#llmengine.FineTune">fine-tuning API Python client reference</a>.</p>
+<p>LLM Engine's fine-tuning API lets you fine-tune various open source LLMs on your own data and then make inference calls to the resulting LLM. For more specific details, see the <a href="../../api/python_client/#llmengine.FineTune">fine-tuning API reference</a>.</p>
 <h2 id="producing-high-quality-data-for-fine-tuning">Producing high quality data for fine-tuning<a class="headerlink" href="#producing-high-quality-data-for-fine-tuning" title="Permanent link">&para;</a></h2>
 <p>The training data for fine-tuning should consist of prompt and response pairs.</p>
 <p>As a rule of thumb, you should expect to see linear improvements in your fine-tuned model's quality with each doubling of the dataset size. Having high-quality data is also essential to improving performance. For every linear increase in the error rate in your training data, you may encounter a roughly quadratic increase in your fine-tuned model's error rate.</p>
@@ -721,7 +721,13 @@ prepare such high quality, diverse data sets - more information <a href="https:/
 <h2 id="making-your-data-accessible-to-llm-engine">Making your data accessible to LLM Engine<a class="headerlink" href="#making-your-data-accessible-to-llm-engine" title="Permanent link">&para;</a></h2>
 <p>Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read for fine-tuning. Publicly accessible HTTP, HTTPS, and S3 URLs are currently supported. Support for privately sharing data with the LLM Engine API is coming shortly. For quick iteration, you can look into tools like Pastebin or Github Gists to quickly host your CSV files in a public manner. We created an example Github Gist you can see <a href="https://gist.github.com/tigss/7cec73251a37de72756a3b15eace9965">here</a>. To use the gist, you can just use the URL given when you click the “Raw” button (<a href="https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv">URL</a>).</p>
 <h2 id="launching-the-fine-tune">Launching the fine-tune<a class="headerlink" href="#launching-the-fine-tune" title="Permanent link">&para;</a></h2>
-<p>Once you have uploaded your data, you can use the LLM Engine API to launch a fine-tune. You will need to specify which base model to fine-tune, the locations of the training file and optional validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, and an optional suffix to append to the name of the fine-tune.</p>
+<p>Once you have uploaded your data, you can use the LLM Engine API to launch a fine-tune. You will 
+need to specify which base model to fine-tune, the locations of the training file and optional 
+validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, 
+and an optional suffix to append to the name of the fine-tune.</p>
+<p>If you specify a suffix, the fine-tune will be named <code>model:suffix:&lt;timestamp&gt;</code>. If you do not, 
+the fine-tune will be named <code>model:&lt;timestamp&gt;</code>. The timestamp will be the time the fine-tune was 
+launched.</p>
 <details>
 <summary>Create a fine-tune</summary>
 
@@ -739,14 +745,22 @@ prepare such high quality, diverse data sets - more information <a href="https:/
 <p>See the <a href="../../model_zoo">Model Zoo</a> to see which models have fine-tuning support.</p>
 <p>Once the fine-tune is launched, you can also <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.get">get the status of your fine-tune</a>.</p>
 <h2 id="making-inference-calls-to-your-fine-tune">Making inference calls to your fine-tune<a class="headerlink" href="#making-inference-calls-to-your-fine-tune" title="Permanent link">&para;</a></h2>
-<p>Once your fine-tune is finished, you will be able to start making inference requests to the model. You can use the <code>fine_tune_id</code> returned from your <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.create">FineTune.create</a> API call to reference your fine-tuned model in the Completions API. Alternatively, you can list available LLMs with <code>Model.list</code> in order to find the name of your fine-tuned model. See the <a href="../../api/python_client/#llmengine.Completion">Completion API</a> for more details. You can then use that name to direct your completion requests.</p>
+<p>Once your fine-tune is finished, you will be able to start making inference requests to the 
+model. You can use the <code>fine_tuned_model</code> returned from your 
+<a href="../../api/python_client/#llmengine.fine_tuning.FineTune.get">FineTune.get</a>
+API call to reference your fine-tuned model in the Completions API. Alternatively, you can list 
+available LLMs with <code>Model.list</code> in order to find the name of your fine-tuned model. See the 
+<a href="../../api/python_client/#llmengine.Completion">Completion API</a> for more details. You can then 
+use that name to direct your completion requests.  You must wait until your fine-tune is complete 
+before you can plug it into the Completions API. You can check the status of your fine-tune with 
+<a href="../../api/python_client/#llmengine.fine_tuning.FineTune.get">FineTune.get</a>.</p>
 <details>
 <summary>Inference with a fine-tuned model</summary>
 
 <div class="highlight" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #f92672">from</span> <span style="color: #f8f8f2">llmengine</span> <span style="color: #f92672">import</span> <span style="color: #f8f8f2">Completion</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span style="color: #f8f8f2">response</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">Completion</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">create(</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span style="color: #f8f8f2">model_name</span><span style="color: #f92672">=</span><span style="color: #e6db74">&quot;ft_abc123&quot;</span><span style="color: #f8f8f2">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span style="color: #f8f8f2">model_name</span><span style="color: #f92672">=</span><span style="color: #e6db74">&quot;llama-7b:airlines:2023-07-17-08-30-45&quot;</span><span style="color: #f8f8f2">,</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span style="color: #f8f8f2">prompt</span><span style="color: #f92672">=</span><span style="color: #e6db74">&quot;Do you offer in-flight Wi-fi?&quot;</span><span style="color: #f8f8f2">,</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span style="color: #f8f8f2">max_new_tokens</span><span style="color: #f92672">=</span><span style="color: #ae81ff">100</span><span style="color: #f8f8f2">,</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span style="color: #f8f8f2">temperature</span><span style="color: #f92672">=</span><span style="color: #ae81ff">0.2</span><span style="color: #f8f8f2">,</span>

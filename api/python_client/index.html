@@ -757,25 +757,25 @@
 
 
 <h2 id="llmengine.Completion" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">Completion</span>
+        <span class="doc doc-object-name doc-class-name">Completion</span>
 
 
 <a href="#llmengine.Completion" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>Completion API. This API is used to generate text completions.</p>
-<p>Language Models are trained to understand natural language and provide text outputs as a response to
-their inputs. The inputs are called <em>prompts</em> and outputs are referred to as <em>completions</em>.
-LLMs take the input <em>prompts</em> and chunk them smaller units called <em>tokens</em> to process and generate
+<p>Language models are trained to understand natural language and predict text outputs as a response to
+their inputs. The inputs are called <em>prompts</em> and the outputs are referred to as <em>completions</em>.
+LLMs take the input prompts and chunk them into smaller units called <em>tokens</em> to process and generate
 language. Tokens may include trailing spaces and even sub-words; this process is language dependent.</p>
-<p>The Completions API can be run either
-synchronous or asynchronously (via Python <code>asyncio</code>); for each of these modes, you can also choose to
-stream token responses or not.</p>
+<p>The Completion API can be run either synchronous or asynchronously (via Python <code>asyncio</code>).
+For each of these modes, you can also choose whether to stream token responses or not.</p>
+
 
 
   
@@ -790,13 +790,12 @@ stream token responses or not.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.completion.Completion.create" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">create</span>
+        <span class="doc doc-object-name doc-function-name">create</span>
 
   
   <span class="doc doc-labels">
@@ -804,7 +803,7 @@ stream token responses or not.</p>
   </span>
 
 <a href="#llmengine.completion.Completion.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #f8f8f2">create(model:</span> <span style="color: #f8f8f2">str,</span> <span style="color: #f8f8f2">prompt:</span> <span style="color: #f8f8f2">str,</span> <span style="color: #f8f8f2">max_new_tokens:</span> <span style="color: #f8f8f2">int</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">20</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">temperature:</span> <span style="color: #f8f8f2">float</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0.2</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">timeout:</span> <span style="color: #f8f8f2">int</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">10</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">stream:</span> <span style="color: #f8f8f2">bool</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">False</span><span style="color: #f8f8f2">)</span> <span style="color: #f92672">-&gt;</span> <span style="color: #f8f8f2">Union[CompletionSyncV1Response,</span> <span style="color: #f8f8f2">Iterator[CompletionStreamV1Response]]</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #f8f8f2">create(model:</span> <span style="color: #f8f8f2">str,</span> <span style="color: #f8f8f2">prompt:</span> <span style="color: #f8f8f2">str,</span> <span style="color: #f8f8f2">max_new_tokens:</span> <span style="color: #f8f8f2">int</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">20</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">temperature:</span> <span style="color: #f8f8f2">float</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0.2</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">timeout:</span> <span style="color: #f8f8f2">int</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">10</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">stream:</span> <span style="color: #f8f8f2">bool</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">False</span><span style="color: #f8f8f2">)</span> <span style="color: #f92672">-&gt;</span> <span style="color: #f8f8f2">Union[CompletionSyncResponse,</span> <span style="color: #f8f8f2">Iterator[CompletionStreamResponse]]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -818,8 +817,6 @@ It returns
 if <code>stream=False</code> or an async iterator of
 <a href="../../api/data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>
 with <code>request_id</code> and <code>outputs</code> fields.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -839,7 +836,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Name of the model to use. See <a href="../model_zoo/">Model Zoo</a> for a list of Models that are supported.</p>
+              <p>Name of the model to use. See <a href="../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
             </div>
           </td>
           <td>
@@ -869,7 +866,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
             <div class="doc-md-description">
               <p>The maximum number of tokens to generate in the completion.</p>
 <p>The token count of your prompt plus <code>max_new_tokens</code> cannot exceed the model's context length. See
-<a href="../model_zoo/">Model Zoo</a> for information on each supported model's context length.</p>
+<a href="../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
             </div>
           </td>
           <td>
@@ -913,7 +910,7 @@ more random, while lower values like 0.2 will make it more focused and determini
           <td>
             <div class="doc-md-description">
               <p>Whether to stream the response. If true, the return type is an
-<code>Iterator[CompletionStreamV1Response]</code>. Otherwise, the return type is a <code>CompletionSyncV1Response</code>.
+<code>Iterator[CompletionStreamResponse]</code>. Otherwise, the return type is a <code>CompletionSyncResponse</code>.
 When streaming, tokens will be sent as data-only <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-sent events</a>.</p>
             </div>
           </td>
@@ -923,8 +920,6 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -937,7 +932,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
     <tbody>
         <tr>
 <td><code>response</code></td>          <td>
-                <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncV1Response" href="../data_types/#llmengine.CompletionSyncV1Response">CompletionSyncV1Response</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamV1Response" href="../data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>]]</code>
+                <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncResponse" href="../data_types/#llmengine.CompletionSyncResponse">CompletionSyncResponse</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamResponse" href="../data_types/#llmengine.CompletionStreamResponse">CompletionStreamResponse</a>]]</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -1006,22 +1001,21 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.completion.Completion.acreate" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">acreate</span>
+        <span class="doc doc-object-name doc-function-name">acreate</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
   </span>
 
 <a href="#llmengine.completion.Completion.acreate" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #f8f8f2">acreate(model:</span> <span style="color: #f8f8f2">str,</span> <span style="color: #f8f8f2">prompt:</span> <span style="color: #f8f8f2">str,</span> <span style="color: #f8f8f2">max_new_tokens:</span> <span style="color: #f8f8f2">int</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">20</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">temperature:</span> <span style="color: #f8f8f2">float</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0.2</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">timeout:</span> <span style="color: #f8f8f2">int</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">10</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">stream:</span> <span style="color: #f8f8f2">bool</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">False</span><span style="color: #f8f8f2">)</span> <span style="color: #f92672">-&gt;</span> <span style="color: #f8f8f2">Union[CompletionSyncV1Response,</span> <span style="color: #f8f8f2">AsyncIterable[CompletionStreamV1Response]]</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #f8f8f2">acreate(model:</span> <span style="color: #f8f8f2">str,</span> <span style="color: #f8f8f2">prompt:</span> <span style="color: #f8f8f2">str,</span> <span style="color: #f8f8f2">max_new_tokens:</span> <span style="color: #f8f8f2">int</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">20</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">temperature:</span> <span style="color: #f8f8f2">float</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0.2</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">timeout:</span> <span style="color: #f8f8f2">int</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">10</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">stream:</span> <span style="color: #f8f8f2">bool</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">False</span><span style="color: #f8f8f2">)</span> <span style="color: #f92672">-&gt;</span> <span style="color: #f8f8f2">Union[CompletionSyncResponse,</span> <span style="color: #f8f8f2">AsyncIterable[CompletionStreamResponse]]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1035,8 +1029,6 @@ It returns
 if <code>stream=False</code> or an async iterator of
 <a href="../../api/data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>
 with <code>request_id</code> and <code>outputs</code> fields.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1056,7 +1048,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Name of the model to use. See <a href="../model_zoo/">Model Zoo</a> for a list of Models that are supported.</p>
+              <p>Name of the model to use. See <a href="../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
             </div>
           </td>
           <td>
@@ -1086,7 +1078,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
             <div class="doc-md-description">
               <p>The maximum number of tokens to generate in the completion.</p>
 <p>The token count of your prompt plus <code>max_new_tokens</code> cannot exceed the model's context length. See
-<a href="../model_zoo/">Model Zoo</a> for information on each supported model's context length.</p>
+<a href="../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
             </div>
           </td>
           <td>
@@ -1130,7 +1122,7 @@ more random, while lower values like 0.2 will make it more focused and determini
           <td>
             <div class="doc-md-description">
               <p>Whether to stream the response. If true, the return type is an
-<code>Iterator[CompletionStreamV1Response]</code>. Otherwise, the return type is a <code>CompletionSyncV1Response</code>.
+<code>Iterator[CompletionStreamResponse]</code>. Otherwise, the return type is a <code>CompletionSyncResponse</code>.
 When streaming, tokens will be sent as data-only <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-sent events</a>.</p>
             </div>
           </td>
@@ -1140,8 +1132,6 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1154,7 +1144,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
     <tbody>
         <tr>
 <td><code>response</code></td>          <td>
-                <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncV1Response" href="../data_types/#llmengine.CompletionSyncV1Response">CompletionSyncV1Response</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamV1Response" href="../data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>]]</code>
+                <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncResponse" href="../data_types/#llmengine.CompletionSyncResponse">CompletionSyncResponse</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamResponse" href="../data_types/#llmengine.CompletionStreamResponse">CompletionStreamResponse</a>]]</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -1243,21 +1233,22 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h2 id="llmengine.FineTune" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">FineTune</span>
+        <span class="doc doc-object-name doc-class-name">FineTune</span>
 
 
 <a href="#llmengine.FineTune" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>FineTune API. This API is used to fine-tune models.</p>
 <p>Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning is a supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM.</p>
 <p>LLM Engine provides APIs to create fine-tunes on a base model with training &amp; validation datasets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.</p>
 <p>Creating a fine-tune will end with the creation of a Model, which you can view using <code>Model.get(model_name)</code> or delete using <code>Model.delete(model_name)</code>.</p>
+
 
 
   
@@ -1272,13 +1263,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.create" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">create</span>
+        <span class="doc doc-object-name doc-function-name">create</span>
 
   
   <span class="doc doc-labels">
@@ -1298,8 +1288,6 @@ file should consist of prompt and response pairs. Your data must be formatted as
 that includes two columns: <code>prompt</code> and <code>response</code>. A maximum of 100,000 rows of data is
 currently supported. At least 200 rows of data is recommended to start to see benefits from
 fine-tuning.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1389,8 +1377,6 @@ fine-tuning.</p>
     </tbody>
   </table>
 
-
-
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -1455,13 +1441,12 @@ an airline question answering bot:</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.get" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">get</span>
+        <span class="doc doc-object-name doc-function-name">get</span>
 
   
   <span class="doc doc-labels">
@@ -1481,8 +1466,6 @@ and returns a
 <a href="../../api/data_types/#llmengine.GetFineTuneResponse">GetFineTuneResponse</a>
 object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 <code>UNDEFINED</code>, <code>FAILURE</code> or <code>SUCCESS</code>).</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1511,8 +1494,6 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1559,13 +1540,12 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.list" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">list</span>
+        <span class="doc doc-object-name doc-function-name">list</span>
 
   
   <span class="doc doc-labels">
@@ -1582,8 +1562,6 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 <p>This API can be used to list all the fine-tuning jobs.
 It returns a list of pairs of <code>fine_tune_id</code> and <code>status</code> for
 all existing jobs.</p>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1635,13 +1613,12 @@ all existing jobs.</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.cancel" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">cancel</span>
+        <span class="doc doc-object-name doc-function-name">cancel</span>
 
   
   <span class="doc doc-labels">
@@ -1659,8 +1636,6 @@ all existing jobs.</p>
 it's no longer required. It takes as parameter the <code>fine_tune_id</code>
 and returns a response object which has a <code>success</code> field
 confirming if the cancellation was successful.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1689,8 +1664,6 @@ confirming if the cancellation was successful.</p>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1746,19 +1719,20 @@ confirming if the cancellation was successful.</p>
 
 
 <h2 id="llmengine.Model" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">Model</span>
+        <span class="doc doc-object-name doc-class-name">Model</span>
 
 
 <a href="#llmengine.Model" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
-      <p>Model API. This API is used to get, list, delete, and (in the self-hosted case) create models. When using Scale Spellbook, create models using FineTune.create().</p>
+      <p>Model API. This API is used to get, list, and delete models. Models can be created using <a href="./#llmengine.fine_tuning.FineTune.create">FineTune.create()</a>.</p>
 <p>See <a href="../../model_zoo">Model Zoo</a> for the list of publicly available models.</p>
+
 
 
   
@@ -1773,13 +1747,12 @@ confirming if the cancellation was successful.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.get" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">get</span>
+        <span class="doc doc-object-name doc-function-name">get</span>
 
   
   <span class="doc doc-labels">
@@ -1793,8 +1766,6 @@ confirming if the cancellation was successful.</p>
   <div class="doc doc-contents ">
   
       <p>Get information about an LLM model endpoint.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1823,8 +1794,6 @@ confirming if the cancellation was successful.</p>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1873,13 +1842,12 @@ confirming if the cancellation was successful.</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.list" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">list</span>
+        <span class="doc doc-object-name doc-function-name">list</span>
 
   
   <span class="doc doc-labels">
@@ -1893,8 +1861,6 @@ confirming if the cancellation was successful.</p>
   <div class="doc doc-contents ">
   
       <p>List LLM model endpoints available to call inference on. This includes publicly available endpoints as well as your fine-tuned model endpoints.</p>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1970,13 +1936,12 @@ confirming if the cancellation was successful.</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.delete" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">delete</span>
+        <span class="doc doc-object-name doc-function-name">delete</span>
 
   
   <span class="doc doc-labels">
@@ -1990,8 +1955,6 @@ confirming if the cancellation was successful.</p>
   <div class="doc doc-contents ">
   
       <p>Deletes an LLM model endpoint.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2020,8 +1983,6 @@ confirming if the cancellation was successful.</p>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>

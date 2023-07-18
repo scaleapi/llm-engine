@@ -654,7 +654,8 @@
 
 
 <h1 id="getting-started">🚀 Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
-<p>To start using LLM Engine's public inference and fine-tuning APIs:</p>
+<p>The fastest way to get started with LLM Engine is to use the python client in this repository to run inference and fine-tuning on Scale's infrastructure. This path does not require you to install anything on your infrastructure, and Scale's free tier gives you access to experimentation using open source LLMs.</p>
+<p>To start with, install LLM Engine via pip or conda:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Install using pip</label><label for="__tabbed_1_2">Install using conda</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -668,18 +669,17 @@
 </div>
 </div>
 <h2 id="scale-api-keys">Scale API Keys<a class="headerlink" href="#scale-api-keys" title="Permanent link">&para;</a></h2>
-<p>To leverage Scale's hosted versions of these models, you will need a Scale Spellbook API key.</p>
+<p>Next, you need a Scale Spellbook API key.</p>
 <h3 id="retrieving-your-api-key">Retrieving your API Key<a class="headerlink" href="#retrieving-your-api-key" title="Permanent link">&para;</a></h3>
 <p>To retrieve your API key, head to <a href="https://spellbook.scale.com">Scale Spellbook</a> where
-you will get a Scale API key on the <a href="https://spellbook.scale.com/settings">settings</a> page.</p>
+you will get an API key on the <a href="https://spellbook.scale.com/settings">settings</a> page.</p>
 <div class="admonition note">
 <p class="admonition-title">Different API Keys for different Scale Products</p>
 <p>If you have leveraged Scale's platform for annotation work in the past, please note that your Spellbook API key will be different than the Scale Annotation API key. You will want to create a Spellbook API key before getting started.</p>
 </div>
 <h3 id="using-your-api-key">Using your API Key<a class="headerlink" href="#using-your-api-key" title="Permanent link">&para;</a></h3>
-<p>LLM Engine leverages environment variables to access your API key.
-Set this API key as the <code>SCALE_API_KEY</code> environment variable by adding the
-following line to your <code>.zshrc</code> or <code>.bash_profile</code>, or by running it in the terminal before you run your python application.</p>
+<p>LLM Engine uses environment variables to access your API key.</p>
+<p>Set this API key as the <code>SCALE_API_KEY</code> environment variable by running the following command in your terminal before you run your python application.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Set API key</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -688,6 +688,7 @@ following line to your <code>.zshrc</code> or <code>.bash_profile</code>, or by 
 </div>
 </div>
 </div>
+<p>You can also add in the line above to your <code>.zshrc</code> or <code>.bash_profile</code> so it's automatically set for future sessions.</p>
 <h2 id="example-code">Example Code<a class="headerlink" href="#example-code" title="Permanent link">&para;</a></h2>
 <h3 id="sample-completion">Sample Completion<a class="headerlink" href="#sample-completion" title="Permanent link">&para;</a></h3>
 <p>With your API key set, you can now send LLM Engine requests using the Python client:</p>

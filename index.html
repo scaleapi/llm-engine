@@ -307,6 +307,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    🚀 Key Features
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#features-coming-soon" class="md-nav__link">
     🔥 Features Coming Soon
   </a>
@@ -571,6 +578,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    🚀 Key Features
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#features-coming-soon" class="md-nav__link">
     🔥 Features Coming Soon
   </a>
@@ -598,8 +612,9 @@
 
 
 <h1 id="llm-engine">⚡ LLM Engine ⚡<a class="headerlink" href="#llm-engine" title="Permanent link">&para;</a></h1>
-<p><strong>The open source engine for fine-tuning large language models</strong>. LLM Engine is the easiest way to customize and serve LLMs.
-Use Scale's hosted version or run it in your own cloud.</p>
+<p><strong>The open source engine for inference and fine-tuning of Large Language Models</strong>.</p>
+<p>LLM Engine is the easiest way to customize and serve LLMs.</p>
+<p>LLMs can be accessed via Scale's hosted version or by using the helm charts in this repository to run model inference and fine-tuning in your own infrastructure.</p>
 <h2 id="quick-install">💻 Quick Install<a class="headerlink" href="#quick-install" title="Permanent link">&para;</a></h2>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Install using pip</label></div>
 <div class="tabbed-content">
@@ -611,22 +626,30 @@ Use Scale's hosted version or run it in your own cloud.</p>
 </div>
 <h2 id="about">🤔 About<a class="headerlink" href="#about" title="Permanent link">&para;</a></h2>
 <p>Foundation models are emerging as the building blocks of AI. However, 
-fine-tuning these models and deploying them to the cloud are expensive 
-operations that require infrastructure and ML expertise.</p>
+deploying these models to the cloud and fine-tuning them are expensive
+operations that require infrastructure and ML expertise. It is also difficult
+to maintain over time as new models are released and new techniques for both
+inference and fine-tuning are made available.</p>
 <p>LLM Engine is a Python library, CLI, and Helm chart that provides
-everything you need to fine-tune and serve foundation models in the cloud
-using Kubernetes. Key features include:</p>
-<p>🎁 <strong>Ready-to-use APIs for your favorite models</strong>:
-Fine-tune and serve open-source foundation models, including MPT, Falcon,
+everything you need to serve and fine-tune foundation models, whether you use
+Scale's hosted infrastructure or do it in your own cloud infrastructure using
+Kubernetes.</p>
+<h3 id="key-features">🚀 Key Features<a class="headerlink" href="#key-features" title="Permanent link">&para;</a></h3>
+<p>🎁 <strong>Ready-to-use APIs for your favorite models</strong>: Serve and fine-tune
+open-source foundation models, including MPT, Falcon,
 and LLaMA. Use Scale-hosted endpoints or deploy to your own infrastructure.</p>
-<p>🐳 <strong>Deploying from any docker image</strong>: Turn any Docker image into an
-auto-scaling deployment with simple APIs.</p>
-<p>🎙️<strong>Optimized Inference</strong>: LLM Engine provides inference APIs
+<p>🎙️ <strong>Optimized Inference</strong>: LLM Engine provides inference APIs
 for streaming responses and dynamically batching inputs for higher throughput
 and lower latency.</p>
 <p>🤗 <strong>Open-Source Integrations</strong>: Deploy any <a href="https://huggingface.co/">Hugging Face</a>
 model with a single command.</p>
+<p>🐳 <strong>Deploying from any docker image</strong>: Turn any Docker image into an
+auto-scaling deployment with simple APIs.</p>
 <h3 id="features-coming-soon">🔥 Features Coming Soon<a class="headerlink" href="#features-coming-soon" title="Permanent link">&para;</a></h3>
+<p>📚 <strong>k8s Installation Documentation</strong>: We are working hard to document installation and
+maintenance of inference and fine-tuning functionality on your own infrastructure.
+For now, our documentation covers using our client libraries to access Scale's
+hosted infrastructure.</p>
 <p>❄ <strong>Fast Cold-Start Times</strong>: To prevent GPUs from idling, LLM Engine
 automatically scales your model to zero when it's not in use and scales up
 within seconds, even for large foundation models.</p>
