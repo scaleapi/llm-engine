@@ -111,6 +111,8 @@ plugins:
 
 extra_css:
   - stylesheets/index.css
+  - assets/css/extra.css
+  - assets/css/neoteroi.css
 
 extra:
   analytics:

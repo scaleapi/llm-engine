@@ -55,7 +55,11 @@ class FineTune(APIEngine):
 
                 Currently supported hyperparameters:
 
-                * `n_epochs`: Number of epochs to fine-tune for.
+                * `lr`: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-5)
+                * `warmup_ratio`: Ratio of training steps used for learning rate warmup. (Default: 0.03)
+                * `epochs`: Number of fine-tuning epochs. (Default: 5)
+                * `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
+                * `max_seq_length`: Maximum number of tokens per sequence in the dataset. (Default: 1024)
 
             suffix (`Optional[str]`):
                 A string that will be added to your fine-tuned model name.
@@ -66,6 +70,7 @@ class FineTune(APIEngine):
         Here is an example script to create a 5-row CSV of properly formatted data for fine-tuning
         an airline question answering bot:
 
+        === "Formatting data in python"
         ```python
         import csv
 
@@ -86,6 +91,7 @@ class FineTune(APIEngine):
         ```
 
         Example code for fine-tuning:
+        === "Fine-tuning in python"
             ```python
             from llmengine import FineTune
 
@@ -97,7 +103,7 @@ class FineTune(APIEngine):
             print(response.json())
             ```
 
-        JSON Response:
+        === "Response in json"
             ```json
             {
                 "fine_tune_id": "ft_abc123"
@@ -127,7 +133,7 @@ class FineTune(APIEngine):
         """
         Get status of a fine-tuning job.
 
-        This API can be used to retrieve the status of an already running
+        This API can be used to get the status of an already running
         fine-tuning job. It takes as a single parameter the `fine_tune_id`
         and returns a
         [GetFineTuneResponse](../../api/data_types/#llmengine.GetFineTuneResponse)
@@ -141,7 +147,7 @@ class FineTune(APIEngine):
         Returns:
             GetFineTuneResponse: an object that contains the ID and status of the requested job
 
-        Example:
+        === "Getting status of fine-tuning in python"
             ```python
             from llmengine import FineTune
 
@@ -152,7 +158,7 @@ class FineTune(APIEngine):
             print(response.json())
             ```
 
-        JSON Response:
+        === "Response in json"
             ```json
             {
                 "fine_tune_id": "ft_abc123",
@@ -175,7 +181,7 @@ class FineTune(APIEngine):
         Returns:
             ListFineTunesResponse: an object that contains a list of all fine-tuning jobs and their statuses
 
-        Example:
+        === "Listing fine-tuning jobs in python"
             ```python
             from llmengine import FineTune
 
@@ -183,7 +189,7 @@ class FineTune(APIEngine):
             print(response.json())
             ```
 
-        JSON Response:
+        === "Response in json"
             ```json
             {
                 "jobs": [
@@ -219,7 +225,7 @@ class FineTune(APIEngine):
         Returns:
             CancelFineTuneResponse: an object that contains whether the cancellation was successful
 
-        Example:
+        === "Cancelling fine-tuning job in python"
             ```python
             from llmengine import FineTune
 
@@ -227,7 +233,7 @@ class FineTune(APIEngine):
             print(response.json())
             ```
 
-        JSON Response:
+        === "Response in json"
             ```json
             {
                 "success": true

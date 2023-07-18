@@ -15,9 +15,9 @@
             - num_prompt_tokens
             - num_completion_tokens
 
-::: llmengine.CompletionSyncV1Response
+::: llmengine.CompletionSyncResponse
 
-::: llmengine.CompletionStreamV1Response
+::: llmengine.CompletionStreamResponse
 
 ::: llmengine.CreateFineTuneRequest
     selection:
@@ -39,12 +39,15 @@
 ::: llmengine.GetLLMEndpointResponse
     selection:
         members:
-            - id
             - name
-            - model_name
             - source
             - inference_framework
+            - id
+            - model_name
+            - inference_framework_tag
             - num_shards
+            - quantize
+            - spec
 
 ::: llmengine.ListLLMEndpointsResponse
 
