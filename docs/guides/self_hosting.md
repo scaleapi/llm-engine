@@ -129,7 +129,7 @@ llm-engine-cacher-5f8b794585-fq7dj             1/1     Running            0     
 llm-engine-endpoint-builder-5cd6bf5bbc-sm254   1/1     Running            0             18m
 llm-engine-image-cache-a10-sw4pg               1/1     Running            0             18m 
 ```
-Note the pod name you see may be different.
+Note the pod names you see may be different.
 
 Forward a port from a `llm-engine` pod:
 ```
