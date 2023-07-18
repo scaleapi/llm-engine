@@ -39,12 +39,14 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"IBM Plex Mono"}</style>
       
     
     
       <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/index.css">
     
       <link rel="stylesheet" href="../../assets/css/extra.css">
     
@@ -79,7 +81,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple">
   
     
     
@@ -109,7 +111,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="LLM Engine" class="md-header__button md-logo" aria-label="LLM Engine" data-md-component="logo">
       
-  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/launch-logo.svg" alt="logo">
+  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -138,21 +140,7 @@
             
             
             
-            <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-            
-              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
-              </label>
-            
-          
-            
-            
-            
-            <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
-            
-              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
-              </label>
+            <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple"  aria-hidden="true"  type="radio" name="__palette" id="__palette_1">
             
           
         </form>
@@ -200,7 +188,7 @@
         <a href="https://github.com/scaleapi/llm-engine" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
   </div>
   <div class="md-source__repository">
     llm-engine
@@ -234,7 +222,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="LLM Engine" class="md-nav__button md-logo" aria-label="LLM Engine" data-md-component="logo">
       
-  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/launch-logo.svg" alt="logo">
+  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png" alt="logo">
 
     </a>
     LLM Engine
@@ -244,7 +232,7 @@
       <a href="https://github.com/scaleapi/llm-engine" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
   </div>
   <div class="md-source__repository">
     llm-engine
@@ -1287,18 +1275,19 @@
 
 
 <h2 id="llmengine.CompletionOutput" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionOutput</span>
+        <span class="doc doc-object-name doc-class-name">CompletionOutput</span>
 
 
 <a href="#llmengine.CompletionOutput" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Represents the output of a completion request to a model.</p>
+
 
 
   
@@ -1316,7 +1305,7 @@
 
 
 <h3 id="llmengine.data_types.CompletionOutput.text" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">text</span>
+        <span class="doc doc-object-name doc-attribute-name">text</span>
 
   
   <span class="doc doc-labels">
@@ -1324,7 +1313,7 @@
   </span>
 
 <a href="#llmengine.data_types.CompletionOutput.text" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>text: <span style="color: #008000">str</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1339,7 +1328,7 @@
 
 
 <h3 id="llmengine.data_types.CompletionOutput.num_completion_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
+        <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
 
   
   <span class="doc doc-labels">
@@ -1347,7 +1336,7 @@
   </span>
 
 <a href="#llmengine.data_types.CompletionOutput.num_completion_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">num_completion_tokens</span><span class="p">:</span> <span class="nb">int</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>num_completion_tokens: <span style="color: #008000">int</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1372,15 +1361,16 @@
 
 
 <h2 id="llmengine.CompletionStreamOutput" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionStreamOutput</span>
+        <span class="doc doc-object-name doc-class-name">CompletionStreamOutput</span>
 
 
 <a href="#llmengine.CompletionStreamOutput" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+
 
 
 
@@ -1399,7 +1389,7 @@
 
 
 <h3 id="llmengine.data_types.CompletionStreamOutput.text" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">text</span>
+        <span class="doc doc-object-name doc-attribute-name">text</span>
 
   
   <span class="doc doc-labels">
@@ -1407,7 +1397,7 @@
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamOutput.text" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>text: <span style="color: #008000">str</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1422,7 +1412,7 @@
 
 
 <h3 id="llmengine.data_types.CompletionStreamOutput.finished" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">finished</span>
+        <span class="doc doc-object-name doc-attribute-name">finished</span>
 
   
   <span class="doc doc-labels">
@@ -1430,7 +1420,7 @@
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamOutput.finished" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">finished</span><span class="p">:</span> <span class="nb">bool</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>finished: <span style="color: #008000">bool</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1445,16 +1435,16 @@
 
 
 <h3 id="llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
+        <span class="doc doc-object-name doc-attribute-name">num_completion_tokens</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamOutput.num_completion_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">num_completion_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>num_completion_tokens: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1479,18 +1469,19 @@
 
 
 <h2 id="llmengine.CompletionSyncResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionSyncResponse</span>
+        <span class="doc doc-object-name doc-class-name">CompletionSyncResponse</span>
 
 
 <a href="#llmengine.CompletionSyncResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for a synchronous prompt completion.</p>
+
 
 
   
@@ -1508,7 +1499,7 @@
 
 
 <h3 id="llmengine.data_types.CompletionSyncResponse.output" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">output</span>
+        <span class="doc doc-object-name doc-attribute-name">output</span>
 
   
   <span class="doc doc-labels">
@@ -1516,7 +1507,7 @@
   </span>
 
 <a href="#llmengine.data_types.CompletionSyncResponse.output" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">output</span><span class="p">:</span> <span class="n">CompletionOutput</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>output: CompletionOutput
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1531,7 +1522,7 @@
 
 
 <h3 id="llmengine.data_types.CompletionSyncResponse.request_id" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">request_id</span>
+        <span class="doc doc-object-name doc-attribute-name">request_id</span>
 
   
   <span class="doc doc-labels">
@@ -1539,7 +1530,7 @@
   </span>
 
 <a href="#llmengine.data_types.CompletionSyncResponse.request_id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">request_id</span><span class="p">:</span> <span class="nb">str</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>request_id: <span style="color: #008000">str</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1564,18 +1555,19 @@
 
 
 <h2 id="llmengine.CompletionStreamResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CompletionStreamResponse</span>
+        <span class="doc doc-object-name doc-class-name">CompletionStreamResponse</span>
 
 
 <a href="#llmengine.CompletionStreamResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for a stream prompt completion task.</p>
+
 
 
   
@@ -1593,16 +1585,16 @@
 
 
 <h3 id="llmengine.data_types.CompletionStreamResponse.output" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">output</span>
+        <span class="doc doc-object-name doc-attribute-name">output</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamResponse.output" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CompletionStreamOutput</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>output: Optional[CompletionStreamOutput] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1617,7 +1609,7 @@
 
 
 <h3 id="llmengine.data_types.CompletionStreamResponse.request_id" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">request_id</span>
+        <span class="doc doc-object-name doc-attribute-name">request_id</span>
 
   
   <span class="doc doc-labels">
@@ -1625,7 +1617,7 @@
   </span>
 
 <a href="#llmengine.data_types.CompletionStreamResponse.request_id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">request_id</span><span class="p">:</span> <span class="nb">str</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>request_id: <span style="color: #008000">str</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1650,18 +1642,19 @@
 
 
 <h2 id="llmengine.CreateFineTuneRequest" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CreateFineTuneRequest</span>
+        <span class="doc doc-object-name doc-class-name">CreateFineTuneRequest</span>
 
 
 <a href="#llmengine.CreateFineTuneRequest" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Request object for creating a FineTune.</p>
+
 
 
   
@@ -1679,19 +1672,16 @@
 
 
 <h3 id="llmengine.data_types.CreateFineTuneRequest.model" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">model</span>
+        <span class="doc doc-object-name doc-attribute-name">model</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CreateFineTuneRequest.model" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Identifier of base model to train from.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>model: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(<span style="color: #008000">Ellipsis</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;Identifier of base model to train from.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1706,19 +1696,16 @@
 
 
 <h3 id="llmengine.data_types.CreateFineTuneRequest.training_file" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">training_file</span>
+        <span class="doc doc-object-name doc-attribute-name">training_file</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CreateFineTuneRequest.training_file" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">training_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to file of training dataset. Dataset must be a csv with columns &#39;prompt&#39; and &#39;response&#39;.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>training_file: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(<span style="color: #008000">Ellipsis</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Path to file of training dataset. Dataset must be a csv with columns &#39;prompt&#39; and &#39;response&#39;.&quot;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1733,19 +1720,16 @@
 
 
 <h3 id="llmengine.data_types.CreateFineTuneRequest.validation_file" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">validation_file</span>
+        <span class="doc doc-object-name doc-attribute-name">validation_file</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CreateFineTuneRequest.validation_file" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">validation_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to file of validation dataset. Has the same format as training_file. If not provided, we will generate a split from the training dataset.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>validation_file: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;Path to file of validation dataset. Has the same format as training_file. If not provided, we will generate a split from the training dataset.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1760,19 +1744,16 @@
 
 
 <h3 id="llmengine.data_types.CreateFineTuneRequest.hyperparameters" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">hyperparameters</span>
+        <span class="doc doc-object-name doc-attribute-name">hyperparameters</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CreateFineTuneRequest.hyperparameters" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">hyperparameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Hyperparameters to pass in to training job.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>hyperparameters: Optional[Dict[<span style="color: #008000">str</span>, Any]] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;Hyperparameters to pass in to training job.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1787,19 +1768,16 @@
 
 
 <h3 id="llmengine.data_types.CreateFineTuneRequest.suffix" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">suffix</span>
+        <span class="doc doc-object-name doc-attribute-name">suffix</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CreateFineTuneRequest.suffix" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Optional user-provided identifier suffix for the fine-tuned model.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>suffix: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;Optional user-provided identifier suffix for the fine-tuned model.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1824,18 +1802,19 @@
 
 
 <h2 id="llmengine.CreateFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CreateFineTuneResponse</span>
+        <span class="doc doc-object-name doc-class-name">CreateFineTuneResponse</span>
 
 
 <a href="#llmengine.CreateFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for creating a FineTune.</p>
+
 
 
   
@@ -1853,18 +1832,16 @@
 
 
 <h3 id="llmengine.data_types.CreateFineTuneResponse.fine_tune_id" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
+        <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CreateFineTuneResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ID of the created fine-tuning job.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>fine_tune_id: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(<span style="color: #008000">Ellipsis</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;ID of the created fine-tuning job.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1889,18 +1866,19 @@
 
 
 <h2 id="llmengine.GetFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">GetFineTuneResponse</span>
+        <span class="doc doc-object-name doc-class-name">GetFineTuneResponse</span>
 
 
 <a href="#llmengine.GetFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for retrieving a FineTune.</p>
+
 
 
   
@@ -1918,18 +1896,16 @@
 
 
 <h3 id="llmengine.data_types.GetFineTuneResponse.fine_tune_id" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
+        <span class="doc doc-object-name doc-attribute-name">fine_tune_id</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetFineTuneResponse.fine_tune_id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ID of the requested job.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>fine_tune_id: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(<span style="color: #008000">Ellipsis</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;ID of the requested job.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1944,18 +1920,16 @@
 
 
 <h3 id="llmengine.data_types.GetFineTuneResponse.status" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">status</span>
+        <span class="doc doc-object-name doc-attribute-name">status</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetFineTuneResponse.status" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">status</span><span class="p">:</span> <span class="n">BatchJobStatus</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Status of the requested job.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>status: BatchJobStatus <span style="color: #666666">=</span> Field(<span style="color: #008000">Ellipsis</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;Status of the requested job.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1980,18 +1954,19 @@
 
 
 <h2 id="llmengine.ListFineTunesResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">ListFineTunesResponse</span>
+        <span class="doc doc-object-name doc-class-name">ListFineTunesResponse</span>
 
 
 <a href="#llmengine.ListFineTunesResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for listing FineTunes.</p>
+
 
 
   
@@ -2009,19 +1984,16 @@
 
 
 <h3 id="llmengine.data_types.ListFineTunesResponse.jobs" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">jobs</span>
+        <span class="doc doc-object-name doc-attribute-name">jobs</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.ListFineTunesResponse.jobs" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">jobs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GetFineTuneResponse</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;List of fine-tuning jobs and their statuses.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>jobs: List[GetFineTuneResponse] <span style="color: #666666">=</span> Field(<span style="color: #008000">Ellipsis</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;List of fine-tuning jobs and their statuses.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2046,18 +2018,19 @@
 
 
 <h2 id="llmengine.CancelFineTuneResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CancelFineTuneResponse</span>
+        <span class="doc doc-object-name doc-class-name">CancelFineTuneResponse</span>
 
 
 <a href="#llmengine.CancelFineTuneResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for cancelling a FineTune.</p>
+
 
 
   
@@ -2075,18 +2048,16 @@
 
 
 <h3 id="llmengine.data_types.CancelFineTuneResponse.success" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">success</span>
+        <span class="doc doc-object-name doc-attribute-name">success</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.CancelFineTuneResponse.success" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether cancellation was successful.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>success: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> Field(<span style="color: #008000">Ellipsis</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;Whether cancellation was successful.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2111,18 +2082,19 @@
 
 
 <h2 id="llmengine.GetLLMEndpointResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">GetLLMEndpointResponse</span>
+        <span class="doc doc-object-name doc-class-name">GetLLMEndpointResponse</span>
 
 
 <a href="#llmengine.GetLLMEndpointResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for retrieving a Model.</p>
+
 
 
   
@@ -2140,18 +2112,16 @@
 
 
 <h3 id="llmengine.data_types.GetLLMEndpointResponse.name" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">name</span>
+        <span class="doc doc-object-name doc-attribute-name">name</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.name" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;The name of the model. Use this for making inference requests to the model.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>name: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;The name of the model. Use this for making inference requests to the model.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2166,18 +2136,16 @@
 
 
 <h3 id="llmengine.data_types.GetLLMEndpointResponse.source" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">source</span>
+        <span class="doc doc-object-name doc-attribute-name">source</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.source" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">source</span><span class="p">:</span> <span class="n">LLMSource</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;The source of the model, e.g. Hugging Face.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>source: LLMSource <span style="color: #666666">=</span> Field(description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;The source of the model, e.g. Hugging Face.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2192,18 +2160,16 @@
 
 
 <h3 id="llmengine.data_types.GetLLMEndpointResponse.inference_framework" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">inference_framework</span>
+        <span class="doc doc-object-name doc-attribute-name">inference_framework</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.inference_framework" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">inference_framework</span><span class="p">:</span> <span class="n">LLMInferenceFramework</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;The inference framework used by the model.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>inference_framework: LLMInferenceFramework <span style="color: #666666">=</span> Field(description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;The inference framework used by the model.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2218,19 +2184,16 @@
 
 
 <h3 id="llmengine.data_types.GetLLMEndpointResponse.id" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">id</span>
+        <span class="doc doc-object-name doc-attribute-name">id</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;(For self-hosted users) The autogenerated ID of the model.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000">id</span>: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) The autogenerated ID of the model.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2245,19 +2208,16 @@
 
 
 <h3 id="llmengine.data_types.GetLLMEndpointResponse.model_name" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">model_name</span>
+        <span class="doc doc-object-name doc-attribute-name">model_name</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.model_name" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">model_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;(For self-hosted users) For fine-tuned models, the base model. For base models, this will be the same as `name`.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>model_name: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) For fine-tuned models, the base model. For base models, this will be the same as `name`.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2272,19 +2232,16 @@
 
 
 <h3 id="llmengine.data_types.GetLLMEndpointResponse.inference_framework_tag" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">inference_framework_tag</span>
+        <span class="doc doc-object-name doc-attribute-name">inference_framework_tag</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.inference_framework_tag" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">inference_framework_tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;(For self-hosted users) The Docker image tag used to run the model.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>inference_framework_tag: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) The Docker image tag used to run the model.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2299,19 +2256,16 @@
 
 
 <h3 id="llmengine.data_types.GetLLMEndpointResponse.num_shards" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">num_shards</span>
+        <span class="doc doc-object-name doc-attribute-name">num_shards</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.num_shards" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">num_shards</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;(For self-hosted users) The number of shards.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>num_shards: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) The number of shards.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2326,19 +2280,16 @@
 
 
 <h3 id="llmengine.data_types.GetLLMEndpointResponse.quantize" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">quantize</span>
+        <span class="doc doc-object-name doc-attribute-name">quantize</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.quantize" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">quantize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Quantization</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;(For self-hosted users) The quantization method.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>quantize: Optional[Quantization] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) The quantization method.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2353,19 +2304,16 @@
 
 
 <h3 id="llmengine.data_types.GetLLMEndpointResponse.spec" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">spec</span>
+        <span class="doc doc-object-name doc-attribute-name">spec</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.spec" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">spec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GetModelEndpointResponse</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;(For self-hosted users) Model endpoint details.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>spec: Optional[GetModelEndpointResponse] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) Model endpoint details.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2390,18 +2338,19 @@
 
 
 <h2 id="llmengine.ListLLMEndpointsResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">ListLLMEndpointsResponse</span>
+        <span class="doc doc-object-name doc-class-name">ListLLMEndpointsResponse</span>
 
 
 <a href="#llmengine.ListLLMEndpointsResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for listing Models.</p>
+
 
 
   
@@ -2419,18 +2368,16 @@
 
 
 <h3 id="llmengine.data_types.ListLLMEndpointsResponse.model_endpoints" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">model_endpoints</span>
+        <span class="doc doc-object-name doc-attribute-name">model_endpoints</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.ListLLMEndpointsResponse.model_endpoints" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">model_endpoints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GetLLMEndpointResponse</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;The list of models.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>model_endpoints: List[GetLLMEndpointResponse] <span style="color: #666666">=</span> Field(<span style="color: #008000">Ellipsis</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;The list of models.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2455,18 +2402,19 @@
 
 
 <h2 id="llmengine.DeleteLLMEndpointResponse" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">DeleteLLMEndpointResponse</span>
+        <span class="doc doc-object-name doc-class-name">DeleteLLMEndpointResponse</span>
 
 
 <a href="#llmengine.DeleteLLMEndpointResponse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
   
       <p>Response object for deleting a Model.</p>
+
 
 
   
@@ -2484,18 +2432,16 @@
 
 
 <h3 id="llmengine.data_types.DeleteLLMEndpointResponse.deleted" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">deleted</span>
+        <span class="doc doc-object-name doc-attribute-name">deleted</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
   </span>
 
 <a href="#llmengine.data_types.DeleteLLMEndpointResponse.deleted" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether deletion was successful.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>deleted: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> Field(<span style="color: #008000">Ellipsis</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;Whether deletion was successful.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">

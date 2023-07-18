@@ -39,12 +39,14 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"IBM Plex Mono"}</style>
       
     
     
       <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/index.css">
     
       <link rel="stylesheet" href="../../assets/css/extra.css">
     
@@ -79,7 +81,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple">
   
     
     
@@ -109,7 +111,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="LLM Engine" class="md-header__button md-logo" aria-label="LLM Engine" data-md-component="logo">
       
-  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/launch-logo.svg" alt="logo">
+  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -138,21 +140,7 @@
             
             
             
-            <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-            
-              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
-              </label>
-            
-          
-            
-            
-            
-            <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
-            
-              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
-              </label>
+            <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple"  aria-hidden="true"  type="radio" name="__palette" id="__palette_1">
             
           
         </form>
@@ -200,7 +188,7 @@
         <a href="https://github.com/scaleapi/llm-engine" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
   </div>
   <div class="md-source__repository">
     llm-engine
@@ -234,7 +222,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="LLM Engine" class="md-nav__button md-logo" aria-label="LLM Engine" data-md-component="logo">
       
-  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/launch-logo.svg" alt="logo">
+  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png" alt="logo">
 
     </a>
     LLM Engine
@@ -244,7 +232,7 @@
       <a href="https://github.com/scaleapi/llm-engine" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
   </div>
   <div class="md-source__repository">
     llm-engine
@@ -759,15 +747,15 @@
 
 
 <h2 id="llmengine.Completion" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">Completion</span>
+        <span class="doc doc-object-name doc-class-name">Completion</span>
 
 
 <a href="#llmengine.Completion" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>Completion API. This API is used to generate text completions.</p>
@@ -777,6 +765,7 @@ LLMs take the input prompts and chunk them into smaller units called <em>tokens<
 language. Tokens may include trailing spaces and even sub-words; this process is language dependent.</p>
 <p>The Completion API can be run either synchronous or asynchronously (via Python <code>asyncio</code>).
 For each of these modes, you can also choose whether to stream token responses or not.</p>
+
 
 
   
@@ -791,13 +780,12 @@ For each of these modes, you can also choose whether to stream token responses o
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.completion.Completion.create" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">create</span>
+        <span class="doc doc-object-name doc-function-name">create</span>
 
   
   <span class="doc doc-labels">
@@ -805,17 +793,7 @@ For each of these modes, you can also choose whether to stream token responses o
   </span>
 
 <a href="#llmengine.completion.Completion.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">CompletionSyncResponse</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">Iterator</span><span class="p">[</span><span class="n">CompletionStreamResponse</span><span class="p">],</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">]</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create(model: <span style="color: #008000">str</span>, prompt: <span style="color: #008000">str</span>, max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>, temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>, timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>, stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>) <span style="color: #666666">-&gt;</span> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -829,8 +807,6 @@ It returns
 if <code>stream=False</code> or an async iterator of
 <a href="../../api/data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>
 with <code>request_id</code> and <code>outputs</code> fields.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -934,8 +910,6 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -962,29 +936,29 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.completion.Completion.create--__tabbed_1_1" name="llmengine.completion.Completion.create--__tabbed_1" type="radio" /><input id="llmengine.completion.Completion.create--__tabbed_1_2" name="llmengine.completion.Completion.create--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.create--__tabbed_1_1">Synchronous completion without token streaming in python</label><label for="llmengine.completion.Completion.create--__tabbed_1_2">Response in json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">Completion</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">Completion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Hello, my name is&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b&quot;</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    max_new_tokens<span style="color: #666666">=10</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0123456789&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&quot;outputs&quot;</span><span class="p">:</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="p">[</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">        </span><span class="p">{</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">            </span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;_______ and I am a _______&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">            </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">        </span><span class="p">}</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="p">],</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">&quot;traceback&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">}</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;0123456789&quot;</span>,
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;outputs&quot;</span>:
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #bbbbbb">    </span>[
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;_______ and I am a _______&quot;</span>,
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">10</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span style="color: #bbbbbb">        </span>}
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span style="color: #bbbbbb">    </span>],
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;traceback&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>}
 </code></pre></div>
 </div>
 </div>
@@ -993,27 +967,27 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="llmengine.completion.Completion.create--__tabbed_2_1" name="llmengine.completion.Completion.create--__tabbed_2" type="radio" /><input id="llmengine.completion.Completion.create--__tabbed_2_2" name="llmengine.completion.Completion.create--__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.create--__tabbed_2_1">Synchronous completion with token streaming in python</label><label for="llmengine.completion.Completion.create--__tabbed_2_2">Response in json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">Completion</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">stream</span> <span class="o">=</span> <span class="n">Completion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;why is the sky blue?&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>stream <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b&quot;</span>,
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;why is the sky blue?&quot;</span>,
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    max_new_tokens<span style="color: #666666">=5</span>,
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    stream<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">True</span>,
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>)
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="k">for</span> <span class="n">response</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span style="color: #008000; font-weight: bold">for</span> response <span style="color: #AA22FF; font-weight: bold">in</span> stream:
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span style="color: #008000; font-weight: bold">if</span> response<span style="color: #666666">.</span>output:
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0123456789&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;\n&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;finished&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="p">{</span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0123456789&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;I&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;finished&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="p">{</span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0123456789&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot; don&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;finished&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="p">{</span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0123456789&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;’&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;finished&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">{</span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0123456789&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;t&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;finished&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;0123456789&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;\n&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">false</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">1</span><span style="color: #bbbbbb"> </span>}<span style="color: #bbbbbb"> </span>}
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;0123456789&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;I&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">false</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">2</span><span style="color: #bbbbbb"> </span>}<span style="color: #bbbbbb"> </span>}
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;0123456789&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot; don&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">false</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">3</span><span style="color: #bbbbbb"> </span>}<span style="color: #bbbbbb"> </span>}
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;0123456789&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;’&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">false</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">4</span><span style="color: #bbbbbb"> </span>}<span style="color: #bbbbbb"> </span>}
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;0123456789&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;t&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">true</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">5</span><span style="color: #bbbbbb"> </span>}<span style="color: #bbbbbb"> </span>}
 </code></pre></div>
 </div>
 </div>
@@ -1023,13 +997,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.completion.Completion.acreate" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">acreate</span>
+        <span class="doc doc-object-name doc-function-name">acreate</span>
 
   
   <span class="doc doc-labels">
@@ -1038,17 +1011,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
   </span>
 
 <a href="#llmengine.completion.Completion.acreate" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">acreate</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">CompletionSyncResponse</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">AsyncIterable</span><span class="p">[</span><span class="n">CompletionStreamResponse</span><span class="p">],</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">]</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>acreate(model: <span style="color: #008000">str</span>, prompt: <span style="color: #008000">str</span>, max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>, temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>, timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>, stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>) <span style="color: #666666">-&gt;</span> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1062,8 +1025,6 @@ It returns
 if <code>stream=False</code> or an async iterator of
 <a href="../../api/data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>
 with <code>request_id</code> and <code>outputs</code> fields.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1168,8 +1129,6 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
     </tbody>
   </table>
 
-
-
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -1195,32 +1154,32 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.completion.Completion.acreate--__tabbed_1_1" name="llmengine.completion.Completion.acreate--__tabbed_1" type="radio" /><input id="llmengine.completion.Completion.acreate--__tabbed_1_2" name="llmengine.completion.Completion.acreate--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.acreate--__tabbed_1_1">Asynchronous completion without token streaming in python</label><label for="llmengine.completion.Completion.acreate--__tabbed_1_2">Response in json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">asyncio</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">Completion</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">asyncio</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">Completion</span><span class="o">.</span><span class="n">acreate</span><span class="p">(</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        <span class="n">model</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Hello, my name is&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="p">)</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span style="color: #008000; font-weight: bold">async</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">main</span>():
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    response <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">await</span> Completion<span style="color: #666666">.</span>acreate(
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b&quot;</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        max_new_tokens<span style="color: #666666">=10</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    )
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>asyncio<span style="color: #666666">.</span>run(main())
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;b1b2c3d4e5f6g7h8i9j0&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&quot;outputs&quot;</span><span class="p">:</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="p">[</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">        </span><span class="p">{</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">            </span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;_______, and I am a _____&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">            </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">        </span><span class="p">}</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="p">],</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="p">}</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;b1b2c3d4e5f6g7h8i9j0&quot;</span>,
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;outputs&quot;</span>:
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #bbbbbb">    </span>[
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;_______, and I am a _____&quot;</span>,
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">10</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span style="color: #bbbbbb">        </span>}
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span style="color: #bbbbbb">    </span>],
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>}
 </code></pre></div>
 </div>
 </div>
@@ -1229,31 +1188,31 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="llmengine.completion.Completion.acreate--__tabbed_2_1" name="llmengine.completion.Completion.acreate--__tabbed_2" type="radio" /><input id="llmengine.completion.Completion.acreate--__tabbed_2_2" name="llmengine.completion.Completion.acreate--__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.acreate--__tabbed_2_1">Asynchronous completion with token streaming in python</label><label for="llmengine.completion.Completion.acreate--__tabbed_2_2">Response in json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span> <span class="nn">asyncio</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">Completion</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">asyncio</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">stream</span> <span class="o">=</span> <span class="k">await</span> <span class="n">Completion</span><span class="o">.</span><span class="n">acreate</span><span class="p">(</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="n">model</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;why is the sky blue?&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span style="color: #008000; font-weight: bold">async</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">main</span>():
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    stream <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">await</span> Completion<span style="color: #666666">.</span>acreate(
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b&quot;</span>,
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;why is the sky blue?&quot;</span>,
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        max_new_tokens<span style="color: #666666">=5</span>,
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        stream<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">True</span>,
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    )
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="k">async</span> <span class="k">for</span> <span class="n">response</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>            <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span style="color: #008000; font-weight: bold">async</span> <span style="color: #008000; font-weight: bold">for</span> response <span style="color: #AA22FF; font-weight: bold">in</span> stream:
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span style="color: #008000; font-weight: bold">if</span> response<span style="color: #666666">.</span>output:
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>            <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>asyncio<span style="color: #666666">.</span>run(main())
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0123456789&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;\n&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;finished&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">}}</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="p">{</span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0123456789&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;I&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;finished&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">}}</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="p">{</span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0123456789&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot; think&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;finished&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">}}</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="p">{</span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0123456789&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot; the&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;finished&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">}}</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">{</span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0123456789&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot; sky&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;finished&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;num_completion_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">}}</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;0123456789&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;\n&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">false</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">1</span>}}
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;0123456789&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;I&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">false</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">2</span>}}
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;0123456789&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot; think&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">false</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">3</span>}}
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;0123456789&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot; the&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">false</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">4</span>}}
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;0123456789&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot; sky&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">true</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">5</span>}}
 </code></pre></div>
 </div>
 </div>
@@ -1276,21 +1235,22 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h2 id="llmengine.FineTune" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">FineTune</span>
+        <span class="doc doc-object-name doc-class-name">FineTune</span>
 
 
 <a href="#llmengine.FineTune" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>FineTune API. This API is used to fine-tune models.</p>
 <p>Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning is a supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM.</p>
 <p>LLM Engine provides APIs to create fine-tunes on a base model with training &amp; validation datasets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.</p>
 <p>Creating a fine-tune will end with the creation of a Model, which you can view using <code>Model.get(model_name)</code> or delete using <code>Model.delete(model_name)</code>.</p>
+
 
 
   
@@ -1305,13 +1265,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.create" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">create</span>
+        <span class="doc doc-object-name doc-function-name">create</span>
 
   
   <span class="doc doc-labels">
@@ -1319,13 +1278,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
   </span>
 
 <a href="#llmengine.fine_tuning.FineTune.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">training_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">validation_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">hyperparameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CreateFineTuneResponse</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create(model: <span style="color: #008000">str</span>, training_file: <span style="color: #008000">str</span>, validation_file: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>, hyperparameters: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>, suffix: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>) <span style="color: #666666">-&gt;</span> CreateFineTuneResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1337,8 +1290,6 @@ file should consist of prompt and response pairs. Your data must be formatted as
 that includes two columns: <code>prompt</code> and <code>response</code>. A maximum of 100,000 rows of data is
 currently supported. At least 200 rows of data is recommended to start to see benefits from
 fine-tuning.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1403,7 +1354,11 @@ fine-tuning.</p>
               <p>A dict of hyperparameters to customize fine-tuning behavior.</p>
 <p>Currently supported hyperparameters:</p>
 <ul>
-<li><code>n_epochs</code>: Number of epochs to fine-tune for.</li>
+<li><code>lr</code>: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-5)</li>
+<li><code>warmup_ratio</code>: Ratio of training steps used for learning rate warmup. (Default: 0.03)</li>
+<li><code>epochs</code>: Number of fine-tuning epochs. (Default: 5)</li>
+<li><code>weight_decay</code>: Regularization penalty applied to learned weights. (Default: 0.001)</li>
+<li><code>max_seq_length</code>: Maximum number of tokens per sequence in the dataset. (Default: 1024)</li>
 </ul>
             </div>
           </td>
@@ -1427,8 +1382,6 @@ fine-tuning.</p>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1458,41 +1411,41 @@ an airline question answering bot:</p>
 <div class="tabbed-block"></div>
 </div>
 </div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">csv</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">csv</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Define data</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  <span class="p">(</span><span class="s2">&quot;What is your policy on carry-on luggage?&quot;</span><span class="p">,</span> <span class="s2">&quot;Our policy allows each passenger to bring one piece of carry-on luggage and one personal item such as a purse or briefcase. The maximum size for carry-on luggage is 22 x 14 x 9 inches.&quot;</span><span class="p">),</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  <span class="p">(</span><span class="s2">&quot;How can I change my flight?&quot;</span><span class="p">,</span> <span class="s2">&quot;You can change your flight through our website or mobile app. Go to &#39;Manage my booking&#39; section, enter your booking reference and last name, then follow the prompts to change your flight.&quot;</span><span class="p">),</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  <span class="p">(</span><span class="s2">&quot;What meals are available on my flight?&quot;</span><span class="p">,</span> <span class="s2">&quot;We offer a variety of meals depending on the flight&#39;s duration and route. These can range from snacks and light refreshments to full-course meals on long-haul flights. Specific meal options can be viewed during the booking process.&quot;</span><span class="p">),</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  <span class="p">(</span><span class="s2">&quot;How early should I arrive at the airport before my flight?&quot;</span><span class="p">,</span> <span class="s2">&quot;We recommend arriving at least two hours before domestic flights and three hours before international flights.&quot;</span><span class="p">),</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  <span class="s2">&quot;Can I select my seat in advance?&quot;</span><span class="p">,</span> <span class="s2">&quot;Yes, you can select your seat during the booking process or afterwards via the &#39;Manage my booking&#39; section on our website or mobile app.&quot;</span><span class="p">),</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  <span class="p">]</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span style="color: #3D7B7B; font-style: italic"># Define data</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>data <span style="color: #666666">=</span> [
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  (<span style="color: #BA2121">&quot;What is your policy on carry-on luggage?&quot;</span>, <span style="color: #BA2121">&quot;Our policy allows each passenger to bring one piece of carry-on luggage and one personal item such as a purse or briefcase. The maximum size for carry-on luggage is 22 x 14 x 9 inches.&quot;</span>),
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  (<span style="color: #BA2121">&quot;How can I change my flight?&quot;</span>, <span style="color: #BA2121">&quot;You can change your flight through our website or mobile app. Go to &#39;Manage my booking&#39; section, enter your booking reference and last name, then follow the prompts to change your flight.&quot;</span>),
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  (<span style="color: #BA2121">&quot;What meals are available on my flight?&quot;</span>, <span style="color: #BA2121">&quot;We offer a variety of meals depending on the flight&#39;s duration and route. These can range from snacks and light refreshments to full-course meals on long-haul flights. Specific meal options can be viewed during the booking process.&quot;</span>),
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  (<span style="color: #BA2121">&quot;How early should I arrive at the airport before my flight?&quot;</span>, <span style="color: #BA2121">&quot;We recommend arriving at least two hours before domestic flights and three hours before international flights.&quot;</span>),
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  <span style="color: #BA2121">&quot;Can I select my seat in advance?&quot;</span>, <span style="color: #BA2121">&quot;Yes, you can select your seat during the booking process or afterwards via the &#39;Manage my booking&#39; section on our website or mobile app.&quot;</span>),
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  ]
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1"># Write data to a CSV file</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;customer_service_data.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="s2">&quot;prompt&quot;</span><span class="p">,</span> <span class="s2">&quot;response&quot;</span><span class="p">])</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">writer</span><span class="o">.</span><span class="n">writerows</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span style="color: #3D7B7B; font-style: italic"># Write data to a CSV file</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span style="color: #008000; font-weight: bold">with</span> <span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;customer_service_data.csv&#39;</span>, <span style="color: #BA2121">&#39;w&#39;</span>, newline<span style="color: #666666">=</span><span style="color: #BA2121">&#39;&#39;</span>) <span style="color: #008000; font-weight: bold">as</span> file:
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    writer <span style="color: #666666">=</span> csv<span style="color: #666666">.</span>writer(file)
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    writer<span style="color: #666666">.</span>writerow([<span style="color: #BA2121">&quot;prompt&quot;</span>, <span style="color: #BA2121">&quot;response&quot;</span>])
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    writer<span style="color: #666666">.</span>writerows(data)
 </code></pre></div>
 <p>Example code for fine-tuning:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.create--__tabbed_2_1" name="llmengine.fine_tuning.FineTune.create--__tabbed_2" type="radio" /><input id="llmengine.fine_tuning.FineTune.create--__tabbed_2_2" name="llmengine.fine_tuning.FineTune.create--__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.create--__tabbed_2_1">Fine-tuning in python</label><label for="llmengine.fine_tuning.FineTune.create--__tabbed_2_2">Response in json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">FineTune</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">FineTune</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">training_file</span><span class="o">=</span><span class="s2">&quot;https://my-bucket.s3.us-west-2.amazonaws.com/path/to/training-file.csv&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>response <span style="color: #666666">=</span> FineTune<span style="color: #666666">.</span>create(
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b&quot;</span>,
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    training_file<span style="color: #666666">=</span><span style="color: #BA2121">&quot;https://my-bucket.s3.us-west-2.amazonaws.com/path/to/training-file.csv&quot;</span>,
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="nt">&quot;fine_tune_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ft_abc123&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="p">}</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>{
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;fine_tune_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;ft_abc123&quot;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>}
 </code></pre></div>
 </div>
 </div>
@@ -1502,13 +1455,12 @@ an airline question answering bot:</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.get" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">get</span>
+        <span class="doc doc-object-name doc-function-name">get</span>
 
   
   <span class="doc doc-labels">
@@ -1516,7 +1468,7 @@ an airline question answering bot:</p>
   </span>
 
 <a href="#llmengine.fine_tuning.FineTune.get" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">get</span><span class="p">(</span><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GetFineTuneResponse</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>get(fine_tune_id: <span style="color: #008000">str</span>) <span style="color: #666666">-&gt;</span> GetFineTuneResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1528,8 +1480,6 @@ and returns a
 <a href="../../api/data_types/#llmengine.GetFineTuneResponse">GetFineTuneResponse</a>
 object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 <code>UNDEFINED</code>, <code>FAILURE</code> or <code>SUCCESS</code>).</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1558,8 +1508,6 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1585,20 +1533,20 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
       <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.get--__tabbed_1_1" name="llmengine.fine_tuning.FineTune.get--__tabbed_1" type="radio" /><input id="llmengine.fine_tuning.FineTune.get--__tabbed_1_2" name="llmengine.fine_tuning.FineTune.get--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.get--__tabbed_1_1">Getting status of fine-tuning in python</label><label for="llmengine.fine_tuning.FineTune.get--__tabbed_1_2">Response in json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">FineTune</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">FineTune</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">fine_tune_id</span><span class="o">=</span><span class="s2">&quot;ft_abc123&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> FineTune<span style="color: #666666">.</span>get(
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    fine_tune_id<span style="color: #666666">=</span><span style="color: #BA2121">&quot;ft_abc123&quot;</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>)
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">&quot;fine_tune_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ft_abc123&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;STARTED&quot;</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">}</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;fine_tune_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;ft_abc123&quot;</span>,
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;status&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;STARTED&quot;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>}
 </code></pre></div>
 </div>
 </div>
@@ -1608,13 +1556,12 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.list" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">list</span>
+        <span class="doc doc-object-name doc-function-name">list</span>
 
   
   <span class="doc doc-labels">
@@ -1622,7 +1569,7 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
   </span>
 
 <a href="#llmengine.fine_tuning.FineTune.list" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">list</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ListFineTunesResponse</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000">list</span>() <span style="color: #666666">-&gt;</span> ListFineTunesResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1631,8 +1578,6 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 <p>This API can be used to list all the fine-tuning jobs.
 It returns a list of pairs of <code>fine_tune_id</code> and <code>status</code> for
 all existing jobs.</p>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1658,25 +1603,25 @@ all existing jobs.</p>
       <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.list--__tabbed_1_1" name="llmengine.fine_tuning.FineTune.list--__tabbed_1" type="radio" /><input id="llmengine.fine_tuning.FineTune.list--__tabbed_1_2" name="llmengine.fine_tuning.FineTune.list--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.list--__tabbed_1_1">Listing fine-tuning jobs in python</label><label for="llmengine.fine_tuning.FineTune.list--__tabbed_1_2">Response in json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">FineTune</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">FineTune</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> FineTune<span style="color: #666666">.</span>list()
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">&quot;jobs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">        </span><span class="p">{</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">            </span><span class="nt">&quot;fine_tune_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ft_abc123&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">            </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;STARTED&quot;</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">        </span><span class="p">},</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">        </span><span class="p">{</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">            </span><span class="nt">&quot;fine_tune_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ft_def456&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">            </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SUCCESS&quot;</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">        </span><span class="p">}</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="p">]</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p">}</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;jobs&quot;</span>:<span style="color: #bbbbbb"> </span>[
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;fine_tune_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;ft_abc123&quot;</span>,
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;status&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;STARTED&quot;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span style="color: #bbbbbb">        </span>},
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;fine_tune_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;ft_def456&quot;</span>,
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;status&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;SUCCESS&quot;</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span style="color: #bbbbbb">        </span>}
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span style="color: #bbbbbb">    </span>]
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>}
 </code></pre></div>
 </div>
 </div>
@@ -1686,13 +1631,12 @@ all existing jobs.</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.cancel" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">cancel</span>
+        <span class="doc doc-object-name doc-function-name">cancel</span>
 
   
   <span class="doc doc-labels">
@@ -1700,7 +1644,7 @@ all existing jobs.</p>
   </span>
 
 <a href="#llmengine.fine_tuning.FineTune.cancel" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">cancel</span><span class="p">(</span><span class="n">fine_tune_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CancelFineTuneResponse</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cancel(fine_tune_id: <span style="color: #008000">str</span>) <span style="color: #666666">-&gt;</span> CancelFineTuneResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1710,8 +1654,6 @@ all existing jobs.</p>
 it's no longer required. It takes as parameter the <code>fine_tune_id</code>
 and returns a response object which has a <code>success</code> field
 confirming if the cancellation was successful.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1741,8 +1683,6 @@ confirming if the cancellation was successful.</p>
     </tbody>
   </table>
 
-
-
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -1767,16 +1707,16 @@ confirming if the cancellation was successful.</p>
       <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_1" name="llmengine.fine_tuning.FineTune.cancel--__tabbed_1" type="radio" /><input id="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_2" name="llmengine.fine_tuning.FineTune.cancel--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_1">Cancelling fine-tuning job in python</label><label for="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_2">Response in json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">FineTune</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">FineTune</span><span class="o">.</span><span class="n">cancel</span><span class="p">(</span><span class="n">fine_tune_id</span><span class="o">=</span><span class="s2">&quot;ft_abc123&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> FineTune<span style="color: #666666">.</span>cancel(fine_tune_id<span style="color: #666666">=</span><span style="color: #BA2121">&quot;ft_abc123&quot;</span>)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="p">}</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;success&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">true</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>}
 </code></pre></div>
 </div>
 </div>
@@ -1799,21 +1739,22 @@ confirming if the cancellation was successful.</p>
 
 
 <h2 id="llmengine.Model" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">Model</span>
+        <span class="doc doc-object-name doc-class-name">Model</span>
 
 
 <a href="#llmengine.Model" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>Model API. This API is used to get, list, and delete models. Models include both base
 models built into LLM Engine, and fine-tuned models that you create through the
 <a href="./#llmengine.fine_tuning.FineTune.create">FineTune.create()</a> API.</p>
 <p>See <a href="../../model_zoo">Model Zoo</a> for the list of publicly available base models.</p>
+
 
 
   
@@ -1828,13 +1769,12 @@ models built into LLM Engine, and fine-tuned models that you create through the
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.get" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">get</span>
+        <span class="doc doc-object-name doc-function-name">get</span>
 
   
   <span class="doc doc-labels">
@@ -1842,7 +1782,7 @@ models built into LLM Engine, and fine-tuned models that you create through the
   </span>
 
 <a href="#llmengine.model.Model.get" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">get</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GetLLMEndpointResponse</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>get(model: <span style="color: #008000">str</span>) <span style="color: #666666">-&gt;</span> GetLLMEndpointResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1854,8 +1794,6 @@ The function takes as a single parameter the name <code>model</code>
 and returns a
 <a href="../../api/data_types/#llmengine.GetLLMEndpointResponse">GetLLMEndpointResponse</a>
 object.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1884,8 +1822,6 @@ object.</p>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1911,25 +1847,25 @@ object.</p>
       <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.model.Model.get--__tabbed_1_1" name="llmengine.model.Model.get--__tabbed_1" type="radio" /><input id="llmengine.model.Model.get--__tabbed_1_2" name="llmengine.model.Model.get--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.model.Model.get--__tabbed_1_1">Accessing model in python</label><label for="llmengine.model.Model.get--__tabbed_1_2">Response in json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">Model</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Model
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">Model</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;llama-7b.suffix.2023-07-18-12-00-00&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> Model<span style="color: #666666">.</span>get(<span style="color: #BA2121">&quot;llama-7b.suffix.2023-07-18-12-00-00&quot;</span>)
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;llama-7b.suffix.2023-07-18-12-00-00&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">&quot;model_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;hugging_face&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">&quot;inference_framework&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text_generation_inference&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">&quot;inference_framework_tag&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nt">&quot;num_shards&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nt">&quot;quantize&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">&quot;spec&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">}</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;name&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;llama-7b.suffix.2023-07-18-12-00-00&quot;</span>,
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;model_name&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;source&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;hugging_face&quot;</span>,
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;inference_framework&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;text_generation_inference&quot;</span>,
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;inference_framework_tag&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;num_shards&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;quantize&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;spec&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>}
 </code></pre></div>
 </div>
 </div>
@@ -1939,13 +1875,12 @@ object.</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.list" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">list</span>
+        <span class="doc doc-object-name doc-function-name">list</span>
 
   
   <span class="doc doc-labels">
@@ -1953,7 +1888,7 @@ object.</p>
   </span>
 
 <a href="#llmengine.model.Model.list" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">list</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ListLLMEndpointsResponse</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000">list</span>() <span style="color: #666666">-&gt;</span> ListLLMEndpointsResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1964,8 +1899,6 @@ available models and user-created fine-tuned models.
 It returns a list of
 <a href="../../api/data_types/#llmengine.GetLLMEndpointResponse">GetLLMEndpointResponse</a>
 objects for all models. The most important field is the model <code>name</code>.</p>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1991,61 +1924,61 @@ objects for all models. The most important field is the model <code>name</code>.
       <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.model.Model.list--__tabbed_1_1" name="llmengine.model.Model.list--__tabbed_1" type="radio" /><input id="llmengine.model.Model.list--__tabbed_1_2" name="llmengine.model.Model.list--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.model.Model.list--__tabbed_1_1">Listing available modes in python</label><label for="llmengine.model.Model.list--__tabbed_1_2">Response in json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">Model</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Model
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">Model</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> Model<span style="color: #666666">.</span>list()
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">&quot;model_endpoints&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">        </span><span class="p">{</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">            </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;llama-7b.suffix.2023-07-18-12-00-00&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">            </span><span class="nt">&quot;model_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">            </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;hugging_face&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">            </span><span class="nt">&quot;inference_framework&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text_generation_inference&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">            </span><span class="nt">&quot;inference_framework_tag&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">            </span><span class="nt">&quot;num_shards&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">            </span><span class="nt">&quot;quantize&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">            </span><span class="nt">&quot;spec&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">        </span><span class="p">},</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">        </span><span class="p">{</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">            </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;llama-7b&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">            </span><span class="nt">&quot;model_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">            </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;hugging_face&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">            </span><span class="nt">&quot;inference_framework&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text_generation_inference&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">            </span><span class="nt">&quot;inference_framework_tag&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">            </span><span class="nt">&quot;num_shards&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">            </span><span class="nt">&quot;quantize&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">            </span><span class="nt">&quot;spec&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">        </span><span class="p">},</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">        </span><span class="p">{</span>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">            </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;llama-13b-deepspeed-sync&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">            </span><span class="nt">&quot;model_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="w">            </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;hugging_face&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="w">            </span><span class="nt">&quot;inference_framework&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;deepspeed&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">            </span><span class="nt">&quot;inference_framework_tag&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">            </span><span class="nt">&quot;num_shards&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">            </span><span class="nt">&quot;quantize&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">            </span><span class="nt">&quot;spec&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">        </span><span class="p">},</span>
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">        </span><span class="p">{</span>
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">            </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;falcon-40b&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="w">            </span><span class="nt">&quot;model_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">            </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;hugging_face&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">            </span><span class="nt">&quot;inference_framework&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text_generation_inference&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">            </span><span class="nt">&quot;inference_framework_tag&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="w">            </span><span class="nt">&quot;num_shards&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="w">            </span><span class="nt">&quot;quantize&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="w">            </span><span class="nt">&quot;spec&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
-<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="w">        </span><span class="p">}</span>
-<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a><span class="w">    </span><span class="p">]</span>
-<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="p">}</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;model_endpoints&quot;</span>:<span style="color: #bbbbbb"> </span>[
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;name&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;llama-7b.suffix.2023-07-18-12-00-00&quot;</span>,
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;model_name&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;source&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;hugging_face&quot;</span>,
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;inference_framework&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;text_generation_inference&quot;</span>,
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;inference_framework_tag&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;num_shards&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;quantize&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;spec&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span style="color: #bbbbbb">        </span>},
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;name&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;llama-7b&quot;</span>,
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;model_name&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;source&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;hugging_face&quot;</span>,
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;inference_framework&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;text_generation_inference&quot;</span>,
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;inference_framework_tag&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;num_shards&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;quantize&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;spec&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span style="color: #bbbbbb">        </span>},
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;name&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;llama-13b-deepspeed-sync&quot;</span>,
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;model_name&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;source&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;hugging_face&quot;</span>,
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;inference_framework&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;deepspeed&quot;</span>,
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;inference_framework_tag&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;num_shards&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;quantize&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;spec&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span style="color: #bbbbbb">        </span>},
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;name&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;falcon-40b&quot;</span>,
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;model_name&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;source&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;hugging_face&quot;</span>,
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;inference_framework&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;text_generation_inference&quot;</span>,
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;inference_framework_tag&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;num_shards&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;quantize&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>,
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;spec&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">null</span>
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span style="color: #bbbbbb">        </span>}
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a><span style="color: #bbbbbb">    </span>]
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>}
 </code></pre></div>
 </div>
 </div>
@@ -2055,13 +1988,12 @@ objects for all models. The most important field is the model <code>name</code>.
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.delete" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">delete</span>
+        <span class="doc doc-object-name doc-function-name">delete</span>
 
   
   <span class="doc doc-labels">
@@ -2069,7 +2001,7 @@ objects for all models. The most important field is the model <code>name</code>.
   </span>
 
 <a href="#llmengine.model.Model.delete" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">delete</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeleteLLMEndpointResponse</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>delete(model: <span style="color: #008000">str</span>) <span style="color: #666666">-&gt;</span> DeleteLLMEndpointResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2080,8 +2012,6 @@ as parameter the name of the <code>model</code> and returns a response
 object which has a <code>deleted</code> field confirming if the deletion
 was successful. If called on a base model included with LLM
 Engine, an error will be thrown.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2111,8 +2041,6 @@ Engine, an error will be thrown.</p>
     </tbody>
   </table>
 
-
-
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -2137,16 +2065,16 @@ Engine, an error will be thrown.</p>
       <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.model.Model.delete--__tabbed_1_1" name="llmengine.model.Model.delete--__tabbed_1" type="radio" /><input id="llmengine.model.Model.delete--__tabbed_1_2" name="llmengine.model.Model.delete--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.model.Model.delete--__tabbed_1_1">Deleting model in python</label><label for="llmengine.model.Model.delete--__tabbed_1_2">Response in json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">Model</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Model
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">Model</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;llama-7b.suffix.2023-07-18-12-00-00&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> Model<span style="color: #666666">.</span>delete(<span style="color: #BA2121">&quot;llama-7b.suffix.2023-07-18-12-00-00&quot;</span>)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">&quot;deleted&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="p">}</span>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;deleted&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">true</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>}
 </code></pre></div>
 </div>
 </div>
