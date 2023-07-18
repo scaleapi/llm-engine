@@ -39,12 +39,15 @@
 ::: llmengine.GetLLMEndpointResponse
     selection:
         members:
-            - id
             - name
-            - model_name
             - source
             - inference_framework
+            - id
+            - model_name
+            - inference_framework_tag
             - num_shards
+            - quantize
+            - spec
 
 ::: llmengine.ListLLMEndpointsResponse
 

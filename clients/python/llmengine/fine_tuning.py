@@ -127,7 +127,7 @@ class FineTune(APIEngine):
         """
         Get status of a fine-tuning job.
 
-        This API can be used to retrieve the status of an already running
+        This API can be used to get the status of an already running
         fine-tuning job. It takes as a single parameter the `fine_tune_id`
         and returns a
         [GetFineTuneResponse](../../api/data_types/#llmengine.GetFineTuneResponse)

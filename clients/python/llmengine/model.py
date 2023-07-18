@@ -12,6 +12,8 @@ class Model(APIEngine):
     """
     Model API. This API is used to get, list, and delete models. Models can be created using [FineTune.create()](./#llmengine.fine_tuning.FineTune.create).
 
+    Our DTOs mention "endpoint"s, which are our concept of a physical running instance of a Model. There is a 1:1 correspondence between Models and endpoints, so you can think of them as equivalent.
+
     See [Model Zoo](../../model_zoo) for the list of publicly available models.
     """
 
@@ -19,20 +21,20 @@ class Model(APIEngine):
     @assert_self_hosted
     def create(
         cls,
-        model_name: str,
+        model: str,
     ) -> CreateLLMEndpointResponse:
         """
-        Create an LLM model endpoint. Note: This feature is only available for self-hosted users.
+        Create an LLM model. Note: This feature is only available for self-hosted users.
 
         Args:
-            model_name (`str`):
+            model (`str`):
                 Name of the model
 
         Returns:
-            CreateLLMEndpointResponse: ID of the created Model Endpoint.
+            CreateLLMEndpointResponse: ID of the created Model.
         """
         request = CreateLLMEndpointRequest(
-            model_name=model_name,
+            model_name=model,
         )
         response = cls.post_sync(
             resource_name="v1/llm/model-endpoints",
@@ -44,17 +46,24 @@ class Model(APIEngine):
     @classmethod
     def get(
         cls,
-        model_name: str,
+        model: str,
     ) -> GetLLMEndpointResponse:
         """
-        Get information about an LLM model endpoint.
+        Get information about an LLM model.
+
+        This API can be used to get information about a Model's source and inference framework.
+        For self-hosted users, it returns additional information about number of shards, quantization, infra settings, etc.
+        The function takes as a single parameter the name `model`
+        and returns a
+        [GetLLMEndpointResponse](../../api/data_types/#llmengine.GetLLMEndpointResponse)
+        object.
 
         Args:
-            model_name (`str`):
+            model (`str`):
                 Name of the model
 
         Returns:
-            GetLLMEndpointResponse: object representing the LLM endpoint and configurations
+            GetLLMEndpointResponse: object representing the LLM and configurations
 
         Example:
             ```python
@@ -68,25 +77,34 @@ class Model(APIEngine):
         JSON Response:
             ```json
             {
-                "id": "end_abc123",
+                "id": null,
                 "name": "llama-7b.suffix.2023-07-18-12-00-00",
-                "model_name": "llama-7b",
+                "model_name": null,
                 "source": "hugging_face",
                 "inference_framework": "text_generation_inference",
-                "num_shards": 4
+                "inference_framework_tag": null,
+                "num_shards": null,
+                "quantize": null,
+                "spec": null
             }
             ```
         """
-        response = cls._get(f"v1/llm/model-endpoints/{model_name}", timeout=DEFAULT_TIMEOUT)
+        response = cls._get(f"v1/llm/model-endpoints/{model}", timeout=DEFAULT_TIMEOUT)
         return GetLLMEndpointResponse.parse_obj(response)
 
     @classmethod
     def list(cls) -> ListLLMEndpointsResponse:
         """
-        List LLM model endpoints available to call inference on. This includes publicly available endpoints as well as your fine-tuned model endpoints.
+        List LLM models available to call inference on.
+
+        This API can be used to list all available models, including both publicly
+        available models and user-specific fine-tuned models.
+        It returns a list of
+        [GetLLMEndpointResponse](../../api/data_types/#llmengine.GetLLMEndpointResponse)
+        objects for all models. The most important field is the model `name`.
 
         Returns:
-            ListLLMEndpointsResponse: list of model endpoints
+            ListLLMEndpointsResponse: list of models
 
         Example:
             ```python
@@ -101,36 +119,48 @@ class Model(APIEngine):
             {
                 "model_endpoints": [
                     {
-                        "id": "end_abc123",
-                        "name": "llama-7b",
-                        "model_name": "llama-7b",
+                        "id": null,
+                        "name": "llama-7b.suffix.2023-07-18-12-00-00",
+                        "model_name": null,
                         "source": "hugging_face",
                         "inference_framework": "text_generation_inference",
-                        "num_shards": 4
+                        "inference_framework_tag": null,
+                        "num_shards": null,
+                        "quantize": null,
+                        "spec": null
                     },
                     {
-                        "id": "end_def456",
+                        "id": null,
+                        "name": "llama-7b",
+                        "model_name": null,
+                        "source": "hugging_face",
+                        "inference_framework": "text_generation_inference",
+                        "inference_framework_tag": null,
+                        "num_shards": null,
+                        "quantize": null,
+                        "spec": null
+                    },
+                    {
+                        "id": null,
                         "name": "llama-13b-deepspeed-sync",
-                        "model_name": "llama-13b-deepspeed-sync",
+                        "model_name": null,
                         "source": "hugging_face",
                         "inference_framework": "deepspeed",
-                        "num_shards": 4
+                        "inference_framework_tag": null,
+                        "num_shards": null,
+                        "quantize": null,
+                        "spec": null
                     },
                     {
-                        "id": "end_ghi789",
+                        "id": null,
                         "name": "falcon-40b",
-                        "model_name": "falcon-40b",
+                        "model_name": null,
                         "source": "hugging_face",
                         "inference_framework": "text_generation_inference",
-                        "num_shards": 4
-                    },
-                    {
-                        "id": "end_jkl012",
-                        "name": "mpt-7b-instruct",
-                        "model_name": "mpt-7b-instruct",
-                        "source": "hugging_face",
-                        "inference_framework": "text_generation_inference",
-                        "num_shards": 4
+                        "inference_framework_tag": null,
+                        "num_shards": null,
+                        "quantize": null,
+                        "spec": null
                     }
                 ]
             }
@@ -140,12 +170,17 @@ class Model(APIEngine):
         return ListLLMEndpointsResponse.parse_obj(response)
 
     @classmethod
-    def delete(cls, model_name: str) -> DeleteLLMEndpointResponse:
+    def delete(cls, model: str) -> DeleteLLMEndpointResponse:
         """
-        Deletes an LLM model endpoint.
+        Deletes an LLM model.
+
+        This API can be used to delete a fine-tuned model if
+        it's no longer required. It takes as parameter the name of the `model`
+        and returns a response object which has a `deleted` field
+        confirming if the deletion was successful.
 
         Args:
-            model_name (`str`):
+            model (`str`):
                 Name of the model
 
         Returns:
@@ -166,5 +201,5 @@ class Model(APIEngine):
             }
             ```
         """
-        response = cls._delete(f"v1/llm/model-endpoints/{model_name}", timeout=DEFAULT_TIMEOUT)
+        response = cls._delete(f"v1/llm/model-endpoints/{model}", timeout=DEFAULT_TIMEOUT)
         return DeleteLLMEndpointResponse.parse_obj(response)

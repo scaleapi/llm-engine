@@ -22,7 +22,7 @@ using Kubernetes. Key features include:
 
 🎁 **Ready-to-use APIs for your favorite models**:
 Fine-tune and serve open-source foundation models, including MPT, Falcon,
-and LLaMA. Use Scale-hosted endpoints or deploy to your own infrastructure.
+and LLaMA. Use Scale-hosted models or deploy to your own infrastructure.
 
 🐳 **Deploying from any docker image**: Turn any Docker image into an
 auto-scaling deployment with simple APIs.
