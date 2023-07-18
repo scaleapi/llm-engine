@@ -19,15 +19,6 @@
 
 ::: llmengine.CompletionStreamResponse
 
-::: llmengine.CreateFineTuneRequest
-    selection:
-        members:
-            - model
-            - training_file
-            - validation_file
-            - hyperparameters
-            - suffix
-
 ::: llmengine.CreateFineTuneResponse
 
 ::: llmengine.GetFineTuneResponse
