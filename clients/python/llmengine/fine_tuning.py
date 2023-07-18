@@ -15,7 +15,7 @@ class FineTune(APIEngine):
     """
     FineTune API. This API is used to fine-tune models.
 
-    Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning is a supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM.
+    Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning is a supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM. LLM Engine currently uses [LoRA](https://arxiv.org/abs/2106.09685) for fine-tuning. Support for additional fine-tuning methods is upcoming.
 
     LLM Engine provides APIs to create fine-tunes on a base model with training & validation datasets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.
 
@@ -49,7 +49,7 @@ class FineTune(APIEngine):
                 Publicly accessible URL to a CSV file for training.
 
             validation_file (`Optional[str]`):
-                Publicly accessible URL to a CSV file for validation.
+                Publicly accessible URL to a CSV file for validation. The validation file is used to compute metrics which let LLM Engine pick the best fine-tuned checkpoint, which will be used for inference when fine-tuning is complete.
 
             hyperparameters (`Optional[Dict[str, str]]`):
                 A dict of hyperparameters to customize fine-tuning behavior.
