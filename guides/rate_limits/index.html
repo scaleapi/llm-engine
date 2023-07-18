@@ -622,7 +622,7 @@ request.</p>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>completion_with_backoff(model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b&quot;</span>, prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Why is the sky blue?&quot;</span>)
 </code></pre></div>
 <h3 id="example-2-using-the-backoff-library">Example #2: Using the <code>backoff</code> library<a class="headerlink" href="#example-2-using-the-backoff-library" title="Permanent link">&para;</a></h3>
-<p>Another python library that provides function decorators for backoff and retry is backoff:</p>
+<p><a href="https://github.com/litl/backoff">Backoff</a> is another python library that provides function decorators which can be used to wrap a function such that it will be retried until some condition is met. </p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Decorators for backoff and retry in python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block"></div>
@@ -630,11 +630,12 @@ request.</p>
 </div>
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">llmengine</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">backoff</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span style="color: #AA22FF">@backoff</span><span style="color: #666666">.</span>on_exception(backoff<span style="color: #666666">.</span>expo, llmengine<span style="color: #666666">.</span>error<span style="color: #666666">.</span>RateLimitError)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">completions_with_backoff</span>(<span style="color: #666666">**</span>kwargs):
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span style="color: #008000; font-weight: bold">return</span> llmengine<span style="color: #666666">.</span>Completion<span style="color: #666666">.</span>create(<span style="color: #666666">**</span>kwargs)
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>completions_with_backoff(model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b&quot;</span>, prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Why is the sky blue?&quot;</span>)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #AA22FF">@backoff</span><span style="color: #666666">.</span>on_exception(backoff<span style="color: #666666">.</span>expo, llmengine<span style="color: #666666">.</span>errors<span style="color: #666666">.</span>RateLimitExceededError)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">completion_with_backoff</span>(<span style="color: #666666">**</span>kwargs):
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span style="color: #008000; font-weight: bold">return</span> llmengine<span style="color: #666666">.</span>Completion<span style="color: #666666">.</span>create(<span style="color: #666666">**</span>kwargs)
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>completions_with_backoff(model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b&quot;</span>, prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Why is the sky blue?&quot;</span>)
 </code></pre></div>
 
 

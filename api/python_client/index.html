@@ -810,12 +810,12 @@ For each of these modes, you can also choose whether to stream token responses o
   
       <p>Creates a completion for the provided prompt and parameters synchronously.</p>
 <p>This API can be used to get the LLM to generate a completion <em>synchronously</em>.
-It takes as parameters the <code>model</code><a href="../model_zoo/">see Model Zoo</a> and the <code>prompt</code>.
+It takes as parameters the <code>model</code> (<a href="../../../model_zoo">see Model Zoo</a>) and the <code>prompt</code>.
 Optionally it takes <code>max_new_tokens</code>, <code>temperature</code>, <code>timeout</code> and <code>stream</code>.
-It returns
-<a href="../../api/data_types/#llmengine.CompletionSyncV1Response">CompletionSyncV1Response</a>
+It returns a
+<a href="../../api/data_types/#llmengine.CompletionSyncResponse">CompletionSyncResponse</a>
 if <code>stream=False</code> or an async iterator of
-<a href="../../api/data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>
+<a href="../../api/data_types/#llmengine.CompletionStreamResponse">CompletionStreamResponse</a>
 with <code>request_id</code> and <code>outputs</code> fields.</p>
 
 
@@ -838,7 +838,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Name of the model to use. See <a href="../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
+              <p>Name of the model to use. See <a href="../../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
             </div>
           </td>
           <td>
@@ -868,7 +868,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
             <div class="doc-md-description">
               <p>The maximum number of tokens to generate in the completion.</p>
 <p>The token count of your prompt plus <code>max_new_tokens</code> cannot exceed the model's context length. See
-<a href="../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
+<a href="../../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
             </div>
           </td>
           <td>
@@ -946,8 +946,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
         </tr>
     </tbody>
   </table>
-      <p>Token streaming can be used to reduce <em>percieved</em> latency for applications:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.completion.Completion.create--__tabbed_1_1" name="llmengine.completion.Completion.create--__tabbed_1" type="radio" /><input id="llmengine.completion.Completion.create--__tabbed_1_2" name="llmengine.completion.Completion.create--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.create--__tabbed_1_1">Synchronous completion without token streaming in python</label><label for="llmengine.completion.Completion.create--__tabbed_1_2">Response in json</label></div>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.completion.Completion.create--__tabbed_1_1" name="llmengine.completion.Completion.create--__tabbed_1" type="radio" /><input id="llmengine.completion.Completion.create--__tabbed_1_2" name="llmengine.completion.Completion.create--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.create--__tabbed_1_1">Synchronous completion without token streaming in Python</label><label for="llmengine.completion.Completion.create--__tabbed_1_2">Response in JSON</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
@@ -977,8 +976,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 </div>
 </div>
 </div>
-<p>Here is how applications can use streaming:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="llmengine.completion.Completion.create--__tabbed_2_1" name="llmengine.completion.Completion.create--__tabbed_2" type="radio" /><input id="llmengine.completion.Completion.create--__tabbed_2_2" name="llmengine.completion.Completion.create--__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.create--__tabbed_2_1">Synchronous completion with token streaming in python</label><label for="llmengine.completion.Completion.create--__tabbed_2_2">Response in json</label></div>
+<p>Token streaming can be used to reduce <em>percieved</em> latency for applications. Here is how applications can use streaming:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="llmengine.completion.Completion.create--__tabbed_2_1" name="llmengine.completion.Completion.create--__tabbed_2" type="radio" /><input id="llmengine.completion.Completion.create--__tabbed_2_2" name="llmengine.completion.Completion.create--__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.create--__tabbed_2_1">Synchronous completion with token streaming in Python</label><label for="llmengine.completion.Completion.create--__tabbed_2_2">Response in JSON</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
@@ -1043,12 +1042,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
   
       <p>Creates a completion for the provided prompt and parameters asynchronously (with <code>asyncio</code>).</p>
 <p>This API can be used to get the LLM to generate a completion <em>asynchronously</em>.
-It takes as parameters the <code>model</code><a href="../model_zoo/">see Model Zoo</a> and the <code>prompt</code>.
+It takes as parameters the <code>model</code> (<a href="../../../model_zoo">see Model Zoo</a>) and the <code>prompt</code>.
 Optionally it takes <code>max_new_tokens</code>, <code>temperature</code>, <code>timeout</code> and <code>stream</code>.
-It returns
-<a href="../../api/data_types/#llmengine.CompletionSyncV1Response">CompletionSyncV1Response</a>
+It returns a
+<a href="../../api/data_types/#llmengine.CompletionSyncResponse">CompletionSyncResponse</a>
 if <code>stream=False</code> or an async iterator of
-<a href="../../api/data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>
+<a href="../../api/data_types/#llmengine.CompletionStreamResponse">CompletionStreamResponse</a>
 with <code>request_id</code> and <code>outputs</code> fields.</p>
 
 
@@ -1071,7 +1070,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Name of the model to use. See <a href="../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
+              <p>Name of the model to use. See <a href="../../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
             </div>
           </td>
           <td>
@@ -1101,7 +1100,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
             <div class="doc-md-description">
               <p>The maximum number of tokens to generate in the completion.</p>
 <p>The token count of your prompt plus <code>max_new_tokens</code> cannot exceed the model's context length. See
-<a href="../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
+<a href="../../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
             </div>
           </td>
           <td>
@@ -1179,8 +1178,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
         </tr>
     </tbody>
   </table>
-      <p>Token streaming can be used to reduce <em>percieved</em> latency for applications:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.completion.Completion.acreate--__tabbed_1_1" name="llmengine.completion.Completion.acreate--__tabbed_1" type="radio" /><input id="llmengine.completion.Completion.acreate--__tabbed_1_2" name="llmengine.completion.Completion.acreate--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.acreate--__tabbed_1_1">Asynchronous completion without token streaming in python</label><label for="llmengine.completion.Completion.acreate--__tabbed_1_2">Response in json</label></div>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.completion.Completion.acreate--__tabbed_1_1" name="llmengine.completion.Completion.acreate--__tabbed_1" type="radio" /><input id="llmengine.completion.Completion.acreate--__tabbed_1_2" name="llmengine.completion.Completion.acreate--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.acreate--__tabbed_1_1">Asynchronous completion without token streaming in Python</label><label for="llmengine.completion.Completion.acreate--__tabbed_1_2">Response in JSON</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">asyncio</span>
@@ -1213,8 +1211,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 </div>
 </div>
 </div>
-<p>Here is how applications can use streaming:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="llmengine.completion.Completion.acreate--__tabbed_2_1" name="llmengine.completion.Completion.acreate--__tabbed_2" type="radio" /><input id="llmengine.completion.Completion.acreate--__tabbed_2_2" name="llmengine.completion.Completion.acreate--__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.acreate--__tabbed_2_1">Asynchronous completion with token streaming in python</label><label for="llmengine.completion.Completion.acreate--__tabbed_2_2">Response in json</label></div>
+<p>Token streaming can be used to reduce <em>percieved</em> latency for applications. Here is how applications can use streaming:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="llmengine.completion.Completion.acreate--__tabbed_2_1" name="llmengine.completion.Completion.acreate--__tabbed_2" type="radio" /><input id="llmengine.completion.Completion.acreate--__tabbed_2_2" name="llmengine.completion.Completion.acreate--__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="llmengine.completion.Completion.acreate--__tabbed_2_1">Asynchronous completion with token streaming in Python</label><label for="llmengine.completion.Completion.acreate--__tabbed_2_2">Response in JSON</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">asyncio</span>
@@ -1276,7 +1274,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   
       <p>FineTune API. This API is used to fine-tune models.</p>
-<p>Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning is a supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM.</p>
+<p>Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning is a supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM. LLM Engine currently uses <a href="https://arxiv.org/abs/2106.09685">LoRA</a> for fine-tuning. Support for additional fine-tuning methods is upcoming.</p>
 <p>LLM Engine provides APIs to create fine-tunes on a base model with training &amp; validation datasets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.</p>
 <p>Creating a fine-tune will end with the creation of a Model, which you can view using <code>Model.get(model_name)</code> or delete using <code>Model.delete(model_name)</code>.</p>
 
@@ -1318,13 +1316,14 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
   <div class="doc doc-contents ">
   
-      <p>Creates a job that fine-tunes a specified model from a given dataset.</p>
+      <p>Creates a job that fine-tunes a specified model with a given dataset.</p>
 <p>This API can be used to fine-tune a model. The <em>model</em> is the name of base model
 (<a href="../../model_zoo">Model Zoo</a> for available models) to fine-tune. The training
 file should consist of prompt and response pairs. Your data must be formatted as a CSV file
 that includes two columns: <code>prompt</code> and <code>response</code>. A maximum of 100,000 rows of data is
 currently supported. At least 200 rows of data is recommended to start to see benefits from
-fine-tuning.</p>
+fine-tuning. For sequences longer than the native <code>max_seq_length</code> of the model, the sequences
+will be truncated.</p>
 
 
 
@@ -1374,7 +1373,7 @@ fine-tuning.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Publicly accessible URL to a CSV file for validation.</p>
+              <p>Publicly accessible URL to a CSV file for validation. The validation file is used to compute metrics which let LLM Engine pick the best fine-tuned checkpoint, which will be used for inference when fine-tuning is complete.</p>
             </div>
           </td>
           <td>
@@ -1391,11 +1390,10 @@ fine-tuning.</p>
               <p>A dict of hyperparameters to customize fine-tuning behavior.</p>
 <p>Currently supported hyperparameters:</p>
 <ul>
-<li><code>lr</code>: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-5)</li>
+<li><code>lr</code>: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-3)</li>
 <li><code>warmup_ratio</code>: Ratio of training steps used for learning rate warmup. (Default: 0.03)</li>
-<li><code>epochs</code>: Number of fine-tuning epochs. (Default: 5)</li>
+<li><code>epochs</code>: Number of fine-tuning epochs. This should be less than 20. (Default: 5)</li>
 <li><code>weight_decay</code>: Regularization penalty applied to learned weights. (Default: 0.001)</li>
-<li><code>max_seq_length</code>: Maximum number of tokens per sequence in the dataset. (Default: 1024)</li>
 </ul>
             </div>
           </td>
