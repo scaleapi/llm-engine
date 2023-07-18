@@ -76,7 +76,7 @@ KUBERNETES_MAX_LENGTH = 64
 FORWARDER_PORT = 5000
 USER_CONTAINER_PORT = 5005
 ARTIFACT_LIKE_CONTAINER_PORT = FORWARDER_PORT
-FORWARDER_IMAGE_TAG = "54f8f73bfb1cce62a2b42326ccf9f49b5b145126"
+FORWARDER_IMAGE_TAG = "0b7ff9d0cdfb27033dd5385c7247a3a38f2829bd"
 
 
 class _BaseResourceArguments(TypedDict):
@@ -317,10 +317,11 @@ class DeploymentTritonEnhancedRunnableImageAsyncGpuArguments(
 
 class HorizontalPodAutoscalerArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into horizontal pod autoscaler templates."""
-
+    
     MIN_WORKERS: int
     MAX_WORKERS: int
     CONCURRENCY: float
+    # AUTO_SCALING_API_VERSION: str TODO: Make this configurable
 
 
 class UserConfigArguments(_BaseEndpointArguments):
