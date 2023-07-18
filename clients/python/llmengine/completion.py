@@ -91,14 +91,11 @@ class Completion(APIEngine):
         === "Response in JSON"
             ```json
             {
-                "request_id": "b1b2c3d4e5f6g7h8i9j0",
-                "outputs":
-                [
-                    {
-                        "text": "_______, and I am a _____",
-                        "num_completion_tokens": 10
-                    }
-                ],
+                "request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0",
+                "output": {
+                    "text": "_______ and I am a _______",
+                    "num_completion_tokens": 10
+                }
             }
             ```
 
@@ -127,11 +124,11 @@ class Completion(APIEngine):
 
         === "Response in JSON"
             ```json
-            {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1}}
-            {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_completion_tokens": 2}}
-            {"request_id": "0123456789", "output": {"text": " think", "finished": false, "num_completion_tokens": 3}}
-            {"request_id": "0123456789", "output": {"text": " the", "finished": false, "num_completion_tokens": 4}}
-            {"request_id": "0123456789", "output": {"text": " sky", "finished": true, "num_completion_tokens": 5}}
+            {"request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1}}
+            {"request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0", "output": {"text": "I", "finished": false, "num_completion_tokens": 2}}
+            {"request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0", "output": {"text": " think", "finished": false, "num_completion_tokens": 3}}
+            {"request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0", "output": {"text": " the", "finished": false, "num_completion_tokens": 4}}
+            {"request_id": "9cfe4d5a-f86f-4094-a935-87f871d90ec0", "output": {"text": " sky", "finished": true, "num_completion_tokens": 5}}
             ```
         """
         if stream:
@@ -238,15 +235,11 @@ class Completion(APIEngine):
         === "Response in JSON"
             ```json
             {
-                "request_id": "0123456789",
-                "outputs":
-                [
-                    {
-                        "text": "_______ and I am a _______",
-                        "num_completion_tokens": 10
-                    }
-                ],
-                "traceback": null
+                "request_id": "8bbd0e83-f94c-465b-a12b-aabad45750a9",
+                "output": {
+                    "text": "_______ and I am a _______",
+                    "num_completion_tokens": 10
+                }
             }
             ```
 
@@ -271,11 +264,11 @@ class Completion(APIEngine):
 
         === "Response in JSON"
             ```json
-            {"request_id": "0123456789", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1 } }
-            {"request_id": "0123456789", "output": {"text": "I", "finished": false, "num_completion_tokens": 2 } }
-            {"request_id": "0123456789", "output": {"text": " don", "finished": false, "num_completion_tokens": 3 } }
-            {"request_id": "0123456789", "output": {"text": "’", "finished": false, "num_completion_tokens": 4 } }
-            {"request_id": "0123456789", "output": {"text": "t", "finished": true, "num_completion_tokens": 5 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "I", "finished": false, "num_completion_tokens": 2 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": " don", "finished": false, "num_completion_tokens": 3 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "’", "finished": false, "num_completion_tokens": 4 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "t", "finished": true, "num_completion_tokens": 5 } }
             ```
         """
         if stream:
