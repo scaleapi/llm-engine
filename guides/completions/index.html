@@ -633,6 +633,9 @@ The <em>temperature</em> is the sampling temperature to use. Higher values make 
 <p>See the full <a href="../../api/python_client/#llmengine.Completion">API reference documentation</a> to learn more.</p>
 <h2 id="completion-api-response">Completion API response<a class="headerlink" href="#completion-api-response" title="Permanent link">&para;</a></h2>
 <p>An example Completion API response looks as follows:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Response in json</label><label for="__tabbed_1_2">Response in python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;outputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="p">{</span>
@@ -642,14 +645,24 @@ The <em>temperature</em> is the sampling temperature to use. Higher values make 
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p">]</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">}</span>
 </code></pre></div>
-<p>In Python, the response is of type <a href="../../api/python_client/#llmengine.CompletionSyncResponse">CompletionSyncResponse</a>, which maps to the above JSON structure.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span> <span class="n">response</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span> <span class="p">)</span>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span> <span class="n">response</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span> <span class="p">)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">________</span><span class="o">.</span> <span class="n">Hello</span><span class="p">,</span> <span class="n">my</span> <span class="n">name</span> <span class="ow">is</span> <span class="n">_</span>
 </code></pre></div>
+</div>
+</div>
+</div>
 <h2 id="token-streaming">Token streaming<a class="headerlink" href="#token-streaming" title="Permanent link">&para;</a></h2>
 <p>The Completions API support token streaming to reduce <em>perceived</em> latency for certain applications. When streaming,
 tokens will be sent as data-only <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-side events</a>.</p>
 <p>To enable token streaming, pass <code>stream=True</code> to either <code>Completion.create</code> or <code>Completion.acreate</code>.</p>
-<p>An example of token streaming using the synchronous Completions API looks as follows:</p>
+<p>An example of token streaming using the synchronous Completions API looks as follows</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Token streaming with synchronous API in python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">Completion</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">stream</span> <span class="o">=</span> <span class="n">Completion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
@@ -667,7 +680,12 @@ tokens will be sent as data-only <a href="https://developer.mozilla.org/en-US/do
 <h2 id="async-requests">Async requests<a class="headerlink" href="#async-requests" title="Permanent link">&para;</a></h2>
 <p>The Python client supports <code>asyncio</code> for creating Completions. Use <code>Completion.acreate</code> instead of <code>Completion.create</code>
 to utilize async processing. The function signatures are otherwise identical.</p>
-<p>An example of async Completions looks as follows:</p>
+<p>An example of async Completions looks as follows</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Completions with asynchronous API in python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span> <span class="nn">asyncio</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span> <span class="nn">llmengine</span> <span class="kn">import</span> <span class="n">Completion</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
