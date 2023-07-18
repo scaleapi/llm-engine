@@ -1,16 +1,15 @@
 # Getting Started
 
-The fastest way to get started with LLM Engine is to use the python client in this repository to run inference and fine-tuning on Scale's infrastructure. This path does not require you to install anything on your infrastructure, and Scale's free tier gives you access to experimentation using open source LLMs.
+The fastest way to get started with LLM Engine is to use the Python client in this repository to 
+run inference and fine-tuning on Scale's infrastructure. This path does not require you to install 
+anything on your infrastructure, and Scale's free tier gives you access to experimentation using 
+open source LLMs.
 
-To start with, install LLM Engine via pip or conda:
+To start with, install LLM Engine via pip:
 
 === "pip"
     ```commandline
     pip install scale-llm-engine
-    ```
-=== "conda"
-    ```commandline
-    conda install scale-llm-engine -c conda-forge
     ```
 
 ## Scale API Keys
@@ -56,15 +55,16 @@ response = Completion.create(
     temperature=0.2,
 )
 
-print(response.outputs[0].text)
+print(response.output.text)
 ```
 
 ### With Streaming
 
 
 ```py
-from llmengine import Completion
 import sys
+
+from llmengine import Completion
 
 stream = Completion.create(
     model="falcon-7b-instruct",

@@ -17,10 +17,9 @@ pip install scale-llm-engine
 
 ## About
 
-Foundation models are emerging as the building blocks of AI. However,
-deploying these models to the cloud and fine-tuning them are expensive
-operations that require infrastructure and ML expertise. It is also difficult
-to maintain over time as new models are released and new techniques for both
+Foundation models are emerging as the building blocks of AI. However, deploying these models to the 
+cloud and fine-tuning them is an expensive operation that require infrastructure and ML expertise. 
+It is also difficult to maintain over time as new models are released and new techniques for both
 inference and fine-tuning are made available.
 
 LLM Engine is a Python library, CLI, and Helm chart that provides
@@ -31,11 +30,11 @@ Kubernetes.
 ### Key Features
 
 **Ready-to-use APIs for your favorite models**: Deploy and serve
-open-source foundation models - including LLaMA, MPT and Falcon.
+open-source foundation models - including LLaMA, MPT, and Falcon.
 Use Scale-hosted models or deploy to your own infrastructure.
 
 **Fine-tune your favorite models**: Fine-tune open-source foundation
-models like LLaMA, MPT etc. with your own data for optimized performance.
+models like LLaMA, MPT, etc. with your own data for optimized performance.
 
 **Optimized Inference**: LLM Engine provides inference APIs
 for streaming responses and dynamically batching inputs for higher throughput
@@ -49,8 +48,8 @@ auto-scaling deployment with simple APIs.
 
 ### Features Coming Soon
 
-**k8s Installation Documentation**: We are working hard to document installation and
-maintenance of inference and fine-tuning functionality on your own infrastructure.
+**Kubernetes Installation Documentation**: We are working hard to document the installation and 
+maintenance of inference and fine-tuning functionality on your infrastructure.
 For now, our documentation covers using our client libraries to access Scale's
 hosted infrastructure.
 
