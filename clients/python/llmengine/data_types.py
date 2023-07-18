@@ -251,8 +251,8 @@ class CompletionSyncResponse(BaseModel):
     associated with the request are grouped by the `request_id`, which allows for easier troubleshooting of errors as
     follows:
 
-    * When running the **Scale-hosted** LLM Engine, please provide the `request_id` in any bug reports.
-    * When running the **self-hosted** LLM Engine, the `request_id` serves as a trace ID in your observability 
+    * When running the *Scale-hosted* LLM Engine, please provide the `request_id` in any bug reports.
+    * When running the *self-hosted* LLM Engine, the `request_id` serves as a trace ID in your observability 
     provider."""
 
     output: CompletionOutput
@@ -290,8 +290,8 @@ class CompletionStreamResponse(BaseModel):
     associated with the request are grouped by the `request_id`, which allows for easier troubleshooting of errors as
     follows:
 
-    * When running the **Scale-hosted** LLM Engine, please provide the `request_id` in any bug reports.
-    * When running the **self-hosted** LLM Engine, the `request_id` serves as a trace ID in your observability 
+    * When running the *Scale-hosted* LLM Engine, please provide the `request_id` in any bug reports.
+    * When running the *self-hosted* LLM Engine, the `request_id` serves as a trace ID in your observability 
     provider."""
 
     output: Optional[CompletionStreamOutput] = None
