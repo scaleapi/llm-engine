@@ -8,7 +8,10 @@ from llm_engine_server.common.dtos.tasks import (
 )
 from llm_engine_server.core.celery import TaskVisibility, celery_app
 from llm_engine_server.core.config import ml_infra_config
+from llm_engine_server.core.loggers import filename_wo_ext, make_logger
 from llm_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
+
+logger = make_logger(filename_wo_ext(__file__))
 
 celery_redis = celery_app(
     None,
@@ -52,13 +55,14 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
         expires: Optional[int] = None,
     ) -> CreateAsyncTaskV1Response:
         celery_dest = self._get_celery_dest()
-
+        logger.info(f"Sending task {task_name} with args {args} kwargs {kwargs} to queue {queue_name}")
         res = celery_dest.send_task(
             name=task_name,
             args=args,
             kwargs=kwargs,
             queue=queue_name,
         )
+        logger.info(f"Response from sending task {task_name}: {res}")
         return CreateAsyncTaskV1Response(task_id=res.id)
 
     def get_task(self, task_id: str) -> GetAsyncTaskV1Response:
