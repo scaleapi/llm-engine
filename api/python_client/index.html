@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../../guides/rate_limits/">
+        <link rel="prev" href="../../guides/self_hosting/">
       
       
         <link rel="next" href="../data_types/">
@@ -354,6 +354,20 @@
     <li class="md-nav__item">
       <a href="../../guides/rate_limits/" class="md-nav__link">
         Rate limits
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/self_hosting/" class="md-nav__link">
+        Self Hosting
       </a>
     </li>
   
@@ -1318,6 +1332,8 @@ that includes two columns: <code>prompt</code> and <code>response</code>. A maxi
 currently supported. At least 200 rows of data is recommended to start to see benefits from
 fine-tuning. For sequences longer than the native <code>max_seq_length</code> of the model, the sequences
 will be truncated.</p>
+<p>A fine-tuning job can take roughly 30 minutes for a small dataset (~200 rows)
+and several hours for larger ones.</p>
 
 
 
@@ -1402,11 +1418,11 @@ will be truncated.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>A string that will be added to your fine-tuned model name. If present, the fine-tuned model name
-will be formatted like "[model].[suffix].[YYYY-MM-DD-HH-MM-SS]". If absent, the
-fine-tuned model name will be formatted like "[model].[YYYY-MM-DD-HH-MM-SS]".
-For example, if <code>suffix</code> is "my-experiment", the fine-tuned model name could be
-"llame-7b.my-experiment.2023-07-17-23-01-50".</p>
+              <p>A string that will be added to your fine-tuned model name. If present, the entire fine-tuned model name
+will be formatted like <code>"[model].[suffix].[YYYY-MM-DD-HH-MM-SS]"</code>. If absent, the
+fine-tuned model name will be formatted <code>"[model].[YYYY-MM-DD-HH-MM-SS]"</code>.
+For example, if <code>suffix</code> is <code>"my-experiment"</code>, the fine-tuned model name could be
+<code>"llama-7b.my-experiment.2023-07-17-23-01-50"</code>.</p>
             </div>
           </td>
           <td>
@@ -1441,7 +1457,7 @@ For example, if <code>suffix</code> is "my-experiment", the fine-tuned model nam
   </table>
       <p>Here is an example script to create a 5-row CSV of properly formatted data for fine-tuning
 an airline question answering bot:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="llmengine.fine_tuning.FineTune.create--__tabbed_1_1" name="llmengine.fine_tuning.FineTune.create--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.create--__tabbed_1_1">Formatting data in python</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="llmengine.fine_tuning.FineTune.create--__tabbed_1_1" name="llmengine.fine_tuning.FineTune.create--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.create--__tabbed_1_1">Formatting data in Python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block"></div>
 </div>
@@ -1472,7 +1488,7 @@ files in a public manner. An example Github Gist can be found
 you can use the URL given when you click the “Raw” button
 (<a href="https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv">URL</a>).</p>
 <p>Example code for fine-tuning:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.create--__tabbed_2_1" name="llmengine.fine_tuning.FineTune.create--__tabbed_2" type="radio" /><input id="llmengine.fine_tuning.FineTune.create--__tabbed_2_2" name="llmengine.fine_tuning.FineTune.create--__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.create--__tabbed_2_1">Fine-tuning in python</label><label for="llmengine.fine_tuning.FineTune.create--__tabbed_2_2">Response in json</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.create--__tabbed_2_1" name="llmengine.fine_tuning.FineTune.create--__tabbed_2" type="radio" /><input id="llmengine.fine_tuning.FineTune.create--__tabbed_2_2" name="llmengine.fine_tuning.FineTune.create--__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.create--__tabbed_2_1">Fine-tuning in Python</label><label for="llmengine.fine_tuning.FineTune.create--__tabbed_2_2">Response in JSON</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
@@ -1578,7 +1594,7 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
         </tr>
     </tbody>
   </table>
-      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.get--__tabbed_1_1" name="llmengine.fine_tuning.FineTune.get--__tabbed_1" type="radio" /><input id="llmengine.fine_tuning.FineTune.get--__tabbed_1_2" name="llmengine.fine_tuning.FineTune.get--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.get--__tabbed_1_1">Getting status of fine-tuning in python</label><label for="llmengine.fine_tuning.FineTune.get--__tabbed_1_2">Response in json</label></div>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.get--__tabbed_1_1" name="llmengine.fine_tuning.FineTune.get--__tabbed_1" type="radio" /><input id="llmengine.fine_tuning.FineTune.get--__tabbed_1_2" name="llmengine.fine_tuning.FineTune.get--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.get--__tabbed_1_1">Getting status of fine-tuning in Python</label><label for="llmengine.fine_tuning.FineTune.get--__tabbed_1_2">Response in JSON</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
@@ -1651,7 +1667,7 @@ all existing jobs.</p>
         </tr>
     </tbody>
   </table>
-      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.list--__tabbed_1_1" name="llmengine.fine_tuning.FineTune.list--__tabbed_1" type="radio" /><input id="llmengine.fine_tuning.FineTune.list--__tabbed_1_2" name="llmengine.fine_tuning.FineTune.list--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.list--__tabbed_1_1">Listing fine-tuning jobs in python</label><label for="llmengine.fine_tuning.FineTune.list--__tabbed_1_2">Response in json</label></div>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.list--__tabbed_1_1" name="llmengine.fine_tuning.FineTune.list--__tabbed_1" type="radio" /><input id="llmengine.fine_tuning.FineTune.list--__tabbed_1_2" name="llmengine.fine_tuning.FineTune.list--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.list--__tabbed_1_1">Listing fine-tuning jobs in Python</label><label for="llmengine.fine_tuning.FineTune.list--__tabbed_1_2">Response in JSON</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
@@ -1760,7 +1776,7 @@ confirming if the cancellation was successful.</p>
         </tr>
     </tbody>
   </table>
-      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_1" name="llmengine.fine_tuning.FineTune.cancel--__tabbed_1" type="radio" /><input id="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_2" name="llmengine.fine_tuning.FineTune.cancel--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_1">Cancelling fine-tuning job in python</label><label for="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_2">Response in json</label></div>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_1" name="llmengine.fine_tuning.FineTune.cancel--__tabbed_1" type="radio" /><input id="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_2" name="llmengine.fine_tuning.FineTune.cancel--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_1">Cancelling fine-tuning job in Python</label><label for="llmengine.fine_tuning.FineTune.cancel--__tabbed_1_2">Response in JSON</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
@@ -1904,7 +1920,7 @@ object.</p>
         </tr>
     </tbody>
   </table>
-      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.model.Model.get--__tabbed_1_1" name="llmengine.model.Model.get--__tabbed_1" type="radio" /><input id="llmengine.model.Model.get--__tabbed_1_2" name="llmengine.model.Model.get--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.model.Model.get--__tabbed_1_1">Accessing model in python</label><label for="llmengine.model.Model.get--__tabbed_1_2">Response in json</label></div>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.model.Model.get--__tabbed_1_1" name="llmengine.model.Model.get--__tabbed_1" type="radio" /><input id="llmengine.model.Model.get--__tabbed_1_2" name="llmengine.model.Model.get--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.model.Model.get--__tabbed_1_1">Accessing model in Python</label><label for="llmengine.model.Model.get--__tabbed_1_2">Response in JSON</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Model
@@ -1984,7 +2000,7 @@ objects for all models. The most important field is the model <code>name</code>.
         </tr>
     </tbody>
   </table>
-      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.model.Model.list--__tabbed_1_1" name="llmengine.model.Model.list--__tabbed_1" type="radio" /><input id="llmengine.model.Model.list--__tabbed_1_2" name="llmengine.model.Model.list--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.model.Model.list--__tabbed_1_1">Listing available modes in python</label><label for="llmengine.model.Model.list--__tabbed_1_2">Response in json</label></div>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.model.Model.list--__tabbed_1_1" name="llmengine.model.Model.list--__tabbed_1" type="radio" /><input id="llmengine.model.Model.list--__tabbed_1_2" name="llmengine.model.Model.list--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.model.Model.list--__tabbed_1_1">Listing available modes in Python</label><label for="llmengine.model.Model.list--__tabbed_1_2">Response in JSON</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Model
@@ -2130,7 +2146,7 @@ Engine, an error will be thrown.</p>
         </tr>
     </tbody>
   </table>
-      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.model.Model.delete--__tabbed_1_1" name="llmengine.model.Model.delete--__tabbed_1" type="radio" /><input id="llmengine.model.Model.delete--__tabbed_1_2" name="llmengine.model.Model.delete--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.model.Model.delete--__tabbed_1_1">Deleting model in python</label><label for="llmengine.model.Model.delete--__tabbed_1_2">Response in json</label></div>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.model.Model.delete--__tabbed_1_1" name="llmengine.model.Model.delete--__tabbed_1" type="radio" /><input id="llmengine.model.Model.delete--__tabbed_1_2" name="llmengine.model.Model.delete--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.model.Model.delete--__tabbed_1_1">Deleting model in Python</label><label for="llmengine.model.Model.delete--__tabbed_1_2">Response in JSON</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Model

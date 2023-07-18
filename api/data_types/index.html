@@ -360,6 +360,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/self_hosting/" class="md-nav__link">
+        Self Hosting
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -556,54 +570,6 @@
           <li class="md-nav__item">
   <a href="#llmengine.data_types.CompletionStreamResponse.request_id" class="md-nav__link">
     request_id
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CreateFineTuneRequest" class="md-nav__link">
-    CreateFineTuneRequest
-  </a>
-  
-    <nav class="md-nav" aria-label="CreateFineTuneRequest">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneRequest.model" class="md-nav__link">
-    model
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneRequest.training_file" class="md-nav__link">
-    training_file
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneRequest.validation_file" class="md-nav__link">
-    validation_file
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneRequest.hyperparameters" class="md-nav__link">
-    hyperparameters
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneRequest.suffix" class="md-nav__link">
-    suffix
   </a>
   
 </li>
@@ -992,54 +958,6 @@
           <li class="md-nav__item">
   <a href="#llmengine.data_types.CompletionStreamResponse.request_id" class="md-nav__link">
     request_id
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llmengine.CreateFineTuneRequest" class="md-nav__link">
-    CreateFineTuneRequest
-  </a>
-  
-    <nav class="md-nav" aria-label="CreateFineTuneRequest">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneRequest.model" class="md-nav__link">
-    model
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneRequest.training_file" class="md-nav__link">
-    training_file
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneRequest.validation_file" class="md-nav__link">
-    validation_file
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneRequest.hyperparameters" class="md-nav__link">
-    hyperparameters
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmengine.data_types.CreateFineTuneRequest.suffix" class="md-nav__link">
-    suffix
   </a>
   
 </li>
@@ -1532,7 +1450,14 @@
 
   <div class="doc doc-contents ">
   
-      <p>Unique ID of request.</p>
+      <p>The unique ID of the corresponding Completion request. This <code>request_id</code> is generated on the server, and all logs 
+associated with the request are grouped by the <code>request_id</code>, which allows for easier troubleshooting of errors as
+follows:</p>
+<ul>
+<li>When running the <em>Scale-hosted</em> LLM Engine, please provide the <code>request_id</code> in any bug reports.</li>
+<li>When running the <em>self-hosted</em> LLM Engine, the <code>request_id</code> serves as a trace ID in your observability 
+provider.</li>
+</ul>
   </div>
 
 </div>
@@ -1618,181 +1543,14 @@
 
   <div class="doc doc-contents ">
   
-      <p>Unique ID of request.</p>
-  </div>
-
-</div>
-
-
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="llmengine.CreateFineTuneRequest" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">CreateFineTuneRequest</span>
-
-
-<a href="#llmengine.CreateFineTuneRequest" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-  <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
-
-  
-      <p>Request object for creating a FineTune.</p>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CreateFineTuneRequest.model" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">model</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CreateFineTuneRequest.model" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>model: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span style="color: #666666">...</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Identifier of base model to train from.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Identifier of base model to train from.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CreateFineTuneRequest.training_file" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">training_file</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CreateFineTuneRequest.training_file" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>training_file: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span style="color: #666666">...</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Path to file of training dataset. Dataset must be a csv with columns &#39;prompt&#39; and &#39;response&#39;.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Path to file of training dataset. Dataset must be a csv with columns 'prompt' and 'response'.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CreateFineTuneRequest.validation_file" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">validation_file</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CreateFineTuneRequest.validation_file" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>validation_file: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Path to file of validation dataset. Has the same format as training_file. If not provided, we will generate a split from the training dataset.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Path to file of validation dataset. Has the same format as training_file. If not provided, we will generate a split from the training dataset.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CreateFineTuneRequest.hyperparameters" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">hyperparameters</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CreateFineTuneRequest.hyperparameters" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>hyperparameters: Optional[Dict[<span style="color: #008000">str</span>, Any]] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Hyperparameters to pass in to training job.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Hyperparameters to pass in to training job.</p>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="llmengine.data_types.CreateFineTuneRequest.suffix" class="doc doc-heading">
-          <span class="doc doc-object-name doc-attribute-name">suffix</span>
-
-  
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#llmengine.data_types.CreateFineTuneRequest.suffix" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>suffix: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Optional user-provided identifier suffix for the fine-tuned model.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Optional user-provided identifier suffix for the fine-tuned model.</p>
+      <p>The unique ID of the corresponding Completion request. This <code>request_id</code> is generated on the server, and all logs 
+associated with the request are grouped by the <code>request_id</code>, which allows for easier troubleshooting of errors as
+follows:</p>
+<ul>
+<li>When running the <em>Scale-hosted</em> LLM Engine, please provide the <code>request_id</code> in any bug reports.</li>
+<li>When running the <em>self-hosted</em> LLM Engine, the <code>request_id</code> serves as a trace ID in your observability 
+provider.</li>
+</ul>
   </div>
 
 </div>
@@ -2196,7 +1954,7 @@
 
   <div class="doc doc-contents ">
   
-      <p>The inference framework used by the model.</p>
+      <p>(For self-hosted users) The inference framework used by the model.</p>
   </div>
 
 </div>

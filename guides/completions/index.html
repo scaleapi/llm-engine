@@ -425,6 +425,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../self_hosting/" class="md-nav__link">
+        Self Hosting
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -601,12 +615,12 @@
 
   <h1>Completions</h1>
 
-<p>Language Models are trained to understand natural language and provide text outputs as a response 
+<p>Language Models are trained to predict natural language and provide text outputs as a response 
 to their inputs. The inputs are called <em>prompts</em> and outputs are referred to as <em>completions</em>. 
 LLMs take the input <em>prompts</em> and chunk them into smaller units called <em>tokens</em> to process and 
 generate language. Tokens may include trailing spaces and even sub-words. This process is 
 language dependent.</p>
-<p>Scale LLM Engine provides access to open source language models (see <a href="../../model_zoo">Model Zoo</a>) 
+<p>Scale's LLM Engine provides access to open source language models (see <a href="../../model_zoo">Model Zoo</a>) 
 that can be used for producing completions to prompts.</p>
 <h2 id="completion-api-call">Completion API call<a class="headerlink" href="#completion-api-call" title="Permanent link">&para;</a></h2>
 <p>An example API call looks as follows:</p>
@@ -632,10 +646,10 @@ that can be used for producing completions to prompts.</p>
 <li><strong>temperature:</strong> The sampling temperature to use. Higher values make the output more random, 
 while lower values will make it more focused and deterministic.  </li>
 </ul>
-<p>See the full <a href="../../api/python_client/#llmengine.Completion">API reference documentation</a> to learn more.</p>
+<p>See the full <a href="../../api/python_client/#llmengine.Completion">Completion API reference documentation</a> to learn more.</p>
 <h2 id="completion-api-response">Completion API response<a class="headerlink" href="#completion-api-response" title="Permanent link">&para;</a></h2>
 <p>An example Completion API response looks as follows:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Response in json</label><label for="__tabbed_1_2">Response in python</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Response in JSON</label><label for="__tabbed_1_2">Response in Python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #666666">&gt;&gt;&gt;</span> <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
@@ -654,7 +668,7 @@ Example output:
 <p><div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span style="color: #666666">&gt;&gt;&gt;</span> <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>output<span style="color: #666666">.</span>text)
 </code></pre></div>
 Example output:
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>_______ <span style="color: #AA22FF; font-weight: bold">and</span> I am a _______
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>_______ and I am a _______
 </code></pre></div></p>
 </div>
 </div>
@@ -663,8 +677,8 @@ Example output:
 <p>The Completions API supports token streaming to reduce <em>perceived</em> latency for certain 
 applications. When streaming, tokens will be sent as data-only 
 <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-side events</a>.</p>
-<p>To enable token streaming, pass <code>stream=True</code> to either <code>Completion.create</code> or <code>Completion.acreate</code>.</p>
-<p>An example of token streaming using the synchronous Completions API looks as follows</p>
+<p>To enable token streaming, pass <code>stream=True</code> to either <a href="../../api/python_client/#llmengine.completion.Completion.create">Completion.create</a> or <a href="../../api/python_client/#llmengine.completion.Completion.acreate">Completion.acreate</a>.</p>
+<p>An example of token streaming using the synchronous Completions API looks as follows:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Token streaming with synchronous API in python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block"></div>
@@ -688,9 +702,9 @@ applications. When streaming, tokens will be sent as data-only
 <a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>        sys<span style="color: #666666">.</span>stdout<span style="color: #666666">.</span>flush()
 </code></pre></div>
 <h2 id="async-requests">Async requests<a class="headerlink" href="#async-requests" title="Permanent link">&para;</a></h2>
-<p>The Python client supports <code>asyncio</code> for creating Completions. Use <code>Completion.acreate</code> instead of <code>Completion.create</code>
+<p>The Python client supports <code>asyncio</code> for creating Completions. Use <a href="../../api/python_client/#llmengine.completion.Completion.acreate">Completion.acreate</a> instead of <a href="../../api/python_client/#llmengine.completion.Completion.create">Completion.create</a>
 to utilize async processing. The function signatures are otherwise identical.</p>
-<p>An example of async Completions looks as follows</p>
+<p>An example of async Completions looks as follows:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Completions with asynchronous API in python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block"></div>

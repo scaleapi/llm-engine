@@ -11,13 +11,17 @@
       
       
       
+        <link rel="prev" href="../rate_limits/">
+      
+      
+        <link rel="next" href="../../api/python_client/">
       
       <link rel="icon" href="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
     
     
       
-        <title>Token streaming - LLM Engine</title>
+        <title>Self Hosting - LLM Engine</title>
       
     
     
@@ -88,6 +92,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#experimental-self-hosting" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -118,7 +127,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Token streaming
+              Self Hosting
             
           </span>
         </div>
@@ -284,16 +293,16 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-        
-      
-      <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
       
       
       
@@ -302,7 +311,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_4">
           <span class="md-nav__icon md-icon"></span>
           Guides
@@ -355,11 +364,107 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../self_hosting/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Self Hosting
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Self Hosting
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#aws-dependencies" class="md-nav__link">
+    AWS Dependencies
+  </a>
+  
+    <nav class="md-nav" aria-label="AWS Dependencies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#eks" class="md-nav__link">
+    EKS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#postgresql" class="md-nav__link">
+    PostgreSQL
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis" class="md-nav__link">
+    Redis
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amazon-s3" class="md-nav__link">
+    Amazon S3
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amazon-ecr" class="md-nav__link">
+    Amazon ECR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amazon-sqs" class="md-nav__link">
+    Amazon SQS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identity-and-access-management-iam" class="md-nav__link">
+    Identity and Access Management (IAM)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -482,6 +587,78 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#aws-dependencies" class="md-nav__link">
+    AWS Dependencies
+  </a>
+  
+    <nav class="md-nav" aria-label="AWS Dependencies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#eks" class="md-nav__link">
+    EKS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#postgresql" class="md-nav__link">
+    PostgreSQL
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis" class="md-nav__link">
+    Redis
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amazon-s3" class="md-nav__link">
+    Amazon S3
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amazon-ecr" class="md-nav__link">
+    Amazon ECR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amazon-sqs" class="md-nav__link">
+    Amazon SQS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identity-and-access-management-iam" class="md-nav__link">
+    Identity and Access Management (IAM)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -496,14 +673,278 @@
                   
 
 
-  <h1>Token streaming</h1>
-
-<p>The Completions APIs support a <code>stream</code> boolean parameter that, when <code>True</code>, will return a streamed response of
-token-by-token server-sent events (SSEs) rather than waiting to receive the full response when model generation has
-finished. This decreases latency of when you start getting a response.</p>
-<p>The response will consist of SSEs of the form <code>{"token": dict, "generated_text": str | null, "details": dict | null}</code>,
-where the dictionary for each token will contain log probability information in addition to the generated string; the
-<code>generated_text</code> field will be <code>null</code> for all but the last SSE, for which it will contain the full generated response.</p>
+<h1 id="experimental-self-hosting">[Experimental] Self Hosting<a class="headerlink" href="#experimental-self-hosting" title="Permanent link">&para;</a></h1>
+<p><strong>This guide is currently highly experimental. Instructions are subject to change as we improve support for self-hosting</strong></p>
+<p>We provide a Helm chart that deploys LLM Engine to an Elastic Kubernetes Cluster (https://aws.amazon.com/eks/). This Helm chart should be configured to connect to dependencies (such as a PostgreSQLql database) that you may already have available in your environment.</p>
+<p>The only portions of the Helm chart that are production ready are the parts that configure and manage LLM Server itself (not PostgreSQL, IAM, etc.)</p>
+<p>We first go over required AWS dependencies that are required to exist before we can run <code>helm install</code> in your EKS cluster.</p>
+<h2 id="aws-dependencies">AWS Dependencies<a class="headerlink" href="#aws-dependencies" title="Permanent link">&para;</a></h2>
+<p>This section describes assumptions about existing AWS resources required run to the LLM Engine Server</p>
+<h3 id="eks">EKS<a class="headerlink" href="#eks" title="Permanent link">&para;</a></h3>
+<p>The LLM Engine server must be deployed in an EKS cluster environment. Currently only versions <code>1.23+</code> are supported. Below are the assumed requirements for the EKS cluster: </p>
+<p>You will need to provision EKS node groups with GPUs to schedule model pods. These node groups must have the <code>node-lifecycle: normal</code> label on them.
+Additionally, they must have the <code>k8s.amazonaws.com/accelerator</code> label set appropriately depending on the instance type:</p>
+<table>
+<thead>
+<tr>
+<th>Instance family</th>
+<th><code>k8s.amazonaws.com/accelerator</code> label</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>g4dn</td>
+<td>nvidia-tesla-t4</td>
+</tr>
+<tr>
+<td>g5</td>
+<td>nvidia-tesla-a10</td>
+</tr>
+<tr>
+<td>p4d</td>
+<td>nvidia-tesla-a100</td>
+</tr>
+<tr>
+<td>p4de</td>
+<td>nvidia-tesla-a100e</td>
+</tr>
+</tbody>
+</table>
+<p>We also recommend setting the following taint on your GPU nodes to prevent pods requiring GPU resources from being scheduled on them:
+- { key = "nvidia.com/gpu", value = "true", effect = "NO_SCHEDULE" }</p>
+<h3 id="postgresql">PostgreSQL<a class="headerlink" href="#postgresql" title="Permanent link">&para;</a></h3>
+<p>The LLM Engine server requires a PostgreSQL database to back data. LLM Engine currently supports PostgreSQL version 14.
+Create a PostgreSQL database (e.g. AWS RDS PostgreSQL) if you do not have an existing one you wish to connect LLM Engine to.</p>
+<p>To enable LLM Engine to connect to the PostgreSQL engine, we create a Kubernetes secret with the PostgreSQL url. An example YAML is provided below:
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>apiVersion: v1
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kind: Secret
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>metadata:
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  name: llm-engine-database-credentials  # this name will be an input to our Helm Chart
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>data:
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    database_url = &quot;postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&amp;...]&quot;
+</code></pre></div></p>
+<h3 id="redis">Redis<a class="headerlink" href="#redis" title="Permanent link">&para;</a></h3>
+<p>The LLM Engine server requires Redis for various caching/queue functionality. LLM Engine currently supports Redis version 6.
+Create a Redis cluster (e.g. AWS Elasticache for Redis) if you do not have an existing one you wish to connect LLM Engine to.</p>
+<p>To enable LLM Engine to connect redis, fill out the Helm chart values with the redis host and url.</p>
+<h3 id="amazon-s3">Amazon S3<a class="headerlink" href="#amazon-s3" title="Permanent link">&para;</a></h3>
+<p>You will need to have an S3 bucket for LLM Engine to store various assets (e.g model weigts, prediction restuls). The ARN of this bucket should be provided in the Helm chart values.</p>
+<h3 id="amazon-ecr">Amazon ECR<a class="headerlink" href="#amazon-ecr" title="Permanent link">&para;</a></h3>
+<p>You will need to provide an ECR repository for the deployment to store model containers. The ARN of this repository should be provided in the Helm chart values.</p>
+<h3 id="amazon-sqs">Amazon SQS<a class="headerlink" href="#amazon-sqs" title="Permanent link">&para;</a></h3>
+<p>LLM Engine utilizes Amazon SQS to keep track of jobs. LLM Engine will create and use SQS queues as needed.</p>
+<h3 id="identity-and-access-management-iam">Identity and Access Management (IAM)<a class="headerlink" href="#identity-and-access-management-iam" title="Permanent link">&para;</a></h3>
+<p>The LLM Engine server will an IAM role to perform various AWS operations. This role will be assumed by the serviceaccount <code>llm-engine</code> in the <code>launch</code> namespace in the EKS cluster. The ARN of this role needs to be provided to the Helm chart, and the role needs to be provided the following permissions:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Resource</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>s3:Get*</code>, <code>s3:Put*</code></td>
+<td><code>${s3_bucket_arn}/*</code></td>
+</tr>
+<tr>
+<td><code>s3:List*</code></td>
+<td><code>${s3_bucket_arn}</code></td>
+</tr>
+<tr>
+<td><code>sqs:*</code></td>
+<td><code>arn:aws:sqs:${region}:${account_id}:llm-engine-endpoint-id-*</code></td>
+</tr>
+<tr>
+<td><code>sqs:ListQueues</code></td>
+<td><code>*</code></td>
+</tr>
+<tr>
+<td><code>ecr:BatchGetImage</code>, <code>ecr:DescribeImages</code>, <code>ecr:GetDownloadUrlForLayer</code>, <code>ecr:ListImages</code></td>
+<td><code>${ecr_repository_arn}</code></td>
+</tr>
+</tbody>
+</table>
+<h1 id="helm-chart">Helm Chart<a class="headerlink" href="#helm-chart" title="Permanent link">&para;</a></h1>
+<p>Now that all dependencies have been installed and configured, we can run the provided Helm chart. The values in the Helm chart will need to correspond with the resources described in the Dependencies section. </p>
+<p>Ensure that Helm V3 is installed <a href="https://helm.sh/docs/intro/install/">instructions</a> and can connect to the EKS cluster. Users should be able to install the chart with <code>helm install llm-engine llm-engine -f llm-engine/values_sample.yaml -n &lt;DESIRED_NAMESPACE&gt;</code>.
+Below are the configurations to specify in the <code>values_sample.yaml</code> file. </p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tag</td>
+<td>The LLM Engine docker image tag</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>context</td>
+<td>A user-specified deployment tag</td>
+<td>No</td>
+</tr>
+<tr>
+<td>image.gatewayRepository</td>
+<td>The docker repository to pull the LLM Engine gateway image from</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>image.builderRepository</td>
+<td>The docker repository to pull the LLM Engine endpoint builder image from</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>image.cacherRepository</td>
+<td>The docker repository to pull the LLM Engine cacher image from</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>image.forwarderRepository</td>
+<td>The docker repository to pull the LLM Engine forwarder image from</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>image.pullPolicy</td>
+<td>The docker image pull policy</td>
+<td>No</td>
+</tr>
+<tr>
+<td>secrets.kubernetesDatabaseSecretName</td>
+<td>The name of the secret that contains the database credentials</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>serviceAccount.annotations.eks.amazonaws.com/role-arn</td>
+<td>The ARN of the IAM role that the service account will assume</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>service.type</td>
+<td>The service configuration for the main LLM Engine server</td>
+<td>No</td>
+</tr>
+<tr>
+<td>service.port</td>
+<td>The service configuration for the main LLM Engine server</td>
+<td>No</td>
+</tr>
+<tr>
+<td>replicaCount</td>
+<td>The amount of replica pods for each deployment</td>
+<td>No</td>
+</tr>
+<tr>
+<td>autoscaling</td>
+<td>The autoscaling configuration for LLM Engine server deployments</td>
+<td>No</td>
+</tr>
+<tr>
+<td>resources.requests.cpu</td>
+<td>The k8s resources for LLM Engine server deployments</td>
+<td>No</td>
+</tr>
+<tr>
+<td>nodeSelector</td>
+<td>The node selector for LLM Engine server deployments</td>
+<td>No</td>
+</tr>
+<tr>
+<td>tolerations</td>
+<td>The tolerations for LLM Engine server deployments</td>
+<td>No</td>
+</tr>
+<tr>
+<td>affinity</td>
+<td>The affinity for LLM Engine server deployments</td>
+<td>No</td>
+</tr>
+<tr>
+<td>aws.configMap.name</td>
+<td>The AWS configurations (by configMap) for LLM Engine server deployments</td>
+<td>No</td>
+</tr>
+<tr>
+<td>aws.configMap.create</td>
+<td>The AWS configurations (by configMap) for LLM Engine server deployments</td>
+<td>No</td>
+</tr>
+<tr>
+<td>aws.profileName</td>
+<td>The AWS configurations (by configMap) for LLM Engine server deployments</td>
+<td>No</td>
+</tr>
+<tr>
+<td>serviceTemplate.securityContext.capabilities.drop</td>
+<td>Additional flags for model endpoints</td>
+<td>No</td>
+</tr>
+<tr>
+<td>serviceTemplate.mountInfraConfig</td>
+<td>Additional flags for model endpoints</td>
+<td>No</td>
+</tr>
+<tr>
+<td>config.values.infra.k8s_cluster_name</td>
+<td>The name of the k8s cluster</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>config.values.infra.dns_host_domain</td>
+<td>The domain name of the k8s cluster</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>config.values.infra.default_region</td>
+<td>The default AWS region for various resources</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>config.values.infra.ml_account_id</td>
+<td>The AWS account ID for various resources</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>config.values.infra.docker_repo_prefix</td>
+<td>The prefix for AWS ECR repositories</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>config.values.infra.redis_host</td>
+<td>The hostname of the redis cluster you wish to connect</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>config.values.infra.s3_bucket</td>
+<td>The S3 bucket you wish to connect</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>config.values.llm_engine.endpoint_namespace</td>
+<td>K8s namespace the endpoints will be created in</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>config.values.llm_engine.cache_redis_url</td>
+<td>The full url for the redis cluster you wish to connect</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>config.values.llm_engine.s3_file_llm_fine_tuning_job_repository</td>
+<td>The S3 URI for the S3 bucket/key that you wish to save fine-tuned assets</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>config.values.datadog_trace_enabled</td>
+<td>Whether to enable datadog tracing, datadog must be installed in the cluster</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
 
 
   
