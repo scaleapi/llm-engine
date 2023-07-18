@@ -49,14 +49,7 @@ from tenacity import (
 def completion_with_backoff(**kwargs):
     return llmengine.Completion.create(**kwargs)
 
-print(  
-    completion_with_backoff(
-        model="llama-7b", 
-        prompt="Why is the sky blue?", 
-        max_new_tokens=100, 
-        temperature=0.2
-    ).output.text
-)
+completion_with_backoff(model="llama-7b", prompt="Why is the sky blue?")
 ```
 
 ### Example #2: Using the `backoff` library
