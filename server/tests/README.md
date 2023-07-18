@@ -2,6 +2,6 @@
 
 ```shell
 pushd ../
-PYTHONPATH=llm_engine WORKSPACE=. python3 -m pytest llm_engine/tests --cov=llm_engine
+PYTHONPATH=llm_engine_server WORKSPACE=. python3 -m pytest tests --cov=llm_engine_server
 popd
 ```
