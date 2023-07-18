@@ -110,8 +110,8 @@ need to specify which base model to fine-tune, the locations of the training fil
 validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, 
 and an optional suffix to append to the name of the fine-tune.
 
-If you specify a suffix, the fine-tune will be named `model.suffix.<timestamp>`. If you do not, 
-the fine-tune will be named `model.<timestamp>`. The timestamp will be the time the fine-tune was 
+If you specify a suffix, the fine-tune will be named `model:suffix:<timestamp>`. If you do not, 
+the fine-tune will be named `model:<timestamp>`. The timestamp will be the time the fine-tune was 
 launched.
 
 <details>
@@ -152,7 +152,7 @@ before you can plug it into the Completions API. You can check the status of you
 from llmengine import Completion
 
 response = Completion.create(
-    model_name="llama-7b.airlines.2023-07-17-08-30-45",
+    model_name="llama-7b:airlines:2023-07-17-08-30-45",
     prompt="Do you offer in-flight Wi-fi?",
     max_new_tokens=100,
     temperature=0.2,
