@@ -188,7 +188,7 @@ class GetLLMEndpointResponse(BaseModel):
         default=None, description="(For self-hosted users) The quantization method."
     )
     """(For self-hosted users) The quantization method."""
-    spec: Optional[GetModelEndpointV1Response] = Field(
+    spec: Optional[GetModelEndpointResponse] = Field(
         default=None, description="(For self-hosted users) Model endpoint details."
     )
     """(For self-hosted users) Model endpoint details."""
