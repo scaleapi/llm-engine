@@ -18,6 +18,8 @@ image:
   forwarderRepository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/llm-engine
   pullPolicy: Always
 
+datadog_trace_enabled: false
+
 secrets:
   kubernetesDatabaseSecretName: ml-infra-pg
 
