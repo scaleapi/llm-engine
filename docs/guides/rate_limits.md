@@ -36,6 +36,7 @@ retry behavior to just about anything. To add exponential backoff to your reques
 decorator. The below example uses the tenacity.wait_random_exponential function to add random exponential backoff to a 
 request.
 
+=== "Exponential backoff in python"
 ```python
 import llmengine
 from tenacity import (
@@ -55,6 +56,7 @@ completion_with_backoff(model="llama-7b", prompt="Why is the sky blue?")
 
 Another python library that provides function decorators for backoff and retry is backoff:
 
+=== "Decorators for backoff and retry in python"
 ```python
 import llmengine
 import backoff
