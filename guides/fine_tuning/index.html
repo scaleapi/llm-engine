@@ -709,7 +709,14 @@ prepare such high quality, diverse data sets - more information <a href="https:/
 </details>
 
 <h2 id="making-your-data-accessible-to-llm-engine">Making your data accessible to LLM Engine<a class="headerlink" href="#making-your-data-accessible-to-llm-engine" title="Permanent link">&para;</a></h2>
-<p>Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read for fine-tuning. Publicly accessible HTTP, HTTPS, and S3 URLs are currently supported. Support for privately sharing data with the LLM Engine API is coming shortly. For quick iteration, you can look into tools like Pastebin or Github Gists to quickly host your CSV files in a public manner. We created an example Github Gist you can see <a href="https://gist.github.com/tigss/7cec73251a37de72756a3b15eace9965">here</a>. To use the gist, you can just use the URL given when you click the “Raw” button (<a href="https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv">URL</a>).</p>
+<p>Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read
+for fine-tuning. Publicly accessible HTTP and HTTPS URLs are currently supported.
+Support for privately sharing data with the LLM Engine API is coming shortly. For quick
+iteration, you can look into tools like Pastebin or GitHub Gists to quickly host your CSV
+files in a public manner. An example Github Gist can be found
+<a href="https://gist.github.com/tigss/7cec73251a37de72756a3b15eace9965">here</a>. To use the gist,
+you can use the URL given when you click the “Raw” button
+(<a href="https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv">URL</a>).</p>
 <h2 id="launching-the-fine-tune">Launching the fine-tune<a class="headerlink" href="#launching-the-fine-tune" title="Permanent link">&para;</a></h2>
 <p>Once you have uploaded your data, you can use the LLM Engine API to launch a fine-tune. You will 
 need to specify which base model to fine-tune, the locations of the training file and optional 
