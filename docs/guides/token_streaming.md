@@ -1,4 +1,4 @@
-The Completions APIs support a `stream` boolean parameter that, when `True`, will return a streamed response of
+The Completion APIs support a `stream` boolean parameter that, when `True`, will return a streamed response of
 token-by-token server-sent events (SSEs) rather than waiting to receive the full response when model generation has
 finished. This decreases latency of when you start getting a response.
 
