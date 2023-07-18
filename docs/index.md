@@ -10,7 +10,8 @@ LLMs can be accessed via Scale's hosted version or by using the helm charts in t
 
 ## Quick Install
 
-```
+=== "Install the python package"
+```commandline
 pip install scale-llm-engine
 ```
 
@@ -29,9 +30,12 @@ Kubernetes.
 
 ### Key Features
 
-**Ready-to-use APIs for your favorite models**: Serve and fine-tune
-open-source foundation models, including MPT, Falcon,
-and LLaMA. Use Scale-hosted models or deploy to your own infrastructure.
+**Ready-to-use APIs for your favorite models**: Deploy and serve
+open-source foundation models - including LLaMA, MPT and Falcon.
+Use Scale-hosted models or deploy to your own infrastructure.
+
+**Fine-tune your favorite models**: Fine-tune open-source foundation
+models like LLaMA, MPT etc. with your own data for optimized performance.
 
 **Optimized Inference**: LLM Engine provides inference APIs
 for streaming responses and dynamically batching inputs for higher throughput
