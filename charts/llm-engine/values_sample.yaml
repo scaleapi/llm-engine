@@ -74,9 +74,6 @@ tolerations: [ ]
 # affinity specifies the affinity for LLM Engine server deployments (e.g gateway, cache, and builder deployments)
 affinity: { }
 
-# # datadog_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
-# datadog_trace_enabled: false
-
 # aws specifies the AWS configurations (by configMap) for LLM Engine server deployments
 aws:
   configMap:
