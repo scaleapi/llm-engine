@@ -49,20 +49,33 @@ from tenacity import (
 def completion_with_backoff(**kwargs):
     return llmengine.Completion.create(**kwargs)
 
-completion_with_backoff(model="llama-7b", prompt="Why is the sky blue?")
+print(  
+    completion_with_backoff(
+        model="llama-7b", 
+        prompt="Why is the sky blue?", 
+        max_new_tokens=100, 
+        temperature=0.2
+    ).output.text
+)
 ```
 
 ### Example #2: Using the `backoff` library
 
-Another python library that provides function decorators for backoff and retry is backoff:
+[Backoff](https://github.com/litl/backoff) is another python library that provides function decorators which can be used to wrap a function such that it will be retried until some condition is met. 
 
 === "Decorators for backoff and retry in python"
 ```python
 import llmengine
 import backoff
-@backoff.on_exception(backoff.expo, llmengine.error.RateLimitError)
-def completions_with_backoff(**kwargs):
+
+@backoff.on_exception(backoff.expo, llmengine.errors.RateLimitExceededError)
+
+def completion_with_backoff(**kwargs):
     return llmengine.Completion.create(**kwargs)
 
-completions_with_backoff(model="llama-7b", prompt="Why is the sky blue?")
+print(completion_with_backoff(model="llama-7b", 
+    prompt="Why is the sky blue?", 
+    max_new_tokens=100, 
+    temperature=0.2).output.text)
+
 ```
