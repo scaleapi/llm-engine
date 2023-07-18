@@ -44,6 +44,7 @@ class APIEngine:
             os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
