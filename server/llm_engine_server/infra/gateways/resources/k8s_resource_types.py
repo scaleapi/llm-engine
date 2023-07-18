@@ -328,7 +328,7 @@ class HorizontalPodAutoscalerArguments(_BaseEndpointArguments):
     MIN_WORKERS: int
     MAX_WORKERS: int
     CONCURRENCY: float
-    # AUTO_SCALING_API_VERSION: str TODO: Make this configurable
+    API_VERSION: str
 
 
 class UserConfigArguments(_BaseEndpointArguments):
@@ -482,6 +482,7 @@ def get_endpoint_resource_arguments_from_request(
     sqs_queue_name: str,
     sqs_queue_url: str,
     endpoint_resource_name: str,
+    api_version: Optional[str] = None,
 ) -> EndpointResourceArguments:
     """Get the arguments for the endpoint resource templates from the request.
 
@@ -528,7 +529,7 @@ def get_endpoint_resource_arguments_from_request(
     # In Circle CI, we use Redis on localhost instead of SQS
     broker_name = BrokerName.SQS.value if not CIRCLECI else BrokerName.REDIS.value
     broker_type = BrokerType.SQS.value if not CIRCLECI else BrokerType.REDIS.value
-    datadog_trace_enabled = "false" # TODO: Make datadog_trace_enabled configurable for endpoints
+    datadog_trace_enabled = hmi_config.datadog_trace_enabled
     if broker_type == BrokerType.REDIS.value:
         sqs_queue_url = ""
 
@@ -1282,6 +1283,7 @@ def get_endpoint_resource_arguments_from_request(
             PRODUCT=product,
             CREATED_BY=created_by,
             OWNER=owner,
+            API_VERSION=api_version,
             # Autoscaler arguments
             CONCURRENCY=concurrency,
             MIN_WORKERS=build_endpoint_request.min_workers,

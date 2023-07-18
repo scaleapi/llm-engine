@@ -74,8 +74,8 @@ tolerations: [ ]
 # affinity specifies the affinity for LLM Engine server deployments (e.g gateway, cache, and builder deployments)
 affinity: { }
 
-# datadog_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
-datadog_trace_enabled: false
+# # datadog_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
+# datadog_trace_enabled: false
 
 # aws specifies the AWS configurations (by configMap) for LLM Engine server deployments
 aws:
@@ -117,6 +117,8 @@ config:
       cache_redis_url: redis://spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com:6379/15
       # s3_file_llm_fine_tuning_job_repository [required] is the S3 URI for the S3 bucket/key that you wish to save fine-tuned assests
       s3_file_llm_fine_tuning_job_repository: "s3://scale-ml/hosted-model-inference/llm-ft-job-repository/circleci"
+      # datadog_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
+      datadog_trace_enabled: false
 
       # Asynchronous endpoints configs (coming soon)
       sqs_profile: default

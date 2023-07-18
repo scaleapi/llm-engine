@@ -35,6 +35,7 @@ class HostedModelInferenceServiceConfig:
     sqs_queue_policy_template: str
     sqs_queue_tag_template: str
     s3_file_llm_fine_tuning_job_repository: str
+    datadog_trace_enabled: str
 
     @classmethod
     def from_yaml(cls, yaml_path):

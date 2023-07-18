@@ -252,5 +252,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ensure_gateway_ready(args.gateway_url)
-    # TODO: Uncomment this when we're ready to deploy the initial models
+    # TODO: Renable this when we're ready to pre-init models
     # create_llm_engine_deployments(args.gateway_url)

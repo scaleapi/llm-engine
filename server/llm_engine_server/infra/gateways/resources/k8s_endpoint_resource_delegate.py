@@ -1078,12 +1078,21 @@ class K8SEndpointResourceDelegate:
             ModelEndpointType.SYNC,
             ModelEndpointType.STREAMING,
         }:
+            cluster_version = get_kubernetes_cluster_version()
+            # For k8s cluster versions 1.23 - 1.25 we need to use the v2beta2 api
+            # For 1.26+ v2beta2 has been deperecated and merged into v2
+            if version.parse(cluster_version) >= version.parse("1.26"):
+                api_version = "autoscaling/v2"
+            else:
+                api_version = "autoscaling/v2beta2"
+
             hpa_arguments = get_endpoint_resource_arguments_from_request(
                 k8s_resource_group_name=k8s_resource_group_name,
                 request=request,
                 sqs_queue_name=sqs_queue_name_str,
                 sqs_queue_url=sqs_queue_url_str,
                 endpoint_resource_name="horizontal-pod-autoscaler",
+                api_version=api_version
             )
             hpa_template = load_k8s_yaml("horizontal-pod-autoscaler.yaml", hpa_arguments)
             await self._create_hpa(
@@ -1103,36 +1112,6 @@ class K8SEndpointResourceDelegate:
                 service=service_template,
                 name=k8s_resource_group_name,
             )
-
-            # virtual_service_arguments = get_endpoint_resource_arguments_from_request(
-            #     k8s_resource_group_name=k8s_resource_group_name,
-            #     request=request,
-            #     sqs_queue_name=sqs_queue_name_str,
-            #     sqs_queue_url=sqs_queue_url_str,
-            #     endpoint_resource_name="virtual-service",
-            # )
-            # virtual_service_template = load_k8s_yaml(
-            #     "virtual-service.yaml", virtual_service_arguments
-            # )
-            # await self._create_virtual_service(
-            #     virtual_service=virtual_service_template,
-            #     name=k8s_resource_group_name,
-            # )
-
-            # destination_rule_arguments = get_endpoint_resource_arguments_from_request(
-            #     k8s_resource_group_name=k8s_resource_group_name,
-            #     request=request,
-            #     sqs_queue_name=sqs_queue_name_str,
-            #     sqs_queue_url=sqs_queue_url_str,
-            #     endpoint_resource_name="destination-rule",
-            # )
-            # destination_rule_template = load_k8s_yaml(
-            #     "destination-rule.yaml", destination_rule_arguments
-            # )
-            # await self._create_destination_rule(
-            #     destination_rule=destination_rule_template,
-            #     name=k8s_resource_group_name,
-            # )
 
     @staticmethod
     def _get_vertical_autoscaling_params(

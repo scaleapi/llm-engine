@@ -3354,62 +3354,6 @@ data:
           protocol: TCP
           name: http
           ${NODE_PORT_DICT}
-  virtual-service.yaml: |-
-    apiVersion: networking.istio.io/v1alpha3
-    kind: VirtualService
-    metadata:
-      name: ${RESOURCE_NAME}
-      namespace: ${NAMESPACE}
-      labels:
-        user_id: ${OWNER}
-        team: ${TEAM}
-        product: ${PRODUCT}
-        created_by: ${CREATED_BY}
-        owner: ${OWNER}
-        env: circleci
-        managed-by: llm-engine
-        use_scale_llm_engine_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
-        tags.datadoghq.com/version: 54f8f73bfb1cce62a2b42326ccf9f49b5b145126
-        tags.datadoghq.com/service: ${ENDPOINT_NAME}
-        endpoint_id: ${ENDPOINT_ID}
-        endpoint_name: ${ENDPOINT_NAME}
-    spec:
-      hosts:
-        - ${RESOURCE_NAME}.${DNS_HOST_DOMAIN}
-      gateways:
-        - default/internal-gateway
-      http:
-        - route:
-            - destination:
-                host: "${RESOURCE_NAME}.${NAMESPACE}.svc.cluster.local"
-                port:
-                  number: 80
-  destination-rule.yaml: |-
-    apiVersion: networking.istio.io/v1beta1
-    kind: DestinationRule
-    metadata:
-      name: ${RESOURCE_NAME}
-      namespace: ${NAMESPACE}
-      labels:
-        user_id: ${OWNER}
-        team: ${TEAM}
-        product: ${PRODUCT}
-        created_by: ${CREATED_BY}
-        owner: ${OWNER}
-        env: circleci
-        managed-by: llm-engine
-        use_scale_llm_engine_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
-        tags.datadoghq.com/version: 54f8f73bfb1cce62a2b42326ccf9f49b5b145126
-        tags.datadoghq.com/service: ${ENDPOINT_NAME}
-        endpoint_id: ${ENDPOINT_ID}
-        endpoint_name: ${ENDPOINT_NAME}
-    spec:
-      host: "${RESOURCE_NAME}.${NAMESPACE}.svc.cluster.local"
-      trafficPolicy:
-        loadBalancer:
-          simple: LEAST_REQUEST
   vertical-pod-autoscaler.yaml: |-
     apiVersion: "autoscaling.k8s.io/v1"
     kind: VerticalPodAutoscaler
