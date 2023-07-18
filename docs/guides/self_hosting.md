@@ -1,7 +1,7 @@
-# [Experimental] Self Hosting
+# Self Hosting _[Experimental]_
 **This guide is currently highly experimental. Instructions are subject to change as we improve support for self-hosting.**
 
-We provide a Helm chart that deploys LLM Engine to an [Elastic Kubernetes Cluster](https://aws.amazon.com/eks/). This Helm chart should be configured to connect to dependencies (such as a PostgreSQL database) that you may already have available in your environment.
+We provide a Helm chart that deploys LLM Engine to an [Elastic Kubernetes Cluster](https://aws.amazon.com/eks/) (EKS) in [AWS](https://aws.amazon.com/). This Helm chart should be configured to connect to dependencies (such as a PostgreSQL database) that you may already have available in your environment.
 
 The only portions of the Helm chart that are production ready are the parts that configure and manage LLM Server itself (not PostgreSQL, IAM, etc.)
 
@@ -74,7 +74,7 @@ The LLM Engine server will an IAM role to perform various AWS operations. This r
 | `sqs:ListQueues` | `*` |
 | `ecr:BatchGetImage`, `ecr:DescribeImages`, `ecr:GetDownloadUrlForLayer`, `ecr:ListImages` | `${ecr_repository_arn}` |
 
-# Helm Chart
+## Helm Chart
 Now that all dependencies have been installed and configured, we can run the provided Helm chart. The values in the Helm chart will need to correspond with the resources described in the Dependencies section. 
 
 Ensure that Helm V3 is installed [instructions](https://helm.sh/docs/intro/install/) and can connect to the EKS cluster. Users should be able to install the chart with `helm install llm-engine llm-engine -f llm-engine/values_sample.yaml -n <DESIRED_NAMESPACE>`.
