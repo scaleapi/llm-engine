@@ -1,4 +1,5 @@
-# Self Hosting
+# [Experimental] Self Hosting
+**This guide is currently experimental. Instructions are subject to change as we improve self-hosting capabilities.**
 
 We provide a Helm chart that deploys LLM Engine to an Elastic Kubernetes Cluster (https://aws.amazon.com/eks/). This Helm chart should be configured to connect to dependencies (such as a postgresql database) that you may already have available in your environment.
 
