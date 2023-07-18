@@ -41,6 +41,7 @@ nav:
       - "Completions": guides/completions.md
       - "Fine-tuning": guides/fine_tuning.md
       - "Rate limits": guides/rate_limits.md
+      - "Self Hosting": guides/self_hosting.md
   - "API":
       - "API Reference": api/python_client.md
       - "Data Type Reference": api/data_types.md
