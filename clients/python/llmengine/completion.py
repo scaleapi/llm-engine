@@ -36,7 +36,7 @@ class Completion(APIEngine):
         Creates a completion for the provided prompt and parameters asynchronously (with `asyncio`).
 
         This API can be used to get the LLM to generate a completion *asynchronously*.
-        It takes as parameters the `model` ([see Model Zoo](../../model_zoo)) and the `prompt`.
+        It takes as parameters the `model` ([see Model Zoo](../../../model_zoo)) and the `prompt`.
         Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
         It returns
         [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
@@ -46,7 +46,7 @@ class Completion(APIEngine):
 
         Args:
             model (str):
-                Name of the model to use. See [Model Zoo](../../model_zoo) for a list of Models that are supported.
+                Name of the model to use. See [Model Zoo](../../../model_zoo) for a list of Models that are supported.
             prompt (str):
                 The prompt to generate completions for, encoded as a string.
 
@@ -54,7 +54,7 @@ class Completion(APIEngine):
                 The maximum number of tokens to generate in the completion.
 
                 The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
-                [Model Zoo](../../model_zoo) for information on each supported model's context length.
+                [Model Zoo](../../../model_zoo) for information on each supported model's context length.
 
             temperature (float):
                 What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
@@ -187,7 +187,7 @@ class Completion(APIEngine):
         Creates a completion for the provided prompt and parameters synchronously.
 
         This API can be used to get the LLM to generate a completion *synchronously*.
-        It takes as parameters the `model` ([see Model Zoo](../../model_zoo)) and the `prompt`.
+        It takes as parameters the `model` ([see Model Zoo](../../../model_zoo)) and the `prompt`.
         Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
         It returns
         [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
@@ -197,7 +197,7 @@ class Completion(APIEngine):
 
         Args:
             model (str):
-                Name of the model to use. See [Model Zoo](../../model_zoo) for a list of Models that are supported.
+                Name of the model to use. See [Model Zoo](../../../model_zoo) for a list of Models that are supported.
 
             prompt (str):
                 The prompt to generate completions for, encoded as a string.
@@ -206,7 +206,7 @@ class Completion(APIEngine):
                 The maximum number of tokens to generate in the completion.
 
                 The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
-                [Model Zoo](../../model_zoo) for information on each supported model's context length.
+                [Model Zoo](../../../model_zoo) for information on each supported model's context length.
 
             temperature (float):
                 What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
