@@ -15,9 +15,9 @@
             - num_prompt_tokens
             - num_completion_tokens
 
-::: llmengine.CompletionSyncV1Response
+::: llmengine.CompletionSyncResponse
 
-::: llmengine.CompletionStreamV1Response
+::: llmengine.CompletionStreamResponse
 
 ::: llmengine.CreateFineTuneRequest
     selection:
