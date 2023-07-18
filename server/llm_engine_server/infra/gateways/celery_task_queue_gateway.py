@@ -55,7 +55,9 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
         expires: Optional[int] = None,
     ) -> CreateAsyncTaskV1Response:
         celery_dest = self._get_celery_dest()
-        logger.info(f"Sending task {task_name} with args {args} kwargs {kwargs} to queue {queue_name}")
+        logger.info(
+            f"Sending task {task_name} with args {args} kwargs {kwargs} to queue {queue_name}"
+        )
         res = celery_dest.send_task(
             name=task_name,
             args=args,

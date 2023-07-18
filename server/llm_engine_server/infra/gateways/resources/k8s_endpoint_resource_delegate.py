@@ -2,9 +2,10 @@ import os
 from string import Template
 from typing import Any, Dict, List, Optional, Tuple
 
-from kubernetes import client as kube_client_sync, config as kube_config_sync
 import kubernetes_asyncio
 import yaml
+from kubernetes import client as kube_client_sync
+from kubernetes import config as kube_config_sync
 from kubernetes_asyncio import config as kube_config_async
 from kubernetes_asyncio.client.models.v1_container import V1Container
 from kubernetes_asyncio.client.models.v1_deployment import V1Deployment
@@ -90,6 +91,7 @@ def set_lazy_load_kubernetes_clients(
     _lazy_load_kubernetes_clients = should_lazy_load
     return former
 
+
 def get_kubernetes_cluster_version():  # pragma: no cover
     if _lazy_load_kubernetes_clients:
         global _kubernetes_cluster_version
@@ -102,6 +104,7 @@ def get_kubernetes_cluster_version():  # pragma: no cover
         major_version = version_info.major
         _kubernetes_cluster_version = f"{major_version}.{minor_version}"
     return _kubernetes_cluster_version
+
 
 def get_kubernetes_apps_client():  # pragma: no cover
     if _lazy_load_kubernetes_clients:
@@ -1092,7 +1095,7 @@ class K8SEndpointResourceDelegate:
                 sqs_queue_name=sqs_queue_name_str,
                 sqs_queue_url=sqs_queue_url_str,
                 endpoint_resource_name="horizontal-pod-autoscaler",
-                api_version=api_version
+                api_version=api_version,
             )
             hpa_template = load_k8s_yaml("horizontal-pod-autoscaler.yaml", hpa_arguments)
             await self._create_hpa(
