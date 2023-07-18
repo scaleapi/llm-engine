@@ -117,11 +117,11 @@ Below are the configurations to specify in the `values_sample.yaml` file.
 | config.values.datadog_trace_enabled | Whether to enable datadog tracing, datadog must be installed in the cluster | No |
 
 ## Play With It
-Once `helm install` succeeds, you can forward port 5000 from a `llm-engine` pod and test sending requests to it.
+Once `helm install` succeeds, you can forward port `5000` from a `llm-engine` pod and test sending requests to it.
 
 First, see a list of pods in the namespace that you performed `helm install` in:
 ```
-$ kubectl get pods -n <NAMESPACE_YOU_INSTALL_LLM_ENGINE>
+$ kubectl get pods -n <NAMESPACE_WHERE_LLM_ENGINE_IS_INSTALLED>
 NAME                                           READY   STATUS             RESTARTS      AGE
 llm-engine-668679554-9q4wj                     1/1     Running            0             18m
 llm-engine-668679554-xfhxx                     1/1     Running            0             18m
@@ -133,7 +133,7 @@ Note the pod names you see may be different.
 
 Forward a port from a `llm-engine` pod:
 ```
-$ kubectl port-forward pod/llm-engine-<REST_OF_POD_NAME> 5000:5000 -n <NAMESPACE_YOU_INSTALL_LLM_ENGINE>
+$ kubectl port-forward pod/llm-engine-<REST_OF_POD_NAME> 5000:5000 -n <NAMESPACE_WHERE_LLM_ENGINE_IS_INSTALLED>
 ```
 
 Then, try sending a request to get LLM model endpoints for `test-user-id`. You should get a response with empty list:
