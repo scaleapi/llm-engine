@@ -48,12 +48,10 @@ An example Completion API response looks as follows:
     ```json
     {
       "request_id": "c4bf0732-08e0-48a8-8b44-dfe8d4702fb0",
-      "outputs": [
-        {
-          "text": "_______ and I am a _______",
-          "num_completion_tokens": 10
-        }
-      ]
+      "output": {
+        "text": "_______ and I am a _______",
+        "num_completion_tokens": 10
+      }
     }
     ```
 === "Response in python"
