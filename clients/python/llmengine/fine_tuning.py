@@ -43,6 +43,9 @@ class FineTune(APIEngine):
         fine-tuning. For sequences longer than the native `max_seq_length` of the model, the sequences
         will be truncated.
 
+        A fine-tuning job can take roughly 30 minutes for a small dataset (~200 rows)
+        and several hours for larger ones.
+
         Args:
             model (`str`):
                 The name of the base model to fine-tune. See [Model Zoo](../../model_zoo) for the list of available models to fine-tune.
@@ -64,11 +67,11 @@ class FineTune(APIEngine):
                 * `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
 
             suffix (`Optional[str]`):
-                A string that will be added to your fine-tuned model name. If present, the fine-tuned model name
-                will be formatted like "[model].[suffix].[YYYY-MM-DD-HH-MM-SS]". If absent, the
-                fine-tuned model name will be formatted like "[model].[YYYY-MM-DD-HH-MM-SS]".
-                For example, if `suffix` is "my-experiment", the fine-tuned model name could be
-                "llame-7b.my-experiment.2023-07-17-23-01-50".
+                A string that will be added to your fine-tuned model name. If present, the entire fine-tuned model name
+                will be formatted like `"[model].[suffix].[YYYY-MM-DD-HH-MM-SS]"`. If absent, the
+                fine-tuned model name will be formatted `"[model].[YYYY-MM-DD-HH-MM-SS]"`.
+                For example, if `suffix` is `"my-experiment"`, the fine-tuned model name could be
+                `"llama-7b.my-experiment.2023-07-17-23-01-50"`.
 
         Returns:
             CreateFineTuneResponse: an object that contains the ID of the created fine-tuning job
@@ -76,7 +79,7 @@ class FineTune(APIEngine):
         Here is an example script to create a 5-row CSV of properly formatted data for fine-tuning
         an airline question answering bot:
 
-        === "Formatting data in python"
+        === "Formatting data in Python"
         ```python
         import csv
 
@@ -106,7 +109,7 @@ class FineTune(APIEngine):
         ([URL](https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv)).
 
         Example code for fine-tuning:
-        === "Fine-tuning in python"
+        === "Fine-tuning in Python"
             ```python
             from llmengine import FineTune
 
@@ -118,7 +121,7 @@ class FineTune(APIEngine):
             print(response.json())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {
                 "fine_tune_id": "ft-cir3eevt71r003ks6il0"
@@ -162,7 +165,7 @@ class FineTune(APIEngine):
         Returns:
             GetFineTuneResponse: an object that contains the ID and status of the requested job
 
-        === "Getting status of fine-tuning in python"
+        === "Getting status of fine-tuning in Python"
             ```python
             from llmengine import FineTune
 
@@ -173,7 +176,7 @@ class FineTune(APIEngine):
             print(response.json())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {
                 "fine_tune_id": "ft-cir3eevt71r003ks6il0",
@@ -196,7 +199,7 @@ class FineTune(APIEngine):
         Returns:
             ListFineTunesResponse: an object that contains a list of all fine-tuning jobs and their statuses
 
-        === "Listing fine-tuning jobs in python"
+        === "Listing fine-tuning jobs in Python"
             ```python
             from llmengine import FineTune
 
@@ -204,7 +207,7 @@ class FineTune(APIEngine):
             print(response.json())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {
                 "jobs": [
@@ -240,7 +243,7 @@ class FineTune(APIEngine):
         Returns:
             CancelFineTuneResponse: an object that contains whether the cancellation was successful
 
-        === "Cancelling fine-tuning job in python"
+        === "Cancelling fine-tuning job in Python"
             ```python
             from llmengine import FineTune
 
@@ -248,7 +251,7 @@ class FineTune(APIEngine):
             print(response.json())
             ```
 
-        === "Response in json"
+        === "Response in JSON"
             ```json
             {
                 "success": true
@@ -269,7 +272,9 @@ class FineTune(APIEngine):
 
         This API can be used to get the list of detailed events for a fine-tuning job.
         It takes as parameter the `fine_tune_id` and returns a response object
-        which has a list of events that has happened for the fine-tuning job.
+        which has a list of events that has happened for the fine-tuning job. Two events
+        are logged periodically: an evaluation of the training loss, and an
+        evaluation of the eval loss. This API will return all events for the fine-tuning job.
 
         Args:
             fine_tune_id (`str`):
@@ -289,18 +294,27 @@ class FineTune(APIEngine):
         JSON Response:
             ```json
             {
+                "events":
                 [
                     {
-                        "timestamp": 1689644480.0,
-                        "message": "Fine-tune job created",
-                        "level": "INFO"
-                    }
-                ],
-                [
+                        "timestamp": 1689665099.6704428,
+                        "message": "{'loss': 2.108, 'learning_rate': 0.002, 'epoch': 0.7}",
+                        "level": "info"
+                    },
                     {
-                        "timestamp": 1689645480.0,
-                        "message": "Fine-tune job finished",
-                        "level": "INFO"
+                        "timestamp": 1689665100.1966307,
+                        "message": "{'eval_loss': 1.67730712890625, 'eval_runtime': 0.2023, 'eval_samples_per_second': 24.717, 'eval_steps_per_second': 4.943, 'epoch': 0.7}",
+                        "level": "info"
+                    },
+                    {
+                        "timestamp": 1689665105.6544185,
+                        "message": "{'loss': 1.8961, 'learning_rate': 0.0017071067811865474, 'epoch': 1.39}",
+                        "level": "info"
+                    },
+                    {
+                        "timestamp": 1689665106.159139,
+                        "message": "{'eval_loss': 1.513688564300537, 'eval_runtime': 0.2025, 'eval_samples_per_second': 24.696, 'eval_steps_per_second': 4.939, 'epoch': 1.39}",
+                        "level": "info"
                     }
                 ]
             }
