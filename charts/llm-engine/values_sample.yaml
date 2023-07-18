@@ -1,7 +1,7 @@
 # This is a YAML-formatted file.
 
 # tag [required] is the LLM Engine docker image tag
-tag: b28b10d42e7490714f0c26635695d8f078420120
+tag: 1defd4f9c5376149e27673e154731a0c7820fe5d
 # context is a user-specified deployment tag. Can be used to 
 context: production
 image:
@@ -18,13 +18,13 @@ image:
 
 secrets:
   # kubernetesDatabaseSecretName [required] is the name of the secret that contains the database credentials
-  kubernetesDatabaseSecretName: ml-infra-pg
+  kubernetesDatabaseSecretName: llm-engine-postgres-credentials
 
 # serviceAccount [required] specifies the service account for LLM Engine server deployments (e.g gateway, cache, and builder deployments).
 serviceAccount:
   annotations:
     # eks.amazonaws.com/role-arn [required] is the ARN of the IAM role that the service account will assume
-    eks.amazonaws.com/role-arn: arn:aws:iam::985572151633:role/k8s-main-llm-engine
+    eks.amazonaws.com/role-arn: arn:aws:iam::000000000000:role/k8s-main-llm-engine
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-2"
   namespaces: []
@@ -96,24 +96,24 @@ config:
       # k8s_cluster_name [required] is the name of the k8s cluster
       k8s_cluster_name: main_cluster
       # dns_host_domain [required] is the domain name of the k8s cluster
-      dns_host_domain: egp-test.scale.com
+      dns_host_domain: llm-engine.scale.com
       # default_region [required] is the default AWS region for various resources (e.g ECR)
       default_region: us-east-1
       # aws_account_id [required] is the AWS account ID for various resources (e.g ECR)
-      ml_account_id: "692474966980"
+      ml_account_id: "000000000000"
       # docker_repo_prefix [required] is the prefix for AWS ECR repositories
-      docker_repo_prefix: "692474966980.dkr.ecr.us-east-1.amazonaws.com"
+      docker_repo_prefix: "000000000000.dkr.ecr.us-east-1.amazonaws.com"
       # redis_host [required] is the hostname of the redis cluster you wish to connect
-      redis_host: spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com
+      redis_host: llm-engine-prod-cache.use1.cache.amazonaws.com
       # s3_bucket [required] is the S3 bucket you wish to connect 
-      s3_bucket: "scale-ml-egp-test"
+      s3_bucket: "llm-engine"
     llm_engine:
       # endpoint_namespace [required] is K8s namespace the endpoints will be created in
       endpoint_namespace: llm-engine
       # cache_redis_url [required] is the full url for the redis cluster you wish to connect
-      cache_redis_url: redis://spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com:6379/15
+      cache_redis_url: redis://llm-engine-prod-cache.use1.cache.amazonaws.com:6379/15
       # s3_file_llm_fine_tuning_job_repository [required] is the S3 URI for the S3 bucket/key that you wish to save fine-tuned assests
-      s3_file_llm_fine_tuning_job_repository: "s3://scale-ml/hosted-model-inference/llm-ft-job-repository/circleci"
+      s3_file_llm_fine_tuning_job_repository: "s3://llm-engine/llm-ft-job-repository"
       # datadog_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
       datadog_trace_enabled: false
 
@@ -129,18 +129,18 @@ config:
               "Sid": "__owner_statement",
               "Effect": "Allow",
               "Principal": {
-                "AWS": "arn:aws:iam::985572151633:root"
+                "AWS": "arn:aws:iam::000000000000:root"
               },
               "Action": "sqs:*",
-              "Resource": "arn:aws:sqs:us-east-1:985572151633:${queue_name}"
+              "Resource": "arn:aws:sqs:us-east-1:000000000000:${queue_name}"
             },
             {
               "Effect": "Allow",
               "Principal": {
-                "AWS": "arn:aws:iam::985572151633:role/k8s-main-llm-engine"
+                "AWS": "arn:aws:iam::000000000000:role/k8s-main-llm-engine"
               },
               "Action": "sqs:*",
-              "Resource": "arn:aws:sqs:us-east-1:985572151633:${queue_name}"
+              "Resource": "arn:aws:sqs:us-east-1:000000000000:${queue_name}"
             }
           ]
         }
@@ -155,7 +155,7 @@ config:
 # Triton enhanced endpoints (coming soon)
 triton:
   image:
-    repository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv
+    repository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv
     tag: e83eccbc8959f90ebbe4bda618b61ec6ee2d8394-triton
 
 # imageCache specifies the image cache configuration for faster endpoint auto-scaling (coming soon)

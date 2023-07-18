@@ -97,7 +97,7 @@ def get_kubernetes_cluster_version():  # pragma: no cover
         _kubernetes_cluster_version = None
     if not _kubernetes_cluster_version:
         version_info = kube_client_sync.VersionApi().get_code()
-        # kuberentes will use `+` instead of specifying a patch version. This confuses version comparisons so we remove it.
+        # kubernetes will use `+` instead of specifying a patch version. This confuses version comparisons so we remove it.
         minor_version = version_info.minor.replace("+", "")
         major_version = version_info.major
         _kubernetes_cluster_version = f"{major_version}.{minor_version}"
