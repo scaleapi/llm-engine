@@ -26,7 +26,7 @@ Kubernetes.
 ### Key Features
 
 🎁 **Ready-to-use APIs for your favorite models**: Deploy and serve
-open-source foundation models— including LLaMA, MPT and Falcon.
+open-source foundation models — including LLaMA, MPT and Falcon.
 Use Scale-hosted models or deploy to your own infrastructure.
 
 🔧 **Fine-tune foundation models**: Fine-tune open-source foundation
