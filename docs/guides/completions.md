@@ -1,10 +1,10 @@
-Language Models are trained to understand natural language and provide text outputs as a response 
+Language Models are trained to predict natural language and provide text outputs as a response 
 to their inputs. The inputs are called _prompts_ and outputs are referred to as _completions_. 
 LLMs take the input _prompts_ and chunk them into smaller units called _tokens_ to process and 
 generate language. Tokens may include trailing spaces and even sub-words. This process is 
 language dependent.
 
-Scale LLM Engine provides access to open source language models (see [Model Zoo](../../model_zoo)) 
+Scale's LLM Engine provides access to open source language models (see [Model Zoo](../../model_zoo)) 
 that can be used for producing completions to prompts.
 
 ## Completion API call
@@ -34,13 +34,13 @@ print(response.output.text)
 - **temperature:** The sampling temperature to use. Higher values make the output more random, 
 while lower values will make it more focused and deterministic.  
 
-See the full [API reference documentation](../../api/python_client/#llmengine.Completion) to learn more.
+See the full [Completion API reference documentation](../../api/python_client/#llmengine.Completion) to learn more.
 
 ## Completion API response
 
 An example Completion API response looks as follows:
 
-=== "Response in json"
+=== "Response in JSON"
     ```python
     >>> print(response.json())
     ```
@@ -54,12 +54,12 @@ An example Completion API response looks as follows:
       }
     }
     ```
-=== "Response in python"
+=== "Response in Python"
     ```python
     >>> print(response.output.text)
     ```
     Example output:
-    ```python
+    ```
     _______ and I am a _______
     ```
 
@@ -69,9 +69,9 @@ The Completions API supports token streaming to reduce _perceived_ latency for c
 applications. When streaming, tokens will be sent as data-only 
 [server-side events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
 
-To enable token streaming, pass `stream=True` to either `Completion.create` or `Completion.acreate`.
+To enable token streaming, pass `stream=True` to either [Completion.create](../../api/python_client/#llmengine.completion.Completion.create) or [Completion.acreate](../../api/python_client/#llmengine.completion.Completion.acreate).
 
-An example of token streaming using the synchronous Completions API looks as follows
+An example of token streaming using the synchronous Completions API looks as follows:
 
 === "Token streaming with synchronous API in python"
 ```python
@@ -95,10 +95,10 @@ for response in stream:
 
 ## Async requests
 
-The Python client supports `asyncio` for creating Completions. Use `Completion.acreate` instead of `Completion.create`
+The Python client supports `asyncio` for creating Completions. Use [Completion.acreate](../../api/python_client/#llmengine.completion.Completion.acreate) instead of [Completion.create](../../api/python_client/#llmengine.completion.Completion.create)
 to utilize async processing. The function signatures are otherwise identical.
 
-An example of async Completions looks as follows
+An example of async Completions looks as follows:
 
 === "Completions with asynchronous API in python"
 ```python
