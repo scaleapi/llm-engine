@@ -41,7 +41,7 @@ class Model(APIEngine):
             ```python
             from llmengine import Model
 
-            response = Model.get("llama-7b.suffix.2023-07-18-12-00-00")
+            response = Model.get("llama-2-7b.suffix.2023-07-18-12-00-00")
 
             print(response.json())
             ```
@@ -50,7 +50,7 @@ class Model(APIEngine):
             ```json
             {
                 "id": null,
-                "name": "llama-7b.suffix.2023-07-18-12-00-00",
+                "name": "llama-2-7b.suffix.2023-07-18-12-00-00",
                 "model_name": null,
                 "source": "hugging_face",
                 "inference_framework": "text_generation_inference",
@@ -92,7 +92,7 @@ class Model(APIEngine):
                 "model_endpoints": [
                     {
                         "id": null,
-                        "name": "llama-7b.suffix.2023-07-18-12-00-00",
+                        "name": "llama-2-7b.suffix.2023-07-18-12-00-00",
                         "model_name": null,
                         "source": "hugging_face",
                         "inference_framework": "text_generation_inference",
@@ -103,7 +103,7 @@ class Model(APIEngine):
                     },
                     {
                         "id": null,
-                        "name": "llama-7b",
+                        "name": "llama-2-7b",
                         "model_name": null,
                         "source": "hugging_face",
                         "inference_framework": "text_generation_inference",
@@ -163,7 +163,7 @@ class Model(APIEngine):
             ```python
             from llmengine import Model
 
-            response = Model.delete("llama-7b.suffix.2023-07-18-12-00-00")
+            response = Model.delete("llama-2-7b.suffix.2023-07-18-12-00-00")
             print(response.json())
             ```
 

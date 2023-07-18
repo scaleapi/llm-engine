@@ -71,7 +71,7 @@ class FineTune(APIEngine):
                 will be formatted like `"[model].[suffix].[YYYY-MM-DD-HH-MM-SS]"`. If absent, the
                 fine-tuned model name will be formatted `"[model].[YYYY-MM-DD-HH-MM-SS]"`.
                 For example, if `suffix` is `"my-experiment"`, the fine-tuned model name could be
-                `"llama-7b.my-experiment.2023-07-17-23-01-50"`.
+                `"llama-2-7b.my-experiment.2023-07-17-23-01-50"`.
 
         Returns:
             CreateFineTuneResponse: an object that contains the ID of the created fine-tuning job
@@ -114,7 +114,7 @@ class FineTune(APIEngine):
             from llmengine import FineTune
 
             response = FineTune.create(
-                model="llama-7b",
+                model="llama-2-7b",
                 training_file="https://my-bucket.s3.us-west-2.amazonaws.com/path/to/training-file.csv",
             )
 
