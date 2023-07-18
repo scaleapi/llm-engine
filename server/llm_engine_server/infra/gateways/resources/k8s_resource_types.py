@@ -482,7 +482,7 @@ def get_endpoint_resource_arguments_from_request(
     sqs_queue_name: str,
     sqs_queue_url: str,
     endpoint_resource_name: str,
-    api_version: Optional[str] = None,
+    api_version: str = "",
 ) -> EndpointResourceArguments:
     """Get the arguments for the endpoint resource templates from the request.
 
