@@ -46,7 +46,9 @@
     
       <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="../../custom/css/extra.css">
+      <link rel="stylesheet" href="../../assets/css/extra.css">
+    
+      <link rel="stylesheet" href="../../assets/css/neoteroi.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -77,7 +79,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
   
     
     
@@ -136,7 +138,7 @@
             
             
             
-            <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+            <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
             
               <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
@@ -629,21 +631,20 @@ and handled by the user accordingly.</p>
 
 
 <h2 id="llmengine.errors.BadRequestError" class="doc doc-heading">
-        <span class="doc doc-object-name doc-class-name">BadRequestError</span>
+          <span class="doc doc-object-name doc-class-name">BadRequestError</span>
 
 
 <a href="#llmengine.errors.BadRequestError" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #f8f8f2">BadRequestError(message:</span> <span style="color: #f8f8f2">str)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">BadRequestError</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code>Exception</code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code>Exception</code></p>
 
   
       <p>Corresponds to HTTP 400. Indicates that the request had inputs that were invalid. The user should not
 attempt to retry the request without changing the inputs.</p>
-
 
 
   
@@ -671,20 +672,19 @@ attempt to retry the request without changing the inputs.</p>
 
 
 <h2 id="llmengine.errors.UnauthorizedError" class="doc doc-heading">
-        <span class="doc doc-object-name doc-class-name">UnauthorizedError</span>
+          <span class="doc doc-object-name doc-class-name">UnauthorizedError</span>
 
 
 <a href="#llmengine.errors.UnauthorizedError" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #f8f8f2">UnauthorizedError(message:</span> <span style="color: #f8f8f2">str)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code>Exception</code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code>Exception</code></p>
 
   
       <p>Corresponds to HTTP 401. This means that no valid API key was provided.</p>
-
 
 
   
@@ -712,23 +712,22 @@ attempt to retry the request without changing the inputs.</p>
 
 
 <h2 id="llmengine.errors.NotFoundError" class="doc doc-heading">
-        <span class="doc doc-object-name doc-class-name">NotFoundError</span>
+          <span class="doc doc-object-name doc-class-name">NotFoundError</span>
 
 
 <a href="#llmengine.errors.NotFoundError" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #f8f8f2">NotFoundError(message:</span> <span style="color: #f8f8f2">str)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">NotFoundError</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code>Exception</code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code>Exception</code></p>
 
   
       <p>Corresponds to HTTP 404. This means that the resource (e.g. a Model, FineTune, etc.) could not be found.
 Note that this can also be returned in some cases where the object might exist, but the user does not have access
 to the object. This is done to avoid leaking information about the existence or nonexistence of said object that
 the user does not have access to.</p>
-
 
 
   
@@ -756,20 +755,19 @@ the user does not have access to.</p>
 
 
 <h2 id="llmengine.errors.RateLimitExceededError" class="doc doc-heading">
-        <span class="doc doc-object-name doc-class-name">RateLimitExceededError</span>
+          <span class="doc doc-object-name doc-class-name">RateLimitExceededError</span>
 
 
 <a href="#llmengine.errors.RateLimitExceededError" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #f8f8f2">RateLimitExceededError(message:</span> <span style="color: #f8f8f2">str)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">RateLimitExceededError</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code>Exception</code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code>Exception</code></p>
 
   
       <p>Corresponds to HTTP 429. Too many requests hit the API too quickly. We recommend an exponential backoff for retries.</p>
-
 
 
   
@@ -797,20 +795,19 @@ the user does not have access to.</p>
 
 
 <h2 id="llmengine.errors.ServerError" class="doc doc-heading">
-        <span class="doc doc-object-name doc-class-name">ServerError</span>
+          <span class="doc doc-object-name doc-class-name">ServerError</span>
 
 
 <a href="#llmengine.errors.ServerError" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #f8f8f2">ServerError(status_code:</span> <span style="color: #f8f8f2">int,</span> <span style="color: #f8f8f2">message:</span> <span style="color: #f8f8f2">str)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">ServerError</span><span class="p">(</span><span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code>Exception</code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code>Exception</code></p>
 
   
       <p>Corresponds to HTTP 5xx errors on the server.</p>
-
 
 
   
