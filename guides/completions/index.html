@@ -601,8 +601,13 @@
 
   <h1>Completions</h1>
 
-<p>Language Models are trained to understand natural language and provide text outputs as a response to their inputs. The inputs are called <em>prompts</em> and outputs are referred to as <em>completions</em>. LLMs take the input <em>prompts</em> and chunk them smaller units called <em>tokens</em> to process and generate language. Tokens may include trailing spaces and even sub-words, this process is language dependent.</p>
-<p>Scale LLM Engine provides access to open source language models (see <a href="../../model_zoo">Model Zoo</a>) that can be used for producing completions to prompts.</p>
+<p>Language Models are trained to understand natural language and provide text outputs as a response 
+to their inputs. The inputs are called <em>prompts</em> and outputs are referred to as <em>completions</em>. 
+LLMs take the input <em>prompts</em> and chunk them into smaller units called <em>tokens</em> to process and 
+generate language. Tokens may include trailing spaces and even sub-words. This process is 
+language dependent.</p>
+<p>Scale LLM Engine provides access to open source language models (see <a href="../../model_zoo">Model Zoo</a>) 
+that can be used for producing completions to prompts.</p>
 <h2 id="completion-api-call">Completion API call<a class="headerlink" href="#completion-api-call" title="Permanent link">&para;</a></h2>
 <p>An example API call looks as follows:</p>
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
@@ -613,37 +618,53 @@
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    max_new_tokens<span style="color: #666666">=10</span>,
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    temperature<span style="color: #666666">=0.2</span>,
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span style="color: #3D7B7B; font-style: italic"># &#39;{&quot;request_id&quot;: &quot;c4bf0732-08e0-48a8-8b44-dfe8d4702fb0&quot;, &quot;output&quot;: {&quot;text&quot;: &quot;________ and I am a ________&quot;, &quot;num_completion_tokens&quot;: 10}}&#39;</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>output<span style="color: #666666">.</span>text)
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span style="color: #3D7B7B; font-style: italic"># ________ and I am a ________</span>
 </code></pre></div>
-<p>The <em>model_name</em> is the LLM to be used (see <a href="../../model_zoo">Model Zoo</a>).
-The <em>prompt</em> is the main input for the LLM to respond to.
-The <em>max_new_tokens</em> parameter is the maximum number of tokens to generate in the chat completion.
-The <em>temperature</em> is the sampling temperature to use. Higher values make the output more random, while lower values will make it more focussed and deterministic.</p>
+<ul>
+<li><strong>model:</strong> The LLM you want to use (see <a href="../../model_zoo">Model Zoo</a>).  </li>
+<li><strong>prompt:</strong> The main input for the LLM to respond to.  </li>
+<li><strong>max_new_tokens:</strong> The maximum number of tokens to generate in the chat completion.  </li>
+<li><strong>temperature:</strong> The sampling temperature to use. Higher values make the output more random, 
+while lower values will make it more focused and deterministic.  </li>
+</ul>
 <p>See the full <a href="../../api/python_client/#llmengine.Completion">API reference documentation</a> to learn more.</p>
 <h2 id="completion-api-response">Completion API response<a class="headerlink" href="#completion-api-response" title="Permanent link">&para;</a></h2>
 <p>An example Completion API response looks as follows:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Response in json</label><label for="__tabbed_1_2">Response in python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">  </span><span style="color: #008000; font-weight: bold">&quot;outputs&quot;</span>:<span style="color: #bbbbbb"> </span>[
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span style="color: #bbbbbb">    </span>{
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #bbbbbb">      </span><span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;_______ and I am a _______&quot;</span>,
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span style="color: #bbbbbb">      </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">10</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span style="color: #bbbbbb">    </span>}
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span style="color: #bbbbbb">  </span>]
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>}
+<p><div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #666666">&gt;&gt;&gt;</span> <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
+Example output:
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>{
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span style="color: #bbbbbb">  </span><span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;c4bf0732-08e0-48a8-8b44-dfe8d4702fb0&quot;</span>,
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span style="color: #bbbbbb">  </span><span style="color: #008000; font-weight: bold">&quot;outputs&quot;</span>:<span style="color: #bbbbbb"> </span>[
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span style="color: #bbbbbb">    </span>{
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span style="color: #bbbbbb">      </span><span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;_______ and I am a _______&quot;</span>,
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span style="color: #bbbbbb">      </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">10</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span style="color: #bbbbbb">    </span>}
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span style="color: #bbbbbb">  </span>]
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>}
+</code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #666666">&gt;&gt;&gt;</span> <span style="color: #008000">print</span>( response<span style="color: #666666">.</span>outputs[<span style="color: #666666">0</span>]<span style="color: #666666">.</span>text )
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>________<span style="color: #666666">.</span> Hello, my name <span style="color: #AA22FF; font-weight: bold">is</span> _
+<p><div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span style="color: #666666">&gt;&gt;&gt;</span> <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>output<span style="color: #666666">.</span>text)
 </code></pre></div>
+Example output:
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>_______ <span style="color: #AA22FF; font-weight: bold">and</span> I am a _______
+</code></pre></div></p>
 </div>
 </div>
 </div>
 <h2 id="token-streaming">Token streaming<a class="headerlink" href="#token-streaming" title="Permanent link">&para;</a></h2>
-<p>The Completions API support token streaming to reduce <em>perceived</em> latency for certain applications. When streaming,
-tokens will be sent as data-only <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-side events</a>.</p>
+<p>The Completions API supports token streaming to reduce <em>perceived</em> latency for certain 
+applications. When streaming, tokens will be sent as data-only 
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-side events</a>.</p>
 <p>To enable token streaming, pass <code>stream=True</code> to either <code>Completion.create</code> or <code>Completion.acreate</code>.</p>
 <p>An example of token streaming using the synchronous Completions API looks as follows</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Token streaming with synchronous API in python</label></div>
@@ -651,19 +672,22 @@ tokens will be sent as data-only <a href="https://developer.mozilla.org/en-US/do
 <div class="tabbed-block"></div>
 </div>
 </div>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>stream <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b&quot;</span>,
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;why is the sky blue?&quot;</span>,
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    max_new_tokens<span style="color: #666666">=5</span>,
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    temperature<span style="color: #666666">=0.2</span>,
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    stream<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">True</span>,
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>)
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span style="color: #008000; font-weight: bold">for</span> response <span style="color: #AA22FF; font-weight: bold">in</span> stream:
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span style="color: #008000; font-weight: bold">if</span> response<span style="color: #666666">.</span>output:
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>        <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">sys</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>stream <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;falcon-7b-instruct&quot;</span>,
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Give me a 200 word summary on the current economic events in the US.&quot;</span>,
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    max_new_tokens<span style="color: #666666">=1000</span>,
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    stream<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">True</span>,
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>)
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span style="color: #008000; font-weight: bold">for</span> response <span style="color: #AA22FF; font-weight: bold">in</span> stream:
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    <span style="color: #008000; font-weight: bold">if</span> response<span style="color: #666666">.</span>output:
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>        <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>output<span style="color: #666666">.</span>text, end<span style="color: #666666">=</span><span style="color: #BA2121">&quot;&quot;</span>)
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>        sys<span style="color: #666666">.</span>stdout<span style="color: #666666">.</span>flush()
 </code></pre></div>
 <h2 id="async-requests">Async requests<a class="headerlink" href="#async-requests" title="Permanent link">&para;</a></h2>
 <p>The Python client supports <code>asyncio</code> for creating Completions. Use <code>Completion.acreate</code> instead of <code>Completion.create</code>
@@ -674,19 +698,19 @@ to utilize async processing. The function signatures are otherwise identical.</p
 <div class="tabbed-block"></div>
 </div>
 </div>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">asyncio</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span style="color: #008000; font-weight: bold">async</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">main</span>():
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    response <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">await</span> Completion<span style="color: #666666">.</span>acreate(
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b&quot;</span>,
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        max_new_tokens<span style="color: #666666">=10</span>,
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        temperature<span style="color: #666666">=0.2</span>,
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    )
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>asyncio<span style="color: #666666">.</span>run(main())
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">asyncio</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span style="color: #008000; font-weight: bold">async</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">main</span>():
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    response <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">await</span> Completion<span style="color: #666666">.</span>acreate(
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-7b&quot;</span>,
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>        prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>        max_new_tokens<span style="color: #666666">=10</span>,
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    )
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>asyncio<span style="color: #666666">.</span>run(main())
 </code></pre></div>
 <h2 id="which-model-should-i-use">Which model should I use?<a class="headerlink" href="#which-model-should-i-use" title="Permanent link">&para;</a></h2>
 <p>See the <a href="../../model_zoo">Model Zoo</a> for more information on best practices for which model to use for Completions.</p>

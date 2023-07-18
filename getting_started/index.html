@@ -644,16 +644,15 @@
 
 
 <h1 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
-<p>The fastest way to get started with LLM Engine is to use the python client in this repository to run inference and fine-tuning on Scale's infrastructure. This path does not require you to install anything on your infrastructure, and Scale's free tier gives you access to experimentation using open source LLMs.</p>
-<p>To start with, install LLM Engine via pip or conda:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">pip</label><label for="__tabbed_1_2">conda</label></div>
+<p>The fastest way to get started with LLM Engine is to use the Python client in this repository to 
+run inference and fine-tuning on Scale's infrastructure. This path does not require you to install 
+anything on your infrastructure, and Scale's free tier gives you access to experimentation using 
+open source LLMs.</p>
+<p>To start, install LLM Engine via pip:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">pip</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip install scale-llm-engine
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>conda install scale-llm-engine -c conda-forge
 </code></pre></div>
 </div>
 </div>
@@ -670,39 +669,40 @@ you will get an API key on the <a href="https://spellbook.scale.com/settings">se
 <h3 id="set-your-api-key">Set your API Key<a class="headerlink" href="#set-your-api-key" title="Permanent link">&para;</a></h3>
 <p>LLM Engine uses environment variables to access your API key.</p>
 <p>Set this API key as the <code>SCALE_API_KEY</code> environment variable by running the following command in your terminal before you run your python application.</p>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>export SCALE_API_KEY=&quot;[Your API key]&quot;
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>export SCALE_API_KEY=&quot;[Your API key]&quot;
 </code></pre></div>
 <p>You can also add in the line above to your <code>.zshrc</code> or <code>.bash_profile</code> so it's automatically set for future sessions.</p>
 <h2 id="example-code">Example Code<a class="headerlink" href="#example-code" title="Permanent link">&para;</a></h2>
 <h3 id="sample-completion">Sample Completion<a class="headerlink" href="#sample-completion" title="Permanent link">&para;</a></h3>
 <p>With your API key set, you can now send LLM Engine requests using the Python client:</p>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;falcon-7b-instruct&quot;</span>,
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;I&#39;m opening a pancake restaurant that specializes in unique pancake shapes, colors, and flavors. List 3 quirky names I could name my restaurant.&quot;</span>,
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    max_new_tokens<span style="color: #666666">=100</span>,
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    temperature<span style="color: #666666">=0.2</span>,
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>)
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>outputs[<span style="color: #666666">0</span>]<span style="color: #666666">.</span>text)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;falcon-7b-instruct&quot;</span>,
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;I&#39;m opening a pancake restaurant that specializes in unique pancake shapes, colors, and flavors. List 3 quirky names I could name my restaurant.&quot;</span>,
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    max_new_tokens<span style="color: #666666">=100</span>,
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>)
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>output<span style="color: #666666">.</span>text)
 </code></pre></div>
 <h3 id="with-streaming">With Streaming<a class="headerlink" href="#with-streaming" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">sys</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>stream <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;falcon-7b-instruct&quot;</span>,
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Give me a 200 word summary on the current economic events in the US.&quot;</span>,
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    max_new_tokens<span style="color: #666666">=1000</span>,
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    temperature<span style="color: #666666">=0.2</span>,
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    stream<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">True</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>)
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span style="color: #008000; font-weight: bold">for</span> response <span style="color: #AA22FF; font-weight: bold">in</span> stream:
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span style="color: #008000; font-weight: bold">if</span> response<span style="color: #666666">.</span>output:
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>output<span style="color: #666666">.</span>text, end<span style="color: #666666">=</span><span style="color: #BA2121">&quot;&quot;</span>)
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        sys<span style="color: #666666">.</span>stdout<span style="color: #666666">.</span>flush()
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">sys</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>stream <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;falcon-7b-instruct&quot;</span>,
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Give me a 200 word summary on the current economic events in the US.&quot;</span>,
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    max_new_tokens<span style="color: #666666">=1000</span>,
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    stream<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">True</span>,
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>)
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span style="color: #008000; font-weight: bold">for</span> response <span style="color: #AA22FF; font-weight: bold">in</span> stream:
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span style="color: #008000; font-weight: bold">if</span> response<span style="color: #666666">.</span>output:
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>output<span style="color: #666666">.</span>text, end<span style="color: #666666">=</span><span style="color: #BA2121">&quot;&quot;</span>)
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>        sys<span style="color: #666666">.</span>stdout<span style="color: #666666">.</span>flush()
 </code></pre></div>
 
 
