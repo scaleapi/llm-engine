@@ -135,7 +135,7 @@ class Completion(APIEngine):
             {"request_id": "0123456789", "output": {"text": " the", "finished": false, "num_completion_tokens": 4}}
             {"request_id": "0123456789", "output": {"text": " sky", "finished": true, "num_completion_tokens": 5}}
             ```
-      """
+        """
         if stream:
 
             async def _acreate_stream(
