@@ -104,10 +104,7 @@ with open('customer_service_data.csv', 'w', newline='') as file:
 Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read for fine-tuning. Publicly accessible HTTP, HTTPS, and S3 URLs are currently supported. Support for privately sharing data with the LLM Engine API is coming shortly. For quick iteration, you can look into tools like Pastebin or Github Gists to quickly host your CSV files in a public manner. We created an example Github Gist you can see [here](https://gist.github.com/tigss/7cec73251a37de72756a3b15eace9965). To use the gist, you can just use the URL given when you click the “Raw” button ([URL](https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv)).
 
 ## Launching the fine-tune
-Once you have uploaded your data, you can use the LLM Engine API to launch a fine-tune. You will 
-need to specify which base model to fine-tune, the locations of the training file and optional 
-validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, 
-and an optional suffix to append to the name of the fine-tune. For sequences longer than the native 
+Once you have uploaded your data, you can use the LLM Engine's [FineTune.Create](../../api/python_client/#llmengine.fine_tuning.FineTune.create) API to launch a fine-tune. You will need to specify which base model to fine-tune, the locations of the training file and optional validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, and an optional suffix to append to the name of the fine-tune. For sequences longer than the native 
 `max_seq_length` of the model, the sequences will be truncated.
 
 If you specify a suffix, the fine-tune will be named `model:suffix:<timestamp>`. If you do not, 
