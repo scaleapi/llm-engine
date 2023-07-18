@@ -1,6 +1,6 @@
 # ⚡ LLM Engine ⚡
 
-**The open source engine for fine-tuning large language models**. 
+**The open source engine for fine-tuning and serving large language models**. 
 
 Scale's LLM Engine is the easiest way to customize and serve LLMs. In LLM Engine, models can be accessed via Scale's hosted version or by using the Helm charts in this repository to run model inference and fine-tuning in your own infrastructure.
 
