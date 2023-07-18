@@ -86,7 +86,7 @@ stream = Completion.create(
     prompt="Give me a 200 word summary on the current economic events in the US.",
     max_new_tokens=1000,
     temperature=0.2,
-    stream=True
+    stream=True,
 )
 
 for response in stream:

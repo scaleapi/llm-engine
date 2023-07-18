@@ -5,7 +5,7 @@ run inference and fine-tuning on Scale's infrastructure. This path does not requ
 anything on your infrastructure, and Scale's free tier gives you access to experimentation using 
 open source LLMs.
 
-To start with, install LLM Engine via pip:
+To start, install LLM Engine via pip:
 
 === "pip"
     ```commandline
@@ -71,7 +71,7 @@ stream = Completion.create(
     prompt="Give me a 200 word summary on the current economic events in the US.",
     max_new_tokens=1000,
     temperature=0.2,
-    stream=True
+    stream=True,
 )
 
 for response in stream:
