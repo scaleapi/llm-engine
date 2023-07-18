@@ -112,10 +112,7 @@ you can use the URL given when you click the “Raw” button
 
 
 ## Launching the fine-tune
-Once you have uploaded your data, you can use the LLM Engine API to launch a fine-tune. You will 
-need to specify which base model to fine-tune, the locations of the training file and optional 
-validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, 
-and an optional suffix to append to the name of the fine-tune. For sequences longer than the native 
+Once you have uploaded your data, you can use the LLM Engine's [FineTune.Create](../../api/python_client/#llmengine.fine_tuning.FineTune.create) API to launch a fine-tune. You will need to specify which base model to fine-tune, the locations of the training file and optional validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, and an optional suffix to append to the name of the fine-tune. For sequences longer than the native 
 `max_seq_length` of the model, the sequences will be truncated.
 
 If you specify a suffix, the fine-tune will be named `model.suffix.<timestamp>`. If you do not, 
