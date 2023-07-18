@@ -28,10 +28,10 @@ print(response.output.text)
 # ________ and I am a ________
 ```
 
-**model:** The LLM you want to use (see [Model Zoo](../../model_zoo)).  
-**prompt:** The main input for the LLM to respond to.  
-**max_new_tokens:** The maximum number of tokens to generate in the chat completion.  
-**temperature:** The sampling temperature to use. Higher values make the output more random, 
+- **model:** The LLM you want to use (see [Model Zoo](../../model_zoo)).  
+- **prompt:** The main input for the LLM to respond to.  
+- **max_new_tokens:** The maximum number of tokens to generate in the chat completion.  
+- **temperature:** The sampling temperature to use. Higher values make the output more random, 
 while lower values will make it more focused and deterministic.  
 
 See the full [API reference documentation](../../api/python_client/#llmengine.Completion) to learn more.
