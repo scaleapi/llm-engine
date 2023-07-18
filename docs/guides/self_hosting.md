@@ -39,15 +39,15 @@ To enable LLM Engine to connect to the postgres engine, fill out the helm chart 
 The LLMEngine server requires Redis for various caching/queue functionality. LLMEngine currently supports Redis version 6.
 Create a Redis cluster (e.g. AWS Elasticache for Redis) if you do not have an existing one you wish to connect LLMEngine to.
 
-To enable LLM Engine to connect to the postgres engine, fill out the helm chart values with the redis database's username, password, and hostname.
+To enable LLM Engine to connect redis, fill out the helm chart values with the redis host and url.
 
 ### Amazon S3
 
-You will need to have an S3 bucket for LLMEngine to store [TODO]. The ARN of this bucket should be provided in the helm chart values.
+You will need to have an S3 bucket for LLMEngine to store various assets (e.g model weigts, prediction restuls). The ARN of this bucket should be provided in the helm chart values.
 
 ### Amazon ECR
 
-You will need to provide an ECR repository for the deployment to store fine-tuned models. The ARN of this repository should be provided in the helm chart values.
+You will need to provide an ECR repository for the deployment to store model containers. The ARN of this repository should be provided in the helm chart values.
 
 ### Amazon SQS
 
@@ -68,4 +68,3 @@ The LLMEngine server will an IAM role to perform various AWS operations. This ro
 # Helm Chart
 Now that all dependencies have been installed and configured, we can run the provided Helm chart. The values in the Helm chart will need to correspond with the resources described in the Dependencies section. 
 
-TODO: insert Table with values
