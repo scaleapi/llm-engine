@@ -150,11 +150,11 @@ Once the fine-tune is launched, you can also [get the status of your fine-tune](
 Once your fine-tune is finished, you will be able to start making inference requests to the 
 model. You can use the `fine_tuned_model` returned from your 
 [FineTune.get](../../api/python_client/#llmengine.fine_tuning.FineTune.get)
-API call to reference your fine-tuned model in the Completions API. Alternatively, you can list 
+API call to reference your fine-tuned model in the Completion API. Alternatively, you can list 
 available LLMs with `Model.list` in order to find the name of your fine-tuned model. See the 
 [Completion API](../../api/python_client/#llmengine.Completion) for more details. You can then 
 use that name to direct your completion requests.  You must wait until your fine-tune is complete 
-before you can plug it into the Completions API. You can check the status of your fine-tune with 
+before you can plug it into the Completion API. You can check the status of your fine-tune with 
 [FineTune.get](../../api/python_client/#llmengine.fine_tuning.FineTune.get).
 
 === "Inference with a fine-tuned model in python"

@@ -65,13 +65,13 @@ An example Completion API response looks as follows:
 
 ## Token streaming
 
-The Completions API supports token streaming to reduce _perceived_ latency for certain 
+The Completion API supports token streaming to reduce _perceived_ latency for certain 
 applications. When streaming, tokens will be sent as data-only 
 [server-side events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
 
 To enable token streaming, pass `stream=True` to either [Completion.create](../../api/python_client/#llmengine.completion.Completion.create) or [Completion.acreate](../../api/python_client/#llmengine.completion.Completion.acreate).
 
-An example of token streaming using the synchronous Completions API looks as follows:
+An example of token streaming using the synchronous Completion API looks as follows:
 
 === "Token streaming with synchronous API in python"
 ```python
