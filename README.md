@@ -76,13 +76,13 @@ Try out this starter code:
 from llmengine import Completion
 
 response = Completion.create(
-    model_name="falcon-7b-instruct",
+    model="falcon-7b-instruct",
     prompt="I'm opening a pancake restaurant that specializes in unique pancake shapes, colors, and flavors. List 3 quirky names I could name my restaurant.",
     max_new_tokens=100,
     temperature=0.2,
 )
 
-print(response.outputs[0].text)
+print(response.output.text)
 ```
 
 You should see a successful completion of your given prompt!
