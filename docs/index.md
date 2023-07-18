@@ -8,7 +8,7 @@ Use Scale's hosted version or run it in your own cloud.
 ## Quick Install
 
 ```
-    pip install scale-llm-engine
+pip install scale-llm-engine
 ```
 
 ## About
