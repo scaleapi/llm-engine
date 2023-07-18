@@ -1,6 +1,6 @@
 # Fine-tuning
 
-Learn how to customize your models on your data with fine-tuning.
+Learn how to customize your models on your data with fine-tuning. Or get started right away with our [fine-tuning cookbook](https://github.com/scaleapi/llm-engine/blob/main/docs/examples/finetuning.ipynb).
 
 ## Introduction
 
