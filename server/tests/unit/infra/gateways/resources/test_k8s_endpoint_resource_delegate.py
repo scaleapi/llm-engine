@@ -385,16 +385,7 @@ async def test_create_streaming_endpoint_has_correct_labels(
     if optimize_costs:
         _verify_custom_object_plurals(
             call_args_list=create_custom_object_call_args_list,
-            expected_plurals=[
-                "verticalpodautoscalers",
-                "virtualservices",
-                "destinationrules",
-            ],
-        )
-    if build_endpoint_request.model_endpoint_record.endpoint_type == ModelEndpointType.SYNC:
-        _verify_custom_object_plurals(
-            call_args_list=create_custom_object_call_args_list,
-            expected_plurals=["virtualservices", "destinationrules"],
+            expected_plurals=["verticalpodautoscalers"],
         )
 
     mock_custom_objects_client.reset_mock()
@@ -459,16 +450,7 @@ async def test_create_sync_endpoint_has_correct_labels(
         if optimize_costs:
             _verify_custom_object_plurals(
                 call_args_list=create_custom_object_call_args_list,
-                expected_plurals=[
-                    "verticalpodautoscalers",
-                    "virtualservices",
-                    "destinationrules",
-                ],
-            )
-        if build_endpoint_request.model_endpoint_record.endpoint_type == ModelEndpointType.SYNC:
-            _verify_custom_object_plurals(
-                call_args_list=create_custom_object_call_args_list,
-                expected_plurals=["virtualservices", "destinationrules"],
+                expected_plurals=["verticalpodautoscalers"],
             )
 
         mock_custom_objects_client.reset_mock()

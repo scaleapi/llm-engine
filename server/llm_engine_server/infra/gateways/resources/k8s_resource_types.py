@@ -47,7 +47,6 @@ __all__: Sequence[str] = (
     "DeploymentTritonEnhancedRunnableImageAsyncGpuArguments",
     "DeploymentTritonEnhancedRunnableImageSyncCpuArguments",
     "DeploymentTritonEnhancedRunnableImageSyncGpuArguments",
-    "DestinationRuleArguments",
     "DictStrInt",
     "DictStrStr",
     "DockerImageBatchJobCpuArguments",
@@ -64,7 +63,6 @@ __all__: Sequence[str] = (
     "UserConfigArguments",
     "VerticalAutoscalingEndpointParams",
     "VerticalPodAutoscalerArguments",
-    "VirtualServiceArguments",
     "get_endpoint_resource_arguments_from_request",
 )
 
@@ -357,21 +355,11 @@ class ServiceArguments(_BaseEndpointArguments):
     NODE_PORT_DICT: DictStrInt
 
 
-class DestinationRuleArguments(_BaseEndpointArguments):
-    """Keyword-arguments for substituting into destination-rule templates."""
-
-
 class VerticalPodAutoscalerArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into vertical pod autoscaler templates."""
 
     CPUS: str
     MEMORY: str
-
-
-class VirtualServiceArguments(_BaseEndpointArguments):
-    """Keyword-arguments for substituting into virtual-service templates."""
-
-    DNS_HOST_DOMAIN: str
 
 
 class BatchJobOrchestrationJobArguments(_JobArguments):
@@ -438,13 +426,11 @@ EndpointResourceArguments = Union[
     DeploymentTritonEnhancedRunnableImageAsyncGpuArguments,
     DeploymentTritonEnhancedRunnableImageSyncCpuArguments,
     DeploymentTritonEnhancedRunnableImageSyncGpuArguments,
-    DestinationRuleArguments,
     EndpointConfigArguments,
     HorizontalPodAutoscalerArguments,
     ServiceArguments,
     UserConfigArguments,
     VerticalPodAutoscalerArguments,
-    VirtualServiceArguments,
 ]
 
 ResourceArguments = Union[
@@ -1312,31 +1298,6 @@ def get_endpoint_resource_arguments_from_request(
             NODE_PORT_DICT=node_port_dict,
             SERVICE_TYPE=service_type,
             SERVICE_TARGET_PORT=FORWARDER_PORT,
-        )
-    elif endpoint_resource_name == "virtual-service":
-        return VirtualServiceArguments(
-            # Base resource arguments
-            RESOURCE_NAME=k8s_resource_group_name,
-            NAMESPACE=hmi_config.endpoint_namespace,
-            ENDPOINT_ID=model_endpoint_record.id,
-            ENDPOINT_NAME=model_endpoint_record.name,
-            TEAM=team,
-            PRODUCT=product,
-            CREATED_BY=created_by,
-            OWNER=owner,
-            DNS_HOST_DOMAIN=ml_infra_config().dns_host_domain,
-        )
-    elif endpoint_resource_name == "destination-rule":
-        return DestinationRuleArguments(
-            # Base resource arguments
-            RESOURCE_NAME=k8s_resource_group_name,
-            NAMESPACE=hmi_config.endpoint_namespace,
-            ENDPOINT_ID=model_endpoint_record.id,
-            ENDPOINT_NAME=model_endpoint_record.name,
-            TEAM=team,
-            PRODUCT=product,
-            CREATED_BY=created_by,
-            OWNER=owner,
         )
     elif endpoint_resource_name == "vertical-pod-autoscaler":
         return VerticalPodAutoscalerArguments(
