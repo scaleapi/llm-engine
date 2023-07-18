@@ -30,7 +30,7 @@ Kubernetes.
 
 🎁 **Ready-to-use APIs for your favorite models**: Serve and fine-tune
 open-source foundation models, including MPT, Falcon,
-and LLaMA. Use Scale-hosted endpoints or deploy to your own infrastructure.
+and LLaMA. Use Scale-hosted models or deploy to your own infrastructure.
 
 🎙️ **Optimized Inference**: LLM Engine provides inference APIs
 for streaming responses and dynamically batching inputs for higher throughput
