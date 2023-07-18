@@ -68,3 +68,50 @@ The LLMEngine server will an IAM role to perform various AWS operations. This ro
 # Helm Chart
 Now that all dependencies have been installed and configured, we can run the provided Helm chart. The values in the Helm chart will need to correspond with the resources described in the Dependencies section. 
 
+| Parameter | Description | Default | Required |
+| --- | --- | --- | --- |
+| tag | The LLM Engine docker image tag | b144dd4e5371484be1889c76e70baec375127b52 | Yes |
+| context | A user-specified deployment tag | production | No |
+| image.gatewayRepository | The docker repository to pull the LLM Engine gateway image from | public.ecr.aws/b2z8n5q1/llm-engine | Yes |
+| image.builderRepository | The docker repository to pull the LLM Engine endpoint builder image from | public.ecr.aws/b2z8n5q1/llm-engine | Yes |
+| image.cacherRepository | The docker repository to pull the LLM Engine cacher image from | public.ecr.aws/b2z8n5q1/llm-engine | Yes |
+| image.forwarderRepository | The docker repository to pull the LLM Engine forwarder image from | public.ecr.aws/b2z8n5q1/llm-engine | Yes |
+| image.pullPolicy | The docker image pull policy | Always | No |
+| secrets.kubernetesDatabaseSecretName | The name of the secret that contains the database credentials | ml-infra-pg | No |
+| serviceAccount.annotations.eks.amazonaws.com/role-arn | The ARN of the IAM role that the service account will assume | arn:aws:iam::985572151633:role/k8s-main-llm-engine | Yes |
+| serviceAccount.annotations.helm.sh/hook | Helm hook annotations | pre-install,pre-upgrade | No |
+| serviceAccount.annotations.helm.sh/hook-weight | Helm hook weight | "-2" | No |
+| serviceAccount.namespaces | Namespaces for the service account | [] | No |
+| service.type | The type of the service | ClusterIP | No |
+| service.port | The port of the service | 80 | No |
+| replicaCount.gateway | The amount of replica pods for the gateway deployment | 2 | No |
+| replicaCount.cacher | The amount of replica pods for the cacher deployment | 1 | No |
+| replicaCount.builder | The amount of replica pods for the builder deployment | 1 | No |
+| replicaCount.balloonA10 | The amount of low priority pod deployment for A10 GPU nodes | 0 | No |
+| replicaCount.balloonA100 | The amount of low priority pod deployment for A100 GPU nodes | 0 | No |
+| replicaCount.balloonCpu | The amount of low priority pod deployment for CPU nodes | 0 | No |
+| replicaCount.balloonT4 | The amount of low priority pod deployment for T4 GPU nodes | 0 | No |
+| autoscaling.horizontal.enabled | Enable horizontal autoscaling | true | No |
+| autoscaling.horizontal.minReplicas | Minimum number of replicas for horizontal autoscaling | 2 | No |
+| autoscaling.horizontal.maxReplicas | Maximum number of replicas for horizontal autoscaling | 10 | No |
+| autoscaling.horizontal.targetConcurrency | Target concurrency for horizontal autoscaling | 50 | No |
+| autoscaling.vertical.enabled | Enable vertical autoscaling | false | No |
+| autoscaling.prewarming.enabled | Enable prewarming for autoscaling | false | No |
+| resources.requests.cpu | CPU resources request for the deployments | 2 | No |
+| nodeSelector | Node selector for the deployments | {} | No |
+| tolerations | Tolerations for the deployments | [] | No |
+| affinity | Affinity for the deployments | {} | No |
+| datadog_trace_enabled | Enable datadog tracing | false | No |
+| config.values.infra.k8s_cluster_name | The name of the k8s cluster | main_cluster | Yes |
+| config.values.infra.dns_host_domain | The domain name of the k8s cluster | egp-test.scale.com | Yes |
+| config.values.infra.default_region | The default AWS region for various resources | us-east-1 | Yes |
+| config.values.infra.ml_account_id | The AWS account ID for various resources | "692474966980" | Yes |
+| config.values.infra.docker_repo_prefix | The prefix for AWS ECR repositories | "692474966980.dkr.ecr.us-east-1.amazonaws.com" | Yes |
+| config.values.infra.redis_host | The hostname of the redis cluster you wish to connect | spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com | Yes |
+| config.values.infra.s3_bucket | The S3 bucket you wish to connect | "scale-ml-egp-test" | Yes |
+| config.values.llm_engine.endpoint_namespace | K8s namespace the endpoints will be created in | llm-engine | Yes |
+| config.values.llm_engine.cache_redis_url | The full url for the redis cluster you wish to connect | redis://spellbook-prod-cache-001.yoibpc.0001.use1.cache.amazonaws.com:6379/15 | Yes |
+| config.values.llm_engine.s3_file_llm_fine_tuning_job_repository | The S3 URI for the S3 bucket/key that you wish to save fine-tuned assets | "s3://scale-ml/hosted-model-inference/llm-ft-job-repository/circleci" | Yes |
+| config.values.llm_engine.sqs_profile | SQS profile for asynchronous endpoints | default | No |
+| config.values.llm_engine.sqs_queue_policy_template | The IAM policy template for SQS queue for async endpoints | Provided in the sample | Yes |
+| config.values.llm_engine.sqs_queue_tag_template | The tag template for SQS queue for async endpoints | Provided in the sample | No |
