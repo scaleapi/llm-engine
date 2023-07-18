@@ -36,7 +36,7 @@ class Completion(APIEngine):
         Creates a completion for the provided prompt and parameters asynchronously (with `asyncio`).
 
         This API can be used to get the LLM to generate a completion *asynchronously*.
-        It takes as parameters the `model`[see Model Zoo](../model_zoo/) and the `prompt`.
+        It takes as parameters the `model` ([see Model Zoo](../../model_zoo)) and the `prompt`.
         Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
         It returns
         [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
@@ -187,7 +187,7 @@ class Completion(APIEngine):
         Creates a completion for the provided prompt and parameters synchronously.
 
         This API can be used to get the LLM to generate a completion *synchronously*.
-        It takes as parameters the `model`[see Model Zoo](../model_zoo/) and the `prompt`.
+        It takes as parameters the `model` ([see Model Zoo](../../model_zoo)) and the `prompt`.
         Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
         It returns
         [CompletionSyncV1Response](../../api/data_types/#llmengine.CompletionSyncV1Response)
