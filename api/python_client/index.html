@@ -747,15 +747,15 @@
 
 
 <h2 id="llmengine.Completion" class="doc doc-heading">
-        <span class="doc doc-object-name doc-class-name">Completion</span>
+          <span class="doc doc-object-name doc-class-name">Completion</span>
 
 
 <a href="#llmengine.Completion" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>Completion API. This API is used to generate text completions.</p>
@@ -765,7 +765,6 @@ LLMs take the input prompts and chunk them into smaller units called <em>tokens<
 language. Tokens may include trailing spaces and even sub-words; this process is language dependent.</p>
 <p>The Completion API can be run either synchronous or asynchronously (via Python <code>asyncio</code>).
 For each of these modes, you can also choose whether to stream token responses or not.</p>
-
 
 
   
@@ -780,12 +779,13 @@ For each of these modes, you can also choose whether to stream token responses o
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.completion.Completion.create" class="doc doc-heading">
-        <span class="doc doc-object-name doc-function-name">create</span>
+          <span class="doc doc-object-name doc-function-name">create</span>
 
   
   <span class="doc doc-labels">
@@ -793,7 +793,17 @@ For each of these modes, you can also choose whether to stream token responses o
   </span>
 
 <a href="#llmengine.completion.Completion.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create(model: <span style="color: #008000">str</span>, prompt: <span style="color: #008000">str</span>, max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>, temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>, timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>, stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>) <span style="color: #666666">-&gt;</span> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create(
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    model: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    prompt: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    Iterator[CompletionStreamResponse],
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -807,6 +817,8 @@ It returns
 if <code>stream=False</code> or an async iterator of
 <a href="../../api/data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>
 with <code>request_id</code> and <code>outputs</code> fields.</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -910,6 +922,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -997,12 +1011,13 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.completion.Completion.acreate" class="doc doc-heading">
-        <span class="doc doc-object-name doc-function-name">acreate</span>
+          <span class="doc doc-object-name doc-function-name">acreate</span>
 
   
   <span class="doc doc-labels">
@@ -1011,7 +1026,17 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
   </span>
 
 <a href="#llmengine.completion.Completion.acreate" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>acreate(model: <span style="color: #008000">str</span>, prompt: <span style="color: #008000">str</span>, max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>, temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>, timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>, stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>) <span style="color: #666666">-&gt;</span> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>acreate(
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    model: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    prompt: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    AsyncIterable[CompletionStreamResponse],
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1025,6 +1050,8 @@ It returns
 if <code>stream=False</code> or an async iterator of
 <a href="../../api/data_types/#llmengine.CompletionStreamV1Response">CompletionStreamV1Response</a>
 with <code>request_id</code> and <code>outputs</code> fields.</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1128,6 +1155,8 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1235,22 +1264,21 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h2 id="llmengine.FineTune" class="doc doc-heading">
-        <span class="doc doc-object-name doc-class-name">FineTune</span>
+          <span class="doc doc-object-name doc-class-name">FineTune</span>
 
 
 <a href="#llmengine.FineTune" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>FineTune API. This API is used to fine-tune models.</p>
 <p>Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning is a supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM.</p>
 <p>LLM Engine provides APIs to create fine-tunes on a base model with training &amp; validation datasets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.</p>
 <p>Creating a fine-tune will end with the creation of a Model, which you can view using <code>Model.get(model_name)</code> or delete using <code>Model.delete(model_name)</code>.</p>
-
 
 
   
@@ -1265,12 +1293,13 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.create" class="doc doc-heading">
-        <span class="doc doc-object-name doc-function-name">create</span>
+          <span class="doc doc-object-name doc-function-name">create</span>
 
   
   <span class="doc doc-labels">
@@ -1278,7 +1307,13 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
   </span>
 
 <a href="#llmengine.fine_tuning.FineTune.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create(model: <span style="color: #008000">str</span>, training_file: <span style="color: #008000">str</span>, validation_file: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>, hyperparameters: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>, suffix: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>) <span style="color: #666666">-&gt;</span> CreateFineTuneResponse
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create(
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    model: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    training_file: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    validation_file: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    hyperparameters: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    suffix: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>) <span style="color: #666666">-&gt;</span> CreateFineTuneResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1290,6 +1325,8 @@ file should consist of prompt and response pairs. Your data must be formatted as
 that includes two columns: <code>prompt</code> and <code>response</code>. A maximum of 100,000 rows of data is
 currently supported. At least 200 rows of data is recommended to start to see benefits from
 fine-tuning.</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1383,6 +1420,8 @@ fine-tuning.</p>
     </tbody>
   </table>
 
+
+
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -1455,12 +1494,13 @@ an airline question answering bot:</p>
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.get" class="doc doc-heading">
-        <span class="doc doc-object-name doc-function-name">get</span>
+          <span class="doc doc-object-name doc-function-name">get</span>
 
   
   <span class="doc doc-labels">
@@ -1480,6 +1520,8 @@ and returns a
 <a href="../../api/data_types/#llmengine.GetFineTuneResponse">GetFineTuneResponse</a>
 object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 <code>UNDEFINED</code>, <code>FAILURE</code> or <code>SUCCESS</code>).</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1508,6 +1550,8 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1556,12 +1600,13 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.list" class="doc doc-heading">
-        <span class="doc doc-object-name doc-function-name">list</span>
+          <span class="doc doc-object-name doc-function-name">list</span>
 
   
   <span class="doc doc-labels">
@@ -1578,6 +1623,8 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 <p>This API can be used to list all the fine-tuning jobs.
 It returns a list of pairs of <code>fine_tune_id</code> and <code>status</code> for
 all existing jobs.</p>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1631,12 +1678,13 @@ all existing jobs.</p>
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.cancel" class="doc doc-heading">
-        <span class="doc doc-object-name doc-function-name">cancel</span>
+          <span class="doc doc-object-name doc-function-name">cancel</span>
 
   
   <span class="doc doc-labels">
@@ -1654,6 +1702,8 @@ all existing jobs.</p>
 it's no longer required. It takes as parameter the <code>fine_tune_id</code>
 and returns a response object which has a <code>success</code> field
 confirming if the cancellation was successful.</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1682,6 +1732,8 @@ confirming if the cancellation was successful.</p>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1739,22 +1791,21 @@ confirming if the cancellation was successful.</p>
 
 
 <h2 id="llmengine.Model" class="doc doc-heading">
-        <span class="doc doc-object-name doc-class-name">Model</span>
+          <span class="doc doc-object-name doc-class-name">Model</span>
 
 
 <a href="#llmengine.Model" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>Model API. This API is used to get, list, and delete models. Models include both base
 models built into LLM Engine, and fine-tuned models that you create through the
 <a href="./#llmengine.fine_tuning.FineTune.create">FineTune.create()</a> API.</p>
 <p>See <a href="../../model_zoo">Model Zoo</a> for the list of publicly available base models.</p>
-
 
 
   
@@ -1769,12 +1820,13 @@ models built into LLM Engine, and fine-tuned models that you create through the
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.get" class="doc doc-heading">
-        <span class="doc doc-object-name doc-function-name">get</span>
+          <span class="doc doc-object-name doc-function-name">get</span>
 
   
   <span class="doc doc-labels">
@@ -1794,6 +1846,8 @@ The function takes as a single parameter the name <code>model</code>
 and returns a
 <a href="../../api/data_types/#llmengine.GetLLMEndpointResponse">GetLLMEndpointResponse</a>
 object.</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1822,6 +1876,8 @@ object.</p>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1875,12 +1931,13 @@ object.</p>
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.list" class="doc doc-heading">
-        <span class="doc doc-object-name doc-function-name">list</span>
+          <span class="doc doc-object-name doc-function-name">list</span>
 
   
   <span class="doc doc-labels">
@@ -1899,6 +1956,8 @@ available models and user-created fine-tuned models.
 It returns a list of
 <a href="../../api/data_types/#llmengine.GetLLMEndpointResponse">GetLLMEndpointResponse</a>
 objects for all models. The most important field is the model <code>name</code>.</p>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1988,12 +2047,13 @@ objects for all models. The most important field is the model <code>name</code>.
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.delete" class="doc doc-heading">
-        <span class="doc doc-object-name doc-function-name">delete</span>
+          <span class="doc doc-object-name doc-function-name">delete</span>
 
   
   <span class="doc doc-labels">
@@ -2012,6 +2072,8 @@ as parameter the name of the <code>model</code> and returns a response
 object which has a <code>deleted</code> field confirming if the deletion
 was successful. If called on a base model included with LLM
 Engine, an error will be thrown.</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2040,6 +2102,8 @@ Engine, an error will be thrown.</p>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
