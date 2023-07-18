@@ -69,7 +69,6 @@ import llmengine
 import backoff
 
 @backoff.on_exception(backoff.expo, llmengine.errors.RateLimitExceededError)
-
 def completion_with_backoff(**kwargs):
     return llmengine.Completion.create(**kwargs)
 
