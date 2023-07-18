@@ -116,11 +116,11 @@ launched.
 <details>
 <summary>Hyper-parameters for fine-tune</summary>
 
-* `lr`: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-5)
+* `lr`: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-3)
 * `warmup_ratio`: Ratio of training steps used for learning rate warmup. (Default: 0.03)
-* `epochs`: Number of fine-tuning epochs. (Default: 5)
+* `epochs`: Number of fine-tuning epochs. This should be less than 20. (Default: 5)
 * `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
-* `max_seq_length`: Maximum number of tokens per sequence in the dataset. (Default: 1024)
+* The `max_seq_length` length of the model is decided based on the architecture and input data.
 </details>
 
 === "Create a fine-tune in python" 
