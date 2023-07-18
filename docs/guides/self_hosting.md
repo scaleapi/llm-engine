@@ -33,7 +33,15 @@ We also recommend setting the following taint on your GPU nodes to prevent pods 
 The LLMEngine server requires a PostgreSQL database to back data. LLMEngine currently supports Postgres version 14.
 Create a PostgreSQL database (e.g. AWS RDS PostgreSQL) if you do not have an existing one you wish to connect LLMEngine to. 
 
-To enable LLM Engine to connect to the postgres engine, fill out the helm chart values with the postgres database's username, password, database name, and hostname.
+To enable LLM Engine to connect to the postgres engine, we create a kubernetes secret with the postgres url. An example yaml is provided below:
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: llm-engine-database-credentials  # this name will be an input to our Helm Chart
+data:
+    database_url = "postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]"
+```
 
 ### Redis
 
