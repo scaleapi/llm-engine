@@ -1,7 +1,5 @@
-from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine, assert_self_hosted
+from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine
 from llmengine.data_types import (
-    CreateLLMEndpointRequest,
-    CreateLLMEndpointResponse,
     DeleteLLMEndpointResponse,
     GetLLMEndpointResponse,
     ListLLMEndpointsResponse,
@@ -16,32 +14,6 @@ class Model(APIEngine):
 
     See [Model Zoo](../../model_zoo) for the list of publicly available base models.
     """
-
-    @classmethod
-    @assert_self_hosted
-    def create(
-        cls,
-        model: str,
-    ) -> CreateLLMEndpointResponse:
-        """
-        Create an LLM model. Note: This feature is only available for self-hosted users.
-
-        Args:
-            model (`str`):
-                Name of the model
-
-        Returns:
-            CreateLLMEndpointResponse: ID of the created Model.
-        """
-        request = CreateLLMEndpointRequest(
-            model_name=model,
-        )
-        response = cls.post_sync(
-            resource_name="v1/llm/model-endpoints",
-            data=request.dict(),
-            timeout=DEFAULT_TIMEOUT,
-        )
-        return CreateLLMEndpointResponse.parse_obj(response)
 
     @classmethod
     def get(
