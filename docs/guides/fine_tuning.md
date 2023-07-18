@@ -105,7 +105,14 @@ with open('customer_service_data.csv', 'w', newline='') as file:
 Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read for fine-tuning. Publicly accessible HTTP, HTTPS, and S3 URLs are currently supported. Support for privately sharing data with the LLM Engine API is coming shortly. For quick iteration, you can look into tools like Pastebin or Github Gists to quickly host your CSV files in a public manner. We created an example Github Gist you can see [here](https://gist.github.com/tigss/7cec73251a37de72756a3b15eace9965). To use the gist, you can just use the URL given when you click the “Raw” button ([URL](https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv)).
 
 ## Launching the fine-tune
-Once you have uploaded your data, you can use the LLM Engine API to launch a fine-tune. You will need to specify which base model to fine-tune, the locations of the training file and optional validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, and an optional suffix to append to the name of the fine-tune.
+Once you have uploaded your data, you can use the LLM Engine API to launch a fine-tune. You will 
+need to specify which base model to fine-tune, the locations of the training file and optional 
+validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, 
+and an optional suffix to append to the name of the fine-tune.
+
+If you specify a suffix, the fine-tune will be named `model:suffix:<timestamp>`. If you do not, 
+the fine-tune will be named `model:<timestamp>`. The timestamp will be the time the fine-tune was 
+launched.
 
 <details>
 <summary>Create a fine-tune</summary>
@@ -128,7 +135,15 @@ Once the fine-tune is launched, you can also [get the status of your fine-tune](
 
 ## Making inference calls to your fine-tune
 
-Once your fine-tune is finished, you will be able to start making inference requests to the model. You can use the `fine_tune_id` returned from your [FineTune.create](../../api/python_client/#llmengine.fine_tuning.FineTune.create) API call to reference your fine-tuned model in the Completions API. Alternatively, you can list available LLMs with `Model.list` in order to find the name of your fine-tuned model. See the [Completion API](../../api/python_client/#llmengine.Completion) for more details. You can then use that name to direct your completion requests.
+Once your fine-tune is finished, you will be able to start making inference requests to the 
+model. You can use the `fine_tuned_model` returned from your 
+[FineTune.get](../../api/python_client/#llmengine.fine_tuning.FineTune.get)
+API call to reference your fine-tuned model in the Completions API. Alternatively, you can list 
+available LLMs with `Model.list` in order to find the name of your fine-tuned model. See the 
+[Completion API](../../api/python_client/#llmengine.Completion) for more details. You can then 
+use that name to direct your completion requests.  You must wait until your fine-tune is complete 
+before you can plug it into the Completions API. You can check the status of your fine-tune with 
+[FineTune.get](../../api/python_client/#llmengine.fine_tuning.FineTune.get).
 
 <details>
 <summary>Inference with a fine-tuned model</summary>
@@ -137,7 +152,7 @@ Once your fine-tune is finished, you will be able to start making inference requ
 from llmengine import Completion
 
 response = Completion.create(
-    model_name="ft_abc123",
+    model_name="llama-7b:airlines:2023-07-17-08-30-45",
     prompt="Do you offer in-flight Wi-fi?",
     max_new_tokens=100,
     temperature=0.2,
