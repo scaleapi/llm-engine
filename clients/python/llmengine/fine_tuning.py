@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine
 from llmengine.data_types import (
@@ -28,7 +28,7 @@ class FineTune(APIEngine):
         model: str,
         training_file: str,
         validation_file: Optional[str] = None,
-        hyperparameters: Optional[Dict[str, str]] = None,
+        hyperparameters: Optional[Dict[str, Union[str, int, float]]] = None,
         suffix: Optional[str] = None,
     ) -> CreateFineTuneResponse:
         """
