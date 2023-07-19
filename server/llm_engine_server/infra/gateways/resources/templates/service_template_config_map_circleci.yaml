@@ -1473,7 +1473,7 @@ data:
                 - ddtrace-run
                 - python
                 - -m
-                - llm_engine.inference.forwarding.http_forwarder
+                - server.llm_engine_server.inference.forwarding.http_forwarder
                 - --config
                 - /workspace/llm_engine/llm_engine/inference/configs/service--http_forwarder.yaml
                 - --port
@@ -3107,7 +3107,7 @@ data:
                 - ddtrace-run
                 - python
                 - -m
-                - llm_engine.inference.forwarding.http_forwarder
+                - server.llm_engine_server.inference.forwarding.http_forwarder
                 - --config
                 - /workspace/llm_engine/llm_engine/inference/configs/service--http_forwarder.yaml
                 - --port
