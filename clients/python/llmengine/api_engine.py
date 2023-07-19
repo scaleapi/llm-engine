@@ -9,14 +9,14 @@ import requests
 from aiohttp import ClientSession, ClientTimeout
 from llmengine.errors import parse_error
 
-SCALE_API_KEY = os.getenv("SCALE_API_KEY")
 SPELLBOOK_API_URL = "https://api.spellbook.scale.com"
 LLM_ENGINE_BASE_PATH = os.getenv("LLM_ENGINE_BASE_PATH", SPELLBOOK_API_URL)
 DEFAULT_TIMEOUT: int = 10
 
 
 def get_api_key() -> str:
-    return SCALE_API_KEY or "root"
+    env_api_key = os.getenv("SCALE_API_KEY")
+    return env_api_key or "root"
 
 
 def assert_self_hosted(func):
@@ -32,7 +32,7 @@ def assert_self_hosted(func):
 class APIEngine:
     @classmethod
     def validate_api_key(cls):
-        if SPELLBOOK_API_URL == LLM_ENGINE_BASE_PATH and not SCALE_API_KEY:
+        if SPELLBOOK_API_URL == LLM_ENGINE_BASE_PATH and not get_api_key():
             raise ValueError(
                 "You must set SCALE_API_KEY in your environment to to use the LLM Engine API."
             )
