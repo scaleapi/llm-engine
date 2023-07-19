@@ -22,15 +22,15 @@ The training data for fine-tuning should consist of prompt and response pairs.
 
 As a rule of thumb, you should expect to see linear improvements in your fine-tuned model's quality with each doubling of the dataset size. Having high-quality data is also essential to improving performance. For every linear increase in the error rate in your training data, you may encounter a roughly quadratic increase in your fine-tuned model's error rate.
 
-High quality data is critical to achieve improved model performance, and in several cases will require _experts_ to 
-generate and prepare data - the breadth and diversity of the data is highly critical. Scale's Data Engine can help 
+High quality data is critical to achieve improved model performance, and in several cases will require _experts_ to
+generate and prepare data - the breadth and diversity of the data is highly critical. Scale's Data Engine can help
 prepare such high quality, diverse data sets - more information [here](https://scale.com/rlhf).
 
 ## Preparing data
+
 Your data must be formatted as a CSV file that includes two columns: `prompt` and `response`. A maximum of 100,000 rows of data is currently supported. At least 200 rows of data is recommended to start to see benefits from fine-tuning.
 
 Here is an example script to create a 50-row CSV of properly formatted data for fine-tuning an airline question answering bot
-
 
 <details>
 <summary>Creating a sample dataset</summary>
@@ -98,9 +98,11 @@ with open('customer_service_data.csv', 'w', newline='') as file:
     writer.writerow(["prompt", "response"])
     writer.writerows(data)
 ```
+
 </details>
 
 ## Making your data accessible to LLM Engine
+
 Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read
 for fine-tuning. Publicly accessible HTTP and HTTPS URLs are currently supported.
 Support for privately sharing data with the LLM Engine API is coming shortly. For quick
@@ -110,31 +112,31 @@ files in a public manner. An example Github Gist can be found
 you can use the URL given when you click the “Raw” button
 ([URL](https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv)).
 
-
 ## Launching the fine-tune
-Once you have uploaded your data, you can use the LLM Engine's [FineTune.Create](../../api/python_client/#llmengine.fine_tuning.FineTune.create) API to launch a fine-tune. You will need to specify which base model to fine-tune, the locations of the training file and optional validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, and an optional suffix to append to the name of the fine-tune. For sequences longer than the native 
+
+Once you have uploaded your data, you can use the LLM Engine's [FineTune.Create](../../api/python_client/#llmengine.fine_tuning.FineTune.create) API to launch a fine-tune. You will need to specify which base model to fine-tune, the locations of the training file and optional validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, and an optional suffix to append to the name of the fine-tune. For sequences longer than the native
 `max_seq_length` of the model, the sequences will be truncated.
 
-If you specify a suffix, the fine-tune will be named `model.suffix.<timestamp>`. If you do not, 
-the fine-tune will be named `model.<timestamp>`. The timestamp will be the time the fine-tune was 
+If you specify a suffix, the fine-tune will be named `model.suffix.<timestamp>`. If you do not,
+the fine-tune will be named `model.<timestamp>`. The timestamp will be the time the fine-tune was
 launched.
 
 <details>
 <summary>Hyper-parameters for fine-tune</summary>
 
-* `lr`: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-3)
-* `warmup_ratio`: Ratio of training steps used for learning rate warmup. (Default: 0.03)
-* `epochs`: Number of fine-tuning epochs. This should be less than 20. (Default: 5)
-* `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
+- `lr`: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-3)
+- `warmup_ratio`: Ratio of training steps used for learning rate warmup. (Default: 0.03)
+- `epochs`: Number of fine-tuning epochs. This should be less than 20. (Default: 5)
+- `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
 </details>
 
-=== "Create a fine-tune in python" 
+=== "Create a fine-tune in python"
 
 ```python
 from llmengine import FineTune
 
 response = FineTune.create(
-    model="llama-7b",
+    model="llama-2-7b",
     training_file="s3://my-bucket/path/to/training-file.csv",
 )
 
@@ -147,14 +149,14 @@ Once the fine-tune is launched, you can also [get the status of your fine-tune](
 
 ## Making inference calls to your fine-tune
 
-Once your fine-tune is finished, you will be able to start making inference requests to the 
-model. You can use the `fine_tuned_model` returned from your 
+Once your fine-tune is finished, you will be able to start making inference requests to the
+model. You can use the `fine_tuned_model` returned from your
 [FineTune.get](../../api/python_client/#llmengine.fine_tuning.FineTune.get)
-API call to reference your fine-tuned model in the Completions API. Alternatively, you can list 
-available LLMs with `Model.list` in order to find the name of your fine-tuned model. See the 
-[Completion API](../../api/python_client/#llmengine.Completion) for more details. You can then 
-use that name to direct your completion requests.  You must wait until your fine-tune is complete 
-before you can plug it into the Completions API. You can check the status of your fine-tune with 
+API call to reference your fine-tuned model in the Completions API. Alternatively, you can list
+available LLMs with `Model.list` in order to find the name of your fine-tuned model. See the
+[Completion API](../../api/python_client/#llmengine.Completion) for more details. You can then
+use that name to direct your completion requests. You must wait until your fine-tune is complete
+before you can plug it into the Completions API. You can check the status of your fine-tune with
 [FineTune.get](../../api/python_client/#llmengine.fine_tuning.FineTune.get).
 
 === "Inference with a fine-tuned model in python"
@@ -163,7 +165,7 @@ before you can plug it into the Completions API. You can check the status of you
 from llmengine import Completion
 
 response = Completion.create(
-    model="llama-7b.airlines.2023-07-17-08-30-45",
+    model="llama-2-7b.airlines.2023-07-17-08-30-45",
     prompt="Do you offer in-flight Wi-fi?",
     max_new_tokens=100,
     temperature=0.2,
