@@ -30,11 +30,11 @@ Kubernetes.
 ### Key Features
 
 **Ready-to-use APIs for your favorite models**: Deploy and serve
-open source foundation models - including LLaMA, MPT, and Falcon.
+open source foundation models - including Llama-2, MPT, and Falcon.
 Use Scale-hosted models or deploy to your own infrastructure.
 
-**Fine-tune your favorite models**: Fine-tune open-source foundation
-models like LLaMA, MPT, etc. with your own data for optimized performance.
+**Fine-tune the best open-source models**: Fine-tune open-source foundation
+models like Llama-2, MPT, etc. with your own data for optimized performance.
 
 **Optimized Inference**: LLM Engine provides inference APIs
 for streaming responses and dynamically batching inputs for higher throughput
