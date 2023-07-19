@@ -1,7 +1,7 @@
 # This is a YAML-formatted file.
 
 # tag [required] is the LLM Engine docker image tag
-tag: 1defd4f9c5376149e27673e154731a0c7820fe5d
+tag: 41ecada1b51ce3a46bbc3190a36ed7890db370d3
 # context is a user-specified deployment tag. Can be used to 
 context: production
 image:
@@ -167,6 +167,20 @@ imageCache:
     - name: a10
       nodeSelector:
         k8s.amazonaws.com/accelerator: nvidia-ampere-a10
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: a100
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-ampere-a100
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: t4
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-tesla-t4
       tolerations:
         - key: "nvidia.com/gpu"
           operator: "Exists"

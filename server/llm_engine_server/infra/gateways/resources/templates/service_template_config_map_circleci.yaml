@@ -114,7 +114,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/llm_engine/llm_engine/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/server/llm_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --queue
                 - "${QUEUE}"
                 - --task-visibility
@@ -383,7 +383,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/llm_engine/llm_engine/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/server/llm_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --queue
                 - "${QUEUE}"
                 - --task-visibility
@@ -805,7 +805,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/llm_engine/llm_engine/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/server/llm_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --http
                 - production_threads
                 - --port
@@ -1071,7 +1071,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/llm_engine/llm_engine/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/server/llm_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --http
                 - production_threads
                 - --port
@@ -1473,9 +1473,9 @@ data:
                 - ddtrace-run
                 - python
                 - -m
-                - llm_engine.inference.forwarding.http_forwarder
+                - server.llm_engine_server.inference.forwarding.http_forwarder
                 - --config
-                - /workspace/llm_engine/llm_engine/inference/configs/service--http_forwarder.yaml
+                - /workspace/server/llm_engine_server/inference/configs/service--http_forwarder.yaml
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
@@ -1712,7 +1712,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/llm_engine/llm_engine/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/server/llm_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --queue
                 - "${QUEUE}"
                 - --task-visibility
@@ -1987,7 +1987,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/llm_engine/llm_engine/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/server/llm_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --queue
                 - "${QUEUE}"
                 - --task-visibility
@@ -2421,7 +2421,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/llm_engine/llm_engine/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/server/llm_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --http
                 - production_threads
                 - --port
@@ -2693,7 +2693,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/llm_engine/llm_engine/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/server/llm_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --http
                 - production_threads
                 - --port
@@ -3107,9 +3107,9 @@ data:
                 - ddtrace-run
                 - python
                 - -m
-                - llm_engine.inference.forwarding.http_forwarder
+                - server.llm_engine_server.inference.forwarding.http_forwarder
                 - --config
-                - /workspace/llm_engine/llm_engine/inference/configs/service--http_forwarder.yaml
+                - /workspace/server/llm_engine_server/inference/configs/service--http_forwarder.yaml
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
