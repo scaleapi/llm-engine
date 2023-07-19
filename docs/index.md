@@ -51,7 +51,7 @@ auto-scaling deployment with simple APIs.
 **Kubernetes Installation Enhancements**: We are working hard to enhance the 
 installation and maintenance of inference and fine-tuning functionality on 
 your infrastructure. For now, our documentation covers _experimental_ libraries
-to [deploy language models on your infrastructure](../guides/self_hosting) 
+to [deploy language models on your infrastructure](guides/self_hosting) 
 and libraries to access Scale's [hosted infrastructure](https://spellbook.scale.com).
 
 **Fast Cold-Start Times**: To prevent GPUs from idling, LLM Engine
