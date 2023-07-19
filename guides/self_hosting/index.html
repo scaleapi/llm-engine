@@ -17,7 +17,7 @@
         <link rel="next" href="../../api/python_client/">
       
       <link rel="icon" href="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.19">
     
     
       
@@ -25,7 +25,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.eebd395e.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
@@ -468,6 +468,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#play-with-it" class="md-nav__link">
+    Play With It
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -683,6 +690,13 @@
         <li class="md-nav__item">
   <a href="#helm-chart" class="md-nav__link">
     Helm Chart
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#play-with-it" class="md-nav__link">
+    Play With It
   </a>
   
 </li>
@@ -974,6 +988,25 @@ Below are the configurations to specify in the <code>values_sample.yaml</code> f
 </tr>
 </tbody>
 </table>
+<h2 id="play-with-it">Play With It<a class="headerlink" href="#play-with-it" title="Permanent link">&para;</a></h2>
+<p>Once <code>helm install</code> succeeds, you can forward port <code>5000</code> from a <code>llm-engine</code> pod and test sending requests to it.</p>
+<p>First, see a list of pods in the namespace that you performed <code>helm install</code> in:
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>$ kubectl get pods -n &lt;NAMESPACE_WHERE_LLM_ENGINE_IS_INSTALLED&gt;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>NAME                                           READY   STATUS             RESTARTS      AGE
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>llm-engine-668679554-9q4wj                     1/1     Running            0             18m
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>llm-engine-668679554-xfhxx                     1/1     Running            0             18m
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>llm-engine-cacher-5f8b794585-fq7dj             1/1     Running            0             18m
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>llm-engine-endpoint-builder-5cd6bf5bbc-sm254   1/1     Running            0             18m
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>llm-engine-image-cache-a10-sw4pg               1/1     Running            0             18m 
+</code></pre></div>
+Note the pod names you see may be different.</p>
+<p>Forward a port from a <code>llm-engine</code> pod:
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>$ kubectl port-forward pod/llm-engine-&lt;REST_OF_POD_NAME&gt; 5000:5000 -n &lt;NAMESPACE_WHERE_LLM_ENGINE_IS_INSTALLED&gt;
+</code></pre></div></p>
+<p>Then, try sending a request to get LLM model endpoints for <code>test-user-id</code>. You should get a response with empty list:
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$ curl -X GET -H &quot;Content-Type: application/json&quot; -u &quot;test-user-id:&quot; &quot;http://localhost:5000/v1/llm/model-endpoints&quot;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>{&quot;model_endpoints&quot;:[]}% 
+</code></pre></div></p>
 
 
   
