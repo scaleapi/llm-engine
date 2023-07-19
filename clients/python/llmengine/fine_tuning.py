@@ -283,7 +283,7 @@ class FineTune(APIEngine):
         Returns:
             GetFineTuneEventsResponse: an object that contains the list of events for the fine-tuning job
 
-        Example:
+        === "Getting events for  fine-tuning jobs in Python"
             ```python
             from llmengine import FineTune
 
@@ -291,7 +291,7 @@ class FineTune(APIEngine):
             print(response.json())
             ```
 
-        JSON Response:
+        === "Response in JSON"
             ```json
             {
                 "events":

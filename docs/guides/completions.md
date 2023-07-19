@@ -42,26 +42,21 @@ See the full [Completion API reference documentation](../../api/python_client/#l
 An example Completion API response looks as follows:
 
 === "Response in JSON"
-`python
-    >>> print(response.json())
-    `
-Example output:
-`json
-    {
-      "request_id": "c4bf0732-08e0-48a8-8b44-dfe8d4702fb0",
-      "output": {
-        "text": "_______ and I am a _______",
-        "num_completion_tokens": 10
-      }
-    }
-    `
+    ```python
+        >>> print(response.json())
+        {
+          "request_id": "c4bf0732-08e0-48a8-8b44-dfe8d4702fb0",
+          "output": {
+            "text": "_______ and I am a _______",
+            "num_completion_tokens": 10
+          }
+        }
+    ```
 === "Response in Python"
-`python
-    >>> print(response.output.text)
-    `
-Example output:
-`    _______ and I am a _______
-   `
+    ```python
+        >>> print(response.output.text)
+        _______ and I am a _______
+    ```
 
 ## Token streaming
 
@@ -81,7 +76,7 @@ import sys
 from llmengine import Completion
 
 stream = Completion.create(
-    model="falcon-7b-instruct",
+    model="llama-2-7b",
     prompt="Give me a 200 word summary on the current economic events in the US.",
     max_new_tokens=1000,
     temperature=0.2,
