@@ -115,3 +115,29 @@ Below are the configurations to specify in the `values_sample.yaml` file.
 | config.values.llm_engine.cache_redis_url | The full url for the redis cluster you wish to connect | Yes |
 | config.values.llm_engine.s3_file_llm_fine_tuning_job_repository | The S3 URI for the S3 bucket/key that you wish to save fine-tuned assets | Yes |
 | config.values.datadog_trace_enabled | Whether to enable datadog tracing, datadog must be installed in the cluster | No |
+
+## Play With It
+Once `helm install` succeeds, you can forward port `5000` from a `llm-engine` pod and test sending requests to it.
+
+First, see a list of pods in the namespace that you performed `helm install` in:
+```
+$ kubectl get pods -n <NAMESPACE_WHERE_LLM_ENGINE_IS_INSTALLED>
+NAME                                           READY   STATUS             RESTARTS      AGE
+llm-engine-668679554-9q4wj                     1/1     Running            0             18m
+llm-engine-668679554-xfhxx                     1/1     Running            0             18m
+llm-engine-cacher-5f8b794585-fq7dj             1/1     Running            0             18m
+llm-engine-endpoint-builder-5cd6bf5bbc-sm254   1/1     Running            0             18m
+llm-engine-image-cache-a10-sw4pg               1/1     Running            0             18m 
+```
+Note the pod names you see may be different.
+
+Forward a port from a `llm-engine` pod:
+```
+$ kubectl port-forward pod/llm-engine-<REST_OF_POD_NAME> 5000:5000 -n <NAMESPACE_WHERE_LLM_ENGINE_IS_INSTALLED>
+```
+
+Then, try sending a request to get LLM model endpoints for `test-user-id`. You should get a response with empty list:
+```
+$ curl -X GET -H "Content-Type: application/json" -u "test-user-id:" "http://localhost:5000/v1/llm/model-endpoints"
+{"model_endpoints":[]}% 
+```
