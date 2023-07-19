@@ -171,6 +171,20 @@ imageCache:
         - key: "nvidia.com/gpu"
           operator: "Exists"
           effect: "NoSchedule"
+    - name: a100
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-ampere-a100
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: t4
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-tesla-t4
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
 
 # celeryBrokerType specifies the celery broker type for async endpoints (coming soon)
 celeryBrokerType: sqs
