@@ -15,7 +15,7 @@ pip install scale-llm-engine
 ### Usage
 
 If you are using LLM Engine, you can get your API key from
-[https://spellbook.scale.com/settings](https://spellbook.scale.com/settings). 
+[https://spellbook.scale.com/settings](https://spellbook.scale.com/settings).
 Set the `SCALE_API_KEY` environment variable to your API key.
 
 If you are using your own infrastructure, you can set the
@@ -26,7 +26,7 @@ self-hosted `llmengine` endpoint.
 from llmengine import Completion
 
 response = Completion.create(
-    model="llama-7b",
+    model="llama-2-7b",
     prompt="Hello, my name is",
     max_new_tokens=10,
     temperature=0.2,
