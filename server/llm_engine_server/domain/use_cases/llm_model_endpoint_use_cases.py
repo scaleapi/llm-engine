@@ -227,7 +227,7 @@ class CreateLLMModelEndpointV1UseCase:
                     schema_location="TBA",
                     flavor=StreamingEnhancedRunnableImageFlavor(
                         flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
-                        repository="text-generation-inference",  # TODO: let user choose repo
+                        repository="ghcr.io/huggingface/text-generation-inference",  # TODO: let user choose repo
                         tag=framework_image_tag,
                         command=command,
                         streaming_command=command,
