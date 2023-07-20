@@ -381,6 +381,16 @@ class GetFineTuneResponse(BaseModel):
     The ID of the FineTune.
     """
 
+    fine_tuned_model: Optional[str] = Field(
+        default=None,
+        description="Name of the resulting fine-tuned model. This can be plugged into the "
+        "Completion API once the fine-tune is complete",
+    )
+    """
+    The name of the resulting fine-tuned model. This can be plugged into the Completion API
+    once the fine-tune is complete.
+    """
+
     status: BatchJobStatus = Field(..., description="Status of the requested job.")
     """
     The status of the FineTune job.
