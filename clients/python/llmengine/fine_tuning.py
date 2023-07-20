@@ -51,7 +51,7 @@ class FineTune(APIEngine):
                 The name of the base model to fine-tune. See [Model Zoo](../../model_zoo) for the list of available models to fine-tune.
 
             training_file (`str`):
-                Publicly accessible URL to a CSV file for training.
+                Publicly accessible URL to a CSV file for training. When no validation_file is provided, one will automatically be created using a 10% split of the training_file data.
 
             validation_file (`Optional[str]`):
                 Publicly accessible URL to a CSV file for validation. The validation file is used to compute metrics which let LLM Engine pick the best fine-tuned checkpoint, which will be used for inference when fine-tuning is complete.
