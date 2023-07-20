@@ -136,7 +136,7 @@ Forward a port from a `llm-engine` pod:
 $ kubectl port-forward pod/llm-engine-<REST_OF_POD_NAME> 5000:5000 -n <NAMESPACE_WHERE_LLM_ENGINE_IS_INSTALLED>
 ```
 
-Then, try sending a request to get LLM model endpoints for `test-user-id`. You should get a response with empty list:
+Then, try sending a request to get LLM model endpoints for `test-user-id`:
 ```
 $ curl -X GET -H "Content-Type: application/json" -u "test-user-id:" "http://localhost:5000/v1/llm/model-endpoints"
 ```
