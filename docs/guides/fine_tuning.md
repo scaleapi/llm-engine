@@ -28,7 +28,7 @@ prepare such high quality, diverse data sets - more information [here](https://s
 
 ## Preparing data
 
-Your data must be formatted as a CSV file that includes two columns: `prompt` and `response`. A maximum of 100,000 rows of data is currently supported. At least 200 rows of data is recommended to start to see benefits from fine-tuning.
+Your data must be formatted as a CSV file that includes two columns: `prompt` and `response`. A maximum of 100,000 rows of data is currently supported. At least 200 rows of data is recommended to start to see benefits from fine-tuning. LLM Engine supports fine-tuning with a training and validation dataset. If only a training dataset is provided, 10% of the data is randomly split to be used as validation.
 
 Here is an example script to create a 50-row CSV of properly formatted data for fine-tuning an airline question answering bot
 
@@ -138,6 +138,7 @@ from llmengine import FineTune
 response = FineTune.create(
     model="llama-2-7b",
     training_file="s3://my-bucket/path/to/training-file.csv",
+    validation_file="s3://my-bucket/path/to/validation-file.csv",
 )
 
 print(response.json())
