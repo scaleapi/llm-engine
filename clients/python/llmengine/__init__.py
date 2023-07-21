@@ -25,12 +25,18 @@ from llmengine.data_types import (
     CompletionSyncResponse,
     CreateFineTuneRequest,
     CreateFineTuneResponse,
+    DeleteFileResponse,
     DeleteLLMEndpointResponse,
+    GetFileContentResponse,
+    GetFileResponse,
     GetFineTuneResponse,
     GetLLMEndpointResponse,
+    ListFilesResponse,
     ListFineTunesResponse,
     ListLLMEndpointsResponse,
+    UploadFileResponse,
 )
+from llmengine.file import File
 from llmengine.fine_tuning import FineTune
 from llmengine.model import Model
 
@@ -43,11 +49,17 @@ __all__: Sequence[str] = (
     "CompletionSyncResponse",
     "CreateFineTuneRequest",
     "CreateFineTuneResponse",
+    "DeleteFileResponse",
     "DeleteLLMEndpointResponse",
+    "File",
     "FineTune",
+    "GetFileContentResponse",
+    "GetFileResponse",
     "GetFineTuneResponse",
     "GetLLMEndpointResponse",
+    "ListFilesResponse",
     "ListFineTunesResponse",
     "ListLLMEndpointsResponse",
     "Model",
+    "UploadFileResponse",
 )

@@ -43,3 +43,13 @@
 ::: llmengine.ListLLMEndpointsResponse
 
 ::: llmengine.DeleteLLMEndpointResponse
+
+::: llmengine.UploadFileResponse
+
+::: llmengine.GetFileResponse
+
+::: llmengine.GetFileContentResponse
+
+::: llmengine.ListFilesResponse
+
+::: llmengine.DeleteFileResponse
