@@ -12,6 +12,7 @@ from llmengine.data_types import (
     LLMSource,
     ModelEndpointType,
     PostInferenceHooks,
+    Quantization,
 )
 
 
@@ -28,12 +29,15 @@ class Model(APIEngine):
     @assert_self_hosted
     def create(
         cls,
+        name: str,
         # LLM specific fields
         model: str,
         inference_framework_image_tag: str,
         source: LLMSource = LLMSource.HUGGING_FACE,
         inference_framework: LLMInferenceFramework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
         num_shards: int = 4,
+        quantize: Optional[Quantization] = None,
+        checkpoint_path: Optional[str] = None,
         # General endpoint fields
         cpus: int = 32,
         memory: str = "192Gi",
@@ -68,6 +72,13 @@ class Model(APIEngine):
             num_shards (`int`):
                 Number of shards for the LLM. When bigger than 1, LLM will be sharded
                 to multiple GPUs. Number of GPUs must be larger than num_shards.
+                Only affects behavior for text-generation-inference models
+
+            quantize (`Optional[Quantization]`):
+                Quantization for the LLM. Only affects behavior for text-generation-inference models
+
+            checkpoint_path (`Optional[str]`):
+                Path to the checkpoint for the LLM. Only affects behavior for text-generation-inference models
 
             cpus (`int`):
                 Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
@@ -157,12 +168,14 @@ class Model(APIEngine):
                     post_inference_hooks_strs.append(hook)
 
         request = CreateLLMEndpointRequest(
-            name=model,
+            name=name,
             model_name=model,
             source=source,
             inference_framework=inference_framework,
             inference_framework_image_tag=inference_framework_image_tag,
             num_shards=num_shards,
+            quantize=quantize,
+            checkpoint_path=checkpoint_path,
             cpus=cpus,
             endpoint_type=ModelEndpointType(endpoint_type),
             gpus=gpus,
