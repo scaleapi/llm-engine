@@ -140,7 +140,7 @@ class CreateLLMEndpointRequest(BaseModel):
 
     quantize: Optional[Quantization] = None
     """
-    Whether to quantize the model. Only affect behavior for text-generation-inference models
+    Quantization for the LLM. Only affects behavior for text-generation-inference models
     """
 
     checkpoint_path: Optional[str] = None
