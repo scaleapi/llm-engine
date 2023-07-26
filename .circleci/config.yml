@@ -90,7 +90,7 @@ jobs:
           name: Install helm chart
           command: |
             cd $HOME/project/charts
-            helm install llm-engine llm-engine --values llm-engine/values_sample.yaml
+            helm install llm-engine llm-engine --values llm-engine/values_circleci.yaml --set tag=$CIRCLE_SHA1
 
 executors:
   ubuntu-large:

@@ -10,7 +10,7 @@ import requests
 from aiohttp import ClientSession, ClientTimeout
 from llmengine.errors import parse_error
 
-SPELLBOOK_API_URL = "https://api.spellbook.scale.com"
+SPELLBOOK_API_URL = "https://api.spellbook.scale.com/llm-engine"
 LLM_ENGINE_BASE_PATH = os.getenv("LLM_ENGINE_BASE_PATH", SPELLBOOK_API_URL)
 DEFAULT_TIMEOUT: int = 10
 
