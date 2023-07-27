@@ -13,8 +13,15 @@ SPELLBOOK_API_URL = "https://api.spellbook.scale.com/llm-engine"
 LLM_ENGINE_BASE_PATH = os.getenv("LLM_ENGINE_BASE_PATH", SPELLBOOK_API_URL)
 DEFAULT_TIMEOUT: int = 10
 
+api_key = None
+
+def set_api_key(key): 
+    global api_key
+    api_key = key
 
 def get_api_key() -> str:
+    if api_key is not None: 
+        return api_key
     env_api_key = os.getenv("SCALE_API_KEY")
     return env_api_key or "root"
 
