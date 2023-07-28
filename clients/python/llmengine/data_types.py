@@ -29,7 +29,7 @@ class GpuType(str, Enum):
 
     NVIDIA_TESLA_T4 = "nvidia-tesla-t4"
     NVIDIA_AMPERE_A10 = "nvidia-ampere-a10"
-    NVIDIA_AMPERE_A100 = "nvidia-a100"
+    NVIDIA_AMPERE_A100 = "nvidia-ampere-a100"
 
 
 class ModelEndpointType(str, Enum):
