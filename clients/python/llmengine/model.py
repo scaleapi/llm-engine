@@ -57,8 +57,11 @@ class Model(APIEngine):
         """
         Create an LLM model. Note: This feature is only available for self-hosted users.
         Args:
+            name (`str`):
+                Name of the endpoint
+
             model (`str`):
-                Name of the model
+                Name of the base model
 
             inference_framework_image_tag (`str`):
                 Image tag for the inference framework
@@ -78,7 +81,9 @@ class Model(APIEngine):
                 Quantization for the LLM. Only affects behavior for text-generation-inference models
 
             checkpoint_path (`Optional[str]`):
-                Path to the checkpoint for the LLM. Only affects behavior for text-generation-inference models
+                Path to the checkpoint for the LLM. For now we only support loading a tar file from AWS S3.
+                Safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be slower).
+                Only affects behavior for text-generation-inference models
 
             cpus (`int`):
                 Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
