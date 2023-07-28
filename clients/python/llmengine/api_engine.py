@@ -51,6 +51,7 @@ class APIEngine:
             os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -67,6 +68,7 @@ class APIEngine:
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -80,6 +82,7 @@ class APIEngine:
             os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -94,6 +97,7 @@ class APIEngine:
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -110,6 +114,7 @@ class APIEngine:
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
             stream=True,
         )
         if response.status_code != 200:
