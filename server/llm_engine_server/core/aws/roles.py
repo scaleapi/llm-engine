@@ -196,14 +196,14 @@ def parse_arn_string(arn: str) -> ArnData:
     if not 2 <= len(bits) <= 3:
         raise ValueError(
             f"Invalid format for AWS ARN string: {arn} -- "
-            f"Expecting either 2 or 3 parts seperated by '/'"
+            f"Expecting either 2 or 3 parts separated by '/'"
         )
 
     account_and_source: List[str] = bits[0].split("::")
     if len(account_and_source) != 2:
         raise ValueError(
             f"Expecting ARN string to have 2 parts in the first '/' part, "
-            f"seperated by '::'. Instead found {account_and_source} from "
+            f"separated by '::'. Instead found {account_and_source} from "
             f"arn={arn}"
         )
 
@@ -234,8 +234,8 @@ def parse_arn_string(arn: str) -> ArnData:
     except ValueError as err:
         raise ValueError(
             "ARN format invalid: expecting account ID to appear as 2nd to last "
-            "value seperated by ':' within the first value seperated by '/' and "
-            "second value seperated by '::' -- "
+            "value separated by ':' within the first value separated by '/' and "
+            "second value separated by '::' -- "
             f"arn={arn} and expecting {account_str} to be account ID"
         ) from err
 
