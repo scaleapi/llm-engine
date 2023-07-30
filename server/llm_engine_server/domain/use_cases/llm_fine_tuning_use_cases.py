@@ -28,7 +28,7 @@ class CreateFineTuneJobV1UseCase:
             hyperparameters=request.hyperparameters,
         )
         return CreateFineTuneJobResponse(
-            id=id,
+            id=fine_tune_id,
         )
 
 
@@ -44,7 +44,7 @@ class GetFineTuneJobV1UseCase:
         if di_batch_job is None:
             raise ObjectNotFoundException
         return GetFineTuneJobResponse(
-            id=id,
+            id=fine_tune_id,
             status=di_batch_job.status,
         )
 
