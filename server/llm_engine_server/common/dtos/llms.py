@@ -155,11 +155,11 @@ class CreateFineTuneJobRequest(BaseModel):
 
 
 class CreateFineTuneJobResponse(BaseModel):
-    fine_tune_id: str
+    id: str
 
 
 class GetFineTuneJobResponse(BaseModel):
-    fine_tune_id: str
+    id: str
     status: BatchJobStatus
 
 

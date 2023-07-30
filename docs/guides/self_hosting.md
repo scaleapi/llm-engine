@@ -136,8 +136,68 @@ Forward a port from a `llm-engine` pod:
 $ kubectl port-forward pod/llm-engine-<REST_OF_POD_NAME> 5000:5000 -n <NAMESPACE_WHERE_LLM_ENGINE_IS_INSTALLED>
 ```
 
-Then, try sending a request to get LLM model endpoints for `test-user-id`. You should get a response with empty list:
+Then, try sending a request to get LLM model endpoints for `test-user-id`:
 ```
 $ curl -X GET -H "Content-Type: application/json" -u "test-user-id:" "http://localhost:5000/v1/llm/model-endpoints"
-{"model_endpoints":[]}% 
+```
+
+You should get the following response:
+```
+{"model_endpoints":[]}
+```
+
+Next, let's create a LLM endpoint using llama-7b:
+```
+$ curl -X POST 'http://localhost:5000/v1/llm/model-endpoints' \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "name": "llama-7b",
+        "model_name": "llama-7b",
+        "source": "hugging_face",
+        "inference_framework": "text_generation_inference",
+        "inference_framework_image_tag": "0.9.3",
+        "num_shards": 4,
+        "endpoint_type": "streaming",
+        "cpus": 32,
+        "gpus": 4,
+        "memory": "40Gi",
+        "storage": "40Gi",
+        "gpu_type": "nvidia-ampere-a10",
+        "min_workers": 1,
+        "max_workers": 12,
+        "per_worker": 1,
+        "labels": {},
+        "metadata": {}
+    }' \
+    -u test_user_id:
+```
+
+It should output something like:
+```
+{"endpoint_creation_task_id":"8d323344-b1b5-497d-a851-6d6284d2f8e4"}
+```
+
+Wait a few minutes for the endpoint to be ready. You can tell that it's ready by listing pods and checking that all containers in the llm endpoint pod are ready:
+```
+$ kubectl get pods -n <endpoint_namespace specified in values_sample.yaml>
+NAME                                                              READY   STATUS    RESTARTS        AGE
+llm-engine-endpoint-id-end-cismpd08agn003rr2kc0-7f86ff64f9qj9xp   2/2     Running   1 (4m41s ago)   7m26s
+```
+Note the endpoint name could be different.
+
+Then, you can send an inference request to the endppoint:
+```
+$ curl -X POST 'http://localhost:5000/v1/llm/completions-sync?model_endpoint_name=llama-7b' \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "prompts": ["Tell me a joke about AI"],
+        "max_new_tokens": 30,
+        "temperature": 0.1
+    }' \
+    -u test-user-id:
+```
+
+You should get a response similar to:
+```
+{"status":"SUCCESS","outputs":[{"text":". Tell me a joke about AI. Tell me a joke about AI. Tell me a joke about AI. Tell me","num_completion_tokens":30}],"traceback":null}
 ```
