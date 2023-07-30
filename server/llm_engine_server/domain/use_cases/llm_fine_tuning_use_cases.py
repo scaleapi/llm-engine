@@ -60,7 +60,7 @@ class ListFineTuneJobV1UseCase:
         return ListFineTuneJobResponse(
             jobs=[
                 GetFineTuneJobResponse(
-                    id==job.id,
+                    id=job.id,
                     status=job.status,
                 )
                 for job in di_batch_jobs
