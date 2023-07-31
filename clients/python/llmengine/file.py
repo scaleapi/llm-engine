@@ -1,3 +1,5 @@
+from io import BufferedReader
+
 from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine
 from llmengine.data_types import (
     DeleteFileResponse,
@@ -16,13 +18,13 @@ class File(APIEngine):
     """
 
     @classmethod
-    def upload(cls, file_path: str) -> UploadFileResponse:
+    def upload(cls, file: BufferedReader) -> UploadFileResponse:
         """
-        Uploads a local file to Scale.
+        Uploads a file to Scale.
 
         Args:
-            file_path (`str`):
-                The local path to the file.
+            file (`BufferedReader`):
+                A file opened with open(file_path, "r")
 
         Returns:
             UploadFileResponse: an object that contains the ID of the uploaded file
@@ -31,7 +33,7 @@ class File(APIEngine):
             ```python
             from llmengine import File
 
-            response = File.upload("training_dataset.csv")
+            response = File.upload(open("training_dataset.csv", "r"))
 
             print(response.json())
             ```
@@ -43,13 +45,12 @@ class File(APIEngine):
             }
             ```
         """
-        with open(file_path, "rb") as file:
-            files = {"file": file}
-            response = cls.post_file(
-                resource_name="v1/files",
-                files=files,
-                timeout=DEFAULT_TIMEOUT,
-            )
+        files = {"file": file}
+        response = cls.post_file(
+            resource_name="v1/files",
+            files=files,
+            timeout=DEFAULT_TIMEOUT,
+        )
         return UploadFileResponse.parse_obj(response)
 
     @classmethod
