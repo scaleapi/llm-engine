@@ -9,6 +9,7 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `llama-2-7b-chat`     | ✅                       |                            |
 | `llama-2-13b`         | ✅                       |                            |
 | `llama-2-13b-chat`    | ✅                       |                            |
+| `llama-2-70b`         | ✅                       |                            |
 | `falcon-7b`           | ✅                       |                            |
 | `falcon-7b-instruct`  | ✅                       |                            |
 | `falcon-40b`          | ✅                       |                            |
