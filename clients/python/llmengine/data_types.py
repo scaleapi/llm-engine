@@ -29,7 +29,7 @@ class GpuType(str, Enum):
 
     NVIDIA_TESLA_T4 = "nvidia-tesla-t4"
     NVIDIA_AMPERE_A10 = "nvidia-ampere-a10"
-    NVIDIA_AMPERE_A100 = "nvidia-a100"
+    NVIDIA_AMPERE_A100 = "nvidia-ampere-a100"
 
 
 class ModelEndpointType(str, Enum):
@@ -131,17 +131,27 @@ class CreateLLMEndpointRequest(BaseModel):
     # LLM specific fields
     model_name: str
     source: LLMSource = LLMSource.HUGGING_FACE
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.DEEPSPEED
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
     inference_framework_image_tag: str
-    num_shards: int
+    num_shards: int = 1
     """
-    Number of shards to distribute the model onto GPUs.
+    Number of shards to distribute the model onto GPUs. Only affects behavior for text-generation-inference models
+    """
+
+    quantize: Optional[Quantization] = None
+    """
+    Quantization for the LLM. Only affects behavior for text-generation-inference models
+    """
+
+    checkpoint_path: Optional[str] = None
+    """
+    Path to the checkpoint to load the model from. Only affects behavior for text-generation-inference models
     """
 
     # General endpoint fields
     metadata: Dict[str, Any]  # TODO: JSON type
     post_inference_hooks: Optional[List[str]]
-    endpoint_type: ModelEndpointType = ModelEndpointType.SYNC
+    endpoint_type: ModelEndpointType = ModelEndpointType.STREAMING
     cpus: CpuSpecificationType
     gpus: int
     memory: StorageSpecificationType
@@ -156,7 +166,10 @@ class CreateLLMEndpointRequest(BaseModel):
     high_priority: Optional[bool]
     default_callback_url: Optional[HttpUrl]
     default_callback_auth: Optional[CallbackAuth]
-    public_inference: Optional[bool] = True  # LLM endpoints are public by default.
+    public_inference: Optional[bool] = True
+    """
+    Whether the endpoint can be used for inference for all users. LLM endpoints are public by default.
+    """
 
 
 class CreateLLMEndpointResponse(BaseModel):

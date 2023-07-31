@@ -24,10 +24,10 @@ def test_create_docker_image_batch_job_resource_requests_merge_requests():
     # Test merging
     default = CreateDockerImageBatchJobResourceRequests(cpus=0.5)
     override = CreateDockerImageBatchJobResourceRequests(
-        memory="100Mi", gpus=1, gpu_type="nvidia-a100", storage="10Gi"
+        memory="100Mi", gpus=1, gpu_type="nvidia-ampere-a100", storage="10Gi"
     )
     expected = CreateDockerImageBatchJobResourceRequests(
-        cpus=0.5, memory="100Mi", gpus=1, gpu_type="nvidia-a100", storage="10Gi"
+        cpus=0.5, memory="100Mi", gpus=1, gpu_type="nvidia-ampere-a100", storage="10Gi"
     )
     actual = CreateDockerImageBatchJobResourceRequests.merge_requests(default, override)
     assert expected == actual
