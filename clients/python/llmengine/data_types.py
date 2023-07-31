@@ -454,8 +454,10 @@ class GetFileResponse(BaseModel):
 
     id: str = Field(..., description="ID of the requested file.")
     """ID of the requested file."""
+
     filename: str = Field(..., description="File name.")
     """File name."""
+
     size: int = Field(..., description="Length of the file, in characters.")
     """Length of the file, in characters."""
 
@@ -479,5 +481,6 @@ class GetFileContentResponse(BaseModel):
 
     id: str = Field(..., description="ID of the requested file.")
     """ID of the requested file."""
+
     content: str = Field(..., description="File content.")
     """File content."""

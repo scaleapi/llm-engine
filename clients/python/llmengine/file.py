@@ -12,7 +12,7 @@ from llmengine.data_types import (
 
 class File(APIEngine):
     """
-    File API. This API is used to upload private files to Scale so that fine-tunes can access them for training and validation data.
+    File API. This API is used to upload private files to LLM engine so that fine-tunes can access them for training and validation data.
 
     Functions are provided to upload, get, list, and delete files, as well as to get the contents of a file.
     """
@@ -20,7 +20,7 @@ class File(APIEngine):
     @classmethod
     def upload(cls, file: BufferedReader) -> UploadFileResponse:
         """
-        Uploads a file to Scale.
+        Uploads a file to LLM engine.
 
         Args:
             file (`BufferedReader`):
@@ -56,7 +56,7 @@ class File(APIEngine):
     @classmethod
     def get(cls, file_id: str) -> GetFileResponse:
         """
-        Get filename and size of a file.
+        Get file metadata, including filename and size.
 
         Args:
             file_id (`str`):
@@ -91,7 +91,7 @@ class File(APIEngine):
     @classmethod
     def list(cls) -> ListFilesResponse:
         """
-        List all files, with information about their filenames and sizes.
+        List metadata about all files, e.g. their filenames and sizes.
 
         Returns:
             ListFilesResponse: an object that contains a list of all files and their filenames and sizes
@@ -159,9 +159,9 @@ class File(APIEngine):
         return DeleteFileResponse.parse_obj(response)
 
     @classmethod
-    def get_content(cls, file_id: str) -> GetFileContentResponse:
+    def download(cls, file_id: str) -> GetFileContentResponse:
         """
-        Get contents of a file.
+        Get contents of a file, as a string. (If the uploaded file is in binary, a string encoding will be returned.)
 
         Args:
             file_id (`str`):
