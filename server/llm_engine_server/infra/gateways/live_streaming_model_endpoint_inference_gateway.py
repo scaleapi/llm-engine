@@ -72,7 +72,6 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
         errored = False
         if self.use_asyncio:
-
             async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
                 aio_resp = await aioclient.post(
                     request_url,

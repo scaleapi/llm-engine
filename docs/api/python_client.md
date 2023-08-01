@@ -21,3 +21,12 @@
             - get
             - list
             - delete
+
+::: llmengine.File
+    selection:
+        members:
+            - upload
+            - get
+            - get_content
+            - list
+            - delete

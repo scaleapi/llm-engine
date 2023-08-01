@@ -175,7 +175,6 @@ class CreateDockerImageBatchJobV1UseCase:
     async def execute(
         self, user: User, request: CreateDockerImageBatchJobV1Request
     ) -> CreateDockerImageBatchJobV1Response:
-
         if request.docker_image_batch_job_bundle_id is not None:
             batch_bundle = await self.docker_image_batch_job_bundle_repository.get_docker_image_batch_job_bundle(
                 request.docker_image_batch_job_bundle_id
