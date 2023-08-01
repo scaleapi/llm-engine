@@ -140,7 +140,7 @@ class APIEngine:
                     raise ValueError(f"Invalid JSON payload: {payload_data}")
 
     @classmethod
-    def post_file(cls, resource_name: str, files: BufferedReader, timeout: int) -> Dict[str, Any]:
+    def post_file(cls, resource_name: str, files: Dict[str, BufferedReader], timeout: int) -> Dict[str, Any]:
         api_key = get_api_key()
         response = requests.post(
             os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
