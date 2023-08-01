@@ -1,9 +1,9 @@
 # NOTICE - per Apache 2.0 license:
 # This file was copied and modified from the OpenAI Python client library: https://github.com/openai/openai-python
-from io import BufferedReader
 import json
 import os
 from functools import wraps
+from io import BufferedReader
 from typing import Any, AsyncIterable, Dict, Iterator, Optional
 
 import requests
