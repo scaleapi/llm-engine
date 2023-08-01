@@ -73,7 +73,7 @@ jobs:
     resource_class: small
     parallelism: 1
     steps:
-      - add_ssh_keys:
+      - add_ssh_keys:  # gives write access to CircleCI worker
           fingerprints:
             - "76:0c:1b:9e:e3:6a:c3:5c:6f:24:91:ef:7c:54:d2:7a"
       - checkout # checkout source code to working directory
