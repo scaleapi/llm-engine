@@ -3,7 +3,7 @@ from io import BufferedReader
 from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine
 from llmengine.data_types import (
     DeleteFileResponse,
-    GetFileContentResponse,
+    DownloadFileResponse,
     GetFileResponse,
     ListFilesResponse,
     UploadFileResponse,
@@ -159,7 +159,7 @@ class File(APIEngine):
         return DeleteFileResponse.parse_obj(response)
 
     @classmethod
-    def download(cls, file_id: str) -> GetFileContentResponse:
+    def download(cls, file_id: str) -> DownloadFileResponse:
         """
         Get contents of a file, as a string. (If the uploaded file is in binary, a string encoding will be returned.)
 
@@ -168,7 +168,7 @@ class File(APIEngine):
                 ID of the file
 
         Returns:
-            GetFileContentResponse: an object that contains the ID and content of the file
+            DownloadFileResponse: an object that contains the ID and content of the file
 
         === "Getting file content in Python"
             ```python
@@ -190,4 +190,4 @@ class File(APIEngine):
             f"v1/files/{file_id}/content",
             timeout=DEFAULT_TIMEOUT,
         )
-        return GetFileContentResponse.parse_obj(response)
+        return DownloadFileResponse.parse_obj(response)
