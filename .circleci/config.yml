@@ -10,7 +10,7 @@ workflows:
       - integration_tests
       - build_image
       - build_docs
-      - deploy_docs
+      - deploy_docs:
           filters:
             branches:
               only:
