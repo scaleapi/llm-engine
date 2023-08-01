@@ -17,7 +17,7 @@
         <link rel="next" href="../error_handling/">
       
       <link rel="icon" href="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.20">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.19">
     
     
       
@@ -1637,9 +1637,7 @@ provider.</li>
   </span>
 
 <a href="#llmengine.data_types.CreateFineTuneResponse.id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000">id</span>: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;ID of the created fine-tuning job.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000">id</span>: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(<span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;ID of the created fine-tuning job.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1702,10 +1700,7 @@ provider.</li>
   </span>
 
 <a href="#llmengine.data_types.GetFineTuneResponse.fine_tuned_model" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>fine_tuned_model: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Name of the resulting fine-tuned model. This can be plugged into the Completion API once the fine-tune is complete&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>fine_tuned_model: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;Name of the resulting fine-tuned model. This can be plugged into the Completion API once the fine-tune is complete&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1730,7 +1725,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.GetFineTuneResponse.id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000">id</span>: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(<span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;ID of the requested job.&quot;</span>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000">id</span>: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(<span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;ID of the requested job.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1754,9 +1749,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.GetFineTuneResponse.status" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>status: BatchJobStatus <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Status of the requested job.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>status: BatchJobStatus <span style="color: #666666">=</span> Field(<span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;Status of the requested job.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1819,10 +1812,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.ListFineTunesResponse.jobs" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>jobs: List[GetFineTuneResponse] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span style="color: #666666">...</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;List of fine-tuning jobs and their statuses.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>jobs: List[GetFineTuneResponse] <span style="color: #666666">=</span> Field(<span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;List of fine-tuning jobs and their statuses.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1885,9 +1875,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.CancelFineTuneResponse.success" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>success: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Whether cancellation was successful.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>success: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> Field(<span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;Whether cancellation was successful.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1950,9 +1938,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.name" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>name: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;The name of the model. Use this for making inference requests to the model.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>name: <span style="color: #008000">str</span> <span style="color: #666666">=</span> Field(description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;The name of the model. Use this for making inference requests to the model.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1976,9 +1962,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.source" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>source: LLMSource <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;The source of the model, e.g. Hugging Face.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>source: LLMSource <span style="color: #666666">=</span> Field(description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;The source of the model, e.g. Hugging Face.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2002,9 +1986,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.inference_framework" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>inference_framework: LLMInferenceFramework <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;The inference framework used by the model.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>inference_framework: LLMInferenceFramework <span style="color: #666666">=</span> Field(description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;The inference framework used by the model.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2028,10 +2010,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.id" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000">id</span>: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;(For self-hosted users) The autogenerated ID of the model.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000">id</span>: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) The autogenerated ID of the model.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2055,10 +2034,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.model_name" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>model_name: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;(For self-hosted users) For fine-tuned models, the base model. For base models, this will be the same as `name`.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>model_name: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) For fine-tuned models, the base model. For base models, this will be the same as `name`.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2082,10 +2058,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.inference_framework_tag" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>inference_framework_tag: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;(For self-hosted users) The Docker image tag used to run the model.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>inference_framework_tag: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) The Docker image tag used to run the model.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2109,10 +2082,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.num_shards" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>num_shards: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;(For self-hosted users) The number of shards.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>num_shards: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) The number of shards.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2136,10 +2106,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.quantize" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>quantize: Optional[Quantization] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;(For self-hosted users) The quantization method.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>quantize: Optional[Quantization] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) The quantization method.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2163,10 +2130,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.GetLLMEndpointResponse.spec" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>spec: Optional[GetModelEndpointResponse] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;(For self-hosted users) Model endpoint details.&quot;</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>spec: Optional[GetModelEndpointResponse] <span style="color: #666666">=</span> Field(default<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">None</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;(For self-hosted users) Model endpoint details.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2229,9 +2193,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.ListLLMEndpointsResponse.model_endpoints" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>model_endpoints: List[GetLLMEndpointResponse] <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;The list of models.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>model_endpoints: List[GetLLMEndpointResponse] <span style="color: #666666">=</span> Field(<span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;The list of models.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2294,9 +2256,7 @@ once the fine-tune is complete.</p>
   </span>
 
 <a href="#llmengine.data_types.DeleteLLMEndpointResponse.deleted" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>deleted: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> Field(
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Whether deletion was successful.&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>deleted: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> Field(<span style="color: #666666">...</span>, description<span style="color: #666666">=</span><span style="color: #BA2121">&#39;Whether deletion was successful.&#39;</span>)
 </code></pre></div>
 
   <div class="doc doc-contents ">
