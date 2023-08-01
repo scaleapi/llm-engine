@@ -17,7 +17,7 @@
         <link rel="next" href="../data_types/">
       
       <link rel="icon" href="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.19">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
     
     
       
@@ -25,7 +25,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.eebd395e.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
@@ -559,6 +559,47 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#llmengine.File" class="md-nav__link">
+    File
+  </a>
+  
+    <nav class="md-nav" aria-label="File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.file.File.upload" class="md-nav__link">
+    upload()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.file.File.get" class="md-nav__link">
+    get()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.file.File.list" class="md-nav__link">
+    list()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.file.File.delete" class="md-nav__link">
+    delete()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -767,6 +808,47 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#llmengine.File" class="md-nav__link">
+    File
+  </a>
+  
+    <nav class="md-nav" aria-label="File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.file.File.upload" class="md-nav__link">
+    upload()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.file.File.get" class="md-nav__link">
+    get()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.file.File.list" class="md-nav__link">
+    list()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.file.File.delete" class="md-nav__link">
+    delete()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -790,15 +872,15 @@
 
 
 <h2 id="llmengine.Completion" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">Completion</span>
+        <span class="doc doc-object-name doc-class-name">Completion</span>
 
 
 <a href="#llmengine.Completion" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>Completion API. This API is used to generate text completions.</p>
@@ -808,6 +890,7 @@ LLMs take the input prompts and chunk them into smaller units called <em>tokens<
 language. Tokens may include trailing spaces and even sub-words; this process is language dependent.</p>
 <p>The Completion API can be run either synchronous or asynchronously (via Python <code>asyncio</code>).
 For each of these modes, you can also choose whether to stream token responses or not.</p>
+
 
 
   
@@ -822,13 +905,12 @@ For each of these modes, you can also choose whether to stream token responses o
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.completion.Completion.create" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">create</span>
+        <span class="doc doc-object-name doc-function-name">create</span>
 
   
   <span class="doc doc-labels">
@@ -836,7 +918,17 @@ For each of these modes, you can also choose whether to stream token responses o
   </span>
 
 <a href="#llmengine.completion.Completion.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create(model: <span style="color: #008000">str</span>, prompt: <span style="color: #008000">str</span>, max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>, temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>, timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>, stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>) <span style="color: #666666">-&gt;</span> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create(
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    model: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    prompt: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    Iterator[CompletionStreamResponse],
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -850,8 +942,6 @@ It returns a
 if <code>stream=False</code> or an async iterator of
 <a href="../../api/data_types/#llmengine.CompletionStreamResponse">CompletionStreamResponse</a>
 with <code>request_id</code> and <code>outputs</code> fields.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -869,11 +959,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           <td>
                 <code>str</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the model to use. See <a href="../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
-            </div>
-          </td>
+          <td><p>Name of the model to use. See <a href="../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -883,11 +969,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           <td>
                 <code>str</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The prompt to generate completions for, encoded as a string.</p>
-            </div>
-          </td>
+          <td><p>The prompt to generate completions for, encoded as a string.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -897,13 +979,9 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The maximum number of tokens to generate in the completion.</p>
+          <td><p>The maximum number of tokens to generate in the completion.</p>
 <p>The token count of your prompt plus <code>max_new_tokens</code> cannot exceed the model's context length. See
-<a href="../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
-            </div>
-          </td>
+<a href="../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p></td>
           <td>
                 <code>20</code>
           </td>
@@ -913,12 +991,8 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           <td>
                 <code>float</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>What sampling temperature to use, in the range <code>(0, 1]</code>. Higher values like 0.8 will make the output
-more random, while lower values like 0.2 will make it more focused and deterministic.</p>
-            </div>
-          </td>
+          <td><p>What sampling temperature to use, in the range <code>(0, 1]</code>. Higher values like 0.8 will make the output
+more random, while lower values like 0.2 will make it more focused and deterministic.</p></td>
           <td>
                 <code>0.2</code>
           </td>
@@ -928,11 +1002,7 @@ more random, while lower values like 0.2 will make it more focused and determini
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.</p>
-            </div>
-          </td>
+          <td><p>Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.</p></td>
           <td>
                 <code>10</code>
           </td>
@@ -942,21 +1012,15 @@ more random, while lower values like 0.2 will make it more focused and determini
           <td>
                 <code>bool</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Whether to stream the response. If true, the return type is an
+          <td><p>Whether to stream the response. If true, the return type is an
 <code>Iterator[CompletionStreamResponse]</code>. Otherwise, the return type is a <code>CompletionSyncResponse</code>.
-When streaming, tokens will be sent as data-only <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-sent events</a>.</p>
-            </div>
-          </td>
+When streaming, tokens will be sent as data-only <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-sent events</a>.</p></td>
           <td>
                 <code>False</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -971,11 +1035,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <td><code>response</code></td>          <td>
                 <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncResponse" href="../data_types/#llmengine.CompletionSyncResponse">CompletionSyncResponse</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamResponse" href="../data_types/#llmengine.CompletionStreamResponse">CompletionStreamResponse</a>]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The generated response (if <code>stream=False</code>) or iterator of response chunks (if <code>stream=True</code>)</p>
-            </div>
-          </td>
+          <td><p>The generated response (if <code>stream=False</code>) or iterator of response chunks (if <code>stream=True</code>)</p></td>
         </tr>
     </tbody>
   </table>
@@ -1039,22 +1099,31 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.completion.Completion.acreate" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">acreate</span>
+        <span class="doc doc-object-name doc-function-name">acreate</span>
 
   
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
   </span>
 
 <a href="#llmengine.completion.Completion.acreate" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>acreate(model: <span style="color: #008000">str</span>, prompt: <span style="color: #008000">str</span>, max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>, temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>, timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>, stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>) <span style="color: #666666">-&gt;</span> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>acreate(
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    model: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    prompt: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    AsyncIterable[CompletionStreamResponse],
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1068,8 +1137,6 @@ It returns a
 if <code>stream=False</code> or an async iterator of
 <a href="../../api/data_types/#llmengine.CompletionStreamResponse">CompletionStreamResponse</a>
 with <code>request_id</code> and <code>outputs</code> fields.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1087,11 +1154,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           <td>
                 <code>str</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the model to use. See <a href="../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p>
-            </div>
-          </td>
+          <td><p>Name of the model to use. See <a href="../../model_zoo">Model Zoo</a> for a list of Models that are supported.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -1101,11 +1164,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           <td>
                 <code>str</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The prompt to generate completions for, encoded as a string.</p>
-            </div>
-          </td>
+          <td><p>The prompt to generate completions for, encoded as a string.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -1115,13 +1174,9 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The maximum number of tokens to generate in the completion.</p>
+          <td><p>The maximum number of tokens to generate in the completion.</p>
 <p>The token count of your prompt plus <code>max_new_tokens</code> cannot exceed the model's context length. See
-<a href="../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p>
-            </div>
-          </td>
+<a href="../../model_zoo">Model Zoo</a> for information on each supported model's context length.</p></td>
           <td>
                 <code>20</code>
           </td>
@@ -1131,12 +1186,8 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           <td>
                 <code>float</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>What sampling temperature to use, in the range <code>(0, 1]</code>. Higher values like 0.8 will make the output
-more random, while lower values like 0.2 will make it more focused and deterministic.</p>
-            </div>
-          </td>
+          <td><p>What sampling temperature to use, in the range <code>(0, 1]</code>. Higher values like 0.8 will make the output
+more random, while lower values like 0.2 will make it more focused and deterministic.</p></td>
           <td>
                 <code>0.2</code>
           </td>
@@ -1146,11 +1197,7 @@ more random, while lower values like 0.2 will make it more focused and determini
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.</p>
-            </div>
-          </td>
+          <td><p>Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.</p></td>
           <td>
                 <code>10</code>
           </td>
@@ -1160,21 +1207,15 @@ more random, while lower values like 0.2 will make it more focused and determini
           <td>
                 <code>bool</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Whether to stream the response. If true, the return type is an
+          <td><p>Whether to stream the response. If true, the return type is an
 <code>Iterator[CompletionStreamResponse]</code>. Otherwise, the return type is a <code>CompletionSyncResponse</code>.
-When streaming, tokens will be sent as data-only <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-sent events</a>.</p>
-            </div>
-          </td>
+When streaming, tokens will be sent as data-only <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-sent events</a>.</p></td>
           <td>
                 <code>False</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1189,11 +1230,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <td><code>response</code></td>          <td>
                 <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncResponse" href="../data_types/#llmengine.CompletionSyncResponse">CompletionSyncResponse</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamResponse" href="../data_types/#llmengine.CompletionStreamResponse">CompletionStreamResponse</a>]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The generated response (if <code>stream=False</code>) or iterator of response chunks (if <code>stream=True</code>)</p>
-            </div>
-          </td>
+          <td><p>The generated response (if <code>stream=False</code>) or iterator of response chunks (if <code>stream=True</code>)</p></td>
         </tr>
     </tbody>
   </table>
@@ -1278,21 +1315,22 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 <h2 id="llmengine.FineTune" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">FineTune</span>
+        <span class="doc doc-object-name doc-class-name">FineTune</span>
 
 
 <a href="#llmengine.FineTune" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>FineTune API. This API is used to fine-tune models.</p>
 <p>Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning is a supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM. LLM Engine currently uses <a href="https://arxiv.org/abs/2106.09685">LoRA</a> for fine-tuning. Support for additional fine-tuning methods is upcoming.</p>
 <p>LLM Engine provides APIs to create fine-tunes on a base model with training &amp; validation datasets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.</p>
 <p>Creating a fine-tune will end with the creation of a Model, which you can view using <code>Model.get(model_name)</code> or delete using <code>Model.delete(model_name)</code>.</p>
+
 
 
   
@@ -1307,13 +1345,12 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.create" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">create</span>
+        <span class="doc doc-object-name doc-function-name">create</span>
 
   
   <span class="doc doc-labels">
@@ -1321,7 +1358,15 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
   </span>
 
 <a href="#llmengine.fine_tuning.FineTune.create" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create(model: <span style="color: #008000">str</span>, training_file: <span style="color: #008000">str</span>, validation_file: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>, hyperparameters: Optional[Dict[<span style="color: #008000">str</span>, Union[<span style="color: #008000">str</span>, <span style="color: #008000">int</span>, <span style="color: #008000">float</span>]]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>, suffix: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>) <span style="color: #666666">-&gt;</span> CreateFineTuneResponse
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create(
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    model: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    training_file: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    validation_file: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    hyperparameters: Optional[
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        Dict[<span style="color: #008000">str</span>, Union[<span style="color: #008000">str</span>, <span style="color: #008000">int</span>, <span style="color: #008000">float</span>]]
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    ] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    suffix: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>) <span style="color: #666666">-&gt;</span> CreateFineTuneResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1337,8 +1382,6 @@ fine-tuning. For sequences longer than the native <code>max_seq_length</code> of
 will be truncated.</p>
 <p>A fine-tuning job can take roughly 30 minutes for a small dataset (~200 rows)
 and several hours for larger ones.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1356,11 +1399,7 @@ and several hours for larger ones.</p>
           <td>
                 <code>`str`</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The name of the base model to fine-tune. See <a href="../../model_zoo">Model Zoo</a> for the list of available models to fine-tune.</p>
-            </div>
-          </td>
+          <td><p>The name of the base model to fine-tune. See <a href="../../model_zoo">Model Zoo</a> for the list of available models to fine-tune.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -1370,11 +1409,7 @@ and several hours for larger ones.</p>
           <td>
                 <code>`str`</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Publicly accessible URL to a CSV file for training. When no validation_file is provided, one will automatically be created using a 10% split of the training_file data.</p>
-            </div>
-          </td>
+          <td><p>Publicly accessible URL to a CSV file for training. When no validation_file is provided, one will automatically be created using a 10% split of the training_file data.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -1384,11 +1419,7 @@ and several hours for larger ones.</p>
           <td>
                 <code>`Optional[str]`</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Publicly accessible URL to a CSV file for validation. The validation file is used to compute metrics which let LLM Engine pick the best fine-tuned checkpoint, which will be used for inference when fine-tuning is complete.</p>
-            </div>
-          </td>
+          <td><p>Publicly accessible URL to a CSV file for validation. The validation file is used to compute metrics which let LLM Engine pick the best fine-tuned checkpoint, which will be used for inference when fine-tuning is complete.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -1398,18 +1429,14 @@ and several hours for larger ones.</p>
           <td>
                 <code>`Optional[Dict[str, str]]`</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A dict of hyperparameters to customize fine-tuning behavior.</p>
+          <td><p>A dict of hyperparameters to customize fine-tuning behavior.</p>
 <p>Currently supported hyperparameters:</p>
 <ul>
 <li><code>lr</code>: Peak learning rate used during fine-tuning. It decays with a cosine schedule afterward. (Default: 2e-3)</li>
 <li><code>warmup_ratio</code>: Ratio of training steps used for learning rate warmup. (Default: 0.03)</li>
 <li><code>epochs</code>: Number of fine-tuning epochs. This should be less than 20. (Default: 5)</li>
 <li><code>weight_decay</code>: Regularization penalty applied to learned weights. (Default: 0.001)</li>
-</ul>
-            </div>
-          </td>
+</ul></td>
           <td>
                 <code>None</code>
           </td>
@@ -1419,23 +1446,17 @@ and several hours for larger ones.</p>
           <td>
                 <code>`Optional[str]`</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A string that will be added to your fine-tuned model name. If present, the entire fine-tuned model name
+          <td><p>A string that will be added to your fine-tuned model name. If present, the entire fine-tuned model name
 will be formatted like <code>"[model].[suffix].[YYYY-MM-DD-HH-MM-SS]"</code>. If absent, the
 fine-tuned model name will be formatted <code>"[model].[YYYY-MM-DD-HH-MM-SS]"</code>.
 For example, if <code>suffix</code> is <code>"my-experiment"</code>, the fine-tuned model name could be
-<code>"llama-2-7b.my-experiment.2023-07-17-23-01-50"</code>.</p>
-            </div>
-          </td>
+<code>"llama-2-7b.my-experiment.2023-07-17-23-01-50"</code>.</p></td>
           <td>
                 <code>None</code>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1450,11 +1471,7 @@ For example, if <code>suffix</code> is <code>"my-experiment"</code>, the fine-tu
 <td><code>CreateFineTuneResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CreateFineTuneResponse" href="../data_types/#llmengine.CreateFineTuneResponse">CreateFineTuneResponse</a></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>an object that contains the ID of the created fine-tuning job</p>
-            </div>
-          </td>
+          <td><p>an object that contains the ID of the created fine-tuning job</p></td>
         </tr>
     </tbody>
   </table>
@@ -1517,13 +1534,12 @@ you can use the URL given when you click the “Raw” button
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.get" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">get</span>
+        <span class="doc doc-object-name doc-function-name">get</span>
 
   
   <span class="doc doc-labels">
@@ -1544,8 +1560,6 @@ and returns a
 object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 <code>UNDEFINED</code>, <code>FAILURE</code> or <code>SUCCESS</code>).</p>
 
-
-
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -1562,19 +1576,13 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
           <td>
                 <code>`str`</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>ID of the fine-tuning job</p>
-            </div>
-          </td>
+          <td><p>ID of the fine-tuning job</p></td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1589,11 +1597,7 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 <td><code>GetFineTuneResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.GetFineTuneResponse" href="../data_types/#llmengine.GetFineTuneResponse">GetFineTuneResponse</a></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>an object that contains the ID and status of the requested job</p>
-            </div>
-          </td>
+          <td><p>an object that contains the ID and status of the requested job</p></td>
         </tr>
     </tbody>
   </table>
@@ -1623,13 +1627,12 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.get_events" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">get_events</span>
+        <span class="doc doc-object-name doc-function-name">get_events</span>
 
   
   <span class="doc doc-labels">
@@ -1649,8 +1652,6 @@ which has a list of events that has happened for the fine-tuning job. Two events
 are logged periodically: an evaluation of the training loss, and an
 evaluation of the eval loss. This API will return all events for the fine-tuning job.</p>
 
-
-
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -1667,19 +1668,13 @@ evaluation of the eval loss. This API will return all events for the fine-tuning
           <td>
                 <code>`str`</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>ID of the fine-tuning job</p>
-            </div>
-          </td>
+          <td><p>ID of the fine-tuning job</p></td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1694,11 +1689,7 @@ evaluation of the eval loss. This API will return all events for the fine-tuning
 <td><code>GetFineTuneEventsResponse</code></td>          <td>
                 <code><span title="llmengine.data_types.GetFineTuneEventsResponse">GetFineTuneEventsResponse</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>an object that contains the list of events for the fine-tuning job</p>
-            </div>
-          </td>
+          <td><p>an object that contains the list of events for the fine-tuning job</p></td>
         </tr>
     </tbody>
   </table>
@@ -1746,13 +1737,12 @@ evaluation of the eval loss. This API will return all events for the fine-tuning
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.list" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">list</span>
+        <span class="doc doc-object-name doc-function-name">list</span>
 
   
   <span class="doc doc-labels">
@@ -1770,8 +1760,6 @@ evaluation of the eval loss. This API will return all events for the fine-tuning
 It returns a list of pairs of <code>fine_tune_id</code> and <code>status</code> for
 all existing jobs.</p>
 
-
-
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -1785,11 +1773,7 @@ all existing jobs.</p>
 <td><code>ListFineTunesResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.ListFineTunesResponse" href="../data_types/#llmengine.ListFineTunesResponse">ListFineTunesResponse</a></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>an object that contains a list of all fine-tuning jobs and their statuses</p>
-            </div>
-          </td>
+          <td><p>an object that contains a list of all fine-tuning jobs and their statuses</p></td>
         </tr>
     </tbody>
   </table>
@@ -1824,13 +1808,12 @@ all existing jobs.</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.fine_tuning.FineTune.cancel" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">cancel</span>
+        <span class="doc doc-object-name doc-function-name">cancel</span>
 
   
   <span class="doc doc-labels">
@@ -1849,8 +1832,6 @@ it's no longer required. It takes the <code>fine_tune_id</code> as a parameter
 and returns a response object which has a <code>success</code> field
 confirming if the cancellation was successful.</p>
 
-
-
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -1867,19 +1848,13 @@ confirming if the cancellation was successful.</p>
           <td>
                 <code>`str`</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>ID of the fine-tuning job</p>
-            </div>
-          </td>
+          <td><p>ID of the fine-tuning job</p></td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1894,11 +1869,7 @@ confirming if the cancellation was successful.</p>
 <td><code>CancelFineTuneResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CancelFineTuneResponse" href="../data_types/#llmengine.CancelFineTuneResponse">CancelFineTuneResponse</a></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>an object that contains whether the cancellation was successful</p>
-            </div>
-          </td>
+          <td><p>an object that contains whether the cancellation was successful</p></td>
         </tr>
     </tbody>
   </table>
@@ -1937,21 +1908,22 @@ confirming if the cancellation was successful.</p>
 
 
 <h2 id="llmengine.Model" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">Model</span>
+        <span class="doc doc-object-name doc-class-name">Model</span>
 
 
 <a href="#llmengine.Model" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
 
   
       <p>Model API. This API is used to get, list, and delete models. Models include both base
 models built into LLM Engine, and fine-tuned models that you create through the
 <a href="./#llmengine.fine_tuning.FineTune.create">FineTune.create()</a> API.</p>
 <p>See <a href="../../model_zoo">Model Zoo</a> for the list of publicly available base models.</p>
+
 
 
   
@@ -1966,13 +1938,12 @@ models built into LLM Engine, and fine-tuned models that you create through the
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.get" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">get</span>
+        <span class="doc doc-object-name doc-function-name">get</span>
 
   
   <span class="doc doc-labels">
@@ -1993,8 +1964,6 @@ and returns a
 <a href="../../api/data_types/#llmengine.GetLLMEndpointResponse">GetLLMEndpointResponse</a>
 object.</p>
 
-
-
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2011,19 +1980,13 @@ object.</p>
           <td>
                 <code>`str`</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the model</p>
-            </div>
-          </td>
+          <td><p>Name of the model</p></td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2038,11 +2001,7 @@ object.</p>
 <td><code>GetLLMEndpointResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.GetLLMEndpointResponse" href="../data_types/#llmengine.GetLLMEndpointResponse">GetLLMEndpointResponse</a></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>object representing the LLM and configurations</p>
-            </div>
-          </td>
+          <td><p>object representing the LLM and configurations</p></td>
         </tr>
     </tbody>
   </table>
@@ -2077,13 +2036,12 @@ object.</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.list" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">list</span>
+        <span class="doc doc-object-name doc-function-name">list</span>
 
   
   <span class="doc doc-labels">
@@ -2103,8 +2061,6 @@ It returns a list of
 <a href="../../api/data_types/#llmengine.GetLLMEndpointResponse">GetLLMEndpointResponse</a>
 objects for all models. The most important field is the model <code>name</code>.</p>
 
-
-
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -2118,11 +2074,7 @@ objects for all models. The most important field is the model <code>name</code>.
 <td><code>ListLLMEndpointsResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.ListLLMEndpointsResponse" href="../data_types/#llmengine.ListLLMEndpointsResponse">ListLLMEndpointsResponse</a></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>list of models</p>
-            </div>
-          </td>
+          <td><p>list of models</p></td>
         </tr>
     </tbody>
   </table>
@@ -2193,13 +2145,12 @@ objects for all models. The most important field is the model <code>name</code>.
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
 <h3 id="llmengine.model.Model.delete" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">delete</span>
+        <span class="doc doc-object-name doc-function-name">delete</span>
 
   
   <span class="doc doc-labels">
@@ -2219,8 +2170,6 @@ object which has a <code>deleted</code> field confirming if the deletion
 was successful. If called on a base model included with LLM
 Engine, an error will be thrown.</p>
 
-
-
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2237,19 +2186,13 @@ Engine, an error will be thrown.</p>
           <td>
                 <code>`str`</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the model</p>
-            </div>
-          </td>
+          <td><p>Name of the model</p></td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2264,11 +2207,7 @@ Engine, an error will be thrown.</p>
 <td><code>response</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.DeleteLLMEndpointResponse" href="../data_types/#llmengine.DeleteLLMEndpointResponse">DeleteLLMEndpointResponse</a></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>whether the model was successfully deleted</p>
-            </div>
-          </td>
+          <td><p>whether the model was successfully deleted</p></td>
         </tr>
     </tbody>
   </table>
@@ -2278,6 +2217,372 @@ Engine, an error will be thrown.</p>
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Model
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> Model<span style="color: #666666">.</span>delete(<span style="color: #BA2121">&quot;llama-2-7b.suffix.2023-07-18-12-00-00&quot;</span>)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;deleted&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">true</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>}
+</code></pre></div>
+</div>
+</div>
+</div>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="llmengine.File" class="doc doc-heading">
+        <span class="doc doc-object-name doc-class-name">File</span>
+
+
+<a href="#llmengine.File" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents first">
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="llmengine.api_engine.APIEngine">APIEngine</span></code></p>
+
+  
+      <p>File API. This API is used to upload private files to LLM engine so that fine-tunes can access them for training and validation data.</p>
+<p>Functions are provided to upload, get, list, and delete files, as well as to get the contents of a file.</p>
+
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="llmengine.file.File.upload" class="doc doc-heading">
+        <span class="doc doc-object-name doc-function-name">upload</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#llmengine.file.File.upload" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>upload(file: BufferedReader) <span style="color: #666666">-&gt;</span> UploadFileResponse
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Uploads a file to LLM engine.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>file</code></td>
+          <td>
+                <code>`BufferedReader`</code>
+          </td>
+          <td><p>A file opened with open(file_path, "r")</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>UploadFileResponse</code></td>          <td>
+                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.UploadFileResponse" href="../data_types/#llmengine.UploadFileResponse">UploadFileResponse</a></code>
+          </td>
+          <td><p>an object that contains the ID of the uploaded file</p></td>
+        </tr>
+    </tbody>
+  </table>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.file.File.upload--__tabbed_1_1" name="llmengine.file.File.upload--__tabbed_1" type="radio" /><input id="llmengine.file.File.upload--__tabbed_1_2" name="llmengine.file.File.upload--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.file.File.upload--__tabbed_1_1">Uploading file in Python</label><label for="llmengine.file.File.upload--__tabbed_1_2">Response in JSON</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> File
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> File<span style="color: #666666">.</span>upload(<span style="color: #008000">open</span>(<span style="color: #BA2121">&quot;training_dataset.csv&quot;</span>, <span style="color: #BA2121">&quot;r&quot;</span>))
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;file-abc123&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>}
+</code></pre></div>
+</div>
+</div>
+</div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="llmengine.file.File.get" class="doc doc-heading">
+        <span class="doc doc-object-name doc-function-name">get</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#llmengine.file.File.get" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>get(file_id: <span style="color: #008000">str</span>) <span style="color: #666666">-&gt;</span> GetFileResponse
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Get file metadata, including filename and size.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>file_id</code></td>
+          <td>
+                <code>`str`</code>
+          </td>
+          <td><p>ID of the file</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>GetFileResponse</code></td>          <td>
+                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.GetFileResponse" href="../data_types/#llmengine.GetFileResponse">GetFileResponse</a></code>
+          </td>
+          <td><p>an object that contains the ID, filename, and size of the requested file</p></td>
+        </tr>
+    </tbody>
+  </table>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.file.File.get--__tabbed_1_1" name="llmengine.file.File.get--__tabbed_1" type="radio" /><input id="llmengine.file.File.get--__tabbed_1_2" name="llmengine.file.File.get--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.file.File.get--__tabbed_1_1">Getting metadata about file in Python</label><label for="llmengine.file.File.get--__tabbed_1_2">Response in JSON</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> File
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> File<span style="color: #666666">.</span>get(
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    file_id<span style="color: #666666">=</span><span style="color: #BA2121">&quot;file-abc123&quot;</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;file-abc123&quot;</span>,
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;filename&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;training_dataset.csv&quot;</span>,
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;size&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">100</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>}
+</code></pre></div>
+</div>
+</div>
+</div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="llmengine.file.File.list" class="doc doc-heading">
+        <span class="doc doc-object-name doc-function-name">list</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#llmengine.file.File.list" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000">list</span>() <span style="color: #666666">-&gt;</span> ListFilesResponse
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>List metadata about all files, e.g. their filenames and sizes.</p>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>ListFilesResponse</code></td>          <td>
+                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.ListFilesResponse" href="../data_types/#llmengine.ListFilesResponse">ListFilesResponse</a></code>
+          </td>
+          <td><p>an object that contains a list of all files and their filenames and sizes</p></td>
+        </tr>
+    </tbody>
+  </table>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.file.File.list--__tabbed_1_1" name="llmengine.file.File.list--__tabbed_1" type="radio" /><input id="llmengine.file.File.list--__tabbed_1_2" name="llmengine.file.File.list--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.file.File.list--__tabbed_1_1">Listing files in Python</label><label for="llmengine.file.File.list--__tabbed_1_2">Response in JSON</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> File
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> File<span style="color: #666666">.</span>list()
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;files&quot;</span>:<span style="color: #bbbbbb"> </span>[
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;file-abc123&quot;</span>,
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;filename&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;training_dataset.csv&quot;</span>,
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;size&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">100</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span style="color: #bbbbbb">        </span>},
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span style="color: #bbbbbb">        </span>{
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;file-def456&quot;</span>,
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;filename&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;validation_dataset.csv&quot;</span>,
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span style="color: #bbbbbb">            </span><span style="color: #008000; font-weight: bold">&quot;size&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">50</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span style="color: #bbbbbb">        </span>}
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span style="color: #bbbbbb">    </span>]
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>}
+</code></pre></div>
+</div>
+</div>
+</div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="llmengine.file.File.delete" class="doc doc-heading">
+        <span class="doc doc-object-name doc-function-name">delete</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#llmengine.file.File.delete" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>delete(file_id: <span style="color: #008000">str</span>) <span style="color: #666666">-&gt;</span> DeleteFileResponse
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Deletes a file.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>file_id</code></td>
+          <td>
+                <code>`str`</code>
+          </td>
+          <td><p>ID of the file</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>DeleteFileResponse</code></td>          <td>
+                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.DeleteFileResponse" href="../data_types/#llmengine.DeleteFileResponse">DeleteFileResponse</a></code>
+          </td>
+          <td><p>an object that contains whether the deletion was successful</p></td>
+        </tr>
+    </tbody>
+  </table>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.file.File.delete--__tabbed_1_1" name="llmengine.file.File.delete--__tabbed_1" type="radio" /><input id="llmengine.file.File.delete--__tabbed_1_2" name="llmengine.file.File.delete--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.file.File.delete--__tabbed_1_1">Deleting file in Python</label><label for="llmengine.file.File.delete--__tabbed_1_2">Response in JSON</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> File
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> File<span style="color: #666666">.</span>delete(file_id<span style="color: #666666">=</span><span style="color: #BA2121">&quot;file-abc123&quot;</span>)
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 </div>
