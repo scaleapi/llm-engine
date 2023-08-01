@@ -48,7 +48,7 @@
 
 ::: llmengine.GetFileResponse
 
-::: llmengine.DownloadFileResponse
+::: llmengine.GetFileContentResponse
 
 ::: llmengine.ListFilesResponse
 

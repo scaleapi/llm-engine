@@ -489,7 +489,7 @@ class DeleteFileResponse(BaseModel):
     """Whether deletion was successful."""
 
 
-class DownloadFileResponse(BaseModel):
+class GetFileContentResponse(BaseModel):
     """Response object for retrieving a file's content."""
 
     id: str = Field(..., description="ID of the requested file.")
