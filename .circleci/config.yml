@@ -15,7 +15,6 @@ workflows:
             branches:
               only:
                 - main
-                - phil/docs-deploy-ci
 
 jobs:
   run_unit_tests_python_client:
