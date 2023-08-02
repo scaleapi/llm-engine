@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0.beta7"
+__version__ = "0.0.0.beta8"
 
 from typing import Sequence
 
@@ -25,12 +25,18 @@ from llmengine.data_types import (
     CompletionSyncResponse,
     CreateFineTuneRequest,
     CreateFineTuneResponse,
+    DeleteFileResponse,
     DeleteLLMEndpointResponse,
+    GetFileContentResponse,
+    GetFileResponse,
     GetFineTuneResponse,
     GetLLMEndpointResponse,
+    ListFilesResponse,
     ListFineTunesResponse,
     ListLLMEndpointsResponse,
+    UploadFileResponse,
 )
+from llmengine.file import File
 from llmengine.fine_tuning import FineTune
 from llmengine.model import Model
 
@@ -43,11 +49,17 @@ __all__: Sequence[str] = (
     "CompletionSyncResponse",
     "CreateFineTuneRequest",
     "CreateFineTuneResponse",
+    "DeleteFileResponse",
     "DeleteLLMEndpointResponse",
+    "GetFileContentResponse",
+    "File",
     "FineTune",
+    "GetFileResponse",
     "GetFineTuneResponse",
     "GetLLMEndpointResponse",
+    "ListFilesResponse",
     "ListFineTunesResponse",
     "ListLLMEndpointsResponse",
     "Model",
+    "UploadFileResponse",
 )
