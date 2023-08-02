@@ -27,6 +27,6 @@
         members:
             - upload
             - get
-            - get_content
+            - download
             - list
             - delete

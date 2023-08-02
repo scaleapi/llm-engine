@@ -174,7 +174,7 @@ class File(APIEngine):
             ```python
             from llmengine import File
 
-            response = File.get_content(file_id="file-abc123")
+            response = File.download(file_id="file-abc123")
             print(response.json())
             ```
 
