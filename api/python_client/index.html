@@ -937,12 +937,14 @@ For each of these modes, you can also choose whether to stream token responses o
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    prompt: <span style="color: #008000">str</span>,
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>,
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>,
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>,
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>) <span style="color: #666666">-&gt;</span> Union[
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    CompletionSyncResponse,
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    Iterator[CompletionStreamResponse],
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>]
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    stop_sequences: Optional[List[<span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    return_token_log_probs: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    Iterator[CompletionStreamResponse],
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1021,12 +1023,42 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>What sampling temperature to use, in the range <code>(0, 1]</code>. Higher values like 0.8 will make the output
-more random, while lower values like 0.2 will make it more focused and deterministic.</p>
+              <p>What sampling temperature to use, in the range <code>[0, 1]</code>. Higher values like 0.8 will make the output
+more random, while lower values like 0.2 will make it more focused and deterministic.
+When temperature is 0 greedy sampling is used.</p>
             </div>
           </td>
           <td>
                 <code>0.2</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>stop_sequences</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[str]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>One or more sequences where the API will stop generating tokens for the current completion.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>return_token_log_probs</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[bool]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to return the log probabilities of generated tokens.
+When True, the response will include a list of tokens and their log probabilities.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
           </td>
         </tr>
         <tr>
@@ -1165,12 +1197,14 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    prompt: <span style="color: #008000">str</span>,
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    max_new_tokens: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">20</span>,
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>,
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>,
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>) <span style="color: #666666">-&gt;</span> Union[
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    CompletionSyncResponse,
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    AsyncIterable[CompletionStreamResponse],
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>]
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    stop_sequences: Optional[List[<span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    return_token_log_probs: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    AsyncIterable[CompletionStreamResponse],
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1249,12 +1283,42 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>What sampling temperature to use, in the range <code>(0, 1]</code>. Higher values like 0.8 will make the output
-more random, while lower values like 0.2 will make it more focused and deterministic.</p>
+              <p>What sampling temperature to use, in the range <code>[0, 1]</code>. Higher values like 0.8 will make the output
+more random, while lower values like 0.2 will make it more focused and deterministic.
+When temperature is 0 greedy sampling is used.</p>
             </div>
           </td>
           <td>
                 <code>0.2</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>stop_sequences</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[str]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>One or more sequences where the API will stop generating tokens for the current completion.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>return_token_log_probs</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[bool]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to return the log probabilities of generated tokens.
+When True, the response will include a list of tokens and their log probabilities.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
           </td>
         </tr>
         <tr>
