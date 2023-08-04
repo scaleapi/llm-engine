@@ -378,18 +378,33 @@ class Model(APIEngine):
         Download a fine-tuned model.
 
         This API can be used to download the resulting model from a fine-tuning job.
-        It takes the `model_name` as a parameter and returns a response object
-        of ### todo: finish this
+        It takes the `model_name` and `download_format` as parameter and returns a 
+        response object which contains a list of urls associated with the fine-tuned model.
+        The user can then download these urls to obtain the fine-tuned model. If called 
+        on a nonexistent model, an error will be thrown.
 
         Args:
             model_name (`str`):
-                name of the fine-tuned model (base model names are null, so not meaningful to download)
-            format (`str`): 
-                download format requested (currently only trying to support "huggingface") 
-                question: should this be an enum? 
+                name of the fine-tuned model 
+            download_format (`str`): 
+                download format requested (default=huggingface) 
         Returns:
             DownloadModelResponse: an object that contains the url from which to download the model weights
 
+        === "Downloading model in Python"
+            ```python
+            from llmengine import Model
+
+            response = Model.download("llama-2-7b.suffix.2023-07-18-12-00-00", download_format="huggingface")
+            print(response.json())
+            ```
+
+        === "Response in JSON"
+            ```json
+            {
+                "urls": ['https://path-to-my-model-weights'] 
+            }
+            ```
         """
 
         request = ModelDownloadRequest(model_name=model_name, download_format=download_format)
