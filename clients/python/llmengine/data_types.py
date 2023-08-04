@@ -8,9 +8,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, Field, HttpUrl
 
 CpuSpecificationType = Union[str, int, float]
-StorageSpecificationType = Union[
-    str, int, float
-]  # TODO(phil): we can make this more specific.
+StorageSpecificationType = Union[str, int, float]  # TODO(phil): we can make this more specific.
 
 
 class LLMInferenceFramework(str, Enum):
@@ -63,9 +61,7 @@ class CallbackmTLSAuth(BaseModel):
 
 
 class CallbackAuth(BaseModel):
-    __root__: Union[CallbackBasicAuth, CallbackmTLSAuth] = Field(
-        ..., discriminator="kind"
-    )
+    __root__: Union[CallbackBasicAuth, CallbackmTLSAuth] = Field(..., discriminator="kind")
 
 
 class ModelEndpointDeploymentState(BaseModel):
@@ -135,9 +131,7 @@ class CreateLLMEndpointRequest(BaseModel):
     # LLM specific fields
     model_name: str
     source: LLMSource = LLMSource.HUGGING_FACE
-    inference_framework: LLMInferenceFramework = (
-        LLMInferenceFramework.TEXT_GENERATION_INFERENCE
-    )
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
     inference_framework_image_tag: str
     num_shards: int = 1
     """
@@ -485,9 +479,7 @@ class GetFineTuneEventsResponse(BaseModel):
     Response object for getting events for a FineTune.
     """
 
-    events: List[LLMFineTuneEvent] = Field(
-        ..., description="List of fine-tuning events."
-    )
+    events: List[LLMFineTuneEvent] = Field(..., description="List of fine-tuning events.")
 
 
 class UploadFileResponse(BaseModel):
@@ -513,9 +505,7 @@ class GetFileResponse(BaseModel):
 class ListFilesResponse(BaseModel):
     """Response object for listing files."""
 
-    files: List[GetFileResponse] = Field(
-        ..., description="List of file IDs, names, and sizes."
-    )
+    files: List[GetFileResponse] = Field(..., description="List of file IDs, names, and sizes.")
     """List of file IDs, names, and sizes."""
 
 
