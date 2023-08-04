@@ -44,9 +44,9 @@
 
 ::: llmengine.DeleteLLMEndpointResponse
 
-::: llmengine.DownloadModelRequest
+::: llmengine.ModelDownloadRequest
 
-::: llmengine.DownloadModelResponse
+::: llmengine.ModelDownloadResponse
 
 ::: llmengine.UploadFileResponse
 
