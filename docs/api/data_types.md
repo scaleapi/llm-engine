@@ -47,3 +47,13 @@
 ::: llmengine.DownloadModelRequest
 
 ::: llmengine.DownloadModelResponse
+
+::: llmengine.UploadFileResponse
+
+::: llmengine.GetFileResponse
+
+::: llmengine.GetFileContentResponse
+
+::: llmengine.ListFilesResponse
+
+::: llmengine.DeleteFileResponse

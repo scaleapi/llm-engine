@@ -106,7 +106,6 @@ async def test_list_docker_image_batch_job_bundles(
     test_api_key: str,
     test_api_key_team: str,
 ):
-
     orm_docker_image_batch_job_bundle_1_v2.created_by = test_api_key_team
     orm_docker_image_batch_job_bundle_1_v2.owner = test_api_key_team
     docker_image_batch_job_bundle_1_v2.created_by = test_api_key_team

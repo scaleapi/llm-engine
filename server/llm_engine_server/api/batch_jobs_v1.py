@@ -125,7 +125,6 @@ async def create_docker_image_batch_job(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> CreateDockerImageBatchJobV1Response:
-
     add_trace_resource_name("batch_jobs_di_create")
     logger.info(f"POST /docker-image-batch-jobs with {request} for {auth}")
     try:

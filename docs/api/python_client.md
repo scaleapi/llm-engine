@@ -22,3 +22,12 @@
             - list
             - delete
             - download
+
+::: llmengine.File
+    selection:
+        members:
+            - upload
+            - get
+            - download
+            - list
+            - delete

@@ -10,6 +10,11 @@ workflows:
       - integration_tests
       - build_image
       - build_docs
+      - deploy_docs:
+          filters:
+            branches:
+              only:
+                - main
 
 jobs:
   run_unit_tests_python_client:
@@ -62,6 +67,25 @@ jobs:
           name: Build Docs
           command: |
             mkdocs build --strict
+  deploy_docs:
+    docker:
+      - image: python:3.8-bookworm
+    resource_class: small
+    parallelism: 1
+    steps:
+      - add_ssh_keys:  # gives write access to CircleCI worker
+          fingerprints:
+            - "76:0c:1b:9e:e3:6a:c3:5c:6f:24:91:ef:7c:54:d2:7a"
+      - checkout # checkout source code to working directory
+      - environment_setup
+      - install_client
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements-docs.txt
+      - run:
+          name: Deploy Docs
+          command: |
+            mkdocs gh-deploy
   build_image:
     executor: ubuntu-large
     steps:

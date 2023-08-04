@@ -3,6 +3,7 @@
 import json
 import os
 from functools import wraps
+from io import BufferedReader
 from typing import Any, AsyncIterable, Dict, Iterator, Optional
 
 import requests
@@ -13,8 +14,17 @@ SPELLBOOK_API_URL = "https://api.spellbook.scale.com/llm-engine"
 LLM_ENGINE_BASE_PATH = os.getenv("LLM_ENGINE_BASE_PATH", SPELLBOOK_API_URL)
 DEFAULT_TIMEOUT: int = 10
 
+api_key = None
+
+
+def set_api_key(key):
+    global api_key
+    api_key = key
+
 
 def get_api_key() -> str:
+    if api_key is not None:
+        return api_key
     env_api_key = os.getenv("SCALE_API_KEY")
     return env_api_key or "root"
 
@@ -44,6 +54,7 @@ class APIEngine:
             os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -60,6 +71,7 @@ class APIEngine:
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -73,6 +85,7 @@ class APIEngine:
             os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -87,6 +100,7 @@ class APIEngine:
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -103,6 +117,7 @@ class APIEngine:
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
             stream=True,
         )
         if response.status_code != 200:
@@ -123,6 +138,22 @@ class APIEngine:
                     yield payload_json
                 except json.JSONDecodeError:
                     raise ValueError(f"Invalid JSON payload: {payload_data}")
+
+    @classmethod
+    def post_file(
+        cls, resource_name: str, files: Dict[str, BufferedReader], timeout: int
+    ) -> Dict[str, Any]:
+        api_key = get_api_key()
+        response = requests.post(
+            os.path.join(LLM_ENGINE_BASE_PATH, resource_name),
+            files=files,
+            timeout=timeout,
+            headers={"x-api-key": api_key},
+        )
+        if response.status_code != 200:
+            raise parse_error(response.status_code, response.content)
+        payload = response.json()
+        return payload
 
     @classmethod
     async def apost_sync(
