@@ -43,3 +43,7 @@
 ::: llmengine.ListLLMEndpointsResponse
 
 ::: llmengine.DeleteLLMEndpointResponse
+
+::: llmengine.DownloadModelRequest
+
+::: llmengine.DownloadModelResponse

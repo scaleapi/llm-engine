@@ -440,3 +440,14 @@ class GetFineTuneEventsResponse(BaseModel):
     """
 
     events: List[LLMFineTuneEvent] = Field(..., description="List of fine-tuning events.")
+
+
+class ModelDownloadRequest(BaseModel):
+    """
+    Request object for downloading a model.
+    """
+    model_name: str = Field(..., description="Name of the model to download.")
+    download_format: str = Field(..., description="Desired return format for downloaded model weights (default=huggingface).")
+
+class ModelDownloadResponse(BaseModel):
+    urls: List[str] = Field(..., description="List of URLs to download model weights from.")

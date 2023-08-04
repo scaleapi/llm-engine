@@ -21,3 +21,4 @@
             - get
             - list
             - delete
+            - download

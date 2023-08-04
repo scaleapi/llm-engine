@@ -5,6 +5,8 @@ from llmengine.data_types import (
     CreateLLMEndpointRequest,
     CreateLLMEndpointResponse,
     DeleteLLMEndpointResponse,
+    ModelDownloadRequest,
+    ModelDownloadResponse,
     GetLLMEndpointResponse,
     GpuType,
     ListLLMEndpointsResponse,
@@ -347,3 +349,35 @@ class Model(APIEngine):
         """
         response = cls._delete(f"v1/llm/model-endpoints/{model}", timeout=DEFAULT_TIMEOUT)
         return DeleteLLMEndpointResponse.parse_obj(response)
+
+
+    @classmethod 
+    def download(cls, 
+                 model_name: str, 
+                 download_format: str = "huggingface", 
+                 ) -> ModelDownloadResponse:
+        """
+        Download a fine-tuned model.
+
+        This API can be used to download the resulting model from a fine-tuning job.
+        It takes the `model_name` as a parameter and returns a response object
+        of ### todo: finish this
+
+        Args:
+            model_name (`str`):
+                name of the fine-tuned model (base model names are null, so not meaningful to download)
+            format (`str`): 
+                download format requested (currently only trying to support "huggingface") 
+                question: should this be an enum? 
+        Returns:
+            DownloadModelResponse: an object that contains the url from which to download the model weights
+
+        """
+
+        request = ModelDownloadRequest(model_name=model_name, download_format=download_format)
+        response = cls.post_sync(
+            resource_name = f"v1/llm/model-endpoints/download",
+            data=request.dict(),
+            timeout=DEFAULT_TIMEOUT,
+        )
+        return ModelDownloadResponse.parse_obj(response)

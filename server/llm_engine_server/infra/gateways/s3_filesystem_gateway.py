@@ -1,6 +1,6 @@
 import os
 import re
-from typing import IO
+from typing import IO, List
 
 import boto3
 import smart_open

@@ -169,3 +169,10 @@ class ListFineTuneJobResponse(BaseModel):
 
 class CancelFineTuneJobResponse(BaseModel):
     success: bool
+
+class ModelDownloadRequest(BaseModel):
+    model_name: str
+    format: str
+
+class ModelDownloadResponse(BaseModel):
+    url: str
