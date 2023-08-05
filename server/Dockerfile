@@ -44,6 +44,7 @@ RUN pip install -r requirements.txt --no-cache-dir
 RUN pip install -r requirements_override.txt --no-cache-dir
 COPY server/pyproject.toml /workspace/server/pyproject.toml
 COPY server/setup.py /workspace/server/setup.py
+COPY server/service_configs /workspace/server/service_configs
 COPY server/llm_engine_server /workspace/server/llm_engine_server
 RUN pip install -e .
 
