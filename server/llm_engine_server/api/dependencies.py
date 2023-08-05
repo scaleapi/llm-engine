@@ -74,7 +74,10 @@ from llm_engine_server.infra.services import (
 from llm_engine_server.infra.services.live_llm_model_endpoint_service import (
     LiveLLMModelEndpointService,
 )
+from llm_engine_server.core.loggers import filename_wo_ext, make_logger
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
+
+logger = make_logger(filename_wo_ext(__name__))
 
 AUTH = HTTPBasic(auto_error=False)
 
@@ -102,7 +105,7 @@ class ExternalInterfaces:
     model_primitive_gateway: ModelPrimitiveGateway
 
 
-def _get_external_interfaces(
+def _get_default_external_interfaces(
     read_only: bool, session: Callable[[], AsyncSession]
 ) -> ExternalInterfaces:
     """
@@ -180,7 +183,6 @@ def _get_external_interfaces(
         batch_job_progress_gateway=batch_job_progress_gateway,
     )
 
-    model_primitive_gateway: ModelPrimitiveGateway
     model_primitive_gateway = FakeModelPrimitiveGateway()
 
     docker_image_batch_job_gateway = LiveDockerImageBatchJobGateway()
@@ -215,18 +217,36 @@ def _get_external_interfaces(
     return external_interfaces
 
 
+async def get_default_external_interfaces():
+    session = async_scoped_session(SessionAsync, scopefunc=asyncio.current_task)
+    return _get_default_external_interfaces(read_only=False, session=session)
+
+
 async def get_external_interfaces():
     try:
-        session = async_scoped_session(SessionAsync, scopefunc=asyncio.current_task)
-        yield _get_external_interfaces(read_only=False, session=session)
+        from plugins.dependencies import get_external_interfaces as get_custom_external_interfaces
+        logger.info("Using custom get_external_interfaces()")
+        return await get_custom_external_interfaces()
+    except ModuleNotFoundError:
+        logger.info("Using default get_external_interfaces()")
+        return await get_default_external_interfaces()
     finally:
         pass
 
 
+def get_default_external_interfaces_read_only():
+    session = async_scoped_session(SessionReadOnlyAsync, scopefunc=asyncio.current_task)
+    return _get_default_external_interfaces(read_only=True, session=session)
+
+
 async def get_external_interfaces_read_only():
     try:
-        session = async_scoped_session(SessionReadOnlyAsync, scopefunc=asyncio.current_task)
-        yield _get_external_interfaces(read_only=True, session=session)
+        from plugins.dependencies import get_external_interfaces_read_only as get_custom_external_interfaces_read_only
+        logger.info("Using custom get_external_interfaces_read_only()")
+        yield get_custom_external_interfaces_read_only()
+    except ModuleNotFoundError:
+        logger.info("Using default get_external_interfaces_read_only()")
+        yield get_default_external_interfaces_read_only()
     finally:
         pass
 
@@ -241,9 +261,9 @@ def get_auth_repository() -> Iterator[AuthenticationRepository]:
         pass
 
 
-async def verify_authentication(
-    credentials: HTTPBasicCredentials = Depends(AUTH),
-    auth_repo: AuthenticationRepository = Depends(get_auth_repository),
+async def default_verify_authentication(
+    credentials: HTTPBasicCredentials,
+    auth_repo: AuthenticationRepository,
 ) -> User:
     """
     Verifies the authentication headers and returns a (user_id, team_id) auth tuple. Otherwise,
@@ -267,6 +287,19 @@ async def verify_authentication(
         )
 
     return auth
+
+
+async def verify_authentication(
+    credentials: HTTPBasicCredentials = Depends(AUTH),
+    auth_repo: AuthenticationRepository = Depends(get_auth_repository),
+) -> User:
+    try:
+        from plugins.dependencies import verify_authentication as custom_verify_authentication
+        logger.info("Using custom verify_authentication()")
+        return await custom_verify_authentication(credentials)
+    except ModuleNotFoundError:
+        logger.info("Using default verify_authentication()")
+        return await default_verify_authentication(credentials, auth_repo)
 
 
 _pool: Optional[aioredis.BlockingConnectionPool] = None
