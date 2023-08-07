@@ -14,6 +14,8 @@ response = FineTune.create(
 )
 ```
 
-Setting `report_to` in `hyperparameters` enables automatic metrics tracking.
-`wandb_config` can contain any parameters from https://docs.wandb.ai/ref/python/init.
+Setting `report_to` in `hyperparameters` to `wandb` enables automatic metrics tracking.
+
+
+`wandb_config` can contain any parameters from [wandb.init()](https://docs.wandb.ai/ref/python/init).
 `api_key` which is the API key must be specified. Can also specify `base_url` to use a custom Weights & Biases server.
