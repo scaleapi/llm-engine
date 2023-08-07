@@ -61,7 +61,7 @@ class Completion(APIEngine):
             temperature (float):
                 What sampling temperature to use, in the range `[0, 1]`. Higher values like 0.8 will make the output
                 more random, while lower values like 0.2 will make it more focused and deterministic.
-                When temperature is 0 greedy sampling is used.
+                When temperature is 0 [greedy search](https://huggingface.co/docs/transformers/generation_strategies#greedy-search) is used.
 
             stop_sequences (Optional[List[str]]):
                 One or more sequences where the API will stop generating tokens for the current completion.
@@ -224,7 +224,7 @@ class Completion(APIEngine):
             temperature (float):
                 What sampling temperature to use, in the range `[0, 1]`. Higher values like 0.8 will make the output
                 more random, while lower values like 0.2 will make it more focused and deterministic.
-                When temperature is 0 greedy sampling is used.
+                When temperature is 0 [greedy search](https://huggingface.co/docs/transformers/generation_strategies#greedy-search) is used.
 
             stop_sequences (Optional[List[str]]):
                 One or more sequences where the API will stop generating tokens for the current completion.
