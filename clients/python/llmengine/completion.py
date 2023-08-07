@@ -187,108 +187,105 @@ class Completion(APIEngine):
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
         """
-                Creates a completion for the provided prompt and parameters synchronously.
+        Creates a completion for the provided prompt and parameters synchronously.
 
-                This API can be used to get the LLM to generate a completion *synchronously*.
-                It takes as parameters the `model` ([see Model Zoo](../../model_zoo)) and the `prompt`.
-                Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
-                It returns a
-                [CompletionSyncResponse](../../api/data_types/#llmengine.CompletionSyncResponse)
-                if `stream=False` or an async iterator of
-                [CompletionStreamResponse](../../api/data_types/#llmengine.CompletionStreamResponse)
-                with `request_id` and `outputs` fields.
+        This API can be used to get the LLM to generate a completion *synchronously*.
+        It takes as parameters the `model` ([see Model Zoo](../../model_zoo)) and the `prompt`.
+        Optionally it takes `max_new_tokens`, `temperature`, `timeout` and `stream`.
+        It returns a
+        [CompletionSyncResponse](../../api/data_types/#llmengine.CompletionSyncResponse)
+        if `stream=False` or an async iterator of
+        [CompletionStreamResponse](../../api/data_types/#llmengine.CompletionStreamResponse)
+        with `request_id` and `outputs` fields.
 
-                Args:
-                    model (str):
-                        Name of the model to use. See [Model Zoo](../../model_zoo) for a list of Models that are supported.
+        Args:
+            model (str):
+                Name of the model to use. See [Model Zoo](../../model_zoo) for a list of Models that are supported.
 
-                    prompt (str):
-                        The prompt to generate completions for, encoded as a string.
+            prompt (str):
+                The prompt to generate completions for, encoded as a string.
 
-                    max_new_tokens (int):
-                        The maximum number of tokens to generate in the completion.
+            max_new_tokens (int):
+                The maximum number of tokens to generate in the completion.
 
-                        The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
-                        [Model Zoo](../../model_zoo) for information on each supported model's context length.
+                The token count of your prompt plus `max_new_tokens` cannot exceed the model's context length. See
+                [Model Zoo](../../model_zoo) for information on each supported model's context length.
 
-                    temperature (float):
-                        What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
-                        more random, while lower values like 0.2 will make it more focused and deterministic.
-        <<<<<<< HEAD
-        =======
-                        When temperature is 0 [greedy search](https://huggingface.co/docs/transformers/generation_strategies#greedy-search) is used.
+            temperature (float):
+                What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
+                more random, while lower values like 0.2 will make it more focused and deterministic.
+                When temperature is 0 [greedy search](https://huggingface.co/docs/transformers/generation_strategies#greedy-search) is used.
 
-                    stop_sequences (Optional[List[str]]):
-                        One or more sequences where the API will stop generating tokens for the current completion.
+            stop_sequences (Optional[List[str]]):
+                One or more sequences where the API will stop generating tokens for the current completion.
 
-                    return_token_log_probs (Optional[bool]):
-                        Whether to return the log probabilities of generated tokens.
-                        When True, the response will include a list of tokens and their log probabilities.
-        >>>>>>> f99db04 (Link to HF greedy search)
+            return_token_log_probs (Optional[bool]):
+                Whether to return the log probabilities of generated tokens.
+                When True, the response will include a list of tokens and their log probabilities.
 
-                    timeout (int):
-                        Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
+            timeout (int):
+                Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
 
-                    stream (bool):
-                        Whether to stream the response. If true, the return type is an
-                        `Iterator[CompletionStreamResponse]`. Otherwise, the return type is a `CompletionSyncResponse`.
-                        When streaming, tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
+            stream (bool):
+                Whether to stream the response. If true, the return type is an
+                `Iterator[CompletionStreamResponse]`. Otherwise, the return type is a `CompletionSyncResponse`.
+                When streaming, tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
 
 
-                Returns:
-                    response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
+        Returns:
+            response (Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]): The generated response (if `stream=False`) or iterator of response chunks (if `stream=True`)
 
-                === "Synchronous completion without token streaming in Python"
-                    ```python
-                    from llmengine import Completion
+        === "Synchronous completion without token streaming in Python"
+            ```python
+            from llmengine import Completion
 
-                    response = Completion.create(
-                        model="llama-2-7b",
-                        prompt="Hello, my name is",
-                        max_new_tokens=10,
-                        temperature=0.2,
-                    )
+            response = Completion.create(
+                model="llama-2-7b",
+                prompt="Hello, my name is",
+                max_new_tokens=10,
+                temperature=0.2,
+            )
+            print(response.json())
+            ```
+
+        === "Response in JSON"
+            ```json
+            {
+                "request_id": "8bbd0e83-f94c-465b-a12b-aabad45750a9",
+                "output": {
+                    "text": "_______ and I am a _______",
+                    "num_completion_tokens": 10
+                }
+            }
+            ```
+
+        Token streaming can be used to reduce _perceived_ latency for applications. Here is how applications can use streaming:
+
+        === "Synchronous completion with token streaming in Python"
+            ```python
+            from llmengine import Completion
+
+            stream = Completion.create(
+                model="llama-2-7b",
+                prompt="why is the sky blue?",
+                max_new_tokens=5,
+                temperature=0.2,
+                stream=True,
+            )
+
+            for response in stream:
+                if response.output:
                     print(response.json())
-                    ```
+            ```
 
-                === "Response in JSON"
-                    ```json
-                    {
-                        "request_id": "8bbd0e83-f94c-465b-a12b-aabad45750a9",
-                        "output": {
-                            "text": "_______ and I am a _______",
-                            "num_completion_tokens": 10
-                        }
-                    }
-                    ```
-
-                Token streaming can be used to reduce _perceived_ latency for applications. Here is how applications can use streaming:
-
-                === "Synchronous completion with token streaming in Python"
-                    ```python
-                    from llmengine import Completion
-
-                    stream = Completion.create(
-                        model="llama-2-7b",
-                        prompt="why is the sky blue?",
-                        max_new_tokens=5,
-                        temperature=0.2,
-                        stream=True,
-                    )
-
-                    for response in stream:
-                        if response.output:
-                            print(response.json())
-                    ```
-
-                === "Response in JSON"
-                    ```json
-                    {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1 } }
-                    {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "I", "finished": false, "num_completion_tokens": 2 } }
-                    {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": " don", "finished": false, "num_completion_tokens": 3 } }
-                    {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "’", "finished": false, "num_completion_tokens": 4 } }
-                    {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "t", "finished": true, "num_completion_tokens": 5 } }
-                    ```
+        === "Response in JSON"
+            ```json
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "\\n", "finished": false, "num_completion_tokens": 1 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "I", "finished": false, "num_completion_tokens": 2 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": " don", "finished": false, "num_completion_tokens": 3 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "’", "finished": false, "num_completion_tokens": 4 } }
+            {"request_id": "ebbde00c-8c31-4c03-8306-24f37cd25fa2", "output": {"text": "t", "finished": true, "num_completion_tokens": 5 } }
+            ```
         """
         if stream:
 
