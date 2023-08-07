@@ -205,7 +205,7 @@ You should get a response similar to:
 ### Pointing LLM Engine client to use self-hosted infrastructure
 The `llmengine` client makes requests to Scale AI's hosted infrastructure by default. You can have `llmengine` client make requests to your own self-hosted infrastructure by setting the `LLM_ENGINE_BASE_PATH` environment variable to the URL of the `llm-engine` pod. 
 
-The exact URL of `llm-engine` pod depends on your Kubernetes cluster networking setup. The domain is specified in `config.values.infra.dns_host_domain` in the helm chart values config file. Using `charts/llm-engine/values_sample.yaml` as an example, you would 
+The exact URL of `llm-engine` pod depends on your Kubernetes cluster networking setup. The domain is specified at `config.values.infra.dns_host_domain` in the helm chart values config file. Using `charts/llm-engine/values_sample.yaml` as an example, you would 
 ```bash
 export LLM_ENGINE_BASE_PATH=https://domain.llm-engine.com
 ```
