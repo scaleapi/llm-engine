@@ -1,4 +1,4 @@
-from typing import AsyncIterable, Iterator, Union
+from typing import AsyncIterable, Iterator, List, Optional, Union
 
 from llmengine.api_engine import APIEngine
 from llmengine.data_types import (
@@ -29,6 +29,8 @@ class Completion(APIEngine):
         prompt: str,
         max_new_tokens: int = 20,
         temperature: float = 0.2,
+        stop_sequences: Optional[List[str]] = None,
+        return_token_log_probs: Optional[bool] = False,
         timeout: int = 10,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]:
@@ -57,7 +59,7 @@ class Completion(APIEngine):
                 [Model Zoo](../../model_zoo) for information on each supported model's context length.
 
             temperature (float):
-                What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
+                What sampling temperature to use, in the range `[0, 1]`. Higher values like 0.8 will make the output
                 more random, while lower values like 0.2 will make it more focused and deterministic.
                 When temperature is 0 [greedy search](https://huggingface.co/docs/transformers/generation_strategies#greedy-search) is used.
 
@@ -158,6 +160,8 @@ class Completion(APIEngine):
                 prompt=prompt,
                 max_new_tokens=max_new_tokens,
                 temperature=temperature,
+                stop_sequences=stop_sequences,
+                return_token_log_probs=return_token_log_probs,
                 timeout=timeout,
             )
 
@@ -173,7 +177,11 @@ class Completion(APIEngine):
                 return CompletionSyncResponse.parse_obj(response)
 
             return await _acreate_sync(
-                prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
+                prompt=prompt,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                stop_sequences=stop_sequences,
+                return_token_log_probs=return_token_log_probs,
             )
 
     @classmethod
@@ -183,6 +191,8 @@ class Completion(APIEngine):
         prompt: str,
         max_new_tokens: int = 20,
         temperature: float = 0.2,
+        stop_sequences: Optional[List[str]] = None,
+        return_token_log_probs: Optional[bool] = False,
         timeout: int = 10,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
@@ -212,7 +222,7 @@ class Completion(APIEngine):
                 [Model Zoo](../../model_zoo) for information on each supported model's context length.
 
             temperature (float):
-                What sampling temperature to use, in the range `(0, 1]`. Higher values like 0.8 will make the output
+                What sampling temperature to use, in the range `[0, 1]`. Higher values like 0.8 will make the output
                 more random, while lower values like 0.2 will make it more focused and deterministic.
                 When temperature is 0 [greedy search](https://huggingface.co/docs/transformers/generation_strategies#greedy-search) is used.
 
@@ -300,12 +310,20 @@ class Completion(APIEngine):
                     yield CompletionStreamResponse.parse_obj(chunk)
 
             return _create_stream(
-                prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
+                prompt=prompt,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                stop_sequences=stop_sequences,
+                return_token_log_probs=return_token_log_probs,
             )
 
         else:
             data = CompletionSyncV1Request(
-                prompt=prompt, max_new_tokens=max_new_tokens, temperature=temperature
+                prompt=prompt,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                stop_sequences=stop_sequences,
+                return_token_log_probs=return_token_log_probs,
             ).dict()
             response = cls.post_sync(
                 resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",
