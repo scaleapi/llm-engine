@@ -664,7 +664,8 @@ that can be used for producing completions to prompts.</p>
 <li><strong>prompt:</strong> The main input for the LLM to respond to.</li>
 <li><strong>max_new_tokens:</strong> The maximum number of tokens to generate in the chat completion.</li>
 <li><strong>temperature:</strong> The sampling temperature to use. Higher values make the output more random,
-  while lower values will make it more focused and deterministic.</li>
+  while lower values will make it more focused and deterministic.
+  When temperature is 0 <a href="https://huggingface.co/docs/transformers/generation_strategies#greedy-search">greedy search</a> is used.</li>
 </ul>
 <p>See the full <a href="../../api/python_client/#llmengine.Completion">Completion API reference documentation</a> to learn more.</p>
 <h2 id="completion-api-response">Completion API response<a class="headerlink" href="#completion-api-response" title="Permanent link">&para;</a></h2>
