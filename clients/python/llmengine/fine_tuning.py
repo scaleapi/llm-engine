@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine
 from llmengine.data_types import (
@@ -29,6 +29,7 @@ class FineTune(APIEngine):
         training_file: str,
         validation_file: Optional[str] = None,
         hyperparameters: Optional[Dict[str, Union[str, int, float]]] = None,
+        wandb_config: Optional[Dict[str, Any]] = None,
         suffix: Optional[str] = None,
     ) -> CreateFineTuneResponse:
         """
@@ -65,6 +66,12 @@ class FineTune(APIEngine):
                 * `warmup_ratio`: Ratio of training steps used for learning rate warmup. (Default: 0.03)
                 * `epochs`: Number of fine-tuning epochs. This should be less than 20. (Default: 5)
                 * `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
+
+            wandb_config (`Optional[Dict[str, Any]]`):
+                A dict of configuration parameters for Weights & Biases. See [Weights & Biases](https://docs.wandb.ai/ref/python/init) for more information.
+                Set `hyperparameter["report_to"]` to `wandb` to enable automatic finetune metrics logging.
+                Must include `api_key` field which is the wandb API key.
+                Also supports setting `base_url` to use a custom Weights & Biases server.
 
             suffix (`Optional[str]`):
                 A string that will be added to your fine-tuned model name. If present, the entire fine-tuned model name
@@ -134,6 +141,7 @@ class FineTune(APIEngine):
             training_file=training_file,
             validation_file=validation_file,
             hyperparameters=hyperparameters,
+            wandb_config=wandb_config,
             suffix=suffix,
         )
         response = cls.post_sync(
