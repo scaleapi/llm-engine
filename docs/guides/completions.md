@@ -34,6 +34,7 @@ print(response.output.text)
 - **max_new_tokens:** The maximum number of tokens to generate in the chat completion.
 - **temperature:** The sampling temperature to use. Higher values make the output more random,
   while lower values will make it more focused and deterministic.
+  When temperature is 0 [greedy search](https://huggingface.co/docs/transformers/generation_strategies#greedy-search) is used.
 
 See the full [Completion API reference documentation](../../api/python_client/#llmengine.Completion) to learn more.
 
