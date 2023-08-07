@@ -1508,8 +1508,9 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    hyperparameters: Optional[
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        Dict[<span style="color: #008000">str</span>, Union[<span style="color: #008000">str</span>, <span style="color: #008000">int</span>, <span style="color: #008000">float</span>]]
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    ] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    suffix: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>) <span style="color: #666666">-&gt;</span> CreateFineTuneResponse
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    wandb_config: Optional[Dict[<span style="color: #008000">str</span>, Any]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    suffix: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>) <span style="color: #666666">-&gt;</span> CreateFineTuneResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1596,6 +1597,23 @@ and several hours for larger ones.</p>
 <li><code>epochs</code>: Number of fine-tuning epochs. This should be less than 20. (Default: 5)</li>
 <li><code>weight_decay</code>: Regularization penalty applied to learned weights. (Default: 0.001)</li>
 </ul>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>wandb_config</code></td>
+          <td>
+                <code>`Optional[Dict[str, Any]]`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A dict of configuration parameters for Weights &amp; Biases. See <a href="https://docs.wandb.ai/ref/python/init">Weights &amp; Biases</a> for more information.
+Set <code>hyperparameter["report_to"]</code> to <code>wandb</code> to enable automatic finetune metrics logging.
+Must include <code>api_key</code> field which is the wandb API key.
+Also supports setting <code>base_url</code> to use a custom Weights &amp; Biases server.</p>
             </div>
           </td>
           <td>
