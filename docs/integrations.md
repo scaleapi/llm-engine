@@ -1,7 +1,9 @@
 # Integrations
 
 ## Weights & Biases
+
 LLM Engine integrates with Weights & Biases to track metrics during fine tuning. To enable:
+
 ```python
 from llmengine import FineTune
 
@@ -14,8 +16,11 @@ response = FineTune.create(
 )
 ```
 
-Setting `report_to` in `hyperparameters` to `wandb` enables automatic metrics tracking.
+Configs to specify:
 
-
-`wandb_config` can contain any parameters from [wandb.init()](https://docs.wandb.ai/ref/python/init).
-`api_key` which is the API key must be specified. Can also specify `base_url` to use a custom Weights & Biases server.
+| Field             | Subfield                                                             | Note                                                      |
+| ----------------- | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| `hyperparameters` | `report_to`                                                          | Set to `wandb` to enables automatic metrics tracking      |
+| `wandb_config`    | `api_key`                                                            | The API key, must specify                                 |
+| `wandb_config`    | `base_url`                                                           | (Optional) base URL of a custom Weights & Biases server   |
+| `wandb_config`    | keys from from [wandb.init()](https://docs.wandb.ai/ref/python/init) | See [wandb.init()](https://docs.wandb.ai/ref/python/init) |
