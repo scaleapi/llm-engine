@@ -69,6 +69,7 @@ class FineTune(APIEngine):
 
             wandb_config (`Optional[Dict[str, Any]]`):
                 A dict of configuration parameters for Weights & Biases. See [Weights & Biases](https://docs.wandb.ai/ref/python/init) for more information.
+                Set `hyperparameter["report_to"]` to `wandb` to enable automatic finetune metrics logging.
                 Must include `api_key` field which is the wandb API key.
                 Also supports setting `base_url` to use a custom Weights & Biases server.
 
