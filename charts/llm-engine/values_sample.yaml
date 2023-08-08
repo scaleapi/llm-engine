@@ -96,7 +96,7 @@ config:
       # k8s_cluster_name [required] is the name of the k8s cluster
       k8s_cluster_name: main_cluster
       # dns_host_domain [required] is the domain name of the k8s cluster
-      dns_host_domain: domain.llm-engine.com
+      dns_host_domain: llm-engine.domain.com
       # default_region [required] is the default AWS region for various resources (e.g ECR)
       default_region: us-east-1
       # aws_account_id [required] is the AWS account ID for various resources (e.g ECR)

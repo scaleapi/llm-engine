@@ -207,5 +207,5 @@ The `llmengine` client makes requests to Scale AI's hosted infrastructure by def
 
 The exact URL of `llm-engine` service depends on your Kubernetes cluster networking setup. The domain is specified at `config.values.infra.dns_host_domain` in the helm chart values config file. Using `charts/llm-engine/values_sample.yaml` as an example, you would do:
 ```bash
-export LLM_ENGINE_BASE_PATH=https://domain.llm-engine.com
+export LLM_ENGINE_BASE_PATH=https://llm-engine.domain.com
 ```
