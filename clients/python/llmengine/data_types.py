@@ -201,6 +201,9 @@ class GetLLMEndpointResponse(BaseModel):
     source: LLMSource = Field(description="The source of the model, e.g. Hugging Face.")
     """The source of the model, e.g. Hugging Face."""
 
+    status: ModelEndpointStatus = Field(description="The status of the model.")
+    """The status of the model (can be one of "READY", "UPDATE_PENDING", "UPDATE_IN_PROGRESS", "UPDATE_FAILED", "DELETE_IN_PROGRESS")."""
+
     inference_framework: LLMInferenceFramework = Field(
         description="The inference framework used by the model."
     )
