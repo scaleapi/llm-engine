@@ -285,9 +285,9 @@ class Model(APIEngine):
                         "name": "llama-2-7b.suffix.2023-07-18-12-00-00",
                         "model_name": null,
                         "source": "hugging_face",
+                        "status": "READY",
                         "inference_framework": "text_generation_inference",
                         "inference_framework_tag": null,
-                        "num_shards": null,
                         "quantize": null,
                         "spec": null
                     },
@@ -296,9 +296,9 @@ class Model(APIEngine):
                         "name": "llama-2-7b",
                         "model_name": null,
                         "source": "hugging_face",
+                        "status": "READY",
                         "inference_framework": "text_generation_inference",
                         "inference_framework_tag": null,
-                        "num_shards": null,
                         "quantize": null,
                         "spec": null
                     },
@@ -307,9 +307,9 @@ class Model(APIEngine):
                         "name": "llama-13b-deepspeed-sync",
                         "model_name": null,
                         "source": "hugging_face",
+                        "status": "READY",
                         "inference_framework": "deepspeed",
                         "inference_framework_tag": null,
-                        "num_shards": null,
                         "quantize": null,
                         "spec": null
                     },
@@ -318,9 +318,9 @@ class Model(APIEngine):
                         "name": "falcon-40b",
                         "model_name": null,
                         "source": "hugging_face",
+                        "status": "READY",
                         "inference_framework": "text_generation_inference",
                         "inference_framework_tag": null,
-                        "num_shards": null,
                         "quantize": null,
                         "spec": null
                     }

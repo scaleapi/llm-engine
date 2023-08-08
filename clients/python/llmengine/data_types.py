@@ -215,11 +215,6 @@ class GetLLMEndpointResponse(BaseModel):
     )
     """(For self-hosted users) The Docker image tag used to run the model."""
 
-    num_shards: Optional[int] = Field(
-        default=None, description="(For self-hosted users) The number of shards."
-    )
-    """(For self-hosted users) The number of shards."""
-
     quantize: Optional[Quantization] = Field(
         default=None, description="(For self-hosted users) The quantization method."
     )
