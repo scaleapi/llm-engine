@@ -717,6 +717,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#llmengine.data_types.GetLLMEndpointResponse.status" class="md-nav__link">
+    status
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#llmengine.data_types.GetLLMEndpointResponse.inference_framework_tag" class="md-nav__link">
     inference_framework_tag
   </a>
@@ -1243,6 +1250,13 @@
           <li class="md-nav__item">
   <a href="#llmengine.data_types.GetLLMEndpointResponse.model_name" class="md-nav__link">
     model_name
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.data_types.GetLLMEndpointResponse.status" class="md-nav__link">
+    status
   </a>
   
 </li>
@@ -2306,6 +2320,32 @@ once the fine-tune is complete.</p>
   <div class="doc doc-contents ">
   
       <p>(For self-hosted users) For fine-tuned models, the base model. For base models, this will be the same as <code>name</code>.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="llmengine.data_types.GetLLMEndpointResponse.status" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">status</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#llmengine.data_types.GetLLMEndpointResponse.status" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>status: ModelEndpointStatus <span style="color: #666666">=</span> Field(
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    description<span style="color: #666666">=</span><span style="color: #BA2121">&quot;The status of the model.&quot;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>)
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>The status of the model (can be one of "READY", "UPDATE_PENDING", "UPDATE_IN_PROGRESS", "UPDATE_FAILED", "DELETE_IN_PROGRESS").</p>
   </div>
 
 </div>
