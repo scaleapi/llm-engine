@@ -201,3 +201,11 @@ You should get a response similar to:
 ```
 {"status":"SUCCESS","outputs":[{"text":". Tell me a joke about AI. Tell me a joke about AI. Tell me a joke about AI. Tell me","num_completion_tokens":30}],"traceback":null}
 ```
+
+### Pointing LLM Engine client to use self-hosted infrastructure
+The `llmengine` client makes requests to Scale AI's hosted infrastructure by default. You can have `llmengine` client make requests to your own self-hosted infrastructure by setting the `LLM_ENGINE_BASE_PATH` environment variable to the URL of the `llm-engine` service. 
+
+The exact URL of `llm-engine` service depends on your Kubernetes cluster networking setup. The domain is specified at `config.values.infra.dns_host_domain` in the helm chart values config file. Using `charts/llm-engine/values_sample.yaml` as an example, you would do:
+```bash
+export LLM_ENGINE_BASE_PATH=https://llm-engine.domain.com
+```
