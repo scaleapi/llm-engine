@@ -473,6 +473,19 @@
     Play With It
   </a>
   
+    <nav class="md-nav" aria-label="Play With It">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pointing-llm-engine-client-to-use-self-hosted-infrastructure" class="md-nav__link">
+    Pointing LLM Engine client to use self-hosted infrastructure
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -698,6 +711,19 @@
   <a href="#play-with-it" class="md-nav__link">
     Play With It
   </a>
+  
+    <nav class="md-nav" aria-label="Play With It">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pointing-llm-engine-client-to-use-self-hosted-infrastructure" class="md-nav__link">
+    Pointing LLM Engine client to use self-hosted infrastructure
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1054,6 +1080,11 @@ Note the endpoint name could be different.</p>
 </code></pre></div></p>
 <p>You should get a response similar to:
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>{&quot;status&quot;:&quot;SUCCESS&quot;,&quot;outputs&quot;:[{&quot;text&quot;:&quot;. Tell me a joke about AI. Tell me a joke about AI. Tell me a joke about AI. Tell me&quot;,&quot;num_completion_tokens&quot;:30}],&quot;traceback&quot;:null}
+</code></pre></div></p>
+<h3 id="pointing-llm-engine-client-to-use-self-hosted-infrastructure">Pointing LLM Engine client to use self-hosted infrastructure<a class="headerlink" href="#pointing-llm-engine-client-to-use-self-hosted-infrastructure" title="Permanent link">&para;</a></h3>
+<p>The <code>llmengine</code> client makes requests to Scale AI's hosted infrastructure by default. You can have <code>llmengine</code> client make requests to your own self-hosted infrastructure by setting the <code>LLM_ENGINE_BASE_PATH</code> environment variable to the URL of the <code>llm-engine</code> service. </p>
+<p>The exact URL of <code>llm-engine</code> service depends on your Kubernetes cluster networking setup. The domain is specified at <code>config.values.infra.dns_host_domain</code> in the helm chart values config file. Using <code>charts/llm-engine/values_sample.yaml</code> as an example, you would do:
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span style="color: #008000">export</span><span style="color: #bbbbbb"> </span><span style="color: #19177C">LLM_ENGINE_BASE_PATH</span><span style="color: #666666">=</span>https://llm-engine.domain.com
 </code></pre></div></p>
 
 
