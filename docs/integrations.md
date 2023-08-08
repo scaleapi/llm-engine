@@ -18,9 +18,7 @@ response = FineTune.create(
 
 Configs to specify:
 
-| Field             | Subfield                                                             | Note                                                      |
-| ----------------- | -------------------------------------------------------------------- | --------------------------------------------------------- |
-| `hyperparameters` | `report_to`                                                          | Set to `wandb` to enables automatic metrics tracking      |
-| `wandb_config`    | `api_key`                                                            | The API key, must specify                                 |
-| `wandb_config`    | `base_url`                                                           | (Optional) base URL of a custom Weights & Biases server   |
-| `wandb_config`    | keys from from [wandb.init()](https://docs.wandb.ai/ref/python/init) | See [wandb.init()](https://docs.wandb.ai/ref/python/init) |
+- (Required) Set `hyperparameters.report_to` to `wandb` to enables automatic metrics tracking.
+- (Required) Set `wandb_config.api_key` to the API key.
+- (Optional) Set `wandb_config.base_url` to use a custom Weights & Biases server.
+- `wandb_config` also accepts keys from [wandb.init()](https://docs.wandb.ai/ref/python/init).
