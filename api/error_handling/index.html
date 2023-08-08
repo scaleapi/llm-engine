@@ -17,7 +17,7 @@
         <link rel="next" href="../../integrations/">
       
       <link rel="icon" href="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.20">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.20">
     
     
       
@@ -663,7 +663,7 @@ and handled by the user accordingly.</p>
 
 
 <h2 id="llmengine.errors.BadRequestError" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">BadRequestError</span>
+        <span class="doc doc-object-name doc-class-name">BadRequestError</span>
 
 
 <a href="#llmengine.errors.BadRequestError" class="headerlink" title="Permanent link">&para;</a></h2>
@@ -671,12 +671,13 @@ and handled by the user accordingly.</p>
 </code></pre></div>
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code>Exception</code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code>Exception</code></p>
 
   
       <p>Corresponds to HTTP 400. Indicates that the request had inputs that were invalid. The user should not
 attempt to retry the request without changing the inputs.</p>
+
 
 
   
@@ -704,7 +705,7 @@ attempt to retry the request without changing the inputs.</p>
 
 
 <h2 id="llmengine.errors.UnauthorizedError" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">UnauthorizedError</span>
+        <span class="doc doc-object-name doc-class-name">UnauthorizedError</span>
 
 
 <a href="#llmengine.errors.UnauthorizedError" class="headerlink" title="Permanent link">&para;</a></h2>
@@ -712,11 +713,12 @@ attempt to retry the request without changing the inputs.</p>
 </code></pre></div>
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code>Exception</code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code>Exception</code></p>
 
   
       <p>Corresponds to HTTP 401. This means that no valid API key was provided.</p>
+
 
 
   
@@ -744,7 +746,7 @@ attempt to retry the request without changing the inputs.</p>
 
 
 <h2 id="llmengine.errors.NotFoundError" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">NotFoundError</span>
+        <span class="doc doc-object-name doc-class-name">NotFoundError</span>
 
 
 <a href="#llmengine.errors.NotFoundError" class="headerlink" title="Permanent link">&para;</a></h2>
@@ -752,14 +754,15 @@ attempt to retry the request without changing the inputs.</p>
 </code></pre></div>
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code>Exception</code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code>Exception</code></p>
 
   
       <p>Corresponds to HTTP 404. This means that the resource (e.g. a Model, FineTune, etc.) could not be found.
 Note that this can also be returned in some cases where the object might exist, but the user does not have access
 to the object. This is done to avoid leaking information about the existence or nonexistence of said object that
 the user does not have access to.</p>
+
 
 
   
@@ -787,7 +790,7 @@ the user does not have access to.</p>
 
 
 <h2 id="llmengine.errors.RateLimitExceededError" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">RateLimitExceededError</span>
+        <span class="doc doc-object-name doc-class-name">RateLimitExceededError</span>
 
 
 <a href="#llmengine.errors.RateLimitExceededError" class="headerlink" title="Permanent link">&para;</a></h2>
@@ -795,11 +798,12 @@ the user does not have access to.</p>
 </code></pre></div>
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code>Exception</code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code>Exception</code></p>
 
   
       <p>Corresponds to HTTP 429. Too many requests hit the API too quickly. We recommend an exponential backoff for retries.</p>
+
 
 
   
@@ -827,7 +831,7 @@ the user does not have access to.</p>
 
 
 <h2 id="llmengine.errors.ServerError" class="doc doc-heading">
-          <span class="doc doc-object-name doc-class-name">ServerError</span>
+        <span class="doc doc-object-name doc-class-name">ServerError</span>
 
 
 <a href="#llmengine.errors.ServerError" class="headerlink" title="Permanent link">&para;</a></h2>
@@ -835,11 +839,12 @@ the user does not have access to.</p>
 </code></pre></div>
 
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code>Exception</code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code>Exception</code></p>
 
   
       <p>Corresponds to HTTP 5xx errors on the server.</p>
+
 
 
   
