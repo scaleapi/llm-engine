@@ -386,6 +386,16 @@ class CreateFineTuneRequest(BaseModel):
     )
     """Hyperparameters to pass in to training job."""
 
+    wandb_config: Optional[Dict[str, Any]] = Field(
+        default=None, description="Configuration for Weights and Biases."
+    )
+    """
+    A dict of configuration parameters for Weights & Biases. See [Weights & Biases](https://docs.wandb.ai/ref/python/init) for more information.
+    Set `hyperparameter["report_to"]` to `wandb` to enable automatic finetune metrics logging.
+    Must include `api_key` field which is the wandb API key.
+    Also supports setting `base_url` to use a custom Weights & Biases server.
+    """
+
     suffix: Optional[str] = Field(
         default=None,
         description="Optional user-provided identifier suffix for the fine-tuned model.",
