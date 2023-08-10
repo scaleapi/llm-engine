@@ -24,8 +24,6 @@ from llm_engine_server.common.dtos.llms import (
     GetLLMModelEndpointV1Response,
     ListFineTuneJobResponse,
     ListLLMModelEndpointsV1Response,
-    ModelDownloadRequest,
-    ModelDownloadResponse,
 )
 from llm_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from llm_engine_server.common.dtos.tasks import TaskStatus
