@@ -503,8 +503,11 @@ class ModelDownloadRequest(BaseModel):
     download_format: Optional[str] = Field(default="huggingface", description="Desired return format for downloaded model weights (default=huggingface).")
 
 class ModelDownloadResponse(BaseModel):
-    urls: List[str] = Field(description="List of URLs to download model weights from.")
-
+    """
+    Response object for downloading a model.
+    """
+    urls: Dict[str, str]  = Field(..., description="Dictionary of (file_name, url) pairs to download the model from.")
+    
 class UploadFileResponse(BaseModel):
     """Response object for uploading a file."""
 
