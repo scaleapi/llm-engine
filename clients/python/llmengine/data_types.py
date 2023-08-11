@@ -201,6 +201,9 @@ class GetLLMEndpointResponse(BaseModel):
     source: LLMSource = Field(description="The source of the model, e.g. Hugging Face.")
     """The source of the model, e.g. Hugging Face."""
 
+    status: ModelEndpointStatus = Field(description="The status of the model.")
+    """The status of the model (can be one of "READY", "UPDATE_PENDING", "UPDATE_IN_PROGRESS", "UPDATE_FAILED", "DELETE_IN_PROGRESS")."""
+
     inference_framework: LLMInferenceFramework = Field(
         description="The inference framework used by the model."
     )
@@ -382,6 +385,16 @@ class CreateFineTuneRequest(BaseModel):
         default=None, description="Hyperparameters to pass in to training job."
     )
     """Hyperparameters to pass in to training job."""
+
+    wandb_config: Optional[Dict[str, Any]] = Field(
+        default=None, description="Configuration for Weights and Biases."
+    )
+    """
+    A dict of configuration parameters for Weights & Biases. See [Weights & Biases](https://docs.wandb.ai/ref/python/init) for more information.
+    Set `hyperparameter["report_to"]` to `wandb` to enable automatic finetune metrics logging.
+    Must include `api_key` field which is the wandb API key.
+    Also supports setting `base_url` to use a custom Weights & Biases server.
+    """
 
     suffix: Optional[str] = Field(
         default=None,

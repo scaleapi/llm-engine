@@ -35,6 +35,7 @@
             - inference_framework
             - id
             - model_name
+            - status
             - inference_framework_tag
             - num_shards
             - quantize
