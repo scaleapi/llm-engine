@@ -390,7 +390,7 @@ class Model(APIEngine):
             download_format (`str`): 
                 download format requested (default=huggingface) 
         Returns:
-            DownloadModelResponse: an object that contains the url from which to download the model weights
+            DownloadModelResponse: an object that contains a dictionary of filenames, urls from which to download the model weights
 
         === "Downloading model in Python"
             ```python
@@ -403,7 +403,7 @@ class Model(APIEngine):
         === "Response in JSON"
             ```json
             {
-                "urls": ['https://path-to-my-model-weights'] 
+                "urls": {"my_model_file": 'https://url-to-my-model-weights'}
             }
             ```
         """
