@@ -390,7 +390,8 @@ class Model(APIEngine):
             download_format (`str`): 
                 download format requested (default=huggingface) 
         Returns:
-            DownloadModelResponse: an object that contains a dictionary of filenames, urls from which to download the model weights
+            DownloadModelResponse: an object that contains a dictionary of filenames, urls from which to download the model weights.
+            The urls are presigned urls that grant temporary access and expire after an hour. 
 
         === "Downloading model in Python"
             ```python
