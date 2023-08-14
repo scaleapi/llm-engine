@@ -17,7 +17,7 @@
         <link rel="next" href="../rate_limits/">
       
       <link rel="icon" href="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.20">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.20">
     
     
       
@@ -450,20 +450,6 @@
 
             
           
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../endpoint_creation/" class="md-nav__link">
-        Endpoint Creation
-      </a>
-    </li>
-  
-
-            
-          
         </ul>
       </nav>
     </li>
@@ -781,7 +767,7 @@ you can use the URL given when you click the “Raw” button
 <code>max_seq_length</code> of the model, the sequences will be truncated.</p>
 <p>If you specify a suffix, the fine-tune will be named <code>model.suffix.&lt;timestamp&gt;</code>. If you do not,
 the fine-tune will be named <code>model.&lt;timestamp&gt;</code>. The timestamp will be the time the fine-tune was
-launched.</p>
+launched. Note: the suffix must only contain alphanumeric characters and hyphens, and be at most 28 characters long.</p>
 <details>
 <summary>Hyper-parameters for fine-tune</summary>
 
