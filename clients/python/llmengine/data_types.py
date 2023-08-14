@@ -398,9 +398,9 @@ class CreateFineTuneRequest(BaseModel):
 
     suffix: Optional[str] = Field(
         default=None,
-        description="Optional user-provided identifier suffix for the fine-tuned model.",
+        description="Optional user-provided identifier suffix for the fine-tuned model. Can be up to 28 characters long.",
     )
-    """Optional user-provided identifier suffix for the fine-tuned model."""
+    """Optional user-provided identifier suffix for the fine-tuned model. Can be up to 28 characters long."""
 
 
 class CreateFineTuneResponse(BaseModel):
