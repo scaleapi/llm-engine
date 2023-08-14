@@ -27,8 +27,6 @@ from llmengine.data_types import (
     CreateFineTuneResponse,
     DeleteFileResponse,
     DeleteLLMEndpointResponse,
-    ModelDownloadRequest,
-    ModelDownloadResponse,
     GetFileContentResponse,
     GetFileResponse,
     GetFineTuneResponse,
@@ -36,6 +34,8 @@ from llmengine.data_types import (
     ListFilesResponse,
     ListFineTunesResponse,
     ListLLMEndpointsResponse,
+    ModelDownloadRequest,
+    ModelDownloadResponse,
     UploadFileResponse,
 )
 from llmengine.file import File

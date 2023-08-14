@@ -499,15 +499,24 @@ class ModelDownloadRequest(BaseModel):
     """
     Request object for downloading a model.
     """
+
     model_name: str = Field(..., description="Name of the model to download.")
-    download_format: Optional[str] = Field(default="huggingface", description="Desired return format for downloaded model weights (default=huggingface).")
+    download_format: Optional[str] = Field(
+        default="huggingface",
+        description="Desired return format for downloaded model weights (default=huggingface).",
+    )
+
 
 class ModelDownloadResponse(BaseModel):
     """
     Response object for downloading a model.
     """
-    urls: Dict[str, str]  = Field(..., description="Dictionary of (file_name, url) pairs to download the model from.")
-    
+
+    urls: Dict[str, str] = Field(
+        ..., description="Dictionary of (file_name, url) pairs to download the model from."
+    )
+
+
 class UploadFileResponse(BaseModel):
     """Response object for uploading a file."""
 
