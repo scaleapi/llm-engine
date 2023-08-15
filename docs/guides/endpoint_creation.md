@@ -9,7 +9,7 @@ model_name = "llama-2-7b.suffix.2023-07-18-12-00-00"
 response = Model.get(model_name)
 while response.status.name != "READY":
     print(response.status.name)
-    time.sleep(60)
+    time.sleep(10)
     response = Model.get(model_name)
 ```
 
