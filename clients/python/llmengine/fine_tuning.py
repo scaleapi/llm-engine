@@ -75,10 +75,11 @@ class FineTune(APIEngine):
 
             suffix (`Optional[str]`):
                 A string that will be added to your fine-tuned model name. If present, the entire fine-tuned model name
-                will be formatted like `"[model].[suffix].[YYYY-MM-DD-HH-MM-SS]"`. If absent, the
-                fine-tuned model name will be formatted `"[model].[YYYY-MM-DD-HH-MM-SS]"`.
+                will be formatted like `"[model].[suffix].[YYMMDD-HHMMSS]"`. If absent, the
+                fine-tuned model name will be formatted `"[model].[YYMMDD-HHMMSS]"`.
                 For example, if `suffix` is `"my-experiment"`, the fine-tuned model name could be
-                `"llama-2-7b.my-experiment.2023-07-17-23-01-50"`.
+                `"llama-2-7b.my-experiment.230717-230150"`.
+                Note: `suffix` must be between 1 and 28 characters long, and can only contain alphanumeric characters and hyphens.
 
         Returns:
             CreateFineTuneResponse: an object that contains the ID of the created fine-tuning job
