@@ -502,8 +502,8 @@ class ModelDownloadRequest(BaseModel):
 
     model_name: str = Field(..., description="Name of the model to download.")
     download_format: Optional[str] = Field(
-        default="huggingface",
-        description="Desired return format for downloaded model weights (default=huggingface).",
+        default="hugging_face",
+        description="Desired return format for downloaded model weights (default=hugging_face).",
     )
 
 

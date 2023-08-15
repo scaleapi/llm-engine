@@ -373,7 +373,7 @@ class Model(APIEngine):
     def download(
         cls,
         model_name: str,
-        download_format: str = "huggingface",
+        download_format: str = "hugging_face",
     ) -> ModelDownloadResponse:
         """
         Download a fine-tuned model.
@@ -388,7 +388,7 @@ class Model(APIEngine):
             model_name (`str`):
                 name of the fine-tuned model
             download_format (`str`):
-                download format requested (default=huggingface)
+                download format requested (default=hugging_face)
         Returns:
             DownloadModelResponse: an object that contains a dictionary of filenames, urls from which to download the model weights.
             The urls are presigned urls that grant temporary access and expire after an hour.
@@ -397,7 +397,7 @@ class Model(APIEngine):
             ```python
             from llmengine import Model
 
-            response = Model.download("llama-2-7b.suffix.2023-07-18-12-00-00", download_format="huggingface")
+            response = Model.download("llama-2-7b.suffix.2023-07-18-12-00-00", download_format="hugging_face")
             print(response.json())
             ```
 
