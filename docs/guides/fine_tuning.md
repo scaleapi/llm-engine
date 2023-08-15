@@ -119,7 +119,7 @@ Once you have uploaded your data, you can use the LLM Engine's [FineTune.Create]
 
 If you specify a suffix, the fine-tune will be named `model.suffix.<timestamp>`. If you do not,
 the fine-tune will be named `model.<timestamp>`. The timestamp will be the time the fine-tune was
-launched.
+launched. Note: the suffix must only contain alphanumeric characters and hyphens, and be at most 28 characters long.
 
 <details>
 <summary>Hyper-parameters for fine-tune</summary>
