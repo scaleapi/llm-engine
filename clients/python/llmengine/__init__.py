@@ -34,6 +34,8 @@ from llmengine.data_types import (
     ListFilesResponse,
     ListFineTunesResponse,
     ListLLMEndpointsResponse,
+    ModelDownloadRequest,
+    ModelDownloadResponse,
     UploadFileResponse,
 )
 from llmengine.file import File
@@ -51,6 +53,8 @@ __all__: Sequence[str] = (
     "CreateFineTuneResponse",
     "DeleteFileResponse",
     "DeleteLLMEndpointResponse",
+    "ModelDownloadRequest",
+    "ModelDownloadResponse",
     "GetFileContentResponse",
     "File",
     "FineTune",
