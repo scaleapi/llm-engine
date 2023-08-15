@@ -535,9 +535,10 @@ An example is provided below: </p>
 <p><em>Assuming the user has created a model named "llama-2-7b.suffix.2023-07-18-12-00-00"</em>
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>model_name = &quot;llama-2-7b.suffix.2023-07-18-12-00-00&quot;
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>response = Model.get(model_name)
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>while response.status != &quot;READY&quot;:
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    time.sleep(60)
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    response = Model.get(model_name)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>while response.status.name != &quot;READY&quot;:
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    print(response.status.name)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    time.sleep(60)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    response = Model.get(model_name)
 </code></pre></div></p>
 <p>Once the endpoint status is ready, you can use your newly created model for inference.</p>
 
