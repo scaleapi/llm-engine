@@ -3,9 +3,10 @@ track the status of your model endpoint. In general, you'll need to wait after t
 model creation step for the model endpoint to be ready and available for use.
 An example is provided below: 
 
-*Assuming the user has created a model named "llama-2-7b.suffix.2023-07-18-12-00-00"*
+
 ```
-model_name = "llama-2-7b.suffix.2023-07-18-12-00-00"
+model_name = "test_deploy"
+model = Model.create(name=model_name, model="llama-2-7b", inference_frame_image_tag="0.9.4")
 response = Model.get(model_name)
 while response.status.name != "READY":
     print(response.status.name)

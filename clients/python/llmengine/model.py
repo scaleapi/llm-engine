@@ -380,9 +380,9 @@ class Model(APIEngine):
 
         This API can be used to download the resulting model from a fine-tuning job.
         It takes the `model_name` and `download_format` as parameter and returns a
-        response object which contains a list of urls associated with the fine-tuned model.
-        The user can then download these urls to obtain the fine-tuned model. If called
-        on a nonexistent model, an error will be thrown.
+        response object which contains a dictonary of filename, url pairs associated 
+        with the fine-tuned model. The user can then download these urls to obtain 
+        the fine-tuned model. If called on a nonexistent model, an error will be thrown.
 
         Args:
             model_name (`str`):
@@ -404,7 +404,7 @@ class Model(APIEngine):
         === "Response in JSON"
             ```json
             {
-                "urls": {"my_model_file": 'https://url-to-my-model-weights'}
+                "urls": {"my_model_file": "https://url-to-my-model-weights"}
             }
             ```
         """
