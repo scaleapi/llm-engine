@@ -2555,9 +2555,9 @@ Engine, an error will be thrown.</p>
       <p>Download a fine-tuned model.</p>
 <p>This API can be used to download the resulting model from a fine-tuning job.
 It takes the <code>model_name</code> and <code>download_format</code> as parameter and returns a
-response object which contains a list of urls associated with the fine-tuned model.
-The user can then download these urls to obtain the fine-tuned model. If called
-on a nonexistent model, an error will be thrown.</p>
+response object which contains a dictonary of filename, url pairs associated
+with the fine-tuned model. The user can then download these urls to obtain
+the fine-tuned model. If called on a nonexistent model, an error will be thrown.</p>
 
 
 
@@ -2647,7 +2647,7 @@ on a nonexistent model, an error will be thrown.</p>
 </div>
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;urls&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;my_model_file&quot;</span>:<span style="color: #bbbbbb"> </span><span style="border: 1px solid #FF0000">&#39;h</span><span style="color: #008000; font-weight: bold">tt</span><span style="border: 1px solid #FF0000">ps</span>:<span style="color: #3D7B7B; font-style: italic">//url-to-my-model-weights&#39;}</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">&quot;urls&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;my_model_file&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;https://url-to-my-model-weights&quot;</span>}
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>}
 </code></pre></div>
 </div>
