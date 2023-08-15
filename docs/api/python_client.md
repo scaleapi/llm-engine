@@ -21,6 +21,7 @@
             - get
             - list
             - delete
+            - download
 
 ::: llmengine.File
     selection:
