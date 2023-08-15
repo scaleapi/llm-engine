@@ -10,6 +10,8 @@ from llmengine.data_types import (
     ListLLMEndpointsResponse,
     LLMInferenceFramework,
     LLMSource,
+    ModelDownloadRequest,
+    ModelDownloadResponse,
     ModelEndpointType,
     PostInferenceHooks,
     Quantization,
@@ -366,3 +368,51 @@ class Model(APIEngine):
         """
         response = cls._delete(f"v1/llm/model-endpoints/{model}", timeout=DEFAULT_TIMEOUT)
         return DeleteLLMEndpointResponse.parse_obj(response)
+
+    @classmethod
+    def download(
+        cls,
+        model_name: str,
+        download_format: str = "hugging_face",
+    ) -> ModelDownloadResponse:
+        """
+        Download a fine-tuned model.
+
+        This API can be used to download the resulting model from a fine-tuning job.
+        It takes the `model_name` and `download_format` as parameter and returns a
+        response object which contains a list of urls associated with the fine-tuned model.
+        The user can then download these urls to obtain the fine-tuned model. If called
+        on a nonexistent model, an error will be thrown.
+
+        Args:
+            model_name (`str`):
+                name of the fine-tuned model
+            download_format (`str`):
+                download format requested (default=hugging_face)
+        Returns:
+            DownloadModelResponse: an object that contains a dictionary of filenames, urls from which to download the model weights.
+            The urls are presigned urls that grant temporary access and expire after an hour.
+
+        === "Downloading model in Python"
+            ```python
+            from llmengine import Model
+
+            response = Model.download("llama-2-7b.suffix.2023-07-18-12-00-00", download_format="hugging_face")
+            print(response.json())
+            ```
+
+        === "Response in JSON"
+            ```json
+            {
+                "urls": {"my_model_file": 'https://url-to-my-model-weights'}
+            }
+            ```
+        """
+
+        request = ModelDownloadRequest(model_name=model_name, download_format=download_format)
+        response = cls.post_sync(
+            resource_name="v1/llm/model-endpoints/download",
+            data=request.dict(),
+            timeout=DEFAULT_TIMEOUT,
+        )
+        return ModelDownloadResponse.parse_obj(response)
