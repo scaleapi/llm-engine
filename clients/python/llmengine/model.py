@@ -380,8 +380,8 @@ class Model(APIEngine):
 
         This API can be used to download the resulting model from a fine-tuning job.
         It takes the `model_name` and `download_format` as parameter and returns a
-        response object which contains a dictonary of filename, url pairs associated 
-        with the fine-tuned model. The user can then download these urls to obtain 
+        response object which contains a dictonary of filename, url pairs associated
+        with the fine-tuned model. The user can then download these urls to obtain
         the fine-tuned model. If called on a nonexistent model, an error will be thrown.
 
         Args:
