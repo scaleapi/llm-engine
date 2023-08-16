@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0.beta10"
+__version__ = "0.0.0.beta11"
 
 from typing import Sequence
 
@@ -34,6 +34,8 @@ from llmengine.data_types import (
     ListFilesResponse,
     ListFineTunesResponse,
     ListLLMEndpointsResponse,
+    ModelDownloadRequest,
+    ModelDownloadResponse,
     UploadFileResponse,
 )
 from llmengine.file import File
@@ -51,6 +53,8 @@ __all__: Sequence[str] = (
     "CreateFineTuneResponse",
     "DeleteFileResponse",
     "DeleteLLMEndpointResponse",
+    "ModelDownloadRequest",
+    "ModelDownloadResponse",
     "GetFileContentResponse",
     "File",
     "FineTune",
