@@ -398,9 +398,9 @@ class CreateFineTuneRequest(BaseModel):
 
     suffix: Optional[str] = Field(
         default=None,
-        description="Optional user-provided identifier suffix for the fine-tuned model.",
+        description="Optional user-provided identifier suffix for the fine-tuned model. Can be up to 28 characters long.",
     )
-    """Optional user-provided identifier suffix for the fine-tuned model."""
+    """Optional user-provided identifier suffix for the fine-tuned model. Can be up to 28 characters long."""
 
 
 class CreateFineTuneResponse(BaseModel):
@@ -493,6 +493,28 @@ class GetFineTuneEventsResponse(BaseModel):
     """
 
     events: List[LLMFineTuneEvent] = Field(..., description="List of fine-tuning events.")
+
+
+class ModelDownloadRequest(BaseModel):
+    """
+    Request object for downloading a model.
+    """
+
+    model_name: str = Field(..., description="Name of the model to download.")
+    download_format: Optional[str] = Field(
+        default="hugging_face",
+        description="Desired return format for downloaded model weights (default=hugging_face).",
+    )
+
+
+class ModelDownloadResponse(BaseModel):
+    """
+    Response object for downloading a model.
+    """
+
+    urls: Dict[str, str] = Field(
+        ..., description="Dictionary of (file_name, url) pairs to download the model from."
+    )
 
 
 class UploadFileResponse(BaseModel):
