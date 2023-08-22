@@ -93,7 +93,7 @@ jobs:
       - run:
           name: Build Docker Image
           command: |
-            docker build . -f server/Dockerfile -t llm-engine:$CIRCLE_SHA1
+            docker build . -f model-engine/Dockerfile -t llm-engine:$CIRCLE_SHA1
   integration_tests:
     executor: ubuntu-large
     steps:
@@ -138,19 +138,19 @@ commands:
     steps:
      - python/install-packages:
          pkg-manager: pip
-         app-dir: server
+         app-dir: model-engine
      - python/install-packages:
          pkg-manager: pip
-         app-dir: server
+         app-dir: model-engine
          pip-dependency-file: requirements-test.txt
      - python/install-packages:
          pkg-manager: pip
-         app-dir: server
+         app-dir: model-engine
          pip-dependency-file: requirements_override.txt
      - run:
          name: Install Server
          command: |
-           pushd server
+           pushd model-engine
            pip install -e .
            popd
   install_client:
@@ -187,12 +187,12 @@ commands:
       - run:
           name: Type Check
           command: |
-            pushd server
+            pushd model-engine
             mypy . --install-types --non-interactive
             popd
       - run:
           name: Unit Tests
           command: |
-            pushd server
-            WORKSPACE=.. pytest
+            pushd model-engine
+            GIT_TAG=$(git rev-parse HEAD) WORKSPACE=.. pytest
             popd

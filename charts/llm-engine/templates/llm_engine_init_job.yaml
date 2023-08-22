@@ -33,7 +33,7 @@ spec:
           args:
             - python
             - -m
-            - server.llm_engine_server.entrypoints.init_llm_engine_models
+            - model_engine_server.entrypoints.init_llm_engine_models
             - --gateway-url
             - 'http://{{- include "llmEngine.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}'
           {{- include "llmEngine.serviceEnv" . | indent 10 }}
