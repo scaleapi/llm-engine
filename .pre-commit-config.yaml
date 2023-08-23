@@ -1,3 +1,4 @@
+fail_fast: false
 repos:
   - repo: https://github.com/psf/black
     # Make sure to update requirements-dev-extra.txt to match versions!
@@ -49,3 +50,30 @@ repos:
         language: python
       - id: check-toml
         language: python
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.3.0'  # Make sure this matches the version in requirements-dev.txt!
+    hooks:
+      - id: mypy
+        name: mypy-clients-python
+        entry: mypy --config-file clients/python/mypy.ini clients/python
+        language: system
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.3.0'  # Make sure this matches the version in requirements-dev.txt!
+    hooks:
+      - id: mypy
+        name: mypy-server
+        entry: mypy --config-file model-engine/mypy.ini model-engine
+        language: system
+  - repo: local
+    hooks:
+      - id: trufflehog
+        name: TruffleHog
+        description: Detect secrets in your data.
+        entry: bash -c 'docker run --rm -v "$(pwd)/..:/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir/llm-engine --since-commit HEAD --only-verified --fail'
+        language: system
+        stages: ["commit", "push"]
+  - repo: https://github.com/returntocorp/semgrep
+    rev: 'v1.36.0'
+    hooks:
+      - id: semgrep
+        args: [ '--config', 'p/python', '--error' ]
