@@ -1,0 +1,2 @@
+# Consists of packages that need to be explicitly different from those in requirements.txt
+aioboto3==10.4.0

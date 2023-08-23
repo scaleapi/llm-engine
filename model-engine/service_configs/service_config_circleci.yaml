@@ -1,0 +1,60 @@
+# Config for Model Engine running in CircleCI
+model_primitive_host: "none"
+
+# Endpoint config
+# K8s namespace the endpoints will be created in
+endpoint_namespace: model-engine
+
+# Asynchronous endpoints
+# TODO: Try out localstack once e2e tests have been updated to use sqs as a broker_type
+sqs_profile: nonexistent_sqs_profile
+sqs_queue_policy_template: >
+  {
+    "Version": "2012-10-17",
+    "Id": "__default_policy_ID",
+    "Statement": [
+      {
+        "Sid": "__owner_statement",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::000000000000:root"
+        },
+        "Action": "sqs:*",
+        "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
+      },
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::000000000000:role/default"
+        },
+        "Action": "sqs:*",
+        "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
+      }
+    ]
+  }
+
+sqs_queue_tag_template: >
+  {
+    "infra.scale.com/product": "MLInfraLaunchSQS",
+    "infra.scale.com/team": "${team}",
+    "infra.scale.com/contact": "yi.xu@scale.com",
+    "infra.scale.com/customer": "AllCustomers",
+    "infra.scale.com/financialOwner": "yi.xu@scale.com",
+    "Launch-Endpoint-Id": "${endpoint_id}",
+    "Launch-Endpoint-Name": "${endpoint_name}",
+    "Launch-Endpoint-Created-By": "${endpoint_created_by}"
+  }
+
+# Billing
+billing_queue_arn: none
+# There's a separate piece of infra that caches k8s state onto redis, so we need a url to it
+cache_redis_url: redis://127.0.0.1:6379/15
+
+s3_file_llm_fine_tune_repository: "s3://test-bucket"
+
+datadog_trace_enabled: false
+istio_enabled: true
+tgi_repository: "text-generation-inference"
+
+# S3 access
+hf_user_fine_tuned_weights_prefix: "s3://test-bucket"
