@@ -17,13 +17,13 @@ repos:
       - id: isort
         name: "python:isort"
   - repo: https://github.com/jazzband/pip-tools
-    rev: 6.6.2
+    rev: 7.0.0
     hooks:
       - id: pip-compile
-        files: server/requirements\.(in|txt)
+        files: model-engine/requirements\.(in|txt)
         args:
           [
-            server/requirements.in,
+            model-engine/requirements.in,
             --allow-unsafe,
             --no-emit-index-url,
             --no-emit-trusted-host,

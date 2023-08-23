@@ -1,0 +1,19 @@
+forwarder:
+  sync:
+    user_port: 5005
+    user_hostname: "localhost"
+    use_grpc: false
+    predict_route: "/predict"
+    healthcheck_route: "/readyz"
+    batch_route: null
+    model_engine_unwrap: true
+    serialize_results_as_string: true
+  async:
+    user_port: 5005
+    user_hostname: "localhost"
+    use_grpc: false
+    predict_route: "/predict"
+    healthcheck_route: "/readyz"
+    batch_route: null
+    model_engine_unwrap: true
+    serialize_results_as_string: true

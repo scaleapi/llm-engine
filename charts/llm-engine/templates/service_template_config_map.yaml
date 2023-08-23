@@ -180,7 +180,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/server/llm_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/server/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --http
                 - production_threads
                 - --port
@@ -221,9 +221,9 @@ data:
                 - ddtrace-run
                 - python
                 - -m
-                - server.llm_engine_server.inference.forwarding.http_forwarder
+                - model_engine_server.inference.forwarding.http_forwarder
                 - --config
-                - /workspace/server/llm_engine_server/inference/configs/service--http_forwarder.yaml
+                - /workspace/server/model_engine_server/inference/configs/service--http_forwarder.yaml
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
@@ -266,7 +266,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/server/llm_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/server/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --queue
                 - "${QUEUE}"
                 - --task-visibility
@@ -559,7 +559,7 @@ data:
               args:
                 - python
                 - -m
-                - server.llm_engine_server.entrypoints.start_batch_job_orchestration
+                - model_engine_server.entrypoints.start_batch_job_orchestration
                 - --job-id
                 - ${JOB_ID}
                 - --owner
@@ -669,7 +669,7 @@ data:
               command:
                 - python
                 - -m
-                - server.llm_engine_server.entrypoints.start_docker_image_batch_job_init_container
+                - model_engine_server.entrypoints.start_docker_image_batch_job_init_container
                 - ${INPUT_LOCATION}
                 - --remote-file
                 - ${S3_FILE}
