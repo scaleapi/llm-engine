@@ -17,7 +17,7 @@ spec:
       containers:
       - name: main
         image: redis
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         resources:
           requests:
             memory: 1Gi

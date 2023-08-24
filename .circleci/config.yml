@@ -93,7 +93,7 @@ jobs:
       - run:
           name: Build Docker Image
           command: |
-            docker build . -f model-engine/Dockerfile -t llm-engine:$CIRCLE_SHA1
+            docker build . -f model-engine/Dockerfile -t model-engine:$CIRCLE_SHA1
   integration_tests:
     executor: ubuntu-large
     steps:
@@ -101,7 +101,7 @@ jobs:
       - run:
           name: Build Docker Image
           command: |
-            docker build . -f model-engine/Dockerfile -t llm-engine:$CIRCLE_SHA1
+            docker build . -f model-engine/Dockerfile -t model-engine:$CIRCLE_SHA1
       - run:
           name: Install minikube
           command: |
@@ -122,15 +122,22 @@ jobs:
             pushd $HOME/project/.circleci/resources
             kubectl apply -f redis-k8s.yaml
             kubectl apply -f postgres-k8s.yaml
+            kubectl create secret generic postgres-credentials --from-literal=databaseUrl=postgresql://postgres:circle_test@postgres.default:5432/circle_test
             export ISTIO_VERSION=1.15.0
+            popd
             curl -L https://istio.io/downloadIstio | TARGET_ARCH=x86_64 sh -
             install istio-${ISTIO_VERSION}/bin/istioctl $HOME/bin
             $HOME/bin/istioctl install --set profile=demo -y
       - run:
+          name: Pre-load model-engine image to minikube
+          command: |
+            minikube --logtostderr -v 1 image load model-engine:$CIRCLE_SHA1
+      - run:
           name: Install helm chart
           command: |
             pushd $HOME/project/charts
-            helm install llm-engine llm-engine --values llm-engine/values_circleci.yaml --set tag=$CIRCLE_SHA1 --atomic
+            kubectl create namespace model-engine
+            helm install llm-engine llm-engine --values llm-engine/values_circleci.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
 
 executors:
   ubuntu-large:

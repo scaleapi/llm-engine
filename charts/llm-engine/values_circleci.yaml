@@ -34,7 +34,7 @@ virtualservice:
   enabled: true
   annotations: { }
   hostDomains:
-    - ml-internal.scale.com
+    - example.com
   gateways:
     - default/internal-gateway
 
@@ -85,7 +85,7 @@ config:
     llm_engine:
       # Endpoint config
       # K8s namespace the endpoints will be created in
-      endpoint_namespace: scale-deploy
+      endpoint_namespace: model-engine
 
       # Asynchronous endpoints
       sqs_profile: default
@@ -133,12 +133,17 @@ config:
 # Service Account
 serviceAccount:
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::000000000000:role/eks-default2
+    "eks.amazonaws.com/role-arn": arn:aws:iam::000000000000:role/default
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-2"
+  namespaces:
+    - default
+    - model-engine
 
 aws:
   configMap:
     name: default-config
-    create: false
+    create: true
   profileName: default
 
 forwarder:
@@ -146,8 +151,8 @@ forwarder:
 
 triton:
   image:
-    repository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv
-    tag: e83eccbc8959f90ebbe4bda618b61ec6ee2d8394-triton
+    repository: nvidia/tritonserver
+    tag: latest
 
 serviceTemplate:
   securityContext:

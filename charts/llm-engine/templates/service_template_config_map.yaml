@@ -95,7 +95,7 @@ data:
           containers:
             {{- if eq $flavor "artifact" }}
             - image: ${IMAGE}
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               name: main
               {{- with $security_context }}
               securityContext:
@@ -173,7 +173,7 @@ data:
             {{- if eq $mode "sync" }}
             - name: http-forwarder
               image: {{ $forwarder_repository }}:${FORWARDER_IMAGE_TAG}
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -214,7 +214,7 @@ data:
             {{- else if eq $mode "streaming" }}
             - name: http-forwarder
               image: {{ $forwarder_repository }}:{{ $tag }}
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -259,7 +259,7 @@ data:
             {{- else if eq $mode "async" }}
             - name: celery-forwarder
               image: {{ $forwarder_repository }}:${FORWARDER_IMAGE_TAG}
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -296,7 +296,7 @@ data:
             {{- if eq $flavor "triton-enhanced-runnable-image" }}
             - name: tritonserver
               image: {{ $triton_repository }}:${TRITON_COMMIT_TAG}-triton
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -345,7 +345,7 @@ data:
                 {{- toYaml . | nindent 16 }}
               {{- end }}
               image: ${IMAGE}
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -551,7 +551,7 @@ data:
                 {{- tuple $env_var | toYaml | nindent 16 }}
                 {{- end }}
                 {{- end }}
-              imagePullPolicy: Always
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               command:
                 - dumb-init
                 - --
@@ -640,7 +640,7 @@ data:
                 {{- tuple $env_var | toYaml | nindent 16 }}
                 {{- end }}
                 {{- end }}
-              imagePullPolicy: Always
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               command: ${COMMAND}
               resources:
                 # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.
@@ -737,7 +737,7 @@ data:
           {{- end }}
           containers:
             - image: public.ecr.aws/docker/library/busybox:latest
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               name: busybox
               command: ["/bin/sh", "-ec", "while : ; do sleep 30 ; done"]
           terminationGracePeriodSeconds: 0
