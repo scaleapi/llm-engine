@@ -122,6 +122,7 @@ jobs:
             pushd $HOME/.circleci/resources
             kubectl apply -f redis-k8s.yaml
             kubectl apply -f postgres-k8s.yaml
+            export ISTIO_VERSION=1.15.0
             curl -L https://istio.io/downloadIstio | TARGET_ARCH=x86_64 sh -
             install istio-${ISTIO_VERSION}/bin/istioctl $HOME/bin
             $HOME/bin/istioctl install --set profile=demo -y
