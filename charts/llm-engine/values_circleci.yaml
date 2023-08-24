@@ -99,26 +99,26 @@ config:
                 "Sid": "__owner_statement",
                 "Effect": "Allow",
                 "Principal": {
-                  "AWS": "arn:aws:iam::$AWS_ACCOUNT_ID:root"
+                  "AWS": "arn:aws:iam::$CIRCLECI_AWS_ACCOUNT_ID:root"
                 },
                 "Action": "sqs:*",
-                "Resource": "arn:aws:sqs:us-west-2:$AWS_ACCOUNT_ID:${queue_name}"
+                "Resource": "arn:aws:sqs:us-west-2:$CIRCLECI_AWS_ACCOUNT_ID:${queue_name}"
               },
               {
                 "Effect": "Allow",
                 "Principal": {
-                  "AWS": "arn:aws:iam::$AWS_ACCOUNT_ID:role/default"
+                  "AWS": "arn:aws:iam::$CIRCLECI_AWS_ACCOUNT_ID:role/default"
                 },
                 "Action": "sqs:*",
-                "Resource": "arn:aws:sqs:us-west-2:$AWS_ACCOUNT_ID:${queue_name}"
+                "Resource": "arn:aws:sqs:us-west-2:$CIRCLECI_AWS_ACCOUNT_ID:${queue_name}"
               },
               {
                 "Effect": "Allow",
                 "Principal": {
-                  "AWS": "arn:aws:iam::$AWS_ACCOUNT_ID:role/ml_llm_engine"
+                  "AWS": "arn:aws:iam::$CIRCLECI_AWS_ACCOUNT_ID:role/ml_llm_engine"
                 },
                 "Action": "sqs:*",
-                "Resource": "arn:aws:sqs:us-west-2:$AWS_ACCOUNT_ID:${queue_name}"
+                "Resource": "arn:aws:sqs:us-west-2:$CIRCLECI_AWS_ACCOUNT_ID:${queue_name}"
               }
             ]
           }
@@ -140,7 +140,7 @@ config:
 # Service Account
 serviceAccount:
   annotations:
-    "eks.amazonaws.com/role-arn": arn:aws:iam::$AWS_ACCOUNT_ID:role/default
+    "eks.amazonaws.com/role-arn": arn:aws:iam::$CIRCLECI_AWS_ACCOUNT_ID:role/default
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-2"
   namespaces:
