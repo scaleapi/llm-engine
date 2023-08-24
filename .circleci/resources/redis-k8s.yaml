@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-message-broker
+  labels:
+    app: redis-message-broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-message-broker
+  template:
+    metadata:
+      labels:
+        app: redis-message-broker
+    spec:
+      containers:
+      - name: main
+        image: redis
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 1
+        ports:
+        - containerPort: 6379
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: redis-message-broker
+  labels:
+    app: redis-message-broker
+spec:
+  type: ClusterIP
+  selector:
+    app: redis-message-broker
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
