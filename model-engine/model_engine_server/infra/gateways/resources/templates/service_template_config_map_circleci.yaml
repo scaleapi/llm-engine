@@ -107,7 +107,7 @@ data:
           containers:
             - name: celery-forwarder
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -179,7 +179,7 @@ data:
                   mountPath: /workspace/model-engine/model_engine_server/core/configs
             - name: tritonserver
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -227,7 +227,7 @@ data:
                   drop:
                   - all
               image: ${IMAGE}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -378,7 +378,7 @@ data:
           containers:
             - name: celery-forwarder
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -454,7 +454,7 @@ data:
                   drop:
                   - all
               image: ${IMAGE}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -597,7 +597,7 @@ data:
           containers:
             - name: http-forwarder
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -674,7 +674,7 @@ data:
                   name: http
             - name: tritonserver
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -722,7 +722,7 @@ data:
                   drop:
                   - all
               image: ${IMAGE}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -865,7 +865,7 @@ data:
           containers:
             - name: http-forwarder
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -946,7 +946,7 @@ data:
                   drop:
                   - all
               image: ${IMAGE}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -1089,7 +1089,7 @@ data:
           containers:
             - name: http-forwarder
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:7034db9f84a3a6009d2ef738e5497b300f24f6cd
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -1172,7 +1172,7 @@ data:
                   drop:
                   - all
               image: ${IMAGE}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -1328,7 +1328,7 @@ data:
           containers:
             - name: celery-forwarder
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -1400,7 +1400,7 @@ data:
                   mountPath: /workspace/model-engine/model_engine_server/core/configs
             - name: tritonserver
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -1448,7 +1448,7 @@ data:
                   drop:
                   - all
               image: ${IMAGE}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -1605,7 +1605,7 @@ data:
           containers:
             - name: celery-forwarder
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -1681,7 +1681,7 @@ data:
                   drop:
                   - all
               image: ${IMAGE}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -1830,7 +1830,7 @@ data:
           containers:
             - name: http-forwarder
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -1907,7 +1907,7 @@ data:
                   name: http
             - name: tritonserver
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -1955,7 +1955,7 @@ data:
                   drop:
                   - all
               image: ${IMAGE}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -2104,7 +2104,7 @@ data:
           containers:
             - name: http-forwarder
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -2185,7 +2185,7 @@ data:
                   drop:
                   - all
               image: ${IMAGE}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -2334,7 +2334,7 @@ data:
           containers:
             - name: http-forwarder
               image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:7034db9f84a3a6009d2ef738e5497b300f24f6cd
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -2417,7 +2417,7 @@ data:
                   drop:
                   - all
               image: ${IMAGE}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -2770,7 +2770,7 @@ data:
                   value: ${GIT_TAG}
                 - name: GIT_TAG
                   value: ${GIT_TAG}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - dumb-init
                 - --
@@ -2893,7 +2893,7 @@ data:
                   value: ${GIT_TAG}
                 - name: GIT_TAG
                   value: ${GIT_TAG}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               resources:
                 # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.
@@ -3037,7 +3037,7 @@ data:
                   value: ${GIT_TAG}
                 - name: GIT_TAG
                   value: ${GIT_TAG}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               resources:
                 # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.
@@ -3118,7 +3118,7 @@ data:
             cpu-only: "true"
           containers:
             - image: public.ecr.aws/docker/library/busybox:latest
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               name: busybox
               command: ["/bin/sh", "-ec", "while : ; do sleep 30 ; done"]
           terminationGracePeriodSeconds: 0
@@ -3159,7 +3159,7 @@ data:
               operator: Exists
           containers:
             - image: public.ecr.aws/docker/library/busybox:latest
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               name: busybox
               command: ["/bin/sh", "-ec", "while : ; do sleep 30 ; done"]
           terminationGracePeriodSeconds: 0
@@ -3200,7 +3200,7 @@ data:
               operator: Exists
           containers:
             - image: public.ecr.aws/docker/library/busybox:latest
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               name: busybox
               command: ["/bin/sh", "-ec", "while : ; do sleep 30 ; done"]
           terminationGracePeriodSeconds: 0
@@ -3241,7 +3241,7 @@ data:
               operator: Exists
           containers:
             - image: public.ecr.aws/docker/library/busybox:latest
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              imagePullPolicy: IfNotPresent
               name: busybox
               command: ["/bin/sh", "-ec", "while : ; do sleep 30 ; done"]
           terminationGracePeriodSeconds: 0
@@ -3280,7 +3280,7 @@ data:
               containers:
               - name: ${NAME}
                 image: curlimages/curl:7.72.0
-                imagePullPolicy: {{ .Values.image.pullPolicy }}
+                imagePullPolicy: IfNotPresent
                 command:
                 - curl
                 - -X
