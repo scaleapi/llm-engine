@@ -17,7 +17,7 @@ spec:
       containers:
       - name: main
         image: "cimg/postgres:12.8-postgis"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: 1Gi
