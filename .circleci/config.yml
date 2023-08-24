@@ -119,7 +119,7 @@ jobs:
       - run:
           name: Install helm chart dependencies (Redis, Postgres, Istio)
           command: |
-            pushd $HOME/.circleci/resources
+            pushd $HOME/project/.circleci/resources
             kubectl apply -f redis-k8s.yaml
             kubectl apply -f postgres-k8s.yaml
             export ISTIO_VERSION=1.15.0
