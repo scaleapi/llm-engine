@@ -14,16 +14,17 @@ replicaCount:
 # tag:
 context: circleci
 image:
-  gatewayRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/llm-engine
-  builderRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/llm-engine
-  cacherRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/llm-engine
-  forwarderRepository: 000000000000.dkr.ecr.us-west-2.amazonaws.com/llm-engine
+  gatewayRepository: model-engine
+  builderRepository: model-engine
+  cacherRepository: model-engine
+  forwarderRepository: model-engine
   pullPolicy: Always
 
 # serviceIdentifier:
 
 secrets:
-  awsDatabaseSecretName: prod/llm_engine.db
+  kubernetesDatabaseSecretName: model-engine-postgres-credentials
+
 
 service:
   type: ClusterIP

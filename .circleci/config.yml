@@ -95,26 +95,41 @@ jobs:
           command: |
             docker build . -f model-engine/Dockerfile -t llm-engine:$CIRCLE_SHA1
   integration_tests:
-    executor: ubuntu-large
+    executor: ubuntu-2xlarge
     steps:
       - checkout
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build . -f model-engine/Dockerfile -t llm-engine:$CIRCLE_SHA1
       - run:
           name: Install minikube
           command: |
             cd $HOME
             curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
             sudo dpkg -i minikube_latest_amd64.deb
-            minikube start --vm-driver=docker --kubernetes-version=v1.23.0 --memory=14336 --cpus=8
+            minikube start --vm-driver=docker --kubernetes-version=v1.23.0 --memory=49152 --cpus=14
       - run:
-          name: Install helm
+          name: Install kubectl, helm
           command: |
             cd $HOME
             curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+            curl -LO "https://dl.k8s.io/release/v1.23.0/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+      - run:
+          name: Install helm chart dependencies (Redis, Postgres, Istio)
+          command: |
+            pushd $HOME/.circleci/resources
+            kubectl apply -f redis-k8s.yaml
+            kubectl apply -f postgres-k8s.yaml
+            curl -L https://istio.io/downloadIstio | TARGET_ARCH=x86_64 sh -
+            install istio-${ISTIO_VERSION}/bin/istioctl $HOME/bin
+            $HOME/bin/istioctl install --set profile=demo -y
       - run:
           name: Install helm chart
           command: |
-            cd $HOME/project/charts
-            helm install llm-engine llm-engine --values llm-engine/values_circleci.yaml --set tag=$CIRCLE_SHA1
+            pushd $HOME/project/charts
+            helm install llm-engine llm-engine --values llm-engine/values_circleci.yaml --set tag=$CIRCLE_SHA1 --atomic
 
 executors:
   ubuntu-large:
