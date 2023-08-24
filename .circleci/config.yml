@@ -112,7 +112,7 @@ jobs:
       - run:
           name: Install kubectl, helm
           command: |
-            cd $HOME
+            cd $HOME/bin
             curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
             curl -LO "https://dl.k8s.io/release/v1.23.0/bin/linux/amd64/kubectl"
             chmod +x kubectl
