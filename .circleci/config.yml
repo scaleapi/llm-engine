@@ -138,6 +138,7 @@ jobs:
           command: |
             pushd $HOME/project/charts
             kubectl create namespace model-engine
+            cat llm-engine/values_circleci.yaml | envsubst > llm-engine/values_circleci.yaml
             helm install llm-engine llm-engine --values llm-engine/values_circleci.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
 
 executors:

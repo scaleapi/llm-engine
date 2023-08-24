@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis-message-broker
+  name: redis-message-broker-master
   labels:
-    app: redis-message-broker
+    app: redis-message-broker-master
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: redis-message-broker
+      app: redis-message-broker-master
   template:
     metadata:
       labels:
-        app: redis-message-broker
+        app: redis-message-broker-master
     spec:
       containers:
       - name: main
@@ -30,13 +30,13 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: redis-message-broker
+  name: redis-message-broker-master
   labels:
-    app: redis-message-broker
+    app: redis-message-broker-master
 spec:
   type: ClusterIP
   selector:
-    app: redis-message-broker
+    app: redis-message-broker-master
   ports:
     - name: redis
       port: 6379

@@ -76,8 +76,8 @@ config:
       k8s_cluster_name: minikube
       dns_host_domain: localhost
       default_region: us-west-2
-      ml_account_id: "000000000000"
-      docker_repo_prefix: "000000000000.dkr.ecr.us-west-2.amazonaws.com"
+      ml_account_id: "$CIRCLECI_AWS_ACCOUNT_ID"
+      docker_repo_prefix: "CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com"
       redis_host: redis-message-broker-master.default
       s3_bucket: "scale-ml-circleci"
       profile_ml_worker: "default"
@@ -99,26 +99,26 @@ config:
                 "Sid": "__owner_statement",
                 "Effect": "Allow",
                 "Principal": {
-                  "AWS": "arn:aws:iam::000000000000:root"
+                  "AWS": "arn:aws:iam::$AWS_ACCOUNT_ID:root"
                 },
                 "Action": "sqs:*",
-                "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
+                "Resource": "arn:aws:sqs:us-west-2:$AWS_ACCOUNT_ID:${queue_name}"
               },
               {
                 "Effect": "Allow",
                 "Principal": {
-                  "AWS": "arn:aws:iam::000000000000:role/default"
+                  "AWS": "arn:aws:iam::$AWS_ACCOUNT_ID:role/default"
                 },
                 "Action": "sqs:*",
-                "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
+                "Resource": "arn:aws:sqs:us-west-2:$AWS_ACCOUNT_ID:${queue_name}"
               },
               {
                 "Effect": "Allow",
                 "Principal": {
-                  "AWS": "arn:aws:iam::000000000000:role/ml_llm_engine"
+                  "AWS": "arn:aws:iam::$AWS_ACCOUNT_ID:role/ml_llm_engine"
                 },
                 "Action": "sqs:*",
-                "Resource": "arn:aws:sqs:us-west-2:000000000000:${queue_name}"
+                "Resource": "arn:aws:sqs:us-west-2:$AWS_ACCOUNT_ID:${queue_name}"
               }
             ]
           }
@@ -130,7 +130,7 @@ config:
         }
 
       billing_queue_arn: none
-      cache_redis_url: redis://redis-message-broker.default/15
+      cache_redis_url: redis://redis-message-broker-master.default/15
       s3_file_llm_fine_tune_repository: "s3://test-bucket"
       datadog_trace_enabled: false
       istio_enabled: true
@@ -140,7 +140,7 @@ config:
 # Service Account
 serviceAccount:
   annotations:
-    "eks.amazonaws.com/role-arn": arn:aws:iam::000000000000:role/default
+    "eks.amazonaws.com/role-arn": arn:aws:iam::$AWS_ACCOUNT_ID:role/default
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-2"
   namespaces:
