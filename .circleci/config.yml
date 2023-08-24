@@ -95,7 +95,7 @@ jobs:
           command: |
             docker build . -f model-engine/Dockerfile -t llm-engine:$CIRCLE_SHA1
   integration_tests:
-    executor: ubuntu-2xlarge
+    executor: ubuntu-large
     steps:
       - checkout
       - run:
@@ -135,7 +135,7 @@ executors:
   ubuntu-large:
     machine:
       image: "ubuntu-2004:202201-02"
-    resource_class: xlarge
+    resource_class: 2xlarge
 
 commands:
   environment_setup:
