@@ -18,7 +18,7 @@ image:
   builderRepository: model-engine
   cacherRepository: model-engine
   forwarderRepository: model-engine
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 # serviceIdentifier:
 
@@ -86,6 +86,7 @@ config:
       # Endpoint config
       # K8s namespace the endpoints will be created in
       endpoint_namespace: model-engine
+      model_primitive_host: none
 
       # Asynchronous endpoints
       sqs_profile: default
@@ -128,7 +129,13 @@ config:
           "Spellbook-Serve-Endpoint-Created-By": "${endpoint_created_by}"
         }
 
-      cache_redis_url: redis://redis-message-broker-master.default/15
+      billing_queue_arn: none
+      cache_redis_url: redis://redis-message-broker.default/15
+      s3_file_llm_fine_tune_repository: "s3://test-bucket"
+      datadog_trace_enabled: false
+      istio_enabled: true
+      tgi_repository: "text-generation-inference"
+      hf_user_fine_tuned_weights_prefix: "s3://test-bucket"
 
 # Service Account
 serviceAccount:
@@ -143,7 +150,7 @@ serviceAccount:
 aws:
   configMap:
     name: default-config
-    create: true
+    create: false
   profileName: default
 
 forwarder:

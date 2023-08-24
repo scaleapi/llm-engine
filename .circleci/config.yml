@@ -122,12 +122,13 @@ jobs:
             pushd $HOME/project/.circleci/resources
             kubectl apply -f redis-k8s.yaml
             kubectl apply -f postgres-k8s.yaml
-            kubectl create secret generic postgres-credentials --from-literal=databaseUrl=postgresql://postgres:circle_test@postgres.default:5432/circle_test
+            kubectl create secret generic model-engine-postgres-credentials --from-literal=database_url=postgresql://postgres:circle_test@postgres.default:5432/circle_test
             export ISTIO_VERSION=1.15.0
             popd
             curl -L https://istio.io/downloadIstio | TARGET_ARCH=x86_64 sh -
             install istio-${ISTIO_VERSION}/bin/istioctl $HOME/bin
             $HOME/bin/istioctl install --set profile=demo -y
+            kubectl create configmap default-config --namespace scale-deploy --from-literal=config="$(cat $HOME/project/.circleci/resources/.minikube-config-map | envsubst)"
       - run:
           name: Pre-load model-engine image to minikube
           command: |
