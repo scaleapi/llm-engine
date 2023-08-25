@@ -154,6 +154,7 @@ jobs:
           name: Run integration tests
           command: |
             pushd $HOME/project
+            kubectl port-forward svc/llm-engine 5001:80 &
             pytest integration_tests
 
 executors:
