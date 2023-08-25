@@ -40,5 +40,5 @@ spec:
             - -c
             - "while true; do sleep 30; done"
       terminationGracePeriodSeconds: 0
-      priorityClassName: launch-low-priority
+      priorityClassName: {{ .Chart.Name }}low-priority
 {{- end }}
