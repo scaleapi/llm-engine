@@ -75,20 +75,20 @@ tags.datadoghq.com/env: {{- .Values.context | printf " %s" }}
 tags.datadoghq.com/version: ${GIT_TAG}
 {{- end }}
 
-{{- define "launch.serviceTemplateLabels" -}}
-{{- include "launch.baseTemplateLabels" . | printf "%s\n" -}}
+{{- define "modelEngine.serviceTemplateLabels" -}}
+{{- include "modelEngine.baseTemplateLabels" . | printf "%s\n" -}}
 tags.datadoghq.com/service: ${ENDPOINT_NAME}
 endpoint_id: ${ENDPOINT_ID}
 endpoint_name: ${ENDPOINT_NAME}
 {{- end }}
 
-{{- define "launch.jobTemplateLabels" -}}
-{{- include "launch.baseTemplateLabels" . | printf "%s\n" -}}
+{{- define "modelEngine.jobTemplateLabels" -}}
+{{- include "modelEngine.baseTemplateLabels" . | printf "%s\n" -}}
 launch_job_id: ${JOB_ID}
 tags.datadoghq.com/service: ${JOB_ID}
 {{- end }}
 
-{{- define "launch.serviceTemplateAsyncAnnotations" -}}
+{{- define "modelEngine.serviceTemplateAsyncAnnotations" -}}
 celery.scaleml.autoscaler/queue: ${QUEUE}
 celery.scaleml.autoscaler/broker: ${BROKER_NAME}
 celery.scaleml.autoscaler/taskVisibility: "VISIBILITY_24H"
@@ -97,7 +97,7 @@ celery.scaleml.autoscaler/minWorkers: "${MIN_WORKERS}"
 celery.scaleml.autoscaler/maxWorkers: "${MAX_WORKERS}"
 {{- end }}
 
-{{- define "launch.serviceTemplateAffinity" -}}
+{{- define "modelEngine.serviceTemplateAffinity" -}}
 podAffinity:
   preferredDuringSchedulingIgnoredDuringExecution:
   - weight: 1
@@ -120,7 +120,7 @@ podAffinity:
       topologyKey: kubernetes.io/hostname
 {{- end }}
 
-{{- define "launch.baseServiceTemplateEnv" -}}
+{{- define "modelEngine.baseServiceTemplateEnv" -}}
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "${DATADOG_TRACE_ENABLED}"
@@ -160,14 +160,14 @@ env:
   {{- end }}
 {{- end }}
 
-{{- define "launch.syncServiceTemplateEnv" -}}
-{{- include "launch.baseServiceTemplateEnv" . }}
+{{- define "modelEngine.syncServiceTemplateEnv" -}}
+{{- include "modelEngine.baseServiceTemplateEnv" . }}
   - name: PORT
     value: "${ARTIFACT_LIKE_CONTAINER_PORT}"
 {{- end }}
 
-{{- define "launch.asyncServiceTemplateEnv" -}}
-{{- include "launch.baseServiceTemplateEnv" . }}
+{{- define "modelEngine.asyncServiceTemplateEnv" -}}
+{{- include "modelEngine.baseServiceTemplateEnv" . }}
   - name: CELERY_S3_BUCKET
     value: "${CELERY_S3_BUCKET}"
   - name: BROKER_TYPE
@@ -180,7 +180,7 @@ env:
     value: "${SQS_QUEUE_URL}"
 {{- end }}
 
-{{- define "launch.baseForwarderTemplateEnv" -}}
+{{- define "modelEngine.baseForwarderTemplateEnv" -}}
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "${DATADOG_TRACE_ENABLED}"
@@ -208,16 +208,16 @@ env:
   {{- end }}
 {{- end }}
 
-{{- define "launch.syncForwarderTemplateEnv" -}}
-{{- include "launch.baseForwarderTemplateEnv" . }}
+{{- define "modelEngine.syncForwarderTemplateEnv" -}}
+{{- include "modelEngine.baseForwarderTemplateEnv" . }}
 {{- if and .Values.forwarder .Values.forwarder.forceUseIPv4 }}
   - name: HTTP_HOST
     value: "0.0.0.0"
 {{- end }}
 {{- end }}
 
-{{- define "launch.asyncForwarderTemplateEnv" -}}
-{{- include "launch.baseForwarderTemplateEnv" . }}
+{{- define "modelEngine.asyncForwarderTemplateEnv" -}}
+{{- include "modelEngine.baseForwarderTemplateEnv" . }}
   - name: CELERY_QUEUE
     value: "${QUEUE}"
   - name: CELERY_TASK_VISIBILITY
@@ -226,7 +226,7 @@ env:
     value: "${CELERY_S3_BUCKET}"
 {{- end }}
 
-{{- define "launch.serviceEnvBase" }}
+{{- define "modelEngine.serviceEnvBase" }}
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "{{ .Values.datadog_trace_enabled }}"
@@ -241,7 +241,7 @@ env:
     value: {{ .Values.serviceIdentifier }}
     {{- end }}
   - name: GATEWAY_URL
-    value: {{ include "launch.gatewayurl" . }}
+    value: {{ include "modelEngine.gatewayurl" . }}
   {{- if .Values.aws }}
   - name: AWS_PROFILE
     value: {{ .Values.aws.profileName }}
@@ -283,16 +283,16 @@ env:
   {{- end }}
 {{- end }}
 
-{{- define "launch.serviceEnvGitTagFromHelmVar" }}
-{{- include "launch.serviceEnvBase" . }}
+{{- define "modelEngine.serviceEnvGitTagFromHelmVar" }}
+{{- include "modelEngine.serviceEnvBase" . }}
   - name: DD_VERSION
     value: {{ .Values.tag }}
   - name: GIT_TAG
     value: {{ .Values.tag }}
 {{- end }}
 
-{{- define "launch.serviceEnvGitTagFromPythonReplace" }}
-{{- include "launch.serviceEnvBase" . }}
+{{- define "modelEngine.serviceEnvGitTagFromPythonReplace" }}
+{{- include "modelEngine.serviceEnvBase" . }}
   - name: DD_VERSION
     value: "${GIT_TAG}"
   - name: GIT_TAG
@@ -300,32 +300,32 @@ env:
 {{- end }}
 
 
-{{- define "launch.gatewayEnv" }}
-{{- include "launch.serviceEnvGitTagFromHelmVar" . }}
+{{- define "modelEngine.gatewayEnv" }}
+{{- include "modelEngine.serviceEnvGitTagFromHelmVar" . }}
   - name: DD_SERVICE
-    value: {{- printf " %s" (include "launch.fullname" .) }}
+    value: {{- printf " %s" (include "modelEngine.fullname" .) }}
 {{- end }}
 
-{{- define "launch.builderEnv" }}
-{{- include "launch.serviceEnvGitTagFromHelmVar" . }}
+{{- define "modelEngine.builderEnv" }}
+{{- include "modelEngine.serviceEnvGitTagFromHelmVar" . }}
   - name: DD_SERVICE
-    value: {{- printf " %s" (include "launch.buildername" .) }}
+    value: {{- printf " %s" (include "modelEngine.buildername" .) }}
 {{- end }}
 
-{{- define "launch.cacherEnv" }}
-{{- include "launch.serviceEnvGitTagFromHelmVar" . }}
+{{- define "modelEngine.cacherEnv" }}
+{{- include "modelEngine.serviceEnvGitTagFromHelmVar" . }}
   - name: DD_SERVICE
-    value: {{- printf " %s" (include "launch.cachername" .) }}
+    value: {{- printf " %s" (include "modelEngine.cachername" .) }}
 {{- end }}
 
-{{- define "launch.volumes" }}
+{{- define "modelEngine.volumes" }}
 volumes:
   - name: dshm
     emptyDir:
       medium: Memory
   - name: service-template-config
     configMap:
-      name: {{ include "launch.fullname" . }}-service-template-config
+      name: {{ include "modelEngine.fullname" . }}-service-template-config
   {{- if .Values.aws }}
   - name: config-volume
     configMap:
@@ -334,20 +334,20 @@ volumes:
   {{- if .Values.config.values }}
   - name: launch-service-config-volume
     configMap:
-      name: {{ include "launch.fullname" . }}-service-config
+      name: {{ include "modelEngine.fullname" . }}-service-config
       items:
         - key: launch_service_config
           path: service_config.yaml
   - name: infra-service-config-volume
     configMap:
-      name: {{ include "launch.fullname" . }}-service-config
+      name: {{ include "modelEngine.fullname" . }}-service-config
       items:
         - key: infra_service_config
           path: config.yaml
   {{- end }}
 {{- end }}
 
-{{- define "launch.volumeMounts" }}
+{{- define "modelEngine.volumeMounts" }}
 volumeMounts:
   - name: dshm
     mountPath: /dev/shm
@@ -366,7 +366,7 @@ volumeMounts:
   {{- end }}
 {{- end }}
 
-{{- define "launch.forwarderVolumeMounts" }}
+{{- define "modelEngine.forwarderVolumeMounts" }}
 volumeMounts:
   - name: config-volume
     mountPath: /root/.aws/config
@@ -383,7 +383,7 @@ volumeMounts:
   {{- end }}
 {{- end }}
 
-{{- define "launch.serviceAccountNamespaces" }}
+{{- define "modelEngine.serviceAccountNamespaces" }}
 namespaces:
   - {{ .Release.Namespace }}
 {{- range .Values.serviceAccount.namespaces }}
