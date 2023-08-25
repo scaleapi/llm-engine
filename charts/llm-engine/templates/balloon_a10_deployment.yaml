@@ -32,7 +32,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - image: public.ecr.aws/ubuntu/ubuntu:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: main
           resources:
             limits:

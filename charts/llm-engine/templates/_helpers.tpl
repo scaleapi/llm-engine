@@ -150,9 +150,9 @@ env:
     value: "${PREWARM}"
   - name: ML_INFRA_SERVICES_CONFIG_PATH
   {{- if .Values.config.file }}
-    value: "${BASE_PATH}/ml_infra_core/llm_engine.core/llm_engine.core/configs/{{ .Values.config.file.infra }}"
+    value: "${BASE_PATH}/model-engine/model_engine_server/core/configs/{{ .Values.config.file.infra }}"
   {{- else }}
-    value: "${BASE_PATH}/ml_infra_core/llm_engine.core/llm_engine.core/configs/config.yaml"
+    value: "${BASE_PATH}/model-engine/model_engine_server/core/configs/config.yaml"
   {{- end }}
 {{- end }}
 
@@ -198,9 +198,9 @@ env:
     value: "/workspace"
   - name: ML_INFRA_SERVICES_CONFIG_PATH
   {{- if .Values.config.file }}
-    value: "/workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs/{{ .Values.config.file.infra }}"
+    value: "/workspace/model-engine/model_engine_server/core/configs/{{ .Values.config.file.infra }}"
   {{- else }}
-    value: "/workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs/config.yaml"
+    value: "/workspace/model-engine/model_engine_server/core/configs/config.yaml"
   {{- end }}
 {{- end }}
 
@@ -262,12 +262,12 @@ env:
   - name: DEPLOY_SERVICE_CONFIG_PATH
     value: "/workspace/llm_engine/service_configs/{{ .Values.config.file.llm_engine }}"
   - name: ML_INFRA_SERVICES_CONFIG_PATH
-    value: "/workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs/{{ .Values.config.file.infra }}"
+    value: "/workspace/model-engine/model_engine_server/core/configs/{{ .Values.config.file.infra }}"
   {{- else }}
   - name: DEPLOY_SERVICE_CONFIG_PATH
     value: "/workspace/llm_engine/service_configs/service_config.yaml"
   - name: ML_INFRA_SERVICES_CONFIG_PATH
-    value: "/workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs/config.yaml"
+    value: "/workspace/model-engine/model_engine_server/core/configs/config.yaml"
   {{- end }}
   - name: CELERY_ELASTICACHE_ENABLED
     value: "true"
