@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "launch.fullname" . }}
+  name: {{ include "modelEngine.fullname" . }}
   labels:
-    {{- include "launch.selectorLabels.gateway" . | nindent 4 }}
-    {{- include "launch.labels" . | nindent 4 }}
-    tags.datadoghq.com/service: {{ include "launch.fullname" . }}
+    {{- include "modelEngine.selectorLabels.gateway" . | nindent 4 }}
+    {{- include "modelEngine.labels" . | nindent 4 }}
+    tags.datadoghq.com/service: {{ include "modelEngine.fullname" . }}
 spec:
   {{- if not .Values.autoscaling.horizontal.enabled }}
   replicas: {{ .Values.replicaCount.gateway }}
@@ -17,26 +17,26 @@ spec:
       maxSurge: 25%
   selector:
     matchLabels:
-      {{- include "launch.selectorLabels.gateway" . | nindent 6 }}
+      {{- include "modelEngine.selectorLabels.gateway" . | nindent 6 }}
   template:
     metadata:
       annotations:
         ad.datadoghq.com/main.logs: |
           [{
-            "service": {{ include "launch.fullname" . | quote }},
+            "service": {{ include "modelEngine.fullname" . | quote }},
             "source": "python"
           }]
       labels:
-        {{- include "launch.selectorLabels.gateway" . | nindent 8 }}
-        {{- include "launch.labels" . | nindent 8 }}
-        tags.datadoghq.com/service: {{ include "launch.fullname" . }}
+        {{- include "modelEngine.selectorLabels.gateway" . | nindent 8 }}
+        {{- include "modelEngine.labels" . | nindent 8 }}
+        tags.datadoghq.com/service: {{ include "modelEngine.fullname" . }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: {{ include "launch.fullname" . }}
+        - name: {{ include "modelEngine.fullname" . }}
           image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:

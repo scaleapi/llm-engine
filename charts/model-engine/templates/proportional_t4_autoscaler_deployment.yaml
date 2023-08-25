@@ -44,6 +44,6 @@ spec:
             - --logtostderr=true
             - --v=2
       priorityClassName: system-cluster-critical
-      serviceAccountName: {{ include "launch.fullname" . }}
+      serviceAccountName: {{ include "modelEngine.fullname" . }}
 {{- end }}
 {{- end }}

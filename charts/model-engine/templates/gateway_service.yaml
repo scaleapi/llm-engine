@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "launch.fullname" . }}
+  name: {{ include "modelEngine.fullname" . }}
   labels:
-    {{- include "launch.labels" . | nindent 4 }}
+    {{- include "modelEngine.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -15,4 +15,4 @@ spec:
       nodePort: {{ . }}
       {{- end }}
   selector:
-    {{- include "launch.selectorLabels.gateway" . | nindent 4 }}
+    {{- include "modelEngine.selectorLabels.gateway" . | nindent 4 }}

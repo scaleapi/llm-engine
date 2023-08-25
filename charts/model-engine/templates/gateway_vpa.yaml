@@ -2,21 +2,21 @@
 apiVersion: "autoscaling.k8s.io/v1"
 kind: VerticalPodAutoscaler
 metadata:
-  name: {{ include "launch.fullname" . }}
+  name: {{ include "modelEngine.fullname" . }}
   labels:
-    {{- include "launch.labels" . | nindent 4 }}
+    {{- include "modelEngine.labels" . | nindent 4 }}
 spec:
   targetRef:
     apiVersion: "apps/v1"
     kind: Deployment
-    name: {{ include "launch.fullname" . }}
+    name: {{ include "modelEngine.fullname" . }}
   updatePolicy:
     updateMode: {{ .Values.autoscaling.vertical.updateMode }}
   resourcePolicy:
     containerPolicies:
       - containerName: istio-proxy
         mode: "Off"
-      - containerName: {{ include "launch.fullname" . }}
+      - containerName: {{ include "modelEngine.fullname" . }}
         minAllowed:
           cpu: {{ .Values.autoscaling.vertical.minAllowed.cpu }}
           memory: {{ .Values.autoscaling.vertical.minAllowed.memory }}

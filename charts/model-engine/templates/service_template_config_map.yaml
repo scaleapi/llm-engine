@@ -1,17 +1,17 @@
-{{- $launch_name := include "launch.fullname" . }}
+{{- $launch_name := include "modelEngine.fullname" . }}
 {{- $config_values := .Values.config.values }}
 {{- $forwarder_repository := .Values.image.forwarderRepository -}}
 {{- $triton_repository := .Values.triton.image.repository -}}
 {{- $triton_tag := .Values.triton.image.tag -}}
 {{- $env := .Values.context -}}
-{{- $service_template_labels := include "launch.serviceTemplateLabels" . }}
-{{- $job_template_labels := include "launch.jobTemplateLabels" . }}
-{{- $service_env := include "launch.serviceEnvGitTagFromPythonReplace" . }}
-{{- $async_service_template_env := include "launch.asyncServiceTemplateEnv" . }}
-{{- $sync_service_template_env := include "launch.syncServiceTemplateEnv" . }}
-{{- $async_forwarder_template_env := include "launch.asyncForwarderTemplateEnv" . }}
-{{- $sync_forwarder_template_env := include "launch.syncForwarderTemplateEnv" . }}
-{{- $forwarder_volume_mounts := include "launch.forwarderVolumeMounts" . }}
+{{- $service_template_labels := include "modelEngine.serviceTemplateLabels" . }}
+{{- $job_template_labels := include "modelEngine.jobTemplateLabels" . }}
+{{- $service_env := include "modelEngine.serviceEnvGitTagFromPythonReplace" . }}
+{{- $async_service_template_env := include "modelEngine.asyncServiceTemplateEnv" . }}
+{{- $sync_service_template_env := include "modelEngine.syncServiceTemplateEnv" . }}
+{{- $async_forwarder_template_env := include "modelEngine.asyncForwarderTemplateEnv" . }}
+{{- $sync_forwarder_template_env := include "modelEngine.syncForwarderTemplateEnv" . }}
+{{- $forwarder_volume_mounts := include "modelEngine.forwarderVolumeMounts" . }}
 {{- $gateway_repository := .Values.image.gatewayRepository -}}
 {{- $tag := .Values.tag -}}
 {{- $aws_config_map_name := .Values.aws.configMap.name }}
@@ -30,7 +30,7 @@ kind: ConfigMap
 metadata:
   name: {{ $launch_name }}-service-template-config
   labels:
-    {{- include "launch.labels" . | nindent 4 }}
+    {{- include "modelEngine.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-2"
@@ -49,7 +49,7 @@ data:
         {{- $service_template_labels | nindent 8 }}
       {{- if eq $mode "async" }}
       annotations:
-        {{- include "launch.serviceTemplateAsyncAnnotations" . | nindent 8 }}
+        {{- include "modelEngine.serviceTemplateAsyncAnnotations" . | nindent 8 }}
       {{- end }}
     spec:
       strategy:
@@ -76,7 +76,7 @@ data:
             kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
         spec:
           affinity:
-            {{- include "launch.serviceTemplateAffinity" . | nindent 12 }}
+            {{- include "modelEngine.serviceTemplateAffinity" . | nindent 12 }}
           terminationGracePeriodSeconds: 600
           {{- if $service_template_service_account_name }}
           serviceAccount: {{ $service_template_service_account_name }}

@@ -2,9 +2,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "launch.fullname" . }}-spellbook-setup
+  name: {{ include "modelEngine.fullname" . }}-spellbook-setup
   labels:
-    {{- include "launch.labels" . | nindent 4 }}
+    {{- include "modelEngine.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": post-install
     "helm.sh/hook-weight": "0"
@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         sidecar.istio.io/inject: "false"
-        {{- include "launch.labels" . | nindent 8 }}
+        {{- include "modelEngine.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
       {{- with .Values.imagePullSecrets }}
@@ -24,7 +24,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: {{ include "launch.fullname" . }}
+        - name: {{ include "modelEngine.fullname" . }}
           image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
@@ -35,11 +35,11 @@ spec:
             - -m
             - model_engine_server.entrypoints.init_spellbook_models
             - --gateway-url
-            - '{{- include "launch.gatewayurl" . }}'
-          {{- include "launch.serviceEnvGitTagFromHelmVar" . | indent 10 }}
-          {{- include "launch.volumeMounts" . | indent 10 }}
-      serviceAccountName: {{ include "launch.fullname" . }}
-      {{- include "launch.volumes" . | indent 6 }}
+            - '{{- include "modelEngine.gatewayurl" . }}'
+          {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 10 }}
+          {{- include "modelEngine.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "modelEngine.fullname" . }}
+      {{- include "modelEngine.volumes" . | indent 6 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

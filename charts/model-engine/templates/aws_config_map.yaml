@@ -3,7 +3,7 @@
 {{- $name := .Values.aws.configMap.name }}
 {{- $profileName := .Values.aws.profileName }}
 {{- $annotations := .Values.serviceAccount.annotations }}
-{{- $labels := include "launch.labels" . }}
+{{- $labels := include "modelEngine.labels" . }}
 {{- range $namespace := .Values.aws.configMap.namespaces }}
 apiVersion: v1
 kind: ConfigMap

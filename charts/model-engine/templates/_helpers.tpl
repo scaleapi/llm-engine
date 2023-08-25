@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "launch.name" -}}
+{{- define "modelEngine.name" -}}
 {{- default .Chart.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 40 chars because some Kubernetes name fields are limited to 63 (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "launch.fullname" -}}
+{{- define "modelEngine.fullname" -}}
 {{- if .Values.serviceIdentifier }}
 {{- printf "%s-%s" .Chart.Name .Values.serviceIdentifier | trunc 40 | trimSuffix "-" }}
 {{- else }}
@@ -18,39 +18,39 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 {{- end }}
 
-{{- define "launch.buildername" -}}
-"{{ include "launch.fullname" . }}-endpoint-builder"
+{{- define "modelEngine.buildername" -}}
+"{{ include "modelEngine.fullname" . }}-endpoint-builder"
 {{- end }}
 
-{{- define "launch.cachername" -}}
-"{{ include "launch.fullname" . }}-cacher"
+{{- define "modelEngine.cachername" -}}
+"{{ include "modelEngine.fullname" . }}-cacher"
 {{- end }}
 
-{{- define "launch.gatewayurl" -}}
-{{ .Values.hostDomain.prefix }}{{ include "launch.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}
+{{- define "modelEngine.gatewayurl" -}}
+{{ .Values.hostDomain.prefix }}{{ include "modelEngine.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}
 {{- end }}
 
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "launch.chart" -}}
+{{- define "modelEngine.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "launch.labels" -}}
+{{- define "modelEngine.labels" -}}
 team: infra
 product: launch
-helm.sh/chart: {{ include "launch.chart" . }}
+helm.sh/chart: {{ include "modelEngine.chart" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/version: {{ .Values.tag }}
 tags.datadoghq.com/version: {{ .Values.tag }}
 tags.datadoghq.com/env: {{ .Values.context }}
 {{- end }}
 
-{{- define "launch.selectorLabels.builder" -}}
+{{- define "modelEngine.selectorLabels.builder" -}}
 app: {{ include "launch.buildername" . }}
 {{- end }}
 

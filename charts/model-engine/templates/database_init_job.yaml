@@ -2,9 +2,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "launch.fullname" . }}-database-setup
+  name: {{ include "modelEngine.fullname" . }}-database-setup
   labels:
-    {{- include "launch.labels" . | nindent 4 }}
+    {{- include "modelEngine.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install
     "helm.sh/hook-weight": "-1"
@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         sidecar.istio.io/inject: "false"
-        {{- include "launch.labels" . | nindent 8 }}
+        {{- include "modelEngine.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
       {{- with .Values.imagePullSecrets }}
@@ -24,7 +24,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: {{ include "launch.fullname" . }}
+        - name: {{ include "modelEngine.fullname" . }}
           image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
@@ -34,8 +34,8 @@ spec:
             - python
             - -m
             - model_engine_server.entrypoints.init_database
-          {{- include "launch.serviceEnvGitTagFromHelmVar" . | indent 10 }}
-          {{- include "launch.volumeMounts" . | indent 10 }}
+          {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 10 }}
+          {{- include "modelEngine.volumeMounts" . | indent 10 }}
       serviceAccountName: {{ include "launch.fullname" . }}
       {{- include "launch.volumes" . | indent 6 }}
       {{- with .Values.nodeSelector }}

@@ -1,11 +1,11 @@
 {{- if .Values.virtualservice.enabled -}}
-{{- $fullName := include "launch.fullname" . -}}
+{{- $fullName := include "modelEngine.fullname" . -}}
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "launch.labels" . | nindent 4 }}
+    {{- include "modelEngine.labels" . | nindent 4 }}
   {{- with .Values.virtualservice.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
