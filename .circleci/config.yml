@@ -144,6 +144,17 @@ jobs:
             pushd $HOME/project/charts
             cat model-engine/values_circleci.yaml | envsubst > model-engine/values_circleci_subst.yaml
             helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
+      - install_client
+      - install_server
+      - run:
+          name: Install integration test dependencies
+          command: |
+            pip install -r model-engine/requirements.txt
+      - run:
+          name: Run integration tests
+          command: |
+            pushd $HOME/project
+            pytest integration_tests
 
 executors:
   ubuntu-large:
