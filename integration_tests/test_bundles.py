@@ -7,6 +7,7 @@ from .rest_api_utils import (
     USER_ID_0,
     USER_ID_1,
     create_model_bundle,
+    get_latest_model_bundle,
 )
 
 
@@ -22,3 +23,7 @@ from .rest_api_utils import (
 @pytest.mark.parametrize("route_version", ["v1", "v2"])
 def test_model_bundle(user, create_bundle_request, route_version):
     create_model_bundle(create_bundle_request, user, route_version)
+    bundle = get_latest_model_bundle(
+        create_bundle_request["model_bundle_name"], user, route_version
+    )
+    assert bundle["name"] == create_bundle_request["name"]
