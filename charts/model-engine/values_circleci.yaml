@@ -67,7 +67,9 @@ resources:
   requests:
     cpu: 2
 
-nodeSelector: { }
+nodeSelector: null
+
+balloonNodeSelector: null
 
 tolerations: [ ]
 
