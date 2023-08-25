@@ -38,6 +38,9 @@ virtualservice:
   gateways:
     - default/internal-gateway
 
+hostDomain:
+  prefix: http://
+
 destinationrule:
   enabled: true
   annotations: { }

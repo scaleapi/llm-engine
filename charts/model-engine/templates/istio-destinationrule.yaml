@@ -1,11 +1,11 @@
 {{- if .Values.destinationrule.enabled -}}
-{{- $fullName := include "launch.fullname" . -}}
+{{- $fullName := include "modelEngine.fullname" . -}}
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "launch.labels" . | nindent 4}}
+    {{- include "modelEngine.labels" . | nindent 4}}
   {{- with .Values.destinationrule.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}

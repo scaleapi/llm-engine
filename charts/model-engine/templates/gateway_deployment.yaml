@@ -66,10 +66,10 @@ spec:
             - model_engine_server.entrypoints.start_fastapi_server
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- include "launch.gatewayEnv" . | indent 10 }}
-          {{- include "launch.volumeMounts" . | indent 10 }}
-      serviceAccountName: {{ include "launch.fullname" . }}
-      {{- include "launch.volumes" . | indent 6 }}
+          {{- include "modelEngine.gatewayEnv" . | indent 10 }}
+          {{- include "modelEngine.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "modelEngine.fullname" . }}
+      {{- include "modelEngine.volumes" . | indent 6 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

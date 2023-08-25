@@ -30,7 +30,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: {{ include "launch.cachername" . }}
+        - name: {{ include "modelEngine.cachername" . }}
           image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -52,10 +52,10 @@ spec:
             - model_engine_server.entrypoints.k8s_cache
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- include "launch.cacherEnv" . | indent 10 }}
-          {{- include "launch.volumeMounts" . | indent 10 }}
-      serviceAccountName: {{ include "launch.fullname" . }}
-      {{- include "launch.volumes" . | indent 6 }}
+          {{- include "modelEngine.cacherEnv" . | indent 10 }}
+          {{- include "modelEngine.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "modelEngine.fullname" . }}
+      {{- include "modelEngine.volumes" . | indent 6 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

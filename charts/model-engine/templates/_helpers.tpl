@@ -51,25 +51,25 @@ tags.datadoghq.com/env: {{ .Values.context }}
 {{- end }}
 
 {{- define "modelEngine.selectorLabels.builder" -}}
-app: {{ include "launch.buildername" . }}
+app: {{ include "modelEngine.buildername" . }}
 {{- end }}
 
-{{- define "launch.selectorLabels.cacher" -}}
-app: {{ include "launch.cachername" . }}
+{{- define "modelEngine.selectorLabels.cacher" -}}
+app: {{ include "modelEngine.cachername" . }}
 {{- end }}
 
-{{- define "launch.selectorLabels.gateway" -}}
-app: {{ include "launch.fullname" . -}}
+{{- define "modelEngine.selectorLabels.gateway" -}}
+app: {{ include "modelEngine.fullname" . -}}
 {{- end }}
 
-{{- define "launch.baseTemplateLabels" -}}
+{{- define "modelEngine.baseTemplateLabels" -}}
 user_id: ${OWNER}
 team: ${TEAM}
 product: ${PRODUCT}
 created_by: ${CREATED_BY}
 owner: ${OWNER}
 env: {{- .Values.context | printf " %s" }}
-managed-by: {{- include "launch.fullname" . | printf " %s\n" -}}
+managed-by: {{- include "modelEngine.fullname" . | printf " %s\n" -}}
 use_scale_launch_endpoint_network_policy: "true"
 tags.datadoghq.com/env: {{- .Values.context | printf " %s" }}
 tags.datadoghq.com/version: ${GIT_TAG}

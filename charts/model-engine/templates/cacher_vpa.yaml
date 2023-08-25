@@ -9,12 +9,12 @@ spec:
   targetRef:
     apiVersion: "apps/v1"
     kind: Deployment
-    name: {{ include "launch.cachername" . }}
+    name: {{ include "modelEngine.cachername" . }}
   updatePolicy:
     updateMode: "Auto"
   resourcePolicy:
     containerPolicies:
-      - containerName: {{ include "launch.cachername" . }}
+      - containerName: {{ include "modelEngine.cachername" . }}
         minAllowed:
           cpu: {{ .Values.autoscaling.vertical.minAllowed.cpu }}
           memory: {{ .Values.autoscaling.vertical.minAllowed.memory }}

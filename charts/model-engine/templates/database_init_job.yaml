@@ -36,8 +36,8 @@ spec:
             - model_engine_server.entrypoints.init_database
           {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 10 }}
           {{- include "modelEngine.volumeMounts" . | indent 10 }}
-      serviceAccountName: {{ include "launch.fullname" . }}
-      {{- include "launch.volumes" . | indent 6 }}
+      serviceAccountName: {{ include "modelEngine.fullname" . }}
+      {{- include "modelEngine.volumes" . | indent 6 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
