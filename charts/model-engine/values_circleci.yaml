@@ -87,7 +87,7 @@ config:
       s3_bucket: "$CIRCLECI_AWS_S3_BUCKET"
       profile_ml_worker: "default"
       profile_ml_inference_worker: "default"
-    llm_engine:
+    launch:
       # Endpoint config
       # K8s namespace the endpoints will be created in
       endpoint_namespace: model-engine

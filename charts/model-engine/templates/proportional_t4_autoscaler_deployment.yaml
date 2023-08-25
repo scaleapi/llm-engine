@@ -3,19 +3,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}proportional-t4-autoscaler-deployment
+  name: {{ .Chart.Name }}-proportional-t4-autoscaler-deployment
   labels:
     team: infra
     product: common-warm-nodes
 spec:
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}proportional-t4-autoscaler-deployment
+      app: {{ .Chart.Name }}-proportional-t4-autoscaler-deployment
       version: v1
   template:
     metadata:
       labels:
-        app: {{ .Chart.Name }}proportional-t4-autoscaler-deployment
+        app: {{ .Chart.Name }}-proportional-t4-autoscaler-deployment
         product: common-warm-nodes
         team: infra
         env: {{ .Values.context }}

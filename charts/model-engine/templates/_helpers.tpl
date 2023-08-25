@@ -332,7 +332,7 @@ volumes:
       name: {{ .Values.aws.configMap.name }}
   {{- end }}
   {{- if .Values.config.values }}
-  - name: {{ .Chart.Name }}service-config-volume
+  - name: {{ .Chart.Name }}-service-config-volume
     configMap:
       name: {{ include "modelEngine.fullname" . }}-service-config
       items:
@@ -359,7 +359,7 @@ volumeMounts:
     subPath: config
   {{- end }}
   {{- if .Values.config.values }}
-  - name: {{ .Chart.Name }}service-config-volume
+  - name: {{ .Chart.Name }}-service-config-volume
     mountPath: /workspace/model-engine/service_configs
   - name: infra-service-config-volume
     mountPath: /workspace/model-engine/model_engine_server/core/configs
