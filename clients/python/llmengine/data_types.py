@@ -408,7 +408,7 @@ class CreateFineTuneResponse(BaseModel):
     Response object for creating a FineTune.
     """
 
-    id: str = Field(..., description="ID of the created fine-tuning job.")
+    id: str = Field(description="ID of the created fine-tuning job.")
     """
     The ID of the FineTune.
     """
