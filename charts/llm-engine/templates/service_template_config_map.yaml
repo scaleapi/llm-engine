@@ -181,7 +181,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/server/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/model-engine/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --http
                 - production_threads
                 - --port
@@ -224,7 +224,7 @@ data:
                 - -m
                 - model_engine_server.inference.forwarding.http_forwarder
                 - --config
-                - /workspace/server/model_engine_server/inference/configs/service--http_forwarder.yaml
+                - /workspace/model-engine/model_engine_server/inference/configs/service--http_forwarder.yaml
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
@@ -267,7 +267,7 @@ data:
                 - ddtrace-run
                 - run-service
                 - --config
-                - /workspace/server/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - /workspace/model-engine/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --queue
                 - "${QUEUE}"
                 - --task-visibility
@@ -484,6 +484,62 @@ data:
           protocol: TCP
           name: http
           ${NODE_PORT_DICT}
+  virtual-service.yaml: |-
+    apiVersion: networking.istio.io/v1alpha3
+    kind: VirtualService
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        env: circleci
+        managed-by: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/version: ${GIT_TAG}
+        tags.datadoghq.com/service: ${ENDPOINT_NAME}
+        endpoint_id: ${ENDPOINT_ID}
+        endpoint_name: ${ENDPOINT_NAME}
+    spec:
+      hosts:
+        - ${RESOURCE_NAME}.${DNS_HOST_DOMAIN}
+      gateways:
+        - default/internal-gateway
+      http:
+        - route:
+            - destination:
+                host: "${RESOURCE_NAME}.${NAMESPACE}.svc.cluster.local"
+                port:
+                  number: 80
+  destination-rule.yaml: |-
+    apiVersion: networking.istio.io/v1beta1
+    kind: DestinationRule
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        env: circleci
+        managed-by: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/version: ${GIT_TAG}
+        tags.datadoghq.com/service: ${ENDPOINT_NAME}
+        endpoint_id: ${ENDPOINT_ID}
+        endpoint_name: ${ENDPOINT_NAME}
+    spec:
+      host: "${RESOURCE_NAME}.${NAMESPACE}.svc.cluster.local"
+      trafficPolicy:
+        loadBalancer:
+          simple: LEAST_REQUEST
   vertical-pod-autoscaler.yaml: |-
     apiVersion: "autoscaling.k8s.io/v1"
     kind: VerticalPodAutoscaler
@@ -743,3 +799,53 @@ data:
               command: ["/bin/sh", "-ec", "while : ; do sleep 30 ; done"]
           terminationGracePeriodSeconds: 0
   {{- end }}
+  cron-trigger.yaml: |-
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      name: ${NAME}
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        launch_trigger_id: ${TRIGGER_ID}
+        tags.datadoghq.com/service: ${TRIGGER_ID}
+    spec:
+      schedule: "${CRON_SCHEDULE}"
+      successfulJobsHistoryLimit: 0
+      failedJobsHistoryLimit: 0
+      jobTemplate:
+        spec:
+          backoffLimit: 0
+          activeDeadlineSeconds: ${BATCH_CURL_JOB_ACTIVE_DEADLINE_SECONDS}
+          template:
+            metadata:
+              labels:
+                user_id: ${OWNER}
+                team: ${TEAM}
+                product: ${PRODUCT}
+                created_by: ${CREATED_BY}
+                owner: ${OWNER}
+                launch_trigger_id: ${TRIGGER_ID}
+                tags.datadoghq.com/service: ${TRIGGER_ID}
+            spec:
+              containers:
+              - name: ${NAME}
+                image: curlimages/curl:7.72.0
+                imagePullPolicy: IfNotPresent
+                command:
+                - curl
+                - -X
+                - 'POST'
+                - '${HOST}/v1/docker-image-batch-jobs'
+                - -H
+                - 'accept: application/json'
+                - -H
+                - 'Content-Type: application/json'
+                - -d
+                - '{ "docker_image_batch_job_bundle_id": "${DOCKER_IMAGE_BATCH_JOB_BUNDLE_ID}", "job_config": ${JOB_CONFIG}, "labels": ${JOB_METADATA}  }'
+                - -u
+                - '${OWNER}:'
+              restartPolicy: Never
