@@ -93,34 +93,63 @@ jobs:
       - run:
           name: Build Docker Image
           command: |
-            docker build . -f model-engine/Dockerfile -t llm-engine:$CIRCLE_SHA1
+            docker build . -f model-engine/Dockerfile -t model-engine:$CIRCLE_SHA1
   integration_tests:
     executor: ubuntu-large
     steps:
       - checkout
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build . -f model-engine/Dockerfile -t model-engine:$CIRCLE_SHA1
       - run:
           name: Install minikube
           command: |
             cd $HOME
             curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
             sudo dpkg -i minikube_latest_amd64.deb
-            minikube start --vm-driver=docker --kubernetes-version=v1.23.0 --memory=14336 --cpus=8
+            minikube start --vm-driver=docker --kubernetes-version=v1.23.0 --memory=49152 --cpus=14
       - run:
-          name: Install helm
+          name: Install kubectl, helm
           command: |
-            cd $HOME
+            cd $HOME/bin
             curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+            curl -LO "https://dl.k8s.io/release/v1.23.0/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+      - run:
+          name: Install helm chart dependencies (Redis, Postgres, Istio)
+          command: |
+            sudo apt-get update && sudo apt-get install -y expect
+            pushd $HOME/project/.circleci/resources
+            kubectl apply -f redis-k8s.yaml
+            kubectl apply -f postgres-k8s.yaml
+            kubectl create secret generic model-engine-postgres-credentials --from-literal=database_url=postgresql://postgres:circle_test@postgres.default:5432/circle_test
+            export ISTIO_VERSION=1.15.0
+            popd
+            curl -L https://istio.io/downloadIstio | TARGET_ARCH=x86_64 sh -
+            install istio-${ISTIO_VERSION}/bin/istioctl $HOME/bin
+            $HOME/bin/istioctl install --set profile=demo -y
+            kubectl create namespace model-engine
+            kubectl create configmap default-config --from-literal=config="$(cat $HOME/project/.circleci/resources/.minikube-config-map | envsubst)"
+            kubectl create configmap default-config --namespace model-engine --from-literal=config="$(cat $HOME/project/.circleci/resources/.minikube-config-map | envsubst)"
+            cat $HOME/project/.circleci/resources/.minikube-registry-creds | envsubst | expect
+            minikube addons enable registry-creds
+      - run:
+          name: Pre-load model-engine image to minikube
+          command: |
+            minikube --logtostderr -v 1 image load model-engine:$CIRCLE_SHA1
       - run:
           name: Install helm chart
           command: |
-            cd $HOME/project/charts
-            helm install llm-engine llm-engine --values llm-engine/values_circleci.yaml --set tag=$CIRCLE_SHA1
+            pushd $HOME/project/charts
+            cat model-engine/values_circleci.yaml | envsubst > model-engine/values_circleci_subst.yaml
+            helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
 
 executors:
   ubuntu-large:
     machine:
       image: "ubuntu-2004:202201-02"
-    resource_class: xlarge
+    resource_class: 2xlarge
 
 commands:
   environment_setup:

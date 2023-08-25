@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "modelEngine.fullname" . }}
+  labels:
+    {{- include "modelEngine.selectorLabels.gateway" . | nindent 4 }}
+    {{- include "modelEngine.labels" . | nindent 4 }}
+    tags.datadoghq.com/service: {{ include "modelEngine.fullname" . }}
+spec:
+  {{- if not .Values.autoscaling.horizontal.enabled }}
+  replicas: {{ .Values.replicaCount.gateway }}
+  {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0 # Protects against out of resource pod eviction during rolling update
+      maxSurge: 25%
+  selector:
+    matchLabels:
+      {{- include "modelEngine.selectorLabels.gateway" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        ad.datadoghq.com/main.logs: |
+          [{
+            "service": {{ include "modelEngine.fullname" . | quote }},
+            "source": "python"
+          }]
+      labels:
+        {{- include "modelEngine.selectorLabels.gateway" . | nindent 8 }}
+        {{- include "modelEngine.labels" . | nindent 8 }}
+        tags.datadoghq.com/service: {{ include "modelEngine.fullname" . }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "modelEngine.fullname" . }}
+          image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 5000
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 2
+            failureThreshold: 10
+          command: 
+            - dumb-init
+            - --
+            - ddtrace-run
+          args:
+            - python
+            - -m
+            - model_engine_server.entrypoints.start_fastapi_server
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- include "modelEngine.gatewayEnv" . | indent 10 }}
+          {{- include "modelEngine.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "modelEngine.fullname" . }}
+      {{- include "modelEngine.volumes" . | indent 6 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

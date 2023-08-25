@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: main
+        image: "cimg/postgres:12.8-postgis"
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 1
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_DB
+          value: circle_test
+        - name: POSTGRES_PASSWORD
+          value: circle_test
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+    - name: redis
+      port: 5432
+      targetPort: 5432

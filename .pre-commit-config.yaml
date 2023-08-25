@@ -55,14 +55,14 @@ repos:
     hooks:
       - id: mypy
         name: mypy-clients-python
-        entry: mypy --config-file clients/python/mypy.ini clients/python
+        entry: mypy --config-file clients/python/mypy.ini
         language: system
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: 'v1.3.0'  # Make sure this matches the version in requirements-dev.txt!
     hooks:
       - id: mypy
         name: mypy-server
-        entry: mypy --config-file model-engine/mypy.ini model-engine
+        entry: mypy --config-file model-engine/mypy.ini
         language: system
   - repo: local
     hooks:
