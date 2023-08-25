@@ -134,6 +134,7 @@ jobs:
             kubectl create configmap default-config --namespace model-engine --from-literal=config="$(cat $HOME/project/.circleci/resources/.minikube-config-map | envsubst)"
             cat $HOME/project/.circleci/resources/.minikube-registry-creds | envsubst | expect
             minikube addons enable registry-creds
+            alias python='python3.8'
       - run:
           name: Pre-load model-engine image to minikube
           command: |

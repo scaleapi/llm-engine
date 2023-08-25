@@ -16,20 +16,12 @@ BASE_PATH = os.environ.get("BASE_PATH", _DEFAULT_BASE_PATH)
 print(f"Integration tests using gateway {BASE_PATH=}")
 DEFAULT_NETWORK_TIMEOUT_SEC = 10
 
-if BASE_PATH == _DEFAULT_BASE_PATH:
-    # Generate some fake 24-character user IDs (Scale user IDs are 24 chars).
-    # We don't want different people to get user ID collisions but at the same time we want people to
-    # consistently use the same user IDs so that they can clean up their extra endpoints.
-    USER_PREFIX = os.getenv("SERVICE_IDENTIFIER", "test")[:8]
-    USER_ID_0 = USER_PREFIX + "0" * (24 - len(USER_PREFIX))
-    USER_ID_1 = USER_PREFIX + "1" * (24 - len(USER_PREFIX))
-else:
-    USER_ID_0 = USER_ID_1 = "62bc820451dbea002b1c5421"
-    print(f"Non-local mode! Using USERs == {USER_ID_0}")
-
-if (OVERRIDE_USER_ID := os.environ.get("OVERRIDE_USER_ID", None)) is not None:
-    print(f"Overriding user ID for testing with env var {OVERRIDE_USER_ID=}")
-    USER_ID_0 = USER_ID_1 = OVERRIDE_USER_ID
+# Generate some fake 24-character user IDs.
+# We don't want different people to get user ID collisions but at the same time we want people to
+# consistently use the same user IDs so that they can clean up their extra endpoints.
+USER_PREFIX = os.getenv("SERVICE_IDENTIFIER", "test")[:8]
+USER_ID_0 = USER_PREFIX + "0" * (24 - len(USER_PREFIX))
+USER_ID_1 = USER_PREFIX + "1" * (24 - len(USER_PREFIX))
 
 DEFAULT_USERS: Sequence[str] = (
     USER_ID_0,
