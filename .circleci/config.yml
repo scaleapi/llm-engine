@@ -142,8 +142,8 @@ jobs:
           name: Install helm chart
           command: |
             pushd $HOME/project/charts
-            cat llm-engine/values_circleci.yaml | envsubst > llm-engine/values_circleci_subst.yaml
-            helm install llm-engine llm-engine --values llm-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
+            cat model-engine/values_circleci.yaml | envsubst > model-engine/values_circleci_subst.yaml
+            helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
 
 executors:
   ubuntu-large:
