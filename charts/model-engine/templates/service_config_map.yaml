@@ -2,15 +2,16 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "llmEngine.fullname" . }}-service-config
+  name: {{ include "launch.fullname" . }}-service-config
   labels:
-    {{- include "llmEngine.labels" . | nindent 4 }}
+    {{- include "launch.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-2"
 data:
-  llm_engine_service_config: |-
-    {{- with .Values.config.values.llm_engine }}
+  launch_service_config: |-
+    datadog_trace_enabled: {{ .Values.datadog_trace_enabled | default false | quote }}
+    {{- with .Values.config.values.launch }}
     {{- range $key, $value := . }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}

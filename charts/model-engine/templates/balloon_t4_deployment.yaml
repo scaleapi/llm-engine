@@ -2,20 +2,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: llm-engine-balloon-cpu
+  name: {{ .Chart.Name }}-balloon-t4
   labels:
     team: infra
     product: common-warm-nodes
 spec:
-  replicas: {{ .Values.replicaCount.balloonCpu }}
+  replicas: {{ .Values.replicaCount.balloonT4 }}
   selector:
     matchLabels:
-      app: llm-engine-balloon-cpu
+      app: {{ .Chart.Name }}-balloon-t4
       version: v1
   template:
     metadata:
       labels:
-        app: llm-engine-balloon-cpu
+        app: {{ .Chart.Name }}-balloon-t4
         product: common-warm-nodes
         team: infra
         env: {{ .Values.context }}
@@ -24,19 +24,27 @@ spec:
         sidecar.istio.io/inject: "false"
     spec:
       nodeSelector:
-        node-lifecycle: normal
+        k8s.amazonaws.com/accelerator: nvidia-tesla-t4
+        {{- with .Values.balloonNodeSelector }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
       containers:
         - image: public.ecr.aws/ubuntu/ubuntu:latest
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          imagePullPolicy: IfNotPresent
           name: main
           resources:
             limits:
               memory: 28Gi
-              cpu: 8
+              nvidia.com/gpu: 1
+              cpu: 4
           command:
             - /bin/bash
             - -c
             - "while true; do sleep 30; done"
       terminationGracePeriodSeconds: 0
-      priorityClassName: llm-engine-low-priority
+      priorityClassName: launch-low-priority
 {{- end }}

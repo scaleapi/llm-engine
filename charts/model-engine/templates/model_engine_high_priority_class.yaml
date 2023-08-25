@@ -2,7 +2,7 @@
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
-  name: "{{ include "llmEngine.fullname" . }}-high-priority"
+  name: "{{ include "launch.fullname" . }}-high-priority"
 value: 100000
-description: "High Priority Class for LLMEngine"
+description: "High Priority Class for Launch"
 {{- end }}

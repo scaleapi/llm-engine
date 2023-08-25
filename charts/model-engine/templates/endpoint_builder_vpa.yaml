@@ -2,21 +2,19 @@
 apiVersion: "autoscaling.k8s.io/v1"
 kind: VerticalPodAutoscaler
 metadata:
-  name: {{ include "llmEngine.fullname" . }}
+  name: {{ include "launch.buildername" . }}
   labels:
-    {{- include "llmEngine.labels" . | nindent 4 }}
+    {{- include "launch.labels" . | nindent 4 }}
 spec:
   targetRef:
     apiVersion: "apps/v1"
     kind: Deployment
-    name: {{ include "llmEngine.fullname" . }}
+    name: {{ include "launch.buildername" . }}
   updatePolicy:
-    updateMode: {{ .Values.autoscaling.vertical.updateMode }}
+    updateMode: "Auto"
   resourcePolicy:
     containerPolicies:
-      - containerName: istio-proxy
-        mode: "Off"
-      - containerName: {{ include "llmEngine.fullname" . }}
+      - containerName: {{ include "launch.buildername" . }}
         minAllowed:
           cpu: {{ .Values.autoscaling.vertical.minAllowed.cpu }}
           memory: {{ .Values.autoscaling.vertical.minAllowed.memory }}

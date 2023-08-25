@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "llmEngine.name" -}}
+{{- define "launch.name" -}}
 {{- default .Chart.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 40 chars because some Kubernetes name fields are limited to 63 (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "llmEngine.fullname" -}}
+{{- define "launch.fullname" -}}
 {{- if .Values.serviceIdentifier }}
 {{- printf "%s-%s" .Chart.Name .Values.serviceIdentifier | trunc 40 | trimSuffix "-" }}
 {{- else }}
@@ -18,73 +18,77 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 {{- end }}
 
-{{- define "llmEngine.buildername" -}}
-"{{ include "llmEngine.fullname" . }}-endpoint-builder"
+{{- define "launch.buildername" -}}
+"{{ include "launch.fullname" . }}-endpoint-builder"
 {{- end }}
 
-{{- define "llmEngine.cachername" -}}
-"{{ include "llmEngine.fullname" . }}-cacher"
+{{- define "launch.cachername" -}}
+"{{ include "launch.fullname" . }}-cacher"
+{{- end }}
+
+{{- define "launch.gatewayurl" -}}
+{{ .Values.hostDomain.prefix }}{{ include "launch.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}
 {{- end }}
 
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "llmEngine.chart" -}}
+{{- define "launch.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "llmEngine.labels" -}}
+{{- define "launch.labels" -}}
 team: infra
-product: llm-engine
-helm.sh/chart: {{ include "llmEngine.chart" . }}
+product: launch
+helm.sh/chart: {{ include "launch.chart" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/version: {{ .Values.tag }}
 tags.datadoghq.com/version: {{ .Values.tag }}
 tags.datadoghq.com/env: {{ .Values.context }}
 {{- end }}
 
-{{- define "llmEngine.selectorLabels.builder" -}}
-app: {{ include "llmEngine.buildername" . }}
+{{- define "launch.selectorLabels.builder" -}}
+app: {{ include "launch.buildername" . }}
 {{- end }}
 
-{{- define "llmEngine.selectorLabels.cacher" -}}
-app: {{ include "llmEngine.cachername" . }}
+{{- define "launch.selectorLabels.cacher" -}}
+app: {{ include "launch.cachername" . }}
 {{- end }}
 
-{{- define "llmEngine.selectorLabels.gateway" -}}
-app: {{ include "llmEngine.fullname" . -}}
+{{- define "launch.selectorLabels.gateway" -}}
+app: {{ include "launch.fullname" . -}}
 {{- end }}
 
-{{- define "llmEngine.baseTemplateLabels" -}}
+{{- define "launch.baseTemplateLabels" -}}
 user_id: ${OWNER}
 team: ${TEAM}
 product: ${PRODUCT}
 created_by: ${CREATED_BY}
 owner: ${OWNER}
 env: {{- .Values.context | printf " %s" }}
-managed-by: {{- include "llmEngine.fullname" . | printf " %s\n" -}}
-use_scale_llm_engine_endpoint_network_policy: "true"
+managed-by: {{- include "launch.fullname" . | printf " %s\n" -}}
+use_scale_launch_endpoint_network_policy: "true"
 tags.datadoghq.com/env: {{- .Values.context | printf " %s" }}
-tags.datadoghq.com/version: {{- .Values.tag | printf " %s" }}
+tags.datadoghq.com/version: ${GIT_TAG}
 {{- end }}
 
-{{- define "llmEngine.serviceTemplateLabels" -}}
-{{- include "llmEngine.baseTemplateLabels" . | printf "%s\n" -}}
+{{- define "launch.serviceTemplateLabels" -}}
+{{- include "launch.baseTemplateLabels" . | printf "%s\n" -}}
 tags.datadoghq.com/service: ${ENDPOINT_NAME}
 endpoint_id: ${ENDPOINT_ID}
 endpoint_name: ${ENDPOINT_NAME}
 {{- end }}
 
-{{- define "llmEngine.jobTemplateLabels" -}}
-{{- include "llmEngine.baseTemplateLabels" . | printf "%s\n" -}}
-llm_engine_job_id: ${JOB_ID}
+{{- define "launch.jobTemplateLabels" -}}
+{{- include "launch.baseTemplateLabels" . | printf "%s\n" -}}
+launch_job_id: ${JOB_ID}
 tags.datadoghq.com/service: ${JOB_ID}
 {{- end }}
 
-{{- define "llmEngine.serviceTemplateAsyncAnnotations" -}}
+{{- define "launch.serviceTemplateAsyncAnnotations" -}}
 celery.scaleml.autoscaler/queue: ${QUEUE}
 celery.scaleml.autoscaler/broker: ${BROKER_NAME}
 celery.scaleml.autoscaler/taskVisibility: "VISIBILITY_24H"
@@ -93,7 +97,7 @@ celery.scaleml.autoscaler/minWorkers: "${MIN_WORKERS}"
 celery.scaleml.autoscaler/maxWorkers: "${MAX_WORKERS}"
 {{- end }}
 
-{{- define "llmEngine.serviceTemplateAffinity" -}}
+{{- define "launch.serviceTemplateAffinity" -}}
 podAffinity:
   preferredDuringSchedulingIgnoredDuringExecution:
   - weight: 1
@@ -116,7 +120,7 @@ podAffinity:
       topologyKey: kubernetes.io/hostname
 {{- end }}
 
-{{- define "llmEngine.baseServiceTemplateEnv" -}}
+{{- define "launch.baseServiceTemplateEnv" -}}
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "${DATADOG_TRACE_ENABLED}"
@@ -125,7 +129,7 @@ env:
   - name: DD_ENV
     value: {{ .Values.context }}
   - name: DD_VERSION
-    value: {{ .Values.tag }}
+    value: "${GIT_TAG}"
   - name: DD_AGENT_HOST
     valueFrom:
       fieldRef:
@@ -150,20 +154,20 @@ env:
     value: "${PREWARM}"
   - name: ML_INFRA_SERVICES_CONFIG_PATH
   {{- if .Values.config.file }}
-    value: "${BASE_PATH}/model-engine/model_engine_server/core/configs/{{ .Values.config.file.infra }}"
+    value: {{ .Values.config.file.infra | quote }}
   {{- else }}
     value: "${BASE_PATH}/model-engine/model_engine_server/core/configs/config.yaml"
   {{- end }}
 {{- end }}
 
-{{- define "llmEngine.syncServiceTemplateEnv" -}}
-{{- include "llmEngine.baseServiceTemplateEnv" . }}
+{{- define "launch.syncServiceTemplateEnv" -}}
+{{- include "launch.baseServiceTemplateEnv" . }}
   - name: PORT
     value: "${ARTIFACT_LIKE_CONTAINER_PORT}"
 {{- end }}
 
-{{- define "llmEngine.asyncServiceTemplateEnv" -}}
-{{- include "llmEngine.baseServiceTemplateEnv" . }}
+{{- define "launch.asyncServiceTemplateEnv" -}}
+{{- include "launch.baseServiceTemplateEnv" . }}
   - name: CELERY_S3_BUCKET
     value: "${CELERY_S3_BUCKET}"
   - name: BROKER_TYPE
@@ -176,7 +180,7 @@ env:
     value: "${SQS_QUEUE_URL}"
 {{- end }}
 
-{{- define "llmEngine.baseForwarderTemplateEnv" -}}
+{{- define "launch.baseForwarderTemplateEnv" -}}
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "${DATADOG_TRACE_ENABLED}"
@@ -185,7 +189,7 @@ env:
   - name: DD_ENV
     value: {{ .Values.context }}
   - name: DD_VERSION
-    value: {{ .Values.tag }}
+    value: "${GIT_TAG}"
   - name: DD_AGENT_HOST
     valueFrom:
       fieldRef:
@@ -198,22 +202,22 @@ env:
     value: "/workspace"
   - name: ML_INFRA_SERVICES_CONFIG_PATH
   {{- if .Values.config.file }}
-    value: "/workspace/model-engine/model_engine_server/core/configs/{{ .Values.config.file.infra }}"
+    value: {{ .Values.config.file.infra | quote }}
   {{- else }}
     value: "/workspace/model-engine/model_engine_server/core/configs/config.yaml"
   {{- end }}
 {{- end }}
 
-{{- define "llmEngine.syncForwarderTemplateEnv" -}}
-{{- include "llmEngine.baseForwarderTemplateEnv" . }}
+{{- define "launch.syncForwarderTemplateEnv" -}}
+{{- include "launch.baseForwarderTemplateEnv" . }}
 {{- if and .Values.forwarder .Values.forwarder.forceUseIPv4 }}
   - name: HTTP_HOST
     value: "0.0.0.0"
 {{- end }}
 {{- end }}
 
-{{- define "llmEngine.asyncForwarderTemplateEnv" -}}
-{{- include "llmEngine.baseForwarderTemplateEnv" . }}
+{{- define "launch.asyncForwarderTemplateEnv" -}}
+{{- include "launch.baseForwarderTemplateEnv" . }}
   - name: CELERY_QUEUE
     value: "${QUEUE}"
   - name: CELERY_TASK_VISIBILITY
@@ -222,29 +226,29 @@ env:
     value: "${CELERY_S3_BUCKET}"
 {{- end }}
 
-{{- define "llmEngine.serviceEnv" }}
+{{- define "launch.serviceEnvBase" }}
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "{{ .Values.datadog_trace_enabled }}"
   - name: DD_ENV
     value: {{ .Values.context }}
-  - name: DD_VERSION
-    value: {{ .Values.tag }}
   - name: DD_AGENT_HOST
     valueFrom:
       fieldRef:
         fieldPath: status.hostIP
-  - name: GIT_TAG
-    value: {{ .Values.tag }}
   - name: SERVICE_IDENTIFIER
     {{- if .Values.serviceIdentifier }}
     value: {{ .Values.serviceIdentifier }}
     {{- end }}
+  - name: GATEWAY_URL
+    value: {{ include "launch.gatewayurl" . }}
   {{- if .Values.aws }}
   - name: AWS_PROFILE
     value: {{ .Values.aws.profileName }}
   - name: ECR_READ_AWS_PROFILE
     value: {{ .Values.aws.profileName }}
+  - name: S3_WRITE_AWS_PROFILE
+    value: {{ .Values.aws.s3WriteProfileName }}
   {{- end }}
   {{- with .Values.secrets }}
   {{- if .kubernetesDatabaseSecretName }}
@@ -260,88 +264,109 @@ env:
   {{- end }}
   {{- if .Values.config.file }}
   - name: DEPLOY_SERVICE_CONFIG_PATH
-    value: "/workspace/llm_engine/service_configs/{{ .Values.config.file.llm_engine }}"
+    value: {{ .Values.config.file.launch | quote }}
   - name: ML_INFRA_SERVICES_CONFIG_PATH
-    value: "/workspace/model-engine/model_engine_server/core/configs/{{ .Values.config.file.infra }}"
+    value: {{ .Values.config.file.infra | quote }}
   {{- else }}
   - name: DEPLOY_SERVICE_CONFIG_PATH
-    value: "/workspace/llm_engine/service_configs/service_config.yaml"
+    value: "/workspace/model-engine/service_configs/service_config.yaml"
   - name: ML_INFRA_SERVICES_CONFIG_PATH
     value: "/workspace/model-engine/model_engine_server/core/configs/config.yaml"
   {{- end }}
   - name: CELERY_ELASTICACHE_ENABLED
     value: "true"
-  - name: LLM_ENGINE_SERVICE_TEMPLATE_FOLDER
-    value: "/workspace/llm_engine/llm_engine/infra/gateways/resources/templates"
+  - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
+    value: "/workspace/model-engine/model_engine_server/infra/gateways/resources/templates"
+  {{- if .Values.redis.auth}}
+  - name: REDIS_AUTH_TOKEN
+    value: {{ .Values.redis.auth }}
+  {{- end }}
 {{- end }}
 
-{{- define "llmEngine.gatewayEnv" }}
-{{- include "llmEngine.serviceEnv" . }}
+{{- define "launch.serviceEnvGitTagFromHelmVar" }}
+{{- include "launch.serviceEnvBase" . }}
+  - name: DD_VERSION
+    value: {{ .Values.tag }}
+  - name: GIT_TAG
+    value: {{ .Values.tag }}
+{{- end }}
+
+{{- define "launch.serviceEnvGitTagFromPythonReplace" }}
+{{- include "launch.serviceEnvBase" . }}
+  - name: DD_VERSION
+    value: "${GIT_TAG}"
+  - name: GIT_TAG
+    value: "${GIT_TAG}"
+{{- end }}
+
+
+{{- define "launch.gatewayEnv" }}
+{{- include "launch.serviceEnvGitTagFromHelmVar" . }}
   - name: DD_SERVICE
-    value: {{- printf " %s" (include "llmEngine.fullname" .) }}
+    value: {{- printf " %s" (include "launch.fullname" .) }}
 {{- end }}
 
-{{- define "llmEngine.builderEnv" }}
-{{- include "llmEngine.serviceEnv" . }}
+{{- define "launch.builderEnv" }}
+{{- include "launch.serviceEnvGitTagFromHelmVar" . }}
   - name: DD_SERVICE
-    value: {{- printf " %s" (include "llmEngine.buildername" .) }}
+    value: {{- printf " %s" (include "launch.buildername" .) }}
 {{- end }}
 
-{{- define "llmEngine.cacherEnv" }}
-{{- include "llmEngine.serviceEnv" . }}
+{{- define "launch.cacherEnv" }}
+{{- include "launch.serviceEnvGitTagFromHelmVar" . }}
   - name: DD_SERVICE
-    value: {{- printf " %s" (include "llmEngine.cachername" .) }}
+    value: {{- printf " %s" (include "launch.cachername" .) }}
 {{- end }}
 
-{{- define "llmEngine.volumes" }}
+{{- define "launch.volumes" }}
 volumes:
   - name: dshm
     emptyDir:
       medium: Memory
   - name: service-template-config
     configMap:
-      name: {{ include "llmEngine.fullname" . }}-service-template-config
+      name: {{ include "launch.fullname" . }}-service-template-config
   {{- if .Values.aws }}
   - name: config-volume
     configMap:
       name: {{ .Values.aws.configMap.name }}
   {{- end }}
   {{- if .Values.config.values }}
-  - name: llm-engine-service-config-volume
+  - name: launch-service-config-volume
     configMap:
-      name: {{ include "llmEngine.fullname" . }}-service-config
+      name: {{ include "launch.fullname" . }}-service-config
       items:
-        - key: llm_engine_service_config
+        - key: launch_service_config
           path: service_config.yaml
   - name: infra-service-config-volume
     configMap:
-      name: {{ include "llmEngine.fullname" . }}-service-config
+      name: {{ include "launch.fullname" . }}-service-config
       items:
         - key: infra_service_config
           path: config.yaml
   {{- end }}
 {{- end }}
 
-{{- define "llmEngine.volumeMounts" }}
+{{- define "launch.volumeMounts" }}
 volumeMounts:
   - name: dshm
     mountPath: /dev/shm
   - name: service-template-config
-    mountPath: /workspace/llm_engine/llm_engine/infra/gateways/resources/templates
+    mountPath: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
   {{- if .Values.aws }}
   - name: config-volume
-    mountPath: /root/.aws/config
+    mountPath: {{ .Values.aws.configMap.mountPath }}
     subPath: config
   {{- end }}
   {{- if .Values.config.values }}
-  - name: llm-engine-service-config-volume
-    mountPath: /workspace/llm_engine/service_configs
+  - name: launch-service-config-volume
+    mountPath: /workspace/model-engine/service_configs
   - name: infra-service-config-volume
     mountPath: /workspace/model-engine/model_engine_server/core/configs
   {{- end }}
 {{- end }}
 
-{{- define "llmEngine.forwarderVolumeMounts" }}
+{{- define "launch.forwarderVolumeMounts" }}
 volumeMounts:
   - name: config-volume
     mountPath: /root/.aws/config
@@ -358,7 +383,7 @@ volumeMounts:
   {{- end }}
 {{- end }}
 
-{{- define "llmEngine.serviceAccountNamespaces" }}
+{{- define "launch.serviceAccountNamespaces" }}
 namespaces:
   - {{ .Release.Namespace }}
 {{- range .Values.serviceAccount.namespaces }}

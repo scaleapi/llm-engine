@@ -1,29 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "llmEngine.buildername" . }}
+  name: {{ include "launch.buildername" . }}
   labels:
-    {{- include "llmEngine.selectorLabels.builder" . | nindent 4 }}
-    {{- include "llmEngine.labels" . | nindent 4 }}
-    tags.datadoghq.com/service: {{ include "llmEngine.buildername" . }}
+    {{- include "launch.selectorLabels.builder" . | nindent 4 }}
+    {{- include "launch.labels" . | nindent 4 }}
+    tags.datadoghq.com/service: {{ include "launch.buildername" . }}
 spec:
   replicas: {{ .Values.replicaCount.builder }}
   selector:
     matchLabels:
-      {{- include "llmEngine.selectorLabels.builder" . | nindent 6 }}
+      {{- include "launch.selectorLabels.builder" . | nindent 6 }}
   template:
     metadata:
       annotations:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         ad.datadoghq.com/main.logs: |
           [{
-            "service": {{ include "llmEngine.buildername" . | quote }},
+            "service": {{ include "launch.buildername" . | quote }},
             "source": "python"
           }]
       labels:
-        {{- include "llmEngine.selectorLabels.builder" . | nindent 8 }}
-        {{- include "llmEngine.labels" . | nindent 8 }}
-        tags.datadoghq.com/service: {{ include "llmEngine.buildername" . }}
+        {{- include "launch.selectorLabels.builder" . | nindent 8 }}
+        {{- include "launch.labels" . | nindent 8 }}
+        tags.datadoghq.com/service: {{ include "launch.buildername" . }}
         sidecar.istio.io/inject: "false"
     spec:
       {{- with .Values.imagePullSecrets }}
@@ -31,7 +31,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: {{ include "llmEngine.buildername" . }}
+        - name: {{ include "launch.buildername" . }}
           image: "{{ .Values.image.builderRepository }}:{{ .Values.tag}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -54,16 +54,16 @@ spec:
             - --loglevel=INFO
             - --concurrency=2
             {{- if .Values.serviceIdentifier }}
-            - --queues=llm-engine-{{ .Values.serviceIdentifier }}.service-builder
+            - --queues=model-engine-{{ .Values.serviceIdentifier }}.service-builder
             {{- else }}
-            - --queues=llm-engine.service-builder
+            - --queues=model-engine.service-builder
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- include "llmEngine.builderEnv" . | indent 10 }}
-          {{- include "llmEngine.volumeMounts" . | indent 10 }}
-      serviceAccountName: {{ include "llmEngine.fullname" . }}
-      {{- include "llmEngine.volumes" . | indent 6 }}
+          {{- include "launch.builderEnv" . | indent 10 }}
+          {{- include "launch.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "launch.fullname" . }}
+      {{- include "launch.volumes" . | indent 6 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

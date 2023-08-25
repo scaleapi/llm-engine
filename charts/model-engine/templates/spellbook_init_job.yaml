@@ -1,13 +1,13 @@
-{{- if .Values.secrets.kubernetesDatabaseSecretName }}
+{{- if and (.Values.secrets.kubernetesDatabaseSecretName) (.Values.spellbook.enabled) }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "llmEngine.fullname" . }}-database-setup
+  name: {{ include "launch.fullname" . }}-spellbook-setup
   labels:
-    {{- include "llmEngine.labels" . | nindent 4 }}
+    {{- include "launch.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook": pre-install
-    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "0"
     "helm.sh/hook-delete-policy": hook-succeeded
 spec:
   backoffLimit: 0
@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         sidecar.istio.io/inject: "false"
-        {{- include "llmEngine.labels" . | nindent 8 }}
+        {{- include "launch.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
       {{- with .Values.imagePullSecrets }}
@@ -24,7 +24,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: {{ include "llmEngine.fullname" . }}
+        - name: {{ include "launch.fullname" . }}
           image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
@@ -33,11 +33,13 @@ spec:
           args:
             - python
             - -m
-            - model_engine_server.entrypoints.init_database
-          {{- include "llmEngine.serviceEnv" . | indent 10 }}
-          {{- include "llmEngine.volumeMounts" . | indent 10 }}
-      serviceAccountName: {{ include "llmEngine.fullname" . }}
-      {{- include "llmEngine.volumes" . | indent 6 }}
+            - model_engine_server.entrypoints.init_spellbook_models
+            - --gateway-url
+            - '{{- include "launch.gatewayurl" . }}'
+          {{- include "launch.serviceEnvGitTagFromHelmVar" . | indent 10 }}
+          {{- include "launch.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "launch.fullname" . }}
+      {{- include "launch.volumes" . | indent 6 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

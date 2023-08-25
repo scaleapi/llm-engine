@@ -1,17 +1,17 @@
-{{- $llm_engine_name := include "llmEngine.fullname" . }}
+{{- $launch_name := include "launch.fullname" . }}
 {{- $config_values := .Values.config.values }}
 {{- $forwarder_repository := .Values.image.forwarderRepository -}}
 {{- $triton_repository := .Values.triton.image.repository -}}
 {{- $triton_tag := .Values.triton.image.tag -}}
 {{- $env := .Values.context -}}
-{{- $service_template_labels := include "llmEngine.serviceTemplateLabels" . }}
-{{- $job_template_labels := include "llmEngine.jobTemplateLabels" . }}
-{{- $service_env := include "llmEngine.serviceEnv" . }}
-{{- $async_service_template_env := include "llmEngine.asyncServiceTemplateEnv" . }}
-{{- $sync_service_template_env := include "llmEngine.syncServiceTemplateEnv" . }}
-{{- $async_forwarder_template_env := include "llmEngine.asyncForwarderTemplateEnv" . }}
-{{- $sync_forwarder_template_env := include "llmEngine.syncForwarderTemplateEnv" . }}
-{{- $forwarder_volume_mounts := include "llmEngine.forwarderVolumeMounts" . }}
+{{- $service_template_labels := include "launch.serviceTemplateLabels" . }}
+{{- $job_template_labels := include "launch.jobTemplateLabels" . }}
+{{- $service_env := include "launch.serviceEnvGitTagFromPythonReplace" . }}
+{{- $async_service_template_env := include "launch.asyncServiceTemplateEnv" . }}
+{{- $sync_service_template_env := include "launch.syncServiceTemplateEnv" . }}
+{{- $async_forwarder_template_env := include "launch.asyncForwarderTemplateEnv" . }}
+{{- $sync_forwarder_template_env := include "launch.syncForwarderTemplateEnv" . }}
+{{- $forwarder_volume_mounts := include "launch.forwarderVolumeMounts" . }}
 {{- $gateway_repository := .Values.image.gatewayRepository -}}
 {{- $tag := .Values.tag -}}
 {{- $aws_config_map_name := .Values.aws.configMap.name }}
@@ -20,7 +20,7 @@
 {{- $service_template_service_account_name := .Values.serviceTemplate.serviceAccountName }}
 {{- $service_template_aws_config_map_name := .Values.serviceTemplate.awsConfigMapName }}
 {{- $celery_broker_type := .Values.celeryBrokerType }}
-{{- $image_pull_policy := .Values.image.pullPolicy }}
+{{- $node_selector := .Values.nodeSelector }}
 
 {{- if .Values.message }}
 {{- .Values.message }}
@@ -28,16 +28,16 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ $llm_engine_name }}-service-template-config
+  name: {{ $launch_name }}-service-template-config
   labels:
-    {{- include "llmEngine.labels" . | nindent 4 }}
+    {{- include "launch.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-2"
 data:
   {{- range $device := tuple "cpu" "gpu" }}
   {{- range $mode := tuple "async" "sync" "streaming"}}
-  {{- range $flavor := tuple "triton-enhanced-runnable-image" "runnable-image" "artifact" }}
+  {{- range $flavor := tuple "triton-enhanced-runnable-image" "runnable-image" }}
   {{- if or (ne $mode "streaming") (eq $flavor "runnable-image") }}
   deployment-{{ $flavor }}-{{ $mode }}-{{ $device }}.yaml: |-
     apiVersion: apps/v1
@@ -49,7 +49,7 @@ data:
         {{- $service_template_labels | nindent 8 }}
       {{- if eq $mode "async" }}
       annotations:
-        {{- include "llmEngine.serviceTemplateAsyncAnnotations" . | nindent 8 }}
+        {{- include "launch.serviceTemplateAsyncAnnotations" . | nindent 8 }}
       {{- end }}
     spec:
       strategy:
@@ -76,15 +76,17 @@ data:
             kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
         spec:
           affinity:
-            {{- include "llmEngine.serviceTemplateAffinity" . | nindent 12 }}
+            {{- include "launch.serviceTemplateAffinity" . | nindent 12 }}
           terminationGracePeriodSeconds: 600
           {{- if $service_template_service_account_name }}
           serviceAccount: {{ $service_template_service_account_name }}
           {{- else }}
-          serviceAccount: {{ $llm_engine_name }}
+          serviceAccount: {{ $launch_name }}
           {{- end }}
+          {{- with $node_selector }}
           nodeSelector:
-            node-lifecycle: normal
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if eq $device "gpu" }}
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
@@ -94,104 +96,30 @@ data:
           {{- end }}
           priorityClassName: ${PRIORITY}
           containers:
-            {{- if eq $flavor "artifact" }}
-            - image: ${IMAGE}
-              imagePullPolicy: {{ $image_pull_policy }}
-              name: main
-              {{- with $security_context }}
-              securityContext:
-                {{- toYaml . | nindent 16 }}
-              {{- end }}
-              {{- if eq $mode "async" }}
-              {{- $async_service_template_env | nindent 14 }}
-              {{- else if eq $mode "sync" }}
-              {{- $sync_service_template_env | nindent 14 }}
-              {{- end }}
-              readinessProbe:
-                {{- if eq $mode "async" }}
-                exec:
-                  command:
-                    - cat
-                    - /tmp/readyz
-                {{- else if eq $mode "sync" }}
-                httpGet:
-                  path: /readyz
-                  port: ${ARTIFACT_LIKE_CONTAINER_PORT}
-                {{- end }}
-                initialDelaySeconds: 2
-                periodSeconds: 2
-                failureThreshold: 100
-              command: [ "dumb-init", "--", "ddtrace-run" ]
-              {{- if eq $mode "async" }}
-              # Not including --pool=solo means there's a worker process and a separate supervisor process
-              # meaning if the worker crashes (because of OOM or something) the supervisor process can mark the task as
-              # failed, which should get rid of infinite task retries
-              args:
-                - celery
-                - --app=llm_engine.inference.async_inference
-                - worker
-                - --loglevel=INFO
-                - --concurrency=1
-                - --queues=${QUEUE}
-                - -O
-                - fair
-              {{- else if eq $mode "sync" }}
-              args:
-                - python
-                - -m
-                - llm_engine.inference.sync_inference.start_fastapi_server
-              {{- end }}
-              resources:
-                requests:
-                  cpu: ${CPUS}
-                  memory: ${MEMORY}
-                  ${STORAGE_DICT}
-                limits:
-                  {{- if eq $device "gpu" }}
-                  nvidia.com/gpu: ${GPUS}
-                  {{- end }}
-                  cpu: ${CPUS}
-                  memory: ${MEMORY}
-                  ${STORAGE_DICT}
-              volumeMounts:
-                - name: config-volume
-                  mountPath: /root/.aws/config
-                  subPath: config
-                - name: config-volume
-                  mountPath: /home/llmengine/.aws/config
-                  subPath: config
-                - name: user-config
-                  mountPath: ${BASE_PATH}/user_config
-                  subPath: raw_data
-                - name: endpoint-config
-                  mountPath: ${BASE_PATH}/endpoint_config
-                  subPath: raw_data
-                {{- if $config_values }}
-                - name: infra-service-config-volume
-                  mountPath: ${BASE_PATH}/ml_infra_core/llm_engine.core/llm_engine.core/configs
-                {{- end }}
-            {{- else if contains "runnable-image" $flavor }}
+            {{- if contains "runnable-image" $flavor }}
             {{- if eq $mode "sync" }}
             - name: http-forwarder
-              image: {{ $forwarder_repository }}:${FORWARDER_IMAGE_TAG}
-              imagePullPolicy: {{ $image_pull_policy }}
+              image: {{ $forwarder_repository }}:${GIT_TAG}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
                 - ddtrace-run
-                - run-service
+                - python
+                - -m
+                - model_engine_server.inference.forwarding.http_forwarder
                 - --config
                 - /workspace/model-engine/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
-                - --http
-                - production_threads
                 - --port
                 - "${FORWARDER_PORT}"
-                - --concurrency
+                - --num-workers
                 - "${PER_WORKER}"
                 - --set
-                - "forwarder.model.args.predict_route=${PREDICT_ROUTE}"
+                - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
-                - "forwarder.model.args.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               {{- $sync_forwarder_template_env | nindent 14 }}
               readinessProbe:
                 httpGet:
@@ -215,7 +143,7 @@ data:
             {{- else if eq $mode "streaming" }}
             - name: http-forwarder
               image: {{ $forwarder_repository }}:{{ $tag }}
-              imagePullPolicy: {{ $image_pull_policy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -259,13 +187,15 @@ data:
                   name: http
             {{- else if eq $mode "async" }}
             - name: celery-forwarder
-              image: {{ $forwarder_repository }}:${FORWARDER_IMAGE_TAG}
-              imagePullPolicy: {{ $image_pull_policy }}
+              image: {{ $forwarder_repository }}:${GIT_TAG}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
                 - ddtrace-run
-                - run-service
+                - python
+                - -m
+                - model_engine_server.inference.forwarding.celery_forwarder
                 - --config
                 - /workspace/model-engine/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
                 - --queue
@@ -280,7 +210,7 @@ data:
                 - --sqs-url
                 - "${SQS_QUEUE_URL}"
                 {{- end }}
-                - --concurrency
+                - --num-workers
                 - "${PER_WORKER}"
               {{- $async_forwarder_template_env | nindent 14 }}
               resources:
@@ -297,7 +227,7 @@ data:
             {{- if eq $flavor "triton-enhanced-runnable-image" }}
             - name: tritonserver
               image: {{ $triton_repository }}:${TRITON_COMMIT_TAG}-triton
-              imagePullPolicy: {{ $image_pull_policy }}
+              imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
@@ -346,7 +276,7 @@ data:
                 {{- toYaml . | nindent 16 }}
               {{- end }}
               image: ${IMAGE}
-              imagePullPolicy: {{ $image_pull_policy }}
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
               readinessProbe:
@@ -379,7 +309,7 @@ data:
                 {{- end }}
                 # LIRA: For compatibility with runnable image converted from artifactlike bundle
                 - name: config-volume
-                  mountPath: /home/llmengine/.aws/config
+                  mountPath: /home/modelengine/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /app/user_config
@@ -414,7 +344,7 @@ data:
             {{- if $config_values }}
             - name: infra-service-config-volume
               configMap:
-                name: {{ $llm_engine_name }}-service-config
+                name: {{ $launch_name }}-service-config
                 items:
                   - key: infra_service_config
                     path: config.yaml
@@ -484,6 +414,7 @@ data:
           protocol: TCP
           name: http
           ${NODE_PORT_DICT}
+  {{- if .Values.virtualservice.enabled }}
   virtual-service.yaml: |-
     apiVersion: networking.istio.io/v1alpha3
     kind: VirtualService
@@ -491,19 +422,7 @@ data:
       name: ${RESOURCE_NAME}
       namespace: ${NAMESPACE}
       labels:
-        user_id: ${OWNER}
-        team: ${TEAM}
-        product: ${PRODUCT}
-        created_by: ${CREATED_BY}
-        owner: ${OWNER}
-        env: circleci
-        managed-by: model-engine
-        use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
-        tags.datadoghq.com/version: ${GIT_TAG}
-        tags.datadoghq.com/service: ${ENDPOINT_NAME}
-        endpoint_id: ${ENDPOINT_ID}
-        endpoint_name: ${ENDPOINT_NAME}
+        {{- $service_template_labels | nindent 8 }}
     spec:
       hosts:
         - ${RESOURCE_NAME}.${DNS_HOST_DOMAIN}
@@ -515,6 +434,8 @@ data:
                 host: "${RESOURCE_NAME}.${NAMESPACE}.svc.cluster.local"
                 port:
                   number: 80
+  {{- end }}
+  {{- if .Values.destinationrule.enabled }}
   destination-rule.yaml: |-
     apiVersion: networking.istio.io/v1beta1
     kind: DestinationRule
@@ -522,24 +443,13 @@ data:
       name: ${RESOURCE_NAME}
       namespace: ${NAMESPACE}
       labels:
-        user_id: ${OWNER}
-        team: ${TEAM}
-        product: ${PRODUCT}
-        created_by: ${CREATED_BY}
-        owner: ${OWNER}
-        env: circleci
-        managed-by: model-engine
-        use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
-        tags.datadoghq.com/version: ${GIT_TAG}
-        tags.datadoghq.com/service: ${ENDPOINT_NAME}
-        endpoint_id: ${ENDPOINT_ID}
-        endpoint_name: ${ENDPOINT_NAME}
+        {{- $service_template_labels | nindent 8 }}
     spec:
       host: "${RESOURCE_NAME}.${NAMESPACE}.svc.cluster.local"
       trafficPolicy:
         loadBalancer:
           simple: LEAST_REQUEST
+  {{- end }}
   vertical-pod-autoscaler.yaml: |-
     apiVersion: "autoscaling.k8s.io/v1"
     kind: VerticalPodAutoscaler
@@ -584,31 +494,33 @@ data:
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
-            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "llm_engine_job_id:${JOB_ID}"]}]'
+            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "launch_job_id:${JOB_ID}"]}]'
             cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
           restartPolicy: Never
+          {{- with $node_selector }}
           nodeSelector:
-            node-lifecycle: normal
-          serviceAccountName: {{ $llm_engine_name }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ $launch_name }}
           volumes:
             - name: config-volume
               configMap:
                 name: {{ $aws_config_map_name }}
           containers:
             - name: main
-              image: {{ $gateway_repository }}:{{ $tag }}
+              image: {{ $gateway_repository }}:${GIT_TAG}
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
-                {{- $env_vars := include "llmEngine.serviceEnv" . | fromYaml }}
+                {{- $env_vars := $service_env | fromYaml }}
                 {{- range $env_var := index $env_vars "env" }}
                 {{- $env_var_name := index $env_var "name" }}
                 {{- if ne $env_var_name "DD_SERVICE" }}
                 {{- tuple $env_var | toYaml | nindent 16 }}
                 {{- end }}
                 {{- end }}
-              imagePullPolicy: {{ $image_pull_policy }}
+              imagePullPolicy: Always
               command:
                 - dumb-init
                 - --
@@ -658,11 +570,13 @@ data:
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
-            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "llm_engine_job_id:${JOB_ID}"]}]'
+            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "launch_job_id:${JOB_ID}"]}]'
         spec:
           restartPolicy: Never
+          {{- with $node_selector }}
           nodeSelector:
-            node-lifecycle: normal
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if eq $device "gpu" }}
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
@@ -673,7 +587,7 @@ data:
           {{- if $service_template_service_account_name }}
           serviceAccountName: {{ $service_template_service_account_name }}
           {{- else }}
-          serviceAccountName: {{ $llm_engine_name }}
+          serviceAccountName: {{ $launch_name }}
           {{- end }}
           volumes:
             - name: config-volume
@@ -697,7 +611,7 @@ data:
                 {{- tuple $env_var | toYaml | nindent 16 }}
                 {{- end }}
                 {{- end }}
-              imagePullPolicy: {{ $image_pull_policy }}
+              imagePullPolicy: Always
               command: ${COMMAND}
               resources:
                 # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.
@@ -722,7 +636,7 @@ data:
                   name: dshm
           initContainers:
             - name: input-downloader
-              image: {{ $gateway_repository }}:{{ $tag }}
+              image: {{ $gateway_repository }}:${GIT_TAG}
               command:
                 - python
                 - -m
@@ -759,8 +673,8 @@ data:
       namespace: ${NAMESPACE}
       labels:
         team: infra
-        product: llm-engine
-        use_scale_llm_engine_endpoint_network_policy: "true"
+        product: launch
+        use_scale_launch_endpoint_network_policy: "true"
         tags.datadoghq.com/service: ${RESOURCE_NAME}
     spec:
       selector:
@@ -774,8 +688,8 @@ data:
           labels:
             app: ${RESOURCE_NAME}
             team: infra
-            product: llm-engine
-            use_scale_llm_engine_endpoint_network_policy: "true"
+            product: launch
+            use_scale_launch_endpoint_network_policy: "true"
             tags.datadoghq.com/service: ${RESOURCE_NAME}
             version: v1
             sidecar.istio.io/inject: "false"
@@ -794,7 +708,7 @@ data:
           {{- end }}
           containers:
             - image: public.ecr.aws/docker/library/busybox:latest
-              imagePullPolicy: {{ $image_pull_policy }}
+              imagePullPolicy: IfNotPresent
               name: busybox
               command: ["/bin/sh", "-ec", "while : ; do sleep 30 ; done"]
           terminationGracePeriodSeconds: 0
