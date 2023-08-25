@@ -1,4 +1,4 @@
-{{- if .Values.secrets.kubernetesDatabaseSecretName }}
+{{- if (and .Values.llmEngineInitJob .Values.llmEngineInitJob.enabled) }}
 apiVersion: batch/v1
 kind: Job
 metadata:
