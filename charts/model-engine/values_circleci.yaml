@@ -154,7 +154,9 @@ aws:
   configMap:
     name: default-config
     create: false
+    mountPath: /root/.aws/config
   profileName: default
+  s3WriteProfileName: default
 
 forwarder:
   forceUseIPv4: true
