@@ -134,7 +134,6 @@ jobs:
             kubectl create configmap default-config --namespace model-engine --from-literal=config="$(cat $HOME/project/.circleci/resources/.minikube-config-map | envsubst)"
             cat $HOME/project/.circleci/resources/.minikube-registry-creds | envsubst | expect
             minikube addons enable registry-creds
-            alias python='python3.8'
       - run:
           name: Pre-load model-engine image to minikube
           command: |
@@ -145,6 +144,11 @@ jobs:
             pushd $HOME/project/charts
             cat model-engine/values_circleci.yaml | envsubst > model-engine/values_circleci_subst.yaml
             helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
+      - run:
+          name: Change python version to 3.8.12
+          command: |
+            pyenv install 3.8.12
+            pyenv global 3.8.12
       - install_client
       - install_server
       - run:
