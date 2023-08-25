@@ -49,7 +49,7 @@ spec:
             - ddtrace-run
           args:
             - celery
-            - --app=server.model_engine_server.service_builder
+            - --app=model_engine_server.service_builder
             - worker
             - --loglevel=INFO
             - --concurrency=2

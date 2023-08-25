@@ -1,0 +1,15 @@
+# Script to send the registry-creds addon configuration to minikube
+# Source: https://github.com/kubernetes/minikube/issues/8283
+# See expect syntax here: https://manpages.ubuntu.com/manpages/trusty/man1/expect.1.html
+spawn minikube addons configure registry-creds
+expect "Do you want to enable AWS Elastic Container Registry?" { send "y\r" }
+expect "Enter AWS Access Key ID:" { send "$CIRCLECI_AWS_ACCESS_KEY\r" }
+expect "Enter AWS Secret Access Key:" { send "$CIRCLECI_AWS_SECRET_KEY\r" }
+expect "Enter AWS Session Token:" { send "\r" }
+expect "Enter AWS Region:" { send "us-west-2\r" }
+expect "Enter 12 digit AWS Account ID (Comma separated list):" { send "$CIRCLECI_AWS_ACCOUNT_ID\r" }
+expect "Enter ARN of AWS role to assume:" { send "\r" }
+expect "Do you want to enable Google Container Registry?" { send "n\r" }
+expect "Do you want to enable Docker Registry?" { send "n\r" }
+expect "Do you want to enable Azure Container Registry?" { send "n\r" }
+expect eof

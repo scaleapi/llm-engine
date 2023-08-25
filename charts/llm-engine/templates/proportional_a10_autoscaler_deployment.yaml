@@ -28,7 +28,7 @@ spec:
           operator: "Exists"
       containers:
         - image: registry.k8s.io/cpa/cluster-proportional-autoscaler:1.8.5
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: main
           resources:
             requests:

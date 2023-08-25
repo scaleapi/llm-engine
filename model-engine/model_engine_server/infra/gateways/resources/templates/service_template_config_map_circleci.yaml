@@ -2770,7 +2770,7 @@ data:
                   value: ${GIT_TAG}
                 - name: GIT_TAG
                   value: ${GIT_TAG}
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               command:
                 - dumb-init
                 - --
@@ -2893,7 +2893,7 @@ data:
                   value: ${GIT_TAG}
                 - name: GIT_TAG
                   value: ${GIT_TAG}
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               resources:
                 # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.
@@ -3037,7 +3037,7 @@ data:
                   value: ${GIT_TAG}
                 - name: GIT_TAG
                   value: ${GIT_TAG}
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               resources:
                 # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.

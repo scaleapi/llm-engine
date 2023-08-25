@@ -27,7 +27,7 @@ spec:
         node-lifecycle: normal
       containers:
         - image: public.ecr.aws/ubuntu/ubuntu:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: main
           resources:
             limits:
