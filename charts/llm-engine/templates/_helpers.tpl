@@ -330,21 +330,21 @@ volumeMounts:
     mountPath: /workspace/llm_engine/llm_engine/infra/gateways/resources/templates
   {{- if .Values.aws }}
   - name: config-volume
-    mountPath: /home/user/.aws/config
+    mountPath: /root/.aws/config
     subPath: config
   {{- end }}
   {{- if .Values.config.values }}
   - name: llm-engine-service-config-volume
     mountPath: /workspace/llm_engine/service_configs
   - name: infra-service-config-volume
-    mountPath: /workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs
+    mountPath: /workspace/model-engine/model_engine_server/core/configs
   {{- end }}
 {{- end }}
 
 {{- define "llmEngine.forwarderVolumeMounts" }}
 volumeMounts:
   - name: config-volume
-    mountPath: /home/user/.aws/config
+    mountPath: /root/.aws/config
     subPath: config
   - name: user-config
     mountPath: /workspace/user_config
@@ -354,7 +354,7 @@ volumeMounts:
     subPath: raw_data
   {{- if .Values.config.values }}
   - name: infra-service-config-volume
-    mountPath: /workspace/ml_infra_core/llm_engine.core/llm_engine.core/configs
+    mountPath: /workspace/model-engine/model_engine_server/core/configs
   {{- end }}
 {{- end }}
 
