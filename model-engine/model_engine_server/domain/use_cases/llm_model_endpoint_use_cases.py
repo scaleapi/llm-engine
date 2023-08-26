@@ -102,6 +102,21 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-40b": "tiiuae/falcon-40b",
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
     },
+    LLMInferenceFramework.VLLM: {
+        "mpt-7b": "mosaicml/mpt-7b",
+        "mpt-7b-instruct": "mosaicml/mpt-7b-instruct",
+        "llama-7b": "decapoda-research/llama-7b-hf",
+        "llama-2-7b": "meta-llama/Llama-2-7b-hf",
+        "llama-2-7b-chat": "meta-llama/Llama-2-7b-chat-hf",
+        "llama-2-13b": "meta-llama/Llama-2-13b-hf",
+        "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
+        "llama-2-70b": "meta-llama/Llama-2-70b-hf",
+        "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
+        "falcon-7b": "tiiuae/falcon-7b",
+        "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
+        "falcon-40b": "tiiuae/falcon-40b",
+        "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
+    },
 }
 
 
@@ -189,6 +204,15 @@ class CreateLLMModelEndpointV1UseCase:
                     endpoint_name,
                     num_shards,
                     quantize,
+                    checkpoint_path,
+                )
+            elif framework == LLMInferenceFramework.VLLM:
+                bundle_id = await self.create_vllm_bundle(
+                    user,
+                    model_name,
+                    framework_image_tag,
+                    endpoint_name,
+                    num_shards,
                     checkpoint_path,
                 )
             else:
@@ -397,6 +421,86 @@ class CreateLLMModelEndpointV1UseCase:
                 )
             ).model_bundle_id
 
+    async def create_vllm_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        checkpoint_path: Optional[str],
+    ):
+        command = []
+
+        max_num_batched_tokens = 2560  # vLLM's default
+        if "llama-2" in model_name:
+            max_num_batched_tokens = 4096  # Need to be bigger than model's context window
+
+        assert checkpoint_path is not None, "Checkpoint path must be provided for vLLM"
+
+        if checkpoint_path.startswith("s3://"):
+            base_path = checkpoint_path.split("/")[-1]
+            final_weights_folder = "model_files"
+            subcommands = []
+
+            s5cmd = "./s5cmd"
+
+            if base_path.endswith(".tar"):
+                # If the checkpoint file is a tar file, extract it into final_weights_folder
+                subcommands.extend(
+                    [
+                        f"{s5cmd} cp {checkpoint_path} .",
+                        f"mkdir -p {final_weights_folder}",
+                        f"tar --no-same-owner -xf {base_path} -C {final_weights_folder}",
+                    ]
+                )
+            else:
+                subcommands.append(
+                    f"{s5cmd} --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+                )
+
+            subcommands.append(
+                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens}"
+            )
+
+            command = [
+                "/bin/bash",
+                "-c",
+                ";".join(subcommands),
+            ]
+        else:
+            raise ObjectHasInvalidValueException(
+                f"Not able to load checkpoint path {checkpoint_path}."
+            )
+
+        return (
+            await self.create_model_bundle_use_case.execute(
+                user,
+                CreateModelBundleV2Request(
+                    name=endpoint_unique_name,
+                    schema_location="TBA",
+                    flavor=StreamingEnhancedRunnableImageFlavor(
+                        flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                        repository=hmi_config.vllm_repository,
+                        tag=framework_image_tag,
+                        command=command,
+                        streaming_command=command,
+                        protocol="http",
+                        readiness_initial_delay_seconds=10,
+                        healthcheck_route="/health",
+                        predict_route="/predict",
+                        streaming_predict_route="/stream",
+                        env={},
+                    ),
+                    metadata={},
+                ),
+                do_auth_check=False,
+                # Skip auth check because llm create endpoint is called as the user itself,
+                # but the user isn't directly making the action. It should come from the fine tune
+                # job.
+            )
+        ).model_bundle_id
+
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
@@ -413,10 +517,13 @@ class CreateLLMModelEndpointV1UseCase:
         validate_model_name(request.model_name, request.inference_framework)
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
 
-        if request.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+        if request.inference_framework in [
+            LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+            LLMInferenceFramework.VLLM,
+        ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
                 raise ObjectHasInvalidValueException(
-                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference."
+                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference and vLLM."
                 )
 
         bundle = await self.create_model_bundle(
