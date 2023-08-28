@@ -18,6 +18,9 @@ from model_engine_server.domain.gateways import (
     StreamingModelEndpointInferenceGateway,
     SyncModelEndpointInferenceGateway,
 )
+from model_engine_server.domain.gateways.inference_autoscaling_metrics_gateway import (
+    InferenceAutoscalingMetricsGateway,
+)
 
 
 class ModelEndpointService(ABC):
@@ -47,6 +50,14 @@ class ModelEndpointService(ABC):
     ) -> StreamingModelEndpointInferenceGateway:
         """
         Returns the sync model endpoint inference gateway.
+        """
+
+    @abstractmethod
+    def get_inference_auto_scaling_metrics_gateway(
+        self,
+    ) -> InferenceAutoscalingMetricsGateway:
+        """
+        Returns the inference autoscaling metrics gateway.
         """
 
     @abstractmethod

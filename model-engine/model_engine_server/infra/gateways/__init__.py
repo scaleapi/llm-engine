@@ -18,6 +18,7 @@ from .live_streaming_model_endpoint_inference_gateway import (
 )
 from .live_sync_model_endpoint_inference_gateway import LiveSyncModelEndpointInferenceGateway
 from .model_endpoint_infra_gateway import ModelEndpointInfraGateway
+from .redis_inference_autoscaling_metrics_gateway import RedisInferenceAutoscalingMetricsGateway
 from .s3_filesystem_gateway import S3FilesystemGateway
 from .s3_llm_artifact_gateway import S3LLMArtifactGateway
 
@@ -38,6 +39,7 @@ __all__: Sequence[str] = [
     "LiveStreamingModelEndpointInferenceGateway",
     "LiveSyncModelEndpointInferenceGateway",
     "ModelEndpointInfraGateway",
+    "RedisInferenceAutoscalingMetricsGateway",
     "S3FilesystemGateway",
     "S3LLMArtifactGateway",
 ]

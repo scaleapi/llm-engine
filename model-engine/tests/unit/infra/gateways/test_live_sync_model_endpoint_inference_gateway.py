@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from model_engine_server.common.dtos.tasks import (
-    EndpointPredictV1Request,
+    SyncEndpointPredictV1Request,
     SyncEndpointPredictV1Response,
 )
 from model_engine_server.domain.exceptions import UpstreamServiceError
@@ -82,7 +82,7 @@ async def test_make_request_with_retries_failed_traceback():
 
 @pytest.mark.asyncio
 async def test_predict_success(
-    endpoint_predict_request_1: Tuple[EndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
 
@@ -93,7 +93,7 @@ async def test_predict_success(
         mock_client_session,
     ):
         response = await gateway.predict(
-            topic="test_topic", predict_request=endpoint_predict_request_1[0]
+            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -105,7 +105,7 @@ async def test_predict_success(
 
 @pytest.mark.asyncio
 async def test_predict_raises_traceback_json(
-    endpoint_predict_request_1: Tuple[EndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
 
@@ -117,7 +117,7 @@ async def test_predict_raises_traceback_json(
         mock_client_session,
     ):
         response = await gateway.predict(
-            topic="test_topic", predict_request=endpoint_predict_request_1[0]
+            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -129,7 +129,7 @@ async def test_predict_raises_traceback_json(
 
 @pytest.mark.asyncio
 async def test_predict_raises_traceback_not_json(
-    endpoint_predict_request_1: Tuple[EndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
 
@@ -141,7 +141,7 @@ async def test_predict_raises_traceback_not_json(
         mock_client_session,
     ):
         response = await gateway.predict(
-            topic="test_topic", predict_request=endpoint_predict_request_1[0]
+            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
