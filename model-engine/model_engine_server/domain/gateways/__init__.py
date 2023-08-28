@@ -16,6 +16,7 @@ __all__ = (
     "CronJobGateway",
     "DockerImageBatchJobGateway",
     "FileStorageGateway",
+    "InferenceAutoscalingMetricsGateway",
     "LLMArtifactGateway",
     "ModelEndpointsSchemaGateway",
     "ModelPrimitiveGateway",
