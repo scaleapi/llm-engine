@@ -11,6 +11,7 @@ from model_engine_server.common.dtos.tasks import (
     CreateAsyncTaskV1Response,
     EndpointPredictV1Request,
     GetAsyncTaskV1Response,
+    SyncEndpointPredictV1Request,
     SyncEndpointPredictV1Response,
     TaskStatus,
 )
@@ -97,7 +98,7 @@ def get_async_inference_task(
 @inference_task_router_v1.post("/sync-tasks", response_model=SyncEndpointPredictV1Response)
 async def create_sync_inference_task(
     model_endpoint_id: str,
-    request: EndpointPredictV1Request,
+    request: SyncEndpointPredictV1Request,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> SyncEndpointPredictV1Response:
@@ -137,7 +138,7 @@ async def create_sync_inference_task(
 @inference_task_router_v1.post("/streaming-tasks")
 async def create_streaming_inference_task(
     model_endpoint_id: str,
-    request: EndpointPredictV1Request,
+    request: SyncEndpointPredictV1Request,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> EventSourceResponse:

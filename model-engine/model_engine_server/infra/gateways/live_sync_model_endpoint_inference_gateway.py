@@ -5,14 +5,18 @@ import orjson
 import requests
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.tasks import (
-    EndpointPredictV1Request,
+    SyncEndpointPredictV1Request,
     SyncEndpointPredictV1Response,
     TaskStatus,
 )
 from model_engine_server.common.env_vars import CIRCLECI, LOCAL
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
-from model_engine_server.domain.exceptions import TooManyRequestsException, UpstreamServiceError
+from model_engine_server.domain.exceptions import (
+    NoHealthyUpstreamException,
+    TooManyRequestsException,
+    UpstreamServiceError,
+)
 from model_engine_server.domain.gateways.sync_model_endpoint_inference_gateway import (
     SyncModelEndpointInferenceGateway,
 )
@@ -23,13 +27,19 @@ from tenacity import (
     RetryError,
     retry_if_exception_type,
     stop_after_attempt,
+    stop_after_delay,
+    stop_any,
     wait_exponential,
 )
 
 logger = make_logger(filename_wo_ext(__file__))
 
-SYNC_ENDPOINT_RETRIES = 5  # Must be an integer >= 0
+SYNC_ENDPOINT_RETRIES = 8  # Must be an integer >= 0
 SYNC_ENDPOINT_MAX_TIMEOUT_SECONDS = 10
+SYNC_ENDPOINT_MAX_RETRY_WAIT = 5
+SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
+    1.2  # Must be a float > 1.0, lower number means more retries but less time waiting.
+)
 
 
 def _get_sync_endpoint_url(deployment_name: str) -> str:
@@ -90,6 +100,8 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         # tenacity can properly capture them.
         if status == 429:
             raise TooManyRequestsException("429 returned")
+        if status == 503:
+            raise NoHealthyUpstreamException("503 returned")
         else:
             raise UpstreamServiceError(status_code=status, content=content)
 
@@ -109,16 +121,32 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
 
         try:
             async for attempt in AsyncRetrying(
-                stop=stop_after_attempt(num_retries + 1),
-                retry=retry_if_exception_type(TooManyRequestsException),
-                wait=wait_exponential(multiplier=1, min=1, max=timeout_seconds),
+                stop=stop_any(
+                    stop_after_attempt(num_retries + 1), stop_after_delay(timeout_seconds)
+                ),
+                retry=retry_if_exception_type(
+                    (TooManyRequestsException, NoHealthyUpstreamException)
+                ),
+                wait=wait_exponential(
+                    multiplier=1,
+                    min=1,
+                    max=SYNC_ENDPOINT_MAX_RETRY_WAIT,
+                    exp_base=SYNC_ENDPOINT_EXP_BACKOFF_BASE,
+                ),
             ):
                 with attempt:
                     logger.info(f"Retry number {attempt.retry_state.attempt_number}")
                     return await self.make_single_request(request_url, payload_json)
-        except RetryError:
-            logger.warning("Hit max # of retries, returning 429 to client")
-            raise UpstreamServiceError(status_code=429, content=b"Too many concurrent requests")
+        except RetryError as e:
+            if type(e.last_attempt.exception()) == TooManyRequestsException:
+                logger.warning("Hit max # of retries, returning 429 to client")
+                raise UpstreamServiceError(status_code=429, content=b"Too many concurrent requests")
+            elif type(e.last_attempt.exception()) == NoHealthyUpstreamException:
+                logger.warning("Pods didn't spin up in time, returning 503 to client")
+                raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
+            else:
+                logger.error("Unknown Exception Type")
+                raise UpstreamServiceError(status_code=500, content=b"Unknown error")
 
         # Never reached because tenacity should throw a RetryError if we exit the for loop.
         # This is for mypy.
@@ -126,16 +154,26 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         return {}
 
     async def predict(
-        self, topic: str, predict_request: EndpointPredictV1Request
+        self, topic: str, predict_request: SyncEndpointPredictV1Request
     ) -> SyncEndpointPredictV1Response:
         deployment_url = _get_sync_endpoint_url(topic)
 
         try:
+            timeout_seconds = (
+                SYNC_ENDPOINT_MAX_TIMEOUT_SECONDS
+                if predict_request.timeout_seconds is None
+                else predict_request.timeout_seconds
+            )
+            num_retries = (
+                SYNC_ENDPOINT_RETRIES
+                if predict_request.num_retries is None
+                else predict_request.num_retries
+            )
             response = await self.make_request_with_retries(
                 request_url=deployment_url,
                 payload_json=predict_request.dict(),
-                timeout_seconds=SYNC_ENDPOINT_MAX_TIMEOUT_SECONDS,
-                num_retries=SYNC_ENDPOINT_RETRIES,
+                timeout_seconds=timeout_seconds,
+                num_retries=num_retries,
             )
         except UpstreamServiceError as exc:
             logger.error(f"Service error on sync task: {exc.content!r}")

@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Any, Optional
 
 from model_engine_server.domain.entities import CallbackAuth
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ResponseSchema(BaseModel):
@@ -49,3 +49,10 @@ class EndpointPredictV1Request(BaseModel):
     callback_url: Optional[str] = None
     callback_auth: Optional[CallbackAuth] = None
     return_pickled: bool = False
+
+
+class SyncEndpointPredictV1Request(EndpointPredictV1Request):
+    timeout_seconds: Optional[float] = Field(default=None, gt=0)
+    num_retries: Optional[int] = Field(default=None, ge=0)
+    # See live_{sync,streaming}_model_endpoint_inference_gateway to see how timeout_seconds/num_retries interact.
+    # Also these fields are only relevant for sync endpoints

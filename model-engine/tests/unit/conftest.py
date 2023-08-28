@@ -36,6 +36,7 @@ from model_engine_server.common.dtos.tasks import (
     CreateAsyncTaskV1Response,
     EndpointPredictV1Request,
     GetAsyncTaskV1Response,
+    SyncEndpointPredictV1Request,
     SyncEndpointPredictV1Response,
     TaskStatus,
 )
@@ -92,6 +93,7 @@ from model_engine_server.domain.gateways import (
     CronJobGateway,
     DockerImageBatchJobGateway,
     FileStorageGateway,
+    InferenceAutoscalingMetricsGateway,
     LLMArtifactGateway,
     StreamingModelEndpointInferenceGateway,
     SyncModelEndpointInferenceGateway,
@@ -1519,6 +1521,14 @@ class FakeAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
         return self.tasks[-1]
 
 
+class FakeInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway):
+    async def emit_inference_autoscaling_metric(self, endpoint_id: str):
+        pass
+
+    async def emit_prewarm_metric(self, endpoint_id: str):
+        pass
+
+
 class FakeModelEndpointService(ModelEndpointService):
     db: Dict[str, ModelEndpoint]
 
@@ -1531,6 +1541,7 @@ class FakeModelEndpointService(ModelEndpointService):
             StreamingModelEndpointInferenceGateway
         ] = None,
         sync_model_endpoint_inference_gateway: Optional[SyncModelEndpointInferenceGateway] = None,
+        inference_autoscaling_metrics_gateway: Optional[InferenceAutoscalingMetricsGateway] = None,
     ):
         if contents:
             self.db = contents
@@ -1560,6 +1571,11 @@ class FakeModelEndpointService(ModelEndpointService):
         if sync_model_endpoint_inference_gateway is None:
             sync_model_endpoint_inference_gateway = FakeSyncModelEndpointInferenceGateway()
         self.sync_model_endpoint_inference_gateway = sync_model_endpoint_inference_gateway
+
+        if inference_autoscaling_metrics_gateway is None:
+            inference_autoscaling_metrics_gateway = FakeInferenceAutoscalingMetricsGateway()
+        self.inference_autoscaling_metrics_gateway = inference_autoscaling_metrics_gateway
+
         self.model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
             filesystem_gateway=FakeFilesystemGateway()
         )
@@ -1578,6 +1594,11 @@ class FakeModelEndpointService(ModelEndpointService):
         self,
     ) -> SyncModelEndpointInferenceGateway:
         return self.sync_model_endpoint_inference_gateway
+
+    def get_inference_auto_scaling_metrics_gateway(
+        self,
+    ) -> InferenceAutoscalingMetricsGateway:
+        return self.inference_autoscaling_metrics_gateway
 
     def add_model_endpoint(self, model_endpoint: ModelEndpoint):
         self.db[model_endpoint.record.id] = model_endpoint
@@ -1990,6 +2011,12 @@ def fake_sync_model_endpoint_inference_gateway() -> FakeSyncModelEndpointInferen
 
 
 @pytest.fixture
+def fake_inference_autoscaling_metrics_gateway() -> FakeInferenceAutoscalingMetricsGateway:
+    gateway = FakeInferenceAutoscalingMetricsGateway()
+    return gateway
+
+
+@pytest.fixture
 def fake_file_storage_gateway() -> FakeFileStorageGateway:
     gateway = FakeFileStorageGateway()
     return gateway
@@ -2073,6 +2100,7 @@ def get_repositories_generator_wrapper():
                 FakeStreamingModelEndpointInferenceGateway()
             )
             sync_model_endpoint_inference_gateway = FakeSyncModelEndpointInferenceGateway()
+            inference_autoscaling_metrics_gateway = FakeInferenceAutoscalingMetricsGateway()
             model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
                 filesystem_gateway=FakeFilesystemGateway(),
             )
@@ -2083,6 +2111,7 @@ def get_repositories_generator_wrapper():
                 async_model_endpoint_inference_gateway=async_model_endpoint_inference_gateway,
                 streaming_model_endpoint_inference_gateway=streaming_model_endpoint_inference_gateway,
                 sync_model_endpoint_inference_gateway=sync_model_endpoint_inference_gateway,
+                inference_autoscaling_metrics_gateway=inference_autoscaling_metrics_gateway,
                 model_endpoints_schema_gateway=model_endpoints_schema_gateway,
             )
             fake_batch_job_service = LiveBatchJobService(
@@ -3355,6 +3384,18 @@ def endpoint_predict_request_2() -> Tuple[EndpointPredictV1Request, Dict[str, An
             )
         ),
         return_pickled=True,
+    )
+    request_dict = request.dict()
+    return request, request_dict
+
+
+@pytest.fixture
+def sync_endpoint_predict_request_1() -> Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]:
+    request = SyncEndpointPredictV1Request(
+        url="test_url",
+        return_pickled=False,
+        timeout_seconds=10,
+        num_retries=5,
     )
     request_dict = request.dict()
     return request, request_dict
