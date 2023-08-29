@@ -754,14 +754,18 @@ prepare such high quality, diverse data sets - more information <a href="https:/
 </details>
 
 <h2 id="making-your-data-accessible-to-llm-engine">Making your data accessible to LLM Engine<a class="headerlink" href="#making-your-data-accessible-to-llm-engine" title="Permanent link">&para;</a></h2>
-<p>Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read
-for fine-tuning. Publicly accessible HTTP and HTTPS URLs are currently supported.
-Support for privately sharing data with the LLM Engine API is coming shortly. For quick
-iteration, you can look into tools like Pastebin or GitHub Gists to quickly host your CSV
-files in a public manner. An example Github Gist can be found
-<a href="https://gist.github.com/tigss/7cec73251a37de72756a3b15eace9965">here</a>. To use the gist,
-you can use the URL given when you click the “Raw” button
-(<a href="https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv">URL</a>).</p>
+<p>Currently, data needs to be uploaded to either a publicly accessible web URL or to LLM Engine's private file server so that it can be read for fine-tuning. Publicly accessible HTTP and HTTPS URLs are currently supported.</p>
+<p>To privately share data with the LLM Engine API, use LLM Engine's <a href="../../api/python_client/#llmengine.File.upload">File.upload</a> API. You can upload data in local file to LLM Engine's private file server and then use the returned file ID to reference your data in the FineTune API. The file ID is generally in the form of <code>file-&lt;random_string&gt;</code>, e.g. "file-7DLVeLdN2Ty4M2m".</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Upload to LLM Engine's private file server</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> File
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>response <span style="color: #666666">=</span> File<span style="color: #666666">.</span>upload(<span style="color: #008000">open</span>(<span style="color: #BA2121">&quot;customer_service_data.csv&quot;</span>, <span style="color: #BA2121">&quot;r&quot;</span>))
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+</code></pre></div>
 <h2 id="launching-the-fine-tune">Launching the fine-tune<a class="headerlink" href="#launching-the-fine-tune" title="Permanent link">&para;</a></h2>
 <p>Once you have uploaded your data, you can use the LLM Engine's <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.create">FineTune.Create</a> API to launch a fine-tune. You will need to specify which base model to fine-tune, the locations of the training file and optional validation data file, an optional set of hyperparameters to customize the fine-tuning behavior, and an optional suffix to append to the name of the fine-tune. For sequences longer than the native
 <code>max_seq_length</code> of the model, the sequences will be truncated.</p>
@@ -777,20 +781,20 @@ launched. Note: the suffix must only contain alphanumeric characters and hyphens
 - `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
 </details>
 
-<div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Create a fine-tune in python</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Create a fine-tune in python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block"></div>
 </div>
 </div>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>response <span style="color: #666666">=</span> FineTune<span style="color: #666666">.</span>create(
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    training_file<span style="color: #666666">=</span><span style="color: #BA2121">&quot;s3://my-bucket/path/to/training-file.csv&quot;</span>,
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    validation_file<span style="color: #666666">=</span><span style="color: #BA2121">&quot;s3://my-bucket/path/to/validation-file.csv&quot;</span>,
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>)
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>response <span style="color: #666666">=</span> FineTune<span style="color: #666666">.</span>create(
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    training_file<span style="color: #666666">=</span><span style="color: #BA2121">&quot;file-7DLVeLdN2Ty4M2m&quot;</span>,
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    training_file<span style="color: #666666">=</span><span style="color: #BA2121">&quot;file-ezSRtpgKQyItI26&quot;</span>,
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>)
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 <p>See the <a href="../../model_zoo">Model Zoo</a> to see which models have fine-tuning support.</p>
 <p>See <a href="../../integrations/">Integrations</a> to see how to track fine-tuning metrics.</p>
@@ -805,20 +809,20 @@ available LLMs with <code>Model.list</code> in order to find the name of your fi
 use that name to direct your completion requests. You must wait until your fine-tune is complete
 before you can plug it into the Completions API. You can check the status of your fine-tune with
 <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.get">FineTune.get</a>.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Inference with a fine-tuned model in python</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Inference with a fine-tuned model in python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block"></div>
 </div>
 </div>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b.airlines.2023-07-17-08-30-45&quot;</span>,
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Do you offer in-flight Wi-fi?&quot;</span>,
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    max_new_tokens<span style="color: #666666">=100</span>,
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    temperature<span style="color: #666666">=0.2</span>,
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>)
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b.airlines.2023-07-17-08-30-45&quot;</span>,
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Do you offer in-flight Wi-fi?&quot;</span>,
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    max_new_tokens<span style="color: #666666">=100</span>,
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>)
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 
 
