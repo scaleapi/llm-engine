@@ -635,7 +635,7 @@ class CompletionSyncV1UseCase:
                     tokens=tokens,
                 )
             except Exception as e:
-                logger.exception(f"Error parsing text-generation-inference output {model_output}")
+                logger.exception(f"Error parsing text-generation-inference output {model_output}. Error message: {e}")
                 if 'generated_text' not in model_output:
                     raise ObjectHasInvalidValueException(
                         f"Error parsing text-generation-inference output {model_output}. Error message: {e}"
@@ -922,15 +922,21 @@ class CompletionStreamV1UseCase:
                             token=result["result"]["token"]["text"],
                             log_prob=result["result"]["token"]["logprob"],
                         )
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=CompletionStreamOutput(
-                            text=result["result"]["token"]["text"],
-                            finished=finished,
-                            num_completion_tokens=num_completion_tokens,
-                            token=token,
-                        ),
-                    )
+                    try: 
+                        yield CompletionStreamV1Response(
+                            request_id=request_id,
+                            output=CompletionStreamOutput(
+                                text=result["result"]["token"]["text"],
+                                finished=finished,
+                                num_completion_tokens=num_completion_tokens,
+                                token=token,
+                            ),
+                        )
+                    except Exception as e:  # if result["result"]["token"]["text"] doesn't exist 
+                        logger.exception(f"Error parsing text-generation-inference output. Error message: {e}")
+                        raise ObjectHasInvalidValueException(
+                            f"Error parsing text-generation-inference output. Error message: {e}"
+                        )
                 else:
                     yield CompletionStreamV1Response(
                         request_id=request_id,
