@@ -635,10 +635,10 @@ class CompletionSyncV1UseCase:
                     tokens=tokens,
                 )
             except Exception as e:
-                logger.exception(f"Error parsing text-generation-inference output {model_output}. Error message: {e}")
+                logger.exception(f"Error parsing text-generation-inference output {model_output}. Error message: {json.loads(e)['error']}")
                 if 'generated_text' not in model_output:
                     raise ObjectHasInvalidValueException(
-                        f"Error parsing text-generation-inference output {model_output}. Error message: {e}"
+                        f"Error parsing text-generation-inference output {model_output}. Error message: {json.loads(e)['error']}"
                     )
         else:
             raise EndpointUnsupportedInferenceTypeException(
