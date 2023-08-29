@@ -12,6 +12,9 @@ from model_engine_server.domain.repositories.llm_fine_tune_events_repository imp
     LLMFineTuneEventsRepository,
 )
 
+import logging
+logging.basicConfig(level=logging.ERROR)
+
 # Echoes llm/ia3_finetune/docker_image_fine_tuning_entrypoint.py
 S3_HF_USER_FINE_TUNED_WEIGHTS_PREFIX = (
     f"s3://{infra_config().s3_bucket}/hosted-model-inference/fine_tuned_weights"

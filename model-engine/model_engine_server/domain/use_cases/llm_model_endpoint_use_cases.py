@@ -636,7 +636,10 @@ class CompletionSyncV1UseCase:
                 )
             except Exception as e:
                 logger.exception(f"Error parsing text-generation-inference output {model_output}")
-                raise e
+                if 'generated_text' not in model_output:
+                    raise ObjectHasInvalidValueException(
+                        f"Error parsing text-generation-inference output {model_output}. Error message: {e}"
+                    )
         else:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {model_content.inference_framework}"
