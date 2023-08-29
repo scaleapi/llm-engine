@@ -107,14 +107,14 @@ class FineTune(APIEngine):
             writer.writerows(data)
         ```
 
-        Currently, data needs to be uploaded to a publicly accessible web URL so that it can be read
-        for fine-tuning. Publicly accessible HTTP and HTTPS URLs are currently supported.
-        Support for privately sharing data with the LLM Engine API is coming shortly. For quick
-        iteration, you can look into tools like Pastebin or GitHub Gists to quickly host your CSV
-        files in a public manner. An example Github Gist can be found
-        [here](https://gist.github.com/tigss/7cec73251a37de72756a3b15eace9965). To use the gist,
-        you can use the URL given when you click the “Raw” button
-        ([URL](https://gist.githubusercontent.com/tigss/7cec73251a37de72756a3b15eace9965/raw/85d9742890e1e6b0c06468507292893b820c13c9/llm_sample_data.csv)).
+        Currently, data needs to be uploaded to either a publicly accessible web URL or to LLM Engine's
+        private file server so that it can be read for fine-tuning. Publicly accessible HTTP and HTTPS
+        URLs are currently supported.
+
+        To privately share data with the LLM Engine API, use LLM Engine's [File.upload](../../api/python_client/#llmengine.File.upload)
+        API. You can upload data in local file to LLM Engine's private file server and then use the
+        returned file ID to reference your data in the FineTune API. The file ID is generally in the
+        form of `file-<random_string>`, e.g. "file-7DLVeLdN2Ty4M2m".
 
         Example code for fine-tuning:
         === "Fine-tuning in Python"
@@ -123,7 +123,7 @@ class FineTune(APIEngine):
 
             response = FineTune.create(
                 model="llama-2-7b",
-                training_file="https://my-bucket.s3.us-west-2.amazonaws.com/path/to/training-file.csv",
+                training_file="file-7DLVeLdN2Ty4M2m",
             )
 
             print(response.json())
