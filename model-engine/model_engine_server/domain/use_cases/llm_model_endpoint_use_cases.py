@@ -933,9 +933,9 @@ class CompletionStreamV1UseCase:
                             ),
                         )
                     except Exception as e:  # if result["result"]["token"]["text"] doesn't exist 
-                        logger.exception(f"Error parsing text-generation-inference output. Error message: {e}")
+                        logger.exception(f"Error parsing text-generation-inference stream output. Error message: {e}")
                         raise ObjectHasInvalidValueException(
-                            f"Error parsing text-generation-inference output. Error message: {e}"
+                            f"Error parsing text-generation-inference stream output." 
                         )
                 else:
                     yield CompletionStreamV1Response(
