@@ -105,7 +105,7 @@ with open('customer_service_data.csv', 'w', newline='') as file:
 
 Currently, data needs to be uploaded to either a publicly accessible web URL or to LLM Engine's private file server so that it can be read for fine-tuning. Publicly accessible HTTP and HTTPS URLs are currently supported.
 
-To privately share data with the LLM Engine API, use LLM Engine's [File.upload](../../api/python_client/#llmengine.File.upload) API. You can upload data in local file to LLM Engine's private file server and then use the returned file ID to reference your data in the FineTune API.
+To privately share data with the LLM Engine API, use LLM Engine's [File.upload](../../api/python_client/#llmengine.File.upload) API. You can upload data in local file to LLM Engine's private file server and then use the returned file ID to reference your data in the FineTune API. The file ID is generally in the form of `file-<random_string>`, e.g. "file-7DLVeLdN2Ty4M2m".
 
 === "Upload to LLM Engine's private file server"
 
@@ -142,6 +142,7 @@ from llmengine import FineTune
 response = FineTune.create(
     model="llama-2-7b",
     training_file="file-7DLVeLdN2Ty4M2m",
+    training_file="file-ezSRtpgKQyItI26",
 )
 
 print(response.json())
