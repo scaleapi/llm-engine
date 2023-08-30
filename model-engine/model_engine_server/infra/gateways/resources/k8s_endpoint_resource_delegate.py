@@ -1025,7 +1025,7 @@ class K8SEndpointResourceDelegate:
                         logger.exception(
                             f"Deletion of HorizontalPodAutoscaler {k8s_resource_group_name} failed"
                         )
-                    return False
+                        return False
             else:
                 logger.exception(
                     f"Deletion of HorizontalPodAutoscaler {k8s_resource_group_name} failed"
@@ -1565,12 +1565,9 @@ class K8SEndpointResourceDelegate:
         hpa_delete_succeeded = await self._delete_hpa(
             endpoint_id=endpoint_id, deployment_name=deployment_name
         )
-        if not hpa_delete_succeeded:
-            keda_scaled_object_succeeded = await self._delete_keda_scaled_object(
-                endpoint_id=endpoint_id
-            )
-        else:
-            keda_scaled_object_succeeded = False
+        keda_scaled_object_succeeded = await self._delete_keda_scaled_object(
+            endpoint_id=endpoint_id
+        )
         await self._delete_vpa(endpoint_id=endpoint_id)
 
         destination_rule_delete_succeeded = await self._delete_destination_rule(
