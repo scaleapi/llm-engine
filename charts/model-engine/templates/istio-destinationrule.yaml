@@ -1,0 +1,18 @@
+{{- if .Values.destinationrule.enabled -}}
+{{- $fullName := include "modelEngine.fullname" . -}}
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4}}
+  {{- with .Values.destinationrule.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  host: "{{ $fullName }}.{{ .Release.Namespace }}.svc.cluster.local"
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_REQUEST  # Requires later version of Istio, which we have on the new clusters
+{{- end }}

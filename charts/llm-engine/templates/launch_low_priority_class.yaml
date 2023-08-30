@@ -1,8 +1,0 @@
-{{- if not .Values.serviceIdentifier }}
-apiVersion: scheduling.k8s.io/v1
-kind: PriorityClass
-metadata:
-  name: "{{ include "llmEngine.fullname" . }}-low-priority"
-value: 0
-description: "Low Priority Class for LLMEngine"
-{{- end }}

@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "modelEngine.buildername" . }}
+  labels:
+    {{- include "modelEngine.selectorLabels.builder" . | nindent 4 }}
+    {{- include "modelEngine.labels" . | nindent 4 }}
+    tags.datadoghq.com/service: {{ include "modelEngine.buildername" . }}
+spec:
+  replicas: {{ .Values.replicaCount.builder }}
+  selector:
+    matchLabels:
+      {{- include "modelEngine.selectorLabels.builder" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+        ad.datadoghq.com/main.logs: |
+          [{
+            "service": {{ include "modelEngine.buildername" . | quote }},
+            "source": "python"
+          }]
+      labels:
+        {{- include "modelEngine.selectorLabels.builder" . | nindent 8 }}
+        {{- include "modelEngine.labels" . | nindent 8 }}
+        tags.datadoghq.com/service: {{ include "modelEngine.buildername" . }}
+        sidecar.istio.io/inject: "false"
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "modelEngine.buildername" . }}
+          image: "{{ .Values.image.builderRepository }}:{{ .Values.tag}}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/readyz
+          command:
+            - dumb-init
+            - --
+            - ddtrace-run
+          args:
+            - celery
+            - --app=model_engine_server.service_builder
+            - worker
+            - --loglevel=INFO
+            - --concurrency=2
+            {{- if .Values.serviceIdentifier }}
+            - --queues=model-engine-{{ .Values.serviceIdentifier }}.service-builder
+            {{- else }}
+            - --queues=model-engine.service-builder
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- include "modelEngine.builderEnv" . | indent 10 }}
+          {{- include "modelEngine.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "modelEngine.fullname" . }}
+      {{- include "modelEngine.volumes" . | indent 6 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
