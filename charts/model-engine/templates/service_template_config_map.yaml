@@ -425,7 +425,7 @@ data:
           activationListLength: "0"
           enableTLS: "false"
           unsafeSsl: "false"
-          databaseIndex: "${REDIS_DB_INDEX}
+          databaseIndex: "${REDIS_DB_INDEX}"
   service.yaml: |-
     apiVersion: v1
     kind: Service
