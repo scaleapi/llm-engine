@@ -66,6 +66,7 @@ class FineTune(APIEngine):
                 * `warmup_ratio`: Ratio of training steps used for learning rate warmup. (Default: 0.03)
                 * `epochs`: Number of fine-tuning epochs. This should be less than 20. (Default: 5)
                 * `weight_decay`: Regularization penalty applied to learned weights. (Default: 0.001)
+                * `peft_config`: A dict of parameters for the PEFT algorithm. See [LoraConfig](https://huggingface.co/docs/peft/main/en/package_reference/tuners#peft.LoraConfig) for more information.
 
             wandb_config (`Optional[Dict[str, Any]]`):
                 A dict of configuration parameters for Weights & Biases. See [Weights & Biases](https://docs.wandb.ai/ref/python/init) for more information.
