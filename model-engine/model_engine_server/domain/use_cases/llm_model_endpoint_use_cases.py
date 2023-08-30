@@ -36,7 +36,6 @@ from model_engine_server.core.domain_exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
-    InvalidRequestException,
 )
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.entities import (
@@ -55,6 +54,7 @@ from model_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
     UpstreamServiceError,
+    InvalidRequestException
 )
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
 from model_engine_server.domain.repositories import ModelBundleRepository
@@ -72,8 +72,12 @@ from .model_endpoint_use_cases import (
     validate_labels,
     validate_post_inference_hooks,
 )
+import logging
 
 logger = make_logger(filename_wo_ext(__name__))
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(levelname)s - %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 _SUPPORTED_MODEL_NAMES = {
     LLMInferenceFramework.DEEPSPEED: {
@@ -603,6 +607,7 @@ class CompletionSyncV1UseCase:
         self.model_endpoint_service = model_endpoint_service
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
+        logging.debug("initializing completion sync use case") 
 
     def model_output_to_completion_output(
         self,
@@ -637,13 +642,7 @@ class CompletionSyncV1UseCase:
                     tokens=tokens,
                 )
             except Exception as e:
-                logger.exception(f"Error parsing text-generation-inference output {model_output}. Error message: {json.loads(e)['error']}")
-                '''
-                if 'generated_text' not in model_output:
-                    raise ObjectHasInvalidValueException(
-                        f"Error parsing text-generation-inference output {model_output}. Error message: {json.loads(e)['error']}"
-                    )
-                '''
+                logger.exception(f"Error parsing text-generation-inference output {model_output}.") 
                 if model_output.get("error_type") == "validation":
                     raise InvalidRequestException(model_output.get("error")) # trigger a 400
                 else:
@@ -769,7 +768,6 @@ class CompletionSyncV1UseCase:
                 )
 
             output = json.loads(predict_result.result["result"])
-
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
@@ -815,8 +813,10 @@ class CompletionStreamV1UseCase:
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
 
+        logging.debug("do we reach execute()?")
         request_id = str(uuid4())
         add_trace_request_id(request_id)
+        logging.debug("request_id: %s", request_id)
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
             owner=user.team_id, name=model_endpoint_name, order_by=None
         )

@@ -199,6 +199,8 @@ async def create_completion_sync_task(
         ) from exc
     except ObjectHasInvalidValueException as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    except InvalidRequestException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     except EndpointUnsupportedInferenceTypeException as exc:
         raise HTTPException(
             status_code=400,
@@ -247,6 +249,8 @@ async def create_completion_stream_task(
             detail="The specified endpoint could not be found.",
         ) from exc
     except ObjectHasInvalidValueException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except InvalidRequestException as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except EndpointUnsupportedInferenceTypeException as exc:
         raise HTTPException(
