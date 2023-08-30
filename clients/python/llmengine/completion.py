@@ -8,7 +8,6 @@ from llmengine.data_types import (
     CompletionSyncV1Request,
 )
 
-
 COMPLETION_TIMEOUT = 300
 
 
