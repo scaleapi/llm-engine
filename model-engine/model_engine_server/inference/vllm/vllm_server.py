@@ -70,7 +70,6 @@ async def generate(request: Request) -> Response:
         final_output = request_output
 
     assert final_output is not None
-    print(final_output)
     prompt = final_output.prompt
     ret = {
         "text": final_output.outputs[0].text,
