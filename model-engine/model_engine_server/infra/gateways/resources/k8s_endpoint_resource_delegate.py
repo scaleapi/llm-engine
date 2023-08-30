@@ -1027,7 +1027,7 @@ class K8SEndpointResourceDelegate:
                         logger.exception(
                             f"Deletion of HorizontalPodAutoscaler {k8s_resource_group_name} failed"
                         )
-                        return False
+                    return False
             else:
                 logger.exception(
                     f"Deletion of HorizontalPodAutoscaler {k8s_resource_group_name} failed"
