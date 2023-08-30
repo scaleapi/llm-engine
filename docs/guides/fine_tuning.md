@@ -142,7 +142,7 @@ from llmengine import FineTune
 response = FineTune.create(
     model="llama-2-7b",
     training_file="file-7DLVeLdN2Ty4M2m",
-    training_file="file-ezSRtpgKQyItI26",
+    validation_file="file-ezSRtpgKQyItI26",
 )
 
 print(response.json())
