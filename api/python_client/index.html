@@ -970,7 +970,7 @@ For each of these modes, you can also choose whether to stream token responses o
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>,
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    stop_sequences: Optional[List[<span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    return_token_log_probs: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>) <span style="color: #666666">-&gt;</span> Union[
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    CompletionSyncResponse,
@@ -1103,7 +1103,7 @@ When True, the response will include a list of tokens and their log probabilitie
             </div>
           </td>
           <td>
-                <code>10</code>
+                <code><span title="llmengine.completion.COMPLETION_TIMEOUT">COMPLETION_TIMEOUT</span></code>
           </td>
         </tr>
         <tr>
@@ -1231,7 +1231,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>,
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    stop_sequences: Optional[List[<span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    return_token_log_probs: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">10</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>) <span style="color: #666666">-&gt;</span> Union[
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    CompletionSyncResponse,
@@ -1364,7 +1364,7 @@ When True, the response will include a list of tokens and their log probabilitie
             </div>
           </td>
           <td>
-                <code>10</code>
+                <code><span title="llmengine.completion.COMPLETION_TIMEOUT">COMPLETION_TIMEOUT</span></code>
           </td>
         </tr>
         <tr>
