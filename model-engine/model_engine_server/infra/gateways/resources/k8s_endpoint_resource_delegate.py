@@ -615,7 +615,7 @@ class K8SEndpointResourceDelegate:
                 logger.info(f"ScaledObject {name} already exists, replacing")
 
                 # The async k8s client has a bug with patching custom objects, so we manually
-                # merge the new VPA with the old one and then replace the old one with the merged
+                # merge the new ScaledObject with the old one and then replace the old one with the merged
                 # one. See _create_vpa for more details.
                 existing_scaled_object = await custom_objects_api.get_namespaced_custom_object(
                     group="keda.sh",
