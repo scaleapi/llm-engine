@@ -16,6 +16,7 @@ def fake_live_model_endpoint_service(
     fake_async_model_endpoint_inference_gateway,
     fake_streaming_model_endpoint_inference_gateway,
     fake_sync_model_endpoint_inference_gateway,
+    fake_inference_autoscaling_metrics_gateway,
     fake_filesystem_gateway,
     model_bundle_1: ModelBundle,
     model_bundle_2: ModelBundle,
@@ -37,6 +38,7 @@ def fake_live_model_endpoint_service(
         async_model_endpoint_inference_gateway=fake_async_model_endpoint_inference_gateway,
         streaming_model_endpoint_inference_gateway=fake_streaming_model_endpoint_inference_gateway,
         sync_model_endpoint_inference_gateway=fake_sync_model_endpoint_inference_gateway,
+        inference_autoscaling_metrics_gateway=fake_inference_autoscaling_metrics_gateway,
         model_endpoints_schema_gateway=model_endpoints_schema_gateway,
     )
     return service

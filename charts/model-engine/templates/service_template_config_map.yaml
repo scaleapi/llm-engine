@@ -287,6 +287,9 @@ data:
                 periodSeconds: 5
               resources:
                 requests:
+                  {{- if eq $device "gpu" }}
+                  nvidia.com/gpu: ${GPUS}
+                  {{- end }}
                   cpu: ${CPUS}
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
@@ -616,6 +619,9 @@ data:
               resources:
                 # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.
                 requests:
+                  {{- if eq $device "gpu" }}
+                  nvidia.com/gpu: ${GPUS}
+                  {{- end }}
                   cpu: ${CPUS}
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
@@ -673,7 +679,7 @@ data:
       namespace: ${NAMESPACE}
       labels:
         team: infra
-        product: launch
+        product: model-engine
         use_scale_launch_endpoint_network_policy: "true"
         tags.datadoghq.com/service: ${RESOURCE_NAME}
     spec:
@@ -688,7 +694,7 @@ data:
           labels:
             app: ${RESOURCE_NAME}
             team: infra
-            product: launch
+            product: model-engine
             use_scale_launch_endpoint_network_policy: "true"
             tags.datadoghq.com/service: ${RESOURCE_NAME}
             version: v1

@@ -1,6 +1,10 @@
-# ⚡ LLM Engine ⚡
+# LLM Engine
 
-**The open source engine for fine-tuning and serving large language models**. 
+[![LICENSE](https://img.shields.io/github/license/scaleapi/llm-engine.svg)](https://github.com/scaleapi/llm-engine/blob/master/LICENSE)
+[![Release Notes](https://img.shields.io/github/release/scaleapi/llm-engine)](https://github.com/scaleapi/llm-engine/releases)
+[![CircleCI](https://circleci.com/gh/scaleapi/llm-engine.svg?style=shield)](https://circleci.com/gh/scaleapi/llm-engine)
+
+🚀 **The open source engine for fine-tuning and serving large language models**. 🚀
 
 Scale's LLM Engine is the easiest way to customize and serve LLMs. In LLM Engine, models can be accessed via Scale's hosted version or by using the Helm charts in this repository to run model inference and fine-tuning in your own infrastructure.
 
@@ -87,4 +91,4 @@ print(response.output.text)
 You should see a successful completion of your given prompt!
 
 _What's next?_ Visit the [LLM Engine documentation pages](https://scaleapi.github.io/llm-engine/) for more on
-the `Completion` and `FineTune` APIs and how to use them.
+the `Completion` and `FineTune` APIs and how to use them. Check out this [blog post](https://scale.com/blog/fine-tune-llama-2) for an end-to-end example.

@@ -20,6 +20,7 @@ from model_engine_server.infra.gateways import (
     LiveModelEndpointsSchemaGateway,
     LiveStreamingModelEndpointInferenceGateway,
     LiveSyncModelEndpointInferenceGateway,
+    RedisInferenceAutoscalingMetricsGateway,
     S3FilesystemGateway,
 )
 from model_engine_server.infra.gateways.resources.fake_sqs_endpoint_resource_delegate import (
@@ -95,6 +96,9 @@ async def run_batch_job(
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
+    inference_autoscaling_metrics_gateway = RedisInferenceAutoscalingMetricsGateway(
+        redis_client=redis,
+    )
     model_endpoint_service = LiveModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,
         model_endpoint_infra_gateway=model_endpoint_infra_gateway,
@@ -103,6 +107,7 @@ async def run_batch_job(
         streaming_model_endpoint_inference_gateway=streaming_model_endpoint_inference_gateway,
         sync_model_endpoint_inference_gateway=sync_model_endpoint_inference_gateway,
         model_endpoints_schema_gateway=model_endpoints_schema_gateway,
+        inference_autoscaling_metrics_gateway=inference_autoscaling_metrics_gateway,
     )
     batch_job_record_repository = DbBatchJobRecordRepository(session=session, read_only=False)
     batch_job_progress_gateway = LiveBatchJobProgressGateway(filesystem_gateway=filesystem_gateway)

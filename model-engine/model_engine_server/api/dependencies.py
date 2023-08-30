@@ -49,6 +49,7 @@ from model_engine_server.infra.gateways import (
     LiveStreamingModelEndpointInferenceGateway,
     LiveSyncModelEndpointInferenceGateway,
     ModelEndpointInfraGateway,
+    RedisInferenceAutoscalingMetricsGateway,
     S3FilesystemGateway,
     S3LLMArtifactGateway,
 )
@@ -179,6 +180,9 @@ def _get_external_interfaces(
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
+    inference_autoscaling_metrics_gateway = RedisInferenceAutoscalingMetricsGateway(
+        redis_client=redis_client
+    )  # we can just reuse the existing redis client, we shouldn't get key collisions because of the prefix
     model_endpoint_service = LiveModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,
         model_endpoint_infra_gateway=model_endpoint_infra_gateway,
@@ -187,6 +191,7 @@ def _get_external_interfaces(
         streaming_model_endpoint_inference_gateway=streaming_model_endpoint_inference_gateway,
         sync_model_endpoint_inference_gateway=sync_model_endpoint_inference_gateway,
         model_endpoints_schema_gateway=model_endpoints_schema_gateway,
+        inference_autoscaling_metrics_gateway=inference_autoscaling_metrics_gateway,
     )
     llm_model_endpoint_service = LiveLLMModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,
