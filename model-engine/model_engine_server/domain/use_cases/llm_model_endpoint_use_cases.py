@@ -36,6 +36,7 @@ from model_engine_server.core.domain_exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
+    InvalidRequestException,
 )
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.entities import (
@@ -53,6 +54,7 @@ from model_engine_server.domain.entities import (
 from model_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
+    UpstreamServiceError,
 )
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
 from model_engine_server.domain.repositories import ModelBundleRepository
@@ -636,10 +638,17 @@ class CompletionSyncV1UseCase:
                 )
             except Exception as e:
                 logger.exception(f"Error parsing text-generation-inference output {model_output}. Error message: {json.loads(e)['error']}")
+                '''
                 if 'generated_text' not in model_output:
                     raise ObjectHasInvalidValueException(
                         f"Error parsing text-generation-inference output {model_output}. Error message: {json.loads(e)['error']}"
                     )
+                '''
+                if model_output.get("error_type") == "validation":
+                    raise InvalidRequestException(model_output.get("error")) # trigger a 400
+                else:
+                    raise UpstreamServiceError(model_output.get("error")) # also change llms_v1.py that will return a 500 HTTPException so user can retry
+
         else:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {model_content.inference_framework}"
@@ -933,10 +942,12 @@ class CompletionStreamV1UseCase:
                             ),
                         )
                     except Exception as e:  # if result["result"]["token"]["text"] doesn't exist 
-                        logger.exception(f"Error parsing text-generation-inference stream output. Error message: {e}")
-                        raise ObjectHasInvalidValueException(
-                            f"Error parsing text-generation-inference stream output." 
-                        )
+                        if "error" in result:
+                            logger.exception(f"Error parsing text-generation-inference stream output. Error message: {e}")
+                            raise ObjectHasInvalidValueException(
+                                f"Error parsing text-generation-inference stream output." 
+                            )
+                        raise e
                 else:
                     yield CompletionStreamV1Response(
                         request_id=request_id,

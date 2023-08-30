@@ -57,3 +57,8 @@ class ReadOnlyDatabaseException(DomainException):
     """
     Thrown if the server attempted to write to a read-only database.
     """
+
+class InvalidRequestException(DomainException):
+    """
+    Thrown if the request sent by the user is invalid (e.x. would occur if user-passed params are invalid).
+    """
