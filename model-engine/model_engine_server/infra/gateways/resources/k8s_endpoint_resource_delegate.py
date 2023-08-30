@@ -1284,7 +1284,6 @@ class K8SEndpointResourceDelegate:
     def _get_sync_autoscaling_params_from_keda(
         keda_config,
     ) -> HorizontalAutoscalingEndpointParams:
-        # import pdb; pdb.set_trace()
         spec = keda_config["spec"]
         return dict(
             max_workers=spec.get("maxReplicaCount"),
