@@ -1349,9 +1349,9 @@ class K8SEndpointResourceDelegate:
                     keda_scaled_object_config
                 )
             else:
-                raise ValueError(
+                raise EndpointResourceInfraException(
                     f"Could not find autoscaling config for {endpoint_type}"
-                )  # TODO better error type
+                )
         else:
             raise ValueError(f"Unexpected endpoint type {endpoint_type}")
 
