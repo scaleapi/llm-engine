@@ -42,7 +42,7 @@ Common labels
 */}}
 {{- define "modelEngine.labels" -}}
 team: infra
-product: launch
+product: model-engine
 helm.sh/chart: {{ include "modelEngine.chart" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/version: {{ .Values.tag }}
