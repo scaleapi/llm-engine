@@ -8,6 +8,8 @@ from llmengine.data_types import (
     CompletionSyncV1Request,
 )
 
+COMPLETION_TIMEOUT = 300
+
 
 class Completion(APIEngine):
     """
@@ -31,7 +33,7 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
-        timeout: int = 10,
+        timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]:
         """
@@ -193,7 +195,7 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
-        timeout: int = 10,
+        timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
         """
