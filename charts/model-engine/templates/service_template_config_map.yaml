@@ -396,7 +396,6 @@ data:
             target:
               type: Value
               averageValue: ${CONCURRENCY}
-  # TODO maybe fix keda scaled object
   keda-scaled-object.yaml: |-
     apiVersion: keda.sh/v1alpha1
     kind: ScaledObject

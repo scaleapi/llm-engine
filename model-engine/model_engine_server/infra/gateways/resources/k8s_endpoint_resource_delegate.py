@@ -196,7 +196,6 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
     yaml_str = Template(template_str).substitute(**substitution_kwargs)
     try:
         yaml_obj = yaml.safe_load(yaml_str)
-        print(yaml_obj)
     except:
         logger.exception("Could not load yaml string: %s", yaml_str)
         raise
@@ -602,7 +601,6 @@ class K8SEndpointResourceDelegate:
 
     @staticmethod
     async def _create_keda_scaled_object(scaled_object: Dict[str, Any], name: str) -> None:
-        # TODO test
         custom_objects_api = get_kubernetes_custom_objects_client()
         try:
             await custom_objects_api.create_namespaced_custom_object(
@@ -1164,7 +1162,6 @@ class K8SEndpointResourceDelegate:
             else:
                 api_version = "autoscaling/v2beta2"
 
-            # TODO select between hpa and keda scaled object somehow
             if request.build_endpoint_request.min_workers > 0:
                 hpa_arguments = get_endpoint_resource_arguments_from_request(
                     k8s_resource_group_name=k8s_resource_group_name,
