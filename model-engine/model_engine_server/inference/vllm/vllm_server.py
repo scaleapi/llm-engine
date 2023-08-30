@@ -41,7 +41,7 @@ async def generate(request: Request) -> Response:
     # Streaming case
     # TODO: vLLM spends a long time decoding text repeatedly, that for every new token `text` is regenerated,
     # (see detokenize_incrementally) which we should definitely optimize away.
-    async def stream_results() -> AsyncGenerator[bytes, None]:
+    async def stream_results() -> AsyncGenerator[str, None]:
         async for request_output in results_generator:
             ret = {
                 "text": request_output.outputs[0].text,
