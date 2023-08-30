@@ -1162,6 +1162,9 @@ class K8SEndpointResourceDelegate:
             else:
                 api_version = "autoscaling/v2beta2"
 
+            # create exactly one of HPA or KEDA ScaledObject, depending if we request more than 0 min_workers
+            # Right now, keda only will support scaling from 0 to 1
+            # TODO support keda scaling from 1 to N as well
             if request.build_endpoint_request.min_workers > 0:
                 hpa_arguments = get_endpoint_resource_arguments_from_request(
                     k8s_resource_group_name=k8s_resource_group_name,
