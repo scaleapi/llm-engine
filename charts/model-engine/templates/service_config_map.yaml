@@ -1,0 +1,26 @@
+{{- if .Values.config.values }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "modelEngine.fullname" . }}-service-config
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-2"
+data:
+  launch_service_config: |-
+    datadog_trace_enabled: {{ .Values.datadog_trace_enabled | default false | quote }}
+    {{- with .Values.config.values.launch }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+  infra_service_config: |-
+    env: {{ .Values.context | quote }}
+    {{- with .Values.config.values.infra }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+{{- end }}

@@ -27,6 +27,9 @@ from model_engine_server.domain.gateways import (
     StreamingModelEndpointInferenceGateway,
     SyncModelEndpointInferenceGateway,
 )
+from model_engine_server.domain.gateways.inference_autoscaling_metrics_gateway import (
+    InferenceAutoscalingMetricsGateway,
+)
 from model_engine_server.domain.services import ModelEndpointService
 from model_engine_server.domain.use_cases.model_endpoint_use_cases import MODEL_BUNDLE_CHANGED_KEY
 from model_engine_server.infra.gateways import ModelEndpointInfraGateway
@@ -51,6 +54,7 @@ class LiveModelEndpointService(ModelEndpointService):
         streaming_model_endpoint_inference_gateway: StreamingModelEndpointInferenceGateway,
         sync_model_endpoint_inference_gateway: SyncModelEndpointInferenceGateway,
         model_endpoints_schema_gateway: ModelEndpointsSchemaGateway,
+        inference_autoscaling_metrics_gateway: InferenceAutoscalingMetricsGateway,
     ):
         self.model_endpoint_record_repository = model_endpoint_record_repository
         self.model_endpoint_infra_gateway = model_endpoint_infra_gateway
@@ -59,6 +63,7 @@ class LiveModelEndpointService(ModelEndpointService):
         self.streaming_model_endpoint_inference_gateway = streaming_model_endpoint_inference_gateway
         self.sync_model_endpoint_inference_gateway = sync_model_endpoint_inference_gateway
         self.model_endpoints_schema_gateway = model_endpoints_schema_gateway
+        self.inference_autoscaling_metrics_gateway = inference_autoscaling_metrics_gateway
 
     def get_async_model_endpoint_inference_gateway(
         self,
@@ -74,6 +79,11 @@ class LiveModelEndpointService(ModelEndpointService):
         self,
     ) -> StreamingModelEndpointInferenceGateway:
         return self.streaming_model_endpoint_inference_gateway
+
+    def get_inference_auto_scaling_metrics_gateway(
+        self,
+    ) -> InferenceAutoscalingMetricsGateway:
+        return self.inference_autoscaling_metrics_gateway
 
     async def _get_model_endpoint_infra_state(
         self, record: ModelEndpointRecord, use_cache: bool
