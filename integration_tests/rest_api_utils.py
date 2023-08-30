@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import json
 import os
 import time
@@ -30,156 +31,52 @@ DEFAULT_USERS: Sequence[str] = (
 
 S3_BUCKET = infra_config().s3_bucket
 
-CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
-    "packaging_type": "cloudpickle",
-    "name": "model_bundle_simple",
-    "location": f"s3://{S3_BUCKET}/scale-launch/model_bundles/646c085a6b38de00808148bb/84de9d96-6140-497b-be36-dcc8dd1dd9c4",
-    "metadata": {
-        "load_predict_fn": """def my_load_predict_fn(model):
+def echo_load_predict_fn(model):
     def echo(**keyword_args):
         return model(**keyword_args)
-    return echo""",
-        "load_model_fn": """def my_load_model_fn():
+    return echo
+
+def echo_load_model_fn():
     def my_model(**keyword_args):
         return {k: v for k, v in keyword_args.items()}
-    return my_model""",
-    },
-    "requirements": [],
-    "env_params": {
-        "framework_type": "pytorch",
-        "pytorch_image_tag": "1.7.1-cuda11.0-cudnn8-runtime",
-    },
-}
+    return my_model
 
-# Taken from https://github.com/scaleapi/models/blob/feb133e55a4373587a8996a945ab20445688811d/autoflag/deploy/linter_loss/service_config.py
-CREATE_MODEL_BUNDLE_REQUEST_CUSTOM_IMAGE = {
-    "packaging_type": "zip",
-    "name": "model_bundle_custom_image",
-    "location": f"s3://{S3_BUCKET}/scale-launch/model_bundles/63bf16d877db8a663d044aa3/b7ccd939-e593-4f9f-89bf-0a7b9cc39df1",
+CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
+    "name": "model_bundle_simple",
+    "schema_location": "TBA",
     "metadata": {
-        "load_predict_fn_module_path": "autoflag.deploy.linter_loss.load_predict_fn.load_predict_fn",
-        "load_model_fn_module_path": "autoflag.deploy.linter_loss.load_model_fn.load_model_fn",
+        "test_key": "test_value",
     },
-    "requirements": [
-        "awscli==1.25.46",
-        "scale-nucleus==0.14.10",
-        "opencv-python==4.6.0.66",
-        "pycocotools==2.0.4",
-        "pytorch-lightning==1.6.4",
-        "pywise==0.4.0",
-        "scikit-image==0.19.3",
-        "torchdata==0.4.0",
-        "fsspec[s3]==2022.5.0",
-    ],
-    "env_params": {
-        "framework_type": "custom_base_image",
-        "ecr_repo": "autoflag-gpu",
-        "image_tag": "d6a18829c8b4dd6e47d34ed0d1c32e9474ce2bb7",
+    "flavor": {
+        "flavor": "cloudpickle_artifact",
+        "load_predict_fn": inspect.getsource(echo_load_predict_fn),
+        "load_model_fn": inspect.getsource(echo_load_model_fn),
+        "framework": {
+            "framework_type": "pytorch",
+            "pytorch_image_tag": "1.7.1-cuda11.0-cudnn8-runtime",
+        },
+        "requirements": [],
+        "location": "s3://model-engine-integration-tests/model_bundles/echo_bundle",
     },
-    "app_config": {"linter_loss_name": "estimated-risk-semseg"},
 }
 
 CREATE_MODEL_BUNDLE_REQUEST_RUNNABLE_IMAGE = {
     "name": "model_bundle_runnable_image",
-    "schema_location": f"s3://{S3_BUCKET}/scale-launch/model_bundles/63bf16d877db8a663d044aa3/b7ccd939-e593-4f9f-89bf-0a7b9cc39df1",
-    "metadata": {
-        "test_key": "test_value",
-    },
-    "flavor": {
-        "flavor": "runnable_image",
-        "repository": "launch/gateway",
-        "tag": GIT_TAG,
-        "command": [
-            "dumb-init",
-            "--",
-            "ddtrace-run",
-            "run-service",
-            "--config",
-            "/workspace/std-ml-srv/tests/resources/example_echo_service_configuration.yaml",
-            "--concurrency",
-            "1",
-            "--http",
-            "production",
-            "--port",
-            "5005",
-        ],
-        "env": {
-            "TEST_KEY": "test_value",
-            # infra configs are mounted here
-            "ML_INFRA_SERVICES_CONFIG_PATH": "/workspace/model-engine/model_engine_server/core/configs/default.yaml",
-            "HTTP_HOST": "0.0.0.0",  # Hack for waitress to work in minikube
-        },
-        "protocol": "http",
-        "readiness_initial_delay_seconds": 20,
-    },
-}
-
-CREATE_MODEL_BUNDLE_REQUEST_STREAMING_IMAGE = {
-    "name": "model_bundle_streaming_image",
-    "schema_location": f"s3://{S3_BUCKET}/scale-launch/model_bundles/63bf16d877db8a663d044aa3/b7ccd939-e593-4f9f-89bf-0a7b9cc39df1",
+    "schema_location": "TBA",
     "metadata": {
         "test_key": "test_value",
     },
     "flavor": {
         "flavor": "streaming_enhanced_runnable_image",
-        "repository": "launch/gateway",
-        "tag": GIT_TAG,
-        "command": [
-            "dumb-init",
-            "--",
-            "ddtrace-run",
-            "run-service",
-            "--config",
-            "/workspace/std-ml-srv/tests/resources/example_echo_service_configuration.yaml",
-            "--concurrency",
-            "1",
-            "--http",
-            "production",
-            "--port",
-            "5005",
-        ],
-        "streaming_command": [
-            "dumb-init",
-            "--",
-            "ddtrace-run",
-            "run-streamer",
-            "--config",
-            "/workspace/std-ml-srv/tests/resources/example_echo_streaming_service_configuration.yaml",
-            "--concurrency",
-            "1",
-            "--http",
-            "production",
-            "--port",
-            "5005",
-        ],
-        "env": {
-            "TEST_KEY": "test_value",
-            "ML_INFRA_SERVICES_CONFIG_PATH": "/workspace/model-engine/model_engine_server/core/configs/default.yaml",
-            # infra configs are mounted here
-            "HTTP_HOST": "0.0.0.0",  # Hack for uvicorn to work in minikube
-        },
-        "protocol": "http",
-        "readiness_initial_delay_seconds": 20,
-    },
-}
-
-CREATE_MODEL_BUNDLE_REQUEST_SYNC_STREAMING_IMAGE = {
-    "name": "model_bundle_sync_streaming_image",
-    "schema_location": f"s3://{S3_BUCKET}/scale-launch/model_bundles/63bf16d877db8a663d044aa3/b7ccd939-e593-4f9f-89bf-0a7b9cc39df1",
-    "metadata": {
-        "test_key": "test_value",
-    },
-    "flavor": {
-        "flavor": "streaming_enhanced_runnable_image",
-        "repository": "launch/gateway",
-        "tag": GIT_TAG,
+        "repository": "model-engine",
+        "tag": "integration_test",
         "command": [
             "dumb-init",
             "--",
             "ddtrace-run",
             "python",
             "-m",
-            "ml_serve.echo_server",
+            "model_engine_server.inference.forwarding.echo_server",
             "--port",
             "5005",
         ],
@@ -189,7 +86,7 @@ CREATE_MODEL_BUNDLE_REQUEST_SYNC_STREAMING_IMAGE = {
             "ddtrace-run",
             "python",
             "-m",
-            "ml_serve.echo_server",
+            "model_engine_server.inference.forwarding.echo_server",
             "--port",
             "5005",
         ],
@@ -222,30 +119,6 @@ CREATE_SYNC_MODEL_ENDPOINT_REQUEST_SIMPLE = CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_
 CREATE_SYNC_MODEL_ENDPOINT_REQUEST_SIMPLE["name"] = "model-endpoint-simple-sync"
 CREATE_SYNC_MODEL_ENDPOINT_REQUEST_SIMPLE["endpoint_type"] = "sync"
 
-CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_CUSTOM_IMAGE = {
-    "bundle_name": "model_bundle_custom_image",
-    "name": "model-endpoint-custom-image-async",
-    "post_inference_hooks": [],
-    "endpoint_type": "async",
-    "cpus": "3",
-    "gpu_type": "nvidia-tesla-t4",
-    "gpus": 1,
-    "memory": "6Gi",
-    "optimize_costs": True,
-    "min_workers": 0,
-    "max_workers": 1,
-    "per_worker": 1,
-    "labels": {"team": "infra", "product": "launch"},
-    "metadata": {"key": "value"},
-}
-
-CREATE_SYNC_MODEL_ENDPOINT_REQUEST_CUSTOM_IMAGE = (
-    CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_CUSTOM_IMAGE.copy()
-)
-CREATE_SYNC_MODEL_ENDPOINT_REQUEST_CUSTOM_IMAGE["name"] = "model-endpoint-custom-image-sync"
-CREATE_SYNC_MODEL_ENDPOINT_REQUEST_CUSTOM_IMAGE["endpoint_type"] = "sync"
-CREATE_SYNC_MODEL_ENDPOINT_REQUEST_CUSTOM_IMAGE["min_workers"] = 1
-
 CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = {
     "bundle_name": "model_bundle_runnable_image",
     "name": "model-endpoint-runnable-image-async",
@@ -262,57 +135,25 @@ CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = {
     "metadata": {"key": "value"},
 }
 
-CREATE_SYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = (
-    CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE.copy()
-)
-CREATE_SYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE["name"] = "model-endpoint-runnable-image-sync"
-CREATE_SYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE["endpoint_type"] = "sync"
-CREATE_SYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE["min_workers"] = 1
-
-CREATE_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = (
-    CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE.copy()
-)
-CREATE_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE[
-    "name"
-] = "model-endpoint-runnable-image-streaming"
-CREATE_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE[
-    "bundle_name"
-] = "model_bundle_streaming_image"
-CREATE_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE["endpoint_type"] = "streaming"
-CREATE_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE["min_workers"] = 1
-
 CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = (
-    CREATE_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE.copy()
+    CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE.copy()
 )
-SYNC_STREAMING_MODEL_ENDPOINT_NAME = "model-endpoint-runnable-image-sync-streaming"
 CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE[
     "name"
-] = SYNC_STREAMING_MODEL_ENDPOINT_NAME
-CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE[
-    "bundle_name"
-] = "model_bundle_sync_streaming_image"
+] = "model-endpoint-runnable-image-sync-streaming"
+CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE["endpoint_type"] = "streaming"
 
 UPDATE_MODEL_ENDPOINT_REQUEST_SIMPLE = {
     "bundle_name": "model_bundle_simple",
     "cpus": "0.25",
-    "max_workers": 2,
-}
-
-UPDATE_MODEL_ENDPOINT_REQUEST_CUSTOM_IMAGE = {
-    "bundle_name": "model_bundle_custom_image",
-    "cpus": "1",
+    "memory": "1Gi",
     "max_workers": 2,
 }
 
 UPDATE_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = {
     "bundle_name": "model_bundle_runnable_image",
     "cpus": "2",
-    "max_workers": 2,
-}
-
-UPDATE_MODEL_ENDPOINT_REQUEST_STREAMING_IMAGE = {
-    "bundle_name": "model_bundle_streaming_image",
-    "cpus": "2",
+    "memory": "2Gi",
     "max_workers": 2,
 }
 
@@ -383,10 +224,10 @@ CREATE_FINE_TUNE_REQUEST: Dict[str, Any] = {
 
 
 def create_model_bundle(
-    create_model_bundle_request: Dict[str, Any], user_id: str, version: str
+    create_model_bundle_request: Dict[str, Any], user_id: str
 ) -> Dict[str, Any]:
     response = requests.post(
-        f"{BASE_PATH}/{version}/model-bundles",
+        f"{BASE_PATH}/v2/model-bundles",
         json=create_model_bundle_request,
         headers={"Content-Type": "application/json"},
         auth=(user_id, ""),
@@ -400,7 +241,7 @@ def create_model_bundle(
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
 def get_latest_model_bundle(model_name: str, user_id: str, version: str) -> Dict[str, Any]:
     response = requests.get(
-        f"{BASE_PATH}/{version}/model-bundles/latest?model_name={model_name}",
+        f"{BASE_PATH}/v2/model-bundles/latest?model_name={model_name}",
         auth=(user_id, ""),
         timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
     )
@@ -581,6 +422,67 @@ def list_fine_tunes(user_id: str) -> Dict[str, Any]:
 def cancel_fine_tune_by_id(fine_tune_id: str, user_id: str) -> Dict[str, Any]:
     response = requests.put(
         f"{BASE_PATH}/v1/llm/fine-tunes/{fine_tune_id}/cancel",
+        headers={"Content-Type": "application/json"},
+        auth=(user_id, ""),
+        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
+    )
+    if not response.ok:
+        raise ValueError(response.content)
+    return response.json()
+
+
+def upload_file(file, user_id: str) -> Dict[str, Any]:
+    files = {"file": file}
+    response = requests.post(
+        f"{BASE_PATH}/v1/files",
+        files=files,
+        auth=(user_id, ""),
+        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
+    )
+    if not response.ok:
+        raise ValueError(response.content)
+    return response.json()
+
+
+def get_file_by_id(file_id: str, user_id: str) -> Dict[str, Any]:
+    response = requests.get(
+        f"{BASE_PATH}/v1/files/{file_id}",
+        headers={"Content-Type": "application/json"},
+        auth=(user_id, ""),
+        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
+    )
+    if not response.ok:
+        raise ValueError(response.content)
+    return response.json()
+
+
+def list_files(user_id: str) -> Dict[str, Any]:
+    response = requests.get(
+        f"{BASE_PATH}/v1/files",
+        headers={"Content-Type": "application/json"},
+        auth=(user_id, ""),
+        timeout=30,
+    )
+    if not response.ok:
+        raise ValueError(response.content)
+    return response.json()
+
+
+def delete_file_by_id(file_id: str, user_id: str) -> Dict[str, Any]:
+    response = requests.delete(
+        f"{BASE_PATH}/v1/files/{file_id}",
+        headers={"Content-Type": "application/json"},
+        auth=(user_id, ""),
+        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
+    )
+    if not response.ok:
+        raise ValueError(response.content)
+    return response.json()
+
+
+def get_file_content_by_id(file_id: str, user_id: str) -> Dict[str, Any]:
+    response = requests.get(
+        f"{BASE_PATH}/v1/files/{file_id}/content",
         headers={"Content-Type": "application/json"},
         auth=(user_id, ""),
         timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
