@@ -29,7 +29,7 @@ from model_engine_server.common.dtos.llms import (
 )
 from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Request
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
-from model_engine_server.common.dtos.tasks import EndpointPredictV1Request, TaskStatus
+from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.domain_exceptions import (
@@ -103,6 +103,10 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
     },
 }
+
+
+NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
+DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
 
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
@@ -495,6 +499,10 @@ class CreateLLMModelEndpointV1UseCase:
             post_inference_hooks=request.post_inference_hooks,
         )
 
+        await self.model_endpoint_service.get_inference_auto_scaling_metrics_gateway().emit_prewarm_metric(
+            model_endpoint_record.id
+        )
+
         return CreateLLMModelEndpointV1Response(
             endpoint_creation_task_id=model_endpoint_record.creation_task_id  # type: ignore
         )
@@ -694,6 +702,12 @@ class CompletionSyncV1UseCase:
             )
 
         inference_gateway = self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
+        autoscaling_metrics_gateway = (
+            self.model_endpoint_service.get_inference_auto_scaling_metrics_gateway()
+        )
+        await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
+            endpoint_id=model_endpoint.record.id
+        )
         endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
         if endpoint_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
             args: Any = {
@@ -710,7 +724,11 @@ class CompletionSyncV1UseCase:
                 # Deepspeed models only accepts one stop sequence
                 args["stop_sequence"] = request.stop_sequences[0]
 
-            inference_request = EndpointPredictV1Request(args=args)
+            inference_request = SyncEndpointPredictV1Request(
+                args=args,
+                num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+                timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
+            )
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination, predict_request=inference_request
             )
@@ -745,7 +763,11 @@ class CompletionSyncV1UseCase:
                 tgi_args["parameters"]["temperature"] = request.temperature
                 tgi_args["parameters"]["do_sample"] = True
 
-            inference_request = EndpointPredictV1Request(args=tgi_args)
+            inference_request = SyncEndpointPredictV1Request(
+                args=tgi_args,
+                num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+                timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
+            )
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination, predict_request=inference_request
             )
@@ -834,6 +856,12 @@ class CompletionStreamV1UseCase:
         inference_gateway = (
             self.model_endpoint_service.get_streaming_model_endpoint_inference_gateway()
         )
+        autoscaling_metrics_gateway = (
+            self.model_endpoint_service.get_inference_auto_scaling_metrics_gateway()
+        )
+        await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
+            endpoint_id=model_endpoint.record.id
+        )
 
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
@@ -865,8 +893,11 @@ class CompletionStreamV1UseCase:
                 args["parameters"]["temperature"] = request.temperature
                 args["parameters"]["do_sample"] = True
 
-        inference_request = EndpointPredictV1Request(args=args)
-
+        inference_request = SyncEndpointPredictV1Request(
+            args=args,
+            num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+            timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
+        )
         predict_result = inference_gateway.streaming_predict(
             topic=model_endpoint.record.destination, predict_request=inference_request
         )

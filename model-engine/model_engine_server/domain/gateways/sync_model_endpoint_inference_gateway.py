@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from model_engine_server.common.dtos.tasks import (
-    EndpointPredictV1Request,
+    SyncEndpointPredictV1Request,
     SyncEndpointPredictV1Response,
 )
 
@@ -16,7 +16,7 @@ class SyncModelEndpointInferenceGateway(ABC):
 
     @abstractmethod
     async def predict(
-        self, topic: str, predict_request: EndpointPredictV1Request
+        self, topic: str, predict_request: SyncEndpointPredictV1Request
     ) -> SyncEndpointPredictV1Response:
         """
         Runs a prediction request and returns a response.

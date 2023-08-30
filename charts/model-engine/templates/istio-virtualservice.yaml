@@ -1,0 +1,31 @@
+{{- if .Values.virtualservice.enabled -}}
+{{- $fullName := include "modelEngine.fullname" . -}}
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+  {{- with .Values.virtualservice.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  hosts:
+  {{- range .Values.virtualservice.hostDomains }}
+    - "{{ $fullName }}.{{ . }}"
+  {{- end }}
+  gateways:
+  {{- range .Values.virtualservice.gateways }}
+    - {{ . | quote }}
+  {{- end }}
+  http:
+    - route:
+        - destination:
+            host: "{{ $fullName }}.{{ .Release.Namespace }}.svc.cluster.local"
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        retryOn: connect-failure,unavailable,gateway-error
+{{- end }}
