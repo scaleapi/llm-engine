@@ -4,8 +4,8 @@ from model_engine_server.common.dtos.docker_repository import BuildImageRequest,
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.docker.ecr import image_exists as ecr_image_exists
 from model_engine_server.core.docker.remote_build import build_remote_block
-from model_engine_server.domain.repositories import DockerRepository
 from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.domain.repositories import DockerRepository
 
 logger = make_logger(logger_name())
 

@@ -2,13 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 import requests
-from model_engine_server.common.constants import (
-    CALLBACK_POST_INFERENCE_HOOK,
-)
+from model_engine_server.common.constants import CALLBACK_POST_INFERENCE_HOOK
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.entities import CallbackAuth, CallbackBasicAuth
-from model_engine_server.inference.common import _write_to_s3
 from model_engine_server.inference.domain.gateways.inference_monitoring_metrics_gateway import (
     InferenceMonitoringMetricsGateway,
 )
