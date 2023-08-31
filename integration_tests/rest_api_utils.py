@@ -43,7 +43,7 @@ def echo_load_model_fn():
 
 CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
     "name": "model_bundle_simple",
-    "schema_location": "TBA",
+    "schema_location": "s3://model-engine-integration-tests/model_bundles/echo_schemas",
     "metadata": {
         "test_key": "test_value",
     },
@@ -55,21 +55,21 @@ CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
             "framework_type": "pytorch",
             "pytorch_image_tag": "1.7.1-cuda11.0-cudnn8-runtime",
         },
-        "requirements": [],
+        "requirements": ["cloudpickle==2.1.0", "pyyaml==6.0"],
         "location": "s3://model-engine-integration-tests/model_bundles/echo_bundle",
     },
 }
 
 CREATE_MODEL_BUNDLE_REQUEST_RUNNABLE_IMAGE = {
     "name": "model_bundle_runnable_image",
-    "schema_location": "TBA",
+    "schema_location": "s3://model-engine-integration-tests/model_bundles/echo_schemas",
     "metadata": {
         "test_key": "test_value",
     },
     "flavor": {
         "flavor": "streaming_enhanced_runnable_image",
         "repository": "model-engine",
-        "tag": "integration_test",
+        "tag": "a74c0a27f29ce7473393bd24fe071015b9e5bcde",
         "command": [
             "dumb-init",
             "--",
@@ -224,10 +224,10 @@ CREATE_FINE_TUNE_REQUEST: Dict[str, Any] = {
 
 
 def create_model_bundle(
-    create_model_bundle_request: Dict[str, Any], user_id: str
+    create_model_bundle_request: Dict[str, Any], user_id: str, version: str
 ) -> Dict[str, Any]:
     response = requests.post(
-        f"{BASE_PATH}/v2/model-bundles",
+        f"{BASE_PATH}/{version}/model-bundles",
         json=create_model_bundle_request,
         headers={"Content-Type": "application/json"},
         auth=(user_id, ""),
@@ -241,7 +241,7 @@ def create_model_bundle(
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
 def get_latest_model_bundle(model_name: str, user_id: str, version: str) -> Dict[str, Any]:
     response = requests.get(
-        f"{BASE_PATH}/v2/model-bundles/latest?model_name={model_name}",
+        f"{BASE_PATH}/{version}/model-bundles/latest?model_name={model_name}",
         auth=(user_id, ""),
         timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
     )

@@ -29,7 +29,7 @@ from xid import XID
 
 DEFAULT_MOUNT_LOCATION = "/restricted_launch/batch_payload.json"
 # Must match resources/docker...{cpu,gpu}.yaml's label selector
-LAUNCH_JOB_ID_LABEL_SELECTOR = "launch_job_id"
+LAUNCH_JOB_ID_LABEL_SELECTOR = "llm_engine_job_id"
 OWNER_LABEL_SELECTOR = "owner"
 
 ENV: str = os.environ.get("DD_ENV")  # type: ignore
