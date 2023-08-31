@@ -51,8 +51,11 @@ async def test_caching_finetune_llm_images(
     tgi_image = DockerImage(
         f"{infra_config().docker_repo_prefix}/{hmi_config.tgi_repository}", "0.9.3-launch_s3"
     )
+    tgi_image_2 = DockerImage(
+        f"{infra_config().docker_repo_prefix}/{hmi_config.tgi_repository}", "0.9.4"
+    )
     forwarder_image = DockerImage(f"{infra_config().docker_repo_prefix}/launch/gateway", GIT_TAG)
 
     for key in ["a10", "a100"]:
-        for llm_image in [istio_image, tgi_image, forwarder_image]:
+        for llm_image in [istio_image, tgi_image, tgi_image_2, forwarder_image]:
             assert f"{llm_image.repo}:{llm_image.tag}" in gateway.cached_images[key]
