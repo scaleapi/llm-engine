@@ -70,7 +70,8 @@ def zip_context(
 
     assert len(folders_to_include) > 0
     assert s3_file_name.endswith(".gz")
-    print(f"Uploading to s3 at: {s3_file_name}")
+    s3_uri = f"s3://{S3_BUCKET}/{s3_file_name}"
+    print(f"Uploading to s3 at: {s3_uri}")
     try:
         # Need to gimme_okta_aws_creds (you can export AWS_PROFILE='ml-admin' right after)
         tar_command = _build_tar_cmd(context, ignore_file, folders_to_include)
@@ -83,7 +84,7 @@ def zip_context(
         ) as proc:
             assert proc.stdout is not None
             with storage_client.open(
-                f"s3://{S3_BUCKET}/{s3_file_name}",
+                s3_uri,
                 "wb",
             ) as out_file:
                 shutil.copyfileobj(proc.stdout, out_file)
@@ -429,6 +430,7 @@ def build_remote_block(
     :param ignore_file: File (e.g. .dockerignore) containing things to ignore when preparing docker context. Relative to context
     :return: BuildResult representing if docker image has successfully built/pushed
     """
+    logger.info(f"build_remote_block args {locals()}")
     job_name = build_remote(
         context,
         dockerfile,
@@ -439,6 +441,7 @@ def build_remote_block(
         build_args,
         custom_tags,
     )
+    logger.info(f"Waiting for job {job_name} to finish")
     result = get_pod_status_and_log(job_name)
     return result
 
