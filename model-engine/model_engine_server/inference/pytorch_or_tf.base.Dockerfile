@@ -57,7 +57,6 @@ COPY --chown=modelengine \
 RUN pip install -r /app/model-engine/model_engine_server/inference/requirements_base.txt
 
 COPY --chown=modelengine model-engine/setup.py /app/model-engine/setup.py
-COPY --chown=modelengine model-engine/model_engine_server.egg-info /app/model-engine/model_engine_server.egg-info
 COPY --chown=modelengine model-engine/model_engine_server/__init__.py /app/model-engine/model_engine_server/__init__.py
 COPY --chown=modelengine model-engine/model_engine_server/common /app/model-engine/model_engine_server/common
 COPY --chown=modelengine model-engine/model_engine_server/core /app/model-engine/model_engine_server/core

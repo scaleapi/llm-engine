@@ -172,6 +172,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         base_image_params = self.get_base_image_params(
                             build_endpoint_request, logger_adapter
                         )
+                        logger.info(f"base_image_params: {base_image_params}")
                         base_image = await self._build_image(
                             base_image_params,
                             build_endpoint_request,
@@ -490,6 +491,8 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         inference_folder = "model-engine/model_engine_server/inference"
         base_path: str = os.getenv("WORKSPACE")  # type: ignore
 
+        logger.info(f"inference_folder: {inference_folder}")
+        logger.info(f"dockerfile: {inference_folder}/{dockerfile}")
         return BuildImageRequest(
             repo="launch/inference",
             image_tag=resulting_image_tag[:MAX_IMAGE_TAG_LEN],
