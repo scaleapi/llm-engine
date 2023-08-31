@@ -256,10 +256,10 @@ class CreateLLMModelEndpointV1UseCase:
                 final_weights_folder = "model_files"
 
                 subcommands += self.load_model_weights_sub_commands(
+                    LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
                     framework_image_tag,
                     checkpoint_path,
                     final_weights_folder,
-                    subcommands,
                 )
             else:
                 raise ObjectHasInvalidValueException(
@@ -271,7 +271,7 @@ class CreateLLMModelEndpointV1UseCase:
             ][model_name]
 
         subcommands.append(
-            f"text-generation-launcher --hostname :: --model-id ./{final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
+            f"text-generation-launcher --hostname :: --model-id {final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
         )
 
         if quantize:
@@ -311,7 +311,7 @@ class CreateLLMModelEndpointV1UseCase:
         ).model_bundle_id
 
     def load_model_weights_sub_commands(
-        self, framework_image_tag, checkpoint_path, final_weights_folder
+        self, framework, framework_image_tag, checkpoint_path, final_weights_folder
     ):
         subcommands = []
         s5cmd = "s5cmd"
@@ -320,7 +320,10 @@ class CreateLLMModelEndpointV1UseCase:
 
         # This is a hack for now to skip installing s5cmd for text-generation-inference:0.9.3-launch_s3,
         # which has s5cmd binary already baked in. Otherwise, install s5cmd if it's not already available
-        if framework_image_tag != "0.9.3-launch_s3":
+        if (
+            framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+            and framework_image_tag != "0.9.3-launch_s3"
+        ):
             subcommands.append(f"{s5cmd} > /dev/null || conda install -c conda-forge -y {s5cmd}")
         else:
             s5cmd = "./s5cmd"
@@ -335,9 +338,14 @@ class CreateLLMModelEndpointV1UseCase:
                 ]
             )
         else:
-            subcommands.append(
-                f"{s5cmd} --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-            )
+            if framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+                subcommands.append(
+                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '*.bin' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+                )
+            else:
+                subcommands.append(
+                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '*.safetensors'  {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+                )
         return subcommands
 
     async def create_deepspeed_bundle(
@@ -439,10 +447,10 @@ class CreateLLMModelEndpointV1UseCase:
             if checkpoint_path.startswith("s3://"):
                 final_weights_folder = "model_files"
                 subcommands += self.load_model_weights_sub_commands(
+                    LLMInferenceFramework.VLLM,
                     framework_image_tag,
                     checkpoint_path,
                     final_weights_folder,
-                    subcommands,
                 )
             else:
                 raise ObjectHasInvalidValueException(
