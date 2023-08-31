@@ -53,8 +53,8 @@ from model_engine_server.domain.entities import (
 from model_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
+    InvalidRequestException,
     UpstreamServiceError,
-    InvalidRequestException
 )
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
 from model_engine_server.domain.repositories import ModelBundleRepository
@@ -72,12 +72,8 @@ from .model_endpoint_use_cases import (
     validate_labels,
     validate_post_inference_hooks,
 )
-import logging
 
 logger = make_logger(filename_wo_ext(__name__))
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S')
 
 _SUPPORTED_MODEL_NAMES = {
     LLMInferenceFramework.DEEPSPEED: {
@@ -607,7 +603,6 @@ class CompletionSyncV1UseCase:
         self.model_endpoint_service = model_endpoint_service
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
-        logging.debug("initializing completion sync use case") 
 
     def model_output_to_completion_output(
         self,
@@ -641,12 +636,15 @@ class CompletionSyncV1UseCase:
                     num_completion_tokens=model_output["details"]["generated_tokens"],
                     tokens=tokens,
                 )
-            except Exception as e:
-                logger.exception(f"Error parsing text-generation-inference output {model_output}.") 
+            except Exception:
+                logger.exception(f"Error parsing text-generation-inference output {model_output}.")
                 if model_output.get("error_type") == "validation":
-                    raise InvalidRequestException(model_output.get("error")) # trigger a 400
+                    raise InvalidRequestException(model_output.get("error"))  # trigger a 400
                 else:
-                    raise UpstreamServiceError(model_output.get("error")) # also change llms_v1.py that will return a 500 HTTPException so user can retry
+                    raise UpstreamServiceError(
+                        status_code=500,
+                        content=model_output.get("error")
+                    )  # also change llms_v1.py that will return a 500 HTTPException so user can retry
 
         else:
             raise EndpointUnsupportedInferenceTypeException(
@@ -813,10 +811,8 @@ class CompletionStreamV1UseCase:
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
 
-        logging.debug("do we reach execute()?")
         request_id = str(uuid4())
         add_trace_request_id(request_id)
-        logging.debug("request_id: %s", request_id)
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
             owner=user.team_id, name=model_endpoint_name, order_by=None
         )
@@ -931,7 +927,7 @@ class CompletionStreamV1UseCase:
                             token=result["result"]["token"]["text"],
                             log_prob=result["result"]["token"]["logprob"],
                         )
-                    try: 
+                    try:
                         yield CompletionStreamV1Response(
                             request_id=request_id,
                             output=CompletionStreamOutput(
@@ -941,13 +937,16 @@ class CompletionStreamV1UseCase:
                                 token=token,
                             ),
                         )
-                    except Exception as e:  # if result["result"]["token"]["text"] doesn't exist 
-                        if "error" in result:
-                            logger.exception(f"Error parsing text-generation-inference stream output. Error message: {e}")
-                            raise ObjectHasInvalidValueException(
-                                f"Error parsing text-generation-inference stream output." 
-                            )
-                        raise e
+                    except Exception as exc:
+                        logger.exception(f"Error parsing text-generation-inference output. {result.get('error')}")
+                        if result.get("error_type") == "validation":
+                            raise InvalidRequestException(result.get("error"))  # trigger a 400
+                        else:
+                            raise UpstreamServiceError(
+                                status_code=500,
+                                content=result.get("error")
+                            )  # also change llms_v1.py that will return a 500 HTTPException so user can retry
+
                 else:
                     yield CompletionStreamV1Response(
                         request_id=request_id,
