@@ -90,16 +90,7 @@ async def _build_endpoint(
     session = SessionAsyncNullPool
     pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
     redis = aioredis.Redis(connection_pool=pool)
-
-    service: LiveEndpointBuilderService
-    try:
-        from plugins.dependencies import (
-            get_live_endpoint_builder_service as get_custom_live_endpoint_builder_service,
-        )
-
-        service = get_custom_live_endpoint_builder_service(session, redis)
-    except ModuleNotFoundError:
-        service = get_live_endpoint_builder_service(session, redis)
+    service: LiveEndpointBuilderService = get_live_endpoint_builder_service(session, redis)
 
     response = await service.build_endpoint(build_endpoint_request)
     await redis.close()
