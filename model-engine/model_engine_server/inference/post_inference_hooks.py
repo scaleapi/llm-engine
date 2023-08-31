@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
-from uuid import uuid4
 
 import requests
 from model_engine_server.common.constants import (
-    BILLING_POST_INFERENCE_HOOK,
     CALLBACK_POST_INFERENCE_HOOK,
 )
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
@@ -14,17 +12,9 @@ from model_engine_server.inference.common import _write_to_s3
 from model_engine_server.inference.domain.gateways.inference_monitoring_metrics_gateway import (
     InferenceMonitoringMetricsGateway,
 )
-from model_engine_server.inference.domain.gateways.usage_metrics_gateway import UsageMetricsGateway
-from model_engine_server.inference.infra.gateways.fake_usage_metrics_gateway import (
-    FakeUsageMetricsGateway,
-)
 from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 logger = make_logger(filename_wo_ext(__file__))
-
-
-def _upload_data(data: Any):
-    return _write_to_s3(data).get("result_url")
 
 
 class PostInferenceHook(ABC):
@@ -46,41 +36,6 @@ class PostInferenceHook(ABC):
         task_id: Optional[str],
     ):
         pass
-
-
-class BillingHook(PostInferenceHook):
-    def __init__(
-        self,
-        endpoint_name: str,
-        bundle_name: str,
-        user_id: str,
-        billing_queue: Optional[str],
-        billing_tags: Optional[Dict[str, Any]],
-    ):
-        super().__init__(endpoint_name, bundle_name, user_id)
-        self._billing_queue = billing_queue
-        self._billing_tags = billing_tags or {}
-
-    def handle(
-        self,
-        request_payload: EndpointPredictV1Request,
-        response: Dict[str, Any],
-        task_id: Optional[str],
-    ):
-        if not self._user_id or not self._billing_queue:
-            logger.error("Usage inputs could not be found for billing hook, aborting")
-            return
-        if not task_id:
-            task_id = str(uuid4())
-
-        events_queue: UsageMetricsGateway
-        try:
-            from plugins.eventbridge_usage_metrics_gateway import EventbridgeUsageMetricsGateway
-
-            events_queue = EventbridgeUsageMetricsGateway(self._billing_queue)
-        except ModuleNotFoundError:
-            events_queue = FakeUsageMetricsGateway()
-        events_queue.emit_task_call_metric(idempotency_token=task_id, tags=self._billing_tags)
 
 
 class CallbackHook(PostInferenceHook):
@@ -142,15 +97,7 @@ class PostInferenceHooksHandler:
                 # TODO: Ensure that this process gracefully handles errors in
                 #   initializing each post-inference hook.
                 hook_lower = hook.lower()
-                if hook_lower == BILLING_POST_INFERENCE_HOOK:
-                    self._hooks[hook_lower] = BillingHook(
-                        endpoint_name,
-                        bundle_name,
-                        user_id,
-                        billing_queue,
-                        billing_tags,
-                    )
-                elif hook_lower == CALLBACK_POST_INFERENCE_HOOK:
+                if hook_lower == CALLBACK_POST_INFERENCE_HOOK:
                     self._hooks[hook_lower] = CallbackHook(
                         endpoint_name,
                         bundle_name,
