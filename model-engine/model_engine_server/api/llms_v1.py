@@ -199,6 +199,8 @@ async def create_completion_sync_task(
         ) from exc
     except ObjectHasInvalidValueException as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    except InvalidRequestException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     except EndpointUnsupportedInferenceTypeException as exc:
         raise HTTPException(
             status_code=400,
@@ -230,8 +232,12 @@ async def create_completion_stream_task(
         )
 
         async def event_generator():
-            async for message in response:
-                yield {"data": message.json()}
+            try:
+                async for message in response:
+                    yield {"data": message.json()}
+            except InvalidRequestException as exc:
+                yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
+                return
 
         return EventSourceResponse(event_generator())
     except UpstreamServiceError:
