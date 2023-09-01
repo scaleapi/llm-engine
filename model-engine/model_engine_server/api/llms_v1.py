@@ -65,7 +65,6 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 from sse_starlette.sse import EventSourceResponse
-from sse_starlette import ServerSentEvent
 
 llm_router_v1 = APIRouter(prefix="/v1/llm")
 logger = make_logger(filename_wo_ext(__name__))
@@ -234,11 +233,13 @@ async def create_completion_stream_task(
 
         async def event_generator():
             try:
-                async for message in response: 
+                async for message in response:
                     yield {"data": message.json()}
             except InvalidRequestException as exc:
-                yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}} # TODO: add pre-stream input validation with tokenizers
-                return                
+                yield {
+                    "data": {"error": {"status_code": 400, "detail": str(exc)}}
+                }  # TODO: add pre-stream input validation with tokenizers
+                return
 
         return EventSourceResponse(event_generator())
     except UpstreamServiceError:
@@ -254,8 +255,6 @@ async def create_completion_stream_task(
             detail="The specified endpoint could not be found.",
         ) from exc
     except ObjectHasInvalidValueException as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except InvalidRequestException as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except EndpointUnsupportedInferenceTypeException as exc:
         raise HTTPException(
