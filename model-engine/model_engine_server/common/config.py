@@ -45,7 +45,7 @@ def get_model_cache_directory_name(model_name: str):
 class HostedModelInferenceServiceConfig:
     endpoint_namespace: str
     billing_queue_arn: str
-    cache_redis_url: str
+    cache_redis_url: str  # also using this to store sync autoscaling metrics
     sqs_profile: str
     sqs_queue_policy_template: str
     sqs_queue_tag_template: str
@@ -55,12 +55,25 @@ class HostedModelInferenceServiceConfig:
     istio_enabled: bool
     datadog_trace_enabled: bool
     tgi_repository: str
+    vllm_repository: str
 
     @classmethod
     def from_yaml(cls, yaml_path):
         with open(yaml_path, "r") as f:
             raw_data = yaml.safe_load(f)
         return HostedModelInferenceServiceConfig(**raw_data)
+
+    @property
+    def cache_redis_host_port(self) -> str:
+        # redis://redis.url:6379/<db_index>
+        # -> redis.url:6379
+        return self.cache_redis_url.split("redis://")[1].split("/")[0]
+
+    @property
+    def cache_redis_db_index(self) -> int:
+        # redis://redis.url:6379/<db_index>
+        # -> <db_index>
+        return int(self.cache_redis_url.split("/")[-1])
 
 
 def read_default_config():

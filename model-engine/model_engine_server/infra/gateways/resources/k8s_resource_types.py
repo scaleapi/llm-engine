@@ -284,6 +284,14 @@ class HorizontalPodAutoscalerArguments(_BaseEndpointArguments):
     API_VERSION: str
 
 
+class KedaScaledObjectArguments(_BaseEndpointArguments):
+    MIN_WORKERS: int
+    MAX_WORKERS: int
+    # CONCURRENCY: float  # TODO add in when we scale from 1 -> N pods
+    REDIS_HOST_PORT: str
+    REDIS_DB_INDEX: str
+
+
 class UserConfigArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into user-config templates."""
 
@@ -1088,6 +1096,25 @@ def get_endpoint_resource_arguments_from_request(
             CONCURRENCY=concurrency,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+        )
+    elif endpoint_resource_name == "keda-scaled-object":
+        return KedaScaledObjectArguments(
+            # Base resource arguments
+            RESOURCE_NAME=k8s_resource_group_name,
+            NAMESPACE=hmi_config.endpoint_namespace,
+            ENDPOINT_ID=model_endpoint_record.id,
+            ENDPOINT_NAME=model_endpoint_record.name,
+            TEAM=team,
+            PRODUCT=product,
+            CREATED_BY=created_by,
+            OWNER=owner,
+            GIT_TAG=GIT_TAG,
+            # Scaled Object arguments
+            MIN_WORKERS=build_endpoint_request.min_workers,
+            MAX_WORKERS=build_endpoint_request.max_workers,
+            # CONCURRENCY=build_endpoint_request.concurrency,
+            REDIS_HOST_PORT=hmi_config.cache_redis_host_port,
+            REDIS_DB_INDEX=hmi_config.cache_redis_db_index,
         )
     elif endpoint_resource_name == "service":
         # Use ClusterIP by default for sync endpoint.

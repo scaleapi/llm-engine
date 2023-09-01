@@ -32,5 +32,5 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         )
         prefix = f"{fine_tuned_weights_prefix}/{owner}/{model_cache_name}"
         for obj in bucket.objects.filter(Prefix=prefix):
-            model_files.append(f"s3://{hmi_config.s3_bucket_name}/{obj.key}")
+            model_files.append(f"s3://{bucket_name}/{obj.key}")
         return model_files

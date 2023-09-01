@@ -59,6 +59,13 @@ class TooManyRequestsException(DomainException):
     """
 
 
+class NoHealthyUpstreamException(DomainException):
+    """
+    Thrown if an endpoint returns a 503 exception for no healthy upstream. This can happen if there are zero pods
+    available to serve the request.
+    """
+
+
 class CorruptRecordInfraStateException(DomainException):
     """
     Thrown if the data from existing state (i.e. the db, k8s, etc.) is somehow uninterpretable

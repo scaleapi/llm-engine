@@ -1,5 +1,5 @@
 from model_engine_server.common.dtos.tasks import (
-    EndpointPredictV1Request,
+    SyncEndpointPredictV1Request,
     SyncEndpointPredictV1Response,
 )
 from model_engine_server.core.auth.authentication_repository import User
@@ -25,7 +25,7 @@ class CreateSyncInferenceTaskV1UseCase:
         self.authz_module = LiveAuthorizationModule()
 
     async def execute(
-        self, user: User, model_endpoint_id: str, request: EndpointPredictV1Request
+        self, user: User, model_endpoint_id: str, request: SyncEndpointPredictV1Request
     ) -> SyncEndpointPredictV1Response:
         """
         Runs the use case to create a sync inference task.
@@ -65,6 +65,12 @@ class CreateSyncInferenceTaskV1UseCase:
             )
 
         inference_gateway = self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
+        autoscaling_metrics_gateway = (
+            self.model_endpoint_service.get_inference_auto_scaling_metrics_gateway()
+        )
+        await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
+            endpoint_id=model_endpoint_id
+        )
         return await inference_gateway.predict(
             topic=model_endpoint.record.destination, predict_request=request
         )

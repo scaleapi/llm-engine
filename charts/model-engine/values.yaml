@@ -1,0 +1,9 @@
+datadog_trace_enabled: true
+spellbook:
+  enabled: false
+redis:
+  auth:
+balloonNodeSelector:
+  node-lifecycle: normal
+nodeSelector:
+  node-lifecycle: normal

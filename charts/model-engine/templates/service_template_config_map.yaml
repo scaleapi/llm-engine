@@ -1,0 +1,800 @@
+{{- $launch_name := include "modelEngine.fullname" . }}
+{{- $config_values := .Values.config.values }}
+{{- $forwarder_repository := .Values.image.forwarderRepository -}}
+{{- $triton_repository := .Values.triton.image.repository -}}
+{{- $triton_tag := .Values.triton.image.tag -}}
+{{- $env := .Values.context -}}
+{{- $service_template_labels := include "modelEngine.serviceTemplateLabels" . }}
+{{- $job_template_labels := include "modelEngine.jobTemplateLabels" . }}
+{{- $service_env := include "modelEngine.serviceEnvGitTagFromPythonReplace" . }}
+{{- $async_service_template_env := include "modelEngine.asyncServiceTemplateEnv" . }}
+{{- $sync_service_template_env := include "modelEngine.syncServiceTemplateEnv" . }}
+{{- $async_forwarder_template_env := include "modelEngine.asyncForwarderTemplateEnv" . }}
+{{- $sync_forwarder_template_env := include "modelEngine.syncForwarderTemplateEnv" . }}
+{{- $forwarder_volume_mounts := include "modelEngine.forwarderVolumeMounts" . }}
+{{- $gateway_repository := .Values.image.gatewayRepository -}}
+{{- $tag := .Values.tag -}}
+{{- $aws_config_map_name := .Values.aws.configMap.name }}
+{{- $security_context := .Values.serviceTemplate.securityContext }}
+{{- $mount_infra_config := .Values.serviceTemplate.mountInfraConfig }}
+{{- $service_template_service_account_name := .Values.serviceTemplate.serviceAccountName }}
+{{- $service_template_aws_config_map_name := .Values.serviceTemplate.awsConfigMapName }}
+{{- $celery_broker_type := .Values.celeryBrokerType }}
+{{- $node_selector := .Values.nodeSelector }}
+
+{{- if .Values.message }}
+{{- .Values.message }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $launch_name }}-service-template-config
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-2"
+data:
+  {{- range $device := tuple "cpu" "gpu" }}
+  {{- range $mode := tuple "async" "sync" "streaming"}}
+  {{- range $flavor := tuple "triton-enhanced-runnable-image" "runnable-image" }}
+  {{- if or (ne $mode "streaming") (eq $flavor "runnable-image") }}
+  deployment-{{ $flavor }}-{{ $mode }}-{{ $device }}.yaml: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+      {{- if eq $mode "async" }}
+      annotations:
+        {{- include "modelEngine.serviceTemplateAsyncAnnotations" . | nindent 8 }}
+      {{- end }}
+    spec:
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
+      replicas: ${MIN_WORKERS}
+      selector:
+        matchLabels:
+          app: ${RESOURCE_NAME}
+          version: v1
+      template:
+        metadata:
+          labels:
+            app: ${RESOURCE_NAME}
+            {{- $service_template_labels | nindent 12 }}
+            {{- if eq $mode "async" }}
+            sidecar.istio.io/inject: "false"  # TODO: switch to scuttle
+            {{- end }}
+            version: v1
+          annotations:
+            ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
+            kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+        spec:
+          affinity:
+            {{- include "modelEngine.serviceTemplateAffinity" . | nindent 12 }}
+          terminationGracePeriodSeconds: 600
+          {{- if $service_template_service_account_name }}
+          serviceAccount: {{ $service_template_service_account_name }}
+          {{- else }}
+          serviceAccount: {{ $launch_name }}
+          {{- end }}
+          {{- with $node_selector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if eq $device "gpu" }}
+            k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+          tolerations:
+            - key: "nvidia.com/gpu"
+              operator: "Exists"
+              effect: "NoSchedule"
+          {{- end }}
+          priorityClassName: ${PRIORITY}
+          containers:
+            {{- if contains "runnable-image" $flavor }}
+            {{- if eq $mode "sync" }}
+            - name: http-forwarder
+              image: {{ $forwarder_repository }}:${GIT_TAG}
+              imagePullPolicy: IfNotPresent
+              command:
+                - /usr/bin/dumb-init
+                - --
+                - ddtrace-run
+                - python
+                - -m
+                - model_engine_server.inference.forwarding.http_forwarder
+                - --config
+                - /workspace/model-engine/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - --port
+                - "${FORWARDER_PORT}"
+                - --num-workers
+                - "${PER_WORKER}"
+                - --set
+                - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
+                - --set
+                - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+              {{- $sync_forwarder_template_env | nindent 14 }}
+              readinessProbe:
+                httpGet:
+                  path: /readyz
+                  port: ${FORWARDER_PORT}
+                initialDelaySeconds: ${READINESS_INITIAL_DELAY}
+                periodSeconds: 5
+              resources:
+                requests:
+                  cpu: 0.1
+                  memory: "100M"
+                  ephemeral-storage: "100M"
+                limits:
+                  cpu: ${FORWARDER_CPUS_LIMIT}
+                  memory: ${FORWARDER_MEMORY_LIMIT}
+                  ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
+              {{ $forwarder_volume_mounts | nindent 14 }}
+              ports:
+                - containerPort: ${FORWARDER_PORT}
+                  name: http
+            {{- else if eq $mode "streaming" }}
+            - name: http-forwarder
+              image: {{ $forwarder_repository }}:{{ $tag }}
+              imagePullPolicy: IfNotPresent
+              command:
+                - /usr/bin/dumb-init
+                - --
+                - ddtrace-run
+                - python
+                - -m
+                - model_engine_server.inference.forwarding.http_forwarder
+                - --config
+                - /workspace/model-engine/model_engine_server/inference/configs/service--http_forwarder.yaml
+                - --port
+                - "${FORWARDER_PORT}"
+                - --num-workers
+                - "${PER_WORKER}"
+                - --set
+                - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
+                - --set
+                - "forwarder.stream.predict_route=${STREAMING_PREDICT_ROUTE}"
+                - --set
+                - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+              {{- $sync_forwarder_template_env | nindent 14 }}
+              readinessProbe:
+                httpGet:
+                  path: /readyz
+                  port: ${FORWARDER_PORT}
+                initialDelaySeconds: ${READINESS_INITIAL_DELAY}
+                periodSeconds: 5
+              resources:
+                requests:
+                  cpu: 0.1
+                  memory: "100M"
+                  ephemeral-storage: "100M"
+                limits:
+                  cpu: ${FORWARDER_CPUS_LIMIT}
+                  memory: ${FORWARDER_MEMORY_LIMIT}
+                  ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
+              {{ $forwarder_volume_mounts | nindent 14 }}
+              ports:
+                - containerPort: ${FORWARDER_PORT}
+                  name: http
+            {{- else if eq $mode "async" }}
+            - name: celery-forwarder
+              image: {{ $forwarder_repository }}:${GIT_TAG}
+              imagePullPolicy: IfNotPresent
+              command:
+                - /usr/bin/dumb-init
+                - --
+                - ddtrace-run
+                - python
+                - -m
+                - model_engine_server.inference.forwarding.celery_forwarder
+                - --config
+                - /workspace/model-engine/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                - --queue
+                - "${QUEUE}"
+                - --task-visibility
+                - "VISIBILITY_24H"
+                - --set
+                - "forwarder.model.args.predict_route=${PREDICT_ROUTE}"
+                - --set
+                - "forwarder.model.args.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                {{- if eq $celery_broker_type "sqs" }}
+                - --sqs-url
+                - "${SQS_QUEUE_URL}"
+                {{- end }}
+                - --num-workers
+                - "${PER_WORKER}"
+              {{- $async_forwarder_template_env | nindent 14 }}
+              resources:
+                requests:
+                  cpu: 0.1
+                  memory: "100M"
+                  ephemeral-storage: "100M"
+                limits:
+                  cpu: ${FORWARDER_CPUS_LIMIT}
+                  memory: ${FORWARDER_MEMORY_LIMIT}
+                  ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
+              {{ $forwarder_volume_mounts | nindent 14 }}
+            {{- end }}
+            {{- if eq $flavor "triton-enhanced-runnable-image" }}
+            - name: tritonserver
+              image: {{ $triton_repository }}:${TRITON_COMMIT_TAG}-triton
+              imagePullPolicy: IfNotPresent
+              command:
+                - /usr/bin/dumb-init
+                - --
+                - bash
+                - -c
+                - "$TRITON_COMMAND"
+              env:
+                - name: AWS_PROFILE
+                  value: "${AWS_ROLE}"
+              ports:
+                - containerPort: 8000
+                  name: http
+                - containerPort: 8001
+                  name: grpc
+                - containerPort: 8002
+                  name: metrics
+              readinessProbe:
+                httpGet:
+                # Need to have Triton support --http-address IPv6 :(
+                # https://github:com/triton-inference-server/server/issues/5305:
+                #   path: /v2/health/ready
+                #   port: 8000
+                  path: /readyz
+                  port: 3000
+                initialDelaySeconds: $TRITON_READINESS_INITIAL_DELAY
+                periodSeconds: 10
+              resources:
+                requests:
+                  cpu: ${TRITON_CPUS}
+                  ${TRITON_MEMORY_DICT}
+                  ${TRITON_STORAGE_DICT}
+                limits:
+                  cpu: ${TRITON_CPUS}
+                  ${TRITON_MEMORY_DICT}
+                  ${TRITON_STORAGE_DICT}
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /root/.aws/config
+                  subPath: config
+                - mountPath: /dev/shm
+                  name: dshm
+            {{- end }}
+            - name: main
+              {{- with $security_context }}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              image: ${IMAGE}
+              imagePullPolicy: IfNotPresent
+              command: ${COMMAND}
+              env: ${MAIN_ENV}
+              readinessProbe:
+                httpGet:
+                  path: ${HEALTHCHECK_ROUTE}
+                  port: ${USER_CONTAINER_PORT}
+                initialDelaySeconds: ${READINESS_INITIAL_DELAY}
+                periodSeconds: 5
+              resources:
+                requests:
+                  {{- if eq $device "gpu" }}
+                  nvidia.com/gpu: ${GPUS}
+                  {{- end }}
+                  cpu: ${CPUS}
+                  memory: ${MEMORY}
+                  ${STORAGE_DICT}
+                limits:
+                  {{- if eq $device "gpu" }}
+                  nvidia.com/gpu: ${GPUS}
+                  {{- end }}
+                  cpu: ${CPUS}
+                  memory: ${MEMORY}
+                  ${STORAGE_DICT}
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /root/.aws/config
+                  subPath: config
+                - mountPath: /dev/shm
+                  name: dshm
+                {{- if $mount_infra_config }}
+                - name: infra-service-config-volume
+                  mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
+                {{- end }}
+                # LIRA: For compatibility with runnable image converted from artifactlike bundle
+                - name: config-volume
+                  mountPath: /home/modelengine/.aws/config
+                  subPath: config
+                - name: user-config
+                  mountPath: /app/user_config
+                  subPath: raw_data
+                - name: endpoint-config
+                  mountPath: /app/endpoint_config
+                  subPath: raw_data
+              ports:
+                - containerPort: ${USER_CONTAINER_PORT}
+                  name: http
+            {{- end }}
+          # Workaround for https://github.com/kubernetes-sigs/external-dns/pull/1185
+          securityContext:
+            fsGroup: 65534
+          volumes:
+            - name: config-volume
+              configMap:
+                {{- if $service_template_aws_config_map_name }}
+                name: {{ $service_template_aws_config_map_name }}
+                {{- else }}
+                name: {{ $aws_config_map_name }}
+                {{- end }}  
+            - name: user-config
+              configMap:
+                name: ${RESOURCE_NAME}
+            - name: endpoint-config
+              configMap:
+                name: ${RESOURCE_NAME}-endpoint-config
+            - name: dshm
+              emptyDir:
+                medium: Memory
+            {{- if $config_values }}
+            - name: infra-service-config-volume
+              configMap:
+                name: {{ $launch_name }}-service-config
+                items:
+                  - key: infra_service_config
+                    path: config.yaml
+            {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  user-config.yaml: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    data:
+      raw_data: ${CONFIG_DATA_SERIALIZED}
+  endpoint-config.yaml: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ${RESOURCE_NAME}-endpoint-config
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    data:
+      raw_data: ${ENDPOINT_CONFIG_SERIALIZED}
+  horizontal-pod-autoscaler.yaml: |-
+    apiVersion: ${API_VERSION}
+    kind: HorizontalPodAutoscaler
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    spec:
+      minReplicas: ${MIN_WORKERS}
+      maxReplicas: ${MAX_WORKERS}
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: ${RESOURCE_NAME}
+      metrics:
+        - type: Pods
+          pods:
+            metric:
+              name: request-concurrency-average
+            target:
+              type: Value
+              averageValue: ${CONCURRENCY}
+  keda-scaled-object.yaml: |-
+    apiVersion: keda.sh/v1alpha1
+    kind: ScaledObject
+    metadata:
+      name: ${RESOURCE_NAME} 
+      namespace: ${NAMESPACE} 
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    spec:
+      scaleTargetRef:
+        name: ${RESOURCE_NAME}
+      pollingInterval:  5
+      cooldownPeriod:   300
+      minReplicaCount:  ${MIN_WORKERS}
+      maxReplicaCount:  ${MAX_WORKERS}
+      fallback:
+        failureThreshold: 3
+        replicas: ${MIN_WORKERS}
+      triggers:
+      - type: redis
+        metadata:
+          address: ${REDIS_HOST_PORT} # Format must be host:port
+          passwordFromEnv: ""
+          listName: "launch-endpoint-autoscaling:${ENDPOINT_ID}"
+          listLength: "100" # something absurdly high so we don't scale past 1 pod
+          activationListLength: "0"
+          enableTLS: "false"
+          unsafeSsl: "false"
+          databaseIndex: "${REDIS_DB_INDEX}"
+  service.yaml: |-
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    spec:
+      type: ${SERVICE_TYPE}
+      selector:
+        app: ${RESOURCE_NAME}
+      ports:
+        - port: 80
+          targetPort: ${SERVICE_TARGET_PORT}
+          protocol: TCP
+          name: http
+          ${NODE_PORT_DICT}
+  {{- if .Values.virtualservice.enabled }}
+  virtual-service.yaml: |-
+    apiVersion: networking.istio.io/v1alpha3
+    kind: VirtualService
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    spec:
+      hosts:
+        - ${RESOURCE_NAME}.${DNS_HOST_DOMAIN}
+      gateways:
+        - default/internal-gateway
+      http:
+        - route:
+            - destination:
+                host: "${RESOURCE_NAME}.${NAMESPACE}.svc.cluster.local"
+                port:
+                  number: 80
+  {{- end }}
+  {{- if .Values.destinationrule.enabled }}
+  destination-rule.yaml: |-
+    apiVersion: networking.istio.io/v1beta1
+    kind: DestinationRule
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    spec:
+      host: "${RESOURCE_NAME}.${NAMESPACE}.svc.cluster.local"
+      trafficPolicy:
+        loadBalancer:
+          simple: LEAST_REQUEST
+  {{- end }}
+  vertical-pod-autoscaler.yaml: |-
+    apiVersion: "autoscaling.k8s.io/v1"
+    kind: VerticalPodAutoscaler
+    metadata:
+      name: ${RESOURCE_NAME}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    spec:
+      targetRef:
+        apiVersion: "apps/v1"
+        kind: Deployment
+        name: ${RESOURCE_NAME}
+      updatePolicy:
+        updateMode: "Auto"
+      resourcePolicy:
+        containerPolicies:
+          - containerName: istio-proxy
+            mode: "Off"
+          - containerName: main
+            minAllowed:
+              cpu: 100m
+              memory: 128Mi
+            maxAllowed:
+              cpu: ${CPUS}
+              memory: ${MEMORY}
+            controlledResources: ["cpu", "memory"]
+  batch-job-orchestration-job.yaml: |-
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: ${RESOURCE_NAME}
+      labels:
+        {{- $job_template_labels | nindent 8 }}
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: ${BATCH_JOB_MAX_RUNTIME}
+      ttlSecondsAfterFinished: ${BATCH_JOB_TTL_SECONDS_AFTER_FINISHED}
+      template:
+        metadata:
+          labels:
+            {{- $job_template_labels | nindent 12 }}
+            sidecar.istio.io/inject: "false"
+            version: v1
+          annotations:
+            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "launch_job_id:${JOB_ID}"]}]'
+            cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+        spec:
+          restartPolicy: Never
+          {{- with $node_selector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ $launch_name }}
+          volumes:
+            - name: config-volume
+              configMap:
+                name: {{ $aws_config_map_name }}
+          containers:
+            - name: main
+              image: {{ $gateway_repository }}:${GIT_TAG}
+              env:
+                - name: DD_SERVICE
+                  value: ${RESOURCE_NAME}
+                {{- $env_vars := $service_env | fromYaml }}
+                {{- range $env_var := index $env_vars "env" }}
+                {{- $env_var_name := index $env_var "name" }}
+                {{- if ne $env_var_name "DD_SERVICE" }}
+                {{- tuple $env_var | toYaml | nindent 16 }}
+                {{- end }}
+                {{- end }}
+              imagePullPolicy: Always
+              command:
+                - dumb-init
+                - --
+                - ddtrace-run
+              args:
+                - python
+                - -m
+                - model_engine_server.entrypoints.start_batch_job_orchestration
+                - --job-id
+                - ${JOB_ID}
+                - --owner
+                - ${OWNER}
+                - --input-path
+                - ${INPUT_LOCATION}
+                - --serialization-format
+                - ${SERIALIZATION_FORMAT}
+                - --timeout-seconds
+                - "${BATCH_JOB_TIMEOUT}"
+              resources:
+                # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.
+                requests:
+                  cpu: 1
+                  memory: 8Gi
+                limits:
+                  cpu: 4
+                  memory: 32Gi
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /root/.aws/config
+                  subPath: config
+  {{- range $device := tuple "cpu" "gpu" }}
+  docker-image-batch-job-{{- $device }}.yaml: |-
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: ${RESOURCE_NAME}
+      labels:
+        {{- $job_template_labels | nindent 8 }}
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: ${BATCH_JOB_MAX_RUNTIME}
+      ttlSecondsAfterFinished: ${BATCH_JOB_TTL_SECONDS_AFTER_FINISHED}
+      template:
+        metadata:
+          labels:
+            {{- $job_template_labels | nindent 12 }}
+            sidecar.istio.io/inject: "false"
+            version: v1
+          annotations:
+            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "launch_job_id:${JOB_ID}"]}]'
+        spec:
+          restartPolicy: Never
+          {{- with $node_selector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if eq $device "gpu" }}
+            k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+          tolerations:
+            - key: "nvidia.com/gpu"
+              operator: "Exists"
+              effect: "NoSchedule"
+          {{- end }}
+          {{- if $service_template_service_account_name }}
+          serviceAccountName: {{ $service_template_service_account_name }}
+          {{- else }}
+          serviceAccountName: {{ $launch_name }}
+          {{- end }}
+          volumes:
+            - name: config-volume
+              configMap:
+                name: {{ $aws_config_map_name }}
+            - name: workdir
+              emptyDir: {}
+            - name: dshm
+              emptyDir:
+                medium: Memory
+          containers:
+            - name: main
+              image: ${IMAGE}
+              env:
+                - name: DD_SERVICE
+                  value: ${RESOURCE_NAME}
+                {{- $env_vars := $service_env | fromYaml }}
+                {{- range $env_var := index $env_vars "env" }}
+                {{- $env_var_name := index $env_var "name" }}
+                {{- if ne $env_var_name "DD_SERVICE" }}
+                {{- tuple $env_var | toYaml | nindent 16 }}
+                {{- end }}
+                {{- end }}
+              imagePullPolicy: Always
+              command: ${COMMAND}
+              resources:
+                # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.
+                requests:
+                  {{- if eq $device "gpu" }}
+                  nvidia.com/gpu: ${GPUS}
+                  {{- end }}
+                  cpu: ${CPUS}
+                  memory: ${MEMORY}
+                  ${STORAGE_DICT}
+                limits:
+                  {{- if eq $device "gpu" }}
+                  nvidia.com/gpu: ${GPUS}
+                  {{- end }}
+                  cpu: ${CPUS}
+                  memory: ${MEMORY}
+                  ${STORAGE_DICT}
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /root/.aws/config
+                  subPath: config
+                - name: workdir
+                  mountPath: ${MOUNT_PATH}
+                - mountPath: /dev/shm
+                  name: dshm
+          initContainers:
+            - name: input-downloader
+              image: {{ $gateway_repository }}:${GIT_TAG}
+              command:
+                - python
+                - -m
+                - model_engine_server.entrypoints.start_docker_image_batch_job_init_container
+                - ${INPUT_LOCATION}
+                - --remote-file
+                - ${S3_FILE}
+                - --local-file
+                - ${LOCAL_FILE_NAME}
+                - --file-contents-b64encoded
+                - ${FILE_CONTENTS_B64ENCODED}
+              resources:
+                requests:
+                  cpu: 1
+                  memory: 1Gi
+                limits:
+                  cpu: 1
+                  memory: 1Gi
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /root/.aws/config
+                  subPath: config
+                - name: workdir
+                  mountPath: ${MOUNT_PATH}
+  {{- end }}
+  {{- range $device := .Values.imageCache.devices }}
+  {{- $device_node_selector := index $device "nodeSelector" }}
+  {{- $device_tolerations := index $device "tolerations" }}
+  image-cache-{{- index $device "name" }}.yaml: |-
+    apiVersion: apps/v1
+    kind: DaemonSet
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        team: infra
+        product: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/service: ${RESOURCE_NAME}
+    spec:
+      selector:
+        matchLabels:
+          app: ${RESOURCE_NAME}
+          version: v1
+      updateStrategy:
+        type: RollingUpdate
+      template:
+        metadata:
+          labels:
+            app: ${RESOURCE_NAME}
+            team: infra
+            product: model-engine
+            use_scale_launch_endpoint_network_policy: "true"
+            tags.datadoghq.com/service: ${RESOURCE_NAME}
+            version: v1
+            sidecar.istio.io/inject: "false"
+        spec:
+          {{- if $device_node_selector }}
+          {{- with $device_node_selector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          {{- if $device_tolerations }}
+          {{- with $device_tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          containers:
+            - image: public.ecr.aws/docker/library/busybox:latest
+              imagePullPolicy: IfNotPresent
+              name: busybox
+              command: ["/bin/sh", "-ec", "while : ; do sleep 30 ; done"]
+          terminationGracePeriodSeconds: 0
+  {{- end }}
+  cron-trigger.yaml: |-
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      name: ${NAME}
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        launch_trigger_id: ${TRIGGER_ID}
+        tags.datadoghq.com/service: ${TRIGGER_ID}
+    spec:
+      schedule: "${CRON_SCHEDULE}"
+      successfulJobsHistoryLimit: 0
+      failedJobsHistoryLimit: 0
+      jobTemplate:
+        spec:
+          backoffLimit: 0
+          activeDeadlineSeconds: ${BATCH_CURL_JOB_ACTIVE_DEADLINE_SECONDS}
+          template:
+            metadata:
+              labels:
+                user_id: ${OWNER}
+                team: ${TEAM}
+                product: ${PRODUCT}
+                created_by: ${CREATED_BY}
+                owner: ${OWNER}
+                launch_trigger_id: ${TRIGGER_ID}
+                tags.datadoghq.com/service: ${TRIGGER_ID}
+            spec:
+              containers:
+              - name: ${NAME}
+                image: curlimages/curl:7.72.0
+                imagePullPolicy: IfNotPresent
+                command:
+                - curl
+                - -X
+                - 'POST'
+                - '${HOST}/v1/docker-image-batch-jobs'
+                - -H
+                - 'accept: application/json'
+                - -H
+                - 'Content-Type: application/json'
+                - -d
+                - '{ "docker_image_batch_job_bundle_id": "${DOCKER_IMAGE_BATCH_JOB_BUNDLE_ID}", "job_config": ${JOB_CONFIG}, "labels": ${JOB_METADATA}  }'
+                - -u
+                - '${OWNER}:'
+              restartPolicy: Never
