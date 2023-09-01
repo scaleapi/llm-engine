@@ -149,12 +149,12 @@ jobs:
           command: |
             pyenv install 3.8.12
             pyenv global 3.8.12
-      - install_client
-      - install_server
       - run:
           name: Install integration test dependencies
           command: |
             pip install -r model-engine/requirements.txt
+      - install_client
+      - install_server
       - run:
           name: Run integration tests
           command: |

@@ -1,14 +1,13 @@
 from .rest_api_utils import (
     CREATE_FINE_TUNE_REQUEST,
-    CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST,
     USER_ID_0,
     USER_ID_1,
+    cancel_fine_tune_by_id,
     create_fine_tune,
     get_fine_tune_by_id,
     list_fine_tunes,
-    cancel_fine_tune_by_id,
-    get_or_create_docker_image_batch_job_bundle,
 )
+
 
 def test_fine_tunes() -> None:
     # di_batch_job_id = get_or_create_docker_image_batch_job_bundle(CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST, USER_ID_0)["id"]
@@ -31,4 +30,3 @@ def test_fine_tunes() -> None:
 
     list_response_0_after = list_fine_tunes(USER_ID_0)
     assert len(list_response_0_after["jobs"]) == num_jobs - 1
-    

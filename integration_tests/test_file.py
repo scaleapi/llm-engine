@@ -1,10 +1,11 @@
 from .rest_api_utils import (
-    upload_file,
-    get_file_by_id,
-    list_files,
     delete_file_by_id,
+    get_file_by_id,
     get_file_content_by_id,
+    list_files,
+    upload_file,
 )
+
 
 def test_files() -> None:
     user = "62bc820451dbea002b1c5421"  # CDS needs proper user ID

@@ -20,8 +20,6 @@ from .rest_api_utils import (
 )
 def test_model_bundle(user, create_bundle_request):
     create_model_bundle(create_bundle_request, user, "v2")
-    bundle = get_latest_model_bundle(
-        create_bundle_request["name"], user, "v2"
-    )
+    bundle = get_latest_model_bundle(create_bundle_request["name"], user, "v2")
     assert bundle["name"] == create_bundle_request["name"]
     assert bundle["metadata"] == create_bundle_request["metadata"]

@@ -31,15 +31,20 @@ DEFAULT_USERS: Sequence[str] = (
 
 S3_BUCKET = infra_config().s3_bucket
 
+
 def echo_load_predict_fn(model):
     def echo(**keyword_args):
         return model(**keyword_args)
+
     return echo
+
 
 def echo_load_model_fn():
     def my_model(**keyword_args):
         return {k: v for k, v in keyword_args.items()}
+
     return my_model
+
 
 CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
     "name": "model_bundle_simple",
