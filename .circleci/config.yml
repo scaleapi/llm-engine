@@ -206,7 +206,6 @@ commands:
       - run:
           name: Install LLM Engine client
           command: |
-            sudo apt-get update && sudo apt-get install python3-setuptools
             pip install -e $HOME/project/clients/python
   run_unit_tests_python_client:
     description: Unit tests of the python client
