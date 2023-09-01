@@ -340,7 +340,7 @@ class CreateLLMModelEndpointV1UseCase:
         else:
             if framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
                 subcommands.append(
-                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '*.bin' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+                    f"{s5cmd} --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
                 )
             else:
                 subcommands.append(
