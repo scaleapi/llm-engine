@@ -140,11 +140,11 @@ class CreateFineTuneV1UseCase:
         else:
             validation_file = request.validation_file
 
-        if not are_dataset_headers_valid(training_file):
+        if training_file is not None and not are_dataset_headers_valid(training_file):
             raise InvalidRequestException(
                 f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in training dataset"
             )
-        if not are_dataset_headers_valid(validation_file):
+        if validation_file is not None and not are_dataset_headers_valid(validation_file):
             raise InvalidRequestException(
                 f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in validation dataset"
             )
