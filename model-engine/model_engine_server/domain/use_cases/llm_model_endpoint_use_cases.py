@@ -751,7 +751,6 @@ class CompletionSyncV1UseCase:
                     TokenOutput(token=model_output["tokens"][index], log_prob=list(t.values())[0])
                     for index, t in enumerate(model_output["log_probs"])
                 ]
-            # TODO: implement return token probs for vLLM
             return CompletionOutput(
                 text=model_output["text"],
                 num_completion_tokens=model_output["count_output_tokens"],
