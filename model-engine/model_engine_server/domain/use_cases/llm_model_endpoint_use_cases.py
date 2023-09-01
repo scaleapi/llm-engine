@@ -938,9 +938,9 @@ class CompletionStreamV1UseCase:
                             ),
                         )
                     except Exception as exc:
-                        logger.exception(f"Error parsing text-generation-inference output. {result.get('error')}")
-                        if result.get("error_type") == "validation":
-                            raise InvalidRequestException(result.get("error"))  # trigger a 400
+                        logger.exception(f"Error parsing text-generation-inference output. {result['result']['error']}") 
+                        if result["result"].get("error_type") == "validation":
+                            raise InvalidRequestException(result["result"].get("error"))  # trigger a 400
                         else:
                             raise UpstreamServiceError(
                                 status_code=500,
