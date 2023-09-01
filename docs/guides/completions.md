@@ -87,13 +87,13 @@ stream = Completion.create(
 )
 
 for response in stream:
-  try:
-      if response.output:
-          print(response.output.text, end="")
-          sys.stdout.flush()
-  except: # an error occurred
-    print(stream.text) # print the error message out 
-    break
+    try:
+        if response.output:
+            print(response.output.text, end="")
+            sys.stdout.flush()
+    except: # an error occurred
+        print(stream.text) # print the error message out 
+        break
 ```
 
 ## Async requests
