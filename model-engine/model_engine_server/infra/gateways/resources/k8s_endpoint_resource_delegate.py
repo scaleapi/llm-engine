@@ -1169,7 +1169,9 @@ class K8SEndpointResourceDelegate:
             # TODO support keda scaling from 1 to N as well
             if request.build_endpoint_request.min_workers > 0:
                 # Delete keda scaled object if it exists so exactly one of HPA or KEDA ScaledObject remains
-                await self._delete_keda_scaled_object(request.build_endpoint_request.model_endpoint_record.id)
+                await self._delete_keda_scaled_object(
+                    build_endpoint_request.model_endpoint_record.id
+                )
                 hpa_arguments = get_endpoint_resource_arguments_from_request(
                     k8s_resource_group_name=k8s_resource_group_name,
                     request=request,
@@ -1185,7 +1187,9 @@ class K8SEndpointResourceDelegate:
                 )
             else:  # min workers == 0, use keda
                 # Delete hpa if it exists so exactly one of HPA or KEDA ScaledObject remains
-                await self._delete_hpa(request.build_endpoint_request.model_endpoint_record.id, k8s_resource_group_name)
+                await self._delete_hpa(
+                    build_endpoint_request.model_endpoint_record.id, k8s_resource_group_name
+                )
                 keda_scaled_object_arguments = get_endpoint_resource_arguments_from_request(
                     k8s_resource_group_name=k8s_resource_group_name,
                     request=request,
