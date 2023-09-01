@@ -55,6 +55,7 @@ class HostedModelInferenceServiceConfig:
     istio_enabled: bool
     datadog_trace_enabled: bool
     tgi_repository: str
+    vllm_repository: str
 
     @classmethod
     def from_yaml(cls, yaml_path):

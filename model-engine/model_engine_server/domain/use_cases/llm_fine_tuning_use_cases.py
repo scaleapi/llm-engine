@@ -1,6 +1,8 @@
+import csv
 import datetime
 import re
 
+import smart_open
 from model_engine_server.common.dtos.llms import (
     CancelFineTuneResponse,
     CreateFineTuneRequest,
@@ -19,6 +21,7 @@ from model_engine_server.domain.repositories import LLMFineTuneEventsRepository
 from model_engine_server.domain.services import LLMFineTuningService, ModelEndpointService
 
 DEFAULT_FINE_TUNING_METHOD = "lora"
+REQUIRED_COLUMNS = ["prompt", "response"]
 
 MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER = 5
 MAX_LLM_ENDPOINTS_PER_INTERNAL_USER = 15
@@ -41,6 +44,23 @@ def ensure_model_name_is_valid_k8s_label(model_name: str):
     since we will end up creating a deployment with the model name as a label.
     """
     return re.sub("[^-A-Za-z0-9_.]", "-", model_name).lstrip("-_.")[:62].rstrip("-_.")
+
+
+def read_csv_headers(file_location: str):
+    """
+    Read the headers of a csv file. Assumes the file exists and is valid.
+    """
+    with smart_open.open(file_location, transport_params=dict(buffer_size=1024)) as file:
+        csv_reader = csv.DictReader(file)
+        return csv_reader.fieldnames
+
+
+def are_dataset_headers_valid(file_location: str):
+    """
+    Ensure the dataset headers are valid with required columns 'prompt' and 'response'.
+    """
+    current_headers = read_csv_headers(file_location)
+    return all(required_header in current_headers for required_header in REQUIRED_COLUMNS)
 
 
 class CreateFineTuneV1UseCase:
@@ -119,6 +139,15 @@ class CreateFineTuneV1UseCase:
                 raise ObjectNotFoundException("Validation file does not exist")
         else:
             validation_file = request.validation_file
+
+        if training_file is not None and not are_dataset_headers_valid(training_file):
+            raise InvalidRequestException(
+                f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in training dataset"
+            )
+        if validation_file is not None and not are_dataset_headers_valid(validation_file):
+            raise InvalidRequestException(
+                f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in validation dataset"
+            )
 
         await self.llm_fine_tune_events_repository.initialize_events(user.team_id, fine_tuned_model)
         fine_tune_id = await self.llm_fine_tuning_service.create_fine_tune(

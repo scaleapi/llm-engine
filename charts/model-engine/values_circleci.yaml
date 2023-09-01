@@ -140,6 +140,7 @@ config:
       datadog_trace_enabled: false
       istio_enabled: true
       tgi_repository: "text-generation-inference"
+      vllm_repository: "vllm"
       hf_user_fine_tuned_weights_prefix: "s3://$CIRCLECI_AWS_S3_BUCKET"
 
 # Service Account
