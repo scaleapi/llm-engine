@@ -104,6 +104,11 @@ def validate_deployment_resources(
     max_workers: Optional[int],
     endpoint_type: ModelEndpointType,
 ) -> None:
+    if endpoint_type in [ModelEndpointType.STREAMING, ModelEndpointType.SYNC]:
+        # Special case for sync endpoints, where we can have 0, 1 min/max workers.
+        # Otherwise, fall through to the general case.
+        if min_workers == 0 and max_workers == 1:
+            return
     # TODO: we should be also validating the update request against the existing state in k8s (e.g.
     #  so min_workers <= max_workers always) maybe this occurs already in update_model_endpoint.
     min_endpoint_size = 0 if endpoint_type == ModelEndpointType.ASYNC else 1
