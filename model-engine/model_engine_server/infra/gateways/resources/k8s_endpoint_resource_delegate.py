@@ -600,6 +600,46 @@ class K8SEndpointResourceDelegate:
                 raise
 
     @staticmethod
+    async def _create_keda_scaled_object(scaled_object: Dict[str, Any], name: str) -> None:
+        custom_objects_api = get_kubernetes_custom_objects_client()
+        try:
+            await custom_objects_api.create_namespaced_custom_object(
+                group="keda.sh",
+                version="v1alpha1",
+                namespace=hmi_config.endpoint_namespace,
+                plural="scaledobjects",
+                body=scaled_object,
+            )
+        except ApiException as exc:
+            if exc.status == 409:
+                logger.info(f"ScaledObject {name} already exists, replacing")
+
+                # The async k8s client has a bug with patching custom objects, so we manually
+                # merge the new ScaledObject with the old one and then replace the old one with the merged
+                # one. See _create_vpa for more details.
+                # There is a setting `restoreToOriginalReplicaCount` in the keda ScaledObject that should be set to
+                # false which should make it safe to do this replace (as opposed to a patch)
+                existing_scaled_object = await custom_objects_api.get_namespaced_custom_object(
+                    group="keda.sh",
+                    version="v1alpha1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="scaledobjects",
+                    name=name,
+                )
+                new_scaled_object = deep_update(existing_scaled_object, scaled_object)
+                await custom_objects_api.replace_namespaced_custom_object(
+                    group="keda.sh",
+                    version="v1alpha1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="scaledobjects",
+                    name=name,
+                    body=new_scaled_object,
+                )
+            else:
+                logger.exception("Got an exception when trying to apply the ScaledObject")
+                raise
+
+    @staticmethod
     async def _create_destination_rule(destination_rule: Dict[str, Any], name: str) -> None:
         """
         Lower-level function to create/patch an Istio DestinationRule. This is only created for sync endpoints.
@@ -995,6 +1035,28 @@ class K8SEndpointResourceDelegate:
                 return False
         return True
 
+    @staticmethod
+    async def _delete_keda_scaled_object(endpoint_id: str) -> bool:
+        custom_objects_client = get_kubernetes_custom_objects_client()
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        try:
+            await custom_objects_client.delete_namespaced_custom_object(
+                group="keda.sh",
+                version="v1alpha1",
+                namespace=hmi_config.endpoint_namespace,
+                plural="scaledobjects",
+                name=k8s_resource_group_name,
+            )
+        except ApiException as e:
+            if e.status == 404:
+                logger.warning(
+                    f"Trying to delete nonexistent ScaledObject {k8s_resource_group_name}"
+                )
+            else:
+                logger.exception(f"Deletion of ScaledObject {k8s_resource_group_name} failed")
+                return False
+        return True
+
     # --- Private higher level fns that interact with k8s
 
     @staticmethod
@@ -1102,19 +1164,46 @@ class K8SEndpointResourceDelegate:
             else:
                 api_version = "autoscaling/v2beta2"
 
-            hpa_arguments = get_endpoint_resource_arguments_from_request(
-                k8s_resource_group_name=k8s_resource_group_name,
-                request=request,
-                sqs_queue_name=sqs_queue_name_str,
-                sqs_queue_url=sqs_queue_url_str,
-                endpoint_resource_name="horizontal-pod-autoscaler",
-                api_version=api_version,
-            )
-            hpa_template = load_k8s_yaml("horizontal-pod-autoscaler.yaml", hpa_arguments)
-            await self._create_hpa(
-                hpa=hpa_template,
-                name=k8s_resource_group_name,
-            )
+            # create exactly one of HPA or KEDA ScaledObject, depending if we request more than 0 min_workers
+            # Right now, keda only will support scaling from 0 to 1
+            # TODO support keda scaling from 1 to N as well
+            if request.build_endpoint_request.min_workers > 0:
+                # Delete keda scaled object if it exists so exactly one of HPA or KEDA ScaledObject remains
+                await self._delete_keda_scaled_object(
+                    build_endpoint_request.model_endpoint_record.id
+                )
+                hpa_arguments = get_endpoint_resource_arguments_from_request(
+                    k8s_resource_group_name=k8s_resource_group_name,
+                    request=request,
+                    sqs_queue_name=sqs_queue_name_str,
+                    sqs_queue_url=sqs_queue_url_str,
+                    endpoint_resource_name="horizontal-pod-autoscaler",
+                    api_version=api_version,
+                )
+                hpa_template = load_k8s_yaml("horizontal-pod-autoscaler.yaml", hpa_arguments)
+                await self._create_hpa(
+                    hpa=hpa_template,
+                    name=k8s_resource_group_name,
+                )
+            else:  # min workers == 0, use keda
+                # Delete hpa if it exists so exactly one of HPA or KEDA ScaledObject remains
+                await self._delete_hpa(
+                    build_endpoint_request.model_endpoint_record.id, k8s_resource_group_name
+                )
+                keda_scaled_object_arguments = get_endpoint_resource_arguments_from_request(
+                    k8s_resource_group_name=k8s_resource_group_name,
+                    request=request,
+                    sqs_queue_name=sqs_queue_name_str,
+                    sqs_queue_url=sqs_queue_url_str,
+                    endpoint_resource_name="keda-scaled-object",
+                )
+                keda_scaled_object_template = load_k8s_yaml(
+                    "keda-scaled-object.yaml", keda_scaled_object_arguments
+                )
+                await self._create_keda_scaled_object(
+                    scaled_object=keda_scaled_object_template,
+                    name=k8s_resource_group_name,
+                )
 
             service_arguments = get_endpoint_resource_arguments_from_request(
                 k8s_resource_group_name=k8s_resource_group_name,
@@ -1204,6 +1293,17 @@ class K8SEndpointResourceDelegate:
             per_worker=per_worker,
         )
 
+    @staticmethod
+    def _get_sync_autoscaling_params_from_keda(
+        keda_config,
+    ) -> HorizontalAutoscalingEndpointParams:
+        spec = keda_config["spec"]
+        return dict(
+            max_workers=spec.get("maxReplicaCount"),
+            min_workers=spec.get("minReplicaCount"),
+            per_worker=1,  # TODO dummy value, fill in when we autoscale from 0 to 1
+        )
+
     async def _get_resources(
         self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
     ) -> ModelEndpointInfraState:
@@ -1232,10 +1332,36 @@ class K8SEndpointResourceDelegate:
             horizontal_autoscaling_params = self._get_async_autoscaling_params(deployment_config)
         elif endpoint_type in {ModelEndpointType.SYNC, ModelEndpointType.STREAMING}:
             autoscaling_client = get_kubernetes_autoscaling_client()
-            hpa_config = await autoscaling_client.read_namespaced_horizontal_pod_autoscaler(
-                k8s_resource_group_name, hmi_config.endpoint_namespace
-            )
-            horizontal_autoscaling_params = self._get_sync_autoscaling_params(hpa_config)
+            custom_object_client = get_kubernetes_custom_objects_client()
+            try:
+                hpa_config = await autoscaling_client.read_namespaced_horizontal_pod_autoscaler(
+                    k8s_resource_group_name, hmi_config.endpoint_namespace
+                )
+            except ApiException as e:
+                if e.status == 404:
+                    hpa_config = None
+                else:
+                    raise e
+            try:
+                keda_scaled_object_config = await custom_object_client.get_namespaced_custom_object(
+                    group="keda.sh",
+                    version="v1alpha1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="scaledobjects",
+                    name=k8s_resource_group_name,
+                )
+            except ApiException:
+                keda_scaled_object_config = None
+            if hpa_config is not None:
+                horizontal_autoscaling_params = self._get_sync_autoscaling_params(hpa_config)
+            elif keda_scaled_object_config is not None:
+                horizontal_autoscaling_params = self._get_sync_autoscaling_params_from_keda(
+                    keda_scaled_object_config
+                )
+            else:
+                raise EndpointResourceInfraException(
+                    f"Could not find autoscaling config for {endpoint_type}"
+                )
         else:
             raise ValueError(f"Unexpected endpoint type {endpoint_type}")
 
@@ -1326,10 +1452,25 @@ class K8SEndpointResourceDelegate:
                 vpas = []
             else:
                 raise
+        try:
+            keda_scaled_objects = (
+                await custom_objects_client.list_namespaced_custom_object(
+                    group="keda.sh",
+                    version="v1alpha1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="scaledobjects",
+                )
+            )["items"]
+        except ApiException as e:
+            if e.status == 404:
+                keda_scaled_objects = []
+            else:
+                raise
 
         deployments_by_name = {deployment.metadata.name: deployment for deployment in deployments}
         hpas_by_name = {hpa.metadata.name: hpa for hpa in hpas}
         vpas_by_name = {vpa["metadata"]["name"]: vpa for vpa in vpas}
+        keda_scaled_objects_by_name = {kso["metadata"]["name"]: kso for kso in keda_scaled_objects}
         all_config_maps = await self._get_all_config_maps()
         # can safely assume hpa with same name as deployment corresponds to the same Launch Endpoint
         logger.info(f"Orphaned hpas: {set(hpas_by_name).difference(set(deployments_by_name))}")
@@ -1340,6 +1481,7 @@ class K8SEndpointResourceDelegate:
             try:
                 hpa_config = hpas_by_name.get(name, None)
                 vpa_config = vpas_by_name.get(name, None)
+                keda_scaled_object_config = keda_scaled_objects_by_name.get(name, None)
                 common_params = self._get_common_endpoint_params(deployment_config)
                 launch_container = self._get_launch_container(deployment_config)
 
@@ -1355,9 +1497,14 @@ class K8SEndpointResourceDelegate:
                 if hpa_config:
                     # Assume it's a sync endpoint
                     # TODO I think this is correct but only barely, it introduces a coupling between
-                    #   an HPA existing and an endpoint being a sync endpoint. The "more correct"
+                    #   an HPA (or keda SO) existing and an endpoint being a sync endpoint. The "more correct"
                     #   thing to do is to query the db to get the endpoints, but it doesn't belong here
                     horizontal_autoscaling_params = self._get_sync_autoscaling_params(hpa_config)
+                elif keda_scaled_object_config:
+                    # Also assume it's a sync endpoint
+                    horizontal_autoscaling_params = self._get_sync_autoscaling_params_from_keda(
+                        keda_scaled_object_config
+                    )
                 else:
                     horizontal_autoscaling_params = self._get_async_autoscaling_params(
                         deployment_config
@@ -1427,8 +1574,12 @@ class K8SEndpointResourceDelegate:
         service_delete_succeeded = await self._delete_service(
             endpoint_id=endpoint_id, deployment_name=deployment_name
         )
+        # we should have created exactly one of an HPA or a keda scaled object
         hpa_delete_succeeded = await self._delete_hpa(
             endpoint_id=endpoint_id, deployment_name=deployment_name
+        )
+        keda_scaled_object_succeeded = await self._delete_keda_scaled_object(
+            endpoint_id=endpoint_id
         )
         await self._delete_vpa(endpoint_id=endpoint_id)
 
@@ -1443,7 +1594,7 @@ class K8SEndpointResourceDelegate:
             deployment_delete_succeeded
             and config_map_delete_succeeded
             and service_delete_succeeded
-            and hpa_delete_succeeded
+            and (hpa_delete_succeeded or keda_scaled_object_succeeded)
             and destination_rule_delete_succeeded
             and virtual_service_delete_succeeded
         )

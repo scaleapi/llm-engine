@@ -29,6 +29,10 @@ class ECRDockerRepository(DockerRepository):
         if image_params.requirements_folder:
             folders_to_include.append(image_params.requirements_folder)
 
+        dockerfile_root_folder = image_params.dockerfile.split("/")[0]
+        if dockerfile_root_folder not in folders_to_include:
+            folders_to_include.append(dockerfile_root_folder)
+
         build_args = {
             "BASE_IMAGE": image_params.base_image,
         }

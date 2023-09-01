@@ -97,7 +97,8 @@ class DockerImageBatchJobLLMFineTuningService(LLMFineTuningService):
                 gpu_type=di_batch_job_bundle.gpu_type,
                 storage=di_batch_job_bundle.storage,
             ),
-            labels=dict(team="infra", product="llm-fine-tune"),
+            # TODO: Pass user-defined labels
+            labels=dict(team="egp", product="llm-fine-tune"),
             annotations=dict(fine_tuned_model=fine_tuned_model),
             mount_location=di_batch_job_bundle.mount_location,
         )

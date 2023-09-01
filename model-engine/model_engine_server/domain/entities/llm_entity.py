@@ -10,6 +10,7 @@ class LLMSource(str, Enum):
 class LLMInferenceFramework(str, Enum):
     DEEPSPEED = "deepspeed"
     TEXT_GENERATION_INFERENCE = "text_generation_inference"
+    VLLM = "vllm"
 
 
 class Quantization(str, Enum):
