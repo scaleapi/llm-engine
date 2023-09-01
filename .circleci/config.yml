@@ -160,7 +160,7 @@ jobs:
           name: Run integration tests
           command: |
             pushd $HOME/project
-            kubectl port-forward svc/llm-engine 5001:80 &
+            kubectl port-forward svc/model-engine 5001:80 &
             GIT_TAG=$CIRCLE_SHA1 pytest integration_tests
 
 executors:
