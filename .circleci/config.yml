@@ -206,6 +206,7 @@ commands:
       - run:
           name: Install LLM Engine client
           command: |
+            pip install --upgrade pip
             pip install -e $HOME/project/clients/python
   run_unit_tests_python_client:
     description: Unit tests of the python client

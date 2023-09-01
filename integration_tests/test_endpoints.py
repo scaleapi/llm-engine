@@ -32,9 +32,13 @@ from .rest_api_utils import (
 
 
 @pytest.fixture(autouse=True)
-def delete_endpoints():
-    ensure_gateway_ready()
-    delete_existing_endpoints()
+def delete_endpoints(capsys):
+    try:
+        ensure_gateway_ready()
+        delete_existing_endpoints()
+    except Exception:
+        with capsys.disabled():
+            print("Endpoint deletion failed")
 
 
 @pytest.mark.parametrize("user", [USER_ID_0, USER_ID_1])
