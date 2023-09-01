@@ -53,6 +53,8 @@ from model_engine_server.domain.entities import (
 from model_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
+    InvalidRequestException,
+    UpstreamServiceError,
 )
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
 from model_engine_server.domain.repositories import ModelBundleRepository
@@ -741,9 +743,15 @@ class CompletionSyncV1UseCase:
                     num_completion_tokens=model_output["details"]["generated_tokens"],
                     tokens=tokens,
                 )
-            except Exception as e:
-                logger.exception(f"Error parsing text-generation-inference output {model_output}")
-                raise e
+            except Exception:
+                logger.exception(f"Error parsing text-generation-inference output {model_output}.")
+                if model_output.get("error_type") == "validation":
+                    raise InvalidRequestException(model_output.get("error"))  # trigger a 400
+                else:
+                    raise UpstreamServiceError(
+                        status_code=500, content=bytes(model_output["error"])
+                    )
+
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
             tokens = None
             if with_token_probs:
@@ -924,7 +932,6 @@ class CompletionSyncV1UseCase:
                 )
 
             output = json.loads(predict_result.result["result"])
-
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
@@ -1106,15 +1113,29 @@ class CompletionStreamV1UseCase:
                             token=result["result"]["token"]["text"],
                             log_prob=result["result"]["token"]["logprob"],
                         )
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=CompletionStreamOutput(
-                            text=result["result"]["token"]["text"],
-                            finished=finished,
-                            num_completion_tokens=num_completion_tokens,
-                            token=token,
-                        ),
-                    )
+                    try:
+                        yield CompletionStreamV1Response(
+                            request_id=request_id,
+                            output=CompletionStreamOutput(
+                                text=result["result"]["token"]["text"],
+                                finished=finished,
+                                num_completion_tokens=num_completion_tokens,
+                                token=token,
+                            ),
+                        )
+                    except Exception:
+                        logger.exception(
+                            f"Error parsing text-generation-inference output. Result: {result['result']}"
+                        )
+                        if result["result"].get("error_type") == "validation":
+                            raise InvalidRequestException(
+                                result["result"].get("error")
+                            )  # trigger a 400
+                        else:
+                            raise UpstreamServiceError(
+                                status_code=500, content=result.get("error")
+                            )  # also change llms_v1.py that will return a 500 HTTPException so user can retry
+
                 else:
                     yield CompletionStreamV1Response(
                         request_id=request_id,
