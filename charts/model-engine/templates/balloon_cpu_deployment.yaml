@@ -34,7 +34,7 @@ spec:
           resources:
             limits:
               memory: 28Gi
-              cpu: 8
+              cpu: 6
           command:
             - /bin/bash
             - -c
