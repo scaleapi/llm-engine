@@ -6,7 +6,6 @@ import random
 import re
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import Mock
 
 import pytest
 from _pytest.assertion.rewrite import AssertionRewritingHook
@@ -82,13 +81,13 @@ def modify_source(source: str, seed: int) -> str:
         f"endpoint_name='\g<2>\g<3>-{seed}'",
         source,
     )
-    source = re.sub(r'"repository": "..."', f'"repository": "launch_rearch"', source)
+    source = re.sub(r'"repository": "..."', '"repository": "launch_rearch"', source)
     source = re.sub(
-        r'"tag": "..."', f'"tag": "11d9d42047cc9a0c6435b19e5e91bc7e0ad31efc-cpu"', source
+        r'"tag": "..."', '"tag": "11d9d42047cc9a0c6435b19e5e91bc7e0ad31efc-cpu"', source
     )
     source = re.sub(
         r'"command": ...',
-        f""""command": [
+        """"command": [
             "dumb-init",
             "--",
             "ddtrace-run",
@@ -106,7 +105,7 @@ def modify_source(source: str, seed: int) -> str:
     )
     source = re.sub(
         r'"streaming_command": ...',
-        f""""streaming_command": [
+        """"streaming_command": [
             "dumb-init",
             "--",
             "ddtrace-run",
