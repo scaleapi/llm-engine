@@ -1,8 +1,6 @@
 from uvicorn.workers import UvicornWorker
 
-# The target concurrency is around 50, so we set the limit to 32 with 4 workers
-# for a total concurrency of 128 to allow for some headroom.
-CONCURRENCY_LIMIT = 32
+CONCURRENCY_LIMIT = 1000
 
 
 class LaunchWorker(UvicornWorker):
