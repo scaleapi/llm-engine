@@ -41,10 +41,10 @@ class Model(APIEngine):
         quantize: Optional[Quantization] = None,
         checkpoint_path: Optional[str] = None,
         # General endpoint fields
-        cpus: int = 32,
-        memory: str = "192Gi",
+        cpus: int = 8,
+        memory: str = "40Gi",
         storage: str = "96Gi",
-        gpus: int = 4,
+        gpus: int = 1,
         min_workers: int = 0,
         max_workers: int = 1,
         per_worker: int = 10,
