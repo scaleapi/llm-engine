@@ -743,9 +743,13 @@ you will get an API key on the <a href="https://spellbook.scale.com/settings">se
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>)
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span style="color: #008000; font-weight: bold">for</span> response <span style="color: #AA22FF; font-weight: bold">in</span> stream:
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span style="color: #008000; font-weight: bold">if</span> response<span style="color: #666666">.</span>output:
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>output<span style="color: #666666">.</span>text, end<span style="color: #666666">=</span><span style="color: #BA2121">&quot;&quot;</span>)
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>        sys<span style="color: #666666">.</span>stdout<span style="color: #666666">.</span>flush()
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span style="color: #008000; font-weight: bold">try</span>:
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        <span style="color: #008000; font-weight: bold">if</span> response<span style="color: #666666">.</span>output:
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>            <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>output<span style="color: #666666">.</span>text, end<span style="color: #666666">=</span><span style="color: #BA2121">&quot;&quot;</span>)
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>            sys<span style="color: #666666">.</span>stdout<span style="color: #666666">.</span>flush()
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span style="color: #008000; font-weight: bold">except</span>: <span style="color: #3D7B7B; font-style: italic"># an error occurred</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>        <span style="color: #008000">print</span>(stream<span style="color: #666666">.</span>text) <span style="color: #3D7B7B; font-style: italic"># print the error message out </span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>        <span style="color: #008000; font-weight: bold">break</span>
 </code></pre></div>
 
 
