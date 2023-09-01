@@ -642,9 +642,8 @@ class CompletionSyncV1UseCase:
                     raise InvalidRequestException(model_output.get("error"))  # trigger a 400
                 else:
                     raise UpstreamServiceError(
-                        status_code=500,
-                        content=model_output.get("error")
-                    )  # also change llms_v1.py that will return a 500 HTTPException so user can retry
+                        status_code=500, content=bytes(model_output["error"])
+                    )
 
         else:
             raise EndpointUnsupportedInferenceTypeException(
@@ -937,14 +936,17 @@ class CompletionStreamV1UseCase:
                                 token=token,
                             ),
                         )
-                    except Exception as exc:
-                        logger.exception(f"Error parsing text-generation-inference output. Result: {result['result']}") 
+                    except Exception:
+                        logger.exception(
+                            f"Error parsing text-generation-inference output. Result: {result['result']}"
+                        )
                         if result["result"].get("error_type") == "validation":
-                            raise InvalidRequestException(result["result"].get("error"))  # trigger a 400
+                            raise InvalidRequestException(
+                                result["result"].get("error")
+                            )  # trigger a 400
                         else:
                             raise UpstreamServiceError(
-                                status_code=500,
-                                content=result.get("error")
+                                status_code=500, content=result.get("error")
                             )  # also change llms_v1.py that will return a 500 HTTPException so user can retry
 
                 else:

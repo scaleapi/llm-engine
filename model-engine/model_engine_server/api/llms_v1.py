@@ -236,9 +236,7 @@ async def create_completion_stream_task(
                 async for message in response:
                     yield {"data": message.json()}
             except InvalidRequestException as exc:
-                yield {
-                    "data": {"error": {"status_code": 400, "detail": str(exc)}}
-                }
+                yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
                 return
 
         return EventSourceResponse(event_generator())
