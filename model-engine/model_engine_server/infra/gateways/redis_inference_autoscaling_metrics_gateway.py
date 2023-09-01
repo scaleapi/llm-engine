@@ -31,6 +31,7 @@ class RedisInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway
 
     @staticmethod
     def _find_redis_key(endpoint_id: str):
+        # Keep in line with keda scaled object yaml
         return f"launch-endpoint-autoscaling:{endpoint_id}"
 
     async def _emit_metric(self, endpoint_id: str, expiry_time: int):

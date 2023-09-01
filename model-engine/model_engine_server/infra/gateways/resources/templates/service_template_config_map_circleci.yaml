@@ -2558,6 +2558,47 @@ data:
             target:
               type: Value
               averageValue: ${CONCURRENCY}
+  keda-scaled-object.yaml: |-
+    apiVersion: keda.sh/v1alpha1
+    kind: ScaledObject
+    metadata:
+      name: ${RESOURCE_NAME} 
+      namespace: ${NAMESPACE} 
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        env: circleci
+        managed-by: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/version: ${GIT_TAG}
+        tags.datadoghq.com/service: ${ENDPOINT_NAME}
+        endpoint_id: ${ENDPOINT_ID}
+        endpoint_name: ${ENDPOINT_NAME}
+    spec:
+      scaleTargetRef:
+        name: ${RESOURCE_NAME}
+      pollingInterval:  5
+      cooldownPeriod:   300
+      minReplicaCount:  ${MIN_WORKERS}
+      maxReplicaCount:  ${MAX_WORKERS}
+      fallback:
+        failureThreshold: 3
+        replicas: ${MIN_WORKERS}
+      triggers:
+      - type: redis
+        metadata:
+          address: ${REDIS_HOST_PORT} # Format must be host:port
+          passwordFromEnv: ""
+          listName: "launch-endpoint-autoscaling:${ENDPOINT_ID}"
+          listLength: "100" # something absurdly high so we don't scale past 1 pod
+          activationListLength: "0"
+          enableTLS: "false"
+          unsafeSsl: "false"
+          databaseIndex: "${REDIS_DB_INDEX}"
   service.yaml: |-
     apiVersion: v1
     kind: Service
