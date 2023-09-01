@@ -141,7 +141,7 @@ async def test_create_model_endpoint_use_case_success(
     bundle = await fake_model_bundle_repository.get_latest_model_bundle_by_name(
         owner=user.team_id, name=create_llm_model_endpoint_request_llama_2.name
     )
-    assert "--max-total-tokens" in bundle.flavor.command and "4096" in bundle.flavor.command
+    assert "--max-total-tokens" in bundle.flavor.command[-1] and "4096" in bundle.flavor.command[-1]
 
 
 @pytest.mark.asyncio

@@ -102,6 +102,21 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-40b": "tiiuae/falcon-40b",
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
     },
+    LLMInferenceFramework.VLLM: {
+        "mpt-7b": "mosaicml/mpt-7b",
+        "mpt-7b-instruct": "mosaicml/mpt-7b-instruct",
+        "llama-7b": "decapoda-research/llama-7b-hf",
+        "llama-2-7b": "meta-llama/Llama-2-7b-hf",
+        "llama-2-7b-chat": "meta-llama/Llama-2-7b-chat-hf",
+        "llama-2-13b": "meta-llama/Llama-2-13b-hf",
+        "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
+        "llama-2-70b": "meta-llama/Llama-2-70b-hf",
+        "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
+        "falcon-7b": "tiiuae/falcon-7b",
+        "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
+        "falcon-40b": "tiiuae/falcon-40b",
+        "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
+    },
 }
 
 
@@ -195,6 +210,15 @@ class CreateLLMModelEndpointV1UseCase:
                     quantize,
                     checkpoint_path,
                 )
+            elif framework == LLMInferenceFramework.VLLM:
+                bundle_id = await self.create_vllm_bundle(
+                    user,
+                    model_name,
+                    framework_image_tag,
+                    endpoint_name,
+                    num_shards,
+                    checkpoint_path,
+                )
             else:
                 raise ObjectHasInvalidValueException(
                     f"Framework {framework} is not supported for source {source}."
@@ -220,79 +244,43 @@ class CreateLLMModelEndpointV1UseCase:
         command = []
 
         # TGI requires max_input_length < max_total_tokens
-        max_input_length = 2047
+        max_input_length = 1024
         max_total_tokens = 2048
         if "llama-2" in model_name:
-            max_input_length = 4095
+            max_input_length = 2048
             max_total_tokens = 4096
 
+        subcommands = []
         if checkpoint_path is not None:
             if checkpoint_path.startswith("s3://"):
-                base_path = checkpoint_path.split("/")[-1]
                 final_weights_folder = "model_files"
-                subcommands = []
 
-                s5cmd = "s5cmd"
-                # This is a hack for now to skip installing s5cmd for text-generation-inference:0.9.3-launch_s3,
-                # which has s5cmd binary already baked in. Otherwise, install s5cmd if it's not already available
-                if framework_image_tag != "0.9.3-launch_s3":
-                    subcommands.append(
-                        f"{s5cmd} > /dev/null || conda install -c conda-forge -y {s5cmd}"
-                    )
-                else:
-                    s5cmd = "./s5cmd"
-
-                if base_path.endswith(".tar"):
-                    # If the checkpoint file is a tar file, extract it into final_weights_folder
-                    subcommands.extend(
-                        [
-                            f"{s5cmd} cp {checkpoint_path} .",
-                            f"mkdir -p {final_weights_folder}",
-                            f"tar --no-same-owner -xf {base_path} -C {final_weights_folder}",
-                        ]
-                    )
-                else:
-                    subcommands.append(
-                        f"{s5cmd} --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-                    )
-
-                subcommands.append(
-                    f"text-generation-launcher --hostname :: --model-id ./{final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
+                subcommands += self.load_model_weights_sub_commands(
+                    LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+                    framework_image_tag,
+                    checkpoint_path,
+                    final_weights_folder,
                 )
-
-                if quantize:
-                    subcommands[-1] = subcommands[-1] + f" --quantize {quantize}"
-                command = [
-                    "/bin/bash",
-                    "-c",
-                    ";".join(subcommands),
-                ]
             else:
                 raise ObjectHasInvalidValueException(
                     f"Not able to load checkpoint path {checkpoint_path}."
                 )
         else:
-            hf_model_name = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.TEXT_GENERATION_INFERENCE][
-                model_name
-            ]
+            final_weights_folder = _SUPPORTED_MODEL_NAMES[
+                LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+            ][model_name]
 
-            command = [
-                "text-generation-launcher",
-                "--model-id",
-                hf_model_name,
-                "--num-shard",
-                str(num_shards),
-                "--port",
-                "5005",
-                "--hostname",
-                "::",
-                "--max-input-length",
-                str(max_input_length),
-                "--max-total-tokens",
-                str(max_total_tokens),
-            ]
-            if quantize:
-                command = command + [f"--quantize {quantize}"]
+        subcommands.append(
+            f"text-generation-launcher --hostname :: --model-id {final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
+        )
+
+        if quantize:
+            subcommands[-1] = subcommands[-1] + f" --quantize {quantize}"
+        command = [
+            "/bin/bash",
+            "-c",
+            ";".join(subcommands),
+        ]
 
         return (
             await self.create_model_bundle_use_case.execute(
@@ -321,6 +309,44 @@ class CreateLLMModelEndpointV1UseCase:
                 # job.
             )
         ).model_bundle_id
+
+    def load_model_weights_sub_commands(
+        self, framework, framework_image_tag, checkpoint_path, final_weights_folder
+    ):
+        subcommands = []
+        s5cmd = "s5cmd"
+
+        base_path = checkpoint_path.split("/")[-1]
+
+        # This is a hack for now to skip installing s5cmd for text-generation-inference:0.9.3-launch_s3,
+        # which has s5cmd binary already baked in. Otherwise, install s5cmd if it's not already available
+        if (
+            framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+            and framework_image_tag != "0.9.3-launch_s3"
+        ):
+            subcommands.append(f"{s5cmd} > /dev/null || conda install -c conda-forge -y {s5cmd}")
+        else:
+            s5cmd = "./s5cmd"
+
+        if base_path.endswith(".tar"):
+            # If the checkpoint file is a tar file, extract it into final_weights_folder
+            subcommands.extend(
+                [
+                    f"{s5cmd} cp {checkpoint_path} .",
+                    f"mkdir -p {final_weights_folder}",
+                    f"tar --no-same-owner -xf {base_path} -C {final_weights_folder}",
+                ]
+            )
+        else:
+            if framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+                subcommands.append(
+                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '*.bin' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+                )
+            else:
+                subcommands.append(
+                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '*.safetensors'  {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+                )
+        return subcommands
 
     async def create_deepspeed_bundle(
         self,
@@ -401,6 +427,76 @@ class CreateLLMModelEndpointV1UseCase:
                 )
             ).model_bundle_id
 
+    async def create_vllm_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        checkpoint_path: Optional[str],
+    ):
+        command = []
+
+        max_num_batched_tokens = 2560  # vLLM's default
+        if "llama-2" in model_name:
+            max_num_batched_tokens = 4096  # Need to be bigger than model's context window
+
+        subcommands = []
+        if checkpoint_path is not None:
+            if checkpoint_path.startswith("s3://"):
+                final_weights_folder = "model_files"
+                subcommands += self.load_model_weights_sub_commands(
+                    LLMInferenceFramework.VLLM,
+                    framework_image_tag,
+                    checkpoint_path,
+                    final_weights_folder,
+                )
+            else:
+                raise ObjectHasInvalidValueException(
+                    f"Not able to load checkpoint path {checkpoint_path}."
+                )
+        else:
+            final_weights_folder = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.VLLM][model_name]
+
+        subcommands.append(
+            f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens}"
+        )
+
+        command = [
+            "/bin/bash",
+            "-c",
+            ";".join(subcommands),
+        ]
+
+        return (
+            await self.create_model_bundle_use_case.execute(
+                user,
+                CreateModelBundleV2Request(
+                    name=endpoint_unique_name,
+                    schema_location="TBA",
+                    flavor=StreamingEnhancedRunnableImageFlavor(
+                        flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                        repository=hmi_config.vllm_repository,
+                        tag=framework_image_tag,
+                        command=command,
+                        streaming_command=command,
+                        protocol="http",
+                        readiness_initial_delay_seconds=10,
+                        healthcheck_route="/health",
+                        predict_route="/predict",
+                        streaming_predict_route="/stream",
+                        env={},
+                    ),
+                    metadata={},
+                ),
+                do_auth_check=False,
+                # Skip auth check because llm create endpoint is called as the user itself,
+                # but the user isn't directly making the action. It should come from the fine tune
+                # job.
+            )
+        ).model_bundle_id
+
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
@@ -417,10 +513,13 @@ class CreateLLMModelEndpointV1UseCase:
         validate_model_name(request.model_name, request.inference_framework)
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
 
-        if request.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+        if request.inference_framework in [
+            LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+            LLMInferenceFramework.VLLM,
+        ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
                 raise ObjectHasInvalidValueException(
-                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference."
+                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference and vLLM."
                 )
 
         bundle = await self.create_model_bundle(
