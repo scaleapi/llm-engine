@@ -1,4 +1,5 @@
 from typing import Any, Tuple
+from unittest import mock
 
 import pytest
 from model_engine_server.common.dtos.llms import (
@@ -652,6 +653,10 @@ async def test_create_llm_fine_tune_model_name_valid():
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_fine_tuning_use_cases.smart_open.open",
+    mock.mock_open(read_data="prompt,response"),
+)
 async def test_create_fine_tune_success(
     fake_llm_fine_tuning_service,
     fake_model_endpoint_service,
@@ -684,6 +689,10 @@ async def test_create_fine_tune_success(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_fine_tuning_use_cases.smart_open.open",
+    mock.mock_open(read_data="prompt,response"),
+)
 async def test_create_fine_tune_limit(
     fake_llm_fine_tuning_service,
     fake_model_endpoint_service,
@@ -716,6 +725,10 @@ async def test_create_fine_tune_limit(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_fine_tuning_use_cases.smart_open.open",
+    mock.mock_open(read_data="prompt,response"),
+)
 async def test_create_fine_tune_long_suffix(
     fake_llm_fine_tuning_service,
     fake_model_endpoint_service,
@@ -743,6 +756,41 @@ async def test_create_fine_tune_long_suffix(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_fine_tuning_use_cases.smart_open.open",
+    mock.mock_open(read_data="prompt,not_response"),
+)
+async def test_create_fine_tune_invalid_headers(
+    fake_llm_fine_tuning_service,
+    fake_model_endpoint_service,
+    fake_llm_fine_tuning_events_repository,
+    fake_file_storage_gateway,
+    test_api_key: str,
+):
+    use_case = CreateFineTuneV1UseCase(
+        fake_llm_fine_tuning_service,
+        fake_model_endpoint_service,
+        fake_llm_fine_tuning_events_repository,
+        fake_file_storage_gateway,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    request = CreateFineTuneRequest(
+        model="base_model",
+        training_file="file1",
+        validation_file=None,
+        # fine_tuning_method="lora",
+        hyperparameters={},
+        suffix=None,
+    )
+    with pytest.raises(InvalidRequestException):
+        await use_case.execute(user=user, request=request)
+
+
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_fine_tuning_use_cases.smart_open.open",
+    mock.mock_open(read_data="prompt,response"),
+)
 async def test_get_fine_tune_events_success(
     fake_llm_fine_tuning_service,
     fake_llm_fine_tuning_events_repository,
