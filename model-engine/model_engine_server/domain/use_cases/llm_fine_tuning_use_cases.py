@@ -50,7 +50,7 @@ def read_csv_headers(file_location: str):
     """
     Read the headers of a csv file. Assumes the file exists and is valid.
     """
-    with smart_open.open(file_location) as file:
+    with smart_open.open(file_location, transport_params=dict(buffer_size=1024)) as file:
         csv_reader = csv.DictReader(file)
         return csv_reader.fieldnames
 
