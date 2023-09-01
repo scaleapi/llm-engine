@@ -744,6 +744,18 @@ class CompletionSyncV1UseCase:
             except Exception as e:
                 logger.exception(f"Error parsing text-generation-inference output {model_output}")
                 raise e
+        elif model_content.inference_framework == LLMInferenceFramework.VLLM:
+            tokens = None
+            if with_token_probs:
+                tokens = [
+                    TokenOutput(token=model_output["tokens"][index], log_prob=list(t.values())[0])
+                    for index, t in enumerate(model_output["log_probs"])
+                ]
+            return CompletionOutput(
+                text=model_output["text"],
+                num_completion_tokens=model_output["count_output_tokens"],
+                tokens=tokens,
+            )
         else:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {model_content.inference_framework}"
@@ -885,6 +897,40 @@ class CompletionSyncV1UseCase:
                     output, model_endpoint, request.return_token_log_probs
                 ),
             )
+        elif endpoint_content.inference_framework == LLMInferenceFramework.VLLM:
+            vllm_args: Any = {
+                "prompt": request.prompt,
+                "max_tokens": request.max_new_tokens,
+            }
+            if request.stop_sequences is not None:
+                vllm_args["stop"] = request.stop_sequences
+            vllm_args["temperature"] = request.temperature
+            if request.return_token_log_probs:
+                vllm_args["logprobs"] = 1
+
+            inference_request = SyncEndpointPredictV1Request(
+                args=vllm_args,
+                num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+                timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
+            )
+            predict_result = await inference_gateway.predict(
+                topic=model_endpoint.record.destination, predict_request=inference_request
+            )
+
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
+                return CompletionSyncV1Response(
+                    request_id=request_id,
+                    output=None,
+                )
+
+            output = json.loads(predict_result.result["result"])
+
+            return CompletionSyncV1Response(
+                request_id=request_id,
+                output=self.model_output_to_completion_output(
+                    output, model_endpoint, request.return_token_log_probs
+                ),
+            )
         else:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {endpoint_content.inference_framework}"
@@ -991,6 +1037,17 @@ class CompletionStreamV1UseCase:
             if request.temperature > 0:
                 args["parameters"]["temperature"] = request.temperature
                 args["parameters"]["do_sample"] = True
+        elif model_content.inference_framework == LLMInferenceFramework.VLLM:
+            args = {
+                "prompt": request.prompt,
+                "max_tokens": request.max_new_tokens,
+            }
+            if request.stop_sequences is not None:
+                args["stop"] = request.stop_sequences
+            args["temperature"] = request.temperature
+            if request.return_token_log_probs:
+                args["logprobs"] = 1
+            args["stream"] = True
 
         inference_request = SyncEndpointPredictV1Request(
             args=args,
@@ -1055,6 +1112,28 @@ class CompletionStreamV1UseCase:
                             text=result["result"]["token"]["text"],
                             finished=finished,
                             num_completion_tokens=num_completion_tokens,
+                            token=token,
+                        ),
+                    )
+                else:
+                    yield CompletionStreamV1Response(
+                        request_id=request_id,
+                        output=None,
+                    )
+            elif model_content.inference_framework == LLMInferenceFramework.VLLM:
+                if res.status == TaskStatus.SUCCESS and result is not None:
+                    token = None
+                    if request.return_token_log_probs:
+                        token = TokenOutput(
+                            token=result["result"]["text"],
+                            log_prob=list(result["result"]["log_probs"].values())[0],
+                        )
+                    yield CompletionStreamV1Response(
+                        request_id=request_id,
+                        output=CompletionStreamOutput(
+                            text=result["result"]["text"],
+                            finished=result["result"]["finished"],
+                            num_completion_tokens=result["result"]["count_output_tokens"],
                             token=token,
                         ),
                     )
