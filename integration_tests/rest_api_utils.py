@@ -9,7 +9,6 @@ import aiohttp
 import requests
 from model_engine_server.common.dtos.tasks import TaskStatus
 from model_engine_server.common.env_vars import GIT_TAG
-from model_engine_server.core.config import infra_config
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 _DEFAULT_BASE_PATH = "http://localhost:5001"
@@ -28,8 +27,6 @@ DEFAULT_USERS: Sequence[str] = (
     USER_ID_0,
     USER_ID_1,
 )
-
-S3_BUCKET = infra_config().s3_bucket
 
 
 def echo_load_predict_fn(model):
@@ -175,7 +172,7 @@ INFERENCE_PAYLOAD_RETURN_PICKLED_TRUE["return_pickled"] = True
 
 CREATE_BATCH_JOB_REQUEST: Dict[str, Any] = {
     "bundle_name": "model_bundle_simple",
-    "input_path": f"s3://{S3_BUCKET}/launch/batch-jobs/inputs/test-input.json",
+    "input_path": "TBA",
     "serialization_format": "JSON",
     "labels": {"team": "infra", "product": "launch"},
     "resource_requests": {
