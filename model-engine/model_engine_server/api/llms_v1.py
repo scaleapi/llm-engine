@@ -238,7 +238,7 @@ async def create_completion_stream_task(
             except InvalidRequestException as exc:
                 yield {
                     "data": {"error": {"status_code": 400, "detail": str(exc)}}
-                }  # TODO: add pre-stream input validation with tokenizers
+                }
                 return
 
         return EventSourceResponse(event_generator())
