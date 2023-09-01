@@ -617,6 +617,8 @@ class K8SEndpointResourceDelegate:
                 # The async k8s client has a bug with patching custom objects, so we manually
                 # merge the new ScaledObject with the old one and then replace the old one with the merged
                 # one. See _create_vpa for more details.
+                # There is a setting `restoreToOriginalReplicaCount` in the keda ScaledObject that should be set to
+                # false which should make it safe to do this replace (as opposed to a patch)
                 existing_scaled_object = await custom_objects_api.get_namespaced_custom_object(
                     group="keda.sh",
                     version="v1alpha1",
@@ -1166,6 +1168,7 @@ class K8SEndpointResourceDelegate:
             # Right now, keda only will support scaling from 0 to 1
             # TODO support keda scaling from 1 to N as well
             if request.build_endpoint_request.min_workers > 0:
+                # TODO delete keda scaled object if it exists
                 hpa_arguments = get_endpoint_resource_arguments_from_request(
                     k8s_resource_group_name=k8s_resource_group_name,
                     request=request,
@@ -1180,6 +1183,7 @@ class K8SEndpointResourceDelegate:
                     name=k8s_resource_group_name,
                 )
             else:  # min workers == 0, use keda
+                # TODO delete hpa if it exists
                 keda_scaled_object_arguments = get_endpoint_resource_arguments_from_request(
                     k8s_resource_group_name=k8s_resource_group_name,
                     request=request,
