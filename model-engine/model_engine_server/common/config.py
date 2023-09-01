@@ -63,6 +63,18 @@ class HostedModelInferenceServiceConfig:
             raw_data = yaml.safe_load(f)
         return HostedModelInferenceServiceConfig(**raw_data)
 
+    @property
+    def cache_redis_host_port(self) -> str:
+        # redis://redis.url:6379/<db_index>
+        # -> redis.url:6379
+        return self.cache_redis_url.split("redis://")[1].split("/")[0]
+
+    @property
+    def cache_redis_db_index(self) -> int:
+        # redis://redis.url:6379/<db_index>
+        # -> <db_index>
+        return int(self.cache_redis_url.split("/")[-1])
+
 
 def read_default_config():
     logger.info(f"Using config file path: `{SERVICE_CONFIG_PATH}`")
