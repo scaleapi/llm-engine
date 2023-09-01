@@ -898,18 +898,18 @@ class CompletionSyncV1UseCase:
                 ),
             )
         elif endpoint_content.inference_framework == LLMInferenceFramework.VLLM:
-            args: Any = {
+            vllm_args: Any = {
                 "prompt": request.prompt,
                 "max_tokens": request.max_new_tokens,
             }
             if request.stop_sequences is not None:
-                args["stop"] = request.stop_sequences
-            args["temperature"] = request.temperature
+                vllm_args["stop"] = request.stop_sequences
+            vllm_args["temperature"] = request.temperature
             if request.return_token_log_probs:
-                args["logprobs"] = 1
+                vllm_args["logprobs"] = 1
 
             inference_request = SyncEndpointPredictV1Request(
-                args=args,
+                args=vllm_args,
                 num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
