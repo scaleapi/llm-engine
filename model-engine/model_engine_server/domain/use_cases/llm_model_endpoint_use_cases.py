@@ -244,10 +244,10 @@ class CreateLLMModelEndpointV1UseCase:
         command = []
 
         # TGI requires max_input_length < max_total_tokens
-        max_input_length = 2047
+        max_input_length = 1024
         max_total_tokens = 2048
         if "llama-2" in model_name:
-            max_input_length = 4095
+            max_input_length = 2048
             max_total_tokens = 4096
 
         subcommands = []
