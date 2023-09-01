@@ -10,7 +10,7 @@ from typing import Optional, Sequence
 import ddtrace
 import json_log_formatter
 import tqdm
-from ddtrace.helpers import get_correlation_ids
+from ddtrace import tracer
 
 # DO NOT CHANGE LOGGING FORMAT
 LOG_FORMAT: str = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] - %(message)s"
@@ -82,11 +82,12 @@ class CustomJSONFormatter(json_log_formatter.JSONFormatter):
         if request_id:
             extra["request_id"] = request_id
 
-        trace_id, span_id = get_correlation_ids()
+        context = tracer.current_trace_context()
+        trace_id, span_id = (context.trace_id, context.span_id) if context else (0, 0)
 
         # add ids to event dictionary
-        extra["dd.trace_id"] = trace_id or 0
-        extra["dd.span_id"] = span_id or 0
+        extra["dd.trace_id"] = trace_id
+        extra["dd.span_id"] = span_id
 
         # add the env, service, and version configured for the tracer.
         # If tracing is not set up, then this should pull values from DD_ENV, DD_SERVICE, and DD_VERSION.

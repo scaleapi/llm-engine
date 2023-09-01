@@ -1,12 +1,22 @@
-aioredis==2.0.1
+aioredis~=2.0
+boto3>=1.28.38
 celery[redis,sqs,tblib]==5.3.1
+datadog-api-client==2.11.0
+datadog~=0.46.0
 fastapi==0.78.0
-gunicorn==20.1.0
 # Incompatibility between celery 5 and python 3.7 because of importlib-metadata 5, so we pin it
 importlib-metadata<5.0;python_version<"3.8"
-json-log-formatter==0.5.2
+scale-launch>=0.1.0
 smart_open==5.1.0
-tqdm==4.65.0
-# Pin typing-extensions so aioitertools doesn't break
 typing-extensions>=4.1.1
 uvicorn==0.17.6
+waitress==2.0.0
+
+# HACK: at time of adding, these deps are imported by model-engine/model_engine_server files
+# add here to to prevent `ModuleNotFoundError` error on container startup, these should be in sync with server reqs
+# long term: consider having slimmer deps and seperating inference container deps from server container deps
+ddtrace==1.8.3  # required for ddtrace-run entrypoint command as well
+json-log-formatter~=0.3  # model_engine_server/core/loggers.py
+tenacity>=6.0.0,<=6.2.0  # model_engine_server/core/loggers.py
+tqdm~=4.64  # model_engine_server/common/service_requests.py
+gunicorn~=20.0
