@@ -42,13 +42,18 @@ async def generate(request: Request) -> Response:
     # TODO: vLLM spends a long time decoding text repeatedly, that for every new token `text` is regenerated,
     # (see detokenize_incrementally) which we should definitely optimize away.
     async def stream_results() -> AsyncGenerator[str, None]:
+        last_output_text = ""
         async for request_output in results_generator:
             ret = {
-                "text": request_output.outputs[0].text,
+                "text": request_output.outputs[-1].text[len(last_output_text) :],
                 "count_prompt_tokens": len(request_output.prompt_token_ids),
                 "count_output_tokens": len(request_output.outputs[0].token_ids),
-                "log_probs": request_output.outputs[0].logprobs[-1],
+                "log_probs": request_output.outputs[0].logprobs[-1]
+                if sampling_params.logprobs
+                else None,
+                "finished": request_output.finished,
             }
+            last_output_text = request_output.outputs[-1].text
             yield f"data:{json.dumps(ret)}\n\n"
 
     async def abort_request() -> None:
@@ -62,7 +67,11 @@ async def generate(request: Request) -> Response:
 
     # Non-streaming case
     final_output = None
+    tokens = []
+    last_output_text = ""
     async for request_output in results_generator:
+        tokens.append(request_output.outputs[-1].text[len(last_output_text) :])
+        last_output_text = request_output.outputs[-1].text
         if await request.is_disconnected():
             # Abort the request if the client disconnects.
             await engine.abort(request_id)
@@ -76,6 +85,7 @@ async def generate(request: Request) -> Response:
         "count_prompt_tokens": len(final_output.prompt_token_ids),
         "count_output_tokens": len(final_output.outputs[0].token_ids),
         "log_probs": final_output.outputs[0].logprobs,
+        "tokens": tokens,
     }
     return Response(content=json.dumps(ret))
 
