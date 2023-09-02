@@ -73,10 +73,14 @@ class DockerImageBatchJobLLMFineTuningService(LLMFineTuningService):
         if not di_batch_job_bundle.public and di_batch_job_bundle.owner != owner:
             raise LLMFineTuningMethodNotImplementedException("Fine-tuning method not accessible")
 
+        # TODO: Pass user-defined labels
+        labels = dict(team="egp", product="llm-fine-tune")
+
         batch_job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
             created_by=created_by,
             owner=owner,
             job_config=dict(
+                **labels,
                 gateway_url=os.getenv("GATEWAY_URL"),
                 user_id=owner,
                 training_file=training_file,
@@ -97,8 +101,7 @@ class DockerImageBatchJobLLMFineTuningService(LLMFineTuningService):
                 gpu_type=di_batch_job_bundle.gpu_type,
                 storage=di_batch_job_bundle.storage,
             ),
-            # TODO: Pass user-defined labels
-            labels=dict(team="egp", product="llm-fine-tune"),
+            labels=labels,
             annotations=dict(fine_tuned_model=fine_tuned_model),
             mount_location=di_batch_job_bundle.mount_location,
         )
