@@ -285,6 +285,12 @@ data:
                   port: ${USER_CONTAINER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+              livenessProbe:
+                httpGet:
+                  path: ${HEALTHCHECK_ROUTE}
+                  port: ${USER_CONTAINER_PORT}
+                initialDelaySeconds: ${READINESS_INITIAL_DELAY}
+                timeoutSeconds: 5
               resources:
                 requests:
                   {{- if eq $device "gpu" }}
