@@ -21,6 +21,7 @@ from model_engine_server.common.dtos.llms import (
     CreateFineTuneResponse,
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
+    DeleteLLMModelEndpointV1Response,
     GetFineTuneEventsResponse,
     GetFineTuneResponse,
     GetLLMModelEndpointV1Response,
@@ -40,9 +41,11 @@ from model_engine_server.core.domain_exceptions import (
 )
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.exceptions import (
+    EndpointDeleteFailedException,
     EndpointLabelsException,
     EndpointResourceInvalidRequestException,
     EndpointUnsupportedInferenceTypeException,
+    ExistingEndpointOperationInProgressException,
     InvalidRequestException,
     LLMFineTuningMethodNotImplementedException,
     LLMFineTuningQuotaReached,
@@ -59,6 +62,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateLLMModelEndpointV1UseCase,
+    DeleteLLMModelEndpointByIdV1UseCase,
     GetLLMModelEndpointByNameV1UseCase,
     ListLLMModelEndpointsV1UseCase,
     ModelDownloadV1UseCase,
@@ -383,4 +387,42 @@ async def download_model_endpoint(
         raise HTTPException(
             status_code=404,
             detail="The requested fine-tuned model could not be found.",
+        ) from exc
+
+
+@llm_router_v1.delete(
+    "model-endpoints/{model_endpoint_id}", response_model=DeleteLLMModelEndpointV1Response
+)
+async def delete_llm_model_endpoint(
+    model_endpoint_id: str,
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
+) -> DeleteLLMModelEndpointV1Response:
+    add_trace_resource_name("llm_model_endpoints_delete")
+    logger.info(f"DELETE /model-endpoints/{model_endpoint_id} for {auth}")
+    try:
+        use_case = DeleteLLMModelEndpointByIdV1UseCase(
+            llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+            model_endpoint_service=external_interfaces.model_endpoint_service,
+        )
+        return await use_case.execute(user=auth, model_endpoint_id=model_endpoint_id)
+    except (ObjectNotFoundException) as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The requested model endpoint could not be found.",
+        ) from exc
+    except (ObjectNotAuthorizedException) as exc:
+        raise HTTPException(
+            status_code=401,
+            detail="You don't have permission to delete the requested model endpoint.",
+        ) from exc
+    except ExistingEndpointOperationInProgressException as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Existing operation on endpoint in progress, try again later.",
+        ) from exc
+    except EndpointDeleteFailedException as exc:  # pragma: no cover
+        raise HTTPException(
+            status_code=500,
+            detail="deletion of endpoint failed, compute resources still exist.",
         ) from exc

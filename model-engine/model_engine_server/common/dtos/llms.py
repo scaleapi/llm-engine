@@ -228,3 +228,7 @@ class ModelDownloadResponse(BaseModel):
     urls: Dict[str, str] = Field(
         ..., description="Dictionary of (file_name, url) pairs to download the model from."
     )
+
+
+class DeleteLLMModelEndpointV1Response(BaseModel):
+    deleted: bool

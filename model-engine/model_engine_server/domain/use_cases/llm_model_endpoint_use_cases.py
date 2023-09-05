@@ -21,6 +21,7 @@ from model_engine_server.common.dtos.llms import (
     CompletionSyncV1Response,
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
+    DeleteLLMModelEndpointV1Response,
     GetLLMModelEndpointV1Response,
     ListLLMModelEndpointsV1Response,
     ModelDownloadRequest,
@@ -682,7 +683,43 @@ class GetLLMModelEndpointByNameV1UseCase:
 
 
 class DeleteLLMModelEndpointByIdV1UseCase:
-    pass
+    """
+    Use case for deleting an LLM Model Endpoint of a given user by id.
+    """
+
+    def __init__(
+        self,
+        model_endpoint_service: ModelEndpointService,
+        llm_model_endpoint_service: LLMModelEndpointService,
+    ):
+        self.model_endpoint_service = model_endpoint_service
+        self.llm_model_endpoint_service = llm_model_endpoint_service
+        self.authz_module = LiveAuthorizationModule()
+
+    async def execute(self, user: User, model_endpoint_id: str) -> DeleteLLMModelEndpointV1Response:
+        """
+        Runs the use case to get the LLM endpoint with the given name.
+
+        Args:
+            user: The owner of the model endpoint.
+            model_endpoint_id: The id of the model endpoint.
+
+        Returns:
+            A response object that contains a boolean indicating if deletion was successful.
+
+        Raises:
+            ObjectNotFoundException: If a model endpoint with the given name could not be found.
+            ObjectNotAuthorizedException: If the owner does not own the model endpoint.
+        """
+        model_endpoint = await self.model_endpoint_service.get_model_endpoint_record(
+            model_endpoint_id=model_endpoint_id
+        )
+        if model_endpoint is None:
+            raise ObjectNotFoundException
+        if not self.authz_module.check_access_write_owned_entity(user, model_endpoint):
+            raise ObjectNotAuthorizedException
+        await self.model_endpoint_service.delete_model_endpoint(model_endpoint_id)
+        return DeleteLLMModelEndpointV1Response(deleted=True)
 
 
 def deepspeed_result_to_tokens(result: Dict[str, Any]) -> List[TokenOutput]:
