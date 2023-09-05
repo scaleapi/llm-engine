@@ -21,7 +21,7 @@ from model_engine_server.common.dtos.llms import (
     CreateFineTuneResponse,
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
-    DeleteLLMModelEndpointV1Response,
+    DeleteLLMEndpointResponse,
     GetFineTuneEventsResponse,
     GetFineTuneResponse,
     GetLLMModelEndpointV1Response,
@@ -62,7 +62,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateLLMModelEndpointV1UseCase,
-    DeleteLLMModelEndpointByIdV1UseCase,
+    DeleteLLMEndpointByIdUseCase,
     GetLLMModelEndpointByNameV1UseCase,
     ListLLMModelEndpointsV1UseCase,
     ModelDownloadV1UseCase,
@@ -391,17 +391,17 @@ async def download_model_endpoint(
 
 
 @llm_router_v1.delete(
-    "model-endpoints/{model_endpoint_id}", response_model=DeleteLLMModelEndpointV1Response
+    "model-endpoints/{model_endpoint_id}", response_model=DeleteLLMEndpointResponse
 )
 async def delete_llm_model_endpoint(
     model_endpoint_id: str,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
-) -> DeleteLLMModelEndpointV1Response:
+) -> DeleteLLMEndpointResponse:
     add_trace_resource_name("llm_model_endpoints_delete")
     logger.info(f"DELETE /model-endpoints/{model_endpoint_id} for {auth}")
     try:
-        use_case = DeleteLLMModelEndpointByIdV1UseCase(
+        use_case = DeleteLLMEndpointByIdUseCase(
             llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
             model_endpoint_service=external_interfaces.model_endpoint_service,
         )

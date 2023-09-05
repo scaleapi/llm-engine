@@ -230,5 +230,5 @@ class ModelDownloadResponse(BaseModel):
     )
 
 
-class DeleteLLMModelEndpointV1Response(BaseModel):
+class DeleteLLMEndpointResponse(BaseModel):
     deleted: bool

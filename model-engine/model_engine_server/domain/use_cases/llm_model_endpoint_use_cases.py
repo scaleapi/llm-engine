@@ -21,7 +21,7 @@ from model_engine_server.common.dtos.llms import (
     CompletionSyncV1Response,
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
-    DeleteLLMModelEndpointV1Response,
+    DeleteLLMEndpointResponse,
     GetLLMModelEndpointV1Response,
     ListLLMModelEndpointsV1Response,
     ModelDownloadRequest,
@@ -682,7 +682,7 @@ class GetLLMModelEndpointByNameV1UseCase:
         return _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
 
-class DeleteLLMModelEndpointByIdV1UseCase:
+class DeleteLLMEndpointByIdUseCase:
     """
     Use case for deleting an LLM Model Endpoint of a given user by id.
     """
@@ -696,7 +696,7 @@ class DeleteLLMModelEndpointByIdV1UseCase:
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
 
-    async def execute(self, user: User, model_endpoint_id: str) -> DeleteLLMModelEndpointV1Response:
+    async def execute(self, user: User, model_endpoint_id: str) -> DeleteLLMEndpointResponse:
         """
         Runs the use case to get the LLM endpoint with the given name.
 
@@ -719,7 +719,7 @@ class DeleteLLMModelEndpointByIdV1UseCase:
         if not self.authz_module.check_access_write_owned_entity(user, model_endpoint):
             raise ObjectNotAuthorizedException
         await self.model_endpoint_service.delete_model_endpoint(model_endpoint_id)
-        return DeleteLLMModelEndpointV1Response(deleted=True)
+        return DeleteLLMEndpointResponse(deleted=True)
 
 
 def deepspeed_result_to_tokens(result: Dict[str, Any]) -> List[TokenOutput]:
