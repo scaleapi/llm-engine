@@ -71,7 +71,7 @@ CREATE_MODEL_BUNDLE_REQUEST_RUNNABLE_IMAGE = {
     "flavor": {
         "flavor": "streaming_enhanced_runnable_image",
         "repository": "model-engine",
-        "tag": "a74c0a27f29ce7473393bd24fe071015b9e5bcde",
+        "tag": "2c1951dfff7159d7d29dd13b4f888e8355f8d51e",
         "command": [
             "dumb-init",
             "--",
@@ -147,7 +147,7 @@ CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE["endpoint_type"] = "
 
 UPDATE_MODEL_ENDPOINT_REQUEST_SIMPLE = {
     "bundle_name": "model_bundle_simple",
-    "cpus": "0.25",
+    "cpus": "1",
     "memory": "1Gi",
     "max_workers": 2,
 }
@@ -751,6 +751,9 @@ def delete_existing_endpoints(users: Sequence[str] = DEFAULT_USERS) -> None:
             f"[{i + 1}/{len(users)}] {len(u_endpoints)} endpoints for user {u}: {k8s_endpoint_names}"
         )
 
+    if all([len(info) == 0 for info in all_endpoint_info]):
+        return
+
     # delete the endpoints: if this fails, manually remove the dangling k8s deployments
     # and delete the user's endpoints from the hosted_model_inference.endpoints table
     # i.e. by default this is running the following SQL:
@@ -774,3 +777,5 @@ def delete_existing_endpoints(users: Sequence[str] = DEFAULT_USERS) -> None:
         barrier: str = "-" * 80
         print(f"ERROR! Deletion failed. All endpoint information:\n{barrier}\n{j}\n{barrier}")
         raise
+
+    time.sleep(15)

@@ -142,7 +142,7 @@ data:
                   name: http
             {{- else if eq $mode "streaming" }}
             - name: http-forwarder
-              image: {{ $forwarder_repository }}:{{ $tag }}
+              image: {{ $forwarder_repository }}:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init

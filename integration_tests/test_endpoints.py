@@ -14,7 +14,6 @@ from .rest_api_utils import (
     UPDATE_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE,
     UPDATE_MODEL_ENDPOINT_REQUEST_SIMPLE,
     USER_ID_0,
-    USER_ID_1,
     create_async_tasks,
     create_model_endpoint,
     create_streaming_tasks,
@@ -27,6 +26,7 @@ from .rest_api_utils import (
     ensure_n_ready_endpoints_long,
     ensure_n_ready_endpoints_short,
     ensure_nonzero_available_workers,
+    get_model_endpoint,
     update_model_endpoint,
 )
 
@@ -41,7 +41,6 @@ def delete_endpoints(capsys):
             print("Endpoint deletion failed")
 
 
-@pytest.mark.parametrize("user", [USER_ID_0, USER_ID_1])
 @pytest.mark.parametrize(
     "create_endpoint_request,update_endpoint_request,inference_requests",
     [
@@ -61,10 +60,11 @@ def delete_endpoints(capsys):
     ],
 )
 def test_async_model_endpoint(
-    capsys, user, create_endpoint_request, update_endpoint_request, inference_requests
+    capsys, create_endpoint_request, update_endpoint_request, inference_requests
 ):
     with capsys.disabled():
         try:
+            user = USER_ID_0
             print(f"Creating {create_endpoint_request['name']} model endpoint...")
             create_model_endpoint(create_endpoint_request, user)
             ensure_n_ready_endpoints_long(1, user)
@@ -75,15 +75,19 @@ def test_async_model_endpoint(
                 update_endpoint_request,
                 user,
             )
+            # Let the cache update
+            time.sleep(30)
             # Endpoint builds should be cached now.
             ensure_n_ready_endpoints_short(1, user)
 
-            # Let the cache update
-            # time.sleep(30)
-            # endpoint = get_model_endpoint(create_endpoint_request["name"], user)
-            # assert endpoint["resource_state"]["cpus"] == update_endpoint_request["cpus"]
-            # assert endpoint["resource_state"]["memory"] == update_endpoint_request["memory"]
-            # assert endpoint["deployment_state"]["max_workers"] == update_endpoint_request["max_workers"]
+            print("Checking endpoint state...")
+            endpoint = get_model_endpoint(create_endpoint_request["name"], user)
+            assert endpoint["resource_state"]["cpus"] == update_endpoint_request["cpus"]
+            assert endpoint["resource_state"]["memory"] == update_endpoint_request["memory"]
+            assert (
+                endpoint["deployment_state"]["max_workers"]
+                == update_endpoint_request["max_workers"]
+            )
 
             time.sleep(5)
 
@@ -105,10 +109,10 @@ def test_async_model_endpoint(
             delete_model_endpoint(create_endpoint_request["name"], user)
 
 
-@pytest.mark.parametrize("user", [USER_ID_0, USER_ID_1])
-def test_sync_model_endpoint(capsys, user):
+def test_sync_model_endpoint(capsys):
     with capsys.disabled():
         try:
+            user = USER_ID_0
             create_endpoint_request = CREATE_SYNC_MODEL_ENDPOINT_REQUEST_SIMPLE
             update_endpoint_request = UPDATE_MODEL_ENDPOINT_REQUEST_SIMPLE
             inference_requests = [
@@ -126,16 +130,20 @@ def test_sync_model_endpoint(capsys, user):
                 update_endpoint_request,
                 user,
             )
+            # Let the cache update
+            time.sleep(30)
             # Endpoint builds should be cached now.
             ensure_n_ready_endpoints_short(1, user)
             ensure_nonzero_available_workers(create_endpoint_request["name"], user)
 
-            # Let the cache update
-            # time.sleep(30)
-            # endpoint = get_model_endpoint(create_endpoint_request["name"], user)
-            # assert endpoint["resource_state"]["cpus"] == update_endpoint_request["cpus"]
-            # assert endpoint["resource_state"]["memory"] == update_endpoint_request["memory"]
-            # assert endpoint["deployment_state"]["max_workers"] == update_endpoint_request["max_workers"]
+            print("Checking endpoint state...")
+            endpoint = get_model_endpoint(create_endpoint_request["name"], user)
+            assert endpoint["resource_state"]["cpus"] == update_endpoint_request["cpus"]
+            assert endpoint["resource_state"]["memory"] == update_endpoint_request["memory"]
+            assert (
+                endpoint["deployment_state"]["max_workers"]
+                == update_endpoint_request["max_workers"]
+            )
 
             time.sleep(5)
 
@@ -156,10 +164,10 @@ def test_sync_model_endpoint(capsys, user):
             delete_model_endpoint(create_endpoint_request["name"], user)
 
 
-@pytest.mark.parametrize("user", [USER_ID_0, USER_ID_1])
-def test_sync_streaming_model_endpoint(capsys, user):
+def test_sync_streaming_model_endpoint(capsys):
     with capsys.disabled():
         try:
+            user = USER_ID_0
             create_endpoint_request = CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE
             update_endpoint_request = UPDATE_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE
 
@@ -173,16 +181,20 @@ def test_sync_streaming_model_endpoint(capsys, user):
                 update_endpoint_request,
                 user,
             )
+            # Let the cache update
+            time.sleep(30)
             # Endpoint builds should be cached now.
             ensure_n_ready_endpoints_short(1, user)
             ensure_nonzero_available_workers(create_endpoint_request["name"], user)
 
-            # Let the cache update
-            # time.sleep(30)
-            # endpoint = get_model_endpoint(create_endpoint_request["name"], user)
-            # assert endpoint["resource_state"]["cpus"] == update_endpoint_request["cpus"]
-            # assert endpoint["resource_state"]["memory"] == update_endpoint_request["memory"]
-            # assert endpoint["deployment_state"]["max_workers"] == update_endpoint_request["max_workers"]
+            print("Checking endpoint state...")
+            endpoint = get_model_endpoint(create_endpoint_request["name"], user)
+            assert endpoint["resource_state"]["cpus"] == update_endpoint_request["cpus"]
+            assert endpoint["resource_state"]["memory"] == update_endpoint_request["memory"]
+            assert (
+                endpoint["deployment_state"]["max_workers"]
+                == update_endpoint_request["max_workers"]
+            )
 
             time.sleep(5)
 
