@@ -334,22 +334,22 @@ class Model(APIEngine):
         return ListLLMEndpointsResponse.parse_obj(response)
 
     @classmethod
-    def delete(cls, model: str) -> DeleteLLMEndpointResponse:
+    def delete(cls, model_endpoint_id: str) -> DeleteLLMEndpointResponse:
         """
         Deletes an LLM model.
 
         This API can be used to delete a fine-tuned model. It takes
-        as parameter the name of the `model` and returns a response
+        as parameter the id of the `model` and returns a response
         object which has a `deleted` field confirming if the deletion
         was successful. If called on a base model included with LLM
         Engine, an error will be thrown.
 
         Args:
-            model (`str`):
-                Name of the model
+            model_endpoint_id (`str`):
+                ID of the model endpoint to be deleted
 
         Returns:
-            response: whether the model was successfully deleted
+            response: whether the model endpoint was successfully deleted
 
         === "Deleting model in Python"
             ```python
@@ -366,7 +366,9 @@ class Model(APIEngine):
             }
             ```
         """
-        response = cls._delete(f"v1/llm/model-endpoints/{model}", timeout=DEFAULT_TIMEOUT)
+        response = cls._delete(
+            f"v1/llm/model-endpoints/{model_endpoint_id}", timeout=DEFAULT_TIMEOUT
+        )
         return DeleteLLMEndpointResponse.parse_obj(response)
 
     @classmethod
