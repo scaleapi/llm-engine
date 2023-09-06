@@ -136,7 +136,7 @@ config:
 
       billing_queue_arn: none
       cache_redis_url: redis://redis-message-broker-master.default/15
-      s3_file_llm_fine_tune_repository: "s3://$CIRCLECI_AWS_S3_BUCKET"
+      s3_file_llm_fine_tune_repository: "s3://model-engine-integration-tests/fine_tune_repository/circleci"
       datadog_trace_enabled: false
       istio_enabled: true
       tgi_repository: "text-generation-inference"

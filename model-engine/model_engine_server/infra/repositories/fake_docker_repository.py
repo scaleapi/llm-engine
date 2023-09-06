@@ -12,6 +12,7 @@ class FakeDockerRepository(DockerRepository):
     def image_exists(
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
     ) -> bool:
+        logger.info("Called image_exists in FakeDockerRepository, returning True")
         return True
 
     def get_image_url(self, image_tag: str, repository_name: str) -> str:
