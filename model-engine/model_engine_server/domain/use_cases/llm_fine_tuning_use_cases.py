@@ -1,6 +1,7 @@
 import csv
 import datetime
 import re
+from typing import Optional
 
 import smart_open
 from model_engine_server.common.dtos.llms import (
@@ -48,20 +49,11 @@ def ensure_model_name_is_valid_k8s_label(model_name: str):
 
 def read_csv_headers(file_location: str):
     """
-    Read the headers of a csv file. Raises a FileNotFoundError if the file does not exist. Raises a ValueError if csv is malformed.
+    Read the headers of a csv file.
     """
-    try:
-        with smart_open.open(file_location, transport_params=dict(buffer_size=1024)) as file:
-            csv_reader = csv.DictReader(file)
-            return csv_reader.fieldnames
-    except FileNotFoundError:
-        raise InvalidRequestException(
-            "The file that you provided cannot be found. Please check that the filepath is correct."
-        )
-    except csv.Error as exc:
-        raise InvalidRequestException(
-            f"An error occurred while processing the CSV file. Details: {exc}"
-        )
+    with smart_open.open(file_location, transport_params=dict(buffer_size=1024)) as file:
+        csv_reader = csv.DictReader(file)
+        return csv_reader.fieldnames
 
 
 def are_dataset_headers_valid(file_location: str):
@@ -70,6 +62,28 @@ def are_dataset_headers_valid(file_location: str):
     """
     current_headers = read_csv_headers(file_location)
     return all(required_header in current_headers for required_header in REQUIRED_COLUMNS)
+
+
+def check_file_is_valid(file_name: Optional[str], file_type: str):
+    """
+    Ensure the file is valid with required columns 'prompt' and 'response'.
+    file_type: 'training' or 'validation'
+    """
+    try:
+        if file_name is not None and not are_dataset_headers_valid(file_name):
+            raise InvalidRequestException(
+                f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in training dataset"
+            )
+        else:
+            return True
+    except FileNotFoundError:
+        raise InvalidRequestException(
+            f"The {file_type} file that you provided cannot be found. Please check that the filepath is correct."
+        )
+    except csv.Error as exc:
+        raise InvalidRequestException(
+            f"An error occurred while processing the {file_type} CSV file. Details: {exc}"
+        )
 
 
 class CreateFineTuneV1UseCase:
@@ -149,14 +163,8 @@ class CreateFineTuneV1UseCase:
         else:
             validation_file = request.validation_file
 
-        if training_file is not None and not are_dataset_headers_valid(training_file):
-            raise InvalidRequestException(
-                f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in training dataset"
-            )
-        if validation_file is not None and not are_dataset_headers_valid(validation_file):
-            raise InvalidRequestException(
-                f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in validation dataset"
-            )
+        check_file_is_valid(training_file, "training")
+        check_file_is_valid(validation_file, "validation")
 
         await self.llm_fine_tune_events_repository.initialize_events(user.team_id, fine_tuned_model)
         fine_tune_id = await self.llm_fine_tuning_service.create_fine_tune(
