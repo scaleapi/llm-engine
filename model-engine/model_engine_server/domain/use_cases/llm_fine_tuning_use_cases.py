@@ -66,7 +66,7 @@ def are_dataset_headers_valid(file_location: str):
 
 def check_file_is_valid(file_name: Optional[str], file_type: str):
     """
-    Ensure the file is valid with required columns 'prompt' and 'response'.
+    Ensure the file is valid with required columns 'prompt' and 'response', isn't malformatted, and exists.
     file_type: 'training' or 'validation'
     """
     try:
