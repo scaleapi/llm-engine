@@ -64,7 +64,7 @@ class ImageCacheService:
             is_high_priority=1,  # make it a high priority
             has_no_available_workers=1,
             # assuming it has no available workers so that it will be at top after reverse sorting
-            last_updated_at=datetime.max,
+            last_updated_at=datetime.max.replace(tzinfo=pytz.utc),
             # setting it to max to ensure it will be at top after reverse sorting
         )
 
@@ -135,7 +135,9 @@ class ImageCacheService:
                     (
                         state.image not in images_to_cache_priority["cpu"]
                         or last_updated_at.replace(tzinfo=pytz.utc)
-                        > images_to_cache_priority["cpu"][state.image].last_updated_at
+                        > images_to_cache_priority["cpu"][state.image].last_updated_at.replace(
+                            tzinfo=pytz.utc
+                        )
                     )
                     and self.docker_repository.image_exists(image_tag, repository_name)
                 ):
@@ -150,7 +152,9 @@ class ImageCacheService:
                             (
                                 state.image not in images_to_cache_priority[key]
                                 or last_updated_at.replace(tzinfo=pytz.utc)
-                                > images_to_cache_priority[key][state.image].last_updated_at
+                                > images_to_cache_priority[key][
+                                    state.image
+                                ].last_updated_at.replace(tzinfo=pytz.utc)
                             )
                             and self.docker_repository.image_exists(image_tag, repository_name)
                         ):
