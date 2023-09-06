@@ -57,7 +57,7 @@ class S3FileStorageGateway(FileStorageGateway):
         with self.filesystem_gateway.open(
             get_s3_url(owner, filename), mode="w", aws_profile=infra_config().profile_ml_worker
         ) as f:
-            f.write(content)
+            f.write(content.decode("utf-8"))
         return filename
 
     async def delete_file(self, owner: str, file_id: str) -> bool:
