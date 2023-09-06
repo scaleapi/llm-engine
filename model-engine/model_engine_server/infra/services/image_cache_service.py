@@ -129,7 +129,7 @@ class ImageCacheService:
             if state.resource_state.gpus == 0 and (
                 (
                     state.image not in images_to_cache_priority["cpu"]
-                    or last_updated_at.replace(tzinfo=pytz.UTC)
+                    or last_updated_at.replace(tzinfo=pytz.utc)
                     > images_to_cache_priority["cpu"][state.image].last_updated_at
                 )
                 and self.docker_repository.image_exists(image_tag, repository_name)
@@ -144,7 +144,7 @@ class ImageCacheService:
                     if state.resource_state.gpu_type == gpu_type and (
                         (
                             state.image not in images_to_cache_priority[key]
-                            or last_updated_at.replace(tzinfo=pytz.UTC)
+                            or last_updated_at.replace(tzinfo=pytz.utc)
                             > images_to_cache_priority[key][state.image].last_updated_at
                         )
                         and self.docker_repository.image_exists(image_tag, repository_name)
@@ -154,7 +154,11 @@ class ImageCacheService:
         images_to_cache = CachedImages(cpu=[], a10=[], a100=[], t4=[])
         for key, val in images_to_cache_priority.items():
             for image in images_to_cache_priority[key]:
-                images_to_cache_priority[key][image].last_updated_at.replace(tzinfo=pytz.UTC)
+                images_to_cache_priority[key][image] = CachePriority(
+                    images_to_cache_priority[key][image].is_high_priority,
+                    images_to_cache_priority[key][image].has_no_available_workers,
+                    images_to_cache_priority[key][image].last_updated_at.replace(tzinfo=pytz.utc),
+                )
 
         for key, val in images_to_cache_priority.items():
             images_to_cache[key] = sorted(  # type: ignore
