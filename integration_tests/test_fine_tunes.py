@@ -10,17 +10,18 @@ from .rest_api_utils import (
     USER_ID_0,
     USER_ID_1,
     cancel_fine_tune_by_id,
+    create_docker_image_batch_job_bundle,
     create_fine_tune,
     get_fine_tune_by_id,
-    get_or_create_docker_image_batch_job_bundle,
     list_fine_tunes,
 )
 
 
 def test_fine_tunes() -> None:
-    di_batch_job_id = get_or_create_docker_image_batch_job_bundle(
+    di_batch_job_id = create_docker_image_batch_job_bundle(
         CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST, USER_ID_0
-    )["id"]
+    )["docker_image_batch_job_bundle_id"]
+
     data = {
         "test_base_model-lora": {
             "docker_image_batch_job_bundle_id": di_batch_job_id,

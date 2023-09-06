@@ -36,7 +36,7 @@ class S3FileStorageGateway(FileStorageGateway):
             )
             return FileMetadata(
                 id=file_id,
-                filename=get_s3_url(owner, file_id),
+                filename=file_id,
                 size=obj.get("ContentLength"),
                 owner=owner,
                 updated_at=obj.get("LastModified"),

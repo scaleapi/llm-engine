@@ -281,6 +281,8 @@ env:
   - name: REDIS_AUTH_TOKEN
     value: {{ .Values.redis.auth }}
   {{- end }}
+  - name: CIRCLECI
+    value: "${CIRCLECI}"
 {{- end }}
 
 {{- define "modelEngine.serviceEnvGitTagFromHelmVar" }}
