@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Sequence
 import aiohttp
 import requests
 from model_engine_server.common.dtos.tasks import TaskStatus
-from model_engine_server.common.env_vars import GIT_TAG
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 _DEFAULT_BASE_PATH = "http://localhost:5001"
@@ -184,8 +183,8 @@ CREATE_BATCH_JOB_REQUEST: Dict[str, Any] = {
 
 CREATE_DOCKER_IMAGE_BATCH_JOB_BUNDLE_REQUEST: Dict[str, Any] = {
     "name": "di_batch_job_bundle_1",
-    "image_repository": "launch/gateway",
-    "image_tag": GIT_TAG,
+    "image_repository": "model-engine",
+    "image_tag": "2c1951dfff7159d7d29dd13b4f888e8355f8d51e",
     "command": ["jq", ".", "/launch_mount_location/file"],
     "env": {"ENV1": "VAL1"},
     "mount_location": "/launch_mount_location/file",
@@ -204,8 +203,8 @@ CREATE_DOCKER_IMAGE_BATCH_JOB_REQUEST: Dict[str, Any] = {
 
 CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST: Dict[str, Any] = {
     "name": "fine_tune_di_batch_job_bundle_1",
-    "image_repository": "launch/gateway",
-    "image_tag": GIT_TAG,
+    "image_repository": "model-engine",
+    "image_tag": "2c1951dfff7159d7d29dd13b4f888e8355f8d51e",
     "command": ["cat", "/launch_mount_location/file"],
     "env": {"ENV1": "VAL1"},
     "mount_location": "/launch_mount_location/file",
@@ -218,8 +217,8 @@ CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST: Dict[str, Any] = {
 
 CREATE_FINE_TUNE_REQUEST: Dict[str, Any] = {
     "model": "test_base_model",
-    "training_file": "test_training_file",
-    "validation_file": "test_validation_file",
+    "training_file": "s3://model-engine-integration-tests/fine_tune_files/run_through_walls.csv",
+    "validation_file": None,
     # "fine_tuning_method": "test_fine_tuning_method",  # ignored until we change it
     "hyperparameters": {},
 }
