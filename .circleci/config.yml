@@ -139,6 +139,28 @@ jobs:
           command: |
             minikube --logtostderr -v 1 image load model-engine:$CIRCLE_SHA1
       - run:
+          name: Pre-load integration test images to minikube
+          command: |
+            docker build -f model-engine/model_engine_server/inference/pytorch_or_tf.base.Dockerfile \
+            --build-arg BASE_IMAGE=pytorch/pytorch:1.7.1-cuda11.0-cudnn8-runtime \
+            --build-arg REQUIREMENTS_FILE="$CIRCLE_SHA1-base-requirements.txt" \
+            -t temp:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1 .
+
+            touch $CIRCLE_SHA1-requirements.txt
+            echo -e "cloudpickle==2.1.0\npyyaml==6.0" > $CIRCLE_SHA1-requirements.txt
+
+            DOCKER_BUILDKIT=1 docker build -f model-engine/model_engine_server/inference/pytorch_or_tf.user.Dockerfile \
+            --build-arg BASE_IMAGE=temp:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1 \
+            --build-arg REQUIREMENTS_FILE="$CIRCLE_SHA1-requirements.txt" \
+            -t 000000000000.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1-021694 .
+            rm $CIRCLE_SHA1-requirements.txt
+
+            docker pull public.ecr.aws/b2z8n5q1/model-engine:2c1951dfff7159d7d29dd13b4f888e8355f8d51e
+            docker tag public.ecr.aws/b2z8n5q1/model-engine:2c1951dfff7159d7d29dd13b4f888e8355f8d51e 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:2c1951dfff7159d7d29dd13b4f888e8355f8d51e
+
+            minikube --logtostderr -v 1 image load 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:2c1951dfff7159d7d29dd13b4f888e8355f8d51e
+            minikube --logtostderr -v 1 image load 000000000000.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1-021694
+      - run:
           name: Install helm chart
           command: |
             pushd $HOME/project/charts

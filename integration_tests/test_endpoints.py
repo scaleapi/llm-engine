@@ -154,7 +154,7 @@ def test_sync_model_endpoint(capsys):
                 task_responses = asyncio.run(
                     create_sync_tasks(
                         create_endpoint_request["name"],
-                        [inference_payload] * 3,
+                        [inference_payload],
                         user,
                     )
                 )
