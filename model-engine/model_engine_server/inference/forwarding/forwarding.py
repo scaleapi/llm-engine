@@ -29,7 +29,7 @@ KEY_SERIALIZE_RESULTS_AS_STRING: str = "serialize_results_as_string"
 
 ENV_SERIALIZE_RESULTS_AS_STRING: str = "SERIALIZE_RESULTS_AS_STRING"
 
-_DEFAULT_PORT: int = 5005
+DEFAULT_PORT: int = 5005
 
 
 class ModelEngineSerializationMixin:
@@ -171,7 +171,7 @@ class LoadForwarder:
           non-localhost user-defined service address
     """
 
-    user_port: int = _DEFAULT_PORT
+    user_port: int = DEFAULT_PORT
     user_hostname: str = "localhost"
     use_grpc: bool = False
     predict_route: str = "/predict"
@@ -343,7 +343,7 @@ class LoadStreamingForwarder:
           non-localhost user-defined service address
     """
 
-    user_port: int = _DEFAULT_PORT
+    user_port: int = DEFAULT_PORT
     user_hostname: str = "localhost"
     use_grpc: bool = False
     predict_route: str = "/predict"

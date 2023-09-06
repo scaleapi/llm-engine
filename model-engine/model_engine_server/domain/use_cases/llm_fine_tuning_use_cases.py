@@ -11,6 +11,7 @@ from model_engine_server.common.dtos.llms import (
     GetFineTuneResponse,
     ListFineTunesResponse,
 )
+from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.domain_exceptions import ObjectNotFoundException
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
@@ -140,11 +141,19 @@ class CreateFineTuneV1UseCase:
         else:
             validation_file = request.validation_file
 
-        if training_file is not None and not are_dataset_headers_valid(training_file):
+        if (
+            training_file is not None
+            and not are_dataset_headers_valid(training_file)
+            and not CIRCLECI
+        ):
             raise InvalidRequestException(
                 f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in training dataset"
             )
-        if validation_file is not None and not are_dataset_headers_valid(validation_file):
+        if (
+            validation_file is not None
+            and not are_dataset_headers_valid(validation_file)
+            and not CIRCLECI
+        ):
             raise InvalidRequestException(
                 f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in validation dataset"
             )
