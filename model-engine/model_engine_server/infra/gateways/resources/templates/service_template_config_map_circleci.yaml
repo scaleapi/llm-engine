@@ -2813,7 +2813,7 @@ data:
                 - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
                   value: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
                 - name: CIRCLECI
-                  value: ${CIRCLECI}
+                  value: "true"
                 - name: DD_VERSION
                   value: ${GIT_TAG}
                 - name: GIT_TAG
@@ -2938,7 +2938,7 @@ data:
                 - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
                   value: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
                 - name: CIRCLECI
-                  value: ${CIRCLECI}
+                  value: "true"
                 - name: DD_VERSION
                   value: ${GIT_TAG}
                 - name: GIT_TAG
@@ -3084,7 +3084,7 @@ data:
                 - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
                   value: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
                 - name: CIRCLECI
-                  value: ${CIRCLECI}
+                  value: "true"
                 - name: DD_VERSION
                   value: ${GIT_TAG}
                 - name: GIT_TAG
