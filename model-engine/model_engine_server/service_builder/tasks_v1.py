@@ -37,6 +37,7 @@ from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate
 from model_engine_server.infra.repositories import (
     DbModelEndpointRecordRepository,
     ECRDockerRepository,
+    FakeDockerRepository,
     RedisFeatureFlagRepository,
     RedisModelEndpointCacheRepository,
 )
@@ -66,8 +67,10 @@ def get_live_endpoint_builder_service(
     else:
         monitoring_metrics_gateway = DatadogMonitoringMetricsGateway()
 
+    docker_repository = ECRDockerRepository() if not CIRCLECI else FakeDockerRepository()
+
     service = LiveEndpointBuilderService(
-        docker_repository=ECRDockerRepository(),
+        docker_repository=docker_repository,
         resource_gateway=LiveEndpointResourceGateway(
             sqs_delegate=sqs_delegate,
         ),
