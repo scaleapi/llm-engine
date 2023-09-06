@@ -109,7 +109,11 @@ class ImageCacheService:
             if record is None:
                 continue
 
-            last_updated_at = record.last_updated_at or datetime.min
+            last_updated_at = (
+                record.last_updated_at.replace(tzinfo=pytz.utc)
+                if record.last_updated_at is not None
+                else datetime.min.replace(tzinfo=pytz.utc)
+            )
             has_no_available_workers = int(state.deployment_state.available_workers == 0)
             is_high_priority = int(state.high_priority is True)
 
@@ -126,39 +130,36 @@ class ImageCacheService:
 
             image_repository_and_tag = state.image.split("/", 1)[1]
             repository_name, image_tag = image_repository_and_tag.split(":")
-            if state.resource_state.gpus == 0 and (
-                (
-                    state.image not in images_to_cache_priority["cpu"]
-                    or last_updated_at.replace(tzinfo=pytz.utc)
-                    > images_to_cache_priority["cpu"][state.image].last_updated_at
-                )
-                and self.docker_repository.image_exists(image_tag, repository_name)
-            ):
-                images_to_cache_priority["cpu"][state.image] = cache_priority
-            elif state.resource_state.gpus > 0:
-                for gpu_type, key in [
-                    (GpuType.NVIDIA_AMPERE_A10, "a10"),
-                    (GpuType.NVIDIA_AMPERE_A100, "a100"),
-                    (GpuType.NVIDIA_TESLA_T4, "t4"),
-                ]:
-                    if state.resource_state.gpu_type == gpu_type and (
-                        (
-                            state.image not in images_to_cache_priority[key]
-                            or last_updated_at.replace(tzinfo=pytz.utc)
-                            > images_to_cache_priority[key][state.image].last_updated_at
-                        )
-                        and self.docker_repository.image_exists(image_tag, repository_name)
-                    ):
-                        images_to_cache_priority[key][state.image] = cache_priority
+            try:
+                if state.resource_state.gpus == 0 and (
+                    (
+                        state.image not in images_to_cache_priority["cpu"]
+                        or last_updated_at.replace(tzinfo=pytz.utc)
+                        > images_to_cache_priority["cpu"][state.image].last_updated_at
+                    )
+                    and self.docker_repository.image_exists(image_tag, repository_name)
+                ):
+                    images_to_cache_priority["cpu"][state.image] = cache_priority
+                elif state.resource_state.gpus > 0:
+                    for gpu_type, key in [
+                        (GpuType.NVIDIA_AMPERE_A10, "a10"),
+                        (GpuType.NVIDIA_AMPERE_A100, "a100"),
+                        (GpuType.NVIDIA_TESLA_T4, "t4"),
+                    ]:
+                        if state.resource_state.gpu_type == gpu_type and (
+                            (
+                                state.image not in images_to_cache_priority[key]
+                                or last_updated_at.replace(tzinfo=pytz.utc)
+                                > images_to_cache_priority[key][state.image].last_updated_at
+                            )
+                            and self.docker_repository.image_exists(image_tag, repository_name)
+                        ):
+                            images_to_cache_priority[key][state.image] = cache_priority
+            except Exception as e:
+                print(e)
+                continue
 
         images_to_cache = CachedImages(cpu=[], a10=[], a100=[], t4=[])
-        for key, val in images_to_cache_priority.items():
-            for image in images_to_cache_priority[key]:
-                images_to_cache_priority[key][image] = CachePriority(
-                    images_to_cache_priority[key][image].is_high_priority,
-                    images_to_cache_priority[key][image].has_no_available_workers,
-                    images_to_cache_priority[key][image].last_updated_at.replace(tzinfo=pytz.utc),
-                )
 
         for key, val in images_to_cache_priority.items():
             images_to_cache[key] = sorted(  # type: ignore
