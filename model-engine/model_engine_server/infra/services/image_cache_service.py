@@ -155,12 +155,13 @@ class ImageCacheService:
                             and self.docker_repository.image_exists(image_tag, repository_name)
                         ):
                             images_to_cache_priority[key][state.image] = cache_priority
-            except Exception as e:
-                print(e)
+            except Exception as exc:
+                logger.warning(
+                    f"Endpoint {endpoint_id} had an error. Error message: {exc}. Skipping caching ..."
+                )
                 continue
 
         images_to_cache = CachedImages(cpu=[], a10=[], a100=[], t4=[])
-
         for key, val in images_to_cache_priority.items():
             images_to_cache[key] = sorted(  # type: ignore
                 val.keys(), key=lambda image: val[image], reverse=True
