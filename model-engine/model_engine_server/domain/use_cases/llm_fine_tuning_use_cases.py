@@ -48,11 +48,20 @@ def ensure_model_name_is_valid_k8s_label(model_name: str):
 
 def read_csv_headers(file_location: str):
     """
-    Read the headers of a csv file. Assumes the file exists and is valid.
+    Read the headers of a csv file. Raises a FileNotFoundError if the file does not exist. Raises a ValueError if csv is malformed.
     """
-    with smart_open.open(file_location, transport_params=dict(buffer_size=1024)) as file:
-        csv_reader = csv.DictReader(file)
-        return csv_reader.fieldnames
+    try:
+        with smart_open.open(file_location, transport_params=dict(buffer_size=1024)) as file:
+            csv_reader = csv.DictReader(file)
+            return csv_reader.fieldnames
+    except FileNotFoundError:
+        raise InvalidRequestException(
+            "The file that you provided cannot be found. Please check that the filepath is correct."
+        )
+    except csv.Error as exc:
+        raise InvalidRequestException(
+            f"An error occurred while processing the CSV file. Details: {exc}"
+        )
 
 
 def are_dataset_headers_valid(file_location: str):
