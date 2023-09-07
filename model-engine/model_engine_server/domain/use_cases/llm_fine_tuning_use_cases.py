@@ -72,17 +72,15 @@ def check_file_is_valid(file_name: Optional[str], file_type: str):
     try:
         if file_name is not None and not are_dataset_headers_valid(file_name):
             raise InvalidRequestException(
-                f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in training dataset"
+                f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in {file_type} dataset"
             )
-        else:
-            return True
     except FileNotFoundError:
         raise InvalidRequestException(
-            f"The {file_type} file that you provided cannot be found. Please check that the filepath is correct."
+            f"Cannot find the {file_type} file. Verify the path and file name are correct."
         )
     except csv.Error as exc:
         raise InvalidRequestException(
-            f"An error occurred while processing the {file_type} CSV file. Details: {exc}"
+            f"Cannot parse the {file_type} dataset as CSV. Details: {exc}"
         )
 
 
