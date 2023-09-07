@@ -12,7 +12,6 @@ from model_engine_server.common.dtos.endpoint_builder import (
 )
 from model_engine_server.common.env_vars import CIRCLECI, SKIP_AUTH
 from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.db.base import SessionAsyncNullPool
 from model_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
 from model_engine_server.infra.gateways import (
@@ -45,8 +44,6 @@ from model_engine_server.infra.repositories import (
 from model_engine_server.infra.services import LiveEndpointBuilderService
 from model_engine_server.service_builder.celery import service_builder_service
 
-logger = make_logger(filename_wo_ext(__name__))
-
 # Need to disable lazy loading of k8s clients because each event loop should contain its own k8s
 # client, which constructs the aiohttp.ClientSession in the event loop.
 set_lazy_load_kubernetes_clients(False)
@@ -72,9 +69,6 @@ def get_live_endpoint_builder_service(
 
     docker_repository = ECRDockerRepository() if not CIRCLECI else FakeDockerRepository()
 
-    logger.info(
-        f"Initializing LiveEndpointBuilderService with {docker_repository} for CIRCLECI={CIRCLECI}"
-    )
     service = LiveEndpointBuilderService(
         docker_repository=docker_repository,
         resource_gateway=LiveEndpointResourceGateway(

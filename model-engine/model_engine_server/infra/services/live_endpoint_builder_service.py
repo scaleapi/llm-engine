@@ -657,12 +657,6 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         endpoint_id = build_endpoint_request.model_endpoint_record.id
 
         log_error = make_exception_log(logger_adapter)
-        log_error(
-            f"Called live endpoint builder service _build_image for repository {image_params.repo}, tag {image_params.image_tag}, AWS profile {ECR_AWS_PROFILE}"
-        )
-        log_error(
-            f"image_exists is {self.docker_repository.image_exists(repository_name=image_params.repo, image_tag=image_params.image_tag, aws_profile=ECR_AWS_PROFILE)}"
-        )
 
         # image_exists hardcodes the ML ECR account, which needs to change for external self-hosted
         if not self.docker_repository.image_exists(

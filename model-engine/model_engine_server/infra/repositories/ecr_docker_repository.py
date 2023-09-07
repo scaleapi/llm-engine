@@ -14,9 +14,6 @@ class ECRDockerRepository(DockerRepository):
     def image_exists(
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
     ) -> bool:
-        logger.info(
-            f"Called image_exists in ECRDockerRepository, returning {ecr_image_exists(image_tag=image_tag, repository_name=repository_name, aws_profile=aws_profile)}"
-        )
         return ecr_image_exists(
             image_tag=image_tag,
             repository_name=repository_name,

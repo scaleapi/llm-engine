@@ -302,6 +302,19 @@ def create_batch_job(create_batch_job_request: Dict[str, Any], user_id: str) -> 
     return response.json()
 
 
+def cancel_batch_job(batch_job_id: str, user_id: str) -> Dict[str, Any]:
+    response = requests.put(
+        f"{BASE_PATH}/v1/batch-jobs/{batch_job_id}",
+        json={"cancel": True},
+        headers={"Content-Type": "application/json"},
+        auth=(user_id, ""),
+        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
+    )
+    if not response.ok:
+        raise ValueError(response.content)
+    return response.json()
+
+
 def create_docker_image_batch_job_bundle(
     create_docker_image_batch_job_bundle_request: Dict[str, Any], user_id: str
 ) -> Dict[str, Any]:
