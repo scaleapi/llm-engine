@@ -82,7 +82,7 @@ config:
       dns_host_domain: localhost
       default_region: us-west-2
       ml_account_id: "$CIRCLECI_AWS_ACCOUNT_ID"
-      docker_repo_prefix: "CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com"
+      docker_repo_prefix: "$CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com"
       redis_host: redis-message-broker-master.default
       s3_bucket: "$CIRCLECI_AWS_S3_BUCKET"
       profile_ml_worker: "default"
