@@ -682,9 +682,9 @@ class GetLLMModelEndpointByNameV1UseCase:
         return _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
 
-class DeleteLLMEndpointByIdUseCase:
+class DeleteLLMEndpointByNameUseCase:
     """
-    Use case for deleting an LLM Model Endpoint of a given user by id.
+    Use case for deleting an LLM Model Endpoint of a given user by endpoint name.
     """
 
     def __init__(
@@ -696,13 +696,13 @@ class DeleteLLMEndpointByIdUseCase:
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
 
-    async def execute(self, user: User, model_endpoint_id: str) -> DeleteLLMEndpointResponse:
+    async def execute(self, user: User, model_endpoint_name: str) -> DeleteLLMEndpointResponse:
         """
         Runs the use case to get the LLM endpoint with the given name.
 
         Args:
             user: The owner of the model endpoint.
-            model_endpoint_id: The id of the model endpoint.
+            model_endpoint_name: The name of the model endpoint.
 
         Returns:
             A response object that contains a boolean indicating if deletion was successful.
@@ -711,14 +711,14 @@ class DeleteLLMEndpointByIdUseCase:
             ObjectNotFoundException: If a model endpoint with the given name could not be found.
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
-        model_endpoint = await self.model_endpoint_service.get_model_endpoint_record(
-            model_endpoint_id=model_endpoint_id
+        model_endpoint = await self.llm_model_endpoint_service.get_llm_model_endpoint(
+            model_endpoint_name
         )
-        if model_endpoint is None:
+        if not model_endpoint:
             raise ObjectNotFoundException
-        if not self.authz_module.check_access_write_owned_entity(user, model_endpoint):
+        if not self.authz_module.check_access_read_owned_entity(user, model_endpoint.record):
             raise ObjectNotAuthorizedException
-        await self.model_endpoint_service.delete_model_endpoint(model_endpoint_id)
+        await self.model_endpoint_service.delete_model_endpoint(model_endpoint.record.id)
         return DeleteLLMEndpointResponse(deleted=True)
 
 

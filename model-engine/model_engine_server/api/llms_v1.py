@@ -62,7 +62,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateLLMModelEndpointV1UseCase,
-    DeleteLLMEndpointByIdUseCase,
+    DeleteLLMEndpointByNameUseCase,
     GetLLMModelEndpointByNameV1UseCase,
     ListLLMModelEndpointsV1UseCase,
     ModelDownloadV1UseCase,
@@ -391,21 +391,21 @@ async def download_model_endpoint(
 
 
 @llm_router_v1.delete(
-    "model-endpoints/{model_endpoint_id}", response_model=DeleteLLMEndpointResponse
+    "/model-endpoints/{model_endpoint_name}", response_model=DeleteLLMEndpointResponse
 )
 async def delete_llm_model_endpoint(
-    model_endpoint_id: str,
+    model_endpoint_name: str,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> DeleteLLMEndpointResponse:
     add_trace_resource_name("llm_model_endpoints_delete")
-    logger.info(f"DELETE /model-endpoints/{model_endpoint_id} for {auth}")
+    logger.info(f"DELETE /model-endpoints/{model_endpoint_name} for {auth}")
     try:
-        use_case = DeleteLLMEndpointByIdUseCase(
+        use_case = DeleteLLMEndpointByNameUseCase(
             llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
             model_endpoint_service=external_interfaces.model_endpoint_service,
         )
-        return await use_case.execute(user=auth, model_endpoint_id=model_endpoint_id)
+        return await use_case.execute(user=auth, model_endpoint_name=model_endpoint_name)
     except (ObjectNotFoundException) as exc:
         raise HTTPException(
             status_code=404,
