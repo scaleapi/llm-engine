@@ -1,6 +1,7 @@
 import csv
 import datetime
 import re
+from typing import Optional
 
 import smart_open
 from model_engine_server.common.dtos.llms import (
@@ -48,7 +49,7 @@ def ensure_model_name_is_valid_k8s_label(model_name: str):
 
 def read_csv_headers(file_location: str):
     """
-    Read the headers of a csv file. Assumes the file exists and is valid.
+    Read the headers of a csv file.
     """
     with smart_open.open(file_location, transport_params=dict(buffer_size=1024)) as file:
         csv_reader = csv.DictReader(file)
@@ -61,6 +62,26 @@ def are_dataset_headers_valid(file_location: str):
     """
     current_headers = read_csv_headers(file_location)
     return all(required_header in current_headers for required_header in REQUIRED_COLUMNS)
+
+
+def check_file_is_valid(file_name: Optional[str], file_type: str):
+    """
+    Ensure the file is valid with required columns 'prompt' and 'response', isn't malformatted, and exists.
+    file_type: 'training' or 'validation'
+    """
+    try:
+        if file_name is not None and not are_dataset_headers_valid(file_name):
+            raise InvalidRequestException(
+                f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in {file_type} dataset"
+            )
+    except FileNotFoundError:
+        raise InvalidRequestException(
+            f"Cannot find the {file_type} file. Verify the path and file name are correct."
+        )
+    except csv.Error as exc:
+        raise InvalidRequestException(
+            f"Cannot parse the {file_type} dataset as CSV. Details: {exc}"
+        )
 
 
 class CreateFineTuneV1UseCase:
@@ -140,14 +161,8 @@ class CreateFineTuneV1UseCase:
         else:
             validation_file = request.validation_file
 
-        if training_file is not None and not are_dataset_headers_valid(training_file):
-            raise InvalidRequestException(
-                f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in training dataset"
-            )
-        if validation_file is not None and not are_dataset_headers_valid(validation_file):
-            raise InvalidRequestException(
-                f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in validation dataset"
-            )
+        check_file_is_valid(training_file, "training")
+        check_file_is_valid(validation_file, "validation")
 
         await self.llm_fine_tune_events_repository.initialize_events(user.team_id, fine_tuned_model)
         fine_tune_id = await self.llm_fine_tuning_service.create_fine_tune(
