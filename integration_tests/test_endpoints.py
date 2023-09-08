@@ -89,7 +89,7 @@ def test_async_model_endpoint(
                 == update_endpoint_request["max_workers"]
             )
 
-            time.sleep(5)
+            time.sleep(10)
 
             for inference_payload, return_pickled in inference_requests:
                 print(
@@ -145,7 +145,7 @@ def test_sync_model_endpoint(capsys):
                 == update_endpoint_request["max_workers"]
             )
 
-            time.sleep(5)
+            time.sleep(10)
 
             for inference_payload, return_pickled in inference_requests:
                 print(
