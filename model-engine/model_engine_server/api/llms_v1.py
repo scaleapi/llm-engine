@@ -238,6 +238,29 @@ async def create_completion_stream_task(
             except InvalidRequestException as exc:
                 yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
                 return
+            except (ObjectNotFoundException, ObjectNotAuthorizedException):
+                yield {
+                    "data": {
+                        "error": {
+                            "status_code": 404,
+                            "detail": "The specified endpoint could not be found.",
+                        }
+                    }
+                }
+                return
+            except ObjectHasInvalidValueException as exc:
+                yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
+                return
+            except EndpointUnsupportedInferenceTypeException as exc:
+                yield {
+                    "data": {
+                        "error": {
+                            "status_code": 400,
+                            "detail": f"Unsupported inference type: {str(exc)}",
+                        }
+                    }
+                }
+                return
 
         return EventSourceResponse(event_generator())
     except UpstreamServiceError:
@@ -247,18 +270,6 @@ async def create_completion_stream_task(
         return EventSourceResponse(
             iter((CompletionStreamV1Response(request_id=request_id).json(),))
         )
-    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
-        raise HTTPException(
-            status_code=404,
-            detail="The specified endpoint could not be found.",
-        ) from exc
-    except ObjectHasInvalidValueException as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except EndpointUnsupportedInferenceTypeException as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported inference type: {str(exc)}",
-        ) from exc
 
 
 @llm_router_v1.post("/fine-tunes", response_model=CreateFineTuneResponse)
