@@ -119,6 +119,15 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-40b": "tiiuae/falcon-40b",
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
     },
+    LLMInferenceFramework.LIGHTLLM: {
+        "llama-7b": "decapoda-research/llama-7b-hf",
+        "llama-2-7b": "meta-llama/Llama-2-7b-hf",
+        "llama-2-7b-chat": "meta-llama/Llama-2-7b-chat-hf",
+        "llama-2-13b": "meta-llama/Llama-2-13b-hf",
+        "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
+        "llama-2-70b": "meta-llama/Llama-2-70b-hf",
+        "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
+    },
 }
 
 
@@ -214,6 +223,15 @@ class CreateLLMModelEndpointV1UseCase:
                 )
             elif framework == LLMInferenceFramework.VLLM:
                 bundle_id = await self.create_vllm_bundle(
+                    user,
+                    model_name,
+                    framework_image_tag,
+                    endpoint_name,
+                    num_shards,
+                    checkpoint_path,
+                )
+            elif framework == LLMInferenceFramework.LIGHTLLM:
+                bundle_id = await self.create_lightllm_bundle(
                     user,
                     model_name,
                     framework_image_tag,
@@ -480,6 +498,86 @@ class CreateLLMModelEndpointV1UseCase:
                     flavor=StreamingEnhancedRunnableImageFlavor(
                         flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
                         repository=hmi_config.vllm_repository,
+                        tag=framework_image_tag,
+                        command=command,
+                        streaming_command=command,
+                        protocol="http",
+                        readiness_initial_delay_seconds=10,
+                        healthcheck_route="/health",
+                        predict_route="/predict",
+                        streaming_predict_route="/stream",
+                        env={},
+                    ),
+                    metadata={},
+                ),
+                do_auth_check=False,
+                # Skip auth check because llm create endpoint is called as the user itself,
+                # but the user isn't directly making the action. It should come from the fine tune
+                # job.
+            )
+        ).model_bundle_id
+
+    async def create_lightllm_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        checkpoint_path: Optional[str],
+    ):
+        command = []
+
+        # TODO: incorporate auto calculate max_total_token_num from https://github.com/ModelTC/lightllm/pull/81
+        max_total_token_num = 6000  # LightLLM default
+        if num_shards == 1:
+            max_total_token_num = 15000  # Default for Llama 2 7B on 1 x A10
+        elif num_shards == 2:
+            max_total_token_num = 21000  # Default for Llama 2 13B on 2 x A10
+        elif num_shards == 4:
+            max_total_token_num = 70000  # Default for Llama 2 13B on 4 x A10
+        max_req_input_len = 2047
+        max_req_total_len = 2048
+        if "llama-2" in model_name:
+            max_req_input_len = 4095
+            max_req_total_len = 4096
+
+        subcommands = []
+        if checkpoint_path is not None:
+            if checkpoint_path.startswith("s3://"):
+                final_weights_folder = "model_files"
+                subcommands += self.load_model_weights_sub_commands(
+                    LLMInferenceFramework.LIGHTLLM,
+                    framework_image_tag,
+                    checkpoint_path,
+                    final_weights_folder,
+                )
+            else:
+                raise ObjectHasInvalidValueException(
+                    f"Not able to load checkpoint path {checkpoint_path}."
+                )
+        else:
+            final_weights_folder = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.VLLM][model_name]
+
+        subcommands.append(
+            f"python -m lightllm.server.api_server --model_dir {final_weights_folder} --host 0.0.0.0 --port 5005 --tp {num_shards} --max_total_token_num {max_total_token_num} --max_req_input_len {max_req_input_len} --max_req_total_len {max_req_total_len} --tokenizer_mode auto"
+        )
+
+        command = [
+            "/bin/bash",
+            "-c",
+            ";".join(subcommands),
+        ]
+
+        return (
+            await self.create_model_bundle_use_case.execute(
+                user,
+                CreateModelBundleV2Request(
+                    name=endpoint_unique_name,
+                    schema_location="TBA",
+                    flavor=StreamingEnhancedRunnableImageFlavor(
+                        flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                        repository=hmi_config.lightllm_repository,
                         tag=framework_image_tag,
                         command=command,
                         streaming_command=command,
@@ -918,6 +1016,44 @@ class CompletionSyncV1UseCase:
 
             inference_request = SyncEndpointPredictV1Request(
                 args=vllm_args,
+                num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+                timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
+            )
+            predict_result = await inference_gateway.predict(
+                topic=model_endpoint.record.destination, predict_request=inference_request
+            )
+
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
+                return CompletionSyncV1Response(
+                    request_id=request_id,
+                    output=None,
+                )
+
+            output = json.loads(predict_result.result["result"])
+            return CompletionSyncV1Response(
+                request_id=request_id,
+                output=self.model_output_to_completion_output(
+                    output, model_endpoint, request.return_token_log_probs
+                ),
+            )
+        elif endpoint_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
+            lightllm_args: Any = {
+                "inputs": request.prompt,
+                "parameters": {
+                    "max_new_tokens": request.max_new_tokens,
+                },
+            }
+            # TODO: implement stop sequences
+            if request.temperature > 0:
+                lightllm_args["parameters"]["temperature"] = request.temperature
+                lightllm_args["parameters"]["do_sample"] = True
+            else:
+                lightllm_args["parameters"]["do_sample"] = False
+            if request.return_token_log_probs:
+                lightllm_args["parameters"]["return_details"] = True
+
+            inference_request = SyncEndpointPredictV1Request(
+                args=lightllm_args,
                 num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
