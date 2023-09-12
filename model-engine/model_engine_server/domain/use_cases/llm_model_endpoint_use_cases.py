@@ -560,7 +560,7 @@ class CreateLLMModelEndpointV1UseCase:
             final_weights_folder = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.VLLM][model_name]
 
         subcommands.append(
-            f"python -m lightllm.server.api_server --model_dir {final_weights_folder} --host 0.0.0.0 --port 5005 --tp {num_shards} --max_total_token_num {max_total_token_num} --max_req_input_len {max_req_input_len} --max_req_total_len {max_req_total_len} --tokenizer_mode auto"
+            f"python -m lightllm.server.api_server --model_dir {final_weights_folder} --port 5005 --tp {num_shards} --max_total_token_num {max_total_token_num} --max_req_input_len {max_req_input_len} --max_req_total_len {max_req_total_len} --tokenizer_mode auto"
         )
 
         command = [
@@ -584,8 +584,8 @@ class CreateLLMModelEndpointV1UseCase:
                         protocol="http",
                         readiness_initial_delay_seconds=10,
                         healthcheck_route="/health",
-                        predict_route="/predict",
-                        streaming_predict_route="/stream",
+                        predict_route="/generate",
+                        streaming_predict_route="/generate_stream",
                         env={},
                     ),
                     metadata={},
@@ -859,6 +859,19 @@ class CompletionSyncV1UseCase:
                 ]
             return CompletionOutput(
                 text=model_output["text"],
+                num_completion_tokens=model_output["count_output_tokens"],
+                tokens=tokens,
+            )
+        elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
+            print(model_output)
+            tokens = None
+            if with_token_probs:
+                tokens = [
+                    TokenOutput(token=t["text"], log_prob=t["logprob"])
+                    for t in model_output["tokens"]
+                ]
+            return CompletionOutput(
+                text=model_output["generated_text"][0],
                 num_completion_tokens=model_output["count_output_tokens"],
                 tokens=tokens,
             )
@@ -1191,6 +1204,25 @@ class CompletionStreamV1UseCase:
             if request.return_token_log_probs:
                 args["logprobs"] = 1
             args["stream"] = True
+        elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
+            args = {
+                "inputs": request.prompt,
+                "parameters": {
+                    "max_new_tokens": request.max_new_tokens,
+                },
+            }
+            # TODO: stop sequences
+            if request.temperature > 0:
+                args["parameters"]["temperature"] = request.temperature
+                args["parameters"]["do_sample"] = True
+            else:
+                args["parameters"]["do_sample"] = False
+            if request.return_token_log_probs:
+                args["parameters"]["return_details"] = True
+        else:
+            raise EndpointUnsupportedInferenceTypeException(
+                f"Unsupported inference framework {model_content.inference_framework}"
+            )
 
         inference_request = SyncEndpointPredictV1Request(
             args=args,
@@ -1291,6 +1323,30 @@ class CompletionStreamV1UseCase:
                             text=result["result"]["text"],
                             finished=result["result"]["finished"],
                             num_completion_tokens=result["result"]["count_output_tokens"],
+                            token=token,
+                        ),
+                    )
+                else:
+                    yield CompletionStreamV1Response(
+                        request_id=request_id,
+                        output=None,
+                    )
+            elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
+                if res.status == TaskStatus.SUCCESS and result is not None:
+                    print(result)
+                    token = None
+                    num_completion_tokens += 1
+                    if request.return_token_log_probs:
+                        token = TokenOutput(
+                            token=result["result"]["token"]["text"],
+                            log_prob=result["result"]["token"]["logprob"],
+                        )
+                    yield CompletionStreamV1Response(
+                        request_id=request_id,
+                        output=CompletionStreamOutput(
+                            text=result["result"]["token"]["text"],
+                            finished=result["result"]["finished"],
+                            num_completion_tokens=num_completion_tokens,
                             token=token,
                         ),
                     )
