@@ -35,6 +35,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateLLMModelEndpointV1UseCase,
+    DeleteLLMEndpointByNameUseCase,
     GetLLMModelEndpointByNameV1UseCase,
     ModelDownloadV1UseCase,
 )
@@ -869,3 +870,60 @@ async def test_download_nonexistent_model_raises_not_found(
     )
     with pytest.raises(ObjectNotFoundException):
         await use_case.execute(user=user, request=request)
+
+
+@pytest.mark.asyncio
+async def test_delete_model_success(
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    model_endpoint_1: ModelEndpoint,
+    test_api_key: str,
+):
+    model_endpoint_1.record.owner = test_api_key
+    model_endpoint_1.record.name = "base_model"
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    use_case = DeleteLLMEndpointByNameUseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    response = await use_case.execute(user=user, model_endpoint_name=model_endpoint_1.record.name)
+    assert response.deleted is True
+
+
+@pytest.mark.asyncio
+async def test_delete_nonexistent_model_raises_not_found(
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    model_endpoint_1: ModelEndpoint,
+    test_api_key: str,
+):
+    model_endpoint_1.record.owner = test_api_key
+    model_endpoint_1.record.name = "base_model"
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    use_case = DeleteLLMEndpointByNameUseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    with pytest.raises(ObjectNotFoundException):
+        await use_case.execute(user=user, model_endpoint_name="nonexistent-model")
+
+
+@pytest.mark.asyncio
+async def test_delete_unauthorized_model_raises_not_authorized(
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    model_endpoint_1: ModelEndpoint,
+    test_api_key: str,
+):
+    model_endpoint_1.record.owner = test_api_key
+    model_endpoint_1.record.name = "base_model"
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    use_case = DeleteLLMEndpointByNameUseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+    )
+    user = User(user_id="fakeapikey", team_id="fakeapikey", is_privileged_user=True)
+    with pytest.raises(ObjectNotAuthorizedException):
+        await use_case.execute(user=user, model_endpoint_name=model_endpoint_1.record.name)
