@@ -881,7 +881,6 @@ async def test_delete_model_success(
 ):
     model_endpoint_1.record.owner = test_api_key
     model_endpoint_1.record.name = "base_model"
-    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     fake_llm_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
@@ -901,7 +900,6 @@ async def test_delete_nonexistent_model_raises_not_found(
 ):
     model_endpoint_1.record.owner = test_api_key
     model_endpoint_1.record.name = "base_model"
-    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     fake_llm_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
@@ -921,7 +919,6 @@ async def test_delete_unauthorized_model_raises_not_authorized(
 ):
     model_endpoint_1.record.owner = test_api_key
     model_endpoint_1.record.name = "base_model"
-    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     fake_llm_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
