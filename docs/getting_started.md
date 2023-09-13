@@ -42,6 +42,7 @@ Alternatively, you can also set your API key using either of the following patte
 llmengine.api_engine.api_key = "abc"
 llmengine.api_engine.set_api_key("abc")
 ```
+These patterns are useful for Jupyter Notebook users to set API keys without the need for using `os.environ`.
 
 ## Example Code
 
