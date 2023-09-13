@@ -37,6 +37,13 @@ export SCALE_API_KEY="[Your API key]"
 
 You can also add in the line above to your `.zshrc` or `.bash_profile` so it's automatically set for future sessions.
 
+Alternatively, you can also set your API key using either of the following patterns:
+```
+llmengine.api_engine.api_key = "abc"
+llmengine.api_engine.set_api_key("abc")
+```
+These patterns are useful for Jupyter Notebook users to set API keys without the need for using `os.environ`.
+
 ## Example Code
 
 ### Sample Completion
