@@ -889,10 +889,11 @@ async def test_delete_model_success(
     response = await use_case.execute(
         user=user, model_endpoint_name=llm_model_endpoint_sync[0].record.name
     )
-    remaining_endpoint = await fake_llm_model_endpoint_service.get_llm_model_endpoint(
-        llm_model_endpoint_sync[0].record.name
+    remaining_endpoint_model_service = await fake_model_endpoint_service.get_model_endpoint(
+        llm_model_endpoint_sync[0].record.id
     )
-    assert response.deleted is True and remaining_endpoint is None
+    assert remaining_endpoint_model_service is None
+    assert response.deleted is True
 
 
 @pytest.mark.asyncio
@@ -927,6 +928,30 @@ async def test_delete_unauthorized_model_raises_not_authorized(
     )
     user = User(user_id="fakeapikey", team_id="fakeapikey", is_privileged_user=True)
     with pytest.raises(ObjectNotAuthorizedException):
+        await use_case.execute(
+            user=user, model_endpoint_name=llm_model_endpoint_sync[0].record.name
+        )
+
+
+@pytest.mark.asyncio
+async def test_delete_public_inference_model_raises_not_authorized(
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
+    test_api_key,
+):
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
+    fake_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
+    use_case = DeleteLLMEndpointByNameUseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+    )
+    user = User(
+        user_id="fakeapikey", team_id="faketeam", is_privileged_user=True
+    )  # write access is based on team_id, so team_id != owner's team_id
+    with pytest.raises(
+        ObjectNotAuthorizedException
+    ):  # user cannot delete public inference model they don't own
         await use_case.execute(
             user=user, model_endpoint_name=llm_model_endpoint_sync[0].record.name
         )
