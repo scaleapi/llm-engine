@@ -889,7 +889,10 @@ async def test_delete_model_success(
     response = await use_case.execute(
         user=user, model_endpoint_name=llm_model_endpoint_sync[0].record.name
     )
-    assert response.deleted is True
+    remaining_endpoint = await fake_llm_model_endpoint_service.get_llm_model_endpoint(
+        llm_model_endpoint_sync[0].record.name
+    )
+    assert response.deleted is True and remaining_endpoint is None
 
 
 @pytest.mark.asyncio

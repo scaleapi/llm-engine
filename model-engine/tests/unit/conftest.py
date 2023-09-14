@@ -3290,7 +3290,6 @@ def build_endpoint_request_async_custom(
         model_endpoint_record=ModelEndpointRecord(
             id="test_model_endpoint_id_3",
             name="test_model_endpoint_name_3",
-            created_by=test_api_key,
             created_at=datetime(2022, 1, 4),
             last_updated_at=datetime(2022, 1, 4),
             metadata={},

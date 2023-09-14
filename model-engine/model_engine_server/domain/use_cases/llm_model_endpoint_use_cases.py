@@ -796,7 +796,7 @@ class DeleteLLMEndpointByNameUseCase:
 
     async def execute(self, user: User, model_endpoint_name: str) -> DeleteLLMEndpointResponse:
         """
-        Runs the use case to get the LLM endpoint with the given name.
+        Runs the use case to delete the LLM endpoint owned by the user with the given name.
 
         Args:
             user: The owner of the model endpoint.
@@ -809,12 +809,13 @@ class DeleteLLMEndpointByNameUseCase:
             ObjectNotFoundException: If a model endpoint with the given name could not be found.
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
-        model_endpoint = await self.llm_model_endpoint_service.get_llm_model_endpoint(
-            model_endpoint_name
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.user_id, name=model_endpoint_name, order_by=None
         )
-        if not model_endpoint:
+        if len(model_endpoints) != 1:
             raise ObjectNotFoundException
-        if not self.authz_module.check_access_read_owned_entity(user, model_endpoint.record):
+        model_endpoint = model_endpoints[0]
+        if not self.authz_module.check_access_write_owned_entity(user, model_endpoint.record):
             raise ObjectNotAuthorizedException
         await self.model_endpoint_service.delete_model_endpoint(model_endpoint.record.id)
         return DeleteLLMEndpointResponse(deleted=True)

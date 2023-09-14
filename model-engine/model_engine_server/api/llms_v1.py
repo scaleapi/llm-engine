@@ -413,7 +413,7 @@ async def delete_llm_model_endpoint(
         ) from exc
     except (ObjectNotAuthorizedException) as exc:
         raise HTTPException(
-            status_code=401,
+            status_code=403,
             detail="You don't have permission to delete the requested model endpoint.",
         ) from exc
     except ExistingEndpointOperationInProgressException as exc:
@@ -424,5 +424,5 @@ async def delete_llm_model_endpoint(
     except EndpointDeleteFailedException as exc:  # pragma: no cover
         raise HTTPException(
             status_code=500,
-            detail="deletion of endpoint failed, compute resources still exist.",
+            detail="deletion of endpoint failed.",
         ) from exc
