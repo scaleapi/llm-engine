@@ -876,18 +876,17 @@ async def test_download_nonexistent_model_raises_not_found(
 async def test_delete_model_success(
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
-    llm_model_endpoint_sync: ModelEndpoint,
+    llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
     test_api_key: str,
 ):
-    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync)
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
     )
-    print(fake_llm_model_endpoint_service)
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response = await use_case.execute(
-        user=user, model_endpoint_name=llm_model_endpoint_sync.record.name
+        user=user, model_endpoint_name=llm_model_endpoint_sync[0].record.name
     )
     assert response.deleted is True
 
@@ -896,10 +895,10 @@ async def test_delete_model_success(
 async def test_delete_nonexistent_model_raises_not_found(
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
-    llm_model_endpoint_sync: ModelEndpoint,
+    llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
     test_api_key: str,
 ):
-    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync)
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
@@ -913,13 +912,15 @@ async def test_delete_nonexistent_model_raises_not_found(
 async def test_delete_unauthorized_model_raises_not_authorized(
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
-    llm_model_endpoint_sync: ModelEndpoint,
+    llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
 ):
-    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync)
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
     )
     user = User(user_id="fakeapikey", team_id="fakeapikey", is_privileged_user=True)
     with pytest.raises(ObjectNotAuthorizedException):
-        await use_case.execute(user=user, model_endpoint_name=llm_model_endpoint_sync.record.name)
+        await use_case.execute(
+            user=user, model_endpoint_name=llm_model_endpoint_sync[0].record.name
+        )
