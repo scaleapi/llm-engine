@@ -879,13 +879,12 @@ async def test_delete_model_success(
     model_endpoint_1: ModelEndpoint,
     test_api_key: str,
 ):
-    model_endpoint_1.record.owner = test_api_key
-    model_endpoint_1.record.name = "base_model"
     fake_llm_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
     )
+    print(fake_llm_model_endpoint_service)
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response = await use_case.execute(user=user, model_endpoint_name=model_endpoint_1.record.name)
     assert response.deleted is True
@@ -898,8 +897,6 @@ async def test_delete_nonexistent_model_raises_not_found(
     model_endpoint_1: ModelEndpoint,
     test_api_key: str,
 ):
-    model_endpoint_1.record.owner = test_api_key
-    model_endpoint_1.record.name = "base_model"
     fake_llm_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
@@ -915,10 +912,7 @@ async def test_delete_unauthorized_model_raises_not_authorized(
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
     model_endpoint_1: ModelEndpoint,
-    test_api_key: str,
 ):
-    model_endpoint_1.record.owner = test_api_key
-    model_endpoint_1.record.name = "base_model"
     fake_llm_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
