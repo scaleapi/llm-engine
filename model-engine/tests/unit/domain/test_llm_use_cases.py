@@ -880,6 +880,7 @@ async def test_delete_model_success(
     test_api_key: str,
 ):
     fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
+    fake_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
@@ -899,6 +900,7 @@ async def test_delete_nonexistent_model_raises_not_found(
     test_api_key: str,
 ):
     fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
+    fake_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
@@ -915,6 +917,7 @@ async def test_delete_unauthorized_model_raises_not_authorized(
     llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
 ):
     fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
+    fake_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
     use_case = DeleteLLMEndpointByNameUseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
