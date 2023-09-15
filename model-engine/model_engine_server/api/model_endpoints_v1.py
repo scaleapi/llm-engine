@@ -24,19 +24,17 @@ from model_engine_server.common.dtos.model_endpoints import (
     UpdateModelEndpointV1Response,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
-    ObjectAlreadyExistsException,
-    ObjectHasInvalidValueException,
-    ObjectNotApprovedException,
-    ObjectNotAuthorizedException,
-    ObjectNotFoundException,
-)
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
     EndpointLabelsException,
     EndpointResourceInvalidRequestException,
     ExistingEndpointOperationInProgressException,
+    ObjectAlreadyExistsException,
+    ObjectHasInvalidValueException,
+    ObjectNotApprovedException,
+    ObjectNotAuthorizedException,
+    ObjectNotFoundException,
 )
 from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
     CreateModelEndpointV1UseCase,

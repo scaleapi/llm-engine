@@ -32,11 +32,6 @@ from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
-    ObjectHasInvalidValueException,
-    ObjectNotAuthorizedException,
-    ObjectNotFoundException,
-)
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
@@ -53,7 +48,11 @@ from model_engine_server.domain.entities import (
 from model_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
+    InternalError,
     InvalidRequestException,
+    ObjectHasInvalidValueException,
+    ObjectNotAuthorizedException,
+    ObjectNotFoundException,
     UpstreamServiceError,
 )
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
@@ -61,7 +60,7 @@ from model_engine_server.domain.repositories import ModelBundleRepository
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
 
-from ...common.datadog_utils import add_trace_request_id
+from ...common.datadog_utils import add_trace_request_id, get_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
 from .model_bundle_use_cases import CreateModelBundleV2UseCase
 from .model_endpoint_use_cases import (
@@ -1373,22 +1372,25 @@ class ModelDownloadV1UseCase:
         self.llm_artifact_gateway = llm_artifact_gateway
 
     async def execute(self, user: User, request: ModelDownloadRequest) -> ModelDownloadResponse:
-        model_endpoints = await self.model_endpoint_service.list_model_endpoints(
-            owner=user.team_id, name=request.model_name, order_by=None
-        )
-        if len(model_endpoints) == 0:
-            raise ObjectNotFoundException
-
-        if len(model_endpoints) > 1:
-            raise ObjectHasInvalidValueException(
-                f"Expected 1 LLM model endpoint for model name {request.model_name}, got {len(model_endpoints)}"
+        try:
+            model_endpoints = await self.model_endpoint_service.list_model_endpoints(
+                owner=user.team_id, name=request.model_name, order_by=None
             )
-        model_files = self.llm_artifact_gateway.get_model_weights_urls(
-            user.team_id, request.model_name
-        )
-        urls = {}
-        for model_file in model_files:
-            # don't want to make s3 bucket full keys public, so trim to just keep file name
-            public_file_name = model_file.rsplit("/", 1)[-1]
-            urls[public_file_name] = self.filesystem_gateway.generate_signed_url(model_file)
-        return ModelDownloadResponse(urls=urls)
+            if len(model_endpoints) == 0:
+                raise ObjectNotFoundException
+
+            if len(model_endpoints) > 1:
+                raise ObjectHasInvalidValueException(
+                    f"Expected 1 LLM model endpoint for model name {request.model_name}, got {len(model_endpoints)}"
+                )
+            model_files = self.llm_artifact_gateway.get_model_weights_urls(
+                user.team_id, request.model_name
+            )
+            urls = {}
+            for model_file in model_files:
+                # don't want to make s3 bucket full keys public, so trim to just keep file name
+                public_file_name = model_file.rsplit("/", 1)[-1]
+                urls[public_file_name] = self.filesystem_gateway.generate_signed_url(model_file)
+            return ModelDownloadResponse(urls=urls)
+        except Exception as exc:
+            raise InternalError(request_id=get_request_id(), error=exc)

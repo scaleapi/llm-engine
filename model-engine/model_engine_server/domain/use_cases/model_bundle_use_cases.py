@@ -16,11 +16,6 @@ from model_engine_server.common.dtos.model_bundles import (
     ModelBundleV2Response,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
-    DockerImageNotFoundException,
-    ObjectNotAuthorizedException,
-    ObjectNotFoundException,
-)
 from model_engine_server.domain.authorization.live_authorization_module import (
     LiveAuthorizationModule,
 )
@@ -36,6 +31,11 @@ from model_engine_server.domain.entities import (
     RunnableImageLike,
     TensorflowFramework,
     ZipArtifactFlavor,
+)
+from model_engine_server.domain.exceptions import (
+    DockerImageNotFoundException,
+    ObjectNotAuthorizedException,
+    ObjectNotFoundException,
 )
 from model_engine_server.domain.gateways import ModelPrimitiveGateway
 from model_engine_server.domain.repositories import DockerRepository, ModelBundleRepository

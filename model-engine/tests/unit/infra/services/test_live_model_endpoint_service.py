@@ -2,10 +2,6 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from model_engine_server.core.domain_exceptions import (
-    ObjectAlreadyExistsException,
-    ObjectNotFoundException,
-)
 from model_engine_server.domain.entities import (
     ModelBundle,
     ModelEndpoint,
@@ -15,6 +11,8 @@ from model_engine_server.domain.entities import (
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
     ExistingEndpointOperationInProgressException,
+    ObjectAlreadyExistsException,
+    ObjectNotFoundException,
 )
 from model_engine_server.infra.services import LiveModelEndpointService
 

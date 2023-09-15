@@ -31,13 +31,6 @@ from model_engine_server.common.dtos.llms import (
 )
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
-    ObjectAlreadyExistsException,
-    ObjectHasInvalidValueException,
-    ObjectNotApprovedException,
-    ObjectNotAuthorizedException,
-    ObjectNotFoundException,
-)
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.exceptions import (
     EndpointLabelsException,
@@ -46,6 +39,11 @@ from model_engine_server.domain.exceptions import (
     InvalidRequestException,
     LLMFineTuningMethodNotImplementedException,
     LLMFineTuningQuotaReached,
+    ObjectAlreadyExistsException,
+    ObjectHasInvalidValueException,
+    ObjectNotApprovedException,
+    ObjectNotAuthorizedException,
+    ObjectNotFoundException,
     UpstreamServiceError,
 )
 from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
@@ -191,7 +189,10 @@ async def create_completion_sync_task(
         request_id = str(uuid4())
         add_trace_request_id(request_id)
         logger.exception(f"Upstream service error for request {request_id}")
-        return CompletionSyncV1Response(request_id=request_id, output=None)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Upstream service error for request_id {request_id}.",
+        )
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(
             status_code=404,
