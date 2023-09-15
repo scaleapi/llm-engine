@@ -53,9 +53,6 @@ class ImageCacheService:
         self.image_cache_gateway = image_cache_gateway
         self.docker_repository = docker_repository
 
-    def is_timezone_aware(self, dt):
-        return dt is not None and dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None
-
     def _cache_finetune_llm_images(
         self, images_to_cache_priority: Dict[str, Dict[str, CachePriority]]
     ):
@@ -112,10 +109,6 @@ class ImageCacheService:
             if record is None:
                 continue
 
-            logger.info(
-                f"Endpoint {endpoint_id} has last_updated_at: {record.last_updated_at} and is timezone-aware: {self.is_timezone_aware(record.last_updated_at)}"
-            )
-
             last_updated_at = (
                 record.last_updated_at.replace(tzinfo=pytz.utc)
                 if record.last_updated_at is not None
@@ -133,10 +126,6 @@ class ImageCacheService:
                 is_high_priority=is_high_priority,
                 has_no_available_workers=has_no_available_workers,
                 last_updated_at=last_updated_at,
-            )
-
-            logger.info(
-                f"Endpoint {endpoint_id} has cache_priority.last_updated_at timezone-aware: {self.is_timezone_aware(cache_priority.last_updated_at)}"
             )
 
             image_repository_and_tag = state.image.split("/", 1)[1]
@@ -177,9 +166,13 @@ class ImageCacheService:
                 continue
 
         images_to_cache = CachedImages(cpu=[], a10=[], a100=[], t4=[])
-        for key, val in images_to_cache_priority.items():
-            images_to_cache[key] = sorted(  # type: ignore
-                val.keys(), key=lambda image: val[image], reverse=True
-            )[:IMAGES_TO_CACHE_PER_INSTANCE_TYPE]
+        try:
+            for key, val in images_to_cache_priority.items():
+                images_to_cache[key] = sorted(  # type: ignore
+                    val.keys(), key=lambda image: val[image], reverse=True
+                )[:IMAGES_TO_CACHE_PER_INSTANCE_TYPE]
+            logger.info("everything worked!")
+        except Exception as exc:
+            logger.warning(f"sorting had an error. Error message: {exc}. Skipping sorting...")
 
         await self.image_cache_gateway.create_or_update_image_cache(images_to_cache)
