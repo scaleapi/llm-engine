@@ -171,7 +171,7 @@ class ImageCacheService:
                 images_to_cache[key] = sorted(  # type: ignore
                     val.keys(), key=lambda image: val[image], reverse=True
                 )[:IMAGES_TO_CACHE_PER_INSTANCE_TYPE]
-            logger.info("everything worked!")
+            logger.info("sorted images to cache successfully")
         except Exception as exc:
             logger.warning(f"sorting had an error. Error message: {exc}. Skipping sorting...")
 
