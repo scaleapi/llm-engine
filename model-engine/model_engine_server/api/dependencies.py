@@ -275,10 +275,8 @@ async def get_external_interfaces():
     try:
         from plugins.dependencies import get_external_interfaces as get_custom_external_interfaces
 
-        logger.info("Using custom external interfaces")
         yield get_custom_external_interfaces()
     except ModuleNotFoundError:
-        logger.info("Using default external interfaces")
         yield get_default_external_interfaces()
     finally:
         pass
@@ -290,10 +288,8 @@ async def get_external_interfaces_read_only():
             get_external_interfaces_read_only as get_custom_external_interfaces_read_only,
         )
 
-        logger.info("Using custom external interfaces")
         yield get_custom_external_interfaces_read_only()
     except ModuleNotFoundError:
-        logger.info("Using default external interfaces")
         yield get_default_external_interfaces_read_only()
     finally:
         pass
