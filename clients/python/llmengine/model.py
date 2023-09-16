@@ -334,7 +334,7 @@ class Model(APIEngine):
         return ListLLMEndpointsResponse.parse_obj(response)
 
     @classmethod
-    def delete(cls, model: str) -> DeleteLLMEndpointResponse:
+    def delete(cls, model_endpoint_name: str) -> DeleteLLMEndpointResponse:
         """
         Deletes an LLM model.
 
@@ -345,11 +345,11 @@ class Model(APIEngine):
         Engine, an error will be thrown.
 
         Args:
-            model (`str`):
-                Name of the model
+            model_endpoint_name (`str`):
+                Name of the model endpoint to be deleted
 
         Returns:
-            response: whether the model was successfully deleted
+            response: whether the model endpoint was successfully deleted
 
         === "Deleting model in Python"
             ```python
@@ -366,7 +366,9 @@ class Model(APIEngine):
             }
             ```
         """
-        response = cls._delete(f"v1/llm/model-endpoints/{model}", timeout=DEFAULT_TIMEOUT)
+        response = cls._delete(
+            f"v1/llm/model-endpoints/{model_endpoint_name}", timeout=DEFAULT_TIMEOUT
+        )
         return DeleteLLMEndpointResponse.parse_obj(response)
 
     @classmethod

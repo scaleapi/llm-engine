@@ -21,6 +21,7 @@ from model_engine_server.common.dtos.llms import (
     CompletionSyncV1Response,
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
+    DeleteLLMEndpointResponse,
     GetLLMModelEndpointV1Response,
     ListLLMModelEndpointsV1Response,
     ModelDownloadRequest,
@@ -778,8 +779,45 @@ class GetLLMModelEndpointByNameV1UseCase:
         return _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
 
-class DeleteLLMModelEndpointByIdV1UseCase:
-    pass
+class DeleteLLMEndpointByNameUseCase:
+    """
+    Use case for deleting an LLM Model Endpoint of a given user by endpoint name.
+    """
+
+    def __init__(
+        self,
+        model_endpoint_service: ModelEndpointService,
+        llm_model_endpoint_service: LLMModelEndpointService,
+    ):
+        self.model_endpoint_service = model_endpoint_service
+        self.llm_model_endpoint_service = llm_model_endpoint_service
+        self.authz_module = LiveAuthorizationModule()
+
+    async def execute(self, user: User, model_endpoint_name: str) -> DeleteLLMEndpointResponse:
+        """
+        Runs the use case to delete the LLM endpoint owned by the user with the given name.
+
+        Args:
+            user: The owner of the model endpoint.
+            model_endpoint_name: The name of the model endpoint.
+
+        Returns:
+            A response object that contains a boolean indicating if deletion was successful.
+
+        Raises:
+            ObjectNotFoundException: If a model endpoint with the given name could not be found.
+            ObjectNotAuthorizedException: If the owner does not own the model endpoint.
+        """
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.user_id, name=model_endpoint_name, order_by=None
+        )
+        if len(model_endpoints) != 1:
+            raise ObjectNotFoundException
+        model_endpoint = model_endpoints[0]
+        if not self.authz_module.check_access_write_owned_entity(user, model_endpoint.record):
+            raise ObjectNotAuthorizedException
+        await self.model_endpoint_service.delete_model_endpoint(model_endpoint.record.id)
+        return DeleteLLMEndpointResponse(deleted=True)
 
 
 def deepspeed_result_to_tokens(result: Dict[str, Any]) -> List[TokenOutput]:
