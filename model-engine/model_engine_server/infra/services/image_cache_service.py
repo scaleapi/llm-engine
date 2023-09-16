@@ -130,49 +130,38 @@ class ImageCacheService:
 
             image_repository_and_tag = state.image.split("/", 1)[1]
             repository_name, image_tag = image_repository_and_tag.split(":")
-            try:
-                if state.resource_state.gpus == 0 and (
-                    (
-                        state.image not in images_to_cache_priority["cpu"]
-                        or last_updated_at.replace(tzinfo=pytz.utc)
-                        > images_to_cache_priority["cpu"][state.image].last_updated_at.replace(
-                            tzinfo=pytz.utc
-                        )
+            if state.resource_state.gpus == 0 and (
+                (
+                    state.image not in images_to_cache_priority["cpu"]
+                    or last_updated_at.replace(tzinfo=pytz.utc)
+                    > images_to_cache_priority["cpu"][state.image].last_updated_at.replace(
+                        tzinfo=pytz.utc
                     )
-                    and self.docker_repository.image_exists(image_tag, repository_name)
-                ):
-                    images_to_cache_priority["cpu"][state.image] = cache_priority
-                elif state.resource_state.gpus > 0:
-                    for gpu_type, key in [
-                        (GpuType.NVIDIA_AMPERE_A10, "a10"),
-                        (GpuType.NVIDIA_AMPERE_A100, "a100"),
-                        (GpuType.NVIDIA_TESLA_T4, "t4"),
-                    ]:
-                        if state.resource_state.gpu_type == gpu_type and (
-                            (
-                                state.image not in images_to_cache_priority[key]
-                                or last_updated_at.replace(tzinfo=pytz.utc)
-                                > images_to_cache_priority[key][
-                                    state.image
-                                ].last_updated_at.replace(tzinfo=pytz.utc)
-                            )
-                            and self.docker_repository.image_exists(image_tag, repository_name)
-                        ):
-                            images_to_cache_priority[key][state.image] = cache_priority
-            except Exception as exc:
-                logger.warning(
-                    f"Endpoint {endpoint_id} had an error. Error message: {exc}. Skipping caching ..."
                 )
-                continue
-
+                and self.docker_repository.image_exists(image_tag, repository_name)
+            ):
+                images_to_cache_priority["cpu"][state.image] = cache_priority
+            elif state.resource_state.gpus > 0:
+                for gpu_type, key in [
+                    (GpuType.NVIDIA_AMPERE_A10, "a10"),
+                    (GpuType.NVIDIA_AMPERE_A100, "a100"),
+                    (GpuType.NVIDIA_TESLA_T4, "t4"),
+                ]:
+                    if state.resource_state.gpu_type == gpu_type and (
+                        (
+                            state.image not in images_to_cache_priority[key]
+                            or last_updated_at.replace(tzinfo=pytz.utc)
+                            > images_to_cache_priority[key][state.image].last_updated_at.replace(
+                                tzinfo=pytz.utc
+                            )
+                        )
+                        and self.docker_repository.image_exists(image_tag, repository_name)
+                    ):
+                        images_to_cache_priority[key][state.image] = cache_priority
         images_to_cache = CachedImages(cpu=[], a10=[], a100=[], t4=[])
-        try:
-            for key, val in images_to_cache_priority.items():
-                images_to_cache[key] = sorted(  # type: ignore
-                    val.keys(), key=lambda image: val[image], reverse=True
-                )[:IMAGES_TO_CACHE_PER_INSTANCE_TYPE]
-            logger.info("sorted images to cache successfully")
-        except Exception as exc:
-            logger.warning(f"sorting had an error. Error message: {exc}. Skipping sorting...")
+        for key, val in images_to_cache_priority.items():
+            images_to_cache[key] = sorted(  # type: ignore
+                val.keys(), key=lambda image: val[image], reverse=True
+            )[:IMAGES_TO_CACHE_PER_INSTANCE_TYPE]
 
         await self.image_cache_gateway.create_or_update_image_cache(images_to_cache)
