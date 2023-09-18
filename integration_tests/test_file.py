@@ -6,7 +6,7 @@ from .rest_api_utils import (  # list_files, delete_file_by_id,
 
 
 def test_files() -> None:
-    user = "integration_test_user"
+    user = "62bc820451dbea002b1c5421"  # CDS needs proper user ID
 
     upload_response = upload_file(open(__file__, "rb"), user)
     file_id = upload_response["id"]

@@ -28,10 +28,37 @@ def tmp_work_path(tmp_path: Path):
     os.chdir(previous_cwd)
 
 
+class SetEnv:
+    def __init__(self):
+        self.envars = set()
+
+    def __call__(self, name, value):
+        self.envars.add(name)
+        os.environ[name] = value
+
+    def clear(self):
+        for n in self.envars:
+            os.environ.pop(n)
+
+
+@pytest.fixture
+def env():
+    setenv = SetEnv()
+
+    yield setenv
+
+    setenv.clear()
+
+
 @pytest.fixture()
 def seed() -> int:
     """Returns a random seed between 0 and 999, inclusive."""
     return random.randint(0, 999)
+
+
+@pytest.fixture()
+def integration_test_user_id() -> str:
+    return "62bc820451dbea002b1c5421"
 
 
 def modify_source(source: str, seed: int) -> str:
@@ -168,10 +195,14 @@ def test_docs_examples(
     module_name,
     source_code,
     import_execute,
+    env,
     seed,
+    integration_test_user_id,
 ):
     if source_code == "__skip__":
         pytest.skip("test='skip' on code snippet")
+
+    env("LAUNCH_API_KEY", os.getenv("LAUNCH_TEST_API_KEY", integration_test_user_id))
 
     try:
         import_execute(module_name, source_code, seed, True)
