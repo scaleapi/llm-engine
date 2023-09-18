@@ -8,14 +8,16 @@ from model_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointResponse,
     BuildEndpointStatus,
 )
-from model_engine_server.domain.exceptions import DockerBuildFailedException
 from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
 from model_engine_server.core.notification_gateway import NotificationApp
 from model_engine_server.domain.entities.model_bundle_entity import (
     ArtifactLike,
     RunnableImageFlavor,
 )
-from model_engine_server.domain.exceptions import EndpointResourceInfraException
+from model_engine_server.domain.exceptions import (
+    DockerBuildFailedException,
+    EndpointResourceInfraException,
+)
 from model_engine_server.infra.gateways.fake_monitoring_metrics_gateway import (
     FakeMonitoringMetricsGateway,
 )

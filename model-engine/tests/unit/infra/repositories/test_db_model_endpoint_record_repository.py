@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
-from model_engine_server.domain.exceptions import ReadOnlyDatabaseException
 from model_engine_server.db.models import Bundle, Endpoint
 from model_engine_server.domain.entities import ModelEndpointRecord
+from model_engine_server.domain.exceptions import ReadOnlyDatabaseException
 from model_engine_server.infra.gateways import FakeMonitoringMetricsGateway
 from model_engine_server.infra.repositories import db_model_endpoint_record_repository
 from model_engine_server.infra.repositories.db_model_endpoint_record_repository import (
