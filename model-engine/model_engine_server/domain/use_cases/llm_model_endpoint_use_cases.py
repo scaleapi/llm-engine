@@ -49,7 +49,6 @@ from model_engine_server.domain.entities import (
 from model_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
-    InternalError,
     InvalidRequestException,
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
@@ -1410,25 +1409,22 @@ class ModelDownloadV1UseCase:
         self.llm_artifact_gateway = llm_artifact_gateway
 
     async def execute(self, user: User, request: ModelDownloadRequest) -> ModelDownloadResponse:
-        try:
-            model_endpoints = await self.model_endpoint_service.list_model_endpoints(
-                owner=user.team_id, name=request.model_name, order_by=None
-            )
-            if len(model_endpoints) == 0:
-                raise ObjectNotFoundException
+        model_endpoints = await self.model_endpoint_service.list_model_endpoints(
+            owner=user.team_id, name=request.model_name, order_by=None
+        )
+        if len(model_endpoints) == 0:
+            raise ObjectNotFoundException
 
-            if len(model_endpoints) > 1:
-                raise ObjectHasInvalidValueException(
-                    f"Expected 1 LLM model endpoint for model name {request.model_name}, got {len(model_endpoints)}"
-                )
-            model_files = self.llm_artifact_gateway.get_model_weights_urls(
-                user.team_id, request.model_name
+        if len(model_endpoints) > 1:
+            raise ObjectHasInvalidValueException(
+                f"Expected 1 LLM model endpoint for model name {request.model_name}, got {len(model_endpoints)}"
             )
-            urls = {}
-            for model_file in model_files:
-                # don't want to make s3 bucket full keys public, so trim to just keep file name
-                public_file_name = model_file.rsplit("/", 1)[-1]
-                urls[public_file_name] = self.filesystem_gateway.generate_signed_url(model_file)
-            return ModelDownloadResponse(urls=urls)
-        except Exception as exc:
-            raise InternalError(request_id=get_request_id(), error=exc)
+        model_files = self.llm_artifact_gateway.get_model_weights_urls(
+            user.team_id, request.model_name
+        )
+        urls = {}
+        for model_file in model_files:
+            # don't want to make s3 bucket full keys public, so trim to just keep file name
+            public_file_name = model_file.rsplit("/", 1)[-1]
+            urls[public_file_name] = self.filesystem_gateway.generate_signed_url(model_file)
+        return ModelDownloadResponse(urls=urls)

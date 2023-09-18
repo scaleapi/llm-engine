@@ -16,7 +16,7 @@ from model_engine_server.common.dtos.tasks import (
     TaskStatus,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
+from model_engine_server.domain.exceptions import (
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )

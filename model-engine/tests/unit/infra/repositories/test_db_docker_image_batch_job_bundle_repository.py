@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 from model_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
-from model_engine_server.core.domain_exceptions import ReadOnlyDatabaseException
+from model_engine_server.domain.exceptions import ReadOnlyDatabaseException
 from model_engine_server.db.models import DockerImageBatchJobBundle as OrmDockerImageBatchJobBundle
 from model_engine_server.domain.entities import GpuType
 from model_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (

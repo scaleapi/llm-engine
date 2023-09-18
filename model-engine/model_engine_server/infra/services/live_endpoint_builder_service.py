@@ -19,7 +19,7 @@ from model_engine_server.common.env_vars import LOCAL
 from model_engine_server.common.io import open_wrapper
 from model_engine_server.common.serialization_utils import bool_to_str
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.domain_exceptions import DockerBuildFailedException
+from model_engine_server.domain.exceptions import DockerBuildFailedException
 from model_engine_server.core.loggers import make_logger
 from model_engine_server.core.notification_gateway import NotificationApp, NotificationGateway
 from model_engine_server.core.utils.env import environment

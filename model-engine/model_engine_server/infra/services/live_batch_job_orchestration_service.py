@@ -16,7 +16,7 @@ from model_engine_server.common.dtos.tasks import (
     TaskStatus,
 )
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.domain_exceptions import ObjectNotFoundException
+from model_engine_server.domain.exceptions import ObjectNotFoundException
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.entities import (
     BatchJobProgress,

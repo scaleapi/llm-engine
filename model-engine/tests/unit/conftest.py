@@ -41,7 +41,7 @@ from model_engine_server.common.dtos.tasks import (
     TaskStatus,
 )
 from model_engine_server.common.settings import generate_destination
-from model_engine_server.core.domain_exceptions import ObjectNotFoundException
+from model_engine_server.domain.exceptions import ObjectNotFoundException
 from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
 from model_engine_server.db.endpoint_row_lock import get_lock_key
 from model_engine_server.db.models import BatchJob as OrmBatchJob

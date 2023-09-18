@@ -6,7 +6,7 @@ from typing import IO, List
 import boto3
 import smart_open
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.domain_exceptions import ObjectNotFoundException
+from model_engine_server.domain.exceptions import ObjectNotFoundException
 from model_engine_server.domain.entities.llm_fine_tune_entity import LLMFineTuneEvent
 from model_engine_server.domain.repositories.llm_fine_tune_events_repository import (
     LLMFineTuneEventsRepository,

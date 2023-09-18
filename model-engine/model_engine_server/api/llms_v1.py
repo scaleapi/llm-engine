@@ -2,7 +2,8 @@
 """
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+import traceback
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,

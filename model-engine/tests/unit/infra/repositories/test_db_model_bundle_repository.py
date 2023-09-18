@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 from model_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
-from model_engine_server.core.domain_exceptions import ReadOnlyDatabaseException
+from model_engine_server.domain.exceptions import ReadOnlyDatabaseException
 from model_engine_server.db.models import Bundle
 from model_engine_server.domain.entities import (
     CloudpickleArtifactFlavor,

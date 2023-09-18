@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, Optional
 from unittest.mock import AsyncMock
 
 import pytest
-from model_engine_server.core.domain_exceptions import ReadOnlyDatabaseException
+from model_engine_server.domain.exceptions import ReadOnlyDatabaseException
 from model_engine_server.db.models import BatchJob, Bundle
 from model_engine_server.domain.entities import BatchJobRecord
 from model_engine_server.infra.repositories.db_batch_job_record_repository import (
