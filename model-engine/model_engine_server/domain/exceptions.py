@@ -170,13 +170,3 @@ class TriggerNameAlreadyExistsException(DomainException):
     """
     Thrown if the requested name already exists in the trigger repository
     """
-
-
-class InternalError(DomainException):
-    """
-    Thrown as a catch-all for unhandled errors.
-    """
-
-    def __init__(self, request_id, error):
-        self.request_id = request_id
-        self.error = error

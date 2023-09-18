@@ -1,7 +1,6 @@
 """LLM Model Endpoint routes for the hosted model inference service.
 """
 from typing import Optional
-from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from model_engine_server.api.dependencies import (
@@ -10,7 +9,7 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_request_id, add_trace_resource_name
+from model_engine_server.common.datadog_utils import add_trace_resource_name, get_request_id
 from model_engine_server.common.dtos.llms import (
     CancelFineTuneResponse,
     CompletionStreamV1Request,
@@ -122,6 +121,13 @@ async def create_model_endpoint(
             status_code=404,
             detail="The specified model bundle could not be found.",
         ) from exc
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
 
 
 @llm_router_v1.get("/model-endpoints", response_model=ListLLMModelEndpointsV1Response)
@@ -136,10 +142,18 @@ async def list_model_endpoints(
     """
     add_trace_resource_name("llm_model_endpoints_get")
     logger.info(f"GET /llm/model-endpoints?name={name}&order_by={order_by} for {auth}")
-    use_case = ListLLMModelEndpointsV1UseCase(
-        llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
-    )
-    return await use_case.execute(user=auth, name=name, order_by=order_by)
+    try:
+        use_case = ListLLMModelEndpointsV1UseCase(
+            llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+        )
+        return await use_case.execute(user=auth, name=name, order_by=order_by)
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
 
 
 @llm_router_v1.get(
@@ -165,6 +179,13 @@ async def get_model_endpoint(
             status_code=404,
             detail=f"Model Endpoint {model_endpoint_name}  was not found.",
         ) from exc
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
 
 
 @llm_router_v1.post("/completions-sync", response_model=CompletionSyncV1Response)
@@ -190,8 +211,7 @@ async def create_completion_sync_task(
             user=auth, model_endpoint_name=model_endpoint_name, request=request
         )
     except UpstreamServiceError:
-        request_id = str(uuid4())
-        add_trace_request_id(request_id)
+        request_id = get_request_id()
         logger.exception(f"Upstream service error for request {request_id}")
         raise HTTPException(
             status_code=500,
@@ -211,6 +231,13 @@ async def create_completion_sync_task(
             status_code=400,
             detail=f"Unsupported inference type: {str(exc)}",
         ) from exc
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
 
 
 @llm_router_v1.post("/completions-stream", response_model=CompletionStreamV1Response)
@@ -246,8 +273,7 @@ async def create_completion_stream_task(
 
         return EventSourceResponse(event_generator())
     except UpstreamServiceError:
-        request_id = str(uuid4())
-        add_trace_request_id(request_id)
+        request_id = get_request_id()
         logger.exception(f"Upstream service error for request {request_id}")
         return EventSourceResponse(
             iter((CompletionStreamV1Response(request_id=request_id).json(),))
@@ -264,6 +290,13 @@ async def create_completion_stream_task(
             status_code=400,
             detail=f"Unsupported inference type: {str(exc)}",
         ) from exc
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
 
 
 @llm_router_v1.post("/fine-tunes", response_model=CreateFineTuneResponse)
@@ -293,6 +326,13 @@ async def create_fine_tune(
             status_code=400,
             detail=str(exc),
         ) from exc
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
 
 
 @llm_router_v1.get("/fine-tunes/{fine_tune_id}", response_model=GetFineTuneResponse)
@@ -313,6 +353,13 @@ async def get_fine_tune(
             status_code=404,
             detail="The specified fine-tune job could not be found.",
         ) from exc
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
 
 
 @llm_router_v1.get("/fine-tunes", response_model=ListFineTunesResponse)
@@ -322,10 +369,18 @@ async def list_fine_tunes(
 ) -> ListFineTunesResponse:
     add_trace_resource_name("fine_tunes_list")
     logger.info(f"GET /fine-tunes for {auth}")
-    use_case = ListFineTunesV1UseCase(
-        llm_fine_tuning_service=external_interfaces.llm_fine_tuning_service,
-    )
-    return await use_case.execute(user=auth)
+    try:
+        use_case = ListFineTunesV1UseCase(
+            llm_fine_tuning_service=external_interfaces.llm_fine_tuning_service,
+        )
+        return await use_case.execute(user=auth)
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
 
 
 @llm_router_v1.put("/fine-tunes/{fine_tune_id}/cancel", response_model=CancelFineTuneResponse)
@@ -346,6 +401,13 @@ async def cancel_fine_tune(
             status_code=404,
             detail="The specified fine-tune job could not be found.",
         ) from exc
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
 
 
 @llm_router_v1.get("/fine-tunes/{fine_tune_id}/events", response_model=GetFineTuneEventsResponse)
@@ -367,6 +429,13 @@ async def get_fine_tune_events(
             status_code=404,
             detail="The specified fine-tune job's events could not be found.",
         ) from exc
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
 
 
 @llm_router_v1.post("/model-endpoints/download", response_model=ModelDownloadResponse)
@@ -389,6 +458,13 @@ async def download_model_endpoint(
             status_code=404,
             detail="The requested fine-tuned model could not be found.",
         ) from exc
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
 
 
 @llm_router_v1.delete(
@@ -427,3 +503,10 @@ async def delete_llm_model_endpoint(
             status_code=500,
             detail="deletion of endpoint failed.",
         ) from exc
+    except Exception as exc:
+        request_id = get_request_id()
+        logger.exception(f"Internal service error for request {request_id}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error for request_id {request_id}.",
+        )
