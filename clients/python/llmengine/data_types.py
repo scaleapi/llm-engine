@@ -14,6 +14,7 @@ StorageSpecificationType = Union[str, int, float]  # TODO(phil): we can make thi
 class LLMInferenceFramework(str, Enum):
     DEEPSPEED = "deepspeed"
     TEXT_GENERATION_INFERENCE = "text_generation_inference"
+    VLLM = "vllm"
 
 
 class LLMSource(str, Enum):
