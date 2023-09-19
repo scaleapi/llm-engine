@@ -515,7 +515,9 @@ async def delete_llm_model_endpoint(
 
 @llm_router_v1.get("/test_error")
 def test_error():
-    raise Exception
+    with tracer.trace("web.request", service="my-fastapi-service") as span:
+        span.set_tag("http.method", "GET")
+        raise Exception
 
 
 @llm_router_v1.get("/test_dd_trace")
