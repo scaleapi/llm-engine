@@ -1,9 +1,8 @@
 """LLM Model Endpoint routes for the hosted model inference service.
 """
-import traceback
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
@@ -511,3 +510,8 @@ async def delete_llm_model_endpoint(
             status_code=500,
             detail=f"Internal error for request_id {request_id}.",
         )
+
+
+@llm_router_v1.get("/test_error")
+def test_error():
+    raise Exception
