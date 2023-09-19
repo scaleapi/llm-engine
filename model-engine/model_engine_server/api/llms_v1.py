@@ -521,9 +521,9 @@ def test_error():
 @llm_router_v1.get("/test_dd_trace")
 def test_dd_trace():
     if get_request_id() is None:
-        print("no trace id")
+        logger.info("no trace id")
     else:
-        print("trace id found!")
+        logger.info("trace id found!")
 
 
 @llm_router_v1.get("/test_create_dd_trace")
@@ -532,7 +532,8 @@ def test_create_dd_trace():
         print("no trace id")
         with tracer.trace("web.request", service="my-fastapi-service") as span:
             span.set_tag("http.method", "GET")
-            print("how about now?")
-            print(get_request_id())
+            logger.info("how about now?")
+            logger.info(get_request_id())
     else:
-        print("trace id found!")
+        logger.info("trace id found!")
+        logger.info(get_request_id())
