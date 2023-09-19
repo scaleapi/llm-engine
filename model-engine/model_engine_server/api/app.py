@@ -43,8 +43,6 @@ class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
         try:
             return await call_next(request)
         except Exception as e:
-            # logger.error("An unexpected error occured during request: {0}".format(str(e)))
-            # logger.exception("Traceback is: {0}".format(str(traceback.format_tb(e.__traceback__))))
             tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
             structured_log = {"error": str(e), "traceback": "".join(tb_str)}
             logger.error("Unhandled exception: %s", structured_log)

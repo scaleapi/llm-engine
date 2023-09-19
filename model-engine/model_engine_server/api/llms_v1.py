@@ -2,6 +2,7 @@
 """
 from typing import Optional
 
+from ddtrace import tracer
 from fastapi import APIRouter, Depends, HTTPException, Query
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
@@ -515,3 +516,23 @@ async def delete_llm_model_endpoint(
 @llm_router_v1.get("/test_error")
 def test_error():
     raise Exception
+
+
+@llm_router_v1.get("/test_dd_trace")
+def test_dd_trace():
+    if get_request_id() is None:
+        print("no trace id")
+    else:
+        print("trace id found!")
+
+
+@llm_router_v1.get("/test_create_dd_trace")
+def test_create_dd_trace():
+    if get_request_id() is None:
+        print("no trace id")
+        with tracer.trace("web.request", service="my-fastapi-service") as span:
+            span.set_tag("http.method", "GET")
+            print("how about now?")
+            print(get_request_id())
+    else:
+        print("trace id found!")
