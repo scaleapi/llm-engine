@@ -80,6 +80,7 @@ from model_engine_server.infra.repositories import (
     DbModelEndpointRecordRepository,
     DbTriggerRepository,
     ECRDockerRepository,
+    FakeDockerRepository,
     RedisModelEndpointCacheRepository,
     S3FileLLMFineTuneEventsRepository,
     S3FileLLMFineTuneRepository,
@@ -232,8 +233,10 @@ def _get_external_interfaces(
 
     file_storage_gateway = S3FileStorageGateway()
 
+    docker_repository = ECRDockerRepository() if not CIRCLECI else FakeDockerRepository()
+
     external_interfaces = ExternalInterfaces(
-        docker_repository=ECRDockerRepository(),
+        docker_repository=docker_repository,
         model_bundle_repository=model_bundle_repository,
         model_endpoint_service=model_endpoint_service,
         llm_model_endpoint_service=llm_model_endpoint_service,

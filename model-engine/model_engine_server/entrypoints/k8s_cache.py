@@ -37,7 +37,7 @@ from model_engine_server.infra.gateways.resources.live_sqs_endpoint_resource_del
 from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
     SQSEndpointResourceDelegate,
 )
-from model_engine_server.infra.repositories import ECRDockerRepository
+from model_engine_server.infra.repositories import ECRDockerRepository, FakeDockerRepository
 from model_engine_server.infra.repositories.db_model_endpoint_record_repository import (
     DbModelEndpointRecordRepository,
 )
@@ -117,7 +117,7 @@ async def main(args: Any):
         sqs_delegate=sqs_delegate,
     )
     image_cache_gateway = ImageCacheGateway()
-    docker_repo = ECRDockerRepository()
+    docker_repo = ECRDockerRepository() if not CIRCLECI else FakeDockerRepository()
     while True:
         loop_start = time.time()
         await loop_iteration(
