@@ -24,11 +24,6 @@ from model_engine_server.common.dtos.model_endpoints import (
 from model_engine_server.common.resource_limits import MAX_ENDPOINT_SIZE, validate_resource_requests
 from model_engine_server.common.settings import REQUIRED_ENDPOINT_LABELS, RESTRICTED_ENDPOINT_LABELS
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
-    ObjectHasInvalidValueException,
-    ObjectNotAuthorizedException,
-    ObjectNotFoundException,
-)
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.authorization.live_authorization_module import (
     LiveAuthorizationModule,
@@ -43,6 +38,9 @@ from model_engine_server.domain.exceptions import (
     EndpointInfraStateNotFound,
     EndpointLabelsException,
     EndpointResourceInvalidRequestException,
+    ObjectHasInvalidValueException,
+    ObjectNotAuthorizedException,
+    ObjectNotFoundException,
 )
 from model_engine_server.domain.repositories import ModelBundleRepository
 from model_engine_server.domain.services import ModelEndpointService

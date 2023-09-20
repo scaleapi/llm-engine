@@ -16,11 +16,11 @@ from model_engine_server.common.dtos.files import (
     UploadFileResponse,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
+from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.domain.exceptions import (
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.use_cases.file_use_cases import (
     DeleteFileUseCase,
     GetFileContentUseCase,

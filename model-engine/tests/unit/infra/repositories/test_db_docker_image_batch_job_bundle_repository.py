@@ -4,13 +4,15 @@ from unittest.mock import AsyncMock
 
 import pytest
 from model_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
-from model_engine_server.core.domain_exceptions import ReadOnlyDatabaseException
 from model_engine_server.db.models import DockerImageBatchJobBundle as OrmDockerImageBatchJobBundle
 from model_engine_server.domain.entities import GpuType
 from model_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
     DockerImageBatchJobBundle,
 )
-from model_engine_server.domain.exceptions import CorruptRecordInfraStateException
+from model_engine_server.domain.exceptions import (
+    CorruptRecordInfraStateException,
+    ReadOnlyDatabaseException,
+)
 from model_engine_server.infra.repositories import DbDockerImageBatchJobBundleRepository
 from model_engine_server.infra.repositories.db_docker_image_batch_job_bundle_repository import (
     translate_docker_image_batch_job_bundle_orm_to_entity,

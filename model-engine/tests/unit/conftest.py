@@ -41,7 +41,6 @@ from model_engine_server.common.dtos.tasks import (
     TaskStatus,
 )
 from model_engine_server.common.settings import generate_destination
-from model_engine_server.core.domain_exceptions import ObjectNotFoundException
 from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
 from model_engine_server.db.endpoint_row_lock import get_lock_key
 from model_engine_server.db.models import BatchJob as OrmBatchJob
@@ -87,7 +86,10 @@ from model_engine_server.domain.entities.docker_image_batch_job_bundle_entity im
     DockerImageBatchJobBundle,
 )
 from model_engine_server.domain.entities.llm_fine_tune_entity import LLMFineTuneTemplate
-from model_engine_server.domain.exceptions import EndpointResourceInfraException
+from model_engine_server.domain.exceptions import (
+    EndpointResourceInfraException,
+    ObjectNotFoundException,
+)
 from model_engine_server.domain.gateways import (
     AsyncModelEndpointInferenceGateway,
     CronJobGateway,

@@ -10,7 +10,7 @@ from model_engine_server.common.dtos.model_bundles import (
     ModelBundleV1Response,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
+from model_engine_server.domain.exceptions import (
     DockerImageNotFoundException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,

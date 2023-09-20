@@ -124,6 +124,8 @@ podAffinity:
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "${DATADOG_TRACE_ENABLED}"
+  - name: DD_REMOTE_CONFIGURATION_ENABLED
+    value: "false"
   - name: DD_SERVICE
     value: "${ENDPOINT_NAME}"
   - name: DD_ENV
@@ -184,6 +186,8 @@ env:
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "${DATADOG_TRACE_ENABLED}"
+  - name: DD_REMOTE_CONFIGURATION_ENABLED
+    value: "false"
   - name: DD_SERVICE
     value: "${ENDPOINT_NAME}"
   - name: DD_ENV
@@ -230,6 +234,8 @@ env:
 env:
   - name: DATADOG_TRACE_ENABLED
     value: "{{ .Values.datadog_trace_enabled }}"
+  - name: DD_REMOTE_CONFIGURATION_ENABLED
+    value: "false"
   - name: DD_ENV
     value: {{ .Values.context }}
   - name: DD_AGENT_HOST

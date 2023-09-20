@@ -1,7 +1,6 @@
 """LLM Model Endpoint routes for the hosted model inference service.
 """
 from typing import Optional
-from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from model_engine_server.api.dependencies import (
@@ -10,7 +9,7 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_request_id, add_trace_resource_name
+from model_engine_server.common.datadog_utils import add_trace_resource_name, get_request_id
 from model_engine_server.common.dtos.llms import (
     CancelFineTuneResponse,
     CompletionStreamV1Request,
@@ -32,13 +31,6 @@ from model_engine_server.common.dtos.llms import (
 )
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
-    ObjectAlreadyExistsException,
-    ObjectHasInvalidValueException,
-    ObjectNotApprovedException,
-    ObjectNotAuthorizedException,
-    ObjectNotFoundException,
-)
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
@@ -49,6 +41,11 @@ from model_engine_server.domain.exceptions import (
     InvalidRequestException,
     LLMFineTuningMethodNotImplementedException,
     LLMFineTuningQuotaReached,
+    ObjectAlreadyExistsException,
+    ObjectHasInvalidValueException,
+    ObjectNotApprovedException,
+    ObjectNotAuthorizedException,
+    ObjectNotFoundException,
     UpstreamServiceError,
 )
 from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
@@ -192,10 +189,12 @@ async def create_completion_sync_task(
             user=auth, model_endpoint_name=model_endpoint_name, request=request
         )
     except UpstreamServiceError:
-        request_id = str(uuid4())
-        add_trace_request_id(request_id)
+        request_id = get_request_id()
         logger.exception(f"Upstream service error for request {request_id}")
-        return CompletionSyncV1Response(request_id=request_id, output=None)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Upstream service error for request_id {request_id}.",
+        )
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(
             status_code=404,
@@ -245,8 +244,7 @@ async def create_completion_stream_task(
 
         return EventSourceResponse(event_generator())
     except UpstreamServiceError:
-        request_id = str(uuid4())
-        add_trace_request_id(request_id)
+        request_id = get_request_id()
         logger.exception(f"Upstream service error for request {request_id}")
         return EventSourceResponse(
             iter((CompletionStreamV1Response(request_id=request_id).json(),))

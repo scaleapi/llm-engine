@@ -3,11 +3,11 @@ from typing import Any, Dict, Tuple
 import pytest
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request, TaskStatus
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
+from model_engine_server.domain.entities import ModelEndpoint
+from model_engine_server.domain.exceptions import (
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from model_engine_server.domain.entities import ModelEndpoint
 from model_engine_server.domain.use_cases.async_inference_use_cases import (
     CreateAsyncInferenceTaskV1UseCase,
     GetAsyncInferenceTaskV1UseCase,

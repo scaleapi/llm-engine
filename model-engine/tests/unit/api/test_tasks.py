@@ -2,12 +2,12 @@ from typing import Any, Dict, Tuple
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
-from model_engine_server.core.domain_exceptions import (
+from model_engine_server.domain.entities import ModelBundle, ModelEndpoint
+from model_engine_server.domain.exceptions import (
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
+    UpstreamServiceError,
 )
-from model_engine_server.domain.entities import ModelBundle, ModelEndpoint
-from model_engine_server.domain.exceptions import UpstreamServiceError
 
 
 def test_create_async_task_success(

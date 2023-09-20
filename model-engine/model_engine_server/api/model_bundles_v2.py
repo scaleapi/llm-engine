@@ -19,13 +19,13 @@ from model_engine_server.common.dtos.model_bundles import (
     ModelBundleV2Response,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
+from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.domain.exceptions import (
     DockerImageNotFoundException,
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.use_cases.model_bundle_use_cases import (
     CloneModelBundleV2UseCase,
     CreateModelBundleV2UseCase,

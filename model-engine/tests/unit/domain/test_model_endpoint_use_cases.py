@@ -17,16 +17,14 @@ from model_engine_server.common.resource_limits import (
     STORAGE_LIMIT,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
-    ObjectHasInvalidValueException,
-    ObjectNotAuthorizedException,
-    ObjectNotFoundException,
-)
 from model_engine_server.domain.entities import ModelBundle, ModelEndpoint
 from model_engine_server.domain.exceptions import (
     EndpointBillingTagsMalformedException,
     EndpointLabelsException,
     EndpointResourceInvalidRequestException,
+    ObjectHasInvalidValueException,
+    ObjectNotAuthorizedException,
+    ObjectNotFoundException,
 )
 from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
     CreateModelEndpointV1UseCase,
