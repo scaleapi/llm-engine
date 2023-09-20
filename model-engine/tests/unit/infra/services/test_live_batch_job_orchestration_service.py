@@ -6,7 +6,6 @@ from unittest.mock import patch
 import pytest
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
 from model_engine_server.common.dtos.tasks import GetAsyncTaskV1Response, ResponseSchema, TaskStatus
-from model_engine_server.core.domain_exceptions import ObjectNotFoundException
 from model_engine_server.domain.entities import (
     BatchJob,
     BatchJobSerializationFormat,
@@ -15,6 +14,7 @@ from model_engine_server.domain.entities import (
     ModelEndpoint,
     ModelEndpointStatus,
 )
+from model_engine_server.domain.exceptions import ObjectNotFoundException
 from model_engine_server.infra.gateways import LiveBatchJobProgressGateway
 from model_engine_server.infra.services import (
     LiveBatchJobOrchestrationService,

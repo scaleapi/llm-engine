@@ -5,15 +5,15 @@ from model_engine_server.common.dtos.tasks import (
     SyncEndpointPredictV1Response,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
-    ObjectNotAuthorizedException,
-    ObjectNotFoundException,
-)
 from model_engine_server.domain.authorization.live_authorization_module import (
     LiveAuthorizationModule,
 )
 from model_engine_server.domain.entities import ModelEndpointType
-from model_engine_server.domain.exceptions import EndpointUnsupportedInferenceTypeException
+from model_engine_server.domain.exceptions import (
+    EndpointUnsupportedInferenceTypeException,
+    ObjectNotAuthorizedException,
+    ObjectNotFoundException,
+)
 from model_engine_server.domain.services.model_endpoint_service import ModelEndpointService
 
 

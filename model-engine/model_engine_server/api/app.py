@@ -1,7 +1,9 @@
 import os
+import traceback
 from pathlib import Path
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from model_engine_server.api.batch_jobs_v1 import batch_job_router_v1
 from model_engine_server.api.dependencies import get_or_create_aioredis_pool
@@ -16,6 +18,9 @@ from model_engine_server.api.model_endpoints_docs_v1 import model_endpoints_docs
 from model_engine_server.api.model_endpoints_v1 import model_endpoint_router_v1
 from model_engine_server.api.tasks_v1 import inference_task_router_v1
 from model_engine_server.api.triggers_v1 import trigger_router_v1
+from model_engine_server.common.datadog_utils import get_request_id
+from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from starlette.middleware.base import BaseHTTPMiddleware
 
 app = FastAPI(title="launch", version="1.0.0", redoc_url="/api")
 
@@ -29,6 +34,30 @@ app.include_router(docker_image_batch_job_bundle_router_v1)
 app.include_router(llm_router_v1)
 app.include_router(file_router_v1)
 app.include_router(trigger_router_v1)
+
+logger = make_logger(filename_wo_ext(__name__))
+
+
+class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        try:
+            return await call_next(request)
+        except Exception as e:
+            tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
+            structured_log = {"error": str(e), "traceback": "".join(tb_str)}
+            logger.error("Unhandled exception: %s", structured_log)
+            request_id = get_request_id()
+            return JSONResponse(
+                {
+                    "status_code": 500,
+                    "content": {
+                        "error": f"Internal error for request_id {request_id}. Our team has been notified."
+                    },
+                }
+            )
+
+
+app.add_middleware(ExceptionLoggingMiddleware)
 
 # TODO: Remove this once we have a better way to serve internal docs
 INTERNAL_DOCS_PATH = str(Path(__file__).parents[3] / "launch_internal/site")

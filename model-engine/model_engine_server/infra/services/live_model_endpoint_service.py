@@ -3,10 +3,6 @@ from typing import Any, Dict, List, Optional
 from datadog import statsd
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.settings import generate_deployment_name
-from model_engine_server.core.domain_exceptions import (
-    ObjectAlreadyExistsException,
-    ObjectNotFoundException,
-)
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.entities import (
     CallbackAuth,
@@ -20,7 +16,11 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
     StorageSpecificationType,
 )
-from model_engine_server.domain.exceptions import EndpointDeleteFailedException
+from model_engine_server.domain.exceptions import (
+    EndpointDeleteFailedException,
+    ObjectAlreadyExistsException,
+    ObjectNotFoundException,
+)
 from model_engine_server.domain.gateways import (
     AsyncModelEndpointInferenceGateway,
     ModelEndpointsSchemaGateway,

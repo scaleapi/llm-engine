@@ -3,12 +3,12 @@ from typing import Any, Dict, Tuple
 import pytest
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.domain_exceptions import (
+from model_engine_server.domain.entities import ModelEndpoint
+from model_engine_server.domain.exceptions import (
+    EndpointUnsupportedInferenceTypeException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
-from model_engine_server.domain.entities import ModelEndpoint
-from model_engine_server.domain.exceptions import EndpointUnsupportedInferenceTypeException
 from model_engine_server.domain.use_cases.streaming_inference_use_cases import (
     CreateStreamingInferenceTaskV1UseCase,
 )
