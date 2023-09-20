@@ -139,11 +139,47 @@ jobs:
           command: |
             minikube --logtostderr -v 1 image load model-engine:$CIRCLE_SHA1
       - run:
+          name: Pre-load integration test images to minikube
+          command: |
+            docker build -f model-engine/model_engine_server/inference/pytorch_or_tf.base.Dockerfile \
+            --build-arg BASE_IMAGE=pytorch/pytorch:1.7.1-cuda11.0-cudnn8-runtime \
+            --build-arg REQUIREMENTS_FILE="$CIRCLE_SHA1-base-requirements.txt" \
+            -t temp:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1 .
+
+            touch $CIRCLE_SHA1-requirements.txt
+            echo -e "cloudpickle==2.1.0\npyyaml==6.0" > $CIRCLE_SHA1-requirements.txt
+
+            DOCKER_BUILDKIT=1 docker build -f model-engine/model_engine_server/inference/pytorch_or_tf.user.Dockerfile \
+            --build-arg BASE_IMAGE=temp:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1 \
+            --build-arg REQUIREMENTS_FILE="$CIRCLE_SHA1-requirements.txt" \
+            -t $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1-021694 .
+            rm $CIRCLE_SHA1-requirements.txt
+
+            minikube --logtostderr -v 1 image load $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1-021694
+      - run:
           name: Install helm chart
           command: |
             pushd $HOME/project/charts
             cat model-engine/values_circleci.yaml | envsubst > model-engine/values_circleci_subst.yaml
             helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
+      - run:
+          name: Change python version to 3.8.12
+          command: |
+            pyenv install 3.8.12
+            pyenv global 3.8.12
+      - run:
+          name: Install integration test dependencies
+          command: |
+            sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libssl-dev python3-dev
+            pip install -r model-engine/requirements.txt
+      - install_client
+      - install_server
+      - run:
+          name: Run integration tests
+          command: |
+            pushd $HOME/project
+            kubectl port-forward svc/model-engine 5001:80 &
+            GIT_TAG=$CIRCLE_SHA1 pytest integration_tests
 
 executors:
   ubuntu-large:
@@ -188,6 +224,7 @@ commands:
       - run:
           name: Install LLM Engine client
           command: |
+            pip install --upgrade pip
             pip install -e $HOME/project/clients/python
   run_unit_tests_python_client:
     description: Unit tests of the python client

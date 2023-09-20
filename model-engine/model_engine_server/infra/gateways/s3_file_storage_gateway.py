@@ -36,7 +36,7 @@ class S3FileStorageGateway(FileStorageGateway):
             )
             return FileMetadata(
                 id=file_id,
-                filename=get_s3_url(owner, file_id),
+                filename=file_id,
                 size=obj.get("ContentLength"),
                 owner=owner,
                 updated_at=obj.get("LastModified"),
@@ -57,7 +57,7 @@ class S3FileStorageGateway(FileStorageGateway):
         with self.filesystem_gateway.open(
             get_s3_url(owner, filename), mode="w", aws_profile=infra_config().profile_ml_worker
         ) as f:
-            f.write(content)
+            f.write(content.decode("utf-8"))
         return filename
 
     async def delete_file(self, owner: str, file_id: str) -> bool:

@@ -48,6 +48,8 @@ COPY model-engine/setup.py /workspace/model-engine/setup.py
 COPY model-engine/model_engine_server /workspace/model-engine/model_engine_server
 RUN pip install -e .
 
+COPY integration_tests /workspace/integration_tests
+
 WORKDIR /workspace
 ENV PYTHONPATH /workspace
 ENV WORKSPACE /workspace

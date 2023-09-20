@@ -30,13 +30,17 @@ async def test_image_cache_success(
     await fake_image_cache_service.execute(infra_states)  # type: ignore
     gateway: Any = fake_image_cache_service.image_cache_gateway
 
-    assert f"{infra_config().docker_repo_prefix}/my-repo:abcdefg222" in gateway.cached_images["t4"]
     assert (
-        f"{infra_config().docker_repo_prefix}/my-repo:abcdefg111111111"
+        f"{infra_config().ml_account_id}.dkr.ecr.us-west-2.amazonaws.com/my-repo:abcdefg222"
         in gateway.cached_images["t4"]
     )
     assert (
-        f"{infra_config().docker_repo_prefix}/my-repo:abcdefg00000" in gateway.cached_images["t4"]
+        f"{infra_config().ml_account_id}.dkr.ecr.us-west-2.amazonaws.com/my-repo:abcdefg111111111"
+        in gateway.cached_images["t4"]
+    )
+    assert (
+        f"{infra_config().ml_account_id}.dkr.ecr.us-west-2.amazonaws.com/my-repo:abcdefg00000"
+        in gateway.cached_images["t4"]
     )
 
 

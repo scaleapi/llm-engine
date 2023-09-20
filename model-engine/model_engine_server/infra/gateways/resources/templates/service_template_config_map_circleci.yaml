@@ -7,11 +7,11 @@ metadata:
   name: model-engine-service-template-config
   labels:
     team: infra
-    product: launch
+    product: model-engine
     helm.sh/chart: model-engine-0.1.0
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/version: 7034db9f84a3a6009d2ef738e5497b300f24f6cd
-    tags.datadoghq.com/version: 7034db9f84a3a6009d2ef738e5497b300f24f6cd
+    app.kubernetes.io/version: a93c7fe34529efde2b468b9cbbf3abf300308164
+    tags.datadoghq.com/version: a93c7fe34529efde2b468b9cbbf3abf300308164
     tags.datadoghq.com/env: circleci
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
@@ -106,7 +106,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -377,7 +377,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -596,7 +596,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -864,7 +864,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -1088,7 +1088,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:7034db9f84a3a6009d2ef738e5497b300f24f6cd
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -1327,7 +1327,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -1459,6 +1459,7 @@ data:
                 periodSeconds: 5
               resources:
                 requests:
+                  nvidia.com/gpu: ${GPUS}
                   cpu: ${CPUS}
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
@@ -1604,7 +1605,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -1692,6 +1693,7 @@ data:
                 periodSeconds: 5
               resources:
                 requests:
+                  nvidia.com/gpu: ${GPUS}
                   cpu: ${CPUS}
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
@@ -1829,7 +1831,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -1966,6 +1968,7 @@ data:
                 periodSeconds: 5
               resources:
                 requests:
+                  nvidia.com/gpu: ${GPUS}
                   cpu: ${CPUS}
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
@@ -2103,7 +2106,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -2196,6 +2199,7 @@ data:
                 periodSeconds: 5
               resources:
                 requests:
+                  nvidia.com/gpu: ${GPUS}
                   cpu: ${CPUS}
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
@@ -2333,7 +2337,7 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:7034db9f84a3a6009d2ef738e5497b300f24f6cd
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -2428,6 +2432,7 @@ data:
                 periodSeconds: 5
               resources:
                 requests:
+                  nvidia.com/gpu: ${GPUS}
                   cpu: ${CPUS}
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
@@ -2776,7 +2781,7 @@ data:
                 name: default-config
           containers:
             - name: main
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
@@ -2807,11 +2812,13 @@ data:
                   value: "true"
                 - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
                   value: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
+                - name: CIRCLECI
+                  value: "true"
                 - name: DD_VERSION
                   value: ${GIT_TAG}
                 - name: GIT_TAG
                   value: ${GIT_TAG}
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               command:
                 - dumb-init
                 - --
@@ -2930,11 +2937,13 @@ data:
                   value: "true"
                 - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
                   value: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
+                - name: CIRCLECI
+                  value: "true"
                 - name: DD_VERSION
                   value: ${GIT_TAG}
                 - name: GIT_TAG
                   value: ${GIT_TAG}
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               command: ${COMMAND}
               resources:
                 # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.
@@ -2956,7 +2965,7 @@ data:
                   name: dshm
           initContainers:
             - name: input-downloader
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               command:
                 - python
                 - -m
@@ -3074,15 +3083,18 @@ data:
                   value: "true"
                 - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
                   value: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
+                - name: CIRCLECI
+                  value: "true"
                 - name: DD_VERSION
                   value: ${GIT_TAG}
                 - name: GIT_TAG
                   value: ${GIT_TAG}
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               command: ${COMMAND}
               resources:
                 # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.
                 requests:
+                  nvidia.com/gpu: ${GPUS}
                   cpu: ${CPUS}
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
@@ -3101,7 +3113,7 @@ data:
                   name: dshm
           initContainers:
             - name: input-downloader
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/launch/gateway:${GIT_TAG}
+              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
               command:
                 - python
                 - -m
@@ -3134,7 +3146,7 @@ data:
       namespace: ${NAMESPACE}
       labels:
         team: infra
-        product: launch
+        product: model-engine
         use_scale_launch_endpoint_network_policy: "true"
         tags.datadoghq.com/service: ${RESOURCE_NAME}
     spec:
@@ -3149,7 +3161,7 @@ data:
           labels:
             app: ${RESOURCE_NAME}
             team: infra
-            product: launch
+            product: model-engine
             use_scale_launch_endpoint_network_policy: "true"
             tags.datadoghq.com/service: ${RESOURCE_NAME}
             version: v1
@@ -3171,7 +3183,7 @@ data:
       namespace: ${NAMESPACE}
       labels:
         team: infra
-        product: launch
+        product: model-engine
         use_scale_launch_endpoint_network_policy: "true"
         tags.datadoghq.com/service: ${RESOURCE_NAME}
     spec:
@@ -3186,7 +3198,7 @@ data:
           labels:
             app: ${RESOURCE_NAME}
             team: infra
-            product: launch
+            product: model-engine
             use_scale_launch_endpoint_network_policy: "true"
             tags.datadoghq.com/service: ${RESOURCE_NAME}
             version: v1
@@ -3212,7 +3224,7 @@ data:
       namespace: ${NAMESPACE}
       labels:
         team: infra
-        product: launch
+        product: model-engine
         use_scale_launch_endpoint_network_policy: "true"
         tags.datadoghq.com/service: ${RESOURCE_NAME}
     spec:
@@ -3227,7 +3239,7 @@ data:
           labels:
             app: ${RESOURCE_NAME}
             team: infra
-            product: launch
+            product: model-engine
             use_scale_launch_endpoint_network_policy: "true"
             tags.datadoghq.com/service: ${RESOURCE_NAME}
             version: v1
@@ -3253,7 +3265,7 @@ data:
       namespace: ${NAMESPACE}
       labels:
         team: infra
-        product: launch
+        product: model-engine
         use_scale_launch_endpoint_network_policy: "true"
         tags.datadoghq.com/service: ${RESOURCE_NAME}
     spec:
@@ -3268,7 +3280,7 @@ data:
           labels:
             app: ${RESOURCE_NAME}
             team: infra
-            product: launch
+            product: model-engine
             use_scale_launch_endpoint_network_policy: "true"
             tags.datadoghq.com/service: ${RESOURCE_NAME}
             version: v1

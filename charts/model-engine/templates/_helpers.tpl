@@ -287,6 +287,10 @@ env:
   - name: REDIS_AUTH_TOKEN
     value: {{ .Values.redis.auth }}
   {{- end }}
+  {{- if eq .Values.context "circleci" }}
+  - name: CIRCLECI
+    value: "true"
+  {{- end }}
 {{- end }}
 
 {{- define "modelEngine.serviceEnvGitTagFromHelmVar" }}
