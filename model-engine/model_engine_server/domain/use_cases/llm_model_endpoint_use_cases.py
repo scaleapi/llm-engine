@@ -60,7 +60,7 @@ from model_engine_server.domain.repositories import ModelBundleRepository
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
 
-from ...common.datadog_utils import add_trace_request_id, get_request_id
+from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
 from .model_bundle_use_cases import CreateModelBundleV2UseCase
 from .model_endpoint_use_cases import (
