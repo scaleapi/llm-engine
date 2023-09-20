@@ -50,7 +50,9 @@ class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 {
                     "status_code": 500,
-                    "content": {"error": f"Internal error for request_id {request_id}."},
+                    "content": {
+                        "error": f"Internal error for request_id {request_id}. Our team has been notified."
+                    },
                 }
             )
 
