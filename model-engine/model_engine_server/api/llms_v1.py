@@ -428,7 +428,7 @@ async def delete_llm_model_endpoint(
         ) from exc
 
 
-@llm_router_v1.get("test_error")
+@llm_router_v1.get("/test_error")
 def test_error():
     logger.info(f"trace exists? : trace_id is {get_request_id()}")
     add_trace_resource_name("test_error_trace")
