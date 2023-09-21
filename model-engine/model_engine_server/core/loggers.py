@@ -10,7 +10,7 @@ from typing import Optional, Sequence
 import ddtrace
 import json_log_formatter
 import tqdm
-from ddtrace.tracer import Tracer
+from ddtrace import tracer
 
 # DO NOT CHANGE LOGGING FORMAT
 LOG_FORMAT: str = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] - %(message)s"
@@ -82,13 +82,9 @@ class CustomJSONFormatter(json_log_formatter.JSONFormatter):
         if request_id:
             extra["request_id"] = request_id
 
-        context = Tracer().get_log_correlation_context()
-        trace_id = context.get("trace_id")
-        span_id = context.get("span_id")
-
-        # add ids to event dictionary
-        extra["dd.trace_id"] = trace_id or 0
-        extra["dd.span_id"] = span_id or 0
+        current_span = tracer.current_span()
+        extra["dd.trace_id"] = current_span.trace_id or 0
+        extra["dd.span_id"] = current_span.span_id or 0
 
         # add the env, service, and version configured for the tracer.
         # If tracing is not set up, then this should pull values from DD_ENV, DD_SERVICE, and DD_VERSION.
@@ -124,9 +120,13 @@ def make_json_logger(name: str, log_level: int = logging.INFO) -> logging.Logger
     if in_kubernetes:
         stream_handler.setFormatter(CustomJSONFormatter())
     else:
+        stream_handler.setFormatter(CustomJSONFormatter())
+    """
+    else:
         # Reading JSON logs in your terminal is kinda hard, and you can't make use of the structured data
         # benefits in your terminal anyway. So just fall back to the standard log format.
         stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    """
 
     logger.addHandler(stream_handler)
     logger.setLevel(log_level)

@@ -2,6 +2,7 @@ import os
 import traceback
 from pathlib import Path
 
+from ddtrace import patch
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -22,6 +23,7 @@ from model_engine_server.common.datadog_utils import get_request_id
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from starlette.middleware.base import BaseHTTPMiddleware
 
+patch(fastapi=True)
 app = FastAPI(title="launch", version="1.0.0", redoc_url="/api")
 
 app.include_router(batch_job_router_v1)
@@ -58,6 +60,7 @@ class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(ExceptionLoggingMiddleware)
+
 
 # TODO: Remove this once we have a better way to serve internal docs
 INTERNAL_DOCS_PATH = str(Path(__file__).parents[3] / "launch_internal/site")
