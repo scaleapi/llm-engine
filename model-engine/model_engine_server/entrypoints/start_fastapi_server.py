@@ -42,7 +42,7 @@ def entrypoint():
     parser.add_argument("--debug", "-d", action="store_true")
     args = parser.parse_args()
 
-    start_gunicorn_server(5003, args.num_workers, args.debug)
+    start_gunicorn_server(args.port, args.num_workers, args.debug)
 
 
 if __name__ == "__main__":

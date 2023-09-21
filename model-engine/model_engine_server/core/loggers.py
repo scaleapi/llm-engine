@@ -83,8 +83,8 @@ class CustomJSONFormatter(json_log_formatter.JSONFormatter):
             extra["request_id"] = request_id
 
         current_span = tracer.current_span()
-        extra["dd.trace_id"] = current_span.trace_id or 0
-        extra["dd.span_id"] = current_span.span_id or 0
+        extra["dd.trace_id"] = current_span.trace_id if current_span else 0
+        extra["dd.span_id"] = current_span.span_id if current_span else 0
 
         # add the env, service, and version configured for the tracer.
         # If tracing is not set up, then this should pull values from DD_ENV, DD_SERVICE, and DD_VERSION.
