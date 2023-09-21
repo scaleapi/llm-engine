@@ -2,7 +2,6 @@
 """
 from typing import Optional
 
-from ddtrace import tracer
 from fastapi import APIRouter, Depends, HTTPException, Query
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
@@ -427,3 +426,10 @@ async def delete_llm_model_endpoint(
             status_code=500,
             detail="deletion of endpoint failed.",
         ) from exc
+
+
+@llm_router_v1.get("test_error")
+def test_error():
+    logger.info(f"trace exists? : trace_id is {get_request_id()}")
+    add_trace_resource_name("test_error_trace")
+    raise Exception("test_error")
