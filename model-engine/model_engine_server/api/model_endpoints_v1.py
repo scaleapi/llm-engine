@@ -12,7 +12,7 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_resource_name, get_request_id
+from model_engine_server.common.datadog_utils import add_trace_resource_name
 from model_engine_server.common.dtos.model_endpoints import (
     CreateModelEndpointV1Request,
     CreateModelEndpointV1Response,
@@ -92,13 +92,6 @@ async def create_model_endpoint(
             status_code=404,
             detail="The specified model bundle could not be found.",
         ) from exc
-    except Exception as exc:
-        request_id = get_request_id()
-        logger.exception(f"Internal service error for request {request_id}: {exc}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal error for request_id {request_id}.",
-        )
 
 
 @model_endpoint_router_v1.get("/model-endpoints", response_model=ListModelEndpointsV1Response)
@@ -113,18 +106,10 @@ async def list_model_endpoints(
     """
     add_trace_resource_name("model_endpoints_get")
     logger.info(f"GET /model-endpoints?name={name}&order_by={order_by} for {auth}")
-    try:
-        use_case = ListModelEndpointsV1UseCase(
-            model_endpoint_service=external_interfaces.model_endpoint_service,
-        )
-        return await use_case.execute(user=auth, name=name, order_by=order_by)
-    except Exception as exc:
-        request_id = get_request_id()
-        logger.exception(f"Internal service error for request {request_id}: {exc}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal error for request_id {request_id}.",
-        )
+    use_case = ListModelEndpointsV1UseCase(
+        model_endpoint_service=external_interfaces.model_endpoint_service,
+    )
+    return await use_case.execute(user=auth, name=name, order_by=order_by)
 
 
 @model_endpoint_router_v1.get(
@@ -150,13 +135,6 @@ async def get_model_endpoint(
             status_code=404,
             detail=f"Model Endpoint {model_endpoint_id}  was not found.",
         ) from exc
-    except Exception as exc:
-        request_id = get_request_id()
-        logger.exception(f"Internal service error for request {request_id}: {exc}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal error for request_id {request_id}.",
-        )
 
 
 @model_endpoint_router_v1.put(
@@ -201,13 +179,6 @@ async def update_model_endpoint(
             status_code=409,
             detail="Existing operation on endpoint in progress, try again later.",
         ) from exc
-    except Exception as exc:
-        request_id = get_request_id()
-        logger.exception(f"Internal service error for request {request_id}: {exc}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal error for request_id {request_id}.",
-        )
 
 
 @model_endpoint_router_v1.delete(
@@ -243,10 +214,3 @@ async def delete_model_endpoint(
             status_code=500,
             detail="deletion of endpoint failed, compute resources still exist.",
         ) from exc
-    except Exception as exc:
-        request_id = get_request_id()
-        logger.exception(f"Internal service error for request {request_id}: {exc}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal error for request_id {request_id}.",
-        )

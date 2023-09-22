@@ -1,5 +1,6 @@
 import os
 import traceback
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -21,13 +22,12 @@ from model_engine_server.api.model_endpoints_docs_v1 import model_endpoints_docs
 from model_engine_server.api.model_endpoints_v1 import model_endpoint_router_v1
 from model_engine_server.api.tasks_v1 import inference_task_router_v1
 from model_engine_server.api.triggers_v1 import trigger_router_v1
-from model_engine_server.common.datadog_utils import (
-    add_trace_request_id,
+from model_engine_server.core.loggers import (
+    filename_wo_ext,
     get_request_id,
-    request_id,
-    set_request_id_context,
+    make_logger,
+    set_request_id,
 )
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
 
 logger = make_logger(filename_wo_ext(__name__))
 
@@ -49,24 +49,15 @@ app.include_router(trigger_router_v1)
 @app.middleware("http")
 async def dispatch(request: Request, call_next):
     try:
-        set_request_id_context()  # trying to set the request id here to be == dd trace id
-        req_id = request_id.get()
-        logger.info(f"testing whether req_id is accessible in try block: {req_id}")
-        response = await call_next(request)
-        req_id = request_id.get()
-        logger.info(f"testing whether req_id is accessible in try block: {req_id}")
-        return response
+        set_request_id(str(uuid.uuid4()))
+        return await call_next(request)
     except Exception as e:
         tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
-        logger.info(
-            f"request id contxt var value is {request_id}, get() returns {request_id.get()}"
-        )
-        req_id = request_id.get()
+        request_id = get_request_id()
         timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
-        add_trace_request_id(req_id)
         structured_log = {
             "error": str(e),
-            "request_id": str(req_id),
+            "request_id": str(request_id),
             "traceback": "".join(tb_str),
         }
         logger.error("Unhandled exception: %s", structured_log)
@@ -74,13 +65,10 @@ async def dispatch(request: Request, call_next):
             {
                 "status_code": 500,
                 "content": {
-                    "error": f"Internal error for request_id {req_id} at time {timestamp}. Our team has been notified."
+                    "error": f"Internal error for request_id {request_id} at time {timestamp}. Our team has been notified."
                 },
             }
         )
-
-
-# app.add_middleware(ExceptionLoggingMiddleware)
 
 
 # TODO: Remove this once we have a better way to serve internal docs
@@ -104,10 +92,3 @@ def load_redis():
 def healthcheck() -> Response:
     """Returns 200 if the app is healthy."""
     return Response(status_code=200)
-
-
-@app.get("/test_error")
-def test_error():
-    logger.info(f"trace exists? : trace_id is {get_request_id()}")
-    request_id.set(get_request_id())
-    raise Exception("test_error")
