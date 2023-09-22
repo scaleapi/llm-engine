@@ -1,8 +1,4 @@
-from contextvars import ContextVar
-
 from ddtrace import tracer
-
-request_id: ContextVar[str] = ContextVar("request_id", default=None)  # type: ignore
 
 
 def add_trace_resource_name(tag: str):
