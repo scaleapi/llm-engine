@@ -9,7 +9,12 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_resource_name, get_request_id
+from model_engine_server.common.datadog_utils import (
+    add_trace_resource_name,
+    get_request_id,
+    request_id,
+    set_request_id_context,
+)
 from model_engine_server.common.dtos.llms import (
     CancelFineTuneResponse,
     CompletionStreamV1Request,
@@ -432,4 +437,6 @@ async def delete_llm_model_endpoint(
 def test_error():
     logger.info(f"trace exists? : trace_id is {get_request_id()}")
     add_trace_resource_name("test_error_trace")
+    set_request_id_context()
+    logger.info(f"request id contxt var value is {request_id}, get() returns {request_id.get()}")
     raise Exception("test_error")
