@@ -133,8 +133,6 @@ async def list_model_endpoints(
     """
     Lists the LLM model endpoints owned by the current owner, plus all public_inference LLMs.
     """
-    # tracer.trace("tracer_test")
-    logger.info(f"trace exists? : trace_id is {get_request_id()}")
     add_trace_resource_name("llm_model_endpoints_get")
     logger.info(f"GET /llm/model-endpoints?name={name}&order_by={order_by} for {auth}")
     use_case = ListLLMModelEndpointsV1UseCase(
