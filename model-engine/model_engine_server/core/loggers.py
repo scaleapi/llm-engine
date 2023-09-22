@@ -47,7 +47,7 @@ def get_request_id() -> Optional[str]:
 
 def set_request_id(request_id: str) -> None:
     """Set the request id in the context variable."""
-    ctx_var_request_id.set(request_id)
+    ctx_var_request_id.set(request_id)  # type: ignore
 
 
 def make_standard_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
@@ -120,13 +120,9 @@ def make_json_logger(name: str, log_level: int = logging.INFO) -> logging.Logger
     if in_kubernetes:
         stream_handler.setFormatter(CustomJSONFormatter())
     else:
-        stream_handler.setFormatter(CustomJSONFormatter())
-    """
-    else:
         # Reading JSON logs in your terminal is kinda hard, and you can't make use of the structured data
         # benefits in your terminal anyway. So just fall back to the standard log format.
         stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-    """
 
     logger.addHandler(stream_handler)
     logger.setLevel(log_level)
@@ -188,7 +184,7 @@ def logger_name(*, fallback_name: Optional[str] = None) -> str:
         # in which case we use it's file name
 
         if hasattr(calling_module, "__file__"):
-            return filename_wo_ext(calling_module.__file__)
+            return filename_wo_ext(calling_module.__file__)  # type: ignore
         if fallback_name is not None:
             fallback_name = fallback_name.strip()
             if len(fallback_name) > 0:
@@ -260,8 +256,8 @@ def silence_chatty_datadog_loggers(*, silence_internal_writer: bool = False) -> 
         silence_chatty_logger("ddtrace.internal.writer", quieter=logging.FATAL)
 
 
-@contextmanager
-def loggers_at_level(*loggers_or_names, new_level: int) -> None:
+@contextmanager  # type: ignore
+def loggers_at_level(*loggers_or_names, new_level: int) -> None:  # type: ignore
     """Temporarily set one or more loggers to a specific level, resetting to previous levels on context end.
 
     :param:`loggers_or_names` is one or more :class:`logging.Logger` instances, or `str` names
