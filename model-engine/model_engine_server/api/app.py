@@ -43,16 +43,13 @@ logger = make_logger(filename_wo_ext(__name__))
 
 
 class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
-    def __init__(self):
-        self.timezone = pytz.timezone("US/Pacific")
-
     async def dispatch(self, request: Request, call_next):
         try:
             return await call_next(request)
         except Exception as e:
             tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
             request_id = get_request_id()
-            timestamp = datetime.now(self.timezone).strftime("%Y-%m-%d %H:%M:%S %Z")
+            timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
             add_trace_request_id(request_id)
             structured_log = {
                 "error": str(e),
