@@ -5,7 +5,6 @@ from datetime import datetime
 from pathlib import Path
 
 import pytz
-from ddtrace import patch
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -31,7 +30,6 @@ from model_engine_server.core.loggers import (
 
 logger = make_logger(filename_wo_ext(__name__))
 
-patch(fastapi=True)
 app = FastAPI(title="launch", version="1.0.0", redoc_url="/api")
 
 app.include_router(batch_job_router_v1)
@@ -65,7 +63,9 @@ async def dispatch(request: Request, call_next):
             {
                 "status_code": 500,
                 "content": {
-                    "error": f"Internal error for request_id {request_id} at time {timestamp}. Our team has been notified."
+                    "error": "Internal error occurred. Our team has been notified.",
+                    "timestamp": timestamp,
+                    "request_id": request_id,
                 },
             }
         )
