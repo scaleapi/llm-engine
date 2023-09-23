@@ -1,7 +1,10 @@
 import os
 import traceback
+import uuid
+from datetime import datetime
 from pathlib import Path
 
+import pytz
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -18,9 +21,14 @@ from model_engine_server.api.model_endpoints_docs_v1 import model_endpoints_docs
 from model_engine_server.api.model_endpoints_v1 import model_endpoint_router_v1
 from model_engine_server.api.tasks_v1 import inference_task_router_v1
 from model_engine_server.api.triggers_v1 import trigger_router_v1
-from model_engine_server.common.datadog_utils import get_request_id
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
-from starlette.middleware.base import BaseHTTPMiddleware
+from model_engine_server.core.loggers import (
+    filename_wo_ext,
+    get_request_id,
+    make_logger,
+    set_request_id,
+)
+
+logger = make_logger(filename_wo_ext(__name__))
 
 app = FastAPI(title="launch", version="1.0.0", redoc_url="/api")
 
@@ -35,29 +43,33 @@ app.include_router(llm_router_v1)
 app.include_router(file_router_v1)
 app.include_router(trigger_router_v1)
 
-logger = make_logger(filename_wo_ext(__name__))
 
+@app.middleware("http")
+async def dispatch(request: Request, call_next):
+    try:
+        set_request_id(str(uuid.uuid4()))
+        return await call_next(request)
+    except Exception as e:
+        tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
+        request_id = get_request_id()
+        timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
+        structured_log = {
+            "error": str(e),
+            "request_id": str(request_id),
+            "traceback": "".join(tb_str),
+        }
+        logger.error("Unhandled exception: %s", structured_log)
+        return JSONResponse(
+            {
+                "status_code": 500,
+                "content": {
+                    "error": "Internal error occurred. Our team has been notified.",
+                    "timestamp": timestamp,
+                    "request_id": request_id,
+                },
+            }
+        )
 
-class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        try:
-            return await call_next(request)
-        except Exception as e:
-            tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
-            structured_log = {"error": str(e), "traceback": "".join(tb_str)}
-            logger.error("Unhandled exception: %s", structured_log)
-            request_id = get_request_id()
-            return JSONResponse(
-                {
-                    "status_code": 500,
-                    "content": {
-                        "error": f"Internal error for request_id {request_id}. Our team has been notified."
-                    },
-                }
-            )
-
-
-app.add_middleware(ExceptionLoggingMiddleware)
 
 # TODO: Remove this once we have a better way to serve internal docs
 INTERNAL_DOCS_PATH = str(Path(__file__).parents[3] / "launch_internal/site")
