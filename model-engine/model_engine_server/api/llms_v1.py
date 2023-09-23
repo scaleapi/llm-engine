@@ -9,7 +9,7 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_resource_name, get_request_id
+from model_engine_server.common.datadog_utils import add_trace_resource_name
 from model_engine_server.common.dtos.llms import (
     CancelFineTuneResponse,
     CompletionStreamV1Request,
@@ -31,7 +31,7 @@ from model_engine_server.common.dtos.llms import (
 )
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import filename_wo_ext, get_request_id, make_logger
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
     EndpointLabelsException,
@@ -247,7 +247,7 @@ async def create_completion_stream_task(
         request_id = get_request_id()
         logger.exception(f"Upstream service error for request {request_id}")
         return EventSourceResponse(
-            iter((CompletionStreamV1Response(request_id=request_id).json(),))
+            iter((CompletionStreamV1Response(request_id=request_id).json(),))  # type: ignore
         )
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(

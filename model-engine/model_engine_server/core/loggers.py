@@ -10,7 +10,7 @@ from typing import Optional, Sequence
 import ddtrace
 import json_log_formatter
 import tqdm
-from ddtrace.tracer import Tracer
+from ddtrace import tracer
 
 # DO NOT CHANGE LOGGING FORMAT
 LOG_FORMAT: str = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] - %(message)s"
@@ -47,7 +47,7 @@ def get_request_id() -> Optional[str]:
 
 def set_request_id(request_id: str) -> None:
     """Set the request id in the context variable."""
-    ctx_var_request_id.set(request_id)
+    ctx_var_request_id.set(request_id)  # type: ignore
 
 
 def make_standard_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
@@ -82,13 +82,9 @@ class CustomJSONFormatter(json_log_formatter.JSONFormatter):
         if request_id:
             extra["request_id"] = request_id
 
-        context = Tracer().get_log_correlation_context()
-        trace_id = context.get("trace_id")
-        span_id = context.get("span_id")
-
-        # add ids to event dictionary
-        extra["dd.trace_id"] = trace_id or 0
-        extra["dd.span_id"] = span_id or 0
+        current_span = tracer.current_span()
+        extra["dd.trace_id"] = current_span.trace_id if current_span else 0
+        extra["dd.span_id"] = current_span.span_id if current_span else 0
 
         # add the env, service, and version configured for the tracer.
         # If tracing is not set up, then this should pull values from DD_ENV, DD_SERVICE, and DD_VERSION.
@@ -188,7 +184,7 @@ def logger_name(*, fallback_name: Optional[str] = None) -> str:
         # in which case we use it's file name
 
         if hasattr(calling_module, "__file__"):
-            return filename_wo_ext(calling_module.__file__)
+            return filename_wo_ext(calling_module.__file__)  # type: ignore
         if fallback_name is not None:
             fallback_name = fallback_name.strip()
             if len(fallback_name) > 0:
@@ -260,8 +256,8 @@ def silence_chatty_datadog_loggers(*, silence_internal_writer: bool = False) -> 
         silence_chatty_logger("ddtrace.internal.writer", quieter=logging.FATAL)
 
 
-@contextmanager
-def loggers_at_level(*loggers_or_names, new_level: int) -> None:
+@contextmanager  # type: ignore
+def loggers_at_level(*loggers_or_names, new_level: int) -> None:  # type: ignore
     """Temporarily set one or more loggers to a specific level, resetting to previous levels on context end.
 
     :param:`loggers_or_names` is one or more :class:`logging.Logger` instances, or `str` names
