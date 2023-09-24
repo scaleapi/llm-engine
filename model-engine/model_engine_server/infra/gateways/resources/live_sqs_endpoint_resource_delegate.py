@@ -7,6 +7,7 @@ from aioboto3 import Session as AioSession
 from aiobotocore.client import AioBaseClient
 from model_engine_server.common.config import hmi_config
 from model_engine_server.core.aws.roles import session
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
@@ -21,7 +22,9 @@ __all__: Sequence[str] = ("LiveSQSEndpointResourceDelegate",)
 
 
 def _create_async_sqs_client(sqs_profile: Optional[str]) -> AioBaseClient:
-    return session(role=sqs_profile, session_type=AioSession).client("sqs", region_name="us-west-2")
+    return session(role=sqs_profile, session_type=AioSession).client(
+        "sqs", region_name=infra_config().default_region
+    )
 
 
 def _get_queue_policy(queue_name: str) -> str:

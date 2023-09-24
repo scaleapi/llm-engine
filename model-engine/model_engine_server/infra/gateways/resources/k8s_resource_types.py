@@ -486,9 +486,9 @@ def get_endpoint_resource_arguments_from_request(
 
     change_cause_message = (
         f"Deployment at {datetime.utcnow()} UTC. "
-        f"Using deployment constructed from model bundle ID: {model_bundle.id}, "
-        f"model bundle name: {model_bundle.name}, "
-        f"endpoint ID: {model_endpoint_record.id}"
+        f"Using deployment constructed from model bundle ID {model_bundle.id}, "
+        f"model bundle name {model_bundle.name}, "
+        f"endpoint ID {model_endpoint_record.id}"
     )
 
     priority = LAUNCH_DEFAULT_PRIORITY_CLASS
