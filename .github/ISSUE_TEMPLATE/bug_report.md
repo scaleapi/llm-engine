@@ -1,6 +1,6 @@
 ---
 name: "\U0001F41B Bug report"
-about: Create a report to help us improve
+about: Submit a bug report to help us improve LLM Engine. If this doesn't look right, [choose a different type.](https://github.com/scaleapi/llm-engine/issues/new/choose)
 title: ''
 labels: bug
 assignees: ''
@@ -8,20 +8,28 @@ assignees: ''
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+Thank you for taking the time to file a bug report! Before you do so, please take a look at existing open issues and make sure that your issue is not already documented. If it isn't, please provide us with a clear and concise description of what the bug is.
 
-**LLM Engine Version, Request ID, Timestamp**
+**LLM Engine Version**
 - LLM Engine Version: 
-- Request ID: 
+
+**System Version**
+- Python Version: 
+- Operating System: 
+
+**Timestamp and Request ID**
+_If you ran into an internal error while using `llm-engine`, please provide the following_
 - Timestamp:
-  
-_Request ID and Timestamp are available as fields in the Internal Error JSON Response message._
+- Request ID: 
 
 **To Reproduce**
 Steps to reproduce the behavior:
 1. Install LLM Engine '....'
 2. Make API call '....'
 3. See error
+
+**Minimal Reproducible Example**
+A code snippet that documents how your bug can be reproduced.
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.

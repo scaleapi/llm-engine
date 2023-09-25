@@ -1,6 +1,6 @@
 ---
 name: Custom issue template
-about: Describe this issue template's purpose here.
+about: If your issue doesn't fall into a bug template or feature request, please provide some information on it here.
 title: ''
 labels: ''
 assignees: ''
