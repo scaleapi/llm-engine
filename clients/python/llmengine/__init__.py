@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0.b14"
+__version__ = "0.0.0.b13"
 
 import os
 from typing import Sequence
@@ -83,7 +83,7 @@ def check_version():
             )
             print("To upgrade, run: pip install --upgrade scale-llm-engine")
             print(
-                "Don't want to see this message? Set the environment variable 'LLMENGINE_DISABLE_VERSION_CHECK' to 'true'."
+                "Don't want to see this message? Set the environment variable 'LLM_ENGINE_DISABLE_VERSION_CHECK' to 'true'."
             )
     except requests.RequestException:
         # Handle exceptions related to the request (like timeouts, connection errors, etc.)
@@ -94,5 +94,5 @@ def check_version():
         print("Something went wrong with checking for the most recent llm-engine package version.")
 
 
-if not os.environ.get("LLMENGINE_DISABLE_VERSION_CHECK"):
+if not os.environ.get("LLM_ENGINE_DISABLE_VERSION_CHECK"):
     check_version()
