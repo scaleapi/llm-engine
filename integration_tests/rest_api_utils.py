@@ -224,6 +224,11 @@ CREATE_FINE_TUNE_REQUEST: Dict[str, Any] = {
 }
 
 
+@retry(stop=stop_after_attempt(300), wait=wait_fixed(2))
+def ensure_launch_gateway_healthy():
+    assert requests.get(f"{BASE_PATH}/healthz").status_code == 200
+
+
 def create_model_bundle(
     create_model_bundle_request: Dict[str, Any], user_id: str, version: str
 ) -> Dict[str, Any]:
@@ -735,7 +740,7 @@ def ensure_inference_task_response_is_correct(response: Dict[str, Any], return_p
 
 # Wait up to 30 seconds for the tasks to be returned.
 @retry(
-    stop=stop_after_attempt(30), wait=wait_fixed(1), retry=retry_if_exception_type(AssertionError)
+    stop=stop_after_attempt(10), wait=wait_fixed(1), retry=retry_if_exception_type(AssertionError)
 )
 def ensure_all_async_tasks_success(task_ids: List[str], user_id: str, return_pickled: bool):
     responses = asyncio.run(get_async_tasks(task_ids, user_id))
