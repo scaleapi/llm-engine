@@ -1,4 +1,5 @@
 import pytest
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 from .rest_api_utils import (
     CREATE_MODEL_BUNDLE_REQUEST_RUNNABLE_IMAGE,
@@ -6,12 +7,15 @@ from .rest_api_utils import (
     USER_ID_0,
     USER_ID_1,
     create_model_bundle,
+    ensure_launch_gateway_healthy,
     get_latest_model_bundle,
 )
 
 
 @pytest.fixture(scope="session")
+@retry(stop=stop_after_attempt(10), wait=wait_fixed(30))
 def model_bundles():
+    ensure_launch_gateway_healthy()
     for user in [USER_ID_0, USER_ID_1]:
         for create_bundle_request in [
             CREATE_MODEL_BUNDLE_REQUEST_SIMPLE,
