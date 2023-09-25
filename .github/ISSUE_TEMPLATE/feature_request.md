@@ -42,5 +42,5 @@ Add any other context or screenshots about the feature request here.
 
 ---
 
-Thank you for your contribution to [PROJECT NAME]. Please ensure you've given the feature considerable thought before submitting it. Once your feature request is accepted, and you're interested in building it, please mention it so that the maintainers can guide you!
+Thank you for your contribution to `llm-engine`. Please ensure you've given the feature considerable thought before submitting it. Once your feature request is accepted, and you're interested in building it, please mention it so that the maintainers can guide you!
 
