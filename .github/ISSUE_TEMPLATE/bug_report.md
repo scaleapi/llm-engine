@@ -1,5 +1,5 @@
 ---
-name: Bug report
+name: "\U0001F41B Bug report"
 about: Create a report to help us improve
 title: ''
 labels: bug
@@ -13,8 +13,9 @@ A clear and concise description of what the bug is.
 **LLM Engine Version, Request ID, Timestamp**
 - LLM Engine Version: 
 - Request ID: 
-- Timestamp: 
-Request ID and Timestamp are available as fields in the Internal Error JSON Response message.
+- Timestamp:
+  
+_Request ID and Timestamp are available as fields in the Internal Error JSON Response message._
 
 **To Reproduce**
 Steps to reproduce the behavior:
