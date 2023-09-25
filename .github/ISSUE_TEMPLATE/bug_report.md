@@ -22,14 +22,17 @@ _If you ran into an internal error while using `llm-engine`, please provide the 
 - Timestamp:
 - Request ID: 
 
-**To Reproduce**
+**Minimal Reproducible Example**
 Steps to reproduce the behavior:
 1. Install LLM Engine '....'
 2. Make API call '....'
 3. See error
 
-**Minimal Reproducible Example**
-A code snippet that documents how your bug can be reproduced.
+Please provide a code snippet that documents how your bug can be reproduced.
+```
+import llmengine
+...
+```
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
