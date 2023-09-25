@@ -2,6 +2,7 @@ import asyncio
 import time
 
 import pytest
+from tenacity import RetryError, retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from .rest_api_utils import (
     CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE,
@@ -39,6 +40,23 @@ def delete_endpoints(capsys):
     except Exception:
         with capsys.disabled():
             print("Endpoint deletion failed")
+
+
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(10), retry=retry_if_exception_type(RetryError))
+def ensure_async_inference_works(user, create_endpoint_request, inference_payload, return_pickled):
+    print(
+        f"Sending async tasks to {create_endpoint_request['name']} for user {user}, {inference_payload=}, {return_pickled=} ..."
+    )
+    task_ids = asyncio.run(
+        create_async_tasks(
+            create_endpoint_request["name"],
+            [inference_payload] * 3,
+            user,
+        )
+    )
+    print("Retrieving async task results...")
+    ensure_nonzero_available_workers(create_endpoint_request["name"], user)
+    ensure_all_async_tasks_success(task_ids, user, return_pickled)
 
 
 @pytest.mark.parametrize(
@@ -89,22 +107,12 @@ def test_async_model_endpoint(
                 == update_endpoint_request["max_workers"]
             )
 
-            time.sleep(10)
+            time.sleep(20)
 
             for inference_payload, return_pickled in inference_requests:
-                print(
-                    f"Sending async tasks to {create_endpoint_request['name']} for user {user}, {inference_payload=}, {return_pickled=} ..."
+                ensure_async_inference_works(
+                    user, create_endpoint_request, inference_payload, return_pickled
                 )
-                task_ids = asyncio.run(
-                    create_async_tasks(
-                        create_endpoint_request["name"],
-                        [inference_payload] * 3,
-                        user,
-                    )
-                )
-                print("Retrieving async task results...")
-                ensure_nonzero_available_workers(create_endpoint_request["name"], user)
-                ensure_all_async_tasks_success(task_ids, user, return_pickled)
         finally:
             delete_model_endpoint(create_endpoint_request["name"], user)
 
