@@ -18,9 +18,9 @@ Thank you for taking the time to file a bug report! Before you do so, please tak
 - Operating System: 
 
 **Timestamp and Request ID**
-_If you ran into an internal error while using `llm-engine`, please provide the following_
-- Timestamp:
-- Request ID: 
+_If you ran into an internal error while using `llm-engine`, please provide the following. These fields are provided in the JSON Response when an internal error occurs._
+- `timestamp`:
+- `request_id`: 
 
 **Minimal Reproducible Example**
 Steps to reproduce the behavior:
