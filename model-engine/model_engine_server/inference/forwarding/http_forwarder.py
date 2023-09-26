@@ -138,6 +138,7 @@ def entrypoint():
     parser.add_argument("--host", type=str, default="[::]")
     parser.add_argument("--port", type=int, default=5000)
     parser.add_argument("--set", type=str, action="append")
+    parser.add_argument("--graceful-timeout", type=int, default=600)
 
     args, extra_args = parser.parse_known_args()
 
@@ -160,6 +161,8 @@ def entrypoint():
         "uvicorn.workers.UvicornWorker",
         "--workers",
         str(args.num_workers),
+        "--graceful-timeout",
+        str(args.graceful_timeout),
         *envs,
         "model_engine_server.inference.forwarding.http_forwarder:app",
         *extra_args,
