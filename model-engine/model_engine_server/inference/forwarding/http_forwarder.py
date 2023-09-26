@@ -139,7 +139,7 @@ def entrypoint():
     parser.add_argument("--port", type=int, default=5000)
     parser.add_argument("--set", type=str, action="append")
 
-    args = parser.parse_args()
+    args, extra_args = parser.parse_known_args()
 
     values = [f"CONFIG_FILE={args.config}"]
     if args.set is not None:
@@ -162,6 +162,7 @@ def entrypoint():
         str(args.num_workers),
         *envs,
         "model_engine_server.inference.forwarding.http_forwarder:app",
+        *extra_args,
     ]
     subprocess.run(command)
 

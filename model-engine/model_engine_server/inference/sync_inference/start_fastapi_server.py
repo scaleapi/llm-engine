@@ -1,3 +1,4 @@
+import argparse
 import os
 import subprocess
 
@@ -8,6 +9,9 @@ PORT = os.environ["PORT"]
 
 
 def start_server():
+    parser = argparse.ArgumentParser()
+    _, extra_args = parser.parse_known_args()
+
     # TODO: HTTPS
     command = [
         "gunicorn",
@@ -22,6 +26,7 @@ def start_server():
         "--workers",
         str(NUM_PROCESSES),
         "model_engine_server.inference.sync_inference.fastapi_server:app",
+        *extra_args,
     ]
     unset_sensitive_envvars()
     subprocess.run(command)

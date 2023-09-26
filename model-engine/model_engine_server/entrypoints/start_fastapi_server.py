@@ -8,7 +8,7 @@ import subprocess
 from typing import List
 
 
-def start_gunicorn_server(port: int, num_workers: int, debug: bool) -> None:
+def start_gunicorn_server(port: int, num_workers: int, debug: bool, extra_args: List[str]) -> None:
     """Starts a GUnicorn server locally."""
     additional_args: List[str] = []
     if debug:
@@ -27,6 +27,7 @@ def start_gunicorn_server(port: int, num_workers: int, debug: bool) -> None:
         f"{num_workers}",
         *additional_args,
         "model_engine_server.api.app:app",
+        *extra_args,
     ]
 
     subprocess.run(command, check=True)
@@ -40,9 +41,9 @@ def entrypoint():
     parser.add_argument("--port", type=int, default=5000)
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--debug", "-d", action="store_true")
-    args = parser.parse_args()
+    args, extra_args = parser.parse_known_args()
 
-    start_gunicorn_server(args.port, args.num_workers, args.debug)
+    start_gunicorn_server(args.port, args.num_workers, args.debug, extra_args)
 
 
 if __name__ == "__main__":
