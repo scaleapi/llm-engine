@@ -16,6 +16,7 @@ class LLMInferenceFramework(str, Enum):
 
 class Quantization(str, Enum):
     BITSANDBYTES = "bitsandbytes"
+    AWQ = "awq"
 
 
 @dataclass
