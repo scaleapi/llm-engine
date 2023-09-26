@@ -33,7 +33,7 @@ def entrypoint():
     parser.add_argument("--host", type=str, default="[::]")
     parser.add_argument("--port", type=int, default=5009)
 
-    args = parser.parse_args()
+    args, extra_args = parser.parse_known_args()
 
     command = [
         "gunicorn",
@@ -48,6 +48,7 @@ def entrypoint():
         "--workers",
         str(args.num_workers),
         "model_engine_server.inference.forwarding.echo_server:app",
+        *extra_args,
     ]
     subprocess.run(command)
 
