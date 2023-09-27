@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0.b15"
+__version__ = "0.0.0b15"
 
 import os
 from typing import Sequence
@@ -76,6 +76,8 @@ def check_version():
         current_version = __version__
         response = requests.get("https://pypi.org/pypi/scale-llm-engine/json")
         latest_version = response.json()["info"]["version"]
+        print(current_version)
+        print(latest_version)
 
         if current_version != latest_version:
             print(
