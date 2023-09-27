@@ -76,8 +76,6 @@ def check_version():
         current_version = __version__
         response = requests.get("https://pypi.org/pypi/scale-llm-engine/json")
         latest_version = response.json()["info"]["version"]
-        print(current_version)
-        print(latest_version)
 
         if current_version != latest_version:
             print(
