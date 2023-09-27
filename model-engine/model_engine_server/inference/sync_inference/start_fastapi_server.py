@@ -1,3 +1,4 @@
+import argparse
 import os
 import subprocess
 
@@ -8,6 +9,10 @@ PORT = os.environ["PORT"]
 
 
 def start_server():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--graceful-timeout", type=int, default=600)
+    args, extra_args = parser.parse_known_args()
+
     # TODO: HTTPS
     command = [
         "gunicorn",
@@ -21,7 +26,10 @@ def start_server():
         "uvicorn.workers.UvicornWorker",
         "--workers",
         str(NUM_PROCESSES),
+        "--graceful-timeout",
+        str(args.graceful_timeout),
         "model_engine_server.inference.sync_inference.fastapi_server:app",
+        *extra_args,
     ]
     unset_sensitive_envvars()
     subprocess.run(command)
