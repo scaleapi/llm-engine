@@ -1,6 +1,6 @@
 ---
 name: "\U0001F41B Bug report"
-about: Submit a bug report to help us improve LLM Engine. If this doesn't look right, [choose a different type.](https://github.com/scaleapi/llm-engine/issues/new/choose)
+about: Submit a bug report to help us improve LLM Engine.
 title: ''
 labels: bug
 assignees: ''
