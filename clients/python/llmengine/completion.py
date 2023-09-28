@@ -33,6 +33,9 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
+        repetition_penalty: Optional[float] = None,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]:
@@ -71,6 +74,15 @@ class Completion(APIEngine):
             return_token_log_probs (Optional[bool]):
                 Whether to return the log probabilities of generated tokens.
                 When True, the response will include a list of tokens and their log probabilities.
+
+            repetition_penalty (Optional[float]):
+                The parameter for repetition penalty. 1.0 means no penalty.
+
+            top_k (Optional[int]):
+                Integer that controls the number of top tokens to consider. -1 means consider all tokens.
+
+            top_p (Optional[float]):
+                Float that controls the cumulative probability of the top tokens to consider. Must be in (0, 1]. 1.0 means consider all tokens.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -164,6 +176,9 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
+                repetition_penalty=repetition_penalty,
+                top_k=top_k,
+                top_p=top_p,
                 timeout=timeout,
             )
 
@@ -184,6 +199,9 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
+                repetition_penalty=repetition_penalty,
+                top_k=top_k,
+                top_p=top_p,
             )
 
     @classmethod
@@ -195,6 +213,9 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
+        repetition_penalty: Optional[float] = None,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
@@ -234,6 +255,15 @@ class Completion(APIEngine):
             return_token_log_probs (Optional[bool]):
                 Whether to return the log probabilities of generated tokens.
                 When True, the response will include a list of tokens and their log probabilities.
+
+            repetition_penalty (Optional[float]):
+                The parameter for repetition penalty. 1.0 means no penalty.
+
+            top_k (Optional[int]):
+                Integer that controls the number of top tokens to consider. -1 means consider all tokens.
+
+            top_p (Optional[float]):
+                Float that controls the cumulative probability of the top tokens to consider. Must be in (0, 1]. 1.0 means consider all tokens.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -317,6 +347,9 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
+                repetition_penalty=repetition_penalty,
+                top_k=top_k,
+                top_p=top_p,
             )
 
         else:
@@ -326,6 +359,9 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
+                repetition_penalty=repetition_penalty,
+                top_k=top_k,
+                top_p=top_p,
             ).dict()
             response = cls.post_sync(
                 resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",

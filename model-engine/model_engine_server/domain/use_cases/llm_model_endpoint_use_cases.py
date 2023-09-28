@@ -1021,6 +1021,7 @@ class CompletionSyncV1UseCase:
                 "parameters": {
                     "max_new_tokens": request.max_new_tokens,
                     "decoder_input_details": True,
+                    "repetition_penalty": request.repetition_penalty,
                 },
             }
             if request.stop_sequences is not None:
@@ -1028,6 +1029,13 @@ class CompletionSyncV1UseCase:
             if request.temperature > 0:
                 tgi_args["parameters"]["temperature"] = request.temperature
                 tgi_args["parameters"]["do_sample"] = True
+                if request.top_k == -1:  # tgi set to None to consider all tokens.
+                    request.top_k = None
+                tgi_args["parameters"]["top_k"] = request.top_k
+                if request.top_p == 1:  # tgi set to None to consider all tokens.
+                    request.top_p = None
+            else:
+                tgi_args["parameters"]["do_sample"] = False
 
             inference_request = SyncEndpointPredictV1Request(
                 args=tgi_args,
@@ -1060,6 +1068,13 @@ class CompletionSyncV1UseCase:
             if request.stop_sequences is not None:
                 vllm_args["stop"] = request.stop_sequences
             vllm_args["temperature"] = request.temperature
+            if request.temperature > 0:
+                if request.top_k is None:  # vllm set to -1 to consider all tokens.
+                    request.top_k = -1
+                vllm_args["top_k"] = request.top_k
+                if request.top_p is None:  # vllm set to 1 to consider all tokens.
+                    request.top_p = 1
+                vllm_args["top_p"] = request.top_p
             if request.return_token_log_probs:
                 vllm_args["logprobs"] = 1
 

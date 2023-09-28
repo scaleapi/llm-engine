@@ -268,6 +268,9 @@ class CompletionSyncV1Request(BaseModel):
     temperature: float = Field(..., ge=0.0)
     stop_sequences: Optional[List[str]] = Field(default=None)
     return_token_log_probs: Optional[bool] = Field(default=False)
+    repetition_penalty: Optional[float] = Field(default=False)
+    top_k: Optional[int] = Field(default=False)
+    top_p: Optional[float] = Field(default=False)
 
 
 class TokenOutput(BaseModel):
@@ -329,6 +332,9 @@ class CompletionStreamV1Request(BaseModel):
     temperature: float = Field(..., ge=0.0)
     stop_sequences: Optional[List[str]] = Field(default=None)
     return_token_log_probs: Optional[bool] = Field(default=False)
+    repetition_penalty: Optional[float] = Field(default=False)
+    top_k: Optional[int] = Field(default=False)
+    top_p: Optional[float] = Field(default=False)
 
 
 class CompletionStreamOutput(BaseModel):

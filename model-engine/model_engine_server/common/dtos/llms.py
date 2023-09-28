@@ -116,6 +116,18 @@ class CompletionSyncV1Request(BaseModel):
     """
     Whether to return the log probabilities of the tokens.
     """
+    repetition_penalty: Optional[float] = None
+    """
+    The parameter for repetition penalty. 1.0 means no penalty. 
+    """
+    top_k: Optional[int] = None
+    """
+    Integer that controls the number of top tokens to consider.
+    """
+    top_p: Optional[float] = None
+    """
+    Float that controls the cumulative probability of the top tokens to consider. Must be in (0, 1].
+    """
 
 
 class TokenOutput(BaseModel):
@@ -156,6 +168,18 @@ class CompletionStreamV1Request(BaseModel):
     return_token_log_probs: Optional[bool] = False
     """
     Whether to return the log probabilities of the tokens. Only affects behavior for text-generation-inference models
+    """
+    repetition_penalty: Optional[float] = None
+    """
+    The parameter for repetition penalty. 1.0 means no penalty. 
+    """
+    top_k: Optional[int] = None
+    """
+    Integer that controls the number of top tokens to consider.
+    """
+    top_p: Optional[float] = None
+    """
+    Float that controls the cumulative probability of the top tokens to consider. Must be in (0, 1].
     """
 
 
