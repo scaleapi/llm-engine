@@ -33,9 +33,11 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
-        repetition_penalty: Optional[float] = None,
-        top_k: Optional[int] = None,
-        top_p: Optional[float] = None,
+        repetition_penalty: Optional[float] = 1,
+        presence_penalty: Optional[float] = 0,
+        frequency_penalty: Optional[float] = 0,
+        top_k: Optional[int] = -1,
+        top_p: Optional[float] = 1,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]:
@@ -76,13 +78,27 @@ class Completion(APIEngine):
                 When True, the response will include a list of tokens and their log probabilities.
 
             repetition_penalty (Optional[float]):
-                The parameter for repetition penalty. 1.0 means no penalty.
+                The parameter for repetition penalty
+                https://arxiv.org/pdf/1909.05858.pdf
+                Range: [1.0, infinity). 1.0 means no penalty
+
+            presence_penalty (Optional[float]):
+                Penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
+                https://platform.openai.com/docs/guides/gpt/parameter-details
+                Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
+
+            frequency_penalty (Optional[float]):
+                Penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
+                https://platform.openai.com/docs/guides/gpt/parameter-details
+                Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
 
             top_k (Optional[int]):
-                Integer that controls the number of top tokens to consider. -1 means consider all tokens.
+                Integer that controls the number of top tokens to consider.
+                Range: [1, infinity). -1 means consider all tokens.
 
             top_p (Optional[float]):
-                Float that controls the cumulative probability of the top tokens to consider. Must be in (0, 1]. 1.0 means consider all tokens.
+                Float that controls the cumulative probability of the top tokens to consider.
+                Range: (0.0, 1.0]. 1.0 means consider all tokens.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -177,6 +193,8 @@ class Completion(APIEngine):
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
                 repetition_penalty=repetition_penalty,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
                 timeout=timeout,
@@ -200,6 +218,8 @@ class Completion(APIEngine):
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
                 repetition_penalty=repetition_penalty,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
             )
@@ -213,9 +233,11 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
-        repetition_penalty: Optional[float] = None,
-        top_k: Optional[int] = None,
-        top_p: Optional[float] = None,
+        repetition_penalty: Optional[float] = 1,
+        presence_penalty: Optional[float] = 0,
+        frequency_penalty: Optional[float] = 0,
+        top_k: Optional[int] = -1,
+        top_p: Optional[float] = 1,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
@@ -257,13 +279,27 @@ class Completion(APIEngine):
                 When True, the response will include a list of tokens and their log probabilities.
 
             repetition_penalty (Optional[float]):
-                The parameter for repetition penalty. 1.0 means no penalty.
+                The parameter for repetition penalty
+                https://arxiv.org/pdf/1909.05858.pdf
+                Range: [1.0, infinity). 1.0 means no penalty
+
+            presence_penalty (Optional[float]):
+                Penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
+                https://platform.openai.com/docs/guides/gpt/parameter-details
+                Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
+
+            frequency_penalty (Optional[float]):
+                Penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
+                https://platform.openai.com/docs/guides/gpt/parameter-details
+                Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
 
             top_k (Optional[int]):
-                Integer that controls the number of top tokens to consider. -1 means consider all tokens.
+                Integer that controls the number of top tokens to consider.
+                Range: [1, infinity). -1 means consider all tokens.
 
             top_p (Optional[float]):
-                Float that controls the cumulative probability of the top tokens to consider. Must be in (0, 1]. 1.0 means consider all tokens.
+                Float that controls the cumulative probability of the top tokens to consider.
+                Range: (0.0, 1.0]. 1.0 means consider all tokens.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -348,6 +384,8 @@ class Completion(APIEngine):
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
                 repetition_penalty=repetition_penalty,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
             )
@@ -360,6 +398,8 @@ class Completion(APIEngine):
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
                 repetition_penalty=repetition_penalty,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
             ).dict()

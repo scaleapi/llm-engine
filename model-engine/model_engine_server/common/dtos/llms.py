@@ -116,17 +116,27 @@ class CompletionSyncV1Request(BaseModel):
     """
     Whether to return the log probabilities of the tokens.
     """
-    repetition_penalty: Optional[float] = None
+
+    repetition_penalty: Optional[float] = Field(default=1, ge=1)
     """
-    The parameter for repetition penalty. 1.0 means no penalty. 
+    Only affects text-generation-inference
+    The parameter for repetition penalty. 1.0 means no penalty
     """
-    top_k: Optional[int] = None
+    presence_penalty: Optional[float] = Field(default=0, ge=0, le=2)
+    frequency_penalty: Optional[float] = Field(default=0, ge=0, le=2)
     """
-    Integer that controls the number of top tokens to consider.
+    Only affects vllm, lightllm
+    presence_penalty: Penalize new tokens based on whether they appear in the text so far. 0.0 means no penalty
+    frequency_penalty: Penalize new tokens based on their existing frequency in the text so far. 0.0 means no penalty
     """
-    top_p: Optional[float] = None
+
+    top_k: Optional[int] = Field(default=-1, ge=-1)
     """
-    Float that controls the cumulative probability of the top tokens to consider. Must be in (0, 1].
+    Controls the number of top tokens to consider. -1 means consider all tokens.
+    """
+    top_p: Optional[float] = Field(default=1, gt=0, le=1)
+    """
+    Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
     """
 
 
@@ -169,17 +179,27 @@ class CompletionStreamV1Request(BaseModel):
     """
     Whether to return the log probabilities of the tokens. Only affects behavior for text-generation-inference models
     """
-    repetition_penalty: Optional[float] = None
+
+    repetition_penalty: Optional[float] = Field(default=1, ge=1)
     """
-    The parameter for repetition penalty. 1.0 means no penalty. 
+    Only affects text-generation-inference
+    The parameter for repetition penalty. 1.0 means no penalty
     """
-    top_k: Optional[int] = None
+    presence_penalty: Optional[float] = Field(default=0, ge=0, le=2)
+    frequency_penalty: Optional[float] = Field(default=0, ge=0, le=2)
     """
-    Integer that controls the number of top tokens to consider.
+    Only affects vllm, lightllm
+    presence_penalty: Penalize new tokens based on whether they appear in the text so far. 0.0 means no penalty
+    frequency_penalty: Penalize new tokens based on their existing frequency in the text so far. 0.0 means no penalty
     """
-    top_p: Optional[float] = None
+
+    top_k: Optional[int] = Field(default=-1, ge=-1)
     """
-    Float that controls the cumulative probability of the top tokens to consider. Must be in (0, 1].
+    Controls the number of top tokens to consider. -1 means consider all tokens.
+    """
+    top_p: Optional[float] = Field(default=1, gt=0, le=1)
+    """
+    Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
     """
 
 

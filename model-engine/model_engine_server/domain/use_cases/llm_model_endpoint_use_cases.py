@@ -937,6 +937,8 @@ class CompletionSyncV1UseCase:
 
         request_id = str(uuid4())
         add_trace_request_id(request_id)
+        if request.top_k == 0:
+            request.top_k = -1
 
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
             owner=user.team_id, name=model_endpoint_name, order_by=None
@@ -1034,6 +1036,7 @@ class CompletionSyncV1UseCase:
                 tgi_args["parameters"]["top_k"] = request.top_k
                 if request.top_p == 1:  # tgi set to None to consider all tokens.
                     request.top_p = None
+                tgi_args["parameters"]["top_p"] = request.top_p
             else:
                 tgi_args["parameters"]["do_sample"] = False
 
@@ -1064,16 +1067,14 @@ class CompletionSyncV1UseCase:
             vllm_args: Any = {
                 "prompt": request.prompt,
                 "max_tokens": request.max_new_tokens,
+                "presence_penalty": request.presence_penalty,
+                "frequency_penalty": request.frequency_penalty,
             }
             if request.stop_sequences is not None:
                 vllm_args["stop"] = request.stop_sequences
             vllm_args["temperature"] = request.temperature
             if request.temperature > 0:
-                if request.top_k is None:  # vllm set to -1 to consider all tokens.
-                    request.top_k = -1
                 vllm_args["top_k"] = request.top_k
-                if request.top_p is None:  # vllm set to 1 to consider all tokens.
-                    request.top_p = 1
                 vllm_args["top_p"] = request.top_p
             if request.return_token_log_probs:
                 vllm_args["logprobs"] = 1
@@ -1105,12 +1106,16 @@ class CompletionSyncV1UseCase:
                 "inputs": request.prompt,
                 "parameters": {
                     "max_new_tokens": request.max_new_tokens,
+                    "presence_penalty": request.presence_penalty,
+                    "frequency_penalty": request.frequency_penalty,
                 },
             }
             # TODO: implement stop sequences
             if request.temperature > 0:
                 lightllm_args["parameters"]["temperature"] = request.temperature
                 lightllm_args["parameters"]["do_sample"] = True
+                lightllm_args["top_k"] = request.top_k
+                lightllm_args["top_p"] = request.top_p
             else:
                 lightllm_args["parameters"]["do_sample"] = False
             if request.return_token_log_probs:
@@ -1179,6 +1184,9 @@ class CompletionStreamV1UseCase:
 
         request_id = str(uuid4())
         add_trace_request_id(request_id)
+        if request.top_k == 0:
+            request.top_k = -1
+
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
             owner=user.team_id, name=model_endpoint_name, order_by=None
         )
@@ -1237,6 +1245,7 @@ class CompletionStreamV1UseCase:
                 "inputs": request.prompt,
                 "parameters": {
                     "max_new_tokens": request.max_new_tokens,
+                    "repetition_penalty": request.repetition_penalty,
                 },
             }
             if request.stop_sequences is not None:
@@ -1244,14 +1253,27 @@ class CompletionStreamV1UseCase:
             if request.temperature > 0:
                 args["parameters"]["temperature"] = request.temperature
                 args["parameters"]["do_sample"] = True
+                if request.top_k == -1:  # tgi set to None to consider all tokens.
+                    request.top_k = None
+                args["parameters"]["top_k"] = request.top_k
+                if request.top_p == 1:  # tgi set to None to consider all tokens.
+                    request.top_p = None
+                args["parameters"]["top_p"] = request.top_p
+            else:
+                args["parameters"]["do_sample"] = False
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
             args = {
                 "prompt": request.prompt,
                 "max_tokens": request.max_new_tokens,
+                "presence_penalty": request.presence_penalty,
+                "frequency_penalty": request.frequency_penalty,
             }
             if request.stop_sequences is not None:
                 args["stop"] = request.stop_sequences
             args["temperature"] = request.temperature
+            if request.temperature > 0:
+                args["top_k"] = request.top_k
+                args["top_p"] = request.top_p
             if request.return_token_log_probs:
                 args["logprobs"] = 1
             args["stream"] = True
@@ -1260,12 +1282,16 @@ class CompletionStreamV1UseCase:
                 "inputs": request.prompt,
                 "parameters": {
                     "max_new_tokens": request.max_new_tokens,
+                    "presence_penalty": request.presence_penalty,
+                    "frequency_penalty": request.frequency_penalty,
                 },
             }
             # TODO: stop sequences
             if request.temperature > 0:
                 args["parameters"]["temperature"] = request.temperature
                 args["parameters"]["do_sample"] = True
+                args["parameters"]["top_k"] = request.top_k
+                args["parameters"]["top_p"] = request.top_p
             else:
                 args["parameters"]["do_sample"] = False
             if request.return_token_log_probs:
