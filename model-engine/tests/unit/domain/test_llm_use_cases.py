@@ -1,3 +1,4 @@
+import os
 from typing import Any, Tuple
 from unittest import mock
 
@@ -14,7 +15,11 @@ from model_engine_server.common.dtos.llms import (
 )
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Response, TaskStatus
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.domain.entities import ModelEndpoint, ModelEndpointType
+from model_engine_server.domain.entities import (
+    LLMInferenceFramework,
+    ModelEndpoint,
+    ModelEndpointType,
+)
 from model_engine_server.domain.exceptions import (
     EndpointUnsupportedInferenceTypeException,
     InvalidRequestException,
@@ -952,4 +957,62 @@ async def test_delete_public_inference_model_raises_not_authorized(
     ):  # user cannot delete public inference model they don't own
         await use_case.execute(
             user=user, model_endpoint_name=llm_model_endpoint_sync[0].record.name
+        )
+
+
+@pytest.mark.parametrize(
+    "framework",
+    [
+        LLMInferenceFramework.DEEPSPEED,
+        LLMInferenceFramework.LIGHTLLM,
+        LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+        LLMInferenceFramework.VLLM,
+    ],
+)
+@pytest.mark.parametrize("image_tag", ["0.9.3-launch_s3"])
+@pytest.mark.parametrize(
+    "checkpoint_path",
+    [
+        "s3://scale-ml/testing/llama-2-13b-bin-path/",
+        "s3://scale-ml/testing/llama-2-13b-safetensors-path/",
+    ],
+)
+def test_load_model_weights_sub_commands(
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    framework,
+    image_tag,
+    checkpoint_path,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    use_case = CreateLLMModelEndpointV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    final_weights_folder = "model"
+
+    subcommands = use_case.load_model_weights_sub_commands(
+        framework=framework,
+        framework_image_tag=image_tag,
+        checkpoint_path=checkpoint_path,
+        final_weights_folder=final_weights_folder,
+    )
+
+    if "llama-2-13b-safetensors-path" in checkpoint_path:
+        assert (
+            subcommands[-1]
+            == f"./s5cmd --numworkers 512 cp --concurrency 10 --exclude '*.bin' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+        )
+    elif "llama-2-13b-bin-path" in checkpoint_path:
+        assert (
+            subcommands[-1]
+            == f"./s5cmd --numworkers 512 cp --concurrency 10 --exclude '*.safetensors' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
         )
