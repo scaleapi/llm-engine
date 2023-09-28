@@ -363,10 +363,11 @@ class CreateLLMModelEndpointV1UseCase:
             # Let's check whether to exclude "*.safetensors" or "*.bin" files
             parsed_remote = parse_attachment_url(checkpoint_path)
             all_files = s3_list_files(bucket=parsed_remote.bucket, key=parsed_remote.key)
+            model_files = [f for f in all_files if "model" in f]
 
             # If there are more files ending in .safetensors, then exclude *.bin
-            if len([f for f in all_files if f.endswith(".safetensors")]) > len(
-                [f for f in all_files if f.endswith(".bin")]
+            if len([f for f in model_files if f.endswith(".safetensors")]) > len(
+                [f for f in model_files if f.endswith(".bin")]
             ):
                 exclude_str = "*.bin"
             else:
