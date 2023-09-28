@@ -997,7 +997,7 @@ def test_load_model_weights_sub_commands(
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
     )
-    final_weights_folder = "model"
+    final_weights_folder = "models"
 
     subcommands = use_case.load_model_weights_sub_commands(
         framework=framework,
