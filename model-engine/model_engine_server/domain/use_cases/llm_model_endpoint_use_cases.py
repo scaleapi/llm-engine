@@ -831,6 +831,34 @@ def deepspeed_result_to_tokens(result: Dict[str, Any]) -> List[TokenOutput]:
     return tokens
 
 
+def validate_completion_params(inference_framework: LLMInferenceFramework, request):
+    # can't pass mypy check with Union[CompletionSyncV1Request, CompletionStreamV1Request], doesn't support intersection types?
+
+    if request.temperature == 0:  # greedy, do_sample is False
+        if request.top_k not in [-1, None] or request.top_p not in [1.0, None]:
+            raise ObjectHasInvalidValueException(
+                "top_k and top_p can't be enabled when temperature is 0."
+            )
+
+    if request.top_k == 0:
+        raise ObjectHasInvalidValueException(
+            "top_k needs to be strictly positive, or set it to be -1 / None to disable top_k."
+        )
+
+    if request.top_k in [-1, None]:  # disable top_k, consider all tokens.
+        if inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+            request.top_k = None
+        elif inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
+            request.top_k = -1
+    if request.top_p in [1.0, None]:  # disable top_p, consider all tokens.
+        if inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+            request.top_p = None
+        elif inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
+            request.top_p = 1.0
+
+    return request
+
+
 class CompletionSyncV1UseCase:
     """
     Use case for running a prompt completion on an LLM endpoint.
@@ -937,8 +965,6 @@ class CompletionSyncV1UseCase:
 
         request_id = str(uuid4())
         add_trace_request_id(request_id)
-        if request.top_k == 0:  # top_k can't be 0, only takes >= 1, or -1/None to disable top_k
-            request.top_k = -1
 
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
             owner=user.team_id, name=model_endpoint_name, order_by=None
@@ -977,6 +1003,8 @@ class CompletionSyncV1UseCase:
             endpoint_id=model_endpoint.record.id
         )
         endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+        request = validate_completion_params(endpoint_content.inference_framework, request)
+
         if endpoint_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
             args: Any = {
                 "prompts": [request.prompt],
@@ -1031,11 +1059,7 @@ class CompletionSyncV1UseCase:
             if request.temperature > 0:
                 tgi_args["parameters"]["temperature"] = request.temperature
                 tgi_args["parameters"]["do_sample"] = True
-                if request.top_k == -1:  # tgi set to None to consider all tokens.
-                    request.top_k = None
                 tgi_args["parameters"]["top_k"] = request.top_k
-                if request.top_p == 1:  # tgi set to None to consider all tokens.
-                    request.top_p = None
                 tgi_args["parameters"]["top_p"] = request.top_p
             else:
                 tgi_args["parameters"]["do_sample"] = False
@@ -1184,8 +1208,6 @@ class CompletionStreamV1UseCase:
 
         request_id = str(uuid4())
         add_trace_request_id(request_id)
-        if request.top_k == 0:  # top_k can't be 0, only takes >= 1, or -1/None to disable top_k
-            request.top_k = -1
 
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
             owner=user.team_id, name=model_endpoint_name, order_by=None
@@ -1224,6 +1246,7 @@ class CompletionStreamV1UseCase:
         )
 
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+        request = validate_completion_params(model_content.inference_framework, request)
 
         args: Any = None
         if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
@@ -1253,11 +1276,7 @@ class CompletionStreamV1UseCase:
             if request.temperature > 0:
                 args["parameters"]["temperature"] = request.temperature
                 args["parameters"]["do_sample"] = True
-                if request.top_k == -1:  # tgi set to None to consider all tokens.
-                    request.top_k = None
                 args["parameters"]["top_k"] = request.top_k
-                if request.top_p == 1:  # tgi set to None to consider all tokens.
-                    request.top_p = None
                 args["parameters"]["top_p"] = request.top_p
             else:
                 args["parameters"]["do_sample"] = False

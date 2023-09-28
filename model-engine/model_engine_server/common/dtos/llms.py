@@ -104,7 +104,7 @@ class CompletionSyncV1Request(BaseModel):
 
     prompt: str
     max_new_tokens: int
-    temperature: float = Field(ge=0, le=1)
+    temperature: float = Field(ge=0.0, le=1.0)
     """
     Temperature of the sampling. Setting to 0 equals to greedy sampling.
     """
@@ -117,24 +117,24 @@ class CompletionSyncV1Request(BaseModel):
     Whether to return the log probabilities of the tokens.
     """
 
-    repetition_penalty: Optional[float] = Field(default=1, ge=1)
+    repetition_penalty: Optional[float] = Field(default=None, ge=1.0)
     """
     Only affects text-generation-inference
     The parameter for repetition penalty. 1.0 means no penalty
     """
-    presence_penalty: Optional[float] = Field(default=0, ge=0, le=2)
-    frequency_penalty: Optional[float] = Field(default=0, ge=0, le=2)
+    presence_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
+    frequency_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
     """
     Only affects vllm, lightllm
     presence_penalty: Penalize new tokens based on whether they appear in the text so far. 0.0 means no penalty
     frequency_penalty: Penalize new tokens based on their existing frequency in the text so far. 0.0 means no penalty
     """
 
-    top_k: Optional[int] = Field(default=-1, ge=-1)
+    top_k: Optional[int] = Field(default=None, ge=-1)
     """
     Controls the number of top tokens to consider. -1 means consider all tokens.
     """
-    top_p: Optional[float] = Field(default=1, gt=0, le=1)
+    top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
     """
     Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
     """
@@ -167,7 +167,7 @@ class CompletionStreamV1Request(BaseModel):
 
     prompt: str
     max_new_tokens: int
-    temperature: float = Field(ge=0, le=1)
+    temperature: float = Field(ge=0.0, le=1.0)
     """
     Temperature of the sampling. Setting to 0 equals to greedy sampling.
     """
@@ -180,24 +180,24 @@ class CompletionStreamV1Request(BaseModel):
     Whether to return the log probabilities of the tokens. Only affects behavior for text-generation-inference models
     """
 
-    repetition_penalty: Optional[float] = Field(default=1, ge=1)
+    repetition_penalty: Optional[float] = Field(default=None, ge=1.0)
     """
     Only affects text-generation-inference
     The parameter for repetition penalty. 1.0 means no penalty
     """
-    presence_penalty: Optional[float] = Field(default=0, ge=0, le=2)
-    frequency_penalty: Optional[float] = Field(default=0, ge=0, le=2)
+    presence_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
+    frequency_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
     """
     Only affects vllm, lightllm
     presence_penalty: Penalize new tokens based on whether they appear in the text so far. 0.0 means no penalty
     frequency_penalty: Penalize new tokens based on their existing frequency in the text so far. 0.0 means no penalty
     """
 
-    top_k: Optional[int] = Field(default=-1, ge=-1)
+    top_k: Optional[int] = Field(default=None, ge=-1)
     """
     Controls the number of top tokens to consider. -1 means consider all tokens.
     """
-    top_p: Optional[float] = Field(default=1, gt=0, le=1)
+    top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
     """
     Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
     """

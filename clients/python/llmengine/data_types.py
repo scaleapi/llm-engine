@@ -268,11 +268,11 @@ class CompletionSyncV1Request(BaseModel):
     temperature: float = Field(..., ge=0.0)
     stop_sequences: Optional[List[str]] = Field(default=None)
     return_token_log_probs: Optional[bool] = Field(default=False)
-    repetition_penalty: Optional[float] = Field(default=1, ge=1)
-    presence_penalty: Optional[float] = Field(default=0, ge=0, le=2)
-    frequency_penalty: Optional[float] = Field(default=0, ge=0, le=2)
-    top_k: Optional[int] = Field(default=-1, ge=-1)
-    top_p: Optional[float] = Field(default=1, gt=0, le=1)
+    repetition_penalty: Optional[float] = Field(default=None, ge=1.0)
+    presence_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
+    frequency_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
+    top_k: Optional[int] = Field(default=None, ge=-1)
+    top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
 
 
 class TokenOutput(BaseModel):
@@ -334,11 +334,11 @@ class CompletionStreamV1Request(BaseModel):
     temperature: float = Field(..., ge=0.0)
     stop_sequences: Optional[List[str]] = Field(default=None)
     return_token_log_probs: Optional[bool] = Field(default=False)
-    repetition_penalty: Optional[float] = Field(default=1, ge=1)
-    presence_penalty: Optional[float] = Field(default=0, ge=0, le=2)
-    frequency_penalty: Optional[float] = Field(default=0, ge=0, le=2)
-    top_k: Optional[int] = Field(default=-1, ge=-1)
-    top_p: Optional[float] = Field(default=1, gt=0, le=1)
+    repetition_penalty: Optional[float] = Field(default=None, ge=1.0)
+    presence_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
+    frequency_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
+    top_k: Optional[int] = Field(default=None, ge=-1)
+    top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
 
 
 class CompletionStreamOutput(BaseModel):
