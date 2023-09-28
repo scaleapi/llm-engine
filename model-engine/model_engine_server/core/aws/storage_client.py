@@ -1,5 +1,5 @@
 import time
-from typing import IO, Callable, Iterable, Optional, Sequence, List
+from typing import IO, Callable, Iterable, List, Optional, Sequence
 
 import smart_open
 from botocore.client import BaseClient
@@ -49,6 +49,7 @@ def sync_storage_client_keepalive(
                 )
         time.sleep(interval)
 
+
 def s3_list_files(bucket: str, key: str, s3: Optional[BaseClient] = None) -> List[str]:
     """
     Test if file exists in s3
@@ -62,11 +63,15 @@ def s3_list_files(bucket: str, key: str, s3: Optional[BaseClient] = None) -> Lis
         s3 = sync_storage_client()
     try:
         # From here: https://dev.to/aws-builders/how-to-list-contents-of-s3-bucket-using-boto3-python-47mm
-        files = [bucket_object['Key'] for bucket_object in s3.list_objects_v2(Bucket=bucket, Prefix=key)['Contents']]
+        files = [
+            bucket_object["Key"]
+            for bucket_object in s3.list_objects_v2(Bucket=bucket, Prefix=key)["Contents"]
+        ]
     except Exception as e:  # type: ignore
         raise e
     else:
         return files
+
 
 def s3_fileobj_exists(bucket: str, key: str, s3: Optional[BaseClient] = None) -> bool:
     """
