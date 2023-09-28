@@ -937,7 +937,7 @@ class CompletionSyncV1UseCase:
 
         request_id = str(uuid4())
         add_trace_request_id(request_id)
-        if request.top_k == 0:
+        if request.top_k == 0:  # top_k can't be 0, only takes >= 1, or -1/None to disable top_k
             request.top_k = -1
 
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
@@ -1184,7 +1184,7 @@ class CompletionStreamV1UseCase:
 
         request_id = str(uuid4())
         add_trace_request_id(request_id)
-        if request.top_k == 0:
+        if request.top_k == 0:  # top_k can't be 0, only takes >= 1, or -1/None to disable top_k
             request.top_k = -1
 
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
