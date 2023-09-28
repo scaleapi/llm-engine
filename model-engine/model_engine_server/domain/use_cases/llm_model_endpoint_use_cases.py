@@ -33,6 +33,8 @@ from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
+from model_engine_server.core.aws.storage_client import sync_storage_client, s3_list_files
+from model_engine_server.core.utils.url import parse_attachment_url
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
@@ -358,14 +360,22 @@ class CreateLLMModelEndpointV1UseCase:
                 ]
             )
         else:
-            if framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
-                subcommands.append(
-                    f"{s5cmd} --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-                )
+            # Let's check whether to exclude "*.safetensors" or "*.bin" files
+            parsed_remote = parse_attachment_url(checkpoint_path)
+            all_files = s3_list_files(bucket=parsed_remote.bucket, key=parsed_remote.key)
+
+            # If there are more files ending in .safetensors, then exclude *.bin
+            if len([f for f in all_files if f.endswith(".safetensors")]) > len(
+                [f for f in all_files if f.endswith(".bin")]
+            ):
+                exclude_str = "*.bin"
             else:
-                subcommands.append(
-                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '*.safetensors'  {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-                )
+                exclude_str = "*.safetensors"
+
+            subcommands.append(
+                f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '{exclude_str}' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+            )
+
         return subcommands
 
     async def create_deepspeed_bundle(
