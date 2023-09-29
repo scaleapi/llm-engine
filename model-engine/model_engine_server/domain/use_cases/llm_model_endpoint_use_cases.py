@@ -34,6 +34,7 @@ from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, 
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.utils.parsing import exclude_safetensors_or_bin
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
     LLMMetadata,
@@ -132,21 +133,6 @@ _SUPPORTED_MODEL_NAMES = {
 
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
-
-
-def _exclude_safetensors_or_bin(model_files):
-    """
-    This function is used to determine whether to exclude "*.safetensors" or "*.bin" files
-    based on which file type is present more often in the checkpoint folder.
-    """
-    exclude_str = ""
-    if len([f for f in model_files if f.endswith(".safetensors")]) > len(
-        [f for f in model_files if f.endswith(".bin")]
-    ):
-        exclude_str = "*.bin"
-    else:
-        exclude_str = "*.safetensors"
-    return exclude_str
 
 
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
@@ -377,7 +363,7 @@ class CreateLLMModelEndpointV1UseCase:
             checkpoint_files = self.llm_artifact_gateway.get_files_from_checkpoint(checkpoint_path)
             model_files = [f for f in checkpoint_files if "model" in f]
 
-            exclude_str = _exclude_safetensors_or_bin(model_files)
+            exclude_str = exclude_safetensors_or_bin(model_files)
 
             subcommands.append(
                 f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '{exclude_str}' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
