@@ -134,7 +134,7 @@ NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
 
-def _exclude_safetensors_or_bin(model_files):
+def _exclude_safetensors_or_bin(model_files: List[str]) -> Optional[str]:
     """
     This function is used to determine whether to exclude "*.safetensors" or "*.bin" files
     based on which file type is present more often in the checkpoint folder. The less

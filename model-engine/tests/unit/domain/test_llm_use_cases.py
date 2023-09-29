@@ -963,13 +963,13 @@ async def test_delete_public_inference_model_raises_not_authorized(
 
 
 @pytest.mark.asyncio
-async def test_exclude_safetensors_or_bin_majority_bin_works():
+async def test_exclude_safetensors_or_bin_majority_bin_returns_exclude_safetensors():
     fake_model_files = ["fake.bin", "fake2.bin", "fake3.safetensors", "model.json", "optimizer.pt"]
     assert _exclude_safetensors_or_bin(fake_model_files) == "*.safetensors"
 
 
 @pytest.mark.asyncio
-async def test_exclude_safetensors_or_bin_majority_safetensors_works():
+async def test_exclude_safetensors_or_bin_majority_safetensors_returns_exclude_bin():
     fake_model_files = [
         "fake.bin",
         "fake2.safetensors",
@@ -981,7 +981,7 @@ async def test_exclude_safetensors_or_bin_majority_safetensors_works():
 
 
 @pytest.mark.asyncio
-async def test_exclude_safetensors_or_bin_equal_bins_and_safetensors_works():
+async def test_exclude_safetensors_or_bin_equal_bins_and_safetensors_returns_none():
     fake_model_files = [
         "fake.bin",
         "fake2.safetensors",
