@@ -227,6 +227,7 @@ class CreateLLMModelEndpointV1UseCase:
                     framework_image_tag,
                     endpoint_name,
                     num_shards,
+                    quantize,
                     checkpoint_path,
                 )
             elif framework == LLMInferenceFramework.LIGHTLLM:
@@ -453,6 +454,7 @@ class CreateLLMModelEndpointV1UseCase:
         framework_image_tag: str,
         endpoint_unique_name: str,
         num_shards: int,
+        quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
     ):
         command = []
@@ -481,6 +483,12 @@ class CreateLLMModelEndpointV1UseCase:
         subcommands.append(
             f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens}"
         )
+
+        if quantize:
+            if quantize == Quantization.AWQ:
+                subcommands[-1] = subcommands[-1] + f" --quantization {quantize}"
+            else:
+                raise InvalidRequestException(f"Quantization {quantize} is not supported by vLLM.")
 
         command = [
             "/bin/bash",
