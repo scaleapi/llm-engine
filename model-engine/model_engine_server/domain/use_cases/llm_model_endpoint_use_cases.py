@@ -834,7 +834,7 @@ def deepspeed_result_to_tokens(result: Dict[str, Any]) -> List[TokenOutput]:
 def validate_and_update_completion_params(
     inference_framework: LLMInferenceFramework,
     request: Union[CompletionSyncV1Request, CompletionStreamV1Request],
-):
+) -> Union[CompletionSyncV1Request, CompletionStreamV1Request]:
     # top_k, top_p
     if inference_framework in [
         LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
@@ -1023,9 +1023,14 @@ class CompletionSyncV1UseCase:
             endpoint_id=model_endpoint.record.id
         )
         endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
-        request = validate_and_update_completion_params(
+        validated_request = validate_and_update_completion_params(
             endpoint_content.inference_framework, request
         )
+        if not isinstance(validated_request, CompletionSyncV1Request):
+            raise ValueError(
+                f"request has type {validated_request.__class__.__name__}, expected type CompletionSyncV1Request"
+            )
+        request = validated_request
 
         if endpoint_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
             args: Any = {
@@ -1267,7 +1272,14 @@ class CompletionStreamV1UseCase:
         )
 
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
-        request = validate_and_update_completion_params(model_content.inference_framework, request)
+        validated_request = validate_and_update_completion_params(
+            model_content.inference_framework, request
+        )
+        if not isinstance(validated_request, CompletionStreamV1Request):
+            raise ValueError(
+                f"request has type {validated_request.__class__.__name__}, expected type CompletionStreamV1Request"
+            )
+        request = validated_request
 
         args: Any = None
         if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
