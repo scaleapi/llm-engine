@@ -754,9 +754,9 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
     def _add_model(self, owner: str, model_name: str):
         self.existing_models.append((owner, model_name))
 
-    def get_files_from_checkpoint(self, checkpoint_path: str, **kwargs) -> List[str]:
-        if checkpoint_path in self.s3_bucket:
-            return self.s3_bucket[checkpoint_path]
+    def list_files(self, path: str, **kwargs) -> List[str]:
+        if path in self.s3_bucket:
+            return self.s3_bucket[path]
 
     def get_model_weights_urls(self, owner: str, model_name: str):
         if (owner, model_name) in self.existing_models:

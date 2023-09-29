@@ -137,14 +137,18 @@ DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 def _exclude_safetensors_or_bin(model_files):
     """
     This function is used to determine whether to exclude "*.safetensors" or "*.bin" files
-    based on which file type is present more often in the checkpoint folder.
+    based on which file type is present more often in the checkpoint folder. The less
+    frequently present file type is excluded.
+    If both files are equally present, no exclusion string is returned.
     """
-    exclude_str = ""
+    exclude_str = None
     if len([f for f in model_files if f.endswith(".safetensors")]) > len(
         [f for f in model_files if f.endswith(".bin")]
     ):
         exclude_str = "*.bin"
-    else:
+    elif len([f for f in model_files if f.endswith(".safetensors")]) < len(
+        [f for f in model_files if f.endswith(".bin")]
+    ):
         exclude_str = "*.safetensors"
     return exclude_str
 
@@ -381,9 +385,14 @@ class CreateLLMModelEndpointV1UseCase:
 
             exclude_str = _exclude_safetensors_or_bin(model_files)
 
-            subcommands.append(
-                f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '{exclude_str}' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-            )
+            if exclude_str is None:
+                subcommands.append(
+                    f"{s5cmd} --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+                )
+            else:
+                subcommands.append(
+                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '{exclude_str}' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+                )
 
         return subcommands
 

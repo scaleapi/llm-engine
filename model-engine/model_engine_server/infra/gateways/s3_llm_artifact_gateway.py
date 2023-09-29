@@ -18,9 +18,9 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         resource = session.resource("s3")
         return resource
 
-    def get_files_from_checkpoint(self, checkpoint_path: str, **kwargs) -> List[str]:
+    def list_files(self, path: str, **kwargs) -> List[str]:
         s3 = self._get_s3_resource(kwargs)
-        parsed_remote = parse_attachment_url(checkpoint_path)
+        parsed_remote = parse_attachment_url(path)
         bucket = parsed_remote.bucket
         key = parsed_remote.key
         try:

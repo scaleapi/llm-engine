@@ -8,9 +8,9 @@ class LLMArtifactGateway(ABC):
     """
 
     @abstractmethod
-    def get_files_from_checkpoint(self, checkpoint_path: str, **kwargs) -> List[str]:
+    def list_files(self, path: str, **kwargs) -> List[str]:
         """
-        Gets a list of files from a given checkpoint path.
+        Gets a list of files from a given path.
         """
         pass
 
