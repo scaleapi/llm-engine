@@ -33,6 +33,10 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
+        presence_penalty: Optional[float] = None,
+        frequency_penalty: Optional[float] = None,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]:
@@ -71,6 +75,26 @@ class Completion(APIEngine):
             return_token_log_probs (Optional[bool]):
                 Whether to return the log probabilities of generated tokens.
                 When True, the response will include a list of tokens and their log probabilities.
+
+            presence_penalty (Optional[float]):
+                Only supported in vllm, lightllm
+                Penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
+                https://platform.openai.com/docs/guides/gpt/parameter-details
+                Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
+
+            frequency_penalty (Optional[float]):
+                Only supported in vllm, lightllm
+                Penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
+                https://platform.openai.com/docs/guides/gpt/parameter-details
+                Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
+
+            top_k (Optional[int]):
+                Integer that controls the number of top tokens to consider.
+                Range: [1, infinity). -1 means consider all tokens.
+
+            top_p (Optional[float]):
+                Float that controls the cumulative probability of the top tokens to consider.
+                Range: (0.0, 1.0]. 1.0 means consider all tokens.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -164,6 +188,10 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
+                top_k=top_k,
+                top_p=top_p,
                 timeout=timeout,
             )
 
@@ -184,6 +212,10 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
+                top_k=top_k,
+                top_p=top_p,
             )
 
     @classmethod
@@ -195,6 +227,10 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
+        presence_penalty: Optional[float] = None,
+        frequency_penalty: Optional[float] = None,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
@@ -234,6 +270,26 @@ class Completion(APIEngine):
             return_token_log_probs (Optional[bool]):
                 Whether to return the log probabilities of generated tokens.
                 When True, the response will include a list of tokens and their log probabilities.
+
+            presence_penalty (Optional[float]):
+                Only supported in vllm, lightllm
+                Penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
+                https://platform.openai.com/docs/guides/gpt/parameter-details
+                Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
+
+            frequency_penalty (Optional[float]):
+                Only supported in vllm, lightllm
+                Penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
+                https://platform.openai.com/docs/guides/gpt/parameter-details
+                Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
+
+            top_k (Optional[int]):
+                Integer that controls the number of top tokens to consider.
+                Range: [1, infinity). -1 means consider all tokens.
+
+            top_p (Optional[float]):
+                Float that controls the cumulative probability of the top tokens to consider.
+                Range: (0.0, 1.0]. 1.0 means consider all tokens.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -317,6 +373,10 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
+                top_k=top_k,
+                top_p=top_p,
             )
 
         else:
@@ -326,6 +386,10 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
+                top_k=top_k,
+                top_p=top_p,
             ).dict()
             response = cls.post_sync(
                 resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",
