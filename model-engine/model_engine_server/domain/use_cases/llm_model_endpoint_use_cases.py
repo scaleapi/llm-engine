@@ -197,11 +197,13 @@ class CreateLLMModelEndpointV1UseCase:
         create_model_bundle_use_case: CreateModelBundleV2UseCase,
         model_bundle_repository: ModelBundleRepository,
         model_endpoint_service: ModelEndpointService,
+        llm_artifact_gateway: LLMArtifactGateway,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_model_bundle_use_case = create_model_bundle_use_case
         self.model_bundle_repository = model_bundle_repository
         self.model_endpoint_service = model_endpoint_service
+        self.llm_artifact_gateway = llm_artifact_gateway
 
     async def create_model_bundle(
         self,

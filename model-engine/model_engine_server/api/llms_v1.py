@@ -92,6 +92,7 @@ async def create_model_endpoint(
             create_model_bundle_use_case=create_model_bundle_use_case,
             model_bundle_repository=external_interfaces.model_bundle_repository,
             model_endpoint_service=external_interfaces.model_endpoint_service,
+            llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
         )
         return await use_case.execute(user=auth, request=request)
     except ObjectAlreadyExistsException as exc:

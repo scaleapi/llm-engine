@@ -48,6 +48,7 @@ async def test_create_model_endpoint_use_case_success(
     fake_model_endpoint_service,
     fake_docker_repository_image_always_exists,
     fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
     create_llm_model_endpoint_request_async: CreateLLMModelEndpointV1Request,
     create_llm_model_endpoint_request_sync: CreateLLMModelEndpointV1Request,
     create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
@@ -63,6 +64,7 @@ async def test_create_model_endpoint_use_case_success(
         create_model_bundle_use_case=bundle_use_case,
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(user=user, request=create_llm_model_endpoint_request_async)
@@ -151,6 +153,7 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
     fake_model_endpoint_service,
     fake_docker_repository_image_always_exists,
     fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
     create_llm_model_endpoint_text_generation_inference_request_async: CreateLLMModelEndpointV1Request,
     create_llm_model_endpoint_text_generation_inference_request_streaming: CreateLLMModelEndpointV1Request,
 ):
@@ -164,6 +167,7 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
         create_model_bundle_use_case=bundle_use_case,
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -203,6 +207,7 @@ async def test_create_llm_model_endpoint_use_case_raises_invalid_value_exception
     fake_model_endpoint_service,
     fake_docker_repository_image_always_exists,
     fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
     create_llm_model_endpoint_request_invalid_model_name: CreateLLMModelEndpointV1Request,
 ):
     fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
@@ -215,6 +220,7 @@ async def test_create_llm_model_endpoint_use_case_raises_invalid_value_exception
         create_model_bundle_use_case=bundle_use_case,
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(ObjectHasInvalidValueException):
