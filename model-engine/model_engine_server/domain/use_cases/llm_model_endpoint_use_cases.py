@@ -33,9 +33,7 @@ from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.aws.storage_client import s3_list_files
 from model_engine_server.core.loggers import filename_wo_ext, make_logger
-from model_engine_server.core.utils.url import parse_attachment_url
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
     LLMMetadata,
@@ -134,6 +132,21 @@ _SUPPORTED_MODEL_NAMES = {
 
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
+
+
+def _exclude_safetensors_or_bin(model_files):
+    """
+    This function is used to determine whether to exclude "*.safetensors" or "*.bin" files
+    based on which file type is present more often in the checkpoint folder.
+    """
+    exclude_str = ""
+    if len([f for f in model_files if f.endswith(".safetensors")]) > len(
+        [f for f in model_files if f.endswith(".bin")]
+    ):
+        exclude_str = "*.bin"
+    else:
+        exclude_str = "*.safetensors"
+    return exclude_str
 
 
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
@@ -361,17 +374,10 @@ class CreateLLMModelEndpointV1UseCase:
             )
         else:
             # Let's check whether to exclude "*.safetensors" or "*.bin" files
-            parsed_remote = parse_attachment_url(checkpoint_path)
-            all_files = s3_list_files(bucket=parsed_remote.bucket, key=parsed_remote.key)
-            model_files = [f for f in all_files if "model" in f]
+            checkpoint_files = self.llm_artifact_gateway.get_files_from_checkpoint(checkpoint_path)
+            model_files = [f for f in checkpoint_files if "model" in f]
 
-            # If there are more files ending in .safetensors, then exclude *.bin
-            if len([f for f in model_files if f.endswith(".safetensors")]) > len(
-                [f for f in model_files if f.endswith(".bin")]
-            ):
-                exclude_str = "*.bin"
-            else:
-                exclude_str = "*.safetensors"
+            exclude_str = _exclude_safetensors_or_bin(model_files)
 
             subcommands.append(
                 f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '{exclude_str}' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
