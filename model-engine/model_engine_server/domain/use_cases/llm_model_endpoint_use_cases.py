@@ -380,7 +380,7 @@ class CreateLLMModelEndpointV1UseCase:
             )
         else:
             # Let's check whether to exclude "*.safetensors" or "*.bin" files
-            checkpoint_files = self.llm_artifact_gateway.get_files_from_checkpoint(checkpoint_path)
+            checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
             model_files = [f for f in checkpoint_files if "model" in f]
 
             exclude_str = _exclude_safetensors_or_bin(model_files)
