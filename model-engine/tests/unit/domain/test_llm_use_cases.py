@@ -36,6 +36,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     DeleteLLMEndpointByNameUseCase,
     GetLLMModelEndpointByNameV1UseCase,
     ModelDownloadV1UseCase,
+    _exclude_safetensors_or_bin,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
@@ -953,3 +954,15 @@ async def test_delete_public_inference_model_raises_not_authorized(
         await use_case.execute(
             user=user, model_endpoint_name=llm_model_endpoint_sync[0].record.name
         )
+
+
+@pytest.mark.asyncio
+async def test_exclude_safetensors_or_bin_majority_bin_works():
+    fake_model_files = ["fake.bin", "fake2.bin", "fake3.safetensors"]
+    assert _exclude_safetensors_or_bin(fake_model_files) == "*.safetensors"
+
+
+@pytest.mark.asyncio
+async def test_exclude_safetensors_or_bin_majority_safetensors_works():
+    fake_model_files = ["fake.bin", "fake2.safetensors", "fake3.safetensors"]
+    assert _exclude_safetensors_or_bin(fake_model_files) == "*.bin"
