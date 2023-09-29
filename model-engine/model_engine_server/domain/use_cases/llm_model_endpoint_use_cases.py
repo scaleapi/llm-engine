@@ -134,6 +134,25 @@ NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
 
+def _exclude_safetensors_or_bin(model_files: List[str]) -> Optional[str]:
+    """
+    This function is used to determine whether to exclude "*.safetensors" or "*.bin" files
+    based on which file type is present more often in the checkpoint folder. The less
+    frequently present file type is excluded.
+    If both files are equally present, no exclusion string is returned.
+    """
+    exclude_str = None
+    if len([f for f in model_files if f.endswith(".safetensors")]) > len(
+        [f for f in model_files if f.endswith(".bin")]
+    ):
+        exclude_str = "*.bin"
+    elif len([f for f in model_files if f.endswith(".safetensors")]) < len(
+        [f for f in model_files if f.endswith(".bin")]
+    ):
+        exclude_str = "*.safetensors"
+    return exclude_str
+
+
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
     model_endpoint: ModelEndpoint,
 ) -> GetLLMModelEndpointV1Response:
@@ -182,11 +201,13 @@ class CreateLLMModelEndpointV1UseCase:
         create_model_bundle_use_case: CreateModelBundleV2UseCase,
         model_bundle_repository: ModelBundleRepository,
         model_endpoint_service: ModelEndpointService,
+        llm_artifact_gateway: LLMArtifactGateway,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_model_bundle_use_case = create_model_bundle_use_case
         self.model_bundle_repository = model_bundle_repository
         self.model_endpoint_service = model_endpoint_service
+        self.llm_artifact_gateway = llm_artifact_gateway
 
     async def create_model_bundle(
         self,
@@ -358,14 +379,21 @@ class CreateLLMModelEndpointV1UseCase:
                 ]
             )
         else:
-            if framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+            # Let's check whether to exclude "*.safetensors" or "*.bin" files
+            checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
+            model_files = [f for f in checkpoint_files if "model" in f]
+
+            exclude_str = _exclude_safetensors_or_bin(model_files)
+
+            if exclude_str is None:
                 subcommands.append(
                     f"{s5cmd} --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
                 )
             else:
                 subcommands.append(
-                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '*.safetensors'  {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '{exclude_str}' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
                 )
+
         return subcommands
 
     async def create_deepspeed_bundle(

@@ -36,6 +36,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     DeleteLLMEndpointByNameUseCase,
     GetLLMModelEndpointByNameV1UseCase,
     ModelDownloadV1UseCase,
+    _exclude_safetensors_or_bin,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
@@ -47,6 +48,7 @@ async def test_create_model_endpoint_use_case_success(
     fake_model_endpoint_service,
     fake_docker_repository_image_always_exists,
     fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
     create_llm_model_endpoint_request_async: CreateLLMModelEndpointV1Request,
     create_llm_model_endpoint_request_sync: CreateLLMModelEndpointV1Request,
     create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
@@ -62,6 +64,7 @@ async def test_create_model_endpoint_use_case_success(
         create_model_bundle_use_case=bundle_use_case,
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(user=user, request=create_llm_model_endpoint_request_async)
@@ -150,6 +153,7 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
     fake_model_endpoint_service,
     fake_docker_repository_image_always_exists,
     fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
     create_llm_model_endpoint_text_generation_inference_request_async: CreateLLMModelEndpointV1Request,
     create_llm_model_endpoint_text_generation_inference_request_streaming: CreateLLMModelEndpointV1Request,
 ):
@@ -163,6 +167,7 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
         create_model_bundle_use_case=bundle_use_case,
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -202,6 +207,7 @@ async def test_create_llm_model_endpoint_use_case_raises_invalid_value_exception
     fake_model_endpoint_service,
     fake_docker_repository_image_always_exists,
     fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
     create_llm_model_endpoint_request_invalid_model_name: CreateLLMModelEndpointV1Request,
 ):
     fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
@@ -214,6 +220,7 @@ async def test_create_llm_model_endpoint_use_case_raises_invalid_value_exception
         create_model_bundle_use_case=bundle_use_case,
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(ObjectHasInvalidValueException):
@@ -953,3 +960,34 @@ async def test_delete_public_inference_model_raises_not_authorized(
         await use_case.execute(
             user=user, model_endpoint_name=llm_model_endpoint_sync[0].record.name
         )
+
+
+@pytest.mark.asyncio
+async def test_exclude_safetensors_or_bin_majority_bin_returns_exclude_safetensors():
+    fake_model_files = ["fake.bin", "fake2.bin", "fake3.safetensors", "model.json", "optimizer.pt"]
+    assert _exclude_safetensors_or_bin(fake_model_files) == "*.safetensors"
+
+
+@pytest.mark.asyncio
+async def test_exclude_safetensors_or_bin_majority_safetensors_returns_exclude_bin():
+    fake_model_files = [
+        "fake.bin",
+        "fake2.safetensors",
+        "fake3.safetensors",
+        "model.json",
+        "optimizer.pt",
+    ]
+    assert _exclude_safetensors_or_bin(fake_model_files) == "*.bin"
+
+
+@pytest.mark.asyncio
+async def test_exclude_safetensors_or_bin_equal_bins_and_safetensors_returns_none():
+    fake_model_files = [
+        "fake.bin",
+        "fake2.safetensors",
+        "fake3.safetensors",
+        "fake4.bin",
+        "model.json",
+        "optimizer.pt",
+    ]
+    assert _exclude_safetensors_or_bin(fake_model_files) is None
