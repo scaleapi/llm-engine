@@ -748,10 +748,15 @@ class FakeLLMFineTuneEventsRepository(LLMFineTuneEventsRepository):
 class FakeLLMArtifactGateway(LLMArtifactGateway):
     def __init__(self):
         self.existing_models = []
+        self.s3_bucket = {"fake-checkpoint": ["fake.bin, fake2.bin", "fake3.safetensors"]}
         self.urls = {"filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"}
 
     def _add_model(self, owner: str, model_name: str):
         self.existing_models.append((owner, model_name))
+
+    def list_files(self, path: str, **kwargs) -> List[str]:
+        if path in self.s3_bucket:
+            return self.s3_bucket[path]
 
     def get_model_weights_urls(self, owner: str, model_name: str):
         if (owner, model_name) in self.existing_models:
