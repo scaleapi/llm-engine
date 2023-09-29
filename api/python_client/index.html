@@ -970,12 +970,16 @@ For each of these modes, you can also choose whether to stream token responses o
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>,
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    stop_sequences: Optional[List[<span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    return_token_log_probs: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>) <span style="color: #666666">-&gt;</span> Union[
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    CompletionSyncResponse,
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    Iterator[CompletionStreamResponse],
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>]
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    presence_penalty: Optional[<span style="color: #008000">float</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    frequency_penalty: Optional[<span style="color: #008000">float</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    top_k: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    top_p: Optional[<span style="color: #008000">float</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    Iterator[CompletionStreamResponse],
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1090,6 +1094,70 @@ When True, the response will include a list of tokens and their log probabilitie
           </td>
           <td>
                 <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>presence_penalty</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[float]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Only supported in vllm, lightllm
+Penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
+https://platform.openai.com/docs/guides/gpt/parameter-details
+Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>frequency_penalty</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[float]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Only supported in vllm, lightllm
+Penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
+https://platform.openai.com/docs/guides/gpt/parameter-details
+Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>top_k</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[int]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Integer that controls the number of top tokens to consider.
+Range: [1, infinity). -1 means consider all tokens.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>top_p</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[float]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Float that controls the cumulative probability of the top tokens to consider.
+Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
           </td>
         </tr>
         <tr>
@@ -1231,12 +1299,16 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    temperature: <span style="color: #008000">float</span> <span style="color: #666666">=</span> <span style="color: #666666">0.2</span>,
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    stop_sequences: Optional[List[<span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    return_token_log_probs: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>) <span style="color: #666666">-&gt;</span> Union[
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    CompletionSyncResponse,
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    AsyncIterable[CompletionStreamResponse],
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>]
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    presence_penalty: Optional[<span style="color: #008000">float</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    frequency_penalty: Optional[<span style="color: #008000">float</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    top_k: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    top_p: Optional[<span style="color: #008000">float</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    AsyncIterable[CompletionStreamResponse],
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1351,6 +1423,70 @@ When True, the response will include a list of tokens and their log probabilitie
           </td>
           <td>
                 <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>presence_penalty</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[float]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Only supported in vllm, lightllm
+Penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
+https://platform.openai.com/docs/guides/gpt/parameter-details
+Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>frequency_penalty</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[float]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Only supported in vllm, lightllm
+Penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
+https://platform.openai.com/docs/guides/gpt/parameter-details
+Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>top_k</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[int]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Integer that controls the number of top tokens to consider.
+Range: [1, infinity). -1 means consider all tokens.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>top_p</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[float]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Float that controls the cumulative probability of the top tokens to consider.
+Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
           </td>
         </tr>
         <tr>
