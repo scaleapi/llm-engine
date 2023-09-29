@@ -8,7 +8,7 @@ import json
 import math
 import os
 from dataclasses import asdict
-from typing import Any, AsyncIterable, Dict, List, Optional
+from typing import Any, AsyncIterable, Dict, List, Optional, Union
 from uuid import uuid4
 
 from model_engine_server.common.config import hmi_config
@@ -831,8 +831,10 @@ def deepspeed_result_to_tokens(result: Dict[str, Any]) -> List[TokenOutput]:
     return tokens
 
 
-def validate_completion_params(inference_framework: LLMInferenceFramework, request):
-    # can't pass mypy check with Union[CompletionSyncV1Request, CompletionStreamV1Request], doesn't support intersection types?
+def validate_completion_params(
+    inference_framework: LLMInferenceFramework,
+    request: Union[CompletionSyncV1Request, CompletionStreamV1Request],
+) -> Union[CompletionSyncV1Request, CompletionStreamV1Request]:
 
     if request.temperature == 0:  # greedy, do_sample is False
         if request.top_k not in [-1, None] or request.top_p not in [1.0, None]:
@@ -1051,7 +1053,6 @@ class CompletionSyncV1UseCase:
                 "parameters": {
                     "max_new_tokens": request.max_new_tokens,
                     "decoder_input_details": True,
-                    "repetition_penalty": request.repetition_penalty,
                 },
             }
             if request.stop_sequences is not None:
@@ -1268,7 +1269,6 @@ class CompletionStreamV1UseCase:
                 "inputs": request.prompt,
                 "parameters": {
                     "max_new_tokens": request.max_new_tokens,
-                    "repetition_penalty": request.repetition_penalty,
                 },
             }
             if request.stop_sequences is not None:

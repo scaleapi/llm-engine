@@ -33,7 +33,6 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
-        repetition_penalty: Optional[float] = None,  # text-generation-inference
         presence_penalty: float = 0.0,  # vllm, lightllm
         frequency_penalty: float = 0.0,  # vllm, lightllm
         top_k: Optional[int] = None,
@@ -77,20 +76,14 @@ class Completion(APIEngine):
                 Whether to return the log probabilities of generated tokens.
                 When True, the response will include a list of tokens and their log probabilities.
 
-            repetition_penalty (Optional[float]):
-                Only affects: text-generation-inference
-                The parameter for repetition penalty
-                https://arxiv.org/pdf/1909.05858.pdf
-                Range: [1.0, infinity). 1.0 means no penalty
-
             presence_penalty (float):
-                Only affects: vllm, lightllm
+                Only supported in vllm, lightllm
                 Penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
                 https://platform.openai.com/docs/guides/gpt/parameter-details
                 Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
 
             frequency_penalty (float):
-                Only affects: vllm, lightllm
+                Only supported in vllm, lightllm
                 Penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
                 https://platform.openai.com/docs/guides/gpt/parameter-details
                 Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
@@ -195,7 +188,6 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
-                repetition_penalty=repetition_penalty,
                 presence_penalty=presence_penalty,
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,
@@ -220,7 +212,6 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
-                repetition_penalty=repetition_penalty,
                 presence_penalty=presence_penalty,
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,
@@ -236,7 +227,6 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
-        repetition_penalty: Optional[float] = None,  # text-generation-inference
         presence_penalty: float = 0.0,  # vllm, lightllm
         frequency_penalty: float = 0.0,  # vllm, lightllm
         top_k: Optional[int] = None,
@@ -281,20 +271,14 @@ class Completion(APIEngine):
                 Whether to return the log probabilities of generated tokens.
                 When True, the response will include a list of tokens and their log probabilities.
 
-            repetition_penalty (Optional[float]):
-                Only affects: text-generation-inference
-                The parameter for repetition penalty
-                https://arxiv.org/pdf/1909.05858.pdf
-                Range: [1.0, infinity). 1.0 means no penalty
-
             presence_penalty (float):
-                Only affects: vllm, lightllm
+                Only supported in vllm, lightllm
                 Penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
                 https://platform.openai.com/docs/guides/gpt/parameter-details
                 Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
 
             frequency_penalty (float):
-                Only affects: vllm, lightllm
+                Only supported in vllm, lightllm
                 Penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
                 https://platform.openai.com/docs/guides/gpt/parameter-details
                 Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
@@ -389,7 +373,6 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
-                repetition_penalty=repetition_penalty,
                 presence_penalty=presence_penalty,
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,
@@ -403,7 +386,6 @@ class Completion(APIEngine):
                 temperature=temperature,
                 stop_sequences=stop_sequences,
                 return_token_log_probs=return_token_log_probs,
-                repetition_penalty=repetition_penalty,
                 presence_penalty=presence_penalty,
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,

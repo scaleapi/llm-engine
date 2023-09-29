@@ -116,20 +116,16 @@ class CompletionSyncV1Request(BaseModel):
     """
     Whether to return the log probabilities of the tokens.
     """
-
-    repetition_penalty: Optional[float] = Field(default=None, ge=1.0)
-    """
-    Only affects text-generation-inference
-    The parameter for repetition penalty. 1.0 means no penalty
-    """
     presence_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
+    """
+    Only supported in vllm, lightllm
+    Penalize new tokens based on whether they appear in the text so far. 0.0 means no penalty
+    """
     frequency_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
     """
-    Only affects vllm, lightllm
-    presence_penalty: Penalize new tokens based on whether they appear in the text so far. 0.0 means no penalty
-    frequency_penalty: Penalize new tokens based on their existing frequency in the text so far. 0.0 means no penalty
+    Only supported in vllm, lightllm
+    Penalize new tokens based on their existing frequency in the text so far. 0.0 means no penalty
     """
-
     top_k: Optional[int] = Field(default=None, ge=-1)
     """
     Controls the number of top tokens to consider. -1 means consider all tokens.
@@ -179,20 +175,16 @@ class CompletionStreamV1Request(BaseModel):
     """
     Whether to return the log probabilities of the tokens. Only affects behavior for text-generation-inference models
     """
-
-    repetition_penalty: Optional[float] = Field(default=None, ge=1.0)
-    """
-    Only affects text-generation-inference
-    The parameter for repetition penalty. 1.0 means no penalty
-    """
     presence_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
+    """
+    Only supported in vllm, lightllm
+    Penalize new tokens based on whether they appear in the text so far. 0.0 means no penalty
+    """
     frequency_penalty: float = Field(default=0.0, ge=0.0, le=2.0)
     """
-    Only affects vllm, lightllm
-    presence_penalty: Penalize new tokens based on whether they appear in the text so far. 0.0 means no penalty
-    frequency_penalty: Penalize new tokens based on their existing frequency in the text so far. 0.0 means no penalty
+    Only supported in vllm, lightllm
+    Penalize new tokens based on their existing frequency in the text so far. 0.0 means no penalty
     """
-
     top_k: Optional[int] = Field(default=None, ge=-1)
     """
     Controls the number of top tokens to consider. -1 means consider all tokens.
