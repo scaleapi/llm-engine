@@ -831,32 +831,50 @@ def deepspeed_result_to_tokens(result: Dict[str, Any]) -> List[TokenOutput]:
     return tokens
 
 
-def validate_completion_params(
+def validate_and_update_completion_params(
     inference_framework: LLMInferenceFramework,
     request: Union[CompletionSyncV1Request, CompletionStreamV1Request],
-) -> Union[CompletionSyncV1Request, CompletionStreamV1Request]:
-
-    if request.temperature == 0:  # greedy, do_sample is False
-        if request.top_k not in [-1, None] or request.top_p not in [1.0, None]:
+):
+    # top_k, top_p
+    if inference_framework in [
+        LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+        LLMInferenceFramework.VLLM,
+        LLMInferenceFramework.LIGHTLLM,
+    ]:
+        if request.temperature == 0:
+            if request.top_k not in [-1, None] or request.top_p not in [1.0, None]:
+                raise ObjectHasInvalidValueException(
+                    "top_k and top_p can't be enabled when temperature is 0."
+                )
+        if request.top_k == 0:
             raise ObjectHasInvalidValueException(
-                "top_k and top_p can't be enabled when temperature is 0."
+                "top_k needs to be strictly positive, or set it to be -1 / None to disable top_k."
+            )
+        if inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+            request.top_k = None if request.top_k == -1 else request.top_k
+            request.top_p = None if request.top_p == 1.0 else request.top_p
+        if inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
+            request.top_k = -1 if request.top_k is None else request.top_k
+            request.top_p = 1.0 if request.top_p is None else request.top_p
+    else:
+        if request.top_k or request.top_p:
+            raise ObjectHasInvalidValueException(
+                "top_k and top_p are only supported in text-generation-inference, vllm, lightllm."
             )
 
-    if request.top_k == 0:
-        raise ObjectHasInvalidValueException(
-            "top_k needs to be strictly positive, or set it to be -1 / None to disable top_k."
+    # presence_penalty, frequency_penalty
+    if inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
+        request.presence_penalty = (
+            0.0 if request.presence_penalty is None else request.presence_penalty
         )
-
-    if request.top_k in [-1, None]:  # disable top_k, consider all tokens.
-        if inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
-            request.top_k = None
-        elif inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
-            request.top_k = -1
-    if request.top_p in [1.0, None]:  # disable top_p, consider all tokens.
-        if inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
-            request.top_p = None
-        elif inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
-            request.top_p = 1.0
+        request.frequency_penalty = (
+            0.0 if request.frequency_penalty is None else request.frequency_penalty
+        )
+    else:
+        if request.presence_penalty or request.frequency_penalty:
+            raise ObjectHasInvalidValueException(
+                "presence_penalty and frequency_penalty are only supported in vllm, lightllm."
+            )
 
     return request
 
@@ -1005,7 +1023,9 @@ class CompletionSyncV1UseCase:
             endpoint_id=model_endpoint.record.id
         )
         endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
-        request = validate_completion_params(endpoint_content.inference_framework, request)
+        request = validate_and_update_completion_params(
+            endpoint_content.inference_framework, request
+        )
 
         if endpoint_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
             args: Any = {
@@ -1247,7 +1267,7 @@ class CompletionStreamV1UseCase:
         )
 
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
-        request = validate_completion_params(model_content.inference_framework, request)
+        request = validate_and_update_completion_params(model_content.inference_framework, request)
 
         args: Any = None
         if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:

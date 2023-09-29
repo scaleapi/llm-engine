@@ -33,8 +33,8 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
-        presence_penalty: float = 0.0,  # vllm, lightllm
-        frequency_penalty: float = 0.0,  # vllm, lightllm
+        presence_penalty: Optional[float] = None,
+        frequency_penalty: Optional[float] = None,
         top_k: Optional[int] = None,
         top_p: Optional[float] = None,
         timeout: int = COMPLETION_TIMEOUT,
@@ -76,13 +76,13 @@ class Completion(APIEngine):
                 Whether to return the log probabilities of generated tokens.
                 When True, the response will include a list of tokens and their log probabilities.
 
-            presence_penalty (float):
+            presence_penalty (Optional[float]):
                 Only supported in vllm, lightllm
                 Penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
                 https://platform.openai.com/docs/guides/gpt/parameter-details
                 Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
 
-            frequency_penalty (float):
+            frequency_penalty (Optional[float]):
                 Only supported in vllm, lightllm
                 Penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
                 https://platform.openai.com/docs/guides/gpt/parameter-details
@@ -227,8 +227,8 @@ class Completion(APIEngine):
         temperature: float = 0.2,
         stop_sequences: Optional[List[str]] = None,
         return_token_log_probs: Optional[bool] = False,
-        presence_penalty: float = 0.0,  # vllm, lightllm
-        frequency_penalty: float = 0.0,  # vllm, lightllm
+        presence_penalty: Optional[float] = None,
+        frequency_penalty: Optional[float] = None,
         top_k: Optional[int] = None,
         top_p: Optional[float] = None,
         timeout: int = COMPLETION_TIMEOUT,
@@ -271,13 +271,13 @@ class Completion(APIEngine):
                 Whether to return the log probabilities of generated tokens.
                 When True, the response will include a list of tokens and their log probabilities.
 
-            presence_penalty (float):
+            presence_penalty (Optional[float]):
                 Only supported in vllm, lightllm
                 Penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
                 https://platform.openai.com/docs/guides/gpt/parameter-details
                 Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.
 
-            frequency_penalty (float):
+            frequency_penalty (Optional[float]):
                 Only supported in vllm, lightllm
                 Penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
                 https://platform.openai.com/docs/guides/gpt/parameter-details
