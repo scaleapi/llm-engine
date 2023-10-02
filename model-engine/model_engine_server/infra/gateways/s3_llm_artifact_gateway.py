@@ -23,11 +23,10 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         parsed_remote = parse_attachment_url(path)
         bucket = parsed_remote.bucket
         key = parsed_remote.key
-        # From here: https://dev.to/aws-builders/how-to-list-contents-of-s3-bucket-using-boto3-python-47mm
-        files = [
-            bucket_object["Key"]
-            for bucket_object in s3.list_objects_v2(Bucket=bucket, Prefix=key)["Contents"]
-        ]
+
+        # Using resource's bucket object to get its objects with specific prefix
+        s3_bucket = s3.Bucket(bucket)
+        files = [obj.key for obj in s3_bucket.objects.filter(Prefix=key)]
         return files
 
     def get_model_weights_urls(self, owner: str, model_name: str, **kwargs) -> List[str]:
