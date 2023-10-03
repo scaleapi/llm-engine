@@ -4,7 +4,7 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 
 | Model Name            | Inference APIs Available | Fine-tuning APIs Available | Inference Frameworks Available |
 | --------------------- | ------------------------ | -------------------------- | ------------------------------ |
-| `llama-7b`            | ✅                       | ✅                         | deepspeed, text-generation-inference, vllm |
+| `llama-7b`            | ✅                       | ✅                         | deepspeed, text-generation-inference |
 | `llama-2-7b`          | ✅                       | ✅                         | text-generation-inference, vllm |
 | `llama-2-7b-chat`     | ✅                       |                            | text-generation-inference, vllm |
 | `llama-2-13b`         | ✅                       |                            | text-generation-inference, vllm |
@@ -17,7 +17,7 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `falcon-40b-instruct` | ✅                       |                            | text-generation-inference, vllm |
 | `mpt-7b`              | ✅                       |                            | deepspeed, text-generation-inference, vllm |
 | `mpt-7b-instruct`     | ✅                       | ✅                         | deepspeed, text-generation-inference, vllm |
-| `flan-t5-xxl`         | ✅                       |                            | deepspeed, text-generation-inference, vllm |
+| `flan-t5-xxl`         | ✅                       |                            | deepspeed, text-generation-inference |
 | `mistral-7b`         | ✅                       |                            | vllm | 
 | `mistral-7b-instruct`         | ✅                       |                            | vllm |
 
