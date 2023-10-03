@@ -77,7 +77,11 @@ data:
         spec:
           affinity:
             {{- include "modelEngine.serviceTemplateAffinity" . | nindent 12 }}
+          {{- if eq $mode "async" }}
+          terminationGracePeriodSeconds: 1800
+          {{- else }}
           terminationGracePeriodSeconds: 600
+          {{- end }}
           {{- if $service_template_service_account_name }}
           serviceAccount: {{ $service_template_service_account_name }}
           {{- else }}
@@ -280,7 +284,10 @@ data:
               image: ${IMAGE}
               imagePullPolicy: IfNotPresent
               command: ${COMMAND}
-              env: ${MAIN_ENV}
+              env:
+                - name: AWS_PROFILE
+                  value: "${AWS_ROLE}"
+                ${MAIN_ENV}
               readinessProbe:
                 httpGet:
                   path: ${HEALTHCHECK_ROUTE}

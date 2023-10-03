@@ -10,7 +10,7 @@ PORT = os.environ["PORT"]
 
 def start_server():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--graceful-timeout", type=int, default=600)
+    parser.add_argument("--graceful-timeout", type=int, default=1800)
     args, extra_args = parser.parse_known_args()
 
     # TODO: HTTPS
