@@ -507,6 +507,7 @@ def get_endpoint_resource_arguments_from_request(
     main_env = []
     if isinstance(flavor, RunnableImageLike) and flavor.env:
         main_env = [{"name": key, "value": value} for key, value in flavor.env.items()]
+    main_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
 
     infra_service_config_volume_mount_path = "/infra-config"
     forwarder_config_file_name = "service--forwarder.yaml"
