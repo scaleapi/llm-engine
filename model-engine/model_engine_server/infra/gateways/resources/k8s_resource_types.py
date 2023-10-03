@@ -504,7 +504,7 @@ def get_endpoint_resource_arguments_from_request(
     if broker_type == BrokerType.REDIS.value:
         sqs_queue_url = ""
 
-    main_env = []
+    main_env = [{"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role}]
     if isinstance(flavor, RunnableImageLike) and flavor.env:
         main_env = [{"name": key, "value": value} for key, value in flavor.env.items()]
 
