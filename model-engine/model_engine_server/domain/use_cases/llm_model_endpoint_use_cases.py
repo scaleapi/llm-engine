@@ -490,13 +490,21 @@ class CreateLLMModelEndpointV1UseCase:
         command = []
 
         max_num_batched_tokens = 2560  # vLLM's default
+        max_model_len = None
         if "llama-2" in model_name:
             max_num_batched_tokens = 4096  # Need to be bigger than model's context window
+        if "mistral" in model_name:
+            max_num_batched_tokens = 8000
+            max_model_len = 8000
 
         subcommands = []
         if checkpoint_path is not None:
             if checkpoint_path.startswith("s3://"):
-                final_weights_folder = "model_files"
+                # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
+                if "mistral" in model_name:
+                    final_weights_folder = "mistral_files"
+                else:
+                    final_weights_folder = "model_files"
                 subcommands += self.load_model_weights_sub_commands(
                     LLMInferenceFramework.VLLM,
                     framework_image_tag,
@@ -510,9 +518,14 @@ class CreateLLMModelEndpointV1UseCase:
         else:
             final_weights_folder = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.VLLM][model_name]
 
-        subcommands.append(
-            f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens}"
-        )
+        if max_model_len:
+            subcommands.append(
+                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens} --max-model-len {max_model_len}"
+            )
+        else:
+            subcommands.append(
+                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens}"
+            )
 
         if quantize:
             if quantize == Quantization.AWQ:
