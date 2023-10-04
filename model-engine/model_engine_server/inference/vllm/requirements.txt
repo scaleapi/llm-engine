@@ -1,3 +1,3 @@
 ray==2.6.3
-git+https://github.com/vllm-project/vllm.git@7d7e3b78a3c265ab3c57eeff43af56f509907998#egg=vllm
+vllm==0.2.0
 pydantic==1.10.12
