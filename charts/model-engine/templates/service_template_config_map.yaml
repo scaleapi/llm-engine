@@ -77,7 +77,11 @@ data:
         spec:
           affinity:
             {{- include "modelEngine.serviceTemplateAffinity" . | nindent 12 }}
+          {{- if eq $mode "async" }}
+          terminationGracePeriodSeconds: 1800
+          {{- else }}
           terminationGracePeriodSeconds: 600
+          {{- end }}
           {{- if $service_template_service_account_name }}
           serviceAccount: {{ $service_template_service_account_name }}
           {{- else }}
