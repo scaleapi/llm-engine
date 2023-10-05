@@ -102,6 +102,7 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
         "falcon-40b": "tiiuae/falcon-40b",
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
+        "falcon-180b-chat": "tiiuae/falcon-180B-chat",
     },
     LLMInferenceFramework.VLLM: {
         "mpt-7b": "mosaicml/mpt-7b",
