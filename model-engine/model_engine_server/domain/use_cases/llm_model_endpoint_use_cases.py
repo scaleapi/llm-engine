@@ -102,8 +102,6 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
         "falcon-40b": "tiiuae/falcon-40b",
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
-        "falcon-180b": "tiiuae/falcon-180B",
-        "falcon-180b-chat": "tiiuae/falcon-180B-chat",
     },
     LLMInferenceFramework.VLLM: {
         "mpt-7b": "mosaicml/mpt-7b",
@@ -121,6 +119,8 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
         "mistral-7b": "mistralai/Mistral-7B-v0.1",
         "mistral-7b-instruct": "mistralai/Mistral-7B-Instruct-v0.1",
+        "falcon-180b": "tiiuae/falcon-180B",
+        "falcon-180b-chat": "tiiuae/falcon-180B-chat",
     },
     LLMInferenceFramework.LIGHTLLM: {
         "llama-7b": "decapoda-research/llama-7b-hf",
