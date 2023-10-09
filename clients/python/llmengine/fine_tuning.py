@@ -38,8 +38,10 @@ class FineTune(APIEngine):
         This API can be used to fine-tune a model. The _model_ is the name of base model
         ([Model Zoo](../../model_zoo) for available models) to fine-tune. The training
         and validation files should consist of prompt and response pairs. `training_file`
-        and `validation_file` must be publicly accessible HTTP or HTTPS URLs to a CSV file
-        that includes two columns: `prompt` and `response`. A maximum of 100,000 rows of data is
+        and `validation_file` must be either publicly accessible HTTP or HTTPS URLs, or
+        file IDs of files uploaded to LLM Engine's [Files API](./#llmengine.File) (these
+        will have the `file-` prefix). The referenced files must be CSV files that include
+        two columns: `prompt` and `response`. A maximum of 100,000 rows of data is
         currently supported. At least 200 rows of data is recommended to start to see benefits from
         fine-tuning. For sequences longer than the native `max_seq_length` of the model, the sequences
         will be truncated.
@@ -52,10 +54,10 @@ class FineTune(APIEngine):
                 The name of the base model to fine-tune. See [Model Zoo](../../model_zoo) for the list of available models to fine-tune.
 
             training_file (`str`):
-                Publicly accessible URL to a CSV file for training. When no validation_file is provided, one will automatically be created using a 10% split of the training_file data.
+                Publicly accessible URL or file ID referencing a CSV file for training. When no validation_file is provided, one will automatically be created using a 10% split of the training_file data.
 
             validation_file (`Optional[str]`):
-                Publicly accessible URL to a CSV file for validation. The validation file is used to compute metrics which let LLM Engine pick the best fine-tuned checkpoint, which will be used for inference when fine-tuning is complete.
+                Publicly accessible URL or file ID referencing a CSV file for validation. The validation file is used to compute metrics which let LLM Engine pick the best fine-tuned checkpoint, which will be used for inference when fine-tuning is complete.
 
             hyperparameters (`Optional[Dict[str, str]]`):
                 A dict of hyperparameters to customize fine-tuning behavior.
