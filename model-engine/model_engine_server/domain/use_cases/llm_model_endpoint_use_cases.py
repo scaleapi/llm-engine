@@ -102,6 +102,9 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
         "falcon-40b": "tiiuae/falcon-40b",
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
+        "code-llama-7b": "codellama/CodeLlama-7b-hf",
+        "code-llama-13b": "codellama/CodeLlama-13b-hf",
+        "code-llama-34b": "codellama/CodeLlama-34b-hf",
     },
     LLMInferenceFramework.VLLM: {
         "mpt-7b": "mosaicml/mpt-7b",
