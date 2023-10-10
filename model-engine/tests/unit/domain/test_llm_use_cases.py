@@ -513,7 +513,7 @@ async def test_completion_sync_use_case_predict_failed_with_errors(
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(UpstreamServiceError):
-        response_1 = await use_case.execute(
+        await use_case.execute(
             user=user,
             model_endpoint_name=llm_model_endpoint_sync_tgi[0].record.name,
             request=completion_sync_request,
