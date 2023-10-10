@@ -243,7 +243,6 @@ async def create_completion_stream_task(
             logger.exception(f"Upstream service error for request {request_id}")
             yield {"data": {"error": {"status_code": 500, "detail": str(exc)}}}
         except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
-            print(str(exc))
             yield {"data": {"error": {"status_code": 404, "detail": str(exc)}}}
         except ObjectHasInvalidValueException as exc:
             yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
