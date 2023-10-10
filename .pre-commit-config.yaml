@@ -55,6 +55,7 @@ repos:
     hooks:
       - id: mypy
         name: mypy-clients-python
+        files: clients/python/.*.py
         entry: mypy --config-file clients/python/mypy.ini
         language: system
   - repo: https://github.com/pre-commit/mirrors-mypy

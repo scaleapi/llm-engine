@@ -226,42 +226,38 @@ async def create_completion_stream_task(
     logger.info(
         f"POST /completion_stream with {request} to endpoint {model_endpoint_name} for {auth}"
     )
-    try:
-        use_case = CompletionStreamV1UseCase(
-            model_endpoint_service=external_interfaces.model_endpoint_service,
-            llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
-        )
-        response = use_case.execute(
-            user=auth, model_endpoint_name=model_endpoint_name, request=request
-        )
+    use_case = CompletionStreamV1UseCase(
+        model_endpoint_service=external_interfaces.model_endpoint_service,
+        llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+    )
+    response = use_case.execute(user=auth, model_endpoint_name=model_endpoint_name, request=request)
 
-        async def event_generator():
-            try:
-                async for message in response:
-                    yield {"data": message.json()}
-            except InvalidRequestException as exc:
-                yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
-                return
+    async def event_generator():
+        try:
+            async for message in response:
+                yield {"data": message.json()}
+        except InvalidRequestException as exc:
+            yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
+        except UpstreamServiceError as exc:
+            request_id = get_request_id()
+            logger.exception(f"Upstream service error for request {request_id}")
+            yield {"data": {"error": {"status_code": 500, "detail": str(exc)}}}
+        except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+            print(str(exc))
+            yield {"data": {"error": {"status_code": 404, "detail": str(exc)}}}
+        except ObjectHasInvalidValueException as exc:
+            yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
+        except EndpointUnsupportedInferenceTypeException as exc:
+            yield {
+                "data": {
+                    "error": {
+                        "status_code": 400,
+                        "detail": f"Unsupported inference type: {str(exc)}",
+                    }
+                }
+            }
 
-        return EventSourceResponse(event_generator())
-    except UpstreamServiceError:
-        request_id = get_request_id()
-        logger.exception(f"Upstream service error for request {request_id}")
-        return EventSourceResponse(
-            iter((CompletionStreamV1Response(request_id=request_id).json(),))  # type: ignore
-        )
-    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
-        raise HTTPException(
-            status_code=404,
-            detail="The specified endpoint could not be found.",
-        ) from exc
-    except ObjectHasInvalidValueException as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except EndpointUnsupportedInferenceTypeException as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported inference type: {str(exc)}",
-        ) from exc
+    return EventSourceResponse(event_generator())
 
 
 @llm_router_v1.post("/fine-tunes", response_model=CreateFineTuneResponse)
@@ -405,12 +401,12 @@ async def delete_llm_model_endpoint(
             model_endpoint_service=external_interfaces.model_endpoint_service,
         )
         return await use_case.execute(user=auth, model_endpoint_name=model_endpoint_name)
-    except (ObjectNotFoundException) as exc:
+    except ObjectNotFoundException as exc:
         raise HTTPException(
             status_code=404,
             detail="The requested model endpoint could not be found.",
         ) from exc
-    except (ObjectNotAuthorizedException) as exc:
+    except ObjectNotAuthorizedException as exc:
         raise HTTPException(
             status_code=403,
             detail="You don't have permission to delete the requested model endpoint.",
