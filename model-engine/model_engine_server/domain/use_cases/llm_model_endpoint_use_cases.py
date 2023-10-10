@@ -203,9 +203,13 @@ def validate_num_shards(
     if inference_framework == LLMInferenceFramework.DEEPSPEED:
         if num_shards <= 1:
             raise ObjectHasInvalidValueException("DeepSpeed requires more than 1 GPU.")
-    if num_shards != gpus:
+        if num_shards != gpus:
+            raise ObjectHasInvalidValueException(
+                f"Num shard {num_shards} must be the same as number of GPUs {gpus} for DeepSpeed."
+            )
+    if num_shards > gpus:
         raise ObjectHasInvalidValueException(
-            f"Num shard {num_shards} must be the same as number of GPUs {gpus}."
+            f"Num shard {num_shards} must be less than or equal to the number of GPUs {gpus}."
         )
 
 
@@ -214,7 +218,7 @@ def validate_quantization(
 ) -> None:
     if quantize is not None and quantize not in _SUPPORTED_QUANTIZATIONS[inference_framework]:
         raise ObjectHasInvalidValueException(
-            f"Quantization {quantize} is not supported for inference framework {inference_framework}."
+            f"Quantization {quantize} is not supported for inference framework {inference_framework}. Supported quantization types are {_SUPPORTED_QUANTIZATIONS[inference_framework]}."
         )
 
 
