@@ -22,6 +22,7 @@ from model_engine_server.domain.exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
+    UpstreamServiceError,
 )
 from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
     MAX_LLM_ENDPOINTS_PER_INTERNAL_USER,
@@ -171,7 +172,8 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
-        user=user, request=create_llm_model_endpoint_text_generation_inference_request_streaming
+        user=user,
+        request=create_llm_model_endpoint_text_generation_inference_request_streaming,
     )
     assert response_1.endpoint_creation_task_id
     assert isinstance(response_1, CreateLLMModelEndpointV1Response)
@@ -196,7 +198,8 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
 
     with pytest.raises(ObjectHasInvalidValueException):
         await use_case.execute(
-            user=user, request=create_llm_model_endpoint_text_generation_inference_request_async
+            user=user,
+            request=create_llm_model_endpoint_text_generation_inference_request_async,
         )
 
 
@@ -510,6 +513,40 @@ async def test_completion_sync_use_case_predict_failed(
         request=completion_sync_request,
     )
     assert response_1.output is None
+
+
+@pytest.mark.asyncio
+async def test_completion_sync_use_case_predict_failed_with_errors(
+    test_api_key: str,
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    llm_model_endpoint_sync_tgi: Tuple[ModelEndpoint, Any],
+    completion_sync_request: CompletionSyncV1Request,
+):
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync_tgi[0])
+    fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = SyncEndpointPredictV1Response(
+        status=TaskStatus.SUCCESS,
+        result={
+            "result": """
+  {
+    "error": "Request failed during generation: Server error: transport error",
+    "error_type": "generation"
+  }
+"""
+        },
+        traceback="failed to predict",
+    )
+    use_case = CompletionSyncV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    with pytest.raises(UpstreamServiceError):
+        await use_case.execute(
+            user=user,
+            model_endpoint_name=llm_model_endpoint_sync_tgi[0].record.name,
+            request=completion_sync_request,
+        )
 
 
 @pytest.mark.asyncio
@@ -993,7 +1030,13 @@ async def test_delete_public_inference_model_raises_not_authorized(
 
 @pytest.mark.asyncio
 async def test_exclude_safetensors_or_bin_majority_bin_returns_exclude_safetensors():
-    fake_model_files = ["fake.bin", "fake2.bin", "fake3.safetensors", "model.json", "optimizer.pt"]
+    fake_model_files = [
+        "fake.bin",
+        "fake2.bin",
+        "fake3.safetensors",
+        "model.json",
+        "optimizer.pt",
+    ]
     assert _exclude_safetensors_or_bin(fake_model_files) == "*.safetensors"
 
 
