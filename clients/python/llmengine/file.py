@@ -22,9 +22,12 @@ class File(APIEngine):
         """
         Uploads a file to LLM engine.
 
+        For use in [FineTune creation](./#llmengine.fine_tuning.FineTune.create), this should be a CSV file with two columns: `prompt` and `response`.
+        A maximum of 100,000 rows of data is currently supported.
+
         Args:
             file (`BufferedReader`):
-                A file opened with open(file_path, "r")
+                A local file opened with `open(file_path, "r")`
 
         Returns:
             UploadFileResponse: an object that contains the ID of the uploaded file
