@@ -98,7 +98,6 @@ def handle_streaming_exception(
                     "content": {
                         "error": message,
                         "timestamp": timestamp,
-                        "request_id": request_id,
                     },
                 },
             }
