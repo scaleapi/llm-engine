@@ -909,7 +909,10 @@ def validate_and_update_completion_params(
         if inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
             request.top_k = None if request.top_k == -1 else request.top_k
             request.top_p = None if request.top_p == 1.0 else request.top_p
-        if inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
+        if inference_framework in [
+            LLMInferenceFramework.VLLM,
+            LLMInferenceFramework.LIGHTLLM,
+        ]:
             request.top_k = -1 if request.top_k is None else request.top_k
             request.top_p = 1.0 if request.top_p is None else request.top_p
     else:
@@ -919,7 +922,10 @@ def validate_and_update_completion_params(
             )
 
     # presence_penalty, frequency_penalty
-    if inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
+    if inference_framework in [
+        LLMInferenceFramework.VLLM,
+        LLMInferenceFramework.LIGHTLLM,
+    ]:
         request.presence_penalty = (
             0.0 if request.presence_penalty is None else request.presence_penalty
         )
@@ -987,14 +993,17 @@ class CompletionSyncV1UseCase:
                     raise InvalidRequestException(model_output.get("error"))  # trigger a 400
                 else:
                     raise UpstreamServiceError(
-                        status_code=500, content=bytes(model_output["error"])
+                        status_code=500, content=bytes(model_output["error"], "utf-8")
                     )
 
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
             tokens = None
             if with_token_probs:
                 tokens = [
-                    TokenOutput(token=model_output["tokens"][index], log_prob=list(t.values())[0])
+                    TokenOutput(
+                        token=model_output["tokens"][index],
+                        log_prob=list(t.values())[0],
+                    )
                     for index, t in enumerate(model_output["log_probs"])
                 ]
             return CompletionOutput(
@@ -1003,7 +1012,6 @@ class CompletionSyncV1UseCase:
                 tokens=tokens,
             )
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
-            print(model_output)
             tokens = None
             if with_token_probs:
                 tokens = [
@@ -1109,7 +1117,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status == TaskStatus.SUCCESS and predict_result.result is not None:
@@ -1152,7 +1161,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1191,7 +1201,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1233,7 +1244,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1296,7 +1308,7 @@ class CompletionStreamV1UseCase:
         )
 
         if len(model_endpoints) == 0:
-            raise ObjectNotFoundException
+            raise ObjectNotFoundException(f"Model endpoint {model_endpoint_name} not found.")
 
         if len(model_endpoints) > 1:
             raise ObjectHasInvalidValueException(
@@ -1517,7 +1529,6 @@ class CompletionStreamV1UseCase:
                     )
             elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
                 if res.status == TaskStatus.SUCCESS and result is not None:
-                    print(result)
                     token = None
                     num_completion_tokens += 1
                     if request.return_token_log_probs:

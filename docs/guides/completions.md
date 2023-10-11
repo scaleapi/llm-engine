@@ -87,12 +87,11 @@ stream = Completion.create(
 )
 
 for response in stream:
-    try:
-        if response.output:
-            print(response.output.text, end="")
-            sys.stdout.flush()
-    except: # an error occurred
-        print(stream.text) # print the error message out 
+    if response.output:
+        print(response.output.text, end="")
+        sys.stdout.flush()
+    else: # an error occurred
+        print(response.error) # print the error message out 
         break
 ```
 
