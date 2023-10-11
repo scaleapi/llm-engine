@@ -1689,8 +1689,10 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <p>This API can be used to fine-tune a model. The <em>model</em> is the name of base model
 (<a href="../../model_zoo">Model Zoo</a> for available models) to fine-tune. The training
 and validation files should consist of prompt and response pairs. <code>training_file</code>
-and <code>validation_file</code> must be publicly accessible HTTP or HTTPS URLs to a CSV file
-that includes two columns: <code>prompt</code> and <code>response</code>. A maximum of 100,000 rows of data is
+and <code>validation_file</code> must be either publicly accessible HTTP or HTTPS URLs, or
+file IDs of files uploaded to LLM Engine's <a href="./#llmengine.File">Files API</a> (these
+will have the <code>file-</code> prefix). The referenced files must be CSV files that include
+two columns: <code>prompt</code> and <code>response</code>. A maximum of 100,000 rows of data is
 currently supported. At least 200 rows of data is recommended to start to see benefits from
 fine-tuning. For sequences longer than the native <code>max_seq_length</code> of the model, the sequences
 will be truncated.</p>
@@ -1731,7 +1733,7 @@ and several hours for larger ones.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Publicly accessible URL to a CSV file for training. When no validation_file is provided, one will automatically be created using a 10% split of the training_file data.</p>
+              <p>Publicly accessible URL or file ID referencing a CSV file for training. When no validation_file is provided, one will automatically be created using a 10% split of the training_file data.</p>
             </div>
           </td>
           <td>
@@ -1745,7 +1747,7 @@ and several hours for larger ones.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Publicly accessible URL to a CSV file for validation. The validation file is used to compute metrics which let LLM Engine pick the best fine-tuned checkpoint, which will be used for inference when fine-tuning is complete.</p>
+              <p>Publicly accessible URL or file ID referencing a CSV file for validation. The validation file is used to compute metrics which let LLM Engine pick the best fine-tuned checkpoint, which will be used for inference when fine-tuning is complete.</p>
             </div>
           </td>
           <td>
@@ -2841,6 +2843,8 @@ the fine-tuned model. If called on a nonexistent model, an error will be thrown.
   <div class="doc doc-contents ">
   
       <p>Uploads a file to LLM engine.</p>
+<p>For use in <a href="./#llmengine.fine_tuning.FineTune.create">FineTune creation</a>, this should be a CSV file with two columns: <code>prompt</code> and <code>response</code>.
+A maximum of 100,000 rows of data is currently supported.</p>
 
 
 
@@ -2862,7 +2866,7 @@ the fine-tuned model. If called on a nonexistent model, an error will be thrown.
           </td>
           <td>
             <div class="doc-md-description">
-              <p>A file opened with open(file_path, "r")</p>
+              <p>A local file opened with <code>open(file_path, "r")</code></p>
             </div>
           </td>
           <td>
