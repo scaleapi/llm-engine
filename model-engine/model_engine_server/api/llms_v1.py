@@ -1,7 +1,11 @@
 """LLM Model Endpoint routes for the hosted model inference service.
 """
+import json
+import traceback
+from datetime import datetime
 from typing import Optional
 
+import pytz
 from fastapi import APIRouter, Depends, HTTPException, Query
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
@@ -69,6 +73,37 @@ from sse_starlette.sse import EventSourceResponse
 
 llm_router_v1 = APIRouter(prefix="/v1/llm")
 logger = make_logger(filename_wo_ext(__name__))
+
+
+def handle_streaming_exception(
+    e: Exception,
+    code: int,
+    message: str,
+):
+    tb_str = traceback.format_exception(e)
+    request_id = get_request_id()
+    timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
+    structured_log = {
+        "error": message,
+        "request_id": str(request_id),
+        "traceback": "".join(tb_str),
+    }
+    logger.error("Exception: %s", structured_log)
+    return {
+        "data": json.dumps(
+            {
+                "request_id": str(request_id),
+                "error": {
+                    "status_code": code,
+                    "content": {
+                        "error": message,
+                        "timestamp": timestamp,
+                        "request_id": request_id,
+                    },
+                },
+            }
+        )
+    }
 
 
 @llm_router_v1.post("/model-endpoints", response_model=CreateLLMModelEndpointV1Response)
@@ -236,25 +271,18 @@ async def create_completion_stream_task(
         try:
             async for message in response:
                 yield {"data": message.json()}
-        except InvalidRequestException as exc:
-            yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
-        except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
-            yield {"data": {"error": {"status_code": 404, "detail": str(exc)}}}
-        except ObjectHasInvalidValueException as exc:
-            yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
-        except EndpointUnsupportedInferenceTypeException as exc:
-            yield {
-                "data": {
-                    "error": {
-                        "status_code": 400,
-                        "detail": f"Unsupported inference type: {str(exc)}",
-                    }
-                }
-            }
+        except (InvalidRequestException, ObjectHasInvalidValueException) as exc:
+            yield handle_streaming_exception(exc, 400, str(exc))
+        except (
+            ObjectNotFoundException,
+            ObjectNotAuthorizedException,
+            EndpointUnsupportedInferenceTypeException,
+        ) as exc:
+            yield handle_streaming_exception(exc, 404, str(exc))
         except Exception as exc:
-            request_id = get_request_id()
-            logger.exception(f"Internal exception for request {request_id}")
-            yield {"data": {"error": {"status_code": 500, "detail": str(exc)}}}
+            yield handle_streaming_exception(
+                exc, 500, "Internal error occurred. Our team has been notified."
+            )
 
     return EventSourceResponse(event_generator())
 
