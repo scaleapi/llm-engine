@@ -10,9 +10,11 @@ from model_engine_server.domain.gateways.cron_job_gateway import CronJobGateway
 from model_engine_server.infra.gateways.live_docker_image_batch_job_gateway import (
     LAUNCH_JOB_ID_LABEL_SELECTOR,
     _parse_job_status_from_k8s_obj,
+    make_job_id_to_pods_mapping,
 )
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     get_kubernetes_batch_client,
+    get_kubernetes_core_client,
     load_k8s_yaml,
     maybe_load_kube_config,
 )
@@ -97,6 +99,20 @@ class LiveCronJobGateway(CronJobGateway):
             logger.exception("Got an exception when trying to list the Jobs")
             raise EndpointResourceInfraException from exc
 
+        core_client = get_kubernetes_core_client()
+
+        try:
+            label_selector = f"trigger_id={trigger_id}" if trigger_id else f"owner={owner}"
+            pods = await core_client.list_namespaced_pod(
+                namespace=hmi_config.endpoint_namespace,
+                label_selector=label_selector,
+            )
+        except ApiException as exc:
+            logger.exception("Got an exception when trying to list the Pods")
+            raise EndpointResourceInfraException from exc
+
+        pods_per_job = make_job_id_to_pods_mapping(pods)
+
         return [
             DockerImageBatchJob(
                 id=job.metadata.labels.get(LAUNCH_JOB_ID_LABEL_SELECTOR),
@@ -104,7 +120,9 @@ class LiveCronJobGateway(CronJobGateway):
                 owner=job.metadata.labels.get("owner"),
                 created_at=job.metadata.creation_timestamp,
                 completed_at=job.status.completion_time,
-                status=_parse_job_status_from_k8s_obj(job),
+                status=_parse_job_status_from_k8s_obj(
+                    job, pods_per_job[job.metadata.labels.get(LAUNCH_JOB_ID_LABEL_SELECTOR)]
+                ),
             )
             for job in jobs.items
         ]

@@ -104,6 +104,20 @@ def _parse_job_status_from_k8s_obj(job: V1Job, pods: List[V1Pod]) -> BatchJobSta
     return BatchJobStatus.PENDING
 
 
+def make_job_id_to_pods_mapping(pods: List[V1Pod]) -> defaultdict:
+    """
+    Returns a defaultdict mapping job IDs to pods
+    """
+    job_id_to_pods_mapping = defaultdict(list)
+    for pod in pods:
+        job_id = pod.metadata.labels.get(LAUNCH_JOB_ID_LABEL_SELECTOR)
+        if job_id is not None:
+            job_id_to_pods_mapping[job_id].append(pod)
+        else:
+            logger.warning(f"Pod {pod.metadata.name} has no job ID label")
+    return job_id_to_pods_mapping
+
+
 class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
     def __init__(self):
         pass
@@ -336,9 +350,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
             raise EndpointResourceInfraException from exc
 
         # Join jobs + pods
-        pods_per_job = defaultdict(list)
-        for pod in pods.items:
-            pods_per_job[pod.metadata.labels.get(LAUNCH_JOB_ID_LABEL_SELECTOR)].append(pod)
+        pods_per_job = make_job_id_to_pods_mapping(pods.items)
 
         return [
             DockerImageBatchJob(
