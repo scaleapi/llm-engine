@@ -1,6 +1,7 @@
 import os
 import traceback
 import uuid
+from base64 import b64decode
 from datetime import datetime
 from pathlib import Path
 
@@ -26,6 +27,7 @@ from model_engine_server.core.loggers import (
     get_request_id,
     make_logger,
     set_request_id,
+    set_user_id,
 )
 
 logger = make_logger(filename_wo_ext(__name__))
@@ -44,10 +46,22 @@ app.include_router(file_router_v1)
 app.include_router(trigger_router_v1)
 
 
+def decode_http_basic_auth(auth_header: str) -> tuple:
+    """
+    Decode HTTP Basic Auth and return a tuple of (username, password).
+    Returns (None, None) if decoding fails.
+    """
+    prefix = "Basic "
+    auth_decoded = b64decode(auth_header[len(prefix) :]).decode("utf-8")
+    username, _, password = auth_decoded.partition(":")
+    return username, password
+
+
 @app.middleware("http")
 async def dispatch(request: Request, call_next):
     try:
         set_request_id(str(uuid.uuid4()))
+        set_user_id(decode_http_basic_auth(request.headers.get("Authorization", ""))[0])
         return await call_next(request)
     except Exception as e:
         tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)

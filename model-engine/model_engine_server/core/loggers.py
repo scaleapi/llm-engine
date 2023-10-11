@@ -17,6 +17,8 @@ LOG_FORMAT: str = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d
 # REQUIRED FOR DATADOG COMPATIBILITY
 
 ctx_var_request_id = contextvars.ContextVar("ctx_var_request_id", default=None)
+ctx_var_team_id = contextvars.ContextVar("ctx_var_team_id", default=None)
+ctx_var_user_id = contextvars.ContextVar("ctx_var_user_id", default=None)
 
 __all__: Sequence[str] = (
     # most common imports
@@ -45,9 +47,29 @@ def get_request_id() -> Optional[str]:
     return ctx_var_request_id.get()
 
 
+def get_team_id() -> Optional[str]:
+    """Get the team id from the context variable."""
+    return ctx_var_team_id.get()
+
+
+def get_user_id() -> Optional[str]:
+    """Get the user id from the context variable."""
+    return ctx_var_user_id.get()
+
+
 def set_request_id(request_id: str) -> None:
     """Set the request id in the context variable."""
     ctx_var_request_id.set(request_id)  # type: ignore
+
+
+def set_team_id(team_id: str) -> None:
+    """Set the team id in the context variable."""
+    ctx_var_team_id.set(team_id)  # type: ignore
+
+
+def set_user_id(user_id: str) -> None:
+    """Set the user id in the context variable."""
+    ctx_var_user_id.set(user_id)  # type: ignore
 
 
 def make_standard_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
@@ -81,6 +103,16 @@ class CustomJSONFormatter(json_log_formatter.JSONFormatter):
         request_id = ctx_var_request_id.get()
         if request_id:
             extra["request_id"] = request_id
+
+        # add the team id for the request if it exists
+        team_id = ctx_var_team_id.get()
+        if team_id:
+            extra["team_id"] = team_id
+
+        # add the user id for the request if it exists
+        user_id = ctx_var_user_id.get()
+        if user_id:
+            extra["user_id"] = user_id
 
         current_span = tracer.current_span()
         extra["dd.trace_id"] = current_span.trace_id if current_span else 0
