@@ -111,7 +111,7 @@ class LiveCronJobGateway(CronJobGateway):
             logger.exception("Got an exception when trying to list the Pods")
             raise EndpointResourceInfraException from exc
 
-        pods_per_job = make_job_id_to_pods_mapping(pods)
+        pods_per_job = make_job_id_to_pods_mapping(pods.items)
 
         return [
             DockerImageBatchJob(
