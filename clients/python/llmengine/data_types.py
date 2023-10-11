@@ -360,8 +360,6 @@ class StreamErrorContent(BaseModel):
     """Error message."""
     timestamp: str
     """Timestamp of the error."""
-    request_id: str
-    """Server generated unique ID of the corresponding request."""
 
 
 class StreamError(BaseModel):

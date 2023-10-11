@@ -1,6 +1,5 @@
 """LLM Model Endpoint routes for the hosted model inference service.
 """
-import json
 import traceback
 from datetime import datetime
 from typing import Optional
@@ -32,6 +31,8 @@ from model_engine_server.common.dtos.llms import (
     ListLLMModelEndpointsV1Response,
     ModelDownloadRequest,
     ModelDownloadResponse,
+    StreamError,
+    StreamErrorContent,
 )
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.core.auth.authentication_repository import User
@@ -90,18 +91,16 @@ def handle_streaming_exception(
     }
     logger.error("Exception: %s", structured_log)
     return {
-        "data": json.dumps(
-            {
-                "request_id": str(request_id),
-                "error": {
-                    "status_code": code,
-                    "content": {
-                        "error": message,
-                        "timestamp": timestamp,
-                    },
-                },
-            }
-        )
+        "data": CompletionStreamV1Response(
+            request_id=str(request_id),
+            error=StreamError(
+                status_code=code,
+                content=StreamErrorContent(
+                    error=message,
+                    timestamp=timestamp,
+                ),
+            ),
+        ).json()
     }
 
 
