@@ -103,7 +103,7 @@ class LiveCronJobGateway(CronJobGateway):
 
         try:
             label_selector = (
-                f"trigger_id={trigger_id}" if trigger_id else f"owner={owner}"
+                f"trigger_id={trigger_id}" if trigger_id else f"owner={owner},job-name"
             )  # TODO filter out endpoint pods
             pods = await core_client.list_namespaced_pod(
                 namespace=hmi_config.endpoint_namespace,

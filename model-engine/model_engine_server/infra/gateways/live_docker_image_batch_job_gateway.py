@@ -343,7 +343,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
         try:
             pods = await core_client.list_namespaced_pod(
                 namespace=hmi_config.endpoint_namespace,
-                label_selector=f"{OWNER_LABEL_SELECTOR}={owner}",  # TODO filter out endpoint pods oops
+                label_selector=f"{OWNER_LABEL_SELECTOR}={owner},job-name",  # get only pods associated with a job
             )
         except ApiException as exc:
             logger.exception("Got an exception when trying to read pods for the Job")
