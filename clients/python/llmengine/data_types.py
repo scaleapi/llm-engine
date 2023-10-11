@@ -24,6 +24,7 @@ class LLMSource(str, Enum):
 
 class Quantization(str, Enum):
     BITSANDBYTES = "bitsandbytes"
+    AWQ = "awq"
 
 
 class GpuType(str, Enum):
