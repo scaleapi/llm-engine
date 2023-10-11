@@ -202,6 +202,24 @@ class CompletionStreamOutput(BaseModel):
     token: Optional[TokenOutput] = None
 
 
+class StreamErrorContent(BaseModel):
+    error: str
+    """Error message."""
+    timestamp: str
+    """Timestamp of the error."""
+
+
+class StreamError(BaseModel):
+    """
+    Error object for a stream prompt completion task.
+    """
+
+    status_code: int
+    """The HTTP status code of the error."""
+    content: StreamErrorContent
+    """The error content."""
+
+
 class CompletionStreamV1Response(BaseModel):
     """
     Response object for a stream prompt completion task.
@@ -209,6 +227,8 @@ class CompletionStreamV1Response(BaseModel):
 
     request_id: str
     output: Optional[CompletionStreamOutput] = None
+    error: Optional[StreamError] = None
+    """Error of the response (if any)."""
 
 
 class CreateFineTuneRequest(BaseModel):

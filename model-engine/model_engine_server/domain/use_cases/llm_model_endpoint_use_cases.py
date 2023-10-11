@@ -1308,7 +1308,7 @@ class CompletionStreamV1UseCase:
         )
 
         if len(model_endpoints) == 0:
-            raise ObjectNotFoundException
+            raise ObjectNotFoundException(f"Model endpoint {model_endpoint_name} not found.")
 
         if len(model_endpoints) > 1:
             raise ObjectHasInvalidValueException(
