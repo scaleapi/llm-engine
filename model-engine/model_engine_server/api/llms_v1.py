@@ -80,7 +80,7 @@ def handle_streaming_exception(
     code: int,
     message: str,
 ):
-    tb_str = traceback.format_exception(e)
+    tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
     request_id = get_request_id()
     timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
     structured_log = {
