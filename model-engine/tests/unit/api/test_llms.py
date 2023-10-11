@@ -202,5 +202,4 @@ def test_completion_stream_endpoint_not_found_returns_404(
     assert response_1.status_code == 200
 
     for message in response_1:
-        print(message)
         assert "404" in message.decode("utf-8")

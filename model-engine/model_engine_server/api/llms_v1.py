@@ -238,10 +238,6 @@ async def create_completion_stream_task(
                 yield {"data": message.json()}
         except InvalidRequestException as exc:
             yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
-        except UpstreamServiceError as exc:
-            request_id = get_request_id()
-            logger.exception(f"Upstream service error for request {request_id}")
-            yield {"data": {"error": {"status_code": 500, "detail": str(exc)}}}
         except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
             yield {"data": {"error": {"status_code": 404, "detail": str(exc)}}}
         except ObjectHasInvalidValueException as exc:
@@ -255,6 +251,10 @@ async def create_completion_stream_task(
                     }
                 }
             }
+        except Exception as exc:
+            request_id = get_request_id()
+            logger.exception(f"Internal exception for request {request_id}")
+            yield {"data": {"error": {"status_code": 500, "detail": str(exc)}}}
 
     return EventSourceResponse(event_generator())
 
