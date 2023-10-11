@@ -364,6 +364,7 @@ def test_create_streaming_task_success(
         f"/v1/streaming-tasks?model_endpoint_id={model_endpoint_streaming.record.id}",
         auth=(test_api_key, ""),
         json=endpoint_predict_request_1[1],
+        stream=True,
     )
     assert response.status_code == 200
     count = 0
