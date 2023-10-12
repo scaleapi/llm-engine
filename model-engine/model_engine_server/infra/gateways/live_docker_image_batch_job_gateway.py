@@ -1,9 +1,11 @@
 import os
 import re
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
 
 from kubernetes_asyncio.client.models.v1_job import V1Job
+from kubernetes_asyncio.client.models.v1_pod import V1Pod
 from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
@@ -17,6 +19,7 @@ from model_engine_server.domain.gateways.docker_image_batch_job_gateway import (
 )
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     get_kubernetes_batch_client,
+    get_kubernetes_core_client,
     load_k8s_yaml,
     maybe_load_kube_config,
 )
@@ -84,7 +87,7 @@ def _k8s_job_name_from_id(job_id: str):
     return f"launch-di-batch-job-{job_id}"
 
 
-def _parse_job_status_from_k8s_obj(job: V1Job) -> BatchJobStatus:
+def _parse_job_status_from_k8s_obj(job: V1Job, pods: List[V1Pod]) -> BatchJobStatus:
     status = job.status
     # these counts are the number of pods in some given status
     if status.failed is not None and status.failed > 0:
@@ -94,8 +97,28 @@ def _parse_job_status_from_k8s_obj(job: V1Job) -> BatchJobStatus:
     if status.ready is not None and status.ready > 0:
         return BatchJobStatus.RUNNING  # empirically this doesn't happen
     if status.active is not None and status.active > 0:
-        return BatchJobStatus.RUNNING  # TODO this might be a mix of pending and running
+        for pod in pods:
+            # In case there are multiple pods for a given job (e.g. if a pod gets shut down)
+            # let's interpret the job as running if any of the pods are running
+            # I haven't empirically seen this, but guard against it just in case.
+            if pod.status.phase == "Running":
+                return BatchJobStatus.RUNNING
+        return BatchJobStatus.PENDING
     return BatchJobStatus.PENDING
+
+
+def make_job_id_to_pods_mapping(pods: List[V1Pod]) -> defaultdict:
+    """
+    Returns a defaultdict mapping job IDs to pods
+    """
+    job_id_to_pods_mapping = defaultdict(list)
+    for pod in pods:
+        job_id = pod.metadata.labels.get(LAUNCH_JOB_ID_LABEL_SELECTOR)
+        if job_id is not None:
+            job_id_to_pods_mapping[job_id].append(pod)
+        else:
+            logger.warning(f"Pod {pod.metadata.name} has no job ID label")
+    return job_id_to_pods_mapping
 
 
 class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
@@ -282,10 +305,21 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
             logger.exception("Got an exception when trying to read the Job")
             raise EndpointResourceInfraException from exc
 
+        core_client = get_kubernetes_core_client()
+        try:
+            pods = await core_client.list_namespaced_pod(
+                namespace=hmi_config.endpoint_namespace,
+                label_selector=f"{LAUNCH_JOB_ID_LABEL_SELECTOR}={batch_job_id}",
+            )
+        except ApiException as exc:
+            logger.exception("Got an exception when trying to read pods for the Job")
+            raise EndpointResourceInfraException from exc
+            # This pod list isn't always needed, but it's simpler code-wise to always make the request
+
         job_labels = job.metadata.labels
         annotations = job.metadata.annotations
 
-        status = _parse_job_status_from_k8s_obj(job)
+        status = _parse_job_status_from_k8s_obj(job, pods.items)
 
         return DockerImageBatchJob(
             id=batch_job_id,
@@ -309,6 +343,19 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
             logger.exception("Got an exception when trying to list the Jobs")
             raise EndpointResourceInfraException from exc
 
+        core_client = get_kubernetes_core_client()
+        try:
+            pods = await core_client.list_namespaced_pod(
+                namespace=hmi_config.endpoint_namespace,
+                label_selector=f"{OWNER_LABEL_SELECTOR}={owner},job-name",  # get only pods associated with a job
+            )
+        except ApiException as exc:
+            logger.exception("Got an exception when trying to read pods for the Job")
+            raise EndpointResourceInfraException from exc
+
+        # Join jobs + pods
+        pods_per_job = make_job_id_to_pods_mapping(pods.items)
+
         return [
             DockerImageBatchJob(
                 id=job.metadata.labels.get(LAUNCH_JOB_ID_LABEL_SELECTOR),
@@ -317,7 +364,9 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
                 created_at=job.metadata.creation_timestamp,
                 completed_at=job.status.completion_time,
                 annotations=job.metadata.annotations,
-                status=_parse_job_status_from_k8s_obj(job),
+                status=_parse_job_status_from_k8s_obj(
+                    job, pods_per_job[job.metadata.labels.get(LAUNCH_JOB_ID_LABEL_SELECTOR)]
+                ),
             )
             for job in jobs.items
         ]
