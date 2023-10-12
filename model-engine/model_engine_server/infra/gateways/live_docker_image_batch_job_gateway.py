@@ -98,6 +98,9 @@ def _parse_job_status_from_k8s_obj(job: V1Job, pods: List[V1Pod]) -> BatchJobSta
         return BatchJobStatus.RUNNING  # empirically this doesn't happen
     if status.active is not None and status.active > 0:
         for pod in pods:
+            # In case there are multiple pods for a given job (e.g. if a pod gets shut down)
+            # let's interpret the job as running if any of the pods are running
+            # I haven't empirically seen this, but guard against it just in case.
             if pod.status.phase == "Running":
                 return BatchJobStatus.RUNNING
         return BatchJobStatus.PENDING
