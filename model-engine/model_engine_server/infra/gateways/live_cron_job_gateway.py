@@ -102,9 +102,7 @@ class LiveCronJobGateway(CronJobGateway):
         core_client = get_kubernetes_core_client()
 
         try:
-            label_selector = (
-                f"trigger_id={trigger_id}" if trigger_id else f"owner={owner},job-name"
-            )  # TODO filter out endpoint pods
+            label_selector = f"trigger_id={trigger_id}" if trigger_id else f"owner={owner},job-name"
             pods = await core_client.list_namespaced_pod(
                 namespace=hmi_config.endpoint_namespace,
                 label_selector=label_selector,

@@ -310,7 +310,8 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
             )
         except ApiException as exc:
             logger.exception("Got an exception when trying to read pods for the Job")
-            raise EndpointResourceInfraException from exc  # TODO is this going to cause problems?
+            raise EndpointResourceInfraException from exc
+            # This pod list isn't always needed, but it's simpler code-wise to always make the request
 
         job_labels = job.metadata.labels
         annotations = job.metadata.annotations
