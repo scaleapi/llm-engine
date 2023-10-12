@@ -57,19 +57,22 @@ def get_user_id() -> Optional[str]:
     return ctx_var_user_id.get()
 
 
-def set_request_id(request_id: str) -> None:
+def set_request_id(request_id: Optional[str]) -> None:
     """Set the request id in the context variable."""
-    ctx_var_request_id.set(request_id)  # type: ignore
+    if request_id:
+        ctx_var_request_id.set(request_id)  # type: ignore
 
 
-def set_team_id(team_id: str) -> None:
+def set_team_id(team_id: Optional[str]) -> None:
     """Set the team id in the context variable."""
-    ctx_var_team_id.set(team_id)  # type: ignore
+    if team_id:
+        ctx_var_team_id.set(team_id)  # type: ignore
 
 
-def set_user_id(user_id: str) -> None:
+def set_user_id(user_id: Optional[str]) -> None:
     """Set the user id in the context variable."""
-    ctx_var_user_id.set(user_id)  # type: ignore
+    if user_id:
+        ctx_var_user_id.set(user_id)  # type: ignore
 
 
 def make_standard_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
