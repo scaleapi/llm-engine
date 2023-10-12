@@ -76,7 +76,7 @@ class Model(APIEngine):
 
             num_shards (`int`):
                 Number of shards for the LLM. When bigger than 1, LLM will be sharded
-                to multiple GPUs. Number of GPUs must be larger than num_shards.
+                to multiple GPUs. Number of GPUs must be equal or larger than num_shards.
                 Only affects behavior for text-generation-inference models
 
             quantize (`Optional[Quantization]`):

@@ -18,6 +18,7 @@ from model_engine_server.common.dtos.model_endpoints import (
 )
 from model_engine_server.domain.entities import (
     GpuType,
+    LLMInferenceFramework,
     ModelBundle,
     ModelBundleEnvironmentParams,
     ModelBundleFrameworkType,
@@ -283,7 +284,6 @@ def create_llm_model_endpoint_text_generation_inference_request_streaming() -> (
         inference_framework="deepspeed",
         inference_framework_image_tag="test_tag",
         num_shards=2,
-        quantize=Quantization.BITSANDBYTES,
         endpoint_type=ModelEndpointType.STREAMING,
         metadata={},
         post_inference_hooks=["billing"],
@@ -339,6 +339,33 @@ def create_llm_model_endpoint_request_invalid_model_name() -> CreateLLMModelEndp
         inference_framework="deepspeed",
         inference_framework_image_tag="test_tag",
         num_shards=2,
+        endpoint_type=ModelEndpointType.SYNC,
+        metadata={},
+        post_inference_hooks=["billing"],
+        cpus=1,
+        gpus=2,
+        memory="8G",
+        gpu_type=GpuType.NVIDIA_TESLA_T4,
+        storage=None,
+        min_workers=1,
+        max_workers=3,
+        per_worker=2,
+        labels={"team": "infra", "product": "my_product"},
+        aws_role="test_aws_role",
+        results_s3_bucket="test_s3_bucket",
+    )
+
+
+@pytest.fixture
+def create_llm_model_endpoint_request_invalid_quantization() -> CreateLLMModelEndpointV1Request:
+    return CreateLLMModelEndpointV1Request(
+        name="test_llm_endpoint_name_1",
+        model_name="nonexist",
+        source="hugging_face",
+        inference_framework=LLMInferenceFramework.VLLM,
+        inference_framework_image_tag="test_tag",
+        num_shards=2,
+        quantize=Quantization.BITSANDBYTES,
         endpoint_type=ModelEndpointType.SYNC,
         metadata={},
         post_inference_hooks=["billing"],
