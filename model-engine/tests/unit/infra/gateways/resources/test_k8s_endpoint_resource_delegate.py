@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Any, Dict, List
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -25,19 +24,9 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
     DictStrStr,
     ResourceArguments,
 )
+from tests.unit.infra.gateways.k8s_fake_objects import FakeK8sDeploymentContainer, FakeK8sEnvVar
 
 MODULE_PATH = "model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate"
-
-
-@dataclass
-class FakeK8sEnvVar:
-    name: str
-    value: str
-
-
-@dataclass
-class FakeK8sDeploymentContainer:
-    env: List[FakeK8sEnvVar]
 
 
 @pytest.fixture
