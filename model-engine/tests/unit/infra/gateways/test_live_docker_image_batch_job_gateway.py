@@ -117,6 +117,105 @@ async def test_get_docker_image_batch_job_phase(
     assert job.status == expected_status
 
 
+@pytest.mark.asyncio
+async def test_list_docker_image_batch_jobs(
+    docker_image_batch_job_gateway,
+    mock_core_client,
+    mock_batch_client,
+):
+    mock_core_client.list_namespaced_pod.return_value = FakeK8sV1PodList(
+        items=[
+            FakeK8sV1Pod(
+                metadata=FakeK8sV1ObjectMeta(
+                    labels={
+                        "job-name": "job-name",
+                        "owner": "owner",
+                        "created_by": "created_by",
+                        "trigger_id": "trigger_id",
+                        "launch_job_id": "launch_job_id",
+                    }
+                ),
+                status=FakeK8sV1PodStatus(
+                    phase="Running",
+                ),
+            ),
+            FakeK8sV1Pod(
+                metadata=FakeK8sV1ObjectMeta(
+                    labels={
+                        "job-name": "job-name2",
+                        "owner": "owner",
+                        "created_by": "created_by",
+                        "trigger_id": "trigger_id",
+                        "launch_job_id": "launch_job_id2",
+                    }
+                ),
+                status=FakeK8sV1PodStatus(
+                    phase="Succeeded",
+                ),
+            ),
+        ]
+    )
+    mock_batch_client.list_namespaced_job.return_value = FakeK8sV1JobList(
+        items=[
+            FakeK8sV1Job(
+                metadata=FakeK8sV1ObjectMeta(
+                    name="job-name",
+                    labels={
+                        "owner": "owner",
+                        "created_by": "created_by",
+                        "trigger_id": "trigger_id",
+                        "launch_job_id": "launch_job_id",
+                    },
+                ),
+                status=FakeK8sV1JobStatus(
+                    active=1,
+                    succeeded=0,
+                    failed=0,
+                ),
+            ),
+            FakeK8sV1Job(
+                metadata=FakeK8sV1ObjectMeta(
+                    name="job-name2",
+                    labels={
+                        "owner": "owner",
+                        "created_by": "created_by",
+                        "trigger_id": "trigger_id",
+                        "launch_job_id": "launch_job_id2",
+                    },
+                ),
+                status=FakeK8sV1JobStatus(
+                    active=0,
+                    succeeded=1,
+                    failed=0,
+                ),
+            ),
+            FakeK8sV1Job(
+                metadata=FakeK8sV1ObjectMeta(
+                    name="job-name3",
+                    labels={
+                        "owner": "owner",
+                        "created_by": "created_by",
+                        "trigger_id": "trigger_id",
+                        "launch_job_id": "launch_job_id3",
+                    },
+                ),
+                status=FakeK8sV1JobStatus(
+                    active=0,
+                    succeeded=0,
+                    failed=0,
+                ),
+            ),
+        ]
+    )
+
+    jobs = await docker_image_batch_job_gateway.list_docker_image_batch_jobs(owner="owner")
+    assert len(jobs) == 3
+    job_ids_to_phases = {job.id: job.status for job in jobs}
+    assert job_ids_to_phases["launch_job_id"] == BatchJobStatus.RUNNING
+    assert job_ids_to_phases["launch_job_id2"] == BatchJobStatus.SUCCESS
+    assert job_ids_to_phases["launch_job_id3"] == BatchJobStatus.PENDING
+
+
 # Small function functionality tests
 def test_valid_job_ids_are_valid():
     for _ in range(20):

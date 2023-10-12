@@ -13,7 +13,6 @@ class FakeK8sV1ObjectMeta:
     annotations: dict = field(default_factory=dict)
     labels: dict = field(default_factory=dict)
     creation_timestamp: datetime = datetime(2021, 1, 1, 0, 0, 0, 0)
-    # completion_time: datetime = datetime(2021, 1, 1, 1, 0, 0, 0)
     # TODO: everything else
 
 
