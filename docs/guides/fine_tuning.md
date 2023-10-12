@@ -152,7 +152,15 @@ See the [Model Zoo](../../model_zoo) to see which models have fine-tuning suppor
 
 See [Integrations](../integrations.md) to see how to track fine-tuning metrics.
 
-Once the fine-tune is launched, you can also [get the status of your fine-tune](../../api/python_client/#llmengine.fine_tuning.FineTune.get). You can also [list events that your fine-tune produces](../../api/python_client/#llmengine.fine_tuning.FineTune.get_events).
+## Monitoring the fine-tune
+
+Once the fine-tune is launched, you can also [get the status of your fine-tune](../../api/python_client/#llmengine.fine_tuning.FineTune.get). 
+You can also [list events that your fine-tune produces](../../api/python_client/#llmengine.fine_tuning.FineTune.get_events).
+
+The status of your fine-tune will give a high-level overview of the fine-tune's progress.
+The events of your fine-tune will give more detail, such as the training loss and validation loss at each epoch, 
+as well as any errors that may have occurred. If you encounter any errors with your fine-tune, 
+the events are a good place to start debugging.
 
 ## Making inference calls to your fine-tune
 
