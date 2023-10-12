@@ -1,7 +1,10 @@
 """LLM Model Endpoint routes for the hosted model inference service.
 """
+import traceback
+from datetime import datetime
 from typing import Optional
 
+import pytz
 from fastapi import APIRouter, Depends, HTTPException, Query
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
@@ -28,6 +31,8 @@ from model_engine_server.common.dtos.llms import (
     ListLLMModelEndpointsV1Response,
     ModelDownloadRequest,
     ModelDownloadResponse,
+    StreamError,
+    StreamErrorContent,
 )
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.core.auth.authentication_repository import User
@@ -69,6 +74,34 @@ from sse_starlette.sse import EventSourceResponse
 
 llm_router_v1 = APIRouter(prefix="/v1/llm")
 logger = make_logger(filename_wo_ext(__name__))
+
+
+def handle_streaming_exception(
+    e: Exception,
+    code: int,
+    message: str,
+):
+    tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
+    request_id = get_request_id()
+    timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
+    structured_log = {
+        "error": message,
+        "request_id": str(request_id),
+        "traceback": "".join(tb_str),
+    }
+    logger.error("Exception: %s", structured_log)
+    return {
+        "data": CompletionStreamV1Response(
+            request_id=str(request_id),
+            error=StreamError(
+                status_code=code,
+                content=StreamErrorContent(
+                    error=message,
+                    timestamp=timestamp,
+                ),
+            ),
+        ).json()
+    }
 
 
 @llm_router_v1.post("/model-endpoints", response_model=CreateLLMModelEndpointV1Response)
@@ -226,42 +259,30 @@ async def create_completion_stream_task(
     logger.info(
         f"POST /completion_stream with {request} to endpoint {model_endpoint_name} for {auth}"
     )
-    try:
-        use_case = CompletionStreamV1UseCase(
-            model_endpoint_service=external_interfaces.model_endpoint_service,
-            llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
-        )
-        response = use_case.execute(
-            user=auth, model_endpoint_name=model_endpoint_name, request=request
-        )
+    use_case = CompletionStreamV1UseCase(
+        model_endpoint_service=external_interfaces.model_endpoint_service,
+        llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+    )
+    response = use_case.execute(user=auth, model_endpoint_name=model_endpoint_name, request=request)
 
-        async def event_generator():
-            try:
-                async for message in response:
-                    yield {"data": message.json()}
-            except InvalidRequestException as exc:
-                yield {"data": {"error": {"status_code": 400, "detail": str(exc)}}}
-                return
+    async def event_generator():
+        try:
+            async for message in response:
+                yield {"data": message.json()}
+        except (InvalidRequestException, ObjectHasInvalidValueException) as exc:
+            yield handle_streaming_exception(exc, 400, str(exc))
+        except (
+            ObjectNotFoundException,
+            ObjectNotAuthorizedException,
+            EndpointUnsupportedInferenceTypeException,
+        ) as exc:
+            yield handle_streaming_exception(exc, 404, str(exc))
+        except Exception as exc:
+            yield handle_streaming_exception(
+                exc, 500, "Internal error occurred. Our team has been notified."
+            )
 
-        return EventSourceResponse(event_generator())
-    except UpstreamServiceError:
-        request_id = get_request_id()
-        logger.exception(f"Upstream service error for request {request_id}")
-        return EventSourceResponse(
-            iter((CompletionStreamV1Response(request_id=request_id).json(),))  # type: ignore
-        )
-    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
-        raise HTTPException(
-            status_code=404,
-            detail="The specified endpoint could not be found.",
-        ) from exc
-    except ObjectHasInvalidValueException as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except EndpointUnsupportedInferenceTypeException as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported inference type: {str(exc)}",
-        ) from exc
+    return EventSourceResponse(event_generator())
 
 
 @llm_router_v1.post("/fine-tunes", response_model=CreateFineTuneResponse)
@@ -405,12 +426,12 @@ async def delete_llm_model_endpoint(
             model_endpoint_service=external_interfaces.model_endpoint_service,
         )
         return await use_case.execute(user=auth, model_endpoint_name=model_endpoint_name)
-    except (ObjectNotFoundException) as exc:
+    except ObjectNotFoundException as exc:
         raise HTTPException(
             status_code=404,
             detail="The requested model endpoint could not be found.",
         ) from exc
-    except (ObjectNotAuthorizedException) as exc:
+    except ObjectNotAuthorizedException as exc:
         raise HTTPException(
             status_code=403,
             detail="You don't have permission to delete the requested model endpoint.",
