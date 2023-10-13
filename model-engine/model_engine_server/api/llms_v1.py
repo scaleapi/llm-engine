@@ -36,7 +36,12 @@ from model_engine_server.common.dtos.llms import (
 )
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger, LoggerTagManager, LoggerTagKey
+from model_engine_server.core.loggers import (
+    LoggerTagKey,
+    LoggerTagManager,
+    filename_wo_ext,
+    make_logger,
+)
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
     EndpointLabelsException,

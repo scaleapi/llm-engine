@@ -1,11 +1,11 @@
 import contextvars
-from enum import Enum, auto
 import inspect
 import logging
 import os
 import sys
 import warnings
 from contextlib import contextmanager
+from enum import Enum
 from typing import Dict, Optional, Sequence
 
 import ddtrace
@@ -38,14 +38,16 @@ __all__: Sequence[str] = (
     "LoggerTagManager",
 )
 
+
 class LoggerTagKey(str, Enum):
-    REQUEST_ID = 'request_id'
-    TEAM_ID = 'team_id'
-    USER_ID = 'user_id'
+    REQUEST_ID = "request_id"
+    TEAM_ID = "team_id"
+    USER_ID = "user_id"
+
 
 class LoggerTagManager:
     _context_vars: Dict[LoggerTagKey, contextvars.ContextVar] = {}
-    
+
     @classmethod
     def get(cls, key: LoggerTagKey) -> Optional[str]:
         """Get the value from the context variable."""
@@ -92,22 +94,7 @@ class CustomJSONFormatter(json_log_formatter.JSONFormatter):
         extra["lineno"] = record.lineno
         extra["pathname"] = record.pathname
 
-        # # add the http request id if it exists
-        # request_id = ctx_var_request_id.get()
-        # if request_id:
-        #     extra["request_id"] = request_id
-        
-        # # add the team id for the request if it exists
-        # team_id = ctx_var_team_id.get()
-        # if team_id:
-        #     extra["team_id"] = team_id
-
-        # # add the user id for the request if it exists
-        # user_id = ctx_var_user_id.get()
-        # if user_id:
-        #     extra["user_id"] = user_id
-
-        # 
+        # add additional logger tags
         for tag_key in LoggerTagKey:
             tag_value = LoggerTagManager.get(tag_key)
             if tag_value:

@@ -13,7 +13,12 @@ from model_engine_server.core.auth.authentication_repository import Authenticati
 from model_engine_server.core.auth.fake_authentication_repository import (
     FakeAuthenticationRepository,
 )
-from model_engine_server.core.loggers import filename_wo_ext, make_logger, LoggerTagKey, LoggerTagManager
+from model_engine_server.core.loggers import (
+    LoggerTagKey,
+    LoggerTagManager,
+    filename_wo_ext,
+    make_logger,
+)
 from model_engine_server.db.base import SessionAsync, SessionReadOnlyAsync
 from model_engine_server.domain.gateways import (
     CronJobGateway,

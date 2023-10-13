@@ -22,9 +22,10 @@ from model_engine_server.api.model_endpoints_v1 import model_endpoint_router_v1
 from model_engine_server.api.tasks_v1 import inference_task_router_v1
 from model_engine_server.api.triggers_v1 import trigger_router_v1
 from model_engine_server.core.loggers import (
+    LoggerTagKey,
+    LoggerTagManager,
     filename_wo_ext,
     make_logger,
-    LoggerTagManager, LoggerTagKey
 )
 
 logger = make_logger(filename_wo_ext(__name__))
