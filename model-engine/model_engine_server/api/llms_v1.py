@@ -36,7 +36,12 @@ from model_engine_server.common.dtos.llms import (
 )
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, get_request_id, make_logger
+from model_engine_server.core.loggers import (
+    LoggerTagKey,
+    LoggerTagManager,
+    filename_wo_ext,
+    make_logger,
+)
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
     EndpointLabelsException,
@@ -82,7 +87,7 @@ def handle_streaming_exception(
     message: str,
 ):
     tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
-    request_id = get_request_id()
+    request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
     timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
     structured_log = {
         "error": message,
@@ -223,7 +228,7 @@ async def create_completion_sync_task(
             user=auth, model_endpoint_name=model_endpoint_name, request=request
         )
     except UpstreamServiceError:
-        request_id = get_request_id()
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         logger.exception(f"Upstream service error for request {request_id}")
         raise HTTPException(
             status_code=500,
