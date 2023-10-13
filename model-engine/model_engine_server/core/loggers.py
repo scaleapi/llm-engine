@@ -5,7 +5,8 @@ import os
 import sys
 import warnings
 from contextlib import contextmanager
-from typing import Optional, Sequence
+from enum import Enum
+from typing import Dict, Optional, Sequence
 
 import ddtrace
 import json_log_formatter
@@ -15,8 +16,6 @@ from ddtrace import tracer
 # DO NOT CHANGE LOGGING FORMAT
 LOG_FORMAT: str = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] - %(message)s"
 # REQUIRED FOR DATADOG COMPATIBILITY
-
-ctx_var_request_id = contextvars.ContextVar("ctx_var_request_id", default=None)
 
 __all__: Sequence[str] = (
     # most common imports
@@ -35,19 +34,37 @@ __all__: Sequence[str] = (
     "loggers_at_level",
     # utils
     "filename_wo_ext",
-    "get_request_id",
-    "set_request_id",
+    "LoggerTagKey",
+    "LoggerTagManager",
 )
 
 
-def get_request_id() -> Optional[str]:
-    """Get the request id from the context variable."""
-    return ctx_var_request_id.get()
+class LoggerTagKey(str, Enum):
+    REQUEST_ID = "request_id"
+    TEAM_ID = "team_id"
+    USER_ID = "user_id"
 
 
-def set_request_id(request_id: str) -> None:
-    """Set the request id in the context variable."""
-    ctx_var_request_id.set(request_id)  # type: ignore
+class LoggerTagManager:
+    _context_vars: Dict[LoggerTagKey, contextvars.ContextVar] = {}
+
+    @classmethod
+    def get(cls, key: LoggerTagKey) -> Optional[str]:
+        """Get the value from the context variable."""
+        ctx_var = cls._context_vars.get(key)
+        if ctx_var is not None:
+            return ctx_var.get()
+        return None
+
+    @classmethod
+    def set(cls, key: LoggerTagKey, value: Optional[str]) -> None:
+        """Set the value in the context variable."""
+        if value is not None:
+            ctx_var = cls._context_vars.get(key)
+            if ctx_var is None:
+                ctx_var = contextvars.ContextVar(f"ctx_var_{key.name.lower()}", default=None)
+                cls._context_vars[key] = ctx_var
+            ctx_var.set(value)
 
 
 def make_standard_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
@@ -77,10 +94,11 @@ class CustomJSONFormatter(json_log_formatter.JSONFormatter):
         extra["lineno"] = record.lineno
         extra["pathname"] = record.pathname
 
-        # add the http request id if it exists
-        request_id = ctx_var_request_id.get()
-        if request_id:
-            extra["request_id"] = request_id
+        # add additional logger tags
+        for tag_key in LoggerTagKey:
+            tag_value = LoggerTagManager.get(tag_key)
+            if tag_value:
+                extra[tag_key.value] = tag_value
 
         current_span = tracer.current_span()
         extra["dd.trace_id"] = current_span.trace_id if current_span else 0
