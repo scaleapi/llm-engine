@@ -1078,6 +1078,27 @@ class K8SEndpointResourceDelegate:
         return True
 
     @staticmethod
+    async def _delete_pdb(endpoint_id: str) -> bool:
+        policy_client = get_kubernetes_policy_client()
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        try:
+            await policy_client.delete_namespaced_pod_disruption_budget(
+                namespace=hmi_config.endpoint_namespace,
+                name=k8s_resource_group_name,
+            )
+        except ApiException as e:
+            if e.status == 404:
+                logger.warning(
+                    f"Trying to delete nonexistent PodDisruptionBudget {k8s_resource_group_name}"
+                )
+            else:
+                logger.exception(
+                    f"Deletion of PodDisruptionBudget {k8s_resource_group_name} failed"
+                )
+                return False
+        return True
+
+    @staticmethod
     async def _delete_keda_scaled_object(endpoint_id: str) -> bool:
         custom_objects_client = get_kubernetes_custom_objects_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
@@ -1616,6 +1637,7 @@ class K8SEndpointResourceDelegate:
             endpoint_id=endpoint_id, deployment_name=deployment_name
         )
         await self._delete_vpa(endpoint_id=endpoint_id)
+        await self._delete_pdb(endpoint_id=endpoint_id)
         return deployment_delete_succeeded and config_map_delete_succeeded
 
     async def _delete_resources_sync(self, endpoint_id: str, deployment_name: str) -> bool:
@@ -1637,6 +1659,7 @@ class K8SEndpointResourceDelegate:
             endpoint_id=endpoint_id
         )
         await self._delete_vpa(endpoint_id=endpoint_id)
+        await self._delete_pdb(endpoint_id=endpoint_id)
 
         destination_rule_delete_succeeded = await self._delete_destination_rule(
             endpoint_id=endpoint_id
