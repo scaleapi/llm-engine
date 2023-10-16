@@ -385,7 +385,7 @@ async def verify_authentication(
     """
     try:
         return await verify_authentication_by_user_id(credentials, auth_repo)
-    except:
+    except Exception:  # noqa
         return await verify_authentication_by_api_key(credentials, auth_repo)
 
 
