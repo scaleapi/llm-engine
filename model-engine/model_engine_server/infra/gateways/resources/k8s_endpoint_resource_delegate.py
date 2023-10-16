@@ -67,6 +67,7 @@ _kubernetes_apps_api = None
 _kubernetes_core_api = None
 _kubernetes_autoscaling_api = None
 _kubernetes_batch_api = None
+_kubernetes_policy_api = None
 _kubernetes_custom_objects_api = None
 _kubernetes_cluster_version = None
 
@@ -145,6 +146,16 @@ def get_kubernetes_batch_client():  # pragma: no cover
     if not _kubernetes_batch_api:
         _kubernetes_batch_api = kubernetes_asyncio.client.BatchV1Api()
     return _kubernetes_batch_api
+
+
+def get_kubernetes_policy_client():  # pragma: no cover
+    if _lazy_load_kubernetes_clients:
+        global _kubernetes_policy_api
+    else:
+        _kubernetes_policy_api = None
+    if not _kubernetes_policy_api:
+        _kubernetes_policy_api = kubernetes_asyncio.client.PolicyV1Api()
+    return _kubernetes_policy_api
 
 
 def get_kubernetes_custom_objects_client():  # pragma: no cover
@@ -597,6 +608,37 @@ class K8SEndpointResourceDelegate:
                 )
             else:
                 logger.exception("Got an exception when trying to apply the VerticalPodAutoscaler")
+                raise
+
+    @staticmethod
+    async def _create_pdb(pdb: Dict[str, Any], name: str) -> None:
+        """
+        Lower-level function to create/patch a k8s PodDisruptionBudget (pdb)
+        Args:
+            pdb: PDB body (a nested Dict in the format specified by Kubernetes)
+            name: The name of the pdb on K8s
+
+        Returns:
+            Nothing; raises a k8s ApiException if failure
+
+        """
+        policy_api = get_kubernetes_policy_client()
+        try:
+            await policy_api.create_namespaced_pod_disruption_budget(
+                namespace=hmi_config.endpoint_namespace,
+                body=pdb,
+            )
+        except ApiException as exc:
+            if exc.status == 409:
+                logger.info(f"PodDisruptionBudget {name} already exists, replacing")
+
+                await policy_api.patch_namespaced_pod_disruption_budget(
+                    name=name,
+                    namespace=hmi_config.endpoint_namespace,
+                    body=pdb,
+                )
+            else:
+                logger.exception("Got an exception when trying to apply the PodDisruptionBudget")
                 raise
 
     @staticmethod
@@ -1151,6 +1193,19 @@ class K8SEndpointResourceDelegate:
                 vpa=vpa_template,
                 name=k8s_resource_group_name,
             )
+
+        pdb_config_arguments = get_endpoint_resource_arguments_from_request(
+            k8s_resource_group_name=k8s_resource_group_name,
+            request=request,
+            sqs_queue_name=sqs_queue_name_str,
+            sqs_queue_url=sqs_queue_url_str,
+            endpoint_resource_name="pod-disruption-budget",
+        )
+        pdb_template = load_k8s_yaml("pod-disruption-budget.yaml", pdb_config_arguments)
+        await self._create_pdb(
+            pdb=pdb_template,
+            name=k8s_resource_group_name,
+        )
 
         if model_endpoint_record.endpoint_type in {
             ModelEndpointType.SYNC,
