@@ -70,6 +70,16 @@ def mock_autoscaling_client():
 
 
 @pytest.fixture
+def mock_policy_client():
+    mock_client = AsyncMock()
+    with patch(
+        f"{MODULE_PATH}.get_kubernetes_policy_client",
+        return_value=mock_client,
+    ):
+        yield mock_client
+
+
+@pytest.fixture
 def mock_custom_objects_client():
     mock_client = AsyncMock()
     with patch(
@@ -276,6 +286,7 @@ async def test_create_async_endpoint_has_correct_labels(
     mock_apps_client,
     mock_core_client,
     mock_autoscaling_client,
+    mock_policy_client,
     mock_custom_objects_client,
     mock_get_kubernetes_cluster_version,
     create_resources_request_async_runnable_image: CreateOrUpdateResourcesRequest,
@@ -323,6 +334,11 @@ async def test_create_async_endpoint_has_correct_labels(
             )
             assert delete_custom_object_call_args_list == []
 
+        # Verify PDB labels
+        create_pdb_call_args = mock_policy_client.create_namespaced_pod_disruption_budget.call_args
+        pdb_body = create_pdb_call_args.kwargs["body"]
+        _verify_non_deployment_labels(pdb_body, request)
+
         if build_endpoint_request.model_endpoint_record.endpoint_type == ModelEndpointType.SYNC:
             assert create_custom_object_call_args_list == []
             _verify_custom_object_plurals(
@@ -339,6 +355,7 @@ async def test_create_streaming_endpoint_has_correct_labels(
     mock_apps_client,
     mock_core_client,
     mock_autoscaling_client,
+    mock_policy_client,
     mock_custom_objects_client,
     mock_get_kubernetes_cluster_version,
     create_resources_request_streaming_runnable_image: CreateOrUpdateResourcesRequest,
@@ -364,6 +381,11 @@ async def test_create_streaming_endpoint_has_correct_labels(
     create_config_map_call_args = mock_core_client.create_namespaced_config_map.call_args
     config_map_body = create_config_map_call_args.kwargs["body"]
     _verify_non_deployment_labels(config_map_body, request)
+
+    # Verify PDB labels
+    create_pdb_call_args = mock_policy_client.create_namespaced_pod_disruption_budget.call_args
+    pdb_body = create_pdb_call_args.kwargs["body"]
+    _verify_non_deployment_labels(pdb_body, request)
 
     # Verify HPA labels
     create_hpa_call_args = (
@@ -406,6 +428,7 @@ async def test_create_sync_endpoint_has_correct_labels(
     mock_apps_client,
     mock_core_client,
     mock_autoscaling_client,
+    mock_policy_client,
     mock_custom_objects_client,
     mock_get_kubernetes_cluster_version,
     create_resources_request_sync_runnable_image: CreateOrUpdateResourcesRequest,
@@ -440,6 +463,11 @@ async def test_create_sync_endpoint_has_correct_labels(
         )
         hpa_body = create_hpa_call_args.kwargs["body"]
         _verify_non_deployment_labels(hpa_body, request)
+
+        # Verify PDB labels
+        create_pdb_call_args = mock_policy_client.create_namespaced_pod_disruption_budget.call_args
+        pdb_body = create_pdb_call_args.kwargs["body"]
+        _verify_non_deployment_labels(pdb_body, request)
 
         # Make sure that an VPA is created if optimize_costs is True.
         build_endpoint_request = request.build_endpoint_request
@@ -477,6 +505,7 @@ async def test_create_sync_endpoint_has_correct_k8s_service_type(
     mock_apps_client,
     mock_core_client,
     mock_autoscaling_client,
+    mock_policy_client,
     mock_custom_objects_client,
     mock_get_kubernetes_cluster_version,
     create_resources_request_sync_runnable_image: CreateOrUpdateResourcesRequest,
@@ -531,6 +560,7 @@ async def test_get_resources_async_success(
     mock_apps_client,
     mock_core_client,
     mock_autoscaling_client,
+    mock_policy_client,
     mock_custom_objects_client,
 ):
     k8s_endpoint_resource_delegate.__setattr__(
@@ -590,6 +620,7 @@ async def test_get_resources_sync_success(
     mock_apps_client,
     mock_core_client,
     mock_autoscaling_client,
+    mock_policy_client,
     mock_custom_objects_client,
 ):
     k8s_endpoint_resource_delegate.__setattr__(
@@ -653,6 +684,7 @@ async def test_delete_resources_async_success(
     mock_apps_client,
     mock_core_client,
     mock_autoscaling_client,
+    mock_policy_client,
     mock_custom_objects_client,
 ):
     deleted = await k8s_endpoint_resource_delegate.delete_resources(
@@ -667,6 +699,7 @@ async def test_delete_resources_sync_success(
     mock_apps_client,
     mock_core_client,
     mock_autoscaling_client,
+    mock_policy_client,
     mock_custom_objects_client,
 ):
     deleted = await k8s_endpoint_resource_delegate.delete_resources(
