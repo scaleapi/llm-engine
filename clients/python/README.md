@@ -19,7 +19,7 @@ If you are using LLM Engine, you can get your API key from
 Set the `SCALE_API_KEY` environment variable to your API key.
 
 If you are using your own infrastructure, you can set the
-`LLM_ENGINE_SERVE_BASE_PATH` environment variable to the base URL of your
+`LLM_ENGINE_BASE_PATH` environment variable to the base URL of your
 self-hosted `llmengine` endpoint.
 
 ```python
