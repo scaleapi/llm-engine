@@ -26,6 +26,7 @@ from model_engine_server.domain.gateways import (
     FileStorageGateway,
     LLMArtifactGateway,
     ModelPrimitiveGateway,
+    MonitoringMetricsGateway,
     TaskQueueGateway,
 )
 from model_engine_server.domain.repositories import (
@@ -134,6 +135,24 @@ class ExternalInterfaces:
     cron_job_gateway: CronJobGateway
 
 
+def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
+    monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
+    return monitoring_metrics_gateway
+
+
+def get_monitoring_metrics_gateway():
+    try:
+        from plugins.dependencies import (
+            get_monitoring_metrics_gateway as get_custom_monitoring_metrics_gateway,
+        )
+
+        yield get_custom_monitoring_metrics_gateway()
+    except ModuleNotFoundError:
+        yield get_default_monitoring_metrics_gateway()
+    finally:
+        pass
+
+
 def _get_external_interfaces(
     read_only: bool, session: Callable[[], AsyncSession]
 ) -> ExternalInterfaces:
@@ -144,7 +163,7 @@ def _get_external_interfaces(
     redis_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS)
     redis_24h_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS_24H)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
-    monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
+    monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     model_endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         session=session,
