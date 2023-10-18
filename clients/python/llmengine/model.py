@@ -36,18 +36,18 @@ class Model(APIEngine):
         model: str,
         inference_framework_image_tag: str,
         source: LLMSource = LLMSource.HUGGING_FACE,
-        inference_framework: LLMInferenceFramework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
-        num_shards: int = 4,
+        inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM,
+        num_shards: int = 1,
         quantize: Optional[Quantization] = None,
         checkpoint_path: Optional[str] = None,
         # General endpoint fields
         cpus: int = 8,
-        memory: str = "40Gi",
+        memory: str = "20Gi",
         storage: str = "96Gi",
         gpus: int = 1,
         min_workers: int = 0,
         max_workers: int = 1,
-        per_worker: int = 10,
+        per_worker: int = 2,
         endpoint_type: ModelEndpointType = ModelEndpointType.STREAMING,
         gpu_type: Optional[str] = "nvidia-ampere-a10",
         high_priority: Optional[bool] = False,
@@ -57,7 +57,8 @@ class Model(APIEngine):
         labels: Optional[Dict[str, str]] = None,
     ) -> CreateLLMEndpointResponse:
         """
-        Create an LLM model. Note: This feature is only available for self-hosted users.
+        Create an LLM model. Note: This API is only available for self-hosted users.
+
         Args:
             name (`str`):
                 Name of the endpoint
@@ -72,32 +73,30 @@ class Model(APIEngine):
                 Source of the LLM. Currently only HuggingFace is supported
 
             inference_framework (`LLMInferenceFramework`):
-                Inference framework for the LLM. Currently only DeepSpeed is supported
+                Inference framework for the LLM. Currently supported frameworks are DeepSpeed, text-generation-inference, vLLM, and LightLLM
 
             num_shards (`int`):
                 Number of shards for the LLM. When bigger than 1, LLM will be sharded
                 to multiple GPUs. Number of GPUs must be equal or larger than num_shards.
-                Only affects behavior for text-generation-inference models
 
             quantize (`Optional[Quantization]`):
-                Quantization for the LLM. Only affects behavior for text-generation-inference models
+                Quantization method for the LLM. Different frameworks support different set of quantization methods.
 
             checkpoint_path (`Optional[str]`):
-                Path to the checkpoint for the LLM. For now we only support loading a tar file from AWS S3.
+                Path to the checkpoint for the LLM. Can be either a folder (preferred since there's no untar) or a tar file.
                 Safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be slower).
-                Only affects behavior for text-generation-inference models
 
             cpus (`int`):
                 Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
-                than or equal to 1
+                than or equal to 1. Recommendation is set it to 8 * GPU count.
 
             memory (`str`):
                 Amount of memory each worker should get, e.g. "4Gi", "512Mi", etc. This must
-                be a positive amount of memory
+                be a positive amount of memory. Recommendation is set it to 20Gi * GPU count.
 
             storage (`str`):
                 Amount of local ephemeral storage each worker should get, e.g. "4Gi",
-                "512Mi", etc. This must be a positive amount of storage
+                "512Mi", etc. This must be a positive amount of storage.
 
             gpus (`int`):
                 Number of gpus each worker should get, e.g. 0, 1, etc.
@@ -105,8 +104,10 @@ class Model(APIEngine):
             min_workers (`int`):
                 The minimum number of workers. Must be greater than or equal to 0. This
                 should be determined by computing the minimum throughput of your workload and
-                dividing it by the throughput of a single worker. This field must be at least ``1``
-                for synchronous endpoints
+                dividing it by the throughput of a single worker. For sync or streaming endpoints,
+                when this number is 0, max_workers must be 1, and the endpoint will autoscale between
+                0 and 1 pods. When this number is greater than 0, max_workers can be any number
+                greater or equal to min_workers.
 
             max_workers (`int`):
                 The maximum number of workers. Must be greater than or equal to 0,
@@ -115,33 +116,19 @@ class Model(APIEngine):
                 of a single worker
 
             per_worker (`int`):
-                The maximum number of concurrent requests that an individual worker can
-                service. Launch automatically scales the number of workers for the endpoint so that
-                each worker is processing ``per_worker`` requests, subject to the limits defined by
-                ``min_workers`` and ``max_workers``
-
-                - If the average number of concurrent requests per worker is lower than
-                ``per_worker``, then the number of workers will be reduced. - Otherwise,
-                if the average number of concurrent requests per worker is higher than
-                ``per_worker``, then the number of workers will be increased to meet the elevated
-                traffic.
-
-                Here is our recommendation for computing ``per_worker``:
-
-                1. Compute ``min_workers`` and ``max_workers`` per your minimum and maximum
-                throughput requirements. 2. Determine a value for the maximum number of
-                concurrent requests in the workload. Divide this number by ``max_workers``. Doing
-                this ensures that the number of workers will "climb" to ``max_workers``.
+                Number of Uvicorn workers per pod. Recommendation is set to 2.
 
             endpoint_type (`ModelEndpointType`):
-                ``"sync"``, ``"async"`` or ``"streaming"``.
+                ``"sync"``, ``"async"`` or ``"streaming"``. Recommendation is ``"streaming"``.
 
             gpu_type (`Optional[str]`):
                 If specifying a non-zero number of gpus, this controls the type of gpu
-                requested. Here are the supported values:
+                requested. Here are some supported values:
 
                 - ``nvidia-tesla-t4``
                 - ``nvidia-ampere-a10``
+                - ``nvidia-ampere-a100``
+                - ``nvidia-ampere-a100e``
 
             high_priority (`Optional[bool]`):
                 Either ``True`` or ``False``. Enabling this will allow the created
@@ -159,11 +146,10 @@ class Model(APIEngine):
                 If ``True``, this endpoint will be available to all user IDs for
                 inference
 
-
             labels (`Optional[Dict[str, str]]`):
                 An optional dictionary of key/value pairs to associate with this endpoint
         Returns:
-            CreateLLMEndpointResponse: creation task ID of the created Model.
+            CreateLLMEndpointResponse: creation task ID of the created Model. Currently not used.
         """
         post_inference_hooks_strs = None
         if post_inference_hooks is not None:
