@@ -42,8 +42,8 @@ class Model(APIEngine):
         checkpoint_path: Optional[str] = None,
         # General endpoint fields
         cpus: int = 8,
-        memory: str = "20Gi",
-        storage: str = "96Gi",
+        memory: str = "24Gi",
+        storage: str = "40Gi",
         gpus: int = 1,
         min_workers: int = 0,
         max_workers: int = 1,
