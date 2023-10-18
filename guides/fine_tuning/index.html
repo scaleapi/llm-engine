@@ -407,6 +407,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#monitoring-the-fine-tune" class="md-nav__link">
+    Monitoring the fine-tune
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#making-inference-calls-to-your-fine-tune" class="md-nav__link">
     Making inference calls to your fine-tune
   </a>
@@ -642,6 +649,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#monitoring-the-fine-tune" class="md-nav__link">
+    Monitoring the fine-tune
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#making-inference-calls-to-your-fine-tune" class="md-nav__link">
     Making inference calls to your fine-tune
   </a>
@@ -790,15 +804,38 @@ launched. Note: the suffix must only contain alphanumeric characters and hyphens
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>response <span style="color: #666666">=</span> FineTune<span style="color: #666666">.</span>create(
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    training_file<span style="color: #666666">=</span><span style="color: #BA2121">&quot;file-7DLVeLdN2Ty4M2m&quot;</span>,
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    validation_file<span style="color: #666666">=</span><span style="color: #BA2121">&quot;file-ezSRtpgKQyItI26&quot;</span>,
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    training_file<span style="color: #666666">=</span><span style="color: #BA2121">&quot;file-AbCDeLdN2Ty4M2m&quot;</span>,
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    validation_file<span style="color: #666666">=</span><span style="color: #BA2121">&quot;file-ezSRpgtKQyItI26&quot;</span>,
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>)
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 <p>See the <a href="../../model_zoo">Model Zoo</a> to see which models have fine-tuning support.</p>
 <p>See <a href="../../integrations/">Integrations</a> to see how to track fine-tuning metrics.</p>
-<p>Once the fine-tune is launched, you can also <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.get">get the status of your fine-tune</a>. You can also <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.get_events">list events that your fine-tune produces</a>.</p>
+<h2 id="monitoring-the-fine-tune">Monitoring the fine-tune<a class="headerlink" href="#monitoring-the-fine-tune" title="Permanent link">&para;</a></h2>
+<p>Once the fine-tune is launched, you can also <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.get">get the status of your fine-tune</a>. 
+You can also <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.get_events">list events that your fine-tune produces</a>.
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> FineTune
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>fine_tune_id <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;ft-cabcdefghi1234567890&quot;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>fine_tune <span style="color: #666666">=</span> FineTune<span style="color: #666666">.</span>get(fine_tune_id)
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span style="color: #008000">print</span>(fine_tune<span style="color: #666666">.</span>status)  <span style="color: #3D7B7B; font-style: italic"># BatchJobStatus.RUNNING</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span style="color: #008000">print</span>(fine_tune<span style="color: #666666">.</span>fine_tuned_model)  <span style="color: #3D7B7B; font-style: italic"># &quot;llama-2-7b.700101-000000</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>fine_tune_events <span style="color: #666666">=</span> FineTune<span style="color: #666666">.</span>get_events(fine_tune_id)
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span style="color: #008000; font-weight: bold">for</span> event <span style="color: #AA22FF; font-weight: bold">in</span> fine_tune_events<span style="color: #666666">.</span>events:
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span style="color: #008000">print</span>(event)
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span style="color: #3D7B7B; font-style: italic"># Prints something like:</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span style="color: #3D7B7B; font-style: italic"># timestamp=1697590000.0 message=&quot;{&#39;loss&#39;: 12.345, &#39;learning_rate&#39;: 0.0, &#39;epoch&#39;: 0.97}&quot; level=&#39;info&#39;</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span style="color: #3D7B7B; font-style: italic"># timestamp=1697590000.0 message=&quot;{&#39;eval_loss&#39;: 23.456, &#39;eval_runtime&#39;: 19.876, &#39;eval_samples_per_second&#39;: 4.9, &#39;eval_steps_per_second&#39;: 4.9, &#39;epoch&#39;: 0.97}&quot; level=&#39;info&#39;</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span style="color: #3D7B7B; font-style: italic"># timestamp=1697590020.0 message=&quot;{&#39;train_runtime&#39;: 421.234, &#39;train_samples_per_second&#39;: 2.042, &#39;train_steps_per_second&#39;: 0.042, &#39;total_flos&#39;: 123.45, &#39;train_loss&#39;: 34.567, &#39;epoch&#39;: 0.97}&quot; level=&#39;info&#39;</span>
+</code></pre></div></p>
+<p>The status of your fine-tune will give a high-level overview of the fine-tune's progress.
+The events of your fine-tune will give more detail, such as the training loss and validation loss at each epoch, 
+as well as any errors that may have occurred. If you encounter any errors with your fine-tune, 
+the events are a good place to start debugging. For example, if you see <code>Unable to read training or validation dataset</code>,
+you may need to make your files accessible to LLM Engine. If you see <code>Invalid value received for lora parameter 'lora_alpha'!</code>,
+you should <a href="../../api/python_client/#llmengine.fine_tuning.FineTune.create">check that your hyperparameters are valid</a>.</p>
 <h2 id="making-inference-calls-to-your-fine-tune">Making inference calls to your fine-tune<a class="headerlink" href="#making-inference-calls-to-your-fine-tune" title="Permanent link">&para;</a></h2>
 <p>Once your fine-tune is finished, you will be able to start making inference requests to the
 model. You can use the <code>fine_tuned_model</code> returned from your
@@ -814,15 +851,15 @@ before you can plug it into the Completions API. You can check the status of you
 <div class="tabbed-block"></div>
 </div>
 </div>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b.airlines.2023-07-17-08-30-45&quot;</span>,
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Do you offer in-flight Wi-fi?&quot;</span>,
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    max_new_tokens<span style="color: #666666">=100</span>,
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    temperature<span style="color: #666666">=0.2</span>,
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>)
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b.airlines.2023-07-17-08-30-45&quot;</span>,
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Do you offer in-flight Wi-fi?&quot;</span>,
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    max_new_tokens<span style="color: #666666">=100</span>,
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>)
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 
 
