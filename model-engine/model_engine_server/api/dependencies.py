@@ -310,83 +310,36 @@ def get_auth_repository() -> Iterator[AuthenticationRepository]:
         pass
 
 
-async def verify_authentication_by_user_id(
-    credentials: HTTPBasicCredentials = Depends(AUTH),
-    auth_repo: AuthenticationRepository = Depends(get_auth_repository),
-) -> User:
-    """
-    Verifies the authentication headers and returns a (user_id, team_id) auth tuple. Otherwise,
-    raises a 401. Expects a user_id.
-    """
-    user_id = credentials.username if credentials is not None else None
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No user id was passed in",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-
-    auth = await auth_repo.get_auth_from_user_id_async(user_id=user_id)
-
-    if not auth:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not authenticate user",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-
-    # set logger context with identity data
-    LoggerTagManager.set(LoggerTagKey.USER_ID, auth.user_id)
-    LoggerTagManager.set(LoggerTagKey.TEAM_ID, auth.team_id)
-
-    return auth
-
-
-async def verify_authentication_by_api_key(
-    credentials: HTTPBasicCredentials = Depends(AUTH),
-    auth_repo: AuthenticationRepository = Depends(get_auth_repository),
-) -> User:
-    """
-    Verifies the authentication headers and returns a (user_id, team_id) auth tuple. Otherwise,
-    raises a 401. Expects an API key.
-    """
-    api_key = credentials.username if credentials is not None else None
-    if api_key is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No API key was passed in",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-
-    auth = await auth_repo.get_auth_from_api_key_async(api_key=api_key)
-
-    if not auth:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not authenticate user",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-
-    # set logger context with identity data
-    LoggerTagManager.set(LoggerTagKey.USER_ID, auth.user_id)
-    LoggerTagManager.set(LoggerTagKey.TEAM_ID, auth.team_id)
-
-    return auth
-
-
-# temporary state for backwards compatibility
 async def verify_authentication(
     credentials: HTTPBasicCredentials = Depends(AUTH),
     auth_repo: AuthenticationRepository = Depends(get_auth_repository),
-):
+) -> User:
     """
     Verifies the authentication headers and returns a (user_id, team_id) auth tuple. Otherwise,
-    raises a 401. Tries a user_id first, then an API key.
+    raises a 401.
     """
-    try:
-        return await verify_authentication_by_user_id(credentials, auth_repo)
-    except Exception:  # noqa
-        return await verify_authentication_by_api_key(credentials, auth_repo)
+    username = credentials.username if credentials is not None else None
+    if username is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No authentication was passed in",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    auth = await auth_repo.get_auth_from_username_async(username=username)
+
+    if not auth:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not authenticate user",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    # set logger context with identity data
+    LoggerTagManager.set(LoggerTagKey.USER_ID, auth.user_id)
+    LoggerTagManager.set(LoggerTagKey.TEAM_ID, auth.team_id)
+
+    return auth
 
 
 _pool: Optional[aioredis.BlockingConnectionPool] = None
