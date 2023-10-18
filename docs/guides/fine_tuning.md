@@ -141,8 +141,8 @@ from llmengine import FineTune
 
 response = FineTune.create(
     model="llama-2-7b",
-    training_file="file-7DLVeLdN2Ty4M2m",
-    validation_file="file-ezSRtpgKQyItI26",
+    training_file="file-AbCDeLdN2Ty4M2m",
+    validation_file="file-ezSRpgtKQyItI26",
 )
 
 print(response.json())
@@ -156,6 +156,24 @@ See [Integrations](../integrations.md) to see how to track fine-tuning metrics.
 
 Once the fine-tune is launched, you can also [get the status of your fine-tune](../../api/python_client/#llmengine.fine_tuning.FineTune.get). 
 You can also [list events that your fine-tune produces](../../api/python_client/#llmengine.fine_tuning.FineTune.get_events).
+```python
+from llmengine import FineTune
+
+fine_tune_id = "ft-cabcdefghi1234567890"
+fine_tune = FineTune.get(fine_tune_id)
+print(fine_tune.status)  # BatchJobStatus.RUNNING
+print(fine_tune.fine_tuned_model)  # "llama-2-7b.700101-000000
+
+fine_tune_events = FineTune.get_events(fine_tune_id)
+for event in fine_tune_events.events:
+    print(event)
+# Prints something like:
+# timestamp=1697590000.0 message="{'loss': 12.345, 'learning_rate': 0.0, 'epoch': 0.97}" level='info'
+# timestamp=1697590000.0 message="{'eval_loss': 23.456, 'eval_runtime': 19.876, 'eval_samples_per_second': 4.9, 'eval_steps_per_second': 4.9, 'epoch': 0.97}" level='info'
+# timestamp=1697590020.0 message="{'train_runtime': 421.234, 'train_samples_per_second': 2.042, 'train_steps_per_second': 0.042, 'total_flos': 123.45, 'train_loss': 34.567, 'epoch': 0.97}" level='info'
+
+
+```
 
 The status of your fine-tune will give a high-level overview of the fine-tune's progress.
 The events of your fine-tune will give more detail, such as the training loss and validation loss at each epoch, 
