@@ -1,7 +1,7 @@
 import asyncio
 import os
 from dataclasses import dataclass
-from typing import Callable, Iterator, Optional
+from typing import Callable, Optional
 
 import aioredis
 from fastapi import Depends, HTTPException, status
@@ -300,12 +300,21 @@ async def get_external_interfaces_read_only():
         pass
 
 
-def get_auth_repository() -> Iterator[AuthenticationRepository]:
+def get_default_auth_repository() -> AuthenticationRepository:
+    auth_repo = FakeAuthenticationRepository()
+    return auth_repo
+
+
+def get_auth_repository():
     """
     Dependency for an AuthenticationRepository. This implementation returns a fake repository.
     """
     try:
-        yield FakeAuthenticationRepository()
+        from plugins.dependencies import get_auth_repository as get_custom_auth_repository
+
+        yield get_custom_auth_repository()
+    except ModuleNotFoundError:
+        yield get_default_auth_repository()
     finally:
         pass
 
