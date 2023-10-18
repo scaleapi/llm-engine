@@ -73,18 +73,19 @@ class Model(APIEngine):
                 Source of the LLM. Currently only HuggingFace is supported
 
             inference_framework (`LLMInferenceFramework`):
-                Inference framework for the LLM. Currently supported frameworks are DeepSpeed, text-generation-inference, vLLM, and LightLLM
+                Inference framework for the LLM. Currently supported frameworks are `deepspeed`, `text_generation_inference`, `vllm`, and `lightllm`
 
             num_shards (`int`):
                 Number of shards for the LLM. When bigger than 1, LLM will be sharded
                 to multiple GPUs. Number of GPUs must be equal or larger than num_shards.
 
             quantize (`Optional[Quantization]`):
-                Quantization method for the LLM. Different frameworks support different set of quantization methods.
+                Quantization method for the LLM. `text_generation_inference` supports `bitsandbytes` and `vllm` supports `awq`.
 
             checkpoint_path (`Optional[str]`):
-                Path to the checkpoint for the LLM. Can be either a folder (preferred since there's no untar) or a tar file.
-                Safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be slower).
+                AWS S3 Path to the checkpoint for the LLM. LLM engine must have permission to access the given path.
+                Can be either a folder or a tar file. Folder is preferred since we don't need to untar and model loads faster.
+                For model weights, safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be longer).
 
             cpus (`int`):
                 Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
@@ -92,11 +93,12 @@ class Model(APIEngine):
 
             memory (`str`):
                 Amount of memory each worker should get, e.g. "4Gi", "512Mi", etc. This must
-                be a positive amount of memory. Recommendation is set it to 20Gi * GPU count.
+                be a positive amount of memory. Recommendation is set it to 24Gi * GPU count.
 
             storage (`str`):
                 Amount of local ephemeral storage each worker should get, e.g. "4Gi",
                 "512Mi", etc. This must be a positive amount of storage.
+                Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B models.
 
             gpus (`int`):
                 Number of gpus each worker should get, e.g. 0, 1, etc.
@@ -116,14 +118,27 @@ class Model(APIEngine):
                 of a single worker
 
             per_worker (`int`):
-                Number of Uvicorn workers per pod. Recommendation is set to 2.
+                The maximum number of concurrent requests that an individual worker can
+                service. LLM engine automatically scales the number of workers for the endpoint so that
+                each worker is processing ``per_worker`` requests, subject to the limits defined by
+                ``min_workers`` and ``max_workers``
+                - If the average number of concurrent requests per worker is lower than
+                ``per_worker``, then the number of workers will be reduced. - Otherwise,
+                if the average number of concurrent requests per worker is higher than
+                ``per_worker``, then the number of workers will be increased to meet the elevated
+                traffic.
+                Here is our recommendation for computing ``per_worker``:
+                1. Compute ``min_workers`` and ``max_workers`` per your minimum and maximum
+                throughput requirements. 2. Determine a value for the maximum number of
+                concurrent requests in the workload. Divide this number by ``max_workers``. Doing
+                this ensures that the number of workers will "climb" to ``max_workers``.
 
             endpoint_type (`ModelEndpointType`):
-                ``"sync"``, ``"async"`` or ``"streaming"``. Recommendation is ``"streaming"``.
+                Currently only ``"streaming"`` endpoints are supported.
 
             gpu_type (`Optional[str]`):
                 If specifying a non-zero number of gpus, this controls the type of gpu
-                requested. Here are some supported values:
+                requested. Here are the supported values:
 
                 - ``nvidia-tesla-t4``
                 - ``nvidia-ampere-a10``
