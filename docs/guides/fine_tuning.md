@@ -178,7 +178,9 @@ for event in fine_tune_events.events:
 The status of your fine-tune will give a high-level overview of the fine-tune's progress.
 The events of your fine-tune will give more detail, such as the training loss and validation loss at each epoch, 
 as well as any errors that may have occurred. If you encounter any errors with your fine-tune, 
-the events are a good place to start debugging.
+the events are a good place to start debugging. For example, if you see `Unable to read training or validation dataset`,
+you may need to make your files accessible to LLM Engine. If you see `Invalid value received for lora parameter 'lora_alpha'!`,
+you should check that your hyperparameters are valid.
 
 ## Making inference calls to your fine-tune
 
