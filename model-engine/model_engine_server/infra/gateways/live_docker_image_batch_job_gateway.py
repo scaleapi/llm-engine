@@ -11,7 +11,12 @@ from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.serialization_utils import python_json_to_b64
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import (
+    LoggerTagKey,
+    LoggerTagManager,
+    filename_wo_ext,
+    make_logger,
+)
 from model_engine_server.domain.entities.batch_job_entity import BatchJobStatus, DockerImageBatchJob
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.domain.gateways.docker_image_batch_job_gateway import (
@@ -231,6 +236,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
                 # GPU Arguments
                 GPU_TYPE=resource_requests.gpu_type.value,
                 GPUS=resource_requests.gpus or 1,
+                REQUEST_ID=LoggerTagManager.get(LoggerTagKey.REQUEST_ID) or "",
             )
         else:
             resource_key = "docker-image-batch-job-cpu.yaml"
@@ -259,6 +265,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
                 LOCAL_FILE_NAME=mount_location,
                 FILE_CONTENTS_B64ENCODED=job_config_b64encoded,
                 AWS_ROLE=infra_config().profile_ml_inference_worker,
+                REQUEST_ID=LoggerTagManager.get(LoggerTagKey.REQUEST_ID) or "",
             )
 
         resource_spec = load_k8s_yaml(resource_key, substitution_kwargs)
