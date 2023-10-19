@@ -167,6 +167,7 @@ class _JobArguments(_BaseResourceArguments):
     JOB_ID: str
     BATCH_JOB_MAX_RUNTIME: int
     BATCH_JOB_TTL_SECONDS_AFTER_FINISHED: int
+    REQUEST_ID: str
 
 
 class _DockerImageBatchJobArguments(_JobArguments):
