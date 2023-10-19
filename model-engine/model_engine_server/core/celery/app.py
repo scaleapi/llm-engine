@@ -504,8 +504,7 @@ def _get_backend_url_and_conf(
     elif backend_protocol == "s3":
         backend_url = "s3://"
         if aws_role is None:
-            aws_profile = os.getenv("S3_WRITE_AWS_PROFILE", infra_config().profile_ml_worker)
-            aws_session = session(aws_profile)
+            aws_session = session(infra_config().profile_ml_worker)
         else:
             aws_session = session(aws_role)
         out_conf_changes.update(
