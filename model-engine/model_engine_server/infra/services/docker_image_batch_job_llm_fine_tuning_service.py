@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import FineTuneHparamValueType
 from model_engine_server.domain.entities.batch_job_entity import DockerImageBatchJob
 from model_engine_server.domain.exceptions import (
@@ -16,6 +17,8 @@ from model_engine_server.domain.repositories.docker_image_batch_job_bundle_repos
 )
 from model_engine_server.domain.services import LLMFineTuningService
 from model_engine_server.infra.repositories.llm_fine_tune_repository import LLMFineTuneRepository
+
+logger = make_logger(logger_name())
 
 
 class DockerImageBatchJobLLMFineTuningService(LLMFineTuningService):
@@ -76,6 +79,9 @@ class DockerImageBatchJobLLMFineTuningService(LLMFineTuningService):
         # TODO: Pass user-defined labels
         labels = dict(team="egp", product="llm-fine-tune")
 
+        logger.info(
+            f"Using bundle {di_batch_job_bundle.id} for fine-tune job: {di_batch_job_bundle.image_repository=}, {di_batch_job_bundle.image_tag=}"
+        )
         batch_job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
             created_by=created_by,
             owner=owner,

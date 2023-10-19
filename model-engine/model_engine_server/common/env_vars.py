@@ -64,6 +64,7 @@ LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH: str = os.environ.get(
 )
 """The path to the config map containing the Launch service template.
 """
+logger.info(f"{LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH=}")
 
 LAUNCH_SERVICE_TEMPLATE_FOLDER: Optional[str] = os.environ.get("LAUNCH_SERVICE_TEMPLATE_FOLDER")
 """The path to the folder containing the Launch service template. If set, this overrides
