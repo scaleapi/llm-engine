@@ -126,7 +126,7 @@ data:
                 - --set
                 - "forwarder.model.args.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
               env:
                 - name: DATADOG_TRACE_ENABLED
                   value: "${DATADOG_TRACE_ENABLED}"
@@ -397,7 +397,7 @@ data:
                 - --set
                 - "forwarder.model.args.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
               env:
                 - name: DATADOG_TRACE_ENABLED
                   value: "${DATADOG_TRACE_ENABLED}"
@@ -610,7 +610,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -878,7 +878,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -1102,7 +1102,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -1347,7 +1347,7 @@ data:
                 - --set
                 - "forwarder.model.args.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
               env:
                 - name: DATADOG_TRACE_ENABLED
                   value: "${DATADOG_TRACE_ENABLED}"
@@ -1625,7 +1625,7 @@ data:
                 - --set
                 - "forwarder.model.args.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
               env:
                 - name: DATADOG_TRACE_ENABLED
                   value: "${DATADOG_TRACE_ENABLED}"
@@ -1845,7 +1845,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -2120,7 +2120,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -2351,7 +2351,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set

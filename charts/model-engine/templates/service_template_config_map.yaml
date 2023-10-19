@@ -117,7 +117,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -161,7 +161,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -217,7 +217,7 @@ data:
                 - "${SQS_QUEUE_URL}"
                 {{- end }}
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
               {{- $async_forwarder_template_env | nindent 14 }}
               resources:
                 requests:

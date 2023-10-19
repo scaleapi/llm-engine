@@ -10,6 +10,7 @@ from model_engine_server.common.resource_limits import (
     FORWARDER_CPU_USAGE,
     FORWARDER_MEMORY_USAGE,
     FORWARDER_STORAGE_USAGE,
+    FORWARDER_WORKER_COUNT,
 )
 from model_engine_server.common.serialization_utils import python_json_to_b64
 from model_engine_server.core.config import infra_config
@@ -158,6 +159,7 @@ class _RunnableImageDeploymentArguments(_BaseDeploymentArguments):
     FORWARDER_CPUS_LIMIT: float
     FORWARDER_MEMORY_LIMIT: str
     FORWARDER_STORAGE_LIMIT: str
+    FORWARDER_WORKER_COUNT: int
     USER_CONTAINER_PORT: int
 
 
@@ -588,6 +590,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
@@ -636,6 +639,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
@@ -687,6 +691,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Streaming Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -731,6 +736,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Streaming Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -776,6 +782,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -819,6 +826,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -864,6 +872,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
@@ -920,6 +929,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
@@ -978,6 +988,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -1029,6 +1040,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
