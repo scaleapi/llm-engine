@@ -1,4 +1,5 @@
 import hashlib
+import math
 import re
 from typing import Union
 
@@ -67,7 +68,7 @@ def get_per_worker_value_from_target_concurrency(concurrency: Union[str, int, fl
 
     Inverse of get_target_concurrency_from_per_worker_value
     """
-    return int(round(parse_cpu_request(str(concurrency)) / 1000.0))
+    return int(math.ceil(parse_cpu_request(str(concurrency)) / 1000.0))
 
 
 def format_bytes(num_bytes) -> str:

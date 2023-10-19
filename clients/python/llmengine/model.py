@@ -73,7 +73,9 @@ class Model(APIEngine):
                 Source of the LLM. Currently only HuggingFace is supported
 
             inference_framework (`LLMInferenceFramework`):
-                Inference framework for the LLM. Currently supported frameworks are `deepspeed`, `text_generation_inference`, `vllm`, and `lightllm`
+                Inference framework for the LLM. Current supported frameworks are
+                LLMInferenceFramework.DEEPSPEED, LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+                LLMInferenceFramework.VLLM and LLMInferenceFramework.LIGHTLLM
 
             num_shards (`int`):
                 Number of shards for the LLM. When bigger than 1, LLM will be sharded
@@ -83,7 +85,7 @@ class Model(APIEngine):
                 Quantization method for the LLM. `text_generation_inference` supports `bitsandbytes` and `vllm` supports `awq`.
 
             checkpoint_path (`Optional[str]`):
-                AWS S3 Path to the checkpoint for the LLM. LLM engine must have permission to access the given path.
+                Remote path to the checkpoint for the LLM. LLM engine must have permission to access the given path.
                 Can be either a folder or a tar file. Folder is preferred since we don't need to untar and model loads faster.
                 For model weights, safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be longer).
 
@@ -106,8 +108,8 @@ class Model(APIEngine):
             min_workers (`int`):
                 The minimum number of workers. Must be greater than or equal to 0. This
                 should be determined by computing the minimum throughput of your workload and
-                dividing it by the throughput of a single worker. For sync or streaming endpoints,
-                when this number is 0, max_workers must be 1, and the endpoint will autoscale between
+                dividing it by the throughput of a single worker. When this number is 0,
+                max_workers must be 1, and the endpoint will autoscale between
                 0 and 1 pods. When this number is greater than 0, max_workers can be any number
                 greater or equal to min_workers.
 
@@ -153,7 +155,7 @@ class Model(APIEngine):
                 List of hooks to trigger after inference tasks are served
 
             default_callback_url (`Optional[str]`):
-                The default callback url to use for async endpoints.
+                The default callback url to use for sync completion requests.
                 This can be overridden in the task parameters for each individual task.
                 post_inference_hooks must contain "callback" for the callback to be triggered
 
