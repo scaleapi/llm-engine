@@ -1,4 +1,4 @@
-{{- if .Values.secrets.kubernetesDatabaseSecretName }}
+{{- if or (.Values.secrets.kubernetesDatabaseSecretName) (.Values.db.runDbInitScript) }}
 apiVersion: batch/v1
 kind: Job
 metadata:

@@ -20,6 +20,9 @@ secrets:
   # kubernetesDatabaseSecretName [required] is the name of the secret that contains the database credentials
   kubernetesDatabaseSecretName: llm-engine-postgres-credentials
 
+db:
+  runDbInitScript: false
+
 # serviceAccount [required] specifies the service account for LLM Engine server deployments (e.g gateway, cache, and builder deployments).
 serviceAccount:
   annotations:
