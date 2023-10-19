@@ -2728,6 +2728,31 @@ data:
               cpu: ${CPUS}
               memory: ${MEMORY}
             controlledResources: ["cpu", "memory"]
+  pod-disruption-budget.yaml: |-
+    apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        env: circleci
+        managed-by: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/version: ${GIT_TAG}
+        tags.datadoghq.com/service: ${ENDPOINT_NAME}
+        endpoint_id: ${ENDPOINT_ID}
+        endpoint_name: ${ENDPOINT_NAME}
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: ${RESOURCE_NAME}
   batch-job-orchestration-job.yaml: |-
     apiVersion: batch/v1
     kind: Job

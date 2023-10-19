@@ -150,6 +150,7 @@ class APIEngine:
             files=files,
             timeout=timeout,
             headers={"x-api-key": api_key},
+            auth=(api_key, ""),
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)

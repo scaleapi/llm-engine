@@ -23,9 +23,6 @@ class CachedImages(TypedDict):
     t4: List[str]
 
 
-KUBERNETES_MAX_LENGTH = 64
-
-
 class ImageCacheGateway:
     async def create_or_update_image_cache(self, cached_images: CachedImages) -> None:
         """

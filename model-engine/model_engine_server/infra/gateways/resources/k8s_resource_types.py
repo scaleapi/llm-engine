@@ -66,7 +66,7 @@ __all__: Sequence[str] = (
 LAUNCH_HIGH_PRIORITY_CLASS = "model-engine-high-priority"
 LAUNCH_DEFAULT_PRIORITY_CLASS = "model-engine-default-priority"
 
-KUBERNETES_MAX_LENGTH = 64
+IMAGE_HASH_MAX_LENGTH = 32
 FORWARDER_PORT = 5000
 USER_CONTAINER_PORT = 5005
 ARTIFACT_LIKE_CONTAINER_PORT = FORWARDER_PORT
@@ -330,6 +330,12 @@ class VerticalPodAutoscalerArguments(_BaseEndpointArguments):
     MEMORY: str
 
 
+class PodDisruptionBudgetArguments(_BaseEndpointArguments):
+    """Keyword-arguments for substituting into pod disruption budget templates."""
+
+    pass
+
+
 class VirtualServiceArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into virtual-service templates."""
 
@@ -433,7 +439,7 @@ ResourceArguments = Union[
 
 
 def compute_image_hash(image: str) -> str:
-    return str(hashlib.md5(str(image).encode()).hexdigest())[:KUBERNETES_MAX_LENGTH]
+    return str(hashlib.sha256(str(image).encode()).hexdigest())[:IMAGE_HASH_MAX_LENGTH]
 
 
 def container_start_triton_cmd(
@@ -1184,6 +1190,19 @@ def get_endpoint_resource_arguments_from_request(
             GIT_TAG=GIT_TAG,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
+        )
+    elif endpoint_resource_name == "pod-disruption-budget":
+        return PodDisruptionBudgetArguments(
+            # Base resource arguments
+            RESOURCE_NAME=k8s_resource_group_name,
+            NAMESPACE=hmi_config.endpoint_namespace,
+            ENDPOINT_ID=model_endpoint_record.id,
+            ENDPOINT_NAME=model_endpoint_record.name,
+            TEAM=team,
+            PRODUCT=product,
+            CREATED_BY=created_by,
+            OWNER=owner,
+            GIT_TAG=GIT_TAG,
         )
     else:
         raise Exception(f"Unknown resource name: {endpoint_resource_name}")
