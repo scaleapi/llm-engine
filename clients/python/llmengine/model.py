@@ -226,7 +226,7 @@ class Model(APIEngine):
             print(response.json())
             ```
 
-        === "Create Llama 70B model with 8bit quantization in Python"
+        === "Create Llama 2 70B model with 8bit quantization in Python"
             ```python
             from llmengine import Model
 
