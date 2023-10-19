@@ -167,6 +167,94 @@ class Model(APIEngine):
                 An optional dictionary of key/value pairs to associate with this endpoint
         Returns:
             CreateLLMEndpointResponse: creation task ID of the created Model. Currently not used.
+
+        === "Create Llama 2 7B model in Python"
+            ```python
+            from llmengine import Model
+
+            response = Model.create(
+                name="llama-2-7b-test"
+                model="llama-2-7b",
+                inference_framework_image_tag="2.0.0",
+                inference_framework=LLMInferenceFramework.VLLM,
+                num_shards=1,
+                checkpoint_path="s3://path/to/checkpoint",
+                cpus=8,
+                memory="24Gi",
+                storage="40Gi",
+                gpus=1,
+                min_workers=0,
+                max_workers=1,
+                per_worker=10,
+                endpoint_type=ModelEndpointType.STREAMING,
+                gpu_type="nvidia-ampere-a10",
+                public_inference=False,
+                labels={
+                    "product": "llm_model_zoo"
+                }
+            )
+
+            print(response.json())
+            ```
+
+        === "Create Llama 2 13B model in Python"
+            ```python
+            from llmengine import Model
+
+            response = Model.create(
+                name="llama-2-13b-test"
+                model="llama-2-13b",
+                inference_framework_image_tag="2.0.0",
+                inference_framework=LLMInferenceFramework.VLLM,
+                num_shards=2,
+                checkpoint_path="s3://path/to/checkpoint",
+                cpus=16,
+                memory="48Gi",
+                storage="80Gi",
+                gpus=2,
+                min_workers=0,
+                max_workers=1,
+                per_worker=10,
+                endpoint_type=ModelEndpointType.STREAMING,
+                gpu_type="nvidia-ampere-a10",
+                public_inference=False,
+                labels={
+                    "product": "llm_model_zoo"
+                }
+            )
+
+            print(response.json())
+            ```
+
+        === "Create Llama 70B model with 8bit quantization in Python"
+            ```python
+            from llmengine import Model
+
+            response = Model.create(
+                name="llama-2-70b-test"
+                model="llama-2-70b",
+                inference_framework_image_tag="0.9.4",
+                inference_framework=LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+                num_shards=4,
+                quantize="bitsandbytes",
+                checkpoint_path="s3://path/to/checkpoint",
+                cpus=40,
+                memory="96Gi",
+                storage="200Gi",
+                gpus=4,
+                min_workers=0,
+                max_workers=1,
+                per_worker=10,
+                endpoint_type=ModelEndpointType.STREAMING,
+                gpu_type="nvidia-ampere-a10",
+                public_inference=False,
+                labels={
+                    "product": "llm_model_zoo"
+                }
+            )
+
+            print(response.json())
+            ```
         """
         post_inference_hooks_strs = None
         if post_inference_hooks is not None:
