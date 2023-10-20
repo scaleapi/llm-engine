@@ -680,7 +680,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     )
                     build_result_status = build_result.status
                     build_result_logs: str = build_result.logs
-                    logger_adapter.info(f"Started build job: {build_result.job_name}")
+                    logger_adapter.info(f"Image Build job: {build_result.job_name}")
                 except Exception:  # noqa
                     build_result_status = False
                     s3_logs_location: Optional[str] = None
@@ -762,8 +762,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         else:
             self.monitoring_metrics_gateway.emit_image_build_cache_hit_metric(image_type)
             logger_adapter.info(
-                f"Image {image_params.repo}:{image_params.image_tag} already exists, "
-                f"skipping build for {endpoint_id=}"
+                f"Image already exists, skipping build. Image={image_params.repo}:{image_params.image_tag}, {endpoint_id=}"
             )
 
         return self.docker_repository.get_image_url(image_params.image_tag, image_params.repo)
