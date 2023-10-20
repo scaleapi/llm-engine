@@ -3,7 +3,12 @@ from typing import Dict
 from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.env_vars import GIT_TAG
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import (
+    LoggerTagKey,
+    LoggerTagManager,
+    logger_name,
+    make_logger,
+)
 from model_engine_server.domain.entities import BatchJobSerializationFormat
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways import BatchJobOrchestrationGateway
@@ -21,7 +26,7 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
 
 SHUTDOWN_GRACE_PERIOD = 60
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 class LiveBatchJobOrchestrationGateway(BatchJobOrchestrationGateway):
@@ -55,6 +60,7 @@ class LiveBatchJobOrchestrationGateway(BatchJobOrchestrationGateway):
             BATCH_JOB_MAX_RUNTIME=int(timeout_seconds + SHUTDOWN_GRACE_PERIOD),
             BATCH_JOB_TTL_SECONDS_AFTER_FINISHED=BATCH_JOB_TTL_SECONDS_AFTER_FINISHED,
             GIT_TAG=GIT_TAG,
+            REQUEST_ID=LoggerTagManager.get(LoggerTagKey.REQUEST_ID) or "",
         )
         resource_key = "batch-job-orchestration-job.yaml"
         deployment_spec = load_k8s_yaml(resource_key, substitution_kwargs)

@@ -24,11 +24,11 @@ from model_engine_server.api.triggers_v1 import trigger_router_v1
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
-    filename_wo_ext,
+    logger_name,
     make_logger,
 )
 
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 app = FastAPI(title="launch", version="1.0.0", redoc_url="/api")
 

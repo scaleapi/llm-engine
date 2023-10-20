@@ -1,10 +1,10 @@
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import BatchJobProgress
 from model_engine_server.infra.gateways import BatchJobProgressGateway
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 def get_batch_job_progress_location(user_id: str, batch_job_id: str):

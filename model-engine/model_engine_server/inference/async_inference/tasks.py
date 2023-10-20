@@ -6,7 +6,7 @@ from celery.signals import worker_process_init
 from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.common.serialization_utils import str_to_bool
-from model_engine_server.core.loggers import make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.utils.timer import timer
 from model_engine_server.domain.entities import ModelEndpointConfig
 from model_engine_server.inference.async_inference.celery import async_inference_service
@@ -20,7 +20,7 @@ from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_m
 )
 from model_engine_server.inference.post_inference_hooks import PostInferenceHooksHandler
 
-logger = make_logger(__name__)
+logger = make_logger(logger_name())
 
 # This should be safe as long as the celery workers are separate processes
 #    (or we're using pool=solo) so they're not shared between threads

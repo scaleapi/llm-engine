@@ -95,6 +95,7 @@ def create_celery_service(
     app: Celery = celery_app(
         name=None,
         s3_bucket=infra_config().s3_bucket,
+        aws_role=infra_config().profile_ml_inference_worker,
         task_visibility=task_visibility,
         broker_type=str(BrokerType.SQS.value if sqs_url else BrokerType.REDIS.value),
         broker_transport_options={"predefined_queues": {queue_name: {"url": sqs_url}}}

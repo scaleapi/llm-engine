@@ -24,7 +24,7 @@ from model_engine_server.common.dtos.model_endpoints import (
 from model_engine_server.common.resource_limits import MAX_ENDPOINT_SIZE, validate_resource_requests
 from model_engine_server.common.settings import REQUIRED_ENDPOINT_LABELS, RESTRICTED_ENDPOINT_LABELS
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.authorization.live_authorization_module import (
     LiveAuthorizationModule,
 )
@@ -48,7 +48,7 @@ from model_engine_server.domain.services import ModelEndpointService
 CONVERTED_FROM_ARTIFACT_LIKE_KEY = "_CONVERTED_FROM_ARTIFACT_LIKE"
 MODEL_BUNDLE_CHANGED_KEY = "_MODEL_BUNDLE_CHANGED"
 
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 
 def model_endpoint_entity_to_get_model_endpoint_response(
