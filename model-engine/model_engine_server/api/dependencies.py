@@ -1,7 +1,7 @@
 import asyncio
 import os
 from dataclasses import dataclass
-from typing import Callable, Iterator, Optional
+from typing import Callable, Optional
 
 import aioredis
 from fastapi import Depends, HTTPException, status
@@ -140,15 +140,15 @@ def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
     return monitoring_metrics_gateway
 
 
-def get_monitoring_metrics_gateway():
+def get_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
     try:
         from plugins.dependencies import (
             get_monitoring_metrics_gateway as get_custom_monitoring_metrics_gateway,
         )
 
-        yield get_custom_monitoring_metrics_gateway()
+        return get_custom_monitoring_metrics_gateway()
     except ModuleNotFoundError:
-        yield get_default_monitoring_metrics_gateway()
+        return get_default_monitoring_metrics_gateway()
     finally:
         pass
 
@@ -324,7 +324,7 @@ def get_default_auth_repository() -> AuthenticationRepository:
     return auth_repo
 
 
-def get_auth_repository() -> Iterator[AuthenticationRepository]:
+async def get_auth_repository():
     """
     Dependency for an AuthenticationRepository. This implementation returns a fake repository.
     """
