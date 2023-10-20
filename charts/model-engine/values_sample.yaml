@@ -63,6 +63,10 @@ autoscaling:
   prewarming:
     enabled: false
 
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
 # resources specify the k8s resources for LLM Engine server deployments (e.g gateway, cache, and builder deployments)
 resources:
   requests:
