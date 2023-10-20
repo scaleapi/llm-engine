@@ -6,7 +6,7 @@ from typing import Optional
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Response, status
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.inference.common import (
     get_endpoint_config,
     load_predict_fn_or_cls,
@@ -22,7 +22,7 @@ from model_engine_server.inference.sync_inference.constants import (
     NAME,
 )
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 class MultiprocessingConcurrencyLimiter:

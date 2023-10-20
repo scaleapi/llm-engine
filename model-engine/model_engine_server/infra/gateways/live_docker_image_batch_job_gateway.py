@@ -11,7 +11,7 @@ from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.serialization_utils import python_json_to_b64
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities.batch_job_entity import BatchJobStatus, DockerImageBatchJob
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.domain.gateways.docker_image_batch_job_gateway import (
@@ -49,7 +49,7 @@ DOCKER_IMAGE_BATCH_JOB_SPEC_GPU_PATH = (
 BATCH_JOB_MAX_RUNTIME_SECONDS = 86400 * 7  # 7 days
 BATCH_JOB_TTL_SECONDS_AFTER_FINISHED = 86400 * 3  # 3 days
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 class K8sEnvDict(TypedDict):

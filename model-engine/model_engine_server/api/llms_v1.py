@@ -39,7 +39,7 @@ from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
-    filename_wo_ext,
+    logger_name,
     make_logger,
 )
 from model_engine_server.domain.exceptions import (
@@ -78,7 +78,7 @@ from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateMo
 from sse_starlette.sse import EventSourceResponse
 
 llm_router_v1 = APIRouter(prefix="/v1/llm")
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 
 def handle_streaming_exception(

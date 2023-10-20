@@ -5,7 +5,7 @@ import pytz
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.env_vars import GIT_TAG
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import GpuType, ModelEndpointInfraState
 from model_engine_server.domain.repositories import DockerRepository
 from model_engine_server.infra.gateways.resources.image_cache_gateway import (
@@ -16,7 +16,7 @@ from model_engine_server.infra.repositories.model_endpoint_record_repository imp
     ModelEndpointRecordRepository,
 )
 
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 IMAGES_TO_CACHE_PER_INSTANCE_TYPE = 32
 
