@@ -217,7 +217,7 @@ data:
                 - "${SQS_QUEUE_URL}"
                 {{- end }}
                 - --num-workers
-                - "${FORWARDER_WORKER_COUNT}"
+                - "${PER_WORKER}"
               {{- $async_forwarder_template_env | nindent 14 }}
               resources:
                 requests:
