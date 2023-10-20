@@ -49,6 +49,7 @@ from model_engine_server.domain.entities import (
 from model_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
+    InvalidInferenceFrameworkImageTagException,
     InvalidRequestException,
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
@@ -73,6 +74,51 @@ from .model_endpoint_use_cases import (
 )
 
 logger = make_logger(filename_wo_ext(__name__))
+
+_VALID_FRAMEWORK_IMAGE_TAGS = {
+    # setting this to empty for now since no one uses deepspeed
+    LLMInferenceFramework.DEEPSPEED: [],
+    LLMInferenceFramework.TEXT_GENERATION_INFERENCE: [
+        "0.9.4.1",
+        "0.9.4",
+        "0.9.3-launch_s3",
+        "0.9.3",
+        "0.9.1-launch_s3",
+        "0.9.1",
+        "ipv6",
+        "ipv6-0",
+        "0.8",
+    ],
+    LLMInferenceFramework.VLLM: [
+        "0.2.1",
+        "0.2.0",
+        "0.1.7-awq",
+        "0.1.5",
+        "0.1.7",
+        "0.1.3.10",
+        "0.1.3.9",
+        "0.1.3.8",
+        "0.1.3.7",
+        "0.1.3.6",
+        "0.1.3.5",
+        "0.1.3.4",
+        "0.1.3.3",
+        "0.1.3.2",
+        "0.1.3.1",
+        "0.1.3",
+    ],
+    LLMInferenceFramework.LIGHTLLM: [
+        "0.0.9",
+        "0.0.8",
+        "0.0.7",
+        "0.0.6",
+        "0.0.5",
+        "0.0.4",
+        "0.0.3",
+        "0.0.2",
+        "0.0.1",
+    ],
+}
 
 _SUPPORTED_MODEL_NAMES = {
     LLMInferenceFramework.DEEPSPEED: {
@@ -134,13 +180,6 @@ _SUPPORTED_MODEL_NAMES = {
         "llama-2-70b": "meta-llama/Llama-2-70b-hf",
         "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
     },
-}
-
-_SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
-    LLMInferenceFramework.DEEPSPEED: [],
-    LLMInferenceFramework.TEXT_GENERATION_INFERENCE: [Quantization.BITSANDBYTES],
-    LLMInferenceFramework.VLLM: [Quantization.AWQ],
-    LLMInferenceFramework.LIGHTLLM: [],
 }
 
 
@@ -205,21 +244,8 @@ def validate_num_shards(
             raise ObjectHasInvalidValueException("DeepSpeed requires more than 1 GPU.")
         if num_shards != gpus:
             raise ObjectHasInvalidValueException(
-                f"Num shard {num_shards} must be the same as number of GPUs {gpus} for DeepSpeed."
+                f"DeepSpeed requires num shard {num_shards} to be the same as number of GPUs {gpus}."
             )
-    if num_shards > gpus:
-        raise ObjectHasInvalidValueException(
-            f"Num shard {num_shards} must be less than or equal to the number of GPUs {gpus}."
-        )
-
-
-def validate_quantization(
-    quantize: Optional[Quantization], inference_framework: LLMInferenceFramework
-) -> None:
-    if quantize is not None and quantize not in _SUPPORTED_QUANTIZATIONS[inference_framework]:
-        raise ObjectHasInvalidValueException(
-            f"Quantization {quantize} is not supported for inference framework {inference_framework}. Supported quantization types are {_SUPPORTED_QUANTIZATIONS[inference_framework]}."
-        )
 
 
 class CreateLLMModelEndpointV1UseCase:
@@ -250,6 +276,10 @@ class CreateLLMModelEndpointV1UseCase:
         checkpoint_path: Optional[str],
     ) -> ModelBundle:
         if source == LLMSource.HUGGING_FACE:
+            # validate the image tag / framework pair
+            if framework_image_tag not in _VALID_FRAMEWORK_IMAGE_TAGS[framework]:  # type: ignore
+                raise InvalidInferenceFrameworkImageTagException
+
             if framework == LLMInferenceFramework.DEEPSPEED:
                 bundle_id = await self.create_deepspeed_bundle(
                     user,
@@ -687,12 +717,10 @@ class CreateLLMModelEndpointV1UseCase:
         validate_post_inference_hooks(user, request.post_inference_hooks)
         validate_model_name(request.model_name, request.inference_framework)
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
-        validate_quantization(request.quantize, request.inference_framework)
 
         if request.inference_framework in [
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
             LLMInferenceFramework.VLLM,
-            LLMInferenceFramework.LIGHTLLM,
         ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
                 raise ObjectHasInvalidValueException(
@@ -931,10 +959,7 @@ def validate_and_update_completion_params(
         if inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
             request.top_k = None if request.top_k == -1 else request.top_k
             request.top_p = None if request.top_p == 1.0 else request.top_p
-        if inference_framework in [
-            LLMInferenceFramework.VLLM,
-            LLMInferenceFramework.LIGHTLLM,
-        ]:
+        if inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
             request.top_k = -1 if request.top_k is None else request.top_k
             request.top_p = 1.0 if request.top_p is None else request.top_p
     else:
@@ -944,10 +969,7 @@ def validate_and_update_completion_params(
             )
 
     # presence_penalty, frequency_penalty
-    if inference_framework in [
-        LLMInferenceFramework.VLLM,
-        LLMInferenceFramework.LIGHTLLM,
-    ]:
+    if inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
         request.presence_penalty = (
             0.0 if request.presence_penalty is None else request.presence_penalty
         )
@@ -1015,17 +1037,14 @@ class CompletionSyncV1UseCase:
                     raise InvalidRequestException(model_output.get("error"))  # trigger a 400
                 else:
                     raise UpstreamServiceError(
-                        status_code=500, content=bytes(model_output["error"], "utf-8")
+                        status_code=500, content=bytes(model_output["error"])
                     )
 
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
             tokens = None
             if with_token_probs:
                 tokens = [
-                    TokenOutput(
-                        token=model_output["tokens"][index],
-                        log_prob=list(t.values())[0],
-                    )
+                    TokenOutput(token=model_output["tokens"][index], log_prob=list(t.values())[0])
                     for index, t in enumerate(model_output["log_probs"])
                 ]
             return CompletionOutput(
@@ -1034,6 +1053,7 @@ class CompletionSyncV1UseCase:
                 tokens=tokens,
             )
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
+            print(model_output)
             tokens = None
             if with_token_probs:
                 tokens = [
@@ -1139,8 +1159,7 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination,
-                predict_request=inference_request,
+                topic=model_endpoint.record.destination, predict_request=inference_request
             )
 
             if predict_result.status == TaskStatus.SUCCESS and predict_result.result is not None:
@@ -1183,8 +1202,7 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination,
-                predict_request=inference_request,
+                topic=model_endpoint.record.destination, predict_request=inference_request
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1223,8 +1241,7 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination,
-                predict_request=inference_request,
+                topic=model_endpoint.record.destination, predict_request=inference_request
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1266,8 +1283,7 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination,
-                predict_request=inference_request,
+                topic=model_endpoint.record.destination, predict_request=inference_request
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1330,7 +1346,7 @@ class CompletionStreamV1UseCase:
         )
 
         if len(model_endpoints) == 0:
-            raise ObjectNotFoundException(f"Model endpoint {model_endpoint_name} not found.")
+            raise ObjectNotFoundException
 
         if len(model_endpoints) > 1:
             raise ObjectHasInvalidValueException(
@@ -1551,6 +1567,7 @@ class CompletionStreamV1UseCase:
                     )
             elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
                 if res.status == TaskStatus.SUCCESS and result is not None:
+                    print(result)
                     token = None
                     num_completion_tokens += 1
                     if request.return_token_log_probs:
