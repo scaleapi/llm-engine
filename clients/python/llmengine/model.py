@@ -175,7 +175,7 @@ class Model(APIEngine):
             response = Model.create(
                 name="llama-2-7b-test"
                 model="llama-2-7b",
-                inference_framework_image_tag="2.0.0",
+                inference_framework_image_tag="0.2.1.post1",
                 inference_framework=LLMInferenceFramework.VLLM,
                 num_shards=1,
                 checkpoint_path="s3://path/to/checkpoint",
@@ -189,9 +189,6 @@ class Model(APIEngine):
                 endpoint_type=ModelEndpointType.STREAMING,
                 gpu_type="nvidia-ampere-a10",
                 public_inference=False,
-                labels={
-                    "product": "llm_model_zoo"
-                }
             )
 
             print(response.json())
@@ -204,7 +201,7 @@ class Model(APIEngine):
             response = Model.create(
                 name="llama-2-13b-test"
                 model="llama-2-13b",
-                inference_framework_image_tag="2.0.0",
+                inference_framework_image_tag="0.2.1.post1",
                 inference_framework=LLMInferenceFramework.VLLM,
                 num_shards=2,
                 checkpoint_path="s3://path/to/checkpoint",
@@ -218,9 +215,6 @@ class Model(APIEngine):
                 endpoint_type=ModelEndpointType.STREAMING,
                 gpu_type="nvidia-ampere-a10",
                 public_inference=False,
-                labels={
-                    "product": "llm_model_zoo"
-                }
             )
 
             print(response.json())
@@ -248,9 +242,6 @@ class Model(APIEngine):
                 endpoint_type=ModelEndpointType.STREAMING,
                 gpu_type="nvidia-ampere-a10",
                 public_inference=False,
-                labels={
-                    "product": "llm_model_zoo"
-                }
             )
 
             print(response.json())
