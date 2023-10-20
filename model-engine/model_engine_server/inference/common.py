@@ -12,12 +12,12 @@ import cloudpickle
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request, RequestSchema
 from model_engine_server.common.io import open_wrapper
 from model_engine_server.common.serialization_utils import b64_to_python_json
-from model_engine_server.core.loggers import make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.utils.timer import timer
 from model_engine_server.domain.entities import ModelEndpointConfig
 from model_engine_server.inference.service_requests import make_request
 
-logger = make_logger(__name__)
+logger = make_logger(logger_name())
 
 s3_client = None
 

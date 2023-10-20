@@ -15,7 +15,7 @@ from model_engine_server.common.dtos.batch_jobs import (
 )
 from model_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
     EndpointResourceInvalidRequestException,
     ObjectNotAuthorizedException,
@@ -30,7 +30,7 @@ from model_engine_server.domain.use_cases.docker_image_batch_job_bundle_use_case
 
 docker_image_batch_job_bundle_router_v1 = APIRouter(prefix="/v1")
 
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 
 @docker_image_batch_job_bundle_router_v1.post(

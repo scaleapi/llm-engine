@@ -8,14 +8,14 @@ from model_engine_server.api.dependencies import (
     verify_authentication,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.use_cases.model_endpoints_schema_use_cases import (
     GetModelEndpointsSchemaV1UseCase,
 )
 from starlette.responses import HTMLResponse
 
 model_endpoints_docs_router_v1 = APIRouter(prefix="/v1")
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 
 @model_endpoints_docs_router_v1.get("/model-endpoints-schema.json")

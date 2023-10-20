@@ -18,8 +18,8 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `mpt-7b`              | ✅                       |                            | deepspeed, text-generation-inference, vllm |
 | `mpt-7b-instruct`     | ✅                       | ✅                         | deepspeed, text-generation-inference, vllm |
 | `flan-t5-xxl`         | ✅                       |                            | deepspeed, text-generation-inference |
-| `mistral-7b`         | ✅                       |                            | vllm | 
-| `mistral-7b-instruct`         | ✅                       |                            | vllm |
+| `mistral-7b`         | ✅                       |   ✅                         | vllm | 
+| `mistral-7b-instruct`         | ✅                       |    ✅                        | vllm |
 
 ## Usage
 

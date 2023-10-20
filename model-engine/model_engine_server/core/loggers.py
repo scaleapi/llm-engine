@@ -33,7 +33,6 @@ __all__: Sequence[str] = (
     "silence_chatty_logger",
     "loggers_at_level",
     # utils
-    "filename_wo_ext",
     "LoggerTagKey",
     "LoggerTagManager",
 )
@@ -202,7 +201,7 @@ def logger_name(*, fallback_name: Optional[str] = None) -> str:
         # in which case we use it's file name
 
         if hasattr(calling_module, "__file__"):
-            return filename_wo_ext(calling_module.__file__)  # type: ignore
+            return _filename_wo_ext(calling_module.__file__)  # type: ignore
         if fallback_name is not None:
             fallback_name = fallback_name.strip()
             if len(fallback_name) > 0:
@@ -316,6 +315,6 @@ def loggers_at_level(*loggers_or_names, new_level: int) -> None:  # type: ignore
             log.setLevel(level)
 
 
-def filename_wo_ext(filename: str) -> str:
+def _filename_wo_ext(filename: str) -> str:
     """Gets the filename, without the file extension, if present."""
     return os.path.split(filename)[1].split(".", 1)[0]

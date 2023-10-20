@@ -2,9 +2,9 @@ import importlib
 import os
 import shutil
 
-from model_engine_server.core.loggers import make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 
-logger = make_logger(__name__)
+logger = make_logger(logger_name())
 
 LOCAL_BUNDLE_PATH = os.getenv("LOCAL_BUNDLE_PATH", "")
 LOAD_MODEL_MODULE_PATH = os.getenv("LOAD_MODEL_MODULE_PATH", "")
