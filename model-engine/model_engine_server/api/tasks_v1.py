@@ -16,7 +16,7 @@ from model_engine_server.common.dtos.tasks import (
     TaskStatus,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
     EndpointUnsupportedInferenceTypeException,
     ObjectNotAuthorizedException,
@@ -36,7 +36,7 @@ from model_engine_server.domain.use_cases.sync_inference_use_cases import (
 from sse_starlette.sse import EventSourceResponse
 
 inference_task_router_v1 = APIRouter(prefix="/v1")
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 
 @inference_task_router_v1.post("/async-tasks", response_model=CreateAsyncTaskV1Response)

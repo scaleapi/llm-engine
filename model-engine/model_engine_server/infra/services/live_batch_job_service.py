@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 
 from model_engine_server.common.dtos.batch_jobs import CreateBatchJobResourceRequests
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     BatchJob,
     BatchJobProgress,
@@ -17,7 +17,7 @@ from model_engine_server.infra.repositories.batch_job_record_repository import (
     BatchJobRecordRepository,
 )
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 DEFAULT_ENDPOINT_CPUS_BATCH_JOB = 3
 DEFAULT_ENDPOINT_MEMORY_BATCH_JOB = "12Gi"

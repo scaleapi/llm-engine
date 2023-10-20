@@ -16,7 +16,7 @@ from model_engine_server.common.dtos.files import (
     UploadFileResponse,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
@@ -30,7 +30,7 @@ from model_engine_server.domain.use_cases.file_use_cases import (
 )
 
 file_router_v1 = APIRouter(prefix="/v1")
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 
 @file_router_v1.post("/files", response_model=UploadFileResponse)

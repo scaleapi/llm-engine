@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.common import dict_not_none
 from model_engine_server.common.config import hmi_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities.batch_job_entity import DockerImageBatchJob
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.domain.gateways.cron_job_gateway import CronJobGateway
@@ -22,7 +22,7 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import Cron
 
 BATCH_CURL_JOB_ACTIVE_DEADLINE_SECONDS = 10
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 def _k8s_cron_job_name_from_id(trigger_id: str):
