@@ -142,11 +142,10 @@ def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
 
 def get_monitoring_metrics_gateway():
     try:
-        from plugins.dependencies import (
-            get_monitoring_metrics_gateway as get_custom_monitoring_metrics_gateway,
-        )
+        # temp while plugin is created
+        from model_engine_server.infra.gateways import DatadogMonitoringMetricsGateway
 
-        yield get_custom_monitoring_metrics_gateway()
+        yield DatadogMonitoringMetricsGateway()
     except ModuleNotFoundError:
         yield get_default_monitoring_metrics_gateway()
     finally:
