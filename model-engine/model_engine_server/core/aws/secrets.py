@@ -6,9 +6,9 @@ from typing import Optional
 import boto3
 from botocore.exceptions import ClientError
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 @lru_cache(maxsize=2)

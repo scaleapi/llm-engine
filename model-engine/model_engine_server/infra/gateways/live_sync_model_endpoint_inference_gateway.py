@@ -11,7 +11,7 @@ from model_engine_server.common.dtos.tasks import (
 )
 from model_engine_server.common.env_vars import CIRCLECI, LOCAL
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
     NoHealthyUpstreamException,
     TooManyRequestsException,
@@ -32,7 +32,7 @@ from tenacity import (
     wait_exponential,
 )
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 SYNC_ENDPOINT_RETRIES = 8  # Must be an integer >= 0
 SYNC_ENDPOINT_MAX_TIMEOUT_SECONDS = 10

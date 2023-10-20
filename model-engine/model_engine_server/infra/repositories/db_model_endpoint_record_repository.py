@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Optional
 from cachetools import TTLCache
 from model_engine_server.common import dict_not_none
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.db.endpoint_row_lock import AdvisoryLockContextManager, get_lock_key
 from model_engine_server.db.models import Endpoint as OrmModelEndpoint
 from model_engine_server.domain.entities import ModelEndpointRecord
@@ -23,7 +23,7 @@ from model_engine_server.infra.repositories.model_endpoint_record_repository imp
 from sqlalchemy import or_, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 CACHE_SIZE = 512
 CACHE_TTL_SECONDS = 15.0  # Kubernetes caching is 15 seconds as well
