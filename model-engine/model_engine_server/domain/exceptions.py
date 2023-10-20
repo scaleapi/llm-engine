@@ -170,3 +170,9 @@ class TriggerNameAlreadyExistsException(DomainException):
     """
     Thrown if the requested name already exists in the trigger repository
     """
+
+
+class InvalidInferenceFrameworkImageTagException(DomainException):
+    """
+    Thrown if the image tag passed in doesn't exist for the provided inference framework
+    """
