@@ -717,7 +717,7 @@ class CreateLLMModelEndpointV1UseCase:
         ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
                 raise ObjectHasInvalidValueException(
-                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference and vLLM."
+                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM and LightLLM."
                 )
 
         bundle = await self.create_model_bundle(
