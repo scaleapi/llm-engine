@@ -6,7 +6,7 @@ from model_engine_server.common.env_vars import GIT_TAG
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
-    filename_wo_ext,
+    logger_name,
     make_logger,
 )
 from model_engine_server.domain.entities import BatchJobSerializationFormat
@@ -26,7 +26,7 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
 
 SHUTDOWN_GRACE_PERIOD = 60
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 class LiveBatchJobOrchestrationGateway(BatchJobOrchestrationGateway):

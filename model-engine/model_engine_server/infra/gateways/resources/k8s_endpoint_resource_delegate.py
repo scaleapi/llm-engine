@@ -24,7 +24,7 @@ from model_engine_server.common.env_vars import (
 )
 from model_engine_server.common.serialization_utils import b64_to_python_json, str_to_bool
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     ModelEndpointConfig,
     ModelEndpointDeploymentState,
@@ -52,7 +52,7 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
 from packaging import version
 from pydantic.utils import deep_update
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 HTTP_PORT = 5000
 

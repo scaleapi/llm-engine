@@ -33,7 +33,7 @@ from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
     LLMMetadata,
@@ -72,7 +72,7 @@ from .model_endpoint_use_cases import (
     validate_post_inference_hooks,
 )
 
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 _SUPPORTED_MODEL_NAMES = {
     LLMInferenceFramework.DEEPSPEED: {

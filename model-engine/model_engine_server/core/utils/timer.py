@@ -26,9 +26,8 @@ class timer:  # pylint: disable=invalid-name
     The other use case is to pass in a `name` and a `logger`. The timing will be recorded
     when the context block is exited:
 
-    >>> from model_engine_server.core.loggers import make_logger
-    >>>
-    >>> log = make_logger("my-main-program")
+    >>> from model_engine_server.core.loggers import make_logger, logger_name    >>>
+    >>> log = make_logger(logger_name())
     >>>
     >>> with timer(logger=log, name="timing-func-f"):
     >>>     f()

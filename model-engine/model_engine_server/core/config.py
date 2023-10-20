@@ -12,9 +12,9 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 import yaml
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 __all__: Sequence[str] = (
     "DEFAULT_CONFIG_PATH",
