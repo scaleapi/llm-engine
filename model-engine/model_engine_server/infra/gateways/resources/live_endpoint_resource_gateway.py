@@ -2,7 +2,7 @@ from typing import Dict, Optional, Tuple
 
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     ModelEndpointInfraState,
     ModelEndpointRecord,
@@ -21,7 +21,7 @@ from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate
     SQSEndpointResourceDelegate,
 )
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 class SqsQueueInfo(QueueInfo):

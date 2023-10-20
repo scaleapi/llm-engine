@@ -5,7 +5,6 @@ ML service.
 """
 
 import base64
-import logging
 import os
 import pathlib
 import subprocess
@@ -17,11 +16,11 @@ import boto3
 import click
 import docker
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 
 from .remote_build import MODELS_ROOT, build_remote_wrapper
 
-logger = make_logger("ml_serve.docker_image", log_level=logging.INFO)
+logger = make_logger(logger_name())
 
 
 def _get_aws_creds() -> Dict[str, str]:
