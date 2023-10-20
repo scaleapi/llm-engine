@@ -174,7 +174,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         base_image_params = self.get_base_image_params(
                             build_endpoint_request, logger_adapter
                         )
-                        logger.info(f"base_image_params: {base_image_params}")
+                        logger_adapter.info(f"base_image_params: {base_image_params}")
                         base_image = await self._build_image(
                             base_image_params,
                             build_endpoint_request,
@@ -227,7 +227,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                             if os.path.exists(model_bundle_path):
                                 os.remove(model_bundle_path)
                             else:
-                                logger.error(f"No bundle object found at {model_bundle_path}!")
+                                logger_adapter.error(
+                                    f"No bundle object found at {model_bundle_path}!"
+                                )
 
                     except DockerBuildFailedException:
                         log_error("Failed to build base and user docker images")
@@ -493,8 +495,8 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         inference_folder = "model-engine/model_engine_server/inference"
         base_path: str = os.getenv("WORKSPACE")  # type: ignore
 
-        logger.info(f"inference_folder: {inference_folder}")
-        logger.info(f"dockerfile: {inference_folder}/{dockerfile}")
+        logger_adapter.info(f"inference_folder: {inference_folder}")
+        logger_adapter.info(f"dockerfile: {inference_folder}/{dockerfile}")
         return BuildImageRequest(
             repo="launch/inference",
             image_tag=resulting_image_tag[:MAX_IMAGE_TAG_LEN],
@@ -614,7 +616,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             pass
         _, model_bundle_path = tempfile.mkstemp(dir=bundle_folder, suffix=".zip")
         bundle_url = model_bundle.location
-        logger.info(
+        logger_adapter.info(
             f"Downloading bundle from serialized object at location {bundle_url} to local path {model_bundle_path}"
         )
         with open_wrapper(bundle_url, "rb") as bundle_data:  # type: ignore
@@ -678,6 +680,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     )
                     build_result_status = build_result.status
                     build_result_logs: str = build_result.logs
+                    logger_adapter.info(f"Image Build job: {build_result.job_name}")
                 except Exception:  # noqa
                     build_result_status = False
                     s3_logs_location: Optional[str] = None
@@ -759,8 +762,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         else:
             self.monitoring_metrics_gateway.emit_image_build_cache_hit_metric(image_type)
             logger_adapter.info(
-                f"Image {image_params.repo}:{image_params.image_tag} already exists, "
-                f"skipping build for {endpoint_id=}"
+                f"Image already exists, skipping build. Image={image_params.repo}:{image_params.image_tag}, {endpoint_id=}"
             )
 
         return self.docker_repository.get_image_url(image_params.image_tag, image_params.repo)

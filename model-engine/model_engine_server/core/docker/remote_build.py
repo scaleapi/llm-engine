@@ -48,6 +48,7 @@ class BuildResult:
 
     status: bool
     logs: str
+    job_name: str
 
 
 def zip_context(
@@ -398,13 +399,13 @@ def get_pod_status_and_log(job_name: str) -> BuildResult:
             )
         elif event["object"].status.phase == "Succeeded":
             cleanup_logs_process()
-            return BuildResult(status=True, logs=_read_pod_logs(pod_name))
+            return BuildResult(status=True, logs=_read_pod_logs(pod_name), job_name=job_name)
         elif event["object"].status.phase == "Failed":
             cleanup_logs_process()
-            return BuildResult(status=False, logs=_read_pod_logs(pod_name))
+            return BuildResult(status=False, logs=_read_pod_logs(pod_name), job_name=job_name)
     if logs_process is not None:
         logs_process.kill()
-    return BuildResult(status=False, logs=_read_pod_logs(pod_name))
+    return BuildResult(status=False, logs=_read_pod_logs(pod_name), job_name=job_name)
 
 
 def build_remote_block(
