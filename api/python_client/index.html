@@ -534,6 +534,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#llmengine.Model.create" class="md-nav__link">
+    create()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#llmengine.Model.get" class="md-nav__link">
     get()
   </a>
@@ -810,6 +817,13 @@
   
     <nav class="md-nav" aria-label="Model">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.Model.create" class="md-nav__link">
+    create()
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#llmengine.Model.get" class="md-nav__link">
@@ -2349,6 +2363,504 @@ models built into LLM Engine, and fine-tuned models that you create through the
 
 
 
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="llmengine.Model.create" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">create</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#llmengine.Model.create" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create(
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    name: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    model: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    inference_framework_image_tag: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    source: LLMSource <span style="color: #666666">=</span> LLMSource<span style="color: #666666">.</span>HUGGING_FACE,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    inference_framework: LLMInferenceFramework <span style="color: #666666">=</span> LLMInferenceFramework<span style="color: #666666">.</span>VLLM,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    num_shards: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    quantize: Optional[Quantization] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    checkpoint_path: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    cpus: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">8</span>,
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    memory: <span style="color: #008000">str</span> <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;24Gi&quot;</span>,
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    storage: <span style="color: #008000">str</span> <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;40Gi&quot;</span>,
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    gpus: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    min_workers: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">0</span>,
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    max_workers: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    per_worker: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">2</span>,
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    endpoint_type: ModelEndpointType <span style="color: #666666">=</span> ModelEndpointType<span style="color: #666666">.</span>STREAMING,
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    gpu_type: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;nvidia-ampere-a10&quot;</span>,
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    high_priority: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    post_inference_hooks: Optional[
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        List[PostInferenceHooks]
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    ] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    default_callback_url: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    public_inference: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">True</span>,
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    labels: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>) <span style="color: #666666">-&gt;</span> CreateLLMEndpointResponse
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Create an LLM model. Note: This API is only available for self-hosted users.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>name</code></td>
+          <td>
+                <code>`str`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Name of the endpoint</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>model</code></td>
+          <td>
+                <code>`str`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Name of the base model</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>inference_framework_image_tag</code></td>
+          <td>
+                <code>`str`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Image tag for the inference framework</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>source</code></td>
+          <td>
+                <code>`LLMSource`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Source of the LLM. Currently only HuggingFace is supported</p>
+            </div>
+          </td>
+          <td>
+                <code><span title="llmengine.data_types.LLMSource.HUGGING_FACE">HUGGING_FACE</span></code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>inference_framework</code></td>
+          <td>
+                <code>`LLMInferenceFramework`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Inference framework for the LLM. Current supported frameworks are
+LLMInferenceFramework.DEEPSPEED, LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+LLMInferenceFramework.VLLM and LLMInferenceFramework.LIGHTLLM</p>
+            </div>
+          </td>
+          <td>
+                <code><span title="llmengine.data_types.LLMInferenceFramework.VLLM">VLLM</span></code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>num_shards</code></td>
+          <td>
+                <code>`int`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Number of shards for the LLM. When bigger than 1, LLM will be sharded
+to multiple GPUs. Number of GPUs must be equal or larger than num_shards.</p>
+            </div>
+          </td>
+          <td>
+                <code>1</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>quantize</code></td>
+          <td>
+                <code>`Optional[Quantization]`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Quantization method for the LLM. <code>text_generation_inference</code> supports <code>bitsandbytes</code> and <code>vllm</code> supports <code>awq</code>.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>checkpoint_path</code></td>
+          <td>
+                <code>`Optional[str]`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Remote path to the checkpoint for the LLM. LLM engine must have permission to access the given path.
+Can be either a folder or a tar file. Folder is preferred since we don't need to untar and model loads faster.
+For model weights, safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be longer).</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>cpus</code></td>
+          <td>
+                <code>`int`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
+than or equal to 1. Recommendation is set it to 8 * GPU count.</p>
+            </div>
+          </td>
+          <td>
+                <code>8</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>memory</code></td>
+          <td>
+                <code>`str`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Amount of memory each worker should get, e.g. "4Gi", "512Mi", etc. This must
+be a positive amount of memory. Recommendation is set it to 24Gi * GPU count.</p>
+            </div>
+          </td>
+          <td>
+                <code>&#39;24Gi&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>storage</code></td>
+          <td>
+                <code>`str`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Amount of local ephemeral storage each worker should get, e.g. "4Gi",
+"512Mi", etc. This must be a positive amount of storage.
+Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B models.</p>
+            </div>
+          </td>
+          <td>
+                <code>&#39;40Gi&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>gpus</code></td>
+          <td>
+                <code>`int`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Number of gpus each worker should get, e.g. 0, 1, etc.</p>
+            </div>
+          </td>
+          <td>
+                <code>1</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>min_workers</code></td>
+          <td>
+                <code>`int`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The minimum number of workers. Must be greater than or equal to 0. This
+should be determined by computing the minimum throughput of your workload and
+dividing it by the throughput of a single worker. When this number is 0,
+max_workers must be 1, and the endpoint will autoscale between
+0 and 1 pods. When this number is greater than 0, max_workers can be any number
+greater or equal to min_workers.</p>
+            </div>
+          </td>
+          <td>
+                <code>0</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>max_workers</code></td>
+          <td>
+                <code>`int`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The maximum number of workers. Must be greater than or equal to 0,
+and as well as greater than or equal to <code>min_workers</code>. This should be determined by
+computing the maximum throughput of your workload and dividing it by the throughput
+of a single worker</p>
+            </div>
+          </td>
+          <td>
+                <code>1</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>per_worker</code></td>
+          <td>
+                <code>`int`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The maximum number of concurrent requests that an individual worker can
+service. LLM engine automatically scales the number of workers for the endpoint so that
+each worker is processing <code>per_worker</code> requests, subject to the limits defined by
+<code>min_workers</code> and <code>max_workers</code>
+- If the average number of concurrent requests per worker is lower than
+<code>per_worker</code>, then the number of workers will be reduced. - Otherwise,
+if the average number of concurrent requests per worker is higher than
+<code>per_worker</code>, then the number of workers will be increased to meet the elevated
+traffic.
+Here is our recommendation for computing <code>per_worker</code>:
+1. Compute <code>min_workers</code> and <code>max_workers</code> per your minimum and maximum
+throughput requirements. 2. Determine a value for the maximum number of
+concurrent requests in the workload. Divide this number by <code>max_workers</code>. Doing
+this ensures that the number of workers will "climb" to <code>max_workers</code>.</p>
+            </div>
+          </td>
+          <td>
+                <code>2</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>endpoint_type</code></td>
+          <td>
+                <code>`ModelEndpointType`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Currently only <code>"streaming"</code> endpoints are supported.</p>
+            </div>
+          </td>
+          <td>
+                <code><span title="llmengine.data_types.ModelEndpointType.STREAMING">STREAMING</span></code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>gpu_type</code></td>
+          <td>
+                <code>`Optional[str]`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If specifying a non-zero number of gpus, this controls the type of gpu
+requested. Here are the supported values:</p>
+<ul>
+<li><code>nvidia-tesla-t4</code></li>
+<li><code>nvidia-ampere-a10</code></li>
+<li><code>nvidia-ampere-a100</code></li>
+<li><code>nvidia-ampere-a100e</code></li>
+</ul>
+            </div>
+          </td>
+          <td>
+                <code>&#39;nvidia-ampere-a10&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>high_priority</code></td>
+          <td>
+                <code>`Optional[bool]`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Either <code>True</code> or <code>False</code>. Enabling this will allow the created
+endpoint to leverage the shared pool of prewarmed nodes for faster spinup time</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>post_inference_hooks</code></td>
+          <td>
+                <code>`Optional[List[PostInferenceHooks]]`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>List of hooks to trigger after inference tasks are served</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>default_callback_url</code></td>
+          <td>
+                <code>`Optional[str]`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The default callback url to use for sync completion requests.
+This can be overridden in the task parameters for each individual task.
+post_inference_hooks must contain "callback" for the callback to be triggered</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>public_inference</code></td>
+          <td>
+                <code>`Optional[bool]`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code>, this endpoint will be available to all user IDs for
+inference</p>
+            </div>
+          </td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>labels</code></td>
+          <td>
+                <code>`Optional[Dict[str, str]]`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>An optional dictionary of key/value pairs to associate with this endpoint</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <p>Returns:
+    CreateLLMEndpointResponse: creation task ID of the created Model. Currently not used.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="llmengine.Model.create--__tabbed_1_1" name="llmengine.Model.create--__tabbed_1" type="radio" /><input id="llmengine.Model.create--__tabbed_1_2" name="llmengine.Model.create--__tabbed_1" type="radio" /><input id="llmengine.Model.create--__tabbed_1_3" name="llmengine.Model.create--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.Model.create--__tabbed_1_1">Create Llama 2 7B model in Python</label><label for="llmengine.Model.create--__tabbed_1_2">Create Llama 2 13B model in Python</label><label for="llmengine.Model.create--__tabbed_1_3">Create Llama 2 70B model with 8bit quantization in Python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Model
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666666">=</span> Model<span style="color: #666666">.</span>create(
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    name<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b-test&quot;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    inference_framework_image_tag<span style="color: #666666">=</span><span style="color: #BA2121">&quot;0.2.1.post1&quot;</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    inference_framework<span style="color: #666666">=</span>LLMInferenceFramework<span style="color: #666666">.</span>VLLM,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    num_shards<span style="color: #666666">=1</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    checkpoint_path<span style="color: #666666">=</span><span style="color: #BA2121">&quot;s3://path/to/checkpoint&quot;</span>,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    cpus<span style="color: #666666">=8</span>,
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    memory<span style="color: #666666">=</span><span style="color: #BA2121">&quot;24Gi&quot;</span>,
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    storage<span style="color: #666666">=</span><span style="color: #BA2121">&quot;40Gi&quot;</span>,
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    gpus<span style="color: #666666">=1</span>,
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    min_workers<span style="color: #666666">=0</span>,
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    max_workers<span style="color: #666666">=1</span>,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    per_worker<span style="color: #666666">=10</span>,
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    endpoint_type<span style="color: #666666">=</span>ModelEndpointType<span style="color: #666666">.</span>STREAMING,
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    gpu_type<span style="color: #666666">=</span><span style="color: #BA2121">&quot;nvidia-ampere-a10&quot;</span>,
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    public_inference<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>)
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Model
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>response <span style="color: #666666">=</span> Model<span style="color: #666666">.</span>create(
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    name<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-13b-test&quot;</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-13b&quot;</span>,
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    inference_framework_image_tag<span style="color: #666666">=</span><span style="color: #BA2121">&quot;0.2.1.post1&quot;</span>,
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    inference_framework<span style="color: #666666">=</span>LLMInferenceFramework<span style="color: #666666">.</span>VLLM,
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    num_shards<span style="color: #666666">=2</span>,
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    checkpoint_path<span style="color: #666666">=</span><span style="color: #BA2121">&quot;s3://path/to/checkpoint&quot;</span>,
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    cpus<span style="color: #666666">=16</span>,
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    memory<span style="color: #666666">=</span><span style="color: #BA2121">&quot;48Gi&quot;</span>,
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    storage<span style="color: #666666">=</span><span style="color: #BA2121">&quot;80Gi&quot;</span>,
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    gpus<span style="color: #666666">=2</span>,
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    min_workers<span style="color: #666666">=0</span>,
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    max_workers<span style="color: #666666">=1</span>,
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    per_worker<span style="color: #666666">=10</span>,
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    endpoint_type<span style="color: #666666">=</span>ModelEndpointType<span style="color: #666666">.</span>STREAMING,
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    gpu_type<span style="color: #666666">=</span><span style="color: #BA2121">&quot;nvidia-ampere-a10&quot;</span>,
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    public_inference<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>)
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Model
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>response <span style="color: #666666">=</span> Model<span style="color: #666666">.</span>create(
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    name<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-70b-test&quot;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-70b&quot;</span>,
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    inference_framework_image_tag<span style="color: #666666">=</span><span style="color: #BA2121">&quot;0.9.4&quot;</span>,
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    inference_framework<span style="color: #666666">=</span>LLMInferenceFramework<span style="color: #666666">.</span>TEXT_GENERATION_INFERENCE,
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    num_shards<span style="color: #666666">=4</span>,
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    quantize<span style="color: #666666">=</span><span style="color: #BA2121">&quot;bitsandbytes&quot;</span>,
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    checkpoint_path<span style="color: #666666">=</span><span style="color: #BA2121">&quot;s3://path/to/checkpoint&quot;</span>,
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    cpus<span style="color: #666666">=40</span>,
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    memory<span style="color: #666666">=</span><span style="color: #BA2121">&quot;96Gi&quot;</span>,
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    storage<span style="color: #666666">=</span><span style="color: #BA2121">&quot;200Gi&quot;</span>,
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    gpus<span style="color: #666666">=4</span>,
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    min_workers<span style="color: #666666">=0</span>,
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    max_workers<span style="color: #666666">=1</span>,
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    per_worker<span style="color: #666666">=10</span>,
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    endpoint_type<span style="color: #666666">=</span>ModelEndpointType<span style="color: #666666">.</span>STREAMING,
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>    gpu_type<span style="color: #666666">=</span><span style="color: #BA2121">&quot;nvidia-ampere-a10&quot;</span>,
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>    public_inference<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>)
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+</code></pre></div>
+</div>
+</div>
+</div>
+
+  </div>
+
+</div>
 
 
 <div class="doc doc-object doc-function">
