@@ -13,16 +13,10 @@ class FakeAuthenticationRepository(AuthenticationRepository):
     def is_allowed_team(team: str) -> bool:
         return True
 
-    def get_auth_from_user_id(self, user_id: str) -> Optional[User]:
-        team_id = self.user_team_override.get(user_id, user_id)
-        return User(user_id=user_id, team_id=team_id, is_privileged_user=True)
+    def get_auth_from_username(self, username: str) -> Optional[User]:
+        team_id = self.user_team_override.get(username, username)
+        return User(user_id=username, team_id=team_id, is_privileged_user=True)
 
-    async def get_auth_from_user_id_async(self, user_id: str) -> Optional[User]:
-        team_id = self.user_team_override.get(user_id, user_id)
-        return User(user_id=user_id, team_id=team_id, is_privileged_user=True)
-
-    def get_auth_from_api_key(self, api_key: str) -> Optional[User]:
-        return User(user_id=api_key, team_id=api_key, is_privileged_user=True)
-
-    async def get_auth_from_api_key_async(self, api_key: str) -> Optional[User]:
-        return User(user_id=api_key, team_id=api_key, is_privileged_user=True)
+    async def get_auth_from_username_async(self, username: str) -> Optional[User]:
+        team_id = self.user_team_override.get(username, username)
+        return User(user_id=username, team_id=team_id, is_privileged_user=True)
