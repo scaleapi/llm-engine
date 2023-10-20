@@ -134,7 +134,7 @@ data:
                 timeoutSeconds: 5
               resources:
                 requests:
-                  cpu: 0.1
+                  cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: "100M"
                   ephemeral-storage: "100M"
                 limits:
@@ -180,7 +180,7 @@ data:
                 timeoutSeconds: 5
               resources:
                 requests:
-                  cpu: 0.1
+                  cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: "100M"
                   ephemeral-storage: "100M"
                 limits:
