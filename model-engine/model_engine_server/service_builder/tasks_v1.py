@@ -4,21 +4,17 @@ from typing import Any, Dict
 
 import aioredis
 from celery.signals import worker_process_init
+from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointRequest,
     BuildEndpointResponse,
 )
-from model_engine_server.common.env_vars import CIRCLECI, SKIP_AUTH
+from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
 from model_engine_server.db.base import SessionAsyncNullPool
-from model_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
-from model_engine_server.infra.gateways import (
-    DatadogMonitoringMetricsGateway,
-    FakeMonitoringMetricsGateway,
-    S3FilesystemGateway,
-)
+from model_engine_server.infra.gateways import S3FilesystemGateway
 from model_engine_server.infra.gateways.resources.fake_sqs_endpoint_resource_delegate import (
     FakeSQSEndpointResourceDelegate,
 )
@@ -61,14 +57,8 @@ def get_live_endpoint_builder_service(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
         )
     notification_gateway = FakeNotificationGateway()
-    monitoring_metrics_gateway: MonitoringMetricsGateway
-    if SKIP_AUTH:
-        monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
-    else:
-        monitoring_metrics_gateway = DatadogMonitoringMetricsGateway()
-
+    monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     docker_repository = ECRDockerRepository() if not CIRCLECI else FakeDockerRepository()
-
     service = LiveEndpointBuilderService(
         docker_repository=docker_repository,
         resource_gateway=LiveEndpointResourceGateway(
