@@ -90,6 +90,7 @@ _VALID_FRAMEWORK_IMAGE_TAGS = {
         "0.8",
     ],
     LLMInferenceFramework.VLLM: [
+        "0.2.1.post1",
         "0.2.1",
         "0.2.0",
         "0.1.7-awq",
