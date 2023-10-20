@@ -48,6 +48,7 @@ from model_engine_server.domain.exceptions import (
     EndpointResourceInvalidRequestException,
     EndpointUnsupportedInferenceTypeException,
     ExistingEndpointOperationInProgressException,
+    InvalidInferenceFrameworkImageTagException,
     InvalidRequestException,
     LLMFineTuningMethodNotImplementedException,
     LLMFineTuningQuotaReached,
@@ -149,6 +150,11 @@ async def create_model_endpoint(
         raise HTTPException(
             status_code=400,
             detail=str(exc),
+        ) from exc
+    except InvalidInferenceFrameworkImageTagException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="The specified inference framework image tag doesn't exist for the specified inference framework.",
         ) from exc
     except ObjectNotApprovedException as exc:
         raise HTTPException(
