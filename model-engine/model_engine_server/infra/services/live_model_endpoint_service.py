@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from datadog import statsd
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.settings import generate_deployment_name
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     CallbackAuth,
     CpuSpecificationType,
@@ -38,7 +38,7 @@ from model_engine_server.infra.repositories.model_endpoint_record_repository imp
     ModelEndpointRecordRepository,
 )
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 STATSD_CACHE_HIT_NAME = "launch.get_infra_state.cache_hit"
 STATSD_CACHE_MISS_NAME = "launch.get_infra_state.cache_miss"

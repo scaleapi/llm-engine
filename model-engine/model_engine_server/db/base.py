@@ -6,14 +6,14 @@ from typing import Iterator, Optional
 import sqlalchemy
 from model_engine_server.core.aws.secrets import get_key_file
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import async_scoped_session, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 def get_key_file_name(environment: str) -> str:

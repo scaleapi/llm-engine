@@ -16,7 +16,7 @@ from model_engine_server.core.auth.fake_authentication_repository import (
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
-    filename_wo_ext,
+    logger_name,
     make_logger,
 )
 from model_engine_server.db.base import SessionAsync, SessionReadOnlyAsync
@@ -101,7 +101,7 @@ from model_engine_server.infra.services.live_llm_model_endpoint_service import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 AUTH = HTTPBasic(auto_error=False)
 

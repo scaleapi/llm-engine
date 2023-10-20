@@ -13,7 +13,7 @@ from model_engine_server.common.dtos.llms import (
     ListFineTunesResponse,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import BatchJobStatus
 from model_engine_server.domain.exceptions import (
     InvalidRequestException,
@@ -34,7 +34,7 @@ MAX_SUFFIX_LENGTH = 28
 # k8s labels need to be <= 62 characters, timestamp takes 13 characters, 2 characters for periods,
 # model name is currently 17 long, but want to add a bit of buffer.
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 def is_model_name_suffix_valid(model_name: str):
