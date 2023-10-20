@@ -63,6 +63,10 @@ autoscaling:
   prewarming:
     enabled: false
 
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
 resources:
   requests:
     cpu: 2
