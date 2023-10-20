@@ -85,7 +85,10 @@ endpoint_name: ${ENDPOINT_NAME}
 {{- define "modelEngine.jobTemplateLabels" -}}
 {{- include "modelEngine.baseTemplateLabels" . | printf "%s\n" -}}
 launch_job_id: ${JOB_ID}
+tags.datadoghq.com/request_id: ${REQUEST_ID}
 tags.datadoghq.com/service: ${JOB_ID}
+tags.datadoghq.com/user_id: ${OWNER}
+tags.datadoghq.com/team: ${TEAM}
 {{- end }}
 
 {{- define "modelEngine.serviceTemplateAsyncAnnotations" -}}

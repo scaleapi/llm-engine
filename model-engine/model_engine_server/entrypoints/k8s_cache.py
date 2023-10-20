@@ -13,7 +13,7 @@ from kubernetes.config.config_exception import ConfigException
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.env_vars import CIRCLECI, SKIP_AUTH
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.db.base import SessionAsyncNullPool
 from model_engine_server.domain.gateways import MonitoringMetricsGateway
 from model_engine_server.domain.repositories import DockerRepository
@@ -55,7 +55,7 @@ from model_engine_server.infra.services.model_endpoint_cache_service import (
     ModelEndpointCacheWriteService,
 )
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 # This is the entrypoint to the k8s cacher
 
 try:
