@@ -19,7 +19,7 @@ from model_engine_server.common.env_vars import LOCAL
 from model_engine_server.common.io import open_wrapper
 from model_engine_server.common.serialization_utils import bool_to_str
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.notification_gateway import NotificationApp, NotificationGateway
 from model_engine_server.core.utils.env import environment
 from model_engine_server.domain.entities import (
@@ -64,9 +64,9 @@ from model_engine_server.infra.repositories.model_endpoint_record_repository imp
 
 if LOCAL:
     with environment(KUBERNETES_SERVICE_HOST=None):
-        logger = make_logger("model_engine_server.service_builder")
+        logger = make_logger(logger_name())
 else:
-    logger = make_logger("model_engine_server.service_builder")
+    logger = make_logger(logger_name())
 
 __all__: Sequence[str] = (
     "INITIAL_K8S_CACHE_TTL_SECONDS",

@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import ModelEndpoint
 from model_engine_server.domain.services import LLMModelEndpointService
 from model_engine_server.infra.repositories.model_endpoint_record_repository import (
@@ -9,7 +9,7 @@ from model_engine_server.infra.repositories.model_endpoint_record_repository imp
 )
 from model_engine_server.infra.services import LiveModelEndpointService
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 class LiveLLMModelEndpointService(LLMModelEndpointService):

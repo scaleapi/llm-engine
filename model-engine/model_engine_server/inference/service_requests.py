@@ -13,9 +13,9 @@ from model_engine_server.common.errors import UpstreamHTTPSvcError
 from model_engine_server.common.io import open_wrapper
 from model_engine_server.common.service_requests import make_sync_request_with_retries
 from model_engine_server.core.celery import TaskVisibility, celery_app
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 # TODO now that we're on SQS this won't work, since it connects to redis
 s3_bucket: str = os.environ.get("CELERY_S3_BUCKET")  # type: ignore

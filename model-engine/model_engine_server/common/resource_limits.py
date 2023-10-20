@@ -1,6 +1,6 @@
 from typing import Optional, Union, cast
 
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     CpuSpecificationType,
     GpuType,
@@ -48,7 +48,7 @@ FORWARDER_MEMORY_USAGE = "2Gi"
 FORWARDER_STORAGE_USAGE = "1G"
 FORWARDER_WORKER_COUNT = 2
 
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 
 def validate_resource_requests(

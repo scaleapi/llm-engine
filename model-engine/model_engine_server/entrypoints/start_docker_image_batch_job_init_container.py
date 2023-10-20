@@ -4,10 +4,10 @@ import shutil
 import model_engine_server.core.aws.storage_client as storage_client
 from model_engine_server.common.serialization_utils import b64_to_str
 from model_engine_server.core.aws.storage_client import s3_fileobj_exists
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.utils.url import parse_attachment_url
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 def main(input_local: str, local_file: str, remote_file: str, file_contents_b64encoded: str):

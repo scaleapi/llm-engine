@@ -4,12 +4,12 @@ import hashlib
 import time
 from contextlib import AbstractContextManager
 
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from sqlalchemy import BIGINT, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.session import Session
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 BLOCKING_LOCK_TIMEOUT_SECONDS = 120
 BLOCKING_LOCK_TIMEOUT_POLL_FREQ_SECONDS = 0.5
