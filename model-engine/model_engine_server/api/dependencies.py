@@ -1,7 +1,7 @@
 import asyncio
 import os
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Iterator, Optional
 
 import aioredis
 from fastapi import Depends, HTTPException, status
@@ -324,7 +324,7 @@ def get_default_auth_repository() -> AuthenticationRepository:
     return auth_repo
 
 
-def get_auth_repository():
+def get_auth_repository() -> Iterator[AuthenticationRepository]:
     """
     Dependency for an AuthenticationRepository. This implementation returns a fake repository.
     """
