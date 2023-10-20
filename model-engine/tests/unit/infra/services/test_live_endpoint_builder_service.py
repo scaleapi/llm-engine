@@ -213,7 +213,7 @@ async def test_build_endpoint_build_result_failed_yields_docker_build_failed_exc
     repo.add_model_endpoint_record(build_endpoint_request_sync_pytorch.model_endpoint_record)
     endpoint_builder_service_empty_docker_not_built.docker_repository.__setattr__(
         "build_image",
-        Mock(return_value=BuildImageResponse(status=False, logs="")),
+        Mock(return_value=BuildImageResponse(status=False, logs="", job_name="")),
     )
     with pytest.raises(DockerBuildFailedException):
         await endpoint_builder_service_empty_docker_not_built.build_endpoint(
