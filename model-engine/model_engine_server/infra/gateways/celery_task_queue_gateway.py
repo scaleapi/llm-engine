@@ -11,7 +11,9 @@ from model_engine_server.core.config import infra_config
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 
 celery_redis = celery_app(
-    None, s3_bucket=infra_config().s3_bucket, broker_type=str(BrokerType.REDIS.value)
+    None,
+    s3_bucket=infra_config().s3_bucket,
+    broker_type=str(BrokerType.REDIS.value),
 )
 celery_redis_24h = celery_app(
     None,
