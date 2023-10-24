@@ -152,14 +152,14 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
 # We need a dict where if we need to override we can
 # NOTE: These are in *descending* order of priority. e.g. if you see 'mammoth-coder'
 # you'll use that override and not listen to the 'llama-2' override
-_VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, int]] = {
+_VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
     "mammoth-coder": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
     # Based on config here: https://huggingface.co/TIGER-Lab/MAmmoTH-Coder-7B/blob/main/config.json#L12
     # Can also see 13B, 34B there too
     "code-llama": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
     # Based on config here: https://huggingface.co/codellama/CodeLlama-7b-hf/blob/main/config.json#L12
     # Can also see 13B, 34B there too
-    "llama-2": {"max_model_len": 4096, "max_num_batched_tokens": 4096},
+    "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
     "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
 }
 
@@ -534,7 +534,7 @@ class CreateLLMModelEndpointV1UseCase:
     ):
         command = []
 
-        max_num_batched_tokens: int = 2560  # vLLM's default
+        max_num_batched_tokens: Optional[int] = 2560  # vLLM's default
         max_model_len: Optional[int] = None
 
         for key, value in _VLLM_MODEL_LENGTH_OVERRIDES.items():
