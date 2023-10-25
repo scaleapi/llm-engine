@@ -195,15 +195,21 @@ def start_build_job(
             os.makedirs("/tmp")
         pip_conf_file = "/tmp/.codeartifact-pip-conf"
         aws_profile = infra_config().profile_ml_worker
-        subprocess.check_output(
-            [
-                f"AWS_PROFILE={aws_profile} python scripts_py3/scale_scripts/exe/maybe_refresh_codeartifact.py --export {pip_conf_file}"
-            ],
-            cwd=str(MODELS_ROOT),
-            shell=True,
-        )
-        with open(pip_conf_file) as f_conf:
-            pip_conf_base64 = b64encode(f_conf.read().encode("utf-8")).decode("utf-8")
+        try:
+            # nosemgrep
+            subprocess.check_output(
+                [
+                    f"AWS_PROFILE={aws_profile} python scripts_py3/scale_scripts/exe/maybe_refresh_codeartifact.py --export {pip_conf_file}"
+                ],
+                cwd=str(MODELS_ROOT),
+                shell=True,
+            )
+            with open(pip_conf_file) as f_conf:
+                pip_conf_data = f_conf.read()
+        except subprocess.CalledProcessError:
+            print("WARNING: Failed to refresh CodeArtifact token secret, using empty secret")
+            pip_conf_data = ""
+        pip_conf_base64 = b64encode(pip_conf_data.encode("utf-8")).decode("utf-8")
         data = {"data": {"codeartifact_pip_conf": pip_conf_base64}}
         subprocess.check_output(
             ["kubectl", "patch", "secret", "codeartifact-pip-conf", f"-p={json.dumps(data)}"]
