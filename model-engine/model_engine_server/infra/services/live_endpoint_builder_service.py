@@ -8,6 +8,7 @@ from logging import LoggerAdapter
 from typing import Dict, List, Optional, Sequence, Set
 
 from datadog import statsd
+from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
 from model_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointRequest,
@@ -496,7 +497,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         logger.info(f"inference_folder: {inference_folder}")
         logger.info(f"dockerfile: {inference_folder}/{dockerfile}")
         return BuildImageRequest(
-            repo="launch/inference",
+            repo=hmi_config.user_inference_repository,
             image_tag=resulting_image_tag[:MAX_IMAGE_TAG_LEN],
             aws_profile=ECR_AWS_PROFILE,  # type: ignore
             base_path=base_path,
@@ -594,6 +595,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
         bundle_id = model_bundle.id
         service_image_str = "-".join([base_image_params.image_tag, GIT_TAG, bundle_id])
+        # nosemgrep
         service_image_hash = hashlib.md5(str(service_image_str).encode("utf-8")).hexdigest()
         service_image_tag = f"inject-bundle-image-{service_image_hash}"
         ecr_repo = base_image_params.repo
@@ -801,6 +803,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
     @staticmethod
     def _get_requirements_hash(requirements: List[str]) -> str:
         """Identifying hash for endpoint's Python requirements."""
+        # nosemgrep
         return hashlib.md5("\n".join(sorted(requirements)).encode("utf-8")).hexdigest()[:6]
 
     @staticmethod
