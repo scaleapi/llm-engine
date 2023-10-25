@@ -52,7 +52,7 @@ cache_redis_url: redis://127.0.0.1:6379/15
 
 s3_file_llm_fine_tune_repository: "s3://model-engine-integration-tests/fine_tune_repository/circleci"
 
-datadog_trace_enabled: false
+dd_trace_enabled: false
 istio_enabled: true
 tgi_repository: "text-generation-inference"
 vllm_repository: "vllm"

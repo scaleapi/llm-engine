@@ -128,8 +128,8 @@ data:
                 - --num-workers
                 - "${PER_WORKER}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -399,8 +399,8 @@ data:
                 - --num-workers
                 - "${PER_WORKER}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -618,8 +618,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -886,8 +886,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1112,8 +1112,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1349,8 +1349,8 @@ data:
                 - --num-workers
                 - "${PER_WORKER}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1627,8 +1627,8 @@ data:
                 - --num-workers
                 - "${PER_WORKER}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1853,8 +1853,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -2128,8 +2128,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -2361,8 +2361,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -2810,7 +2810,7 @@ data:
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
-                - name: DATADOG_TRACE_ENABLED
+                - name: DD_TRACE_ENABLED
                   value: "false"
                 - name: DD_ENV
                   value: circleci
@@ -2935,7 +2935,7 @@ data:
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
-                - name: DATADOG_TRACE_ENABLED
+                - name: DD_TRACE_ENABLED
                   value: "false"
                 - name: DD_ENV
                   value: circleci
@@ -3081,7 +3081,7 @@ data:
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
-                - name: DATADOG_TRACE_ENABLED
+                - name: DD_TRACE_ENABLED
                   value: "false"
                 - name: DD_ENV
                   value: circleci
