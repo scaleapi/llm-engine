@@ -83,7 +83,7 @@ MAX_IMAGE_TAG_LEN = 128
 
 RESTRICTED_ENV_VARS_KEYS = {
     "BASE": [
-        "DATADOG_TRACE_ENABLED",
+        "DD_TRACE_ENABLED",
         "DD_AGENT_HOST",
         "DD_ENV",
         "DD_SERVICE",
