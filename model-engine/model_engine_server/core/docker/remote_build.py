@@ -206,7 +206,7 @@ def start_build_job(
             )
             with open(pip_conf_file) as f_conf:
                 pip_conf_data = f_conf.read()
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, FileNotFoundError):
             print("WARNING: Failed to refresh CodeArtifact token secret, using empty secret")
             pip_conf_data = ""
         pip_conf_base64 = b64encode(pip_conf_data.encode("utf-8")).decode("utf-8")
