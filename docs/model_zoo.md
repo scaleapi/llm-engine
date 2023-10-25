@@ -21,8 +21,6 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `mistral-7b`         | ✅                       |   ✅                         | vllm | 
 | `mistral-7b-instruct`         | ✅                       |    ✅                        | vllm |
 | `code-llama-7b`         | ✅                       |                            | text-generation-inference, vllm |
-| `code-llama-13b`         | ✅                       |                            | text-generation-inference, vllm |
-| `code-llama-34b`         | ✅                       |                            | text-generation-inference, vllm |
 
 ## Usage
 
