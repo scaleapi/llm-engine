@@ -16,9 +16,9 @@ print(f"Integration tests using gateway {BASE_PATH=}")
 DEFAULT_NETWORK_TIMEOUT_SEC = 10
 
 # Use the scale-launch-integration-tests id
-USER_ID_0 = "62bc820451dbea002b1c5421"
+USER_ID_0 = os.getenv("TEST_USER_ID")  # type: ignore
 
-DEFAULT_USERS: Sequence[str] = (USER_ID_0,)
+DEFAULT_USERS: Sequence[str] = (USER_ID_0,)  # type: ignore
 
 
 def echo_load_predict_fn(model):
