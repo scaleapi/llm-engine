@@ -32,6 +32,13 @@ serviceAccount:
     "helm.sh/hook-weight": "-2"
   namespaces: []
 
+imageBuilderServiceAccount:
+  create: true
+  annotations:
+    # eks.amazonaws.com/role-arn [required] is the ARN of the IAM role that the image builder service account will assume. Needs to have ecr permissions
+    eks.amazonaws.com/role-arn: arn:aws:iam::000000000000:role/k8s-main-llm-engine-image-builder
+  # Reads from serviceAccount.namespaces to determine which namespaces to create the image builder service account in
+
 # service specifies the service configuration for the main LLM Engine server. Users should setup their own ingress controller to expose the service.
 service:
   type: ClusterIP
