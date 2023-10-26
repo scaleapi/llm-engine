@@ -16,7 +16,7 @@ print(f"Integration tests using gateway {BASE_PATH=}")
 DEFAULT_NETWORK_TIMEOUT_SEC = 10
 
 # Use the scale-launch-integration-tests id
-USER_ID_0 = os.getenv("TEST_USER_ID", "fakeuser")  # type: ignore
+USER_ID_0 = os.getenv("TEST_USER_ID", "fakeuser")
 
 DEFAULT_USERS: Sequence[str] = (USER_ID_0,)  # type: ignore
 
