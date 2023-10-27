@@ -69,11 +69,11 @@ def fake_verify_authentication(
     Verifies the authentication headers and returns a (user_id, team_id) auth tuple. Otherwise,
     raises a 401.
     """
-    auth_user_id = credentials.username if credentials is not None else None
-    if not auth_user_id:
-        raise HTTPException(status_code=401, detail="No user id was passed in")
+    auth_username = credentials.username if credentials is not None else None
+    if not auth_username:
+        raise HTTPException(status_code=401, detail="No authentication was passed in")
 
-    auth = auth_repo.get_auth_from_user_id(user_id=auth_user_id)
+    auth = auth_repo.get_auth_from_username(username=auth_username)
     if not auth:
         raise HTTPException(status_code=401, detail="Could not authenticate user")
 

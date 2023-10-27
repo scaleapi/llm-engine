@@ -668,7 +668,7 @@ class FakeDockerRepository(DockerRepository):
     def build_image(self, image_params: BuildImageRequest) -> BuildImageResponse:
         if self.raises_error:
             raise Exception("I hope you're handling this!")
-        return BuildImageResponse(status=True, logs="")
+        return BuildImageResponse(status=True, logs="", job_name="test-job-name")
 
 
 class FakeModelEndpointCacheRepository(ModelEndpointCacheRepository):
