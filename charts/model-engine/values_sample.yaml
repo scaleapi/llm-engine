@@ -63,6 +63,10 @@ autoscaling:
   prewarming:
     enabled: false
 
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
 # resources specify the k8s resources for LLM Engine server deployments (e.g gateway, cache, and builder deployments)
 resources:
   requests:
@@ -114,8 +118,8 @@ config:
       cache_redis_url: redis://llm-engine-prod-cache.use1.cache.amazonaws.com:6379/15
       # s3_file_llm_fine_tuning_job_repository [required] is the S3 URI for the S3 bucket/key that you wish to save fine-tuned assests
       s3_file_llm_fine_tuning_job_repository: "s3://llm-engine/llm-ft-job-repository"
-      # datadog_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
-      datadog_trace_enabled: false
+      # dd_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
+      dd_trace_enabled: false
 
       # Asynchronous endpoints configs (coming soon)
       sqs_profile: default

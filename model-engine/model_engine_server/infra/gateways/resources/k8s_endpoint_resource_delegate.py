@@ -60,7 +60,7 @@ HTTP_PORT = 5000
 # and where the user actually owns the files
 BASE_PATH_IN_ENDPOINT = "/app"
 
-DATADOG_ENV_VAR = {"DATADOG_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
+DATADOG_ENV_VAR = {"DD_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
 
 _lazy_load_kubernetes_clients = True
 _kubernetes_apps_api = None
@@ -237,7 +237,7 @@ def add_datadog_env_to_main_container(deployment_template: Dict[str, Any]) -> No
     user_container_envs.extend(
         [
             {
-                "name": "DATADOG_TRACE_ENABLED",
+                "name": "DD_TRACE_ENABLED",
                 "value": "false" if CIRCLECI else "true",
             },
             {

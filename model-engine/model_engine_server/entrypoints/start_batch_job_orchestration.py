@@ -4,16 +4,14 @@ import os
 from datetime import timedelta
 
 import aioredis
+from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
-from model_engine_server.common.env_vars import CIRCLECI, SKIP_AUTH
+from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.db.base import SessionAsyncNullPool
 from model_engine_server.domain.entities import BatchJobSerializationFormat
-from model_engine_server.domain.gateways import MonitoringMetricsGateway
 from model_engine_server.infra.gateways import (
     CeleryTaskQueueGateway,
-    DatadogMonitoringMetricsGateway,
-    FakeMonitoringMetricsGateway,
     LiveAsyncModelEndpointInferenceGateway,
     LiveBatchJobProgressGateway,
     LiveModelEndpointInfraGateway,
@@ -58,11 +56,8 @@ async def run_batch_job(
     redis = aioredis.Redis(connection_pool=pool)
     redis_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
-    monitoring_metrics_gateway: MonitoringMetricsGateway
-    if SKIP_AUTH:
-        monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
-    else:
-        monitoring_metrics_gateway = DatadogMonitoringMetricsGateway()
+
+    monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     model_endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway, session=session, read_only=False
     )
