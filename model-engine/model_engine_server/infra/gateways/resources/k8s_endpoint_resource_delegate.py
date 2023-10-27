@@ -238,9 +238,7 @@ def add_datadog_env_to_main_container(deployment_template: Dict[str, Any]) -> No
         [
             {
                 "name": "DD_TRACE_ENABLED",
-                "value": "false"
-                if (CIRCLECI or hmi_config.dd_trace_enabled == "false")
-                else "true",
+                "value": "false" if CIRCLECI else "true",
             },
             {
                 "name": "DD_SERVICE",
