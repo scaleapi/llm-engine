@@ -8,7 +8,7 @@ from aiobotocore.client import AioBaseClient
 from model_engine_server.common.config import hmi_config
 from model_engine_server.core.aws.roles import session
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import make_logger, logger_name
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
     SQSEndpointResourceDelegate,
