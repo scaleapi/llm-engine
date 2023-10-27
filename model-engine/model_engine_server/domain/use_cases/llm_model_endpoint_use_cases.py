@@ -278,8 +278,10 @@ class CreateLLMModelEndpointV1UseCase:
     ) -> ModelBundle:
         if source == LLMSource.HUGGING_FACE:
             # validate the image tag / framework pair
-            if framework_image_tag not in _VALID_FRAMEWORK_IMAGE_TAGS[framework]:  # type: ignore
-                raise InvalidInferenceFrameworkImageTagException
+            if framework != LLMInferenceFramework.DEEPSPEED and framework_image_tag not in _VALID_FRAMEWORK_IMAGE_TAGS[framework]:  # type: ignore
+                raise InvalidInferenceFrameworkImageTagException(
+                    f"Valid image tags for framework {framework} are {_VALID_FRAMEWORK_IMAGE_TAGS[framework]}"
+                )
 
             if framework == LLMInferenceFramework.DEEPSPEED:
                 bundle_id = await self.create_deepspeed_bundle(
