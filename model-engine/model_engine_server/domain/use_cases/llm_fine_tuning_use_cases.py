@@ -147,33 +147,33 @@ class CreateFineTuneV1UseCase:
         fine_tuned_model = ensure_model_name_is_valid_k8s_label(fine_tuned_model)
 
         if request.training_file.startswith("file-"):
-            training_file = await self.file_storage_gateway.get_url_from_id(
+            training_file_url = await self.file_storage_gateway.get_url_from_id(
                 user.team_id, request.training_file
             )
-            if training_file is None:
+            if training_file_url is None:
                 raise ObjectNotFoundException("Training file does not exist")
         else:
-            training_file = request.training_file
+            training_file_url = request.training_file
 
         if request.validation_file is not None and request.validation_file.startswith("file-"):
-            validation_file = await self.file_storage_gateway.get_url_from_id(
+            validation_file_url = await self.file_storage_gateway.get_url_from_id(
                 user.team_id, request.validation_file
             )
-            if validation_file is None:
+            if validation_file_url is None:
                 raise ObjectNotFoundException("Validation file does not exist")
         else:
-            validation_file = request.validation_file
+            validation_file_url = request.validation_file
 
-        check_file_is_valid(training_file, "training")
-        check_file_is_valid(validation_file, "validation")
+        check_file_is_valid(training_file_url, "training")
+        check_file_is_valid(validation_file_url, "validation")
 
         await self.llm_fine_tune_events_repository.initialize_events(user.team_id, fine_tuned_model)
         fine_tune_id = await self.llm_fine_tuning_service.create_fine_tune(
             created_by=user.user_id,
             owner=user.team_id,
             model=request.model,
-            training_file=training_file,
-            validation_file=validation_file,
+            training_file=request.training_file,  # for Files API, pass file ID rather than signed URL since the latter expires; fine-tuning script will get file content from Files API
+            validation_file=request.validation_file,
             fine_tuning_method=DEFAULT_FINE_TUNING_METHOD,
             hyperparameters=request.hyperparameters,
             fine_tuned_model=fine_tuned_model,

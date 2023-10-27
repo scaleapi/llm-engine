@@ -47,4 +47,6 @@ class ECRDockerRepository(DockerRepository):
             folders_to_include=folders_to_include,
             build_args=build_args,
         )
-        return BuildImageResponse(status=build_result.status, logs=build_result.logs)
+        return BuildImageResponse(
+            status=build_result.status, logs=build_result.logs, job_name=build_result.job_name
+        )
