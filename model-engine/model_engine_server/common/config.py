@@ -53,7 +53,7 @@ class HostedModelInferenceServiceConfig:
     s3_file_llm_fine_tune_repository: str
     hf_user_fine_tuned_weights_prefix: str
     istio_enabled: bool
-    datadog_trace_enabled: bool
+    dd_trace_enabled: bool
     tgi_repository: str
     vllm_repository: str
     lightllm_repository: str

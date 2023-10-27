@@ -1,4 +1,4 @@
-datadog_trace_enabled: true
+dd_trace_enabled: true
 spellbook:
   enabled: false
 redis:

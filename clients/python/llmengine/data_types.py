@@ -37,8 +37,6 @@ class GpuType(str, Enum):
 
 
 class ModelEndpointType(str, Enum):
-    ASYNC = "async"
-    SYNC = "sync"
     STREAMING = "streaming"
 
 
@@ -135,7 +133,7 @@ class CreateLLMEndpointRequest(BaseModel):
     # LLM specific fields
     model_name: str
     source: LLMSource = LLMSource.HUGGING_FACE
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM
     inference_framework_image_tag: str
     num_shards: int = 1
     """

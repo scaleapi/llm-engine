@@ -18,6 +18,7 @@
 ::: llmengine.Model
     selection:
         members:
+            - create
             - get
             - list
             - delete
