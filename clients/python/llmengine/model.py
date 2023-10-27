@@ -36,18 +36,18 @@ class Model(APIEngine):
         model: str,
         inference_framework_image_tag: str,
         source: LLMSource = LLMSource.HUGGING_FACE,
-        inference_framework: LLMInferenceFramework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
-        num_shards: int = 4,
+        inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM,
+        num_shards: int = 1,
         quantize: Optional[Quantization] = None,
         checkpoint_path: Optional[str] = None,
         # General endpoint fields
         cpus: int = 8,
-        memory: str = "40Gi",
-        storage: str = "96Gi",
+        memory: str = "24Gi",
+        storage: str = "40Gi",
         gpus: int = 1,
         min_workers: int = 0,
         max_workers: int = 1,
-        per_worker: int = 10,
+        per_worker: int = 2,
         endpoint_type: ModelEndpointType = ModelEndpointType.STREAMING,
         gpu_type: Optional[str] = "nvidia-ampere-a10",
         high_priority: Optional[bool] = False,
@@ -57,7 +57,8 @@ class Model(APIEngine):
         labels: Optional[Dict[str, str]] = None,
     ) -> CreateLLMEndpointResponse:
         """
-        Create an LLM model. Note: This feature is only available for self-hosted users.
+        Create an LLM model. Note: This API is only available for self-hosted users.
+
         Args:
             name (`str`):
                 Name of the endpoint
@@ -72,32 +73,34 @@ class Model(APIEngine):
                 Source of the LLM. Currently only HuggingFace is supported
 
             inference_framework (`LLMInferenceFramework`):
-                Inference framework for the LLM. Currently only DeepSpeed is supported
+                Inference framework for the LLM. Current supported frameworks are
+                LLMInferenceFramework.DEEPSPEED, LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+                LLMInferenceFramework.VLLM and LLMInferenceFramework.LIGHTLLM
 
             num_shards (`int`):
                 Number of shards for the LLM. When bigger than 1, LLM will be sharded
-                to multiple GPUs. Number of GPUs must be larger than num_shards.
-                Only affects behavior for text-generation-inference models
+                to multiple GPUs. Number of GPUs must be equal or larger than num_shards.
 
             quantize (`Optional[Quantization]`):
-                Quantization for the LLM. Only affects behavior for text-generation-inference models
+                Quantization method for the LLM. `text_generation_inference` supports `bitsandbytes` and `vllm` supports `awq`.
 
             checkpoint_path (`Optional[str]`):
-                Path to the checkpoint for the LLM. For now we only support loading a tar file from AWS S3.
-                Safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be slower).
-                Only affects behavior for text-generation-inference models
+                Remote path to the checkpoint for the LLM. LLM engine must have permission to access the given path.
+                Can be either a folder or a tar file. Folder is preferred since we don't need to untar and model loads faster.
+                For model weights, safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be longer).
 
             cpus (`int`):
                 Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
-                than or equal to 1
+                than or equal to 1. Recommendation is set it to 8 * GPU count.
 
             memory (`str`):
                 Amount of memory each worker should get, e.g. "4Gi", "512Mi", etc. This must
-                be a positive amount of memory
+                be a positive amount of memory. Recommendation is set it to 24Gi * GPU count.
 
             storage (`str`):
                 Amount of local ephemeral storage each worker should get, e.g. "4Gi",
-                "512Mi", etc. This must be a positive amount of storage
+                "512Mi", etc. This must be a positive amount of storage.
+                Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B models.
 
             gpus (`int`):
                 Number of gpus each worker should get, e.g. 0, 1, etc.
@@ -105,8 +108,10 @@ class Model(APIEngine):
             min_workers (`int`):
                 The minimum number of workers. Must be greater than or equal to 0. This
                 should be determined by computing the minimum throughput of your workload and
-                dividing it by the throughput of a single worker. This field must be at least ``1``
-                for synchronous endpoints
+                dividing it by the throughput of a single worker. When this number is 0,
+                max_workers must be 1, and the endpoint will autoscale between
+                0 and 1 pods. When this number is greater than 0, max_workers can be any number
+                greater or equal to min_workers.
 
             max_workers (`int`):
                 The maximum number of workers. Must be greater than or equal to 0,
@@ -116,25 +121,22 @@ class Model(APIEngine):
 
             per_worker (`int`):
                 The maximum number of concurrent requests that an individual worker can
-                service. Launch automatically scales the number of workers for the endpoint so that
+                service. LLM engine automatically scales the number of workers for the endpoint so that
                 each worker is processing ``per_worker`` requests, subject to the limits defined by
                 ``min_workers`` and ``max_workers``
-
                 - If the average number of concurrent requests per worker is lower than
                 ``per_worker``, then the number of workers will be reduced. - Otherwise,
                 if the average number of concurrent requests per worker is higher than
                 ``per_worker``, then the number of workers will be increased to meet the elevated
                 traffic.
-
                 Here is our recommendation for computing ``per_worker``:
-
                 1. Compute ``min_workers`` and ``max_workers`` per your minimum and maximum
                 throughput requirements. 2. Determine a value for the maximum number of
                 concurrent requests in the workload. Divide this number by ``max_workers``. Doing
                 this ensures that the number of workers will "climb" to ``max_workers``.
 
             endpoint_type (`ModelEndpointType`):
-                ``"sync"``, ``"async"`` or ``"streaming"``.
+                Currently only ``"streaming"`` endpoints are supported.
 
             gpu_type (`Optional[str]`):
                 If specifying a non-zero number of gpus, this controls the type of gpu
@@ -142,6 +144,8 @@ class Model(APIEngine):
 
                 - ``nvidia-tesla-t4``
                 - ``nvidia-ampere-a10``
+                - ``nvidia-ampere-a100``
+                - ``nvidia-ampere-a100e``
 
             high_priority (`Optional[bool]`):
                 Either ``True`` or ``False``. Enabling this will allow the created
@@ -151,7 +155,7 @@ class Model(APIEngine):
                 List of hooks to trigger after inference tasks are served
 
             default_callback_url (`Optional[str]`):
-                The default callback url to use for async endpoints.
+                The default callback url to use for sync completion requests.
                 This can be overridden in the task parameters for each individual task.
                 post_inference_hooks must contain "callback" for the callback to be triggered
 
@@ -159,11 +163,89 @@ class Model(APIEngine):
                 If ``True``, this endpoint will be available to all user IDs for
                 inference
 
-
             labels (`Optional[Dict[str, str]]`):
                 An optional dictionary of key/value pairs to associate with this endpoint
         Returns:
-            CreateLLMEndpointResponse: creation task ID of the created Model.
+            CreateLLMEndpointResponse: creation task ID of the created Model. Currently not used.
+
+        === "Create Llama 2 7B model in Python"
+            ```python
+            from llmengine import Model
+
+            response = Model.create(
+                name="llama-2-7b-test"
+                model="llama-2-7b",
+                inference_framework_image_tag="0.2.1.post1",
+                inference_framework=LLMInferenceFramework.VLLM,
+                num_shards=1,
+                checkpoint_path="s3://path/to/checkpoint",
+                cpus=8,
+                memory="24Gi",
+                storage="40Gi",
+                gpus=1,
+                min_workers=0,
+                max_workers=1,
+                per_worker=10,
+                endpoint_type=ModelEndpointType.STREAMING,
+                gpu_type="nvidia-ampere-a10",
+                public_inference=False,
+            )
+
+            print(response.json())
+            ```
+
+        === "Create Llama 2 13B model in Python"
+            ```python
+            from llmengine import Model
+
+            response = Model.create(
+                name="llama-2-13b-test"
+                model="llama-2-13b",
+                inference_framework_image_tag="0.2.1.post1",
+                inference_framework=LLMInferenceFramework.VLLM,
+                num_shards=2,
+                checkpoint_path="s3://path/to/checkpoint",
+                cpus=16,
+                memory="48Gi",
+                storage="80Gi",
+                gpus=2,
+                min_workers=0,
+                max_workers=1,
+                per_worker=10,
+                endpoint_type=ModelEndpointType.STREAMING,
+                gpu_type="nvidia-ampere-a10",
+                public_inference=False,
+            )
+
+            print(response.json())
+            ```
+
+        === "Create Llama 2 70B model with 8bit quantization in Python"
+            ```python
+            from llmengine import Model
+
+            response = Model.create(
+                name="llama-2-70b-test"
+                model="llama-2-70b",
+                inference_framework_image_tag="0.9.4",
+                inference_framework=LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+                num_shards=4,
+                quantize="bitsandbytes",
+                checkpoint_path="s3://path/to/checkpoint",
+                cpus=40,
+                memory="96Gi",
+                storage="200Gi",
+                gpus=4,
+                min_workers=0,
+                max_workers=1,
+                per_worker=10,
+                endpoint_type=ModelEndpointType.STREAMING,
+                gpu_type="nvidia-ampere-a10",
+                public_inference=False,
+            )
+
+            print(response.json())
+            ```
         """
         post_inference_hooks_strs = None
         if post_inference_hooks is not None:

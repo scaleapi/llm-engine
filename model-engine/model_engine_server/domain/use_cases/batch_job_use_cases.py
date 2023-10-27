@@ -17,7 +17,7 @@ from model_engine_server.common.dtos.batch_jobs import (
 )
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.authorization.live_authorization_module import (
     LiveAuthorizationModule,
 )
@@ -41,7 +41,7 @@ from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
     validate_labels,
 )
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 class CreateBatchJobV1UseCase:

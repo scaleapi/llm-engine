@@ -3,7 +3,7 @@ from typing import Any, Dict, List, TypedDict, cast
 
 from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.common.config import hmi_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     get_kubernetes_apps_client,
     load_k8s_yaml,
@@ -13,7 +13,7 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
     compute_image_hash,
 )
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 class CachedImages(TypedDict):
@@ -21,9 +21,6 @@ class CachedImages(TypedDict):
     a10: List[str]
     a100: List[str]
     t4: List[str]
-
-
-KUBERNETES_MAX_LENGTH = 64
 
 
 class ImageCacheGateway:

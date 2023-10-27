@@ -3,6 +3,7 @@ from typing import List
 
 import boto3
 from model_engine_server.common.config import get_model_cache_directory_name, hmi_config
+from model_engine_server.core.utils.url import parse_attachment_url
 from model_engine_server.domain.gateways import LLMArtifactGateway
 
 
@@ -16,6 +17,17 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         session = boto3.Session(profile_name=profile_name)
         resource = session.resource("s3")
         return resource
+
+    def list_files(self, path: str, **kwargs) -> List[str]:
+        s3 = self._get_s3_resource(kwargs)
+        parsed_remote = parse_attachment_url(path)
+        bucket = parsed_remote.bucket
+        key = parsed_remote.key
+
+        # Using resource's bucket object to get its objects with specific prefix
+        s3_bucket = s3.Bucket(bucket)
+        files = [obj.key for obj in s3_bucket.objects.filter(Prefix=key)]
+        return files
 
     def get_model_weights_urls(self, owner: str, model_name: str, **kwargs) -> List[str]:
         s3 = self._get_s3_resource(kwargs)

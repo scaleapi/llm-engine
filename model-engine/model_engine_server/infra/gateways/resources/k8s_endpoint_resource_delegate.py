@@ -24,7 +24,7 @@ from model_engine_server.common.env_vars import (
 )
 from model_engine_server.common.serialization_utils import b64_to_python_json, str_to_bool
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     ModelEndpointConfig,
     ModelEndpointDeploymentState,
@@ -52,7 +52,7 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
 from packaging import version
 from pydantic.utils import deep_update
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 HTTP_PORT = 5000
 
@@ -60,13 +60,14 @@ HTTP_PORT = 5000
 # and where the user actually owns the files
 BASE_PATH_IN_ENDPOINT = "/app"
 
-DATADOG_ENV_VAR = {"DATADOG_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
+DATADOG_ENV_VAR = {"DD_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
 
 _lazy_load_kubernetes_clients = True
 _kubernetes_apps_api = None
 _kubernetes_core_api = None
 _kubernetes_autoscaling_api = None
 _kubernetes_batch_api = None
+_kubernetes_policy_api = None
 _kubernetes_custom_objects_api = None
 _kubernetes_cluster_version = None
 
@@ -145,6 +146,16 @@ def get_kubernetes_batch_client():  # pragma: no cover
     if not _kubernetes_batch_api:
         _kubernetes_batch_api = kubernetes_asyncio.client.BatchV1Api()
     return _kubernetes_batch_api
+
+
+def get_kubernetes_policy_client():  # pragma: no cover
+    if _lazy_load_kubernetes_clients:
+        global _kubernetes_policy_api
+    else:
+        _kubernetes_policy_api = None
+    if not _kubernetes_policy_api:
+        _kubernetes_policy_api = kubernetes_asyncio.client.PolicyV1Api()
+    return _kubernetes_policy_api
 
 
 def get_kubernetes_custom_objects_client():  # pragma: no cover
@@ -226,7 +237,7 @@ def add_datadog_env_to_main_container(deployment_template: Dict[str, Any]) -> No
     user_container_envs.extend(
         [
             {
-                "name": "DATADOG_TRACE_ENABLED",
+                "name": "DD_TRACE_ENABLED",
                 "value": "false"
                 if (CIRCLECI or hmi_config.datadog_trace_enabled == "false")
                 else "true",
@@ -599,6 +610,37 @@ class K8SEndpointResourceDelegate:
                 )
             else:
                 logger.exception("Got an exception when trying to apply the VerticalPodAutoscaler")
+                raise
+
+    @staticmethod
+    async def _create_pdb(pdb: Dict[str, Any], name: str) -> None:
+        """
+        Lower-level function to create/patch a k8s PodDisruptionBudget (pdb)
+        Args:
+            pdb: PDB body (a nested Dict in the format specified by Kubernetes)
+            name: The name of the pdb on K8s
+
+        Returns:
+            Nothing; raises a k8s ApiException if failure
+
+        """
+        policy_api = get_kubernetes_policy_client()
+        try:
+            await policy_api.create_namespaced_pod_disruption_budget(
+                namespace=hmi_config.endpoint_namespace,
+                body=pdb,
+            )
+        except ApiException as exc:
+            if exc.status == 409:
+                logger.info(f"PodDisruptionBudget {name} already exists, replacing")
+
+                await policy_api.patch_namespaced_pod_disruption_budget(
+                    name=name,
+                    namespace=hmi_config.endpoint_namespace,
+                    body=pdb,
+                )
+            else:
+                logger.exception("Got an exception when trying to apply the PodDisruptionBudget")
                 raise
 
     @staticmethod
@@ -1038,6 +1080,27 @@ class K8SEndpointResourceDelegate:
         return True
 
     @staticmethod
+    async def _delete_pdb(endpoint_id: str) -> bool:
+        policy_client = get_kubernetes_policy_client()
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        try:
+            await policy_client.delete_namespaced_pod_disruption_budget(
+                namespace=hmi_config.endpoint_namespace,
+                name=k8s_resource_group_name,
+            )
+        except ApiException as e:
+            if e.status == 404:
+                logger.warning(
+                    f"Trying to delete nonexistent PodDisruptionBudget {k8s_resource_group_name}"
+                )
+            else:
+                logger.exception(
+                    f"Deletion of PodDisruptionBudget {k8s_resource_group_name} failed"
+                )
+                return False
+        return True
+
+    @staticmethod
     async def _delete_keda_scaled_object(endpoint_id: str) -> bool:
         custom_objects_client = get_kubernetes_custom_objects_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
@@ -1153,6 +1216,19 @@ class K8SEndpointResourceDelegate:
                 vpa=vpa_template,
                 name=k8s_resource_group_name,
             )
+
+        pdb_config_arguments = get_endpoint_resource_arguments_from_request(
+            k8s_resource_group_name=k8s_resource_group_name,
+            request=request,
+            sqs_queue_name=sqs_queue_name_str,
+            sqs_queue_url=sqs_queue_url_str,
+            endpoint_resource_name="pod-disruption-budget",
+        )
+        pdb_template = load_k8s_yaml("pod-disruption-budget.yaml", pdb_config_arguments)
+        await self._create_pdb(
+            pdb=pdb_template,
+            name=k8s_resource_group_name,
+        )
 
         if model_endpoint_record.endpoint_type in {
             ModelEndpointType.SYNC,
@@ -1563,6 +1639,7 @@ class K8SEndpointResourceDelegate:
             endpoint_id=endpoint_id, deployment_name=deployment_name
         )
         await self._delete_vpa(endpoint_id=endpoint_id)
+        await self._delete_pdb(endpoint_id=endpoint_id)
         return deployment_delete_succeeded and config_map_delete_succeeded
 
     async def _delete_resources_sync(self, endpoint_id: str, deployment_name: str) -> bool:
@@ -1584,6 +1661,7 @@ class K8SEndpointResourceDelegate:
             endpoint_id=endpoint_id
         )
         await self._delete_vpa(endpoint_id=endpoint_id)
+        await self._delete_pdb(endpoint_id=endpoint_id)
 
         destination_rule_delete_succeeded = await self._delete_destination_rule(
             endpoint_id=endpoint_id

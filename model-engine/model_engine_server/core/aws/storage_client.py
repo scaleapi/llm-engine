@@ -20,7 +20,7 @@ __all__: Sequence[str] = (
 
 
 def sync_storage_client(**kwargs) -> BaseClient:
-    return session(infra_config().profile_ml_worker).client("s3", **kwargs)
+    return session(infra_config().profile_ml_worker).client("s3", **kwargs)  # type: ignore
 
 
 def open(uri: str, mode: str = "rt", **kwargs) -> IO:  # pylint: disable=redefined-builtin

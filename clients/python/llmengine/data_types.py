@@ -24,6 +24,7 @@ class LLMSource(str, Enum):
 
 class Quantization(str, Enum):
     BITSANDBYTES = "bitsandbytes"
+    AWQ = "awq"
 
 
 class GpuType(str, Enum):
@@ -32,11 +33,10 @@ class GpuType(str, Enum):
     NVIDIA_TESLA_T4 = "nvidia-tesla-t4"
     NVIDIA_AMPERE_A10 = "nvidia-ampere-a10"
     NVIDIA_AMPERE_A100 = "nvidia-ampere-a100"
+    NVIDIA_AMPERE_A100E = "nvidia-ampere-a100e"
 
 
 class ModelEndpointType(str, Enum):
-    ASYNC = "async"
-    SYNC = "sync"
     STREAMING = "streaming"
 
 
@@ -133,7 +133,7 @@ class CreateLLMEndpointRequest(BaseModel):
     # LLM specific fields
     model_name: str
     source: LLMSource = LLMSource.HUGGING_FACE
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM
     inference_framework_image_tag: str
     num_shards: int = 1
     """
@@ -268,6 +268,10 @@ class CompletionSyncV1Request(BaseModel):
     temperature: float = Field(..., ge=0.0)
     stop_sequences: Optional[List[str]] = Field(default=None)
     return_token_log_probs: Optional[bool] = Field(default=False)
+    presence_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    top_k: Optional[int] = Field(default=None, ge=-1)
+    top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
 
 
 class TokenOutput(BaseModel):
@@ -329,6 +333,10 @@ class CompletionStreamV1Request(BaseModel):
     temperature: float = Field(..., ge=0.0)
     stop_sequences: Optional[List[str]] = Field(default=None)
     return_token_log_probs: Optional[bool] = Field(default=False)
+    presence_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    top_k: Optional[int] = Field(default=None, ge=-1)
+    top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
 
 
 class CompletionStreamOutput(BaseModel):
@@ -343,6 +351,24 @@ class CompletionStreamOutput(BaseModel):
 
     token: Optional[TokenOutput] = None
     """Detailed token information."""
+
+
+class StreamErrorContent(BaseModel):
+    error: str
+    """Error message."""
+    timestamp: str
+    """Timestamp of the error."""
+
+
+class StreamError(BaseModel):
+    """
+    Error object for a stream prompt completion task.
+    """
+
+    status_code: int
+    """The HTTP status code of the error."""
+    content: StreamErrorContent
+    """The error content."""
 
 
 class CompletionStreamResponse(BaseModel):
@@ -361,6 +387,9 @@ class CompletionStreamResponse(BaseModel):
 
     output: Optional[CompletionStreamOutput] = None
     """Completion output."""
+
+    error: Optional[StreamError] = None
+    """Error of the response (if any)."""
 
 
 class CreateFineTuneRequest(BaseModel):

@@ -128,8 +128,8 @@ data:
                 - --num-workers
                 - "${PER_WORKER}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -399,8 +399,8 @@ data:
                 - --num-workers
                 - "${PER_WORKER}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -610,7 +610,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -618,8 +618,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -878,7 +878,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -886,8 +886,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1102,7 +1102,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -1112,8 +1112,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1349,8 +1349,8 @@ data:
                 - --num-workers
                 - "${PER_WORKER}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1627,8 +1627,8 @@ data:
                 - --num-workers
                 - "${PER_WORKER}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1845,7 +1845,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -1853,8 +1853,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -2120,7 +2120,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -2128,8 +2128,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -2351,7 +2351,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -2361,8 +2361,8 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
               env:
-                - name: DATADOG_TRACE_ENABLED
-                  value: "${DATADOG_TRACE_ENABLED}"
+                - name: DD_TRACE_ENABLED
+                  value: "${DD_TRACE_ENABLED}"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -2728,6 +2728,31 @@ data:
               cpu: ${CPUS}
               memory: ${MEMORY}
             controlledResources: ["cpu", "memory"]
+  pod-disruption-budget.yaml: |-
+    apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        env: circleci
+        managed-by: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/version: ${GIT_TAG}
+        tags.datadoghq.com/service: ${ENDPOINT_NAME}
+        endpoint_id: ${ENDPOINT_ID}
+        endpoint_name: ${ENDPOINT_NAME}
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: ${RESOURCE_NAME}
   batch-job-orchestration-job.yaml: |-
     apiVersion: batch/v1
     kind: Job
@@ -2785,7 +2810,7 @@ data:
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
-                - name: DATADOG_TRACE_ENABLED
+                - name: DD_TRACE_ENABLED
                   value: "false"
                 - name: DD_ENV
                   value: circleci
@@ -2910,7 +2935,7 @@ data:
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
-                - name: DATADOG_TRACE_ENABLED
+                - name: DD_TRACE_ENABLED
                   value: "false"
                 - name: DD_ENV
                   value: circleci
@@ -3056,7 +3081,7 @@ data:
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
-                - name: DATADOG_TRACE_ENABLED
+                - name: DD_TRACE_ENABLED
                   value: "false"
                 - name: DD_ENV
                   value: circleci

@@ -77,7 +77,11 @@ data:
         spec:
           affinity:
             {{- include "modelEngine.serviceTemplateAffinity" . | nindent 12 }}
+          {{- if eq $mode "async" }}
+          terminationGracePeriodSeconds: 1800
+          {{- else }}
           terminationGracePeriodSeconds: 600
+          {{- end }}
           {{- if $service_template_service_account_name }}
           serviceAccount: {{ $service_template_service_account_name }}
           {{- else }}
@@ -113,7 +117,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -130,7 +134,7 @@ data:
                 timeoutSeconds: 5
               resources:
                 requests:
-                  cpu: 0.1
+                  cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: "100M"
                   ephemeral-storage: "100M"
                 limits:
@@ -157,7 +161,7 @@ data:
                 - --port
                 - "${FORWARDER_PORT}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${FORWARDER_WORKER_COUNT}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -176,7 +180,7 @@ data:
                 timeoutSeconds: 5
               resources:
                 requests:
-                  cpu: 0.1
+                  cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: "100M"
                   ephemeral-storage: "100M"
                 limits:
@@ -511,6 +515,19 @@ data:
               cpu: ${CPUS}
               memory: ${MEMORY}
             controlledResources: ["cpu", "memory"]
+  pod-disruption-budget.yaml: |-
+    apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: ${RESOURCE_NAME}
   batch-job-orchestration-job.yaml: |-
     apiVersion: batch/v1
     kind: Job

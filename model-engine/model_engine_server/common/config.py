@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Sequence
 
 import yaml
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 __all__: Sequence[str] = (
     "DEFAULT_SERVICE_CONFIG_PATH",
@@ -53,7 +53,7 @@ class HostedModelInferenceServiceConfig:
     s3_file_llm_fine_tune_repository: str
     hf_user_fine_tuned_weights_prefix: str
     istio_enabled: bool
-    datadog_trace_enabled: bool
+    dd_trace_enabled: bool
     tgi_repository: str
     vllm_repository: str
     lightllm_repository: str

@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0.beta13"
+__version__ = "0.0.0b19"
 
+import os
 from typing import Sequence
 
+import requests
 from llmengine.completion import Completion
 from llmengine.data_types import (
     CancelFineTuneResponse,
@@ -67,3 +69,30 @@ __all__: Sequence[str] = (
     "Model",
     "UploadFileResponse",
 )
+
+
+def check_version():
+    try:
+        current_version = __version__
+        response = requests.get("https://pypi.org/pypi/scale-llm-engine/json")
+        latest_version = response.json()["info"]["version"]
+
+        if current_version != latest_version:
+            print(
+                f"A newer version ({latest_version}) of 'scale-llm-engine' is available. Please upgrade!"
+            )
+            print("To upgrade, run: pip install --upgrade scale-llm-engine")
+            print(
+                "Don't want to see this message? Set the environment variable 'LLM_ENGINE_DISABLE_VERSION_CHECK' to 'true'."
+            )
+    except requests.RequestException:
+        # Handle exceptions related to the request (like timeouts, connection errors, etc.)
+        print(
+            "Failed to check for the most recent llm-engine package version. Please check your internet connection."
+        )
+    except Exception:
+        print("Something went wrong with checking for the most recent llm-engine package version.")
+
+
+if not os.environ.get("LLM_ENGINE_DISABLE_VERSION_CHECK"):
+    check_version()

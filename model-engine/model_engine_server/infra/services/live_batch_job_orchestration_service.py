@@ -16,7 +16,7 @@ from model_engine_server.common.dtos.tasks import (
     TaskStatus,
 )
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     BatchJobProgress,
     BatchJobRecord,
@@ -39,7 +39,7 @@ from model_engine_server.infra.services.batch_job_orchestration_service import (
     BatchJobOrchestrationService,
 )
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 
 @dataclass

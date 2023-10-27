@@ -85,7 +85,10 @@ endpoint_name: ${ENDPOINT_NAME}
 {{- define "modelEngine.jobTemplateLabels" -}}
 {{- include "modelEngine.baseTemplateLabels" . | printf "%s\n" -}}
 launch_job_id: ${JOB_ID}
+tags.datadoghq.com/request_id: ${REQUEST_ID}
 tags.datadoghq.com/service: ${JOB_ID}
+tags.datadoghq.com/user_id: ${OWNER}
+tags.datadoghq.com/team: ${TEAM}
 {{- end }}
 
 {{- define "modelEngine.serviceTemplateAsyncAnnotations" -}}
@@ -122,8 +125,8 @@ podAffinity:
 
 {{- define "modelEngine.baseServiceTemplateEnv" -}}
 env:
-  - name: DATADOG_TRACE_ENABLED
-    value: "${DATADOG_TRACE_ENABLED}"
+  - name: DD_TRACE_ENABLED
+    value: "${DD_TRACE_ENABLED}"
   - name: DD_REMOTE_CONFIGURATION_ENABLED
     value: "false"
   - name: DD_SERVICE
@@ -184,8 +187,8 @@ env:
 
 {{- define "modelEngine.baseForwarderTemplateEnv" -}}
 env:
-  - name: DATADOG_TRACE_ENABLED
-    value: "${DATADOG_TRACE_ENABLED}"
+  - name: DD_TRACE_ENABLED
+    value: "${DD_TRACE_ENABLED}"
   - name: DD_REMOTE_CONFIGURATION_ENABLED
     value: "false"
   - name: DD_SERVICE
@@ -232,8 +235,8 @@ env:
 
 {{- define "modelEngine.serviceEnvBase" }}
 env:
-  - name: DATADOG_TRACE_ENABLED
-    value: "{{ .Values.datadog_trace_enabled }}"
+  - name: DD_TRACE_ENABLED
+    value: "{{ .Values.dd_trace_enabled }}"
   - name: DD_REMOTE_CONFIGURATION_ENABLED
     value: "false"
   - name: DD_ENV

@@ -15,17 +15,10 @@ BASE_PATH = os.environ.get("BASE_PATH", _DEFAULT_BASE_PATH)
 print(f"Integration tests using gateway {BASE_PATH=}")
 DEFAULT_NETWORK_TIMEOUT_SEC = 10
 
-# Generate some fake 24-character user IDs.
-# We don't want different people to get user ID collisions but at the same time we want people to
-# consistently use the same user IDs so that they can clean up their extra endpoints.
-USER_PREFIX = os.getenv("SERVICE_IDENTIFIER", "test")[:8]
-USER_ID_0 = USER_PREFIX + "0" * (24 - len(USER_PREFIX))
-USER_ID_1 = USER_PREFIX + "1" * (24 - len(USER_PREFIX))
+# Use the scale-launch-integration-tests id
+USER_ID_0 = os.getenv("TEST_USER_ID", "fakeuser")
 
-DEFAULT_USERS: Sequence[str] = (
-    USER_ID_0,
-    USER_ID_1,
-)
+DEFAULT_USERS: Sequence[str] = (USER_ID_0,)  # type: ignore
 
 
 def echo_load_predict_fn(model):
@@ -222,6 +215,11 @@ CREATE_FINE_TUNE_REQUEST: Dict[str, Any] = {
     # "fine_tuning_method": "test_fine_tuning_method",  # ignored until we change it
     "hyperparameters": {},
 }
+
+
+@retry(stop=stop_after_attempt(300), wait=wait_fixed(2))
+def ensure_launch_gateway_healthy():
+    assert requests.get(f"{BASE_PATH}/healthz").status_code == 200
 
 
 def create_model_bundle(
@@ -735,7 +733,7 @@ def ensure_inference_task_response_is_correct(response: Dict[str, Any], return_p
 
 # Wait up to 30 seconds for the tasks to be returned.
 @retry(
-    stop=stop_after_attempt(30), wait=wait_fixed(1), retry=retry_if_exception_type(AssertionError)
+    stop=stop_after_attempt(10), wait=wait_fixed(1), retry=retry_if_exception_type(AssertionError)
 )
 def ensure_all_async_tasks_success(task_ids: List[str], user_id: str, return_pickled: bool):
     responses = asyncio.run(get_async_tasks(task_ids, user_id))

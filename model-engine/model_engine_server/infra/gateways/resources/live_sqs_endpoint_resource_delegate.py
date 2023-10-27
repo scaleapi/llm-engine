@@ -8,7 +8,7 @@ from aiobotocore.client import AioBaseClient
 from model_engine_server.common.config import hmi_config
 from model_engine_server.core.aws.roles import session
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import make_logger, logger_name
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
     SQSEndpointResourceDelegate,
@@ -16,7 +16,7 @@ from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate
 )
 from mypy_boto3_sqs.type_defs import GetQueueAttributesResultTypeDef
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 __all__: Sequence[str] = ("LiveSQSEndpointResourceDelegate",)
 

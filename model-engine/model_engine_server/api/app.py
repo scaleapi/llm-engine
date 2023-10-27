@@ -22,13 +22,13 @@ from model_engine_server.api.model_endpoints_v1 import model_endpoint_router_v1
 from model_engine_server.api.tasks_v1 import inference_task_router_v1
 from model_engine_server.api.triggers_v1 import trigger_router_v1
 from model_engine_server.core.loggers import (
-    filename_wo_ext,
-    get_request_id,
+    LoggerTagKey,
+    LoggerTagManager,
+    logger_name,
     make_logger,
-    set_request_id,
 )
 
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 app = FastAPI(title="launch", version="1.0.0", redoc_url="/api")
 
@@ -47,11 +47,11 @@ app.include_router(trigger_router_v1)
 @app.middleware("http")
 async def dispatch(request: Request, call_next):
     try:
-        set_request_id(str(uuid.uuid4()))
+        LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
         return await call_next(request)
     except Exception as e:
         tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
-        request_id = get_request_id()
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
         structured_log = {
             "error": str(e),

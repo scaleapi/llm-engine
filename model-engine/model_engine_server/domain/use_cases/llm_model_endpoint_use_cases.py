@@ -8,7 +8,7 @@ import json
 import math
 import os
 from dataclasses import asdict
-from typing import Any, AsyncIterable, Dict, List, Optional
+from typing import Any, AsyncIterable, Dict, List, Optional, Union
 from uuid import uuid4
 
 from model_engine_server.common.config import hmi_config
@@ -33,7 +33,7 @@ from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
     LLMMetadata,
@@ -72,7 +72,7 @@ from .model_endpoint_use_cases import (
     validate_post_inference_hooks,
 )
 
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 _SUPPORTED_MODEL_NAMES = {
     LLMInferenceFramework.DEEPSPEED: {
@@ -102,6 +102,11 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
         "falcon-40b": "tiiuae/falcon-40b",
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
+        "code-llama-7b": "codellama/CodeLlama-7b-hf",
+        "code-llama-13b": "codellama/CodeLlama-13b-hf",
+        "code-llama-34b": "codellama/CodeLlama-34b-hf",
+        "llm-jp-13b-instruct-full": "llm-jp/llm-jp-13b-instruct-full-jaster-v1.0",
+        "llm-jp-13b-instruct-full-dolly": "llm-jp/llm-jp-13b-instruct-full-dolly-oasst-v1.0",
     },
     LLMInferenceFramework.VLLM: {
         "mpt-7b": "mosaicml/mpt-7b",
@@ -117,6 +122,16 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
         "falcon-40b": "tiiuae/falcon-40b",
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
+        "mistral-7b": "mistralai/Mistral-7B-v0.1",
+        "mistral-7b-instruct": "mistralai/Mistral-7B-Instruct-v0.1",
+        "falcon-180b": "tiiuae/falcon-180B",
+        "falcon-180b-chat": "tiiuae/falcon-180B-chat",
+        "code-llama-7b": "codellama/CodeLlama-7b-hf",
+        "code-llama-13b": "codellama/CodeLlama-13b-hf",
+        "code-llama-34b": "codellama/CodeLlama-34b-hf",
+        "mammoth-coder-llama-2-7b": "TIGER-Lab/MAmmoTH-Coder-7B",
+        "mammoth-coder-llama-2-13b": "TIGER-Lab/MAmmoTH-Coder-13B",
+        "mammoth-coder-llama-2-34b": "TIGER-Lab/MAmmoTH-Coder-34B",
     },
     LLMInferenceFramework.LIGHTLLM: {
         "llama-7b": "decapoda-research/llama-7b-hf",
@@ -129,9 +144,49 @@ _SUPPORTED_MODEL_NAMES = {
     },
 }
 
+_SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
+    LLMInferenceFramework.DEEPSPEED: [],
+    LLMInferenceFramework.TEXT_GENERATION_INFERENCE: [Quantization.BITSANDBYTES],
+    LLMInferenceFramework.VLLM: [Quantization.AWQ],
+    LLMInferenceFramework.LIGHTLLM: [],
+}
+
+# We need a dict where if we need to override we can
+# NOTE: These are in *descending* order of priority. e.g. if you see 'mammoth-coder'
+# you'll use that override and not listen to the 'llama-2' override
+_VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
+    "mammoth-coder": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
+    # Based on config here: https://huggingface.co/TIGER-Lab/MAmmoTH-Coder-7B/blob/main/config.json#L12
+    # Can also see 13B, 34B there too
+    "code-llama": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
+    # Based on config here: https://huggingface.co/codellama/CodeLlama-7b-hf/blob/main/config.json#L12
+    # Can also see 13B, 34B there too
+    "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
+    "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
+}
+
 
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
+
+
+def _exclude_safetensors_or_bin(model_files: List[str]) -> Optional[str]:
+    """
+    This function is used to determine whether to exclude "*.safetensors" or "*.bin" files
+    based on which file type is present more often in the checkpoint folder. The less
+    frequently present file type is excluded.
+    If both files are equally present, no exclusion string is returned.
+    """
+    exclude_str = None
+    if len([f for f in model_files if f.endswith(".safetensors")]) > len(
+        [f for f in model_files if f.endswith(".bin")]
+    ):
+        exclude_str = "*.bin"
+    elif len([f for f in model_files if f.endswith(".safetensors")]) < len(
+        [f for f in model_files if f.endswith(".bin")]
+    ):
+        exclude_str = "*.safetensors"
+    return exclude_str
 
 
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
@@ -172,8 +227,21 @@ def validate_num_shards(
             raise ObjectHasInvalidValueException("DeepSpeed requires more than 1 GPU.")
         if num_shards != gpus:
             raise ObjectHasInvalidValueException(
-                f"DeepSpeed requires num shard {num_shards} to be the same as number of GPUs {gpus}."
+                f"Num shard {num_shards} must be the same as number of GPUs {gpus} for DeepSpeed."
             )
+    if num_shards > gpus:
+        raise ObjectHasInvalidValueException(
+            f"Num shard {num_shards} must be less than or equal to the number of GPUs {gpus}."
+        )
+
+
+def validate_quantization(
+    quantize: Optional[Quantization], inference_framework: LLMInferenceFramework
+) -> None:
+    if quantize is not None and quantize not in _SUPPORTED_QUANTIZATIONS[inference_framework]:
+        raise ObjectHasInvalidValueException(
+            f"Quantization {quantize} is not supported for inference framework {inference_framework}. Supported quantization types are {_SUPPORTED_QUANTIZATIONS[inference_framework]}."
+        )
 
 
 class CreateLLMModelEndpointV1UseCase:
@@ -182,11 +250,13 @@ class CreateLLMModelEndpointV1UseCase:
         create_model_bundle_use_case: CreateModelBundleV2UseCase,
         model_bundle_repository: ModelBundleRepository,
         model_endpoint_service: ModelEndpointService,
+        llm_artifact_gateway: LLMArtifactGateway,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_model_bundle_use_case = create_model_bundle_use_case
         self.model_bundle_repository = model_bundle_repository
         self.model_endpoint_service = model_endpoint_service
+        self.llm_artifact_gateway = llm_artifact_gateway
 
     async def create_model_bundle(
         self,
@@ -227,6 +297,7 @@ class CreateLLMModelEndpointV1UseCase:
                     framework_image_tag,
                     endpoint_name,
                     num_shards,
+                    quantize,
                     checkpoint_path,
                 )
             elif framework == LLMInferenceFramework.LIGHTLLM:
@@ -357,14 +428,21 @@ class CreateLLMModelEndpointV1UseCase:
                 ]
             )
         else:
-            if framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+            # Let's check whether to exclude "*.safetensors" or "*.bin" files
+            checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
+            model_files = [f for f in checkpoint_files if "model" in f]
+
+            exclude_str = _exclude_safetensors_or_bin(model_files)
+
+            if exclude_str is None:
                 subcommands.append(
                     f"{s5cmd} --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
                 )
             else:
                 subcommands.append(
-                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '*.safetensors'  {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '{exclude_str}' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
                 )
+
         return subcommands
 
     async def create_deepspeed_bundle(
@@ -453,18 +531,28 @@ class CreateLLMModelEndpointV1UseCase:
         framework_image_tag: str,
         endpoint_unique_name: str,
         num_shards: int,
+        quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
     ):
         command = []
 
-        max_num_batched_tokens = 2560  # vLLM's default
-        if "llama-2" in model_name:
-            max_num_batched_tokens = 4096  # Need to be bigger than model's context window
+        max_num_batched_tokens: Optional[int] = 2560  # vLLM's default
+        max_model_len: Optional[int] = None
+
+        for key, value in _VLLM_MODEL_LENGTH_OVERRIDES.items():
+            if key in model_name:
+                max_model_len = value["max_model_len"]
+                max_num_batched_tokens = value["max_num_batched_tokens"]
+                break
 
         subcommands = []
         if checkpoint_path is not None:
             if checkpoint_path.startswith("s3://"):
-                final_weights_folder = "model_files"
+                # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
+                if "mistral" in model_name:
+                    final_weights_folder = "mistral_files"
+                else:
+                    final_weights_folder = "model_files"
                 subcommands += self.load_model_weights_sub_commands(
                     LLMInferenceFramework.VLLM,
                     framework_image_tag,
@@ -478,9 +566,20 @@ class CreateLLMModelEndpointV1UseCase:
         else:
             final_weights_folder = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.VLLM][model_name]
 
-        subcommands.append(
-            f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens}"
-        )
+        if max_model_len:
+            subcommands.append(
+                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens} --max-model-len {max_model_len}"
+            )
+        else:
+            subcommands.append(
+                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens}"
+            )
+
+        if quantize:
+            if quantize == Quantization.AWQ:
+                subcommands[-1] = subcommands[-1] + f" --quantization {quantize}"
+            else:
+                raise InvalidRequestException(f"Quantization {quantize} is not supported by vLLM.")
 
         command = [
             "/bin/bash",
@@ -611,14 +710,16 @@ class CreateLLMModelEndpointV1UseCase:
         validate_post_inference_hooks(user, request.post_inference_hooks)
         validate_model_name(request.model_name, request.inference_framework)
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
+        validate_quantization(request.quantize, request.inference_framework)
 
         if request.inference_framework in [
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
             LLMInferenceFramework.VLLM,
+            LLMInferenceFramework.LIGHTLLM,
         ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
                 raise ObjectHasInvalidValueException(
-                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference and vLLM."
+                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM and LightLLM."
                 )
 
         bundle = await self.create_model_bundle(
@@ -831,6 +932,60 @@ def deepspeed_result_to_tokens(result: Dict[str, Any]) -> List[TokenOutput]:
     return tokens
 
 
+def validate_and_update_completion_params(
+    inference_framework: LLMInferenceFramework,
+    request: Union[CompletionSyncV1Request, CompletionStreamV1Request],
+) -> Union[CompletionSyncV1Request, CompletionStreamV1Request]:
+    # top_k, top_p
+    if inference_framework in [
+        LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+        LLMInferenceFramework.VLLM,
+        LLMInferenceFramework.LIGHTLLM,
+    ]:
+        if request.temperature == 0:
+            if request.top_k not in [-1, None] or request.top_p not in [1.0, None]:
+                raise ObjectHasInvalidValueException(
+                    "top_k and top_p can't be enabled when temperature is 0."
+                )
+        if request.top_k == 0:
+            raise ObjectHasInvalidValueException(
+                "top_k needs to be strictly positive, or set it to be -1 / None to disable top_k."
+            )
+        if inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+            request.top_k = None if request.top_k == -1 else request.top_k
+            request.top_p = None if request.top_p == 1.0 else request.top_p
+        if inference_framework in [
+            LLMInferenceFramework.VLLM,
+            LLMInferenceFramework.LIGHTLLM,
+        ]:
+            request.top_k = -1 if request.top_k is None else request.top_k
+            request.top_p = 1.0 if request.top_p is None else request.top_p
+    else:
+        if request.top_k or request.top_p:
+            raise ObjectHasInvalidValueException(
+                "top_k and top_p are only supported in text-generation-inference, vllm, lightllm."
+            )
+
+    # presence_penalty, frequency_penalty
+    if inference_framework in [
+        LLMInferenceFramework.VLLM,
+        LLMInferenceFramework.LIGHTLLM,
+    ]:
+        request.presence_penalty = (
+            0.0 if request.presence_penalty is None else request.presence_penalty
+        )
+        request.frequency_penalty = (
+            0.0 if request.frequency_penalty is None else request.frequency_penalty
+        )
+    else:
+        if request.presence_penalty or request.frequency_penalty:
+            raise ObjectHasInvalidValueException(
+                "presence_penalty and frequency_penalty are only supported in vllm, lightllm."
+            )
+
+    return request
+
+
 class CompletionSyncV1UseCase:
     """
     Use case for running a prompt completion on an LLM endpoint.
@@ -883,14 +1038,17 @@ class CompletionSyncV1UseCase:
                     raise InvalidRequestException(model_output.get("error"))  # trigger a 400
                 else:
                     raise UpstreamServiceError(
-                        status_code=500, content=bytes(model_output["error"])
+                        status_code=500, content=bytes(model_output["error"], "utf-8")
                     )
 
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
             tokens = None
             if with_token_probs:
                 tokens = [
-                    TokenOutput(token=model_output["tokens"][index], log_prob=list(t.values())[0])
+                    TokenOutput(
+                        token=model_output["tokens"][index],
+                        log_prob=list(t.values())[0],
+                    )
                     for index, t in enumerate(model_output["log_probs"])
                 ]
             return CompletionOutput(
@@ -899,7 +1057,6 @@ class CompletionSyncV1UseCase:
                 tokens=tokens,
             )
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
-            print(model_output)
             tokens = None
             if with_token_probs:
                 tokens = [
@@ -975,6 +1132,15 @@ class CompletionSyncV1UseCase:
             endpoint_id=model_endpoint.record.id
         )
         endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+        validated_request = validate_and_update_completion_params(
+            endpoint_content.inference_framework, request
+        )
+        if not isinstance(validated_request, CompletionSyncV1Request):
+            raise ValueError(
+                f"request has type {validated_request.__class__.__name__}, expected type CompletionSyncV1Request"
+            )
+        request = validated_request
+
         if endpoint_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
             args: Any = {
                 "prompts": [request.prompt],
@@ -996,7 +1162,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status == TaskStatus.SUCCESS and predict_result.result is not None:
@@ -1028,6 +1195,10 @@ class CompletionSyncV1UseCase:
             if request.temperature > 0:
                 tgi_args["parameters"]["temperature"] = request.temperature
                 tgi_args["parameters"]["do_sample"] = True
+                tgi_args["parameters"]["top_k"] = request.top_k
+                tgi_args["parameters"]["top_p"] = request.top_p
+            else:
+                tgi_args["parameters"]["do_sample"] = False
 
             inference_request = SyncEndpointPredictV1Request(
                 args=tgi_args,
@@ -1035,7 +1206,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1056,10 +1228,15 @@ class CompletionSyncV1UseCase:
             vllm_args: Any = {
                 "prompt": request.prompt,
                 "max_tokens": request.max_new_tokens,
+                "presence_penalty": request.presence_penalty,
+                "frequency_penalty": request.frequency_penalty,
             }
             if request.stop_sequences is not None:
                 vllm_args["stop"] = request.stop_sequences
             vllm_args["temperature"] = request.temperature
+            if request.temperature > 0:
+                vllm_args["top_k"] = request.top_k
+                vllm_args["top_p"] = request.top_p
             if request.return_token_log_probs:
                 vllm_args["logprobs"] = 1
 
@@ -1069,7 +1246,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1090,12 +1268,16 @@ class CompletionSyncV1UseCase:
                 "inputs": request.prompt,
                 "parameters": {
                     "max_new_tokens": request.max_new_tokens,
+                    "presence_penalty": request.presence_penalty,
+                    "frequency_penalty": request.frequency_penalty,
                 },
             }
             # TODO: implement stop sequences
             if request.temperature > 0:
                 lightllm_args["parameters"]["temperature"] = request.temperature
                 lightllm_args["parameters"]["do_sample"] = True
+                lightllm_args["top_k"] = request.top_k
+                lightllm_args["top_p"] = request.top_p
             else:
                 lightllm_args["parameters"]["do_sample"] = False
             if request.return_token_log_probs:
@@ -1107,7 +1289,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1164,12 +1347,13 @@ class CompletionStreamV1UseCase:
 
         request_id = str(uuid4())
         add_trace_request_id(request_id)
+
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
             owner=user.team_id, name=model_endpoint_name, order_by=None
         )
 
         if len(model_endpoints) == 0:
-            raise ObjectNotFoundException
+            raise ObjectNotFoundException(f"Model endpoint {model_endpoint_name} not found.")
 
         if len(model_endpoints) > 1:
             raise ObjectHasInvalidValueException(
@@ -1201,6 +1385,14 @@ class CompletionStreamV1UseCase:
         )
 
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+        validated_request = validate_and_update_completion_params(
+            model_content.inference_framework, request
+        )
+        if not isinstance(validated_request, CompletionStreamV1Request):
+            raise ValueError(
+                f"request has type {validated_request.__class__.__name__}, expected type CompletionStreamV1Request"
+            )
+        request = validated_request
 
         args: Any = None
         if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
@@ -1229,14 +1421,23 @@ class CompletionStreamV1UseCase:
             if request.temperature > 0:
                 args["parameters"]["temperature"] = request.temperature
                 args["parameters"]["do_sample"] = True
+                args["parameters"]["top_k"] = request.top_k
+                args["parameters"]["top_p"] = request.top_p
+            else:
+                args["parameters"]["do_sample"] = False
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
             args = {
                 "prompt": request.prompt,
                 "max_tokens": request.max_new_tokens,
+                "presence_penalty": request.presence_penalty,
+                "frequency_penalty": request.frequency_penalty,
             }
             if request.stop_sequences is not None:
                 args["stop"] = request.stop_sequences
             args["temperature"] = request.temperature
+            if request.temperature > 0:
+                args["top_k"] = request.top_k
+                args["top_p"] = request.top_p
             if request.return_token_log_probs:
                 args["logprobs"] = 1
             args["stream"] = True
@@ -1245,12 +1446,16 @@ class CompletionStreamV1UseCase:
                 "inputs": request.prompt,
                 "parameters": {
                     "max_new_tokens": request.max_new_tokens,
+                    "presence_penalty": request.presence_penalty,
+                    "frequency_penalty": request.frequency_penalty,
                 },
             }
             # TODO: stop sequences
             if request.temperature > 0:
                 args["parameters"]["temperature"] = request.temperature
                 args["parameters"]["do_sample"] = True
+                args["parameters"]["top_k"] = request.top_k
+                args["parameters"]["top_p"] = request.top_p
             else:
                 args["parameters"]["do_sample"] = False
             if request.return_token_log_probs:
@@ -1369,7 +1574,6 @@ class CompletionStreamV1UseCase:
                     )
             elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
                 if res.status == TaskStatus.SUCCESS and result is not None:
-                    print(result)
                     token = None
                     num_completion_tokens += 1
                     if request.return_token_log_probs:

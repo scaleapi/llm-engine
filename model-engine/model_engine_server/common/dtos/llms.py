@@ -104,7 +104,7 @@ class CompletionSyncV1Request(BaseModel):
 
     prompt: str
     max_new_tokens: int
-    temperature: float = Field(ge=0, le=1)
+    temperature: float = Field(ge=0.0, le=1.0)
     """
     Temperature of the sampling. Setting to 0 equals to greedy sampling.
     """
@@ -115,6 +115,24 @@ class CompletionSyncV1Request(BaseModel):
     return_token_log_probs: Optional[bool] = False
     """
     Whether to return the log probabilities of the tokens.
+    """
+    presence_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    """
+    Only supported in vllm, lightllm
+    Penalize new tokens based on whether they appear in the text so far. 0.0 means no penalty
+    """
+    frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    """
+    Only supported in vllm, lightllm
+    Penalize new tokens based on their existing frequency in the text so far. 0.0 means no penalty
+    """
+    top_k: Optional[int] = Field(default=None, ge=-1)
+    """
+    Controls the number of top tokens to consider. -1 means consider all tokens.
+    """
+    top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
+    """
+    Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
     """
 
 
@@ -145,7 +163,7 @@ class CompletionStreamV1Request(BaseModel):
 
     prompt: str
     max_new_tokens: int
-    temperature: float = Field(ge=0, le=1)
+    temperature: float = Field(ge=0.0, le=1.0)
     """
     Temperature of the sampling. Setting to 0 equals to greedy sampling.
     """
@@ -157,6 +175,24 @@ class CompletionStreamV1Request(BaseModel):
     """
     Whether to return the log probabilities of the tokens. Only affects behavior for text-generation-inference models
     """
+    presence_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    """
+    Only supported in vllm, lightllm
+    Penalize new tokens based on whether they appear in the text so far. 0.0 means no penalty
+    """
+    frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    """
+    Only supported in vllm, lightllm
+    Penalize new tokens based on their existing frequency in the text so far. 0.0 means no penalty
+    """
+    top_k: Optional[int] = Field(default=None, ge=-1)
+    """
+    Controls the number of top tokens to consider. -1 means consider all tokens.
+    """
+    top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
+    """
+    Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
+    """
 
 
 class CompletionStreamOutput(BaseModel):
@@ -166,6 +202,24 @@ class CompletionStreamOutput(BaseModel):
     token: Optional[TokenOutput] = None
 
 
+class StreamErrorContent(BaseModel):
+    error: str
+    """Error message."""
+    timestamp: str
+    """Timestamp of the error."""
+
+
+class StreamError(BaseModel):
+    """
+    Error object for a stream prompt completion task.
+    """
+
+    status_code: int
+    """The HTTP status code of the error."""
+    content: StreamErrorContent
+    """The error content."""
+
+
 class CompletionStreamV1Response(BaseModel):
     """
     Response object for a stream prompt completion task.
@@ -173,6 +227,8 @@ class CompletionStreamV1Response(BaseModel):
 
     request_id: str
     output: Optional[CompletionStreamOutput] = None
+    error: Optional[StreamError] = None
+    """Error of the response (if any)."""
 
 
 class CreateFineTuneRequest(BaseModel):

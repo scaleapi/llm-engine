@@ -10,17 +10,13 @@ from typing import Any
 
 from kubernetes import config as kube_config
 from kubernetes.config.config_exception import ConfigException
+from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.constants import READYZ_FPATH
-from model_engine_server.common.env_vars import CIRCLECI, SKIP_AUTH
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.common.env_vars import CIRCLECI
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.db.base import SessionAsyncNullPool
-from model_engine_server.domain.gateways import MonitoringMetricsGateway
 from model_engine_server.domain.repositories import DockerRepository
-from model_engine_server.infra.gateways import (
-    DatadogMonitoringMetricsGateway,
-    FakeMonitoringMetricsGateway,
-)
 from model_engine_server.infra.gateways.resources.endpoint_resource_gateway import (
     EndpointResourceGateway,
 )
@@ -55,7 +51,7 @@ from model_engine_server.infra.services.model_endpoint_cache_service import (
     ModelEndpointCacheWriteService,
 )
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 # This is the entrypoint to the k8s cacher
 
 try:
@@ -95,16 +91,13 @@ async def main(args: Any):
     logger.info(f"Using cache redis url {redis_url}")
     cache_repo = RedisModelEndpointCacheRepository(redis_info=redis_url)
 
-    monitoring_metrics_gateway: MonitoringMetricsGateway
-    if SKIP_AUTH:
-        monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
-    else:
-        monitoring_metrics_gateway = DatadogMonitoringMetricsGateway()
+    monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         session=SessionAsyncNullPool,
         read_only=True,
     )
+
     sqs_delegate: SQSEndpointResourceDelegate
     if CIRCLECI:
         sqs_delegate = FakeSQSEndpointResourceDelegate()

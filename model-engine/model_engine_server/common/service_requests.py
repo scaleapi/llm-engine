@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 
 import requests
 from model_engine_server.common.errors import HTTP429Exception, UpstreamHTTPSvcError
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from tenacity import (
     RetryError,
     Retrying,
@@ -13,7 +13,7 @@ from tenacity import (
     wait_exponential,
 )
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 SYNC_ENDPOINT_RETRIES = 10  # Must be an integer >= 0
 SYNC_ENDPOINT_MAX_TIMEOUT_SECONDS = 10
