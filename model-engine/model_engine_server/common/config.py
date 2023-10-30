@@ -57,7 +57,7 @@ class HostedModelInferenceServiceConfig:
     tgi_repository: str
     vllm_repository: str
     lightllm_repository: str
-    user_inference_repository: str
+    user_inference_base_repository: str
 
     @classmethod
     def from_yaml(cls, yaml_path):
