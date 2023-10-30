@@ -7,6 +7,7 @@ from typing import Optional
 class User:
     user_id: str
     team_id: str
+    email: Optional[str]
     is_privileged_user: bool
 
 
