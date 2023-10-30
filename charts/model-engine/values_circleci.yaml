@@ -143,6 +143,8 @@ config:
       vllm_repository: "vllm"
       lightllm_repository: "lightllm"
       user_inference_base_repository: "launch/inference"
+      user_inference_pytorch_repository: "hosted-model-inference/async-pytorch"
+      user_inference_tensorflow_repository: "hosted-model-inference/async-tensorflow-cpu"
       hf_user_fine_tuned_weights_prefix: "s3://$CIRCLECI_AWS_S3_BUCKET"
 
 # Service Account

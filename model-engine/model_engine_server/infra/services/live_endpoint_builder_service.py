@@ -528,7 +528,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
             dockerfile = "pytorch_or_tf.user.Dockerfile"
             service_image_tag = self._get_image_tag(base_image_tag, GIT_TAG, requirements_hash)
-            ecr_repo = "hosted-model-inference/async-pytorch"  # TODO change
+            ecr_repo = hmi_config.user_inference_pytorch_repository
         elif isinstance(env_params, TensorflowFramework):
             if build_endpoint_request.gpus > 0:
                 raise NotImplementedError("Tensorflow GPU image not supported yet")
@@ -540,7 +540,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 raise ValueError("Tensorflow version must be specified if the framework is TF.")
             dockerfile = "pytorch_or_tf.user.Dockerfile"
             service_image_tag = self._get_image_tag(tensorflow_version, GIT_TAG, requirements_hash)
-            ecr_repo = "hosted-model-inference/async-tensorflow-cpu"  # TODO change
+            ecr_repo = hmi_config.user_inference_tensorflow_repository
         elif isinstance(env_params, CustomFramework):
             if (
                 env_params.image_tag is None or env_params.image_repository is None
