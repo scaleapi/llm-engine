@@ -8,7 +8,7 @@ class User:
     user_id: str
     team_id: str
     email: Optional[str] = None
-    is_privileged_user: bool
+    is_privileged_user: bool = False
 
 
 class AuthenticationRepository(ABC):
