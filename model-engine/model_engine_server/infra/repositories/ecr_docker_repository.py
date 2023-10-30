@@ -1,5 +1,6 @@
 from typing import Optional
 
+from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.docker.ecr import image_exists as ecr_image_exists
@@ -46,6 +47,6 @@ class ECRDockerRepository(DockerRepository):
             repotags=[f"{image_params.repo}:{image_params.image_tag}"],
             folders_to_include=folders_to_include,
             build_args=build_args,
-            cache_name="TODO",  # TODO fill in
+            cache_name=hmi_config.docker_image_layer_cache_repository,
         )
         return BuildImageResponse(status=build_result.status, logs=build_result.logs)
