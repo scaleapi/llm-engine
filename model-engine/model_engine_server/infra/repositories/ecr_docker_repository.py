@@ -46,5 +46,6 @@ class ECRDockerRepository(DockerRepository):
             repotags=[f"{image_params.repo}:{image_params.image_tag}"],
             folders_to_include=folders_to_include,
             build_args=build_args,
+            cache_name="TODO",  # TODO fill in
         )
         return BuildImageResponse(status=build_result.status, logs=build_result.logs)
