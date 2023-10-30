@@ -152,6 +152,8 @@ _SUPPORTED_MODEL_NAMES = {
         "code-llama-7b": "codellama/CodeLlama-7b-hf",
         "code-llama-13b": "codellama/CodeLlama-13b-hf",
         "code-llama-34b": "codellama/CodeLlama-34b-hf",
+        "llm-jp-13b-instruct-full": "llm-jp/llm-jp-13b-instruct-full-jaster-v1.0",
+        "llm-jp-13b-instruct-full-dolly": "llm-jp/llm-jp-13b-instruct-full-dolly-oasst-v1.0",
     },
     LLMInferenceFramework.VLLM: {
         "mpt-7b": "mosaicml/mpt-7b",
