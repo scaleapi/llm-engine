@@ -57,6 +57,7 @@ class HostedModelInferenceServiceConfig:
     tgi_repository: str
     vllm_repository: str
     lightllm_repository: str
+    tensorrt_llm_repository: str
 
     @classmethod
     def from_yaml(cls, yaml_path):

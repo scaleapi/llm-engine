@@ -142,6 +142,9 @@ _SUPPORTED_MODEL_NAMES = {
         "llama-2-70b": "meta-llama/Llama-2-70b-hf",
         "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
     },
+    LLMInferenceFramework.TENSORRT_LLM: {
+        "llama-2-7b": "meta-llama/Llama-2-7b-hf",
+    },
 }
 
 _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
@@ -149,6 +152,7 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
     LLMInferenceFramework.TEXT_GENERATION_INFERENCE: [Quantization.BITSANDBYTES],
     LLMInferenceFramework.VLLM: [Quantization.AWQ],
     LLMInferenceFramework.LIGHTLLM: [],
+    LLMInferenceFramework.TENSORRT_LLM: [],
 }
 
 # We need a dict where if we need to override we can
@@ -309,6 +313,14 @@ class CreateLLMModelEndpointV1UseCase:
                     num_shards,
                     checkpoint_path,
                 )
+            elif framework == LLMInferenceFramework.TENSORRT_LLM:
+                bundle_id = await self.create_tensorrt_llm_bundle(
+                    user,
+                    framework_image_tag,
+                    endpoint_name,
+                    num_shards,
+                    checkpoint_path,
+                )
             else:
                 raise ObjectHasInvalidValueException(
                     f"Framework {framework} is not supported for source {source}."
@@ -442,6 +454,30 @@ class CreateLLMModelEndpointV1UseCase:
                 subcommands.append(
                     f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '{exclude_str}' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
                 )
+
+        return subcommands
+    
+    def load_model_files_sub_commands_trt_llm(
+        self, checkpoint_path, 
+    ):
+        """
+        This function generate subcommands to load model files for TensorRT-LLM.
+        Each model checkpoint is constituted of two folders: `model_weights` which stores the model engine files,
+        and `model_tokenizer` which stores the model tokenizer files.
+        See llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/tensorrt_llm/config.pbtxt
+        and llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/postprocessing/config.pbtxt
+        """
+        subcommands = []
+        s5cmd = "s5cmd"
+
+        base_path = checkpoint_path.split("/")[-1]
+
+        if base_path.endswith(".tar"):
+            raise ObjectHasInvalidValueException("Checkpoint for TensorRT-LLM models must be a folder, not a tar file.")
+        else:
+            subcommands.append(
+                f"{s5cmd} --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
+            )
 
         return subcommands
 
@@ -694,6 +730,70 @@ class CreateLLMModelEndpointV1UseCase:
                 # job.
             )
         ).model_bundle_id
+    
+    async def create_tensorrt_llm_bundle(
+        self,
+        user: User,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        checkpoint_path: Optional[str],
+    ):
+        command = []
+
+        subcommands = []
+        if checkpoint_path is not None:
+            if checkpoint_path.startswith("s3://"):
+                subcommands += self.load_model_files_sub_commands_trt_llm(
+                    checkpoint_path,
+                )
+            else:
+                raise ObjectHasInvalidValueException(
+                    f"Not able to load checkpoint path {checkpoint_path}."
+                )
+        else:
+            raise ObjectHasInvalidValueException(
+                f"Checkpoint must be provided for TensorRT-LLM models."
+            )
+
+        subcommands.append(
+            f"python3 launch_triton_server.py --world_size={num_shards} --model_repo=./model_repo/"
+        )
+
+        command = [
+            "/bin/bash",
+            "-c",
+            ";".join(subcommands),
+        ]
+
+        return (
+            await self.create_model_bundle_use_case.execute(
+                user,
+                CreateModelBundleV2Request(
+                    name=endpoint_unique_name,
+                    schema_location="TBA",
+                    flavor=StreamingEnhancedRunnableImageFlavor(
+                        flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                        repository=hmi_config.tensorrt_llm_repository,
+                        tag=framework_image_tag,
+                        command=command,
+                        streaming_command=command,
+                        protocol="http",
+                        readiness_initial_delay_seconds=10,
+                        healthcheck_route="/v2/health/ready",
+                        # See https://github.com/triton-inference-server/server/blob/main/docs/protocol/extension_generate.md
+                        predict_route="/v2/models/ensemble/generate",
+                        streaming_predict_route="/v2/models/ensemble/generate_stream",
+                        env={},
+                    ),
+                    metadata={},
+                ),
+                do_auth_check=False,
+                # Skip auth check because llm create endpoint is called as the user itself,
+                # but the user isn't directly making the action. It should come from the fine tune
+                # job.
+            )
+        ).model_bundle_id
 
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
@@ -716,6 +816,7 @@ class CreateLLMModelEndpointV1UseCase:
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
             LLMInferenceFramework.VLLM,
             LLMInferenceFramework.LIGHTLLM,
+            LLMInferenceFramework.TENSORRT_LLM,
         ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
                 raise ObjectHasInvalidValueException(

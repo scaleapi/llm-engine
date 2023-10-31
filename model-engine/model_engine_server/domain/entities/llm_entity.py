@@ -12,6 +12,7 @@ class LLMInferenceFramework(str, Enum):
     TEXT_GENERATION_INFERENCE = "text_generation_inference"
     VLLM = "vllm"
     LIGHTLLM = "lightllm"
+    TENSORRT_LLM = "tensorrt_llm"
 
 
 class Quantization(str, Enum):

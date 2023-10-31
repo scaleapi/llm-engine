@@ -146,6 +146,7 @@ config:
       tgi_repository: "text-generation-inference"
       vllm_repository: "vllm"
       lightllm_repository: "lightllm"
+      tensorrt_llm_repository: "tensorrt-llm"
       hf_user_fine_tuned_weights_prefix: "s3://$CIRCLECI_AWS_S3_BUCKET"
 
 # Service Account
