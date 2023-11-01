@@ -88,7 +88,7 @@ async def record_route_call(
     model_name = request.query_params.get("model_endpoint_name", None)
 
     external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        route=route, metadata=MetricMetadata(user=auth, model_name=model_name)
+        route, MetricMetadata(user=auth, model_name=model_name)
     )
 
 
