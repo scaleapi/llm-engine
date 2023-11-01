@@ -1086,7 +1086,6 @@ class CompletionSyncV1UseCase:
                 tokens=tokens,
             )
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
-            print(model_output)
             tokens = None
             if with_token_probs:
                 tokens = [
@@ -1600,7 +1599,6 @@ class CompletionStreamV1UseCase:
                     )
             elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
                 if res.status == TaskStatus.SUCCESS and result is not None:
-                    print(result)
                     token = None
                     num_completion_tokens += 1
                     if request.return_token_log_probs:
