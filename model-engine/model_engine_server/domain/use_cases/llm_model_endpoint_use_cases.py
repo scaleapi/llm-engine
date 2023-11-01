@@ -143,7 +143,7 @@ _SUPPORTED_MODEL_NAMES = {
         "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
     },
     LLMInferenceFramework.TENSORRT_LLM: {
-        "llama-2-7b": "meta-llama/Llama-2-7b-hf",
+        "llama-2-7b": "huggyllama/llama-7b",  # Hack to get tokenizer for llama without sign in to huggingface
     },
 }
 
@@ -456,9 +456,10 @@ class CreateLLMModelEndpointV1UseCase:
                 )
 
         return subcommands
-    
+
     def load_model_files_sub_commands_trt_llm(
-        self, checkpoint_path, 
+        self,
+        checkpoint_path,
     ):
         """
         This function generate subcommands to load model files for TensorRT-LLM.
@@ -468,15 +469,16 @@ class CreateLLMModelEndpointV1UseCase:
         and llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/postprocessing/config.pbtxt
         """
         subcommands = []
-        s5cmd = "s5cmd"
 
         base_path = checkpoint_path.split("/")[-1]
 
         if base_path.endswith(".tar"):
-            raise ObjectHasInvalidValueException("Checkpoint for TensorRT-LLM models must be a folder, not a tar file.")
+            raise ObjectHasInvalidValueException(
+                "Checkpoint for TensorRT-LLM models must be a folder, not a tar file."
+            )
         else:
             subcommands.append(
-                f"{s5cmd} --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
+                f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
             )
 
         return subcommands
@@ -730,7 +732,7 @@ class CreateLLMModelEndpointV1UseCase:
                 # job.
             )
         ).model_bundle_id
-    
+
     async def create_tensorrt_llm_bundle(
         self,
         user: User,
@@ -1084,7 +1086,28 @@ def validate_and_update_completion_params(
                 "presence_penalty and frequency_penalty are only supported in vllm, lightllm."
             )
 
+    # return_token_log_probs
+    if inference_framework in [
+        LLMInferenceFramework.DEEPSPEED,
+        LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+        LLMInferenceFramework.VLLM,
+        LLMInferenceFramework.LIGHTLLM,
+    ]:
+        pass
+    else:
+        if request.return_token_log_probs:
+            raise ObjectHasInvalidValueException(
+                "return_token_log_probs are only supported in deepspeed, text-generation-inference, vllm, lightllm."
+            )
+
     return request
+
+
+# Hack for TensorRT-LLM. Remove when it supports returning output tokens only
+# See https://github.com/NVIDIA/TensorRT-LLM/issues/227
+from transformers import AutoTokenizer
+
+tokenizer_cache: Dict[str, AutoTokenizer] = {}
 
 
 class CompletionSyncV1UseCase:
@@ -1106,6 +1129,7 @@ class CompletionSyncV1UseCase:
         model_output: Dict[str, Any],
         model_endpoint: ModelEndpoint,
         with_token_probs: Optional[bool],
+        prompt: Optional[str] = None,
     ) -> CompletionOutput:
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
@@ -1168,6 +1192,20 @@ class CompletionSyncV1UseCase:
                 text=model_output["generated_text"][0],
                 num_completion_tokens=model_output["count_output_tokens"],
                 tokens=tokens,
+            )
+        elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
+            if model_content.model_name not in tokenizer_cache:
+                tokenizer_cache[model_content.model_name] = AutoTokenizer.from_pretrained(
+                    _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.TENSORRT_LLM][
+                        model_content.model_name
+                    ]
+                )
+            tokenizer = tokenizer_cache[model_content.model_name]
+            prompt_tokens = tokenizer.encode(prompt)
+
+            return CompletionOutput(
+                text=model_output["text_output"],
+                num_completion_tokens=len(model_output["token_ids"]) - len(prompt_tokens),
             )
         else:
             raise EndpointUnsupportedInferenceTypeException(
@@ -1259,7 +1297,7 @@ class CompletionSyncV1UseCase:
 
             inference_request = SyncEndpointPredictV1Request(
                 args=args,
-                num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+                num_retries=1,
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
@@ -1274,6 +1312,7 @@ class CompletionSyncV1UseCase:
                         predict_result.result["result"][0],
                         model_endpoint,
                         request.return_token_log_probs,
+                        request.prompt,
                     ),
                 )
             else:
@@ -1365,7 +1404,7 @@ class CompletionSyncV1UseCase:
                 ),
             )
         elif endpoint_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
-            lightllm_args: Any = {
+            light_llm_args: Any = {
                 "inputs": request.prompt,
                 "parameters": {
                     "max_new_tokens": request.max_new_tokens,
@@ -1375,17 +1414,17 @@ class CompletionSyncV1UseCase:
             }
             # TODO: implement stop sequences
             if request.temperature > 0:
-                lightllm_args["parameters"]["temperature"] = request.temperature
-                lightllm_args["parameters"]["do_sample"] = True
-                lightllm_args["top_k"] = request.top_k
-                lightllm_args["top_p"] = request.top_p
+                light_llm_args["parameters"]["temperature"] = request.temperature
+                light_llm_args["parameters"]["do_sample"] = True
+                light_llm_args["top_k"] = request.top_k
+                light_llm_args["top_p"] = request.top_p
             else:
-                lightllm_args["parameters"]["do_sample"] = False
+                light_llm_args["parameters"]["do_sample"] = False
             if request.return_token_log_probs:
-                lightllm_args["parameters"]["return_details"] = True
+                light_llm_args["parameters"]["return_details"] = True
 
             inference_request = SyncEndpointPredictV1Request(
-                args=lightllm_args,
+                args=light_llm_args,
                 num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
@@ -1405,6 +1444,42 @@ class CompletionSyncV1UseCase:
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
                     output, model_endpoint, request.return_token_log_probs
+                ),
+            )
+        elif endpoint_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
+            # TODO: Stop sequences is buggy and return token logprobs are not supported
+            # TODO: verify the implementation of presence_penalty and repetition_penalty
+            # and see if they fit our existing definition of presence_penalty and frequency_penalty
+            # Ref https://github.com/NVIDIA/FasterTransformer/blob/main/src/fastertransformer/kernels/sampling_penalty_kernels.cu
+            trt_llm_args: Any = {
+                "text_input": request.prompt,
+                "max_tokens": request.max_new_tokens,
+                "stop_words": request.stop_sequences if request.stop_sequences else "",
+                "bad_words": "",
+                "temperature": request.temperature,
+            }
+
+            inference_request = SyncEndpointPredictV1Request(
+                args=trt_llm_args,
+                num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+                timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
+            )
+            predict_result = await inference_gateway.predict(
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
+            )
+
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
+                return CompletionSyncV1Response(
+                    request_id=request_id,
+                    output=None,
+                )
+
+            output = json.loads(predict_result.result["result"])
+            return CompletionSyncV1Response(
+                request_id=request_id,
+                output=self.model_output_to_completion_output(
+                    output, model_endpoint, request.return_token_log_probs, request.prompt
                 ),
             )
         else:
@@ -1561,6 +1636,19 @@ class CompletionStreamV1UseCase:
                 args["parameters"]["do_sample"] = False
             if request.return_token_log_probs:
                 args["parameters"]["return_details"] = True
+        elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
+            # TODO: Stop sequences is buggy and return token logprobs are not supported
+            # TODO: verify the implementation of presence_penalty and repetition_penalty
+            # and see if they fit our existing definition of presence_penalty and frequency_penalty
+            # Ref https://github.com/NVIDIA/FasterTransformer/blob/main/src/fastertransformer/kernels/sampling_penalty_kernels.cu
+            args = {
+                "text_input": request.prompt,
+                "max_tokens": request.max_new_tokens,
+                "stop_words": request.stop_sequences if request.stop_sequences else "",
+                "bad_words": "",
+                "temperature": request.temperature,
+                "stream": True,
+            }
         else:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {model_content.inference_framework}"
@@ -1689,6 +1777,23 @@ class CompletionStreamV1UseCase:
                             finished=result["result"]["finished"],
                             num_completion_tokens=num_completion_tokens,
                             token=token,
+                        ),
+                    )
+                else:
+                    yield CompletionStreamV1Response(
+                        request_id=request_id,
+                        output=None,
+                    )
+            elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
+                if res.status == TaskStatus.SUCCESS and result is not None:
+                    num_completion_tokens += 1
+                    print(f"{result=}")
+                    yield CompletionStreamV1Response(
+                        request_id=request_id,
+                        output=CompletionStreamOutput(
+                            text=result["result"]["text_output"],
+                            finished=result["result"]["sequence_end"],
+                            num_completion_tokens=num_completion_tokens,
                         ),
                     )
                 else:

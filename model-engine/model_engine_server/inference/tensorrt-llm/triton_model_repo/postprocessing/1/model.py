@@ -52,33 +52,34 @@ class TritonPythonModel:
           * model_name: Model name
         """
         # Parse model configs
-        model_config = json.loads(args['model_config'])
-        tokenizer_dir = model_config['parameters']['tokenizer_dir'][
-            'string_value']
-        tokenizer_type = model_config['parameters']['tokenizer_type'][
-            'string_value']
+        model_config = json.loads(args["model_config"])
+        tokenizer_dir = model_config["parameters"]["tokenizer_dir"]["string_value"]
+        tokenizer_type = model_config["parameters"]["tokenizer_type"]["string_value"]
 
-        if tokenizer_type == 't5':
-            self.tokenizer = T5Tokenizer(vocab_file=tokenizer_dir,
-                                         padding_side='left')
-        elif tokenizer_type == 'auto':
-            self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir,
-                                                           padding_side='left')
-        elif tokenizer_type == 'llama':
+        if tokenizer_type == "t5":
+            self.tokenizer = T5Tokenizer(vocab_file=tokenizer_dir, padding_side="left")
+        elif tokenizer_type == "auto":
+            self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir, padding_side="left")
+        elif tokenizer_type == "llama":
             self.tokenizer = LlamaTokenizer.from_pretrained(
-                tokenizer_dir, legacy=False, padding_side='left')
+                tokenizer_dir, legacy=False, padding_side="left"
+            )
         else:
-            raise AttributeError(
-                f'Unexpected tokenizer type: {tokenizer_type}')
+            raise AttributeError(f"Unexpected tokenizer type: {tokenizer_type}")
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
         # Parse model output configs
-        output_config = pb_utils.get_output_config_by_name(
-            model_config, "OUTPUT")
+        output_config = pb_utils.get_output_config_by_name(model_config, "OUTPUT")
+        output_token_ids_config = pb_utils.get_output_config_by_name(
+            model_config, "OUTPUT_TOKEN_IDS"
+        )
 
         # Convert Triton types to numpy types
-        self.output_dtype = pb_utils.triton_string_to_numpy(
-            output_config['data_type'])
+        self.output_dtype = pb_utils.triton_string_to_numpy(output_config["data_type"])
+
+        self.output_token_ids_dtype = pb_utils.triton_string_to_numpy(
+            output_token_ids_config["data_type"]
+        )
 
     def execute(self, requests):
         """`execute` must be implemented in every Python model. `execute`
@@ -106,8 +107,7 @@ class TritonPythonModel:
         # and create a pb_utils.InferenceResponse for each of them.
         for idx, request in enumerate(requests):
             # Get input tensors
-            tokens_batch = pb_utils.get_input_tensor_by_name(
-                request, 'TOKENS_BATCH').as_numpy()
+            tokens_batch = pb_utils.get_input_tensor_by_name(request, "TOKENS_BATCH").as_numpy()
 
             # Reshape Input
             # tokens_batch = tokens_batch.reshape([-1, tokens_batch.shape[0]])
@@ -118,9 +118,11 @@ class TritonPythonModel:
 
             # Create output tensors. You need pb_utils.Tensor
             # objects to create pb_utils.InferenceResponse.
-            output_tensor = pb_utils.Tensor(
-                'OUTPUT',
-                np.array(outputs).astype(self.output_dtype))
+            output_tensor = pb_utils.Tensor("OUTPUT", np.array(outputs).astype(self.output_dtype))
+
+            output_token_ids = pb_utils.Tensor(
+                "OUTPUT_TOKEN_IDS", np.array(tokens_batch).astype(self.output_token_ids_dtype)
+            )
 
             # Create InferenceResponse. You can set an error here in case
             # there was a problem with handling this inference request.
@@ -130,7 +132,8 @@ class TritonPythonModel:
             # pb_utils.InferenceResponse(
             #    output_tensors=..., TritonError("An error occurred"))
             inference_response = pb_utils.InferenceResponse(
-                output_tensors=[output_tensor])
+                output_tensors=[output_tensor, output_token_ids]
+            )
             responses.append(inference_response)
 
         # You should return a list of pb_utils.InferenceResponse. Length
@@ -142,12 +145,12 @@ class TritonPythonModel:
         Implementing `finalize` function is optional. This function allows
         the model to perform any necessary clean ups before exit.
         """
-        print('Cleaning up...')
+        print("Cleaning up...")
 
     def _postprocessing(self, tokens_batch):
         outputs = []
         for beam_tokens in tokens_batch:
             for tokens in beam_tokens:
                 output = self.tokenizer.decode(tokens)
-                outputs.append(output.encode('utf8'))
+                outputs.append(output.encode("utf8"))
         return outputs
