@@ -56,40 +56,34 @@ class TritonPythonModel:
           * model_name: Model name
         """
         # Parse model configs
-        model_config = json.loads(args['model_config'])
-        tokenizer_dir = model_config['parameters']['tokenizer_dir'][
-            'string_value']
-        tokenizer_type = model_config['parameters']['tokenizer_type'][
-            'string_value']
+        model_config = json.loads(args["model_config"])
+        tokenizer_dir = model_config["parameters"]["tokenizer_dir"]["string_value"]
+        tokenizer_type = model_config["parameters"]["tokenizer_type"]["string_value"]
 
-        if tokenizer_type == 't5':
-            self.tokenizer = T5Tokenizer(vocab_file=tokenizer_dir,
-                                         padding_side='left')
-        elif tokenizer_type == 'auto':
-            self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir,
-                                                           padding_side='left')
-        elif tokenizer_type == 'llama':
+        if tokenizer_type == "t5":
+            self.tokenizer = T5Tokenizer(vocab_file=tokenizer_dir, padding_side="left")
+        elif tokenizer_type == "auto":
+            self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir, padding_side="left")
+        elif tokenizer_type == "llama":
             self.tokenizer = LlamaTokenizer.from_pretrained(
-                tokenizer_dir, legacy=False, padding_side='left')
+                tokenizer_dir, legacy=False, padding_side="left"
+            )
         else:
-            raise AttributeError(
-                f'Unexpected tokenizer type: {tokenizer_type}')
+            raise AttributeError(f"Unexpected tokenizer type: {tokenizer_type}")
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
-        self.pad_id = self.tokenizer.encode(self.tokenizer.pad_token,
-                                            add_special_tokens=False)[0]
+        self.pad_id = self.tokenizer.encode(self.tokenizer.pad_token, add_special_tokens=False)[0]
 
         # Parse model output configs and convert Triton types to numpy types
-        input_names = [
-            "INPUT_ID", "REQUEST_INPUT_LEN", "BAD_WORDS_IDS", "STOP_WORDS_IDS"
-        ]
+        input_names = ["INPUT_ID", "REQUEST_INPUT_LEN", "BAD_WORDS_IDS", "STOP_WORDS_IDS"]
         for input_name in input_names:
             setattr(
                 self,
                 input_name.lower() + "_dtype",
                 pb_utils.triton_string_to_numpy(
-                    pb_utils.get_output_config_by_name(
-                        model_config, input_name)['data_type']))
+                    pb_utils.get_output_config_by_name(model_config, input_name)["data_type"]
+                ),
+            )
 
     def execute(self, requests):
         """`execute` must be implemented in every Python model. `execute`
@@ -117,15 +111,15 @@ class TritonPythonModel:
         # and create a pb_utils.InferenceResponse for each of them.
         for idx, request in enumerate(requests):
             # Get input tensors
-            query = pb_utils.get_input_tensor_by_name(request,
-                                                      'QUERY').as_numpy()
+            query = pb_utils.get_input_tensor_by_name(request, "QUERY").as_numpy()
             request_output_len = pb_utils.get_input_tensor_by_name(
-                request, 'REQUEST_OUTPUT_LEN').as_numpy()
+                request, "REQUEST_OUTPUT_LEN"
+            ).as_numpy()
 
-            bad_words_dict = pb_utils.get_input_tensor_by_name(
-                request, 'BAD_WORDS_DICT').as_numpy()
+            bad_words_dict = pb_utils.get_input_tensor_by_name(request, "BAD_WORDS_DICT").as_numpy()
             stop_words_dict = pb_utils.get_input_tensor_by_name(
-                request, 'STOP_WORDS_DICT').as_numpy()
+                request, "STOP_WORDS_DICT"
+            ).as_numpy()
 
             # Preprocessing input data.
             input_id, request_input_len = self._create_request(query)
@@ -135,17 +129,15 @@ class TritonPythonModel:
             # Create output tensors. You need pb_utils.Tensor
             # objects to create pb_utils.InferenceResponse.
             input_id_tensor = pb_utils.Tensor(
-                'INPUT_ID',
-                np.array(input_id).astype(self.input_id_dtype))
+                "INPUT_ID", np.array(input_id).astype(self.input_id_dtype)
+            )
             request_input_len_tensor = pb_utils.Tensor(
-                'REQUEST_INPUT_LEN',
-                np.array(request_input_len).astype(
-                    self.request_input_len_dtype))
-            request_output_len_tensor = pb_utils.Tensor(
-                'REQUEST_OUTPUT_LEN', request_output_len)
-            bad_words_ids_tensor = pb_utils.Tensor('BAD_WORDS_IDS', bad_words)
-            stop_words_ids_tensor = pb_utils.Tensor('STOP_WORDS_IDS',
-                                                    stop_words)
+                "REQUEST_INPUT_LEN",
+                np.array(request_input_len).astype(self.request_input_len_dtype),
+            )
+            request_output_len_tensor = pb_utils.Tensor("REQUEST_OUTPUT_LEN", request_output_len)
+            bad_words_ids_tensor = pb_utils.Tensor("BAD_WORDS_IDS", bad_words)
+            stop_words_ids_tensor = pb_utils.Tensor("STOP_WORDS_IDS", stop_words)
 
             # Create InferenceResponse. You can set an error here in case
             # there was a problem with handling this inference request.
@@ -154,10 +146,15 @@ class TritonPythonModel:
             #
             # pb_utils.InferenceResponse(
             #    output_tensors=..., TritonError("An error occurred"))
-            inference_response = pb_utils.InferenceResponse(output_tensors=[
-                input_id_tensor, bad_words_ids_tensor, stop_words_ids_tensor,
-                request_input_len_tensor, request_output_len_tensor
-            ])
+            inference_response = pb_utils.InferenceResponse(
+                output_tensors=[
+                    input_id_tensor,
+                    bad_words_ids_tensor,
+                    stop_words_ids_tensor,
+                    request_input_len_tensor,
+                    request_output_len_tensor,
+                ]
+            )
             responses.append(inference_response)
 
         # You should return a list of pb_utils.InferenceResponse. Length
@@ -169,28 +166,23 @@ class TritonPythonModel:
         Implementing `finalize` function is optional. This function allows
         the model to perform any necessary clean ups before exit.
         """
-        print('Cleaning up...')
+        print("Cleaning up...")
 
     def _create_request(self, query):
         """
-            query : batch string (2D numpy array)
+        query : batch string (2D numpy array)
         """
-        start_ids = [
-            torch.IntTensor(self.tokenizer.encode(s[0].decode()))
-            for s in query
-        ]
+        start_ids = [torch.IntTensor(self.tokenizer.encode(s[0].decode())) for s in query]
         start_lengths = torch.IntTensor([[len(ids)] for ids in start_ids])
 
-        start_ids = pad_sequence(start_ids,
-                                 batch_first=True,
-                                 padding_value=self.pad_id)
+        start_ids = pad_sequence(start_ids, batch_first=True, padding_value=self.pad_id)
         # input_len = min(start_lengths)
-        #attn_mask = torch.ones((batch_size, input_len, input_len)).tril()
+        # attn_mask = torch.ones((batch_size, input_len, input_len)).tril()
 
         return start_ids, start_lengths
 
     def _to_word_list_format(self, word_dict: List[List[str]]):
-        '''
+        """
         format of word_dict
             len(word_dict) should be same to batch_size
             word_dict[i] means the words for batch i
@@ -198,7 +190,7 @@ class TritonPythonModel:
             This string can contains several sentences and split by ",".
             For example, if word_dict[2] = " I am happy, I am sad", then this function will return
             the ids for two short sentences " I am happy" and " I am sad".
-        '''
+        """
         assert self.tokenizer != None, "need to set tokenizer"
 
         flat_ids = []
@@ -226,10 +218,7 @@ class TritonPythonModel:
         pad_to = max(1, max(len(ids) for ids in flat_ids))
 
         for i, (ids, offs) in enumerate(zip(flat_ids, offsets)):
-            flat_ids[i] = np.pad(ids, (0, pad_to - len(ids)),
-                                 constant_values=0)
-            offsets[i] = np.pad(offs, (0, pad_to - len(offs)),
-                                constant_values=-1)
+            flat_ids[i] = np.pad(ids, (0, pad_to - len(ids)), constant_values=0)
+            offsets[i] = np.pad(offs, (0, pad_to - len(offs)), constant_values=-1)
 
-        return np.array([flat_ids, offsets], dtype="int32").transpose(
-            (1, 0, 2))
+        return np.array([flat_ids, offsets], dtype="int32").transpose((1, 0, 2))
