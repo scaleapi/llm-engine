@@ -12,7 +12,7 @@ def start_gunicorn_server(port: int, num_workers: int, debug: bool) -> None:
     """Starts a GUnicorn server locally."""
     additional_args: List[str] = []
     if debug:
-        additional_args.extend(["--reload", "--reload-engine", "poll", "--timeout", "0"])
+        additional_args.extend(["--reload", "--timeout", "0"])
     print(f"{additional_args=}")
     command = [
         "gunicorn",

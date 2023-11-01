@@ -119,7 +119,6 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         # requests to the same endpoint. This is admittedly a hack until we get proper
         # least-outstanding-requests load balancing to our http endpoints
 
-        num_retries = 1
         try:
             async for attempt in AsyncRetrying(
                 stop=stop_any(
@@ -170,15 +169,12 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 if predict_request.num_retries is None
                 else predict_request.num_retries
             )
-            print(f"{predict_request.dict()=}")
-            print(f"{deployment_url=}")
             response = await self.make_request_with_retries(
                 request_url=deployment_url,
                 payload_json=predict_request.dict(),
                 timeout_seconds=timeout_seconds,
                 num_retries=num_retries,
             )
-            print(f"{response=}")
         except UpstreamServiceError as exc:
             logger.error(f"Service error on sync task: {exc.content!r}")
             try:

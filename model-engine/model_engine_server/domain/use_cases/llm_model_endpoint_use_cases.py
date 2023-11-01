@@ -1787,12 +1787,11 @@ class CompletionStreamV1UseCase:
             elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
                 if res.status == TaskStatus.SUCCESS and result is not None:
                     num_completion_tokens += 1
-                    print(f"{result=}")
                     yield CompletionStreamV1Response(
                         request_id=request_id,
                         output=CompletionStreamOutput(
                             text=result["result"]["text_output"],
-                            finished=result["result"]["sequence_end"],
+                            finished=False,  # Tracked by https://github.com/NVIDIA/TensorRT-LLM/issues/240
                             num_completion_tokens=num_completion_tokens,
                         ),
                     )
