@@ -14,9 +14,14 @@ from model_engine_server.common.dtos.llms import (
 )
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Response, TaskStatus
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.domain.entities import ModelEndpoint, ModelEndpointType
+from model_engine_server.domain.entities import (
+    LLMInferenceFramework,
+    ModelEndpoint,
+    ModelEndpointType,
+)
 from model_engine_server.domain.exceptions import (
     EndpointUnsupportedInferenceTypeException,
+    InvalidInferenceFrameworkImageTagException,
     InvalidRequestException,
     LLMFineTuningQuotaReached,
     ObjectHasInvalidValueException,
@@ -145,6 +150,53 @@ async def test_create_model_endpoint_use_case_success(
         owner=user.team_id, name=create_llm_model_endpoint_request_llama_2.name
     )
     assert "--max-total-tokens" in bundle.flavor.command[-1] and "4096" in bundle.flavor.command[-1]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "valid, inference_framework, inference_framework_image_tag",
+    [
+        (False, LLMInferenceFramework.TEXT_GENERATION_INFERENCE, "0.9.2"),
+        (True, LLMInferenceFramework.TEXT_GENERATION_INFERENCE, "0.9.3"),
+        (False, LLMInferenceFramework.VLLM, "0.1.6"),
+        (True, LLMInferenceFramework.VLLM, "0.1.3.6"),
+    ],
+)
+async def test_create_model_bundle_inference_framework_image_tag_validation(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    create_llm_model_endpoint_text_generation_inference_request_streaming: CreateLLMModelEndpointV1Request,
+    valid,
+    inference_framework,
+    inference_framework_image_tag,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+
+    use_case = CreateLLMModelEndpointV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+
+    request = create_llm_model_endpoint_text_generation_inference_request_streaming.copy()
+    request.inference_framework = inference_framework
+    request.inference_framework_image_tag = inference_framework_image_tag
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    if valid:
+        await use_case.execute(user=user, request=request)
+    else:
+        with pytest.raises(InvalidInferenceFrameworkImageTagException):
+            await use_case.execute(user=user, request=request)
 
 
 @pytest.mark.asyncio
