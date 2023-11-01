@@ -24,7 +24,6 @@ def get_cmd(world_size, tritonserver, model_repo, http_port):
     cmd = "mpirun --allow-run-as-root "
     for i in range(world_size):
         cmd += f" -n 1 {tritonserver} --model-repository={model_repo} --http-address ipv6:[::1] --http-port {http_port} --disable-auto-complete-config --backend-config=python,shm-region-prefix-name=prefix{i}_ : "
-    cmd += "&"
     return cmd
 
 
