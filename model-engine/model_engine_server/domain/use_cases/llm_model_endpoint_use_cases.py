@@ -1039,7 +1039,6 @@ class CompletionSyncV1UseCase:
         with_token_probs: Optional[bool],
     ) -> CompletionOutput:
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
-
         if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
             completion_token_count = len(model_output["token_probs"]["tokens"])
             tokens = None
@@ -1070,7 +1069,7 @@ class CompletionSyncV1UseCase:
                     raise InvalidRequestException(model_output.get("error"))  # trigger a 400
                 else:
                     raise UpstreamServiceError(
-                        status_code=500, content=bytes(model_output["error"])
+                        status_code=500, content=bytes(model_output["error"], "utf-8")
                     )
 
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
