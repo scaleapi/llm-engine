@@ -13,7 +13,6 @@ def start_gunicorn_server(port: int, num_workers: int, debug: bool) -> None:
     additional_args: List[str] = []
     if debug:
         additional_args.extend(["--reload", "--timeout", "0"])
-    print(f"{additional_args=}")
     command = [
         "gunicorn",
         "--bind",

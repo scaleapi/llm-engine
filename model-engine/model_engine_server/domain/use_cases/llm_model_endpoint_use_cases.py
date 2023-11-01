@@ -1297,7 +1297,7 @@ class CompletionSyncV1UseCase:
 
             inference_request = SyncEndpointPredictV1Request(
                 args=args,
-                num_retries=1,
+                num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
@@ -1404,7 +1404,7 @@ class CompletionSyncV1UseCase:
                 ),
             )
         elif endpoint_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
-            light_llm_args: Any = {
+            lightllm_args: Any = {
                 "inputs": request.prompt,
                 "parameters": {
                     "max_new_tokens": request.max_new_tokens,
@@ -1414,17 +1414,17 @@ class CompletionSyncV1UseCase:
             }
             # TODO: implement stop sequences
             if request.temperature > 0:
-                light_llm_args["parameters"]["temperature"] = request.temperature
-                light_llm_args["parameters"]["do_sample"] = True
-                light_llm_args["top_k"] = request.top_k
-                light_llm_args["top_p"] = request.top_p
+                lightllm_args["parameters"]["temperature"] = request.temperature
+                lightllm_args["parameters"]["do_sample"] = True
+                lightllm_args["top_k"] = request.top_k
+                lightllm_args["top_p"] = request.top_p
             else:
-                light_llm_args["parameters"]["do_sample"] = False
+                lightllm_args["parameters"]["do_sample"] = False
             if request.return_token_log_probs:
-                light_llm_args["parameters"]["return_details"] = True
+                lightllm_args["parameters"]["return_details"] = True
 
             inference_request = SyncEndpointPredictV1Request(
-                args=light_llm_args,
+                args=lightllm_args,
                 num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
