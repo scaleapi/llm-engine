@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 import pytz
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
@@ -78,7 +78,21 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 from sse_starlette.sse import EventSourceResponse
 
-llm_router_v1 = APIRouter(prefix="/v1/llm")
+
+async def record_route_call(
+    request: Request,
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
+):
+    route = f"{request.method}_{request.url.path}".lower()
+    model_name = request.query_params.get("model_endpoint_name", None)
+
+    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
+        route=route, metadata=MetricMetadata(user=auth, model_name=model_name)
+    )
+
+
+llm_router_v1 = APIRouter(prefix="/v1/llm", dependencies=[Depends(record_route_call)])
 logger = make_logger(logger_name())
 
 
@@ -119,9 +133,6 @@ async def create_model_endpoint(
     """
     Creates an LLM endpoint for the current user.
     """
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "create_model_endpoint", MetricMetadata(user=auth)
-    )
     add_trace_resource_name("llm_model_endpoints_post")
     logger.info(f"POST /llm/model-endpoints with {request} for {auth}")
     try:
@@ -176,9 +187,6 @@ async def list_model_endpoints(
     """
     Lists the LLM model endpoints owned by the current owner, plus all public_inference LLMs.
     """
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "list_model_endpoints", MetricMetadata(user=auth)
-    )
     add_trace_resource_name("llm_model_endpoints_get")
     logger.info(f"GET /llm/model-endpoints?name={name}&order_by={order_by} for {auth}")
     use_case = ListLLMModelEndpointsV1UseCase(
@@ -198,9 +206,6 @@ async def get_model_endpoint(
     """
     Describe the LLM Model endpoint with given name.
     """
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "get_model_endpoint", MetricMetadata(user=auth)
-    )
     add_trace_resource_name("llm_model_endpoints_name_get")
     logger.info(f"GET /llm/model-endpoints/{model_endpoint_name} for {auth}")
     try:
@@ -225,9 +230,6 @@ async def create_completion_sync_task(
     """
     Runs a sync prompt completion on an LLM.
     """
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "create_completion_sync_task", MetricMetadata(user=auth, model_name=model_endpoint_name)
-    )
     add_trace_resource_name("llm_completion_sync_post")
     logger.info(
         f"POST /completion_sync with {request} to endpoint {model_endpoint_name} for {auth}"
@@ -273,9 +275,6 @@ async def create_completion_stream_task(
     """
     Runs a stream prompt completion on an LLM.
     """
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "create_completion_stream_task", MetricMetadata(user=auth, model_name=model_endpoint_name)
-    )
     add_trace_resource_name("llm_completion_stream_post")
     logger.info(
         f"POST /completion_stream with {request} to endpoint {model_endpoint_name} for {auth}"
@@ -312,9 +311,6 @@ async def create_fine_tune(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> CreateFineTuneResponse:
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "create_fine_tune", MetricMetadata(user=auth)
-    )
     add_trace_resource_name("fine_tunes_create")
     logger.info(f"POST /fine-tunes with {request} for {auth}")
     try:
@@ -344,9 +340,6 @@ async def get_fine_tune(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> GetFineTuneResponse:
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "get_fine_tune", MetricMetadata(user=auth)
-    )
     add_trace_resource_name("fine_tunes_get")
     logger.info(f"GET /fine-tunes/{fine_tune_id} for {auth}")
     try:
@@ -366,9 +359,6 @@ async def list_fine_tunes(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> ListFineTunesResponse:
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "list_fine_tunes", MetricMetadata(user=auth)
-    )
     add_trace_resource_name("fine_tunes_list")
     logger.info(f"GET /fine-tunes for {auth}")
     use_case = ListFineTunesV1UseCase(
@@ -383,9 +373,6 @@ async def cancel_fine_tune(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> CancelFineTuneResponse:
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "cancel_fine_tune", MetricMetadata(user=auth)
-    )
     add_trace_resource_name("fine_tunes_cancel")
     logger.info(f"PUT /fine-tunes/{fine_tune_id}/cancel for {auth}")
     try:
@@ -406,9 +393,6 @@ async def get_fine_tune_events(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> GetFineTuneEventsResponse:
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "get_fine_tune_events", MetricMetadata(user=auth)
-    )
     add_trace_resource_name("fine_tunes_events_get")
     logger.info(f"GET /fine-tunes/{fine_tune_id}/events for {auth}")
     try:
@@ -430,9 +414,6 @@ async def download_model_endpoint(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> ModelDownloadResponse:
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "download_model_endpoint", MetricMetadata(user=auth)
-    )
     add_trace_resource_name("model_endpoints_download")
     logger.info(f"POST /model-endpoints/download with {request} for {auth}")
     try:
@@ -457,9 +438,6 @@ async def delete_llm_model_endpoint(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> DeleteLLMEndpointResponse:
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        "delete_llm_model_endpoint", MetricMetadata(user=auth)
-    )
     add_trace_resource_name("llm_model_endpoints_delete")
     logger.info(f"DELETE /model-endpoints/{model_endpoint_name} for {auth}")
     try:
