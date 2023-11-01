@@ -33,7 +33,7 @@ from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
     LLMMetadata,
@@ -72,7 +72,7 @@ from .model_endpoint_use_cases import (
     validate_post_inference_hooks,
 )
 
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 _SUPPORTED_MODEL_NAMES = {
     LLMInferenceFramework.DEEPSPEED: {
@@ -105,6 +105,8 @@ _SUPPORTED_MODEL_NAMES = {
         "code-llama-7b": "codellama/CodeLlama-7b-hf",
         "code-llama-13b": "codellama/CodeLlama-13b-hf",
         "code-llama-34b": "codellama/CodeLlama-34b-hf",
+        "llm-jp-13b-instruct-full": "llm-jp/llm-jp-13b-instruct-full-jaster-v1.0",
+        "llm-jp-13b-instruct-full-dolly": "llm-jp/llm-jp-13b-instruct-full-dolly-oasst-v1.0",
     },
     LLMInferenceFramework.VLLM: {
         "mpt-7b": "mosaicml/mpt-7b",
@@ -124,6 +126,12 @@ _SUPPORTED_MODEL_NAMES = {
         "mistral-7b-instruct": "mistralai/Mistral-7B-Instruct-v0.1",
         "falcon-180b": "tiiuae/falcon-180B",
         "falcon-180b-chat": "tiiuae/falcon-180B-chat",
+        "code-llama-7b": "codellama/CodeLlama-7b-hf",
+        "code-llama-13b": "codellama/CodeLlama-13b-hf",
+        "code-llama-34b": "codellama/CodeLlama-34b-hf",
+        "mammoth-coder-llama-2-7b": "TIGER-Lab/MAmmoTH-Coder-7B",
+        "mammoth-coder-llama-2-13b": "TIGER-Lab/MAmmoTH-Coder-13B",
+        "mammoth-coder-llama-2-34b": "TIGER-Lab/MAmmoTH-Coder-34B",
     },
     LLMInferenceFramework.LIGHTLLM: {
         "llama-7b": "decapoda-research/llama-7b-hf",
@@ -141,6 +149,20 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
     LLMInferenceFramework.TEXT_GENERATION_INFERENCE: [Quantization.BITSANDBYTES],
     LLMInferenceFramework.VLLM: [Quantization.AWQ],
     LLMInferenceFramework.LIGHTLLM: [],
+}
+
+# We need a dict where if we need to override we can
+# NOTE: These are in *descending* order of priority. e.g. if you see 'mammoth-coder'
+# you'll use that override and not listen to the 'llama-2' override
+_VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
+    "mammoth-coder": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
+    # Based on config here: https://huggingface.co/TIGER-Lab/MAmmoTH-Coder-7B/blob/main/config.json#L12
+    # Can also see 13B, 34B there too
+    "code-llama": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
+    # Based on config here: https://huggingface.co/codellama/CodeLlama-7b-hf/blob/main/config.json#L12
+    # Can also see 13B, 34B there too
+    "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
+    "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
 }
 
 
@@ -514,13 +536,14 @@ class CreateLLMModelEndpointV1UseCase:
     ):
         command = []
 
-        max_num_batched_tokens = 2560  # vLLM's default
-        max_model_len = None
-        if "llama-2" in model_name:
-            max_num_batched_tokens = 4096  # Need to be bigger than model's context window
-        if "mistral" in model_name:
-            max_num_batched_tokens = 8000
-            max_model_len = 8000
+        max_num_batched_tokens: Optional[int] = 2560  # vLLM's default
+        max_model_len: Optional[int] = None
+
+        for key, value in _VLLM_MODEL_LENGTH_OVERRIDES.items():
+            if key in model_name:
+                max_model_len = value["max_model_len"]
+                max_num_batched_tokens = value["max_num_batched_tokens"]
+                break
 
         subcommands = []
         if checkpoint_path is not None:
@@ -696,7 +719,7 @@ class CreateLLMModelEndpointV1UseCase:
         ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
                 raise ObjectHasInvalidValueException(
-                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference and vLLM."
+                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM and LightLLM."
                 )
 
         bundle = await self.create_model_bundle(

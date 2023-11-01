@@ -99,13 +99,13 @@ def test_parse_mem_request():
 @pytest.mark.parametrize(
     "input_value",
     [
-        "1",
-        "1.5",
-        "500m",
-        "5500m",
+        ("1", "1"),
+        ("1.5", "2"),
+        ("500m", "1"),
+        ("5500m", "6"),
     ],
 )
 def test_get_target_concurrency_to_per_worker_value(input_value):
     assert get_target_concurrency_from_per_worker_value(
-        parse_cpu_request(str(get_per_worker_value_from_target_concurrency(input_value)))
-    ) == parse_cpu_request(input_value)
+        parse_cpu_request(str(get_per_worker_value_from_target_concurrency(input_value[0])))
+    ) == parse_cpu_request(input_value[1])

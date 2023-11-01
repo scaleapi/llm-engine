@@ -1,7 +1,7 @@
 import asyncio
 import os
 from dataclasses import dataclass
-from typing import Callable, Iterator, Optional
+from typing import Callable, Optional
 
 import aioredis
 from fastapi import Depends, HTTPException, status
@@ -16,7 +16,7 @@ from model_engine_server.core.auth.fake_authentication_repository import (
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
-    filename_wo_ext,
+    logger_name,
     make_logger,
 )
 from model_engine_server.db.base import SessionAsync, SessionReadOnlyAsync
@@ -26,6 +26,7 @@ from model_engine_server.domain.gateways import (
     FileStorageGateway,
     LLMArtifactGateway,
     ModelPrimitiveGateway,
+    MonitoringMetricsGateway,
     TaskQueueGateway,
 )
 from model_engine_server.domain.repositories import (
@@ -100,7 +101,7 @@ from model_engine_server.infra.services.live_llm_model_endpoint_service import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 AUTH = HTTPBasic(auto_error=False)
 
@@ -134,6 +135,24 @@ class ExternalInterfaces:
     cron_job_gateway: CronJobGateway
 
 
+def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
+    monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
+    return monitoring_metrics_gateway
+
+
+def get_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
+    try:
+        from plugins.dependencies import (
+            get_monitoring_metrics_gateway as get_custom_monitoring_metrics_gateway,
+        )
+
+        return get_custom_monitoring_metrics_gateway()
+    except ModuleNotFoundError:
+        return get_default_monitoring_metrics_gateway()
+    finally:
+        pass
+
+
 def _get_external_interfaces(
     read_only: bool, session: Callable[[], AsyncSession]
 ) -> ExternalInterfaces:
@@ -144,7 +163,7 @@ def _get_external_interfaces(
     redis_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS)
     redis_24h_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS_24H)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
-    monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
+    monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     model_endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         session=session,
@@ -300,12 +319,21 @@ async def get_external_interfaces_read_only():
         pass
 
 
-def get_auth_repository() -> Iterator[AuthenticationRepository]:
+def get_default_auth_repository() -> AuthenticationRepository:
+    auth_repo = FakeAuthenticationRepository()
+    return auth_repo
+
+
+async def get_auth_repository():
     """
     Dependency for an AuthenticationRepository. This implementation returns a fake repository.
     """
     try:
-        yield FakeAuthenticationRepository()
+        from plugins.dependencies import get_auth_repository as get_custom_auth_repository
+
+        yield get_custom_auth_repository()
+    except ModuleNotFoundError:
+        yield get_default_auth_repository()
     finally:
         pass
 
@@ -318,15 +346,15 @@ async def verify_authentication(
     Verifies the authentication headers and returns a (user_id, team_id) auth tuple. Otherwise,
     raises a 401.
     """
-    user_id = credentials.username if credentials is not None else None
-    if user_id is None:
+    username = credentials.username if credentials is not None else None
+    if username is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No user id was passed in",
+            detail="No authentication was passed in",
             headers={"WWW-Authenticate": "Basic"},
         )
 
-    auth = await auth_repo.get_auth_from_user_id_async(user_id=user_id)
+    auth = await auth_repo.get_auth_from_username_async(username=username)
 
     if not auth:
         raise HTTPException(

@@ -49,4 +49,6 @@ class ECRDockerRepository(DockerRepository):
             build_args=build_args,
             cache_name=hmi_config.docker_image_layer_cache_repository,
         )
-        return BuildImageResponse(status=build_result.status, logs=build_result.logs)
+        return BuildImageResponse(
+            status=build_result.status, logs=build_result.logs, job_name=build_result.job_name
+        )

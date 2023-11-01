@@ -125,8 +125,8 @@ podAffinity:
 
 {{- define "modelEngine.baseServiceTemplateEnv" -}}
 env:
-  - name: DATADOG_TRACE_ENABLED
-    value: "${DATADOG_TRACE_ENABLED}"
+  - name: DD_TRACE_ENABLED
+    value: "${DD_TRACE_ENABLED}"
   - name: DD_REMOTE_CONFIGURATION_ENABLED
     value: "false"
   - name: DD_SERVICE
@@ -187,8 +187,8 @@ env:
 
 {{- define "modelEngine.baseForwarderTemplateEnv" -}}
 env:
-  - name: DATADOG_TRACE_ENABLED
-    value: "${DATADOG_TRACE_ENABLED}"
+  - name: DD_TRACE_ENABLED
+    value: "${DD_TRACE_ENABLED}"
   - name: DD_REMOTE_CONFIGURATION_ENABLED
     value: "false"
   - name: DD_SERVICE
@@ -235,8 +235,8 @@ env:
 
 {{- define "modelEngine.serviceEnvBase" }}
 env:
-  - name: DATADOG_TRACE_ENABLED
-    value: "{{ .Values.datadog_trace_enabled }}"
+  - name: DD_TRACE_ENABLED
+    value: "{{ .Values.dd_trace_enabled }}"
   - name: DD_REMOTE_CONFIGURATION_ENABLED
     value: "false"
   - name: DD_ENV

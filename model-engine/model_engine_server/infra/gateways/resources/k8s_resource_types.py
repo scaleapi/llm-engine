@@ -10,6 +10,7 @@ from model_engine_server.common.resource_limits import (
     FORWARDER_CPU_USAGE,
     FORWARDER_MEMORY_USAGE,
     FORWARDER_STORAGE_USAGE,
+    FORWARDER_WORKER_COUNT,
 )
 from model_engine_server.common.serialization_utils import python_json_to_b64
 from model_engine_server.core.config import infra_config
@@ -105,7 +106,7 @@ class _BaseDeploymentArguments(_BaseEndpointArguments):
     PRIORITY: str
     IMAGE: str
     IMAGE_HASH: str
-    DATADOG_TRACE_ENABLED: str
+    DD_TRACE_ENABLED: str
     CPUS: str
     MEMORY: str
     STORAGE_DICT: DictStrStr
@@ -136,6 +137,7 @@ class _SyncRunnableImageDeploymentArguments(TypedDict):
     """Keyword-arguments for substituting into sync deployment templates."""
 
     FORWARDER_PORT: int
+    FORWARDER_WORKER_COUNT: int
 
 
 class _StreamingDeploymentArguments(TypedDict):
@@ -143,6 +145,7 @@ class _StreamingDeploymentArguments(TypedDict):
 
     FORWARDER_PORT: int
     STREAMING_PREDICT_ROUTE: str
+    FORWARDER_WORKER_COUNT: int
 
 
 class _RunnableImageDeploymentArguments(_BaseDeploymentArguments):
@@ -493,9 +496,9 @@ def get_endpoint_resource_arguments_from_request(
 
     change_cause_message = (
         f"Deployment at {datetime.utcnow()} UTC. "
-        f"Using deployment constructed from model bundle ID: {model_bundle.id}, "
-        f"model bundle name: {model_bundle.name}, "
-        f"endpoint ID: {model_endpoint_record.id}"
+        f"Using deployment constructed from model bundle ID {model_bundle.id}, "
+        f"model bundle name {model_bundle.name}, "
+        f"endpoint ID {model_endpoint_record.id}"
     )
 
     priority = LAUNCH_DEFAULT_PRIORITY_CLASS
@@ -507,7 +510,7 @@ def get_endpoint_resource_arguments_from_request(
     # In Circle CI, we use Redis on localhost instead of SQS
     broker_name = BrokerName.SQS.value if not CIRCLECI else BrokerName.REDIS.value
     broker_type = BrokerType.SQS.value if not CIRCLECI else BrokerType.REDIS.value
-    datadog_trace_enabled = hmi_config.datadog_trace_enabled
+    dd_trace_enabled = hmi_config.dd_trace_enabled
     if broker_type == BrokerType.REDIS.value:
         sqs_queue_url = ""
 
@@ -570,7 +573,7 @@ def get_endpoint_resource_arguments_from_request(
             PRIORITY=priority,
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
-            DATADOG_TRACE_ENABLED=datadog_trace_enabled,
+            DD_TRACE_ENABLED=dd_trace_enabled,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -618,7 +621,7 @@ def get_endpoint_resource_arguments_from_request(
             PRIORITY=priority,
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
-            DATADOG_TRACE_ENABLED=datadog_trace_enabled,
+            DD_TRACE_ENABLED=dd_trace_enabled,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -668,7 +671,7 @@ def get_endpoint_resource_arguments_from_request(
             PRIORITY=priority,
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
-            DATADOG_TRACE_ENABLED=datadog_trace_enabled,
+            DD_TRACE_ENABLED=dd_trace_enabled,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -691,6 +694,7 @@ def get_endpoint_resource_arguments_from_request(
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Streaming Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
         )
     elif endpoint_resource_name == "deployment-runnable-image-streaming-gpu":
         assert isinstance(flavor, StreamingEnhancedRunnableImageFlavor)
@@ -712,7 +716,7 @@ def get_endpoint_resource_arguments_from_request(
             PRIORITY=priority,
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
-            DATADOG_TRACE_ENABLED=datadog_trace_enabled,
+            DD_TRACE_ENABLED=dd_trace_enabled,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -735,6 +739,7 @@ def get_endpoint_resource_arguments_from_request(
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Streaming Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             # GPU Deployment Arguments
             GPU_TYPE=build_endpoint_request.gpu_type.value,
             GPUS=build_endpoint_request.gpus,
@@ -758,7 +763,7 @@ def get_endpoint_resource_arguments_from_request(
             PRIORITY=priority,
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
-            DATADOG_TRACE_ENABLED=datadog_trace_enabled,
+            DD_TRACE_ENABLED=dd_trace_enabled,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -780,6 +785,7 @@ def get_endpoint_resource_arguments_from_request(
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
         )
     elif endpoint_resource_name == "deployment-runnable-image-sync-gpu":
         assert isinstance(flavor, RunnableImageLike)
@@ -801,7 +807,7 @@ def get_endpoint_resource_arguments_from_request(
             PRIORITY=priority,
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
-            DATADOG_TRACE_ENABLED=datadog_trace_enabled,
+            DD_TRACE_ENABLED=dd_trace_enabled,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -823,6 +829,7 @@ def get_endpoint_resource_arguments_from_request(
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             # GPU Deployment Arguments
             GPU_TYPE=build_endpoint_request.gpu_type.value,
             GPUS=build_endpoint_request.gpus,
@@ -846,7 +853,7 @@ def get_endpoint_resource_arguments_from_request(
             PRIORITY=priority,
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
-            DATADOG_TRACE_ENABLED=datadog_trace_enabled,
+            DD_TRACE_ENABLED=dd_trace_enabled,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -902,7 +909,7 @@ def get_endpoint_resource_arguments_from_request(
             PRIORITY=priority,
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
-            DATADOG_TRACE_ENABLED=datadog_trace_enabled,
+            DD_TRACE_ENABLED=dd_trace_enabled,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -960,7 +967,7 @@ def get_endpoint_resource_arguments_from_request(
             PRIORITY=priority,
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
-            DATADOG_TRACE_ENABLED=datadog_trace_enabled,
+            DD_TRACE_ENABLED=dd_trace_enabled,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -982,6 +989,7 @@ def get_endpoint_resource_arguments_from_request(
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             # Triton Deployment Arguments
             TRITON_MODEL_REPOSITORY=flavor.triton_model_repository,
             TRITON_CPUS=str(flavor.triton_num_cpu),
@@ -1011,7 +1019,7 @@ def get_endpoint_resource_arguments_from_request(
             PRIORITY=priority,
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
-            DATADOG_TRACE_ENABLED=datadog_trace_enabled,
+            DD_TRACE_ENABLED=dd_trace_enabled,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -1033,6 +1041,7 @@ def get_endpoint_resource_arguments_from_request(
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             # GPU Deployment Arguments
             GPU_TYPE=build_endpoint_request.gpu_type.value,
             GPUS=build_endpoint_request.gpus,

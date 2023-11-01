@@ -24,7 +24,7 @@ from model_engine_server.common.env_vars import (
 )
 from model_engine_server.common.serialization_utils import b64_to_python_json, str_to_bool
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     ModelEndpointConfig,
     ModelEndpointDeploymentState,
@@ -52,7 +52,7 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
 from packaging import version
 from pydantic.utils import deep_update
 
-logger = make_logger(filename_wo_ext(__file__))
+logger = make_logger(logger_name())
 
 HTTP_PORT = 5000
 
@@ -60,7 +60,7 @@ HTTP_PORT = 5000
 # and where the user actually owns the files
 BASE_PATH_IN_ENDPOINT = "/app"
 
-DATADOG_ENV_VAR = {"DATADOG_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
+DATADOG_ENV_VAR = {"DD_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
 
 _lazy_load_kubernetes_clients = True
 _kubernetes_apps_api = None
@@ -236,7 +236,7 @@ def add_datadog_env_to_main_container(deployment_template: Dict[str, Any]) -> No
     user_container_envs.extend(
         [
             {
-                "name": "DATADOG_TRACE_ENABLED",
+                "name": "DD_TRACE_ENABLED",
                 "value": "false" if CIRCLECI else "true",
             },
             {

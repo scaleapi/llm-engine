@@ -17,6 +17,7 @@ class BuildImageRequest(BaseModel):
 class BuildImageResponse(BaseModel):
     status: bool
     logs: str
+    job_name: str
 
 
 # TODO: We may want to add a DTO for streaming logs from the docker build to users.

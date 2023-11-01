@@ -19,7 +19,7 @@ from model_engine_server.common.dtos.model_bundles import (
     ModelBundleV1Response,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import filename_wo_ext, make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
     DockerImageNotFoundException,
     ObjectHasInvalidValueException,
@@ -35,7 +35,7 @@ from model_engine_server.domain.use_cases.model_bundle_use_cases import (
 )
 
 model_bundle_router_v1 = APIRouter(prefix="/v1")
-logger = make_logger(filename_wo_ext(__name__))
+logger = make_logger(logger_name())
 
 
 @model_bundle_router_v1.post("/model-bundles", response_model=CreateModelBundleV1Response)
