@@ -7,7 +7,8 @@ from typing import Optional
 class User:
     user_id: str
     team_id: str
-    is_privileged_user: bool
+    email: Optional[str] = None
+    is_privileged_user: bool = False
 
 
 class AuthenticationRepository(ABC):

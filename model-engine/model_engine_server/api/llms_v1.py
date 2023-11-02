@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 import pytz
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
@@ -58,6 +58,7 @@ from model_engine_server.domain.exceptions import (
     ObjectNotFoundException,
     UpstreamServiceError,
 )
+from model_engine_server.domain.gateways.monitoring_metrics_gateway import MetricMetadata
 from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
     CancelFineTuneV1UseCase,
     CreateFineTuneV1UseCase,
@@ -77,7 +78,21 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 from sse_starlette.sse import EventSourceResponse
 
-llm_router_v1 = APIRouter(prefix="/v1/llm")
+
+async def record_route_call(
+    request: Request,
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
+):
+    route = f"{request.method}_{request.url.path}".lower()
+    model_name = request.query_params.get("model_endpoint_name", None)
+
+    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
+        route, MetricMetadata(user=auth, model_name=model_name)
+    )
+
+
+llm_router_v1 = APIRouter(prefix="/v1/llm", dependencies=[Depends(record_route_call)])
 logger = make_logger(logger_name())
 
 
