@@ -20,8 +20,8 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
 )
 from model_engine_server.domain.exceptions import (
+    DockerImageNotFoundException,
     EndpointUnsupportedInferenceTypeException,
-    InvalidInferenceFrameworkImageTagException,
     InvalidRequestException,
     LLMFineTuningQuotaReached,
     ObjectHasInvalidValueException,
@@ -167,6 +167,7 @@ async def test_create_model_bundle_inference_framework_image_tag_validation(
     fake_model_bundle_repository,
     fake_model_endpoint_service,
     fake_docker_repository_image_always_exists,
+    fake_docker_repository_image_never_exists,
     fake_model_primitive_gateway,
     fake_llm_artifact_gateway,
     create_llm_model_endpoint_text_generation_inference_request_streaming: CreateLLMModelEndpointV1Request,
@@ -186,6 +187,7 @@ async def test_create_model_bundle_inference_framework_image_tag_validation(
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
         llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
 
     request = create_llm_model_endpoint_text_generation_inference_request_streaming.copy()
@@ -195,7 +197,8 @@ async def test_create_model_bundle_inference_framework_image_tag_validation(
     if valid:
         await use_case.execute(user=user, request=request)
     else:
-        with pytest.raises(InvalidInferenceFrameworkImageTagException):
+        use_case.docker_repository = fake_docker_repository_image_never_exists
+        with pytest.raises(DockerImageNotFoundException):
             await use_case.execute(user=user, request=request)
 
 

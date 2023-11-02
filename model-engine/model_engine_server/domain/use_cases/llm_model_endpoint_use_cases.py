@@ -47,9 +47,9 @@ from model_engine_server.domain.entities import (
     StreamingEnhancedRunnableImageFlavor,
 )
 from model_engine_server.domain.exceptions import (
+    DockerImageNotFoundException,
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
-    InvalidInferenceFrameworkImageTagException,
     InvalidRequestException,
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
@@ -58,6 +58,7 @@ from model_engine_server.domain.exceptions import (
 )
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
 from model_engine_server.domain.repositories import ModelBundleRepository
+from model_engine_server.domain.repositories.docker_repository import DockerRepository
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
 
@@ -74,52 +75,6 @@ from .model_endpoint_use_cases import (
 )
 
 logger = make_logger(logger_name())
-
-_VALID_FRAMEWORK_IMAGE_TAGS = {
-    # setting this to empty for now since no one uses deepspeed
-    LLMInferenceFramework.DEEPSPEED: [],
-    LLMInferenceFramework.TEXT_GENERATION_INFERENCE: [
-        "0.9.4.1",
-        "0.9.4",
-        "0.9.3-launch_s3",
-        "0.9.3",
-        "0.9.1-launch_s3",
-        "0.9.1",
-        "ipv6",
-        "ipv6-0",
-        "0.8",
-    ],
-    LLMInferenceFramework.VLLM: [
-        "0.2.1.post1",
-        "0.2.1",
-        "0.2.0",
-        "0.1.7-awq",
-        "0.1.5",
-        "0.1.7",
-        "0.1.3.10",
-        "0.1.3.9",
-        "0.1.3.8",
-        "0.1.3.7",
-        "0.1.3.6",
-        "0.1.3.5",
-        "0.1.3.4",
-        "0.1.3.3",
-        "0.1.3.2",
-        "0.1.3.1",
-        "0.1.3",
-    ],
-    LLMInferenceFramework.LIGHTLLM: [
-        "0.0.9",
-        "0.0.8",
-        "0.0.7",
-        "0.0.6",
-        "0.0.5",
-        "0.0.4",
-        "0.0.3",
-        "0.0.2",
-        "0.0.1",
-    ],
-}
 
 _SUPPORTED_MODEL_NAMES = {
     LLMInferenceFramework.DEEPSPEED: {
@@ -285,12 +240,14 @@ class CreateLLMModelEndpointV1UseCase:
         model_bundle_repository: ModelBundleRepository,
         model_endpoint_service: ModelEndpointService,
         llm_artifact_gateway: LLMArtifactGateway,
+        docker_repository: DockerRepository,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_model_bundle_use_case = create_model_bundle_use_case
         self.model_bundle_repository = model_bundle_repository
         self.model_endpoint_service = model_endpoint_service
         self.llm_artifact_gateway = llm_artifact_gateway
+        self.docker_repository = docker_repository
 
     async def create_model_bundle(
         self,
@@ -306,13 +263,15 @@ class CreateLLMModelEndpointV1UseCase:
         checkpoint_path: Optional[str],
     ) -> ModelBundle:
         if source == LLMSource.HUGGING_FACE:
-            # validate the image tag / framework pair
-            if framework != LLMInferenceFramework.DEEPSPEED and framework_image_tag not in _VALID_FRAMEWORK_IMAGE_TAGS[framework]:  # type: ignore
-                raise InvalidInferenceFrameworkImageTagException(
-                    f"Valid image tags for framework {framework} are {_VALID_FRAMEWORK_IMAGE_TAGS[framework]}"
-                )
-
             if framework == LLMInferenceFramework.DEEPSPEED:
+                if not self.docker_repository.image_exists(
+                    image_tag=framework_image_tag,
+                    repository_name="instant-llm",
+                ):
+                    raise DockerImageNotFoundException(
+                        repository="instant-llm",
+                        tag=framework_image_tag,
+                    )
                 bundle_id = await self.create_deepspeed_bundle(
                     user,
                     model_name,
@@ -321,6 +280,14 @@ class CreateLLMModelEndpointV1UseCase:
                     endpoint_name,
                 )
             elif framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+                if not self.docker_repository.image_exists(
+                    image_tag=framework_image_tag,
+                    repository_name=hmi_config.tgi_repository,
+                ):
+                    raise DockerImageNotFoundException(
+                        repository=hmi_config.tgi_repository,
+                        tag=framework_image_tag,
+                    )
                 bundle_id = await self.create_text_generation_inference_bundle(
                     user,
                     model_name,
@@ -331,6 +298,14 @@ class CreateLLMModelEndpointV1UseCase:
                     checkpoint_path,
                 )
             elif framework == LLMInferenceFramework.VLLM:
+                if not self.docker_repository.image_exists(
+                    image_tag=framework_image_tag,
+                    repository_name=hmi_config.vllm_repository,
+                ):
+                    raise DockerImageNotFoundException(
+                        repository=hmi_config.vllm_repository,
+                        tag=framework_image_tag,
+                    )
                 bundle_id = await self.create_vllm_bundle(
                     user,
                     model_name,
@@ -349,6 +324,14 @@ class CreateLLMModelEndpointV1UseCase:
                     num_shards,
                     checkpoint_path,
                 )
+                if not self.docker_repository.image_exists(
+                    image_tag=framework_image_tag,
+                    repository_name=hmi_config.lightllm_repository,
+                ):
+                    raise DockerImageNotFoundException(
+                        repository=hmi_config.lightllm_repository,
+                        tag=framework_image_tag,
+                    )
             else:
                 raise ObjectHasInvalidValueException(
                     f"Framework {framework} is not supported for source {source}."
