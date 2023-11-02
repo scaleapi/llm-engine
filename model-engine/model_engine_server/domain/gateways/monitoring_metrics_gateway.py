@@ -7,6 +7,15 @@ docker build vs other errors
 """
 
 from abc import ABC, abstractmethod
+from typing import Optional
+
+from model_engine_server.core.auth.authentication_repository import User
+from pydantic import BaseModel
+
+
+class MetricMetadata(BaseModel):
+    user: User
+    model_name: Optional[str]
 
 
 class MonitoringMetricsGateway(ABC):
@@ -64,3 +73,11 @@ class MonitoringMetricsGateway(ABC):
         Missed database cache metric
 
         """
+
+    @abstractmethod
+    def emit_route_call_metric(self, route: str, metadata: MetricMetadata):
+        """
+        Route call metric
+
+        """
+        pass
