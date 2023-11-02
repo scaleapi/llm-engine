@@ -12,7 +12,6 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_resource_name
 from model_engine_server.common.dtos.llms import (
     CancelFineTuneResponse,
     CompletionStreamV1Request,
@@ -133,7 +132,6 @@ async def create_model_endpoint(
     """
     Creates an LLM endpoint for the current user.
     """
-    add_trace_resource_name("llm_model_endpoints_post")
     logger.info(f"POST /llm/model-endpoints with {request} for {auth}")
     try:
         create_model_bundle_use_case = CreateModelBundleV2UseCase(
@@ -187,7 +185,6 @@ async def list_model_endpoints(
     """
     Lists the LLM model endpoints owned by the current owner, plus all public_inference LLMs.
     """
-    add_trace_resource_name("llm_model_endpoints_get")
     logger.info(f"GET /llm/model-endpoints?name={name}&order_by={order_by} for {auth}")
     use_case = ListLLMModelEndpointsV1UseCase(
         llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
@@ -206,7 +203,6 @@ async def get_model_endpoint(
     """
     Describe the LLM Model endpoint with given name.
     """
-    add_trace_resource_name("llm_model_endpoints_name_get")
     logger.info(f"GET /llm/model-endpoints/{model_endpoint_name} for {auth}")
     try:
         use_case = GetLLMModelEndpointByNameV1UseCase(
@@ -230,7 +226,6 @@ async def create_completion_sync_task(
     """
     Runs a sync prompt completion on an LLM.
     """
-    add_trace_resource_name("llm_completion_sync_post")
     logger.info(
         f"POST /completion_sync with {request} to endpoint {model_endpoint_name} for {auth}"
     )
@@ -275,7 +270,6 @@ async def create_completion_stream_task(
     """
     Runs a stream prompt completion on an LLM.
     """
-    add_trace_resource_name("llm_completion_stream_post")
     logger.info(
         f"POST /completion_stream with {request} to endpoint {model_endpoint_name} for {auth}"
     )
@@ -311,7 +305,6 @@ async def create_fine_tune(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> CreateFineTuneResponse:
-    add_trace_resource_name("fine_tunes_create")
     logger.info(f"POST /fine-tunes with {request} for {auth}")
     try:
         use_case = CreateFineTuneV1UseCase(
@@ -340,7 +333,6 @@ async def get_fine_tune(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> GetFineTuneResponse:
-    add_trace_resource_name("fine_tunes_get")
     logger.info(f"GET /fine-tunes/{fine_tune_id} for {auth}")
     try:
         use_case = GetFineTuneV1UseCase(
@@ -359,7 +351,6 @@ async def list_fine_tunes(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> ListFineTunesResponse:
-    add_trace_resource_name("fine_tunes_list")
     logger.info(f"GET /fine-tunes for {auth}")
     use_case = ListFineTunesV1UseCase(
         llm_fine_tuning_service=external_interfaces.llm_fine_tuning_service,
@@ -373,7 +364,6 @@ async def cancel_fine_tune(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> CancelFineTuneResponse:
-    add_trace_resource_name("fine_tunes_cancel")
     logger.info(f"PUT /fine-tunes/{fine_tune_id}/cancel for {auth}")
     try:
         use_case = CancelFineTuneV1UseCase(
@@ -393,7 +383,6 @@ async def get_fine_tune_events(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> GetFineTuneEventsResponse:
-    add_trace_resource_name("fine_tunes_events_get")
     logger.info(f"GET /fine-tunes/{fine_tune_id}/events for {auth}")
     try:
         use_case = GetFineTuneEventsV1UseCase(
@@ -414,7 +403,6 @@ async def download_model_endpoint(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> ModelDownloadResponse:
-    add_trace_resource_name("model_endpoints_download")
     logger.info(f"POST /model-endpoints/download with {request} for {auth}")
     try:
         use_case = ModelDownloadV1UseCase(
@@ -438,7 +426,6 @@ async def delete_llm_model_endpoint(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> DeleteLLMEndpointResponse:
-    add_trace_resource_name("llm_model_endpoints_delete")
     logger.info(f"DELETE /model-endpoints/{model_endpoint_name} for {auth}")
     try:
         use_case = DeleteLLMEndpointByNameUseCase(

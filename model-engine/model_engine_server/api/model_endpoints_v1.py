@@ -12,7 +12,6 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_resource_name
 from model_engine_server.common.dtos.model_endpoints import (
     CreateModelEndpointV1Request,
     CreateModelEndpointV1Response,
@@ -57,7 +56,6 @@ async def create_model_endpoint(
     """
     Creates a Model for the current user.
     """
-    add_trace_resource_name("model_endpoints_post")
     logger.info(f"POST /model-endpoints with {request} for {auth}")
     try:
         use_case = CreateModelEndpointV1UseCase(
@@ -104,7 +102,6 @@ async def list_model_endpoints(
     """
     Lists the Models owned by the current owner.
     """
-    add_trace_resource_name("model_endpoints_get")
     logger.info(f"GET /model-endpoints?name={name}&order_by={order_by} for {auth}")
     use_case = ListModelEndpointsV1UseCase(
         model_endpoint_service=external_interfaces.model_endpoint_service,
@@ -123,7 +120,6 @@ async def get_model_endpoint(
     """
     Describe the Model endpoint with given ID.
     """
-    add_trace_resource_name("model_endpoints_id_get")
     logger.info(f"GET /model-endpoints/{model_endpoint_id} for {auth}")
     try:
         use_case = GetModelEndpointByIdV1UseCase(
@@ -149,7 +145,6 @@ async def update_model_endpoint(
     """
     Lists the Models owned by the current owner.
     """
-    add_trace_resource_name("model_endpoints_id_put")
     logger.info(f"PUT /model-endpoints/{model_endpoint_id} with {request} for {auth}")
     try:
         use_case = UpdateModelEndpointByIdV1UseCase(
@@ -192,7 +187,6 @@ async def delete_model_endpoint(
     """
     Lists the Models owned by the current owner.
     """
-    add_trace_resource_name("model_endpoints_id_delete")
     logger.info(f"DELETE /model-endpoints/{model_endpoint_id} for {auth}")
     try:
         use_case = DeleteModelEndpointByIdV1UseCase(
