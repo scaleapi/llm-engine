@@ -7,7 +7,6 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_resource_name
 from model_engine_server.common.dtos.files import (
     DeleteFileResponse,
     GetFileContentResponse,
@@ -39,7 +38,6 @@ async def upload_file(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> UploadFileResponse:
-    add_trace_resource_name("files_upload")
     logger.info(f"POST /files with filename {file.filename} for {auth}")
     use_case = UploadFileUseCase(
         file_storage_gateway=external_interfaces.file_storage_gateway,
@@ -57,7 +55,6 @@ async def get_file(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> GetFileResponse:
-    add_trace_resource_name("files_get")
     logger.info(f"GET /files/{file_id} for {auth}")
     try:
         use_case = GetFileUseCase(
@@ -76,7 +73,6 @@ async def list_files(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> ListFilesResponse:
-    add_trace_resource_name("files_list")
     logger.info(f"GET /files for {auth}")
     use_case = ListFilesUseCase(
         file_storage_gateway=external_interfaces.file_storage_gateway,
@@ -90,7 +86,6 @@ async def delete_file(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> DeleteFileResponse:
-    add_trace_resource_name("files_delete")
     logger.info(f"DELETE /files/{file_id} for {auth}")
     try:
         use_case = DeleteFileUseCase(
@@ -113,7 +108,6 @@ async def get_file_content(
     """
     Describe the LLM Model endpoint with given name.
     """
-    add_trace_resource_name("files_content_get")
     logger.info(f"GET /files/{file_id}/content for {auth}")
     try:
         use_case = GetFileContentUseCase(

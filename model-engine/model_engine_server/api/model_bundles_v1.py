@@ -9,7 +9,6 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_resource_name
 from model_engine_server.common.dtos.model_bundles import (
     CloneModelBundleV1Request,
     CreateModelBundleV1Request,
@@ -48,7 +47,6 @@ async def create_model_bundle(
     Creates a ModelBundle for the current user.
     """
     logger.info(f"POST /model-bundles with {request} for {auth}")
-    add_trace_resource_name("model_bundles_post")
     try:
         use_case = CreateModelBundleV1UseCase(
             model_bundle_repository=external_interfaces.model_bundle_repository,
@@ -84,7 +82,6 @@ async def clone_model_bundle_with_changes(
     """
     Creates a ModelBundle by cloning an existing one and then applying changes on top.
     """
-    add_trace_resource_name("model_bundles_clone")
     try:
         use_case = CloneModelBundleV1UseCase(
             model_bundle_repository=external_interfaces.model_bundle_repository,
@@ -107,7 +104,6 @@ async def list_model_bundles(
     """
     Lists the ModelBundles owned by the current owner.
     """
-    add_trace_resource_name("model_bundles_get")
     logger.info(f"GET /model-bundles?model_name={model_name}&order_by={order_by} for {auth}")
     use_case = ListModelBundlesV1UseCase(
         model_bundle_repository=external_interfaces.model_bundle_repository
@@ -124,7 +120,6 @@ async def get_latest_model_bundle(
     """
     Gets the latest Model Bundle with the given name owned by the current owner.
     """
-    add_trace_resource_name("model_bundles_latest_get")
     logger.info(f"GET /model-bundles/latest?model_name={model_name} for {auth}")
     try:
         use_case = GetLatestModelBundleByNameV1UseCase(
@@ -149,7 +144,6 @@ async def get_model_bundle(
     """
     Gets the details for a given ModelBundle owned by the current owner.
     """
-    add_trace_resource_name("model_bundles_id_get")
     logger.info(f"GET /model-bundles/{model_bundle_id} for {auth}")
     try:
         use_case = GetModelBundleByIdV1UseCase(
