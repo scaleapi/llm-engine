@@ -256,6 +256,8 @@ env:
     value: {{ .Values.aws.profileName }}
   - name: ECR_READ_AWS_PROFILE
     value: {{ .Values.aws.profileName }}
+  - name: DB_SECRET_AWS_PROFILE
+    value: {{ .Values.aws.profileName }}
   - name: S3_WRITE_AWS_PROFILE
     value: {{ .Values.aws.s3WriteProfileName }}
   {{- end }}
