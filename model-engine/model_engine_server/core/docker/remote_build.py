@@ -124,6 +124,7 @@ def start_build_job(
     path_to_dockerfile: str,
     repotags: Iterable[str],
     use_cache: bool,
+    cache_name: str,
     build_args: Optional[Dict[str, str]] = None,
     custom_tags: Optional[Dict[str, str]] = None,
 ) -> str:
@@ -172,7 +173,7 @@ def start_build_job(
             S3_BUCKET=S3_BUCKET,
             S3_FILE=s3_file_name,
             USE_CACHE="true" if use_cache else "false",
-            CACHE_REPO=f"{infra_config().docker_repo_prefix}/kaniko-cache",
+            CACHE_REPO=f"{infra_config().docker_repo_prefix}/{cache_name}",
             AWS_ACCESS_KEY_ID=aws_access_key_id,
             AWS_SECRET_ACCESS_KEY=aws_secret_access_key,
             NAMESPACE=NAMESPACE,
@@ -196,15 +197,21 @@ def start_build_job(
             os.makedirs("/tmp")
         pip_conf_file = "/tmp/.codeartifact-pip-conf"
         aws_profile = infra_config().profile_ml_worker
-        subprocess.check_output(
-            [
-                f"AWS_PROFILE={aws_profile} python scripts_py3/scale_scripts/exe/maybe_refresh_codeartifact.py --export {pip_conf_file}"
-            ],
-            cwd=str(MODELS_ROOT),
-            shell=True,
-        )
-        with open(pip_conf_file) as f_conf:
-            pip_conf_base64 = b64encode(f_conf.read().encode("utf-8")).decode("utf-8")
+        try:
+            # nosemgrep
+            subprocess.check_output(
+                [
+                    f"AWS_PROFILE={aws_profile} python scripts_py3/scale_scripts/exe/maybe_refresh_codeartifact.py --export {pip_conf_file}"
+                ],
+                cwd=str(MODELS_ROOT),
+                shell=True,
+            )
+            with open(pip_conf_file) as f_conf:
+                pip_conf_data = f_conf.read()
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print("WARNING: Failed to refresh CodeArtifact token secret, using empty secret")
+            pip_conf_data = ""
+        pip_conf_base64 = b64encode(pip_conf_data.encode("utf-8")).decode("utf-8")
         data = {"data": {"codeartifact_pip_conf": pip_conf_base64}}
         subprocess.check_output(
             ["kubectl", "patch", "secret", "codeartifact-pip-conf", f"-p={json.dumps(data)}"]
@@ -223,6 +230,7 @@ def build_remote(
     repotags: Union[str, Iterable[str]],
     folders_to_include: Optional[List[str]] = None,
     use_cache: bool = True,
+    cache_name: str = "kaniko-cache",
     ignore_file: Optional[str] = None,
     build_args: Optional[Dict[str, str]] = None,
     custom_tags: Optional[Dict[str, str]] = None,
@@ -284,7 +292,9 @@ def build_remote(
         folders_to_include=folders_to_include,
         ignore_file=ignore_file,
     )
-    return start_build_job(s3_file_name, dockerfile, repotags, use_cache, build_args, custom_tags)
+    return start_build_job(
+        s3_file_name, dockerfile, repotags, use_cache, cache_name, build_args, custom_tags
+    )
 
 
 def verify_and_reformat_as_relative_to(context: str, dockerfile: str) -> str:
@@ -414,6 +424,7 @@ def build_remote_block(
     repotags: Union[str, Iterable[str]],
     folders_to_include: Optional[List[str]] = None,
     use_cache: bool = True,
+    cache_name: str = "kaniko-cache",
     ignore_file: Optional[str] = None,
     build_args: Optional[Dict[str, str]] = None,
     custom_tags: Optional[Dict[str, str]] = None,
@@ -438,6 +449,7 @@ def build_remote_block(
         repotags,
         folders_to_include,
         use_cache,
+        cache_name,
         ignore_file,
         build_args,
         custom_tags,
@@ -522,6 +534,8 @@ def build_remote_wrapper(
     custom_tags = json.loads(custom_tags)
     folders_to_include: Optional[List[str]] = folders.split(",") if folders is not None else None
 
+    cache_name = "kaniko-cache"
+
     build_args = None
     if build_arg:
         build_arg_kvs = [arg.split("=") for arg in build_arg]
@@ -534,6 +548,7 @@ def build_remote_wrapper(
             repotags=repotag,
             folders_to_include=folders_to_include,
             use_cache=not no_cache,
+            cache_name=cache_name,
             ignore_file=dockerignore,
             build_args=build_args,
             custom_tags=custom_tags,
@@ -545,6 +560,7 @@ def build_remote_wrapper(
             repotags=repotag,
             folders_to_include=folders_to_include,
             use_cache=not no_cache,
+            cache_name=cache_name,
             ignore_file=dockerignore,
             build_args=build_args,
             custom_tags=custom_tags,

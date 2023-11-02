@@ -3,6 +3,8 @@ spellbook:
   enabled: false
 redis:
   auth:
+db:
+  runDbInitScript: false
 balloonNodeSelector:
   node-lifecycle: normal
 nodeSelector:

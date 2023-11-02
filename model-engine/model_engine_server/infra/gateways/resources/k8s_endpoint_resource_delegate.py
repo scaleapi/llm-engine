@@ -134,7 +134,6 @@ def get_kubernetes_autoscaling_client():  # pragma: no cover
             _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2Api()
         else:
             _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2beta2Api()
-        _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2beta2Api()
     return _kubernetes_autoscaling_api
 
 
