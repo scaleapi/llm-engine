@@ -7,7 +7,6 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_resource_name
 from model_engine_server.common.dtos.batch_jobs import (
     CreateBatchJobV1Request,
     CreateBatchJobV1Response,
@@ -55,7 +54,6 @@ async def create_batch_job(
     """
     Runs a batch job.
     """
-    add_trace_resource_name("batch_jobs_post")
     logger.info(f"POST /batch-jobs with {request} for {auth}")
     try:
         use_case = CreateBatchJobV1UseCase(
@@ -85,7 +83,6 @@ async def get_batch_job(
     """
     Gets a batch job.
     """
-    add_trace_resource_name("batch_jobs_get")
     logger.info(f"GET /batch-jobs/{batch_job_id} for {auth}")
     try:
         use_case = GetBatchJobV1UseCase(batch_job_service=external_interfaces.batch_job_service)
@@ -107,7 +104,6 @@ async def update_batch_job(
     """
     Updates a batch job.
     """
-    add_trace_resource_name("batch_jobs_put")
     logger.info(f"PUT /batch-jobs/{batch_job_id} for {auth}")
     try:
         use_case = UpdateBatchJobV1UseCase(batch_job_service=external_interfaces.batch_job_service)
@@ -127,7 +123,6 @@ async def create_docker_image_batch_job(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> CreateDockerImageBatchJobV1Response:
-    add_trace_resource_name("batch_jobs_di_create")
     logger.info(f"POST /docker-image-batch-jobs with {request} for {auth}")
     try:
         use_case = CreateDockerImageBatchJobV1UseCase(
@@ -166,7 +161,6 @@ async def get_docker_image_batch_job(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> GetDockerImageBatchJobV1Response:
-    add_trace_resource_name("batch_jobs_di_get")
     logger.info(f"GET /docker-image-batch-jobs/{batch_job_id} for {auth}")
     try:
         use_case = GetDockerImageBatchJobV1UseCase(
@@ -191,7 +185,6 @@ async def list_docker_image_batch_jobs(
     """
     Lists docker image batch jobs spawned by trigger with given ID
     """
-    add_trace_resource_name("batch_jobs_di_get_trigger")
     logger.info(f"GET /docker-image-batch-jobs?trigger_id={trigger_id}")
     try:
         use_case = ListDockerImageBatchJobsV1UseCase(
@@ -212,7 +205,6 @@ async def update_docker_image_batch_job(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> UpdateDockerImageBatchJobV1Response:
-    add_trace_resource_name("batch_jobs_di_put")
     logger.info(f"PUT /docker-image-batch-jobs/{batch_job_id} with {request} for {auth}")
     try:
         use_case = UpdateDockerImageBatchJobV1UseCase(
