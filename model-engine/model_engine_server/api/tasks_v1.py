@@ -6,7 +6,6 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_resource_name
 from model_engine_server.common.dtos.tasks import (
     CreateAsyncTaskV1Response,
     EndpointPredictV1Request,
@@ -49,7 +48,6 @@ async def create_async_inference_task(
     """
     Runs an async inference prediction.
     """
-    add_trace_resource_name("task_async_post")
     logger.info(f"POST /async-tasks {request} to endpoint {model_endpoint_id} for {auth}")
     try:
         use_case = CreateAsyncInferenceTaskV1UseCase(
@@ -79,7 +77,6 @@ def get_async_inference_task(
     """
     Gets the status of an async inference task.
     """
-    add_trace_resource_name("task_async_id_get")
     logger.info(f"GET /async-tasks/{task_id} for {auth}")
     try:
         use_case = GetAsyncInferenceTaskV1UseCase(
@@ -103,7 +100,6 @@ async def create_sync_inference_task(
     """
     Runs a sync inference prediction.
     """
-    add_trace_resource_name("task_sync_post")
     logger.info(f"POST /sync-tasks with {request} to endpoint {model_endpoint_id} for {auth}")
     try:
         use_case = CreateSyncInferenceTaskV1UseCase(
@@ -143,7 +139,6 @@ async def create_streaming_inference_task(
     """
     Runs a streaming inference prediction.
     """
-    add_trace_resource_name("task_streaming_post")
     logger.info(f"POST /streaming-tasks with {request} to endpoint {model_endpoint_id} for {auth}")
     try:
         use_case = CreateStreamingInferenceTaskV1UseCase(
