@@ -243,6 +243,8 @@ data:
               env:
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
               ports:
                 - containerPort: 8000
                   name: http
@@ -271,7 +273,7 @@ data:
                   ${TRITON_STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -285,6 +287,8 @@ data:
               imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
               readinessProbe:
                 httpGet:
                   path: ${HEALTHCHECK_ROUTE}
@@ -309,7 +313,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -565,6 +569,8 @@ data:
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
                 {{- $env_vars := $service_env | fromYaml }}
                 {{- range $env_var := index $env_vars "env" }}
                 {{- $env_var_name := index $env_var "name" }}
@@ -601,7 +607,7 @@ data:
                   memory: 32Gi
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
   {{- range $device := tuple "cpu" "gpu" }}
   docker-image-batch-job-{{- $device }}.yaml: |-
@@ -657,6 +663,8 @@ data:
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
                 {{- $env_vars := $service_env | fromYaml }}
                 {{- range $env_var := index $env_vars "env" }}
                 {{- $env_var_name := index $env_var "name" }}
@@ -684,7 +692,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
@@ -693,6 +701,9 @@ data:
           initContainers:
             - name: input-downloader
               image: {{ $gateway_repository }}:${GIT_TAG}
+              env:
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
               command:
                 - python
                 - -m
@@ -713,7 +724,7 @@ data:
                   memory: 1Gi
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
