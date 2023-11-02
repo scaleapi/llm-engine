@@ -1,6 +1,9 @@
 from collections import defaultdict
 
-from model_engine_server.domain.gateways import MonitoringMetricsGateway
+from model_engine_server.domain.gateways.monitoring_metrics_gateway import (
+    MetricMetadata,
+    MonitoringMetricsGateway,
+)
 
 
 class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
@@ -15,6 +18,7 @@ class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
         self.successful_hook = defaultdict(int)
         self.database_cache_hit = 0
         self.database_cache_miss = 0
+        self.route_call = defaultdict(int)
 
     def reset(self):
         self.attempted_build = 0
@@ -27,6 +31,7 @@ class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
         self.successful_hook = defaultdict(int)
         self.database_cache_hit = 0
         self.database_cache_miss = 0
+        self.route_call = defaultdict(int)
 
     def emit_attempted_build_metric(self):
         self.attempted_build += 1
@@ -57,3 +62,6 @@ class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
 
     def emit_database_cache_miss_metric(self):
         self.database_cache_miss += 1
+
+    def emit_route_call_metric(self, route: str, _metadata: MetricMetadata):
+        self.route_call[route] += 1
