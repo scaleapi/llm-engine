@@ -174,23 +174,22 @@ NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
 
-def _exclude_safetensors_or_bin(model_files: List[str]) -> Optional[str]:
+def _include_safetensors_bin_or_pt(model_files: List[str]) -> Optional[str]:
     """
-    This function is used to determine whether to exclude "*.safetensors" or "*.bin" files
-    based on which file type is present more often in the checkpoint folder. The less
-    frequently present file type is excluded.
-    If both files are equally present, no exclusion string is returned.
+    This function is used to determine whether to include "*.safetensors", "*.bin", or "*.pt" files
+    based on which file type is present most often in the checkpoint folder. The most
+    frequently present file type is included.
+    In case of ties, priority is given to "*.safetensors", then "*.bin", then "*.pt".
     """
-    exclude_str = None
-    if len([f for f in model_files if f.endswith(".safetensors")]) > len(
-        [f for f in model_files if f.endswith(".bin")]
-    ):
-        exclude_str = "*.bin"
-    elif len([f for f in model_files if f.endswith(".safetensors")]) < len(
-        [f for f in model_files if f.endswith(".bin")]
-    ):
-        exclude_str = "*.safetensors"
-    return exclude_str
+    num_safetensors = len([f for f in model_files if f.endswith(".safetensors")])
+    num_bin = len([f for f in model_files if f.endswith(".bin")])
+    num_pt = len([f for f in model_files if f.endswith(".pt")])
+    maximum = max(num_safetensors, num_bin, num_pt)
+    if num_safetensors == maximum:
+        return "*.safetensors"
+    if num_bin == maximum:
+        return "*.bin"
+    return "*.pt"
 
 
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
@@ -436,16 +435,11 @@ class CreateLLMModelEndpointV1UseCase:
             checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
             model_files = [f for f in checkpoint_files if "model" in f]
 
-            exclude_str = _exclude_safetensors_or_bin(model_files)
-
-            if exclude_str is None:
-                subcommands.append(
-                    f"{s5cmd} --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-                )
-            else:
-                subcommands.append(
-                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '{exclude_str}' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-                )
+            include_str = _include_safetensors_bin_or_pt(model_files)
+            file_selection_str = f"--include '*.model' --include '*.json' --include '{include_str}' --exclude 'optimizer*'"
+            subcommands.append(
+                f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+            )
 
         return subcommands
 
