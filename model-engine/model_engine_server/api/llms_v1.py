@@ -43,6 +43,7 @@ from model_engine_server.core.loggers import (
     make_logger,
 )
 from model_engine_server.domain.exceptions import (
+    DockerImageNotFoundException,
     EndpointDeleteFailedException,
     EndpointLabelsException,
     EndpointResourceInvalidRequestException,
@@ -160,6 +161,11 @@ async def create_model_endpoint(
         raise HTTPException(
             status_code=404,
             detail="The specified model bundle could not be found.",
+        ) from exc
+    except DockerImageNotFoundException as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The specified docker image could not be found.",
         ) from exc
 
 
