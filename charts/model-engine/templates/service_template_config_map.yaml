@@ -321,10 +321,6 @@ data:
                 - name: infra-service-config-volume
                   mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
                 {{- end }}
-                # LIRA: For compatibility with runnable image converted from artifactlike bundle
-                - name: config-volume
-                  mountPath: /home/modelengine/.aws/config
-                  subPath: config
                 - name: user-config
                   mountPath: /app/user_config
                   subPath: raw_data
