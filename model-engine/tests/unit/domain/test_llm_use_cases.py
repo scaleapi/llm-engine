@@ -71,6 +71,7 @@ async def test_create_model_endpoint_use_case_success(
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
         llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(user=user, request=create_llm_model_endpoint_request_async)
@@ -224,6 +225,7 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
         llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -279,6 +281,7 @@ async def test_create_llm_model_endpoint_use_case_raises_invalid_value_exception
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
         llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(ObjectHasInvalidValueException):
@@ -308,6 +311,7 @@ async def test_create_llm_model_endpoint_use_case_quantization_exception(
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
         llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(ObjectHasInvalidValueException):
