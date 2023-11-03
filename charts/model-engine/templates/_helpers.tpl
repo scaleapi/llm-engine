@@ -125,8 +125,8 @@ podAffinity:
 
 {{- define "modelEngine.baseServiceTemplateEnv" -}}
 env:
-  - name: DATADOG_TRACE_ENABLED
-    value: "${DATADOG_TRACE_ENABLED}"
+  - name: DD_TRACE_ENABLED
+    value: "${DD_TRACE_ENABLED}"
   - name: DD_REMOTE_CONFIGURATION_ENABLED
     value: "false"
   - name: DD_SERVICE
@@ -187,8 +187,8 @@ env:
 
 {{- define "modelEngine.baseForwarderTemplateEnv" -}}
 env:
-  - name: DATADOG_TRACE_ENABLED
-    value: "${DATADOG_TRACE_ENABLED}"
+  - name: DD_TRACE_ENABLED
+    value: "${DD_TRACE_ENABLED}"
   - name: DD_REMOTE_CONFIGURATION_ENABLED
     value: "false"
   - name: DD_SERVICE
@@ -235,8 +235,8 @@ env:
 
 {{- define "modelEngine.serviceEnvBase" }}
 env:
-  - name: DATADOG_TRACE_ENABLED
-    value: "{{ .Values.datadog_trace_enabled }}"
+  - name: DD_TRACE_ENABLED
+    value: "{{ .Values.dd_trace_enabled }}"
   - name: DD_REMOTE_CONFIGURATION_ENABLED
     value: "false"
   - name: DD_ENV
@@ -255,6 +255,8 @@ env:
   - name: AWS_PROFILE
     value: {{ .Values.aws.profileName }}
   - name: ECR_READ_AWS_PROFILE
+    value: {{ .Values.aws.profileName }}
+  - name: DB_SECRET_AWS_PROFILE
     value: {{ .Values.aws.profileName }}
   - name: S3_WRITE_AWS_PROFILE
     value: {{ .Values.aws.s3WriteProfileName }}

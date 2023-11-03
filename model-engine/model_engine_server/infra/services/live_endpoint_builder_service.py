@@ -8,6 +8,7 @@ from logging import LoggerAdapter
 from typing import Dict, List, Optional, Sequence, Set
 
 from datadog import statsd
+from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
 from model_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointRequest,
@@ -83,7 +84,7 @@ MAX_IMAGE_TAG_LEN = 128
 
 RESTRICTED_ENV_VARS_KEYS = {
     "BASE": [
-        "DATADOG_TRACE_ENABLED",
+        "DD_TRACE_ENABLED",
         "DD_AGENT_HOST",
         "DD_ENV",
         "DD_SERVICE",
@@ -174,7 +175,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         base_image_params = self.get_base_image_params(
                             build_endpoint_request, logger_adapter
                         )
-                        logger.info(f"base_image_params: {base_image_params}")
+                        logger_adapter.info(f"base_image_params: {base_image_params}")
                         base_image = await self._build_image(
                             base_image_params,
                             build_endpoint_request,
@@ -227,7 +228,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                             if os.path.exists(model_bundle_path):
                                 os.remove(model_bundle_path)
                             else:
-                                logger.error(f"No bundle object found at {model_bundle_path}!")
+                                logger_adapter.error(
+                                    f"No bundle object found at {model_bundle_path}!"
+                                )
 
                     except DockerBuildFailedException:
                         log_error("Failed to build base and user docker images")
@@ -493,10 +496,10 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         inference_folder = "model-engine/model_engine_server/inference"
         base_path: str = os.getenv("WORKSPACE")  # type: ignore
 
-        logger.info(f"inference_folder: {inference_folder}")
-        logger.info(f"dockerfile: {inference_folder}/{dockerfile}")
+        logger_adapter.info(f"inference_folder: {inference_folder}")
+        logger_adapter.info(f"dockerfile: {inference_folder}/{dockerfile}")
         return BuildImageRequest(
-            repo="launch/inference",
+            repo=hmi_config.user_inference_base_repository,
             image_tag=resulting_image_tag[:MAX_IMAGE_TAG_LEN],
             aws_profile=ECR_AWS_PROFILE,  # type: ignore
             base_path=base_path,
@@ -527,7 +530,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
             dockerfile = "pytorch_or_tf.user.Dockerfile"
             service_image_tag = self._get_image_tag(base_image_tag, GIT_TAG, requirements_hash)
-            ecr_repo = "hosted-model-inference/async-pytorch"
+            ecr_repo = hmi_config.user_inference_pytorch_repository
         elif isinstance(env_params, TensorflowFramework):
             if build_endpoint_request.gpus > 0:
                 raise NotImplementedError("Tensorflow GPU image not supported yet")
@@ -539,7 +542,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 raise ValueError("Tensorflow version must be specified if the framework is TF.")
             dockerfile = "pytorch_or_tf.user.Dockerfile"
             service_image_tag = self._get_image_tag(tensorflow_version, GIT_TAG, requirements_hash)
-            ecr_repo = "hosted-model-inference/async-tensorflow-cpu"
+            ecr_repo = hmi_config.user_inference_tensorflow_repository
         elif isinstance(env_params, CustomFramework):
             if (
                 env_params.image_tag is None or env_params.image_repository is None
@@ -594,6 +597,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
         bundle_id = model_bundle.id
         service_image_str = "-".join([base_image_params.image_tag, GIT_TAG, bundle_id])
+        # nosemgrep
         service_image_hash = hashlib.md5(str(service_image_str).encode("utf-8")).hexdigest()
         service_image_tag = f"inject-bundle-image-{service_image_hash}"
         ecr_repo = base_image_params.repo
@@ -614,7 +618,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             pass
         _, model_bundle_path = tempfile.mkstemp(dir=bundle_folder, suffix=".zip")
         bundle_url = model_bundle.location
-        logger.info(
+        logger_adapter.info(
             f"Downloading bundle from serialized object at location {bundle_url} to local path {model_bundle_path}"
         )
         with open_wrapper(bundle_url, "rb") as bundle_data:  # type: ignore
@@ -678,6 +682,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     )
                     build_result_status = build_result.status
                     build_result_logs: str = build_result.logs
+                    logger_adapter.info(f"Image Build job: {build_result.job_name}")
                 except Exception:  # noqa
                     build_result_status = False
                     s3_logs_location: Optional[str] = None
@@ -759,8 +764,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         else:
             self.monitoring_metrics_gateway.emit_image_build_cache_hit_metric(image_type)
             logger_adapter.info(
-                f"Image {image_params.repo}:{image_params.image_tag} already exists, "
-                f"skipping build for {endpoint_id=}"
+                f"Image already exists, skipping build. Image={image_params.repo}:{image_params.image_tag}, {endpoint_id=}"
             )
 
         return self.docker_repository.get_image_url(image_params.image_tag, image_params.repo)
@@ -801,6 +805,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
     @staticmethod
     def _get_requirements_hash(requirements: List[str]) -> str:
         """Identifying hash for endpoint's Python requirements."""
+        # nosemgrep
         return hashlib.md5("\n".join(sorted(requirements)).encode("utf-8")).hexdigest()[:6]
 
     @staticmethod

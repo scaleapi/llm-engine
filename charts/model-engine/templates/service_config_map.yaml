@@ -10,7 +10,7 @@ metadata:
     "helm.sh/hook-weight": "-2"
 data:
   launch_service_config: |-
-    datadog_trace_enabled: {{ .Values.datadog_trace_enabled | default false | quote }}
+    dd_trace_enabled: {{ .Values.dd_trace_enabled | default false | quote }}
     {{- with .Values.config.values.launch }}
     {{- range $key, $value := . }}
     {{ $key }}: {{ $value | quote }}
@@ -38,7 +38,7 @@ metadata:
     "helm.sh/hook-weight": "-2"
 data:
   launch_service_config: |-
-    datadog_trace_enabled: {{ .Values.datadog_trace_enabled | default false | quote }}
+    dd_trace_enabled: {{ .Values.dd_trace_enabled | default false | quote }}
     {{- with .Values.config.values.launch }}
     {{- range $key, $value := . }}
     {{ $key }}: {{ $value | quote }}

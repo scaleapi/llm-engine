@@ -52,11 +52,15 @@ cache_redis_url: redis://127.0.0.1:6379/15
 
 s3_file_llm_fine_tune_repository: "s3://model-engine-integration-tests/fine_tune_repository/circleci"
 
-datadog_trace_enabled: false
+dd_trace_enabled: false
 istio_enabled: true
 tgi_repository: "text-generation-inference"
 vllm_repository: "vllm"
 lightllm_repository: "lightllm"
+user_inference_base_repository: "launch/inference"
+user_inference_pytorch_repository: "hosted-model-inference/async-pytorch"
+user_inference_tensorflow_repository: "hosted-model-inference/async-tensorflow-cpu"
+docker_image_layer_cache_repository: "kaniko-cache"
 
 # S3 access
 hf_user_fine_tuned_weights_prefix: "s3://test-bucket"

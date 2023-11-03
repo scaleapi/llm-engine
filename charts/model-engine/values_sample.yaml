@@ -1,24 +1,28 @@
 # This is a YAML-formatted file.
 
 # tag [required] is the LLM Engine docker image tag
-tag: 41ecada1b51ce3a46bbc3190a36ed7890db370d3
+tag: 60ac144c55aad971cdd7f152f4f7816ce2fb7d2f
 # context is a user-specified deployment tag. Can be used to 
 context: production
 image:
   # gatewayRepository [required] is the docker repository to pull the LLM Engine gateway image from
-  gatewayRepository: public.ecr.aws/b2z8n5q1/llm-engine
+  gatewayRepository: public.ecr.aws/b2z8n5q1/model-engine
   # builderRepository [required] is the docker repository to pull the LLM Engine endpoint builder image from
-  builderRepository: public.ecr.aws/b2z8n5q1/llm-engine
+  builderRepository: public.ecr.aws/b2z8n5q1/model-engine
   # cacherRepository [required] is the docker repository to pull the LLM Engine cacher image from
-  cacherRepository: public.ecr.aws/b2z8n5q1/llm-engine
+  cacherRepository: public.ecr.aws/b2z8n5q1/model-engine
   # forwarderRepository [required] is the docker repository to pull the LLM Engine forwarder image from
-  forwarderRepository: public.ecr.aws/b2z8n5q1/llm-engine
+  forwarderRepository: public.ecr.aws/b2z8n5q1/model-engine
   # pullPolicy is the docker image pull policy
   pullPolicy: Always
 
 secrets:
-  # kubernetesDatabaseSecretName [required] is the name of the secret that contains the database credentials
+  # kubernetesDatabaseSecretName or awsDatabaseSecretName [required]
+  # is the name of the secret that contains the database credentials
   kubernetesDatabaseSecretName: llm-engine-postgres-credentials
+
+db:
+  runDbInitScript: false
 
 # serviceAccount [required] specifies the service account for LLM Engine server deployments (e.g gateway, cache, and builder deployments).
 serviceAccount:
@@ -29,10 +33,34 @@ serviceAccount:
     "helm.sh/hook-weight": "-2"
   namespaces: []
 
+imageBuilderServiceAccount:
+  create: true
+  annotations:
+    # eks.amazonaws.com/role-arn [required] is the ARN of the IAM role that the image builder service account will assume. Needs to have ecr permissions
+    eks.amazonaws.com/role-arn: arn:aws:iam::000000000000:role/k8s-main-llm-engine-image-builder
+  # Reads from serviceAccount.namespaces to determine which namespaces to create the image builder service account in
+
 # service specifies the service configuration for the main LLM Engine server. Users should setup their own ingress controller to expose the service.
 service:
   type: ClusterIP
   port: 80
+
+# virtualservice specifies the configuration of an Istio VirtualService
+virtualservice:
+  enabled: true
+  annotations: { }
+  hostDomains:
+    - llm-engine.domain.com
+  gateways:
+    - default/internal-gateway
+
+hostDomain:
+  prefix: http://
+
+# destinationrule specifies the configuration of an Istio DestinationRule
+destinationrule:
+  enabled: true
+  annotations: { }
 
 # replicaCount specifies the amount of replica pods for each deployment
 replicaCount:
@@ -63,6 +91,10 @@ autoscaling:
   prewarming:
     enabled: false
 
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
 # resources specify the k8s resources for LLM Engine server deployments (e.g gateway, cache, and builder deployments)
 resources:
   requests:
@@ -88,6 +120,14 @@ serviceTemplate:
       drop:
         - all
   mountInfraConfig: true
+  # createServiceAccount/serviceAccountName/serviceAccountAnnotations specify whether to create a serviceAccount for
+  # inference pods. Assumes the inference pods run in a separate namespace to the LLM Engine control plane.
+  createServiceAccount: true
+  serviceAccountName: model-engine
+  serviceAccountAnnotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::000000000000:role/llm-engine
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-2"
 
 # config specifes the `data` field of the service config map
 config:
@@ -107,15 +147,16 @@ config:
       redis_host: llm-engine-prod-cache.use1.cache.amazonaws.com
       # s3_bucket [required] is the S3 bucket you wish to connect 
       s3_bucket: "llm-engine"
-    llm_engine:
+    launch:
       # endpoint_namespace [required] is K8s namespace the endpoints will be created in
       endpoint_namespace: llm-engine
       # cache_redis_url [required] is the full url for the redis cluster you wish to connect
       cache_redis_url: redis://llm-engine-prod-cache.use1.cache.amazonaws.com:6379/15
       # s3_file_llm_fine_tuning_job_repository [required] is the S3 URI for the S3 bucket/key that you wish to save fine-tuned assests
       s3_file_llm_fine_tuning_job_repository: "s3://llm-engine/llm-ft-job-repository"
-      # datadog_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
-      datadog_trace_enabled: false
+      # dd_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
+      dd_trace_enabled: false
+      istio_enabled: true
 
       # Asynchronous endpoints configs (coming soon)
       sqs_profile: default
@@ -151,6 +192,17 @@ config:
           "Spellbook-Serve-Endpoint-Name": "${endpoint_name}",
           "Spellbook-Serve-Endpoint-Created-By": "${endpoint_created_by}"
         }
+      billing_queue_arn: "unused"
+      model_primitive_host: "unused"
+      hf_user_fine_tuned_weights_prefix: "s3://llm-engine/fine_tuned_weights"
+
+      tgi_repository: "text-generation-inference"
+      vllm_repository: "vllm"
+      lightllm_repository: "lightllm"
+      user_inference_base_repository: "launch/inference"
+      user_inference_pytorch_repository: "launch/inference/pytorch"
+      user_inference_tensorflow_repository: "launch/inference/tf"
+      docker_image_layer_cache_repository: "launch-docker-build-cache"
 
 # Triton enhanced endpoints (coming soon)
 triton:

@@ -20,6 +20,11 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `flan-t5-xxl`         | ✅                       |                            | deepspeed, text-generation-inference |
 | `mistral-7b`         | ✅                       |   ✅                         | vllm | 
 | `mistral-7b-instruct`         | ✅                       |    ✅                        | vllm |
+| `codellama-7b`         | ✅                       | ✅                           | text-generation-inference, vllm |
+| `codellama-7b-instruct`         | ✅                       | ✅                           | text-generation-inference, vllm |
+| `codellama-13b`         | ✅                       |                            | text-generation-inference, vllm |
+| `codellama-13b-instruct`         | ✅                       |                            | text-generation-inference, vllm |
+| `codellama-34b`         | ✅                       |                            | text-generation-inference, vllm |
 
 ## Usage
 

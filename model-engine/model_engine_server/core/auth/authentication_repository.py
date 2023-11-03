@@ -7,7 +7,8 @@ from typing import Optional
 class User:
     user_id: str
     team_id: str
-    is_privileged_user: bool
+    email: Optional[str] = None
+    is_privileged_user: bool = False
 
 
 class AuthenticationRepository(ABC):
@@ -24,25 +25,13 @@ class AuthenticationRepository(ABC):
         """
 
     @abstractmethod
-    def get_auth_from_user_id(self, user_id: str) -> Optional[User]:
+    def get_auth_from_username(self, username: str) -> Optional[User]:
         """
-        Returns authentication information associated with a given user_id.
-        """
-
-    @abstractmethod
-    def get_auth_from_api_key(self, api_key: str) -> Optional[User]:
-        """
-        Returns authentication information associated with a given api_key.
+        Returns authentication information associated with a given Basic Auth username.
         """
 
     @abstractmethod
-    async def get_auth_from_user_id_async(self, user_id: str) -> Optional[User]:
+    async def get_auth_from_username_async(self, username: str) -> Optional[User]:
         """
-        Returns authentication information associated with a given user_id.
-        """
-
-    @abstractmethod
-    async def get_auth_from_api_key_async(self, api_key: str) -> Optional[User]:
-        """
-        Returns authentication information associated with a given api_key.
+        Returns authentication information associated with a given Basic Auth username.
         """

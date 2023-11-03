@@ -53,10 +53,14 @@ class HostedModelInferenceServiceConfig:
     s3_file_llm_fine_tune_repository: str
     hf_user_fine_tuned_weights_prefix: str
     istio_enabled: bool
-    datadog_trace_enabled: bool
+    dd_trace_enabled: bool
     tgi_repository: str
     vllm_repository: str
     lightllm_repository: str
+    user_inference_base_repository: str
+    user_inference_pytorch_repository: str
+    user_inference_tensorflow_repository: str
+    docker_image_layer_cache_repository: str
 
     @classmethod
     def from_yaml(cls, yaml_path):

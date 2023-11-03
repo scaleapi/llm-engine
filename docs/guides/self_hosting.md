@@ -114,7 +114,7 @@ Below are the configurations to specify in the `values_sample.yaml` file.
 | config.values.llm_engine.endpoint_namespace | K8s namespace the endpoints will be created in | Yes |
 | config.values.llm_engine.cache_redis_url | The full url for the redis cluster you wish to connect | Yes |
 | config.values.llm_engine.s3_file_llm_fine_tuning_job_repository | The S3 URI for the S3 bucket/key that you wish to save fine-tuned assets | Yes |
-| config.values.datadog_trace_enabled | Whether to enable datadog tracing, datadog must be installed in the cluster | No |
+| config.values.dd_trace_enabled | Whether to enable datadog tracing, datadog must be installed in the cluster | No |
 
 ## Play With It
 Once `helm install` succeeds, you can forward port `5000` from a `llm-engine` pod and test sending requests to it.

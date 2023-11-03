@@ -60,7 +60,7 @@ HTTP_PORT = 5000
 # and where the user actually owns the files
 BASE_PATH_IN_ENDPOINT = "/app"
 
-DATADOG_ENV_VAR = {"DATADOG_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
+DATADOG_ENV_VAR = {"DD_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
 
 _lazy_load_kubernetes_clients = True
 _kubernetes_apps_api = None
@@ -134,7 +134,6 @@ def get_kubernetes_autoscaling_client():  # pragma: no cover
             _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2Api()
         else:
             _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2beta2Api()
-        _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2beta2Api()
     return _kubernetes_autoscaling_api
 
 
@@ -237,7 +236,7 @@ def add_datadog_env_to_main_container(deployment_template: Dict[str, Any]) -> No
     user_container_envs.extend(
         [
             {
-                "name": "DATADOG_TRACE_ENABLED",
+                "name": "DD_TRACE_ENABLED",
                 "value": "false" if CIRCLECI else "true",
             },
             {

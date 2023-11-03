@@ -4,7 +4,6 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces,
     verify_authentication,
 )
-from model_engine_server.common.datadog_utils import add_trace_resource_name
 from model_engine_server.common.dtos.triggers import (
     CreateTriggerV1Request,
     CreateTriggerV1Response,
@@ -48,7 +47,6 @@ async def create_trigger(
     """
     Creates and runs a trigger
     """
-    add_trace_resource_name("triggers_post")
     logger.info(f"POST /triggers with {request} for {auth}")
     try:
         use_case = CreateTriggerUseCase(
@@ -102,7 +100,6 @@ async def list_triggers(
     """
     Lists descriptions of all triggers
     """
-    add_trace_resource_name("triggers_get")
     logger.info(f"GET /triggers for {auth}")
     use_case = ListTriggersUseCase(trigger_repository=external_interfaces.trigger_repository)
     return await use_case.execute(user=auth)
@@ -117,7 +114,6 @@ async def get_trigger(
     """
     Describes the trigger with the given ID
     """
-    add_trace_resource_name("triggers_id_get")
     logger.info(f"GET /triggers/{trigger_id} for {auth}")
     try:
         use_case = GetTriggerUseCase(trigger_repository=external_interfaces.trigger_repository)
@@ -136,7 +132,6 @@ async def update_trigger(
     """
     Updates the trigger with the given ID
     """
-    add_trace_resource_name("triggers_id_put")
     logger.info(f"PUT /triggers/{trigger_id} with {request} for {auth}")
     try:
         use_case = UpdateTriggerUseCase(
@@ -162,7 +157,6 @@ async def delete_trigger(
     """
     Deletes the trigger with the given ID
     """
-    add_trace_resource_name("trigger_id_delete")
     logger.info(f"DELETE /triggers/{trigger_id} for {auth}")
     try:
         use_case = DeleteTriggerUseCase(

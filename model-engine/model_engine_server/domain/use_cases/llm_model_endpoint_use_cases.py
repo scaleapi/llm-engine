@@ -102,9 +102,13 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
         "falcon-40b": "tiiuae/falcon-40b",
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
-        "code-llama-7b": "codellama/CodeLlama-7b-hf",
-        "code-llama-13b": "codellama/CodeLlama-13b-hf",
-        "code-llama-34b": "codellama/CodeLlama-34b-hf",
+        "codellama-7b": "codellama/CodeLlama-7b-hf",
+        "codellama-7b-instruct": "codellama/CodeLlama-7b-Instruct-hf",
+        "codellama-13b": "codellama/CodeLlama-13b-hf",
+        "codellama-13b-instruct": "codellama/CodeLlama-13b-Instruct-hf",
+        "codellama-34b": "codellama/CodeLlama-34b-hf",
+        "llm-jp-13b-instruct-full": "llm-jp/llm-jp-13b-instruct-full-jaster-v1.0",
+        "llm-jp-13b-instruct-full-dolly": "llm-jp/llm-jp-13b-instruct-full-dolly-oasst-v1.0",
     },
     LLMInferenceFramework.VLLM: {
         "mpt-7b": "mosaicml/mpt-7b",
@@ -124,9 +128,11 @@ _SUPPORTED_MODEL_NAMES = {
         "mistral-7b-instruct": "mistralai/Mistral-7B-Instruct-v0.1",
         "falcon-180b": "tiiuae/falcon-180B",
         "falcon-180b-chat": "tiiuae/falcon-180B-chat",
-        "code-llama-7b": "codellama/CodeLlama-7b-hf",
-        "code-llama-13b": "codellama/CodeLlama-13b-hf",
-        "code-llama-34b": "codellama/CodeLlama-34b-hf",
+        "codellama-7b": "codellama/CodeLlama-7b-hf",
+        "codellama-7b-instruct": "codellama/CodeLlama-7b-Instruct-hf",
+        "codellama-13b": "codellama/CodeLlama-13b-hf",
+        "codellama-13b-instruct": "codellama/CodeLlama-13b-Instruct-hf",
+        "codellama-34b": "codellama/CodeLlama-34b-hf",
         "mammoth-coder-llama-2-7b": "TIGER-Lab/MAmmoTH-Coder-7B",
         "mammoth-coder-llama-2-13b": "TIGER-Lab/MAmmoTH-Coder-13B",
         "mammoth-coder-llama-2-34b": "TIGER-Lab/MAmmoTH-Coder-34B",
@@ -152,14 +158,14 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
 # We need a dict where if we need to override we can
 # NOTE: These are in *descending* order of priority. e.g. if you see 'mammoth-coder'
 # you'll use that override and not listen to the 'llama-2' override
-_VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, int]] = {
+_VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
     "mammoth-coder": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
     # Based on config here: https://huggingface.co/TIGER-Lab/MAmmoTH-Coder-7B/blob/main/config.json#L12
     # Can also see 13B, 34B there too
     "code-llama": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
     # Based on config here: https://huggingface.co/codellama/CodeLlama-7b-hf/blob/main/config.json#L12
     # Can also see 13B, 34B there too
-    "llama-2": {"max_model_len": 4096, "max_num_batched_tokens": 4096},
+    "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
     "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
 }
 
@@ -534,7 +540,7 @@ class CreateLLMModelEndpointV1UseCase:
     ):
         command = []
 
-        max_num_batched_tokens: int = 2560  # vLLM's default
+        max_num_batched_tokens: Optional[int] = 2560  # vLLM's default
         max_model_len: Optional[int] = None
 
         for key, value in _VLLM_MODEL_LENGTH_OVERRIDES.items():
@@ -717,7 +723,7 @@ class CreateLLMModelEndpointV1UseCase:
         ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
                 raise ObjectHasInvalidValueException(
-                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference and vLLM."
+                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM and LightLLM."
                 )
 
         bundle = await self.create_model_bundle(
