@@ -287,8 +287,6 @@ data:
               imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
-                - name: AWS_CONFIG_FILE
-                  value: "/opt/.aws/config"
               readinessProbe:
                 httpGet:
                   path: ${HEALTHCHECK_ROUTE}
