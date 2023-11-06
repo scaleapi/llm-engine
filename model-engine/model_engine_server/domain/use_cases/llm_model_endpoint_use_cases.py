@@ -365,7 +365,7 @@ class CreateLLMModelEndpointV1UseCase:
                 )
             else:
                 raise ObjectHasInvalidValueException(
-                    f"Not able to load checkpoint path {checkpoint_path}."
+                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
                 )
         else:
             final_weights_folder = _SUPPORTED_MODEL_NAMES[
@@ -599,7 +599,7 @@ class CreateLLMModelEndpointV1UseCase:
                 )
             else:
                 raise ObjectHasInvalidValueException(
-                    f"Not able to load checkpoint path {checkpoint_path}."
+                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
                 )
         else:
             final_weights_folder = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.VLLM][model_name]
@@ -690,7 +690,7 @@ class CreateLLMModelEndpointV1UseCase:
                 )
             else:
                 raise ObjectHasInvalidValueException(
-                    f"Not able to load checkpoint path {checkpoint_path}."
+                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
                 )
         else:
             final_weights_folder = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.VLLM][model_name]
@@ -751,7 +751,7 @@ class CreateLLMModelEndpointV1UseCase:
                 )
             else:
                 raise ObjectHasInvalidValueException(
-                    f"Not able to load checkpoint path {checkpoint_path}."
+                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
                 )
         else:
             raise ObjectHasInvalidValueException(
@@ -1097,7 +1097,7 @@ def validate_and_update_completion_params(
     else:
         if request.return_token_log_probs:
             raise ObjectHasInvalidValueException(
-                "return_token_log_probs are only supported in deepspeed, text-generation-inference, vllm, lightllm."
+                "return_token_log_probs is only supported in deepspeed, text-generation-inference, vllm, lightllm."
             )
 
     return request
