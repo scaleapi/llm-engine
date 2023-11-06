@@ -192,6 +192,23 @@ async def list_model_endpoints(
     return await use_case.execute(user=auth, name=name, order_by=order_by)
 
 
+@llm_router_v1.get("hello", response_model=ListLLMModelEndpointsV1Response)
+async def hello(
+    name: Optional[str] = Query(default=None),
+    order_by: Optional[ModelEndpointOrderBy] = Query(default=None),
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
+) -> ListLLMModelEndpointsV1Response:
+    """
+    Lists the LLM model endpoints owned by the current owner, plus all public_inference LLMs.
+    """
+    logger.info(f"GET /llm/model-endpoints?name={name}&order_by={order_by} for {auth}")
+    use_case = ListLLMModelEndpointsV1UseCase(
+        llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+    )
+    return await use_case.execute(user=auth, name=name, order_by=order_by)
+
+
 @llm_router_v1.get(
     "/model-endpoints/{model_endpoint_name}", response_model=GetLLMModelEndpointV1Response
 )
