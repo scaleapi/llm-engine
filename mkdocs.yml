@@ -88,17 +88,17 @@ markdown_extensions:
   - neoteroi.cards
   - footnotes
 
+watch:
+  - clients/python/llmengine
+
 plugins:
   - search
   - mkdocstrings:
-      watch:
-        - clients/python/llmengine
       handlers:
         python:
           options:
             separate_signature: true
             line_length: 60
-          rendering:
             show_root_heading: true
             show_root_full_path: false
             show_source: false
