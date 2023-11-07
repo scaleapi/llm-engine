@@ -2093,6 +2093,7 @@ def get_repositories_generator_wrapper():
             fake_model_bundle_repository = FakeModelBundleRepository(
                 contents=fake_model_bundle_repository_contents
             )
+            fake_monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
             fake_model_endpoint_record_repository = FakeModelEndpointRecordRepository(
                 contents=fake_model_endpoint_record_repository_contents,
                 model_bundle_repository=fake_model_bundle_repository,
@@ -2176,6 +2177,7 @@ def get_repositories_generator_wrapper():
                 cron_job_gateway=fake_cron_job_gateway,
                 filesystem_gateway=fake_file_system_gateway,
                 llm_artifact_gateway=fake_llm_artifact_gateway,
+                monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
             )
             try:
                 yield repositories
