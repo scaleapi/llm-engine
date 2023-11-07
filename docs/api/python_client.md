@@ -1,13 +1,13 @@
 # 🐍 Python Client API Reference
 
 ::: llmengine.Completion
-    selection:
+    options:
         members:
             - create
             - acreate
 
 ::: llmengine.FineTune
-    selection:
+    options:
         members:
             - create
             - get
@@ -16,7 +16,7 @@
             - cancel
 
 ::: llmengine.Model
-    selection:
+    options:
         members:
             - create
             - get
@@ -25,7 +25,7 @@
             - download
 
 ::: llmengine.File
-    selection:
+    options:
         members:
             - upload
             - get
