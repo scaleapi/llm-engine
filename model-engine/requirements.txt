@@ -133,10 +133,16 @@ exceptiongroup==1.1.3
     #   cattrs
 fastapi==0.78.0
     # via -r model-engine/requirements.in
+filelock==3.13.1
+    # via
+    #   huggingface-hub
+    #   transformers
 frozenlist==1.3.3
     # via
     #   aiohttp
     #   aiosignal
+fsspec==2023.10.0
+    # via huggingface-hub
 gitdb==4.0.10
     # via gitpython
 gitdb2==2.0.6
@@ -160,6 +166,10 @@ hpack==4.0.0
     # via h2
 httptools==0.5.0
     # via -r model-engine/requirements.in
+huggingface-hub==0.17.3
+    # via
+    #   tokenizers
+    #   transformers
 hypercorn==0.14.4
     # via quart
 hyperframe==6.0.1
@@ -249,6 +259,8 @@ mypy-boto3-sqs==1.26.148
     # via boto3-stubs
 mypy-extensions==1.0.0
     # via typing-inspect
+numpy==1.24.4
+    # via transformers
 oauthlib==3.2.2
     # via requests-oauthlib
 orjson==3.8.6
@@ -258,7 +270,9 @@ packaging==23.1
     #   build
     #   ddtrace
     #   deprecation
+    #   huggingface-hub
     #   marshmallow
+    #   transformers
 pep517==0.13.0
     # via build
 pg8000==1.29.8
@@ -314,9 +328,11 @@ python-multipart==0.0.6
     # via -r model-engine/requirements.in
 pyyaml==6.0
     # via
+    #   huggingface-hub
     #   kubeconfig
     #   kubernetes
     #   kubernetes-asyncio
+    #   transformers
 quart==0.18.3
     # via -r model-engine/requirements.in
 readme-renderer==40.0
@@ -327,15 +343,19 @@ referencing==0.30.2
     # via
     #   jsonschema
     #   jsonschema-specifications
+regex==2023.10.3
+    # via transformers
 requests==2.31.0
     # via
     #   -r model-engine/requirements.in
     #   datadog
     #   docker
+    #   huggingface-hub
     #   kubernetes
     #   requests-auth-aws-sigv4
     #   requests-oauthlib
     #   requests-toolbelt
+    #   transformers
     #   twine
 requests-auth-aws-sigv4==0.7
     # via -r model-engine/requirements.in
@@ -355,6 +375,8 @@ rsa==4.9
     # via google-auth
 s3transfer==0.6.1
     # via boto3
+safetensors==0.4.0
+    # via transformers
 scramp==1.4.4
     # via pg8000
 secretstorage==3.3.3
@@ -403,6 +425,8 @@ testing-common-database==2.0.3
     # via testing-postgresql
 testing-postgresql==1.3.0
     # via -r model-engine/requirements.in
+tokenizers==0.14.1
+    # via transformers
 tomli==2.0.1
     # via
     #   build
@@ -411,7 +435,11 @@ tomli==2.0.1
 tqdm==4.65.0
     # via
     #   -r model-engine/requirements.in
+    #   huggingface-hub
+    #   transformers
     #   twine
+transformers==4.34.1
+    # via -r model-engine/requirements.in
 twine==3.7.1
     # via -r model-engine/requirements.in
 types-awscrt==0.16.23
@@ -430,6 +458,7 @@ typing-extensions==4.7.1
     #   cattrs
     #   datadog-api-client
     #   ddtrace
+    #   huggingface-hub
     #   kombu
     #   mypy-boto3-cloudformation
     #   mypy-boto3-dynamodb

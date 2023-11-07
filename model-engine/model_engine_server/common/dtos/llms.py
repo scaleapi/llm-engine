@@ -80,7 +80,7 @@ class GetLLMModelEndpointV1Response(BaseModel):
     """
 
     name: str
-    model_name: Optional[str] = None
+    model_name: str
     source: LLMSource
     status: ModelEndpointStatus
     inference_framework: LLMInferenceFramework
@@ -143,6 +143,7 @@ class TokenOutput(BaseModel):
 
 class CompletionOutput(BaseModel):
     text: str
+    num_prompt_tokens: int
     num_completion_tokens: int
     tokens: Optional[List[TokenOutput]] = None
 
@@ -198,6 +199,7 @@ class CompletionStreamV1Request(BaseModel):
 class CompletionStreamOutput(BaseModel):
     text: str
     finished: bool
+    num_prompt_tokens: Optional[int] = None
     num_completion_tokens: Optional[int] = None
     token: Optional[TokenOutput] = None
 

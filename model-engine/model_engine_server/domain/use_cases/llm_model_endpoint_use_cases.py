@@ -59,6 +59,7 @@ from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifact
 from model_engine_server.domain.repositories import ModelBundleRepository
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
+from transformers import AutoTokenizer
 
 from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
@@ -172,6 +173,24 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
 
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
+
+
+# Hack to count prompt tokens
+tokenizer_cache: Dict[str, AutoTokenizer] = {}
+
+
+def get_tokenizer(model_name: str, inference_framework: LLMInferenceFramework) -> AutoTokenizer:
+    if model_name not in tokenizer_cache:
+        tokenizer_cache[model_name] = AutoTokenizer.from_pretrained(
+            _SUPPORTED_MODEL_NAMES[inference_framework][model_name]
+        )
+    tokenizer = tokenizer_cache[model_name]
+    return tokenizer
+
+
+def count_tokens(input: str, model_name: str, inference_framework: LLMInferenceFramework) -> int:
+    tokenizer = get_tokenizer(model_name, inference_framework)
+    return tokenizer.encode(input)
 
 
 def _exclude_safetensors_or_bin(model_files: List[str]) -> Optional[str]:
@@ -1008,6 +1027,7 @@ class CompletionSyncV1UseCase:
         self,
         model_output: Dict[str, Any],
         model_endpoint: ModelEndpoint,
+        prompt: str,
         with_token_probs: Optional[bool],
     ) -> CompletionOutput:
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
@@ -1019,6 +1039,9 @@ class CompletionSyncV1UseCase:
                 tokens = deepspeed_result_to_tokens(model_output)
             return CompletionOutput(
                 text=model_output["text"],
+                num_prompt_tokens=count_tokens(
+                    prompt, model_content.model_name, LLMInferenceFramework.DEEPSPEED
+                ),
                 num_completion_tokens=completion_token_count,
                 tokens=tokens,
             )
@@ -1032,7 +1055,8 @@ class CompletionSyncV1UseCase:
                     ]
                 return CompletionOutput(
                     text=model_output["generated_text"],
-                    # len(model_output["details"]["prefill"]) does not return the correct value reliably
+                    # len(model_output["details"]["prefill"]) does not return the correct value reliably | <- check this
+                    num_prompt_tokens=len(model_output["details"]["prefill"]),
                     num_completion_tokens=model_output["details"]["generated_tokens"],
                     tokens=tokens,
                 )
@@ -1057,6 +1081,7 @@ class CompletionSyncV1UseCase:
                 ]
             return CompletionOutput(
                 text=model_output["text"],
+                num_prompt_tokens=model_output["count_prompt_tokens"],
                 num_completion_tokens=model_output["count_output_tokens"],
                 tokens=tokens,
             )
@@ -1069,6 +1094,9 @@ class CompletionSyncV1UseCase:
                 ]
             return CompletionOutput(
                 text=model_output["generated_text"][0],
+                num_prompt_tokens=count_tokens(
+                    prompt, model_content.model_name, LLMInferenceFramework.LIGHTLLM
+                ),
                 num_completion_tokens=model_output["count_output_tokens"],
                 tokens=tokens,
             )
@@ -1176,6 +1204,7 @@ class CompletionSyncV1UseCase:
                     output=self.model_output_to_completion_output(
                         predict_result.result["result"][0],
                         model_endpoint,
+                        request.prompt,
                         request.return_token_log_probs,
                     ),
                 )
@@ -1225,7 +1254,7 @@ class CompletionSyncV1UseCase:
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
-                    output, model_endpoint, request.return_token_log_probs
+                    output, model_endpoint, request.prompt, request.return_token_log_probs
                 ),
             )
         elif endpoint_content.inference_framework == LLMInferenceFramework.VLLM:
@@ -1264,7 +1293,7 @@ class CompletionSyncV1UseCase:
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
-                    output, model_endpoint, request.return_token_log_probs
+                    output, model_endpoint, request.prompt, request.return_token_log_probs
                 ),
             )
         elif endpoint_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
@@ -1307,7 +1336,7 @@ class CompletionSyncV1UseCase:
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
-                    output, model_endpoint, request.return_token_log_probs
+                    output, model_endpoint, request.prompt, request.return_token_log_probs
                 ),
             )
         else:
@@ -1399,6 +1428,7 @@ class CompletionStreamV1UseCase:
         request = validated_request
 
         args: Any = None
+        num_prompt_tokens = None
         if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
             args = {
                 "prompts": [request.prompt],
@@ -1413,6 +1443,9 @@ class CompletionStreamV1UseCase:
             if request.stop_sequences is not None:
                 # Deepspeed models only accepts one stop sequence
                 args["stop_sequence"] = request.stop_sequences[0]
+            num_prompt_tokens = count_tokens(
+                request.prompt, model_content.model_name, LLMInferenceFramework.DEEPSPEED
+            )
         elif model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
             args = {
                 "inputs": request.prompt,
@@ -1429,6 +1462,11 @@ class CompletionStreamV1UseCase:
                 args["parameters"]["top_p"] = request.top_p
             else:
                 args["parameters"]["do_sample"] = False
+            num_prompt_tokens = count_tokens(
+                request.prompt,
+                model_content.model_name,
+                LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+            )
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
             args = {
                 "prompt": request.prompt,
@@ -1464,6 +1502,9 @@ class CompletionStreamV1UseCase:
                 args["parameters"]["do_sample"] = False
             if request.return_token_log_probs:
                 args["parameters"]["return_details"] = True
+            num_prompt_tokens = count_tokens(
+                request.prompt, model_content.model_name, LLMInferenceFramework.LIGHTLLM
+            )
         else:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {model_content.inference_framework}"
@@ -1489,6 +1530,7 @@ class CompletionStreamV1UseCase:
                             output=CompletionStreamOutput(
                                 text=result["result"]["token"],
                                 finished=False,
+                                num_prompt_tokens=num_prompt_tokens,
                                 num_completion_tokens=None,
                             ),
                         )
@@ -1501,6 +1543,7 @@ class CompletionStreamV1UseCase:
                             output=CompletionStreamOutput(
                                 text=result["result"]["response"][0]["text"],
                                 finished=True,
+                                num_prompt_tokens=num_prompt_tokens,
                                 num_completion_tokens=completion_token_count,
                             ),
                         )
@@ -1532,6 +1575,7 @@ class CompletionStreamV1UseCase:
                             output=CompletionStreamOutput(
                                 text=result["result"]["token"]["text"],
                                 finished=finished,
+                                num_prompt_tokens=num_prompt_tokens,
                                 num_completion_tokens=num_completion_tokens,
                                 token=token,
                             ),
@@ -1567,6 +1611,7 @@ class CompletionStreamV1UseCase:
                         output=CompletionStreamOutput(
                             text=result["result"]["text"],
                             finished=result["result"]["finished"],
+                            num_prompt_tokens=result["result"]["count_prompt_tokens"],
                             num_completion_tokens=result["result"]["count_output_tokens"],
                             token=token,
                         ),
@@ -1590,6 +1635,7 @@ class CompletionStreamV1UseCase:
                         output=CompletionStreamOutput(
                             text=result["result"]["token"]["text"],
                             finished=result["result"]["finished"],
+                            num_prompt_tokens=num_prompt_tokens,
                             num_completion_tokens=num_completion_tokens,
                             token=token,
                         ),
