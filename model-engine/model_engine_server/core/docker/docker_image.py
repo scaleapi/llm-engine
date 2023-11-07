@@ -158,13 +158,13 @@ def build(
             command=test_command,
             volumes={
                 os.path.join(home_dir, ".aws"): {
-                    "bind": "/root/.aws/config",
+                    "bind": "/opt/.aws/config",
                     "mode": "ro",
                 }
             },
             environment={
                 "AWS_PROFILE": infra_config().profile_ml_worker,
-                "AWS_CONFIG_FILE": "/root/.aws/config",
+                "AWS_CONFIG_FILE": "/opt/.aws/config",
             },
             remove=True,
         )

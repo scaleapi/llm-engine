@@ -384,7 +384,7 @@ volumeMounts:
 {{- define "modelEngine.forwarderVolumeMounts" }}
 volumeMounts:
   - name: config-volume
-    mountPath: /root/.aws/config
+    mountPath: /opt/.aws/config
     subPath: config
   - name: user-config
     mountPath: /workspace/user_config
