@@ -42,7 +42,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     DeleteLLMEndpointByNameUseCase,
     GetLLMModelEndpointByNameV1UseCase,
     ModelDownloadV1UseCase,
-    _exclude_safetensors_or_bin,
+    _include_safetensors_bin_or_pt,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
@@ -1088,37 +1088,31 @@ async def test_delete_public_inference_model_raises_not_authorized(
 
 
 @pytest.mark.asyncio
-async def test_exclude_safetensors_or_bin_majority_bin_returns_exclude_safetensors():
+async def test_include_safetensors_bin_or_pt_majority_safetensors():
+    fake_model_files = ["fake.bin", "fake2.safetensors", "model.json", "optimizer.pt"]
+    assert _include_safetensors_bin_or_pt(fake_model_files) == "*.safetensors"
+
+
+@pytest.mark.asyncio
+async def test_include_safetensors_bin_or_pt_majority_bin():
     fake_model_files = [
         "fake.bin",
         "fake2.bin",
         "fake3.safetensors",
         "model.json",
         "optimizer.pt",
+        "fake4.pt",
     ]
-    assert _exclude_safetensors_or_bin(fake_model_files) == "*.safetensors"
+    assert _include_safetensors_bin_or_pt(fake_model_files) == "*.bin"
 
 
 @pytest.mark.asyncio
-async def test_exclude_safetensors_or_bin_majority_safetensors_returns_exclude_bin():
+async def test_include_safetensors_bin_or_pt_majority_pt():
     fake_model_files = [
         "fake.bin",
         "fake2.safetensors",
-        "fake3.safetensors",
         "model.json",
         "optimizer.pt",
+        "fake3.pt",
     ]
-    assert _exclude_safetensors_or_bin(fake_model_files) == "*.bin"
-
-
-@pytest.mark.asyncio
-async def test_exclude_safetensors_or_bin_equal_bins_and_safetensors_returns_none():
-    fake_model_files = [
-        "fake.bin",
-        "fake2.safetensors",
-        "fake3.safetensors",
-        "fake4.bin",
-        "model.json",
-        "optimizer.pt",
-    ]
-    assert _exclude_safetensors_or_bin(fake_model_files) is None
+    assert _include_safetensors_bin_or_pt(fake_model_files) == "*.pt"
