@@ -358,6 +358,7 @@ async def test_completion_sync_use_case_success(
     )
     assert response_1.output == CompletionOutput(
         text="I am a newbie to the world of programming.",
+        num_prompt_tokens=7,
         num_completion_tokens=11,
         tokens=[
             TokenOutput(token="I", log_prob=-2.3025850929940455),
@@ -471,6 +472,7 @@ async def test_completion_sync_text_generation_inference_use_case_success(
     )
     assert response_1.output == CompletionOutput(
         text=" Deep Learning is a new type of machine learning",
+        num_prompt_tokens=5,
         num_completion_tokens=9,
         tokens=[
             TokenOutput(token=" Deep", log_prob=0.0),

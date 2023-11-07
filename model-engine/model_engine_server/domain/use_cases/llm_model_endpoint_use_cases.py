@@ -184,9 +184,8 @@ def get_tokenizer(model_name: str, inference_framework: LLMInferenceFramework) -
     Get tokenizer for a given model name and inference framework.
     """
     if model_name not in tokenizer_cache:
-        tokenizer_cache[model_name] = AutoTokenizer.from_pretrained(
-            _SUPPORTED_MODEL_NAMES[inference_framework][model_name]
-        )
+        model_location = _SUPPORTED_MODEL_NAMES[inference_framework][model_name]
+        tokenizer_cache[model_name] = AutoTokenizer.from_pretrained(model_location)
     tokenizer = tokenizer_cache[model_name]
     return tokenizer
 
@@ -196,7 +195,7 @@ def count_tokens(input: str, model_name: str, inference_framework: LLMInferenceF
     Count the number of tokens in the input string.
     """
     tokenizer = get_tokenizer(model_name, inference_framework)
-    return tokenizer.encode(input)
+    return len(tokenizer.encode(input))
 
 
 def _include_safetensors_bin_or_pt(model_files: List[str]) -> Optional[str]:
