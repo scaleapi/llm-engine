@@ -203,6 +203,8 @@ env:
         fieldPath: status.hostIP
   - name: AWS_PROFILE
     value: "${AWS_ROLE}"
+  - name: AWS_CONFIG_FILE
+    value: /opt/.aws/config
   - name: RESULTS_S3_BUCKET
     value: "${RESULTS_S3_BUCKET}"
   - name: BASE_PATH
