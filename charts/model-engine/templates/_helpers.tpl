@@ -254,6 +254,8 @@ env:
   {{- if .Values.aws }}
   - name: AWS_PROFILE
     value: {{ .Values.aws.profileName }}
+  - name: AWS_CONFIG_FILE
+    value: /opt/.aws/config
   - name: ECR_READ_AWS_PROFILE
     value: {{ .Values.aws.profileName }}
   - name: DB_SECRET_AWS_PROFILE
