@@ -180,6 +180,9 @@ tokenizer_cache: Dict[str, AutoTokenizer] = {}
 
 
 def get_tokenizer(model_name: str, inference_framework: LLMInferenceFramework) -> AutoTokenizer:
+    """
+    Get tokenizer for a given model name and inference framework.
+    """
     if model_name not in tokenizer_cache:
         tokenizer_cache[model_name] = AutoTokenizer.from_pretrained(
             _SUPPORTED_MODEL_NAMES[inference_framework][model_name]
@@ -189,6 +192,9 @@ def get_tokenizer(model_name: str, inference_framework: LLMInferenceFramework) -
 
 
 def count_tokens(input: str, model_name: str, inference_framework: LLMInferenceFramework) -> int:
+    """
+    Count the number of tokens in the input string.
+    """
     tokenizer = get_tokenizer(model_name, inference_framework)
     return tokenizer.encode(input)
 
