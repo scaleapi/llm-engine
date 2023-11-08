@@ -11,6 +11,7 @@ class LLMInferenceFramework(str, Enum):
     DEEPSPEED = "deepspeed"
     TEXT_GENERATION_INFERENCE = "text_generation_inference"
     VLLM = "vllm"
+    VLLM_GUIDED = "vllm_guided"
     LIGHTLLM = "lightllm"
 
 

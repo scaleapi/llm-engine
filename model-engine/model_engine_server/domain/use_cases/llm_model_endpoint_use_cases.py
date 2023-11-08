@@ -137,6 +137,33 @@ _SUPPORTED_MODEL_NAMES = {
         "mammoth-coder-llama-2-13b": "TIGER-Lab/MAmmoTH-Coder-13B",
         "mammoth-coder-llama-2-34b": "TIGER-Lab/MAmmoTH-Coder-34B",
     },
+    LLMInferenceFramework.VLLM_GUIDED: {
+        "mpt-7b": "mosaicml/mpt-7b",
+        "mpt-7b-instruct": "mosaicml/mpt-7b-instruct",
+        "llama-7b": "decapoda-research/llama-7b-hf",
+        "llama-2-7b": "meta-llama/Llama-2-7b-hf",
+        "llama-2-7b-chat": "meta-llama/Llama-2-7b-chat-hf",
+        "llama-2-13b": "meta-llama/Llama-2-13b-hf",
+        "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
+        "llama-2-70b": "meta-llama/Llama-2-70b-hf",
+        "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
+        "falcon-7b": "tiiuae/falcon-7b",
+        "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
+        "falcon-40b": "tiiuae/falcon-40b",
+        "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
+        "mistral-7b": "mistralai/Mistral-7B-v0.1",
+        "mistral-7b-instruct": "mistralai/Mistral-7B-Instruct-v0.1",
+        "falcon-180b": "tiiuae/falcon-180B",
+        "falcon-180b-chat": "tiiuae/falcon-180B-chat",
+        "codellama-7b": "codellama/CodeLlama-7b-hf",
+        "codellama-7b-instruct": "codellama/CodeLlama-7b-Instruct-hf",
+        "codellama-13b": "codellama/CodeLlama-13b-hf",
+        "codellama-13b-instruct": "codellama/CodeLlama-13b-Instruct-hf",
+        "codellama-34b": "codellama/CodeLlama-34b-hf",
+        "mammoth-coder-llama-2-7b": "TIGER-Lab/MAmmoTH-Coder-7B",
+        "mammoth-coder-llama-2-13b": "TIGER-Lab/MAmmoTH-Coder-13B",
+        "mammoth-coder-llama-2-34b": "TIGER-Lab/MAmmoTH-Coder-34B",
+    },
     LLMInferenceFramework.LIGHTLLM: {
         "llama-7b": "decapoda-research/llama-7b-hf",
         "llama-2-7b": "meta-llama/Llama-2-7b-hf",
@@ -152,6 +179,7 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
     LLMInferenceFramework.DEEPSPEED: [],
     LLMInferenceFramework.TEXT_GENERATION_INFERENCE: [Quantization.BITSANDBYTES],
     LLMInferenceFramework.VLLM: [Quantization.AWQ],
+    LLMInferenceFramework.VLLM_GUIDED: [Quantization.AWQ],
     LLMInferenceFramework.LIGHTLLM: [],
 }
 
@@ -294,7 +322,7 @@ class CreateLLMModelEndpointV1UseCase:
                     quantize,
                     checkpoint_path,
                 )
-            elif framework == LLMInferenceFramework.VLLM:
+            elif framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.VLLM_GUIDED]:
                 bundle_id = await self.create_vllm_bundle(
                     user,
                     model_name,
@@ -303,6 +331,7 @@ class CreateLLMModelEndpointV1UseCase:
                     num_shards,
                     quantize,
                     checkpoint_path,
+                    framework == LLMInferenceFramework.VLLM_GUIDED
                 )
             elif framework == LLMInferenceFramework.LIGHTLLM:
                 bundle_id = await self.create_lightllm_bundle(
@@ -537,6 +566,7 @@ class CreateLLMModelEndpointV1UseCase:
         num_shards: int,
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
+        guided: bool = False
     ):
         command = []
 
@@ -590,7 +620,10 @@ class CreateLLMModelEndpointV1UseCase:
             "-c",
             ";".join(subcommands),
         ]
-
+        if guided:
+            repository = hmi_config.vllm_guided_repository
+        else:
+            repository = hmi_config.vllm_repository
         return (
             await self.create_model_bundle_use_case.execute(
                 user,
@@ -599,7 +632,7 @@ class CreateLLMModelEndpointV1UseCase:
                     schema_location="TBA",
                     flavor=StreamingEnhancedRunnableImageFlavor(
                         flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
-                        repository=hmi_config.vllm_repository,
+                        repository=repository,
                         tag=framework_image_tag,
                         command=command,
                         streaming_command=command,
@@ -719,6 +752,7 @@ class CreateLLMModelEndpointV1UseCase:
         if request.inference_framework in [
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
             LLMInferenceFramework.VLLM,
+            LLMInferenceFramework.VLLM_GUIDED,
             LLMInferenceFramework.LIGHTLLM,
         ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
@@ -944,6 +978,7 @@ def validate_and_update_completion_params(
     if inference_framework in [
         LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
         LLMInferenceFramework.VLLM,
+        LLMInferenceFramework.VLLM_GUIDED,
         LLMInferenceFramework.LIGHTLLM,
     ]:
         if request.temperature == 0:
@@ -960,6 +995,7 @@ def validate_and_update_completion_params(
             request.top_p = None if request.top_p == 1.0 else request.top_p
         if inference_framework in [
             LLMInferenceFramework.VLLM,
+            LLMInferenceFramework.VLLM_GUIDED,
             LLMInferenceFramework.LIGHTLLM,
         ]:
             request.top_k = -1 if request.top_k is None else request.top_k
@@ -973,6 +1009,7 @@ def validate_and_update_completion_params(
     # presence_penalty, frequency_penalty
     if inference_framework in [
         LLMInferenceFramework.VLLM,
+        LLMInferenceFramework.VLLM_GUIDED,
         LLMInferenceFramework.LIGHTLLM,
     ]:
         request.presence_penalty = (
@@ -986,7 +1023,16 @@ def validate_and_update_completion_params(
             raise ObjectHasInvalidValueException(
                 "presence_penalty and frequency_penalty are only supported in vllm, lightllm."
             )
+    # check guided decoding variables
+    if inference_framework != LLMInferenceFramework.VLLM_GUIDED and (request.generation_regex is not None or request.token_healing):
+        raise ObjectHasInvalidValueException(
+            "generation_regex and token_healing can only be set for requests to vllm_guided."
+        )
 
+    if request.token_healing and request.generation_regex is None:
+        raise ObjectHasInvalidValueException(
+            "generation_regex must be set for token_healing to be enabled."
+        )
     return request
 
 
@@ -1045,7 +1091,7 @@ class CompletionSyncV1UseCase:
                         status_code=500, content=bytes(model_output["error"], "utf-8")
                     )
 
-        elif model_content.inference_framework == LLMInferenceFramework.VLLM:
+        elif model_content.inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.VLLM_GUIDED]:
             tokens = None
             if with_token_probs:
                 tokens = [
@@ -1228,7 +1274,7 @@ class CompletionSyncV1UseCase:
                     output, model_endpoint, request.return_token_log_probs
                 ),
             )
-        elif endpoint_content.inference_framework == LLMInferenceFramework.VLLM:
+        elif endpoint_content.inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.VLLM_GUIDED]:
             vllm_args: Any = {
                 "prompt": request.prompt,
                 "max_tokens": request.max_new_tokens,
@@ -1243,6 +1289,9 @@ class CompletionSyncV1UseCase:
                 vllm_args["top_p"] = request.top_p
             if request.return_token_log_probs:
                 vllm_args["logprobs"] = 1
+            if endpoint_content.inference_framework == LLMInferenceFramework.VLLM_GUIDED:
+                vllm_args["decoding_regex_schema"] = request.generation_regex
+                vllm_args["token_healing"] = request.token_healing
 
             inference_request = SyncEndpointPredictV1Request(
                 args=vllm_args,
@@ -1429,7 +1478,7 @@ class CompletionStreamV1UseCase:
                 args["parameters"]["top_p"] = request.top_p
             else:
                 args["parameters"]["do_sample"] = False
-        elif model_content.inference_framework == LLMInferenceFramework.VLLM:
+        elif model_content.inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.VLLM_GUIDED]:
             args = {
                 "prompt": request.prompt,
                 "max_tokens": request.max_new_tokens,
@@ -1445,6 +1494,9 @@ class CompletionStreamV1UseCase:
             if request.return_token_log_probs:
                 args["logprobs"] = 1
             args["stream"] = True
+            if model_content.inference_framework == LLMInferenceFramework.VLLM_GUIDED:
+                args["decoding_regex_schema"] = request.generation_regex
+                args["token_healing"] = request.token_healing
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
             args = {
                 "inputs": request.prompt,
@@ -1554,7 +1606,7 @@ class CompletionStreamV1UseCase:
                         request_id=request_id,
                         output=None,
                     )
-            elif model_content.inference_framework == LLMInferenceFramework.VLLM:
+            elif model_content.inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.VLLM]:
                 if res.status == TaskStatus.SUCCESS and result is not None:
                     token = None
                     if request.return_token_log_probs:

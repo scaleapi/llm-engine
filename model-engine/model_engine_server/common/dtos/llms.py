@@ -134,6 +134,16 @@ class CompletionSyncV1Request(BaseModel):
     """
     Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
     """
+    generation_regex: Optional[str] = Field(default=None) 
+    """
+    Only support in vllm with guided decoding.
+    LLM output will conform to the regex passed.
+    """
+    token_healing: bool = Field(default=False) 
+    """
+    Only support in vllm with guided decoding. Only works if a generation_regex has been passed.
+    Causes prompt to be backed up one token to handle boundary tokenization issues.
+    """
 
 
 class TokenOutput(BaseModel):
@@ -193,7 +203,16 @@ class CompletionStreamV1Request(BaseModel):
     """
     Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
     """
-
+    generation_regex: Optional[str] = Field(default=None) 
+    """
+    Only support in vllm with guided decoding.
+    LLM output will conform to the regex passed.
+    """
+    token_healing: bool = Field(default=False) 
+    """
+    Only support in vllm with guided decoding. Only works if a generation_regex has been passed.
+    Causes prompt to be backed up one token to handle boundary tokenization issues.
+    """
 
 class CompletionStreamOutput(BaseModel):
     text: str
