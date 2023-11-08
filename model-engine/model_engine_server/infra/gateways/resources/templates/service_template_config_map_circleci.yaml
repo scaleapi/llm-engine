@@ -167,7 +167,7 @@ data:
               
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /workspace/user_config
@@ -217,7 +217,7 @@ data:
                   ${TRITON_STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -247,7 +247,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -438,7 +438,7 @@ data:
               
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /workspace/user_config
@@ -474,7 +474,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -659,7 +659,7 @@ data:
               
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /workspace/user_config
@@ -712,7 +712,7 @@ data:
                   ${TRITON_STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -742,7 +742,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -927,7 +927,7 @@ data:
               
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /workspace/user_config
@@ -966,7 +966,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -1153,7 +1153,7 @@ data:
               
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /workspace/user_config
@@ -1192,7 +1192,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -1388,7 +1388,7 @@ data:
               
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /workspace/user_config
@@ -1438,7 +1438,7 @@ data:
                   ${TRITON_STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -1470,7 +1470,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -1666,7 +1666,7 @@ data:
               
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /workspace/user_config
@@ -1704,7 +1704,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -1894,7 +1894,7 @@ data:
               
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /workspace/user_config
@@ -1947,7 +1947,7 @@ data:
                   ${TRITON_STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -1979,7 +1979,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -2169,7 +2169,7 @@ data:
               
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /workspace/user_config
@@ -2210,7 +2210,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -2402,7 +2402,7 @@ data:
               
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: user-config
                   mountPath: /workspace/user_config
@@ -2443,7 +2443,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - mountPath: /dev/shm
                   name: dshm
@@ -2872,7 +2872,7 @@ data:
                   memory: 32Gi
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
   docker-image-batch-job-cpu.yaml: |-
     apiVersion: batch/v1
@@ -2982,7 +2982,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
@@ -3011,7 +3011,7 @@ data:
                   memory: 1Gi
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
@@ -3130,7 +3130,7 @@ data:
                   ${STORAGE_DICT}
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
@@ -3159,7 +3159,7 @@ data:
                   memory: 1Gi
               volumeMounts:
                 - name: config-volume
-                  mountPath: /root/.aws/config
+                  mountPath: /opt/.aws/config
                   subPath: config
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
