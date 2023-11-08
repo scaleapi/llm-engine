@@ -203,6 +203,8 @@ env:
         fieldPath: status.hostIP
   - name: AWS_PROFILE
     value: "${AWS_ROLE}"
+  - name: AWS_CONFIG_FILE
+    value: /opt/.aws/config
   - name: RESULTS_S3_BUCKET
     value: "${RESULTS_S3_BUCKET}"
   - name: BASE_PATH
@@ -254,6 +256,8 @@ env:
   {{- if .Values.aws }}
   - name: AWS_PROFILE
     value: {{ .Values.aws.profileName }}
+  - name: AWS_CONFIG_FILE
+    value: /opt/.aws/config
   - name: ECR_READ_AWS_PROFILE
     value: {{ .Values.aws.profileName }}
   - name: DB_SECRET_AWS_PROFILE
@@ -384,7 +388,7 @@ volumeMounts:
 {{- define "modelEngine.forwarderVolumeMounts" }}
 volumeMounts:
   - name: config-volume
-    mountPath: /root/.aws/config
+    mountPath: /opt/.aws/config
     subPath: config
   - name: user-config
     mountPath: /workspace/user_config
