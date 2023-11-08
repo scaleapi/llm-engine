@@ -37,6 +37,8 @@ class Completion(APIEngine):
         frequency_penalty: Optional[float] = None,
         top_k: Optional[int] = None,
         top_p: Optional[float] = None,
+        generation_regex: Optional[str] = None,
+        token_healing: bool = False ,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]:
@@ -95,6 +97,14 @@ class Completion(APIEngine):
             top_p (Optional[float]):
                 Float that controls the cumulative probability of the top tokens to consider.
                 Range: (0.0, 1.0]. 1.0 means consider all tokens.
+
+            generation_regex (Optional[str]):
+                LLM output will conform to the regex passed.
+                Only support in vllm with guided decoding.
+
+            token_healing (bool):
+                Causes prompt to be backed up one token to handle boundary tokenization issues.
+                Only support in vllm with guided decoding. Only works if a generation_regex has been passed.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -192,6 +202,8 @@ class Completion(APIEngine):
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
+                generation_regex=generation_regex,
+                token_healing=token_healing,
                 timeout=timeout,
             )
 
@@ -216,6 +228,8 @@ class Completion(APIEngine):
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
+                generation_regex=generation_regex,
+                token_healing=token_healing,
             )
 
     @classmethod
@@ -231,6 +245,8 @@ class Completion(APIEngine):
         frequency_penalty: Optional[float] = None,
         top_k: Optional[int] = None,
         top_p: Optional[float] = None,
+        generation_regex: Optional[str] = None,
+        token_healing: bool = False,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
@@ -290,6 +306,14 @@ class Completion(APIEngine):
             top_p (Optional[float]):
                 Float that controls the cumulative probability of the top tokens to consider.
                 Range: (0.0, 1.0]. 1.0 means consider all tokens.
+
+            generation_regex (Optional[str]):
+                LLM output will conform to the regex passed.
+                Only support in vllm with guided decoding.
+
+            token_healing (bool):
+                Causes prompt to be backed up one token to handle boundary tokenization issues.
+                Only support in vllm with guided decoding. Only works if a generation_regex has been passed.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -377,6 +401,8 @@ class Completion(APIEngine):
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
+                generation_regex=generation_regex,
+                token_healing=token_healing
             )
 
         else:
@@ -390,6 +416,8 @@ class Completion(APIEngine):
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
+                generation_regex=generation_regex,
+                token_healing=token_healing,
             ).dict()
             response = cls.post_sync(
                 resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",

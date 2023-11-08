@@ -272,6 +272,8 @@ class CompletionSyncV1Request(BaseModel):
     frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     top_k: Optional[int] = Field(default=None, ge=-1)
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
+    generation_regex: Optional[str] = Field(default=None)
+    token_healing: bool = Field(default=False)
 
 
 class TokenOutput(BaseModel):
@@ -337,6 +339,8 @@ class CompletionStreamV1Request(BaseModel):
     frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     top_k: Optional[int] = Field(default=None, ge=-1)
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
+    generation_regex: Optional[str] = Field(default=None)
+    token_healing: bool = Field(default=False)
 
 
 class CompletionStreamOutput(BaseModel):

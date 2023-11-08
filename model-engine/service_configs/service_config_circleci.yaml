@@ -56,6 +56,7 @@ dd_trace_enabled: false
 istio_enabled: true
 tgi_repository: "text-generation-inference"
 vllm_repository: "vllm"
+vllm_guided_repository: "scale-vllm"
 lightllm_repository: "lightllm"
 user_inference_base_repository: "launch/inference"
 user_inference_pytorch_repository: "hosted-model-inference/async-pytorch"

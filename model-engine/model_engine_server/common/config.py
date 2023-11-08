@@ -56,6 +56,7 @@ class HostedModelInferenceServiceConfig:
     dd_trace_enabled: bool
     tgi_repository: str
     vllm_repository: str
+    vllm_guided_repository: str
     lightllm_repository: str
     user_inference_base_repository: str
     user_inference_pytorch_repository: str
