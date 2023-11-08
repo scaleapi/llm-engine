@@ -232,8 +232,21 @@ def validate_num_shards(
             raise ObjectHasInvalidValueException("DeepSpeed requires more than 1 GPU.")
         if num_shards != gpus:
             raise ObjectHasInvalidValueException(
-                f"DeepSpeed requires num shard {num_shards} to be the same as number of GPUs {gpus}."
+                f"Num shard {num_shards} must be the same as number of GPUs {gpus} for DeepSpeed."
             )
+    if num_shards > gpus:
+        raise ObjectHasInvalidValueException(
+            f"Num shard {num_shards} must be less than or equal to the number of GPUs {gpus}."
+        )
+
+
+def validate_quantization(
+    quantize: Optional[Quantization], inference_framework: LLMInferenceFramework
+) -> None:
+    if quantize is not None and quantize not in _SUPPORTED_QUANTIZATIONS[inference_framework]:
+        raise ObjectHasInvalidValueException(
+            f"Quantization {quantize} is not supported for inference framework {inference_framework}. Supported quantization types are {_SUPPORTED_QUANTIZATIONS[inference_framework]}."
+        )
 
 
 class CreateLLMModelEndpointV1UseCase:
@@ -731,6 +744,7 @@ class CreateLLMModelEndpointV1UseCase:
         validate_post_inference_hooks(user, request.post_inference_hooks)
         validate_model_name(request.model_name, request.inference_framework)
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
+        validate_quantization(request.quantize, request.inference_framework)
 
         if request.inference_framework in [
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
