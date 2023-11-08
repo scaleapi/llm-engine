@@ -129,7 +129,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                     (
                         TooManyRequestsException,
                         NoHealthyUpstreamException,
-                        aiohttp.client_exceptions.ClientConnectorError,
+                        aiohttp.ClientConnectorError,
                     )
                 ),
                 wait=wait_exponential(
@@ -149,7 +149,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
             elif type(e.last_attempt.exception()) == NoHealthyUpstreamException:
                 logger.warning("Pods didn't spin up in time, returning 503 to client")
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
-            elif type(e.last_attempt.exception()) == aiohttp.client_exceptions.ClientConnectorError:
+            elif type(e.last_attempt.exception()) == aiohttp.ClientConnectorError:
                 logger.warning("ClientConnectorError, returning 503 to client")
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
             else:
