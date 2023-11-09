@@ -42,6 +42,7 @@ from model_engine_server.core.loggers import (
     make_logger,
 )
 from model_engine_server.domain.exceptions import (
+    DockerImageNotFoundException,
     EndpointDeleteFailedException,
     EndpointLabelsException,
     EndpointResourceInvalidRequestException,
@@ -144,6 +145,7 @@ async def create_model_endpoint(
             model_bundle_repository=external_interfaces.model_bundle_repository,
             model_endpoint_service=external_interfaces.model_endpoint_service,
             llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
+            docker_repository=external_interfaces.docker_repository,
         )
         return await use_case.execute(user=auth, request=request)
     except ObjectAlreadyExistsException as exc:
@@ -172,6 +174,11 @@ async def create_model_endpoint(
         raise HTTPException(
             status_code=404,
             detail="The specified model bundle could not be found.",
+        ) from exc
+    except DockerImageNotFoundException as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The specified docker image could not be found.",
         ) from exc
 
 
