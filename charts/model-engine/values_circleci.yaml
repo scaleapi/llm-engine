@@ -166,7 +166,7 @@ aws:
   configMap:
     name: default-config
     create: false
-    mountPath: /root/.aws/config
+    mountPath: /opt/.aws/config
   profileName: default
   s3WriteProfileName: default
 
