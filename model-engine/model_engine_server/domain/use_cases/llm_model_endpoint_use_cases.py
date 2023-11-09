@@ -265,6 +265,18 @@ class CreateLLMModelEndpointV1UseCase:
         self.llm_artifact_gateway = llm_artifact_gateway
         self.docker_repository = docker_repository
 
+    def check_docker_image_exists_for_image_tag(
+        self, framework_image_tag: str, repository_name: str
+    ):
+        if not self.docker_repository.image_exists(
+            image_tag=framework_image_tag,
+            repository_name=repository_name,
+        ):
+            raise DockerImageNotFoundException(
+                repository=repository_name,
+                tag=framework_image_tag,
+            )
+
     async def create_model_bundle(
         self,
         user: User,
@@ -280,14 +292,7 @@ class CreateLLMModelEndpointV1UseCase:
     ) -> ModelBundle:
         if source == LLMSource.HUGGING_FACE:
             if framework == LLMInferenceFramework.DEEPSPEED:
-                if not self.docker_repository.image_exists(
-                    image_tag=framework_image_tag,
-                    repository_name="instant-llm",
-                ):
-                    raise DockerImageNotFoundException(
-                        repository="instant-llm",
-                        tag=framework_image_tag,
-                    )
+                self.check_docker_image_exists_for_image_tag(framework_image_tag, "instant-llm")
                 bundle_id = await self.create_deepspeed_bundle(
                     user,
                     model_name,
@@ -296,14 +301,9 @@ class CreateLLMModelEndpointV1UseCase:
                     endpoint_name,
                 )
             elif framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
-                if not self.docker_repository.image_exists(
-                    image_tag=framework_image_tag,
-                    repository_name=hmi_config.tgi_repository,
-                ):
-                    raise DockerImageNotFoundException(
-                        repository=hmi_config.tgi_repository,
-                        tag=framework_image_tag,
-                    )
+                self.check_docker_image_exists_for_image_tag(
+                    framework_image_tag, hmi_config.tgi_repository
+                )
                 bundle_id = await self.create_text_generation_inference_bundle(
                     user,
                     model_name,
@@ -314,14 +314,9 @@ class CreateLLMModelEndpointV1UseCase:
                     checkpoint_path,
                 )
             elif framework == LLMInferenceFramework.VLLM:
-                if not self.docker_repository.image_exists(
-                    image_tag=framework_image_tag,
-                    repository_name=hmi_config.vllm_repository,
-                ):
-                    raise DockerImageNotFoundException(
-                        repository=hmi_config.vllm_repository,
-                        tag=framework_image_tag,
-                    )
+                self.check_docker_image_exists_for_image_tag(
+                    framework_image_tag, hmi_config.vllm_repository
+                )
                 bundle_id = await self.create_vllm_bundle(
                     user,
                     model_name,
@@ -332,6 +327,9 @@ class CreateLLMModelEndpointV1UseCase:
                     checkpoint_path,
                 )
             elif framework == LLMInferenceFramework.LIGHTLLM:
+                self.check_docker_image_exists_for_image_tag(
+                    framework_image_tag, hmi_config.lightllm_repository
+                )
                 bundle_id = await self.create_lightllm_bundle(
                     user,
                     model_name,
@@ -340,14 +338,6 @@ class CreateLLMModelEndpointV1UseCase:
                     num_shards,
                     checkpoint_path,
                 )
-                if not self.docker_repository.image_exists(
-                    image_tag=framework_image_tag,
-                    repository_name=hmi_config.lightllm_repository,
-                ):
-                    raise DockerImageNotFoundException(
-                        repository=hmi_config.lightllm_repository,
-                        tag=framework_image_tag,
-                    )
             else:
                 raise ObjectHasInvalidValueException(
                     f"Framework {framework} is not supported for source {source}."
@@ -1372,7 +1362,7 @@ class CompletionStreamV1UseCase:
         )
 
         if len(model_endpoints) == 0:
-            raise ObjectNotFoundException
+            raise ObjectNotFoundException(f"Model endpoint {model_endpoint_name} not found.")
 
         if len(model_endpoints) > 1:
             raise ObjectHasInvalidValueException(
