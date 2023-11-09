@@ -140,6 +140,7 @@ _SUPPORTED_MODEL_NAMES = {
         "mammoth-coder-llama-2-7b": "TIGER-Lab/MAmmoTH-Coder-7B",
         "mammoth-coder-llama-2-13b": "TIGER-Lab/MAmmoTH-Coder-13B",
         "mammoth-coder-llama-2-34b": "TIGER-Lab/MAmmoTH-Coder-34B",
+        "baichuan-13b-chat": "baichuan-inc/Baichuan-13B-Chat",
     },
     LLMInferenceFramework.LIGHTLLM: {
         "llama-7b": "decapoda-research/llama-7b-hf",
