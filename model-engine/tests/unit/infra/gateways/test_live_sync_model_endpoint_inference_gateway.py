@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Tuple
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import aiohttp
 import pytest
 from model_engine_server.common.dtos.tasks import (
     SyncEndpointPredictV1Request,
@@ -33,6 +34,22 @@ def _get_mock_client_session(fake_response: FakeResponse):
     mock_client_session_val.post = mock_post
     mock_client_session_val.__aenter__ = AsyncMock(return_value=mock_client_session_val)
     mock_client_session_val.__aexit__ = AsyncMock()
+    mock_client_session = MagicMock(return_value=mock_client_session_val)
+    return mock_client_session
+
+
+def _get_mock_client_session_with_client_connector_error():
+    mock_post = AsyncMock(
+        side_effect=aiohttp.ClientConnectorError(connection_key=None, os_error=OSError())
+    )
+    mock_client_session_val = AsyncMock()
+    mock_client_session_val.post = mock_post
+    mock_client_session_val.__aenter__ = AsyncMock(return_value=mock_client_session_val)
+
+    async def _aexit(*exc):
+        pass
+
+    mock_client_session_val.__aexit__ = AsyncMock(side_effect=_aexit)
     mock_client_session = MagicMock(return_value=mock_client_session_val)
     return mock_client_session
 
@@ -72,6 +89,19 @@ async def test_make_request_with_retries_failed_traceback():
 
     fake_response = FakeResponse(status=500)
     mock_client_session = _get_mock_client_session(fake_response)
+
+    with pytest.raises(UpstreamServiceError), patch(
+        "model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
+        mock_client_session,
+    ):
+        await gateway.make_request_with_retries("test_request_url", {}, 0.05, 2)
+
+
+@pytest.mark.asyncio
+async def test_make_request_with_retries_failed_with_client_connector_error():
+    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+
+    mock_client_session = _get_mock_client_session_with_client_connector_error()
 
     with pytest.raises(UpstreamServiceError), patch(
         "model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
