@@ -24,7 +24,8 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `codellama-7b-instruct`         | ✅                       | ✅                           | text-generation-inference, vllm |
 | `codellama-13b`         | ✅                       |                            | text-generation-inference, vllm |
 | `codellama-13b-instruct`         | ✅                       |                            | text-generation-inference, vllm |
-| `codellama-34b`         | ✅                       |                            | text-generation-inference, vllm |
+| `codellama-34b`         | ✅                       | ✅                           | text-generation-inference, vllm |
+| `codellama-34b-instruct`         | ✅                       | ✅                           | text-generation-inference, vllm |
 
 ## Usage
 
