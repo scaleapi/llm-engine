@@ -114,5 +114,4 @@
   value: get_/v2/model-bundles/latest
 - condition: request.method == 'GET' && request.url_path.matches('^/v2/model-bundles/[[:alnum:]-_]*$')
   value: get_/v2/model-bundles/_model_bundle_id
-
 {{- end -}}
