@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 
@@ -7,7 +7,8 @@ from typing import Optional
 class User:
     user_id: str
     team_id: str
-    email: Optional[str] = None
+    email: Optional[str] = field(repr=False, default=None)
+    team_email: Optional[str] = field(repr=False, default=None)
     is_privileged_user: bool = False
 
 
