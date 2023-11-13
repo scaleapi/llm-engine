@@ -42,6 +42,7 @@ from model_engine_server.core.loggers import (
     make_logger,
 )
 from model_engine_server.domain.exceptions import (
+    DockerImageNotFoundException,
     EndpointDeleteFailedException,
     EndpointLabelsException,
     EndpointResourceInvalidRequestException,
@@ -78,12 +79,19 @@ from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateMo
 from sse_starlette.sse import EventSourceResponse
 
 
+def format_request_route(request: Request) -> str:
+    url_path = request.url.path
+    for path_param in request.path_params:
+        url_path = url_path.replace(request.path_params[path_param], f":{path_param}")
+    return f"{request.method}_{url_path}".lower()
+
+
 async def record_route_call(
     request: Request,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ):
-    route = f"{request.method}_{request.url.path}".lower()
+    route = format_request_route(request)
     model_name = request.query_params.get("model_endpoint_name", None)
 
     external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
@@ -144,6 +152,7 @@ async def create_model_endpoint(
             model_bundle_repository=external_interfaces.model_bundle_repository,
             model_endpoint_service=external_interfaces.model_endpoint_service,
             llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
+            docker_repository=external_interfaces.docker_repository,
         )
         return await use_case.execute(user=auth, request=request)
     except ObjectAlreadyExistsException as exc:
@@ -172,6 +181,11 @@ async def create_model_endpoint(
         raise HTTPException(
             status_code=404,
             detail="The specified model bundle could not be found.",
+        ) from exc
+    except DockerImageNotFoundException as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The specified docker image could not be found.",
         ) from exc
 
 
