@@ -122,10 +122,15 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         try:
             async for attempt in AsyncRetrying(
                 stop=stop_any(
-                    stop_after_attempt(num_retries + 1), stop_after_delay(timeout_seconds)
+                    stop_after_attempt(num_retries + 1),
+                    stop_after_delay(timeout_seconds),
                 ),
                 retry=retry_if_exception_type(
-                    (TooManyRequestsException, NoHealthyUpstreamException)
+                    (
+                        TooManyRequestsException,
+                        NoHealthyUpstreamException,
+                        aiohttp.ClientConnectorError,
+                    )
                 ),
                 wait=wait_exponential(
                     multiplier=1,
@@ -143,6 +148,9 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 raise UpstreamServiceError(status_code=429, content=b"Too many concurrent requests")
             elif type(e.last_attempt.exception()) == NoHealthyUpstreamException:
                 logger.warning("Pods didn't spin up in time, returning 503 to client")
+                raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
+            elif type(e.last_attempt.exception()) == aiohttp.ClientConnectorError:
+                logger.warning("ClientConnectorError, returning 503 to client")
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
             else:
                 logger.error("Unknown Exception Type")

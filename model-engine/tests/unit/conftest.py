@@ -3690,7 +3690,7 @@ def llm_model_endpoint_sync_tgi(
                     "model_name": "llama-7b",
                     "source": "hugging_face",
                     "inference_framework": "text_generation_inference",
-                    "inference_framework_image_tag": "123",
+                    "inference_framework_image_tag": "0.9.4",
                     "num_shards": 4,
                 }
             },
@@ -3752,7 +3752,7 @@ def llm_model_endpoint_sync_tgi(
         "source": "hugging_face",
         "status": "READY",
         "inference_framework": "text_generation_inference",
-        "inference_framework_image_tag": "123",
+        "inference_framework_image_tag": "0.9.4",
         "num_shards": 4,
         "spec": {
             "id": "test_llm_model_endpoint_id_2",
@@ -3765,7 +3765,7 @@ def llm_model_endpoint_sync_tgi(
                     "model_name": "llama-7b",
                     "source": "hugging_face",
                     "inference_framework": "text_generation_inference",
-                    "inference_framework_image_tag": "123",
+                    "inference_framework_image_tag": "0.9.4",
                     "num_shards": 4,
                 }
             },
@@ -3887,7 +3887,7 @@ def llm_model_endpoint_text_generation_inference(
                     "model_name": "llama-7b",
                     "source": "hugging_face",
                     "inference_framework": "text_generation_inference",
-                    "inference_framework_image_tag": "123",
+                    "inference_framework_image_tag": "0.9.4",
                     "num_shards": 4,
                 }
             },
