@@ -24,10 +24,33 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         bucket = parsed_remote.bucket
         key = parsed_remote.key
 
-        # Using resource's bucket object to get its objects with specific prefix
         s3_bucket = s3.Bucket(bucket)
         files = [obj.key for obj in s3_bucket.objects.filter(Prefix=key)]
         return files
+
+    def download_files(self, path: str, target_path: str, overwrite=False, **kwargs) -> List[str]:
+        s3 = self._get_s3_resource(kwargs)
+        parsed_remote = parse_attachment_url(path)
+        bucket = parsed_remote.bucket
+        key = parsed_remote.key
+
+        s3_bucket = s3.Bucket(bucket)
+        downloaded_files: List[str] = []
+        for obj in s3_bucket.objects.filter(Prefix=key):
+            file_path_suffix = obj.key.replace(key, "").lstrip("/")
+            local_path = os.path.join(target_path, file_path_suffix).rstrip("/")
+
+            if not overwrite and os.path.exists(local_path):
+                downloaded_files.append(local_path)
+                continue
+
+            local_dir = "/".join(local_path.split("/")[:-1])
+            if not os.path.exists(local_dir):
+                os.makedirs(local_dir)
+
+            s3_bucket.download_file(obj.key, local_path)
+            downloaded_files.append(local_path)
+        return downloaded_files
 
     def get_model_weights_urls(self, owner: str, model_name: str, **kwargs) -> List[str]:
         s3 = self._get_s3_resource(kwargs)
