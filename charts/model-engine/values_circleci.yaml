@@ -147,6 +147,10 @@ config:
       vllm_repository: "vllm"
       lightllm_repository: "lightllm"
       tensorrt_llm_repository: "tensorrt-llm"
+      user_inference_base_repository: "launch/inference"
+      user_inference_pytorch_repository: "hosted-model-inference/async-pytorch"
+      user_inference_tensorflow_repository: "hosted-model-inference/async-tensorflow-cpu"
+      docker_image_layer_cache_repository: "kaniko-cache"
       hf_user_fine_tuned_weights_prefix: "s3://$CIRCLECI_AWS_S3_BUCKET"
 
 # Service Account
@@ -163,7 +167,7 @@ aws:
   configMap:
     name: default-config
     create: false
-    mountPath: /root/.aws/config
+    mountPath: /opt/.aws/config
   profileName: default
   s3WriteProfileName: default
 

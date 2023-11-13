@@ -59,7 +59,7 @@ class FineTune(APIEngine):
             validation_file (`Optional[str]`):
                 Publicly accessible URL or file ID referencing a CSV file for validation. The validation file is used to compute metrics which let LLM Engine pick the best fine-tuned checkpoint, which will be used for inference when fine-tuning is complete.
 
-            hyperparameters (`Optional[Dict[str, str]]`):
+            hyperparameters (`Optional[Dict[str, Union[str, int, float, Dict[str, Any]]]]`):
                 A dict of hyperparameters to customize fine-tuning behavior.
 
                 Currently supported hyperparameters:

@@ -47,6 +47,7 @@ from model_engine_server.domain.entities import (
     StreamingEnhancedRunnableImageFlavor,
 )
 from model_engine_server.domain.exceptions import (
+    DockerImageNotFoundException,
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
     InvalidRequestException,
@@ -57,6 +58,7 @@ from model_engine_server.domain.exceptions import (
 )
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
 from model_engine_server.domain.repositories import ModelBundleRepository
+from model_engine_server.domain.repositories.docker_repository import DockerRepository
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
 
@@ -102,9 +104,12 @@ _SUPPORTED_MODEL_NAMES = {
         "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
         "falcon-40b": "tiiuae/falcon-40b",
         "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
-        "code-llama-7b": "codellama/CodeLlama-7b-hf",
-        "code-llama-13b": "codellama/CodeLlama-13b-hf",
-        "code-llama-34b": "codellama/CodeLlama-34b-hf",
+        "codellama-7b": "codellama/CodeLlama-7b-hf",
+        "codellama-7b-instruct": "codellama/CodeLlama-7b-Instruct-hf",
+        "codellama-13b": "codellama/CodeLlama-13b-hf",
+        "codellama-13b-instruct": "codellama/CodeLlama-13b-Instruct-hf",
+        "codellama-34b": "codellama/CodeLlama-34b-hf",
+        "codellama-34b-instruct": "codellama/CodeLlama-34b-Instruct-hf",
         "llm-jp-13b-instruct-full": "llm-jp/llm-jp-13b-instruct-full-jaster-v1.0",
         "llm-jp-13b-instruct-full-dolly": "llm-jp/llm-jp-13b-instruct-full-dolly-oasst-v1.0",
     },
@@ -126,9 +131,12 @@ _SUPPORTED_MODEL_NAMES = {
         "mistral-7b-instruct": "mistralai/Mistral-7B-Instruct-v0.1",
         "falcon-180b": "tiiuae/falcon-180B",
         "falcon-180b-chat": "tiiuae/falcon-180B-chat",
-        "code-llama-7b": "codellama/CodeLlama-7b-hf",
-        "code-llama-13b": "codellama/CodeLlama-13b-hf",
-        "code-llama-34b": "codellama/CodeLlama-34b-hf",
+        "codellama-7b": "codellama/CodeLlama-7b-hf",
+        "codellama-7b-instruct": "codellama/CodeLlama-7b-Instruct-hf",
+        "codellama-13b": "codellama/CodeLlama-13b-hf",
+        "codellama-13b-instruct": "codellama/CodeLlama-13b-Instruct-hf",
+        "codellama-34b": "codellama/CodeLlama-34b-hf",
+        "codellama-34b-instruct": "codellama/CodeLlama-34b-Instruct-hf",
         "mammoth-coder-llama-2-7b": "TIGER-Lab/MAmmoTH-Coder-7B",
         "mammoth-coder-llama-2-13b": "TIGER-Lab/MAmmoTH-Coder-13B",
         "mammoth-coder-llama-2-34b": "TIGER-Lab/MAmmoTH-Coder-34B",
@@ -174,23 +182,22 @@ NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
 
-def _exclude_safetensors_or_bin(model_files: List[str]) -> Optional[str]:
+def _include_safetensors_bin_or_pt(model_files: List[str]) -> Optional[str]:
     """
-    This function is used to determine whether to exclude "*.safetensors" or "*.bin" files
-    based on which file type is present more often in the checkpoint folder. The less
-    frequently present file type is excluded.
-    If both files are equally present, no exclusion string is returned.
+    This function is used to determine whether to include "*.safetensors", "*.bin", or "*.pt" files
+    based on which file type is present most often in the checkpoint folder. The most
+    frequently present file type is included.
+    In case of ties, priority is given to "*.safetensors", then "*.bin", then "*.pt".
     """
-    exclude_str = None
-    if len([f for f in model_files if f.endswith(".safetensors")]) > len(
-        [f for f in model_files if f.endswith(".bin")]
-    ):
-        exclude_str = "*.bin"
-    elif len([f for f in model_files if f.endswith(".safetensors")]) < len(
-        [f for f in model_files if f.endswith(".bin")]
-    ):
-        exclude_str = "*.safetensors"
-    return exclude_str
+    num_safetensors = len([f for f in model_files if f.endswith(".safetensors")])
+    num_bin = len([f for f in model_files if f.endswith(".bin")])
+    num_pt = len([f for f in model_files if f.endswith(".pt")])
+    maximum = max(num_safetensors, num_bin, num_pt)
+    if num_safetensors == maximum:
+        return "*.safetensors"
+    if num_bin == maximum:
+        return "*.bin"
+    return "*.pt"
 
 
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
@@ -255,12 +262,26 @@ class CreateLLMModelEndpointV1UseCase:
         model_bundle_repository: ModelBundleRepository,
         model_endpoint_service: ModelEndpointService,
         llm_artifact_gateway: LLMArtifactGateway,
+        docker_repository: DockerRepository,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_model_bundle_use_case = create_model_bundle_use_case
         self.model_bundle_repository = model_bundle_repository
         self.model_endpoint_service = model_endpoint_service
         self.llm_artifact_gateway = llm_artifact_gateway
+        self.docker_repository = docker_repository
+
+    def check_docker_image_exists_for_image_tag(
+        self, framework_image_tag: str, repository_name: str
+    ):
+        if not self.docker_repository.image_exists(
+            image_tag=framework_image_tag,
+            repository_name=repository_name,
+        ):
+            raise DockerImageNotFoundException(
+                repository=repository_name,
+                tag=framework_image_tag,
+            )
 
     async def create_model_bundle(
         self,
@@ -277,6 +298,7 @@ class CreateLLMModelEndpointV1UseCase:
     ) -> ModelBundle:
         if source == LLMSource.HUGGING_FACE:
             if framework == LLMInferenceFramework.DEEPSPEED:
+                self.check_docker_image_exists_for_image_tag(framework_image_tag, "instant-llm")
                 bundle_id = await self.create_deepspeed_bundle(
                     user,
                     model_name,
@@ -285,6 +307,9 @@ class CreateLLMModelEndpointV1UseCase:
                     endpoint_name,
                 )
             elif framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+                self.check_docker_image_exists_for_image_tag(
+                    framework_image_tag, hmi_config.tgi_repository
+                )
                 bundle_id = await self.create_text_generation_inference_bundle(
                     user,
                     model_name,
@@ -295,6 +320,9 @@ class CreateLLMModelEndpointV1UseCase:
                     checkpoint_path,
                 )
             elif framework == LLMInferenceFramework.VLLM:
+                self.check_docker_image_exists_for_image_tag(
+                    framework_image_tag, hmi_config.vllm_repository
+                )
                 bundle_id = await self.create_vllm_bundle(
                     user,
                     model_name,
@@ -305,6 +333,9 @@ class CreateLLMModelEndpointV1UseCase:
                     checkpoint_path,
                 )
             elif framework == LLMInferenceFramework.LIGHTLLM:
+                self.check_docker_image_exists_for_image_tag(
+                    framework_image_tag, hmi_config.lightllm_repository
+                )
                 bundle_id = await self.create_lightllm_bundle(
                     user,
                     model_name,
@@ -444,16 +475,11 @@ class CreateLLMModelEndpointV1UseCase:
             checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
             model_files = [f for f in checkpoint_files if "model" in f]
 
-            exclude_str = _exclude_safetensors_or_bin(model_files)
-
-            if exclude_str is None:
-                subcommands.append(
-                    f"{s5cmd} --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-                )
-            else:
-                subcommands.append(
-                    f"{s5cmd} --numworkers 512 cp --concurrency 10 --exclude '{exclude_str}' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-                )
+            include_str = _include_safetensors_bin_or_pt(model_files)
+            file_selection_str = f"--include '*.model' --include '*.json' --include '{include_str}' --exclude 'optimizer*'"
+            subcommands.append(
+                f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+            )
 
         return subcommands
 
@@ -1057,10 +1083,7 @@ def validate_and_update_completion_params(
         if inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
             request.top_k = None if request.top_k == -1 else request.top_k
             request.top_p = None if request.top_p == 1.0 else request.top_p
-        if inference_framework in [
-            LLMInferenceFramework.VLLM,
-            LLMInferenceFramework.LIGHTLLM,
-        ]:
+        if inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
             request.top_k = -1 if request.top_k is None else request.top_k
             request.top_p = 1.0 if request.top_p is None else request.top_p
     else:
@@ -1070,10 +1093,7 @@ def validate_and_update_completion_params(
             )
 
     # presence_penalty, frequency_penalty
-    if inference_framework in [
-        LLMInferenceFramework.VLLM,
-        LLMInferenceFramework.LIGHTLLM,
-    ]:
+    if inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
         request.presence_penalty = (
             0.0 if request.presence_penalty is None else request.presence_penalty
         )
@@ -1132,7 +1152,6 @@ class CompletionSyncV1UseCase:
         prompt: Optional[str] = None,
     ) -> CompletionOutput:
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
-
         if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
             completion_token_count = len(model_output["token_probs"]["tokens"])
             tokens = None
@@ -1170,10 +1189,7 @@ class CompletionSyncV1UseCase:
             tokens = None
             if with_token_probs:
                 tokens = [
-                    TokenOutput(
-                        token=model_output["tokens"][index],
-                        log_prob=list(t.values())[0],
-                    )
+                    TokenOutput(token=model_output["tokens"][index], log_prob=list(t.values())[0])
                     for index, t in enumerate(model_output["log_probs"])
                 ]
             return CompletionOutput(
@@ -1301,8 +1317,7 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination,
-                predict_request=inference_request,
+                topic=model_endpoint.record.destination, predict_request=inference_request
             )
 
             if predict_result.status == TaskStatus.SUCCESS and predict_result.result is not None:
@@ -1346,8 +1361,7 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination,
-                predict_request=inference_request,
+                topic=model_endpoint.record.destination, predict_request=inference_request
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1386,8 +1400,7 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination,
-                predict_request=inference_request,
+                topic=model_endpoint.record.destination, predict_request=inference_request
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1429,8 +1442,7 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination,
-                predict_request=inference_request,
+                topic=model_endpoint.record.destination, predict_request=inference_request
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:

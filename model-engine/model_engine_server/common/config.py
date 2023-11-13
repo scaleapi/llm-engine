@@ -58,6 +58,10 @@ class HostedModelInferenceServiceConfig:
     vllm_repository: str
     lightllm_repository: str
     tensorrt_llm_repository: str
+    user_inference_base_repository: str
+    user_inference_pytorch_repository: str
+    user_inference_tensorflow_repository: str
+    docker_image_layer_cache_repository: str
 
     @classmethod
     def from_yaml(cls, yaml_path):

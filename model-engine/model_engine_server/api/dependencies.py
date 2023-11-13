@@ -133,6 +133,7 @@ class ExternalInterfaces:
     filesystem_gateway: FilesystemGateway
     llm_artifact_gateway: LLMArtifactGateway
     cron_job_gateway: CronJobGateway
+    monitoring_metrics_gateway: MonitoringMetricsGateway
 
 
 def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
@@ -279,6 +280,7 @@ def _get_external_interfaces(
         llm_artifact_gateway=llm_artifact_gateway,
         trigger_repository=trigger_repository,
         cron_job_gateway=cron_job_gateway,
+        monitoring_metrics_gateway=monitoring_metrics_gateway,
     )
     return external_interfaces
 

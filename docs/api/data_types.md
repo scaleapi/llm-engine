@@ -1,14 +1,14 @@
 # 🐍 Python Client Data Type Reference
 
 ::: llmengine.CompletionOutput
-    selection:
+    options:
         members:
             - text
             - num_prompt_tokens
             - num_completion_tokens
 
 ::: llmengine.CompletionStreamOutput
-    selection:
+    options:
         members:
             - text
             - finished
@@ -16,40 +16,40 @@
             - num_completion_tokens
 
 ::: llmengine.CompletionSyncResponse
-    selection:
+    options:
         members:
             - request_id
             - output
 
 ::: llmengine.CompletionStreamResponse
-    selection:
+    options:
         members:
             - request_id
             - output
 
 ::: llmengine.CreateFineTuneResponse
-    selection:
+    options:
         members:
             - id
 
 ::: llmengine.GetFineTuneResponse
-    selection:
+    options:
         members:
             - id
             - fine_tuned_model
 
 ::: llmengine.ListFineTunesResponse
-    selection:
+    options:
         members:
             - jobs
 
 ::: llmengine.CancelFineTuneResponse
-    selection:
+    options:
         members:
             - success
 
 ::: llmengine.GetLLMEndpointResponse
-    selection:
+    options:
         members:
             - name
             - source
@@ -63,50 +63,50 @@
             - spec
 
 ::: llmengine.ListLLMEndpointsResponse
-    selection:
+    options:
         members:
             - model_endpoints
 
 ::: llmengine.DeleteLLMEndpointResponse
-    selection:
+    options:
         members:
             - deleted
 
 ::: llmengine.ModelDownloadRequest
-    selection:
+    options:
         members:
             - model_name
             - download_format
 
 ::: llmengine.ModelDownloadResponse
-    selection:
+    options:
         members:
             - urls
 
 ::: llmengine.UploadFileResponse
-    selection:
+    options:
         members:
             - id
 
 ::: llmengine.GetFileResponse
-    selection:
+    options:
         members:
             - id
             - filename
             - size
 
 ::: llmengine.GetFileContentResponse
-    selection:
+    options:
         members:
             - id
             - content
 
 ::: llmengine.ListFilesResponse
-    selection:
+    options:
         members:
             - files
 
 ::: llmengine.DeleteFileResponse
-    selection:
+    options:
         members:
             - deleted

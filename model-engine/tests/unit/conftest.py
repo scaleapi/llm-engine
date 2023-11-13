@@ -2093,6 +2093,7 @@ def get_repositories_generator_wrapper():
             fake_model_bundle_repository = FakeModelBundleRepository(
                 contents=fake_model_bundle_repository_contents
             )
+            fake_monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
             fake_model_endpoint_record_repository = FakeModelEndpointRecordRepository(
                 contents=fake_model_endpoint_record_repository_contents,
                 model_bundle_repository=fake_model_bundle_repository,
@@ -2176,6 +2177,7 @@ def get_repositories_generator_wrapper():
                 cron_job_gateway=fake_cron_job_gateway,
                 filesystem_gateway=fake_file_system_gateway,
                 llm_artifact_gateway=fake_llm_artifact_gateway,
+                monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
             )
             try:
                 yield repositories
@@ -3688,7 +3690,7 @@ def llm_model_endpoint_sync_tgi(
                     "model_name": "llama-7b",
                     "source": "hugging_face",
                     "inference_framework": "text_generation_inference",
-                    "inference_framework_image_tag": "123",
+                    "inference_framework_image_tag": "0.9.4",
                     "num_shards": 4,
                 }
             },
@@ -3750,7 +3752,7 @@ def llm_model_endpoint_sync_tgi(
         "source": "hugging_face",
         "status": "READY",
         "inference_framework": "text_generation_inference",
-        "inference_framework_image_tag": "123",
+        "inference_framework_image_tag": "0.9.4",
         "num_shards": 4,
         "spec": {
             "id": "test_llm_model_endpoint_id_2",
@@ -3763,7 +3765,7 @@ def llm_model_endpoint_sync_tgi(
                     "model_name": "llama-7b",
                     "source": "hugging_face",
                     "inference_framework": "text_generation_inference",
-                    "inference_framework_image_tag": "123",
+                    "inference_framework_image_tag": "0.9.4",
                     "num_shards": 4,
                 }
             },
@@ -3885,7 +3887,7 @@ def llm_model_endpoint_text_generation_inference(
                     "model_name": "llama-7b",
                     "source": "hugging_face",
                     "inference_framework": "text_generation_inference",
-                    "inference_framework_image_tag": "123",
+                    "inference_framework_image_tag": "0.9.4",
                     "num_shards": 4,
                 }
             },
