@@ -54,18 +54,14 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
 
     def get_model_weights_urls(self, owner: str, model_name: str, **kwargs) -> List[str]:
         s3 = self._get_s3_resource(kwargs)
-        # parsing prefix to get S3 bucket name
-        bucket_name = hmi_config.hf_user_fine_tuned_weights_prefix.replace("s3://", "").split("/")[
-            0
-        ]
-        bucket = s3.Bucket(bucket_name)
+        parsed_remote = parse_attachment_url(hmi_config.hf_user_fine_tuned_weights_prefix)
+        bucket = parsed_remote.bucket
+        fine_tuned_weights_prefix = parsed_remote.key
+
+        s3_bucket = s3.Bucket(bucket)
         model_files: List[str] = []
         model_cache_name = get_model_cache_directory_name(model_name)
-        # parsing prefix to get /hosted-model-inference/fine_tuned_weights
-        fine_tuned_weights_prefix = "/".join(
-            hmi_config.hf_user_fine_tuned_weights_prefix.split("/")[-2:]
-        )
         prefix = f"{fine_tuned_weights_prefix}/{owner}/{model_cache_name}"
-        for obj in bucket.objects.filter(Prefix=prefix):
-            model_files.append(f"s3://{bucket_name}/{obj.key}")
+        for obj in s3_bucket.objects.filter(Prefix=prefix):
+            model_files.append(f"s3://{bucket}/{obj.key}")
         return model_files
