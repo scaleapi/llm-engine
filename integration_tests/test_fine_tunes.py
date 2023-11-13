@@ -2,9 +2,7 @@ import json
 import os
 
 import boto3
-import pytest
 import smart_open
-from fastapi import HTTPException
 
 from .rest_api_utils import (
     CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST,
@@ -22,7 +20,6 @@ def test_fine_tunes() -> None:
     di_batch_job_id = get_or_create_docker_image_batch_job_bundle(
         CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST, USER_ID_0
     )["id"]
-
     data = {
         "test_base_model-lora": {
             "docker_image_batch_job_bundle_id": di_batch_job_id,
@@ -44,9 +41,7 @@ def test_fine_tunes() -> None:
         ) as f:
             json.dump(data, f)
 
-    with pytest.raises(HTTPException) as e:
-        create_response = create_fine_tune(CREATE_FINE_TUNE_REQUEST, USER_ID_0)
-    assert e.type is None
+    create_response = create_fine_tune(CREATE_FINE_TUNE_REQUEST, USER_ID_0)
 
     fine_tune_id = create_response["id"]
     get_response = get_fine_tune_by_id(fine_tune_id, USER_ID_0)
@@ -59,9 +54,8 @@ def test_fine_tunes() -> None:
     num_jobs = len(list_response_0_before["jobs"])
     assert num_jobs >= 1
 
-    with pytest.raises(HTTPException) as e:
-        cancel_fine_tune_by_id(fine_tune_id, USER_ID_0)
-    assert e.type is None
+    cancel_response = cancel_fine_tune_by_id(fine_tune_id, USER_ID_0)
+    print(cancel_response)
 
     list_response_0_after = list_fine_tunes(USER_ID_0)
     assert len(list_response_0_after["jobs"]) == num_jobs - 1
