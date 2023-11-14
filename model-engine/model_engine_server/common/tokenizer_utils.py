@@ -20,7 +20,7 @@ TOKENIZER_FILES_REQUIRED = [
 TOKENIZER_FILES_OPTIONAL = [
     "tokenizer.model",
 ]
-TOKENIZER_TARGET_DIR = "/root/.cache/model_engine_server/tokenizers"
+TOKENIZER_TARGET_DIR = "/opt/.cache/model_engine_server/tokenizers"
 
 
 def get_models_s3_prefix(model_prefix: str) -> str:
