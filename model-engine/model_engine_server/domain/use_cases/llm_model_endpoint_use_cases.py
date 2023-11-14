@@ -1210,6 +1210,10 @@ class CompletionSyncV1UseCase:
                 tokens=tokens,
             )
         elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
+            if not model_content.model_name:
+                raise InvalidRequestException(
+                    f"Invalid endpoint {model_content.name} has no base model"
+                )
             if model_content.model_name not in tokenizer_cache:
                 tokenizer_cache[model_content.model_name] = AutoTokenizer.from_pretrained(
                     _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.TENSORRT_LLM][
