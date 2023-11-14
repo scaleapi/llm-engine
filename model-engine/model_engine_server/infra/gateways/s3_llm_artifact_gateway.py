@@ -3,8 +3,11 @@ from typing import List
 
 import boto3
 from model_engine_server.common.config import get_model_cache_directory_name, hmi_config
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.utils.url import parse_attachment_url
 from model_engine_server.domain.gateways import LLMArtifactGateway
+
+logger = make_logger(logger_name())
 
 
 class S3LLMArtifactGateway(LLMArtifactGateway):
@@ -48,6 +51,7 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
             if not os.path.exists(local_dir):
                 os.makedirs(local_dir)
 
+            logger.info(f"Downloading {obj.key} to {local_path}")
             s3_bucket.download_file(obj.key, local_path)
             downloaded_files.append(local_path)
         return downloaded_files

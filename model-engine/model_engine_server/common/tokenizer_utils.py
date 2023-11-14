@@ -125,7 +125,6 @@ def load_tokenizer_from_s3(
         return ""
 
     model_tokenizer_dir = f"{TOKENIZER_TARGET_DIR}/{model_name}"
-    logger.info(f"Downloading tokenizer files for model {model_name} to {model_tokenizer_dir}.")
 
     for file in TOKENIZER_FILES_REQUIRED:
         s3_path = get_models_s3_uri(s3_prefix, file)
@@ -137,7 +136,7 @@ def load_tokenizer_from_s3(
         target_path = get_models_local_path(model_name, file)
         try:
             llm_artifact_gateway.download_files(s3_path, target_path)
-        except Exception:  # noqa
+        except Exception:
             pass
 
     return model_tokenizer_dir
@@ -145,8 +144,6 @@ def load_tokenizer_from_s3(
 
 @lru_cache(maxsize=32)
 def load_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> AutoTokenizer:
-    logger.info(f"Loading tokenizer for model {model_name}.")
-
     model_info = _SUPPORTED_MODELS_INFO[model_name]
     model_location = ""
     try:
@@ -155,8 +152,7 @@ def load_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) ->
         list_repo_refs(model_info.hf_repo)  # check if model exists in Hugging Face Hub
         model_location = model_info.hf_repo
         # AutoTokenizer handles file downloads for HF repos
-    except RepositoryNotFoundError as e:
-        logger.warn(f"No HF repo for model {model_name} - {e}.")
+    except RepositoryNotFoundError:
         model_location = load_tokenizer_from_s3(
             model_name, model_info.s3_repo, llm_artifact_gateway
         )
