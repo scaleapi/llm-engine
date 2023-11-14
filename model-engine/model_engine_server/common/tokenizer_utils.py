@@ -1,4 +1,4 @@
-from typing import Dict
+from functools import lru_cache
 
 from huggingface_hub import list_repo_refs
 from huggingface_hub.utils._errors import RepositoryNotFoundError
@@ -10,10 +10,6 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import _S
 from transformers import AutoTokenizer
 
 logger = make_logger(logger_name())
-
-
-# Hack to count prompt tokens
-tokenizer_cache: Dict[str, AutoTokenizer] = {}
 
 
 TOKENIZER_FILES_REQUIRED = [
@@ -73,7 +69,8 @@ def load_tokenizer_from_s3(
     return f"{TOKENIZER_TARGET_DIR}/{model_name}"
 
 
-def load_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> None:
+@lru_cache(maxsize=32)
+def load_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> AutoTokenizer:
     logger.info(f"Loading tokenizer for model {model_name}.")
 
     model_info = _SUPPORTED_MODELS_INFO[model_name]
@@ -94,21 +91,12 @@ def load_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) ->
         raise ObjectNotFoundException(f"Tokenizer not found for model {model_name}.")
 
     logger.info(f"Loading tokenizer for model {model_name} from {model_location}.")
-    tokenizer_cache[model_name] = AutoTokenizer.from_pretrained(model_location)
-
-
-def get_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> AutoTokenizer:
-    """
-    Get tokenizer for a given model name and inference framework.
-    """
-    if model_name not in tokenizer_cache:
-        load_tokenizer(model_name, llm_artifact_gateway)
-    return tokenizer_cache[model_name]
+    return AutoTokenizer.from_pretrained(model_location)
 
 
 def count_tokens(input: str, model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> int:
     """
     Count the number of tokens in the input string.
     """
-    tokenizer = get_tokenizer(model_name, llm_artifact_gateway)
+    tokenizer = load_tokenizer(model_name, llm_artifact_gateway)
     return len(tokenizer.encode(input))
