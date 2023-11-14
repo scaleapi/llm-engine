@@ -2,6 +2,7 @@ import asyncio
 import time
 
 import pytest
+from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.common.tokenizer_utils import _SUPPORTED_MODELS_INFO, load_tokenizer
 from model_engine_server.infra.gateways.s3_llm_artifact_gateway import S3LLMArtifactGateway
 from tenacity import RetryError, retry, retry_if_exception_type, stop_after_attempt, wait_fixed
@@ -238,7 +239,7 @@ def test_sync_streaming_model_endpoint(capsys):
             delete_model_endpoint(create_endpoint_request["name"], user)
 
 
-@pytest.mark.skip(reason="test doesn't currently work, needs to figure out s3 fallback")
+@pytest.mark.skipif(CIRCLECI, reason="skip on circleci since need to figure out s3 access")
 def test_models_tokenizers() -> None:
     llm_artifact_gateway = S3LLMArtifactGateway()
     for model_name in _SUPPORTED_MODELS_INFO:

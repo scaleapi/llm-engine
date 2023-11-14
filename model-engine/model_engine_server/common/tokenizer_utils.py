@@ -124,6 +124,9 @@ def load_tokenizer_from_s3(
     if not s3_prefix:
         return ""
 
+    model_tokenizer_dir = f"{TOKENIZER_TARGET_DIR}/{model_name}"
+    logger.info(f"Downloading tokenizer files for model {model_name} to {model_tokenizer_dir}.")
+
     for file in TOKENIZER_FILES_REQUIRED:
         s3_path = get_models_s3_uri(s3_prefix, file)
         target_path = get_models_local_path(model_name, file)
@@ -137,7 +140,7 @@ def load_tokenizer_from_s3(
         except Exception:  # noqa
             pass
 
-    return f"{TOKENIZER_TARGET_DIR}/{model_name}"
+    return model_tokenizer_dir
 
 
 @lru_cache(maxsize=32)
