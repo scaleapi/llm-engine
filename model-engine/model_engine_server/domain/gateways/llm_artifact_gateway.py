@@ -13,7 +13,7 @@ class LLMArtifactGateway(ABC):
         Gets a list of files from a given path.
 
         Args:
-            path (str): S3 path to list files for. can either be a complete path or prefix
+            path (str): path to list files
         """
         pass
 
@@ -23,9 +23,9 @@ class LLMArtifactGateway(ABC):
         Download files from a given path to a target path.
 
         Args:
-            path (str): S3 path to list files for. can either be a complete path or prefix
-            target_path (str): local file dir path to download files to. can either be a complete path or prefix
-            overwrite (bool): whether to overwrite existing files
+            path (str): path to list files
+            target_path (str): local path to download files
+            overwrite (bool): whether to overwrite existing local files
         """
         pass
 

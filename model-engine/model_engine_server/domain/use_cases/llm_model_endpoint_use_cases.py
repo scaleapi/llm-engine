@@ -32,7 +32,7 @@ from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Req
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
-from model_engine_server.common.tokenizer_utils import _SUPPORTED_MODELS_INFO, count_tokens
+from model_engine_server.common.tokenizer_utils import _SUPPORTED_MODELS_INFO, load_tokenizer
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
@@ -186,6 +186,14 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
 
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
+
+
+def count_tokens(input: str, model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> int:
+    """
+    Count the number of tokens in the input string.
+    """
+    tokenizer = load_tokenizer(model_name, llm_artifact_gateway)
+    return len(tokenizer.encode(input))
 
 
 def _include_safetensors_bin_or_pt(model_files: List[str]) -> Optional[str]:
