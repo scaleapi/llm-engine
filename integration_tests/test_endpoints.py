@@ -2,8 +2,7 @@ import asyncio
 import time
 
 import pytest
-from model_engine_server.common.tokenizer_utils import load_tokenizer
-from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import _SUPPORTED_MODELS_INFO
+from model_engine_server.common.tokenizer_utils import _SUPPORTED_MODELS_INFO, load_tokenizer
 from model_engine_server.infra.gateways.s3_llm_artifact_gateway import S3LLMArtifactGateway
 from tenacity import RetryError, retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
