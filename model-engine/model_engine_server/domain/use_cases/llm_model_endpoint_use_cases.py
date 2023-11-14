@@ -88,7 +88,7 @@ def get_models_s3_repo(s3_repo: str):
     return f"s3://{infra_config().s3_bucket}/models/{s3_repo}"
 
 
-_COMMON_MODELS_INFO = {
+_SUPPORTED_MODELS_INFO = {
     "mpt-7b": ModelInfo("mosaicml/mpt-7b", ""),
     "mpt-7b-instruct": ModelInfo("mosaicml/mpt-7b-instruct", ""),
     "flan-t5-xxl": ModelInfo("google/flan-t5-xxl", ""),
@@ -148,82 +148,96 @@ _COMMON_MODELS_INFO = {
     "mammoth-coder-llama-2-34b": ModelInfo(
         "TIGER-Lab/MAmmoTH-Coder-34B", get_models_s3_repo("hf-llama/mammoth-coder-llama-2-34b")
     ),
+    "gpt-j-6b": ModelInfo("EleutherAI/gpt-j-6b", ""),
+    "gpt-j-6b-zh-en": ModelInfo("EleutherAI/gpt-j-6b", ""),
+    "gpt4all-j": ModelInfo("nomic-ai/gpt4all-j", ""),
+    "dolly-v2-12b": ModelInfo("databricks/dolly-v2-12b", ""),
+    "stablelm-tuned-7b": ModelInfo("StabilityAI/stablelm-tuned-alpha-7b", ""),
+    "vicuna-13b": ModelInfo("eachadea/vicuna-13b-1.1", ""),
 }
 
 _SUPPORTED_MODELS_BY_FRAMEWORK = {
-    LLMInferenceFramework.DEEPSPEED: {
-        "mpt-7b": _COMMON_MODELS_INFO["mpt-7b"],
-        "mpt-7b-instruct": _COMMON_MODELS_INFO["mpt-7b-instruct"],
-        "llama-7b": _COMMON_MODELS_INFO["llama-7b"],
-        "gpt-j-6b": ModelInfo("EleutherAI/gpt-j-6b", ""),
-        "gpt-j-6b-zh-en": ModelInfo("EleutherAI/gpt-j-6b", ""),
-        "gpt4all-j": ModelInfo("nomic-ai/gpt4all-j", ""),
-        "dolly-v2-12b": ModelInfo("databricks/dolly-v2-12b", ""),
-        "stablelm-tuned-7b": ModelInfo("StabilityAI/stablelm-tuned-alpha-7b", ""),
-        "flan-t5-xxl": ModelInfo("google/flan-t5-xxl", ""),
-        "vicuna-13b": ModelInfo("eachadea/vicuna-13b-1.1", ""),
-    },
-    LLMInferenceFramework.TEXT_GENERATION_INFERENCE: {
-        "mpt-7b": _COMMON_MODELS_INFO["mpt-7b"],
-        "mpt-7b-instruct": _COMMON_MODELS_INFO["mpt-7b-instruct"],
-        "flan-t5-xxl": _COMMON_MODELS_INFO["flan-t5-xxl"],
-        "llama-7b": _COMMON_MODELS_INFO["llama-7b"],
-        "llama-2-7b": _COMMON_MODELS_INFO["llama-2-7b"],
-        "llama-2-7b-chat": _COMMON_MODELS_INFO["llama-2-7b-chat"],
-        "llama-2-13b": _COMMON_MODELS_INFO["llama-2-13b"],
-        "llama-2-13b-chat": _COMMON_MODELS_INFO["llama-2-13b-chat"],
-        "llama-2-70b": _COMMON_MODELS_INFO["llama-2-70b"],
-        "llama-2-70b-chat": _COMMON_MODELS_INFO["llama-2-70b-chat"],
-        "falcon-7b": _COMMON_MODELS_INFO["falcon-7b"],
-        "falcon-7b-instruct": _COMMON_MODELS_INFO["falcon-7b-instruct"],
-        "falcon-40b": _COMMON_MODELS_INFO["falcon-40b"],
-        "falcon-40b-instruct": _COMMON_MODELS_INFO["falcon-40b-instruct"],
-        "codellama-7b": _COMMON_MODELS_INFO["codellama-7b"],
-        "codellama-7b-instruct": _COMMON_MODELS_INFO["codellama-7b-instruct"],
-        "codellama-13b": _COMMON_MODELS_INFO["codellama-13b"],
-        "codellama-13b-instruct": _COMMON_MODELS_INFO["codellama-13b-instruct"],
-        "codellama-34b": _COMMON_MODELS_INFO["codellama-34b"],
-        "codellama-34b-instruct": _COMMON_MODELS_INFO["codellama-34b-instruct"],
-        "llm-jp-13b-instruct-full": _COMMON_MODELS_INFO["llm-jp-13b-instruct-full"],
-        "llm-jp-13b-instruct-full-dolly": _COMMON_MODELS_INFO["llm-jp-13b-instruct-full-dolly"],
-    },
-    LLMInferenceFramework.VLLM: {
-        "mpt-7b": _COMMON_MODELS_INFO["mpt-7b"],
-        "mpt-7b-instruct": _COMMON_MODELS_INFO["mpt-7b-instruct"],
-        "llama-7b": _COMMON_MODELS_INFO["llama-7b"],
-        "llama-2-7b": _COMMON_MODELS_INFO["llama-2-7b"],
-        "llama-2-7b-chat": _COMMON_MODELS_INFO["llama-2-7b-chat"],
-        "llama-2-13b": _COMMON_MODELS_INFO["llama-2-13b"],
-        "llama-2-13b-chat": _COMMON_MODELS_INFO["llama-2-13b-chat"],
-        "llama-2-70b": _COMMON_MODELS_INFO["llama-2-70b"],
-        "llama-2-70b-chat": _COMMON_MODELS_INFO["llama-2-70b-chat"],
-        "falcon-7b": _COMMON_MODELS_INFO["falcon-7b"],
-        "falcon-7b-instruct": _COMMON_MODELS_INFO["falcon-7b-instruct"],
-        "falcon-40b": _COMMON_MODELS_INFO["falcon-40b"],
-        "falcon-40b-instruct": _COMMON_MODELS_INFO["falcon-40b-instruct"],
-        "falcon-180b": _COMMON_MODELS_INFO["falcon-180b"],
-        "falcon-180b-chat": _COMMON_MODELS_INFO["falcon-180b-chat"],
-        "codellama-7b": _COMMON_MODELS_INFO["codellama-7b"],
-        "codellama-7b-instruct": _COMMON_MODELS_INFO["codellama-7b-instruct"],
-        "codellama-13b": _COMMON_MODELS_INFO["codellama-13b"],
-        "codellama-13b-instruct": _COMMON_MODELS_INFO["codellama-13b-instruct"],
-        "codellama-34b": _COMMON_MODELS_INFO["codellama-34b"],
-        "codellama-34b-instruct": _COMMON_MODELS_INFO["codellama-34b-instruct"],
-        "mistral-7b": _COMMON_MODELS_INFO["mistral-7b"],
-        "mistral-7b-instruct": _COMMON_MODELS_INFO["mistral-7b-instruct"],
-        "mammoth-coder-llama-2-7b": _COMMON_MODELS_INFO["mammoth-coder-llama-2-7b"],
-        "mammoth-coder-llama-2-13b": _COMMON_MODELS_INFO["mammoth-coder-llama-2-13b"],
-        "mammoth-coder-llama-2-34b": _COMMON_MODELS_INFO["mammoth-coder-llama-2-34b"],
-    },
-    LLMInferenceFramework.LIGHTLLM: {
-        "llama-7b": _COMMON_MODELS_INFO["llama-7b"],
-        "llama-2-7b": _COMMON_MODELS_INFO["llama-2-7b"],
-        "llama-2-7b-chat": _COMMON_MODELS_INFO["llama-2-7b-chat"],
-        "llama-2-13b": _COMMON_MODELS_INFO["llama-2-13b"],
-        "llama-2-13b-chat": _COMMON_MODELS_INFO["llama-2-13b-chat"],
-        "llama-2-70b": _COMMON_MODELS_INFO["llama-2-70b"],
-        "llama-2-70b-chat": _COMMON_MODELS_INFO["llama-2-70b-chat"],
-    },
+    LLMInferenceFramework.DEEPSPEED: set(
+        [
+            "mpt-7b",
+            "mpt-7b-instruct",
+            "flan-t5-xxl",
+            "llama-7b",
+            "gpt-j-6b",
+            "gpt-j-6b-zh-en",
+            "gpt4all-j",
+            "dolly-v2-12b",
+            "stablelm-tuned-7b",
+            "vicuna-13b",
+        ]
+    ),
+    LLMInferenceFramework.TEXT_GENERATION_INFERENCE: set(
+        [
+            "mpt-7b",
+            "mpt-7b-instruct",
+            "flan-t5-xxl",
+            "llama-7b",
+            "llama-2-7b",
+            "llama-2-7b-chat",
+            "llama-2-13b",
+            "llama-2-13b-chat",
+            "llama-2-70b",
+            "llama-2-70b-chat",
+            "falcon-7b",
+            "falcon-7b-instruct",
+            "falcon-40b",
+            "falcon-40b-instruct",
+            "codellama-7b",
+            "codellama-7b-instruct",
+            "codellama-13b",
+            "codellama-13b-instruct",
+            "codellama-34b",
+            "codellama-34b-instruct",
+            "llm-jp-13b-instruct-full",
+            "llm-jp-13b-instruct-full-dolly",
+        ]
+    ),
+    LLMInferenceFramework.VLLM: set(
+        [
+            "mpt-7b",
+            "mpt-7b-instruct",
+            "llama-7b",
+            "llama-2-7b",
+            "llama-2-7b-chat",
+            "llama-2-13b",
+            "llama-2-13b-chat",
+            "llama-2-70b",
+            "llama-2-70b-chat",
+            "falcon-7b",
+            "falcon-7b-instruct",
+            "falcon-40b",
+            "falcon-40b-instruct",
+            "falcon-180b",
+            "falcon-180b-chat",
+            "codellama-7b",
+            "codellama-7b-instruct",
+            "codellama-13b",
+            "codellama-13b-instruct",
+            "codellama-34b",
+            "codellama-34b-instruct",
+            "mistral-7b",
+            "mistral-7b-instruct",
+            "mammoth-coder-llama-2-7b",
+            "mammoth-coder-llama-2-13b",
+            "mammoth-coder-llama-2-34b",
+        ]
+    ),
+    LLMInferenceFramework.LIGHTLLM: set(
+        [
+            "llama-7b",
+            "llama-2-7b",
+            "llama-2-7b-chat",
+            "llama-2-13b",
+            "llama-2-13b-chat",
+            "llama-2-70b",
+            "llama-2-70b-chat",
+        ]
+    ),
 }
 
 _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
@@ -288,14 +302,10 @@ def load_tokenizer_from_s3(s3_repo: str, llm_artifact_gateway: LLMArtifactGatewa
             pass
 
 
-def load_tokenizer(
-    model_name: str,
-    inference_framework: LLMInferenceFramework,
-    llm_artifact_gateway: LLMArtifactGateway,
-) -> None:
-    logger.info(f"Loading tokenizer for model {model_name} and framework {inference_framework}.")
+def load_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> None:
+    logger.info(f"Loading tokenizer for model {model_name}.")
 
-    model_info = _SUPPORTED_MODELS_BY_FRAMEWORK[inference_framework][model_name]
+    model_info = _SUPPORTED_MODELS_INFO[model_name]
     model_location = ""
     try:
         if not model_info.hf_repo:
@@ -315,29 +325,20 @@ def load_tokenizer(
     tokenizer_cache[model_name] = AutoTokenizer.from_pretrained(model_location)
 
 
-def get_tokenizer(
-    model_name: str,
-    inference_framework: LLMInferenceFramework,
-    llm_artifact_gateway: LLMArtifactGateway,
-) -> AutoTokenizer:
+def get_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> AutoTokenizer:
     """
     Get tokenizer for a given model name and inference framework.
     """
     if model_name not in tokenizer_cache:
-        load_tokenizer(model_name, inference_framework, llm_artifact_gateway)
+        load_tokenizer(model_name, llm_artifact_gateway)
     return tokenizer_cache[model_name]
 
 
-def count_tokens(
-    input: str,
-    model_name: str,
-    inference_framework: LLMInferenceFramework,
-    llm_artifact_gateway: LLMArtifactGateway,
-) -> int:
+def count_tokens(input: str, model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> int:
     """
     Count the number of tokens in the input string.
     """
-    tokenizer = get_tokenizer(model_name, inference_framework, llm_artifact_gateway)
+    tokenizer = get_tokenizer(model_name, llm_artifact_gateway)
     return len(tokenizer.encode(input))
 
 
@@ -550,9 +551,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Not able to load checkpoint path {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODELS_BY_FRAMEWORK[
-                LLMInferenceFramework.TEXT_GENERATION_INFERENCE
-            ][model_name].hf_repo
+            final_weights_folder = _SUPPORTED_MODELS_INFO[model_name].hf_repo
 
         subcommands.append(
             f"text-generation-launcher --hostname :: --model-id {final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
@@ -753,9 +752,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Not able to load checkpoint path {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODELS_BY_FRAMEWORK[LLMInferenceFramework.VLLM][
-                model_name
-            ].hf_repo
+            final_weights_folder = _SUPPORTED_MODELS_INFO[model_name].hf_repo
 
         if max_model_len:
             subcommands.append(
@@ -846,9 +843,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Not able to load checkpoint path {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODELS_BY_FRAMEWORK[LLMInferenceFramework.VLLM][
-                model_name
-            ].hf_repo
+            final_weights_folder = _SUPPORTED_MODELS_INFO[model_name].hf_repo
 
         subcommands.append(
             f"python -m lightllm.server.api_server --model_dir {final_weights_folder} --port 5005 --tp {num_shards} --max_total_token_num {max_total_token_num} --max_req_input_len {max_req_input_len} --max_req_total_len {max_req_total_len} --tokenizer_mode auto"
@@ -1206,7 +1201,6 @@ class CompletionSyncV1UseCase:
                 num_prompt_tokens=count_tokens(
                     prompt,
                     model_content.model_name,
-                    LLMInferenceFramework.DEEPSPEED,
                     self.llm_artifact_gateway,
                 ),
                 num_completion_tokens=completion_token_count,
@@ -1261,7 +1255,6 @@ class CompletionSyncV1UseCase:
                 num_prompt_tokens=count_tokens(
                     prompt,
                     model_content.model_name,
-                    LLMInferenceFramework.LIGHTLLM,
                     self.llm_artifact_gateway,
                 ),
                 num_completion_tokens=model_output["count_output_tokens"],
@@ -1611,7 +1604,6 @@ class CompletionStreamV1UseCase:
             num_prompt_tokens = count_tokens(
                 request.prompt,
                 model_content.model_name,
-                LLMInferenceFramework.DEEPSPEED,
                 self.llm_artifact_gateway,
             )
         elif model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
@@ -1633,7 +1625,6 @@ class CompletionStreamV1UseCase:
             num_prompt_tokens = count_tokens(
                 request.prompt,
                 model_content.model_name,
-                LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
                 self.llm_artifact_gateway,
             )
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
@@ -1674,7 +1665,6 @@ class CompletionStreamV1UseCase:
             num_prompt_tokens = count_tokens(
                 request.prompt,
                 model_content.model_name,
-                LLMInferenceFramework.LIGHTLLM,
                 self.llm_artifact_gateway,
             )
         else:
