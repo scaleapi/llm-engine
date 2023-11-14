@@ -1,8 +1,7 @@
-from typing import Any, Tuple
+from typing import Any, List, Tuple
 from unittest import mock
 
 import pytest
-from huggingface_hub.utils._errors import RepositoryNotFoundError
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
     CompletionStreamV1Request,
@@ -46,6 +45,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     _include_safetensors_bin_or_pt,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
+from model_engine_server.infra.repositories.live_tokenizer_repository import ModelInfo
 
 
 @pytest.mark.asyncio
@@ -356,7 +356,7 @@ async def test_get_llm_model_endpoint_use_case_raises_not_authorized(
 
 def mocked_auto_tokenizer_from_pretrained(*args, **kwargs):  # noqa
     class mocked_encode:
-        def encode(self, input: str) -> dict:  # noqa
+        def encode(self, input: str) -> List[Any]:  # noqa
             return [1] * 7
 
     return mocked_encode()
@@ -364,8 +364,12 @@ def mocked_auto_tokenizer_from_pretrained(*args, **kwargs):  # noqa
 
 @pytest.mark.asyncio
 @mock.patch(
-    "model_engine_server.infra.repositories.live_tokenizer_repository.list_repo_refs",
-    side_effect=RepositoryNotFoundError("not found"),
+    "model_engine_server.infra.repositories.live_tokenizer_repository.get_supported_models_info",
+    mock.Mock(return_value={"llama-7b": ModelInfo(None, "test-key")}),
+)
+@mock.patch(
+    "model_engine_server.infra.repositories.live_tokenizer_repository.get_models_s3_uri",
+    mock.Mock(return_value="s3://test-bucket/test-key"),
 )
 @mock.patch(
     "model_engine_server.infra.repositories.live_tokenizer_repository.AutoTokenizer.from_pretrained",

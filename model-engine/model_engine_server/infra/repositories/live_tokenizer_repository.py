@@ -84,6 +84,15 @@ def get_supported_models_info() -> Dict[str, ModelInfo]:
 _SUPPORTED_MODELS_INFO = get_supported_models_info()
 
 
+def get_models_s3_uri(*args, **kwargs) -> str:
+    try:
+        from plugins.live_tokenizer_repository import get_models_s3_uri as get_custom_models_s3_uri
+
+        return get_custom_models_s3_uri(*args, **kwargs)
+    except ModuleNotFoundError:
+        raise NotImplementedError
+
+
 def get_models_local_dir_path(model_name: str) -> str:
     """
     Get the local directory path for a given model.
@@ -104,25 +113,20 @@ class LiveTokenizerRepository(TokenizerRepository):
 
         model_tokenizer_dir = get_models_local_dir_path(model_name)
 
-        try:
-            from plugins.live_tokenizer_repository import get_models_s3_uri
+        for file in TOKENIZER_FILES_REQUIRED:
+            s3_path = get_models_s3_uri(s3_prefix, file)
+            target_path = os.path.join(model_tokenizer_dir, file)
+            self.llm_artifact_gateway.download_files(s3_path, target_path)
 
-            for file in TOKENIZER_FILES_REQUIRED:
-                s3_path = get_models_s3_uri(s3_prefix, file)
-                target_path = os.path.join(model_tokenizer_dir, file)
+        for file in TOKENIZER_FILES_OPTIONAL:
+            s3_path = get_models_s3_uri(s3_prefix, file)
+            target_path = os.path.join(model_tokenizer_dir, file)
+            try:
                 self.llm_artifact_gateway.download_files(s3_path, target_path)
+            except Exception:
+                pass
 
-            for file in TOKENIZER_FILES_OPTIONAL:
-                s3_path = get_models_s3_uri(s3_prefix, file)
-                target_path = os.path.join(model_tokenizer_dir, file)
-                try:
-                    self.llm_artifact_gateway.download_files(s3_path, target_path)
-                except Exception:
-                    pass
-
-            return model_tokenizer_dir
-        except ModuleNotFoundError:
-            return None
+        return model_tokenizer_dir
 
     @lru_cache(maxsize=32)
     def load_tokenizer(self, model_name: str) -> AutoTokenizer:
