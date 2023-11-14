@@ -123,6 +123,7 @@ class Forwarder(ModelEngineSerializationMixin):
     serialize_results_as_string: bool
     post_inference_hooks_handler: PostInferenceHooksHandler
     wrap_response: bool
+    forward_http_status: bool
 
     def __call__(self, json_payload: Any) -> Any:
         request_obj = EndpointPredictV1Request.parse_obj(json_payload)
@@ -164,7 +165,10 @@ class Forwarder(ModelEngineSerializationMixin):
 
         # TODO: we actually want to do this after we've returned the response.
         self.post_inference_hooks_handler.handle(request_obj, response)
-        return JSONResponse(content=response, status_code=response_raw.status_code)
+        if self.forward_http_status:
+            return JSONResponse(content=response, status_code=response_raw.status_code)
+        else:
+            return response
 
 
 @dataclass(frozen=True)
@@ -188,6 +192,7 @@ class LoadForwarder:
     model_engine_unwrap: bool = True
     serialize_results_as_string: bool = True
     wrap_response: bool = True
+    forward_http_status: bool = False
 
     def load(self, resources: Path, cache: Any) -> Forwarder:
         if self.use_grpc:
@@ -286,6 +291,7 @@ class LoadForwarder:
             serialize_results_as_string=serialize_results_as_string,
             post_inference_hooks_handler=handler,
             wrap_response=self.wrap_response,
+            forward_http_status=self.forward_http_status,
         )
 
 
