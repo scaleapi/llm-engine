@@ -354,6 +354,10 @@ async def test_get_llm_model_endpoint_use_case_raises_not_authorized(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
+    return_value=7,
+)
 async def test_completion_sync_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
@@ -438,6 +442,10 @@ async def test_completion_sync_use_case_success(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
+    return_value=5,
+)
 async def test_completion_sync_text_generation_inference_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
@@ -643,6 +651,10 @@ async def test_completion_sync_use_case_not_sync_endpoint_raises(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
+    return_value=7,
+)
 async def test_completion_stream_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
@@ -726,11 +738,16 @@ async def test_completion_stream_use_case_success(
         assert message.dict()["request_id"]
         assert message.dict()["output"]["text"] == output_texts[i]
         if i == 6:
+            assert message.dict()["output"]["num_prompt_tokens"] == 7
             assert message.dict()["output"]["num_completion_tokens"] == 6
         i += 1
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
+    return_value=7,
+)
 async def test_completion_stream_text_generation_inference_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
@@ -789,6 +806,7 @@ async def test_completion_stream_text_generation_inference_use_case_success(
         assert message.dict()["request_id"]
         assert message.dict()["output"]["text"] == output_texts[i]
         if i == 5:
+            assert message.dict()["output"]["num_prompt_tokens"] == 7
             assert message.dict()["output"]["num_completion_tokens"] == 6
         i += 1
 
