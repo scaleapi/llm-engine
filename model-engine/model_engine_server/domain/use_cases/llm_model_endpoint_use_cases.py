@@ -82,85 +82,145 @@ logger = make_logger(logger_name())
 ModelInfo = namedtuple("ModelInfo", ["hf_repo", "s3_repo"])
 
 
-def get_s3_repo(s3_repo: str):
-    return f"s3://{infra_config().s3_bucket}/{s3_repo}"
+def get_models_s3_repo(s3_repo: str):
+    return f"s3://{infra_config().s3_bucket}/models/{s3_repo}"
 
 
-_SUPPORTED_MODEL_NAMES = {
+_COMMON_MODELS_INFO = {
+    "mpt-7b": ModelInfo("mosaicml/mpt-7b", ""),
+    "mpt-7b-instruct": ModelInfo("mosaicml/mpt-7b-instruct", ""),
+    "flan-t5-xxl": ModelInfo("google/flan-t5-xxl", ""),
+    "llama-7b": ModelInfo(
+        "decapoda-research/llama-7b-hf", get_models_s3_repo("hf-llama/hf-llama-7b")
+    ),
+    "llama-2-7b": ModelInfo(
+        "meta-llama/Llama-2-7b-hf", get_models_s3_repo("hf-llama/hf-llama-2-7b")
+    ),
+    "llama-2-7b-chat": ModelInfo(
+        "meta-llama/Llama-2-7b-chat-hf", get_models_s3_repo("hf-llama/hf-llama-2-7b-chat")
+    ),
+    "llama-2-13b": ModelInfo(
+        "meta-llama/Llama-2-13b-hf", get_models_s3_repo("hf-llama/hf-llama-2-13b")
+    ),
+    "llama-2-13b-chat": ModelInfo(
+        "meta-llama/Llama-2-13b-chat-hf", get_models_s3_repo("hf-llama/hf-llama-2-13b-chat")
+    ),
+    "llama-2-70b": ModelInfo(
+        "meta-llama/Llama-2-70b-hf", get_models_s3_repo("hf-llama/hf-llama-2-70b")
+    ),
+    "llama-2-70b-chat": ModelInfo(
+        "meta-llama/Llama-2-70b-chat-hf", get_models_s3_repo("hf-llama/hf-llama-2-70b-chat")
+    ),
+    "falcon-7b": ModelInfo("tiiuae/falcon-7b", ""),
+    "falcon-7b-instruct": ModelInfo("tiiuae/falcon-7b-instruct", ""),
+    "falcon-40b": ModelInfo("tiiuae/falcon-40b", ""),
+    "falcon-40b-instruct": ModelInfo("tiiuae/falcon-40b-instruct", ""),
+    "falcon-180b": ModelInfo("tiiuae/falcon-180B", get_models_s3_repo("falcon-hf/falcon-180b")),
+    "falcon-180b-chat": ModelInfo(
+        "tiiuae/falcon-180B-chat", get_models_s3_repo("falcon-hf/falcon-180b-chat")
+    ),
+    "codellama-7b": ModelInfo("codellama/CodeLlama-7b-hf", ""),
+    "codellama-7b-instruct": ModelInfo("codellama/CodeLlama-7b-Instruct-hf", ""),
+    "codellama-13b": ModelInfo("codellama/CodeLlama-13b-hf", ""),
+    "codellama-13b-instruct": ModelInfo("codellama/CodeLlama-13b-Instruct-hf", ""),
+    "codellama-34b": ModelInfo("codellama/CodeLlama-34b-hf", ""),
+    "codellama-34b-instruct": ModelInfo("codellama/CodeLlama-34b-Instruct-hf", ""),
+    "llm-jp-13b-instruct-full": ModelInfo(
+        "llm-jp/llm-jp-13b-instruct-full-jaster-v1.0",
+        get_models_s3_repo("llm-jp/llm-jp-13b-instruct-full-jaster-v1.0"),
+    ),
+    "llm-jp-13b-instruct-full-dolly": ModelInfo(
+        "llm-jp/llm-jp-13b-instruct-full-dolly-oasst-v1.0",
+        get_models_s3_repo("llm-jp/llm-jp--llm-jp-13b-instruct-full-dolly-oasst-v1.0"),
+    ),
+    "mistral-7b": ModelInfo("mistralai/Mistral-7B-v0.1", get_models_s3_repo("mistral-7b")),
+    "mistral-7b-instruct": ModelInfo(
+        "mistralai/Mistral-7B-Instruct-v0.1", get_models_s3_repo("mistral-7b-instruct")
+    ),
+    "mammoth-coder-llama-2-7b": ModelInfo(
+        "TIGER-Lab/MAmmoTH-Coder-7B", get_models_s3_repo("hf-llama/mammoth-coder-llama-2-7b")
+    ),
+    "mammoth-coder-llama-2-13b": ModelInfo(
+        "TIGER-Lab/MAmmoTH-Coder-13B", get_models_s3_repo("hf-llama/mammoth-coder-llama-2-13b")
+    ),
+    "mammoth-coder-llama-2-34b": ModelInfo(
+        "TIGER-Lab/MAmmoTH-Coder-34B", get_models_s3_repo("hf-llama/mammoth-coder-llama-2-34b")
+    ),
+}
+
+_SUPPORTED_MODELS_BY_FRAMEWORK = {
     LLMInferenceFramework.DEEPSPEED: {
-        "mpt-7b": ModelInfo("mosaicml/mpt-7b", ""),
-        "mpt-7b-instruct": ModelInfo("mosaicml/mpt-7b-instruct", ""),
+        "mpt-7b": _COMMON_MODELS_INFO["mpt-7b"],
+        "mpt-7b-instruct": _COMMON_MODELS_INFO["mpt-7b-instruct"],
+        "llama-7b": _COMMON_MODELS_INFO["llama-7b"],
         "gpt-j-6b": ModelInfo("EleutherAI/gpt-j-6b", ""),
         "gpt-j-6b-zh-en": ModelInfo("EleutherAI/gpt-j-6b", ""),
         "gpt4all-j": ModelInfo("nomic-ai/gpt4all-j", ""),
         "dolly-v2-12b": ModelInfo("databricks/dolly-v2-12b", ""),
         "stablelm-tuned-7b": ModelInfo("StabilityAI/stablelm-tuned-alpha-7b", ""),
         "flan-t5-xxl": ModelInfo("google/flan-t5-xxl", ""),
-        "llama-7b": ModelInfo("decapoda-research/llama-7b-hf", ""),
         "vicuna-13b": ModelInfo("eachadea/vicuna-13b-1.1", ""),
     },
     LLMInferenceFramework.TEXT_GENERATION_INFERENCE: {
-        "mpt-7b": ModelInfo("mosaicml/mpt-7b", ""),
-        "mpt-7b-instruct": ModelInfo("mosaicml/mpt-7b-instruct", ""),
-        "flan-t5-xxl": ModelInfo("google/flan-t5-xxl", ""),
-        "llama-7b": ModelInfo("decapoda-research/llama-7b-hf", ""),
-        "llama-2-7b": ModelInfo("meta-llama/Llama-2-7b-hf", ""),
-        "llama-2-7b-chat": ModelInfo("meta-llama/Llama-2-7b-chat-hf", ""),
-        "llama-2-13b": ModelInfo("meta-llama/Llama-2-13b-hf", ""),
-        "llama-2-13b-chat": ModelInfo("meta-llama/Llama-2-13b-chat-hf", ""),
-        "llama-2-70b": ModelInfo("meta-llama/Llama-2-70b-hf", ""),
-        "llama-2-70b-chat": ModelInfo("meta-llama/Llama-2-70b-chat-hf", ""),
-        "falcon-7b": ModelInfo("tiiuae/falcon-7b", ""),
-        "falcon-7b-instruct": ModelInfo("tiiuae/falcon-7b-instruct", ""),
-        "falcon-40b": ModelInfo("tiiuae/falcon-40b", ""),
-        "falcon-40b-instruct": ModelInfo("tiiuae/falcon-40b-instruct", ""),
-        "codellama-7b": ModelInfo("codellama/CodeLlama-7b-hf", ""),
-        "codellama-7b-instruct": ModelInfo("codellama/CodeLlama-7b-Instruct-hf", ""),
-        "codellama-13b": ModelInfo("codellama/CodeLlama-13b-hf", ""),
-        "codellama-13b-instruct": ModelInfo("codellama/CodeLlama-13b-Instruct-hf", ""),
-        "codellama-34b": ModelInfo("codellama/CodeLlama-34b-hf", ""),
-        "codellama-34b-instruct": ModelInfo("codellama/CodeLlama-34b-Instruct-hf", ""),
-        "llm-jp-13b-instruct-full": ModelInfo("llm-jp/llm-jp-13b-instruct-full-jaster-v1.0", ""),
-        "llm-jp-13b-instruct-full-dolly": ModelInfo(
-            "llm-jp/llm-jp-13b-instruct-full-dolly-oasst-v1.0", ""
-        ),
+        "mpt-7b": _COMMON_MODELS_INFO["mpt-7b"],
+        "mpt-7b-instruct": _COMMON_MODELS_INFO["mpt-7b-instruct"],
+        "flan-t5-xxl": _COMMON_MODELS_INFO["flan-t5-xxl"],
+        "llama-7b": _COMMON_MODELS_INFO["llama-7b"],
+        "llama-2-7b": _COMMON_MODELS_INFO["llama-2-7b"],
+        "llama-2-7b-chat": _COMMON_MODELS_INFO["llama-2-7b-chat"],
+        "llama-2-13b": _COMMON_MODELS_INFO["llama-2-13b"],
+        "llama-2-13b-chat": _COMMON_MODELS_INFO["llama-2-13b-chat"],
+        "llama-2-70b": _COMMON_MODELS_INFO["llama-2-70b"],
+        "llama-2-70b-chat": _COMMON_MODELS_INFO["llama-2-70b-chat"],
+        "falcon-7b": _COMMON_MODELS_INFO["falcon-7b"],
+        "falcon-7b-instruct": _COMMON_MODELS_INFO["falcon-7b-instruct"],
+        "falcon-40b": _COMMON_MODELS_INFO["falcon-40b"],
+        "falcon-40b-instruct": _COMMON_MODELS_INFO["falcon-40b-instruct"],
+        "codellama-7b": _COMMON_MODELS_INFO["codellama-7b"],
+        "codellama-7b-instruct": _COMMON_MODELS_INFO["codellama-7b-instruct"],
+        "codellama-13b": _COMMON_MODELS_INFO["codellama-13b"],
+        "codellama-13b-instruct": _COMMON_MODELS_INFO["codellama-13b-instruct"],
+        "codellama-34b": _COMMON_MODELS_INFO["codellama-34b"],
+        "codellama-34b-instruct": _COMMON_MODELS_INFO["codellama-34b-instruct"],
+        "llm-jp-13b-instruct-full": _COMMON_MODELS_INFO["llm-jp-13b-instruct-full"],
+        "llm-jp-13b-instruct-full-dolly": _COMMON_MODELS_INFO["llm-jp-13b-instruct-full-dolly"],
     },
     LLMInferenceFramework.VLLM: {
-        "mpt-7b": ModelInfo("mosaicml/mpt-7b", ""),
-        "mpt-7b-instruct": ModelInfo("mosaicml/mpt-7b-instruct", ""),
-        "llama-7b": ModelInfo("decapoda-research/llama-7b-hf", ""),
-        "llama-2-7b": ModelInfo("meta-llama/Llama-2-7b-hf", ""),
-        "llama-2-7b-chat": ModelInfo("meta-llama/Llama-2-7b-chat-hf", ""),
-        "llama-2-13b": ModelInfo("meta-llama/Llama-2-13b-hf", ""),
-        "llama-2-13b-chat": ModelInfo("meta-llama/Llama-2-13b-chat-hf", ""),
-        "llama-2-70b": ModelInfo("meta-llama/Llama-2-70b-hf", ""),
-        "llama-2-70b-chat": ModelInfo("meta-llama/Llama-2-70b-chat-hf", ""),
-        "falcon-7b": ModelInfo("tiiuae/falcon-7b", ""),
-        "falcon-7b-instruct": ModelInfo("tiiuae/falcon-7b-instruct", ""),
-        "falcon-40b": ModelInfo("tiiuae/falcon-40b", ""),
-        "falcon-40b-instruct": ModelInfo("tiiuae/falcon-40b-instruct", ""),
-        "mistral-7b": ModelInfo("mistralai/Mistral-7B-v0.1", ""),
-        "mistral-7b-instruct": ModelInfo("mistralai/Mistral-7B-Instruct-v0.1", ""),
-        "falcon-180b": ModelInfo("tiiuae/falcon-180B", ""),
-        "falcon-180b-chat": ModelInfo("tiiuae/falcon-180B-chat", ""),
-        "codellama-7b": ModelInfo("codellama/CodeLlama-7b-hf", ""),
-        "codellama-7b-instruct": ModelInfo("codellama/CodeLlama-7b-Instruct-hf", ""),
-        "codellama-13b": ModelInfo("codellama/CodeLlama-13b-hf", ""),
-        "codellama-13b-instruct": ModelInfo("codellama/CodeLlama-13b-Instruct-hf", ""),
-        "codellama-34b": ModelInfo("codellama/CodeLlama-34b-hf", ""),
-        "codellama-34b-instruct": ModelInfo("codellama/CodeLlama-34b-Instruct-hf", ""),
-        "mammoth-coder-llama-2-7b": ModelInfo("TIGER-Lab/MAmmoTH-Coder-7B", ""),
-        "mammoth-coder-llama-2-13b": ModelInfo("TIGER-Lab/MAmmoTH-Coder-13B", ""),
-        "mammoth-coder-llama-2-34b": ModelInfo("TIGER-Lab/MAmmoTH-Coder-34B", ""),
+        "mpt-7b": _COMMON_MODELS_INFO["mpt-7b"],
+        "mpt-7b-instruct": _COMMON_MODELS_INFO["mpt-7b-instruct"],
+        "llama-7b": _COMMON_MODELS_INFO["llama-7b"],
+        "llama-2-7b": _COMMON_MODELS_INFO["llama-2-7b"],
+        "llama-2-7b-chat": _COMMON_MODELS_INFO["llama-2-7b-chat"],
+        "llama-2-13b": _COMMON_MODELS_INFO["llama-2-13b"],
+        "llama-2-13b-chat": _COMMON_MODELS_INFO["llama-2-13b-chat"],
+        "llama-2-70b": _COMMON_MODELS_INFO["llama-2-70b"],
+        "llama-2-70b-chat": _COMMON_MODELS_INFO["llama-2-70b-chat"],
+        "falcon-7b": _COMMON_MODELS_INFO["falcon-7b"],
+        "falcon-7b-instruct": _COMMON_MODELS_INFO["falcon-7b-instruct"],
+        "falcon-40b": _COMMON_MODELS_INFO["falcon-40b"],
+        "falcon-40b-instruct": _COMMON_MODELS_INFO["falcon-40b-instruct"],
+        "falcon-180b": _COMMON_MODELS_INFO["falcon-180b"],
+        "falcon-180b-chat": _COMMON_MODELS_INFO["falcon-180b-chat"],
+        "codellama-7b": _COMMON_MODELS_INFO["codellama-7b"],
+        "codellama-7b-instruct": _COMMON_MODELS_INFO["codellama-7b-instruct"],
+        "codellama-13b": _COMMON_MODELS_INFO["codellama-13b"],
+        "codellama-13b-instruct": _COMMON_MODELS_INFO["codellama-13b-instruct"],
+        "codellama-34b": _COMMON_MODELS_INFO["codellama-34b"],
+        "codellama-34b-instruct": _COMMON_MODELS_INFO["codellama-34b-instruct"],
+        "mistral-7b": _COMMON_MODELS_INFO["mistral-7b"],
+        "mistral-7b-instruct": _COMMON_MODELS_INFO["mistral-7b-instruct"],
+        "mammoth-coder-llama-2-7b": _COMMON_MODELS_INFO["mammoth-coder-llama-2-7b"],
+        "mammoth-coder-llama-2-13b": _COMMON_MODELS_INFO["mammoth-coder-llama-2-13b"],
+        "mammoth-coder-llama-2-34b": _COMMON_MODELS_INFO["mammoth-coder-llama-2-34b"],
     },
     LLMInferenceFramework.LIGHTLLM: {
-        "llama-7b": ModelInfo("decapoda-research/llama-7b-hf", ""),
-        "llama-2-7b": ModelInfo("meta-llama/Llama-2-7b-hf", ""),
-        "llama-2-7b-chat": ModelInfo("meta-llama/Llama-2-7b-chat-hf", ""),
-        "llama-2-13b": ModelInfo("meta-llama/Llama-2-13b-hf", ""),
-        "llama-2-13b-chat": ModelInfo("meta-llama/Llama-2-13b-chat-hf", ""),
-        "llama-2-70b": ModelInfo("meta-llama/Llama-2-70b-hf", ""),
-        "llama-2-70b-chat": ModelInfo("meta-llama/Llama-2-70b-chat-hf", ""),
+        "llama-7b": _COMMON_MODELS_INFO["llama-7b"],
+        "llama-2-7b": _COMMON_MODELS_INFO["llama-2-7b"],
+        "llama-2-7b-chat": _COMMON_MODELS_INFO["llama-2-7b-chat"],
+        "llama-2-13b": _COMMON_MODELS_INFO["llama-2-13b"],
+        "llama-2-13b-chat": _COMMON_MODELS_INFO["llama-2-13b-chat"],
+        "llama-2-70b": _COMMON_MODELS_INFO["llama-2-70b"],
+        "llama-2-70b-chat": _COMMON_MODELS_INFO["llama-2-70b-chat"],
     },
 }
 
@@ -199,7 +259,7 @@ def get_tokenizer(model_name: str, inference_framework: LLMInferenceFramework) -
     Get tokenizer for a given model name and inference framework.
     """
     if model_name not in tokenizer_cache:
-        model_location = _SUPPORTED_MODEL_NAMES[inference_framework][model_name].hf_repo
+        model_location = _SUPPORTED_MODELS_BY_FRAMEWORK[inference_framework][model_name].hf_repo
         tokenizer_cache[model_name] = AutoTokenizer.from_pretrained(model_location)
     tokenizer = tokenizer_cache[model_name]
     return tokenizer
@@ -255,7 +315,7 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
 
 
 def validate_model_name(model_name: str, inference_framework: LLMInferenceFramework) -> None:
-    if model_name not in _SUPPORTED_MODEL_NAMES[inference_framework]:
+    if model_name not in _SUPPORTED_MODELS_BY_FRAMEWORK[inference_framework]:
         raise ObjectHasInvalidValueException(
             f"Model name {model_name} is not supported for inference framework {inference_framework}."
         )
@@ -422,7 +482,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Not able to load checkpoint path {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODEL_NAMES[
+            final_weights_folder = _SUPPORTED_MODELS_BY_FRAMEWORK[
                 LLMInferenceFramework.TEXT_GENERATION_INFERENCE
             ][model_name].hf_repo
 
@@ -625,7 +685,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Not able to load checkpoint path {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.VLLM][
+            final_weights_folder = _SUPPORTED_MODELS_BY_FRAMEWORK[LLMInferenceFramework.VLLM][
                 model_name
             ].hf_repo
 
@@ -718,7 +778,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Not able to load checkpoint path {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.VLLM][
+            final_weights_folder = _SUPPORTED_MODELS_BY_FRAMEWORK[LLMInferenceFramework.VLLM][
                 model_name
             ].hf_repo
 
