@@ -1550,7 +1550,7 @@ class CompletionStreamV1UseCase:
                             output=CompletionStreamOutput(
                                 text=result["result"]["token"],
                                 finished=False,
-                                num_prompt_tokens=num_prompt_tokens,
+                                num_prompt_tokens=None,
                                 num_completion_tokens=None,
                             ),
                         )
@@ -1595,7 +1595,7 @@ class CompletionStreamV1UseCase:
                             output=CompletionStreamOutput(
                                 text=result["result"]["token"]["text"],
                                 finished=finished,
-                                num_prompt_tokens=num_prompt_tokens,
+                                num_prompt_tokens=num_prompt_tokens if finished else None,
                                 num_completion_tokens=num_completion_tokens,
                                 token=token,
                             ),
@@ -1626,12 +1626,14 @@ class CompletionStreamV1UseCase:
                             token=result["result"]["text"],
                             log_prob=list(result["result"]["log_probs"].values())[0],
                         )
+                    finished = result["result"]["finished"]
+                    num_prompt_tokens = result["result"]["count_prompt_tokens"]
                     yield CompletionStreamV1Response(
                         request_id=request_id,
                         output=CompletionStreamOutput(
                             text=result["result"]["text"],
-                            finished=result["result"]["finished"],
-                            num_prompt_tokens=result["result"]["count_prompt_tokens"],
+                            finished=finished,
+                            num_prompt_tokens=num_prompt_tokens if finished else None,
                             num_completion_tokens=result["result"]["count_output_tokens"],
                             token=token,
                         ),
@@ -1650,12 +1652,13 @@ class CompletionStreamV1UseCase:
                             token=result["result"]["token"]["text"],
                             log_prob=result["result"]["token"]["logprob"],
                         )
+                    finished = result["result"]["finished"]
                     yield CompletionStreamV1Response(
                         request_id=request_id,
                         output=CompletionStreamOutput(
                             text=result["result"]["token"]["text"],
-                            finished=result["result"]["finished"],
-                            num_prompt_tokens=num_prompt_tokens,
+                            finished=finished,
+                            num_prompt_tokens=num_prompt_tokens if finished else None,
                             num_completion_tokens=num_completion_tokens,
                             token=token,
                         ),
