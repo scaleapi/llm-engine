@@ -91,6 +91,10 @@ autoscaling:
   prewarming:
     enabled: false
 
+# for async endpoints, scale the number of pods based on number of requests
+celery_autoscaler:
+  enabled: true
+
 podDisruptionBudget:
   enabled: true
   minAvailable: 1

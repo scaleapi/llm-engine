@@ -63,6 +63,9 @@ autoscaling:
   prewarming:
     enabled: false
 
+celery_autoscaler:
+  enabled: true
+
 podDisruptionBudget:
   enabled: true
   minAvailable: 1

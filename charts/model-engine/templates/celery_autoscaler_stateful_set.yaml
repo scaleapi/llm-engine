@@ -1,0 +1,95 @@
+{{- if .Values.celery_autoscaler.enabled }}
+{{- $env := .Values.context }}
+{{- $tag := .Values.tag }}
+{{- $service_identifier := .Values.serviceIdentifier }}
+{{- $num_shards := ternary 30 3 (eq .Values.context "prod") }}
+{{- range $base_app := tuple "celery-autoscaler-elasticache" }}
+{{- $app := ternary (printf "%s-%s" $base_app $service_identifier) $base_app (not (empty $service_identifier)) }}
+{{- $broker_name := ternary "redis-elasticache-message-broker-master" "sqs-message-broker-master" (eq $base_app "celery-autoscaler-elasticache") }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: {{ $app }}
+    team: infra
+    product: common
+    tags.datadoghq.com/env: {{ $env }}
+    tags.datadoghq.com/service: {{ $app }}
+    tags.datadoghq.com/version: {{ $tag }}
+  name: {{ $app }}
+spec:
+  serviceName: ""
+  replicas: {{ $num_shards }}
+  selector:
+    matchLabels:
+      app: {{ $app }}
+  template:
+    metadata:
+      annotations:
+        ad.datadoghq.com/main.logs: '[{"service": "{{ $app }}", "source": "python"}]'
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: {{ $app }}
+        team: infra
+        product: common
+        tags.datadoghq.com/env: {{ $env }}
+        tags.datadoghq.com/service: {{ $app }}
+        tags.datadoghq.com/version: {{ $tag }}
+    spec:
+      containers:
+      - args:
+        - ddtrace-run
+        - python
+        - -m
+        - model_engine_server.core.celery_autoscaler
+        env:
+        - name: AWS_PROFILE
+          value: {{ $.Values.aws.profileName }}
+        - name: DD_TRACE_ENABLED
+          value: 'false'
+        - name: DD_SERVICE
+          value: {{ $app }}
+        - name: DD_ENV
+          value: {{ $env }}
+        - name: DD_VERSION
+          value: {{ $tag }}
+        - name: DD_AGENT_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: BROKER_NAME
+          value: {{ $broker_name }}
+        - name: REDIS_BROKER_NAME
+          value: {{ $broker_name }}
+        - name: CELERY_ELASTICACHE_ENABLED
+          value: {{ (eq $base_app "celery-autoscaler-elasticache") | squote }}
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NUM_SHARDS
+          value: '{{ $num_shards }}'
+        image: "{{ $.Values.image.gatewayRepository }}:{{ $tag }}"
+        imagePullPolicy: Always
+        name: main
+        resources:
+          requests:
+            cpu: 1000m
+        volumeMounts:
+        - mountPath: /root/.aws/config
+          name: config-volume
+          subPath: config
+      nodeSelector:
+        node-lifecycle: normal
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Equal
+          value: 'true'
+          effect: NoSchedule
+      serviceAccountName: ml-k8s-admin
+      volumes:
+      - configMap:
+          name: ml-worker-config
+        name: config-volume
+{{- end }}
+{{- end }}
