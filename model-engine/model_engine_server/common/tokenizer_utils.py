@@ -1,5 +1,6 @@
 from collections import namedtuple
 from functools import lru_cache
+from typing import Optional
 
 from huggingface_hub import list_repo_refs
 from huggingface_hub.utils._errors import RepositoryNotFoundError
@@ -33,9 +34,9 @@ def get_models_s3_prefix(model_prefix: str) -> str:
 ModelInfo = namedtuple("ModelInfo", ["hf_repo", "s3_repo"])
 
 _SUPPORTED_MODELS_INFO = {
-    "mpt-7b": ModelInfo("mosaicml/mpt-7b", ""),
-    "mpt-7b-instruct": ModelInfo("mosaicml/mpt-7b-instruct", ""),
-    "flan-t5-xxl": ModelInfo("google/flan-t5-xxl", ""),
+    "mpt-7b": ModelInfo("mosaicml/mpt-7b", None),
+    "mpt-7b-instruct": ModelInfo("mosaicml/mpt-7b-instruct", None),
+    "flan-t5-xxl": ModelInfo("google/flan-t5-xxl", None),
     "llama-7b": ModelInfo(
         "decapoda-research/llama-7b-hf", get_models_s3_prefix("hf-llama/hf-llama-7b")
     ),
@@ -57,20 +58,20 @@ _SUPPORTED_MODELS_INFO = {
     "llama-2-70b-chat": ModelInfo(
         "meta-llama/Llama-2-70b-chat-hf", get_models_s3_prefix("hf-llama/hf-llama-2-70b-chat")
     ),
-    "falcon-7b": ModelInfo("tiiuae/falcon-7b", ""),
-    "falcon-7b-instruct": ModelInfo("tiiuae/falcon-7b-instruct", ""),
-    "falcon-40b": ModelInfo("tiiuae/falcon-40b", ""),
-    "falcon-40b-instruct": ModelInfo("tiiuae/falcon-40b-instruct", ""),
+    "falcon-7b": ModelInfo("tiiuae/falcon-7b", None),
+    "falcon-7b-instruct": ModelInfo("tiiuae/falcon-7b-instruct", None),
+    "falcon-40b": ModelInfo("tiiuae/falcon-40b", None),
+    "falcon-40b-instruct": ModelInfo("tiiuae/falcon-40b-instruct", None),
     "falcon-180b": ModelInfo("tiiuae/falcon-180B", get_models_s3_prefix("falcon-hf/falcon-180b")),
     "falcon-180b-chat": ModelInfo(
         "tiiuae/falcon-180B-chat", get_models_s3_prefix("falcon-hf/falcon-180b-chat")
     ),
-    "codellama-7b": ModelInfo("codellama/CodeLlama-7b-hf", ""),
-    "codellama-7b-instruct": ModelInfo("codellama/CodeLlama-7b-Instruct-hf", ""),
-    "codellama-13b": ModelInfo("codellama/CodeLlama-13b-hf", ""),
-    "codellama-13b-instruct": ModelInfo("codellama/CodeLlama-13b-Instruct-hf", ""),
-    "codellama-34b": ModelInfo("codellama/CodeLlama-34b-hf", ""),
-    "codellama-34b-instruct": ModelInfo("codellama/CodeLlama-34b-Instruct-hf", ""),
+    "codellama-7b": ModelInfo("codellama/CodeLlama-7b-hf", None),
+    "codellama-7b-instruct": ModelInfo("codellama/CodeLlama-7b-Instruct-hf", None),
+    "codellama-13b": ModelInfo("codellama/CodeLlama-13b-hf", None),
+    "codellama-13b-instruct": ModelInfo("codellama/CodeLlama-13b-Instruct-hf", None),
+    "codellama-34b": ModelInfo("codellama/CodeLlama-34b-hf", None),
+    "codellama-34b-instruct": ModelInfo("codellama/CodeLlama-34b-Instruct-hf", None),
     "llm-jp-13b-instruct-full": ModelInfo(
         "llm-jp/llm-jp-13b-instruct-full-jaster-v1.0",
         get_models_s3_prefix("llm-jp/llm-jp-13b-instruct-full-jaster-v1.0"),
@@ -92,12 +93,12 @@ _SUPPORTED_MODELS_INFO = {
     "mammoth-coder-llama-2-34b": ModelInfo(
         "TIGER-Lab/MAmmoTH-Coder-34B", get_models_s3_prefix("hf-llama/mammoth-coder-llama-2-34b")
     ),
-    "gpt-j-6b": ModelInfo("EleutherAI/gpt-j-6b", ""),
-    "gpt-j-6b-zh-en": ModelInfo("EleutherAI/gpt-j-6b", ""),
-    "gpt4all-j": ModelInfo("nomic-ai/gpt4all-j", ""),
-    "dolly-v2-12b": ModelInfo("databricks/dolly-v2-12b", ""),
-    "stablelm-tuned-7b": ModelInfo("StabilityAI/stablelm-tuned-alpha-7b", ""),
-    "vicuna-13b": ModelInfo("eachadea/vicuna-13b-1.1", ""),
+    "gpt-j-6b": ModelInfo("EleutherAI/gpt-j-6b", None),
+    "gpt-j-6b-zh-en": ModelInfo("EleutherAI/gpt-j-6b", None),
+    "gpt4all-j": ModelInfo("nomic-ai/gpt4all-j", None),
+    "dolly-v2-12b": ModelInfo("databricks/dolly-v2-12b", None),
+    "stablelm-tuned-7b": ModelInfo("StabilityAI/stablelm-tuned-alpha-7b", None),
+    "vicuna-13b": ModelInfo("eachadea/vicuna-13b-1.1", None),
 }
 
 
@@ -116,13 +117,13 @@ def get_models_local_path(model_name: str, file: str) -> str:
 
 
 def load_tokenizer_from_s3(
-    model_name: str, s3_prefix: str, llm_artifact_gateway: LLMArtifactGateway
-) -> str:
+    model_name: str, s3_prefix: Optional[str], llm_artifact_gateway: LLMArtifactGateway
+) -> Optional[str]:
     """
     Download tokenizer files from S3 to the local filesystem.
     """
     if not s3_prefix:
-        return ""
+        return None
 
     model_tokenizer_dir = f"{TOKENIZER_TARGET_DIR}/{model_name}"
 
@@ -145,7 +146,7 @@ def load_tokenizer_from_s3(
 @lru_cache(maxsize=32)
 def load_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> AutoTokenizer:
     model_info = _SUPPORTED_MODELS_INFO[model_name]
-    model_location = ""
+    model_location = None
     try:
         if not model_info.hf_repo:
             raise RepositoryNotFoundError("No HF repo specified for model.")
