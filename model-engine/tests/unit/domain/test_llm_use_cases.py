@@ -2,6 +2,7 @@ from typing import Any, Tuple
 from unittest import mock
 
 import pytest
+from huggingface_hub.utils._errors import RepositoryNotFoundError
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
     CompletionStreamV1Request,
@@ -353,10 +354,22 @@ async def test_get_llm_model_endpoint_use_case_raises_not_authorized(
         )
 
 
+def mocked_auto_tokenizer_from_pretrained(*args, **kwargs):  # noqa
+    class mocked_encode:
+        def encode(self, input: str) -> dict:  # noqa
+            return [1] * 7
+
+    return mocked_encode()
+
+
 @pytest.mark.asyncio
 @mock.patch(
-    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
-    return_value=7,
+    "model_engine_server.common.tokenizer_utils.list_repo_refs",
+    side_effect=RepositoryNotFoundError("not found"),
+)
+@mock.patch(
+    "model_engine_server.common.tokenizer_utils.AutoTokenizer.from_pretrained",
+    mocked_auto_tokenizer_from_pretrained,
 )
 async def test_completion_sync_use_case_success(
     test_api_key: str,
