@@ -267,12 +267,13 @@ TOKENIZER_FILES_OPTIONAL = [
 TOKENIZER_TARGET_DIR = "/root/.cache/model_engine_server/tokenizers"
 
 
-def download_tokenizer_files_from_s3(
-    s3_repo: str, llm_artifact_gateway: LLMArtifactGateway
-) -> None:
+def load_tokenizer_from_s3(s3_repo: str, llm_artifact_gateway: LLMArtifactGateway) -> None:
     """
     Download tokenizer files from S3 to the local filesystem.
     """
+    if not s3_repo:
+        return
+
     for file in TOKENIZER_FILES_REQUIRED:
         s3_path = f"{s3_repo}/{file}"
         target_path = f"{TOKENIZER_TARGET_DIR}/{file}"
@@ -287,6 +288,33 @@ def download_tokenizer_files_from_s3(
             pass
 
 
+def load_tokenizer(
+    model_name: str,
+    inference_framework: LLMInferenceFramework,
+    llm_artifact_gateway: LLMArtifactGateway,
+) -> None:
+    logger.info(f"Loading tokenizer for model {model_name} and framework {inference_framework}.")
+
+    model_info = _SUPPORTED_MODELS_BY_FRAMEWORK[inference_framework][model_name]
+    model_location = ""
+    try:
+        if not model_info.hf_repo:
+            raise RepositoryNotFoundError("No HF repo specified for model.")
+        list_repo_refs(model_info.hf_repo)  # check if model exists in Hugging Face Hub
+        model_location = model_info.hf_repo
+        # AutoTokenizer handles file downloads for HF repos
+    except RepositoryNotFoundError as e:
+        logger.warn(f"No HF repo for model {model_name} - {e}.")
+        load_tokenizer_from_s3(model_info.s3_repo, llm_artifact_gateway)
+        model_location = model_info.s3_repo
+
+    if not model_location:
+        raise ObjectNotFoundException(f"Tokenizer not found for model {model_name}.")
+
+    logger.info(f"Loading tokenizer for model {model_name} from {model_location}.")
+    tokenizer_cache[model_name] = AutoTokenizer.from_pretrained(model_location)
+
+
 def get_tokenizer(
     model_name: str,
     inference_framework: LLMInferenceFramework,
@@ -296,25 +324,8 @@ def get_tokenizer(
     Get tokenizer for a given model name and inference framework.
     """
     if model_name not in tokenizer_cache:
-        model_info = _SUPPORTED_MODELS_BY_FRAMEWORK[inference_framework][model_name]
-        model_location = ""
-        try:
-            if model_info.hf_repo:
-                list_repo_refs(model_info.hf_repo)  # check if model exists in Hugging Face Hub
-                model_location = model_info.hf_repo
-                # AutoTokenizer handles file downloads for HF repos
-        except RepositoryNotFoundError as e:
-            logger.warn(f"Model {model_name} not found in Hugging Face Hub - {e}.")
-            if model_info.s3_repo:
-                download_tokenizer_files_from_s3(model_info.s3_repo, llm_artifact_gateway)
-                model_location = model_info.s3_repo
-
-        if not model_location:
-            raise ObjectNotFoundException(f"Tokenizer not found for model {model_name}.")
-
-        tokenizer_cache[model_name] = AutoTokenizer.from_pretrained(model_location)
-    tokenizer = tokenizer_cache[model_name]
-    return tokenizer
+        load_tokenizer(model_name, inference_framework, llm_artifact_gateway)
+    return tokenizer_cache[model_name]
 
 
 def count_tokens(
