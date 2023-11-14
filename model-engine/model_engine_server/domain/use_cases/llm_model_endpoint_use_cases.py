@@ -12,8 +12,6 @@ from dataclasses import asdict
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
 from uuid import uuid4
 
-from huggingface_hub import list_repo_refs
-from huggingface_hub.utils._errors import RepositoryNotFoundError
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
@@ -35,6 +33,7 @@ from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Req
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
+from model_engine_server.common.tokenizer_utils import count_tokens
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -65,7 +64,6 @@ from model_engine_server.domain.repositories import ModelBundleRepository
 from model_engine_server.domain.repositories.docker_repository import DockerRepository
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
-from transformers import AutoTokenizer
 
 from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
@@ -264,82 +262,6 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
 
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
-
-
-# Hack to count prompt tokens
-tokenizer_cache: Dict[str, AutoTokenizer] = {}
-
-
-TOKENIZER_FILES_REQUIRED = [
-    "tokenizer.json",
-    "tokenizer_config.json",
-    "special_tokens_map.json",
-]
-TOKENIZER_FILES_OPTIONAL = [
-    "tokenizer.model",
-]
-TOKENIZER_TARGET_DIR = "/root/.cache/model_engine_server/tokenizers"
-
-
-def load_tokenizer_from_s3(s3_repo: str, llm_artifact_gateway: LLMArtifactGateway) -> None:
-    """
-    Download tokenizer files from S3 to the local filesystem.
-    """
-    if not s3_repo:
-        return
-
-    for file in TOKENIZER_FILES_REQUIRED:
-        s3_path = f"{s3_repo}/{file}"
-        target_path = f"{TOKENIZER_TARGET_DIR}/{file}"
-        llm_artifact_gateway.download_files(s3_path, target_path)
-
-    for file in TOKENIZER_FILES_OPTIONAL:
-        s3_path = f"{s3_repo}/{file}"
-        target_path = f"{TOKENIZER_TARGET_DIR}/{file}"
-        try:
-            llm_artifact_gateway.download_files(s3_path, target_path)
-        except Exception:  # noqa
-            pass
-
-
-def load_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> None:
-    logger.info(f"Loading tokenizer for model {model_name}.")
-
-    model_info = _SUPPORTED_MODELS_INFO[model_name]
-    model_location = ""
-    try:
-        if not model_info.hf_repo:
-            raise RepositoryNotFoundError("No HF repo specified for model.")
-        list_repo_refs(model_info.hf_repo)  # check if model exists in Hugging Face Hub
-        model_location = model_info.hf_repo
-        # AutoTokenizer handles file downloads for HF repos
-    except RepositoryNotFoundError as e:
-        logger.warn(f"No HF repo for model {model_name} - {e}.")
-        load_tokenizer_from_s3(model_info.s3_repo, llm_artifact_gateway)
-        model_location = model_info.s3_repo
-
-    if not model_location:
-        raise ObjectNotFoundException(f"Tokenizer not found for model {model_name}.")
-
-    logger.info(f"Loading tokenizer for model {model_name} from {model_location}.")
-    tokenizer_cache[model_name] = AutoTokenizer.from_pretrained(model_location)
-
-
-def get_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> AutoTokenizer:
-    """
-    Get tokenizer for a given model name and inference framework.
-    """
-    if model_name not in tokenizer_cache:
-        load_tokenizer(model_name, llm_artifact_gateway)
-    return tokenizer_cache[model_name]
-
-
-def count_tokens(input: str, model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> int:
-    """
-    Count the number of tokens in the input string.
-    """
-    tokenizer = get_tokenizer(model_name, llm_artifact_gateway)
-    return len(tokenizer.encode(input))
 
 
 def _include_safetensors_bin_or_pt(model_files: List[str]) -> Optional[str]:
