@@ -150,7 +150,7 @@ config:
       user_inference_pytorch_repository: "hosted-model-inference/async-pytorch"
       user_inference_tensorflow_repository: "hosted-model-inference/async-tensorflow-cpu"
       docker_image_layer_cache_repository: "kaniko-cache"
-      hf_user_fine_tuned_weights_prefix: "s3://$CIRCLECI_AWS_S3_BUCKET"
+      hf_user_fine_tuned_weights_prefix: "s3://$CIRCLECI_AWS_S3_BUCKET/model-weights"
 
 # Service Account
 serviceAccount:
