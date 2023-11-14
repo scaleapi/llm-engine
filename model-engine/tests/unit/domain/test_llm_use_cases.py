@@ -364,11 +364,11 @@ def mocked_auto_tokenizer_from_pretrained(*args, **kwargs):  # noqa
 
 @pytest.mark.asyncio
 @mock.patch(
-    "model_engine_server.common.tokenizer_utils.list_repo_refs",
+    "model_engine_server.infra.repositories.live_tokenizer_repository.list_repo_refs",
     side_effect=RepositoryNotFoundError("not found"),
 )
 @mock.patch(
-    "model_engine_server.common.tokenizer_utils.AutoTokenizer.from_pretrained",
+    "model_engine_server.infra.repositories.live_tokenizer_repository.AutoTokenizer.from_pretrained",
     mocked_auto_tokenizer_from_pretrained,
 )
 async def test_completion_sync_use_case_success(

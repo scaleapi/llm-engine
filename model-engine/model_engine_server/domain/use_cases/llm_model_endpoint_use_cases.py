@@ -32,7 +32,6 @@ from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Req
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
-from model_engine_server.common.tokenizer_utils import _SUPPORTED_MODELS_INFO, load_tokenizer
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
@@ -62,6 +61,10 @@ from model_engine_server.domain.repositories import ModelBundleRepository
 from model_engine_server.domain.repositories.docker_repository import DockerRepository
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
+from model_engine_server.infra.repositories.live_tokenizer_repository import (
+    _SUPPORTED_MODELS_INFO,
+    LiveTokenizerRepository,
+)
 
 from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
@@ -192,7 +195,8 @@ def count_tokens(input: str, model_name: str, llm_artifact_gateway: LLMArtifactG
     """
     Count the number of tokens in the input string.
     """
-    tokenizer = load_tokenizer(model_name, llm_artifact_gateway)
+    tokenizer_repository = LiveTokenizerRepository(llm_artifact_gateway=llm_artifact_gateway)
+    tokenizer = tokenizer_repository.load_tokenizer(model_name)
     return len(tokenizer.encode(input))
 
 
