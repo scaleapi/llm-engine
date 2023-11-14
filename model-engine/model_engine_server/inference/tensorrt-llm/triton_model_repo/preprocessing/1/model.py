@@ -191,7 +191,7 @@ class TritonPythonModel:
             For example, if word_dict[2] = " I am happy, I am sad", then this function will return
             the ids for two short sentences " I am happy" and " I am sad".
         """
-        assert self.tokenizer != None, "need to set tokenizer"
+        assert self.tokenizer is not None, "need to set tokenizer"
 
         flat_ids = []
         offsets = []

@@ -62,6 +62,10 @@ from model_engine_server.domain.repositories.docker_repository import DockerRepo
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
 
+# Hack for TensorRT-LLM. Remove when it supports returning output tokens only
+# See https://github.com/NVIDIA/TensorRT-LLM/issues/227
+from transformers import AutoTokenizer
+
 from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
 from .model_bundle_use_cases import CreateModelBundleV2UseCase
@@ -781,7 +785,7 @@ class CreateLLMModelEndpointV1UseCase:
                 )
         else:
             raise ObjectHasInvalidValueException(
-                f"Checkpoint must be provided for TensorRT-LLM models."
+                "Checkpoint must be provided for TensorRT-LLM models."
             )
 
         subcommands.append(
@@ -1122,10 +1126,6 @@ def validate_and_update_completion_params(
 
     return request
 
-
-# Hack for TensorRT-LLM. Remove when it supports returning output tokens only
-# See https://github.com/NVIDIA/TensorRT-LLM/issues/227
-from transformers import AutoTokenizer
 
 tokenizer_cache: Dict[str, AutoTokenizer] = {}
 
