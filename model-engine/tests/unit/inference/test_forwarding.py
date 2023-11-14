@@ -33,6 +33,19 @@ def mocked_get(*args, **kwargs):  # noqa
 def mocked_post(*args, **kwargs):  # noqa
     @dataclass
     class mocked_static_json:
+        status_code: int = 200
+
+        def json(self) -> dict:
+            return PAYLOAD  # type: ignore
+
+    return mocked_static_json()
+
+
+def mocked_post_500(*args, **kwargs):  # noqa
+    @dataclass
+    class mocked_static_json:
+        status_code: int = 500
+
         def json(self) -> dict:
             return PAYLOAD  # type: ignore
 
@@ -91,10 +104,11 @@ def test_forwarders(post_inference_hooks_handler):
 
 
 def _check(json_response) -> None:
-    assert json_response == {"result": PAYLOAD}
+    assert json.loads(json_response.body.decode("utf-8")) == {"result": PAYLOAD}
 
 
 def _check_responses_not_wrapped(json_response) -> None:
+    json_response = json.loads(json_response.body.decode("utf-8"))
     assert json_response == PAYLOAD
 
 
@@ -127,6 +141,7 @@ def test_forwarders_serialize_results_as_string(post_inference_hooks_handler):
 
 
 def _check_serialized(json_response) -> None:
+    json_response = json.loads(json_response.body.decode("utf-8"))
     assert isinstance(json_response["result"], str)
     assert len(json_response) == 1, f"expecting only 'result' key, but got {json_response=}"
     assert json.loads(json_response["result"]) == PAYLOAD
@@ -144,7 +159,6 @@ def test_forwarders_override_serialize_results(post_inference_hooks_handler):
     )
     json_response = fwd({"ignore": "me", KEY_SERIALIZE_RESULTS_AS_STRING: False})
     _check(json_response)
-    assert json_response == {"result": PAYLOAD}
 
     fwd = Forwarder(
         "ignored",
@@ -169,6 +183,21 @@ def test_forwarder_does_not_wrap_response(post_inference_hooks_handler):
     )
     json_response = fwd({"ignore": "me"})
     _check_responses_not_wrapped(json_response)
+
+
+@mock.patch("requests.post", mocked_post_500)
+@mock.patch("requests.get", mocked_get)
+def test_forwarder_return_status_code(post_inference_hooks_handler):
+    fwd = Forwarder(
+        "ignored",
+        model_engine_unwrap=True,
+        serialize_results_as_string=True,
+        post_inference_hooks_handler=post_inference_hooks_handler,
+        wrap_response=False,
+    )
+    json_response = fwd({"ignore": "me"})
+    _check_responses_not_wrapped(json_response)
+    assert json_response.status_code == 500
 
 
 @mock.patch("requests.post", mocked_post)

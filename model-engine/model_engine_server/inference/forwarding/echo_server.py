@@ -5,6 +5,7 @@ import argparse
 import subprocess
 
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from sse_starlette.sse import EventSourceResponse
 
 app = FastAPI()
@@ -19,6 +20,12 @@ def healthcheck():
 @app.post("/predict")
 async def predict(request: Request):
     return await request.json()
+
+
+@app.post("/predict500")
+async def predict500(request: Request):
+    response = JSONResponse(content=await request.json(), status_code=500)
+    return response
 
 
 @app.post("/stream")
