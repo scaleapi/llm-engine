@@ -142,7 +142,7 @@ jobs:
           name: Pre-load integration test images to minikube
           command: |
             docker build -f model-engine/model_engine_server/inference/pytorch_or_tf.base.Dockerfile \
-            --build-arg BASE_IMAGE=pytorch/pytorch:1.7.1-cuda11.0-cudnn8-runtime \
+            --build-arg BASE_IMAGE=python:3.8-slim \
             --build-arg REQUIREMENTS_FILE="$CIRCLE_SHA1-base-requirements.txt" \
             -t temp:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1 .
 
