@@ -297,7 +297,7 @@ def load_tokenizer_from_s3(s3_repo: str, llm_artifact_gateway: LLMArtifactGatewa
         s3_path = f"{s3_repo}/{file}"
         target_path = f"{TOKENIZER_TARGET_DIR}/{file}"
         try:
-            llm_artifact_gateway.download_files(s3_path, target_path, overwrite=False)
+            llm_artifact_gateway.download_files(s3_path, target_path)
         except Exception:  # noqa
             pass
 

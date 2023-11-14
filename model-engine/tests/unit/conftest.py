@@ -758,7 +758,7 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 
-    def download_files(self, path: str, **kwargs) -> List[str]:
+    def download_files(self, path: str, target_path: str, overwrite=False, **kwargs) -> List[str]:
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 

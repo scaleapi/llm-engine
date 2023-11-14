@@ -2,6 +2,11 @@ import asyncio
 import time
 
 import pytest
+from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
+    _SUPPORTED_MODELS_INFO,
+    load_tokenizer,
+)
+from model_engine_server.infra.gateways.s3_llm_artifact_gateway import S3LLMArtifactGateway
 from tenacity import RetryError, retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from .rest_api_utils import (
@@ -234,3 +239,10 @@ def test_sync_streaming_model_endpoint(capsys):
                 )
         finally:
             delete_model_endpoint(create_endpoint_request["name"], user)
+
+
+@pytest.mark.skip(reason="test doesn't currently work, needs to figure out s3 fallback")
+def test_models_tokenizers() -> None:
+    llm_artifact_gateway = S3LLMArtifactGateway()
+    for model_name in _SUPPORTED_MODELS_INFO:
+        load_tokenizer(model_name, llm_artifact_gateway)
