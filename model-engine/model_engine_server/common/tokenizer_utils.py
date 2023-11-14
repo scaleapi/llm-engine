@@ -2,6 +2,7 @@ from typing import Dict
 
 from huggingface_hub import list_repo_refs
 from huggingface_hub.utils._errors import RepositoryNotFoundError
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import ObjectNotFoundException
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
@@ -26,25 +27,50 @@ TOKENIZER_FILES_OPTIONAL = [
 TOKENIZER_TARGET_DIR = "/root/.cache/model_engine_server/tokenizers"
 
 
-def load_tokenizer_from_s3(s3_repo: str, llm_artifact_gateway: LLMArtifactGateway) -> None:
+def get_models_s3_prefix(model_prefix: str) -> str:
+    """
+    Get the S3 prefix for a given model prefix.
+    """
+    return f"models/{model_prefix}"
+
+
+def get_models_s3_uri(s3_prefix: str, file: str) -> str:
+    """
+    Get the S3 URI for a given model prefix and file.
+    """
+    return f"s3://{infra_config().s3_bucket}/{s3_prefix}/{file}"
+
+
+def get_models_local_path(model_name: str, file: str) -> str:
+    """
+    Get the local path for a given model prefix and file.
+    """
+    return f"{TOKENIZER_TARGET_DIR}/{model_name}/{file}"
+
+
+def load_tokenizer_from_s3(
+    model_name: str, s3_prefix: str, llm_artifact_gateway: LLMArtifactGateway
+) -> str:
     """
     Download tokenizer files from S3 to the local filesystem.
     """
-    if not s3_repo:
-        return
+    if not s3_prefix:
+        return ""
 
     for file in TOKENIZER_FILES_REQUIRED:
-        s3_path = f"{s3_repo}/{file}"
-        target_path = f"{TOKENIZER_TARGET_DIR}/{file}"
+        s3_path = get_models_s3_uri(s3_prefix, file)
+        target_path = get_models_local_path(model_name, file)
         llm_artifact_gateway.download_files(s3_path, target_path)
 
     for file in TOKENIZER_FILES_OPTIONAL:
-        s3_path = f"{s3_repo}/{file}"
-        target_path = f"{TOKENIZER_TARGET_DIR}/{file}"
+        s3_path = get_models_s3_uri(s3_prefix, file)
+        target_path = get_models_local_path(model_name, file)
         try:
             llm_artifact_gateway.download_files(s3_path, target_path)
         except Exception:  # noqa
             pass
+
+    return f"{TOKENIZER_TARGET_DIR}/{model_name}"
 
 
 def load_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> None:
@@ -60,8 +86,9 @@ def load_tokenizer(model_name: str, llm_artifact_gateway: LLMArtifactGateway) ->
         # AutoTokenizer handles file downloads for HF repos
     except RepositoryNotFoundError as e:
         logger.warn(f"No HF repo for model {model_name} - {e}.")
-        load_tokenizer_from_s3(model_info.s3_repo, llm_artifact_gateway)
-        model_location = model_info.s3_repo
+        model_location = load_tokenizer_from_s3(
+            model_name, model_info.s3_repo, llm_artifact_gateway
+        )
 
     if not model_location:
         raise ObjectNotFoundException(f"Tokenizer not found for model {model_name}.")

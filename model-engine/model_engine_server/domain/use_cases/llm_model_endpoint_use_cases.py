@@ -33,9 +33,8 @@ from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Req
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
-from model_engine_server.common.tokenizer_utils import count_tokens
+from model_engine_server.common.tokenizer_utils import count_tokens, get_models_s3_prefix
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
@@ -81,43 +80,38 @@ logger = make_logger(logger_name())
 
 ModelInfo = namedtuple("ModelInfo", ["hf_repo", "s3_repo"])
 
-
-def get_models_s3_repo(s3_repo: str):
-    return f"s3://{infra_config().s3_bucket}/models/{s3_repo}"
-
-
 _SUPPORTED_MODELS_INFO = {
     "mpt-7b": ModelInfo("mosaicml/mpt-7b", ""),
     "mpt-7b-instruct": ModelInfo("mosaicml/mpt-7b-instruct", ""),
     "flan-t5-xxl": ModelInfo("google/flan-t5-xxl", ""),
     "llama-7b": ModelInfo(
-        "decapoda-research/llama-7b-hf", get_models_s3_repo("hf-llama/hf-llama-7b")
+        "decapoda-research/llama-7b-hf", get_models_s3_prefix("hf-llama/hf-llama-7b")
     ),
     "llama-2-7b": ModelInfo(
-        "meta-llama/Llama-2-7b-hf", get_models_s3_repo("hf-llama/hf-llama-2-7b")
+        "meta-llama/Llama-2-7b-hf", get_models_s3_prefix("hf-llama/hf-llama-2-7b")
     ),
     "llama-2-7b-chat": ModelInfo(
-        "meta-llama/Llama-2-7b-chat-hf", get_models_s3_repo("hf-llama/hf-llama-2-7b-chat")
+        "meta-llama/Llama-2-7b-chat-hf", get_models_s3_prefix("hf-llama/hf-llama-2-7b-chat")
     ),
     "llama-2-13b": ModelInfo(
-        "meta-llama/Llama-2-13b-hf", get_models_s3_repo("hf-llama/hf-llama-2-13b")
+        "meta-llama/Llama-2-13b-hf", get_models_s3_prefix("hf-llama/hf-llama-2-13b")
     ),
     "llama-2-13b-chat": ModelInfo(
-        "meta-llama/Llama-2-13b-chat-hf", get_models_s3_repo("hf-llama/hf-llama-2-13b-chat")
+        "meta-llama/Llama-2-13b-chat-hf", get_models_s3_prefix("hf-llama/hf-llama-2-13b-chat")
     ),
     "llama-2-70b": ModelInfo(
-        "meta-llama/Llama-2-70b-hf", get_models_s3_repo("hf-llama/hf-llama-2-70b")
+        "meta-llama/Llama-2-70b-hf", get_models_s3_prefix("hf-llama/hf-llama-2-70b")
     ),
     "llama-2-70b-chat": ModelInfo(
-        "meta-llama/Llama-2-70b-chat-hf", get_models_s3_repo("hf-llama/hf-llama-2-70b-chat")
+        "meta-llama/Llama-2-70b-chat-hf", get_models_s3_prefix("hf-llama/hf-llama-2-70b-chat")
     ),
     "falcon-7b": ModelInfo("tiiuae/falcon-7b", ""),
     "falcon-7b-instruct": ModelInfo("tiiuae/falcon-7b-instruct", ""),
     "falcon-40b": ModelInfo("tiiuae/falcon-40b", ""),
     "falcon-40b-instruct": ModelInfo("tiiuae/falcon-40b-instruct", ""),
-    "falcon-180b": ModelInfo("tiiuae/falcon-180B", get_models_s3_repo("falcon-hf/falcon-180b")),
+    "falcon-180b": ModelInfo("tiiuae/falcon-180B", get_models_s3_prefix("falcon-hf/falcon-180b")),
     "falcon-180b-chat": ModelInfo(
-        "tiiuae/falcon-180B-chat", get_models_s3_repo("falcon-hf/falcon-180b-chat")
+        "tiiuae/falcon-180B-chat", get_models_s3_prefix("falcon-hf/falcon-180b-chat")
     ),
     "codellama-7b": ModelInfo("codellama/CodeLlama-7b-hf", ""),
     "codellama-7b-instruct": ModelInfo("codellama/CodeLlama-7b-Instruct-hf", ""),
@@ -127,24 +121,24 @@ _SUPPORTED_MODELS_INFO = {
     "codellama-34b-instruct": ModelInfo("codellama/CodeLlama-34b-Instruct-hf", ""),
     "llm-jp-13b-instruct-full": ModelInfo(
         "llm-jp/llm-jp-13b-instruct-full-jaster-v1.0",
-        get_models_s3_repo("llm-jp/llm-jp-13b-instruct-full-jaster-v1.0"),
+        get_models_s3_prefix("llm-jp/llm-jp-13b-instruct-full-jaster-v1.0"),
     ),
     "llm-jp-13b-instruct-full-dolly": ModelInfo(
         "llm-jp/llm-jp-13b-instruct-full-dolly-oasst-v1.0",
-        get_models_s3_repo("llm-jp/llm-jp--llm-jp-13b-instruct-full-dolly-oasst-v1.0"),
+        get_models_s3_prefix("llm-jp/llm-jp--llm-jp-13b-instruct-full-dolly-oasst-v1.0"),
     ),
-    "mistral-7b": ModelInfo("mistralai/Mistral-7B-v0.1", get_models_s3_repo("mistral-7b")),
+    "mistral-7b": ModelInfo("mistralai/Mistral-7B-v0.1", get_models_s3_prefix("mistral-7b")),
     "mistral-7b-instruct": ModelInfo(
-        "mistralai/Mistral-7B-Instruct-v0.1", get_models_s3_repo("mistral-7b-instruct")
+        "mistralai/Mistral-7B-Instruct-v0.1", get_models_s3_prefix("mistral-7b-instruct")
     ),
     "mammoth-coder-llama-2-7b": ModelInfo(
-        "TIGER-Lab/MAmmoTH-Coder-7B", get_models_s3_repo("hf-llama/mammoth-coder-llama-2-7b")
+        "TIGER-Lab/MAmmoTH-Coder-7B", get_models_s3_prefix("hf-llama/mammoth-coder-llama-2-7b")
     ),
     "mammoth-coder-llama-2-13b": ModelInfo(
-        "TIGER-Lab/MAmmoTH-Coder-13B", get_models_s3_repo("hf-llama/mammoth-coder-llama-2-13b")
+        "TIGER-Lab/MAmmoTH-Coder-13B", get_models_s3_prefix("hf-llama/mammoth-coder-llama-2-13b")
     ),
     "mammoth-coder-llama-2-34b": ModelInfo(
-        "TIGER-Lab/MAmmoTH-Coder-34B", get_models_s3_repo("hf-llama/mammoth-coder-llama-2-34b")
+        "TIGER-Lab/MAmmoTH-Coder-34B", get_models_s3_prefix("hf-llama/mammoth-coder-llama-2-34b")
     ),
     "gpt-j-6b": ModelInfo("EleutherAI/gpt-j-6b", ""),
     "gpt-j-6b-zh-en": ModelInfo("EleutherAI/gpt-j-6b", ""),
