@@ -364,8 +364,8 @@ def mocked_auto_tokenizer_from_pretrained(*args, **kwargs):  # noqa
 
 @pytest.mark.asyncio
 @mock.patch(
-    "model_engine_server.infra.repositories.live_tokenizer_repository.get_supported_models_info",
-    mock.Mock(return_value={"llama-7b": ModelInfo(None, "test-key")}),
+    "model_engine_server.infra.repositories.live_tokenizer_repository._SUPPORTED_MODELS_INFO",
+    {"llama-7b": ModelInfo(None, "test-key")},
 )
 @mock.patch(
     "model_engine_server.infra.repositories.live_tokenizer_repository.get_models_s3_uri",
