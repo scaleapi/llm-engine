@@ -124,6 +124,7 @@ jobs:
             kubectl apply -f redis-k8s.yaml
             kubectl apply -f postgres-k8s.yaml
             kubectl create secret generic model-engine-postgres-credentials --from-literal=database_url=postgresql://postgres:circle_test@postgres.default:5432/circle_test
+            kubectl create secret generic model-engine-postgres-credentials --from-literal=database_url=postgresql://postgres:circle_test@postgres.default:5432/circle_test -n model-engine
             export ISTIO_VERSION=1.15.0
             popd
             curl -L https://istio.io/downloadIstio | TARGET_ARCH=x86_64 sh -

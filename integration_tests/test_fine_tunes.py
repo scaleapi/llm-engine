@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 import boto3
 import smart_open
@@ -15,14 +16,13 @@ from .rest_api_utils import (
     list_fine_tunes,
 )
 
+MAX_RETRIES = 10
+
 
 def test_fine_tunes() -> None:
-    di_batch_job = create_docker_image_batch_job_bundle(
+    di_batch_job_id = create_docker_image_batch_job_bundle(
         CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST, USER_ID_0
-    )
-    print(f"{di_batch_job=}")
-    di_batch_job_id = di_batch_job["docker_image_batch_job_bundle_id"]
-    print(f"{di_batch_job_id=}")
+    )["docker_image_batch_job_bundle_id"]
     data = {
         "test_base_model-lora": {
             "docker_image_batch_job_bundle_id": di_batch_job_id,
@@ -45,24 +45,24 @@ def test_fine_tunes() -> None:
             json.dump(data, f)
 
     create_response = create_fine_tune(CREATE_FINE_TUNE_REQUEST, USER_ID_0)
-    print(f"{create_response=}")
     fine_tune_id = create_response["id"]
-    print(f"{fine_tune_id=}")
+
     get_response = get_fine_tune_by_id(fine_tune_id, USER_ID_0)
+    num_retries = 0
     while get_response["status"] not in ["SUCCESS", "FAILURE"]:
-        print(f"{get_response=}")
+        if num_retries >= MAX_RETRIES:
+            raise Exception("Fine tune job did not complete in time.")
+        num_retries += 1
         get_response = get_fine_tune_by_id(fine_tune_id, USER_ID_0)
+        time.sleep(10)
     assert get_response["id"] == fine_tune_id
     assert get_response["status"] == "SUCCESS"
 
     list_response_0_before = list_fine_tunes(USER_ID_0)
-    print(f"{list_response_0_before=}")
     num_jobs = len(list_response_0_before["jobs"])
     assert num_jobs >= 1
 
-    cancel_response = cancel_fine_tune_by_id(fine_tune_id, USER_ID_0)
-    print(f"{cancel_response=}")
+    cancel_fine_tune_by_id(fine_tune_id, USER_ID_0)
 
     list_response_0_after = list_fine_tunes(USER_ID_0)
-    print(f"{list_response_0_after=}")
     assert len(list_response_0_after["jobs"]) == num_jobs - 1
