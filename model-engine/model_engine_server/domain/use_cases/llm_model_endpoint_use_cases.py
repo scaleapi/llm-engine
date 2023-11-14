@@ -12,6 +12,8 @@ from dataclasses import asdict
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
 from uuid import uuid4
 
+from huggingface_hub import list_repo_refs
+from huggingface_hub.utils._errors import RepositoryNotFoundError
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
@@ -254,22 +256,77 @@ DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 tokenizer_cache: Dict[str, AutoTokenizer] = {}
 
 
-def get_tokenizer(model_name: str, inference_framework: LLMInferenceFramework) -> AutoTokenizer:
+TOKENIZER_FILES_REQUIRED = [
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "special_tokens_map.json",
+]
+TOKENIZER_FILES_OPTIONAL = [
+    "tokenizer.model",
+]
+TOKENIZER_TARGET_DIR = "/root/.cache/model_engine_server/tokenizers"
+
+
+def download_tokenizer_files_from_s3(
+    s3_repo: str, llm_artifact_gateway: LLMArtifactGateway
+) -> None:
+    """
+    Download tokenizer files from S3 to the local filesystem.
+    """
+    for file in TOKENIZER_FILES_REQUIRED:
+        s3_path = f"{s3_repo}/{file}"
+        target_path = f"{TOKENIZER_TARGET_DIR}/{file}"
+        llm_artifact_gateway.download_files(s3_path, target_path)
+
+    for file in TOKENIZER_FILES_OPTIONAL:
+        s3_path = f"{s3_repo}/{file}"
+        target_path = f"{TOKENIZER_TARGET_DIR}/{file}"
+        try:
+            llm_artifact_gateway.download_files(s3_path, target_path, overwrite=False)
+        except Exception:  # noqa
+            pass
+
+
+def get_tokenizer(
+    model_name: str,
+    inference_framework: LLMInferenceFramework,
+    llm_artifact_gateway: LLMArtifactGateway,
+) -> AutoTokenizer:
     """
     Get tokenizer for a given model name and inference framework.
     """
     if model_name not in tokenizer_cache:
-        model_location = _SUPPORTED_MODELS_BY_FRAMEWORK[inference_framework][model_name].hf_repo
+        model_info = _SUPPORTED_MODELS_BY_FRAMEWORK[inference_framework][model_name]
+        model_location = ""
+        try:
+            if model_info.hf_repo:
+                list_repo_refs(model_info.hf_repo)  # check if model exists in Hugging Face Hub
+                model_location = model_info.hf_repo
+                # AutoTokenizer handles file downloads for HF repos
+        except RepositoryNotFoundError as e:
+            logger.warn(f"Model {model_name} not found in Hugging Face Hub - {e}.")
+            if model_info.s3_repo:
+                download_tokenizer_files_from_s3(model_info.s3_repo, llm_artifact_gateway)
+                model_location = model_info.s3_repo
+
+        if not model_location:
+            raise ObjectNotFoundException(f"Tokenizer not found for model {model_name}.")
+
         tokenizer_cache[model_name] = AutoTokenizer.from_pretrained(model_location)
     tokenizer = tokenizer_cache[model_name]
     return tokenizer
 
 
-def count_tokens(input: str, model_name: str, inference_framework: LLMInferenceFramework) -> int:
+def count_tokens(
+    input: str,
+    model_name: str,
+    inference_framework: LLMInferenceFramework,
+    llm_artifact_gateway: LLMArtifactGateway,
+) -> int:
     """
     Count the number of tokens in the input string.
     """
-    tokenizer = get_tokenizer(model_name, inference_framework)
+    tokenizer = get_tokenizer(model_name, inference_framework, llm_artifact_gateway)
     return len(tokenizer.encode(input))
 
 
@@ -1113,10 +1170,12 @@ class CompletionSyncV1UseCase:
         self,
         model_endpoint_service: ModelEndpointService,
         llm_model_endpoint_service: LLMModelEndpointService,
+        llm_artifact_gateway: LLMArtifactGateway,
     ):
         self.model_endpoint_service = model_endpoint_service
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
+        self.llm_artifact_gateway = llm_artifact_gateway
 
     def model_output_to_completion_output(
         self,
@@ -1134,7 +1193,10 @@ class CompletionSyncV1UseCase:
             return CompletionOutput(
                 text=model_output["text"],
                 num_prompt_tokens=count_tokens(
-                    prompt, model_content.model_name, LLMInferenceFramework.DEEPSPEED
+                    prompt,
+                    model_content.model_name,
+                    LLMInferenceFramework.DEEPSPEED,
+                    self.llm_artifact_gateway,
                 ),
                 num_completion_tokens=completion_token_count,
                 tokens=tokens,
@@ -1186,7 +1248,10 @@ class CompletionSyncV1UseCase:
             return CompletionOutput(
                 text=model_output["generated_text"][0],
                 num_prompt_tokens=count_tokens(
-                    prompt, model_content.model_name, LLMInferenceFramework.LIGHTLLM
+                    prompt,
+                    model_content.model_name,
+                    LLMInferenceFramework.LIGHTLLM,
+                    self.llm_artifact_gateway,
                 ),
                 num_completion_tokens=model_output["count_output_tokens"],
                 tokens=tokens,
@@ -1441,10 +1506,12 @@ class CompletionStreamV1UseCase:
         self,
         model_endpoint_service: ModelEndpointService,
         llm_model_endpoint_service: LLMModelEndpointService,
+        llm_artifact_gateway: LLMArtifactGateway,
     ):
         self.model_endpoint_service = model_endpoint_service
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
+        self.llm_artifact_gateway = llm_artifact_gateway
 
     async def execute(
         self, user: User, model_endpoint_name: str, request: CompletionStreamV1Request
@@ -1531,7 +1598,10 @@ class CompletionStreamV1UseCase:
                 # Deepspeed models only accepts one stop sequence
                 args["stop_sequence"] = request.stop_sequences[0]
             num_prompt_tokens = count_tokens(
-                request.prompt, model_content.model_name, LLMInferenceFramework.DEEPSPEED
+                request.prompt,
+                model_content.model_name,
+                LLMInferenceFramework.DEEPSPEED,
+                self.llm_artifact_gateway,
             )
         elif model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
             args = {
@@ -1553,6 +1623,7 @@ class CompletionStreamV1UseCase:
                 request.prompt,
                 model_content.model_name,
                 LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+                self.llm_artifact_gateway,
             )
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
             args = {
@@ -1590,7 +1661,10 @@ class CompletionStreamV1UseCase:
             if request.return_token_log_probs:
                 args["parameters"]["return_details"] = True
             num_prompt_tokens = count_tokens(
-                request.prompt, model_content.model_name, LLMInferenceFramework.LIGHTLLM
+                request.prompt,
+                model_content.model_name,
+                LLMInferenceFramework.LIGHTLLM,
+                self.llm_artifact_gateway,
             )
         else:
             raise EndpointUnsupportedInferenceTypeException(

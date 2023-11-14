@@ -247,6 +247,7 @@ async def create_completion_sync_task(
         use_case = CompletionSyncV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,
             llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+            llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
         )
         return await use_case.execute(
             user=auth, model_endpoint_name=model_endpoint_name, request=request
@@ -290,6 +291,7 @@ async def create_completion_stream_task(
     use_case = CompletionStreamV1UseCase(
         model_endpoint_service=external_interfaces.model_endpoint_service,
         llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+        llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
     )
     response = use_case.execute(user=auth, model_endpoint_name=model_endpoint_name, request=request)
 

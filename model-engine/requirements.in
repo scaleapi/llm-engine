@@ -37,6 +37,7 @@ quart==0.18.3
 requests-auth-aws-sigv4~=0.7
 requests~=2.25
 rich~=12.6
+sentencepiece==0.1.99
 sh~=1.13
 smart-open~=5.2
 sqlalchemy[asyncio]==2.0.4
