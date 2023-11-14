@@ -61,10 +61,8 @@ from model_engine_server.domain.repositories import ModelBundleRepository
 from model_engine_server.domain.repositories.docker_repository import DockerRepository
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
-from model_engine_server.infra.repositories.live_tokenizer_repository import (
-    _SUPPORTED_MODELS_INFO,
-    LiveTokenizerRepository,
-)
+from model_engine_server.infra.repositories import LiveTokenizerRepository
+from model_engine_server.infra.repositories.live_tokenizer_repository import SUPPORTED_MODELS_INFO
 
 from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
@@ -409,7 +407,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Not able to load checkpoint path {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODELS_INFO[model_name].hf_repo
+            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
 
         subcommands.append(
             f"text-generation-launcher --hostname :: --model-id {final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
@@ -610,7 +608,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Not able to load checkpoint path {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODELS_INFO[model_name].hf_repo
+            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
 
         if max_model_len:
             subcommands.append(
@@ -701,7 +699,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Not able to load checkpoint path {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODELS_INFO[model_name].hf_repo
+            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
 
         subcommands.append(
             f"python -m lightllm.server.api_server --model_dir {final_weights_folder} --port 5005 --tp {num_shards} --max_total_token_num {max_total_token_num} --max_req_input_len {max_req_input_len} --max_req_total_len {max_req_total_len} --tokenizer_mode auto"

@@ -81,7 +81,7 @@ def get_supported_models_info() -> Dict[str, ModelInfo]:
         return get_default_supported_models_info()
 
 
-_SUPPORTED_MODELS_INFO = get_supported_models_info()
+SUPPORTED_MODELS_INFO = get_supported_models_info()
 
 
 def get_models_s3_uri(*args, **kwargs) -> str:
@@ -130,7 +130,7 @@ class LiveTokenizerRepository(TokenizerRepository):
 
     @lru_cache(maxsize=32)
     def load_tokenizer(self, model_name: str) -> AutoTokenizer:
-        model_info = _SUPPORTED_MODELS_INFO[model_name]
+        model_info = SUPPORTED_MODELS_INFO[model_name]
 
         model_location = None
         try:
