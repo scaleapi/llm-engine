@@ -174,7 +174,7 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
     "mammoth-coder": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
     # Based on config here: https://huggingface.co/TIGER-Lab/MAmmoTH-Coder-7B/blob/main/config.json#L12
     # Can also see 13B, 34B there too
-    "code-llama": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
+    "codellama": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
     # Based on config here: https://huggingface.co/codellama/CodeLlama-7b-hf/blob/main/config.json#L12
     # Can also see 13B, 34B there too
     "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
@@ -613,6 +613,11 @@ class CreateLLMModelEndpointV1UseCase:
                 max_num_batched_tokens = value["max_num_batched_tokens"]
                 break
 
+        # If max_num_batched_tokens is larger, let's update it to max_model_len.
+        # Otherwise vLLM complains: "ValueError: max_num_batched_tokens (2560) is smaller than max_model_len (4096)."
+        if max_model_len is not None and max_num_batched_tokens < max_model_len:
+            max_num_batched_tokens = max_model_len
+        
         subcommands = []
         if checkpoint_path is not None:
             if checkpoint_path.startswith("s3://"):
