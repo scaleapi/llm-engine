@@ -34,7 +34,7 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "mpt-7b-instruct": ModelInfo("mosaicml/mpt-7b-instruct", None),
         "flan-t5-xxl": ModelInfo("google/flan-t5-xxl", None),
         "llama-7b": ModelInfo("decapoda-research/llama-7b-hf", None),
-        "llama-2-7b": ModelInfo("meta-llama/Llama-2-7b-hf", None),
+        "llama-2-7b": ModelInfo("huggyllama/llama-7b", None),
         "llama-2-7b-chat": ModelInfo("meta-llama/Llama-2-7b-chat-hf", None),
         "llama-2-13b": ModelInfo("meta-llama/Llama-2-13b-hf", None),
         "llama-2-13b-chat": ModelInfo("meta-llama/Llama-2-13b-chat-hf", None),

@@ -1,7 +1,7 @@
 apiVersion: telemetry.istio.io/v1alpha1
 kind: Telemetry
 metadata:
-  name: custom-tags
+  name: {{ include "modelEngine.fullname" . }}-custom-tags
   namespace: istio-system
 spec:
   metrics:
@@ -18,7 +18,7 @@ spec:
 apiVersion: extensions.istio.io/v1alpha1
 kind: WasmPlugin
 metadata:
-  name: istio-attributegen-filter
+  name: {{ include "modelEngine.fullname" . }}-attributegen
   namespace: istio-system
 spec:
   imagePullPolicy: Always

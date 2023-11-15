@@ -185,7 +185,7 @@ importlib-metadata==6.8.0
     #   keyring
     #   quart
     #   twine
-importlib-resources==6.0.1
+importlib-resources==6.1.0
     # via
     #   alembic
     #   jsonschema
