@@ -2182,8 +2182,7 @@ def get_repositories_generator_wrapper():
             )
             fake_llm_fine_tuning_events_repository = FakeLLMFineTuneEventsRepository()
             fake_file_storage_gateway = FakeFileStorageGateway(fake_file_storage_gateway_contents)
-
-            fake_tokenizer_repository = FakeTokenizerRepository(fake_llm_artifact_gateway)
+            fake_tokenizer_repository = FakeTokenizerRepository()
 
             repositories = ExternalInterfaces(
                 docker_repository=FakeDockerRepository(

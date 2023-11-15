@@ -629,6 +629,7 @@ async def test_completion_sync_trt_llm_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
     llm_model_endpoint_trt_llm: ModelEndpoint,
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -644,6 +645,7 @@ async def test_completion_sync_trt_llm_use_case_success(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -914,6 +916,7 @@ async def test_completion_stream_trt_llm_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
     llm_model_endpoint_trt_llm: ModelEndpoint,
     completion_stream_request: CompletionStreamV1Request,
 ):
@@ -948,6 +951,7 @@ async def test_completion_stream_trt_llm_use_case_success(
     use_case = CompletionStreamV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = use_case.execute(

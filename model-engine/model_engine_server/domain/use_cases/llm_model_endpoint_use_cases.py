@@ -1189,7 +1189,6 @@ class CompletionSyncV1UseCase:
                     ]
                 return CompletionOutput(
                     text=model_output["generated_text"],
-                    # len(model_output["details"]["prefill"]) does not return the correct value reliably | <- check this
                     num_prompt_tokens=len(model_output["details"]["prefill"]),
                     num_completion_tokens=model_output["details"]["generated_tokens"],
                     tokens=tokens,
