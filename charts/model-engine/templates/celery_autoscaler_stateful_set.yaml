@@ -3,7 +3,7 @@
 {{- $tag := .Values.tag }}
 {{- $service_identifier := .Values.serviceIdentifier }}
 {{- $num_shards := ternary 30 3 (eq .Values.context "prod") }}
-{{- range $base_app := tuple "celery-autoscaler-elasticache" }}
+{{- range $base_app := tuple "celery-autoscaler-elasticache" "celery-autoscaler-sqs" }}
 {{- $app := ternary (printf "%s-%s" $base_app $service_identifier) $base_app (not (empty $service_identifier)) }}
 {{- $broker_name := ternary "redis-elasticache-message-broker-master" "sqs-message-broker-master" (eq $base_app "celery-autoscaler-elasticache") }}
 apiVersion: apps/v1
