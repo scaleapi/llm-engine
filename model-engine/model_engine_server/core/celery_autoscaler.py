@@ -425,12 +425,12 @@ class SQSBroker(AutoscalerBroker):
                 )
             total_end_time = time.time()
             queue_size = max(queue_size_hist)
-            logger.info(
-                f"SQS {queue_name} total: {total_end_time - total_start_time} seconds, queue size {queue_size}"
-            )
             # SQS's ApproximateNumberOfMessagesNotVisible should correspond to celery's
             #  number of active + number of reserved tasks
             reserved_size = max(reserved_size_hist)
+            logger.info(
+                f"SQS {queue_name} total: {total_end_time - total_start_time} seconds, queue size {queue_size}, reserved size {reserved_size}"
+            )
 
         except sqs_client.exceptions.QueueDoesNotExist as e:
             logger.info(f"Queue does not exist {queue_name}: {e}")
