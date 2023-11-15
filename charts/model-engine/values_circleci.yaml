@@ -64,7 +64,7 @@ autoscaling:
     enabled: false
 
 celery_autoscaler:
-  enabled: true
+  enabled: false
 
 podDisruptionBudget:
   enabled: true

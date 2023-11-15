@@ -27,7 +27,7 @@ from model_engine_server.core.celery import (
     get_redis_host_port,
     inspect_app,
 )
-from model_engine_server.core.loggers import make_logger
+from model_engine_server.core.loggers import logger_name, make_logger
 
 
 def excluded_namespaces():
@@ -37,8 +37,6 @@ def excluded_namespaces():
         return CELERY_AUTOSCALER_EXCLUDED_NAMESPACES
     except ModuleNotFoundError:
         return []
-    finally:
-        pass
 
 
 ELASTICACHE_REDIS_BROKER = "redis-elasticache-message-broker-master"
@@ -48,7 +46,7 @@ UPDATE_DEPLOYMENT_MAX_RETRIES = 10
 
 SQS_SAMPLE_COUNT = 10
 
-logger = make_logger("model_engine_server.core.celery_autoscaler")
+logger = make_logger(logger_name())
 
 autoscaler_broker = os.environ.get("BROKER_NAME", SQS_BROKER)
 aws_profile = os.environ.get("AWS_PROFILE")
@@ -558,7 +556,7 @@ async def main():
     else:
         raise ValueError("broker_type not redis or sqs, how did we get here?")
 
-    env = os.getenv("DD_ENV", "training")
+    env = os.getenv("DD_ENV")
     instance_count = int(os.getenv("POD_NAME", "pod-0").split("-")[-1])
     num_shards = int(os.getenv("NUM_SHARDS", 1))
 
