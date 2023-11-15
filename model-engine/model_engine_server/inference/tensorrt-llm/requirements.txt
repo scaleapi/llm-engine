@@ -1,0 +1,2 @@
+sentencepiece==0.1.99
+protobuf==4.24.4
