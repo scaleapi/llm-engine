@@ -181,9 +181,9 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
     "mammoth-coder": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
     # Based on config here: https://huggingface.co/TIGER-Lab/MAmmoTH-Coder-7B/blob/main/config.json#L12
     # Can also see 13B, 34B there too
-    "code-llama": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
+    "codellama": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
     # Based on config here: https://huggingface.co/codellama/CodeLlama-7b-hf/blob/main/config.json#L12
-    # Can also see 13B, 34B there too
+    # Can also see 13B, 34B there too. Note, codellama is one word.
     "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
     "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
 }

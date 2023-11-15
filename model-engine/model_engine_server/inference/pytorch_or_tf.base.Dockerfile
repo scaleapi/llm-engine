@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Apparently wget has a vulnerability so we remove it here
-RUN apt-get remove wget -y
+RUN dpkg -l | grep wget && apt-get remove wget -y || echo "wget not installed, skipping removal"
 
 # Create a virtualenv for python so we install our packages in the right place
 # Not sure how useful the existing contents of the pytorch image are anymore :/ Maybe it's used for cuda/cudnn installs
