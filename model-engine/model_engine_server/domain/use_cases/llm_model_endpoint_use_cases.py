@@ -1214,6 +1214,8 @@ class CompletionSyncV1UseCase:
                 raise InvalidRequestException(
                     f"Invalid endpoint {model_content.name} has no base model"
                 )
+            if not prompt:
+                raise InvalidRequestException("Prompt must be provided for TensorRT-LLM models.")
             if model_content.model_name not in tokenizer_cache:
                 tokenizer_cache[model_content.model_name] = AutoTokenizer.from_pretrained(
                     _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.TENSORRT_LLM][
@@ -1224,7 +1226,9 @@ class CompletionSyncV1UseCase:
             prompt_tokens = tokenizer.encode(prompt)
 
             return CompletionOutput(
-                text=model_output["text_output"],
+                text=model_output["text_output"][
+                    len(prompt) + 4 :
+                ],  # Output is "<s> prompt output"
                 num_completion_tokens=len(model_output["token_ids"]) - len(prompt_tokens),
             )
         else:
