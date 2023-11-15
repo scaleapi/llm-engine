@@ -57,14 +57,14 @@ from model_engine_server.domain.exceptions import (
     UpstreamServiceError,
 )
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
-from model_engine_server.domain.repositories import ModelBundleRepository
-from model_engine_server.domain.repositories.docker_repository import DockerRepository
+from model_engine_server.domain.repositories import (
+    DockerRepository,
+    ModelBundleRepository,
+    TokenizerRepository,
+)
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
-
-# Hack for TensorRT-LLM. Remove when it supports returning output tokens only
-# See https://github.com/NVIDIA/TensorRT-LLM/issues/227
-from transformers import AutoTokenizer
+from model_engine_server.infra.repositories.live_tokenizer_repository import SUPPORTED_MODELS_INFO
 
 from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
@@ -80,83 +80,90 @@ from .model_endpoint_use_cases import (
 
 logger = make_logger(logger_name())
 
-_SUPPORTED_MODEL_NAMES = {
-    LLMInferenceFramework.DEEPSPEED: {
-        "mpt-7b": "mosaicml/mpt-7b",
-        "mpt-7b-instruct": "mosaicml/mpt-7b-instruct",
-        "gpt-j-6b": "EleutherAI/gpt-j-6b",
-        "gpt-j-6b-zh-en": "EleutherAI/gpt-j-6b",
-        "gpt4all-j": "nomic-ai/gpt4all-j",
-        "dolly-v2-12b": "databricks/dolly-v2-12b",
-        "stablelm-tuned-7b": "StabilityAI/stablelm-tuned-alpha-7b",
-        "flan-t5-xxl": "google/flan-t5-xxl",
-        "llama-7b": "decapoda-research/llama-7b-hf",
-        "vicuna-13b": "eachadea/vicuna-13b-1.1",
-    },
-    LLMInferenceFramework.TEXT_GENERATION_INFERENCE: {
-        "mpt-7b": "mosaicml/mpt-7b",
-        "mpt-7b-instruct": "mosaicml/mpt-7b-instruct",
-        "flan-t5-xxl": "google/flan-t5-xxl",
-        "llama-7b": "decapoda-research/llama-7b-hf",
-        "llama-2-7b": "meta-llama/Llama-2-7b-hf",
-        "llama-2-7b-chat": "meta-llama/Llama-2-7b-chat-hf",
-        "llama-2-13b": "meta-llama/Llama-2-13b-hf",
-        "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
-        "llama-2-70b": "meta-llama/Llama-2-70b-hf",
-        "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
-        "falcon-7b": "tiiuae/falcon-7b",
-        "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
-        "falcon-40b": "tiiuae/falcon-40b",
-        "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
-        "codellama-7b": "codellama/CodeLlama-7b-hf",
-        "codellama-7b-instruct": "codellama/CodeLlama-7b-Instruct-hf",
-        "codellama-13b": "codellama/CodeLlama-13b-hf",
-        "codellama-13b-instruct": "codellama/CodeLlama-13b-Instruct-hf",
-        "codellama-34b": "codellama/CodeLlama-34b-hf",
-        "codellama-34b-instruct": "codellama/CodeLlama-34b-Instruct-hf",
-        "llm-jp-13b-instruct-full": "llm-jp/llm-jp-13b-instruct-full-jaster-v1.0",
-        "llm-jp-13b-instruct-full-dolly": "llm-jp/llm-jp-13b-instruct-full-dolly-oasst-v1.0",
-    },
-    LLMInferenceFramework.VLLM: {
-        "mpt-7b": "mosaicml/mpt-7b",
-        "mpt-7b-instruct": "mosaicml/mpt-7b-instruct",
-        "llama-7b": "decapoda-research/llama-7b-hf",
-        "llama-2-7b": "meta-llama/Llama-2-7b-hf",
-        "llama-2-7b-chat": "meta-llama/Llama-2-7b-chat-hf",
-        "llama-2-13b": "meta-llama/Llama-2-13b-hf",
-        "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
-        "llama-2-70b": "meta-llama/Llama-2-70b-hf",
-        "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
-        "falcon-7b": "tiiuae/falcon-7b",
-        "falcon-7b-instruct": "tiiuae/falcon-7b-instruct",
-        "falcon-40b": "tiiuae/falcon-40b",
-        "falcon-40b-instruct": "tiiuae/falcon-40b-instruct",
-        "mistral-7b": "mistralai/Mistral-7B-v0.1",
-        "mistral-7b-instruct": "mistralai/Mistral-7B-Instruct-v0.1",
-        "falcon-180b": "tiiuae/falcon-180B",
-        "falcon-180b-chat": "tiiuae/falcon-180B-chat",
-        "codellama-7b": "codellama/CodeLlama-7b-hf",
-        "codellama-7b-instruct": "codellama/CodeLlama-7b-Instruct-hf",
-        "codellama-13b": "codellama/CodeLlama-13b-hf",
-        "codellama-13b-instruct": "codellama/CodeLlama-13b-Instruct-hf",
-        "codellama-34b": "codellama/CodeLlama-34b-hf",
-        "codellama-34b-instruct": "codellama/CodeLlama-34b-Instruct-hf",
-        "mammoth-coder-llama-2-7b": "TIGER-Lab/MAmmoTH-Coder-7B",
-        "mammoth-coder-llama-2-13b": "TIGER-Lab/MAmmoTH-Coder-13B",
-        "mammoth-coder-llama-2-34b": "TIGER-Lab/MAmmoTH-Coder-34B",
-    },
-    LLMInferenceFramework.LIGHTLLM: {
-        "llama-7b": "decapoda-research/llama-7b-hf",
-        "llama-2-7b": "meta-llama/Llama-2-7b-hf",
-        "llama-2-7b-chat": "meta-llama/Llama-2-7b-chat-hf",
-        "llama-2-13b": "meta-llama/Llama-2-13b-hf",
-        "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
-        "llama-2-70b": "meta-llama/Llama-2-70b-hf",
-        "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
-    },
-    LLMInferenceFramework.TENSORRT_LLM: {
-        "llama-2-7b": "huggyllama/llama-7b",  # Hack to get tokenizer for llama without sign in to huggingface
-    },
+
+_SUPPORTED_MODELS_BY_FRAMEWORK = {
+    LLMInferenceFramework.DEEPSPEED: set(
+        [
+            "mpt-7b",
+            "mpt-7b-instruct",
+            "flan-t5-xxl",
+            "llama-7b",
+            "gpt-j-6b",
+            "gpt-j-6b-zh-en",
+            "gpt4all-j",
+            "dolly-v2-12b",
+            "stablelm-tuned-7b",
+            "vicuna-13b",
+        ]
+    ),
+    LLMInferenceFramework.TEXT_GENERATION_INFERENCE: set(
+        [
+            "mpt-7b",
+            "mpt-7b-instruct",
+            "flan-t5-xxl",
+            "llama-7b",
+            "llama-2-7b",
+            "llama-2-7b-chat",
+            "llama-2-13b",
+            "llama-2-13b-chat",
+            "llama-2-70b",
+            "llama-2-70b-chat",
+            "falcon-7b",
+            "falcon-7b-instruct",
+            "falcon-40b",
+            "falcon-40b-instruct",
+            "codellama-7b",
+            "codellama-7b-instruct",
+            "codellama-13b",
+            "codellama-13b-instruct",
+            "codellama-34b",
+            "codellama-34b-instruct",
+            "llm-jp-13b-instruct-full",
+            "llm-jp-13b-instruct-full-dolly",
+        ]
+    ),
+    LLMInferenceFramework.VLLM: set(
+        [
+            "mpt-7b",
+            "mpt-7b-instruct",
+            "llama-7b",
+            "llama-2-7b",
+            "llama-2-7b-chat",
+            "llama-2-13b",
+            "llama-2-13b-chat",
+            "llama-2-70b",
+            "llama-2-70b-chat",
+            "falcon-7b",
+            "falcon-7b-instruct",
+            "falcon-40b",
+            "falcon-40b-instruct",
+            "falcon-180b",
+            "falcon-180b-chat",
+            "codellama-7b",
+            "codellama-7b-instruct",
+            "codellama-13b",
+            "codellama-13b-instruct",
+            "codellama-34b",
+            "codellama-34b-instruct",
+            "mistral-7b",
+            "mistral-7b-instruct",
+            "mammoth-coder-llama-2-7b",
+            "mammoth-coder-llama-2-13b",
+            "mammoth-coder-llama-2-34b",
+        ]
+    ),
+    LLMInferenceFramework.LIGHTLLM: set(
+        [
+            "llama-7b",
+            "llama-2-7b",
+            "llama-2-7b-chat",
+            "llama-2-13b",
+            "llama-2-13b-chat",
+            "llama-2-70b",
+            "llama-2-70b-chat",
+        ]
+    ),
+    LLMInferenceFramework.TENSORRT_LLM: set(["llama-2-7b"]),
 }
 
 _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
@@ -184,6 +191,14 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
 
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
+
+
+def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
+    """
+    Count the number of tokens in the input string.
+    """
+    tokenizer = tokenizer_repository.load_tokenizer(model_name)
+    return len(tokenizer.encode(input))
 
 
 def _include_safetensors_bin_or_pt(model_files: List[str]) -> Optional[str]:
@@ -228,7 +243,7 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
 
 
 def validate_model_name(model_name: str, inference_framework: LLMInferenceFramework) -> None:
-    if model_name not in _SUPPORTED_MODEL_NAMES[inference_framework]:
+    if model_name not in _SUPPORTED_MODELS_BY_FRAMEWORK[inference_framework]:
         raise ObjectHasInvalidValueException(
             f"Model name {model_name} is not supported for inference framework {inference_framework}."
         )
@@ -403,9 +418,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODEL_NAMES[
-                LLMInferenceFramework.TEXT_GENERATION_INFERENCE
-            ][model_name]
+            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
 
         subcommands.append(
             f"text-generation-launcher --hostname :: --model-id {final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
@@ -632,7 +645,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.VLLM][model_name]
+            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
 
         if max_model_len:
             subcommands.append(
@@ -723,7 +736,7 @@ class CreateLLMModelEndpointV1UseCase:
                     f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
                 )
         else:
-            final_weights_folder = _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.VLLM][model_name]
+            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
 
         subcommands.append(
             f"python -m lightllm.server.api_server --model_dir {final_weights_folder} --port 5005 --tp {num_shards} --max_total_token_num {max_total_token_num} --max_req_input_len {max_req_input_len} --max_req_total_len {max_req_total_len} --tokenizer_mode auto"
@@ -1127,9 +1140,6 @@ def validate_and_update_completion_params(
     return request
 
 
-tokenizer_cache: Dict[str, AutoTokenizer] = {}
-
-
 class CompletionSyncV1UseCase:
     """
     Use case for running a prompt completion on an LLM endpoint.
@@ -1139,17 +1149,19 @@ class CompletionSyncV1UseCase:
         self,
         model_endpoint_service: ModelEndpointService,
         llm_model_endpoint_service: LLMModelEndpointService,
+        tokenizer_repository: TokenizerRepository,
     ):
         self.model_endpoint_service = model_endpoint_service
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
+        self.tokenizer_repository = tokenizer_repository
 
     def model_output_to_completion_output(
         self,
         model_output: Dict[str, Any],
         model_endpoint: ModelEndpoint,
+        prompt: str,
         with_token_probs: Optional[bool],
-        prompt: Optional[str] = None,
     ) -> CompletionOutput:
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
         if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
@@ -1159,6 +1171,11 @@ class CompletionSyncV1UseCase:
                 tokens = deepspeed_result_to_tokens(model_output)
             return CompletionOutput(
                 text=model_output["text"],
+                num_prompt_tokens=count_tokens(
+                    prompt,
+                    model_content.model_name,
+                    self.tokenizer_repository,
+                ),
                 num_completion_tokens=completion_token_count,
                 tokens=tokens,
             )
@@ -1172,7 +1189,7 @@ class CompletionSyncV1UseCase:
                     ]
                 return CompletionOutput(
                     text=model_output["generated_text"],
-                    # len(model_output["details"]["prefill"]) does not return the correct value reliably
+                    num_prompt_tokens=len(model_output["details"]["prefill"]),
                     num_completion_tokens=model_output["details"]["generated_tokens"],
                     tokens=tokens,
                 )
@@ -1194,6 +1211,7 @@ class CompletionSyncV1UseCase:
                 ]
             return CompletionOutput(
                 text=model_output["text"],
+                num_prompt_tokens=model_output["count_prompt_tokens"],
                 num_completion_tokens=model_output["count_output_tokens"],
                 tokens=tokens,
             )
@@ -1206,6 +1224,11 @@ class CompletionSyncV1UseCase:
                 ]
             return CompletionOutput(
                 text=model_output["generated_text"][0],
+                num_prompt_tokens=count_tokens(
+                    prompt,
+                    model_content.model_name,
+                    self.tokenizer_repository,
+                ),
                 num_completion_tokens=model_output["count_output_tokens"],
                 tokens=tokens,
             )
@@ -1216,20 +1239,14 @@ class CompletionSyncV1UseCase:
                 )
             if not prompt:
                 raise InvalidRequestException("Prompt must be provided for TensorRT-LLM models.")
-            if model_content.model_name not in tokenizer_cache:
-                tokenizer_cache[model_content.model_name] = AutoTokenizer.from_pretrained(
-                    _SUPPORTED_MODEL_NAMES[LLMInferenceFramework.TENSORRT_LLM][
-                        model_content.model_name
-                    ]
-                )
-            tokenizer = tokenizer_cache[model_content.model_name]
-            prompt_tokens = tokenizer.encode(prompt)
-
+            num_prompt_tokens = count_tokens(
+                prompt, model_content.model_name, self.tokenizer_repository
+            )
             return CompletionOutput(
-                text=model_output["text_output"][
-                    len(prompt) + 4 :
-                ],  # Output is "<s> prompt output"
-                num_completion_tokens=len(model_output["token_ids"]) - len(prompt_tokens),
+                # Output is "<s> prompt output"
+                text=model_output["text_output"][(len(prompt) + 4) :],
+                num_prompt_tokens=num_prompt_tokens,
+                num_completion_tokens=len(model_output["token_ids"]) - num_prompt_tokens,
             )
         else:
             raise EndpointUnsupportedInferenceTypeException(
@@ -1334,8 +1351,8 @@ class CompletionSyncV1UseCase:
                     output=self.model_output_to_completion_output(
                         predict_result.result["result"][0],
                         model_endpoint,
-                        request.return_token_log_probs,
                         request.prompt,
+                        request.return_token_log_probs,
                     ),
                 )
             else:
@@ -1383,7 +1400,7 @@ class CompletionSyncV1UseCase:
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
-                    output, model_endpoint, request.return_token_log_probs
+                    output, model_endpoint, request.prompt, request.return_token_log_probs
                 ),
             )
         elif endpoint_content.inference_framework == LLMInferenceFramework.VLLM:
@@ -1421,7 +1438,7 @@ class CompletionSyncV1UseCase:
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
-                    output, model_endpoint, request.return_token_log_probs
+                    output, model_endpoint, request.prompt, request.return_token_log_probs
                 ),
             )
         elif endpoint_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
@@ -1463,7 +1480,7 @@ class CompletionSyncV1UseCase:
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
-                    output, model_endpoint, request.return_token_log_probs
+                    output, model_endpoint, request.prompt, request.return_token_log_probs
                 ),
             )
         elif endpoint_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
@@ -1499,7 +1516,7 @@ class CompletionSyncV1UseCase:
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
-                    output, model_endpoint, request.return_token_log_probs, request.prompt
+                    output, model_endpoint, request.prompt, request.return_token_log_probs
                 ),
             )
         else:
@@ -1517,10 +1534,12 @@ class CompletionStreamV1UseCase:
         self,
         model_endpoint_service: ModelEndpointService,
         llm_model_endpoint_service: LLMModelEndpointService,
+        tokenizer_repository: TokenizerRepository,
     ):
         self.model_endpoint_service = model_endpoint_service
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
+        self.tokenizer_repository = tokenizer_repository
 
     async def execute(
         self, user: User, model_endpoint_name: str, request: CompletionStreamV1Request
@@ -1591,6 +1610,7 @@ class CompletionStreamV1UseCase:
         request = validated_request
 
         args: Any = None
+        num_prompt_tokens = None
         if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
             args = {
                 "prompts": [request.prompt],
@@ -1605,6 +1625,11 @@ class CompletionStreamV1UseCase:
             if request.stop_sequences is not None:
                 # Deepspeed models only accepts one stop sequence
                 args["stop_sequence"] = request.stop_sequences[0]
+            num_prompt_tokens = count_tokens(
+                request.prompt,
+                model_content.model_name,
+                self.tokenizer_repository,
+            )
         elif model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
             args = {
                 "inputs": request.prompt,
@@ -1621,6 +1646,11 @@ class CompletionStreamV1UseCase:
                 args["parameters"]["top_p"] = request.top_p
             else:
                 args["parameters"]["do_sample"] = False
+            num_prompt_tokens = count_tokens(
+                request.prompt,
+                model_content.model_name,
+                self.tokenizer_repository,
+            )
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
             args = {
                 "prompt": request.prompt,
@@ -1656,6 +1686,11 @@ class CompletionStreamV1UseCase:
                 args["parameters"]["do_sample"] = False
             if request.return_token_log_probs:
                 args["parameters"]["return_details"] = True
+            num_prompt_tokens = count_tokens(
+                request.prompt,
+                model_content.model_name,
+                self.tokenizer_repository,
+            )
         elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
             # TODO: Stop sequences is buggy and return token logprobs are not supported
             # TODO: verify the implementation of presence_penalty and repetition_penalty
@@ -1669,6 +1704,12 @@ class CompletionStreamV1UseCase:
                 "temperature": request.temperature,
                 "stream": True,
             }
+            num_prompt_tokens = count_tokens(
+                request.prompt,
+                model_content.model_name,
+                self.tokenizer_repository,
+            )
+
         else:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {model_content.inference_framework}"
@@ -1694,6 +1735,7 @@ class CompletionStreamV1UseCase:
                             output=CompletionStreamOutput(
                                 text=result["result"]["token"],
                                 finished=False,
+                                num_prompt_tokens=None,
                                 num_completion_tokens=None,
                             ),
                         )
@@ -1706,6 +1748,7 @@ class CompletionStreamV1UseCase:
                             output=CompletionStreamOutput(
                                 text=result["result"]["response"][0]["text"],
                                 finished=True,
+                                num_prompt_tokens=num_prompt_tokens,
                                 num_completion_tokens=completion_token_count,
                             ),
                         )
@@ -1737,6 +1780,7 @@ class CompletionStreamV1UseCase:
                             output=CompletionStreamOutput(
                                 text=result["result"]["token"]["text"],
                                 finished=finished,
+                                num_prompt_tokens=num_prompt_tokens if finished else None,
                                 num_completion_tokens=num_completion_tokens,
                                 token=token,
                             ),
@@ -1767,11 +1811,14 @@ class CompletionStreamV1UseCase:
                             token=result["result"]["text"],
                             log_prob=list(result["result"]["log_probs"].values())[0],
                         )
+                    finished = result["result"]["finished"]
+                    num_prompt_tokens = result["result"]["count_prompt_tokens"]
                     yield CompletionStreamV1Response(
                         request_id=request_id,
                         output=CompletionStreamOutput(
                             text=result["result"]["text"],
-                            finished=result["result"]["finished"],
+                            finished=finished,
+                            num_prompt_tokens=num_prompt_tokens if finished else None,
                             num_completion_tokens=result["result"]["count_output_tokens"],
                             token=token,
                         ),
@@ -1790,11 +1837,13 @@ class CompletionStreamV1UseCase:
                             token=result["result"]["token"]["text"],
                             log_prob=result["result"]["token"]["logprob"],
                         )
+                    finished = result["result"]["finished"]
                     yield CompletionStreamV1Response(
                         request_id=request_id,
                         output=CompletionStreamOutput(
                             text=result["result"]["token"]["text"],
-                            finished=result["result"]["finished"],
+                            finished=finished,
+                            num_prompt_tokens=num_prompt_tokens if finished else None,
                             num_completion_tokens=num_completion_tokens,
                             token=token,
                         ),
@@ -1812,6 +1861,7 @@ class CompletionStreamV1UseCase:
                         output=CompletionStreamOutput(
                             text=result["result"]["text_output"],
                             finished=False,  # Tracked by https://github.com/NVIDIA/TensorRT-LLM/issues/240
+                            num_prompt_tokens=num_prompt_tokens,
                             num_completion_tokens=num_completion_tokens,
                         ),
                     )

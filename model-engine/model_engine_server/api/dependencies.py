@@ -34,6 +34,7 @@ from model_engine_server.domain.repositories import (
     DockerRepository,
     LLMFineTuneEventsRepository,
     ModelBundleRepository,
+    TokenizerRepository,
     TriggerRepository,
 )
 from model_engine_server.domain.services import (
@@ -87,6 +88,7 @@ from model_engine_server.infra.repositories import (
     DbTriggerRepository,
     ECRDockerRepository,
     FakeDockerRepository,
+    LiveTokenizerRepository,
     RedisModelEndpointCacheRepository,
     S3FileLLMFineTuneEventsRepository,
     S3FileLLMFineTuneRepository,
@@ -134,6 +136,7 @@ class ExternalInterfaces:
     llm_artifact_gateway: LLMArtifactGateway
     cron_job_gateway: CronJobGateway
     monitoring_metrics_gateway: MonitoringMetricsGateway
+    tokenizer_repository: TokenizerRepository
 
 
 def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
@@ -260,6 +263,8 @@ def _get_external_interfaces(
 
     docker_repository = ECRDockerRepository() if not CIRCLECI else FakeDockerRepository()
 
+    tokenizer_repository = LiveTokenizerRepository(llm_artifact_gateway=llm_artifact_gateway)
+
     external_interfaces = ExternalInterfaces(
         docker_repository=docker_repository,
         model_bundle_repository=model_bundle_repository,
@@ -281,6 +286,7 @@ def _get_external_interfaces(
         trigger_repository=trigger_repository,
         cron_job_gateway=cron_job_gateway,
         monitoring_metrics_gateway=monitoring_metrics_gateway,
+        tokenizer_repository=tokenizer_repository,
     )
     return external_interfaces
 
