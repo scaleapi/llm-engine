@@ -57,11 +57,13 @@ from model_engine_server.domain.exceptions import (
     UpstreamServiceError,
 )
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
-from model_engine_server.domain.repositories import ModelBundleRepository
-from model_engine_server.domain.repositories.docker_repository import DockerRepository
+from model_engine_server.domain.repositories import (
+    DockerRepository,
+    ModelBundleRepository,
+    TokenizerRepository,
+)
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
-from model_engine_server.infra.repositories import LiveTokenizerRepository
 from model_engine_server.infra.repositories.live_tokenizer_repository import SUPPORTED_MODELS_INFO
 
 from ...common.datadog_utils import add_trace_request_id
@@ -189,11 +191,10 @@ NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
 
-def count_tokens(input: str, model_name: str, llm_artifact_gateway: LLMArtifactGateway) -> int:
+def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
     """
     Count the number of tokens in the input string.
     """
-    tokenizer_repository = LiveTokenizerRepository(llm_artifact_gateway=llm_artifact_gateway)
     tokenizer = tokenizer_repository.load_tokenizer(model_name)
     return len(tokenizer.encode(input))
 
@@ -1032,12 +1033,12 @@ class CompletionSyncV1UseCase:
         self,
         model_endpoint_service: ModelEndpointService,
         llm_model_endpoint_service: LLMModelEndpointService,
-        llm_artifact_gateway: LLMArtifactGateway,
+        tokenizer_repository: TokenizerRepository,
     ):
         self.model_endpoint_service = model_endpoint_service
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
-        self.llm_artifact_gateway = llm_artifact_gateway
+        self.tokenizer_repository = tokenizer_repository
 
     def model_output_to_completion_output(
         self,
@@ -1057,7 +1058,7 @@ class CompletionSyncV1UseCase:
                 num_prompt_tokens=count_tokens(
                     prompt,
                     model_content.model_name,
-                    self.llm_artifact_gateway,
+                    self.tokenizer_repository,
                 ),
                 num_completion_tokens=completion_token_count,
                 tokens=tokens,
@@ -1111,7 +1112,7 @@ class CompletionSyncV1UseCase:
                 num_prompt_tokens=count_tokens(
                     prompt,
                     model_content.model_name,
-                    self.llm_artifact_gateway,
+                    self.tokenizer_repository,
                 ),
                 num_completion_tokens=model_output["count_output_tokens"],
                 tokens=tokens,
@@ -1366,12 +1367,12 @@ class CompletionStreamV1UseCase:
         self,
         model_endpoint_service: ModelEndpointService,
         llm_model_endpoint_service: LLMModelEndpointService,
-        llm_artifact_gateway: LLMArtifactGateway,
+        tokenizer_repository: TokenizerRepository,
     ):
         self.model_endpoint_service = model_endpoint_service
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
-        self.llm_artifact_gateway = llm_artifact_gateway
+        self.tokenizer_repository = tokenizer_repository
 
     async def execute(
         self, user: User, model_endpoint_name: str, request: CompletionStreamV1Request
@@ -1460,7 +1461,7 @@ class CompletionStreamV1UseCase:
             num_prompt_tokens = count_tokens(
                 request.prompt,
                 model_content.model_name,
-                self.llm_artifact_gateway,
+                self.tokenizer_repository,
             )
         elif model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
             args = {
@@ -1481,7 +1482,7 @@ class CompletionStreamV1UseCase:
             num_prompt_tokens = count_tokens(
                 request.prompt,
                 model_content.model_name,
-                self.llm_artifact_gateway,
+                self.tokenizer_repository,
             )
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
             args = {
@@ -1521,7 +1522,7 @@ class CompletionStreamV1UseCase:
             num_prompt_tokens = count_tokens(
                 request.prompt,
                 model_content.model_name,
-                self.llm_artifact_gateway,
+                self.tokenizer_repository,
             )
         else:
             raise EndpointUnsupportedInferenceTypeException(
