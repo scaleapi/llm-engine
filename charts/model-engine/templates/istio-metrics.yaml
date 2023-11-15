@@ -1,0 +1,34 @@
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: {{ include "modelEngine.fullname" . }}-custom-tags
+  namespace: istio-system
+spec:
+  metrics:
+  - overrides:
+    - match:
+        metric: REQUEST_COUNT
+        mode: CLIENT_AND_SERVER
+      tagOverrides:
+        request_operation:
+          value: istio_requestOperation
+    providers:
+    - name: prometheus
+---
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
+metadata:
+  name: {{ include "modelEngine.fullname" . }}-attributegen
+  namespace: istio-system
+spec:
+  imagePullPolicy: Always
+  phase: AUTHN
+  pluginConfig:
+    attributes:
+    - match:
+      {{- include "modelEngine.istioAttributeMatchConditions" . | nindent 6 }}
+      output_attribute: istio_requestOperation
+  selector:
+    matchLabels: 
+      {{- include "modelEngine.selectorLabels.gateway" . | nindent 6 }}
+  url: https://storage.googleapis.com/istio-build/proxy/attributegen-359dcd3a19f109c50e97517fe6b1e2676e870c4d.wasm

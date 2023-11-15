@@ -79,12 +79,19 @@ from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateMo
 from sse_starlette.sse import EventSourceResponse
 
 
+def format_request_route(request: Request) -> str:
+    url_path = request.url.path
+    for path_param in request.path_params:
+        url_path = url_path.replace(request.path_params[path_param], f":{path_param}")
+    return f"{request.method}_{url_path}".lower()
+
+
 async def record_route_call(
     request: Request,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ):
-    route = f"{request.method}_{request.url.path}".lower()
+    route = format_request_route(request)
     model_name = request.query_params.get("model_endpoint_name", None)
 
     external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
