@@ -8,6 +8,7 @@ from typing import Any, Iterator, List, Optional, Sequence, Tuple
 import requests
 import sseclient
 import yaml
+from fastapi.responses import JSONResponse
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.inference.common import get_endpoint_config
@@ -122,6 +123,7 @@ class Forwarder(ModelEngineSerializationMixin):
     serialize_results_as_string: bool
     post_inference_hooks_handler: PostInferenceHooksHandler
     wrap_response: bool
+    forward_http_status: bool
 
     def __call__(self, json_payload: Any) -> Any:
         request_obj = EndpointPredictV1Request.parse_obj(json_payload)
@@ -131,13 +133,14 @@ class Forwarder(ModelEngineSerializationMixin):
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
         try:
-            response: Any = requests.post(
+            response_raw: Any = requests.post(
                 self.predict_endpoint,
                 json=json_payload,
                 headers={
                     "Content-Type": "application/json",
                 },
-            ).json()
+            )
+            response = response_raw.json()
         except Exception:
             logger.exception(
                 f"Failed to get response for request ({json_payload_repr}) "
@@ -145,18 +148,27 @@ class Forwarder(ModelEngineSerializationMixin):
             )
             raise
         if isinstance(response, dict):
-            logger.info(f"Got response from user-defined service: {response.keys()=}")
+            logger.info(
+                f"Got response from user-defined service: {response.keys()=}, {response_raw.status_code=}"
+            )
         elif isinstance(response, list):
-            logger.info(f"Got response from user-defined service: {len(response)=}")
+            logger.info(
+                f"Got response from user-defined service: {len(response)=}, {response_raw.status_code=}"
+            )
         else:
-            logger.info(f"Got response from user-defined service: {response=}")
+            logger.info(
+                f"Got response from user-defined service: {response=}, {response_raw.status_code=}"
+            )
 
         if self.wrap_response:
             response = self.get_response_payload(using_serialize_results_as_string, response)
 
         # TODO: we actually want to do this after we've returned the response.
         self.post_inference_hooks_handler.handle(request_obj, response)
-        return response
+        if self.forward_http_status:
+            return JSONResponse(content=response, status_code=response_raw.status_code)
+        else:
+            return response
 
 
 @dataclass(frozen=True)
@@ -180,6 +192,7 @@ class LoadForwarder:
     model_engine_unwrap: bool = True
     serialize_results_as_string: bool = True
     wrap_response: bool = True
+    forward_http_status: bool = False
 
     def load(self, resources: Path, cache: Any) -> Forwarder:
         if self.use_grpc:
@@ -278,6 +291,7 @@ class LoadForwarder:
             serialize_results_as_string=serialize_results_as_string,
             post_inference_hooks_handler=handler,
             wrap_response=self.wrap_response,
+            forward_http_status=self.forward_http_status,
         )
 
 
@@ -492,7 +506,7 @@ def _set_value(config: dict, key_path: List[str], value: Any) -> None:
     """
     key = key_path[0]
     if len(key_path) == 1:
-        config[key] = value
+        config[key] = value if not value.isdigit() else int(value)
     else:
         if key not in config:
             config[key] = dict()
