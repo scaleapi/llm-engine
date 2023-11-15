@@ -12,7 +12,6 @@ from math import ceil
 from typing import Any, DefaultDict, Dict, List, Set, Tuple
 
 import aioredis
-import botocore
 import stringcase
 from celery.app.control import Inspect
 from datadog import statsd
@@ -425,13 +424,15 @@ class SQSBroker(AutoscalerBroker):
                     int(response["Attributes"]["ApproximateNumberOfMessagesNotVisible"])
                 )
             total_end_time = time.time()
-            logger.info(f"SQS {queue_name} total: {total_end_time - total_start_time} seconds")
             queue_size = max(queue_size_hist)
+            logger.info(
+                f"SQS {queue_name} total: {total_end_time - total_start_time} seconds, queue size {queue_size}"
+            )
             # SQS's ApproximateNumberOfMessagesNotVisible should correspond to celery's
             #  number of active + number of reserved tasks
             reserved_size = max(reserved_size_hist)
 
-        except botocore.errorfactory.QueueDoesNotExist as e:
+        except sqs_client.exceptions.QueueDoesNotExist as e:
             logger.info(f"Queue does not exist {queue_name}: {e}")
             queue_size = 0
             reserved_size = 0
