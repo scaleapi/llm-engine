@@ -261,6 +261,63 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
 
 
 @pytest.mark.asyncio
+async def test_create_model_endpoint_trt_llm_use_case_success(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    create_llm_model_endpoint_trt_llm_request_async: CreateLLMModelEndpointV1Request,
+    create_llm_model_endpoint_trt_llm_request_streaming: CreateLLMModelEndpointV1Request,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    use_case = CreateLLMModelEndpointV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    response_1 = await use_case.execute(
+        user=user,
+        request=create_llm_model_endpoint_trt_llm_request_streaming,
+    )
+    assert response_1.endpoint_creation_task_id
+    assert isinstance(response_1, CreateLLMModelEndpointV1Response)
+    endpoint = (
+        await fake_model_endpoint_service.list_model_endpoints(
+            owner=None,
+            name=create_llm_model_endpoint_trt_llm_request_streaming.name,
+            order_by=None,
+        )
+    )[0]
+    assert endpoint.record.endpoint_type == ModelEndpointType.STREAMING
+    assert endpoint.record.metadata == {
+        "_llm": {
+            "model_name": create_llm_model_endpoint_trt_llm_request_streaming.model_name,
+            "source": create_llm_model_endpoint_trt_llm_request_streaming.source,
+            "inference_framework": create_llm_model_endpoint_trt_llm_request_streaming.inference_framework,
+            "inference_framework_image_tag": create_llm_model_endpoint_trt_llm_request_streaming.inference_framework_image_tag,
+            "num_shards": create_llm_model_endpoint_trt_llm_request_streaming.num_shards,
+            "quantize": create_llm_model_endpoint_trt_llm_request_streaming.quantize,
+        }
+    }
+
+    with pytest.raises(ObjectHasInvalidValueException):
+        await use_case.execute(
+            user=user,
+            request=create_llm_model_endpoint_trt_llm_request_async,
+        )
+
+
+@pytest.mark.asyncio
 async def test_create_llm_model_endpoint_use_case_raises_invalid_value_exception(
     test_api_key: str,
     fake_model_bundle_repository,
@@ -546,6 +603,39 @@ async def test_completion_sync_text_generation_inference_use_case_success(
 
 
 @pytest.mark.asyncio
+async def test_completion_sync_trt_llm_use_case_success(
+    test_api_key: str,
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    llm_model_endpoint_trt_llm: ModelEndpoint,
+    completion_sync_request: CompletionSyncV1Request,
+):
+    completion_sync_request.return_token_log_probs = False  # not yet supported
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_trt_llm)
+    fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = SyncEndpointPredictV1Response(
+        status=TaskStatus.SUCCESS,
+        result={
+            "result": '{"model_name": "ensemble", "model_version": "1", "sequence_end": false, "sequence_id": 0, "sequence_start": false, "text_output": "<s> What is machine learning? Machine learning is a branch", "token_ids": [1, 1724, 338, 4933, 6509, 29973, 6189, 6509, 338, 263, 5443]}'
+        },
+        traceback=None,
+    )
+    use_case = CompletionSyncV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    response_1 = await use_case.execute(
+        user=user,
+        model_endpoint_name=llm_model_endpoint_trt_llm.record.name,
+        request=completion_sync_request,
+    )
+    assert response_1.output == CompletionOutput(
+        text=" Machine learning is a branch",
+        num_completion_tokens=5,
+    )
+
+
+@pytest.mark.asyncio
 async def test_completion_sync_use_case_predict_failed(
     test_api_key: str,
     fake_model_endpoint_service,
@@ -774,6 +864,61 @@ async def test_completion_stream_text_generation_inference_use_case_success(
         assert message.dict()["output"]["text"] == output_texts[i]
         if i == 5:
             assert message.dict()["output"]["num_completion_tokens"] == 6
+        i += 1
+
+
+@pytest.mark.asyncio
+async def test_completion_stream_trt_llm_use_case_success(
+    test_api_key: str,
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    llm_model_endpoint_trt_llm: ModelEndpoint,
+    completion_stream_request: CompletionStreamV1Request,
+):
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_trt_llm)
+    fake_model_endpoint_service.streaming_model_endpoint_inference_gateway.responses = [
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={"result": {"text_output": "Machine", "token_ids": 6189}},
+            traceback=None,
+        ),
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={"result": {"text_output": "learning", "token_ids": 6509}},
+            traceback=None,
+        ),
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={"result": {"text_output": "is", "token_ids": 338}},
+            traceback=None,
+        ),
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={"result": {"text_output": "a", "token_ids": 263}},
+            traceback=None,
+        ),
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={"result": {"text_output": "branch", "token_ids": 5443}},
+            traceback=None,
+        ),
+    ]
+    use_case = CompletionStreamV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    response_1 = use_case.execute(
+        user=user,
+        model_endpoint_name=llm_model_endpoint_trt_llm.record.name,
+        request=completion_stream_request,
+    )
+    output_texts = ["Machine", "learning", "is", "a", "branch"]
+    i = 0
+    async for message in response_1:
+        assert message.dict()["request_id"]
+        assert message.dict()["output"]["text"] == output_texts[i]
+        assert message.dict()["output"]["num_completion_tokens"] == i + 1
         i += 1
 
 
