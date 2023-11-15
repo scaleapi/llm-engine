@@ -203,6 +203,7 @@ config:
       tgi_repository: "text-generation-inference"
       vllm_repository: "vllm"
       lightllm_repository: "lightllm"
+      tensorrt_llm_repository: "tensorrt-llm"
       user_inference_base_repository: "launch/inference"
       user_inference_pytorch_repository: "launch/inference/pytorch"
       user_inference_tensorflow_repository: "launch/inference/tf"

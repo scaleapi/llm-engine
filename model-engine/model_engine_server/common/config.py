@@ -57,6 +57,7 @@ class HostedModelInferenceServiceConfig:
     tgi_repository: str
     vllm_repository: str
     lightllm_repository: str
+    tensorrt_llm_repository: str
     user_inference_base_repository: str
     user_inference_pytorch_repository: str
     user_inference_tensorflow_repository: str

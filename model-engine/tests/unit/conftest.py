@@ -106,6 +106,7 @@ from model_engine_server.domain.repositories import (
     DockerRepository,
     LLMFineTuneEventsRepository,
     ModelBundleRepository,
+    TokenizerRepository,
     TriggerRepository,
 )
 from model_engine_server.domain.services import (
@@ -151,6 +152,7 @@ from model_engine_server.infra.services.image_cache_service import ImageCacheSer
 from model_engine_server.infra.services.live_llm_model_endpoint_service import (
     LiveLLMModelEndpointService,
 )
+from transformers import AutoTokenizer
 
 
 def _translate_fake_model_endpoint_orm_to_model_endpoint_record(
@@ -748,13 +750,22 @@ class FakeLLMFineTuneEventsRepository(LLMFineTuneEventsRepository):
 class FakeLLMArtifactGateway(LLMArtifactGateway):
     def __init__(self):
         self.existing_models = []
-        self.s3_bucket = {"fake-checkpoint": ["fake.bin, fake2.bin", "fake3.safetensors"]}
+        self.s3_bucket = {
+            "fake-checkpoint": ["fake.bin, fake2.bin", "fake3.safetensors"],
+            "llama-7b/tokenizer.json": ["llama-7b/tokenizer.json"],
+            "llama-7b/tokenizer_config.json": ["llama-7b/tokenizer_config.json"],
+            "llama-7b/special_tokens_map.json": ["llama-7b/special_tokens_map.json"],
+        }
         self.urls = {"filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"}
 
     def _add_model(self, owner: str, model_name: str):
         self.existing_models.append((owner, model_name))
 
     def list_files(self, path: str, **kwargs) -> List[str]:
+        if path in self.s3_bucket:
+            return self.s3_bucket[path]
+
+    def download_files(self, path: str, target_path: str, overwrite=False, **kwargs) -> List[str]:
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 
@@ -1803,6 +1814,11 @@ class FakeModelEndpointService(ModelEndpointService):
         del self.db[model_endpoint_id]
 
 
+class FakeTokenizerRepository(TokenizerRepository):
+    def load_tokenizer(self, model_name: str) -> AutoTokenizer:
+        return AutoTokenizer.from_pretrained(model_name)
+
+
 class FakeLLMModelEndpointService(LLMModelEndpointService):
     db: Dict[str, ModelEndpoint]
 
@@ -2072,6 +2088,11 @@ def fake_image_cache_service(
 
 
 @pytest.fixture
+def fake_tokenizer_repository() -> TokenizerRepository:
+    return FakeTokenizerRepository()
+
+
+@pytest.fixture
 def get_repositories_generator_wrapper():
     def get_repositories_generator(
         fake_docker_repository_image_always_exists: bool,
@@ -2155,6 +2176,8 @@ def get_repositories_generator_wrapper():
             )
             fake_llm_fine_tuning_events_repository = FakeLLMFineTuneEventsRepository()
             fake_file_storage_gateway = FakeFileStorageGateway(fake_file_storage_gateway_contents)
+            fake_tokenizer_repository = FakeTokenizerRepository()
+
             repositories = ExternalInterfaces(
                 docker_repository=FakeDockerRepository(
                     fake_docker_repository_image_always_exists, False
@@ -2178,6 +2201,7 @@ def get_repositories_generator_wrapper():
                 filesystem_gateway=fake_file_system_gateway,
                 llm_artifact_gateway=fake_llm_artifact_gateway,
                 monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
+                tokenizer_repository=fake_tokenizer_repository,
             )
             try:
                 yield repositories
@@ -3901,6 +3925,79 @@ def llm_model_endpoint_text_generation_inference(
         ),
         infra_state=ModelEndpointInfraState(
             deployment_name=f"{test_api_key}-test_llm_model_endpoint_name_tgi",
+            aws_role="test_aws_role",
+            results_s3_bucket="test_s3_bucket",
+            child_fn_info=None,
+            labels={},
+            prewarm=True,
+            high_priority=False,
+            deployment_state=ModelEndpointDeploymentState(
+                min_workers=1,
+                max_workers=3,
+                per_worker=2,
+                available_workers=1,
+                unavailable_workers=1,
+            ),
+            resource_state=ModelEndpointResourceState(
+                cpus=1,
+                gpus=1,
+                memory="1G",
+                gpu_type=GpuType.NVIDIA_TESLA_T4,
+                storage="10G",
+                optimize_costs=True,
+            ),
+            user_config_state=ModelEndpointUserConfigState(
+                app_config=model_bundle_1.app_config,
+                endpoint_config=ModelEndpointConfig(
+                    bundle_name=model_bundle_1.name,
+                    endpoint_name="test_llm_model_endpoint_name_1",
+                    post_inference_hooks=["callback"],
+                    default_callback_url="http://www.example.com",
+                    default_callback_auth=CallbackAuth(
+                        __root__=CallbackBasicAuth(
+                            kind="basic",
+                            username="test_username",
+                            password="test_password",
+                        ),
+                    ),
+                ),
+            ),
+            num_queued_items=1,
+            image="test_image",
+        ),
+    )
+
+
+@pytest.fixture
+def llm_model_endpoint_trt_llm(
+    test_api_key: str, model_bundle_1: ModelBundle
+) -> Tuple[ModelEndpoint, Any]:
+    return ModelEndpoint(
+        record=ModelEndpointRecord(
+            id="test_llm_model_endpoint_id_3",
+            name="test_llm_model_endpoint_name_trt_llm",
+            created_by=test_api_key,
+            created_at=datetime(2022, 1, 3),
+            last_updated_at=datetime(2022, 1, 3),
+            metadata={
+                "_llm": {
+                    "model_name": "llama-2-7b",
+                    "source": "hugging_face",
+                    "inference_framework": "tensorrt_llm",
+                    "inference_framework_image_tag": "23.10",
+                    "num_shards": 4,
+                }
+            },
+            creation_task_id="test_creation_task_id",
+            endpoint_type=ModelEndpointType.STREAMING,
+            destination="test_destination",
+            status=ModelEndpointStatus.READY,
+            current_model_bundle=model_bundle_1,
+            owner=test_api_key,
+            public_inference=True,
+        ),
+        infra_state=ModelEndpointInfraState(
+            deployment_name=f"{test_api_key}-test_llm_model_endpoint_name_trt_llm",
             aws_role="test_aws_role",
             results_s3_bucket="test_s3_bucket",
             child_fn_info=None,

@@ -331,6 +331,61 @@ def create_llm_model_endpoint_text_generation_inference_request_async() -> (
 
 
 @pytest.fixture
+def create_llm_model_endpoint_trt_llm_request_streaming() -> CreateLLMModelEndpointV1Request:
+    return CreateLLMModelEndpointV1Request(
+        name="test_llm_endpoint_name_trt_llm_streaming",
+        model_name="llama-2-7b",
+        source="hugging_face",
+        inference_framework="tensorrt_llm",
+        inference_framework_image_tag="23.10",
+        num_shards=2,
+        endpoint_type=ModelEndpointType.STREAMING,
+        metadata={},
+        post_inference_hooks=["billing"],
+        cpus=1,
+        gpus=2,
+        memory="8G",
+        gpu_type=GpuType.NVIDIA_TESLA_T4,
+        storage=None,
+        min_workers=1,
+        max_workers=3,
+        per_worker=2,
+        labels={"team": "infra", "product": "my_product"},
+        aws_role="test_aws_role",
+        results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://test_checkpoint_path",
+    )
+
+
+@pytest.fixture
+def create_llm_model_endpoint_trt_llm_request_async() -> CreateLLMModelEndpointV1Request:
+    return CreateLLMModelEndpointV1Request(
+        name="test_llm_endpoint_name_tgi_async",
+        model_name="llama-2-7b",
+        source="hugging_face",
+        inference_framework="tensorrt_llm",
+        inference_framework_image_tag="23.10",
+        num_shards=2,
+        quantize=Quantization.BITSANDBYTES,
+        endpoint_type=ModelEndpointType.ASYNC,
+        metadata={},
+        post_inference_hooks=["billing"],
+        cpus=1,
+        gpus=2,
+        memory="8G",
+        gpu_type=GpuType.NVIDIA_TESLA_T4,
+        storage=None,
+        min_workers=1,
+        max_workers=3,
+        per_worker=2,
+        labels={"team": "infra", "product": "my_product"},
+        aws_role="test_aws_role",
+        results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://test_checkpoint_path",
+    )
+
+
+@pytest.fixture
 def create_llm_model_endpoint_request_invalid_model_name() -> CreateLLMModelEndpointV1Request:
     return CreateLLMModelEndpointV1Request(
         name="test_llm_endpoint_name_1",
@@ -386,7 +441,7 @@ def create_llm_model_endpoint_request_invalid_quantization() -> CreateLLMModelEn
 @pytest.fixture
 def completion_sync_request() -> CompletionSyncV1Request:
     return CompletionSyncV1Request(
-        prompt="test_prompt_1",
+        prompt="What is machine learning?",
         max_new_tokens=10,
         temperature=0.5,
         return_token_log_probs=True,
@@ -396,7 +451,7 @@ def completion_sync_request() -> CompletionSyncV1Request:
 @pytest.fixture
 def completion_stream_request() -> CompletionStreamV1Request:
     return CompletionStreamV1Request(
-        prompt="test_prompt_1",
+        prompt="What is machine learning?",
         max_new_tokens=10,
         temperature=0.5,
     )

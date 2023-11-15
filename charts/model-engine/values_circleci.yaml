@@ -143,17 +143,18 @@ config:
 
       billing_queue_arn: none
       cache_redis_url: redis://redis-message-broker-master.default/15
-      s3_file_llm_fine_tune_repository: "s3://$CIRCLECI_AWS_S3_BUCKET"
+      s3_file_llm_fine_tune_repository: "s3://$CIRCLECI_AWS_S3_BUCKET/fine_tune_repository"
       dd_trace_enabled: false
       istio_enabled: true
       tgi_repository: "text-generation-inference"
       vllm_repository: "vllm"
       lightllm_repository: "lightllm"
+      tensorrt_llm_repository: "tensorrt-llm"
       user_inference_base_repository: "launch/inference"
       user_inference_pytorch_repository: "hosted-model-inference/async-pytorch"
       user_inference_tensorflow_repository: "hosted-model-inference/async-tensorflow-cpu"
       docker_image_layer_cache_repository: "kaniko-cache"
-      hf_user_fine_tuned_weights_prefix: "s3://$CIRCLECI_AWS_S3_BUCKET"
+      hf_user_fine_tuned_weights_prefix: "s3://$CIRCLECI_AWS_S3_BUCKET/model-weights"
 
 # Service Account
 serviceAccount:
