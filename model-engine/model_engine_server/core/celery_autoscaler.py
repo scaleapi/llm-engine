@@ -544,7 +544,9 @@ async def main():
     if broker_type == "redis":
         inspect = {
             db_index: inspect_app(
-                app=celery_app(None, broker_type=broker_type, task_visibility=db_index)
+                app=celery_app(
+                    None, broker_type=broker_type, task_visibility=db_index, aws_role=aws_profile
+                )
             )
             for db_index in get_all_db_indexes()
         }
