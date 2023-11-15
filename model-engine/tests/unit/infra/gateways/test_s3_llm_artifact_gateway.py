@@ -34,10 +34,11 @@ def mock_boto3_session(fake_files: List[str]):
     return mock_session
 
 
-@mock.patch("model_engine_server.infra.gateways.s3_llm_artifact_gateway.os.makedirs")
-def test_s3_llm_artifact_gateway_download_folder(
-    mock_os_makedirs, llm_artifact_gateway, fake_files
-):
+@mock.patch(
+    "model_engine_server.infra.gateways.s3_llm_artifact_gateway.os.makedirs",
+    lambda *args, **kwargs: None,  # noqa
+)
+def test_s3_llm_artifact_gateway_download_folder(llm_artifact_gateway, fake_files):
     prefix = "/".join(fake_files[0].split("/")[:-1])
     uri_prefix = f"s3://fake-bucket/{prefix}"
     target_dir = "fake-target"
@@ -50,8 +51,11 @@ def test_s3_llm_artifact_gateway_download_folder(
         assert llm_artifact_gateway.download_files(uri_prefix, target_dir) == expected_files
 
 
-@mock.patch("model_engine_server.infra.gateways.s3_llm_artifact_gateway.os.makedirs")
-def test_s3_llm_artifact_gateway_download_file(mock_os_makedirs, llm_artifact_gateway, fake_files):
+@mock.patch(
+    "model_engine_server.infra.gateways.s3_llm_artifact_gateway.os.makedirs",
+    lambda *args, **kwargs: None,  # noqa
+)
+def test_s3_llm_artifact_gateway_download_file(llm_artifact_gateway, fake_files):
     file = fake_files[1]
     uri = f"s3://fake-bucket/{file}"
     target = f"fake-target/{file}"

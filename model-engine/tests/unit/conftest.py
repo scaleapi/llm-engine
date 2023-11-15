@@ -752,15 +752,9 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
         self.existing_models = []
         self.s3_bucket = {
             "fake-checkpoint": ["fake.bin, fake2.bin", "fake3.safetensors"],
-            "models/hf-llama/hf-llama-7b/tokenizer.json": [
-                "models/hf-llama/hf-llama-7b/tokenizer.json"
-            ],
-            "models/hf-llama/hf-llama-7b/tokenizer_config.json": [
-                "models/hf-llama/hf-llama-7b/tokenizer_config.json"
-            ],
-            "models/hf-llama/hf-llama-7b/special_tokens_map.json": [
-                "models/hf-llama/hf-llama-7b/special_tokens_map.json"
-            ],
+            "llama-7b/tokenizer.json": ["llama-7b/tokenizer.json"],
+            "llama-7b/tokenizer_config.json": ["llama-7b/tokenizer_config.json"],
+            "llama-7b/special_tokens_map.json": ["llama-7b/special_tokens_map.json"],
         }
         self.urls = {"filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"}
 
