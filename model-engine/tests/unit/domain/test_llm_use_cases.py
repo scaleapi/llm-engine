@@ -627,7 +627,7 @@ async def test_completion_sync_text_generation_inference_use_case_success(
 @pytest.mark.asyncio
 @mock.patch(
     "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
-    return_value=7,
+    return_value=6,
 )
 async def test_completion_sync_trt_llm_use_case_success(
     test_api_key: str,
@@ -659,7 +659,7 @@ async def test_completion_sync_trt_llm_use_case_success(
     )
     assert response_1.output == CompletionOutput(
         text=" Machine learning is a branch",
-        num_prompt_tokens=7,
+        num_prompt_tokens=6,
         num_completion_tokens=5,
     )
 
