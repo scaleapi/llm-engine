@@ -2094,6 +2094,11 @@ def fake_image_cache_service(
 
 
 @pytest.fixture
+def fake_tokenizer_repository() -> TokenizerRepository:
+    return FakeTokenizerRepository()
+
+
+@pytest.fixture
 def get_repositories_generator_wrapper():
     def get_repositories_generator(
         fake_docker_repository_image_always_exists: bool,

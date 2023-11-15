@@ -45,7 +45,6 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     _include_safetensors_bin_or_pt,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
-from model_engine_server.infra.repositories.live_tokenizer_repository import ModelInfo
 
 
 @pytest.mark.asyncio
@@ -364,14 +363,6 @@ def mocked_auto_tokenizer_from_pretrained(*args, **kwargs):  # noqa
 
 @pytest.mark.asyncio
 @mock.patch(
-    "model_engine_server.infra.repositories.live_tokenizer_repository.SUPPORTED_MODELS_INFO",
-    {"llama-7b": ModelInfo(None, "test-key")},
-)
-@mock.patch(
-    "model_engine_server.infra.repositories.live_tokenizer_repository.get_models_s3_uri",
-    mock.Mock(return_value="s3://test-bucket/test-key"),
-)
-@mock.patch(
     "model_engine_server.infra.repositories.live_tokenizer_repository.AutoTokenizer.from_pretrained",
     mocked_auto_tokenizer_from_pretrained,
 )
@@ -379,7 +370,7 @@ async def test_completion_sync_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
-    fake_llm_artifact_gateway,
+    fake_tokenizer_repository,
     llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -430,7 +421,7 @@ async def test_completion_sync_use_case_success(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
-        llm_artifact_gateway=fake_llm_artifact_gateway,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -467,7 +458,7 @@ async def test_completion_sync_text_generation_inference_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
-    fake_llm_artifact_gateway,
+    fake_tokenizer_repository,
     llm_model_endpoint_text_generation_inference: ModelEndpoint,
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -550,7 +541,7 @@ async def test_completion_sync_text_generation_inference_use_case_success(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
-        llm_artifact_gateway=fake_llm_artifact_gateway,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -581,7 +572,7 @@ async def test_completion_sync_use_case_predict_failed(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
-    fake_llm_artifact_gateway,
+    fake_tokenizer_repository,
     llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -596,7 +587,7 @@ async def test_completion_sync_use_case_predict_failed(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
-        llm_artifact_gateway=fake_llm_artifact_gateway,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -612,7 +603,7 @@ async def test_completion_sync_use_case_predict_failed_with_errors(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
-    fake_llm_artifact_gateway,
+    fake_tokenizer_repository,
     llm_model_endpoint_sync_tgi: Tuple[ModelEndpoint, Any],
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -632,7 +623,7 @@ async def test_completion_sync_use_case_predict_failed_with_errors(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
-        llm_artifact_gateway=fake_llm_artifact_gateway,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(UpstreamServiceError):
@@ -648,7 +639,7 @@ async def test_completion_sync_use_case_not_sync_endpoint_raises(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
-    fake_llm_artifact_gateway,
+    fake_tokenizer_repository,
     llm_model_endpoint_async: Tuple[ModelEndpoint, Any],
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -656,7 +647,7 @@ async def test_completion_sync_use_case_not_sync_endpoint_raises(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
-        llm_artifact_gateway=fake_llm_artifact_gateway,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(EndpointUnsupportedInferenceTypeException):
@@ -676,7 +667,7 @@ async def test_completion_stream_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
-    fake_llm_artifact_gateway,
+    fake_tokenizer_repository,
     llm_model_endpoint_streaming: ModelEndpoint,
     completion_stream_request: CompletionStreamV1Request,
 ):
@@ -741,7 +732,7 @@ async def test_completion_stream_use_case_success(
     use_case = CompletionStreamV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
-        llm_artifact_gateway=fake_llm_artifact_gateway,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = use_case.execute(
@@ -769,7 +760,7 @@ async def test_completion_stream_text_generation_inference_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
-    fake_llm_artifact_gateway,
+    fake_tokenizer_repository,
     llm_model_endpoint_text_generation_inference: ModelEndpoint,
     completion_stream_request: CompletionStreamV1Request,
 ):
@@ -809,7 +800,7 @@ async def test_completion_stream_text_generation_inference_use_case_success(
     use_case = CompletionStreamV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
-        llm_artifact_gateway=fake_llm_artifact_gateway,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = use_case.execute(
