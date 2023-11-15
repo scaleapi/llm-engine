@@ -381,6 +381,8 @@ scramp==1.4.4
     # via pg8000
 secretstorage==3.3.3
     # via keyring
+sentencepiece==0.1.99
+    # via -r model-engine/requirements.in
 sh==1.14.3
     # via -r model-engine/requirements.in
 six==1.16.0

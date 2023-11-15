@@ -1,4 +1,4 @@
-from typing import Any, Tuple
+from typing import Any, List, Tuple
 from unittest import mock
 
 import pytest
@@ -410,11 +410,24 @@ async def test_get_llm_model_endpoint_use_case_raises_not_authorized(
         )
 
 
+def mocked_auto_tokenizer_from_pretrained(*args, **kwargs):  # noqa
+    class mocked_encode:
+        def encode(self, input: str) -> List[Any]:  # noqa
+            return [1] * 7
+
+    return mocked_encode()
+
+
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.infra.repositories.live_tokenizer_repository.AutoTokenizer.from_pretrained",
+    mocked_auto_tokenizer_from_pretrained,
+)
 async def test_completion_sync_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
     llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -465,6 +478,7 @@ async def test_completion_sync_use_case_success(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -474,6 +488,7 @@ async def test_completion_sync_use_case_success(
     )
     assert response_1.output == CompletionOutput(
         text="I am a newbie to the world of programming.",
+        num_prompt_tokens=7,
         num_completion_tokens=11,
         tokens=[
             TokenOutput(token="I", log_prob=-2.3025850929940455),
@@ -492,10 +507,15 @@ async def test_completion_sync_use_case_success(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
+    return_value=5,
+)
 async def test_completion_sync_text_generation_inference_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
     llm_model_endpoint_text_generation_inference: ModelEndpoint,
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -578,6 +598,7 @@ async def test_completion_sync_text_generation_inference_use_case_success(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -587,6 +608,7 @@ async def test_completion_sync_text_generation_inference_use_case_success(
     )
     assert response_1.output == CompletionOutput(
         text=" Deep Learning is a new type of machine learning",
+        num_prompt_tokens=5,
         num_completion_tokens=9,
         tokens=[
             TokenOutput(token=" Deep", log_prob=0.0),
@@ -603,10 +625,15 @@ async def test_completion_sync_text_generation_inference_use_case_success(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
+    return_value=6,
+)
 async def test_completion_sync_trt_llm_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
     llm_model_endpoint_trt_llm: ModelEndpoint,
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -622,6 +649,7 @@ async def test_completion_sync_trt_llm_use_case_success(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -631,6 +659,7 @@ async def test_completion_sync_trt_llm_use_case_success(
     )
     assert response_1.output == CompletionOutput(
         text=" Machine learning is a branch",
+        num_prompt_tokens=6,
         num_completion_tokens=5,
     )
 
@@ -640,6 +669,7 @@ async def test_completion_sync_use_case_predict_failed(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
     llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -654,6 +684,7 @@ async def test_completion_sync_use_case_predict_failed(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -669,6 +700,7 @@ async def test_completion_sync_use_case_predict_failed_with_errors(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
     llm_model_endpoint_sync_tgi: Tuple[ModelEndpoint, Any],
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -688,6 +720,7 @@ async def test_completion_sync_use_case_predict_failed_with_errors(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(UpstreamServiceError):
@@ -703,6 +736,7 @@ async def test_completion_sync_use_case_not_sync_endpoint_raises(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
     llm_model_endpoint_async: Tuple[ModelEndpoint, Any],
     completion_sync_request: CompletionSyncV1Request,
 ):
@@ -710,6 +744,7 @@ async def test_completion_sync_use_case_not_sync_endpoint_raises(
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(EndpointUnsupportedInferenceTypeException):
@@ -721,10 +756,15 @@ async def test_completion_sync_use_case_not_sync_endpoint_raises(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
+    return_value=7,
+)
 async def test_completion_stream_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
     llm_model_endpoint_streaming: ModelEndpoint,
     completion_stream_request: CompletionStreamV1Request,
 ):
@@ -789,6 +829,7 @@ async def test_completion_stream_use_case_success(
     use_case = CompletionStreamV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = use_case.execute(
@@ -802,15 +843,21 @@ async def test_completion_stream_use_case_success(
         assert message.dict()["request_id"]
         assert message.dict()["output"]["text"] == output_texts[i]
         if i == 6:
+            assert message.dict()["output"]["num_prompt_tokens"] == 7
             assert message.dict()["output"]["num_completion_tokens"] == 6
         i += 1
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
+    return_value=7,
+)
 async def test_completion_stream_text_generation_inference_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
     llm_model_endpoint_text_generation_inference: ModelEndpoint,
     completion_stream_request: CompletionStreamV1Request,
 ):
@@ -850,6 +897,7 @@ async def test_completion_stream_text_generation_inference_use_case_success(
     use_case = CompletionStreamV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = use_case.execute(
@@ -863,15 +911,21 @@ async def test_completion_stream_text_generation_inference_use_case_success(
         assert message.dict()["request_id"]
         assert message.dict()["output"]["text"] == output_texts[i]
         if i == 5:
+            assert message.dict()["output"]["num_prompt_tokens"] == 7
             assert message.dict()["output"]["num_completion_tokens"] == 6
         i += 1
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
+    return_value=7,
+)
 async def test_completion_stream_trt_llm_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
     llm_model_endpoint_trt_llm: ModelEndpoint,
     completion_stream_request: CompletionStreamV1Request,
 ):
@@ -906,6 +960,7 @@ async def test_completion_stream_trt_llm_use_case_success(
     use_case = CompletionStreamV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = use_case.execute(
@@ -918,6 +973,7 @@ async def test_completion_stream_trt_llm_use_case_success(
     async for message in response_1:
         assert message.dict()["request_id"]
         assert message.dict()["output"]["text"] == output_texts[i]
+        assert message.dict()["output"]["num_prompt_tokens"] == 7
         assert message.dict()["output"]["num_completion_tokens"] == i + 1
         i += 1
 

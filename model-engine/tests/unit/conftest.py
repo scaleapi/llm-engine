@@ -106,6 +106,7 @@ from model_engine_server.domain.repositories import (
     DockerRepository,
     LLMFineTuneEventsRepository,
     ModelBundleRepository,
+    TokenizerRepository,
     TriggerRepository,
 )
 from model_engine_server.domain.services import (
@@ -151,6 +152,7 @@ from model_engine_server.infra.services.image_cache_service import ImageCacheSer
 from model_engine_server.infra.services.live_llm_model_endpoint_service import (
     LiveLLMModelEndpointService,
 )
+from transformers import AutoTokenizer
 
 
 def _translate_fake_model_endpoint_orm_to_model_endpoint_record(
@@ -748,13 +750,22 @@ class FakeLLMFineTuneEventsRepository(LLMFineTuneEventsRepository):
 class FakeLLMArtifactGateway(LLMArtifactGateway):
     def __init__(self):
         self.existing_models = []
-        self.s3_bucket = {"fake-checkpoint": ["fake.bin, fake2.bin", "fake3.safetensors"]}
+        self.s3_bucket = {
+            "fake-checkpoint": ["fake.bin, fake2.bin", "fake3.safetensors"],
+            "llama-7b/tokenizer.json": ["llama-7b/tokenizer.json"],
+            "llama-7b/tokenizer_config.json": ["llama-7b/tokenizer_config.json"],
+            "llama-7b/special_tokens_map.json": ["llama-7b/special_tokens_map.json"],
+        }
         self.urls = {"filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"}
 
     def _add_model(self, owner: str, model_name: str):
         self.existing_models.append((owner, model_name))
 
     def list_files(self, path: str, **kwargs) -> List[str]:
+        if path in self.s3_bucket:
+            return self.s3_bucket[path]
+
+    def download_files(self, path: str, target_path: str, overwrite=False, **kwargs) -> List[str]:
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 
@@ -1803,6 +1814,11 @@ class FakeModelEndpointService(ModelEndpointService):
         del self.db[model_endpoint_id]
 
 
+class FakeTokenizerRepository(TokenizerRepository):
+    def load_tokenizer(self, model_name: str) -> AutoTokenizer:
+        return AutoTokenizer.from_pretrained(model_name)
+
+
 class FakeLLMModelEndpointService(LLMModelEndpointService):
     db: Dict[str, ModelEndpoint]
 
@@ -2072,6 +2088,11 @@ def fake_image_cache_service(
 
 
 @pytest.fixture
+def fake_tokenizer_repository() -> TokenizerRepository:
+    return FakeTokenizerRepository()
+
+
+@pytest.fixture
 def get_repositories_generator_wrapper():
     def get_repositories_generator(
         fake_docker_repository_image_always_exists: bool,
@@ -2155,6 +2176,8 @@ def get_repositories_generator_wrapper():
             )
             fake_llm_fine_tuning_events_repository = FakeLLMFineTuneEventsRepository()
             fake_file_storage_gateway = FakeFileStorageGateway(fake_file_storage_gateway_contents)
+            fake_tokenizer_repository = FakeTokenizerRepository()
+
             repositories = ExternalInterfaces(
                 docker_repository=FakeDockerRepository(
                     fake_docker_repository_image_always_exists, False
@@ -2178,6 +2201,7 @@ def get_repositories_generator_wrapper():
                 filesystem_gateway=fake_file_system_gateway,
                 llm_artifact_gateway=fake_llm_artifact_gateway,
                 monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
+                tokenizer_repository=fake_tokenizer_repository,
             )
             try:
                 yield repositories
