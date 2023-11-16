@@ -572,7 +572,7 @@ data:
                 {{- tuple $env_var | toYaml | nindent 16 }}
                 {{- end }}
                 {{- end }}
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               command:
                 - dumb-init
                 - --
@@ -666,7 +666,7 @@ data:
                 {{- tuple $env_var | toYaml | nindent 16 }}
                 {{- end }}
                 {{- end }}
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               resources:
                 # If job pods get evicted, then we can make "Guaranteed QoS" by setting requests = limits.
