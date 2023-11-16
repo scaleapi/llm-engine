@@ -68,7 +68,6 @@ class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
 
     def emit_route_call_metric(self, route: str, _metadata: MetricMetadata):
         self.route_call[route] += 1
-        print("route_call", route, self.route_call[route])
 
     def emit_token_count_metrics(self, token_usage: TokenUsage, _metadata: MetricMetadata):
         self.token_count += token_usage.num_total_tokens
