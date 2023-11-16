@@ -9,6 +9,7 @@ docker build vs other errors
 from abc import ABC, abstractmethod
 from typing import Optional
 
+from model_engine_server.common.dtos.llms import TokenUsage
 from model_engine_server.core.auth.authentication_repository import User
 from pydantic import BaseModel
 
@@ -78,6 +79,14 @@ class MonitoringMetricsGateway(ABC):
     def emit_route_call_metric(self, route: str, metadata: MetricMetadata):
         """
         Route call metric
+
+        """
+        pass
+
+    @abstractmethod
+    def emit_token_count_metrics(self, token_usage: TokenUsage, metadata: MetricMetadata):
+        """
+        Token count metrics
 
         """
         pass
