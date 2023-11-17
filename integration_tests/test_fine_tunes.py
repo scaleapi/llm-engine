@@ -21,7 +21,7 @@ MAX_RETRIES = 10
 
 
 @pytest.mark.skipif(
-    os.getenv("ENV") == "prod",
+    os.getenv("ENV") in ["prod", "launch"],
     reason="Skipping fine tune tests since we don't want to add test templates to prod environment.",
 )
 def test_fine_tunes() -> None:
