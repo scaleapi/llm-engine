@@ -1,22 +1,16 @@
 {{- if .Values.celery_autoscaler.enabled }}
+{{- $app := include "modelEngine.celeryautoscalername" . }}
 {{- $env := .Values.context }}
 {{- $tag := .Values.tag }}
-{{- $service_identifier := .Values.serviceIdentifier }}
-{{- $num_shards := ternary 30 3 (eq .Values.context "prod") }}
-{{- range $base_app := tuple "celery-autoscaler-elasticache" "celery-autoscaler-sqs" }}
-{{- $app := ternary (printf "%s-%s" $base_app $service_identifier) $base_app (not (empty $service_identifier)) }}
-{{- $broker_name := ternary "redis-elasticache-message-broker-master" "sqs-message-broker-master" (eq $base_app "celery-autoscaler-elasticache") }}
----
+{{- $message_broker := .Values.celery_autoscaler.message_broker }}
+{{- $num_shards := .Values.celery_autoscaler.num_shards }}
+{{- $broker_name := ternary "redis-elasticache-message-broker-master" "sqs-message-broker-master" (eq $message_broker "elasticache") }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   labels:
-    app: {{ $app }}
-    team: infra
-    product: common
-    tags.datadoghq.com/env: {{ $env }}
-    tags.datadoghq.com/service: {{ $app }}
-    tags.datadoghq.com/version: {{ $tag }}
+    {{- include "modelEngine.baseLabels" . | nindent 4 }}
+    {{- include "modelEngine.selectorLabels.celeryAutoscaler" . | nindent 4 }}
   name: {{ $app }}
 spec:
   serviceName: {{ $app }}
@@ -30,12 +24,8 @@ spec:
         ad.datadoghq.com/main.logs: '[{"service": "{{ $app }}", "source": "python"}]'
         sidecar.istio.io/inject: "false"
       labels:
-        app: {{ $app }}
-        team: infra
-        product: common
-        tags.datadoghq.com/env: {{ $env }}
-        tags.datadoghq.com/service: {{ $app }}
-        tags.datadoghq.com/version: {{ $tag }}
+        {{- include "modelEngine.baseLabels" . | nindent 8 }}
+        {{- include "modelEngine.selectorLabels.celeryAutoscaler" . | nindent 8 }}
     spec:
       containers:
       - args:
@@ -45,7 +35,7 @@ spec:
         - model_engine_server.core.celery.celery_autoscaler
         env:
         - name: AWS_PROFILE
-          value: {{ $.Values.aws.profileName }}
+          value: {{ .Values.aws.profileName }}
         - name: AWS_CONFIG_FILE
           value: /opt/.aws/config
         - name: DD_TRACE_ENABLED
@@ -65,14 +55,14 @@ spec:
         - name: REDIS_BROKER_NAME
           value: {{ $broker_name }}
         - name: CELERY_ELASTICACHE_ENABLED
-          value: {{ (eq $base_app "celery-autoscaler-elasticache") | squote }}
+          value: {{ (eq $message_broker "elasticache") | squote }}
         - name: POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
         - name: NUM_SHARDS
           value: '{{ $num_shards }}'
-        image: "{{ $.Values.image.gatewayRepository }}:{{ $tag }}"
+        image: "{{ .Values.image.gatewayRepository }}:{{ $tag }}"
         imagePullPolicy: Always
         name: main
         resources:
@@ -92,7 +82,6 @@ spec:
       serviceAccountName: {{ include "modelEngine.fullname" $ }}
       volumes:
       - configMap:
-          name: {{ $.Values.aws.configMap.name }}
+          name: {{ .Values.aws.configMap.name }}
         name: config-volume
-{{- end }}
 {{- end }}

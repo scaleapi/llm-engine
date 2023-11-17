@@ -101,8 +101,6 @@ async def list_deployments(core_api, apps_api) -> Dict[Tuple[str, str], CeleryAu
 
             for f in dataclasses.fields(CeleryAutoscalerParams):
                 k = f.name
-                # TODO: this technically can remain the same, since Celery deployments won't have the `channel` field and
-                # would be skipped by the NATS autoscaler, but renaming to make things obvious and as a safety precaution
                 v = annotations.get(f"celery.scaleml.autoscaler/{stringcase.camelcase(k)}")
                 if not v:
                     continue

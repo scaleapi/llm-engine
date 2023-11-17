@@ -91,9 +91,13 @@ autoscaling:
   prewarming:
     enabled: false
 
-# for async endpoints, scale the number of pods based on number of requests
+# for async endpoints, Celery autoscaler scales the number of pods based on number of requests
+# message_broker should be either "sqs" or "elasticache"
+# num_shards is number of instances of the autoscaler
 celery_autoscaler:
   enabled: true
+  message_broker: sqs
+  num_shards: 3
 
 podDisruptionBudget:
   enabled: true

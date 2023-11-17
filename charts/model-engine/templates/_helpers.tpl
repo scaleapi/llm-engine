@@ -30,6 +30,14 @@ If release name contains chart name it will be used as a full name.
 {{ .Values.hostDomain.prefix }}{{ include "modelEngine.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}
 {{- end }}
 
+{{- define "modelEngine.celeryautoscalername" -}}
+{{- if .Values.serviceIdentifier }}
+{{- printf "celery-autoscaler-%s-%s" .Values.celery_autoscaler.message_broker .Values.serviceIdentifier }}
+{{- else }}
+{{- printf "celery-autoscaler-%s" .Values.celery_autoscaler.message_broker }}
+{{- end }}
+{{- end }}
+
 {{/*
 Create chart name and version as used by the chart label.
 */}}
@@ -37,17 +45,21 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "modelEngine.baseLabels" -}}
+team: infra
+app.kubernetes.io/version: {{ .Values.tag }}
+tags.datadoghq.com/version: {{ .Values.tag }}
+tags.datadoghq.com/env: {{ .Values.context }}
+{{- end }}
+
 {{/*
 Common labels
 */}}
 {{- define "modelEngine.labels" -}}
-team: infra
+{{- include "modelEngine.baseLabels" . | printf "%s\n" -}}
 product: model-engine
 helm.sh/chart: {{ include "modelEngine.chart" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/version: {{ .Values.tag }}
-tags.datadoghq.com/version: {{ .Values.tag }}
-tags.datadoghq.com/env: {{ .Values.context }}
 {{- end }}
 
 {{- define "modelEngine.selectorLabels.builder" -}}
@@ -60,6 +72,12 @@ app: {{ include "modelEngine.cachername" . }}
 
 {{- define "modelEngine.selectorLabels.gateway" -}}
 app: {{ include "modelEngine.fullname" . -}}
+{{- end }}
+
+{{- define "modelEngine.selectorLabels.celeryAutoscaler" -}}
+app: {{ include "modelEngine.celeryautoscalername" . }}
+product: common
+tags.datadoghq.com/service: {{ include "modelEngine.celeryautoscalername" . -}}
 {{- end }}
 
 {{- define "modelEngine.baseTemplateLabels" -}}
