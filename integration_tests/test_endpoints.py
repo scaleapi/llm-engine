@@ -2,7 +2,6 @@ import asyncio
 import time
 
 import pytest
-from model_engine_server.common.env_vars import CIRCLECI
 from tenacity import RetryError, retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from .rest_api_utils import (
@@ -237,7 +236,9 @@ def test_sync_streaming_model_endpoint(capsys):
             delete_model_endpoint(create_endpoint_request["name"], user)
 
 
-@pytest.mark.skipif(CIRCLECI, reason="skip on circleci since need to figure out s3 access")
+@pytest.mark.skipif(
+    reason="Need to update the following test to hit remote service to be integration test"
+)
 def test_models_tokenizers() -> None:
     from model_engine_server.infra.gateways.s3_llm_artifact_gateway import S3LLMArtifactGateway
     from model_engine_server.infra.repositories import LiveTokenizerRepository
