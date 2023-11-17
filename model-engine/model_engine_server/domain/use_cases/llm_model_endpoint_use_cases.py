@@ -399,7 +399,7 @@ class CreateLLMModelEndpointV1UseCase:
         max_input_length = 1024
         max_total_tokens = 2048
         if "llama-2" in model_name:
-            max_input_length = 2048
+            max_input_length = 4095
             max_total_tokens = 4096
 
         subcommands = []

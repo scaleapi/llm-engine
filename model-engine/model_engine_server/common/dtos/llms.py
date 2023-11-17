@@ -233,6 +233,15 @@ class CompletionStreamV1Response(BaseModel):
     """Error of the response (if any)."""
 
 
+class TokenUsage(BaseModel):
+    num_prompt_tokens: Optional[int] = 0
+    num_completion_tokens: Optional[int] = 0
+
+    @property
+    def num_total_tokens(self) -> int:
+        return (self.num_prompt_tokens or 0) + (self.num_completion_tokens or 0)
+
+
 class CreateFineTuneRequest(BaseModel):
     model: str
     training_file: str

@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 import pytz
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
@@ -32,6 +32,7 @@ from model_engine_server.common.dtos.llms import (
     ModelDownloadResponse,
     StreamError,
     StreamErrorContent,
+    TokenUsage,
 )
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.core.auth.authentication_repository import User
@@ -86,17 +87,20 @@ def format_request_route(request: Request) -> str:
     return f"{request.method}_{url_path}".lower()
 
 
-async def record_route_call(
+async def get_metric_metadata(
     request: Request,
     auth: User = Depends(verify_authentication),
-    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
-):
-    route = format_request_route(request)
+) -> MetricMetadata:
     model_name = request.query_params.get("model_endpoint_name", None)
+    return MetricMetadata(user=auth, model_name=model_name)
 
-    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(
-        route, MetricMetadata(user=auth, model_name=model_name)
-    )
+
+async def record_route_call(
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
+    route: str = Depends(format_request_route),
+    metric_metadata: MetricMetadata = Depends(get_metric_metadata),
+):
+    external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(route, metric_metadata)
 
 
 llm_router_v1 = APIRouter(prefix="/v1/llm", dependencies=[Depends(record_route_call)])
@@ -234,8 +238,10 @@ async def get_model_endpoint(
 async def create_completion_sync_task(
     model_endpoint_name: str,
     request: CompletionSyncV1Request,
+    background_tasks: BackgroundTasks,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
+    metric_metadata: MetricMetadata = Depends(get_metric_metadata),
 ) -> CompletionSyncV1Response:
     """
     Runs a sync prompt completion on an LLM.
@@ -249,9 +255,20 @@ async def create_completion_sync_task(
             llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
             tokenizer_repository=external_interfaces.tokenizer_repository,
         )
-        return await use_case.execute(
+        response = await use_case.execute(
             user=auth, model_endpoint_name=model_endpoint_name, request=request
         )
+        background_tasks.add_task(
+            external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
+            TokenUsage(
+                num_prompt_tokens=response.output.num_prompt_tokens if response.output else None,
+                num_completion_tokens=response.output.num_completion_tokens
+                if response.output
+                else None,
+            ),
+            metric_metadata,
+        )
+        return response
     except UpstreamServiceError:
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         logger.exception(f"Upstream service error for request {request_id}")
@@ -279,8 +296,10 @@ async def create_completion_sync_task(
 async def create_completion_stream_task(
     model_endpoint_name: str,
     request: CompletionStreamV1Request,
+    background_tasks: BackgroundTasks,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
+    metric_metadata: MetricMetadata = Depends(get_metric_metadata),
 ) -> EventSourceResponse:
     """
     Runs a stream prompt completion on an LLM.
@@ -299,6 +318,16 @@ async def create_completion_stream_task(
         try:
             async for message in response:
                 yield {"data": message.json()}
+            background_tasks.add_task(
+                external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
+                TokenUsage(
+                    num_prompt_tokens=message.output.num_prompt_tokens if message.output else None,
+                    num_completion_tokens=message.output.num_completion_tokens
+                    if message.output
+                    else None,
+                ),
+                metric_metadata,
+            )
         except (InvalidRequestException, ObjectHasInvalidValueException) as exc:
             yield handle_streaming_exception(exc, 400, str(exc))
         except (
