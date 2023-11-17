@@ -91,6 +91,12 @@ autoscaling:
   prewarming:
     enabled: false
 
+# for async endpoints, Celery autoscaler scales the number of pods based on number of requests
+# num_shards is number of instances of the autoscaler
+celery_autoscaler:
+  enabled: true
+  num_shards: 3
+
 podDisruptionBudget:
   enabled: true
   minAvailable: 1
@@ -239,5 +245,5 @@ imageCache:
           operator: "Exists"
           effect: "NoSchedule"
 
-# celeryBrokerType specifies the celery broker type for async endpoints (coming soon)
+# celeryBrokerType specifies the celery broker type for async endpoints, either "sqs" or "elasticache"
 celeryBrokerType: sqs

@@ -417,6 +417,8 @@ starlette==0.19.1
     # via
     #   fastapi
     #   sse-starlette
+stringcase==1.2.0
+    # via -r model-engine/requirements.in
 tblib==2.0.0
     # via celery
 tenacity==6.2.0

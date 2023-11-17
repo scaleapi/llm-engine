@@ -1,0 +1,87 @@
+{{- if .Values.celery_autoscaler.enabled }}
+{{- $app := include "modelEngine.celeryautoscalername" . }}
+{{- $env := .Values.context }}
+{{- $tag := .Values.tag }}
+{{- $message_broker := .Values.celeryBrokerType }}
+{{- $num_shards := .Values.celery_autoscaler.num_shards }}
+{{- $broker_name := ternary "redis-elasticache-message-broker-master" "sqs-message-broker-master" (eq $message_broker "elasticache") }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    {{- include "modelEngine.baseLabels" . | nindent 4 }}
+    {{- include "modelEngine.selectorLabels.celeryAutoscaler" . | nindent 4 }}
+  name: {{ $app }}
+spec:
+  serviceName: {{ $app }}
+  replicas: {{ $num_shards }}
+  selector:
+    matchLabels:
+      app: {{ $app }}
+  template:
+    metadata:
+      annotations:
+        ad.datadoghq.com/main.logs: '[{"service": "{{ $app }}", "source": "python"}]'
+        sidecar.istio.io/inject: "false"
+      labels:
+        {{- include "modelEngine.baseLabels" . | nindent 8 }}
+        {{- include "modelEngine.selectorLabels.celeryAutoscaler" . | nindent 8 }}
+    spec:
+      containers:
+      - args:
+        - ddtrace-run
+        - python
+        - -m
+        - model_engine_server.core.celery.celery_autoscaler
+        env:
+        - name: AWS_PROFILE
+          value: {{ .Values.aws.profileName }}
+        - name: AWS_CONFIG_FILE
+          value: /opt/.aws/config
+        - name: DD_TRACE_ENABLED
+          value: 'false'
+        - name: DD_SERVICE
+          value: {{ $app }}
+        - name: DD_ENV
+          value: {{ $env }}
+        - name: DD_VERSION
+          value: {{ $tag }}
+        - name: DD_AGENT_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: BROKER_NAME
+          value: {{ $broker_name }}
+        - name: REDIS_BROKER_NAME
+          value: {{ $broker_name }}
+        - name: CELERY_ELASTICACHE_ENABLED
+          value: {{ (eq $message_broker "elasticache") | squote }}
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NUM_SHARDS
+          value: '{{ $num_shards }}'
+        image: "{{ .Values.image.gatewayRepository }}:{{ $tag }}"
+        imagePullPolicy: Always
+        name: main
+        resources:
+          requests:
+            cpu: 1000m
+        volumeMounts:
+        - mountPath: /opt/.aws/config
+          name: config-volume
+          subPath: config
+      nodeSelector:
+        node-lifecycle: normal
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Equal
+          value: 'true'
+          effect: NoSchedule
+      serviceAccountName: {{ include "modelEngine.fullname" $ }}
+      volumes:
+      - configMap:
+          name: {{ .Values.aws.configMap.name }}
+        name: config-volume
+{{- end }}
