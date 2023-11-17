@@ -3,6 +3,7 @@ import os
 import time
 
 import boto3
+import pytest
 import smart_open
 
 from .rest_api_utils import (
@@ -19,6 +20,10 @@ from .rest_api_utils import (
 MAX_RETRIES = 10
 
 
+@pytest.mark.skipif(
+    not os.getenv("FINE_TUNE_TEST_READY"),
+    reason="Skipping fine tune tests when test templates are not set up.",
+)
 def test_fine_tunes() -> None:
     di_batch_job_id = create_docker_image_batch_job_bundle(
         CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST, USER_ID_0
