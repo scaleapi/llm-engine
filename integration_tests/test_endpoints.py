@@ -2,7 +2,6 @@ import asyncio
 import time
 
 import pytest
-from model_engine_server.common.env_vars import CIRCLECI
 from tenacity import RetryError, retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from .rest_api_utils import (
