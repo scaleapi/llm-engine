@@ -32,9 +32,9 @@ If release name contains chart name it will be used as a full name.
 
 {{- define "modelEngine.celeryautoscalername" -}}
 {{- if .Values.serviceIdentifier }}
-{{- printf "celery-autoscaler-%s-%s" .Values.celery_autoscaler.message_broker .Values.serviceIdentifier }}
+{{- printf "celery-autoscaler-%s-%s" .Values.celeryBrokerType .Values.serviceIdentifier }}
 {{- else }}
-{{- printf "celery-autoscaler-%s" .Values.celery_autoscaler.message_broker }}
+{{- printf "celery-autoscaler-%s" .Values.celeryBrokerType }}
 {{- end }}
 {{- end }}
 
