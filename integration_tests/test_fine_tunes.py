@@ -21,8 +21,8 @@ MAX_RETRIES = 10
 
 
 @pytest.mark.skipif(
-    os.getenv("ENV") in ["prod", "launch"],
-    reason="Skipping fine tune tests since we don't want to add test templates to prod environment.",
+    not os.getenv("FINE_TUNE_TEST_READY"),
+    reason="Skipping fine tune tests when test templates are not set up.",
 )
 def test_fine_tunes() -> None:
     di_batch_job_id = create_docker_image_batch_job_bundle(
