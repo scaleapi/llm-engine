@@ -166,6 +166,11 @@ async def create_model_endpoint(
             model_endpoint_service=external_interfaces.model_endpoint_service,
         )
         return await use_case.execute(user=auth, request=request)
+    except ObjectAlreadyExistsException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="The specified model endpoint already exists.",
+        ) from exc
     except EndpointLabelsException as exc:
         raise HTTPException(
             status_code=400,
@@ -270,11 +275,6 @@ async def update_model_endpoint(
         return await use_case.execute(
             user=auth, model_endpoint_name=model_endpoint_name, request=request
         )
-    except ObjectAlreadyExistsException as exc:
-        raise HTTPException(
-            status_code=400,
-            detail="The specified model endpoint already exists.",
-        ) from exc
     except EndpointLabelsException as exc:
         raise HTTPException(
             status_code=400,

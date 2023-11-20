@@ -1087,6 +1087,14 @@ class UpdateLLMModelEndpointV1UseCase:
         infra_state = model_endpoint.infra_state
 
         if (
+            request.endpoint_type is not None
+            and request.endpoint_type != endpoint_record.endpoint_type
+        ):
+            raise ObjectHasInvalidValueException(
+                f"Cannot change endpoint type (attempting to change from {endpoint_record.endpoint_type} to {request.endpoint_type})"
+            )
+
+        if (
             request.model_name
             or request.source
             or request.inference_framework
@@ -1097,9 +1105,19 @@ class UpdateLLMModelEndpointV1UseCase:
         ):
             llm_metadata = (model_endpoint.record.metadata or {}).get("_llm", {})
 
+            inference_framework = llm_metadata["inference_framework"]
+            # disallowing changing the inference framework for now since this might cause downtime
+            # (for completion requests, gateway determines the payload keys sent to the user container based on the framework)
+            if (
+                request.inference_framework is not None
+                and request.inference_framework != inference_framework
+            ):
+                raise ObjectHasInvalidValueException(
+                    f"Cannot change inference framework (attempting to change from {inference_framework} to {request.inference_framework})"
+                )
+
             model_name = request.model_name or llm_metadata["model_name"]
             source = request.source or llm_metadata["source"]
-            inference_framework = request.inference_framework or llm_metadata["inference_framework"]
             inference_framework_image_tag = (
                 request.inference_framework_image_tag
                 or llm_metadata["inference_framework_image_tag"]
