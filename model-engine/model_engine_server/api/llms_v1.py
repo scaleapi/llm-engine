@@ -33,6 +33,8 @@ from model_engine_server.common.dtos.llms import (
     StreamError,
     StreamErrorContent,
     TokenUsage,
+    UpdateLLMModelEndpointV1Request,
+    UpdateLLMModelEndpointV1Response,
 )
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.core.auth.authentication_repository import User
@@ -70,11 +72,13 @@ from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
 from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
+    CreateLLMModelBundleV1UseCase,
     CreateLLMModelEndpointV1UseCase,
     DeleteLLMEndpointByNameUseCase,
     GetLLMModelEndpointByNameV1UseCase,
     ListLLMModelEndpointsV1UseCase,
     ModelDownloadV1UseCase,
+    UpdateLLMModelEndpointV1UseCase,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 from sse_starlette.sse import EventSourceResponse
@@ -151,19 +155,17 @@ async def create_model_endpoint(
             docker_repository=external_interfaces.docker_repository,
             model_primitive_gateway=external_interfaces.model_primitive_gateway,
         )
-        use_case = CreateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case = CreateLLMModelBundleV1UseCase(
             create_model_bundle_use_case=create_model_bundle_use_case,
             model_bundle_repository=external_interfaces.model_bundle_repository,
-            model_endpoint_service=external_interfaces.model_endpoint_service,
             llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
             docker_repository=external_interfaces.docker_repository,
         )
+        use_case = CreateLLMModelEndpointV1UseCase(
+            create_llm_model_bundle_use_case=create_llm_model_bundle_use_case,
+            model_endpoint_service=external_interfaces.model_endpoint_service,
+        )
         return await use_case.execute(user=auth, request=request)
-    except ObjectAlreadyExistsException as exc:
-        raise HTTPException(
-            status_code=400,
-            detail="The specified model endpoint already exists.",
-        ) from exc
     except EndpointLabelsException as exc:
         raise HTTPException(
             status_code=400,
@@ -231,6 +233,74 @@ async def get_model_endpoint(
         raise HTTPException(
             status_code=404,
             detail=f"Model Endpoint {model_endpoint_name}  was not found.",
+        ) from exc
+
+
+@llm_router_v1.post(
+    "/model-endpoints/{model_endpoint_name}", response_model=UpdateLLMModelEndpointV1Response
+)
+async def update_model_endpoint(
+    model_endpoint_name: str,
+    request: UpdateLLMModelEndpointV1Request,
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
+) -> UpdateLLMModelEndpointV1Response:
+    """
+    Updates an LLM endpoint for the current user.
+    """
+    logger.info(f"POST /llm/model-endpoints/{model_endpoint_name} with {request} for {auth}")
+    try:
+
+        create_model_bundle_use_case = CreateModelBundleV2UseCase(
+            model_bundle_repository=external_interfaces.model_bundle_repository,
+            docker_repository=external_interfaces.docker_repository,
+            model_primitive_gateway=external_interfaces.model_primitive_gateway,
+        )
+        create_llm_model_bundle_use_case = CreateLLMModelBundleV1UseCase(
+            create_model_bundle_use_case=create_model_bundle_use_case,
+            model_bundle_repository=external_interfaces.model_bundle_repository,
+            llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
+            docker_repository=external_interfaces.docker_repository,
+        )
+        use_case = UpdateLLMModelEndpointV1UseCase(
+            create_llm_model_bundle_use_case=create_llm_model_bundle_use_case,
+            model_endpoint_service=external_interfaces.model_endpoint_service,
+            llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+        )
+        return await use_case.execute(
+            user=auth, model_endpoint_name=model_endpoint_name, request=request
+        )
+    except ObjectAlreadyExistsException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="The specified model endpoint already exists.",
+        ) from exc
+    except EndpointLabelsException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+    except ObjectHasInvalidValueException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except EndpointResourceInvalidRequestException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+    except ObjectNotApprovedException as exc:
+        raise HTTPException(
+            status_code=403,
+            detail="The specified model bundle was not approved yet.",
+        ) from exc
+    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The specified model bundle could not be found.",
+        ) from exc
+    except DockerImageNotFoundException as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The specified docker image could not be found.",
         ) from exc
 
 

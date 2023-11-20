@@ -87,6 +87,7 @@ class GetLLMModelEndpointV1Response(BaseModel):
     inference_framework_image_tag: Optional[str] = None
     num_shards: Optional[int] = None
     quantize: Optional[Quantization] = None
+    checkpoint_path: Optional[str] = None
     spec: Optional[GetModelEndpointV1Response] = None
 
 
@@ -94,7 +95,54 @@ class ListLLMModelEndpointsV1Response(BaseModel):
     model_endpoints: List[GetLLMModelEndpointV1Response]
 
 
-# Delete and update use the default Launch endpoint APIs.
+class UpdateLLMModelEndpointV1Request(BaseModel):
+    # LLM specific fields
+    model_name: Optional[str]
+    source: Optional[LLMSource]
+    inference_framework: Optional[LLMInferenceFramework]
+    inference_framework_image_tag: Optional[str]
+    num_shards: Optional[int]
+    """
+    Number of shards to distribute the model onto GPUs. Only affects behavior for text-generation-inference models
+    """
+
+    quantize: Optional[Quantization]
+    """
+    Whether to quantize the model. Only affect behavior for text-generation-inference models
+    """
+
+    checkpoint_path: Optional[str]
+    """
+    Path to the checkpoint to load the model from. Only affects behavior for text-generation-inference models
+    """
+
+    # General endpoint fields
+    metadata: Optional[Dict[str, Any]]
+    post_inference_hooks: Optional[List[str]]
+    endpoint_type: Optional[ModelEndpointType]
+    cpus: Optional[CpuSpecificationType]
+    gpus: Optional[int]
+    memory: Optional[StorageSpecificationType]
+    gpu_type: Optional[GpuType]
+    storage: Optional[StorageSpecificationType]
+    optimize_costs: Optional[bool]
+    min_workers: Optional[int]
+    max_workers: Optional[int]
+    per_worker: Optional[int]
+    labels: Optional[Dict[str, str]]
+    prewarm: Optional[bool]
+    high_priority: Optional[bool]
+    billing_tags: Optional[Dict[str, Any]]
+    default_callback_url: Optional[HttpUrl]
+    default_callback_auth: Optional[CallbackAuth]
+    public_inference: Optional[bool]
+
+
+class UpdateLLMModelEndpointV1Response(BaseModel):
+    endpoint_creation_task_id: str
+
+
+# Delete uses the default Launch endpoint APIs.
 
 
 class CompletionSyncV1Request(BaseModel):
