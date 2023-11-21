@@ -7,6 +7,7 @@ from model_engine_server.common.dtos.llms import (
     CompletionStreamV1Request,
     CompletionSyncV1Request,
     CreateLLMModelEndpointV1Request,
+    UpdateLLMModelEndpointV1Request,
 )
 from model_engine_server.common.dtos.model_bundles import (
     CreateModelBundleV1Request,
@@ -244,6 +245,13 @@ def create_llm_model_endpoint_request_streaming() -> CreateLLMModelEndpointV1Req
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
+    )
+
+
+@pytest.fixture
+def update_llm_model_endpoint_request() -> UpdateLLMModelEndpointV1Request:
+    return UpdateLLMModelEndpointV1Request(
+        checkpoint_path="s3://test_checkpoint_path",
     )
 
 

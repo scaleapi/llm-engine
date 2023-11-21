@@ -1123,7 +1123,7 @@ class UpdateLLMModelEndpointV1UseCase:
                 or llm_metadata["inference_framework_image_tag"]
             )
             num_shards = request.num_shards or llm_metadata["num_shards"]
-            quantize = llm_metadata.get("quantize")
+            quantize = request.quantize or llm_metadata.get("quantize")
             checkpoint_path = request.checkpoint_path or llm_metadata.get("checkpoint_path")
 
             validate_model_name(model_name, inference_framework)

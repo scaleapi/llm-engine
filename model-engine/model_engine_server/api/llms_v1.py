@@ -255,7 +255,6 @@ async def update_model_endpoint(
     """
     logger.info(f"POST /llm/model-endpoints/{model_endpoint_name} with {request} for {auth}")
     try:
-
         create_model_bundle_use_case = CreateModelBundleV2UseCase(
             model_bundle_repository=external_interfaces.model_bundle_repository,
             docker_repository=external_interfaces.docker_repository,
