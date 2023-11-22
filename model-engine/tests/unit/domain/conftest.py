@@ -252,6 +252,9 @@ def create_llm_model_endpoint_request_streaming() -> CreateLLMModelEndpointV1Req
 def update_llm_model_endpoint_request() -> UpdateLLMModelEndpointV1Request:
     return UpdateLLMModelEndpointV1Request(
         checkpoint_path="s3://test_checkpoint_path",
+        memory="4G",
+        min_workers=0,
+        max_workers=1,
     )
 
 

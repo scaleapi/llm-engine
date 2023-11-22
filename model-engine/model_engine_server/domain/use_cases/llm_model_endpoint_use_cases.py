@@ -879,7 +879,7 @@ class CreateLLMModelEndpointV1UseCase:
         ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
                 raise ObjectHasInvalidValueException(
-                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM and LightLLM."
+                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM, LightLLM, and TensorRT-LLM."
                 )
 
         bundle = await self.create_llm_model_bundle_use_case.execute(
@@ -1065,11 +1065,7 @@ class UpdateLLMModelEndpointV1UseCase:
         )
         if not model_endpoint:
             raise ObjectNotFoundException
-        if not self.authz_module.check_access_read_owned_entity(
-            user, model_endpoint.record
-        ) and not self.authz_module.check_endpoint_public_inference_for_user(
-            user, model_endpoint.record
-        ):
+        if not self.authz_module.check_access_write_owned_entity(user, model_endpoint.record):
             raise ObjectNotAuthorizedException
 
         endpoint_record = model_endpoint.record
@@ -1087,34 +1083,15 @@ class UpdateLLMModelEndpointV1UseCase:
         infra_state = model_endpoint.infra_state
 
         if (
-            request.endpoint_type is not None
-            and request.endpoint_type != endpoint_record.endpoint_type
-        ):
-            raise ObjectHasInvalidValueException(
-                f"Cannot change endpoint type (attempting to change from {endpoint_record.endpoint_type} to {request.endpoint_type})"
-            )
-
-        if (
             request.model_name
             or request.source
-            or request.inference_framework
             or request.inference_framework_image_tag
             or request.num_shards
             or request.quantize
             or request.checkpoint_path
         ):
             llm_metadata = (model_endpoint.record.metadata or {}).get("_llm", {})
-
             inference_framework = llm_metadata["inference_framework"]
-            # disallowing changing the inference framework for now since this might cause downtime
-            # (for completion requests, gateway determines the payload keys sent to the user container based on the framework)
-            if (
-                request.inference_framework is not None
-                and request.inference_framework != inference_framework
-            ):
-                raise ObjectHasInvalidValueException(
-                    f"Cannot change inference framework (attempting to change from {inference_framework} to {request.inference_framework})"
-                )
 
             model_name = request.model_name or llm_metadata["model_name"]
             source = request.source or llm_metadata["source"]
@@ -1131,17 +1108,6 @@ class UpdateLLMModelEndpointV1UseCase:
                 num_shards, inference_framework, request.gpus or infra_state.resource_state.gpus
             )
             validate_quantization(quantize, inference_framework)
-
-            if inference_framework in [
-                LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
-                LLMInferenceFramework.VLLM,
-                LLMInferenceFramework.LIGHTLLM,
-                LLMInferenceFramework.TENSORRT_LLM,
-            ]:
-                if endpoint_record.endpoint_type != ModelEndpointType.STREAMING:
-                    raise ObjectHasInvalidValueException(
-                        f"Creating endpoint type {str(endpoint_record.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM and LightLLM."
-                    )
 
             bundle = await self.create_llm_model_bundle_use_case.execute(
                 user,

@@ -507,6 +507,15 @@ async def test_update_model_endpoint_use_case_success(
             "checkpoint_path": update_llm_model_endpoint_request.checkpoint_path,
         }
     }
+    assert endpoint.infra_state.resource_state.memory == update_llm_model_endpoint_request.memory
+    assert (
+        endpoint.infra_state.deployment_state.min_workers
+        == update_llm_model_endpoint_request.min_workers
+    )
+    assert (
+        endpoint.infra_state.deployment_state.max_workers
+        == update_llm_model_endpoint_request.max_workers
+    )
 
 
 def mocked_auto_tokenizer_from_pretrained(*args, **kwargs):  # noqa

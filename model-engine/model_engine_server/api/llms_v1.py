@@ -241,7 +241,7 @@ async def get_model_endpoint(
         ) from exc
 
 
-@llm_router_v1.post(
+@llm_router_v1.put(
     "/model-endpoints/{model_endpoint_name}", response_model=UpdateLLMModelEndpointV1Response
 )
 async def update_model_endpoint(

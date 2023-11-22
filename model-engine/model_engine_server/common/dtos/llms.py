@@ -99,7 +99,6 @@ class UpdateLLMModelEndpointV1Request(BaseModel):
     # LLM specific fields
     model_name: Optional[str]
     source: Optional[LLMSource]
-    inference_framework: Optional[LLMInferenceFramework]
     inference_framework_image_tag: Optional[str]
     num_shards: Optional[int]
     """
@@ -119,7 +118,6 @@ class UpdateLLMModelEndpointV1Request(BaseModel):
     # General endpoint fields
     metadata: Optional[Dict[str, Any]]
     post_inference_hooks: Optional[List[str]]
-    endpoint_type: Optional[ModelEndpointType]
     cpus: Optional[CpuSpecificationType]
     gpus: Optional[int]
     memory: Optional[StorageSpecificationType]
