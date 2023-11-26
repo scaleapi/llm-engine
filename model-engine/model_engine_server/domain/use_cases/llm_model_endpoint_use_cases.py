@@ -120,6 +120,8 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "codellama-34b-instruct",
             "llm-jp-13b-instruct-full",
             "llm-jp-13b-instruct-full-dolly",
+            "zephyr-7b-alpha",
+            "zephyr-7b-beta",
         ]
     ),
     LLMInferenceFramework.VLLM: set(
@@ -150,6 +152,8 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "mammoth-coder-llama-2-7b",
             "mammoth-coder-llama-2-13b",
             "mammoth-coder-llama-2-34b",
+            "zephyr-7b-alpha",
+            "zephyr-7b-beta",
         ]
     ),
     LLMInferenceFramework.LIGHTLLM: set(
