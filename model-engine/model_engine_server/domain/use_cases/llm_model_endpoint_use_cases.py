@@ -27,6 +27,8 @@ from model_engine_server.common.dtos.llms import (
     ModelDownloadRequest,
     ModelDownloadResponse,
     TokenOutput,
+    UpdateLLMModelEndpointV1Request,
+    UpdateLLMModelEndpointV1Response,
 )
 from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Request
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
@@ -48,6 +50,7 @@ from model_engine_server.domain.entities import (
 )
 from model_engine_server.domain.exceptions import (
     DockerImageNotFoundException,
+    EndpointInfraStateNotFound,
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
     InvalidRequestException,
@@ -70,6 +73,7 @@ from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
 from .model_bundle_use_cases import CreateModelBundleV2UseCase
 from .model_endpoint_use_cases import (
+    CONVERTED_FROM_ARTIFACT_LIKE_KEY,
     _handle_post_inference_hooks,
     model_endpoint_entity_to_get_model_endpoint_response,
     validate_billing_tags,
@@ -237,6 +241,7 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
         inference_framework_image_tag=llm_metadata["inference_framework_image_tag"],
         num_shards=llm_metadata["num_shards"],
         quantize=llm_metadata.get("quantize"),
+        checkpoint_path=llm_metadata.get("checkpoint_path"),
         spec=model_endpoint_entity_to_get_model_endpoint_response(model_endpoint),
     )
     return response
@@ -274,19 +279,17 @@ def validate_quantization(
         )
 
 
-class CreateLLMModelEndpointV1UseCase:
+class CreateLLMModelBundleV1UseCase:
     def __init__(
         self,
         create_model_bundle_use_case: CreateModelBundleV2UseCase,
         model_bundle_repository: ModelBundleRepository,
-        model_endpoint_service: ModelEndpointService,
         llm_artifact_gateway: LLMArtifactGateway,
         docker_repository: DockerRepository,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_model_bundle_use_case = create_model_bundle_use_case
         self.model_bundle_repository = model_bundle_repository
-        self.model_endpoint_service = model_endpoint_service
         self.llm_artifact_gateway = llm_artifact_gateway
         self.docker_repository = docker_repository
 
@@ -302,7 +305,7 @@ class CreateLLMModelEndpointV1UseCase:
                 tag=framework_image_tag,
             )
 
-    async def create_model_bundle(
+    async def execute(
         self,
         user: User,
         endpoint_name: str,
@@ -840,6 +843,17 @@ class CreateLLMModelEndpointV1UseCase:
             )
         ).model_bundle_id
 
+
+class CreateLLMModelEndpointV1UseCase:
+    def __init__(
+        self,
+        create_llm_model_bundle_use_case: CreateLLMModelBundleV1UseCase,
+        model_endpoint_service: ModelEndpointService,
+    ):
+        self.authz_module = LiveAuthorizationModule()
+        self.create_llm_model_bundle_use_case = create_llm_model_bundle_use_case
+        self.model_endpoint_service = model_endpoint_service
+
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
@@ -865,10 +879,10 @@ class CreateLLMModelEndpointV1UseCase:
         ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
                 raise ObjectHasInvalidValueException(
-                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM and LightLLM."
+                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM, LightLLM, and TensorRT-LLM."
                 )
 
-        bundle = await self.create_model_bundle(
+        bundle = await self.create_llm_model_bundle_use_case.execute(
             user,
             endpoint_name=request.name,
             model_name=request.model_name,
@@ -908,6 +922,7 @@ class CreateLLMModelEndpointV1UseCase:
                 inference_framework_image_tag=request.inference_framework_image_tag,
                 num_shards=request.num_shards,
                 quantize=request.quantize,
+                checkpoint_path=request.checkpoint_path,
             )
         )
 
@@ -1023,6 +1038,158 @@ class GetLLMModelEndpointByNameV1UseCase:
         ):
             raise ObjectNotAuthorizedException
         return _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+
+
+class UpdateLLMModelEndpointV1UseCase:
+    def __init__(
+        self,
+        create_llm_model_bundle_use_case: CreateLLMModelBundleV1UseCase,
+        model_endpoint_service: ModelEndpointService,
+        llm_model_endpoint_service: LLMModelEndpointService,
+    ):
+        self.authz_module = LiveAuthorizationModule()
+        self.create_llm_model_bundle_use_case = create_llm_model_bundle_use_case
+        self.model_endpoint_service = model_endpoint_service
+        self.llm_model_endpoint_service = llm_model_endpoint_service
+
+    async def execute(
+        self, user: User, model_endpoint_name: str, request: UpdateLLMModelEndpointV1Request
+    ) -> UpdateLLMModelEndpointV1Response:
+        if request.labels is not None:
+            validate_labels(request.labels)
+        validate_billing_tags(request.billing_tags)
+        validate_post_inference_hooks(user, request.post_inference_hooks)
+
+        model_endpoint = await self.llm_model_endpoint_service.get_llm_model_endpoint(
+            model_endpoint_name
+        )
+        if not model_endpoint:
+            raise ObjectNotFoundException
+        if not self.authz_module.check_access_write_owned_entity(user, model_endpoint.record):
+            raise ObjectNotAuthorizedException
+
+        endpoint_record = model_endpoint.record
+        model_endpoint_id = endpoint_record.id
+        bundle = endpoint_record.current_model_bundle
+
+        # TODO: We may want to consider what happens if an endpoint gets stuck in UPDATE_PENDING
+        #  on first creating it, and we need to find a way to get it unstuck. This would end up
+        # causing endpoint.infra_state to be None.
+        if model_endpoint.infra_state is None:
+            error_msg = f"Endpoint infra state not found for {model_endpoint_name=}"
+            logger.error(error_msg)
+            raise EndpointInfraStateNotFound(error_msg)
+
+        infra_state = model_endpoint.infra_state
+
+        if (
+            request.model_name
+            or request.source
+            or request.inference_framework_image_tag
+            or request.num_shards
+            or request.quantize
+            or request.checkpoint_path
+        ):
+            llm_metadata = (model_endpoint.record.metadata or {}).get("_llm", {})
+            inference_framework = llm_metadata["inference_framework"]
+
+            model_name = request.model_name or llm_metadata["model_name"]
+            source = request.source or llm_metadata["source"]
+            inference_framework_image_tag = (
+                request.inference_framework_image_tag
+                or llm_metadata["inference_framework_image_tag"]
+            )
+            num_shards = request.num_shards or llm_metadata["num_shards"]
+            quantize = request.quantize or llm_metadata.get("quantize")
+            checkpoint_path = request.checkpoint_path or llm_metadata.get("checkpoint_path")
+
+            validate_model_name(model_name, inference_framework)
+            validate_num_shards(
+                num_shards, inference_framework, request.gpus or infra_state.resource_state.gpus
+            )
+            validate_quantization(quantize, inference_framework)
+
+            bundle = await self.create_llm_model_bundle_use_case.execute(
+                user,
+                endpoint_name=model_endpoint_name,
+                model_name=model_name,
+                source=source,
+                framework=inference_framework,
+                framework_image_tag=inference_framework_image_tag,
+                endpoint_type=endpoint_record.endpoint_type,
+                num_shards=num_shards,
+                quantize=quantize,
+                checkpoint_path=checkpoint_path,
+            )
+
+            metadata = endpoint_record.metadata or {}
+            metadata["_llm"] = asdict(
+                LLMMetadata(
+                    model_name=model_name,
+                    source=source,
+                    inference_framework=inference_framework,
+                    inference_framework_image_tag=inference_framework_image_tag,
+                    num_shards=num_shards,
+                    quantize=quantize,
+                    checkpoint_path=checkpoint_path,
+                )
+            )
+            request.metadata = metadata
+
+        # For resources that are not specified in the update endpoint request, pass in resource from
+        # infra_state to make sure that after the update, all resources are valid and in sync.
+        # E.g. If user only want to update gpus and leave gpu_type as None, we use the existing gpu_type
+        # from infra_state to avoid passing in None to validate_resource_requests.
+        validate_resource_requests(
+            bundle=bundle,
+            cpus=request.cpus or infra_state.resource_state.cpus,
+            memory=request.memory or infra_state.resource_state.memory,
+            storage=request.storage or infra_state.resource_state.storage,
+            gpus=request.gpus or infra_state.resource_state.gpus,
+            gpu_type=request.gpu_type or infra_state.resource_state.gpu_type,
+        )
+
+        validate_deployment_resources(
+            min_workers=request.min_workers,
+            max_workers=request.max_workers,
+            endpoint_type=endpoint_record.endpoint_type,
+        )
+
+        if request.metadata is not None and CONVERTED_FROM_ARTIFACT_LIKE_KEY in request.metadata:
+            raise ObjectHasInvalidValueException(
+                f"{CONVERTED_FROM_ARTIFACT_LIKE_KEY} is a reserved metadata key and cannot be used by user."
+            )
+
+        updated_endpoint_record = await self.model_endpoint_service.update_model_endpoint(
+            model_endpoint_id=model_endpoint_id,
+            model_bundle_id=bundle.id,
+            metadata=request.metadata,
+            post_inference_hooks=request.post_inference_hooks,
+            cpus=request.cpus,
+            gpus=request.gpus,
+            memory=request.memory,
+            gpu_type=request.gpu_type,
+            storage=request.storage,
+            optimize_costs=request.optimize_costs,
+            min_workers=request.min_workers,
+            max_workers=request.max_workers,
+            per_worker=request.per_worker,
+            labels=request.labels,
+            prewarm=request.prewarm,
+            high_priority=request.high_priority,
+            default_callback_url=request.default_callback_url,
+            default_callback_auth=request.default_callback_auth,
+            public_inference=request.public_inference,
+        )
+        _handle_post_inference_hooks(
+            created_by=endpoint_record.created_by,
+            name=updated_endpoint_record.name,
+            post_inference_hooks=request.post_inference_hooks,
+        )
+
+        return UpdateLLMModelEndpointV1Response(
+            endpoint_creation_task_id=updated_endpoint_record.creation_task_id  # type: ignore
+        )
 
 
 class DeleteLLMEndpointByNameUseCase:

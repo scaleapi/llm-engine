@@ -28,3 +28,4 @@ class LLMMetadata:
     inference_framework_image_tag: str
     num_shards: int
     quantize: Optional[Quantization] = None
+    checkpoint_path: Optional[str] = None
