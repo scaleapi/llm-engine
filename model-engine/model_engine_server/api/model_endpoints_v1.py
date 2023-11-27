@@ -31,7 +31,6 @@ from model_engine_server.domain.exceptions import (
     ExistingEndpointOperationInProgressException,
     ObjectAlreadyExistsException,
     ObjectHasInvalidValueException,
-    ObjectNotApprovedException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
@@ -79,11 +78,6 @@ async def create_model_endpoint(
         raise HTTPException(
             status_code=400,
             detail=str(exc),
-        ) from exc
-    except ObjectNotApprovedException as exc:
-        raise HTTPException(
-            status_code=403,
-            detail="The specified model bundle was not approved yet.",
         ) from exc
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(
@@ -154,11 +148,6 @@ async def update_model_endpoint(
         return await use_case.execute(
             user=auth, model_endpoint_id=model_endpoint_id, request=request
         )
-    except ObjectNotApprovedException as exc:
-        raise HTTPException(
-            status_code=403,
-            detail="The specified model bundle was not approved yet.",
-        ) from exc
     except EndpointLabelsException as exc:
         raise HTTPException(
             status_code=400,
