@@ -67,6 +67,8 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "dolly-v2-12b": ModelInfo("databricks/dolly-v2-12b", None),
         "stablelm-tuned-7b": ModelInfo("StabilityAI/stablelm-tuned-alpha-7b", None),
         "vicuna-13b": ModelInfo("eachadea/vicuna-13b-1.1", None),
+        "zephyr-7b-alpha": ModelInfo("HuggingFaceH4/zephyr-7b-alpha", None),
+        "zephyr-7b-beta": ModelInfo("HuggingFaceH4/zephyr-7b-beta", None),
     }
 
 
