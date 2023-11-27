@@ -16,6 +16,7 @@ class LLMInferenceFramework(str, Enum):
     TEXT_GENERATION_INFERENCE = "text_generation_inference"
     VLLM = "vllm"
     LIGHTLLM = "lightllm"
+    TENSORRTLLM = "tensorrt-llm"
 
 
 class LLMSource(str, Enum):
