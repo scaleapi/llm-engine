@@ -31,12 +31,6 @@ class ObjectHasInvalidValueException(DomainException, ValueError):
     """
 
 
-class ObjectNotApprovedException(DomainException):
-    """
-    Thrown when a required object is not approved, e.g. for a Bundle in review.
-    """
-
-
 @dataclass
 class DockerImageNotFoundException(DomainException):
     """

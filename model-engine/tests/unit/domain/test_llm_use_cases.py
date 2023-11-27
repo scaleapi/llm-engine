@@ -100,7 +100,7 @@ async def test_create_model_endpoint_use_case_success(
             "inference_framework_image_tag": create_llm_model_endpoint_request_async.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_request_async.num_shards,
             "quantize": None,
-            "checkpoint_path": None,
+            "checkpoint_path": create_llm_model_endpoint_request_async.checkpoint_path,
         }
     }
 

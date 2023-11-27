@@ -56,7 +56,6 @@ from model_engine_server.domain.exceptions import (
     LLMFineTuningQuotaReached,
     ObjectAlreadyExistsException,
     ObjectHasInvalidValueException,
-    ObjectNotApprovedException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
     UpstreamServiceError,
@@ -183,11 +182,6 @@ async def create_model_endpoint(
             status_code=400,
             detail=str(exc),
         ) from exc
-    except ObjectNotApprovedException as exc:
-        raise HTTPException(
-            status_code=403,
-            detail="The specified model bundle was not approved yet.",
-        ) from exc
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(
             status_code=404,
@@ -253,7 +247,7 @@ async def update_model_endpoint(
     """
     Updates an LLM endpoint for the current user.
     """
-    logger.info(f"POST /llm/model-endpoints/{model_endpoint_name} with {request} for {auth}")
+    logger.info(f"PUT /llm/model-endpoints/{model_endpoint_name} with {request} for {auth}")
     try:
         create_model_bundle_use_case = CreateModelBundleV2UseCase(
             model_bundle_repository=external_interfaces.model_bundle_repository,
@@ -286,15 +280,10 @@ async def update_model_endpoint(
             status_code=400,
             detail=str(exc),
         ) from exc
-    except ObjectNotApprovedException as exc:
-        raise HTTPException(
-            status_code=403,
-            detail="The specified model bundle was not approved yet.",
-        ) from exc
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(
             status_code=404,
-            detail="The specified model bundle could not be found.",
+            detail="The specified LLM endpoint could not be found.",
         ) from exc
     except DockerImageNotFoundException as exc:
         raise HTTPException(

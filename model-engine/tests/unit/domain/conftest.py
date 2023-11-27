@@ -219,6 +219,7 @@ def create_llm_model_endpoint_request_async() -> CreateLLMModelEndpointV1Request
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://test_checkpoint_path",
     )
 
 
