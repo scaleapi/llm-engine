@@ -27,10 +27,42 @@ from model_engine_server.core.loggers import (
     logger_name,
     make_logger,
 )
+from starlette.middleware import Middleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = make_logger(logger_name())
 
-app = FastAPI(title="launch", version="1.0.0", redoc_url="/api")
+
+class CustomMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        try:
+            LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
+            return await call_next(request)
+        except Exception as e:
+            tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
+            request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
+            timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
+            structured_log = {
+                "error": str(e),
+                "request_id": str(request_id),
+                "traceback": "".join(tb_str),
+            }
+            logger.error("Unhandled exception: %s", structured_log)
+            return JSONResponse(
+                {
+                    "status_code": 500,
+                    "content": {
+                        "error": "Internal error occurred. Our team has been notified.",
+                        "timestamp": timestamp,
+                        "request_id": request_id,
+                    },
+                }
+            )
+
+
+app = FastAPI(
+    title="launch", version="1.0.0", redoc_url="/api", middleware=[Middleware(CustomMiddleware)]
+)
 
 app.include_router(batch_job_router_v1)
 app.include_router(inference_task_router_v1)
@@ -42,33 +74,6 @@ app.include_router(docker_image_batch_job_bundle_router_v1)
 app.include_router(llm_router_v1)
 app.include_router(file_router_v1)
 app.include_router(trigger_router_v1)
-
-
-@app.middleware("http")
-async def dispatch(request: Request, call_next):
-    try:
-        LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
-        return await call_next(request)
-    except Exception as e:
-        tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
-        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
-        timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
-        structured_log = {
-            "error": str(e),
-            "request_id": str(request_id),
-            "traceback": "".join(tb_str),
-        }
-        logger.error("Unhandled exception: %s", structured_log)
-        return JSONResponse(
-            {
-                "status_code": 500,
-                "content": {
-                    "error": "Internal error occurred. Our team has been notified.",
-                    "timestamp": timestamp,
-                    "request_id": request_id,
-                },
-            }
-        )
 
 
 # TODO: Remove this once we have a better way to serve internal docs
