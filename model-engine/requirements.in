@@ -1,6 +1,6 @@
 GitPython~=3.0
 Jinja2==3.0.3   # version 3.1.0 had a bug
-aiohttp~=3.8
+aiohttp~=3.9
 aioredis~=2.0
 alembic==1.8.1
 asyncpg==0.27.0
