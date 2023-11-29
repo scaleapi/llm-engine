@@ -3,6 +3,8 @@ FROM ${BASE_IMAGE}
 
 WORKDIR /app
 
+RUN rm -rf /var/lib/apt/lists/*
+
 # Install basic packages.
 RUN apt-get update && apt-get install -y \
       apt-utils \
