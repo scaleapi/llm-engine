@@ -44,6 +44,7 @@ from model_engine_server.core.loggers import (
     logger_name,
     make_logger,
 )
+from model_engine_server.core.utils.timer import timer
 from model_engine_server.domain.exceptions import (
     DockerImageNotFoundException,
     EndpointDeleteFailedException,
@@ -313,9 +314,10 @@ async def create_completion_sync_task(
             llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
             tokenizer_repository=external_interfaces.tokenizer_repository,
         )
-        response = await use_case.execute(
-            user=auth, model_endpoint_name=model_endpoint_name, request=request
-        )
+        with timer() as use_case_timer:
+            response = await use_case.execute(
+                user=auth, model_endpoint_name=model_endpoint_name, request=request
+            )
         background_tasks.add_task(
             external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
             TokenUsage(
@@ -323,6 +325,7 @@ async def create_completion_sync_task(
                 num_completion_tokens=response.output.num_completion_tokens
                 if response.output
                 else None,
+                total_duration=use_case_timer.duration,
             ),
             metric_metadata,
         )
@@ -374,8 +377,9 @@ async def create_completion_stream_task(
 
     async def event_generator():
         try:
-            async for message in response:
-                yield {"data": message.json()}
+            with timer() as use_case_timer:
+                async for message in response:
+                    yield {"data": message.json()}
             background_tasks.add_task(
                 external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
                 TokenUsage(
@@ -383,6 +387,7 @@ async def create_completion_stream_task(
                     num_completion_tokens=message.output.num_completion_tokens
                     if message.output
                     else None,
+                    total_duration=use_case_timer.duration,
                 ),
                 metric_metadata,
             )

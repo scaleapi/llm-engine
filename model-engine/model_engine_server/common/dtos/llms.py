@@ -280,12 +280,26 @@ class CompletionStreamV1Response(BaseModel):
 
 
 class TokenUsage(BaseModel):
+    """
+    Token usage for a prompt completion task.
+    """
+
     num_prompt_tokens: Optional[int] = 0
     num_completion_tokens: Optional[int] = 0
+    total_duration: Optional[float] = None
+    """Includes time spent waiting for the model to be ready."""
 
     @property
     def num_total_tokens(self) -> int:
         return (self.num_prompt_tokens or 0) + (self.num_completion_tokens or 0)
+
+    @property
+    def total_tokens_per_second(self) -> float:
+        return (
+            self.num_total_tokens / self.total_duration
+            if self.total_duration and self.total_duration > 0
+            else 0.0
+        )
 
 
 class CreateFineTuneRequest(BaseModel):

@@ -21,6 +21,7 @@ class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
         self.database_cache_miss = 0
         self.route_call = defaultdict(int)
         self.token_count = 0
+        self.total_tokens_per_second = 0
 
     def reset(self):
         self.attempted_build = 0
@@ -35,6 +36,7 @@ class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
         self.database_cache_miss = 0
         self.route_call = defaultdict(int)
         self.token_count = 0
+        self.total_tokens_per_second = 0
 
     def emit_attempted_build_metric(self):
         self.attempted_build += 1
@@ -71,3 +73,4 @@ class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
 
     def emit_token_count_metrics(self, token_usage: TokenUsage, _metadata: MetricMetadata):
         self.token_count += token_usage.num_total_tokens
+        self.total_tokens_per_second = token_usage.total_tokens_per_second
