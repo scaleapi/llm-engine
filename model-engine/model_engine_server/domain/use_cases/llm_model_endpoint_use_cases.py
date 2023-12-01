@@ -194,6 +194,7 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
     # Can also see 13B, 34B there too
     "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
     "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
+    "zephyr": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
 }
 
 
