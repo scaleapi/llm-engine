@@ -294,7 +294,7 @@ class TokenUsage(BaseModel):
         return (self.num_prompt_tokens or 0) + (self.num_completion_tokens or 0)
 
     @property
-    def tokens_per_second(self) -> float:
+    def total_tokens_per_second(self) -> float:
         return (
             self.num_total_tokens / self.total_duration
             if self.total_duration and self.total_duration > 0
