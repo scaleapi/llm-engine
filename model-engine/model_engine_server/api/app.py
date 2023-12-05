@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytz
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from model_engine_server.api.batch_jobs_v1 import batch_job_router_v1
@@ -21,6 +21,7 @@ from model_engine_server.api.model_endpoints_docs_v1 import model_endpoints_docs
 from model_engine_server.api.model_endpoints_v1 import model_endpoint_router_v1
 from model_engine_server.api.tasks_v1 import inference_task_router_v1
 from model_engine_server.api.triggers_v1 import trigger_router_v1
+from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
@@ -32,12 +33,29 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = make_logger(logger_name())
 
+# TODO: determine this based on load testing; for now, setting to 4x the per-pod targetConcurrency of 25
+MAX_CONCURRENCY = 100
+
+concurrency_limiter = MultiprocessingConcurrencyLimiter(
+    concurrency=MAX_CONCURRENCY, fail_on_concurrency_limit=True
+)
+
 
 class CustomMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:
-            LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
-            return await call_next(request)
+            with concurrency_limiter:
+                LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
+                return await call_next(request)
+        except HTTPException as e:
+            timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
+            return JSONResponse(
+                status_code=e.status_code,
+                content={
+                    "error": e.detail,
+                    "timestamp": timestamp,
+                },
+            )
         except Exception as e:
             tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
             request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
@@ -49,14 +67,12 @@ class CustomMiddleware(BaseHTTPMiddleware):
             }
             logger.error("Unhandled exception: %s", structured_log)
             return JSONResponse(
-                {
-                    "status_code": 500,
-                    "content": {
-                        "error": "Internal error occurred. Our team has been notified.",
-                        "timestamp": timestamp,
-                        "request_id": request_id,
-                    },
-                }
+                status_code=500,
+                content={
+                    "error": "Internal error occurred. Our team has been notified.",
+                    "timestamp": timestamp,
+                    "request_id": request_id,
+                },
             )
 
 
