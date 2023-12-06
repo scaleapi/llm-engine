@@ -49,13 +49,6 @@ spec:
               port: 5000
             periodSeconds: 2
             failureThreshold: 30
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 5000
-            initialDelaySeconds: 5
-            periodSeconds: 2
-            failureThreshold: 10
           command: 
             - dumb-init
             - --
