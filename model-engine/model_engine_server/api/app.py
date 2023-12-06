@@ -33,8 +33,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = make_logger(logger_name())
 
-# TODO: determine this based on load testing; for now, setting to 4x the per-pod targetConcurrency of 25
-MAX_CONCURRENCY = 100
+MAX_CONCURRENCY = 1000
 
 concurrency_limiter = MultiprocessingConcurrencyLimiter(
     concurrency=MAX_CONCURRENCY, fail_on_concurrency_limit=True
