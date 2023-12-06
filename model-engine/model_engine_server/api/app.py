@@ -34,7 +34,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 logger = make_logger(logger_name())
 
 # Allows us to make the Uvicorn worker concurrency in model_engine_server/api/worker.py very high
-MAX_CONCURRENCY = 700
+MAX_CONCURRENCY = 500
 
 concurrency_limiter = MultiprocessingConcurrencyLimiter(
     concurrency=MAX_CONCURRENCY, fail_on_concurrency_limit=True
