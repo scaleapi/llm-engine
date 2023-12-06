@@ -2,7 +2,7 @@
 
 Scale hosts the following models in the LLM Engine Model Zoo:
 
-| Model Name            | Inference APIs Available | Fine-tuning APIs Available | Inference Frameworks Available | Model Context Window |
+| Model Name            | Inference APIs Available | Fine-tuning APIs Available | Inference Frameworks Available | Inference Max Context Window Length (tokens) |
 | --------------------- | ------------------------ | -------------------------- | ------------------------------ | ------------------------------ |
 | `llama-7b`            | ✅                       | ✅                         | deepspeed, text-generation-inference | 2048 |
 | `llama-2-7b`          | ✅                       | ✅                         | text-generation-inference, vllm | 4096|
