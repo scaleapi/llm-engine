@@ -44,8 +44,10 @@ concurrency_limiter = MultiprocessingConcurrencyLimiter(
 class CustomMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:
+            LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
+            if request.url.path in ["/healthcheck", "/healthz", "/readyz"]:
+                return await call_next(request)
             with concurrency_limiter:
-                LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
                 return await call_next(request)
         except HTTPException as e:
             timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
@@ -107,6 +109,7 @@ def load_redis():
     get_or_create_aioredis_pool()
 
 
+# these routes should match those exempt from the concurrency limiter in the middleware
 @app.get("/healthcheck")
 @app.get("/healthz")
 @app.get("/readyz")
