@@ -9,6 +9,7 @@ import math
 import os
 from dataclasses import asdict
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
+from uuid import uuid4
 
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.llms import (
@@ -1452,8 +1453,7 @@ class CompletionSyncV1UseCase:
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
 
-        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
-        assert request_id is not None
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID) or str(uuid4())
         add_trace_request_id(request_id)
 
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
@@ -1741,8 +1741,7 @@ class CompletionStreamV1UseCase:
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
 
-        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
-        assert request_id is not None
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID) or str(uuid4())
         add_trace_request_id(request_id)
 
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
