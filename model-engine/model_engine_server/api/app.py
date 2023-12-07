@@ -40,12 +40,15 @@ concurrency_limiter = MultiprocessingConcurrencyLimiter(
     concurrency=MAX_CONCURRENCY, fail_on_concurrency_limit=True
 )
 
+healthcheck_routes = ["/healthcheck", "/healthz", "/readyz"]
+
 
 class CustomMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:
             LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
-            if request.url.path in ["/healthcheck", "/healthz", "/readyz"]:
+            # we intentionally exclude healthcheck routes from the concurrency limiter
+            if request.url.path in healthcheck_routes:
                 return await call_next(request)
             with concurrency_limiter:
                 return await call_next(request)
@@ -109,10 +112,10 @@ def load_redis():
     get_or_create_aioredis_pool()
 
 
-# these routes should match those exempt from the concurrency limiter in the middleware
-@app.get("/healthcheck")
-@app.get("/healthz")
-@app.get("/readyz")
 def healthcheck() -> Response:
     """Returns 200 if the app is healthy."""
     return Response(status_code=200)
+
+
+for endpoint in healthcheck_routes:
+    app.get(endpoint)(healthcheck)
