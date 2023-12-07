@@ -9,7 +9,6 @@ import math
 import os
 from dataclasses import asdict
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
-from uuid import uuid4
 
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.llms import (
@@ -35,7 +34,12 @@ from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.core.loggers import (
+    LoggerTagKey,
+    LoggerTagManager,
+    logger_name,
+    make_logger,
+)
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
     LLMMetadata,
@@ -1448,7 +1452,8 @@ class CompletionSyncV1UseCase:
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
 
-        request_id = str(uuid4())
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
+        assert request_id is not None
         add_trace_request_id(request_id)
 
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
@@ -1736,7 +1741,8 @@ class CompletionStreamV1UseCase:
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
 
-        request_id = str(uuid4())
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
+        assert request_id is not None
         add_trace_request_id(request_id)
 
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
