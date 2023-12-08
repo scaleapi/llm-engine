@@ -672,6 +672,9 @@ class FakeDockerRepository(DockerRepository):
             raise Exception("I hope you're handling this!")
         return BuildImageResponse(status=True, logs="", job_name="test-job-name")
 
+    def get_latest_image_tag(self, repository_name: str) -> str:
+        return "fake_docker_repository_latest_image_tag"
+
 
 class FakeModelEndpointCacheRepository(ModelEndpointCacheRepository):
     def __init__(self):

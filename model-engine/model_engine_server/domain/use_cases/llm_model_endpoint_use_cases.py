@@ -85,6 +85,14 @@ from .model_endpoint_use_cases import (
 logger = make_logger(logger_name())
 
 
+INFERENCE_FRAMEWORK_REPOSITORY: Dict[LLMInferenceFramework, str] = {
+    LLMInferenceFramework.DEEPSPEED: "instant-llm",
+    LLMInferenceFramework.TEXT_GENERATION_INFERENCE: hmi_config.tgi_repository,
+    LLMInferenceFramework.VLLM: hmi_config.vllm_repository,
+    LLMInferenceFramework.LIGHTLLM: hmi_config.lightllm_repository,
+    LLMInferenceFramework.TENSORRT_LLM: hmi_config.tensorrt_llm_repository,
+}
+
 _SUPPORTED_MODELS_BY_FRAMEWORK = {
     LLMInferenceFramework.DEEPSPEED: set(
         [
@@ -328,8 +336,10 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path: Optional[str],
     ) -> ModelBundle:
         if source == LLMSource.HUGGING_FACE:
+            self.check_docker_image_exists_for_image_tag(
+                framework_image_tag, INFERENCE_FRAMEWORK_REPOSITORY[framework]
+            )
             if framework == LLMInferenceFramework.DEEPSPEED:
-                self.check_docker_image_exists_for_image_tag(framework_image_tag, "instant-llm")
                 bundle_id = await self.create_deepspeed_bundle(
                     user,
                     model_name,
@@ -338,9 +348,6 @@ class CreateLLMModelBundleV1UseCase:
                     endpoint_name,
                 )
             elif framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
-                self.check_docker_image_exists_for_image_tag(
-                    framework_image_tag, hmi_config.tgi_repository
-                )
                 bundle_id = await self.create_text_generation_inference_bundle(
                     user,
                     model_name,
@@ -351,9 +358,6 @@ class CreateLLMModelBundleV1UseCase:
                     checkpoint_path,
                 )
             elif framework == LLMInferenceFramework.VLLM:
-                self.check_docker_image_exists_for_image_tag(
-                    framework_image_tag, hmi_config.vllm_repository
-                )
                 bundle_id = await self.create_vllm_bundle(
                     user,
                     model_name,
@@ -364,9 +368,6 @@ class CreateLLMModelBundleV1UseCase:
                     checkpoint_path,
                 )
             elif framework == LLMInferenceFramework.LIGHTLLM:
-                self.check_docker_image_exists_for_image_tag(
-                    framework_image_tag, hmi_config.lightllm_repository
-                )
                 bundle_id = await self.create_lightllm_bundle(
                     user,
                     model_name,
@@ -858,10 +859,12 @@ class CreateLLMModelEndpointV1UseCase:
         self,
         create_llm_model_bundle_use_case: CreateLLMModelBundleV1UseCase,
         model_endpoint_service: ModelEndpointService,
+        docker_repository: DockerRepository,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_llm_model_bundle_use_case = create_llm_model_bundle_use_case
         self.model_endpoint_service = model_endpoint_service
+        self.docker_repository = docker_repository
 
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
@@ -890,6 +893,11 @@ class CreateLLMModelEndpointV1UseCase:
                 raise ObjectHasInvalidValueException(
                     f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM, LightLLM, and TensorRT-LLM."
                 )
+
+        if request.inference_framework_image_tag == "latest":
+            request.inference_framework_image_tag = self.docker_repository.get_latest_image_tag(
+                INFERENCE_FRAMEWORK_REPOSITORY[request.inference_framework]
+            )
 
         bundle = await self.create_llm_model_bundle_use_case.execute(
             user,
@@ -1055,11 +1063,13 @@ class UpdateLLMModelEndpointV1UseCase:
         create_llm_model_bundle_use_case: CreateLLMModelBundleV1UseCase,
         model_endpoint_service: ModelEndpointService,
         llm_model_endpoint_service: LLMModelEndpointService,
+        docker_repository: DockerRepository,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_llm_model_bundle_use_case = create_llm_model_bundle_use_case
         self.model_endpoint_service = model_endpoint_service
         self.llm_model_endpoint_service = llm_model_endpoint_service
+        self.docker_repository = docker_repository
 
     async def execute(
         self, user: User, model_endpoint_name: str, request: UpdateLLMModelEndpointV1Request
@@ -1102,12 +1112,18 @@ class UpdateLLMModelEndpointV1UseCase:
             llm_metadata = (model_endpoint.record.metadata or {}).get("_llm", {})
             inference_framework = llm_metadata["inference_framework"]
 
+            if request.inference_framework_image_tag == "latest":
+                inference_framework_image_tag = self.docker_repository.get_latest_image_tag(
+                    INFERENCE_FRAMEWORK_REPOSITORY[inference_framework]
+                )
+            else:
+                inference_framework_image_tag = (
+                    request.inference_framework_image_tag
+                    or llm_metadata["inference_framework_image_tag"]
+                )
+
             model_name = request.model_name or llm_metadata["model_name"]
             source = request.source or llm_metadata["source"]
-            inference_framework_image_tag = (
-                request.inference_framework_image_tag
-                or llm_metadata["inference_framework_image_tag"]
-            )
             num_shards = request.num_shards or llm_metadata["num_shards"]
             quantize = request.quantize or llm_metadata.get("quantize")
             checkpoint_path = request.checkpoint_path or llm_metadata.get("checkpoint_path")

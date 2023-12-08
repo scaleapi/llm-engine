@@ -3,6 +3,7 @@ from typing import Optional
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
 from model_engine_server.core.config import infra_config
+from model_engine_server.core.docker.ecr import get_latest_image_tag
 from model_engine_server.core.docker.ecr import image_exists as ecr_image_exists
 from model_engine_server.core.docker.remote_build import build_remote_block
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -52,3 +53,6 @@ class ECRDockerRepository(DockerRepository):
         return BuildImageResponse(
             status=build_result.status, logs=build_result.logs, job_name=build_result.job_name
         )
+
+    def get_latest_image_tag(self, repository_name: str) -> str:
+        return get_latest_image_tag(repository_name=repository_name)

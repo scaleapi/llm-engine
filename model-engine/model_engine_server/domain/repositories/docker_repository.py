@@ -49,6 +49,17 @@ class DockerRepository(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_latest_image_tag(self, repository_name: str) -> str:
+        """
+        Returns the Docker image tag of the most recently pushed image in the given repository
+
+        Args:
+            repository_name: the name of the repository containing the image.
+
+        Returns: the tag of the latest Docker image.
+        """
+
     def is_repo_name(self, repo_name: str):
         # We assume repository names must start with a letter and can only contain lowercase letters, numbers, hyphens, underscores, and forward slashes.
         # Based-off ECR naming standards

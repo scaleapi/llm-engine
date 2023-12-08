@@ -164,6 +164,7 @@ async def create_model_endpoint(
         use_case = CreateLLMModelEndpointV1UseCase(
             create_llm_model_bundle_use_case=create_llm_model_bundle_use_case,
             model_endpoint_service=external_interfaces.model_endpoint_service,
+            docker_repository=external_interfaces.docker_repository,
         )
         return await use_case.execute(user=auth, request=request)
     except ObjectAlreadyExistsException as exc:
@@ -265,6 +266,7 @@ async def update_model_endpoint(
             create_llm_model_bundle_use_case=create_llm_model_bundle_use_case,
             model_endpoint_service=external_interfaces.model_endpoint_service,
             llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+            docker_repository=external_interfaces.docker_repository,
         )
         return await use_case.execute(
             user=auth, model_endpoint_name=model_endpoint_name, request=request

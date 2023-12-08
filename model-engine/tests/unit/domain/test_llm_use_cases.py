@@ -78,6 +78,7 @@ async def test_create_model_endpoint_use_case_success(
     use_case = CreateLLMModelEndpointV1UseCase(
         create_llm_model_bundle_use_case=llm_bundle_use_case,
         model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
 
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
@@ -97,7 +98,7 @@ async def test_create_model_endpoint_use_case_success(
             "model_name": create_llm_model_endpoint_request_async.model_name,
             "source": create_llm_model_endpoint_request_async.source,
             "inference_framework": create_llm_model_endpoint_request_async.inference_framework,
-            "inference_framework_image_tag": create_llm_model_endpoint_request_async.inference_framework_image_tag,
+            "inference_framework_image_tag": "fake_docker_repository_latest_image_tag",
             "num_shards": create_llm_model_endpoint_request_async.num_shards,
             "quantize": None,
             "checkpoint_path": create_llm_model_endpoint_request_async.checkpoint_path,
@@ -201,6 +202,7 @@ async def test_create_model_bundle_inference_framework_image_tag_validation(
     use_case = CreateLLMModelEndpointV1UseCase(
         create_llm_model_bundle_use_case=llm_bundle_use_case,
         model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
 
     request = create_llm_model_endpoint_text_generation_inference_request_streaming.copy()
@@ -241,6 +243,7 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
     use_case = CreateLLMModelEndpointV1UseCase(
         create_llm_model_bundle_use_case=llm_bundle_use_case,
         model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -302,6 +305,7 @@ async def test_create_model_endpoint_trt_llm_use_case_success(
     use_case = CreateLLMModelEndpointV1UseCase(
         create_llm_model_bundle_use_case=llm_bundle_use_case,
         model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response_1 = await use_case.execute(
@@ -362,6 +366,7 @@ async def test_create_llm_model_endpoint_use_case_raises_invalid_value_exception
     use_case = CreateLLMModelEndpointV1UseCase(
         create_llm_model_bundle_use_case=llm_bundle_use_case,
         model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(ObjectHasInvalidValueException):
@@ -395,6 +400,7 @@ async def test_create_llm_model_endpoint_use_case_quantization_exception(
     use_case = CreateLLMModelEndpointV1UseCase(
         create_llm_model_bundle_use_case=llm_bundle_use_case,
         model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(ObjectHasInvalidValueException):
@@ -463,11 +469,13 @@ async def test_update_model_endpoint_use_case_success(
     create_use_case = CreateLLMModelEndpointV1UseCase(
         create_llm_model_bundle_use_case=llm_bundle_use_case,
         model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
     update_use_case = UpdateLLMModelEndpointV1UseCase(
         create_llm_model_bundle_use_case=llm_bundle_use_case,
         model_endpoint_service=fake_model_endpoint_service,
         llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
     )
 
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
@@ -501,7 +509,7 @@ async def test_update_model_endpoint_use_case_success(
             "model_name": create_llm_model_endpoint_request_streaming.model_name,
             "source": create_llm_model_endpoint_request_streaming.source,
             "inference_framework": create_llm_model_endpoint_request_streaming.inference_framework,
-            "inference_framework_image_tag": create_llm_model_endpoint_request_streaming.inference_framework_image_tag,
+            "inference_framework_image_tag": "fake_docker_repository_latest_image_tag",
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
             "quantize": None,
             "checkpoint_path": update_llm_model_endpoint_request.checkpoint_path,
