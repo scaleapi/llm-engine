@@ -67,7 +67,7 @@ class Model(APIEngine):
                 Name of the base model
 
             inference_framework_image_tag (`str`):
-                Image tag for the inference framework
+                Image tag for the inference framework. Use "latest" for the most recent image
 
             source (`LLMSource`):
                 Source of the LLM. Currently only HuggingFace is supported
