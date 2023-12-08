@@ -956,7 +956,6 @@ async def test_completion_stream_use_case_success(
     output_texts = ["I", " am", " a", " new", "bie", ".", "I am a newbie."]
     i = 0
     async for message in response_1:
-        assert message.dict()["request_id"]
         assert message.dict()["output"]["text"] == output_texts[i]
         if i == 6:
             assert message.dict()["output"]["num_prompt_tokens"] == 7
@@ -1024,7 +1023,6 @@ async def test_completion_stream_text_generation_inference_use_case_success(
     output_texts = ["I", " am", " a", " new", "bie", ".", "I am a newbie."]
     i = 0
     async for message in response_1:
-        assert message.dict()["request_id"]
         assert message.dict()["output"]["text"] == output_texts[i]
         if i == 5:
             assert message.dict()["output"]["num_prompt_tokens"] == 7
@@ -1087,7 +1085,6 @@ async def test_completion_stream_trt_llm_use_case_success(
     output_texts = ["Machine", "learning", "is", "a", "branch"]
     i = 0
     async for message in response_1:
-        assert message.dict()["request_id"]
         assert message.dict()["output"]["text"] == output_texts[i]
         assert message.dict()["output"]["num_prompt_tokens"] == 7
         assert message.dict()["output"]["num_completion_tokens"] == i + 1

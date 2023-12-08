@@ -199,7 +199,7 @@ class CompletionSyncV1Response(BaseModel):
     Response object for a synchronous prompt completion task.
     """
 
-    request_id: str
+    request_id: Optional[str]
     output: Optional[CompletionOutput] = None
 
 
@@ -273,7 +273,7 @@ class CompletionStreamV1Response(BaseModel):
     Response object for a stream prompt completion task.
     """
 
-    request_id: str
+    request_id: Optional[str]
     output: Optional[CompletionStreamOutput] = None
     error: Optional[StreamError] = None
     """Error of the response (if any)."""
