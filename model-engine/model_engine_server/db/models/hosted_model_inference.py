@@ -453,6 +453,7 @@ class Endpoint(Base):
     current_bundle = relationship("Bundle")
     owner = Column(String(SHORT_STRING))
     public_inference = Column(Boolean, default=False)
+    shadow_endpoints_ids = Column(ARRAY(Text), default=[])
 
     def __init__(
         self,
@@ -467,6 +468,7 @@ class Endpoint(Base):
         endpoint_status: Optional[str] = "READY",  # EndpointStatus.ready.value
         owner: Optional[str] = None,
         public_inference: Optional[bool] = False,
+        shadow_endpoints_ids: Optional[List[str]] = None,
     ):
         self.id = f"end_{get_xid()}"
         self.name = name
@@ -479,6 +481,7 @@ class Endpoint(Base):
         self.endpoint_status = endpoint_status
         self.owner = owner
         self.public_inference = public_inference
+        self.shadow_endpoints_ids = shadow_endpoints_ids
 
     @classmethod
     async def create(cls, session: AsyncSession, endpoint: "Endpoint") -> None:
@@ -632,7 +635,9 @@ class BatchJob(Base):
     created_by = Column(String(SHORT_STRING), index=True, nullable=False)
     owner = Column(String(SHORT_STRING), index=True, nullable=False)
     model_bundle_id = Column(
-        Text, ForeignKey("hosted_model_inference.bundles.id", ondelete="SET NULL"), nullable=False
+        Text,
+        ForeignKey("hosted_model_inference.bundles.id", ondelete="SET NULL"),
+        nullable=False,
     )
     model_endpoint_id = Column(
         Text, ForeignKey("hosted_model_inference.endpoints.id"), nullable=True

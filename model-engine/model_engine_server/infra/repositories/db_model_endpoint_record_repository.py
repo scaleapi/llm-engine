@@ -120,6 +120,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         status: str,
         owner: str,
         public_inference: Optional[bool] = False,
+        shadow_endpoints_ids: Optional[List[str]] = None,  # list of ids
     ) -> ModelEndpointRecord:
         model_endpoint_record = OrmModelEndpoint(
             name=name,
@@ -132,6 +133,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
             endpoint_status=status,
             owner=owner,
             public_inference=public_inference,
+            shadow_endpoints_ids=shadow_endpoints_ids,
         )
         async with self.session() as session:
             await OrmModelEndpoint.create(session, model_endpoint_record)

@@ -14,6 +14,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointsSchema,
     ModelEndpointStatus,
     ModelEndpointType,
+    ShadowModelEndpointRecord,
     StorageSpecificationType,
 )
 from model_engine_server.domain.exceptions import (
@@ -160,6 +161,7 @@ class LiveModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
+        shadow_endpoints: Optional[List[ShadowModelEndpointRecord]] = None,
     ) -> ModelEndpointRecord:
         existing_endpoints = (
             await self.model_endpoint_record_repository.list_model_endpoint_records(
@@ -181,6 +183,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 status=ModelEndpointStatus.UPDATE_PENDING,
                 owner=owner,
                 public_inference=public_inference,
+                shadow_endpoints_ids=[shadow.id for shadow in shadow_endpoints or []],
             )
         )
         creation_task_id = self.model_endpoint_infra_gateway.create_model_endpoint_infra(

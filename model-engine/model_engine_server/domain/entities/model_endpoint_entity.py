@@ -150,3 +150,11 @@ class ModelEndpoint(BaseModel):
 
     record: ModelEndpointRecord
     infra_state: Optional[ModelEndpointInfraState]
+
+
+class ShadowModelEndpointRecord(BaseModel):
+    """
+    This is the entity-layer class for everything related to a Shadow Endpoint.
+    """
+
+    id: str
