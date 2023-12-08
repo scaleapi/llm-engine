@@ -203,7 +203,7 @@ def create_llm_model_endpoint_request_async() -> CreateLLMModelEndpointV1Request
         model_name="mpt-7b",
         source="hugging_face",
         inference_framework="deepspeed",
-        inference_framework_image_tag="test_tag",
+        inference_framework_image_tag="latest",
         num_shards=2,
         endpoint_type=ModelEndpointType.ASYNC,
         metadata={},
@@ -252,6 +252,7 @@ def create_llm_model_endpoint_request_streaming() -> CreateLLMModelEndpointV1Req
 @pytest.fixture
 def update_llm_model_endpoint_request() -> UpdateLLMModelEndpointV1Request:
     return UpdateLLMModelEndpointV1Request(
+        inference_framework_image_tag="latest",
         checkpoint_path="s3://test_checkpoint_path",
         memory="4G",
         min_workers=0,

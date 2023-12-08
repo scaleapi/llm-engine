@@ -97,3 +97,15 @@ def ecr_exists_for_repo(repo_name: str, image_tag: Optional[str] = None):
         return True
     except ecr.exceptions.ImageNotFoundException:
         return False
+
+
+def get_latest_image_tag(repository_name: str):
+    ecr = boto3.client("ecr", region_name=infra_config().default_region)
+    images = ecr.describe_images(
+        registryId=infra_config().ml_account_id,
+        repositoryName=repository_name,
+        filter=DEFAULT_FILTER,
+        maxResults=1000,
+    )["imageDetails"]
+    latest_image = max(images, key=lambda image: image["imagePushedAt"])
+    return latest_image["imageTags"][0]
