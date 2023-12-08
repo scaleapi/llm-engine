@@ -17,7 +17,11 @@ from model_engine_server.common.resource_limits import (
     STORAGE_LIMIT,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.domain.entities import ModelBundle, ModelEndpoint
+from model_engine_server.domain.entities import (
+    ModelBundle,
+    ModelEndpoint,
+    ShadowModelEndpointRecord,
+)
 from model_engine_server.domain.exceptions import (
     EndpointBillingTagsMalformedException,
     EndpointLabelsException,
@@ -25,6 +29,7 @@ from model_engine_server.domain.exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
+    ShadowModelEndpointInvalidException,
 )
 from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
     CreateModelEndpointV1UseCase,
@@ -441,6 +446,29 @@ async def test_create_model_endpoint_use_case_raises_billing_tags_exception(
     request = create_model_endpoint_request_async.copy()
     request.billing_tags = "not_a_dict"  # type: ignore
     with pytest.raises(EndpointBillingTagsMalformedException):
+        await use_case.execute(user=user, request=request)
+
+
+@pytest.mark.asyncio
+async def test_create_model_endpoint_use_case_validates_shadow_endpoints(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    create_model_endpoint_request_async: CreateModelEndpointV1Request,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = CreateModelEndpointV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_bundle_1.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+
+    request = create_model_endpoint_request_async.copy()
+    non_existing_shadow_endpoint = ShadowModelEndpointRecord(id="non_existing_model_endpoint_id")
+    request.shadow_endpoints = [non_existing_shadow_endpoint]
+    with pytest.raises(ShadowModelEndpointInvalidException):
         await use_case.execute(user=user, request=request)
 
 
