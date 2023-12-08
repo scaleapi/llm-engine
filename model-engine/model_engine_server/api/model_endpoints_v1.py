@@ -33,6 +33,7 @@ from model_engine_server.domain.exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
+    ShadowModelEndpointInvalidException,
 )
 from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
     CreateModelEndpointV1UseCase,
@@ -83,6 +84,11 @@ async def create_model_endpoint(
         raise HTTPException(
             status_code=404,
             detail="The specified model bundle could not be found.",
+        ) from exc
+    except ShadowModelEndpointInvalidException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
         ) from exc
 
 
@@ -162,6 +168,11 @@ async def update_model_endpoint(
         raise HTTPException(
             status_code=409,
             detail="Existing operation on endpoint in progress, try again later.",
+        ) from exc
+    except ShadowModelEndpointInvalidException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
         ) from exc
 
 

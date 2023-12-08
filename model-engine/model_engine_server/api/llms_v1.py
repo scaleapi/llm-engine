@@ -59,6 +59,7 @@ from model_engine_server.domain.exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
+    ShadowModelEndpointInvalidException,
     UpstreamServiceError,
 )
 from model_engine_server.domain.gateways.monitoring_metrics_gateway import MetricMetadata
@@ -193,6 +194,11 @@ async def create_model_endpoint(
             status_code=404,
             detail="The specified docker image could not be found.",
         ) from exc
+    except ShadowModelEndpointInvalidException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
 
 
 @llm_router_v1.get("/model-endpoints", response_model=ListLLMModelEndpointsV1Response)
@@ -290,6 +296,11 @@ async def update_model_endpoint(
         raise HTTPException(
             status_code=404,
             detail="The specified docker image could not be found.",
+        ) from exc
+    except ShadowModelEndpointInvalidException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
         ) from exc
 
 

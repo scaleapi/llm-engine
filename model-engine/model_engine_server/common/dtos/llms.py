@@ -139,6 +139,10 @@ class UpdateLLMModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrl]
     default_callback_auth: Optional[CallbackAuth]
     public_inference: Optional[bool]
+    shadow_endpoints: Optional[List[ShadowModelEndpointRecord]]
+    """
+    List of shadow endpoints to deploy for this endpoint.
+    """
 
 
 class UpdateLLMModelEndpointV1Response(BaseModel):
