@@ -19,3 +19,6 @@ class FakeDockerRepository(DockerRepository):
 
     def build_image(self, image_params: BuildImageRequest) -> BuildImageResponse:
         raise NotImplementedError("FakeDockerRepository build_image() not implemented")
+
+    def get_latest_image_tag(self, repository_name: str) -> str:
+        raise NotImplementedError("FakeDockerRepository get_latest_image_tag() not implemented")
