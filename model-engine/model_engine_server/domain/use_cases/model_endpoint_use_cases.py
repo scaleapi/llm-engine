@@ -403,6 +403,7 @@ class UpdateModelEndpointByIdV1UseCase:
             default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
+            shadow_endpoints=request.shadow_endpoints,
         )
         _handle_post_inference_hooks(
             created_by=endpoint_record.created_by,

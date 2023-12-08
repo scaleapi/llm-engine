@@ -307,6 +307,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         destination: Optional[str] = None,
         status: Optional[str] = None,
         public_inference: Optional[bool] = None,
+        shadow_endpoints_ids: Optional[List[str]] = None,
     ) -> Optional[ModelEndpointRecord]:
         async with self.session() as session:
             model_endpoint_orm = await OrmModelEndpoint.select_by_id(
@@ -326,6 +327,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
                 endpoint_status=status,
                 last_updated_at=datetime.utcnow(),
                 public_inference=public_inference,
+                shadow_endpoints_ids=shadow_endpoints_ids,
             )
             await OrmModelEndpoint.update_by_name_owner(
                 session=session,
