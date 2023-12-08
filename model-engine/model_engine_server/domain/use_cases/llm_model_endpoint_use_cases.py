@@ -9,7 +9,6 @@ import math
 import os
 from dataclasses import asdict
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
-from uuid import uuid4
 
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.llms import (
@@ -1453,7 +1452,7 @@ class CompletionSyncV1UseCase:
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
 
-        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID) or str(uuid4())
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
@@ -1569,6 +1568,7 @@ class CompletionSyncV1UseCase:
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination, predict_request=inference_request
             )
+            logger.info(f"Text generation inference result: {predict_result}")
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 return CompletionSyncV1Response(
@@ -1608,6 +1608,7 @@ class CompletionSyncV1UseCase:
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination, predict_request=inference_request
             )
+            logger.info(f"VLLM result: {predict_result}")
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 return CompletionSyncV1Response(
@@ -1741,7 +1742,7 @@ class CompletionStreamV1UseCase:
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
 
-        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID) or str(uuid4())
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
