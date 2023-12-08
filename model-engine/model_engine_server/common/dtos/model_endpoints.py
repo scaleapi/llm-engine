@@ -19,6 +19,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointsSchema,
     ModelEndpointStatus,
     ModelEndpointType,
+    ShadowModelEndpointRecord,
     StorageSpecificationType,
 )
 from pydantic import BaseModel, Field, HttpUrl
@@ -66,6 +67,7 @@ class CreateModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrl]
     default_callback_auth: Optional[CallbackAuth]
     public_inference: Optional[bool] = Field(default=False)
+    shadow_endpoints: Optional[List[ShadowModelEndpointRecord]]
 
 
 class CreateModelEndpointV1Response(BaseModel):

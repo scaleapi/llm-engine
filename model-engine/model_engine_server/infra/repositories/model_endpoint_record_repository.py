@@ -50,6 +50,7 @@ class ModelEndpointRecordRepository(ABC):
         status: str,
         owner: str,
         public_inference: Optional[bool] = False,
+        shadow_endpoints_ids: Optional[List[str]] = None,
     ) -> ModelEndpointRecord:
         """
         Creates an entry for endpoint tracking data, but not the actual compute resources.
@@ -66,6 +67,7 @@ class ModelEndpointRecordRepository(ABC):
                 used to coordinate edit operations on the endpoint
             owner: Team who owns endpoint
             public_inference: Whether the endpoint is publicly accessible
+            shadow_endpoints_ids: List of shadow endpoint ids
 
         Returns:
             A Model Endpoint Record domain entity.

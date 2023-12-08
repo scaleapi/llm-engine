@@ -11,6 +11,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointRecord,
     ModelEndpointsSchema,
     ModelEndpointType,
+    ShadowModelEndpointRecord,
     StorageSpecificationType,
 )
 from model_engine_server.domain.gateways import (
@@ -90,6 +91,7 @@ class ModelEndpointService(ABC):
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
+        shadow_endpoints: Optional[List[ShadowModelEndpointRecord]] = None,
     ) -> ModelEndpointRecord:
         """
         Creates a model endpoint.
@@ -123,6 +125,7 @@ class ModelEndpointService(ABC):
             default_callback_url: The default callback URL to use for the model endpoint.
             default_callback_auth: The default callback auth to use for the model endpoint.
             public_inference: Whether to allow public inference.
+            shadow_endpoints: The shadow endpoints to deploy with the model endpoint.
         Returns:
             A Model Endpoint Record domain entity object of the created endpoint.
         Raises:
