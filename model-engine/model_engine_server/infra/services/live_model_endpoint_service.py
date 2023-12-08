@@ -286,6 +286,7 @@ class LiveModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
+        shadow_endpoints: Optional[List[ShadowModelEndpointRecord]] = None,
     ) -> ModelEndpointRecord:
         record = await self.model_endpoint_record_repository.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id
@@ -325,6 +326,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 metadata=metadata,
                 status=ModelEndpointStatus.UPDATE_PENDING,
                 public_inference=public_inference,
+                shadow_endpoints_ids=[shadow.id for shadow in shadow_endpoints or []],
             )
             if record is None:  # pragma: no cover
                 raise ObjectNotFoundException

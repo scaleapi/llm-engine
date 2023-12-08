@@ -84,6 +84,7 @@ class ModelEndpointRecordRepository(ABC):
         destination: Optional[str] = None,
         status: Optional[str] = None,
         public_inference: Optional[bool] = None,
+        shadow_endpoints_ids: Optional[List[str]] = None,
     ) -> Optional[ModelEndpointRecord]:
         """
         Updates the entry for endpoint tracking data with the given new values. Only these values are editable.
@@ -96,6 +97,7 @@ class ModelEndpointRecordRepository(ABC):
             destination: The destination where async tasks should be sent.
             status: Status field on the endpoint, used to coordinate endpoint edit operations
             public_inference: Whether the endpoint is publicly accessible
+            shadow_endpoints_ids: List of shadow endpoint ids
 
         Returns:
             A Model Endpoint Record domain entity if found, else None.
