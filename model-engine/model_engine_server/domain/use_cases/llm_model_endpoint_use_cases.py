@@ -1568,7 +1568,6 @@ class CompletionSyncV1UseCase:
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination, predict_request=inference_request
             )
-            logger.info(f"Text generation inference result: {predict_result}")
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 return CompletionSyncV1Response(
@@ -1608,7 +1607,6 @@ class CompletionSyncV1UseCase:
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination, predict_request=inference_request
             )
-            logger.info(f"VLLM result: {predict_result}")
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 return CompletionSyncV1Response(
