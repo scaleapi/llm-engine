@@ -20,6 +20,7 @@ from model_engine_server.domain.entities import (
     LLMSource,
     ModelEndpointStatus,
     Quantization,
+    ShadowModelEndpointRecord,
 )
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -67,6 +68,10 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrl]
     default_callback_auth: Optional[CallbackAuth]
     public_inference: Optional[bool] = True  # LLM endpoints are public by default.
+    shadow_endpoints: Optional[List[ShadowModelEndpointRecord]]
+    """
+    List of shadow endpoints to deploy for this endpoint.
+    """
 
 
 class CreateLLMModelEndpointV1Response(BaseModel):
