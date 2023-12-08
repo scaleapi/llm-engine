@@ -80,6 +80,7 @@ from .model_endpoint_use_cases import (
     validate_deployment_resources,
     validate_labels,
     validate_post_inference_hooks,
+    validate_shadow_endpoints,
 )
 
 logger = make_logger(logger_name())
@@ -879,6 +880,7 @@ class CreateLLMModelEndpointV1UseCase:
         validate_model_name(request.model_name, request.inference_framework)
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
         validate_quantization(request.quantize, request.inference_framework)
+        await validate_shadow_endpoints(self.model_endpoint_service, request.shadow_endpoints)
 
         if request.inference_framework in [
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
@@ -1069,6 +1071,7 @@ class UpdateLLMModelEndpointV1UseCase:
             validate_labels(request.labels)
         validate_billing_tags(request.billing_tags)
         validate_post_inference_hooks(user, request.post_inference_hooks)
+        await validate_shadow_endpoints(self.model_endpoint_service, request.shadow_endpoints)
 
         model_endpoint = await self.llm_model_endpoint_service.get_llm_model_endpoint(
             model_endpoint_name
@@ -1190,6 +1193,7 @@ class UpdateLLMModelEndpointV1UseCase:
             default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
+            shadow_endpoints=request.shadow_endpoints,
         )
         _handle_post_inference_hooks(
             created_by=endpoint_record.created_by,

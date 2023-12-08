@@ -164,3 +164,9 @@ class TriggerNameAlreadyExistsException(DomainException):
     """
     Thrown if the requested name already exists in the trigger repository
     """
+
+
+class ShadowModelEndpointInvalidException(DomainException):
+    """
+    Thrown if the shadow endpoint model is invalid. Currently, this is thrown if the shadow endpoints don't exist.
+    """
