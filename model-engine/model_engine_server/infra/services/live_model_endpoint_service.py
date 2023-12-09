@@ -161,7 +161,7 @@ class LiveModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
-        shadow_endpoints: Optional[List[ShadowModelEndpointRecord]] = None,
+        shadow_endpoints: Optional[List[ShadowModelEndpointRecord]],
     ) -> ModelEndpointRecord:
         existing_endpoints = (
             await self.model_endpoint_record_repository.list_model_endpoint_records(

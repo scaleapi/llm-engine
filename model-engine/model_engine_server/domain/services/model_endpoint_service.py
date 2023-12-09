@@ -91,7 +91,7 @@ class ModelEndpointService(ABC):
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
-        shadow_endpoints: Optional[List[ShadowModelEndpointRecord]] = None,
+        shadow_endpoints: Optional[List[ShadowModelEndpointRecord]],
     ) -> ModelEndpointRecord:
         """
         Creates a model endpoint.
