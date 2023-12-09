@@ -1157,6 +1157,33 @@ async def test_update_model_endpoint_raises_billing_tags_exception(
 
 
 @pytest.mark.asyncio
+async def test_update_model_endpoint_validates_shadow_endpoints(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    model_endpoint_1: ModelEndpoint,
+    update_model_endpoint_request: UpdateModelEndpointV1Request,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = UpdateModelEndpointByIdV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_bundle_1.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+
+    request = update_model_endpoint_request.copy()
+    non_existing_shadow_endpoint = ShadowModelEndpointRecord(id="non_existing_model_endpoint_id")
+    request.shadow_endpoints = [non_existing_shadow_endpoint]
+    with pytest.raises(ShadowModelEndpointInvalidException):
+        await use_case.execute(
+            user=user, model_endpoint_id=model_endpoint_1.record.id, request=request
+        )
+
+
+@pytest.mark.asyncio
 async def test_delete_model_endpoint_success(
     fake_model_endpoint_service,
     model_endpoint_1: ModelEndpoint,
