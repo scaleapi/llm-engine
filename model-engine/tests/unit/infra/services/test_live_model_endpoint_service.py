@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List, Optional
 from unittest.mock import AsyncMock
 
 import pytest
@@ -7,6 +7,7 @@ from model_engine_server.domain.entities import (
     ModelEndpoint,
     ModelEndpointRecord,
     ModelEndpointStatus,
+    ShadowModelEndpointRecord,
 )
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
@@ -20,6 +21,7 @@ from model_engine_server.infra.services import LiveModelEndpointService
 async def _create_model_endpoint_helper(
     model_endpoint: ModelEndpoint,
     service: LiveModelEndpointService,
+    shadow_endpoints: Optional[List[ShadowModelEndpointRecord]] = None,
 ) -> ModelEndpointRecord:
     assert model_endpoint.infra_state is not None
     infra_state = model_endpoint.infra_state
@@ -63,8 +65,72 @@ async def _create_model_endpoint_helper(
         high_priority=high_priority,
         billing_tags=infra_state.user_config_state.endpoint_config.billing_tags,
         owner=model_endpoint.record.owner,
+        shadow_endpoints=shadow_endpoints,
     )
     return model_endpoint_record
+
+
+@pytest.mark.asyncio
+async def test_create_and_update_model_endpoint_with_shadows_success(
+    model_endpoint_1: ModelEndpoint,
+    model_endpoint_2: ModelEndpoint,
+    model_endpoint_3: ModelEndpoint,
+    model_endpoint_4: ModelEndpoint,
+    fake_live_model_endpoint_service: LiveModelEndpointService,
+):
+
+    # Create shadow endpoints
+    shadow_model_endpoint_2_record = await _create_model_endpoint_helper(
+        model_endpoint=model_endpoint_2,
+        service=fake_live_model_endpoint_service,
+    )
+    shadow_model_endpoint_3_record = await _create_model_endpoint_helper(
+        model_endpoint=model_endpoint_3,
+        service=fake_live_model_endpoint_service,
+    )
+    shadow_model_endpoint_2 = ShadowModelEndpointRecord(id=shadow_model_endpoint_2_record.id)
+    shadow_model_endpoint_3 = ShadowModelEndpointRecord(id=shadow_model_endpoint_3_record.id)
+
+    # Create new model endpoint with shadow endpoints
+    model_endpoint_record_with_shadows = await _create_model_endpoint_helper(
+        model_endpoint=model_endpoint_1,
+        service=fake_live_model_endpoint_service,
+        shadow_endpoints=[shadow_model_endpoint_2, shadow_model_endpoint_3],
+    )
+    assert isinstance(model_endpoint_record_with_shadows, ModelEndpointRecord)
+    assert model_endpoint_record_with_shadows.shadow_endpoints_ids == [
+        shadow_model_endpoint_2_record.id,
+        shadow_model_endpoint_3_record.id,
+    ]
+
+    # Create a new shadow endpoint
+    shadow_model_endpoint_4_record = await _create_model_endpoint_helper(
+        model_endpoint=model_endpoint_4,
+        service=fake_live_model_endpoint_service,
+    )
+    shadow_model_endpoint_4 = ShadowModelEndpointRecord(id=shadow_model_endpoint_4_record.id)
+
+    # Promote the endpoint infra for the new shadow endpoint
+    model_endpoint_infra_gateway: Any = (
+        fake_live_model_endpoint_service.model_endpoint_infra_gateway
+    )
+    await model_endpoint_infra_gateway.promote_in_flight_infra(
+        owner=model_endpoint_record_with_shadows.created_by,
+        model_endpoint_name=model_endpoint_record_with_shadows.name,
+    )
+
+    # Update the model endpoint with the new shadow endpoint
+    update_kwargs: Any = dict(
+        shadow_endpoints=[shadow_model_endpoint_4],
+    )
+    updated_model_endpoint_record_with_shadows = (
+        await fake_live_model_endpoint_service.update_model_endpoint(
+            model_endpoint_id=model_endpoint_record_with_shadows.id, **update_kwargs
+        )
+    )
+    assert (updated_model_endpoint_record_with_shadows.shadow_endpoints_ids) == [
+        shadow_model_endpoint_4_record.id
+    ]
 
 
 @pytest.mark.asyncio

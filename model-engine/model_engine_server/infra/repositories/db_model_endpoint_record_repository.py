@@ -53,6 +53,7 @@ def translate_model_endpoint_orm_to_model_endpoint_record(
         status=model_endpoint_orm.endpoint_status,
         current_model_bundle=current_model_bundle,
         public_inference=model_endpoint_orm.public_inference,
+        shadow_endpoints_ids=model_endpoint_orm.shadow_endpoints_ids,
     )
 
 

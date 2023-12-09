@@ -122,6 +122,7 @@ class ModelEndpointRecord(OwnedEntity):
     current_model_bundle: ModelBundle
     owner: str
     public_inference: Optional[bool]
+    shadow_endpoints_ids: Optional[List[str]]
 
 
 class ModelEndpointInfraState(BaseModel):

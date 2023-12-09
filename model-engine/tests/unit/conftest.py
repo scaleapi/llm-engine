@@ -172,6 +172,7 @@ def _translate_fake_model_endpoint_orm_to_model_endpoint_record(
         destination="test_destination",
         status=ModelEndpointStatus(model_endpoint_orm.endpoint_status),
         current_model_bundle=current_model_bundle,
+        shadow_endpoints_ids=model_endpoint_orm.shadow_endpoints_ids,
     )
 
 
@@ -439,6 +440,7 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         status: str,
         owner: str,
         public_inference: Optional[bool] = False,
+        shadow_endpoints_ids: Optional[List[str]] = None,
     ) -> ModelEndpointRecord:
         orm_model_endpoint = OrmModelEndpoint(
             name=name,
@@ -451,6 +453,7 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
             endpoint_status=status,
             owner=owner,
             public_inference=public_inference,
+            shadow_endpoints_ids=shadow_endpoints_ids,
         )
         orm_model_endpoint.created_at = datetime.now()
         orm_model_endpoint.last_updated_at = datetime.now()
@@ -475,6 +478,8 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
             model_endpoint_record.creation_task_id = kwargs["creation_task_id"]
         if kwargs["status"] is not None:
             model_endpoint_record.status = kwargs["status"]
+        if kwargs["shadow_endpoints_ids"] is not None:
+            model_endpoint_record.shadow_endpoints_ids = kwargs["shadow_endpoints_ids"]
 
     async def update_model_endpoint_record(
         self,
@@ -486,6 +491,7 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         destination: Optional[str] = None,
         status: Optional[str] = None,
         public_inference: Optional[bool] = None,
+        shadow_endpoints_ids: Optional[List[str]] = None,
     ) -> Optional[ModelEndpointRecord]:
         model_endpoint_record = await self.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id
