@@ -112,8 +112,6 @@ pg_engine_async_null_pool = create_async_engine(
     future=True,
     poolclass=NullPool,
     pool_pre_ping=True,
-    pool_size=20,
-    max_overflow=30,
 )
 
 # Synchronous sessions (Session and SessionReadOnly) are fairly straightforward, and both
