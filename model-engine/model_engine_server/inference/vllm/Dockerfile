@@ -1,5 +1,8 @@
 FROM nvcr.io/nvidia/pytorch:22.12-py3
 
+# temp since v0.2.4 does not include https://github.com/vllm-project/vllm/pull/2027
+RUN pip install accelerate megablocks
+
 RUN pip uninstall torch -y
 COPY requirements.txt /workspace/requirements.txt
 RUN pip install -r requirements.txt
