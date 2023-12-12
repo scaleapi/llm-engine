@@ -73,8 +73,10 @@ spec:
         - mountPath: /opt/.aws/config
           name: config-volume
           subPath: config
+      {{ with .Values.nodeSelector }}
       nodeSelector:
-        node-lifecycle: normal
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       tolerations:
         - key: CriticalAddonsOnly
           operator: Equal
