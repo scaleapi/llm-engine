@@ -111,7 +111,7 @@ cryptography==41.0.3
     # via secretstorage
 dataclasses-json==0.5.9
     # via -r model-engine/requirements.in
-datadog==0.46.0
+datadog==0.47.0
     # via -r model-engine/requirements.in
 datadog-api-client==2.11.0
     # via -r model-engine/requirements.in
