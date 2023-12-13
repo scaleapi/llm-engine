@@ -42,6 +42,7 @@ class LoggerTagKey(str, Enum):
     REQUEST_ID = "request_id"
     TEAM_ID = "team_id"
     USER_ID = "user_id"
+    REQUEST_SIZE = "request_size"
 
 
 class LoggerTagManager:
