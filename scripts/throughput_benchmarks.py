@@ -43,10 +43,17 @@ HF_MODEL_MAPPING = {
 
 
 class InferenceFramework(Enum):
-    TextGenerationInference = "tgi"
-    vLLM = "vllm"
-    LightLLM = "lightllm"
-    TensorRTLLM = "tensorrt-llm"
+    TEXT_GENERATION_INFERENCE = "tgi"
+    VLLM = "vllm"
+    LIGHTLLM = "lightllm"
+    TENSORRT_LLM = "tensorrt-llm"
+
+    @classmethod
+    def from_value(cls, value):
+        for member in cls:
+            if member.value == value:
+                return member
+        raise ValueError(f"No member with value {value} in {cls.__name__}")
 
 
 def send_request(url, request, user=None):
@@ -75,7 +82,7 @@ def send_request(url, request, user=None):
             payload_json = json.loads(payload_data)
 
     return {
-        "payload": payload_json["output"],
+        "payload": payload_json,
         "time_to_first_token": time_to_first_token,
         "total_time": time.time() - start,
     }
@@ -92,25 +99,63 @@ def pull_and_send_request_from_queue(
     while not request_queue.empty():
         request = request_queue.get()
         if use_localhost:
-            if not framework == InferenceFramework.TensorRTLLM:
+            if framework == InferenceFramework.VLLM:
                 response = send_request(f"http://localhost:{local_port}/stream", request)
+                response["num_completion_tokens"] = response["payload"]["count_output_tokens"]
             else:
-                response = send_request(
-                    f"http://localhost:{local_port}/v2/models/ensemble/generate_stream", request
-                )
+                raise NotImplementedError()
+        else:
+            response = send_request(
+                f"{GATEWAY_URL}/v1/llm/completions-stream?model_endpoint_name={model}",
+                request,
+                AUTH_USER_ID,
+            )
+            response["num_completion_tokens"] = response["payload"]["output"][
+                "num_completion_tokens"
+            ]
 
-            result_queue.put(response)
-
-        response = send_request(
-            f"{GATEWAY_URL}/v1/llm/completions-stream?model_endpoint_name={model}",
-            request,
-            AUTH_USER_ID,
-        )
         result_queue.put(response)
 
 
-def generate_request(prompt: str, output_token_count: int):
-    return {"prompt": prompt, "max_new_tokens": output_token_count, "temperature": 0.0}
+def generate_request(
+    framework: InferenceFramework, prompt: str, output_token_count: int, localhost: bool
+):
+    if not localhost:
+        return {"prompt": prompt, "max_new_tokens": output_token_count, "temperature": 0.0}
+
+    if framework == InferenceFramework.TEXT_GENERATION_INFERENCE:
+        return {
+            "parameters": {
+                "do_sample": False,
+                "max_new_tokens": output_token_count,
+                "details": False,
+            },
+            "inputs": prompt,
+        }
+    elif framework == InferenceFramework.VLLM:
+        return {
+            "prompt": prompt,
+            "max_tokens": output_token_count,
+            "temperature": 0,
+            "stream": True,
+        }
+    elif framework == InferenceFramework.LIGHTLLM:
+        return {
+            "parameters": {
+                "do_sample": False,
+                "max_new_tokens": output_token_count,
+            },
+            "inputs": prompt,
+        }
+    elif framework == InferenceFramework.TENSORRT_LLM:
+        return {
+            "max_tokens": output_token_count,
+            "text_input": prompt,
+            "bad_words": "",
+            "stop_words": "",
+        }
+    else:
+        raise NotImplementedError()
 
 
 def send_requests(
@@ -125,7 +170,7 @@ def send_requests(
     thread_results: queue.Queue = queue.Queue()
     requests_queue: queue.Queue = queue.Queue()
     for output_token_count in output_token_counts:
-        request = generate_request(prompt, output_token_count)
+        request = generate_request(framework, prompt, output_token_count, use_localhost)
         requests_queue.put(request)
     threads = []
     for i in range(concurrency):
@@ -205,13 +250,13 @@ def run_benchmark(
     elapsed = end - start
     results = [result for result in results if result is not None]
 
-    num_sampled_tokens = sum([result["payload"]["num_completion_tokens"] for result in results])
+    num_sampled_tokens = sum([result["num_completion_tokens"] for result in results])
     num_prompt_tokens = prompt_num_tokens * len(results)
     time_to_process_prompt = []
     time_per_completion = []
     for result in results:
         avg_time_per_token = (result["total_time"] - result["time_to_first_token"]) / (
-            result["payload"]["num_completion_tokens"] - 1
+            result["num_completion_tokens"] - 1
         )
         time_to_process_prompt.append(result["time_to_first_token"] - avg_time_per_token)
         time_per_completion.append(result["total_time"] - time_to_process_prompt[-1])
@@ -270,7 +315,7 @@ def run_benchmarks(
             hf_model = HF_MODEL_MAPPING[model]
         statistics = run_benchmark(
             model,
-            InferenceFramework[framework],
+            InferenceFramework.from_value(framework),
             hf_model,
             config,
             num_trials,
