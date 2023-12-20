@@ -165,6 +165,8 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "codellama-34b-instruct",
             "mistral-7b",
             "mistral-7b-instruct",
+            "mixtral-8x7b",
+            "mixtral-8x7b-instruct",
             "mammoth-coder-llama-2-7b",
             "mammoth-coder-llama-2-13b",
             "mammoth-coder-llama-2-34b",
@@ -210,6 +212,7 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
     # Can also see 13B, 34B there too
     "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
     "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
+    "mixtral": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
     "zephyr": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
 }
 
