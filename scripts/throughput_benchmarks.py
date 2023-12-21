@@ -252,30 +252,40 @@ def run_benchmark(
 
     num_sampled_tokens = sum([result["num_completion_tokens"] for result in results])
     num_prompt_tokens = prompt_num_tokens * len(results)
+    n = len(results)
     time_to_process_prompt = []
     time_per_completion = []
+    time_to_first_token = []
+    inter_token_latency = []
     for result in results:
         avg_time_per_token = (result["total_time"] - result["time_to_first_token"]) / (
             result["num_completion_tokens"] - 1
         )
+        time_to_first_token.append(result["time_to_first_token"])
         time_to_process_prompt.append(result["time_to_first_token"] - avg_time_per_token)
         time_per_completion.append(result["total_time"] - time_to_process_prompt[-1])
+        inter_token_latency.append(avg_time_per_token)
 
     total_num_tokens = num_sampled_tokens + num_prompt_tokens
-
-    n = len(results)
+    avg_prefill_time = sum(time_to_process_prompt) / n
+    avg_completion_time = sum(time_per_completion) / n
 
     statistics = {
+        "avg_prompt_throughput": num_prompt_tokens / (elapsed * avg_prefill_time / (avg_prefill_time + avg_completion_time)),
+        "avg_time_to_first_token": sum(time_to_first_token) / n,
+        "avg_sampling_throughput": num_sampled_tokens / (elapsed * avg_completion_time / (avg_prefill_time + avg_completion_time)),
+        "avg_total_throughput": total_num_tokens / elapsed,
+        "avg_per_session_sampling_throughput": num_sampled_tokens / (elapsed * avg_completion_time / (avg_prefill_time + avg_completion_time)) / concurrency,
+        "avg_inter_token_latency": sum(inter_token_latency) / n,
         "num_prompt_tokens": prompt_num_tokens,
         "avg_num_sampled_tokens": num_sampled_tokens / n,
         "elapsed_time": elapsed,
+        "avg_prefill_time": avg_prefill_time,
+        "avg_completion_time": avg_completion_time,
         "num_requests": num_trials,
         "num_successful_requests": n,
         "total_num_tokens": total_num_tokens,
         "total_num_sampled_tokens": num_sampled_tokens,
-        "prompt_throughput": num_prompt_tokens / (sum(time_to_process_prompt) / concurrency),
-        "sampling_throughput": num_sampled_tokens / (sum(time_per_completion) / concurrency),
-        "per_session_sampling_throughput": num_sampled_tokens / sum(time_per_completion),
     }
     if verbose:
         print(f"Statistics: {statistics}")
@@ -329,9 +339,42 @@ def run_benchmarks(
         traceback.print_exc()
 
     if output_file is not None:
-        with open(output_file, "w") as f:
+        with open(output_file, "a") as f:
             yaml.safe_dump(all_statistics, f)
 
+@app.command()
+def run_benchmarks_concurrency_range(
+    model: str,
+    framework: str,
+    input_token_count: int,
+    output_token_count_mean: int,
+    num_trials_per_concurrency: int = 5,
+    output_file: Optional[str] = None,
+    use_localhost: bool = False,
+    concurrency_min: int = 1,
+    concurrency_max: int = 1,
+    verbose: bool = False,
+    hf_model: Optional[str] = None,
+    local_port: int = 5005,
+):
+    if output_file is not None:
+        # Create empty file
+        with open(output_file, "w") as f:
+            pass
+    for concurrency in range(concurrency_min, concurrency_max + 1):
+        run_benchmarks(
+            model,
+            framework,
+            input_token_count,
+            output_token_count_mean,
+            num_trials_per_concurrency * concurrency,
+            output_file,
+            use_localhost,
+            concurrency,
+            verbose,
+            hf_model,
+            local_port,
+        )
 
 if __name__ == "__main__":
-    typer.run(run_benchmarks)
+    app()
