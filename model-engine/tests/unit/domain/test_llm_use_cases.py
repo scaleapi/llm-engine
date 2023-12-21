@@ -803,12 +803,12 @@ async def test_completion_sync_use_case_predict_failed(
         tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
-    response_1 = await use_case.execute(
-        user=user,
-        model_endpoint_name=llm_model_endpoint_sync[0].record.name,
-        request=completion_sync_request,
-    )
-    assert response_1.output is None
+    with pytest.raises(UpstreamServiceError):
+        await use_case.execute(
+            user=user,
+            model_endpoint_name=llm_model_endpoint_sync[0].record.name,
+            request=completion_sync_request,
+        )
 
 
 @pytest.mark.asyncio

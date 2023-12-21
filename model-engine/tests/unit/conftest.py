@@ -1434,12 +1434,15 @@ class FakeStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
 
 
 class FakeSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
-    def __init__(self):
-        self.response = SyncEndpointPredictV1Response(
-            status=TaskStatus.SUCCESS,
-            result=None,
-            traceback=None,
-        )
+    def __init__(self, fake_sync_inference_content=None):
+        if not fake_sync_inference_content:
+            self.response = SyncEndpointPredictV1Response(
+                status=TaskStatus.SUCCESS,
+                result=None,
+                traceback=None,
+            )
+        else:
+            self.response = fake_sync_inference_content
 
     async def predict(
         self, topic: str, predict_request: EndpointPredictV1Request
@@ -2111,6 +2114,7 @@ def get_repositories_generator_wrapper():
         fake_file_storage_gateway_contents,
         fake_trigger_repository_contents,
         fake_file_system_gateway_contents,
+        fake_sync_inference_content,
     ):
         def get_test_repositories() -> Iterator[ExternalInterfaces]:
             fake_file_system_gateway = FakeFilesystemGateway()
@@ -2131,7 +2135,9 @@ def get_repositories_generator_wrapper():
             streaming_model_endpoint_inference_gateway = (
                 FakeStreamingModelEndpointInferenceGateway()
             )
-            sync_model_endpoint_inference_gateway = FakeSyncModelEndpointInferenceGateway()
+            sync_model_endpoint_inference_gateway = FakeSyncModelEndpointInferenceGateway(
+                fake_sync_inference_content
+            )
             inference_autoscaling_metrics_gateway = FakeInferenceAutoscalingMetricsGateway()
             model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
                 filesystem_gateway=FakeFilesystemGateway(),
@@ -3584,7 +3590,7 @@ def llm_model_endpoint_sync(
                 "_llm": {
                     "model_name": "llama-7b",
                     "source": "hugging_face",
-                    "inference_framework": "deepspeed",
+                    "inference_framework": "vllm",
                     "inference_framework_image_tag": "123",
                     "num_shards": 4,
                 }
@@ -3646,7 +3652,7 @@ def llm_model_endpoint_sync(
         "model_name": "llama-7b",
         "source": "hugging_face",
         "status": "READY",
-        "inference_framework": "deepspeed",
+        "inference_framework": "vllm",
         "inference_framework_image_tag": "123",
         "num_shards": 4,
         "spec": {
@@ -3659,7 +3665,7 @@ def llm_model_endpoint_sync(
                 "_llm": {
                     "model_name": "llama-7b",
                     "source": "hugging_face",
-                    "inference_framework": "deepspeed",
+                    "inference_framework": "vllm",
                     "inference_framework_image_tag": "123",
                     "num_shards": 4,
                 }
