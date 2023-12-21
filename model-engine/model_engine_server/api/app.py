@@ -47,6 +47,7 @@ class CustomMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:
             LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
+            LoggerTagManager.set(LoggerTagKey.REQUEST_SIZE, request.headers.get("content-length"))
             # we intentionally exclude healthcheck routes from the concurrency limiter
             if request.url.path in healthcheck_routes:
                 return await call_next(request)
