@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import queue
@@ -224,7 +225,6 @@ def run_benchmark(
     verbose: bool,
     local_port: int,
 ):
-    group_statistics = []
     prompt = generate_prompt(config.input_token_count, hf_model)
 
     prompt_num_tokens = config.input_token_count
@@ -271,11 +271,15 @@ def run_benchmark(
     avg_completion_time = sum(time_per_completion) / n
 
     statistics = {
-        "avg_prompt_throughput": num_prompt_tokens / (elapsed * avg_prefill_time / (avg_prefill_time + avg_completion_time)),
+        "avg_prompt_throughput": num_prompt_tokens
+        / (elapsed * avg_prefill_time / (avg_prefill_time + avg_completion_time)),
         "avg_time_to_first_token": sum(time_to_first_token) / n,
-        "avg_sampling_throughput": num_sampled_tokens / (elapsed * avg_completion_time / (avg_prefill_time + avg_completion_time)),
+        "avg_sampling_throughput": num_sampled_tokens
+        / (elapsed * avg_completion_time / (avg_prefill_time + avg_completion_time)),
         "avg_total_throughput": total_num_tokens / elapsed,
-        "avg_per_session_sampling_throughput": num_sampled_tokens / (elapsed * avg_completion_time / (avg_prefill_time + avg_completion_time)) / concurrency,
+        "avg_per_session_sampling_throughput": num_sampled_tokens
+        / (elapsed * avg_completion_time / (avg_prefill_time + avg_completion_time))
+        / concurrency,
         "avg_inter_token_latency": sum(inter_token_latency) / n,
         "num_prompt_tokens": prompt_num_tokens,
         "avg_num_sampled_tokens": num_sampled_tokens / n,
@@ -289,12 +293,11 @@ def run_benchmark(
     }
     if verbose:
         print(f"Statistics: {statistics}")
-    group_statistics.append(statistics)
 
-    # Sleep for 1 seconds between each fixture.
+    # Sleep for 1 seconds between each benchmark.
     time.sleep(1)
 
-    return group_statistics
+    return statistics
 
 
 @app.command()
@@ -334,13 +337,18 @@ def run_benchmarks(
             verbose,
             local_port,
         )
-        all_statistics.extend(statistics)
+        all_statistics.append(statistics)
     except Exception:
         traceback.print_exc()
 
     if output_file is not None:
-        with open(output_file, "a") as f:
-            yaml.safe_dump(all_statistics, f)
+        header = all_statistics[0].keys()
+
+        with open(output_file, "w") as csvfile:
+            csv_writer = csv.DictWriter(csvfile, fieldnames=header)
+            csv_writer.writeheader()
+            csv_writer.writerows(all_statistics)
+
 
 @app.command()
 def run_benchmarks_concurrency_range(
@@ -375,6 +383,7 @@ def run_benchmarks_concurrency_range(
             hf_model,
             local_port,
         )
+
 
 if __name__ == "__main__":
     app()
