@@ -122,6 +122,7 @@ class ModelEndpointRecord(OwnedEntity):
     current_model_bundle: ModelBundle
     owner: str
     public_inference: Optional[bool]
+    shadow_endpoints_ids: Optional[List[str]]
 
 
 class ModelEndpointInfraState(BaseModel):
@@ -150,3 +151,11 @@ class ModelEndpoint(BaseModel):
 
     record: ModelEndpointRecord
     infra_state: Optional[ModelEndpointInfraState]
+
+
+class ShadowModelEndpointRecord(BaseModel):
+    """
+    This is the entity-layer class for everything related to a Shadow Endpoint.
+    """
+
+    id: str

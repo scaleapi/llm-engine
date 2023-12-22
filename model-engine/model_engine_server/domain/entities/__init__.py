@@ -45,6 +45,7 @@ from .model_endpoint_entity import (
     ModelEndpointStatus,
     ModelEndpointType,
     ModelEndpointUserConfigState,
+    ShadowModelEndpointRecord,
 )
 from .owned_entity import OwnedEntity
 from .trigger_entity import Trigger
@@ -91,6 +92,7 @@ __all__: Sequence[str] = [
     "Quantization",
     "RunnableImageFlavor",
     "RunnableImageLike",
+    "ShadowModelEndpointRecord",
     "StorageSpecificationType",
     "StreamingEnhancedRunnableImageFlavor",
     "TensorflowFramework",

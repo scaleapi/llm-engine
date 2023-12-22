@@ -31,6 +31,7 @@ from model_engine_server.domain.authorization.live_authorization_module import (
 from model_engine_server.domain.entities import (
     ModelEndpoint,
     ModelEndpointType,
+    ShadowModelEndpointRecord,
     StreamingEnhancedRunnableImageFlavor,
 )
 from model_engine_server.domain.exceptions import (
@@ -41,6 +42,7 @@ from model_engine_server.domain.exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
+    ShadowModelEndpointInvalidException,
 )
 from model_engine_server.domain.repositories import ModelBundleRepository
 from model_engine_server.domain.services import ModelEndpointService
@@ -191,6 +193,24 @@ def validate_post_inference_hooks(user: User, post_inference_hooks: Optional[Lis
             raise ValueError(f"Unsupported post-inference hook {hook}")
 
 
+async def validate_shadow_endpoints(
+    model_endpoint_service: ModelEndpointService,
+    shadow_endpoints: Optional[List[ShadowModelEndpointRecord]],
+) -> None:
+    if shadow_endpoints is None:
+        return
+
+    for shadow_endpoint in shadow_endpoints:
+        endpoint = await model_endpoint_service.get_model_endpoint(
+            model_endpoint_id=shadow_endpoint.id
+        )
+        if endpoint is None:
+            logger.error(f"Shadow endpoint not found for {shadow_endpoint.id=}")
+            raise ShadowModelEndpointInvalidException(
+                f"Endpoint not found for {shadow_endpoint.id=}"
+            )
+
+
 class CreateModelEndpointV1UseCase:
     def __init__(
         self,
@@ -214,6 +234,8 @@ class CreateModelEndpointV1UseCase:
         validate_labels(request.labels)
         validate_billing_tags(request.billing_tags)
         validate_post_inference_hooks(user, request.post_inference_hooks)
+        await validate_shadow_endpoints(self.model_endpoint_service, request.shadow_endpoints)
+
         bundle = await self.model_bundle_repository.get_model_bundle(
             model_bundle_id=request.model_bundle_id
         )
@@ -289,6 +311,7 @@ class CreateModelEndpointV1UseCase:
             default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
+            shadow_endpoints=request.shadow_endpoints,
         )
         _handle_post_inference_hooks(
             created_by=user.user_id,
@@ -318,6 +341,7 @@ class UpdateModelEndpointByIdV1UseCase:
             validate_labels(request.labels)
         validate_billing_tags(request.billing_tags)
         validate_post_inference_hooks(user, request.post_inference_hooks)
+        await validate_shadow_endpoints(self.model_endpoint_service, request.shadow_endpoints)
 
         endpoint = await self.model_endpoint_service.get_model_endpoint(
             model_endpoint_id=model_endpoint_id
@@ -402,6 +426,7 @@ class UpdateModelEndpointByIdV1UseCase:
             default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
+            shadow_endpoints=request.shadow_endpoints,
         )
         _handle_post_inference_hooks(
             created_by=endpoint_record.created_by,
