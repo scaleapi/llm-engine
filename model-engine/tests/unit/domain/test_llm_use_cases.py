@@ -1,3 +1,4 @@
+import json
 from typing import Any, List, Tuple
 from unittest import mock
 
@@ -552,41 +553,39 @@ async def test_completion_sync_use_case_success(
         SyncEndpointPredictV1Response(
             status=TaskStatus.SUCCESS,
             result={
-                "result": [
+                "result": json.dumps(
                     {
-                        "error": None,
                         "text": "I am a newbie to the world of programming.",
-                        "token_probs": {
-                            "tokens": [
-                                "I",
-                                " am",
-                                " a",
-                                " new",
-                                "bie",
-                                " to",
-                                " the",
-                                " world",
-                                " of",
-                                " programming",
-                                ".",
-                            ],
-                            "token_probs": [
-                                0.1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                            ],
-                        },
-                        "tokens_consumed": 25,
+                        "tokens": [
+                            "I",
+                            " am",
+                            " a",
+                            " new",
+                            "bie",
+                            " to",
+                            " the",
+                            " world",
+                            " of",
+                            " programming",
+                            ".",
+                        ],
+                        "log_probs": [
+                            {1: -2.3025850929940455},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                        ],
+                        "count_prompt_tokens": 7,
+                        "count_output_tokens": 11,
                     }
-                ]
+                )
             },
             traceback=None,
         )
@@ -803,12 +802,75 @@ async def test_completion_sync_use_case_predict_failed(
         tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
-    response_1 = await use_case.execute(
-        user=user,
-        model_endpoint_name=llm_model_endpoint_sync[0].record.name,
-        request=completion_sync_request,
+    with pytest.raises(UpstreamServiceError):
+        await use_case.execute(
+            user=user,
+            model_endpoint_name=llm_model_endpoint_sync[0].record.name,
+            request=completion_sync_request,
+        )
+
+
+@pytest.mark.asyncio
+async def test_completion_sync_use_case_predict_failed_lightllm(
+    test_api_key: str,
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
+    llm_model_endpoint_sync_lightllm: Tuple[ModelEndpoint, Any],
+    completion_sync_request: CompletionSyncV1Request,
+):
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync_lightllm[0])
+    fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = (
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.FAILURE,
+            result=None,
+            traceback="failed to predict",
+        )
     )
-    assert response_1.output is None
+    use_case = CompletionSyncV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    with pytest.raises(UpstreamServiceError):
+        await use_case.execute(
+            user=user,
+            model_endpoint_name=llm_model_endpoint_sync_lightllm[0].record.name,
+            request=completion_sync_request,
+        )
+
+
+@pytest.mark.asyncio
+async def test_completion_sync_use_case_predict_failed_trt_llm(
+    test_api_key: str,
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
+    llm_model_endpoint_sync_trt_llm: Tuple[ModelEndpoint, Any],
+    completion_sync_request: CompletionSyncV1Request,
+):
+    completion_sync_request.return_token_log_probs = False  # not yet supported
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync_trt_llm[0])
+    fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = (
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.FAILURE,
+            result=None,
+            traceback="failed to predict",
+        )
+    )
+    use_case = CompletionSyncV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    with pytest.raises(UpstreamServiceError):
+        await use_case.execute(
+            user=user,
+            model_endpoint_name=llm_model_endpoint_sync_trt_llm[0].record.name,
+            request=completion_sync_request,
+        )
 
 
 @pytest.mark.asyncio
