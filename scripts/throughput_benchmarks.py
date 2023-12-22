@@ -344,7 +344,7 @@ def run_benchmarks(
     if output_file is not None:
         header = all_statistics[0].keys()
 
-        with open(output_file, "w") as csvfile:
+        with open(output_file, "a") as csvfile:
             csv_writer = csv.DictWriter(csvfile, fieldnames=header)
             csv_writer.writeheader()
             csv_writer.writerows(all_statistics)
