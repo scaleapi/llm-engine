@@ -1,3 +1,4 @@
+import json
 from typing import Any, List, Tuple
 from unittest import mock
 
@@ -552,41 +553,39 @@ async def test_completion_sync_use_case_success(
         SyncEndpointPredictV1Response(
             status=TaskStatus.SUCCESS,
             result={
-                "result": [
+                "result": json.dumps(
                     {
-                        "error": None,
                         "text": "I am a newbie to the world of programming.",
-                        "token_probs": {
-                            "tokens": [
-                                "I",
-                                " am",
-                                " a",
-                                " new",
-                                "bie",
-                                " to",
-                                " the",
-                                " world",
-                                " of",
-                                " programming",
-                                ".",
-                            ],
-                            "token_probs": [
-                                0.1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                                1,
-                            ],
-                        },
-                        "tokens_consumed": 25,
+                        "tokens": [
+                            "I",
+                            " am",
+                            " a",
+                            " new",
+                            "bie",
+                            " to",
+                            " the",
+                            " world",
+                            " of",
+                            " programming",
+                            ".",
+                        ],
+                        "log_probs": [
+                            {1: -2.3025850929940455},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                            {1: 0},
+                        ],
+                        "count_prompt_tokens": 7,
+                        "count_output_tokens": 11,
                     }
-                ]
+                )
             },
             traceback=None,
         )
