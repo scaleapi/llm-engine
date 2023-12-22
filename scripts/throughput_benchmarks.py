@@ -271,6 +271,7 @@ def run_benchmark(
     avg_completion_time = sum(time_per_completion) / n
 
     statistics = {
+        "concurrency": concurrency,
         "avg_prompt_throughput": num_prompt_tokens
         / (elapsed * avg_prefill_time / (avg_prefill_time + avg_completion_time)),
         "avg_time_to_first_token": sum(time_to_first_token) / n,
