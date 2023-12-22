@@ -811,6 +811,69 @@ async def test_completion_sync_use_case_predict_failed(
 
 
 @pytest.mark.asyncio
+async def test_completion_sync_use_case_predict_failed_lightllm(
+    test_api_key: str,
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
+    llm_model_endpoint_sync_lightllm: Tuple[ModelEndpoint, Any],
+    completion_sync_request: CompletionSyncV1Request,
+):
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync_lightllm[0])
+    fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = (
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.FAILURE,
+            result=None,
+            traceback="failed to predict",
+        )
+    )
+    use_case = CompletionSyncV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    with pytest.raises(UpstreamServiceError):
+        await use_case.execute(
+            user=user,
+            model_endpoint_name=llm_model_endpoint_sync_lightllm[0].record.name,
+            request=completion_sync_request,
+        )
+
+
+@pytest.mark.asyncio
+async def test_completion_sync_use_case_predict_failed_trt_llm(
+    test_api_key: str,
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
+    llm_model_endpoint_sync_trt_llm: Tuple[ModelEndpoint, Any],
+    completion_sync_request: CompletionSyncV1Request,
+):
+    completion_sync_request.return_token_log_probs = False  # not yet supported
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync_trt_llm[0])
+    fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = (
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.FAILURE,
+            result=None,
+            traceback="failed to predict",
+        )
+    )
+    use_case = CompletionSyncV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    with pytest.raises(UpstreamServiceError):
+        await use_case.execute(
+            user=user,
+            model_endpoint_name=llm_model_endpoint_sync_trt_llm[0].record.name,
+            request=completion_sync_request,
+        )
+
+
+@pytest.mark.asyncio
 async def test_completion_sync_use_case_predict_failed_with_errors(
     test_api_key: str,
     fake_model_endpoint_service,
