@@ -4,6 +4,7 @@ from typing import Any, Dict, Tuple
 
 import pytest
 from model_engine_server.common.dtos.llms import GetLLMModelEndpointV1Response
+from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Response, TaskStatus
 from model_engine_server.domain.entities import ModelEndpoint
 
 
@@ -102,6 +103,17 @@ def test_completion_sync_success(
         fake_batch_job_record_repository_contents={},
         fake_batch_job_progress_gateway_contents={},
         fake_docker_image_batch_job_bundle_repository_contents={},
+        fake_sync_inference_content=SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={
+                "result": """{
+                    "text": "output",
+                    "count_prompt_tokens": 1,
+                    "count_output_tokens": 1
+                }"""
+            },
+            traceback=None,
+        ),
     )
     response_1 = client.post(
         f"/v1/llm/completions-sync?model_endpoint_name={llm_model_endpoint_sync[0].record.name}",
@@ -109,7 +121,12 @@ def test_completion_sync_success(
         json=completion_sync_request,
     )
     assert response_1.status_code == 200
-    assert response_1.json()["output"] is None
+    assert response_1.json()["output"] == {
+        "text": "output",
+        "num_completion_tokens": 1,
+        "num_prompt_tokens": 1,
+        "tokens": None,
+    }
     assert response_1.json().keys() == {"output", "request_id"}
 
 

@@ -106,6 +106,7 @@ def get_test_client_wrapper(get_repositories_generator_wrapper):
         fake_file_system_gateway_contents=None,
         fake_trigger_repository_contents=None,
         fake_cron_job_gateway_contents=None,
+        fake_sync_inference_content=None,
     ) -> TestClient:
         if fake_docker_image_batch_job_gateway_contents is None:
             fake_docker_image_batch_job_gateway_contents = {}
@@ -131,6 +132,8 @@ def get_test_client_wrapper(get_repositories_generator_wrapper):
             fake_trigger_repository_contents = {}
         if fake_cron_job_gateway_contents is None:
             fake_cron_job_gateway_contents = {}
+        if fake_sync_inference_content is None:
+            fake_sync_inference_content = {}
         app.dependency_overrides[get_external_interfaces] = get_repositories_generator_wrapper(
             fake_docker_repository_image_always_exists=fake_docker_repository_image_always_exists,
             fake_model_bundle_repository_contents=fake_model_bundle_repository_contents,
@@ -145,6 +148,7 @@ def get_test_client_wrapper(get_repositories_generator_wrapper):
             fake_file_system_gateway_contents=fake_file_system_gateway_contents,
             fake_trigger_repository_contents=fake_trigger_repository_contents,
             fake_cron_job_gateway_contents=fake_cron_job_gateway_contents,
+            fake_sync_inference_content=fake_sync_inference_content,
         )
         app.dependency_overrides[get_external_interfaces_read_only] = app.dependency_overrides[
             get_external_interfaces

@@ -332,12 +332,14 @@ async def create_completion_sync_task(
             metric_metadata,
         )
         return response
-    except UpstreamServiceError:
+    except UpstreamServiceError as exc:
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
-        logger.exception(f"Upstream service error for request {request_id}")
+        logger.exception(
+            f"Upstream service error for request {request_id}. Error detail: {str(exc.content)}"
+        )
         raise HTTPException(
             status_code=500,
-            detail=f"Upstream service error for request_id {request_id}.",
+            detail=f"Upstream service error for request_id {request_id}",
         )
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(
