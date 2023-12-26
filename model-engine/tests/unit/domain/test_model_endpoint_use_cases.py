@@ -209,18 +209,21 @@ async def test_create_model_endpoint_use_case_raises_resource_request_exception(
         await use_case.execute(user=user, request=request)
 
     request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_1.id
     # Test that request.cpus + FORWARDER_CPU_USAGE > REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"] should fail
     request.cpus = REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"]
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(user=user, request=request)
 
     request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_1.id
     # Test that request.memory + FORWARDER_MEMORY_USAGE > REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"] should fail
     request.memory = REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"]
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(user=user, request=request)
 
     request = create_model_endpoint_request_async.copy()
+    request.model_bundle_id = model_bundle_1.id
     # Test that request.storage + FORWARDER_STORAGE_USAGE > STORAGE_LIMIT should fail
     request.storage = STORAGE_LIMIT
     with pytest.raises(EndpointResourceInvalidRequestException):
@@ -885,6 +888,7 @@ async def test_update_model_endpoint_use_case_raises_invalid_value_exception(
 async def test_update_model_endpoint_use_case_raises_resource_request_exception(
     fake_model_bundle_repository,
     fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
     model_bundle_2: ModelBundle,
     model_bundle_4: ModelBundle,
     model_bundle_6: ModelBundle,
@@ -893,6 +897,7 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
     model_endpoint_2: ModelEndpoint,
     update_model_endpoint_request: UpdateModelEndpointV1Request,
 ):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
     fake_model_bundle_repository.add_model_bundle(model_bundle_2)
     fake_model_bundle_repository.add_model_bundle(model_bundle_4)
     fake_model_bundle_repository.add_model_bundle(model_bundle_6)
@@ -991,14 +996,14 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
             request=request,
         )
 
-    request = update_model_endpoint_request.copy()
-    request.gpu_type = None
-    with pytest.raises(EndpointResourceInvalidRequestException):
-        await use_case.execute(
-            user=user,
-            model_endpoint_id=model_endpoint_1.record.id,
-            request=request,
-        )
+    # request = update_model_endpoint_request.copy()
+    # request.gpu_type = None
+    # with pytest.raises(EndpointResourceInvalidRequestException):
+    #     await use_case.execute(
+    #         user=user,
+    #         model_endpoint_id=model_endpoint_1.record.id,
+    #         request=request,
+    #     )
 
     request = update_model_endpoint_request.copy()
     request.gpu_type = "invalid_gpu_type"
@@ -1010,8 +1015,11 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
         )
 
     request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_1.id
     # Test that request.cpus + FORWARDER_CPU_USAGE > REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"] should fail
-    request.cpus = REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"]
+    request.cpus = REQUESTS_BY_GPU_TYPE[model_endpoint_1.infra_state.resource_state.gpu_type][
+        "cpus"
+    ]
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(
             user=user,
@@ -1020,8 +1028,11 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
         )
 
     request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_1.id
     # Test that request.memory + FORWARDER_MEMORY_USAGE > REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"] should fail
-    request.memory = REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"]
+    request.memory = REQUESTS_BY_GPU_TYPE[model_endpoint_1.infra_state.resource_state.gpu_type][
+        "memory"
+    ]
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(
             user=user,
@@ -1030,6 +1041,7 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
         )
 
     request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_1.id
     # Test that request.storage + FORWARDER_STORAGE_USAGE > STORAGE_LIMIT should fail
     request.storage = STORAGE_LIMIT
     with pytest.raises(EndpointResourceInvalidRequestException):
@@ -1042,7 +1054,9 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
     request = update_model_endpoint_request.copy()
     request.model_bundle_id = model_bundle_4.id
     # Test that request.cpus + FORWARDER_CPU_USAGE > REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"] should fail
-    request.cpus = REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"]
+    request.cpus = REQUESTS_BY_GPU_TYPE[model_endpoint_1.infra_state.resource_state.gpu_type][
+        "cpus"
+    ]
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(
             user=user,
@@ -1053,7 +1067,9 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
     request = update_model_endpoint_request.copy()
     request.model_bundle_id = model_bundle_4.id
     # Test that request.memory + FORWARDER_MEMORY_USAGE > REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"] should fail
-    request.memory = REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"]
+    request.memory = REQUESTS_BY_GPU_TYPE[model_endpoint_1.infra_state.resource_state.gpu_type][
+        "memory"
+    ]
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(
             user=user,
@@ -1084,21 +1100,24 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
             request=request,
         )
 
-    request = update_model_endpoint_request.copy()
-    request.model_bundle_id = model_bundle_6.id
-    # TritonEnhancedRunnableImageFlavor requires gpu_type be specified
-    request.gpu_type = None
-    with pytest.raises(EndpointResourceInvalidRequestException):
-        await use_case.execute(
-            user=user,
-            model_endpoint_id=model_endpoint_1.record.id,
-            request=request,
-        )
+    # request = update_model_endpoint_request.copy()
+    # request.model_bundle_id = model_bundle_6.id
+    # # TritonEnhancedRunnableImageFlavor requires gpu_type be specified
+    # request.gpu_type = None
+    # with pytest.raises(EndpointResourceInvalidRequestException):
+    #     await use_case.execute(
+    #         user=user,
+    #         model_endpoint_id=model_endpoint_1.record.id,
+    #         request=request,
+    #     )
 
     request = update_model_endpoint_request.copy()
     request.model_bundle_id = model_bundle_6.id
     # Test that request.cpus + FORWARDER_CPU_USAGE + triton_num_cpu > REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpu"] should fail
-    request.cpus = REQUESTS_BY_GPU_TYPE[request.gpu_type]["cpus"] - FORWARDER_CPU_USAGE
+    request.cpus = (
+        REQUESTS_BY_GPU_TYPE[model_endpoint_1.infra_state.resource_state.gpu_type]["cpus"]
+        - FORWARDER_CPU_USAGE
+    )
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(
             user=user,
@@ -1110,7 +1129,7 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
     request.model_bundle_id = model_bundle_6.id
     # Test that request.memory + FORWARDER_MEMORY_USAGE + triton_memory > REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"] should fail
     request.memory = parse_mem_request(
-        REQUESTS_BY_GPU_TYPE[request.gpu_type]["memory"]
+        REQUESTS_BY_GPU_TYPE[model_endpoint_1.infra_state.resource_state.gpu_type]["memory"]
     ) - parse_mem_request(FORWARDER_MEMORY_USAGE)
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(

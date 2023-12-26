@@ -364,11 +364,21 @@ class UpdateModelEndpointByIdV1UseCase:
         # from infra_state to avoid passing in None to validate_resource_requests.
         validate_resource_requests(
             bundle=bundle,
-            cpus=request.cpus or infra_state.resource_state.cpus,
-            memory=request.memory or infra_state.resource_state.memory,
-            storage=request.storage or infra_state.resource_state.storage,
-            gpus=request.gpus or infra_state.resource_state.gpus,
-            gpu_type=request.gpu_type or infra_state.resource_state.gpu_type,
+            cpus=(request.cpus if request.cpus is not None else infra_state.resource_state.cpus),
+            memory=(
+                request.memory if request.memory is not None else infra_state.resource_state.memory
+            ),
+            storage=(
+                request.storage
+                if request.storage is not None
+                else infra_state.resource_state.storage
+            ),
+            gpus=(request.gpus if request.gpus is not None else infra_state.resource_state.gpus),
+            gpu_type=(
+                request.gpu_type
+                if request.gpu_type is not None
+                else infra_state.resource_state.gpu_type
+            ),
         )
 
         validate_deployment_resources(
