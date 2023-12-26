@@ -67,14 +67,11 @@ async def create_model_endpoint(
             status_code=400,
             detail="The specified model endpoint already exists.",
         ) from exc
-    except EndpointLabelsException as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=str(exc),
-        ) from exc
-    except ObjectHasInvalidValueException as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except EndpointResourceInvalidRequestException as exc:
+    except (
+        EndpointLabelsException,
+        ObjectHasInvalidValueException,
+        EndpointResourceInvalidRequestException,
+    ) as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),
@@ -148,7 +145,11 @@ async def update_model_endpoint(
         return await use_case.execute(
             user=auth, model_endpoint_id=model_endpoint_id, request=request
         )
-    except EndpointLabelsException as exc:
+    except (
+        EndpointLabelsException,
+        ObjectHasInvalidValueException,
+        EndpointResourceInvalidRequestException,
+    ) as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),
