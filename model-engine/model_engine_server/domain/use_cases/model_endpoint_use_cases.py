@@ -362,21 +362,20 @@ class UpdateModelEndpointByIdV1UseCase:
         # infra_state to make sure that after the update, all resources are valid and in sync.
         # E.g. If user only want to update gpus and leave gpu_type as None, we use the existing gpu_type
         # from infra_state to avoid passing in None to validate_resource_requests.
+        raw_request = request.dict(exclude_unset=True)
         validate_resource_requests(
             bundle=bundle,
-            cpus=(request.cpus if request.cpus is not None else infra_state.resource_state.cpus),
+            cpus=(request.cpus if "cpus" in raw_request else infra_state.resource_state.cpus),
             memory=(
-                request.memory if request.memory is not None else infra_state.resource_state.memory
+                request.memory if "memory" in raw_request else infra_state.resource_state.memory
             ),
             storage=(
-                request.storage
-                if request.storage is not None
-                else infra_state.resource_state.storage
+                request.storage if "storage" in raw_request else infra_state.resource_state.storage
             ),
-            gpus=(request.gpus if request.gpus is not None else infra_state.resource_state.gpus),
+            gpus=(request.gpus if "gpus" in raw_request else infra_state.resource_state.gpus),
             gpu_type=(
                 request.gpu_type
-                if request.gpu_type is not None
+                if "gpu_type" in raw_request
                 else infra_state.resource_state.gpu_type
             ),
         )
