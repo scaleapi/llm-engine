@@ -62,6 +62,7 @@ class HostedModelInferenceServiceConfig:
     user_inference_pytorch_repository: str
     user_inference_tensorflow_repository: str
     docker_image_layer_cache_repository: str
+    sensitive_log_mode: bool
 
     @classmethod
     def from_yaml(cls, yaml_path):
