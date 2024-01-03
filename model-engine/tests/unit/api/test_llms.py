@@ -156,6 +156,9 @@ def test_completion_sync_endpoint_not_found_returns_404(
     assert response_1.status_code == 404
 
 
+# When enabling this test, other tests fail with "RunTumeError got Future <Future pending> attached to a different loop"
+# https://github.com/encode/starlette/issues/1315#issuecomment-980784457
+@pytest.mark.skip(reason="Need to figure out FastAPI test client asyncio funkiness")
 def test_completion_stream_success(
     llm_model_endpoint_streaming: ModelEndpoint,
     completion_stream_request: Dict[str, Any],
