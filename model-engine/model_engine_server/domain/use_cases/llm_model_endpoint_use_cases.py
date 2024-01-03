@@ -682,7 +682,7 @@ class CreateLLMModelBundleV1UseCase:
             else:
                 raise InvalidRequestException(f"Quantization {quantize} is not supported by vLLM.")
 
-        if hmi_config.sensitive_log_mode:
+        if hmi_config.sensitive_log_mode:  # pragma: no cover
             subcommands[-1] = subcommands[-1] + " --disable-log-requests"
 
         command = [

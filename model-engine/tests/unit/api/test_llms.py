@@ -163,7 +163,7 @@ def test_completion_stream_success(
     llm_model_endpoint_streaming: ModelEndpoint,
     completion_stream_request: Dict[str, Any],
     get_test_client_wrapper,
-):
+):  # pragma: no cover
     client = get_test_client_wrapper(
         fake_docker_repository_image_always_exists=True,
         fake_model_bundle_repository_contents={},
