@@ -163,6 +163,7 @@ config:
       # dd_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
       dd_trace_enabled: false
       istio_enabled: true
+      sensitive_log_mode: false
 
       # Asynchronous endpoints configs (coming soon)
       sqs_profile: default
