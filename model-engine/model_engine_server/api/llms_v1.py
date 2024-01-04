@@ -12,6 +12,7 @@ from model_engine_server.api.dependencies import (
     get_external_interfaces_read_only,
     verify_authentication,
 )
+from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.llms import (
     CancelFineTuneResponse,
     CompletionStreamV1Request,
@@ -307,9 +308,10 @@ async def create_completion_sync_task(
     """
     Runs a sync prompt completion on an LLM.
     """
-    logger.info(
-        f"POST /completion_sync with {request} to endpoint {model_endpoint_name} for {auth}"
-    )
+    if not hmi_config.sensitive_log_mode:
+        logger.info(
+            f"POST /completion_sync with {request} to endpoint {model_endpoint_name} for {auth}"
+        )
     try:
         use_case = CompletionSyncV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,
@@ -369,9 +371,10 @@ async def create_completion_stream_task(
     """
     Runs a stream prompt completion on an LLM.
     """
-    logger.info(
-        f"POST /completion_stream with {request} to endpoint {model_endpoint_name} for {auth}"
-    )
+    if not hmi_config.sensitive_log_mode:  # pragma: no cover
+        logger.info(
+            f"POST /completion_stream with {request} to endpoint {model_endpoint_name} for {auth}"
+        )
     use_case = CompletionStreamV1UseCase(
         model_endpoint_service=external_interfaces.model_endpoint_service,
         llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
