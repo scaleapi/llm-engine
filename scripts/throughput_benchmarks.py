@@ -13,7 +13,6 @@ from typing import List, Optional
 import numpy as np
 import requests
 import typer
-import yaml
 from lorem_text import lorem
 from transformers import AutoTokenizer
 
@@ -368,7 +367,7 @@ def run_benchmarks_concurrency_range(
 ):
     if output_file is not None:
         # Create empty file
-        with open(output_file, "w") as f:
+        with open(output_file, "w"):
             pass
     for concurrency in range(concurrency_min, concurrency_max + 1):
         run_benchmarks(
