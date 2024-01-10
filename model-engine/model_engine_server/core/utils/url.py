@@ -32,7 +32,7 @@ class InvalidAttachmentUrl(ValueError):
     pass
 
 
-def parse_attachment_url(url: str) -> ParsedURL:
+def parse_attachment_url(url: str, clean_key: bool = True) -> ParsedURL:
     """Extracts protocol, bucket, region, and key from the :param:`url`.
 
     :raises: InvalidAttachmentUrl Iff the input `url` is not a valid AWS S3 or GCS url.
@@ -102,5 +102,5 @@ def parse_attachment_url(url: str) -> ParsedURL:
         protocol=clean(protocol),
         bucket=clean(bucket),
         region=clean(region),
-        key=clean(key),
+        key=clean(key) if clean_key else key,
     )

@@ -682,6 +682,9 @@ class CreateLLMModelBundleV1UseCase:
             else:
                 raise InvalidRequestException(f"Quantization {quantize} is not supported by vLLM.")
 
+        if hmi_config.sensitive_log_mode:  # pragma: no cover
+            subcommands[-1] = subcommands[-1] + " --disable-log-requests"
+
         command = [
             "/bin/bash",
             "-c",
@@ -1555,9 +1558,11 @@ class CompletionSyncV1UseCase:
                     ),
                 )
             else:
-                return CompletionSyncV1Response(
-                    request_id=request_id,
-                    output=None,
+                raise UpstreamServiceError(
+                    status_code=500,
+                    content=predict_result.traceback.encode("utf-8")
+                    if predict_result.traceback is not None
+                    else b"",
                 )
         elif (
             endpoint_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
@@ -1589,9 +1594,11 @@ class CompletionSyncV1UseCase:
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
-                return CompletionSyncV1Response(
-                    request_id=request_id,
-                    output=None,
+                raise UpstreamServiceError(
+                    status_code=500,
+                    content=predict_result.traceback.encode("utf-8")
+                    if predict_result.traceback is not None
+                    else b"",
                 )
 
             output = json.loads(predict_result.result["result"])
@@ -1628,9 +1635,11 @@ class CompletionSyncV1UseCase:
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
-                return CompletionSyncV1Response(
-                    request_id=request_id,
-                    output=None,
+                raise UpstreamServiceError(
+                    status_code=500,
+                    content=predict_result.traceback.encode("utf-8")
+                    if predict_result.traceback is not None
+                    else b"",
                 )
 
             output = json.loads(predict_result.result["result"])
@@ -1670,9 +1679,11 @@ class CompletionSyncV1UseCase:
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
-                return CompletionSyncV1Response(
-                    request_id=request_id,
-                    output=None,
+                raise UpstreamServiceError(
+                    status_code=500,
+                    content=predict_result.traceback.encode("utf-8")
+                    if predict_result.traceback is not None
+                    else b"",
                 )
 
             output = json.loads(predict_result.result["result"])
@@ -1706,9 +1717,11 @@ class CompletionSyncV1UseCase:
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
-                return CompletionSyncV1Response(
-                    request_id=request_id,
-                    output=None,
+                raise UpstreamServiceError(
+                    status_code=500,
+                    content=predict_result.traceback.encode("utf-8")
+                    if predict_result.traceback is not None
+                    else b"",
                 )
 
             output = json.loads(predict_result.result["result"])

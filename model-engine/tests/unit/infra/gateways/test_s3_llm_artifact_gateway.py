@@ -14,7 +14,7 @@ def llm_artifact_gateway():
 
 @pytest.fixture
 def fake_files():
-    return ["fake-prefix/fake1", "fake-prefix/fake2", "fake-prefix/fake3"]
+    return ["fake-prefix/fake1", "fake-prefix/fake2", "fake-prefix/fake3", "fake-prefix-ext/fake1"]
 
 
 def mock_boto3_session(fake_files: List[str]):
@@ -39,11 +39,13 @@ def mock_boto3_session(fake_files: List[str]):
     lambda *args, **kwargs: None,  # noqa
 )
 def test_s3_llm_artifact_gateway_download_folder(llm_artifact_gateway, fake_files):
-    prefix = "/".join(fake_files[0].split("/")[:-1])
+    prefix = "/".join(fake_files[0].split("/")[:-1]) + "/"
     uri_prefix = f"s3://fake-bucket/{prefix}"
     target_dir = "fake-target"
 
-    expected_files = [f"{target_dir}/{file.split('/')[-1]}" for file in fake_files]
+    expected_files = [
+        f"{target_dir}/{file.split('/')[-1]}" for file in fake_files if file.startswith(prefix)
+    ]
     with mock.patch(
         "model_engine_server.infra.gateways.s3_llm_artifact_gateway.boto3.Session",
         mock_boto3_session(fake_files),

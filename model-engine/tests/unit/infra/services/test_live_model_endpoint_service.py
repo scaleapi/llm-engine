@@ -238,6 +238,17 @@ async def test_create_update_model_endpoint_success(
     assert model_endpoint.infra_state.deployment_state.max_workers == update_kwargs["max_workers"]
     assert model_endpoint.infra_state.labels == update_kwargs["labels"]
 
+    # Now update min_worker only
+    update_kwargs: Any = dict(
+        min_workers=2,
+    )
+    updated_model_endpoint_record = await fake_live_model_endpoint_service.update_model_endpoint(
+        model_endpoint_id=model_endpoint_record.id, **update_kwargs
+    )
+
+    # Make sure metadata is not updated
+    assert updated_model_endpoint_record.metadata == {"some_new_key": "some_new_values"}
+
 
 @pytest.mark.skip(reason="Exception is temporarily disabled due to lock flakiness")
 @pytest.mark.asyncio
