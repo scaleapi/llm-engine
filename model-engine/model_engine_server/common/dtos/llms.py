@@ -34,17 +34,17 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     inference_framework_image_tag: str
     num_shards: int = 1
     """
-    Number of shards to distribute the model onto GPUs. Only affects behavior for text-generation-inference models
+    Number of shards to distribute the model onto GPUs.
     """
 
     quantize: Optional[Quantization] = None
     """
-    Whether to quantize the model. Only affect behavior for text-generation-inference models
+    Whether to quantize the model.
     """
 
     checkpoint_path: Optional[str] = None
     """
-    Path to the checkpoint to load the model from. Only affects behavior for text-generation-inference models
+    Path to the checkpoint to load the model from.
     """
 
     # General endpoint fields
@@ -102,17 +102,17 @@ class UpdateLLMModelEndpointV1Request(BaseModel):
     inference_framework_image_tag: Optional[str]
     num_shards: Optional[int]
     """
-    Number of shards to distribute the model onto GPUs. Only affects behavior for text-generation-inference models
+    Number of shards to distribute the model onto GPUs.
     """
 
     quantize: Optional[Quantization]
     """
-    Whether to quantize the model. Only affect behavior for text-generation-inference models
+    Whether to quantize the model.
     """
 
     checkpoint_path: Optional[str]
     """
-    Path to the checkpoint to load the model from. Only affects behavior for text-generation-inference models
+    Path to the checkpoint to load the model from.
     """
 
     # General endpoint fields
@@ -220,7 +220,7 @@ class CompletionStreamV1Request(BaseModel):
     """
     return_token_log_probs: Optional[bool] = False
     """
-    Whether to return the log probabilities of the tokens. Only affects behavior for text-generation-inference models
+    Whether to return the log probabilities of the tokens.
     """
     presence_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     """
@@ -359,3 +359,80 @@ class ModelDownloadResponse(BaseModel):
 
 class DeleteLLMEndpointResponse(BaseModel):
     deleted: bool
+
+
+class BatchCompletionsRequestContent(BaseModel):
+    prompts: List[str]
+    max_new_tokens: int
+    temperature: float = Field(ge=0.0, le=1.0)
+    """
+    Temperature of the sampling. Setting to 0 equals to greedy sampling.
+    """
+    stop_sequences: Optional[List[str]] = None
+    """
+    List of sequences to stop the completion at.
+    """
+    return_token_log_probs: Optional[bool] = False
+    """
+    Whether to return the log probabilities of the tokens.
+    """
+    presence_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    """
+    Only supported in vllm, lightllm
+    Penalize new tokens based on whether they appear in the text so far. 0.0 means no penalty
+    """
+    frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    """
+    Only supported in vllm, lightllm
+    Penalize new tokens based on their existing frequency in the text so far. 0.0 means no penalty
+    """
+    top_k: Optional[int] = Field(default=None, ge=-1)
+    """
+    Controls the number of top tokens to consider. -1 means consider all tokens.
+    """
+    top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
+    """
+    Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
+    """
+
+
+class BatchCompletionsModelConfig(BaseModel):
+    model: str
+    checkpoint_path: Optional[str] = None
+    """
+    Path to the checkpoint to load the model from.
+    """
+    quantize: Optional[Quantization] = None
+    """
+    Whether to quantize the model.
+    """
+    num_shards: Optional[int] = None
+    """
+    Number of shards to distribute the model onto GPUs. When not provided, it will be inferred from the model name.
+    """
+    seed: Optional[int] = None
+    """
+    Random seed for the model.
+    """
+
+
+class BatchCompletionsRequest(BaseModel):
+    """
+    Request object for batch completions.
+    """
+
+    input_data_path: Optional[str]
+    output_data_path: str
+    """
+    Path to the output file. The output file will be a JSON file of type List[CompletionOutput].
+    """
+    content: Optional[BatchCompletionsRequestContent]
+    """
+    Either `input_data_path` or `content` needs to be provided.
+    When input_data_path is provided, the input file should be a JSON file of type BatchCompletionsRequestContent.
+    """
+    model_config: BatchCompletionsModelConfig
+    data_parallelism: Optional[int] = 1
+    """
+    Number of replicas to run the batch inference. More replicas are slower to schedule but faster to inference.
+    """
