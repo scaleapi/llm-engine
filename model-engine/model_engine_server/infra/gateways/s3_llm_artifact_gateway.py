@@ -23,7 +23,7 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
 
     def list_files(self, path: str, **kwargs) -> List[str]:
         s3 = self._get_s3_resource(kwargs)
-        parsed_remote = parse_attachment_url(path)
+        parsed_remote = parse_attachment_url(path, clean_key=False)
         bucket = parsed_remote.bucket
         key = parsed_remote.key
 
@@ -33,7 +33,7 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
 
     def download_files(self, path: str, target_path: str, overwrite=False, **kwargs) -> List[str]:
         s3 = self._get_s3_resource(kwargs)
-        parsed_remote = parse_attachment_url(path)
+        parsed_remote = parse_attachment_url(path, clean_key=False)
         bucket = parsed_remote.bucket
         key = parsed_remote.key
 
@@ -58,7 +58,9 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
 
     def get_model_weights_urls(self, owner: str, model_name: str, **kwargs) -> List[str]:
         s3 = self._get_s3_resource(kwargs)
-        parsed_remote = parse_attachment_url(hmi_config.hf_user_fine_tuned_weights_prefix)
+        parsed_remote = parse_attachment_url(
+            hmi_config.hf_user_fine_tuned_weights_prefix, clean_key=False
+        )
         bucket = parsed_remote.bucket
         fine_tuned_weights_prefix = parsed_remote.key
 

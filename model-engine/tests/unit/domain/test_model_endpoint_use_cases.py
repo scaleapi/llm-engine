@@ -27,6 +27,7 @@ from model_engine_server.domain.exceptions import (
     ObjectNotFoundException,
 )
 from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
+    CONVERTED_FROM_ARTIFACT_LIKE_KEY,
     CreateModelEndpointV1UseCase,
     DeleteModelEndpointByIdV1UseCase,
     GetModelEndpointByIdV1UseCase,
@@ -853,6 +854,303 @@ async def test_update_model_endpoint_team_success(
     )
     assert response.endpoint_creation_task_id
     assert isinstance(response, UpdateModelEndpointV1Response)
+
+
+@pytest.mark.asyncio
+async def test_update_model_endpoint_use_case_raises_invalid_value_exception(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_2: ModelBundle,
+    model_endpoint_1: ModelEndpoint,
+    update_model_endpoint_request: UpdateModelEndpointV1Request,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_2)
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = UpdateModelEndpointByIdV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_endpoint_1.record.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+
+    request = update_model_endpoint_request.copy()
+    request.metadata = {CONVERTED_FROM_ARTIFACT_LIKE_KEY: False}
+    with pytest.raises(ObjectHasInvalidValueException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_model_endpoint_use_case_raises_resource_request_exception(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    model_bundle_2: ModelBundle,
+    model_bundle_4: ModelBundle,
+    model_bundle_6: ModelBundle,
+    model_bundle_triton_enhanced_runnable_image_0_cpu_None_memory_storage: ModelBundle,
+    model_endpoint_1: ModelEndpoint,
+    model_endpoint_2: ModelEndpoint,
+    update_model_endpoint_request: UpdateModelEndpointV1Request,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_bundle_repository.add_model_bundle(model_bundle_2)
+    fake_model_bundle_repository.add_model_bundle(model_bundle_4)
+    fake_model_bundle_repository.add_model_bundle(model_bundle_6)
+    fake_model_bundle_repository.add_model_bundle(
+        model_bundle_triton_enhanced_runnable_image_0_cpu_None_memory_storage
+    )
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_2)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = UpdateModelEndpointByIdV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_endpoint_1.record.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+
+    request = update_model_endpoint_request.copy()
+    request.cpus = -1
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.cpus = float("inf")
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.memory = "invalid_memory_amount"
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.memory = float("inf")
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.storage = "invalid_storage_amount"
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.storage = float("inf")
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    # specific to sync endpoint
+    request = update_model_endpoint_request.copy()
+    request.min_workers = 0
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_2.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.max_workers = 2**63
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.gpus = 0
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.gpu_type = None
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.gpu_type = "invalid_gpu_type"
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    instance_limits = REQUESTS_BY_GPU_TYPE[model_endpoint_1.infra_state.resource_state.gpu_type]
+
+    request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_1.id
+    # Test that request.cpus + FORWARDER_CPU_USAGE > instance_limits["cpus"] should fail
+    request.cpus = instance_limits["cpus"]
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_1.id
+    # Test that request.memory + FORWARDER_MEMORY_USAGE > instance_limits["memory"] should fail
+    request.memory = instance_limits["memory"]
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_1.id
+    # Test that request.storage + FORWARDER_STORAGE_USAGE > STORAGE_LIMIT should fail
+    request.storage = STORAGE_LIMIT
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_4.id
+    # Test that request.cpus + FORWARDER_CPU_USAGE > instance_limits["cpus"] should fail
+    request.cpus = instance_limits["cpus"]
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_4.id
+    # Test that request.memory + FORWARDER_MEMORY_USAGE > instance_limits["memory"] should fail
+    request.memory = instance_limits["memory"]
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_4.id
+    # Test that request.storage + FORWARDER_STORAGE_USAGE > STORAGE_LIMIT should fail
+    request.storage = STORAGE_LIMIT
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    # Test TritonEnhancedRunnableImageFlavor specific validation logic
+    request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_6.id
+    # TritonEnhancedRunnableImageFlavor requires gpu >= 1
+    request.gpus = 0.9
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_6.id
+    # TritonEnhancedRunnableImageFlavor requires gpu_type be specified
+    request.gpu_type = None
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_6.id
+    # Test that request.cpus + FORWARDER_CPU_USAGE + triton_num_cpu > instance_limits["cpu"] should fail
+    request.cpus = instance_limits["cpus"] - FORWARDER_CPU_USAGE
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_6.id
+    # Test that request.memory + FORWARDER_MEMORY_USAGE + triton_memory > instance_limits["memory"] should fail
+    request.memory = parse_mem_request(instance_limits["memory"]) - parse_mem_request(
+        FORWARDER_MEMORY_USAGE
+    )
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.model_bundle_id = model_bundle_6.id
+    # Test that request.storage + FORWARDER_STORAGE_USAGE + triton_storage > STORAGE_LIMIT should fail
+    request.storage = parse_mem_request(STORAGE_LIMIT) - parse_mem_request(FORWARDER_STORAGE_USAGE)
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    # Test triton_num_cpu >= 1
+    request.model_bundle_id = (
+        model_bundle_triton_enhanced_runnable_image_0_cpu_None_memory_storage.id
+    )
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
 
 
 @pytest.mark.asyncio
