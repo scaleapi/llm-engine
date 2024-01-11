@@ -17,7 +17,7 @@ from vllm.utils import random_uuid
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = "us-west-2"
 
-job_index = int(os.getenv("JOB_COMPLETION_INDEX"))
+job_index = int(os.getenv("JOB_COMPLETION_INDEX"), 0)
 
 
 def download_model(checkpoint_path, final_weights_folder):
