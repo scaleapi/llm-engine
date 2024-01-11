@@ -22,10 +22,20 @@ job_index = int(os.getenv("JOB_COMPLETION_INDEX"), 0)
 
 def download_model(checkpoint_path, final_weights_folder):
     s5cmd = f"./s5cmd --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-    result = subprocess.run(s5cmd, shell=True, capture_output=True, text=True)
-    print(result)
-    if result.returncode != 0:
-        raise Exception(f"Error downloading model weights: {result.stderr}")
+    process = subprocess.Popen(
+        s5cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    for line in process.stdout:
+        print(line)
+
+    process.wait()
+
+    if process.returncode != 0:
+        stderr_lines = []
+        for line in iter(process.stderr.readline, ""):
+            stderr_lines.append(line.strip())
+
+        raise Exception(f"Error downloading model weights: {stderr_lines}")
 
 
 def file_exists(path):

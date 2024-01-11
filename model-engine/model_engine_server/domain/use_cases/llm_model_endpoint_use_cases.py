@@ -2153,13 +2153,13 @@ class CreateBatchCompletionsUseCase:
                 cpus = "10"
                 gpus = 1
                 memory = "24Gi"
-                storage = "24Gi"
+                storage = "80Gi"
                 gpu_type = GpuType.NVIDIA_AMPERE_A10
             elif b_params <= 13:
                 cpus = "20"
                 gpus = 2
                 memory = "48Gi"
-                storage = "48Gi"
+                storage = "80Gi"
                 gpu_type = GpuType.NVIDIA_AMPERE_A10
             elif b_params <= 34:
                 cpus = "40"
@@ -2225,6 +2225,7 @@ class CreateBatchCompletionsUseCase:
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
         hardware = self.infer_hardware_from_model_name(request.model_config.model)
+        hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
         batch_bundle = await self.create_batch_job_bundle(user, request, hardware)
 
         validate_resource_requests(
@@ -2238,9 +2239,6 @@ class CreateBatchCompletionsUseCase:
 
         if request.max_runtime_sec is None or request.max_runtime_sec < 1:
             raise ObjectHasInvalidValueException("max_runtime_sec must be a positive integer.")
-
-        logger.info(request.dict())
-        logger.info(json.dumps(request.dict(), indent=4))
 
         job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
             created_by=user.user_id,

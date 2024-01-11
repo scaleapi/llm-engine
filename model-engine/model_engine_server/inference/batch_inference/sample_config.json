@@ -4,7 +4,8 @@
     "model_config":{
         "model":"llama-2-7b",
         "checkpoint_path":"s3://scale-ml/models/llama-2-hf/llama-2-7b/",
-        "num_shards":1
+        "num_shards": 1,
+        "labels": {"team": "my_team"}
     },
     "data_parallelism":2
 }

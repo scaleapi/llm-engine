@@ -406,6 +406,11 @@ class CreateBatchCompletionsModelConfig(BaseModel):
     """
     Labels to attach to the batch inference job.
     """
+    num_shards: Optional[int] = 1
+    """
+    Suggested number of shards to distribute the model. When not specified, will infer the number of shards based on model config.
+    System may decide to use a different number than the given value.
+    """
     quantize: Optional[Quantization] = None
     """
     Whether to quantize the model.
