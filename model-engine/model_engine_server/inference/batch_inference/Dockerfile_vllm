@@ -1,12 +1,12 @@
 FROM nvcr.io/nvidia/pytorch:23.09-py3
 
 RUN pip uninstall torch -y
-COPY requirements.txt /workspace/requirements.txt
+COPY model-engine/model_engine_server/inference/batch_inference/requirements.txt /workspace/requirements.txt
 RUN pip install -r requirements.txt
 
 RUN wget https://github.com/peak/s5cmd/releases/download/v2.2.1/s5cmd_2.2.1_Linux-64bit.tar.gz
 RUN tar -xvzf s5cmd_2.2.1_Linux-64bit.tar.gz
 
-COPY model_engine_server /workspace/model_engine_server
-RUN pip install -e /workspace/model_engine_server
-COPY model_engine_server/inference/batch_inference/vllm_batch.py /workspace/vllm_batch.py
+COPY model-engine /workspace/model-engine
+RUN pip install -e /workspace/model-engine
+COPY model-engine/model_engine_server/inference/batch_inference/vllm_batch.py /workspace/vllm_batch.py
