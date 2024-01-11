@@ -2222,7 +2222,11 @@ class CreateBatchCompletionsUseCase:
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
         hardware = self.infer_hardware_from_model_name(request.model_config.model)
-        hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
+        # Reconcile gpus count with num_shards from request
+        if request.model_config.num_shards:
+            hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
+        request.model_config.num_shards = hardware.gpus
+
         batch_bundle = await self.create_batch_job_bundle(user, request, hardware)
 
         validate_resource_requests(
