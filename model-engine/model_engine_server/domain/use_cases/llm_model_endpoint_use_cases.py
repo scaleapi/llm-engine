@@ -2130,12 +2130,10 @@ class CreateBatchCompletionsUseCase:
     def __init__(
         self,
         docker_image_batch_job_gateway: DockerImageBatchJobGateway,
-        docker_image_batch_job_bundle_repository: DockerImageBatchJobBundleRepository,
         docker_repository: DockerRepository,
         docker_image_batch_job_bundle_repo: DockerImageBatchJobBundleRepository,
     ):
         self.docker_image_batch_job_gateway = docker_image_batch_job_gateway
-        self.docker_image_batch_job_bundle_repository = docker_image_batch_job_bundle_repository
         self.docker_repository = docker_repository
         self.docker_image_batch_job_bundle_repo = docker_image_batch_job_bundle_repo
 
@@ -2150,25 +2148,26 @@ class CreateBatchCompletionsUseCase:
             gpu_type = GpuType.NVIDIA_AMPERE_A100E
         else:
             numbers = re.findall(r"\d+", model_name)
-            if numbers[-1] <= 7:
+            b_params = int(numbers[-1])
+            if b_params <= 7:
                 cpus = "10"
                 gpus = 1
                 memory = "24Gi"
                 storage = "24Gi"
                 gpu_type = GpuType.NVIDIA_AMPERE_A10
-            elif numbers[-1] <= 13:
+            elif b_params <= 13:
                 cpus = "20"
                 gpus = 2
                 memory = "48Gi"
                 storage = "48Gi"
                 gpu_type = GpuType.NVIDIA_AMPERE_A10
-            elif numbers[-1] <= 34:
+            elif b_params <= 34:
                 cpus = "40"
                 gpus = 4
                 memory = "96Gi"
                 storage = "96Gi"
                 gpu_type = GpuType.NVIDIA_AMPERE_A10
-            elif numbers[-1] <= 70:
+            elif b_params <= 70:
                 cpus = "20"
                 gpus = 2
                 memory = "160Gi"
@@ -2223,7 +2222,7 @@ class CreateBatchCompletionsUseCase:
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
         hardware = self.infer_hardware_from_model_name(request.model_config.model)
-        batch_bundle = await self.create_batch_job_bundle(request, hardware)
+        batch_bundle = await self.create_batch_job_bundle(user, request, hardware)
 
         self.create_docker_image_batch_job(
             user=user,

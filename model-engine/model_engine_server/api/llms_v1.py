@@ -18,6 +18,8 @@ from model_engine_server.common.dtos.llms import (
     CompletionStreamV1Response,
     CompletionSyncV1Request,
     CompletionSyncV1Response,
+    CreateBatchCompletionsRequest,
+    CreateBatchCompletionsResponse,
     CreateFineTuneRequest,
     CreateFineTuneResponse,
     CreateLLMModelEndpointV1Request,
@@ -35,8 +37,6 @@ from model_engine_server.common.dtos.llms import (
     TokenUsage,
     UpdateLLMModelEndpointV1Request,
     UpdateLLMModelEndpointV1Response,
-    CreateBatchCompletionsRequest,
-    CreateBatchCompletionsResponse,
 )
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.core.auth.authentication_repository import User
@@ -74,6 +74,7 @@ from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
 from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
+    CreateBatchCompletionsUseCase,
     CreateLLMModelBundleV1UseCase,
     CreateLLMModelEndpointV1UseCase,
     DeleteLLMEndpointByNameUseCase,
@@ -81,7 +82,6 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     ListLLMModelEndpointsV1UseCase,
     ModelDownloadV1UseCase,
     UpdateLLMModelEndpointV1UseCase,
-    CreateBatchCompletionsUseCase,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 from sse_starlette.sse import EventSourceResponse
@@ -576,6 +576,8 @@ async def create_batch_completions(
 ) -> CreateBatchCompletionsResponse:
     logger.info(f"POST /batch-completions with {request} for {auth}")
     use_case = CreateBatchCompletionsUseCase(
-        llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+        docker_image_batch_job_gateway=external_interfaces.docker_image_batch_job_gateway,
+        docker_repository=external_interfaces.docker_repository,
+        docker_image_batch_job_bundle_repo=external_interfaces.docker_image_batch_job_bundle_repository,
     )
     return await use_case.execute(user=auth, request=request)
