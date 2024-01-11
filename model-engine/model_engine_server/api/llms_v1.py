@@ -35,6 +35,8 @@ from model_engine_server.common.dtos.llms import (
     TokenUsage,
     UpdateLLMModelEndpointV1Request,
     UpdateLLMModelEndpointV1Response,
+    CreateBatchCompletionsRequest,
+    CreateBatchCompletionsResponse,
 )
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.core.auth.authentication_repository import User
@@ -79,6 +81,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     ListLLMModelEndpointsV1UseCase,
     ModelDownloadV1UseCase,
     UpdateLLMModelEndpointV1UseCase,
+    CreateBatchCompletionsUseCase,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 from sse_starlette.sse import EventSourceResponse
@@ -563,3 +566,16 @@ async def delete_llm_model_endpoint(
             status_code=500,
             detail="deletion of endpoint failed.",
         ) from exc
+
+
+@llm_router_v1.post("/batch-completions", response_model=CreateBatchCompletionsResponse)
+async def create_batch_completions(
+    request: CreateBatchCompletionsRequest,
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
+) -> CreateBatchCompletionsResponse:
+    logger.info(f"POST /batch-completions with {request} for {auth}")
+    use_case = CreateBatchCompletionsUseCase(
+        llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+    )
+    return await use_case.execute(user=auth, request=request)

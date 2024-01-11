@@ -145,6 +145,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
         mount_location: Optional[str],
         annotations: Optional[Dict[str, str]] = None,
         override_job_max_runtime_s: Optional[int] = None,
+        parallelism: Optional[int] = 1,
     ) -> str:
         await maybe_load_kube_config()
 
@@ -161,6 +162,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
             labels=labels,
             annotations=annotations,
             override_job_max_runtime_s=override_job_max_runtime_s,
+            parallelism=parallelism,
         )
 
         batch_client = get_kubernetes_batch_client()
@@ -191,6 +193,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
         labels: Dict[str, str],
         annotations: Optional[Dict[str, str]] = None,
         override_job_max_runtime_s: Optional[int] = None,
+        num_workers: Optional[int] = 1,
     ) -> Tuple[str, Dict[str, Any]]:
         job_id = _get_job_id()
         job_name = _k8s_job_name_from_id(job_id)  # why do we even have job_name and id
@@ -237,6 +240,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
                 GPU_TYPE=resource_requests.gpu_type.value,
                 GPUS=resource_requests.gpus or 1,
                 REQUEST_ID=LoggerTagManager.get(LoggerTagKey.REQUEST_ID) or "",
+                BATCH_JOB_NUM_WORKERS=num_workers,
             )
         else:
             resource_key = "docker-image-batch-job-cpu.yaml"
@@ -266,6 +270,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
                 FILE_CONTENTS_B64ENCODED=job_config_b64encoded,
                 AWS_ROLE=infra_config().profile_ml_inference_worker,
                 REQUEST_ID=LoggerTagManager.get(LoggerTagKey.REQUEST_ID) or "",
+                BATCH_JOB_NUM_WORKERS=num_workers,
             )
 
         resource_spec = load_k8s_yaml(resource_key, substitution_kwargs)

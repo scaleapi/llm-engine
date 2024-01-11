@@ -30,8 +30,8 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     # LLM specific fields
     model_name: str
     source: LLMSource = LLMSource.HUGGING_FACE
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.DEEPSPEED
-    inference_framework_image_tag: str
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM
+    inference_framework_image_tag: str = "latest"
     num_shards: int = 1
     """
     Number of shards to distribute the model onto GPUs.
@@ -361,7 +361,7 @@ class DeleteLLMEndpointResponse(BaseModel):
     deleted: bool
 
 
-class BatchCompletionsRequestContent(BaseModel):
+class CreateBatchCompletionsRequestContent(BaseModel):
     prompts: List[str]
     max_new_tokens: int
     temperature: float = Field(ge=0.0, le=1.0)
@@ -396,19 +396,19 @@ class BatchCompletionsRequestContent(BaseModel):
     """
 
 
-class BatchCompletionsModelConfig(BaseModel):
+class CreateBatchCompletionsModelConfig(BaseModel):
     model: str
     checkpoint_path: Optional[str] = None
     """
     Path to the checkpoint to load the model from.
     """
+    labels: Dict[str, str]
+    """
+    Labels to attach to the batch inference job.
+    """
     quantize: Optional[Quantization] = None
     """
     Whether to quantize the model.
-    """
-    num_shards: Optional[int] = None
-    """
-    Number of shards to distribute the model onto GPUs. When not provided, it will be inferred from the model name.
     """
     seed: Optional[int] = None
     """
@@ -416,7 +416,7 @@ class BatchCompletionsModelConfig(BaseModel):
     """
 
 
-class BatchCompletionsRequest(BaseModel):
+class CreateBatchCompletionsRequest(BaseModel):
     """
     Request object for batch completions.
     """
@@ -426,13 +426,32 @@ class BatchCompletionsRequest(BaseModel):
     """
     Path to the output file. The output file will be a JSON file of type List[CompletionOutput].
     """
-    content: Optional[BatchCompletionsRequestContent]
+    content: Optional[CreateBatchCompletionsRequestContent] = None
     """
     Either `input_data_path` or `content` needs to be provided.
     When input_data_path is provided, the input file should be a JSON file of type BatchCompletionsRequestContent.
     """
-    model_config: BatchCompletionsModelConfig
+    model_config: CreateBatchCompletionsModelConfig
+    """
+    Model configuration for the batch inference. Hardware configurations are inferred.
+    """
     data_parallelism: Optional[int] = 1
     """
     Number of replicas to run the batch inference. More replicas are slower to schedule but faster to inference.
     """
+    max_runtime_sec: Optional[int] = 24 * 3600
+    """
+    Maximum runtime of the batch inference in seconds. Default to one day.
+    """
+
+
+class CreateBatchCompletionsResponse(BaseModel):
+    job_id: str
+
+
+class GetBatchCompletionsResponse(BaseModel):
+    progress: float
+    """
+    Progress of the batch inference in percentage from 0 to 100.
+    """
+    finished: bool
