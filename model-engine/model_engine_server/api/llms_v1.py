@@ -25,6 +25,7 @@ from model_engine_server.common.dtos.llms import (
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
     DeleteLLMEndpointResponse,
+    GetBatchCompletionsResponse,
     GetFineTuneEventsResponse,
     GetFineTuneResponse,
     GetLLMModelEndpointV1Response,
@@ -581,3 +582,16 @@ async def create_batch_completions(
         docker_image_batch_job_bundle_repo=external_interfaces.docker_image_batch_job_bundle_repository,
     )
     return await use_case.execute(user=auth, request=request)
+
+
+# @llm_router_v1.get("/batch-completions/{job_id}", response_model=GetBatchCompletionsResponse)
+# async def create_batch_completions(
+#     job_id: str,
+#     auth: User = Depends(verify_authentication),
+#     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
+# ) -> CreateBatchCompletionsResponse:
+#     logger.info(f"POST /batch-completions with {request} for {auth}")
+#     use_case = GetBatchCompletionsUseCase(
+#         llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
+#     )
+#     return await use_case.execute(user=auth, job_id=job_id)

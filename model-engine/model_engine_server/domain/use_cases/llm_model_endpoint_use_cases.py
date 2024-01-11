@@ -2198,6 +2198,9 @@ class CreateBatchCompletionsUseCase:
 
         config_file_path = "/opt/config.json"
 
+        logger.info(request.dict())
+        logger.info(json.dumps(request.dict(), indent=4))
+
         batch_bundle = (
             await self.docker_image_batch_job_bundle_repo.create_docker_image_batch_job_bundle(
                 name=bundle_name,
@@ -2206,13 +2209,13 @@ class CreateBatchCompletionsUseCase:
                 image_repository=hmi_config.batch_infer_vllm_repository,
                 image_tag=image_tag,
                 command=["python", "vllm_batch.py"],
-                env={"CONFIG_FILE", config_file_path},
+                env={"CONFIG_FILE": config_file_path},
                 mount_location=config_file_path,
-                cpus=hardware.cpus,
-                memory=hardware.memory,
-                storage=hardware.storage,
+                cpus=str(hardware.cpus),
+                memory=str(hardware.memory),
+                storage=str(hardware.storage),
                 gpus=hardware.gpus,
-                gpu_type=hardware.gpu_type,
+                gpu_type=hardware.gpu_type.value,
                 public=False,
             )
         )
@@ -2223,12 +2226,6 @@ class CreateBatchCompletionsUseCase:
     ) -> CreateBatchCompletionsResponse:
         hardware = self.infer_hardware_from_model_name(request.model_config.model)
         batch_bundle = await self.create_batch_job_bundle(user, request, hardware)
-
-        self.create_docker_image_batch_job(
-            user=user,
-            request=request,
-            batch_bundle=batch_bundle,
-        )
 
         validate_resource_requests(
             bundle=batch_bundle,
@@ -2241,6 +2238,9 @@ class CreateBatchCompletionsUseCase:
 
         if request.max_runtime_sec is None or request.max_runtime_sec < 1:
             raise ObjectHasInvalidValueException("max_runtime_sec must be a positive integer.")
+
+        logger.info(request.dict())
+        logger.info(json.dumps(request.dict(), indent=4))
 
         job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
             created_by=user.user_id,
@@ -2257,3 +2257,24 @@ class CreateBatchCompletionsUseCase:
             num_workers=request.data_parallelism,
         )
         return CreateBatchCompletionsResponse(job_id=job_id)
+
+
+# class GetBatchCompletionsUseCase:
+#     def __init__(
+#         self,
+#         llm_fine_tune_events_repository: LLMFineTuneEventsRepository,
+#         llm_fine_tuning_service: LLMFineTuningService,
+#     ):
+#         self.llm_fine_tune_events_repository = llm_fine_tune_events_repository
+#         self.llm_fine_tuning_service = llm_fine_tuning_service
+
+#     async def execute(self, user: User, fine_tune_id: str) -> GetFineTuneEventsResponse:
+#         model_endpoint_name = await self.llm_fine_tuning_service.get_fine_tune_model_name_from_id(
+#             user.team_id, fine_tune_id
+#         )
+#         if model_endpoint_name is None:
+#             raise ObjectNotFoundException(f"Fine-tune with id {fine_tune_id} not found")
+#         events = await self.llm_fine_tune_events_repository.get_fine_tune_events(
+#             user_id=user.team_id, model_endpoint_name=model_endpoint_name
+#         )
+#         return GetFineTuneEventsResponse(events=events)

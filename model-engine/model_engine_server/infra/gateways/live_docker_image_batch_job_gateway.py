@@ -145,7 +145,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
         mount_location: Optional[str],
         annotations: Optional[Dict[str, str]] = None,
         override_job_max_runtime_s: Optional[int] = None,
-        parallelism: Optional[int] = 1,
+        num_workers: Optional[int] = 1,
     ) -> str:
         await maybe_load_kube_config()
 
@@ -162,7 +162,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
             labels=labels,
             annotations=annotations,
             override_job_max_runtime_s=override_job_max_runtime_s,
-            parallelism=parallelism,
+            num_workers=num_workers,
         )
 
         batch_client = get_kubernetes_batch_client()
@@ -341,6 +341,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
             completed_at=job.status.completion_time,
             status=status,
             annotations=annotations,
+            num_workers=job.spec.completions,
         )
 
     async def list_docker_image_batch_jobs(self, owner: str) -> List[DockerImageBatchJob]:
@@ -379,6 +380,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
                 status=_parse_job_status_from_k8s_obj(
                     job, pods_per_job[job.metadata.labels.get(LAUNCH_JOB_ID_LABEL_SELECTOR)]
                 ),
+                num_workers=job.spec.completions,
             )
             for job in jobs.items
         ]
