@@ -2198,9 +2198,6 @@ class CreateBatchCompletionsUseCase:
 
         config_file_path = "/opt/config.json"
 
-        logger.info(request.dict())
-        logger.info(json.dumps(request.dict(), indent=4))
-
         batch_bundle = (
             await self.docker_image_batch_job_bundle_repo.create_docker_image_batch_job_bundle(
                 name=bundle_name,

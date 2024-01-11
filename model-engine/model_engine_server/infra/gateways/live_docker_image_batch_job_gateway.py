@@ -164,6 +164,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
             override_job_max_runtime_s=override_job_max_runtime_s,
             num_workers=num_workers,
         )
+        logger.info(resource_spec)
 
         batch_client = get_kubernetes_batch_client()
 
