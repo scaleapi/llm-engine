@@ -21,7 +21,6 @@ from model_engine_server.common.dtos.llms import (
     CompletionStreamV1Response,
     CompletionSyncV1Request,
     CompletionSyncV1Response,
-    CreateBatchCompletionsModelConfig,
     CreateBatchCompletionsRequest,
     CreateBatchCompletionsResponse,
     CreateLLMModelEndpointV1Request,

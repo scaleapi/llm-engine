@@ -25,7 +25,6 @@ from model_engine_server.common.dtos.llms import (
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
     DeleteLLMEndpointResponse,
-    GetBatchCompletionsResponse,
     GetFineTuneEventsResponse,
     GetFineTuneResponse,
     GetLLMModelEndpointV1Response,
