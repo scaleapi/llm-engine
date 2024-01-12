@@ -1,5 +1,8 @@
 FROM nvcr.io/nvidia/pytorch:23.09-py3
 
+RUN apt-get update && \
+    apt-get install -y dumb-init
+
 RUN pip uninstall torch -y
 COPY model-engine/model_engine_server/inference/batch_inference/requirements.txt /workspace/requirements.txt
 RUN pip install -r requirements.txt
