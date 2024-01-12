@@ -3,7 +3,9 @@ import json
 import os
 import subprocess
 import time
+from urllib.parse import urlparse
 
+import boto3
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
     CreateBatchCompletionsRequest,
@@ -14,16 +16,20 @@ from smart_open import open
 from vllm import AsyncEngineArgs, AsyncLLMEngine, SamplingParams
 from vllm.utils import random_uuid
 
-os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE")
-
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = "us-west-2"
+
+os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE")
+
+session = boto3.Session(profile_name=os.getenv("S3_WRITE_AWS_PROFILE"))
+s3 = session.client("s3", region_name=AWS_REGION)
+
 
 job_index = int(os.getenv("JOB_COMPLETION_INDEX"), 0)
 
 
 def download_model(checkpoint_path, final_weights_folder):
-    s5cmd = f"./s5cmd --numworkers 512 cp --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+    s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
     process = subprocess.Popen(
         s5cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
     )
@@ -46,6 +52,18 @@ def file_exists(path):
             return True
     except FileNotFoundError:
         return False
+
+
+def parse_s3_url(s3_url):
+    parsed_url = urlparse(s3_url)
+
+    if parsed_url.scheme != "s3":
+        raise ValueError(f'The URL scheme is not "s3": {s3_url}')
+
+    bucket = parsed_url.netloc
+    key = parsed_url.path.lstrip("/")
+
+    return bucket, key
 
 
 def wait_for_all_chunks(request):
@@ -78,6 +96,15 @@ def combine_all_chunks(request):
                 f.write(chunk_data[1:-1])  # Remove leading and trailing brackets
         f.write("]")
     print("Chunks combined")
+
+
+def delete_s3_chunks(request):
+    print("Deleting S3 chunks...")
+    for i in range(request.data_parallelism):
+        chunk_file = f"{request.output_data_path}.{i}"
+        bucket, key = parse_s3_url(chunk_file)
+        s3.delete_object(Bucket=bucket, Key=key)
+    print("Chunks deleted")
 
 
 async def batch_inference():
@@ -160,6 +187,8 @@ async def batch_inference():
         if job_index == 0:
             wait_for_all_chunks(request)
             combine_all_chunks(request)
+            if request.output_data_path.startswith("s3://"):
+                delete_s3_chunks(request)
 
 
 if __name__ == "__main__":
