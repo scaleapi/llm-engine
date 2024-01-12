@@ -3,7 +3,7 @@
     "output_data_path":"./sample_output.json",
     "model_config":{
         "model":"llama-2-7b",
-        "checkpoint_path":"s3://scale-ml/models/llama-2-hf/llama-2-7b/",
+        "checkpoint_path":"my_path",
         "num_shards": 1,
         "labels": {"team": "my_team"}
     },
