@@ -1436,12 +1436,15 @@ class FakeStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
 
 
 class FakeSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
-    def __init__(self):
-        self.response = SyncEndpointPredictV1Response(
-            status=TaskStatus.SUCCESS,
-            result=None,
-            traceback=None,
-        )
+    def __init__(self, fake_sync_inference_content=None):
+        if not fake_sync_inference_content:
+            self.response = SyncEndpointPredictV1Response(
+                status=TaskStatus.SUCCESS,
+                result=None,
+                traceback=None,
+            )
+        else:
+            self.response = fake_sync_inference_content
 
     async def predict(
         self, topic: str, predict_request: EndpointPredictV1Request
@@ -2113,6 +2116,7 @@ def get_repositories_generator_wrapper():
         fake_file_storage_gateway_contents,
         fake_trigger_repository_contents,
         fake_file_system_gateway_contents,
+        fake_sync_inference_content,
     ):
         def get_test_repositories() -> Iterator[ExternalInterfaces]:
             fake_file_system_gateway = FakeFilesystemGateway()
@@ -2133,7 +2137,9 @@ def get_repositories_generator_wrapper():
             streaming_model_endpoint_inference_gateway = (
                 FakeStreamingModelEndpointInferenceGateway()
             )
-            sync_model_endpoint_inference_gateway = FakeSyncModelEndpointInferenceGateway()
+            sync_model_endpoint_inference_gateway = FakeSyncModelEndpointInferenceGateway(
+                fake_sync_inference_content
+            )
             inference_autoscaling_metrics_gateway = FakeInferenceAutoscalingMetricsGateway()
             model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
                 filesystem_gateway=FakeFilesystemGateway(),
@@ -3586,7 +3592,7 @@ def llm_model_endpoint_sync(
                 "_llm": {
                     "model_name": "llama-7b",
                     "source": "hugging_face",
-                    "inference_framework": "deepspeed",
+                    "inference_framework": "vllm",
                     "inference_framework_image_tag": "123",
                     "num_shards": 4,
                 }
@@ -3648,7 +3654,7 @@ def llm_model_endpoint_sync(
         "model_name": "llama-7b",
         "source": "hugging_face",
         "status": "READY",
-        "inference_framework": "deepspeed",
+        "inference_framework": "vllm",
         "inference_framework_image_tag": "123",
         "num_shards": 4,
         "spec": {
@@ -3661,7 +3667,7 @@ def llm_model_endpoint_sync(
                 "_llm": {
                     "model_name": "llama-7b",
                     "source": "hugging_face",
-                    "inference_framework": "deepspeed",
+                    "inference_framework": "vllm",
                     "inference_framework_image_tag": "123",
                     "num_shards": 4,
                 }
@@ -3794,6 +3800,270 @@ def llm_model_endpoint_sync_tgi(
                     "model_name": "llama-7b",
                     "source": "hugging_face",
                     "inference_framework": "text_generation_inference",
+                    "inference_framework_image_tag": "0.9.4",
+                    "num_shards": 4,
+                }
+            },
+            "bundle_name": "test_model_bundle_name_1",
+            "status": "READY",
+            "post_inference_hooks": ["callback"],
+            "default_callback_url": "http://www.example.com",
+            "default_callback_auth": {
+                "kind": "basic",
+                "username": "test_username",
+                "password": "test_password",
+            },
+            "labels": {},
+            "aws_role": "test_aws_role",
+            "results_s3_bucket": "test_s3_bucket",
+            "created_by": test_api_key,
+            "created_at": "2022-01-03T00:00:00",
+            "last_updated_at": "2022-01-03T00:00:00",
+            "deployment_state": {
+                "min_workers": 1,
+                "max_workers": 3,
+                "per_worker": 2,
+                "available_workers": 1,
+                "unavailable_workers": 1,
+            },
+            "resource_state": {
+                "cpus": "1",
+                "gpus": 1,
+                "memory": "1G",
+                "gpu_type": "nvidia-tesla-t4",
+                "storage": "10G",
+                "optimize_costs": True,
+            },
+            "num_queued_items": 1,
+            "public_inference": True,
+        },
+    }
+    return model_endpoint, model_endpoint_json
+
+
+@pytest.fixture
+def llm_model_endpoint_sync_lightllm(
+    test_api_key: str, model_bundle_1: ModelBundle
+) -> Tuple[ModelEndpoint, Any]:
+    model_endpoint = ModelEndpoint(
+        record=ModelEndpointRecord(
+            id="test_llm_model_endpoint_id_2",
+            name="test_llm_model_endpoint_name_1",
+            created_by=test_api_key,
+            created_at=datetime(2022, 1, 3),
+            last_updated_at=datetime(2022, 1, 3),
+            metadata={
+                "_llm": {
+                    "model_name": "llama-7b",
+                    "source": "hugging_face",
+                    "inference_framework": "lightllm",
+                    "inference_framework_image_tag": "0.9.4",
+                    "num_shards": 4,
+                }
+            },
+            creation_task_id="test_creation_task_id",
+            endpoint_type=ModelEndpointType.SYNC,
+            destination="test_destination",
+            status=ModelEndpointStatus.READY,
+            current_model_bundle=model_bundle_1,
+            owner=test_api_key,
+            public_inference=True,
+        ),
+        infra_state=ModelEndpointInfraState(
+            deployment_name=f"{test_api_key}-test_llm_model_endpoint_name_1",
+            aws_role="test_aws_role",
+            results_s3_bucket="test_s3_bucket",
+            child_fn_info=None,
+            labels={},
+            prewarm=True,
+            high_priority=False,
+            deployment_state=ModelEndpointDeploymentState(
+                min_workers=1,
+                max_workers=3,
+                per_worker=2,
+                available_workers=1,
+                unavailable_workers=1,
+            ),
+            resource_state=ModelEndpointResourceState(
+                cpus=1,
+                gpus=1,
+                memory="1G",
+                gpu_type=GpuType.NVIDIA_TESLA_T4,
+                storage="10G",
+                optimize_costs=True,
+            ),
+            user_config_state=ModelEndpointUserConfigState(
+                app_config=model_bundle_1.app_config,
+                endpoint_config=ModelEndpointConfig(
+                    bundle_name=model_bundle_1.name,
+                    endpoint_name="test_llm_model_endpoint_name_1",
+                    post_inference_hooks=["callback"],
+                    default_callback_url="http://www.example.com",
+                    default_callback_auth=CallbackAuth(
+                        __root__=CallbackBasicAuth(
+                            kind="basic",
+                            username="test_username",
+                            password="test_password",
+                        ),
+                    ),
+                ),
+            ),
+            num_queued_items=1,
+            image="test_image",
+        ),
+    )
+    model_endpoint_json: Dict[str, Any] = {
+        "id": "test_llm_model_endpoint_id_2",
+        "name": "test_llm_model_endpoint_name_1",
+        "model_name": "llama-7b",
+        "source": "hugging_face",
+        "status": "READY",
+        "inference_framework": "lightllm",
+        "inference_framework_image_tag": "0.9.4",
+        "num_shards": 4,
+        "spec": {
+            "id": "test_llm_model_endpoint_id_2",
+            "name": "test_llm_model_endpoint_name_1",
+            "endpoint_type": "sync",
+            "destination": "test_destination",
+            "deployment_name": f"{test_api_key}-test_llm_model_endpoint_name_1",
+            "metadata": {
+                "_llm": {
+                    "model_name": "llama-7b",
+                    "source": "hugging_face",
+                    "inference_framework": "lightllm",
+                    "inference_framework_image_tag": "0.9.4",
+                    "num_shards": 4,
+                }
+            },
+            "bundle_name": "test_model_bundle_name_1",
+            "status": "READY",
+            "post_inference_hooks": ["callback"],
+            "default_callback_url": "http://www.example.com",
+            "default_callback_auth": {
+                "kind": "basic",
+                "username": "test_username",
+                "password": "test_password",
+            },
+            "labels": {},
+            "aws_role": "test_aws_role",
+            "results_s3_bucket": "test_s3_bucket",
+            "created_by": test_api_key,
+            "created_at": "2022-01-03T00:00:00",
+            "last_updated_at": "2022-01-03T00:00:00",
+            "deployment_state": {
+                "min_workers": 1,
+                "max_workers": 3,
+                "per_worker": 2,
+                "available_workers": 1,
+                "unavailable_workers": 1,
+            },
+            "resource_state": {
+                "cpus": "1",
+                "gpus": 1,
+                "memory": "1G",
+                "gpu_type": "nvidia-tesla-t4",
+                "storage": "10G",
+                "optimize_costs": True,
+            },
+            "num_queued_items": 1,
+            "public_inference": True,
+        },
+    }
+    return model_endpoint, model_endpoint_json
+
+
+@pytest.fixture
+def llm_model_endpoint_sync_trt_llm(
+    test_api_key: str, model_bundle_1: ModelBundle
+) -> Tuple[ModelEndpoint, Any]:
+    model_endpoint = ModelEndpoint(
+        record=ModelEndpointRecord(
+            id="test_llm_model_endpoint_id_2",
+            name="test_llm_model_endpoint_name_1",
+            created_by=test_api_key,
+            created_at=datetime(2022, 1, 3),
+            last_updated_at=datetime(2022, 1, 3),
+            metadata={
+                "_llm": {
+                    "model_name": "llama-7b",
+                    "source": "hugging_face",
+                    "inference_framework": "tensorrt_llm",
+                    "inference_framework_image_tag": "0.9.4",
+                    "num_shards": 4,
+                }
+            },
+            creation_task_id="test_creation_task_id",
+            endpoint_type=ModelEndpointType.SYNC,
+            destination="test_destination",
+            status=ModelEndpointStatus.READY,
+            current_model_bundle=model_bundle_1,
+            owner=test_api_key,
+            public_inference=True,
+        ),
+        infra_state=ModelEndpointInfraState(
+            deployment_name=f"{test_api_key}-test_llm_model_endpoint_name_1",
+            aws_role="test_aws_role",
+            results_s3_bucket="test_s3_bucket",
+            child_fn_info=None,
+            labels={},
+            prewarm=True,
+            high_priority=False,
+            deployment_state=ModelEndpointDeploymentState(
+                min_workers=1,
+                max_workers=3,
+                per_worker=2,
+                available_workers=1,
+                unavailable_workers=1,
+            ),
+            resource_state=ModelEndpointResourceState(
+                cpus=1,
+                gpus=1,
+                memory="1G",
+                gpu_type=GpuType.NVIDIA_TESLA_T4,
+                storage="10G",
+                optimize_costs=True,
+            ),
+            user_config_state=ModelEndpointUserConfigState(
+                app_config=model_bundle_1.app_config,
+                endpoint_config=ModelEndpointConfig(
+                    bundle_name=model_bundle_1.name,
+                    endpoint_name="test_llm_model_endpoint_name_1",
+                    post_inference_hooks=["callback"],
+                    default_callback_url="http://www.example.com",
+                    default_callback_auth=CallbackAuth(
+                        __root__=CallbackBasicAuth(
+                            kind="basic",
+                            username="test_username",
+                            password="test_password",
+                        ),
+                    ),
+                ),
+            ),
+            num_queued_items=1,
+            image="test_image",
+        ),
+    )
+    model_endpoint_json: Dict[str, Any] = {
+        "id": "test_llm_model_endpoint_id_2",
+        "name": "test_llm_model_endpoint_name_1",
+        "model_name": "llama-7b",
+        "source": "hugging_face",
+        "status": "READY",
+        "inference_framework": "tensorrt_llm",
+        "inference_framework_image_tag": "0.9.4",
+        "num_shards": 4,
+        "spec": {
+            "id": "test_llm_model_endpoint_id_2",
+            "name": "test_llm_model_endpoint_name_1",
+            "endpoint_type": "sync",
+            "destination": "test_destination",
+            "deployment_name": f"{test_api_key}-test_llm_model_endpoint_name_1",
+            "metadata": {
+                "_llm": {
+                    "model_name": "llama-7b",
+                    "source": "hugging_face",
+                    "inference_framework": "tensorrt_llm",
                     "inference_framework_image_tag": "0.9.4",
                     "num_shards": 4,
                 }

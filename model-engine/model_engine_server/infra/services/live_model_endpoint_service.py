@@ -312,7 +312,7 @@ class LiveModelEndpointService(ModelEndpointService):
 
             if record.current_model_bundle.id != model_bundle_id:
                 if metadata is None:
-                    metadata = {}
+                    metadata = record.metadata if record.metadata is not None else {}
                 # MODEL_BUNDLE_CHANGED_KEY will be checked during _create_deployment in K8SEndpointResourceDelegate
                 metadata[MODEL_BUNDLE_CHANGED_KEY] = True
 

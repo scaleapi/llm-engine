@@ -26,6 +26,7 @@ from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
+    EndpointInfraStateNotFound,
     EndpointLabelsException,
     EndpointResourceInvalidRequestException,
     ExistingEndpointOperationInProgressException,
@@ -67,14 +68,11 @@ async def create_model_endpoint(
             status_code=400,
             detail="The specified model endpoint already exists.",
         ) from exc
-    except EndpointLabelsException as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=str(exc),
-        ) from exc
-    except ObjectHasInvalidValueException as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except EndpointResourceInvalidRequestException as exc:
+    except (
+        EndpointLabelsException,
+        ObjectHasInvalidValueException,
+        EndpointResourceInvalidRequestException,
+    ) as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),
@@ -148,7 +146,11 @@ async def update_model_endpoint(
         return await use_case.execute(
             user=auth, model_endpoint_id=model_endpoint_id, request=request
         )
-    except EndpointLabelsException as exc:
+    except (
+        EndpointLabelsException,
+        ObjectHasInvalidValueException,
+        EndpointResourceInvalidRequestException,
+    ) as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),
@@ -162,6 +164,11 @@ async def update_model_endpoint(
         raise HTTPException(
             status_code=409,
             detail="Existing operation on endpoint in progress, try again later.",
+        ) from exc
+    except EndpointInfraStateNotFound as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Endpoint infra state not found, try again later.",
         ) from exc
 
 

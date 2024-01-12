@@ -54,6 +54,7 @@ s3_file_llm_fine_tune_repository: "s3://model-engine-integration-tests/fine_tune
 
 dd_trace_enabled: false
 istio_enabled: true
+sensitive_log_mode: false
 tgi_repository: "text-generation-inference"
 vllm_repository: "vllm"
 lightllm_repository: "lightllm"
