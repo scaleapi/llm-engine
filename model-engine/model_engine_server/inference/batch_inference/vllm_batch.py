@@ -14,6 +14,8 @@ from smart_open import open
 from vllm import AsyncEngineArgs, AsyncLLMEngine, SamplingParams
 from vllm.utils import random_uuid
 
+os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE")
+
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = "us-west-2"
 
