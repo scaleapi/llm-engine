@@ -231,3 +231,25 @@ def test_completion_stream_endpoint_not_found_returns_404(
 
     for message in response_1:
         assert "404" in message.decode("utf-8")
+
+
+def test_create_batch_completions_success(
+    create_batch_completions_request: Dict[str, Any],
+    test_api_key: str,
+    get_test_client_wrapper,
+):
+    client = get_test_client_wrapper(
+        fake_docker_repository_image_always_exists=True,
+        fake_model_bundle_repository_contents={},
+        fake_model_endpoint_record_repository_contents={},
+        fake_model_endpoint_infra_gateway_contents={},
+        fake_batch_job_record_repository_contents={},
+        fake_batch_job_progress_gateway_contents={},
+        fake_docker_image_batch_job_bundle_repository_contents={},
+    )
+    response_1 = client.post(
+        "/v1/llm/batch-completions",
+        auth=(test_api_key, ""),
+        json=create_batch_completions_request,
+    )
+    assert response_1.status_code == 200

@@ -518,7 +518,7 @@ class CreateLLMModelBundleV1UseCase:
         base_path = checkpoint_path.split("/")[-1]
         if base_path.endswith(".tar"):
             # If the checkpoint file is a tar file, extract it into final_weights_folder
-            subcommands.append(
+            subcommands.extend(
                 [
                     f"{s5cmd} cp {checkpoint_path} .",
                     f"mkdir -p {final_weights_folder}",
@@ -2138,6 +2138,50 @@ class ModelDownloadV1UseCase:
         return ModelDownloadResponse(urls=urls)
 
 
+def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJobResourceRequests:
+    if "mixtral-8x7b" in model_name:
+        cpus = "20"
+        gpus = 2
+        memory = "160Gi"
+        storage = "160Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    else:
+        numbers = re.findall(r"\d+", model_name)
+        b_params = int(numbers[-1])
+        if b_params <= 7:
+            cpus = "10"
+            gpus = 1
+            memory = "24Gi"
+            storage = "80Gi"
+            gpu_type = GpuType.NVIDIA_AMPERE_A10
+        elif b_params <= 13:
+            cpus = "20"
+            gpus = 2
+            memory = "48Gi"
+            storage = "80Gi"
+            gpu_type = GpuType.NVIDIA_AMPERE_A10
+        elif b_params <= 34:
+            cpus = "40"
+            gpus = 4
+            memory = "96Gi"
+            storage = "96Gi"
+            gpu_type = GpuType.NVIDIA_AMPERE_A10
+        elif b_params <= 70:
+            cpus = "20"
+            gpus = 2
+            memory = "160Gi"
+            storage = "160Gi"
+            gpu_type = GpuType.NVIDIA_AMPERE_A100E
+        else:
+            raise ObjectHasInvalidValueException(
+                f"Model {model_name} is not supported for batch completions."
+            )
+
+    return CreateDockerImageBatchJobResourceRequests(
+        cpus=cpus, gpus=gpus, memory=memory, storage=storage, gpu_type=gpu_type
+    )
+
+
 class CreateBatchCompletionsUseCase:
     def __init__(
         self,
@@ -2148,51 +2192,6 @@ class CreateBatchCompletionsUseCase:
         self.docker_image_batch_job_gateway = docker_image_batch_job_gateway
         self.docker_repository = docker_repository
         self.docker_image_batch_job_bundle_repo = docker_image_batch_job_bundle_repo
-
-    def infer_hardware_from_model_name(
-        self, model_name: str
-    ) -> CreateDockerImageBatchJobResourceRequests:
-        if "mixtral-8x7b" in model_name:
-            cpus = "20"
-            gpus = 2
-            memory = "160Gi"
-            storage = "160Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A100E
-        else:
-            numbers = re.findall(r"\d+", model_name)
-            b_params = int(numbers[-1])
-            if b_params <= 7:
-                cpus = "10"
-                gpus = 1
-                memory = "24Gi"
-                storage = "80Gi"
-                gpu_type = GpuType.NVIDIA_AMPERE_A10
-            elif b_params <= 13:
-                cpus = "20"
-                gpus = 2
-                memory = "48Gi"
-                storage = "80Gi"
-                gpu_type = GpuType.NVIDIA_AMPERE_A10
-            elif b_params <= 34:
-                cpus = "40"
-                gpus = 4
-                memory = "96Gi"
-                storage = "96Gi"
-                gpu_type = GpuType.NVIDIA_AMPERE_A10
-            elif b_params <= 70:
-                cpus = "20"
-                gpus = 2
-                memory = "160Gi"
-                storage = "160Gi"
-                gpu_type = GpuType.NVIDIA_AMPERE_A100E
-            else:
-                raise ObjectHasInvalidValueException(
-                    f"Model {model_name} is not supported for batch completions."
-                )
-
-        return CreateDockerImageBatchJobResourceRequests(
-            cpus=cpus, gpus=gpus, memory=memory, storage=storage, gpu_type=gpu_type
-        )
 
     async def create_batch_job_bundle(
         self,
@@ -2205,7 +2204,7 @@ class CreateBatchCompletionsUseCase:
         )
 
         image_tag = self.docker_repository.get_latest_image_tag(
-            hmi_config.batch_infer_vllm_repository
+            hmi_config.batch_inference_vllm_repository
         )
 
         config_file_path = "/opt/config.json"
@@ -2215,7 +2214,7 @@ class CreateBatchCompletionsUseCase:
                 name=bundle_name,
                 created_by=user.user_id,
                 owner=user.team_id,
-                image_repository=hmi_config.batch_infer_vllm_repository,
+                image_repository=hmi_config.batch_inference_vllm_repository,
                 image_tag=image_tag,
                 command=[
                     "dumb-init",
@@ -2239,7 +2238,7 @@ class CreateBatchCompletionsUseCase:
     async def execute(
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
-        hardware = self.infer_hardware_from_model_name(request.model_config.model)
+        hardware = infer_hardware_from_model_name(request.model_config.model)
         # Reconcile gpus count with num_shards from request
         if request.model_config.num_shards:
             hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
@@ -2274,24 +2273,3 @@ class CreateBatchCompletionsUseCase:
             num_workers=request.data_parallelism,
         )
         return CreateBatchCompletionsResponse(job_id=job_id)
-
-
-# class GetBatchCompletionsUseCase:
-#     def __init__(
-#         self,
-#         llm_fine_tune_events_repository: LLMFineTuneEventsRepository,
-#         llm_fine_tuning_service: LLMFineTuningService,
-#     ):
-#         self.llm_fine_tune_events_repository = llm_fine_tune_events_repository
-#         self.llm_fine_tuning_service = llm_fine_tuning_service
-
-#     async def execute(self, user: User, fine_tune_id: str) -> GetFineTuneEventsResponse:
-#         model_endpoint_name = await self.llm_fine_tuning_service.get_fine_tune_model_name_from_id(
-#             user.team_id, fine_tune_id
-#         )
-#         if model_endpoint_name is None:
-#             raise ObjectNotFoundException(f"Fine-tune with id {fine_tune_id} not found")
-#         events = await self.llm_fine_tune_events_repository.get_fine_tune_events(
-#             user_id=user.team_id, model_endpoint_name=model_endpoint_name
-#         )
-#         return GetFineTuneEventsResponse(events=events)

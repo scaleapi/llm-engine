@@ -580,22 +580,17 @@ async def create_batch_completions(
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> CreateBatchCompletionsResponse:
     logger.info(f"POST /batch-completions with {request} for {auth}")
-    use_case = CreateBatchCompletionsUseCase(
-        docker_image_batch_job_gateway=external_interfaces.docker_image_batch_job_gateway,
-        docker_repository=external_interfaces.docker_repository,
-        docker_image_batch_job_bundle_repo=external_interfaces.docker_image_batch_job_bundle_repository,
-    )
-    return await use_case.execute(user=auth, request=request)
-
-
-# @llm_router_v1.get("/batch-completions/{job_id}", response_model=GetBatchCompletionsResponse)
-# async def create_batch_completions(
-#     job_id: str,
-#     auth: User = Depends(verify_authentication),
-#     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
-# ) -> CreateBatchCompletionsResponse:
-#     logger.info(f"POST /batch-completions with {request} for {auth}")
-#     use_case = GetBatchCompletionsUseCase(
-#         llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
-#     )
-#     return await use_case.execute(user=auth, job_id=job_id)
+    try:
+        use_case = CreateBatchCompletionsUseCase(
+            docker_image_batch_job_gateway=external_interfaces.docker_image_batch_job_gateway,
+            docker_repository=external_interfaces.docker_repository,
+            docker_image_batch_job_bundle_repo=external_interfaces.docker_image_batch_job_bundle_repository,
+        )
+        return await use_case.execute(user=auth, request=request)
+    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The specified endpoint could not be found.",
+        ) from exc
+    except (InvalidRequestException, ObjectHasInvalidValueException) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))

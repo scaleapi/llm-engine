@@ -440,11 +440,11 @@ class CreateBatchCompletionsRequest(BaseModel):
     """
     Model configuration for the batch inference. Hardware configurations are inferred.
     """
-    data_parallelism: Optional[int] = 1
+    data_parallelism: Optional[int] = Field(default=1, ge=1, le=64)
     """
     Number of replicas to run the batch inference. More replicas are slower to schedule but faster to inference.
     """
-    max_runtime_sec: Optional[int] = 24 * 3600
+    max_runtime_sec: Optional[int] = Field(default=24 * 3600, ge=1, le=2 * 24 * 3600)
     """
     Maximum runtime of the batch inference in seconds. Default to one day.
     """

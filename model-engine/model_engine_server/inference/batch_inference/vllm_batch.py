@@ -6,26 +6,23 @@ import time
 from urllib.parse import urlparse
 
 import boto3
+import smart_open
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
     CreateBatchCompletionsRequest,
     CreateBatchCompletionsRequestContent,
     TokenOutput,
 )
-from smart_open import open
-from vllm import AsyncEngineArgs, AsyncLLMEngine, SamplingParams
-from vllm.utils import random_uuid
 
 CONFIG_FILE = os.getenv("CONFIG_FILE")
-AWS_REGION = "us-west-2"
+AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
 
-os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE")
-
-session = boto3.Session(profile_name=os.getenv("S3_WRITE_AWS_PROFILE"))
-s3 = session.client("s3", region_name=AWS_REGION)
+os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
 
 
-job_index = int(os.getenv("JOB_COMPLETION_INDEX"), 0)
+def get_s3_client():
+    session = boto3.Session(profile_name=os.getenv("S3_WRITE_AWS_PROFILE"))
+    return session.client("s3", region_name=AWS_REGION)
 
 
 def download_model(checkpoint_path, final_weights_folder):
@@ -43,12 +40,12 @@ def download_model(checkpoint_path, final_weights_folder):
         for line in iter(process.stderr.readline, ""):
             stderr_lines.append(line.strip())
 
-        raise Exception(f"Error downloading model weights: {stderr_lines}")
+        raise IOError(f"Error downloading model weights: {stderr_lines}")
 
 
 def file_exists(path):
     try:
-        with open(path, "r"):
+        with smart_open.open(path, "r"):
             return True
     except FileNotFoundError:
         return False
@@ -85,13 +82,13 @@ def wait_for_all_chunks(request):
 
 def combine_all_chunks(request):
     print("Combining chunks...")
-    with open(request.output_data_path, "w") as f:
+    with smart_open.open(request.output_data_path, "w") as f:
         f.write("[")
         for i in range(request.data_parallelism):
             if i > 0:
                 f.write(",")
             chunk_file = f"{request.output_data_path}.{i}"
-            with open(chunk_file, "r") as chunk_f:
+            with smart_open.open(chunk_file, "r") as chunk_f:
                 chunk_data = chunk_f.read()
                 f.write(chunk_data[1:-1])  # Remove leading and trailing brackets
         f.write("]")
@@ -103,11 +100,13 @@ def delete_s3_chunks(request):
     for i in range(request.data_parallelism):
         chunk_file = f"{request.output_data_path}.{i}"
         bucket, key = parse_s3_url(chunk_file)
-        s3.delete_object(Bucket=bucket, Key=key)
+        get_s3_client().delete_object(Bucket=bucket, Key=key)
     print("Chunks deleted")
 
 
 async def batch_inference():
+    job_index = int(os.getenv("JOB_COMPLETION_INDEX", 0))
+
     request = CreateBatchCompletionsRequest.parse_file(CONFIG_FILE)
 
     if request.model_config.checkpoint_path is not None:
@@ -115,12 +114,64 @@ async def batch_inference():
 
     content = request.content
     if content is None:
-        with open(request.input_data_path, "r") as f:
+        with smart_open.open(request.input_data_path, "r") as f:
             content = CreateBatchCompletionsRequestContent.parse_raw(f.read())
 
     model = (
         "./model_weights" if request.model_config.checkpoint_path else request.model_config.model
     )
+
+    results_generators = await generate_with_vllm(request, content, model, job_index)
+
+    outputs = []
+    for generator in results_generators:
+        last_output_text = ""
+        tokens = []
+        async for request_output in generator:
+            token_text = request_output.outputs[-1].text[len(last_output_text) :]
+            log_probs = (
+                request_output.outputs[0].logprobs[-1] if content.return_token_log_probs else None
+            )
+            last_output_text = request_output.outputs[-1].text
+
+            if content.return_token_log_probs:
+                tokens.append(
+                    TokenOutput(
+                        token=token_text,
+                        log_prob=log_probs[request_output.outputs[0].token_ids[-1]],
+                    )
+                )
+
+        num_prompt_tokens = len(request_output.prompt_token_ids)
+        num_completion_tokens = len(request_output.outputs[0].token_ids)
+
+        output = CompletionOutput(
+            text=request_output.outputs[0].text,
+            num_prompt_tokens=num_prompt_tokens,
+            num_completion_tokens=num_completion_tokens,
+        )
+        if content.return_token_log_probs:
+            output.tokens = tokens
+
+        outputs.append(output.dict())
+
+    if request.data_parallelism == 1:
+        with smart_open.open(request.output_data_path, "w") as f:
+            f.write(json.dumps(outputs))
+    else:
+        chunk_file = f"{request.output_data_path}.{job_index}"
+        with smart_open.open(chunk_file, "w") as f:
+            f.write(json.dumps(outputs))
+        if job_index == 0:
+            wait_for_all_chunks(request)
+            combine_all_chunks(request)
+            if request.output_data_path.startswith("s3://"):
+                delete_s3_chunks(request)
+
+
+async def generate_with_vllm(request, content, model, job_index):
+    from vllm import AsyncEngineArgs, AsyncLLMEngine, SamplingParams
+    from vllm.utils import random_uuid
 
     engine_args = AsyncEngineArgs(
         model=model,
@@ -151,44 +202,7 @@ async def batch_inference():
             request_id, prompt, sampling_params, None, time.monotonic()
         )
         results_generators.append(results_generator)
-
-    outputs = []
-    for generator in results_generators:
-        last_output_text = ""
-        tokens = []
-        async for request_output in generator:
-            token_text = request_output.outputs[-1].text[len(last_output_text) :]
-            log_probs = request_output.outputs[0].logprobs[-1] if sampling_params.logprobs else None
-            last_output_text = request_output.outputs[-1].text
-
-            if content.return_token_log_probs:
-                tokens.append(TokenOutput(token=token_text, log_prob=list(log_probs.values())[0]))
-
-        num_prompt_tokens = len(request_output.prompt_token_ids)
-        num_completion_tokens = len(request_output.outputs[0].token_ids)
-
-        output = CompletionOutput(
-            text=request_output.outputs[0].text,
-            num_prompt_tokens=num_prompt_tokens,
-            num_completion_tokens=num_completion_tokens,
-        )
-        if content.return_token_log_probs:
-            output.tokens = tokens
-
-        outputs.append(output.dict())
-
-    if request.data_parallelism == 1:
-        with open(request.output_data_path, "w") as f:
-            f.write(json.dumps(outputs))
-    else:
-        chunk_file = f"{request.output_data_path}.{job_index}"
-        with open(chunk_file, "w") as f:
-            f.write(json.dumps(outputs))
-        if job_index == 0:
-            wait_for_all_chunks(request)
-            combine_all_chunks(request)
-            if request.output_data_path.startswith("s3://"):
-                delete_s3_chunks(request)
+    return results_generators
 
 
 if __name__ == "__main__":
