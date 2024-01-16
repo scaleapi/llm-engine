@@ -131,10 +131,11 @@ class Forwarder(ModelEngineSerializationMixin):
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
-
+        logger.info("HHHIII123")
         try:
             response_raw: Any = requests.post(
-                self.predict_endpoint,
+                # self.predict_endpoint,
+                "https://launch-endpoint-id-end-cmisa3d3c9t002iqv8qg.ml-internal.scale.com/predict",
                 json=json_payload,
                 headers={
                     "Content-Type": "application/json",
@@ -241,15 +242,15 @@ class LoadForwarder:
         logger.info(f"Prediction endpoint:  {pred}")
         logger.info(f"Healthcheck endpoint: {hc}")
 
-        while True:
-            try:
-                if requests.get(hc).status_code == 200:
-                    break
-            except requests.exceptions.ConnectionError:
-                pass
+        # while True:
+        #     try:
+        #         if requests.get(hc).status_code == 200:
+        #             break
+        #     except requests.exceptions.ConnectionError:
+        #         pass
 
-            logger.info(f"Waiting for user-defined service to be ready at {hc}...")
-            time.sleep(1)
+        #     logger.info(f"Waiting for user-defined service to be ready at {hc}...")
+        #     time.sleep(1)
 
         logger.info(f"Unwrapping model engine payload formatting?: {self.model_engine_unwrap}")
 
@@ -272,7 +273,13 @@ class LoadForwarder:
         else:
             serialize_results_as_string = self.serialize_results_as_string
 
-        endpoint_config = get_endpoint_config()
+        # endpoint_config = get_endpoint_config()
+        from typing import Any
+
+        from model_engine_server.domain.entities import ModelEndpointConfig
+
+        endpoint_config: Any = ModelEndpointConfig(endpoint_name="hi", bundle_name="hi")
+
         handler = PostInferenceHooksHandler(
             endpoint_name=endpoint_config.endpoint_name,
             bundle_name=endpoint_config.bundle_name,
