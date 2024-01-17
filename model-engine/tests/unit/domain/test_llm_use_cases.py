@@ -1537,6 +1537,9 @@ def test_infer_hardware_from_model_name():
     with pytest.raises(ObjectHasInvalidValueException):
         infer_hardware_from_model_name("unsupported_model")
 
+    with pytest.raises(ObjectHasInvalidValueException):
+        infer_hardware_from_model_name("falcon-180b")
+
 
 @pytest.mark.asyncio
 async def test_create_batch_completions(

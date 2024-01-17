@@ -2147,6 +2147,11 @@ def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJob
         gpu_type = GpuType.NVIDIA_AMPERE_A100E
     else:
         numbers = re.findall(r"\d+", model_name)
+        if len(numbers) == 0:
+            raise ObjectHasInvalidValueException(
+                f"Model {model_name} is not supported for batch completions."
+            )
+
         b_params = int(numbers[-1])
         if b_params <= 7:
             cpus = "10"
