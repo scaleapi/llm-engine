@@ -13,6 +13,7 @@ from model_engine_server.common.dtos.llms import (
     CreateBatchCompletionsRequestContent,
     TokenOutput,
 )
+from tqdm import tqdm
 
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
@@ -123,11 +124,16 @@ async def batch_inference():
 
     results_generators = await generate_with_vllm(request, content, model, job_index)
 
+    bar = tqdm(total=len(content.prompts), desc="Processed prompts")
+
     outputs = []
     for generator in results_generators:
         last_output_text = ""
         tokens = []
         async for request_output in generator:
+            if request_output.finished:
+                bar.update(1)
+
             token_text = request_output.outputs[-1].text[len(last_output_text) :]
             log_probs = (
                 request_output.outputs[0].logprobs[-1] if content.return_token_log_probs else None
@@ -155,6 +161,8 @@ async def batch_inference():
 
         outputs.append(output.dict())
 
+    bar.close()
+
     if request.data_parallelism == 1:
         with smart_open.open(request.output_data_path, "w") as f:
             f.write(json.dumps(outputs))
@@ -178,6 +186,7 @@ async def generate_with_vllm(request, content, model, job_index):
         quantization=request.model_config.quantize,
         tensor_parallel_size=request.model_config.num_shards,
         seed=request.model_config.seed or 0,
+        disable_log_requests=True,
     )
 
     llm = AsyncLLMEngine.from_engine_args(engine_args)
