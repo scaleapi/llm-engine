@@ -2,7 +2,6 @@ import json
 from unittest.mock import MagicMock, call, mock_open, patch
 
 import pytest
-from model_engine_server.common.dtos.llms import CompletionOutput, TokenOutput
 from model_engine_server.inference.batch_inference.vllm_batch import batch_inference
 
 
@@ -31,6 +30,7 @@ async def test_batch_inference(
     create_vllm_request_outputs,
     mock_s3_client,
     mock_process,
+    mock_completion_output,
 ):
     # Mock the necessary objects and data
     mock_popen.return_value = mock_process
@@ -41,18 +41,6 @@ async def test_batch_inference(
     )
 
     mock_results_generator = MagicMock()
-
-    mock_completion_output = CompletionOutput(
-        text="text1 text2 text3",
-        num_prompt_tokens=3,
-        num_completion_tokens=3,
-        tokens=[
-            TokenOutput(token="text1", log_prob=0.1),
-            TokenOutput(token=" text2", log_prob=0.2),
-            TokenOutput(token=" text3", log_prob=0.3),
-        ],
-    )
-
     mock_results_generator.__aiter__.return_value = create_vllm_request_outputs
 
     # Mock the generate_with_vllm function
@@ -140,6 +128,7 @@ async def test_batch_inference_two_workers(
     create_vllm_request_outputs,
     mock_s3_client,
     mock_process,
+    mock_completion_output,
 ):
     # Mock the necessary objects and data
     mock_popen.return_value = mock_process
@@ -151,18 +140,6 @@ async def test_batch_inference_two_workers(
     )
 
     mock_results_generator = MagicMock()
-
-    mock_completion_output = CompletionOutput(
-        text="text1 text2 text3",
-        num_prompt_tokens=3,
-        num_completion_tokens=3,
-        tokens=[
-            TokenOutput(token="text1", log_prob=0.1),
-            TokenOutput(token=" text2", log_prob=0.2),
-            TokenOutput(token=" text3", log_prob=0.3),
-        ],
-    )
-
     mock_results_generator.__aiter__.return_value = create_vllm_request_outputs
 
     # Mock the generate_with_vllm function
@@ -235,6 +212,7 @@ async def test_batch_inference_delete_chunks(
     create_vllm_request_outputs,
     mock_s3_client,
     mock_process,
+    mock_completion_output,
 ):
     # Mock the necessary objects and data
     mock_popen.return_value = mock_process
@@ -247,18 +225,6 @@ async def test_batch_inference_delete_chunks(
     )
 
     mock_results_generator = MagicMock()
-
-    mock_completion_output = CompletionOutput(
-        text="text1 text2 text3",
-        num_prompt_tokens=3,
-        num_completion_tokens=3,
-        tokens=[
-            TokenOutput(token="text1", log_prob=0.1),
-            TokenOutput(token=" text2", log_prob=0.2),
-            TokenOutput(token=" text3", log_prob=0.3),
-        ],
-    )
-
     mock_results_generator.__aiter__.return_value = create_vllm_request_outputs
 
     # Mock the generate_with_vllm function

@@ -2,9 +2,11 @@ from unittest.mock import MagicMock
 
 import pytest
 from model_engine_server.common.dtos.llms import (
+    CompletionOutput,
     CreateBatchCompletionsModelConfig,
     CreateBatchCompletionsRequest,
     CreateBatchCompletionsRequestContent,
+    TokenOutput,
 )
 
 
@@ -75,3 +77,17 @@ def mock_process():
     mock_process.returncode = 0
     mock_process.wait.return_value = None
     return mock_process
+
+
+@pytest.fixture
+def mock_completion_output():
+    return CompletionOutput(
+        text="text1 text2 text3",
+        num_prompt_tokens=3,
+        num_completion_tokens=3,
+        tokens=[
+            TokenOutput(token="text1", log_prob=0.1),
+            TokenOutput(token=" text2", log_prob=0.2),
+            TokenOutput(token=" text3", log_prob=0.3),
+        ],
+    )
