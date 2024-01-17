@@ -26,6 +26,7 @@ class DockerImageBatchJobGateway(ABC):
         mount_location: Optional[str],
         annotations: Optional[Dict[str, str]] = None,
         override_job_max_runtime_s: Optional[int] = None,
+        num_workers: Optional[int] = 1,
     ) -> str:
         """
         Create a docker image batch job
@@ -42,6 +43,8 @@ class DockerImageBatchJobGateway(ABC):
             annotations: K8s annotations
             resource_requests: The resource requests for the batch job.
             mount_location: Location on filesystem where runtime-provided file contents get mounted
+            override_job_max_runtime_s: Optional override for the maximum runtime of the job
+            num_workers: num of pods to run in this job. Coordination needs to happen between the workers.
 
 
         Returns:

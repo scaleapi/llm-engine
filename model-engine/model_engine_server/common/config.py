@@ -58,6 +58,7 @@ class HostedModelInferenceServiceConfig:
     vllm_repository: str
     lightllm_repository: str
     tensorrt_llm_repository: str
+    batch_inference_vllm_repository: str
     user_inference_base_repository: str
     user_inference_pytorch_repository: str
     user_inference_tensorflow_repository: str

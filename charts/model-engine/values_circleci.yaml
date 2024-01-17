@@ -151,6 +151,7 @@ config:
       vllm_repository: "vllm"
       lightllm_repository: "lightllm"
       tensorrt_llm_repository: "tensorrt-llm"
+      batch_inference_vllm_repository: "llm-engine/batch-infer-vllm"
       user_inference_base_repository: "launch/inference"
       user_inference_pytorch_repository: "hosted-model-inference/async-pytorch"
       user_inference_tensorflow_repository: "hosted-model-inference/async-tensorflow-cpu"

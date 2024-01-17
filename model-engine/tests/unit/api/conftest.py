@@ -1268,3 +1268,24 @@ def trigger_2(test_api_key) -> Tuple[Trigger, Any]:
         "default_job_metadata": {"team": "infra", "product": "my_product_two"},
     }
     return trigger, trigger_json
+
+
+@pytest.fixture
+def create_batch_completions_request() -> Dict[str, Any]:
+    return {
+        "input_data_path": "test_input_data_path",
+        "output_data_path": "test_output_data_path",
+        "content": {
+            "prompts": ["what is 1+1?"],
+            "max_new_tokens": 10,
+            "temperature": 0.1,
+        },
+        "model_config": {
+            "model": "mpt-7b",
+            "checkpoint_path": "test_checkpoint_path",
+            "labels": [],
+            "num_shards": 2,
+        },
+        "data_parallelism": 1,
+        "max_runtime_sec": 86400,
+    }
