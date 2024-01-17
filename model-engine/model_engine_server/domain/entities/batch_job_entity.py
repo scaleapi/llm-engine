@@ -61,3 +61,4 @@ class DockerImageBatchJob(BaseModel):
     status: BatchJobStatus  # the status map relatively nicely onto BatchJobStatus
     annotations: Optional[Dict[str, str]] = None
     override_job_max_runtime_s: Optional[int] = None
+    num_workers: Optional[int] = 1

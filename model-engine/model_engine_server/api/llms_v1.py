@@ -19,6 +19,8 @@ from model_engine_server.common.dtos.llms import (
     CompletionStreamV1Response,
     CompletionSyncV1Request,
     CompletionSyncV1Response,
+    CreateBatchCompletionsRequest,
+    CreateBatchCompletionsResponse,
     CreateFineTuneRequest,
     CreateFineTuneResponse,
     CreateLLMModelEndpointV1Request,
@@ -73,6 +75,7 @@ from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
 from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
+    CreateBatchCompletionsUseCase,
     CreateLLMModelBundleV1UseCase,
     CreateLLMModelEndpointV1UseCase,
     DeleteLLMEndpointByNameUseCase,
@@ -568,3 +571,26 @@ async def delete_llm_model_endpoint(
             status_code=500,
             detail="deletion of endpoint failed.",
         ) from exc
+
+
+@llm_router_v1.post("/batch-completions", response_model=CreateBatchCompletionsResponse)
+async def create_batch_completions(
+    request: CreateBatchCompletionsRequest,
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
+) -> CreateBatchCompletionsResponse:
+    logger.info(f"POST /batch-completions with {request} for {auth}")
+    try:
+        use_case = CreateBatchCompletionsUseCase(
+            docker_image_batch_job_gateway=external_interfaces.docker_image_batch_job_gateway,
+            docker_repository=external_interfaces.docker_repository,
+            docker_image_batch_job_bundle_repo=external_interfaces.docker_image_batch_job_bundle_repository,
+        )
+        return await use_case.execute(user=auth, request=request)
+    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The specified endpoint could not be found.",
+        ) from exc
+    except (InvalidRequestException, ObjectHasInvalidValueException) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))

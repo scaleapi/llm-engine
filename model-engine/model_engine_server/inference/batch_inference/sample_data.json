@@ -1,0 +1,9 @@
+{
+    "prompts":[
+        "deep learning is",
+        "san francisco is"
+    ],
+    "max_new_tokens": 100,
+    "temperature": 0.0,
+    "return_token_log_probs": true
+}
