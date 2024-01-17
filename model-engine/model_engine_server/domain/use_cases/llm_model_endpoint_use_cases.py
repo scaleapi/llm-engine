@@ -2209,6 +2209,8 @@ class CreateBatchCompletionsUseCase:
 
         config_file_path = "/opt/config.json"
 
+        assert hardware.gpu_type is not None
+
         batch_bundle = (
             await self.docker_image_batch_job_bundle_repo.create_docker_image_batch_job_bundle(
                 name=bundle_name,
@@ -2229,7 +2231,7 @@ class CreateBatchCompletionsUseCase:
                 memory=str(hardware.memory),
                 storage=str(hardware.storage),
                 gpus=hardware.gpus,
-                gpu_type=hardware.gpu_type.value,
+                gpu_type=hardware.gpu_type,
                 public=False,
             )
         )
@@ -2240,6 +2242,7 @@ class CreateBatchCompletionsUseCase:
     ) -> CreateBatchCompletionsResponse:
         hardware = infer_hardware_from_model_name(request.model_config.model)
         # Reconcile gpus count with num_shards from request
+        assert hardware.gpus is not None
         if request.model_config.num_shards:
             hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
         request.model_config.num_shards = hardware.gpus

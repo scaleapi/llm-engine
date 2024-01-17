@@ -241,7 +241,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
                 GPU_TYPE=resource_requests.gpu_type.value,
                 GPUS=resource_requests.gpus or 1,
                 REQUEST_ID=LoggerTagManager.get(LoggerTagKey.REQUEST_ID) or "",
-                BATCH_JOB_NUM_WORKERS=num_workers,
+                BATCH_JOB_NUM_WORKERS=num_workers or 1,
             )
         else:
             resource_key = "docker-image-batch-job-cpu.yaml"
@@ -271,7 +271,7 @@ class LiveDockerImageBatchJobGateway(DockerImageBatchJobGateway):
                 FILE_CONTENTS_B64ENCODED=job_config_b64encoded,
                 AWS_ROLE=infra_config().profile_ml_inference_worker,
                 REQUEST_ID=LoggerTagManager.get(LoggerTagKey.REQUEST_ID) or "",
-                BATCH_JOB_NUM_WORKERS=num_workers,
+                BATCH_JOB_NUM_WORKERS=num_workers or 1,
             )
 
         resource_spec = load_k8s_yaml(resource_key, substitution_kwargs)
