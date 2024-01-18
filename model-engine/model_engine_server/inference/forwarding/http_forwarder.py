@@ -4,7 +4,8 @@ import os
 import subprocess
 from functools import lru_cache
 
-from fastapi import Depends, FastAPI
+from fastapi import BackgroundTasks, Depends, FastAPI
+from fastapi.responses import JSONResponse
 from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -70,11 +71,26 @@ def load_streaming_forwarder():
 @app.post("/predict")
 def predict(
     request: EndpointPredictV1Request,
+    background_tasks: BackgroundTasks,
     forwarder=Depends(load_forwarder),
     limiter=Depends(get_concurrency_limiter),
 ):
     with limiter:
-        return forwarder(request.dict())
+        try:
+            payload = request.dict()
+            response = forwarder(payload)
+            print(response)
+            if isinstance(response, JSONResponse):
+                loaded_response = json.loads(response.body)
+            else:
+                loaded_response = response
+            background_tasks.add_task(
+                forwarder.post_inference_hooks_handler.handle, request, loaded_response
+            )
+            return response
+        except Exception:
+            logger.error(f"Failed to decode payload from: {request}")
+            raise
 
 
 @app.post("/stream")

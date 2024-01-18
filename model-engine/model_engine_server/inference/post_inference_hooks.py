@@ -115,6 +115,7 @@ class PostInferenceHooksHandler:
             self._monitoring_metrics_gateway.emit_attempted_post_inference_hook(hook_name)
             try:
                 hook.handle(request_payload, response, task_id)
+                print("callback hook success")
                 self._monitoring_metrics_gateway.emit_successful_post_inference_hook(hook_name)
             except Exception:
                 logger.exception(f"Hook {hook_name} failed.")

@@ -126,12 +126,11 @@ class Forwarder(ModelEngineSerializationMixin):
     forward_http_status: bool
 
     def __call__(self, json_payload: Any) -> Any:
-        request_obj = EndpointPredictV1Request.parse_obj(json_payload)
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
-        logger.info("HHHIII123")
+
         try:
             response_raw: Any = requests.post(
                 # self.predict_endpoint,
@@ -164,8 +163,6 @@ class Forwarder(ModelEngineSerializationMixin):
         if self.wrap_response:
             response = self.get_response_payload(using_serialize_results_as_string, response)
 
-        # TODO: we actually want to do this after we've returned the response.
-        self.post_inference_hooks_handler.handle(request_obj, response)
         if self.forward_http_status:
             return JSONResponse(content=response, status_code=response_raw.status_code)
         else:
@@ -278,7 +275,14 @@ class LoadForwarder:
 
         from model_engine_server.domain.entities import ModelEndpointConfig
 
-        endpoint_config: Any = ModelEndpointConfig(endpoint_name="hi", bundle_name="hi")
+        endpoint_config: Any = ModelEndpointConfig(
+            endpoint_name="hi",
+            bundle_name="hi",
+            post_inference_hooks=["callback"],
+            user_id="hi",
+            default_callback_url="https://echo-server.ml-internal.scale.com/my-path",
+            default_callback_auth=None,
+        )
 
         handler = PostInferenceHooksHandler(
             endpoint_name=endpoint_config.endpoint_name,
