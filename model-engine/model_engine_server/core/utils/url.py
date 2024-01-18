@@ -8,6 +8,7 @@ class ParsedURL(NamedTuple):
     bucket: str
     key: str
     region: Optional[str]
+    account: Optional[str] = None
 
     def canonical_url(self) -> str:
         """Packs the parsed URL information into a standard form of
@@ -22,6 +23,10 @@ class ParsedURL(NamedTuple):
     @staticmethod
     def gs(bucket: str, key: str, region: Optional[str] = None) -> "ParsedURL":
         return ParsedURL(protocol="gs", bucket=bucket, key=key, region=region)
+
+    @staticmethod
+    def azure(bucket: str, key: str, account: Optional[str] = None) -> "ParsedURL":
+        return ParsedURL(protocol="azure", bucket=bucket, key=key, account=account)
 
     @staticmethod
     def cds(bucket: str, key: str, region: Optional[str] = None) -> "ParsedURL":
@@ -42,6 +47,7 @@ def parse_attachment_url(url: str, clean_key: bool = True) -> ParsedURL:
     bucket = None
     region = None
     key = None
+    account = None
 
     # s3://bucket/key1/key2
     match = re.search("^s3://([^/]+)/(.*?)$", url)
@@ -52,6 +58,13 @@ def parse_attachment_url(url: str, clean_key: bool = True) -> ParsedURL:
     match = re.search("^gs://([^/]+)/(.*?)$", url)
     if match:
         protocol = "gs"
+        bucket, key = match.group(1), match.group(2)
+
+    # azure://bucket/key1/key2
+    # for Azure Blob Storage, bucket refers to an ABS container
+    match = re.search("^azure://([^/]+)/(.*?)$", url)
+    if match:
+        protocol = "azure"
         bucket, key = match.group(1), match.group(2)
 
     # http://bucket.s3.amazonaws.com/key1/key2
@@ -85,6 +98,13 @@ def parse_attachment_url(url: str, clean_key: bool = True) -> ParsedURL:
     if match:
         bucket, key = match.group(1), match.group(2)
 
+    # https://account.blob.core.windows.net/bucket/key1/key2
+    # for Azure Blob Storage, bucket refers to an ABS container
+    match = re.search("^https?://([^/]+).blob.core.windows.net/([^/]+)(.*?)$", url)
+    if match:
+        protocol = "azure"
+        account, bucket, key = match.group(1), match.group(2), match.group(3)
+
     match = re.search("scale-cds://(\\w+)/([\\-\\w\\/]+)", url)
     if match:
         bucket, key = match.group(1), match.group(2)
@@ -103,4 +123,5 @@ def parse_attachment_url(url: str, clean_key: bool = True) -> ParsedURL:
         bucket=clean(bucket),
         region=clean(region),
         key=clean(key) if clean_key else key,
+        account=clean(account),
     )

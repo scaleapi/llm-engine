@@ -12,11 +12,16 @@ from model_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointResponse,
 )
 from model_engine_server.common.env_vars import CIRCLECI
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
 from model_engine_server.db.base import SessionAsyncNullPool
-from model_engine_server.infra.gateways import S3FilesystemGateway
-from model_engine_server.infra.gateways.resources.fake_sqs_endpoint_resource_delegate import (
-    FakeSQSEndpointResourceDelegate,
+from model_engine_server.domain.repositories import DockerRepository
+from model_engine_server.infra.gateways import ABSFilesystemGateway, S3FilesystemGateway
+from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
+    ASBQueueEndpointResourceDelegate,
+)
+from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_delegate import (
+    FakeQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     set_lazy_load_kubernetes_clients,
@@ -24,13 +29,14 @@ from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
 )
-from model_engine_server.infra.gateways.resources.live_sqs_endpoint_resource_delegate import (
-    LiveSQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
+    QueueEndpointResourceDelegate,
 )
-from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
-    SQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
+    SQSQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.repositories import (
+    ACRDockerRepository,
     DbModelEndpointRecordRepository,
     ECRDockerRepository,
     FakeDockerRepository,
@@ -49,27 +55,37 @@ def get_live_endpoint_builder_service(
     session: Any,
     redis: aioredis.Redis,
 ):
-    sqs_delegate: SQSEndpointResourceDelegate
+    queue_delegate: QueueEndpointResourceDelegate
     if CIRCLECI:
-        sqs_delegate = FakeSQSEndpointResourceDelegate()
+        queue_delegate = FakeQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "azure":
+        queue_delegate = ASBQueueEndpointResourceDelegate()
     else:
-        sqs_delegate = LiveSQSEndpointResourceDelegate(
+        queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
         )
     notification_gateway = FakeNotificationGateway()
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
-    docker_repository = ECRDockerRepository() if not CIRCLECI else FakeDockerRepository()
+    docker_repository: DockerRepository
+    if CIRCLECI:
+        docker_repository = FakeDockerRepository()
+    elif infra_config().cloud_provider == "azure":
+        docker_repository = ACRDockerRepository()
+    else:
+        docker_repository = ECRDockerRepository()
     service = LiveEndpointBuilderService(
         docker_repository=docker_repository,
         resource_gateway=LiveEndpointResourceGateway(
-            sqs_delegate=sqs_delegate,
+            queue_delegate=queue_delegate,
         ),
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         model_endpoint_record_repository=DbModelEndpointRecordRepository(
             monitoring_metrics_gateway=monitoring_metrics_gateway, session=session, read_only=False
         ),
         model_endpoint_cache_repository=RedisModelEndpointCacheRepository(redis_client=redis),
-        filesystem_gateway=S3FilesystemGateway(),
+        filesystem_gateway=ABSFilesystemGateway()
+        if infra_config().cloud_provider == "azure"
+        else S3FilesystemGateway(),
         notification_gateway=notification_gateway,
         feature_flag_repo=RedisFeatureFlagRepository(redis_client=redis),
     )

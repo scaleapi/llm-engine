@@ -7,8 +7,8 @@ import pytest
 from model_engine_server.common.dtos.endpoint_builder import BuildEndpointRequest
 from model_engine_server.domain.entities import ModelEndpointRecord
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
-from model_engine_server.infra.gateways.resources.live_sqs_endpoint_resource_delegate import (
-    LiveSQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
+    SQSQueueEndpointResourceDelegate,
 )
 
 MODULE_PATH = "model_engine_server.infra.gateways.resources.live_sqs_endpoint_resource_delegate"
@@ -340,7 +340,7 @@ async def test_sqs_create_or_update_resources_endpoint_exists(
     build_endpoint_request_async_custom: BuildEndpointRequest,
     mock_create_async_sqs_client_get_queue_url,
 ):
-    delegate = LiveSQSEndpointResourceDelegate(sqs_profile="foobar")
+    delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
     endpoint_record: ModelEndpointRecord = build_endpoint_request_async_custom.model_endpoint_record
     queue_name, queue_url = await delegate.create_queue_if_not_exists(
         endpoint_id=endpoint_record.id,
@@ -368,7 +368,7 @@ async def test_sqs_create_or_update_resources(
     build_endpoint_request_async_custom: BuildEndpointRequest,
     mock_create_async_sqs_client_create_queue,
 ):
-    delegate = LiveSQSEndpointResourceDelegate(sqs_profile="foobar")
+    delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
     endpoint_record: ModelEndpointRecord = build_endpoint_request_async_custom.model_endpoint_record
     queue_name, queue_url = await delegate.create_queue_if_not_exists(
         endpoint_id=endpoint_record.id,
@@ -408,7 +408,7 @@ async def test_sqs_create_or_update_resources_throws_exception(
     build_endpoint_request_async_custom: BuildEndpointRequest,
     mock_create_async_sqs_client_create_queue_throws_exception,
 ):
-    delegate = LiveSQSEndpointResourceDelegate(sqs_profile="foobar")
+    delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
     endpoint_record: ModelEndpointRecord = build_endpoint_request_async_custom.model_endpoint_record
     with pytest.raises(EndpointResourceInfraException):
         await delegate.create_queue_if_not_exists(
@@ -424,7 +424,7 @@ async def test_sqs_create_or_update_resources_non_200(
     build_endpoint_request_async_custom: BuildEndpointRequest,
     mock_create_async_sqs_client_create_queue_returns_non_200,
 ):
-    delegate = LiveSQSEndpointResourceDelegate(sqs_profile="foobar")
+    delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
     endpoint_record: ModelEndpointRecord = build_endpoint_request_async_custom.model_endpoint_record
     with pytest.raises(EndpointResourceInfraException):
         await delegate.create_queue_if_not_exists(
@@ -437,7 +437,7 @@ async def test_sqs_create_or_update_resources_non_200(
 
 @pytest.mark.asyncio
 async def test_sqs_delete_resources(mock_create_async_sqs_client_delete_queue):
-    delegate = LiveSQSEndpointResourceDelegate(sqs_profile="foobar")
+    delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
     await delegate.delete_queue(endpoint_id="model_endpoint_id_1")
 
     mock_create_async_sqs_client_delete_queue.__aenter__.assert_called_once()
@@ -456,7 +456,7 @@ async def test_sqs_delete_resources_throws_exception(
     mock_create_async_sqs_client_delete_queue_throws_exception,
 ):
     with pytest.raises(EndpointResourceInfraException):
-        delegate = LiveSQSEndpointResourceDelegate(sqs_profile="foobar")
+        delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
         await delegate.delete_queue(endpoint_id="model_endpoint_id_1")
 
 
@@ -465,13 +465,13 @@ async def test_sqs_delete_resources_non_200(
     mock_create_async_sqs_client_delete_queue_returns_non_200,
 ):
     with pytest.raises(EndpointResourceInfraException):
-        delegate = LiveSQSEndpointResourceDelegate(sqs_profile="foobar")
+        delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
         await delegate.delete_queue(endpoint_id="model_endpoint_id_1")
 
 
 @pytest.mark.asyncio
 async def test_sqs_get_queue_attributes(mock_create_async_sqs_client_get_queue_attributes):
-    delegate = LiveSQSEndpointResourceDelegate(sqs_profile="foobar")
+    delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
     response = await delegate.get_queue_attributes(endpoint_id="model_endpoint_id_1")
 
     mock_create_async_sqs_client_get_queue_attributes.__aenter__.assert_called_once()
@@ -494,7 +494,7 @@ async def test_sqs_get_queue_attributes_queue_not_found(
     mock_create_async_sqs_client_get_queue_attributes_queue_not_found,
 ):
     with pytest.raises(EndpointResourceInfraException):
-        delegate = LiveSQSEndpointResourceDelegate(sqs_profile="foobar")
+        delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
         await delegate.get_queue_attributes(endpoint_id="model_endpoint_id_1")
 
 
@@ -503,5 +503,5 @@ async def test_sqs_get_queue_attributes_queue_throws_exception(
     mock_create_async_sqs_client_get_queue_attributes_queue_throws_exception,
 ):
     with pytest.raises(EndpointResourceInfraException):
-        delegate = LiveSQSEndpointResourceDelegate(sqs_profile="foobar")
+        delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
         await delegate.get_queue_attributes(endpoint_id="model_endpoint_id_1")

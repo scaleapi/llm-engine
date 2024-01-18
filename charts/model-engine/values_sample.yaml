@@ -17,9 +17,12 @@ image:
   pullPolicy: Always
 
 secrets:
-  # kubernetesDatabaseSecretName or awsDatabaseSecretName [required]
+  # kubernetesDatabaseSecretName or cloudDatabaseSecretName [required]
   # is the name of the secret that contains the database credentials
   kubernetesDatabaseSecretName: llm-engine-postgres-credentials
+
+# Azure Key Vault name to pull secrets from
+keyvaultName: llm-engine-keyvault
 
 db:
   runDbInitScript: false
@@ -139,6 +142,8 @@ serviceTemplate:
 config:
   values:
     infra:
+      # cloud_provider [required]; either "aws" or "azure"
+      cloud_provider: aws
       # k8s_cluster_name [required] is the name of the k8s cluster
       k8s_cluster_name: main_cluster
       # dns_host_domain [required] is the domain name of the k8s cluster

@@ -347,14 +347,14 @@ def celery_app(
     :param s3_base_path: [optional] Base path for task results when using S3 as backend. The results uri will be
     "s3://<s3_bucket>/<s3_base_path>/...".
 
-    :param backend_protocol: [optional] Backend protocol to use, currently supports "s3" and "redis".
+    :param backend_protocol: [optional] Backend protocol to use, currently supports "s3", "redis", and "abs".
     Defaults to "s3". Redis might be faster than S3 but is not persistent, so using "redis" is discouraged.
     If you do end up using this, make sure you set up `result_expires`
     (https://docs.celeryproject.org/en/stable/userguide/configuration.html#result-expires) to something reasonable
     (1 day by default) and run `celery beat` periodically to clear expired results from Redis. Visit
     https://docs.celeryproject.org/en/stable/userguide/periodic-tasks.html to learn more about celery beat
 
-    :param broker_type: [defaults to "redis"] The broker type. We currently support "redis" and "sqs".
+    :param broker_type: [defaults to "redis"] The broker type. We currently support "redis", "sqs", and "servicebus".
 
     :param aws_role: [optional] AWS role to use.
 
@@ -481,9 +481,14 @@ def _get_broker_endpoint_and_transport_options(
 
         # Plain "sqs://" signifies to use instance metadata.
         return "sqs://", out_broker_transport_options
+    if broker_type == "servicebus":
+        return (
+            f"azureservicebus://RootManageSharedAccessKey:{os.getenv('SERVICEBUS_SAS_KEY')}@{os.getenv('SERVICEBUS_NAMESPACE')}",
+            out_broker_transport_options,
+        )
 
     raise ValueError(
-        f"Only 'redis' and 'sqs' are supported values for broker_type, got value {broker_type}"
+        f"Only 'redis', 'sqs', and 'servicebus' are supported values for broker_type, got value {broker_type}"
     )
 
 
@@ -514,9 +519,11 @@ def _get_backend_url_and_conf(
                 "s3_base_path": s3_base_path,
             }
         )
+    elif backend_protocol == "abs":
+        backend_url = f"azureblockblob://{os.getenv('CELERY_BACKEND_CONNECTION_STRING')}"
     else:
         raise ValueError(
-            f'Unknown backend protocol "{backend_protocol}". Should be one of ["s3", "redis"].'
+            f'Unknown backend protocol "{backend_protocol}". Should be one of ["s3", "redis", "abs].'
         )
 
     return backend_url, out_conf_changes

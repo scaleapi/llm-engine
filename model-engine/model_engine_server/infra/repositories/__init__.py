@@ -1,5 +1,8 @@
 from typing import Sequence
 
+from .abs_file_llm_fine_tune_events_repository import ABSFileLLMFineTuneEventsRepository
+from .abs_file_llm_fine_tune_repository import ABSFileLLMFineTuneRepository
+from .acr_docker_repository import ACRDockerRepository
 from .batch_job_record_repository import BatchJobRecordRepository
 from .db_batch_job_record_repository import DbBatchJobRecordRepository
 from .db_docker_image_batch_job_bundle_repository import DbDockerImageBatchJobBundleRepository
@@ -19,6 +22,9 @@ from .s3_file_llm_fine_tune_events_repository import S3FileLLMFineTuneEventsRepo
 from .s3_file_llm_fine_tune_repository import S3FileLLMFineTuneRepository
 
 __all__: Sequence[str] = [
+    "ABSFileLLMFineTuneEventsRepository",
+    "ABSFileLLMFineTuneRepository",
+    "ACRDockerRepository",
     "BatchJobRecordRepository",
     "DbBatchJobRecordRepository",
     "DbDockerImageBatchJobBundleRepository",

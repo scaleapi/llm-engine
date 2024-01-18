@@ -1,5 +1,8 @@
 from typing import Sequence
 
+from .abs_file_storage_gateway import ABSFileStorageGateway
+from .abs_filesystem_gateway import ABSFilesystemGateway
+from .abs_llm_artifact_gateway import ABSLLMArtifactGateway
 from .batch_job_orchestration_gateway import BatchJobOrchestrationGateway
 from .batch_job_progress_gateway import BatchJobProgressGateway
 from .celery_task_queue_gateway import CeleryTaskQueueGateway
@@ -22,6 +25,9 @@ from .s3_filesystem_gateway import S3FilesystemGateway
 from .s3_llm_artifact_gateway import S3LLMArtifactGateway
 
 __all__: Sequence[str] = [
+    "ABSFileStorageGateway",
+    "ABSFilesystemGateway",
+    "ABSLLMArtifactGateway",
     "BatchJobOrchestrationGateway",
     "BatchJobProgressGateway",
     "CeleryTaskQueueGateway",

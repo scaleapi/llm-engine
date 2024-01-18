@@ -1,6 +1,5 @@
 from typing import Dict, Optional, Tuple
 
-from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
@@ -12,49 +11,36 @@ from model_engine_server.domain.exceptions import EndpointResourceInvalidRequest
 from model_engine_server.infra.gateways.resources.endpoint_resource_gateway import (
     EndpointResourceGateway,
     EndpointResourceGatewayCreateOrUpdateResourcesResponse,
-    QueueInfo,
 )
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     K8SEndpointResourceDelegate,
 )
-from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
-    SQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
+    QueueEndpointResourceDelegate,
+    QueueInfo,
 )
 
 logger = make_logger(logger_name())
 
 
-class SqsQueueInfo(QueueInfo):
-    """Live endpoints create and use SQS queues. These come with an additional per-queue URL.
-
-    NOTE: broker for this class **MUST** always be SQS.
-    """
-
-    queue_url: str
-
-    @staticmethod
-    def new(queue_name: str, queue_url: str) -> "SqsQueueInfo":
-        return SqsQueueInfo(queue_name=queue_name, broker=BrokerType.SQS, queue_url=queue_url)
-
-
-class LiveEndpointResourceGateway(EndpointResourceGateway[SqsQueueInfo]):
-    def __init__(self, sqs_delegate: SQSEndpointResourceDelegate):
+class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
+    def __init__(self, queue_delegate: QueueEndpointResourceDelegate):
         self.k8s_delegate = K8SEndpointResourceDelegate()
-        self.sqs_delegate = sqs_delegate
+        self.queue_delegate = queue_delegate
 
     async def create_queue(
         self,
         endpoint_record: ModelEndpointRecord,
         labels: Dict[str, str],
-    ) -> SqsQueueInfo:
+    ) -> QueueInfo:
         """Creates a new SQS queue, returning its unique name and queue URL."""
-        queue_name, queue_url = await self.sqs_delegate.create_queue_if_not_exists(
+        queue_name, queue_url = await self.queue_delegate.create_queue_if_not_exists(
             endpoint_id=endpoint_record.id,
             endpoint_name=endpoint_record.name,
             endpoint_created_by=endpoint_record.created_by,
             endpoint_labels=labels,
         )
-        return SqsQueueInfo.new(queue_name, queue_url)
+        return QueueInfo(queue_name, queue_url)
 
     async def create_or_update_resources(
         self, request: CreateOrUpdateResourcesRequest
@@ -90,11 +76,16 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[SqsQueueInfo]):
         )
 
         if endpoint_type == ModelEndpointType.ASYNC:
-            sqs_attributes = await self.sqs_delegate.get_queue_attributes(endpoint_id=endpoint_id)
-            if "ApproximateNumberOfMessages" in sqs_attributes["Attributes"]:
+            sqs_attributes = await self.queue_delegate.get_queue_attributes(endpoint_id=endpoint_id)
+            if (
+                "Attributes" in sqs_attributes
+                and "ApproximateNumberOfMessages" in sqs_attributes["Attributes"]
+            ):
                 resources.num_queued_items = int(
                     sqs_attributes["Attributes"]["ApproximateNumberOfMessages"]
                 )
+            elif "active_message_count" in sqs_attributes:  # from ASBQueueEndpointResourceDelegate
+                resources.num_queued_items = int(sqs_attributes["active_message_count"])
 
         return resources
 
@@ -113,7 +104,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[SqsQueueInfo]):
         )
         sqs_result = True
         try:
-            await self.sqs_delegate.delete_queue(endpoint_id=endpoint_id)
+            await self.queue_delegate.delete_queue(endpoint_id=endpoint_id)
         except EndpointResourceInvalidRequestException as e:
             logger.warning("Could not delete SQS resources", exc_info=e)
             sqs_result = False

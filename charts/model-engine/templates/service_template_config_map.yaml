@@ -218,6 +218,12 @@ data:
                 {{- end }}
                 - --num-workers
                 - "${PER_WORKER}"
+                - --broker-type
+                - {{ $celery_broker_type }}
+                {{- if eq $celery_broker_type "servicebus" }}
+                - --backend-protocol
+                - abs
+                {{- end }}
               {{- $async_forwarder_template_env | nindent 14 }}
               resources:
                 requests:

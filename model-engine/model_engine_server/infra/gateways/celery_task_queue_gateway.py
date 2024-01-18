@@ -22,20 +22,30 @@ celery_redis_24h = celery_app(
 celery_sqs = celery_app(
     None, s3_bucket=infra_config().s3_bucket, broker_type=str(BrokerType.SQS.value)
 )
+celery_servicebus = celery_app(
+    None, broker_type=str(BrokerType.SERVICEBUS.value), backend_protocol="abs"
+)
 
 
 class CeleryTaskQueueGateway(TaskQueueGateway):
     def __init__(self, broker_type: BrokerType):
         self.broker_type = broker_type
-        assert self.broker_type in [BrokerType.SQS, BrokerType.REDIS, BrokerType.REDIS_24H]
+        assert self.broker_type in [
+            BrokerType.SQS,
+            BrokerType.REDIS,
+            BrokerType.REDIS_24H,
+            BrokerType.SERVICEBUS,
+        ]
 
     def _get_celery_dest(self):
         if self.broker_type == BrokerType.SQS:
             return celery_sqs
         elif self.broker_type == BrokerType.REDIS_24H:
             return celery_redis_24h
-        else:  # self.broker_type == BrokerType.REDIS
+        elif self.broker_type == BrokerType.REDIS:
             return celery_redis
+        else:
+            return celery_servicebus
 
     def send_task(
         self,

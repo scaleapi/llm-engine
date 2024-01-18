@@ -290,9 +290,9 @@ env:
       secretKeyRef:
         name: {{ .kubernetesDatabaseSecretName }}
         key: database_url
-  {{- else if .awsDatabaseSecretName }}
+  {{- else if .cloudDatabaseSecretName }}
   - name: DB_SECRET_NAME
-    value: {{ .awsDatabaseSecretName }}
+    value: {{ .cloudDatabaseSecretName }}
   {{- end }}
   {{- end }}
   {{- if .Values.config.file }}
@@ -313,6 +313,22 @@ env:
   {{- if .Values.redis.auth}}
   - name: REDIS_AUTH_TOKEN
     value: {{ .Values.redis.auth }}
+  {{- end }}
+  {{- if .Values.azure}}
+  - name: KEYVAULT_NAME
+    value: {{ .Values.azure.keyvault_name }}
+  - name: ABS_ACCOUNT_KEY
+    value: {{ .Values.azure.abs_account_key }}
+  - name: ABS_CONNECTION_STRING
+    value: {{ .Values.azure.abs_connection_string }}
+  - name: SERVICEBUS_SAS_KEY
+    value: {{ .Values.azure.servicebus_sas_key }}
+  - name: SERVICEBUS_NAMESPACE
+    value: {{ .Values.azure.servicebus_namespace }}
+  - name: SERVICEBUS_CONNECTION_STRING
+    value: {{ .Values.azure.servicebus_connection_string }}
+  - name: CELERY_BACKEND_CONNECTION_STRING
+    value: {{ .Values.azure.celery_backend_connection_string }}
   {{- end }}
   {{- if eq .Values.context "circleci" }}
   - name: CIRCLECI

@@ -32,6 +32,7 @@ class BrokerType(str, Enum):
     REDIS = "redis"
     REDIS_24H = "redis_24h"
     SQS = "sqs"
+    SERVICEBUS = "servicebus"
 
 
 class BrokerName(str, Enum):

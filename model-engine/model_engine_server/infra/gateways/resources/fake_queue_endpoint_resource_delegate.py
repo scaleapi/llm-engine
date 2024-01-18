@@ -1,32 +1,31 @@
 from typing import Any, Dict, Sequence
 
-from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
-    SQSEndpointResourceDelegate,
-    SQSQueueInfo,
+from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
+    QueueEndpointResourceDelegate,
+    QueueInfo,
 )
-from mypy_boto3_sqs.type_defs import GetQueueAttributesResultTypeDef
 
-__all__: Sequence[str] = ("FakeSQSEndpointResourceDelegate",)
+__all__: Sequence[str] = ("FakeQueueEndpointResourceDelegate",)
 
 
-class FakeSQSEndpointResourceDelegate(SQSEndpointResourceDelegate):
+class FakeQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
     async def create_queue_if_not_exists(
         self,
         endpoint_id: str,
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
-    ) -> SQSQueueInfo:
-        queue_name = SQSEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
+    ) -> QueueInfo:
+        queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
         queue_url = f"http://foobar.com/{queue_name}"
-        return SQSQueueInfo(queue_name, queue_url)
+        return QueueInfo(queue_name, queue_url)
 
     async def delete_queue(self, endpoint_id: str) -> None:
         # Don't need to do anything, since the contract says that deleting is a no-op,
         # and we don't need to simulate real exceptions.
         pass
 
-    async def get_queue_attributes(self, endpoint_id: str) -> GetQueueAttributesResultTypeDef:
+    async def get_queue_attributes(self, endpoint_id: str) -> Dict[str, Any]:
         return {
             "Attributes": {
                 "ApproximateNumberOfMessages": "100",

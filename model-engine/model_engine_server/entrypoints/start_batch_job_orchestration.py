@@ -8,9 +8,11 @@ from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.env_vars import CIRCLECI
+from model_engine_server.core.config import infra_config
 from model_engine_server.db.base import SessionAsyncNullPool
 from model_engine_server.domain.entities import BatchJobSerializationFormat
 from model_engine_server.infra.gateways import (
+    ABSFilesystemGateway,
     CeleryTaskQueueGateway,
     LiveAsyncModelEndpointInferenceGateway,
     LiveBatchJobProgressGateway,
@@ -21,17 +23,20 @@ from model_engine_server.infra.gateways import (
     RedisInferenceAutoscalingMetricsGateway,
     S3FilesystemGateway,
 )
-from model_engine_server.infra.gateways.resources.fake_sqs_endpoint_resource_delegate import (
-    FakeSQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
+    ASBQueueEndpointResourceDelegate,
+)
+from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_delegate import (
+    FakeQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
 )
-from model_engine_server.infra.gateways.resources.live_sqs_endpoint_resource_delegate import (
-    LiveSQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
+    QueueEndpointResourceDelegate,
 )
-from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
-    SQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
+    SQSQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.repositories import (
     DbBatchJobRecordRepository,
@@ -56,21 +61,24 @@ async def run_batch_job(
     redis = aioredis.Redis(connection_pool=pool)
     redis_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
+    servicebus_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS)
 
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     model_endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway, session=session, read_only=False
     )
 
-    sqs_delegate: SQSEndpointResourceDelegate
+    queue_delegate: QueueEndpointResourceDelegate
     if CIRCLECI:
-        sqs_delegate = FakeSQSEndpointResourceDelegate()
+        queue_delegate = FakeQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "azure":
+        queue_delegate = ASBQueueEndpointResourceDelegate()
     else:
-        sqs_delegate = LiveSQSEndpointResourceDelegate(
+        queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
         )
 
-    resource_gateway = LiveEndpointResourceGateway(sqs_delegate=sqs_delegate)
+    resource_gateway = LiveEndpointResourceGateway(queue_delegate=queue_delegate)
     model_endpoint_cache_repo = RedisModelEndpointCacheRepository(
         redis_client=redis,
     )
@@ -79,7 +87,9 @@ async def run_batch_job(
         task_queue_gateway=redis_task_queue_gateway,
     )
     async_model_endpoint_inference_gateway = LiveAsyncModelEndpointInferenceGateway(
-        task_queue_gateway=sqs_task_queue_gateway
+        task_queue_gateway=servicebus_task_queue_gateway
+        if infra_config().cloud_provider == "azure"
+        else sqs_task_queue_gateway
     )
     streaming_model_endpoint_inference_gateway = LiveStreamingModelEndpointInferenceGateway(
         use_asyncio=(not CIRCLECI),
@@ -87,7 +97,11 @@ async def run_batch_job(
     sync_model_endpoint_inference_gateway = LiveSyncModelEndpointInferenceGateway(
         use_asyncio=(not CIRCLECI),
     )
-    filesystem_gateway = S3FilesystemGateway()
+    filesystem_gateway = (
+        ABSFilesystemGateway()
+        if infra_config().cloud_provider == "azure"
+        else S3FilesystemGateway()
+    )
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
