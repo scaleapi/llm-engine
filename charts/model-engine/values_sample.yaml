@@ -202,7 +202,7 @@ config:
       billing_queue_arn: "unused"
       model_primitive_host: "unused"
       hf_user_fine_tuned_weights_prefix: "s3://llm-engine/fine_tuned_weights"
-
+      sensitive_log_mode: false
       tgi_repository: "text-generation-inference"
       vllm_repository: "vllm"
       lightllm_repository: "lightllm"
