@@ -17,7 +17,6 @@ from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.serialization_utils import python_json_to_b64
 from model_engine_server.core.config import infra_config
 from model_engine_server.domain.entities import CallbackAuth, CallbackBasicAuth, ModelEndpointConfig
-from model_engine_server.inference.forwarding.http_forwarder import app
 from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 MODULE_PATH = Path(__file__).resolve()
@@ -179,27 +178,6 @@ def callback_app(callback_port: int) -> Iterator[FastAPI]:
     ):
         with attempt:
             readyz_response = requests.get(f"http://localhost:{callback_port}/readyz", timeout=1)
-            assert readyz_response.status_code == 200
-
-    yield app
-
-    process.terminate()
-
-
-@pytest.fixture(scope="session")
-def http_forwarder_app() -> Iterator[FastAPI]:
-    port = 5000
-    process = multiprocess.context.Process(target=uvicorn.run, args=(app,), kwargs={"port": port})
-    process.start()
-
-    for attempt in Retrying(
-        wait=wait_fixed(1),
-        stop=stop_after_attempt(10),
-        retry=retry_if_exception_type((AssertionError, requests.exceptions.RequestException)),
-        reraise=True,
-    ):
-        with attempt:
-            readyz_response = requests.get(f"http://localhost:{port}/readyz", timeout=1)
             assert readyz_response.status_code == 200
 
     yield app
