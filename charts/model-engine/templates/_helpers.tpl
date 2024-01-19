@@ -315,6 +315,8 @@ env:
     value: {{ .Values.redis.auth }}
   {{- end }}
   {{- if .Values.azure}}
+  - name: AZURE_CLIENT_ID
+    value: {{ .Values.azure.client_id }}
   - name: KEYVAULT_NAME
     value: {{ .Values.azure.keyvault_name }}
   - name: ABS_ACCOUNT_KEY

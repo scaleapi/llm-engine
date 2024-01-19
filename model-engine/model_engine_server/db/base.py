@@ -52,7 +52,7 @@ def get_engine_url(env: Optional[str] = None, read_only: bool = True, sync: bool
                 vault_url=f"https://{os.environ.get('KEYVAULT_NAME')}.vault.azure.net",
                 credential=DefaultAzureCredential(),
             )
-            engine_url = client.get_secret(key_file)
+            engine_url = client.get_secret(key_file).value
             logger.info(f"Connecting to db {engine_url}")
         else:
             db_secret_aws_profile = os.environ.get("DB_SECRET_AWS_PROFILE")

@@ -14,7 +14,7 @@
 {{- $forwarder_volume_mounts := include "modelEngine.forwarderVolumeMounts" . }}
 {{- $gateway_repository := .Values.image.gatewayRepository -}}
 {{- $tag := .Values.tag -}}
-{{- $aws_config_map_name := .Values.aws.configMap.name }}
+{{- $aws_config_map_name := (.Values.aws).configMap.name }}
 {{- $security_context := .Values.serviceTemplate.securityContext }}
 {{- $mount_infra_config := .Values.serviceTemplate.mountInfraConfig }}
 {{- $service_template_service_account_name := .Values.serviceTemplate.serviceAccountName }}

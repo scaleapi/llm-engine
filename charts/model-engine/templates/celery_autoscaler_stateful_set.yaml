@@ -36,7 +36,7 @@ spec:
         - model_engine_server.core.celery.celery_autoscaler
         env:
         - name: AWS_PROFILE
-          value: {{ .Values.aws.profileName }}
+          value: {{ (.Values.aws).profileName }}
         - name: AWS_CONFIG_FILE
           value: /opt/.aws/config
         - name: DD_TRACE_ENABLED
@@ -85,7 +85,7 @@ spec:
       serviceAccountName: {{ include "modelEngine.fullname" $ }}
       volumes:
       - configMap:
-          name: {{ .Values.aws.configMap.name }}
+          name: {{ (.Values.aws).configMap.name }}
         name: config-volume
 {{- end }}
 {{- end }}
