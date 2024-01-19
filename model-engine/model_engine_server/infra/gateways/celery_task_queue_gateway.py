@@ -10,20 +10,29 @@ from model_engine_server.core.celery import TaskVisibility, celery_app
 from model_engine_server.core.config import infra_config
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 
+backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
+
 celery_redis = celery_app(
-    None, s3_bucket=infra_config().s3_bucket, broker_type=str(BrokerType.REDIS.value)
+    None,
+    s3_bucket=infra_config().s3_bucket,
+    broker_type=str(BrokerType.REDIS.value),
+    backend_protocol=backend_protocol,
 )
 celery_redis_24h = celery_app(
     None,
     s3_bucket=infra_config().s3_bucket,
     broker_type=str(BrokerType.REDIS.value),
     task_visibility=TaskVisibility.VISIBILITY_24H,
+    backend_protocol=backend_protocol,
 )
 celery_sqs = celery_app(
-    None, s3_bucket=infra_config().s3_bucket, broker_type=str(BrokerType.SQS.value)
+    None,
+    s3_bucket=infra_config().s3_bucket,
+    broker_type=str(BrokerType.SQS.value),
+    backend_protocol=backend_protocol,
 )
 celery_servicebus = celery_app(
-    None, broker_type=str(BrokerType.SERVICEBUS.value), backend_protocol="abs"
+    None, broker_type=str(BrokerType.SERVICEBUS.value), backend_protocol=backend_protocol
 )
 
 
