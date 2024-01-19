@@ -4,7 +4,7 @@ from model_engine_server.domain.gateways.file_storage_gateway import (
     FileMetadata,
     FileStorageGateway,
 )
-from model_engine_server.infra.gateways import ABSFilesystemGateway
+from model_engine_server.infra.gateways.abs_filesystem_gateway import ABSFilesystemGateway
 
 
 class ABSFileStorageGateway(FileStorageGateway):
