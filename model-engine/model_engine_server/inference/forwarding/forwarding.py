@@ -9,7 +9,6 @@ import requests
 import sseclient
 import yaml
 from fastapi.responses import JSONResponse
-from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.inference.common import get_endpoint_config
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
@@ -133,8 +132,7 @@ class Forwarder(ModelEngineSerializationMixin):
 
         try:
             response_raw: Any = requests.post(
-                # self.predict_endpoint,
-                "https://launch-endpoint-id-end-cmisa3d3c9t002iqv8qg.ml-internal.scale.com/predict",
+                self.predict_endpoint,
                 json=json_payload,
                 headers={
                     "Content-Type": "application/json",
@@ -239,15 +237,15 @@ class LoadForwarder:
         logger.info(f"Prediction endpoint:  {pred}")
         logger.info(f"Healthcheck endpoint: {hc}")
 
-        # while True:
-        #     try:
-        #         if requests.get(hc).status_code == 200:
-        #             break
-        #     except requests.exceptions.ConnectionError:
-        #         pass
+        while True:
+            try:
+                if requests.get(hc).status_code == 200:
+                    break
+            except requests.exceptions.ConnectionError:
+                pass
 
-        #     logger.info(f"Waiting for user-defined service to be ready at {hc}...")
-        #     time.sleep(1)
+            logger.info(f"Waiting for user-defined service to be ready at {hc}...")
+            time.sleep(1)
 
         logger.info(f"Unwrapping model engine payload formatting?: {self.model_engine_unwrap}")
 
@@ -270,20 +268,7 @@ class LoadForwarder:
         else:
             serialize_results_as_string = self.serialize_results_as_string
 
-        # endpoint_config = get_endpoint_config()
-        from typing import Any
-
-        from model_engine_server.domain.entities import ModelEndpointConfig
-
-        endpoint_config: Any = ModelEndpointConfig(
-            endpoint_name="hi",
-            bundle_name="hi",
-            post_inference_hooks=["callback"],
-            user_id="hi",
-            default_callback_url="https://echo-server.ml-internal.scale.com/my-path",
-            default_callback_auth=None,
-        )
-
+        endpoint_config = get_endpoint_config()
         handler = PostInferenceHooksHandler(
             endpoint_name=endpoint_config.endpoint_name,
             bundle_name=endpoint_config.bundle_name,
