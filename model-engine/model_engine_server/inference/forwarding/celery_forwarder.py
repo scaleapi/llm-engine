@@ -161,6 +161,7 @@ def entrypoint():
     parser.add_argument("--num-workers", type=int, required=True)
     parser.add_argument("--queue", type=str, required=True)
     parser.add_argument("--sqs-url", type=str, default=None)
+
     args = parser.parse_args()
 
     forwarder_config = load_named_config(args.config, args.set)
