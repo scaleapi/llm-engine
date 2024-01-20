@@ -284,6 +284,41 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
         )
 
 
+def test_load_model_weights_sub_commands(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+
+    framework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+    framework_image_tag = "0.9.3-launch_s3"
+    checkpoint_path = "fake-checkpoint"
+    final_weights_folder = "test_folder"
+
+    subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
+        framework, framework_image_tag, checkpoint_path, final_weights_folder
+    )
+
+    expected_result = [
+        "./s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*' fake-checkpoint/* test_folder",
+    ]
+    assert expected_result == subcommands
+
+
 @pytest.mark.asyncio
 async def test_create_model_endpoint_trt_llm_use_case_success(
     test_api_key: str,
