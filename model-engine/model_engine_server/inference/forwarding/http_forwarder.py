@@ -79,7 +79,6 @@ def predict(
         try:
             payload = request.dict()
             response = forwarder(payload)
-            print(response)
             if isinstance(response, JSONResponse):
                 loaded_response = json.loads(response.body)
             else:
