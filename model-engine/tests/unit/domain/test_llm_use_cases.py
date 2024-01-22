@@ -304,8 +304,8 @@ def test_load_model_weights_sub_commands(
         docker_repository=fake_docker_repository_image_always_exists,
     )
 
-    framework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
-    framework_image_tag = "0.9.3-launch_s3"
+    framework = LLMInferenceFramework.VLLM
+    framework_image_tag = "0.2.7"
     checkpoint_path = "fake-checkpoint"
     final_weights_folder = "test_folder"
 
@@ -315,6 +315,21 @@ def test_load_model_weights_sub_commands(
 
     expected_result = [
         "./s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*' fake-checkpoint/* test_folder",
+    ]
+    assert expected_result == subcommands
+
+    framework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+    framework_image_tag = "1.0.0"
+    checkpoint_path = "fake-checkpoint"
+    final_weights_folder = "test_folder"
+
+    subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
+        framework, framework_image_tag, checkpoint_path, final_weights_folder
+    )
+
+    expected_result = [
+        "s5cmd > /dev/null || conda install -c conda-forge -y s5cmd",
+        "s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*' fake-checkpoint/* test_folder",
     ]
     assert expected_result == subcommands
 

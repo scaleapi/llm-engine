@@ -497,8 +497,6 @@ class CreateLLMModelBundleV1UseCase:
         subcommands = []
         s5cmd = "s5cmd"
 
-        base_path = checkpoint_path.split("/")[-1]
-
         # This is a hack for now to skip installing s5cmd for text-generation-inference:0.9.3-launch_s3,
         # which has s5cmd binary already baked in. Otherwise, install s5cmd if it's not already available
         if (
