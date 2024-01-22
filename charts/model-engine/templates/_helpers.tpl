@@ -325,10 +325,10 @@ env:
     value: {{ .Values.azure.abs_account_key }}
   - name: ABS_CONNECTION_STRING
     value: {{ .Values.azure.abs_connection_string }}
-  - name: SERVICEBUS_SAS_KEY
-    value: {{ .Values.azure.servicebus_sas_key }}
   - name: SERVICEBUS_NAMESPACE
     value: {{ .Values.azure.servicebus_namespace }}
+  - name: SERVICEBUS_SAS_KEY
+    value: {{ .Values.azure.servicebus_sas_key }}
   - name: SERVICEBUS_CONNECTION_STRING
     value: {{ .Values.azure.servicebus_connection_string }}
   - name: CELERY_BACKEND_CONNECTION_STRING

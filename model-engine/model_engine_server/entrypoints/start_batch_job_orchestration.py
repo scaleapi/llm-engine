@@ -59,7 +59,6 @@ async def run_batch_job(
     session = SessionAsyncNullPool
     pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
     redis = aioredis.Redis(connection_pool=pool)
-    redis_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
     servicebus_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS)
 
@@ -82,14 +81,17 @@ async def run_batch_job(
     model_endpoint_cache_repo = RedisModelEndpointCacheRepository(
         redis_client=redis,
     )
-    model_endpoint_infra_gateway = LiveModelEndpointInfraGateway(
-        resource_gateway=resource_gateway,
-        task_queue_gateway=redis_task_queue_gateway,
-    )
-    async_model_endpoint_inference_gateway = LiveAsyncModelEndpointInferenceGateway(
-        task_queue_gateway=servicebus_task_queue_gateway
+    inference_task_queue_gateway = (
+        servicebus_task_queue_gateway
         if infra_config().cloud_provider == "azure"
         else sqs_task_queue_gateway
+    )
+    model_endpoint_infra_gateway = LiveModelEndpointInfraGateway(
+        resource_gateway=resource_gateway,
+        task_queue_gateway=inference_task_queue_gateway,
+    )
+    async_model_endpoint_inference_gateway = LiveAsyncModelEndpointInferenceGateway(
+        task_queue_gateway=inference_task_queue_gateway
     )
     streaming_model_endpoint_inference_gateway = LiveStreamingModelEndpointInferenceGateway(
         use_asyncio=(not CIRCLECI),

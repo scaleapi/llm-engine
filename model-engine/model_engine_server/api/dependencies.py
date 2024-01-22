@@ -210,7 +210,7 @@ def _get_external_interfaces(
     )
     model_endpoint_infra_gateway = LiveModelEndpointInfraGateway(
         resource_gateway=resource_gateway,
-        task_queue_gateway=redis_task_queue_gateway,
+        task_queue_gateway=inference_task_queue_gateway,
     )
     async_model_endpoint_inference_gateway = LiveAsyncModelEndpointInferenceGateway(
         task_queue_gateway=inference_task_queue_gateway
