@@ -69,10 +69,12 @@ spec:
         resources:
           requests:
             cpu: 1000m
+        {{- if .Values.aws }}
         volumeMounts:
         - mountPath: /opt/.aws/config
           name: config-volume
           subPath: config
+        {{- end }}
       {{ with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -83,9 +85,11 @@ spec:
           value: 'true'
           effect: NoSchedule
       serviceAccountName: {{ include "modelEngine.fullname" $ }}
+      {{- if .Values.aws }}
       volumes:
       - configMap:
           name: {{ (.Values.aws).configMap.name }}
         name: config-volume
+      {{- end}}
 {{- end }}
 {{- end }}

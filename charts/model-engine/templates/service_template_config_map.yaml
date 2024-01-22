@@ -21,6 +21,7 @@
 {{- $service_template_aws_config_map_name := .Values.serviceTemplate.awsConfigMapName }}
 {{- $celery_broker_type := .Values.celeryBrokerType }}
 {{- $node_selector := .Values.nodeSelector }}
+{{- $require_aws_config := not (empty .Values.aws) }}
 
 {{- if .Values.message }}
 {{- .Values.message }}
@@ -278,9 +279,11 @@ data:
                   ${TRITON_MEMORY_DICT}
                   ${TRITON_STORAGE_DICT}
               volumeMounts:
+                {{- if $require_aws_config }}
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
+                {{- end }}
                 - mountPath: /dev/shm
                   name: dshm
             {{- end }}
@@ -316,9 +319,11 @@ data:
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
               volumeMounts:
+                {{- if $require_aws_config }}
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
+                {{- end }}
                 - mountPath: /dev/shm
                   name: dshm
                 {{- if $mount_infra_config }}
@@ -339,6 +344,7 @@ data:
           securityContext:
             fsGroup: 65534
           volumes:
+            {{- if $require_aws_config }}
             - name: config-volume
               configMap:
                 {{- if $service_template_aws_config_map_name }}
@@ -346,6 +352,7 @@ data:
                 {{- else }}
                 name: {{ $aws_config_map_name }}
                 {{- end }}  
+            {{- end }}
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -559,10 +566,12 @@ data:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           serviceAccountName: {{ $launch_name }}
+          {{- if $require_aws_config }}
           volumes:
             - name: config-volume
               configMap:
                 name: {{ $aws_config_map_name }}
+          {{- end }}
           containers:
             - name: main
               image: {{ $gateway_repository }}:${GIT_TAG}
@@ -605,10 +614,12 @@ data:
                 limits:
                   cpu: 4
                   memory: 32Gi
+              {{- if $require_aws_config }}
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
+              {{- end }}
   {{- range $device := tuple "cpu" "gpu" }}
   docker-image-batch-job-{{- $device }}.yaml: |-
     apiVersion: batch/v1
@@ -649,9 +660,11 @@ data:
           serviceAccountName: {{ $launch_name }}
           {{- end }}
           volumes:
+            {{- if $require_aws_config }}
             - name: config-volume
               configMap:
                 name: {{ $aws_config_map_name }}
+            {{- end }}
             - name: workdir
               emptyDir: {}
             - name: dshm
@@ -691,9 +704,11 @@ data:
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
               volumeMounts:
+                {{- if $require_aws_config }}
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
+                {{- end }}
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
                 - mountPath: /dev/shm
@@ -723,9 +738,11 @@ data:
                   cpu: 1
                   memory: 1Gi
               volumeMounts:
+                {{- if $require_aws_config }}
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
+                {{- end }}
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
   {{- end }}

@@ -315,8 +315,10 @@ env:
     value: {{ .Values.redis.auth }}
   {{- end }}
   {{- if .Values.azure}}
-  - name: AZURE_CLIENT_ID
-    value: {{ .Values.azure.client_id }}
+  - name: AZURE_KUBERNETES_CLUSTER_CLIENT_ID
+    value: {{ .Values.azure.kubernetes_cluster_client_id }}
+  - name: AZURE_KEYVAULT_IDENTITY_CLIENT_ID
+    value: {{ .Values.azure.keyvault_identity_client_id }}
   - name: KEYVAULT_NAME
     value: {{ .Values.azure.keyvault_name }}
   - name: ABS_ACCOUNT_KEY
@@ -423,9 +425,11 @@ volumeMounts:
 
 {{- define "modelEngine.forwarderVolumeMounts" }}
 volumeMounts:
+  {{- if .Values.aws }}
   - name: config-volume
     mountPath: /opt/.aws/config
     subPath: config
+  {{- end }}
   - name: user-config
     mountPath: /workspace/user_config
     subPath: raw_data

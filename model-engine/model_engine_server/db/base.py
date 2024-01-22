@@ -4,7 +4,7 @@ import sys
 from typing import Iterator, Optional
 
 import sqlalchemy
-from azure.identity import DefaultAzureCredential
+from azure.identity import ManagedIdentityCredential
 from azure.keyvault.secrets import SecretClient
 from model_engine_server.core.aws.secrets import get_key_file
 from model_engine_server.core.config import infra_config
@@ -50,7 +50,9 @@ def get_engine_url(env: Optional[str] = None, read_only: bool = True, sync: bool
         if infra_config().cloud_provider == "azure":
             client = SecretClient(
                 vault_url=f"https://{os.environ.get('KEYVAULT_NAME')}.vault.azure.net",
-                credential=DefaultAzureCredential(),
+                credential=ManagedIdentityCredential(
+                    client_id=os.getenv("AZURE_KEYVAULT_IDENTITY_CLIENT_ID")
+                ),
             )
             engine_url = client.get_secret(key_file).value
             logger.info(f"Connecting to db {engine_url}")
