@@ -8,7 +8,7 @@
 {{- $broker_name := "redis-elasticache-message-broker-master" }}
 {{- if eq $message_broker "sqs" }}
 {{ $broker_name = "sqs-message-broker-master" }}
-{{- elif eq $message_broker "servicebus" }}
+{{- else if eq $message_broker "servicebus" }}
 {{ $broker_name = "servicebus-message-broker-master" }}
 {{- end }}
 apiVersion: apps/v1
