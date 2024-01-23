@@ -238,6 +238,8 @@ env:
     value: "/workspace/model-engine/model_engine_server/core/configs/config.yaml"
   {{- end }}
   {{- if .Values.azure}}
+  - name: AZURE_KUBERNETES_CLUSTER_CLIENT_ID
+    value: {{ .Values.azure.kubernetes_cluster_client_id }}
   - name: ABS_CONNECTION_STRING
     value: {{ .Values.azure.abs_connection_string }}
   {{- end }}
@@ -259,6 +261,16 @@ env:
     value: "VISIBILITY_24H"
   - name: S3_BUCKET
     value: "${CELERY_S3_BUCKET}"
+  {{- if .Values.azure}}
+  - name: ABS_CONNECTION_STRING
+    value: {{ .Values.azure.abs_connection_string }}
+  - name: SERVICEBUS_NAMESPACE
+    value: {{ .Values.azure.servicebus_namespace }}
+  - name: SERVICEBUS_SAS_KEY
+    value: {{ .Values.azure.servicebus_sas_key }}
+  - name: CELERY_BACKEND_CONNECTION_STRING
+    value: {{ .Values.azure.celery_backend_connection_string }}
+  {{- end }}
 {{- end }}
 
 {{- define "modelEngine.serviceEnvBase" }}

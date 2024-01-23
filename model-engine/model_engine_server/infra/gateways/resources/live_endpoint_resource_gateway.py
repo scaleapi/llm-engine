@@ -33,7 +33,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         endpoint_record: ModelEndpointRecord,
         labels: Dict[str, str],
     ) -> QueueInfo:
-        """Creates a new SQS queue, returning its unique name and queue URL."""
+        """Creates a new queue, returning its unique name and queue URL."""
         queue_name, queue_url = await self.queue_delegate.create_queue_if_not_exists(
             endpoint_id=endpoint_record.id,
             endpoint_name=endpoint_record.name,
