@@ -103,3 +103,12 @@ def test_http_service_429(mock_request, post_inference_hooks_handler):
     t1.join()
     with pytest.raises(Exception):  # 429 thrown
         t2.join()
+
+
+def test_handler_response(post_inference_hooks_handler):
+    try:
+        post_inference_hooks_handler.handle(
+            request_payload=mock_request, response=PAYLOAD, task_id="test_task_id"
+        )
+    except Exception as e:
+        pytest.fail(f"Unexpected exception: {e}")
