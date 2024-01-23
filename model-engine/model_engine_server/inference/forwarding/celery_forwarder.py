@@ -102,8 +102,6 @@ def create_celery_service(
                         "custom": json.dumps(error_payload, indent=False),
                     },
                 )
-
-        def on_success(self, retval, task_id, args, kwargs):
             request_params = args[0]
             request_params_pydantic = EndpointPredictV1Request.parse_obj(request_params)
             forwarder.post_inference_hooks_handler.handle(request_params_pydantic, retval, task_id)  # type: ignore
