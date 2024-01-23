@@ -13,6 +13,8 @@ from typing import Any, DefaultDict, Dict, List, Set, Tuple
 
 import aioredis
 import stringcase
+from azure.core.exceptions import ResourceNotFoundError
+from azure.servicebus.management import ServiceBusAdministrationClient
 from celery.app.control import Inspect
 from datadog import statsd
 from kubernetes_asyncio import client
@@ -41,6 +43,7 @@ def excluded_namespaces():
 
 ELASTICACHE_REDIS_BROKER = "redis-elasticache-message-broker-master"
 SQS_BROKER = "sqs-message-broker-master"
+SERVICEBUS_BROKER = "servicebus-message-broker-master"
 
 UPDATE_DEPLOYMENT_MAX_RETRIES = 10
 
@@ -466,6 +469,54 @@ class SQSBroker(AutoscalerBroker):
         )  # connection_count and max_connections are redis-specific metrics
 
 
+class ASBBroker(AutoscalerBroker):
+    @staticmethod
+    def _get_asb_queue_size(queue_name: str):
+        conn_str = os.getenv("SERVICEBUS_CONNECTION_STRING")
+        if conn_str is None:
+            raise ValueError("SERVICEBUS_CONNECTION_STRING env var is required")
+        with ServiceBusAdministrationClient.from_connection_string(conn_str=conn_str) as client:
+            try:
+                queue_attributes = client.get_queue_runtime_properties(queue_name=queue_name)
+                active_queue_size = queue_attributes.active_message_count
+
+                logger.info(f"ASB {queue_name} total: active queue size {active_queue_size}")
+            except ResourceNotFoundError as e:
+                logger.info(f"Queue does not exist {queue_name}: {e}")
+                active_queue_size = 0
+            except Exception as e:
+                logger.error(f"Failed to get queue attributes {queue_name}: {e}")
+                active_queue_size = 0
+
+        return active_queue_size
+
+    def _get_queue_sizes(
+        self,
+        queues: Set[Tuple[str, int]],
+        queue_sizes: DefaultDict[Tuple[str, int], QueueSizes],
+    ):
+        queue_names = [queue_name for queue_name, _ in queues]
+        with ThreadPoolExecutor() as executor:
+            results = executor.map(ASBBroker._get_asb_queue_size, queue_names)
+
+        for q, active_queue_size in zip(queues, results):
+            queue_sizes[q].enqueued += active_queue_size
+            queue_sizes[q].total += active_queue_size
+        return queue_sizes
+
+    async def get_broker_metrics(
+        self,
+        queues: Set[Tuple[str, int]],
+        queue_sizes: DefaultDict[Tuple[str, int], QueueSizes],
+    ) -> BrokerMetrics:
+        queue_sizes = self._get_queue_sizes(queues, queue_sizes)
+        return BrokerMetrics(
+            queue_sizes=queue_sizes,
+            connection_count=None,
+            max_connections=None,
+        )  # connection_count and max_connections are redis-specific metrics
+
+
 def get_worker_metrics(
     inspect: Dict[int, Inspect],
     queues: Set[Tuple[str, int]],
@@ -533,10 +584,17 @@ async def main():
     BROKER_NAME_TO_CLASS = {
         ELASTICACHE_REDIS_BROKER: RedisBroker(use_elasticache=True),
         SQS_BROKER: SQSBroker(),
+        SERVICEBUS_BROKER: ASBBroker(),
     }
 
     broker = BROKER_NAME_TO_CLASS[autoscaler_broker]
-    broker_type = "redis" if isinstance(broker, RedisBroker) else "sqs"
+    broker_type = (
+        "redis"
+        if isinstance(broker, RedisBroker)
+        else "sqs"
+        if isinstance(broker, SQSBroker)
+        else "servicebus"
+    )
 
     if broker_type == "redis":
         inspect = {
@@ -551,8 +609,12 @@ async def main():
         # for sqs we will get active/reserved counts directly from sqs as opposed to using
         #   an inspect object
         inspect = {}
+    elif broker_type == "servicebus":
+        inspect = {
+            0: inspect_app(app=celery_app(None, broker_type=broker_type, backend_protocol="abs"))
+        }
     else:
-        raise ValueError("broker_type not redis or sqs, how did we get here?")
+        raise ValueError("broker_type not redis, sqs, or servicebus; how did we get here?")
 
     env = os.getenv("DD_ENV")
     instance_count = int(os.getenv("POD_NAME", "pod-0").split("-")[-1])

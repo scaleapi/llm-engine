@@ -11,7 +11,7 @@ from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_de
     SQSQueueEndpointResourceDelegate,
 )
 
-MODULE_PATH = "model_engine_server.infra.gateways.resources.live_sqs_endpoint_resource_delegate"
+MODULE_PATH = "model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate"
 
 EXPECTED_QUEUE_POLICY = """
 {

@@ -5,7 +5,12 @@
 {{- $tag := .Values.tag }}
 {{- $message_broker := .Values.celeryBrokerType }}
 {{- $num_shards := .Values.celery_autoscaler.num_shards }}
-{{- $broker_name := ternary "redis-elasticache-message-broker-master" "sqs-message-broker-master" (eq $message_broker "elasticache") }}
+{{- $broker_name := "redis-elasticache-message-broker-master" }}
+{{- if eq $message_broker "sqs" }}
+{{ $broker_name = "sqs-message-broker-master" }}
+{{- elif eq $message_broker "servicebus" }}
+{{ $broker_name = "servicebus-message-broker-master" }}
+{{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -35,10 +40,12 @@ spec:
         - -m
         - model_engine_server.core.celery.celery_autoscaler
         env:
+        {{- if .Values.aws }}
         - name: AWS_PROFILE
-          value: {{ (.Values.aws).profileName }}
+          value: {{ .Values.aws.profileName }}
         - name: AWS_CONFIG_FILE
           value: /opt/.aws/config
+        {{- end}}
         - name: DD_TRACE_ENABLED
           value: 'false'
         - name: DD_SERVICE
@@ -63,6 +70,16 @@ spec:
               fieldPath: metadata.name
         - name: NUM_SHARDS
           value: '{{ $num_shards }}'
+        {{- if .Values.azure }}
+        - name: SERVICEBUS_NAMESPACE
+          value: {{ .Values.azure.servicebus_namespace }}
+        - name: SERVICEBUS_SAS_KEY
+          value: {{ .Values.azure.servicebus_sas_key }}
+        - name: SERVICEBUS_CONNECTION_STRING
+          value: {{ .Values.azure.servicebus_connection_string }}
+        - name: CELERY_BACKEND_CONNECTION_STRING
+          value: {{ .Values.azure.celery_backend_connection_string }}
+        {{- end }}
         image: "{{ .Values.image.gatewayRepository }}:{{ $tag }}"
         imagePullPolicy: Always
         name: main
@@ -88,7 +105,7 @@ spec:
       {{- if .Values.aws }}
       volumes:
       - configMap:
-          name: {{ (.Values.aws).configMap.name }}
+          name: {{ .Values.aws.configMap.name }}
         name: config-volume
       {{- end}}
 {{- end }}
