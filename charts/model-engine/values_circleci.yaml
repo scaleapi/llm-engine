@@ -85,6 +85,7 @@ affinity: { }
 config:
   values:
     infra:
+      cloud_provider: aws
       k8s_cluster_name: minikube
       dns_host_domain: localhost
       default_region: us-west-2

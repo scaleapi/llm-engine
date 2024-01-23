@@ -1,3 +1,4 @@
+cloud_provider: "aws"
 env: "circleci"
 k8s_cluster_name: "minikube"
 dns_host_domain: "localhost"
