@@ -1,14 +1,25 @@
 """Launch Input/Output utils."""
 import os
+from typing import Any
 
 import boto3
 import smart_open
+from azure.storage.blob import BlobServiceClient
+from model_engine_server.core.config import infra_config
 
 
 def open_wrapper(uri: str, mode: str = "rt", **kwargs):
+    client: Any
     # This follows the 5.1.0 smart_open API
-    profile_name = kwargs.get("aws_profile", os.getenv("AWS_PROFILE"))
-    session = boto3.Session(profile_name=profile_name)
-    client = session.client("s3")
+    if infra_config().cloud_provider == "azure":
+        conn_str = os.getenv("ABS_CONNECTION_STRING")
+        if conn_str is None:
+            raise ValueError("ABS_CONNECTION_STRING env var is required")
+        client = BlobServiceClient.from_connection_string(conn_str=conn_str)
+    else:
+        profile_name = kwargs.get("aws_profile", os.getenv("AWS_PROFILE"))
+        session = boto3.Session(profile_name=profile_name)
+        client = session.client("s3")
+
     transport_params = {"client": client}
     return smart_open.open(uri, mode, transport_params=transport_params)

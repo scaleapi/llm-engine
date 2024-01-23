@@ -167,8 +167,10 @@ env:
     value: "${LOAD_PREDICT_FN_MODULE_PATH}"
   - name: LOAD_MODEL_FN_MODULE_PATH
     value: "${LOAD_MODEL_FN_MODULE_PATH}"
+  {{- if .Values.aws }}
   - name: AWS_PROFILE
     value: "${AWS_ROLE}"
+  {{- end }}
   - name: RESULTS_S3_BUCKET
     value: "${RESULTS_S3_BUCKET}"
   - name: CHILD_FN_INFO
@@ -219,10 +221,12 @@ env:
     valueFrom:
       fieldRef:
         fieldPath: status.hostIP
+  {{- if .Values.aws }}
   - name: AWS_PROFILE
     value: "${AWS_ROLE}"
   - name: AWS_CONFIG_FILE
     value: /opt/.aws/config
+  {{- end }}
   - name: RESULTS_S3_BUCKET
     value: "${RESULTS_S3_BUCKET}"
   - name: BASE_PATH
@@ -232,6 +236,10 @@ env:
     value: {{ .Values.config.file.infra | quote }}
   {{- else }}
     value: "/workspace/model-engine/model_engine_server/core/configs/config.yaml"
+  {{- end }}
+  {{- if .Values.azure}}
+  - name: ABS_CONNECTION_STRING
+    value: {{ .Values.azure.abs_connection_string }}
   {{- end }}
 {{- end }}
 
