@@ -4,13 +4,16 @@ List model endpoint history: GET model-endpoints/<endpoint id>/history
 Read model endpoint creation logs: GET model-endpoints/<endpoint id>/creation-logs
 """
 
+import datetime
 import json
 import math
 import os
+import re
 from dataclasses import asdict
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
 
 from model_engine_server.common.config import hmi_config
+from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
     CompletionStreamOutput,
@@ -18,6 +21,8 @@ from model_engine_server.common.dtos.llms import (
     CompletionStreamV1Response,
     CompletionSyncV1Request,
     CompletionSyncV1Response,
+    CreateBatchCompletionsRequest,
+    CreateBatchCompletionsResponse,
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
     DeleteLLMEndpointResponse,
@@ -41,6 +46,7 @@ from model_engine_server.core.loggers import (
     make_logger,
 )
 from model_engine_server.domain.entities import (
+    GpuType,
     LLMInferenceFramework,
     LLMMetadata,
     LLMSource,
@@ -51,6 +57,9 @@ from model_engine_server.domain.entities import (
     Quantization,
     RunnableImageFlavor,
     StreamingEnhancedRunnableImageFlavor,
+)
+from model_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
+    DockerImageBatchJobBundle,
 )
 from model_engine_server.domain.exceptions import (
     DockerImageNotFoundException,
@@ -63,8 +72,10 @@ from model_engine_server.domain.exceptions import (
     ObjectNotFoundException,
     UpstreamServiceError,
 )
+from model_engine_server.domain.gateways import DockerImageBatchJobGateway
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
 from model_engine_server.domain.repositories import (
+    DockerImageBatchJobBundleRepository,
     DockerRepository,
     ModelBundleRepository,
     TokenizerRepository,
@@ -486,8 +497,6 @@ class CreateLLMModelBundleV1UseCase:
         subcommands = []
         s5cmd = "s5cmd"
 
-        base_path = checkpoint_path.split("/")[-1]
-
         # This is a hack for now to skip installing s5cmd for text-generation-inference:0.9.3-launch_s3,
         # which has s5cmd binary already baked in. Otherwise, install s5cmd if it's not already available
         if (
@@ -498,6 +507,7 @@ class CreateLLMModelBundleV1UseCase:
         else:
             s5cmd = "./s5cmd"
 
+        base_path = checkpoint_path.split("/")[-1]
         if base_path.endswith(".tar"):
             # If the checkpoint file is a tar file, extract it into final_weights_folder
             subcommands.extend(
@@ -2119,3 +2129,148 @@ class ModelDownloadV1UseCase:
             public_file_name = model_file.rsplit("/", 1)[-1]
             urls[public_file_name] = self.filesystem_gateway.generate_signed_url(model_file)
         return ModelDownloadResponse(urls=urls)
+
+
+def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJobResourceRequests:
+    if "mixtral-8x7b" in model_name:
+        cpus = "20"
+        gpus = 2
+        memory = "160Gi"
+        storage = "160Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    else:
+        numbers = re.findall(r"\d+", model_name)
+        if len(numbers) == 0:
+            raise ObjectHasInvalidValueException(
+                f"Model {model_name} is not supported for batch completions."
+            )
+
+        b_params = int(numbers[-1])
+        if b_params <= 7:
+            cpus = "10"
+            gpus = 1
+            memory = "24Gi"
+            storage = "80Gi"
+            gpu_type = GpuType.NVIDIA_AMPERE_A10
+        elif b_params <= 13:
+            cpus = "20"
+            gpus = 2
+            memory = "48Gi"
+            storage = "80Gi"
+            gpu_type = GpuType.NVIDIA_AMPERE_A10
+        elif b_params <= 34:
+            cpus = "40"
+            gpus = 4
+            memory = "96Gi"
+            storage = "96Gi"
+            gpu_type = GpuType.NVIDIA_AMPERE_A10
+        elif b_params <= 70:
+            cpus = "20"
+            gpus = 2
+            memory = "160Gi"
+            storage = "160Gi"
+            gpu_type = GpuType.NVIDIA_AMPERE_A100E
+        else:
+            raise ObjectHasInvalidValueException(
+                f"Model {model_name} is not supported for batch completions."
+            )
+
+    return CreateDockerImageBatchJobResourceRequests(
+        cpus=cpus, gpus=gpus, memory=memory, storage=storage, gpu_type=gpu_type
+    )
+
+
+class CreateBatchCompletionsUseCase:
+    def __init__(
+        self,
+        docker_image_batch_job_gateway: DockerImageBatchJobGateway,
+        docker_repository: DockerRepository,
+        docker_image_batch_job_bundle_repo: DockerImageBatchJobBundleRepository,
+    ):
+        self.docker_image_batch_job_gateway = docker_image_batch_job_gateway
+        self.docker_repository = docker_repository
+        self.docker_image_batch_job_bundle_repo = docker_image_batch_job_bundle_repo
+
+    async def create_batch_job_bundle(
+        self,
+        user: User,
+        request: CreateBatchCompletionsRequest,
+        hardware: CreateDockerImageBatchJobResourceRequests,
+    ) -> DockerImageBatchJobBundle:
+        bundle_name = (
+            f"{request.model_config.model}_{datetime.datetime.utcnow().strftime('%y%m%d-%H%M%S')}"
+        )
+
+        image_tag = self.docker_repository.get_latest_image_tag(
+            hmi_config.batch_inference_vllm_repository
+        )
+
+        config_file_path = "/opt/config.json"
+
+        assert hardware.gpu_type is not None
+
+        batch_bundle = (
+            await self.docker_image_batch_job_bundle_repo.create_docker_image_batch_job_bundle(
+                name=bundle_name,
+                created_by=user.user_id,
+                owner=user.team_id,
+                image_repository=hmi_config.batch_inference_vllm_repository,
+                image_tag=image_tag,
+                command=[
+                    "dumb-init",
+                    "--",
+                    "/bin/bash",
+                    "-c",
+                    "ddtrace-run python vllm_batch.py",
+                ],
+                env={"CONFIG_FILE": config_file_path},
+                mount_location=config_file_path,
+                cpus=str(hardware.cpus),
+                memory=str(hardware.memory),
+                storage=str(hardware.storage),
+                gpus=hardware.gpus,
+                gpu_type=hardware.gpu_type,
+                public=False,
+            )
+        )
+        return batch_bundle
+
+    async def execute(
+        self, user: User, request: CreateBatchCompletionsRequest
+    ) -> CreateBatchCompletionsResponse:
+        hardware = infer_hardware_from_model_name(request.model_config.model)
+        # Reconcile gpus count with num_shards from request
+        assert hardware.gpus is not None
+        if request.model_config.num_shards:
+            hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
+        request.model_config.num_shards = hardware.gpus
+
+        batch_bundle = await self.create_batch_job_bundle(user, request, hardware)
+
+        validate_resource_requests(
+            bundle=batch_bundle,
+            cpus=hardware.cpus,
+            memory=hardware.memory,
+            storage=hardware.storage,
+            gpus=hardware.gpus,
+            gpu_type=hardware.gpu_type,
+        )
+
+        if request.max_runtime_sec is None or request.max_runtime_sec < 1:
+            raise ObjectHasInvalidValueException("max_runtime_sec must be a positive integer.")
+
+        job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
+            created_by=user.user_id,
+            owner=user.team_id,
+            job_config=request.dict(),
+            env=batch_bundle.env,
+            command=batch_bundle.command,
+            repo=batch_bundle.image_repository,
+            tag=batch_bundle.image_tag,
+            resource_requests=hardware,
+            labels=request.model_config.labels,
+            mount_location=batch_bundle.mount_location,
+            override_job_max_runtime_s=request.max_runtime_sec,
+            num_workers=request.data_parallelism,
+        )
+        return CreateBatchCompletionsResponse(job_id=job_id)

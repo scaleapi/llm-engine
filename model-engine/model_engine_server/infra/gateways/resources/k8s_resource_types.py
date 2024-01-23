@@ -187,6 +187,7 @@ class _DockerImageBatchJobArguments(_JobArguments):
     LOCAL_FILE_NAME: str
     FILE_CONTENTS_B64ENCODED: str
     COMMAND: List[str]
+    BATCH_JOB_NUM_WORKERS: int
 
 
 class _GpuArguments(TypedDict):

@@ -632,6 +632,9 @@ data:
       backoffLimit: 0
       activeDeadlineSeconds: ${BATCH_JOB_MAX_RUNTIME}
       ttlSecondsAfterFinished: ${BATCH_JOB_TTL_SECONDS_AFTER_FINISHED}
+      completions: ${BATCH_JOB_NUM_WORKERS}
+      parallelism: ${BATCH_JOB_NUM_WORKERS}
+      completionMode: "Indexed"
       template:
         metadata:
           labels:

@@ -33,9 +33,16 @@ class FakeK8sV1JobStatus:
 
 
 @dataclass
+class FakeK8sV1JobSpec:
+    completions: int = 1
+    parallelism: int = 1
+
+
+@dataclass
 class FakeK8sV1Job:
     metadata: FakeK8sV1ObjectMeta = FakeK8sV1ObjectMeta()
     status: FakeK8sV1JobStatus = FakeK8sV1JobStatus()
+    spec: FakeK8sV1JobSpec = FakeK8sV1JobSpec()
     # TODO: spec, api_version, kind
 
 

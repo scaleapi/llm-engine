@@ -7,6 +7,7 @@ from model_engine_server.common.dtos.llms import (
     CompletionOutput,
     CompletionStreamV1Request,
     CompletionSyncV1Request,
+    CreateBatchCompletionsRequest,
     CreateFineTuneRequest,
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
@@ -40,13 +41,16 @@ from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
 from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
+    CreateBatchCompletionsUseCase,
     CreateLLMModelBundleV1UseCase,
     CreateLLMModelEndpointV1UseCase,
     DeleteLLMEndpointByNameUseCase,
     GetLLMModelEndpointByNameV1UseCase,
+    GpuType,
     ModelDownloadV1UseCase,
     UpdateLLMModelEndpointV1UseCase,
     _include_safetensors_bin_or_pt,
+    infer_hardware_from_model_name,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
@@ -278,6 +282,56 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
             user=user,
             request=create_llm_model_endpoint_text_generation_inference_request_async,
         )
+
+
+def test_load_model_weights_sub_commands(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+
+    framework = LLMInferenceFramework.VLLM
+    framework_image_tag = "0.2.7"
+    checkpoint_path = "fake-checkpoint"
+    final_weights_folder = "test_folder"
+
+    subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
+        framework, framework_image_tag, checkpoint_path, final_weights_folder
+    )
+
+    expected_result = [
+        "./s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*' fake-checkpoint/* test_folder",
+    ]
+    assert expected_result == subcommands
+
+    framework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+    framework_image_tag = "1.0.0"
+    checkpoint_path = "fake-checkpoint"
+    final_weights_folder = "test_folder"
+
+    subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
+        framework, framework_image_tag, checkpoint_path, final_weights_folder
+    )
+
+    expected_result = [
+        "s5cmd > /dev/null || conda install -c conda-forge -y s5cmd",
+        "s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*' fake-checkpoint/* test_folder",
+    ]
+    assert expected_result == subcommands
 
 
 @pytest.mark.asyncio
@@ -1492,3 +1546,76 @@ async def test_include_safetensors_bin_or_pt_majority_pt():
         "fake3.pt",
     ]
     assert _include_safetensors_bin_or_pt(fake_model_files) == "*.pt"
+
+
+def test_infer_hardware_from_model_name():
+    hardware = infer_hardware_from_model_name("mixtral-8x7b")
+    assert hardware.cpus == "20"
+    assert hardware.gpus == 2
+    assert hardware.memory == "160Gi"
+    assert hardware.storage == "160Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+
+    hardware = infer_hardware_from_model_name("llama-2-7b")
+    assert hardware.cpus == "10"
+    assert hardware.gpus == 1
+    assert hardware.memory == "24Gi"
+    assert hardware.storage == "80Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
+
+    hardware = infer_hardware_from_model_name("llama-2-13b")
+    assert hardware.cpus == "20"
+    assert hardware.gpus == 2
+    assert hardware.memory == "48Gi"
+    assert hardware.storage == "80Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
+
+    hardware = infer_hardware_from_model_name("codellama-34b")
+    assert hardware.cpus == "40"
+    assert hardware.gpus == 4
+    assert hardware.memory == "96Gi"
+    assert hardware.storage == "96Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
+
+    hardware = infer_hardware_from_model_name("llama-2-70b")
+    assert hardware.cpus == "20"
+    assert hardware.gpus == 2
+    assert hardware.memory == "160Gi"
+    assert hardware.storage == "160Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+
+    with pytest.raises(ObjectHasInvalidValueException):
+        infer_hardware_from_model_name("unsupported_model")
+
+    with pytest.raises(ObjectHasInvalidValueException):
+        infer_hardware_from_model_name("falcon-180b")
+
+
+@pytest.mark.asyncio
+async def test_create_batch_completions(
+    fake_docker_image_batch_job_gateway,
+    fake_docker_repository_image_always_exists,
+    fake_docker_image_batch_job_bundle_repository,
+    test_api_key: str,
+    create_batch_completions_request: CreateBatchCompletionsRequest,
+):
+    use_case = CreateBatchCompletionsUseCase(
+        docker_image_batch_job_gateway=fake_docker_image_batch_job_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+        docker_image_batch_job_bundle_repo=fake_docker_image_batch_job_bundle_repository,
+    )
+
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    result = await use_case.execute(user, create_batch_completions_request)
+
+    job = await fake_docker_image_batch_job_gateway.get_docker_image_batch_job(result.job_id)
+    assert job.num_workers == create_batch_completions_request.data_parallelism
+
+    bundle = list(fake_docker_image_batch_job_bundle_repository.db.values())[0]
+    assert bundle.command == [
+        "dumb-init",
+        "--",
+        "/bin/bash",
+        "-c",
+        "ddtrace-run python vllm_batch.py",
+    ]
