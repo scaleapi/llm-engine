@@ -5,6 +5,7 @@ from unittest import mock
 
 import pytest
 from fastapi import BackgroundTasks
+from fastapi.responses import JSONResponse
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.inference.forwarding.forwarding import Forwarder
 from model_engine_server.inference.forwarding.http_forwarder import (
@@ -109,6 +110,17 @@ def test_handler_response(post_inference_hooks_handler):
     try:
         post_inference_hooks_handler.handle(
             request_payload=mock_request, response=PAYLOAD, task_id="test_task_id"
+        )
+    except Exception as e:
+        pytest.fail(f"Unexpected exception: {e}")
+
+
+def test_handler_json_response(post_inference_hooks_handler):
+    try:
+        post_inference_hooks_handler.handle(
+            request_payload=mock_request,
+            response=JSONResponse(content=PAYLOAD),
+            task_id="test_task_id",
         )
     except Exception as e:
         pytest.fail(f"Unexpected exception: {e}")
