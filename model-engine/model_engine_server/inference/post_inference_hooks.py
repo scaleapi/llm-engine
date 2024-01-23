@@ -120,7 +120,7 @@ class PostInferenceHooksHandler:
         for hook_name, hook in self._hooks.items():
             self._monitoring_metrics_gateway.emit_attempted_post_inference_hook(hook_name)
             try:
-                hook.handle(request_payload, loaded_response, task_id)
+                hook.handle(request_payload, loaded_response, task_id)  # pragma: no cover
                 self._monitoring_metrics_gateway.emit_successful_post_inference_hook(hook_name)
             except Exception:
                 logger.exception(f"Hook {hook_name} failed.")
