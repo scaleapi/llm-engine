@@ -1249,6 +1249,7 @@ class FakeDockerImageBatchJobGateway(DockerImageBatchJobGateway):
         mount_location: Optional[str],
         annotations: Optional[Dict[str, str]] = None,
         override_job_max_runtime_s: Optional[int] = None,
+        num_workers: Optional[int] = 1,
     ) -> str:
         job_id = f"ft-{self.id}"
         self.id += 1
@@ -1262,6 +1263,7 @@ class FakeDockerImageBatchJobGateway(DockerImageBatchJobGateway):
             status=BatchJobStatus.RUNNING,
             annotations=annotations,
             override_job_max_runtime_s=override_job_max_runtime_s,
+            num_workers=num_workers,
         )
 
         return job_id

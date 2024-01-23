@@ -6,6 +6,9 @@ from model_engine_server.common.dtos.batch_jobs import (
 from model_engine_server.common.dtos.llms import (
     CompletionStreamV1Request,
     CompletionSyncV1Request,
+    CreateBatchCompletionsModelConfig,
+    CreateBatchCompletionsRequest,
+    CreateBatchCompletionsRequestContent,
     CreateLLMModelEndpointV1Request,
     UpdateLLMModelEndpointV1Request,
 )
@@ -467,4 +470,24 @@ def completion_stream_request() -> CompletionStreamV1Request:
         prompt="What is machine learning?",
         max_new_tokens=10,
         temperature=0.5,
+    )
+
+
+@pytest.fixture
+def create_batch_completions_request() -> CreateBatchCompletionsRequest:
+    return CreateBatchCompletionsRequest(
+        input_data_path="test_input_data_path",
+        output_data_path="test_output_data_path",
+        content=CreateBatchCompletionsRequestContent(
+            prompts=["What is machine learning?"],
+            max_new_tokens=10,
+            temperature=0.5,
+        ),
+        model_config=CreateBatchCompletionsModelConfig(
+            model="mpt-7b",
+            checkpoint_path="test_checkpoint_path",
+            labels=[],
+            num_shards=2,
+        ),
+        data_parallelism=2,
     )

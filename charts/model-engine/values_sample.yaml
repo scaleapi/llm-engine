@@ -202,11 +202,12 @@ config:
       billing_queue_arn: "unused"
       model_primitive_host: "unused"
       hf_user_fine_tuned_weights_prefix: "s3://llm-engine/fine_tuned_weights"
-
+      sensitive_log_mode: false
       tgi_repository: "text-generation-inference"
       vllm_repository: "vllm"
       lightllm_repository: "lightllm"
       tensorrt_llm_repository: "tensorrt-llm"
+      batch_inference_vllm_repository: "llm-engine/batch-infer-vllm"
       user_inference_base_repository: "launch/inference"
       user_inference_pytorch_repository: "launch/inference/pytorch"
       user_inference_tensorflow_repository: "launch/inference/tf"
