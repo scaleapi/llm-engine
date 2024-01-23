@@ -5,7 +5,6 @@ import subprocess
 from functools import lru_cache
 
 from fastapi import BackgroundTasks, Depends, FastAPI
-from fastapi.responses import JSONResponse
 from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -77,14 +76,9 @@ def predict(
 ):
     with limiter:
         try:
-            payload = request.dict()
-            response = forwarder(payload)
-            if isinstance(response, JSONResponse):
-                loaded_response = json.loads(response.body)
-            else:
-                loaded_response = response
+            response = forwarder(request.dict())
             background_tasks.add_task(
-                forwarder.post_inference_hooks_handler.handle, request, loaded_response
+                forwarder.post_inference_hooks_handler.handle, request, response
             )
             return response
         except Exception:
