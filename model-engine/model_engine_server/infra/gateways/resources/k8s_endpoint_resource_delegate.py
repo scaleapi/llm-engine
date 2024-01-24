@@ -10,9 +10,7 @@ from kubernetes_asyncio import config as kube_config_async
 from kubernetes_asyncio.client.models.v1_container import V1Container
 from kubernetes_asyncio.client.models.v1_deployment import V1Deployment
 from kubernetes_asyncio.client.models.v1_env_var import V1EnvVar
-from kubernetes_asyncio.client.models.v2beta2_horizontal_pod_autoscaler import (
-    V2beta2HorizontalPodAutoscaler,
-)
+from kubernetes_asyncio.client.models.v2_horizontal_pod_autoscaler import V2HorizontalPodAutoscaler
 from kubernetes_asyncio.client.rest import ApiException
 from kubernetes_asyncio.config import ConfigException
 from model_engine_server.common.config import hmi_config
@@ -1356,7 +1354,7 @@ class K8SEndpointResourceDelegate:
 
     @staticmethod
     def _get_sync_autoscaling_params(
-        hpa_config: V2beta2HorizontalPodAutoscaler,
+        hpa_config: V2HorizontalPodAutoscaler,
     ) -> HorizontalAutoscalingEndpointParams:
         spec = hpa_config.spec
         per_worker = get_per_worker_value_from_target_concurrency(
