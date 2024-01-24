@@ -13,6 +13,7 @@ from llmengine.data_types import (
 )
 
 COMPLETION_TIMEOUT = 300
+HTTP_TIMEOUT = 60
 
 
 class Completion(APIEngine):
@@ -405,10 +406,10 @@ class Completion(APIEngine):
     @classmethod
     async def batch_create(
         cls,
-        output_file_path: str,
+        output_data_path: str,
         model_config: CreateBatchCompletionsModelConfig,
         content: Optional[CreateBatchCompletionsRequestContent] = None,
-        input_file_path: Optional[str] = None,
+        input_data_path: Optional[str] = None,
         data_parallelism: int = 1,
         max_runtime_sec: int = 24 * 3600,
     ) -> CreateBatchCompletionsResponse:
@@ -418,17 +419,17 @@ class Completion(APIEngine):
         Prompts can be passed in from an input file, or as a part of the request.
 
         Args:
-            output_file_path (str):
+            output_data_path (str):
                 The path to the output file. The output file will be a JSON file containing the completions.
 
             model_config (CreateBatchCompletionsModelConfig):
                 The model configuration to use for the batch completion.
 
             content (Optional[CreateBatchCompletionsRequestContent]):
-                The content to use for the batch completion. Either one of `content` or `input_file_path` must be provided.
+                The content to use for the batch completion. Either one of `content` or `input_data_path` must be provided.
 
-            input_file_path (Optional[str]):
-                The path to the input file. The input file should be a JSON file with data of type `BatchCompletionsRequestContent`. Either one of `content` or `input_file_path` must be provided.
+            input_data_path (Optional[str]):
+                The path to the input file. The input file should be a JSON file with data of type `BatchCompletionsRequestContent`. Either one of `content` or `input_data_path` must be provided.
 
             data_parallelism (int):
                 The number of parallel jobs to run. Data will be evenly distributed to the jobs. Defaults to 1.
@@ -445,7 +446,7 @@ class Completion(APIEngine):
             from llmengine.data_types import CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
 
             response = Completion.batch_create(
-                output_file_path="s3://my-path",
+                output_data_path="s3://my-path",
                 model_config=CreateBatchCompletionsModelConfig(
                     model="llama-2-7b",
                     checkpoint="s3://checkpoint-path",
@@ -468,8 +469,8 @@ class Completion(APIEngine):
             # Store CreateBatchCompletionsRequestContent data into input file "s3://my-input-path"
 
             response = Completion.batch_create(
-                input_file_path="s3://my-input-path",
-                output_file_path="s3://my-output-path",
+                input_data_path="s3://my-input-path",
+                output_data_path="s3://my-output-path",
                 model_config=CreateBatchCompletionsModelConfig(
                     model="llama-2-7b",
                     checkpoint="s3://checkpoint-path",
@@ -483,13 +484,14 @@ class Completion(APIEngine):
         data = CreateBatchCompletionsRequest(
             model_config=model_config,
             content=content,
-            input_file_path=input_file_path,
-            output_file_path=output_file_path,
+            input_data_path=input_data_path,
+            output_data_path=output_data_path,
             data_parallelism=data_parallelism,
             max_runtime_sec=max_runtime_sec,
         ).dict()
         response = cls.post_sync(
             resource_name="v1/llm/batch-completions",
             data=data,
+            timeout=HTTP_TIMEOUT,
         )
         return CreateBatchCompletionsResponse.parse_obj(response)
