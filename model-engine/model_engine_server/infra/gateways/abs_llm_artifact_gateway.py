@@ -1,6 +1,7 @@
 import os
 from typing import List
 
+from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient, ContainerClient
 from model_engine_server.common.config import get_model_cache_directory_name, hmi_config
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -11,11 +12,9 @@ logger = make_logger(logger_name())
 
 
 def _get_abs_container_client(bucket: str) -> ContainerClient:
-    conn_str = os.getenv("ABS_CONNECTION_STRING")
-    if conn_str is None:
-        raise ValueError("ABS_CONNECTION_STRING env var is required")
-
-    blob_service_client = BlobServiceClient.from_connection_string(conn_str=conn_str)
+    blob_service_client = BlobServiceClient(
+        f"https://{os.getenv('ABS_ACCOUNT_NAME')}.blob.core.windows.net", DefaultAzureCredential()
+    )
     return blob_service_client.get_container_client(container=bucket)
 
 

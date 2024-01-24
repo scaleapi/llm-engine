@@ -63,7 +63,7 @@ backports-zoneinfo[tzdata]==0.2.1
     # via
     #   celery
     #   kombu
-billiard==4.1.0
+billiard==4.2.0
     # via celery
 bleach==6.0.0
     # via readme-renderer
@@ -91,7 +91,7 @@ cachetools==5.3.1
     # via google-auth
 cattrs==23.1.2
     # via ddtrace
-celery[redis,sqs,tblib]==5.3.1
+celery[redis,sqs,tblib]==5.3.6
     # via -r model-engine/requirements.in
 certifi==2023.7.22
     # via
@@ -245,7 +245,7 @@ jsonschema-specifications==2023.7.1
     # via jsonschema
 keyring==24.2.0
     # via twine
-kombu[sqs]==5.3.1
+kombu[sqs]==5.3.5
     # via celery
 kubeconfig==1.1.1
     # via -r model-engine/requirements.in
@@ -545,7 +545,7 @@ uvicorn==0.17.6
     # via -r model-engine/requirements.in
 uvloop==0.17.0
     # via -r model-engine/requirements.in
-vine==5.0.0
+vine==5.1.0
     # via
     #   amqp
     #   celery

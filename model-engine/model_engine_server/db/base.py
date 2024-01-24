@@ -4,7 +4,7 @@ import sys
 from typing import Iterator, Optional
 
 import sqlalchemy
-from azure.identity import ManagedIdentityCredential
+from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
 from azure.keyvault.secrets import SecretClient
 from model_engine_server.core.aws.secrets import get_key_file
 from model_engine_server.core.config import infra_config
@@ -52,9 +52,18 @@ def get_engine_url(env: Optional[str] = None, read_only: bool = True, sync: bool
                 vault_url=f"https://{os.environ.get('KEYVAULT_NAME')}.vault.azure.net",
                 credential=ManagedIdentityCredential(
                     client_id=os.getenv("AZURE_KEYVAULT_IDENTITY_CLIENT_ID")
-                ),
+                ),  # uses a different managed identity than the default
             )
-            engine_url = client.get_secret(key_file).value
+            db = client.get_secret(key_file).value
+            user = os.environ.get("AZURE_KUBERNETES_CLUSTER_IDENTITY_NAME")
+            password = (
+                DefaultAzureCredential()
+                .get_token("https://ossrdbms-aad.database.windows.net")
+                .token
+            )
+            logger.info(f"Connecting to db {db} as user {user}")
+
+            engine_url = f"postgresql://{user}:{password}@{db}"
         else:
             db_secret_aws_profile = os.environ.get("DB_SECRET_AWS_PROFILE")
             creds = get_key_file(key_file, db_secret_aws_profile)

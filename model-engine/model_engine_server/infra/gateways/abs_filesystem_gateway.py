@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import IO
 
 import smart_open
+from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobSasPermissions, BlobServiceClient, generate_blob_sas
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
 
@@ -15,10 +16,10 @@ class ABSFilesystemGateway(FilesystemGateway):
 
     # uri should start with azure:// (as opposed to https://) unless the container is publicly accessible
     def open(self, uri: str, mode: str = "rt", **kwargs) -> IO:
-        conn_str = os.getenv("ABS_CONNECTION_STRING")
-        if conn_str is None:
-            raise ValueError("ABS_CONNECTION_STRING env var is required")
-        client = BlobServiceClient.from_connection_string(conn_str=conn_str)
+        client = BlobServiceClient(
+            f"https://{os.getenv('ABS_ACCOUNT_NAME')}.blob.core.windows.net",
+            DefaultAzureCredential(),
+        )
         transport_params = {"client": client}
         return smart_open.open(uri, mode, transport_params=transport_params)
 

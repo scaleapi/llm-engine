@@ -238,10 +238,12 @@ env:
     value: "/workspace/model-engine/model_engine_server/core/configs/config.yaml"
   {{- end }}
   {{- if .Values.azure}}
-  - name: AZURE_KUBERNETES_CLUSTER_CLIENT_ID
-    value: {{ .Values.azure.kubernetes_cluster_client_id }}
-  - name: ABS_CONNECTION_STRING
-    value: {{ .Values.azure.abs_connection_string }}
+  - name: AZURE_IDENTITY_NAME
+    value: {{ .Values.azure.identity_name }}
+  - name: AZURE_CLIENT_ID
+    value: {{ .Values.azure.client_id }}
+  - name: ABS_ACCOUNT_NAME
+    value: {{ .Values.azure.abs_account_name }}
   {{- end }}
 {{- end }}
 
@@ -262,14 +264,12 @@ env:
   - name: S3_BUCKET
     value: "${CELERY_S3_BUCKET}"
   {{- if .Values.azure}}
-  - name: ABS_CONNECTION_STRING
-    value: {{ .Values.azure.abs_connection_string }}
+  - name: ABS_ACCOUNT_NAME
+    value: {{ .Values.azure.abs_account_name }}
   - name: SERVICEBUS_NAMESPACE
     value: {{ .Values.azure.servicebus_namespace }}
   - name: SERVICEBUS_SAS_KEY
     value: {{ .Values.azure.servicebus_sas_key }}
-  - name: CELERY_BACKEND_CONNECTION_STRING
-    value: {{ .Values.azure.celery_backend_connection_string }}
   {{- end }}
 {{- end }}
 
@@ -335,24 +335,18 @@ env:
     value: {{ .Values.redis.auth }}
   {{- end }}
   {{- if .Values.azure}}
-  - name: AZURE_KUBERNETES_CLUSTER_CLIENT_ID
-    value: {{ .Values.azure.kubernetes_cluster_client_id }}
+  - name: AZURE_IDENTITY_NAME
+    value: {{ .Values.azure.identity_name }}
+  - name: AZURE_CLIENT_ID
+    value: {{ .Values.azure.client_id }}
   - name: AZURE_KEYVAULT_IDENTITY_CLIENT_ID
     value: {{ .Values.azure.keyvault_identity_client_id }}
   - name: KEYVAULT_NAME
     value: {{ .Values.azure.keyvault_name }}
-  - name: ABS_ACCOUNT_KEY
-    value: {{ .Values.azure.abs_account_key }}
-  - name: ABS_CONNECTION_STRING
-    value: {{ .Values.azure.abs_connection_string }}
+  - name: ABS_ACCOUNT_NAME
+    value: {{ .Values.azure.abs_account_name }}
   - name: SERVICEBUS_NAMESPACE
     value: {{ .Values.azure.servicebus_namespace }}
-  - name: SERVICEBUS_SAS_KEY
-    value: {{ .Values.azure.servicebus_sas_key }}
-  - name: SERVICEBUS_CONNECTION_STRING
-    value: {{ .Values.azure.servicebus_connection_string }}
-  - name: CELERY_BACKEND_CONNECTION_STRING
-    value: {{ .Values.azure.celery_backend_connection_string }}
   {{- end }}
   {{- if eq .Values.context "circleci" }}
   - name: CIRCLECI

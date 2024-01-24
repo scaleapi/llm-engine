@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.identity import DefaultAzureCredential
 from azure.servicebus.management import ServiceBusAdministrationClient
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
@@ -11,10 +12,10 @@ from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delega
 
 
 def _get_servicebus_administration_client() -> ServiceBusAdministrationClient:
-    conn_str = os.getenv("SERVICEBUS_CONNECTION_STRING")
-    if conn_str is None:
-        raise ValueError("SERVICEBUS_CONNECTION_STRING env var is required")
-    return ServiceBusAdministrationClient.from_connection_string(conn_str=conn_str)
+    return ServiceBusAdministrationClient(
+        f"{os.getenv('SERVICEBUS_NAMESPACE')}.servicebus.windows.net",
+        credential=DefaultAzureCredential(),
+    )
 
 
 class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):

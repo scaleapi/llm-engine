@@ -71,14 +71,10 @@ spec:
         - name: NUM_SHARDS
           value: '{{ $num_shards }}'
         {{- if .Values.azure }}
+        - name: AZURE_CLIENT_ID
+          value: {{ .Values.azure.client_id }}
         - name: SERVICEBUS_NAMESPACE
           value: {{ .Values.azure.servicebus_namespace }}
-        - name: SERVICEBUS_SAS_KEY
-          value: {{ .Values.azure.servicebus_sas_key }}
-        - name: SERVICEBUS_CONNECTION_STRING
-          value: {{ .Values.azure.servicebus_connection_string }}
-        - name: CELERY_BACKEND_CONNECTION_STRING
-          value: {{ .Values.azure.celery_backend_connection_string }}
         {{- end }}
         image: "{{ .Values.image.gatewayRepository }}:{{ $tag }}"
         imagePullPolicy: Always

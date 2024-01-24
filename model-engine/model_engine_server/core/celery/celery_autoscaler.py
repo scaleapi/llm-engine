@@ -14,6 +14,7 @@ from typing import Any, DefaultDict, Dict, List, Set, Tuple
 import aioredis
 import stringcase
 from azure.core.exceptions import ResourceNotFoundError
+from azure.identity import DefaultAzureCredential
 from azure.servicebus.management import ServiceBusAdministrationClient
 from celery.app.control import Inspect
 from datadog import statsd
@@ -472,10 +473,10 @@ class SQSBroker(AutoscalerBroker):
 class ASBBroker(AutoscalerBroker):
     @staticmethod
     def _get_asb_queue_size(queue_name: str):
-        conn_str = os.getenv("SERVICEBUS_CONNECTION_STRING")
-        if conn_str is None:
-            raise ValueError("SERVICEBUS_CONNECTION_STRING env var is required")
-        with ServiceBusAdministrationClient.from_connection_string(conn_str=conn_str) as client:
+        with ServiceBusAdministrationClient(
+            f"{os.getenv('SERVICEBUS_NAMESPACE')}.servicebus.windows.net",
+            credential=DefaultAzureCredential(),
+        ) as client:
             try:
                 queue_attributes = client.get_queue_runtime_properties(queue_name=queue_name)
                 active_queue_size = queue_attributes.active_message_count

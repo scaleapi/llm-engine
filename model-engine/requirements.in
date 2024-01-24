@@ -13,7 +13,7 @@ boto3-stubs[essential]==1.26.67
 boto3~=1.21
 botocore~=1.24
 build==0.8.0
-celery[redis,sqs,tblib]~=5.2
+celery[redis,sqs,tblib]~=5.3.6
 click~=8.1
 cloudpickle==2.1.0
 croniter==1.4.1

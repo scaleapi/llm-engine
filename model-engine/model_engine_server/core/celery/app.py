@@ -26,6 +26,9 @@ logger = make_logger(logger_name())
 # override the backend with a class instead of a URL, despite the fact
 # that the `backend` constructor arg type is a Union[str, Type[celery.backends.base.Backend]]
 backends.BACKEND_ALIASES["s3"] = "model_engine_server.core.celery.s3:S3Backend"
+backends.BACKEND_ALIASES[
+    "azureblockblob"
+] = "model_engine_server.core.celery.abs:AzureBlockBlobBackend"
 
 
 @unique
@@ -483,7 +486,7 @@ def _get_broker_endpoint_and_transport_options(
         return "sqs://", out_broker_transport_options
     if broker_type == "servicebus":
         return (
-            f"azureservicebus://RootManageSharedAccessKey:{os.getenv('SERVICEBUS_SAS_KEY')}@{os.getenv('SERVICEBUS_NAMESPACE')}",
+            f"azureservicebus://DefaultAzureCredential@{os.getenv('SERVICEBUS_NAMESPACE')}",
             out_broker_transport_options,
         )
 
@@ -520,7 +523,7 @@ def _get_backend_url_and_conf(
             }
         )
     elif backend_protocol == "abs":
-        backend_url = f"azureblockblob://{os.getenv('CELERY_BACKEND_CONNECTION_STRING')}"
+        backend_url = f"azureblockblob://{os.getenv('ABS_ACCOUNT_NAME')}"
     else:
         raise ValueError(
             f'Unknown backend protocol "{backend_protocol}". Should be one of ["s3", "redis", "abs].'
