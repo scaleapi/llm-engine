@@ -9,7 +9,6 @@ import requests
 import sseclient
 import yaml
 from fastapi.responses import JSONResponse
-from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.inference.common import get_endpoint_config
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
@@ -126,7 +125,6 @@ class Forwarder(ModelEngineSerializationMixin):
     forward_http_status: bool
 
     def __call__(self, json_payload: Any) -> Any:
-        request_obj = EndpointPredictV1Request.parse_obj(json_payload)
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
@@ -163,8 +161,6 @@ class Forwarder(ModelEngineSerializationMixin):
         if self.wrap_response:
             response = self.get_response_payload(using_serialize_results_as_string, response)
 
-        # TODO: we actually want to do this after we've returned the response.
-        self.post_inference_hooks_handler.handle(request_obj, response)
         if self.forward_http_status:
             return JSONResponse(content=response, status_code=response_raw.status_code)
         else:

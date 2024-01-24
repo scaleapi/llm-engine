@@ -507,14 +507,6 @@ class CreateLLMModelBundleV1UseCase:
         else:
             s5cmd = "./s5cmd"
 
-        subcommands.extend(
-            self.get_s5cmd_copy_command(checkpoint_path, final_weights_folder, subcommands, s5cmd)
-        )
-
-        return subcommands
-
-    def get_s5cmd_copy_command(self, checkpoint_path, final_weights_folder, s5cmd):
-        subcommands = []
         base_path = checkpoint_path.split("/")[-1]
         if base_path.endswith(".tar"):
             # If the checkpoint file is a tar file, extract it into final_weights_folder
@@ -535,6 +527,7 @@ class CreateLLMModelBundleV1UseCase:
             subcommands.append(
                 f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
             )
+
         return subcommands
 
     def load_model_files_sub_commands_trt_llm(
