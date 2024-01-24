@@ -55,7 +55,6 @@ def get_engine_url(env: Optional[str] = None, read_only: bool = True, sync: bool
                 ),
             )
             engine_url = client.get_secret(key_file).value
-            logger.info(f"Connecting to db {engine_url}")
         else:
             db_secret_aws_profile = os.environ.get("DB_SECRET_AWS_PROFILE")
             creds = get_key_file(key_file, db_secret_aws_profile)
