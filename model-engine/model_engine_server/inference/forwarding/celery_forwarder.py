@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional, TypedDict, Union
 from celery import Celery, Task, states
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
 from model_engine_server.common.dtos.model_endpoints import BrokerType
+from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.celery import TaskVisibility, celery_app
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -23,45 +24,6 @@ class ErrorResponse(TypedDict):
 
     error: str
     error_metadata: str
-
-
-class ErrorHandlingTask(Task):
-    """Sets a 'custom' field with error in the Task response for FAILURE.
-
-    Used when services are ran via the Celery backend.
-    """
-
-    def after_return(
-        self, status: str, retval: Union[dict, Exception], task_id: str, args, kwargs, einfo
-    ) -> None:
-        """Handler that ensures custom error response information is available whenever a Task fails.
-
-        Specifically, whenever the task's :param:`status` is `"FAILURE"` and the return value
-        :param:`retval` is an `Exception`, this handler extracts information from the `Exception`
-        and constructs a custom error response JSON value (see :func:`error_response` for details).
-
-        This handler then re-propagates the Celery-required exception information (`"exc_type"` and
-        `"exc_message"`) while adding this new error response information under the `"custom"` key.
-        """
-        if status == states.FAILURE and isinstance(retval, Exception):
-            logger.warning(f"Setting custom error response for failed task {task_id}")
-
-            info: dict = raw_celery_response(self.backend, task_id)
-            result: dict = info["result"]
-            err: Exception = retval
-
-            error_payload = error_response("Internal failure", err)
-
-            # Inspired by pattern from:
-            # https://www.distributedpython.com/2018/09/28/celery-task-states/
-            self.update_state(
-                state=states.FAILURE,
-                meta={
-                    "exc_type": result["exc_type"],
-                    "exc_message": result["exc_message"],
-                    "custom": json.dumps(error_payload, indent=False),
-                },
-            )
 
 
 def raw_celery_response(backend, task_id: str) -> Dict[str, Any]:
@@ -105,6 +67,47 @@ def create_celery_service(
         else None,
         backend_protocol=backend_protocol,
     )
+
+    class ErrorHandlingTask(Task):
+        """Sets a 'custom' field with error in the Task response for FAILURE.
+
+        Used when services are ran via the Celery backend.
+        """
+
+        def after_return(
+            self, status: str, retval: Union[dict, Exception], task_id: str, args, kwargs, einfo
+        ) -> None:
+            """Handler that ensures custom error response information is available whenever a Task fails.
+
+            Specifically, whenever the task's :param:`status` is `"FAILURE"` and the return value
+            :param:`retval` is an `Exception`, this handler extracts information from the `Exception`
+            and constructs a custom error response JSON value (see :func:`error_response` for details).
+
+            This handler then re-propagates the Celery-required exception information (`"exc_type"` and
+            `"exc_message"`) while adding this new error response information under the `"custom"` key.
+            """
+            if status == states.FAILURE and isinstance(retval, Exception):
+                logger.warning(f"Setting custom error response for failed task {task_id}")
+
+                info: dict = raw_celery_response(self.backend, task_id)
+                result: dict = info["result"]
+                err: Exception = retval
+
+                error_payload = error_response("Internal failure", err)
+
+                # Inspired by pattern from:
+                # https://www.distributedpython.com/2018/09/28/celery-task-states/
+                self.update_state(
+                    state=states.FAILURE,
+                    meta={
+                        "exc_type": result["exc_type"],
+                        "exc_message": result["exc_message"],
+                        "custom": json.dumps(error_payload, indent=False),
+                    },
+                )
+            request_params = args[0]
+            request_params_pydantic = EndpointPredictV1Request.parse_obj(request_params)
+            forwarder.post_inference_hooks_handler.handle(request_params_pydantic, retval, task_id)  # type: ignore
 
     # See documentation for options:
     # https://docs.celeryproject.org/en/stable/userguide/tasks.html#list-of-options

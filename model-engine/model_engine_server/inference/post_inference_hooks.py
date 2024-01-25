@@ -1,7 +1,9 @@
+import json
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import requests
+from fastapi.responses import JSONResponse
 from model_engine_server.common.constants import CALLBACK_POST_INFERENCE_HOOK
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -108,13 +110,17 @@ class PostInferenceHooksHandler:
     def handle(
         self,
         request_payload: EndpointPredictV1Request,
-        response: Dict[str, Any],
+        response: Union[Dict[str, Any], JSONResponse],
         task_id: Optional[str] = None,
     ):
+        if isinstance(response, JSONResponse):
+            loaded_response = json.loads(response.body)
+        else:
+            loaded_response = response
         for hook_name, hook in self._hooks.items():
             self._monitoring_metrics_gateway.emit_attempted_post_inference_hook(hook_name)
             try:
-                hook.handle(request_payload, response, task_id)
+                hook.handle(request_payload, loaded_response, task_id)  # pragma: no cover
                 self._monitoring_metrics_gateway.emit_successful_post_inference_hook(hook_name)
             except Exception:
                 logger.exception(f"Hook {hook_name} failed.")
