@@ -486,7 +486,7 @@ def _get_broker_endpoint_and_transport_options(
         return "sqs://", out_broker_transport_options
     if broker_type == "servicebus":
         return (
-            f"azureservicebus://DefaultAzureCredential@{os.getenv('SERVICEBUS_NAMESPACE')}",
+            f"azureservicebus://DefaultAzureCredential@{os.getenv('SERVICEBUS_NAMESPACE')}.servicebus.windows.net",
             out_broker_transport_options,
         )
 
