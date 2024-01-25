@@ -28,11 +28,19 @@ class ABSFilesystemGateway(FilesystemGateway):
         assert match
 
         account_name, container_name, blob_name = match.group(1), match.group(2), match.group(3)
+
+        blob_service_client = BlobServiceClient(
+            f"https://{account_name}.blob.core.windows.net", DefaultAzureCredential()
+        )
+        user_delegation_key = blob_service_client.get_user_delegation_key(
+            datetime.utcnow(), datetime.utcnow() + timedelta(seconds=expiration)
+        )
+
         sas_blob = generate_blob_sas(
             account_name=account_name,
             container_name=container_name,
             blob_name=blob_name,
-            account_key=os.getenv("ABS_ACCOUNT_KEY"),
+            user_delegation_key=user_delegation_key,
             permission=BlobSasPermissions(read=True, write=False, create=False),
             expiry=datetime.utcnow() + timedelta(seconds=expiration),
             **kwargs,
