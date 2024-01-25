@@ -55,7 +55,7 @@ def get_engine_url(env: Optional[str] = None, read_only: bool = True, sync: bool
                 ),  # uses a different managed identity than the default
             )
             db = client.get_secret(key_file).value
-            user = os.environ.get("AZURE_KUBERNETES_CLUSTER_IDENTITY_NAME")
+            user = os.environ.get("AZURE_IDENTITY_NAME")
             password = (
                 DefaultAzureCredential()
                 .get_token("https://ossrdbms-aad.database.windows.net")
