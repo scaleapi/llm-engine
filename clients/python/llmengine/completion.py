@@ -404,7 +404,7 @@ class Completion(APIEngine):
             return CompletionSyncResponse.parse_obj(response)
 
     @classmethod
-    async def batch_create(
+    def batch_create(
         cls,
         output_data_path: str,
         model_config: CreateBatchCompletionsModelConfig,
@@ -449,7 +449,7 @@ class Completion(APIEngine):
                 output_data_path="s3://my-path",
                 model_config=CreateBatchCompletionsModelConfig(
                     model="llama-2-7b",
-                    checkpoint="s3://checkpoint-path",
+                    checkpoint_path="s3://checkpoint-path",
                     labels={"team":"my-team", "product":"my-product"}
                 ),
                 content=CreateBatchCompletionsRequestContent(
@@ -473,7 +473,7 @@ class Completion(APIEngine):
                 output_data_path="s3://my-output-path",
                 model_config=CreateBatchCompletionsModelConfig(
                     model="llama-2-7b",
-                    checkpoint="s3://checkpoint-path",
+                    checkpoint_path="s3://checkpoint-path",
                     labels={"team":"my-team", "product":"my-product"}
                 ),
                 data_parallelism=2
