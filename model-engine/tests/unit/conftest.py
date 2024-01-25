@@ -1160,7 +1160,7 @@ class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         """Creates a new, unique queue name.
         Used by this endpoint resource gateway to create new resources.
         """
-        return QueueInfo(queue_name="foobar")
+        return QueueInfo(queue_name="foobar", queue_url=None)
 
     async def create_or_update_resources(
         self, request: CreateOrUpdateResourcesRequest
