@@ -519,7 +519,7 @@ def get_endpoint_resource_arguments_from_request(
         broker_name = BrokerName.SQS.value
         broker_type = BrokerType.SQS.value
     dd_trace_enabled = hmi_config.dd_trace_enabled
-    if broker_type == BrokerType.REDIS.value:
+    if broker_type != BrokerType.SQS.value:
         sqs_queue_url = ""
 
     main_env = []
