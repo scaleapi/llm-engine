@@ -108,13 +108,13 @@ jobs:
             cd $HOME
             curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
             sudo dpkg -i minikube_latest_amd64.deb
-            minikube start --vm-driver=docker --kubernetes-version=v1.23.0 --memory=49152 --cpus=14
+            minikube start --vm-driver=docker --kubernetes-version=v1.27.7 --memory=49152 --cpus=14
       - run:
           name: Install kubectl, helm
           command: |
             cd $HOME/bin
             curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-            curl -LO "https://dl.k8s.io/release/v1.23.0/bin/linux/amd64/kubectl"
+            curl -LO "https://dl.k8s.io/release/v1.27.7/bin/linux/amd64/kubectl"
             chmod +x kubectl
       - run:
           name: Install helm chart dependencies (Redis, Postgres, Istio)
