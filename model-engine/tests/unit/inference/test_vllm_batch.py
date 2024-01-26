@@ -1,8 +1,9 @@
 import json
 from unittest.mock import MagicMock, call, mock_open, patch
 
+import botocore
 import pytest
-from model_engine_server.inference.batch_inference.vllm_batch import batch_inference
+from model_engine_server.inference.batch_inference.vllm_batch import batch_inference, file_exists
 
 
 @pytest.mark.asyncio
@@ -272,3 +273,28 @@ async def test_batch_inference_delete_chunks(
     mock_s3_client.delete_object.assert_has_calls(
         [call(Bucket="bucket", Key="key.0"), call(Bucket="bucket", Key="key.1")]
     )
+
+
+def test_file_exists():
+    mock_open_func = mock_open()
+    path = "test_path"
+
+    with patch(
+        "model_engine_server.inference.batch_inference.vllm_batch.smart_open.open", mock_open_func
+    ):
+        result = file_exists(path)
+
+    mock_open_func.assert_called_once_with(path, "r")
+    assert result is True
+
+
+def test_file_exists_no_such_key():
+    path = "test_path"
+
+    with patch(
+        "model_engine_server.inference.batch_inference.vllm_batch.smart_open.open",
+        side_effect=botocore.errorfactory.NoSuchKey,
+    ):
+        result = file_exists(path)
+
+    assert result is False
