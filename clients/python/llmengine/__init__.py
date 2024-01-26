@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0b21"
+__version__ = "0.0.0b22"
 
 import os
 from typing import Sequence
@@ -25,6 +25,10 @@ from llmengine.data_types import (
     CompletionStreamOutput,
     CompletionStreamResponse,
     CompletionSyncResponse,
+    CreateBatchCompletionsModelConfig,
+    CreateBatchCompletionsRequest,
+    CreateBatchCompletionsRequestContent,
+    CreateBatchCompletionsResponse,
     CreateFineTuneRequest,
     CreateFineTuneResponse,
     DeleteFileResponse,
@@ -51,6 +55,10 @@ __all__: Sequence[str] = (
     "CompletionStreamOutput",
     "CompletionStreamResponse",
     "CompletionSyncResponse",
+    "CreateBatchCompletionsModelConfig",
+    "CreateBatchCompletionsRequest",
+    "CreateBatchCompletionsRequestContent",
+    "CreateBatchCompletionsResponse",
     "CreateFineTuneRequest",
     "CreateFineTuneResponse",
     "DeleteFileResponse",

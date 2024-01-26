@@ -48,7 +48,8 @@ def file_exists(path):
     try:
         with smart_open.open(path, "r"):
             return True
-    except FileNotFoundError:
+    except Exception as exc:
+        print(f"Error checking if file exists: {exc}")
         return False
 
 
@@ -124,7 +125,7 @@ async def batch_inference():
 
     results_generators = await generate_with_vllm(request, content, model, job_index)
 
-    bar = tqdm(total=len(content.prompts), desc="Processed prompts")
+    bar = tqdm(total=len(results_generators), desc="Processed prompts")
 
     outputs = []
     for generator in results_generators:
