@@ -47,8 +47,6 @@ def get_model_cache_directory_name(model_name: str):
 class HostedModelInferenceServiceConfig:
     endpoint_namespace: str
     billing_queue_arn: str
-    cache_redis_aws_url: Optional[str]  # also using this to store sync autoscaling metrics
-    cache_redis_azure_host: Optional[str]
     sqs_profile: str
     sqs_queue_policy_template: str
     sqs_queue_tag_template: str
@@ -67,6 +65,8 @@ class HostedModelInferenceServiceConfig:
     user_inference_tensorflow_repository: str
     docker_image_layer_cache_repository: str
     sensitive_log_mode: bool
+    cache_redis_aws_url: Optional[str] = None  # also using this to store sync autoscaling metrics
+    cache_redis_azure_host: Optional[str] = None
 
     @classmethod
     def from_yaml(cls, yaml_path):
