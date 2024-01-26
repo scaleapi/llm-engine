@@ -472,6 +472,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#llmengine.Completion.batch_create" class="md-nav__link">
+    batch_create
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -753,6 +760,13 @@
           <li class="md-nav__item">
   <a href="#llmengine.Completion.acreate" class="md-nav__link">
     acreate
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.Completion.batch_create" class="md-nav__link">
+    batch_create
   </a>
   
 </li>
@@ -1615,6 +1629,208 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;9cfe4d5a-f86f-4094-a935-87f871d90ec0&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot; think&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">false</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">3</span>}}
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;9cfe4d5a-f86f-4094-a935-87f871d90ec0&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot; the&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">false</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">4</span>}}
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>{<span style="color: #008000; font-weight: bold">&quot;request_id&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot;9cfe4d5a-f86f-4094-a935-87f871d90ec0&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;output&quot;</span>:<span style="color: #bbbbbb"> </span>{<span style="color: #008000; font-weight: bold">&quot;text&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #BA2121">&quot; sky&quot;</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;finished&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">true</span>,<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">&quot;num_completion_tokens&quot;</span>:<span style="color: #bbbbbb"> </span><span style="color: #666666">5</span>}}
+</code></pre></div>
+</div>
+</div>
+</div>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="llmengine.Completion.batch_create" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">batch_create</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#llmengine.Completion.batch_create" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>batch_create(
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    output_data_path: <span style="color: #008000">str</span>,
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    model_config: CreateBatchCompletionsModelConfig,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    content: Optional[
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        CreateBatchCompletionsRequestContent
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    ] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    input_data_path: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    data_parallelism: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    max_runtime_sec: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">24</span> <span style="color: #666666">*</span> <span style="color: #666666">3600</span>,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>) <span style="color: #666666">-&gt;</span> CreateBatchCompletionsResponse
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Creates a batch completion for the provided input data. The job runs offline and does not depend on an existing model endpoint.</p>
+<p>Prompts can be passed in from an input file, or as a part of the request.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>output_data_path</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The path to the output file. The output file will be a JSON file containing the completions.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>model_config</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CreateBatchCompletionsModelConfig" href="../data_types/#llmengine.CreateBatchCompletionsModelConfig">CreateBatchCompletionsModelConfig</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The model configuration to use for the batch completion.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>content</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CreateBatchCompletionsRequestContent" href="../data_types/#llmengine.CreateBatchCompletionsRequestContent">CreateBatchCompletionsRequestContent</a>]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The content to use for the batch completion. Either one of <code>content</code> or <code>input_data_path</code> must be provided.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>input_data_path</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[str]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The path to the input file. The input file should be a JSON file with data of type <code>BatchCompletionsRequestContent</code>. Either one of <code>content</code> or <code>input_data_path</code> must be provided.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>data_parallelism</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The number of parallel jobs to run. Data will be evenly distributed to the jobs. Defaults to 1.</p>
+            </div>
+          </td>
+          <td>
+                <code>1</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>max_runtime_sec</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The maximum runtime of the batch completion in seconds. Defaults to 24 hours.</p>
+            </div>
+          </td>
+          <td>
+                <code>24 * 3600</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>response</code></td>          <td>
+                <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CreateBatchCompletionsResponse" href="../data_types/#llmengine.CreateBatchCompletionsResponse">CreateBatchCompletionsResponse</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The response containing the job id.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="llmengine.Completion.batch_create--__tabbed_1_1" name="llmengine.Completion.batch_create--__tabbed_1" type="radio" /><input id="llmengine.Completion.batch_create--__tabbed_1_2" name="llmengine.Completion.batch_create--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.Completion.batch_create--__tabbed_1_1">Batch completions with prompts in the request</label><label for="llmengine.Completion.batch_create--__tabbed_1_2">Batch completions with prompts in a file and with 2 parallel jobs</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine.data_types</span> <span style="color: #008000; font-weight: bold">import</span> CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>batch_create(
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    output_data_path<span style="color: #666666">=</span><span style="color: #BA2121">&quot;s3://my-path&quot;</span>,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    model_config<span style="color: #666666">=</span>CreateBatchCompletionsModelConfig(
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        checkpoint_path<span style="color: #666666">=</span><span style="color: #BA2121">&quot;s3://checkpoint-path&quot;</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        labels<span style="color: #666666">=</span>{<span style="color: #BA2121">&quot;team&quot;</span>:<span style="color: #BA2121">&quot;my-team&quot;</span>, <span style="color: #BA2121">&quot;product&quot;</span>:<span style="color: #BA2121">&quot;my-product&quot;</span>}
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    ),
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    content<span style="color: #666666">=</span>CreateBatchCompletionsRequestContent(
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>        prompts<span style="color: #666666">=</span>[<span style="color: #BA2121">&quot;What is deep learning&quot;</span>, <span style="color: #BA2121">&quot;What is a neural network&quot;</span>],
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>        max_new_tokens<span style="color: #666666">=10</span>,
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        temperature<span style="color: #666666">=0.0</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    )
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>)
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine.data_types</span> <span style="color: #008000; font-weight: bold">import</span> CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #3D7B7B; font-style: italic"># Store CreateBatchCompletionsRequestContent data into input file &quot;s3://my-input-path&quot;</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>batch_create(
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    input_data_path<span style="color: #666666">=</span><span style="color: #BA2121">&quot;s3://my-input-path&quot;</span>,
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    output_data_path<span style="color: #666666">=</span><span style="color: #BA2121">&quot;s3://my-output-path&quot;</span>,
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    model_config<span style="color: #666666">=</span>CreateBatchCompletionsModelConfig(
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>        checkpoint_path<span style="color: #666666">=</span><span style="color: #BA2121">&quot;s3://checkpoint-path&quot;</span>,
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        labels<span style="color: #666666">=</span>{<span style="color: #BA2121">&quot;team&quot;</span>:<span style="color: #BA2121">&quot;my-team&quot;</span>, <span style="color: #BA2121">&quot;product&quot;</span>:<span style="color: #BA2121">&quot;my-product&quot;</span>}
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    ),
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    data_parallelism<span style="color: #666666">=2</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>)
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
 </div>
 </div>
