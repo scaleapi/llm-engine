@@ -6,7 +6,6 @@ import time
 from urllib.parse import urlparse
 
 import boto3
-import botocore
 import smart_open
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
@@ -49,7 +48,8 @@ def file_exists(path):
     try:
         with smart_open.open(path, "r"):
             return True
-    except (FileNotFoundError, botocore.errorfactory.NoSuchKey):
+    except Exception as exc:
+        print(f"Error checking if file exists: {exc}")
         return False
 
 

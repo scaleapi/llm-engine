@@ -1,7 +1,6 @@
 import json
 from unittest.mock import MagicMock, call, mock_open, patch
 
-import botocore
 import pytest
 from model_engine_server.inference.batch_inference.vllm_batch import batch_inference, file_exists
 
@@ -293,7 +292,7 @@ def test_file_exists_no_such_key():
 
     with patch(
         "model_engine_server.inference.batch_inference.vllm_batch.smart_open.open",
-        side_effect=botocore.errorfactory.NoSuchKey,
+        side_effect=IOError("No such key"),
     ):
         result = file_exists(path)
 
