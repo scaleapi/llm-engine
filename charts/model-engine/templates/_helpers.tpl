@@ -242,6 +242,8 @@ env:
     value: {{ .Values.azure.identity_name }}
   - name: AZURE_CLIENT_ID
     value: {{ .Values.azure.client_id }}
+  - name: AZURE_OBJECT_ID
+    value: {{ .Values.azure.object_id }}
   - name: ABS_ACCOUNT_NAME
     value: {{ .Values.azure.abs_account_name }}
   {{- end }}
@@ -339,6 +341,8 @@ env:
     value: {{ .Values.azure.identity_name }}
   - name: AZURE_CLIENT_ID
     value: {{ .Values.azure.client_id }}
+  - name: AZURE_OBJECT_ID
+    value: {{ .Values.azure.object_id }}
   - name: AZURE_KEYVAULT_IDENTITY_CLIENT_ID
     value: {{ .Values.azure.keyvault_identity_client_id }}
   - name: KEYVAULT_NAME

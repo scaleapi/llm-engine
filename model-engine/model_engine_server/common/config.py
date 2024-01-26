@@ -4,9 +4,11 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Optional, Sequence
 
 import yaml
+from azure.identity import DefaultAzureCredential
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 
 logger = make_logger(logger_name())
@@ -45,7 +47,8 @@ def get_model_cache_directory_name(model_name: str):
 class HostedModelInferenceServiceConfig:
     endpoint_namespace: str
     billing_queue_arn: str
-    cache_redis_url: str  # also using this to store sync autoscaling metrics
+    cache_redis_aws_url: Optional[str]  # also using this to store sync autoscaling metrics
+    cache_redis_azure_host: Optional[str]
     sqs_profile: str
     sqs_queue_policy_template: str
     sqs_queue_tag_template: str
@@ -72,9 +75,21 @@ class HostedModelInferenceServiceConfig:
         return HostedModelInferenceServiceConfig(**raw_data)
 
     @property
+    def cache_redis_url(self) -> str:
+        if self.cache_redis_aws_url:
+            return self.cache_redis_aws_url
+
+        assert self.cache_redis_azure_host and infra_config().cloud_provider == "azure"
+        username = os.getenv("AZURE_OBJECT_ID")
+        password = DefaultAzureCredential().get_token("https://redis.azure.com/.default").token
+        return f"rediss://{username}:{password}@{self.cache_redis_azure_host}"
+
+    @property
     def cache_redis_host_port(self) -> str:
         # redis://redis.url:6379/<db_index>
         # -> redis.url:6379
+        if "rediss://" in self.cache_redis_url:
+            return self.cache_redis_url.split("rediss://")[1].split("/")[0]
         return self.cache_redis_url.split("redis://")[1].split("/")[0]
 
     @property

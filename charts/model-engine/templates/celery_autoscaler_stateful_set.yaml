@@ -73,6 +73,8 @@ spec:
         {{- if .Values.azure }}
         - name: AZURE_CLIENT_ID
           value: {{ .Values.azure.client_id }}
+        - name: AZURE_OBJECT_ID
+          value: {{ .Values.azure.object_id }}
         - name: SERVICEBUS_NAMESPACE
           value: {{ .Values.azure.servicebus_namespace }}
         {{- end }}
