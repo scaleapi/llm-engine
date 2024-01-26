@@ -6,9 +6,14 @@ from llmengine.data_types import (
     CompletionStreamV1Request,
     CompletionSyncResponse,
     CompletionSyncV1Request,
+    CreateBatchCompletionsModelConfig,
+    CreateBatchCompletionsRequest,
+    CreateBatchCompletionsRequestContent,
+    CreateBatchCompletionsResponse,
 )
 
 COMPLETION_TIMEOUT = 300
+HTTP_TIMEOUT = 60
 
 
 class Completion(APIEngine):
@@ -397,3 +402,96 @@ class Completion(APIEngine):
                 timeout=timeout,
             )
             return CompletionSyncResponse.parse_obj(response)
+
+    @classmethod
+    def batch_create(
+        cls,
+        output_data_path: str,
+        model_config: CreateBatchCompletionsModelConfig,
+        content: Optional[CreateBatchCompletionsRequestContent] = None,
+        input_data_path: Optional[str] = None,
+        data_parallelism: int = 1,
+        max_runtime_sec: int = 24 * 3600,
+    ) -> CreateBatchCompletionsResponse:
+        """
+        Creates a batch completion for the provided input data. The job runs offline and does not depend on an existing model endpoint.
+
+        Prompts can be passed in from an input file, or as a part of the request.
+
+        Args:
+            output_data_path (str):
+                The path to the output file. The output file will be a JSON file containing the completions.
+
+            model_config (CreateBatchCompletionsModelConfig):
+                The model configuration to use for the batch completion.
+
+            content (Optional[CreateBatchCompletionsRequestContent]):
+                The content to use for the batch completion. Either one of `content` or `input_data_path` must be provided.
+
+            input_data_path (Optional[str]):
+                The path to the input file. The input file should be a JSON file with data of type `BatchCompletionsRequestContent`. Either one of `content` or `input_data_path` must be provided.
+
+            data_parallelism (int):
+                The number of parallel jobs to run. Data will be evenly distributed to the jobs. Defaults to 1.
+
+            max_runtime_sec (int):
+                The maximum runtime of the batch completion in seconds. Defaults to 24 hours.
+
+        Returns:
+            response (CreateBatchCompletionsResponse): The response containing the job id.
+
+        === "Batch completions with prompts in the request"
+            ```python
+            from llmengine import Completion
+            from llmengine.data_types import CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
+
+            response = Completion.batch_create(
+                output_data_path="s3://my-path",
+                model_config=CreateBatchCompletionsModelConfig(
+                    model="llama-2-7b",
+                    checkpoint_path="s3://checkpoint-path",
+                    labels={"team":"my-team", "product":"my-product"}
+                ),
+                content=CreateBatchCompletionsRequestContent(
+                    prompts=["What is deep learning", "What is a neural network"],
+                    max_new_tokens=10,
+                    temperature=0.0
+                )
+            )
+            print(response.json())
+            ```
+
+        === "Batch completions with prompts in a file and with 2 parallel jobs"
+            ```python
+            from llmengine import Completion
+            from llmengine.data_types import CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
+
+            # Store CreateBatchCompletionsRequestContent data into input file "s3://my-input-path"
+
+            response = Completion.batch_create(
+                input_data_path="s3://my-input-path",
+                output_data_path="s3://my-output-path",
+                model_config=CreateBatchCompletionsModelConfig(
+                    model="llama-2-7b",
+                    checkpoint_path="s3://checkpoint-path",
+                    labels={"team":"my-team", "product":"my-product"}
+                ),
+                data_parallelism=2
+            )
+            print(response.json())
+            ```
+        """
+        data = CreateBatchCompletionsRequest(
+            model_config=model_config,
+            content=content,
+            input_data_path=input_data_path,
+            output_data_path=output_data_path,
+            data_parallelism=data_parallelism,
+            max_runtime_sec=max_runtime_sec,
+        ).dict()
+        response = cls.post_sync(
+            resource_name="v1/llm/batch-completions",
+            data=data,
+            timeout=HTTP_TIMEOUT,
+        )
+        return CreateBatchCompletionsResponse.parse_obj(response)
