@@ -256,6 +256,7 @@ def run_benchmark(
     time_per_completion = []
     time_to_first_token = []
     inter_token_latency = []
+    total_request_time = []
     for result in results:
         avg_time_per_token = (result["total_time"] - result["time_to_first_token"]) / (
             result["num_completion_tokens"] - 1
@@ -264,14 +265,15 @@ def run_benchmark(
         time_to_process_prompt.append(result["time_to_first_token"] - avg_time_per_token)
         time_per_completion.append(result["total_time"] - time_to_process_prompt[-1])
         inter_token_latency.append(avg_time_per_token)
+        total_request_time.append(result["total_time"])
 
     total_num_tokens = num_sampled_tokens + num_prompt_tokens
     avg_prefill_time = sum(time_to_process_prompt) / n
     avg_completion_time = sum(time_per_completion) / n
-    p50_completion_time = np.percentile(time_per_completion, 50)
-    p90_completion_time = np.percentile(time_per_completion, 90)
-    p95_completion_time = np.percentile(time_per_completion, 95)
-    p99_completion_time = np.percentile(time_per_completion, 99)
+    p50_request_time = np.percentile(total_request_time, 50)
+    p90_request_time = np.percentile(total_request_time, 90)
+    p95_request_time = np.percentile(total_request_time, 95)
+    p99_request_time = np.percentile(total_request_time, 99)
 
     statistics = {
         "concurrency": concurrency,
@@ -290,10 +292,10 @@ def run_benchmark(
         "elapsed_time": elapsed,
         "avg_prefill_time": avg_prefill_time,
         "avg_completion_time": avg_completion_time,
-        "p50_completion_time": p50_completion_time,
-        "p90_completion_time": p90_completion_time,
-        "p95_completion_time": p95_completion_time,
-        "p99_completion_time": p99_completion_time,
+        "p50_completion_time": p50_request_time,
+        "p90_completion_time": p90_request_time,
+        "p95_completion_time": p95_request_time,
+        "p99_completion_time": p99_request_time,
         "num_requests": num_trials,
         "num_successful_requests": n,
         "total_num_tokens": total_num_tokens,
