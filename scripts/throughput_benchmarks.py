@@ -361,6 +361,7 @@ def run_benchmarks_concurrency_range(
     use_localhost: bool = False,
     concurrency_min: int = 1,
     concurrency_max: int = 1,
+    concurrency_step: int = 1,
     verbose: bool = False,
     hf_model: Optional[str] = None,
     local_port: int = 5005,
@@ -369,7 +370,7 @@ def run_benchmarks_concurrency_range(
         # Create empty file
         with open(output_file, "w"):
             pass
-    for concurrency in range(concurrency_min, concurrency_max + 1):
+    for concurrency in range(concurrency_min, concurrency_max + 1, concurrency_step):
         run_benchmarks(
             model,
             framework,
