@@ -5,6 +5,7 @@
         members:
             - create
             - acreate
+            - batch_create
 
 ::: llmengine.FineTune
     options:
