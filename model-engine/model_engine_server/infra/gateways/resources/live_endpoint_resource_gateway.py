@@ -7,7 +7,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointRecord,
     ModelEndpointType,
 )
-from model_engine_server.domain.exceptions import EndpointResourceInvalidRequestException
+from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.endpoint_resource_gateway import (
     EndpointResourceGateway,
     EndpointResourceGatewayCreateOrUpdateResourcesResponse,
@@ -105,7 +105,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         sqs_result = True
         try:
             await self.queue_delegate.delete_queue(endpoint_id=endpoint_id)
-        except EndpointResourceInvalidRequestException as e:
+        except EndpointResourceInfraException as e:
             logger.warning("Could not delete SQS resources", exc_info=e)
             sqs_result = False
 
