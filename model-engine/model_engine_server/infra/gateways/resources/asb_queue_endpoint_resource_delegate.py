@@ -4,11 +4,14 @@ from typing import Any, Dict
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 from azure.servicebus.management import ServiceBusAdministrationClient
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
     QueueEndpointResourceDelegate,
     QueueInfo,
 )
+
+logger = make_logger(logger_name())
 
 
 def _get_servicebus_administration_client() -> ServiceBusAdministrationClient:
@@ -44,10 +47,8 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         with _get_servicebus_administration_client() as client:
             try:
                 client.delete_queue(queue_name=queue_name)
-            except ResourceNotFoundError as e:
-                raise EndpointResourceInfraException(
-                    f"Could not find ASB queue {queue_name} for endpoint {endpoint_id}"
-                ) from e
+            except ResourceNotFoundError:
+                logger.info(f"Could not find ASB queue {queue_name} for endpoint {endpoint_id}")
 
     async def get_queue_attributes(self, endpoint_id: str) -> Dict[str, Any]:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
