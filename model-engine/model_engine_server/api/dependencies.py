@@ -175,7 +175,6 @@ def _get_external_interfaces(
     Dependency that returns a ExternalInterfaces object. This allows repositories to share
     sessions for the database and redis.
     """
-    redis_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS)
     redis_24h_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS_24H)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
     servicebus_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS)
@@ -210,7 +209,7 @@ def _get_external_interfaces(
     )
     model_endpoint_infra_gateway = LiveModelEndpointInfraGateway(
         resource_gateway=resource_gateway,
-        task_queue_gateway=redis_task_queue_gateway,
+        task_queue_gateway=inference_task_queue_gateway,
     )
     async_model_endpoint_inference_gateway = LiveAsyncModelEndpointInferenceGateway(
         task_queue_gateway=inference_task_queue_gateway
@@ -316,7 +315,7 @@ def _get_external_interfaces(
         llm_model_endpoint_service=llm_model_endpoint_service,
         batch_job_service=batch_job_service,
         resource_gateway=resource_gateway,
-        endpoint_creation_task_queue_gateway=redis_task_queue_gateway,
+        endpoint_creation_task_queue_gateway=inference_task_queue_gateway,
         inference_task_queue_gateway=inference_task_queue_gateway,
         model_endpoint_infra_gateway=model_endpoint_infra_gateway,
         model_primitive_gateway=model_primitive_gateway,
