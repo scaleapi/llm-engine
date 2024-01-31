@@ -2,10 +2,16 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
+import boto3
 import requests
 from fastapi.responses import JSONResponse
-from model_engine_server.common.constants import CALLBACK_POST_INFERENCE_HOOK
+from model_engine_server.common.constants import (
+    CALLBACK_POST_INFERENCE_HOOK,
+    LOGGING_FIREHOSE_STREAM,
+    LOGGING_POST_INFERENCE_HOOK,
+)
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import CallbackAuth, CallbackBasicAuth
 from model_engine_server.inference.domain.gateways.inference_monitoring_metrics_gateway import (
@@ -76,6 +82,42 @@ class CallbackHook(PostInferenceHook):
                 assert 200 <= res.status_code < 300
 
 
+class LoggingHook(PostInferenceHook):
+    def __init__(
+        self,
+        endpoint_name,
+        bundle_name,
+        user_id,
+    ):
+        super().__init__(endpoint_name, bundle_name, user_id)
+
+    def handle(
+        self,
+        request_payload: EndpointPredictV1Request,
+        response: Dict[str, Any],
+        task_id: Optional[str],
+    ):
+        aws_profile = infra_config().profile_ml_worker
+        session = boto3.Session(profile_name=aws_profile)
+        firehose_client = session.client("firehose", region_name=infra_config().default_region)
+        data_record = {
+            "JOB_ID": "345",
+            "REQUEST_BODY": request_payload.json(),
+            "RESPONSE_BODY": response,
+            "ENDPOINT_ID": "123456789",
+            "ENDPOINT_NAME": "test",
+            "ENDPOINT_TYPE": "test",
+            "BUNDLE_ID": "123456789",
+            "TEAM_ID": "123456789",
+            "PRODUCT_ID": "test",
+        }
+        data = json.dumps(data_record)
+        firehose_response = firehose_client.put_record(
+            DeliveryStreamName=LOGGING_FIREHOSE_STREAM, Record={"Data": data.encode("utf-8")}
+        )
+        assert firehose_response["ResponseMetadata"]["HTTPStatusCode"] == 200
+
+
 class PostInferenceHooksHandler:
     def __init__(
         self,
@@ -103,6 +145,12 @@ class PostInferenceHooksHandler:
                         user_id,
                         default_callback_url,
                         default_callback_auth,
+                    )
+                elif hook_lower == LOGGING_POST_INFERENCE_HOOK:
+                    self._hooks[hook_lower] = LoggingHook(
+                        endpoint_name,
+                        bundle_name,
+                        user_id,
                     )
                 else:
                     raise ValueError(f"Hook {hook_lower} is currently not supported.")
