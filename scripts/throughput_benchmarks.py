@@ -289,12 +289,20 @@ def run_benchmark(
     p95_inter_token_latency = np.percentile(all_inter_token_latencies, 95)
     p99_inter_token_latency = np.percentile(all_inter_token_latencies, 99)
     p999_inter_token_latency = np.percentile(all_inter_token_latencies, 99.9)
+    p50_time_to_first_token = np.percentile(time_to_first_token, 50)
+    p90_time_to_first_token = np.percentile(time_to_first_token, 90)
+    p95_time_to_first_token = np.percentile(time_to_first_token, 95)
+    p99_time_to_first_token = np.percentile(time_to_first_token, 99)
 
     statistics = {
         "concurrency": concurrency,
         "avg_prompt_throughput": num_prompt_tokens
         / (elapsed * avg_prefill_time / (avg_prefill_time + avg_completion_time)),
         "avg_time_to_first_token": sum(time_to_first_token) / n,
+        "p50_time_to_first_token": p50_time_to_first_token,
+        "p90_time_to_first_token": p90_time_to_first_token,
+        "p95_time_to_first_token": p95_time_to_first_token,
+        "p99_time_to_first_token": p99_time_to_first_token,
         "avg_sampling_throughput": num_sampled_tokens
         / (elapsed * avg_completion_time / (avg_prefill_time + avg_completion_time)),
         "avg_total_throughput": total_num_tokens / elapsed,
