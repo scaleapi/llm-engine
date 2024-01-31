@@ -284,11 +284,11 @@ def run_benchmark(
     p90_request_time = np.percentile(total_request_time, 90)
     p95_request_time = np.percentile(total_request_time, 95)
     p99_request_time = np.percentile(total_request_time, 99)
-    p50_inter_token_latency = np.percentile(inter_token_latency, 50)
-    p90_inter_token_latency = np.percentile(inter_token_latency, 90)
-    p95_inter_token_latency = np.percentile(inter_token_latency, 95)
-    p99_inter_token_latency = np.percentile(inter_token_latency, 99)
-    p999_inter_token_latency = np.percentile(inter_token_latency, 99.9)
+    p50_inter_token_latency = np.percentile(all_inter_token_latencies, 50)
+    p90_inter_token_latency = np.percentile(all_inter_token_latencies, 90)
+    p95_inter_token_latency = np.percentile(all_inter_token_latencies, 95)
+    p99_inter_token_latency = np.percentile(all_inter_token_latencies, 99)
+    p999_inter_token_latency = np.percentile(all_inter_token_latencies, 99.9)
 
     statistics = {
         "concurrency": concurrency,
