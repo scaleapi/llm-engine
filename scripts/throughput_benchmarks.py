@@ -65,10 +65,17 @@ def send_request(url, request, user=None):
         stream=True,
     )
     first_line = True
+    inter_token_latencies = []
+    last_token_time = None
     for byte_payload in response.iter_lines():
+        token_time = time.time()
         if first_line:
-            time_to_first_token = time.time() - start
+            time_to_first_token = token_time - start
+            last_token_time = token_time
             first_line = False
+        else:
+            inter_token_latencies.append(token_time - last_token_time)
+            last_token_time = token_time
 
         # Skip line
         if byte_payload == b"\n":
@@ -85,6 +92,7 @@ def send_request(url, request, user=None):
         "payload": payload_json,
         "time_to_first_token": time_to_first_token,
         "total_time": time.time() - start,
+        "inter_token_latencies": inter_token_latencies,
     }
 
 
@@ -255,8 +263,9 @@ def run_benchmark(
     time_to_process_prompt = []
     time_per_completion = []
     time_to_first_token = []
-    inter_token_latency = []
+    inter_token_latency = []  # one value per request, average inter-token latency in the request
     total_request_time = []
+    all_inter_token_latencies = []  # one value per token (except the first generated token)
     for result in results:
         avg_time_per_token = (result["total_time"] - result["time_to_first_token"]) / (
             result["num_completion_tokens"] - 1
@@ -266,6 +275,7 @@ def run_benchmark(
         time_per_completion.append(result["total_time"] - time_to_process_prompt[-1])
         inter_token_latency.append(avg_time_per_token)
         total_request_time.append(result["total_time"])
+        all_inter_token_latencies.extend(result["inter_token_latencies"])
 
     total_num_tokens = num_sampled_tokens + num_prompt_tokens
     avg_prefill_time = sum(time_to_process_prompt) / n
