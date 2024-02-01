@@ -46,6 +46,10 @@ def init_worker_global():
         default_callback_url=endpoint_config.default_callback_url,
         default_callback_auth=endpoint_config.default_callback_auth,
         monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
+        endpoint_id=endpoint_config.endpoint_id,
+        endpoint_type=endpoint_config.endpoint_type,
+        bundle_id=endpoint_config.bundle_id,
+        labels=endpoint_config.labels,
     )
     # k8s health check
     with open(READYZ_FPATH, "w") as f:

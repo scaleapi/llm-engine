@@ -1082,6 +1082,10 @@ def get_endpoint_resource_arguments_from_request(
             billing_tags=build_endpoint_request.billing_tags,
             default_callback_url=build_endpoint_request.default_callback_url,
             default_callback_auth=build_endpoint_request.default_callback_auth,
+            endpoint_id=model_endpoint_record.id,
+            endpoint_type=model_endpoint_record.endpoint_type,
+            bundle_id=model_bundle.id,
+            labels=build_endpoint_request.labels,
         ).serialize()
         return EndpointConfigArguments(
             # Base resource arguments

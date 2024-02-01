@@ -14,6 +14,7 @@ from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import CallbackAuth, CallbackBasicAuth
+from model_engine_server.domain.entities.model_endpoint_entity import ModelEndpointType
 from model_engine_server.inference.domain.gateways.inference_monitoring_metrics_gateway import (
     InferenceMonitoringMetricsGateway,
 )
@@ -85,11 +86,19 @@ class CallbackHook(PostInferenceHook):
 class LoggingHook(PostInferenceHook):
     def __init__(
         self,
-        endpoint_name,
-        bundle_name,
-        user_id,
+        endpoint_name: str,
+        bundle_name: str,
+        user_id: str,
+        endpoint_id: Optional[str],
+        endpoint_type: Optional[ModelEndpointType],
+        bundle_id: Optional[str],
+        labels: Optional[Dict[str, str]],
     ):
         super().__init__(endpoint_name, bundle_name, user_id)
+        self._endpoint_id = endpoint_id
+        self._endpoint_type = endpoint_type
+        self._bundle_id = bundle_id
+        self._labels = labels
 
     def handle(
         self,
@@ -100,15 +109,26 @@ class LoggingHook(PostInferenceHook):
         aws_profile = infra_config().profile_ml_worker
         session = boto3.Session(profile_name=aws_profile)
         firehose_client = session.client("firehose", region_name=infra_config().default_region)
+        if (
+            not self._endpoint_id
+            or not self._endpoint_type
+            or not self._bundle_id
+            or not self._labels
+        ):
+            logger.warning(
+                "No endpoint_id, endpoint_type, bundle_id, or labels specified for request."
+            )
+            return
+        response["task_id"] = task_id
         data_record = {
             "JOB_ID": "345",
             "REQUEST_BODY": request_payload.json(),
             "RESPONSE_BODY": response,
-            "ENDPOINT_ID": "123456789",
-            "ENDPOINT_NAME": "test",
-            "ENDPOINT_TYPE": "test",
-            "BUNDLE_ID": "123456789",
-            "TEAM_ID": "123456789",
+            "ENDPOINT_ID": self._endpoint_id,
+            "ENDPOINT_NAME": self._endpoint_name,
+            "ENDPOINT_TYPE": self._endpoint_type.value,
+            "BUNDLE_ID": self._bundle_id,
+            "TEAM_ID": "team",
             "PRODUCT_ID": "test",
         }
         data = json.dumps(data_record)
@@ -116,6 +136,7 @@ class LoggingHook(PostInferenceHook):
             DeliveryStreamName=LOGGING_FIREHOSE_STREAM, Record={"Data": data.encode("utf-8")}
         )
         assert firehose_response["ResponseMetadata"]["HTTPStatusCode"] == 200
+        logger.info(f"Logged to firehose stream {LOGGING_FIREHOSE_STREAM}: {data_record}")
 
 
 class PostInferenceHooksHandler:
@@ -130,6 +151,10 @@ class PostInferenceHooksHandler:
         default_callback_auth: Optional[CallbackAuth],
         post_inference_hooks: Optional[List[str]],
         monitoring_metrics_gateway: InferenceMonitoringMetricsGateway,
+        endpoint_id: Optional[str],
+        endpoint_type: Optional[ModelEndpointType],
+        bundle_id: Optional[str],
+        labels: Optional[Dict[str, str]],
     ):
         self._monitoring_metrics_gateway = monitoring_metrics_gateway
         self._hooks: Dict[str, PostInferenceHook] = {}
@@ -151,6 +176,10 @@ class PostInferenceHooksHandler:
                         endpoint_name,
                         bundle_name,
                         user_id,
+                        endpoint_id,
+                        endpoint_type,
+                        bundle_id,
+                        labels,
                     )
                 else:
                     raise ValueError(f"Hook {hook_lower} is currently not supported.")
