@@ -86,6 +86,10 @@ def post_inference_hooks_handler():
         default_callback_url=None,
         default_callback_auth=None,
         monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
+        endpoint_id="test_endpoint_id",
+        endpoint_type="sync",
+        bundle_id="test_bundle_id",
+        labels={},
     )
     return handler
 
