@@ -128,8 +128,7 @@ class LoggingHook(PostInferenceHook):
             "ENDPOINT_NAME": self._endpoint_name,
             "ENDPOINT_TYPE": self._endpoint_type.value,
             "BUNDLE_ID": self._bundle_id,
-            "TEAM_ID": "team",
-            "PRODUCT_ID": "test",
+            "LABELS": self._labels,
         }
         data = json.dumps(data_record)
         firehose_response = firehose_client.put_record(
