@@ -106,8 +106,17 @@ class LoggingHook(PostInferenceHook):
         response: Dict[str, Any],
         task_id: Optional[str],
     ):
-        aws_profile = infra_config().profile_ml_worker
-        session = boto3.Session(profile_name=aws_profile)
+        sts_client = boto3.client("sts", region_name=infra_config().default_region)
+        assumed_role_object = sts_client.assume_role(
+            RoleArn=infra_config().firehose_role_arn,
+            RoleSessionName="AssumeRoleSession1",
+        )
+        credentials = assumed_role_object["Credentials"]
+        session = boto3.Session(
+            aws_access_key_id=credentials["AccessKeyId"],
+            aws_secret_access_key=credentials["SecretAccessKey"],
+            aws_session_token=credentials["SessionToken"],
+        )
         firehose_client = session.client("firehose", region_name=infra_config().default_region)
         if (
             not self._endpoint_id
@@ -121,7 +130,6 @@ class LoggingHook(PostInferenceHook):
             return
         response["task_id"] = task_id
         data_record = {
-            "JOB_ID": "345",
             "REQUEST_BODY": request_payload.json(),
             "RESPONSE_BODY": response,
             "ENDPOINT_ID": self._endpoint_id,

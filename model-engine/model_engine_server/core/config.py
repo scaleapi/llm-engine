@@ -42,6 +42,7 @@ class InfraConfig:
     profile_ml_worker: str = "default"
     profile_ml_inference_worker: str = "default"
     identity_service_url: Optional[str] = None
+    firehose_role_arn: Optional[str] = None
 
     @classmethod
     def from_yaml(cls, yaml_path) -> "InfraConfig":
