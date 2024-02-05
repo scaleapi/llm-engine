@@ -19,6 +19,9 @@ CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
 
 os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+# Need to override these env vars so s5cmd uses AWS_PROFILE
+os.environ["AWS_ROLE_ARN"] = ""
+os.environ["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
 
 
 def get_s3_client():
