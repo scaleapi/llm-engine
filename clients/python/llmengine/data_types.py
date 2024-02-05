@@ -5,7 +5,12 @@ import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field, HttpUrl
+import pydantic
+
+if int(pydantic.__version__.split(".")[0]) > 1:
+    from pydantic.v1 import BaseModel, Field, HttpUrl
+else:
+    from pydantic import BaseModel, Field, HttpUrl
 
 CpuSpecificationType = Union[str, int, float]
 StorageSpecificationType = Union[str, int, float]  # TODO(phil): we can make this more specific.
