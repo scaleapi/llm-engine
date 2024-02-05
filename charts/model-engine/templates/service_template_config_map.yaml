@@ -637,6 +637,9 @@ data:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- if eq $device "gpu" }}
+          {{- if empty $node_selector }}
+          nodeSelector:
+          {{- end }}
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
             - key: "nvidia.com/gpu"
