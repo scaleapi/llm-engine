@@ -25,7 +25,7 @@ def get_s3_client():
 
 
 def download_model(checkpoint_path, final_weights_folder):
-    s5cmd = f"./s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.bin' --include '*.safetensors' --exclude 'optimizer*' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+    s5cmd = f"./s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.bin' --include '*.safetensors' --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
     env = os.environ.copy()
     env["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
     # Need to override these env vars so s5cmd uses AWS_PROFILE
@@ -44,7 +44,7 @@ def download_model(checkpoint_path, final_weights_folder):
         for line in iter(process.stderr.readline, ""):
             stderr_lines.append(line.strip())
 
-        raise IOError(f"Error downloading model weights: {stderr_lines}")
+        print(f"Error downloading model weights: {stderr_lines}")
 
 
 def file_exists(path):
