@@ -18,11 +18,6 @@ from tqdm import tqdm
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
 
-os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
-# Need to override these env vars so s5cmd uses AWS_PROFILE
-os.environ["AWS_ROLE_ARN"] = ""
-os.environ["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
-
 
 def get_s3_client():
     session = boto3.Session(profile_name=os.getenv("S3_WRITE_AWS_PROFILE"))
@@ -30,9 +25,14 @@ def get_s3_client():
 
 
 def download_model(checkpoint_path, final_weights_folder):
-    s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+    s5cmd = f"./s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.bin' --include '*.safetensors' --exclude 'optimizer*' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+    env = os.environ.copy()
+    env["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+    # Need to override these env vars so s5cmd uses AWS_PROFILE
+    env["AWS_ROLE_ARN"] = ""
+    env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
     process = subprocess.Popen(
-        s5cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        s5cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
     )
     for line in process.stdout:
         print(line)
