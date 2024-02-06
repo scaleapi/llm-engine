@@ -18,6 +18,8 @@ from tqdm import tqdm
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
 
+os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+
 
 def get_s3_client():
     session = boto3.Session(profile_name=os.getenv("S3_WRITE_AWS_PROFILE"))
