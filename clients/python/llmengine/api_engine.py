@@ -8,7 +8,7 @@ from typing import Any, AsyncIterable, Dict, Iterator, Optional
 from urllib.parse import urljoin
 
 import requests
-from aiohttp import ClientSession, ClientTimeout
+from aiohttp import BasicAuth, ClientSession, ClientTimeout
 from llmengine.errors import parse_error
 
 SPELLBOOK_API_URL = "https://api.spellbook.scale.com/llm-engine/"
@@ -163,7 +163,9 @@ class APIEngine:
     ) -> Dict[str, Any]:
         api_key = get_api_key()
         async with ClientSession(
-            timeout=ClientTimeout(timeout), headers={"x-api-key": api_key}
+            timeout=ClientTimeout(timeout),
+            headers={"x-api-key": api_key},
+            auth=BasicAuth(api_key, ""),
         ) as session:
             async with session.post(
                 urljoin(LLM_ENGINE_BASE_PATH, resource_name), json=data
@@ -179,7 +181,9 @@ class APIEngine:
     ) -> AsyncIterable[Dict[str, Any]]:
         api_key = get_api_key()
         async with ClientSession(
-            timeout=ClientTimeout(timeout), headers={"x-api-key": api_key}
+            timeout=ClientTimeout(timeout),
+            headers={"x-api-key": api_key},
+            auth=BasicAuth(api_key, ""),
         ) as session:
             async with session.post(
                 urljoin(LLM_ENGINE_BASE_PATH, resource_name), json=data
