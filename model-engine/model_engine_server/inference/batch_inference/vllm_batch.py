@@ -27,12 +27,17 @@ def get_s3_client():
 
 
 def download_model(checkpoint_path, final_weights_folder):
-    s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+    s5cmd = f"./s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.bin' --include '*.safetensors' --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+    env = os.environ.copy()
+    env["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+    # Need to override these env vars so s5cmd uses AWS_PROFILE
+    env["AWS_ROLE_ARN"] = ""
+    env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
     process = subprocess.Popen(
-        s5cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        s5cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
     )
     for line in process.stdout:
-        print(line)
+        print(line, flush=True)
 
     process.wait()
 
@@ -41,7 +46,7 @@ def download_model(checkpoint_path, final_weights_folder):
         for line in iter(process.stderr.readline, ""):
             stderr_lines.append(line.strip())
 
-        raise IOError(f"Error downloading model weights: {stderr_lines}")
+        print(f"Error downloading model weights: {stderr_lines}", flush=True)
 
 
 def file_exists(path):
