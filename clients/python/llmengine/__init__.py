@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0b23"
+__version__ = "0.0.0b24"
 
 import os
 from typing import Sequence

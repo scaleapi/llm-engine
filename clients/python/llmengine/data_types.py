@@ -10,7 +10,7 @@ import pydantic
 if int(pydantic.__version__.split(".")[0]) > 1:
     from pydantic.v1 import BaseModel, Field, HttpUrl
 else:
-    from pydantic import BaseModel, Field, HttpUrl
+    from pydantic import BaseModel, Field, HttpUrl  # type: ignore
 
 CpuSpecificationType = Union[str, int, float]
 StorageSpecificationType = Union[str, int, float]  # TODO(phil): we can make this more specific.
@@ -163,17 +163,17 @@ class CreateLLMEndpointRequest(BaseModel):
     cpus: CpuSpecificationType
     gpus: int
     memory: StorageSpecificationType
-    gpu_type: GpuType
+    gpu_type: Optional[GpuType]
     storage: Optional[StorageSpecificationType]
-    optimize_costs: Optional[bool]
+    optimize_costs: Optional[bool] = None
     min_workers: int
     max_workers: int
     per_worker: int
     labels: Dict[str, str]
-    prewarm: Optional[bool]
+    prewarm: Optional[bool] = None
     high_priority: Optional[bool]
-    default_callback_url: Optional[HttpUrl]
-    default_callback_auth: Optional[CallbackAuth]
+    default_callback_url: Optional[HttpUrl] = None
+    default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = True
     """
     Whether the endpoint can be used for inference for all users. LLM endpoints are public by default.
