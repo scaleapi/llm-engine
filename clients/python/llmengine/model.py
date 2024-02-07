@@ -1,12 +1,5 @@
 from typing import Dict, List, Optional
 
-import pydantic
-
-if int(pydantic.__version__.split(".")[0]) > 1:
-    from pydantic.v1 import HttpUrl
-else:
-    from pydantic import HttpUrl  # type: ignore
-
 from llmengine.api_engine import DEFAULT_TIMEOUT, APIEngine, assert_self_hosted
 from llmengine.data_types import (
     CreateLLMEndpointRequest,
@@ -284,7 +277,8 @@ class Model(APIEngine):
             per_worker=per_worker,
             high_priority=high_priority,
             post_inference_hooks=post_inference_hooks_strs,
-            default_callback_url=HttpUrl(default_callback_url),
+            # Pydantic automatically validates the url
+            default_callback_url=default_callback_url,  # type: ignore
             storage=storage,
             public_inference=public_inference,
         )
