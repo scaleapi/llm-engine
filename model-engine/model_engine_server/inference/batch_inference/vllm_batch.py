@@ -37,7 +37,7 @@ def download_model(checkpoint_path, final_weights_folder):
         s5cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
     )
     for line in process.stdout:
-        print(line)
+        print(line, flush=True)
 
     process.wait()
 
@@ -46,7 +46,7 @@ def download_model(checkpoint_path, final_weights_folder):
         for line in iter(process.stderr.readline, ""):
             stderr_lines.append(line.strip())
 
-        print(f"Error downloading model weights: {stderr_lines}")
+        print(f"Error downloading model weights: {stderr_lines}", flush=True)
 
 
 def file_exists(path):
