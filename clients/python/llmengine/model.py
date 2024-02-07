@@ -277,7 +277,8 @@ class Model(APIEngine):
             per_worker=per_worker,
             high_priority=high_priority,
             post_inference_hooks=post_inference_hooks_strs,
-            default_callback_url=default_callback_url,
+            # Pydantic automatically validates the url
+            default_callback_url=default_callback_url,  # type: ignore
             storage=storage,
             public_inference=public_inference,
         )
