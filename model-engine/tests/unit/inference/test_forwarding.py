@@ -90,6 +90,7 @@ def post_inference_hooks_handler():
         endpoint_type="sync",
         bundle_id="test_bundle_id",
         labels={},
+        streaming_storage_gateway=mock.Mock(),
     )
     return handler
 
