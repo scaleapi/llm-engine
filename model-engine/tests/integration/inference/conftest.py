@@ -32,7 +32,6 @@ BASE_PATH = MODULE_PATH.parents[4]
 
 QUEUE = str(uuid4())[-12:]
 CALLBACK_PORT = 8000 + random.randint(0, 1000)
-FORWARDER_PORT = 8000 + random.randint(0, 1000)
 
 
 @pytest.fixture(scope="session")
@@ -165,37 +164,6 @@ def callback_app(callback_port: int) -> Iterator[FastAPI]:
     @app.get("/callback-stats")
     def callback_stats():
         return JSONResponse(content=app.extra)
-
-    process = multiprocess.context.Process(
-        target=uvicorn.run, args=(app,), kwargs={"port": callback_port}
-    )
-    process.start()
-
-    for attempt in Retrying(
-        wait=wait_fixed(1),
-        stop=stop_after_attempt(10),
-        retry=retry_if_exception_type((AssertionError, requests.exceptions.RequestException)),
-        reraise=True,
-    ):
-        with attempt:
-            readyz_response = requests.get(f"http://localhost:{callback_port}/readyz", timeout=1)
-            assert readyz_response.status_code == 200
-
-    yield app
-
-    process.terminate()
-
-@pytest.fixture(scope="session")
-def http_forwarder_app(callback_port: int) -> Iterator[FastAPI]:
-    app = FastAPI()
-
-    @app.get("/readyz")
-    def readyz():
-        return "OK"
-
-    @app.post("/predict")
-    def predict(request: Request):
-        return "OK"
 
     process = multiprocess.context.Process(
         target=uvicorn.run, args=(app,), kwargs={"port": callback_port}
