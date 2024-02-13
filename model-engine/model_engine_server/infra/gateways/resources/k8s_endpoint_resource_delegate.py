@@ -7,11 +7,12 @@ import yaml
 from kubernetes import client as kube_client_sync
 from kubernetes import config as kube_config_sync
 from kubernetes_asyncio import config as kube_config_async
-from kubernetes_asyncio.client.api.autoscaling_v2beta2_api import AutoscalingV2beta2Api
 from kubernetes_asyncio.client.models.v1_container import V1Container
 from kubernetes_asyncio.client.models.v1_deployment import V1Deployment
 from kubernetes_asyncio.client.models.v1_env_var import V1EnvVar
-from kubernetes_asyncio.client.models.v2_horizontal_pod_autoscaler import V2HorizontalPodAutoscaler
+from kubernetes_asyncio.client.models.v2beta2_horizontal_pod_autoscaler import (
+    V2beta2HorizontalPodAutoscaler,
+)
 from kubernetes_asyncio.client.rest import ApiException
 from kubernetes_asyncio.config import ConfigException
 from model_engine_server.common.config import hmi_config
@@ -132,7 +133,7 @@ def get_kubernetes_autoscaling_client():  # pragma: no cover
         if version.parse(cluster_version) >= version.parse("1.26"):
             _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2Api()
         else:
-            _kubernetes_autoscaling_api = AutoscalingV2beta2Api()
+            _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2beta2Api()
     return _kubernetes_autoscaling_api
 
 
@@ -1355,7 +1356,7 @@ class K8SEndpointResourceDelegate:
 
     @staticmethod
     def _get_sync_autoscaling_params(
-        hpa_config: V2HorizontalPodAutoscaler,
+        hpa_config: V2beta2HorizontalPodAutoscaler,
     ) -> HorizontalAutoscalingEndpointParams:
         spec = hpa_config.spec
         per_worker = get_per_worker_value_from_target_concurrency(

@@ -251,7 +251,7 @@ kubeconfig==1.1.1
     # via -r model-engine/requirements.in
 kubernetes==25.3.0
     # via -r model-engine/requirements.in
-kubernetes-asyncio==29.0.0
+kubernetes-asyncio==25.11.0
     # via -r model-engine/requirements.in
 mako==1.2.4
     # via alembic
