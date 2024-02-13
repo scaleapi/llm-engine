@@ -74,7 +74,7 @@ async def test_batch_inference(
     new_callable=mock_open,
     read_data="Mocked content",
 )
-async def test_batch_inference_failed_to_download_model(
+async def test_batch_inference_failed_to_download_model_but_proceed(
     mock_open_func,
     mock_popen,
     mock_get_s3_client,
@@ -86,9 +86,10 @@ async def test_batch_inference_failed_to_download_model(
     create_vllm_request_outputs,
     mock_s3_client,
     mock_process,
+    mock_completion_output,
 ):
     # Mock the necessary objects and data
-    mock_process.returncode = 1
+    mock_process.returncode = 1  # Failed to download model
     mock_popen.return_value = mock_process
     mock_get_s3_client.return_value = mock_s3_client
     mock_create_batch_completions_request.parse_file.return_value = create_batch_completions_request
@@ -96,9 +97,25 @@ async def test_batch_inference_failed_to_download_model(
         create_batch_completions_request_content
     )
 
+    mock_results_generator = MagicMock()
+    mock_results_generator.__aiter__.return_value = create_vllm_request_outputs
+
+    # Mock the generate_with_vllm function
+    mock_generate_with_vllm.return_value = [mock_results_generator]
+
     # Call the function
-    with pytest.raises(IOError):
-        await batch_inference()
+    await batch_inference()
+
+    # Assertions
+    mock_create_batch_completions_request.parse_file.assert_called_once()
+    mock_open_func.assert_has_calls(
+        [
+            call("input_data_path", "r"),
+            call("output_data_path", "w"),
+            call().write(json.dumps([mock_completion_output.dict()])),
+        ],
+        any_order=True,
+    )
 
 
 @pytest.mark.asyncio
