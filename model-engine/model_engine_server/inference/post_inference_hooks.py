@@ -109,7 +109,9 @@ class LoggingHook(PostInferenceHook):
         response: Dict[str, Any],
         task_id: Optional[str],
     ):
-        # TODO: handle error
+        if response["error"]:
+            logger.info(f"Error in response with status code {response['error']} thus not logging")
+            return
         if (
             not self._endpoint_id
             or not self._endpoint_type
@@ -193,6 +195,8 @@ class PostInferenceHooksHandler:
     ):
         if isinstance(response, JSONResponse):
             loaded_response = json.loads(response.body)
+            if response.status_code >= 400:
+                loaded_response = {"error": response.status_code}
         else:
             loaded_response = response
         for hook_name, hook in self._hooks.items():
