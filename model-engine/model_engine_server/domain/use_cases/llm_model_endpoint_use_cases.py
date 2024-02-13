@@ -1349,6 +1349,15 @@ def validate_and_update_completion_params(
                 "return_token_log_probs is only supported in deepspeed, text-generation-inference, vllm, lightllm."
             )
 
+    # include_stop_str_in_output
+    if inference_framework == LLMInferenceFramework.VLLM:
+        pass
+    else:
+        if request.include_stop_str_in_output is not None:
+            raise ObjectHasInvalidValueException(
+                "include_stop_str_in_output is only supported in vllm."
+            )
+
     return request
 
 
@@ -1634,6 +1643,8 @@ class CompletionSyncV1UseCase:
                 vllm_args["top_p"] = request.top_p
             if request.return_token_log_probs:
                 vllm_args["logprobs"] = 1
+            if request.include_stop_str_in_output is not None:
+                vllm_args["include_stop_str_in_output"] = request.include_stop_str_in_output
 
             inference_request = SyncEndpointPredictV1Request(
                 args=vllm_args,
@@ -1888,6 +1899,8 @@ class CompletionStreamV1UseCase:
                 args["top_p"] = request.top_p
             if request.return_token_log_probs:
                 args["logprobs"] = 1
+            if request.include_stop_str_in_output is not None:
+                args["include_stop_str_in_output"] = request.include_stop_str_in_output
             args["stream"] = True
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
             args = {
