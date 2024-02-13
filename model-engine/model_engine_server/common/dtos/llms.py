@@ -180,6 +180,10 @@ class CompletionSyncV1Request(BaseModel):
     """
     Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
     """
+    include_stop_str_in_output: Optional[bool] = None
+    """
+    Whether to include the stop strings in output text.
+    """
 
 
 class TokenOutput(BaseModel):
@@ -239,6 +243,10 @@ class CompletionStreamV1Request(BaseModel):
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
     """
     Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
+    """
+    include_stop_str_in_output: Optional[bool] = None
+    """
+    Whether to include the stop strings in output text.
     """
 
 
