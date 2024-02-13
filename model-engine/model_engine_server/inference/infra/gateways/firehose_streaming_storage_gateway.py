@@ -23,7 +23,7 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
         """
         sts_client = boto3.client("sts", region_name=infra_config().default_region)
         assumed_role_object = sts_client.assume_role(
-            RoleArn=infra_config().firehose_stream_logging_role_arn,
+            RoleArn=infra_config().firehose_role_arn,
             RoleSessionName="AssumeMlLoggingRoleSession",
         )
         credentials = assumed_role_object["Credentials"]

@@ -6,10 +6,10 @@ import requests
 from fastapi.responses import JSONResponse
 from model_engine_server.common.constants import (
     CALLBACK_POST_INFERENCE_HOOK,
-    LOGGING_FIREHOSE_STREAM,
     LOGGING_POST_INFERENCE_HOOK,
 )
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import CallbackAuth, CallbackBasicAuth
 from model_engine_server.domain.entities.model_endpoint_entity import ModelEndpointType
@@ -131,7 +131,11 @@ class LoggingHook(PostInferenceHook):
             "LABELS": self._labels,
         }
         data = json.dumps(data_record)
-        self._streaming_storage_gateway.put_record(stream_name=LOGGING_FIREHOSE_STREAM, record=data)
+        stream_name = infra_config().firehose_stream_name
+        if stream_name is None:
+            logger.warning("No firehose stream name specified. Logging hook will not be executed.")
+            return
+        self._streaming_storage_gateway.put_record(stream_name=stream_name, record=data)
 
 
 class PostInferenceHooksHandler:
