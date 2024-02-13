@@ -2,7 +2,6 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
-import boto3
 import requests
 from fastapi.responses import JSONResponse
 from model_engine_server.common.constants import (
@@ -11,12 +10,14 @@ from model_engine_server.common.constants import (
     LOGGING_POST_INFERENCE_HOOK,
 )
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
-from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import CallbackAuth, CallbackBasicAuth
 from model_engine_server.domain.entities.model_endpoint_entity import ModelEndpointType
 from model_engine_server.inference.domain.gateways.inference_monitoring_metrics_gateway import (
     InferenceMonitoringMetricsGateway,
+)
+from model_engine_server.inference.domain.gateways.streaming_storage_gateway import (
+    StreamingStorageGateway,
 )
 from tenacity import Retrying, stop_after_attempt, wait_exponential
 
@@ -93,12 +94,14 @@ class LoggingHook(PostInferenceHook):
         endpoint_type: Optional[ModelEndpointType],
         bundle_id: Optional[str],
         labels: Optional[Dict[str, str]],
+        streaming_storage_gateway: StreamingStorageGateway,
     ):
         super().__init__(endpoint_name, bundle_name, user_id)
         self._endpoint_id = endpoint_id
         self._endpoint_type = endpoint_type
         self._bundle_id = bundle_id
         self._labels = labels
+        self._streaming_storage_gateway = streaming_storage_gateway
 
     def handle(
         self,
@@ -106,18 +109,7 @@ class LoggingHook(PostInferenceHook):
         response: Dict[str, Any],
         task_id: Optional[str],
     ):
-        sts_client = boto3.client("sts", region_name=infra_config().default_region)
-        assumed_role_object = sts_client.assume_role(
-            RoleArn=infra_config().firehose_role_arn,
-            RoleSessionName="AssumeRoleSession1",
-        )
-        credentials = assumed_role_object["Credentials"]
-        session = boto3.Session(
-            aws_access_key_id=credentials["AccessKeyId"],
-            aws_secret_access_key=credentials["SecretAccessKey"],
-            aws_session_token=credentials["SessionToken"],
-        )
-        firehose_client = session.client("firehose", region_name=infra_config().default_region)
+        # TODO: handle error
         if (
             not self._endpoint_id
             or not self._endpoint_type
@@ -139,11 +131,7 @@ class LoggingHook(PostInferenceHook):
             "LABELS": self._labels,
         }
         data = json.dumps(data_record)
-        firehose_response = firehose_client.put_record(
-            DeliveryStreamName=LOGGING_FIREHOSE_STREAM, Record={"Data": data.encode("utf-8")}
-        )
-        assert firehose_response["ResponseMetadata"]["HTTPStatusCode"] == 200
-        logger.info(f"Logged to firehose stream {LOGGING_FIREHOSE_STREAM}: {data_record}")
+        self._streaming_storage_gateway.put_record(stream_name=LOGGING_FIREHOSE_STREAM, record=data)
 
 
 class PostInferenceHooksHandler:
@@ -162,6 +150,7 @@ class PostInferenceHooksHandler:
         endpoint_type: Optional[ModelEndpointType],
         bundle_id: Optional[str],
         labels: Optional[Dict[str, str]],
+        streaming_storage_gateway: StreamingStorageGateway,
     ):
         self._monitoring_metrics_gateway = monitoring_metrics_gateway
         self._hooks: Dict[str, PostInferenceHook] = {}
@@ -187,6 +176,7 @@ class PostInferenceHooksHandler:
                         endpoint_type,
                         bundle_id,
                         labels,
+                        streaming_storage_gateway,
                     )
                 else:
                     raise ValueError(f"Hook {hook_lower} is currently not supported.")
