@@ -22,6 +22,7 @@
 {{- $celery_broker_type := .Values.celeryBrokerType }}
 {{- $node_selector := .Values.nodeSelector }}
 {{- $require_aws_config := not (empty .Values.aws) }}
+{{- $enable_datadog := .Values.datadog.enabled }}
 
 {{- if .Values.message }}
 {{- .Values.message }}
@@ -112,7 +113,9 @@ data:
               command:
                 - /usr/bin/dumb-init
                 - --
+                {{- if $enable_datadog }}
                 - ddtrace-run
+                {{- end }}
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.http_forwarder
@@ -156,7 +159,9 @@ data:
               command:
                 - /usr/bin/dumb-init
                 - --
+                {{- if $enable_datadog }}
                 - ddtrace-run
+                {{- end }}
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.http_forwarder
@@ -202,7 +207,9 @@ data:
               command:
                 - /usr/bin/dumb-init
                 - --
+                {{- if $enable_datadog }}
                 - ddtrace-run
+                {{- end }}
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.celery_forwarder
@@ -594,7 +601,9 @@ data:
               command:
                 - dumb-init
                 - --
+                {{- if $enable_datadog }}
                 - ddtrace-run
+                {{- end }}
               args:
                 - python
                 - -m

@@ -35,7 +35,9 @@ spec:
     spec:
       containers:
       - args:
+        {{- if .Values.datadog.enabled }}
         - ddtrace-run
+        {{- end }}
         - python
         - -m
         - model_engine_server.core.celery.celery_autoscaler
@@ -45,7 +47,7 @@ spec:
           value: {{ .Values.aws.profileName }}
         - name: AWS_CONFIG_FILE
           value: /opt/.aws/config
-        {{- end}}
+        {{- end }}
         - name: DD_TRACE_ENABLED
           value: 'false'
         - name: DD_SERVICE

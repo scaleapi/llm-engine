@@ -257,3 +257,6 @@ imageCache:
 
 # celeryBrokerType specifies the celery broker type for async endpoints, either "sqs" or "elasticache"
 celeryBrokerType: sqs
+
+datadog:
+  enabled: false

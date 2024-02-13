@@ -222,3 +222,6 @@ imageCache:
           effect: "NoSchedule"
 
 celeryBrokerType: redis
+
+datadog:
+  enabled: false

@@ -46,7 +46,9 @@ spec:
           command:
             - dumb-init
             - --
+            {{- if .Values.datadog.enabled }}
             - ddtrace-run
+            {{- end }}
           args:
             - celery
             - --app=model_engine_server.service_builder

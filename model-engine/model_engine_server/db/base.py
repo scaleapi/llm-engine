@@ -63,7 +63,7 @@ def get_engine_url(env: Optional[str] = None, read_only: bool = True, sync: bool
             )
             logger.info(f"Connecting to db {db} as user {user}")
 
-            engine_url = f"postgresql://{user}:{password}@{db}"
+            engine_url = f"postgresql://{user}:{password}@{db}?sslmode=require"
         else:
             db_secret_aws_profile = os.environ.get("DB_SECRET_AWS_PROFILE")
             creds = get_key_file(key_file, db_secret_aws_profile)
