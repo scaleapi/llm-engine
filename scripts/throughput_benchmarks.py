@@ -65,10 +65,17 @@ def send_request(url, request, user=None):
         stream=True,
     )
     first_line = True
+    inter_token_latencies = []
+    last_token_time = None
     for byte_payload in response.iter_lines():
+        token_time = time.time()
         if first_line:
-            time_to_first_token = time.time() - start
+            time_to_first_token = token_time - start
+            last_token_time = token_time
             first_line = False
+        else:
+            inter_token_latencies.append(token_time - last_token_time)
+            last_token_time = token_time
 
         # Skip line
         if byte_payload == b"\n":
@@ -85,6 +92,7 @@ def send_request(url, request, user=None):
         "payload": payload_json,
         "time_to_first_token": time_to_first_token,
         "total_time": time.time() - start,
+        "inter_token_latencies": inter_token_latencies,
     }
 
 
@@ -255,7 +263,9 @@ def run_benchmark(
     time_to_process_prompt = []
     time_per_completion = []
     time_to_first_token = []
-    inter_token_latency = []
+    inter_token_latency = []  # one value per request, average inter-token latency in the request
+    total_request_time = []
+    all_inter_token_latencies = []  # one value per token (except the first generated token)
     for result in results:
         avg_time_per_token = (result["total_time"] - result["time_to_first_token"]) / (
             result["num_completion_tokens"] - 1
@@ -264,28 +274,57 @@ def run_benchmark(
         time_to_process_prompt.append(result["time_to_first_token"] - avg_time_per_token)
         time_per_completion.append(result["total_time"] - time_to_process_prompt[-1])
         inter_token_latency.append(avg_time_per_token)
+        total_request_time.append(result["total_time"])
+        all_inter_token_latencies.extend(result["inter_token_latencies"])
 
     total_num_tokens = num_sampled_tokens + num_prompt_tokens
     avg_prefill_time = sum(time_to_process_prompt) / n
     avg_completion_time = sum(time_per_completion) / n
+    p50_request_time = np.percentile(total_request_time, 50)
+    p90_request_time = np.percentile(total_request_time, 90)
+    p95_request_time = np.percentile(total_request_time, 95)
+    p99_request_time = np.percentile(total_request_time, 99)
+    p50_inter_token_latency = np.percentile(all_inter_token_latencies, 50)
+    p90_inter_token_latency = np.percentile(all_inter_token_latencies, 90)
+    p95_inter_token_latency = np.percentile(all_inter_token_latencies, 95)
+    p99_inter_token_latency = np.percentile(all_inter_token_latencies, 99)
+    p999_inter_token_latency = np.percentile(all_inter_token_latencies, 99.9)
+    p50_time_to_first_token = np.percentile(time_to_first_token, 50)
+    p90_time_to_first_token = np.percentile(time_to_first_token, 90)
+    p95_time_to_first_token = np.percentile(time_to_first_token, 95)
+    p99_time_to_first_token = np.percentile(time_to_first_token, 99)
 
     statistics = {
         "concurrency": concurrency,
         "avg_prompt_throughput": num_prompt_tokens
         / (elapsed * avg_prefill_time / (avg_prefill_time + avg_completion_time)),
         "avg_time_to_first_token": sum(time_to_first_token) / n,
+        "p50_time_to_first_token": p50_time_to_first_token,
+        "p90_time_to_first_token": p90_time_to_first_token,
+        "p95_time_to_first_token": p95_time_to_first_token,
+        "p99_time_to_first_token": p99_time_to_first_token,
         "avg_sampling_throughput": num_sampled_tokens
         / (elapsed * avg_completion_time / (avg_prefill_time + avg_completion_time)),
         "avg_total_throughput": total_num_tokens / elapsed,
         "avg_per_session_sampling_throughput": num_sampled_tokens
         / (elapsed * avg_completion_time / (avg_prefill_time + avg_completion_time))
         / concurrency,
+        "avg_request_throughput": n / elapsed,
         "avg_inter_token_latency": sum(inter_token_latency) / n,
+        "p50_inter_token_latency": p50_inter_token_latency,
+        "p90_inter_token_latency": p90_inter_token_latency,
+        "p95_inter_token_latency": p95_inter_token_latency,
+        "p99_inter_token_latency": p99_inter_token_latency,
+        "p99.9_inter_token_latency": p999_inter_token_latency,
         "num_prompt_tokens": prompt_num_tokens,
         "avg_num_sampled_tokens": num_sampled_tokens / n,
         "elapsed_time": elapsed,
         "avg_prefill_time": avg_prefill_time,
         "avg_completion_time": avg_completion_time,
+        "p50_request_time": p50_request_time,
+        "p90_request_time": p90_request_time,
+        "p95_request_time": p95_request_time,
+        "p99_request_time": p99_request_time,
         "num_requests": num_trials,
         "num_successful_requests": n,
         "total_num_tokens": total_num_tokens,
@@ -361,6 +400,7 @@ def run_benchmarks_concurrency_range(
     use_localhost: bool = False,
     concurrency_min: int = 1,
     concurrency_max: int = 1,
+    concurrency_step: int = 1,
     verbose: bool = False,
     hf_model: Optional[str] = None,
     local_port: int = 5005,
@@ -369,7 +409,7 @@ def run_benchmarks_concurrency_range(
         # Create empty file
         with open(output_file, "w"):
             pass
-    for concurrency in range(concurrency_min, concurrency_max + 1):
+    for concurrency in range(concurrency_min, concurrency_max + 1, concurrency_step):
         run_benchmarks(
             model,
             framework,
