@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any, Dict
 
 
 class StreamingStorageGateway(ABC):
@@ -7,7 +8,7 @@ class StreamingStorageGateway(ABC):
     """
 
     @abstractmethod
-    def put_record(self, stream_name: str, record: str) -> None:
+    def put_record(self, stream_name: str, record: Dict[str, Any]) -> None:
         """
         Put a record into a streaming storage mechanism.
 

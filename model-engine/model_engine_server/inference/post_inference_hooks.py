@@ -109,7 +109,7 @@ class LoggingHook(PostInferenceHook):
         response: Dict[str, Any],
         task_id: Optional[str],
     ):
-        if response["error"]:
+        if "error" in response:
             logger.info(f"Error in response with status code {response['error']} thus not logging")
             return
         if (
@@ -132,12 +132,11 @@ class LoggingHook(PostInferenceHook):
             "BUNDLE_ID": self._bundle_id,
             "LABELS": self._labels,
         }
-        data = json.dumps(data_record)
         stream_name = infra_config().firehose_stream_name
         if stream_name is None:
             logger.warning("No firehose stream name specified. Logging hook will not be executed.")
             return
-        self._streaming_storage_gateway.put_record(stream_name=stream_name, record=data)
+        self._streaming_storage_gateway.put_record(stream_name=stream_name, record=data_record)
 
 
 class PostInferenceHooksHandler:

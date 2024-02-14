@@ -1,6 +1,10 @@
+import json
+from typing import Any, Dict
+
 import boto3
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.domain.exceptions import StreamPutException
 from model_engine_server.inference.domain.gateways.streaming_storage_gateway import (
     StreamingStorageGateway,
 )
@@ -19,9 +23,9 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
     """
     Creates a new firehose client.
 
-    Streams with Snowflake as a destination live in the ml account while
-    ml-worker lives in the prod account. Firehose doesn't support resource-based
-    policies, so we need to assume a role in the ml account to write to the stream.
+    Streams with Snowflake as a destination and the AWS profile live in different 
+    accounts. Firehose doesn't support resource-based policies, so we need to assume 
+    a new role to write to the stream.
     """
 
     def _get_firehose_client(self):
@@ -39,7 +43,7 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
         firehose_client = session.client("firehose", region_name=infra_config().default_region)
         return firehose_client
 
-    def put_record(self, stream_name: str, record: str) -> None:
+    def put_record(self, stream_name: str, record: Dict[str, Any]) -> None:
         """
         Put a record into a Firehose stream.
 
@@ -48,9 +52,12 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
             record: The record to put into the stream.
         """
         firehose_response = self._get_firehose_client().put_record(
-            DeliveryStreamName=stream_name, Record={"Data": record.encode("utf-8")}
+            DeliveryStreamName=stream_name, Record={"Data": json.dumps(record).encode("utf-8")}
         )
-        assert firehose_response["ResponseMetadata"]["HTTPStatusCode"] == 200
+        if firehose_response["ResponseMetadata"]["HTTPStatusCode"] != 200:
+            raise StreamPutException(
+                f"Failed to put record into firehose stream {stream_name}. Record content: {record}"
+            )
         logger.info(
             f"Logged to firehose stream {stream_name}. Record content: {record}, Record ID: {firehose_response['RecordId']}"
         )
