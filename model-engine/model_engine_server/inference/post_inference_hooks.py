@@ -13,6 +13,7 @@ from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import CallbackAuth, CallbackBasicAuth
 from model_engine_server.domain.entities.model_endpoint_entity import ModelEndpointType
+from model_engine_server.domain.exceptions import StreamPutException
 from model_engine_server.inference.domain.gateways.inference_monitoring_metrics_gateway import (
     InferenceMonitoringMetricsGateway,
 )
@@ -136,7 +137,10 @@ class LoggingHook(PostInferenceHook):
         if stream_name is None:
             logger.warning("No firehose stream name specified. Logging hook will not be executed.")
             return
-        self._streaming_storage_gateway.put_record(stream_name=stream_name, record=data_record)
+        try:
+            self._streaming_storage_gateway.put_record(stream_name=stream_name, record=data_record)
+        except StreamPutException as e:
+            logger.error(f"Error in logging hook {e}")
 
 
 class PostInferenceHooksHandler:
