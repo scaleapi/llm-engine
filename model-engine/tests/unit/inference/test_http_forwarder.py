@@ -79,6 +79,27 @@ def post_inference_hooks_handler():
 
 
 @pytest.fixture
+def post_inference_hooks_handler_with_logging():
+    handler = PostInferenceHooksHandler(
+        endpoint_name="test_endpoint_name",
+        bundle_name="test_bundle_name",
+        post_inference_hooks=["logging"],
+        user_id="test_user_id",
+        billing_queue="billing_queue",
+        billing_tags=[],
+        default_callback_url=None,
+        default_callback_auth=None,
+        monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
+        endpoint_id="test_endpoint_id",
+        endpoint_type="sync",
+        bundle_id="test_bundle_id",
+        labels={},
+        streaming_storage_gateway=FakeStreamingStorageGateway(),
+    )
+    return handler
+
+
+@pytest.fixture
 def mock_request():
     return EndpointPredictV1Request(
         url="test_url",
@@ -127,6 +148,15 @@ def test_handler_json_response(post_inference_hooks_handler):
             request_payload=mock_request,
             response=JSONResponse(content=PAYLOAD),
             task_id="test_task_id",
+        )
+    except Exception as e:
+        pytest.fail(f"Unexpected exception: {e}")
+
+
+def test_logging_response(post_inference_hooks_handler_with_logging):
+    try:
+        post_inference_hooks_handler_with_logging.handle(
+            request_payload=mock_request, response=PAYLOAD, task_id="test_task_id"
         )
     except Exception as e:
         pytest.fail(f"Unexpected exception: {e}")
