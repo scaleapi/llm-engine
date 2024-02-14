@@ -14,13 +14,17 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
     """
 
     def __init__(self):
-        """
-        Creates a new firehose client.
+        pass
 
-        Streams with Snowflake as a destination live in the ml account while
-        ml-worker lives in the prod account. Firehose doesn't support resource-based
-        policies, so we need to assume a role in the ml account to write to the stream.
-        """
+    """
+    Creates a new firehose client.
+
+    Streams with Snowflake as a destination live in the ml account while
+    ml-worker lives in the prod account. Firehose doesn't support resource-based
+    policies, so we need to assume a role in the ml account to write to the stream.
+    """
+
+    def _get_firehose_client(self):
         sts_client = boto3.client("sts", region_name=infra_config().default_region)
         assumed_role_object = sts_client.assume_role(
             RoleArn=infra_config().firehose_role_arn,
@@ -33,7 +37,7 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
             aws_session_token=credentials["SessionToken"],
         )
         firehose_client = session.client("firehose", region_name=infra_config().default_region)
-        self._firehose_client = firehose_client
+        return firehose_client
 
     def put_record(self, stream_name: str, record: str) -> None:
         """
@@ -43,7 +47,7 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
             stream_name: The name of the stream.
             record: The record to put into the stream.
         """
-        firehose_response = self._firehose_client.put_record(
+        firehose_response = self._get_firehose_client().put_record(
             DeliveryStreamName=stream_name, Record={"Data": record.encode("utf-8")}
         )
         assert firehose_response["ResponseMetadata"]["HTTPStatusCode"] == 200
