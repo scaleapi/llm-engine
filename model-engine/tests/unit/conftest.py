@@ -1559,7 +1559,7 @@ class FakeInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway)
 
 
 class FakeStreamingStorageGateway(StreamingStorageGateway):
-    def put_record(self, stream_name: str, record: str):
+    def put_record(self, stream_name: str, record: Dict[str, Any]):
         pass
 
 

@@ -19,6 +19,7 @@ from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_m
     DatadogInferenceMonitoringMetricsGateway,
 )
 from model_engine_server.inference.post_inference_hooks import PostInferenceHooksHandler
+from tests.unit.conftest import FakeStreamingStorageGateway
 
 PAYLOAD: Mapping[str, str] = {"hello": "world"}
 
@@ -90,7 +91,7 @@ def post_inference_hooks_handler():
         endpoint_type="sync",
         bundle_id="test_bundle_id",
         labels={},
-        streaming_storage_gateway=mock.Mock(),
+        streaming_storage_gateway=FakeStreamingStorageGateway(),
     )
     return handler
 
