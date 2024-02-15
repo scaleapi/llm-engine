@@ -43,6 +43,12 @@ from model_engine_server.domain.services import (
     LLMModelEndpointService,
     ModelEndpointService,
 )
+from model_engine_server.inference.domain.gateways.streaming_storage_gateway import (
+    StreamingStorageGateway,
+)
+from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway import (
+    FirehoseStreamingStorageGateway,
+)
 from model_engine_server.infra.gateways import (
     CeleryTaskQueueGateway,
     FakeMonitoringMetricsGateway,
@@ -137,6 +143,7 @@ class ExternalInterfaces:
     cron_job_gateway: CronJobGateway
     monitoring_metrics_gateway: MonitoringMetricsGateway
     tokenizer_repository: TokenizerRepository
+    streaming_storage_gateway: StreamingStorageGateway
 
 
 def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
@@ -265,6 +272,8 @@ def _get_external_interfaces(
 
     tokenizer_repository = LiveTokenizerRepository(llm_artifact_gateway=llm_artifact_gateway)
 
+    streaming_storage_gateway = FirehoseStreamingStorageGateway()
+
     external_interfaces = ExternalInterfaces(
         docker_repository=docker_repository,
         model_bundle_repository=model_bundle_repository,
@@ -287,6 +296,7 @@ def _get_external_interfaces(
         cron_job_gateway=cron_job_gateway,
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         tokenizer_repository=tokenizer_repository,
+        streaming_storage_gateway=streaming_storage_gateway,
     )
     return external_interfaces
 

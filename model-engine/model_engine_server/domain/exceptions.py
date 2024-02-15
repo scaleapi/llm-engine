@@ -164,3 +164,9 @@ class TriggerNameAlreadyExistsException(DomainException):
     """
     Thrown if the requested name already exists in the trigger repository
     """
+
+
+class StreamPutException(DomainException):
+    """
+    Thrown if the streaming storage gateway fails to put a record.
+    """
