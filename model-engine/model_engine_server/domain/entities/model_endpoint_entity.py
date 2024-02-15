@@ -88,6 +88,10 @@ class ModelEndpointConfig(BaseModel):
     billing_tags: Optional[Dict[str, Any]] = None
     default_callback_url: Optional[str] = None
     default_callback_auth: Optional[CallbackAuth]
+    endpoint_id: Optional[str] = None
+    endpoint_type: Optional[ModelEndpointType]
+    bundle_id: Optional[str] = None
+    labels: Optional[Dict[str, str]] = None
 
     def serialize(self) -> str:
         return python_json_to_b64(dict_not_none(**self.dict()))

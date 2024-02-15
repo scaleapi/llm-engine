@@ -114,6 +114,9 @@ from model_engine_server.domain.services import (
     LLMModelEndpointService,
     ModelEndpointService,
 )
+from model_engine_server.inference.domain.gateways.streaming_storage_gateway import (
+    StreamingStorageGateway,
+)
 from model_engine_server.infra.gateways import (
     BatchJobOrchestrationGateway,
     LiveBatchJobProgressGateway,
@@ -1555,6 +1558,11 @@ class FakeInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway)
         pass
 
 
+class FakeStreamingStorageGateway(StreamingStorageGateway):
+    def put_record(self, stream_name: str, record: Dict[str, Any]):
+        pass
+
+
 class FakeModelEndpointService(ModelEndpointService):
     db: Dict[str, ModelEndpoint]
 
@@ -2101,6 +2109,12 @@ def fake_tokenizer_repository() -> TokenizerRepository:
 
 
 @pytest.fixture
+def fake_streaming_storage_gateway() -> StreamingStorageGateway:
+    gateway = FakeStreamingStorageGateway()
+    return gateway
+
+
+@pytest.fixture
 def get_repositories_generator_wrapper():
     def get_repositories_generator(
         fake_docker_repository_image_always_exists: bool,
@@ -2188,6 +2202,7 @@ def get_repositories_generator_wrapper():
             fake_llm_fine_tuning_events_repository = FakeLLMFineTuneEventsRepository()
             fake_file_storage_gateway = FakeFileStorageGateway(fake_file_storage_gateway_contents)
             fake_tokenizer_repository = FakeTokenizerRepository()
+            fake_streaming_storage_gateway = FakeStreamingStorageGateway()
 
             repositories = ExternalInterfaces(
                 docker_repository=FakeDockerRepository(
@@ -2213,6 +2228,7 @@ def get_repositories_generator_wrapper():
                 llm_artifact_gateway=fake_llm_artifact_gateway,
                 monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
                 tokenizer_repository=fake_tokenizer_repository,
+                streaming_storage_gateway=fake_streaming_storage_gateway,
             )
             try:
                 yield repositories

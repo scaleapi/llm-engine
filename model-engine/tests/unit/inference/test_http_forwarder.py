@@ -16,6 +16,7 @@ from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_m
     DatadogInferenceMonitoringMetricsGateway,
 )
 from model_engine_server.inference.post_inference_hooks import PostInferenceHooksHandler
+from tests.unit.conftest import FakeStreamingStorageGateway
 
 PAYLOAD: Mapping[str, str] = {"hello": "world"}
 
@@ -68,6 +69,32 @@ def post_inference_hooks_handler():
         default_callback_url=None,
         default_callback_auth=None,
         monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
+        endpoint_id="test_endpoint_id",
+        endpoint_type="sync",
+        bundle_id="test_bundle_id",
+        labels={},
+        streaming_storage_gateway=FakeStreamingStorageGateway(),
+    )
+    return handler
+
+
+@pytest.fixture
+def post_inference_hooks_handler_with_logging():
+    handler = PostInferenceHooksHandler(
+        endpoint_name="test_endpoint_name",
+        bundle_name="test_bundle_name",
+        post_inference_hooks=["logging"],
+        user_id="test_user_id",
+        billing_queue="billing_queue",
+        billing_tags=[],
+        default_callback_url=None,
+        default_callback_auth=None,
+        monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
+        endpoint_id="test_endpoint_id",
+        endpoint_type="sync",
+        bundle_id="test_bundle_id",
+        labels={},
+        streaming_storage_gateway=FakeStreamingStorageGateway(),
     )
     return handler
 
@@ -118,6 +145,17 @@ def test_handler_response(post_inference_hooks_handler):
 def test_handler_json_response(post_inference_hooks_handler):
     try:
         post_inference_hooks_handler.handle(
+            request_payload=mock_request,
+            response=JSONResponse(content=PAYLOAD),
+            task_id="test_task_id",
+        )
+    except Exception as e:
+        pytest.fail(f"Unexpected exception: {e}")
+
+
+def test_handler_with_logging(post_inference_hooks_handler_with_logging):
+    try:
+        post_inference_hooks_handler_with_logging.handle(
             request_payload=mock_request,
             response=JSONResponse(content=PAYLOAD),
             task_id="test_task_id",
