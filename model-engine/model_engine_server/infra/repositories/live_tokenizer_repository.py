@@ -52,6 +52,8 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "codellama-13b-instruct": ModelInfo("codellama/CodeLlama-13b-Instruct-hf", None),
         "codellama-34b": ModelInfo("codellama/CodeLlama-34b-hf", None),
         "codellama-34b-instruct": ModelInfo("codellama/CodeLlama-34b-Instruct-hf", None),
+        "codellama-70b": ModelInfo("codellama/CodeLlama-70b-hf", None),
+        "codellama-70b-instruct": ModelInfo("codellama/CodeLlama-70b-Instruct-hf", None),
         "llm-jp-13b-instruct-full": ModelInfo("llm-jp/llm-jp-13b-instruct-full-jaster-v1.0", None),
         "llm-jp-13b-instruct-full-dolly": ModelInfo(
             "llm-jp/llm-jp-13b-instruct-full-dolly-oasst-v1.0", None

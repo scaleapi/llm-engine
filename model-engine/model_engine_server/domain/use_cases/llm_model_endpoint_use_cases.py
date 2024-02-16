@@ -174,6 +174,8 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "codellama-13b-instruct",
             "codellama-34b",
             "codellama-34b-instruct",
+            "codellama-70b",
+            "codellama-70b-instruct",
             "mistral-7b",
             "mistral-7b-instruct",
             "mixtral-8x7b",
@@ -1579,9 +1581,11 @@ class CompletionSyncV1UseCase:
             else:
                 raise UpstreamServiceError(
                     status_code=500,
-                    content=predict_result.traceback.encode("utf-8")
-                    if predict_result.traceback is not None
-                    else b"",
+                    content=(
+                        predict_result.traceback.encode("utf-8")
+                        if predict_result.traceback is not None
+                        else b""
+                    ),
                 )
         elif (
             endpoint_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
@@ -1615,9 +1619,11 @@ class CompletionSyncV1UseCase:
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
-                    content=predict_result.traceback.encode("utf-8")
-                    if predict_result.traceback is not None
-                    else b"",
+                    content=(
+                        predict_result.traceback.encode("utf-8")
+                        if predict_result.traceback is not None
+                        else b""
+                    ),
                 )
 
             output = json.loads(predict_result.result["result"])
@@ -1658,9 +1664,11 @@ class CompletionSyncV1UseCase:
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
-                    content=predict_result.traceback.encode("utf-8")
-                    if predict_result.traceback is not None
-                    else b"",
+                    content=(
+                        predict_result.traceback.encode("utf-8")
+                        if predict_result.traceback is not None
+                        else b""
+                    ),
                 )
 
             output = json.loads(predict_result.result["result"])
@@ -1702,9 +1710,11 @@ class CompletionSyncV1UseCase:
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
-                    content=predict_result.traceback.encode("utf-8")
-                    if predict_result.traceback is not None
-                    else b"",
+                    content=(
+                        predict_result.traceback.encode("utf-8")
+                        if predict_result.traceback is not None
+                        else b""
+                    ),
                 )
 
             output = json.loads(predict_result.result["result"])
@@ -1740,9 +1750,11 @@ class CompletionSyncV1UseCase:
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
-                    content=predict_result.traceback.encode("utf-8")
-                    if predict_result.traceback is not None
-                    else b"",
+                    content=(
+                        predict_result.traceback.encode("utf-8")
+                        if predict_result.traceback is not None
+                        else b""
+                    ),
                 )
 
             output = json.loads(predict_result.result["result"])
