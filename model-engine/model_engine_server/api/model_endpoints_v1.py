@@ -3,6 +3,7 @@ TODO:
 List model endpoint history: GET model-endpoints/<endpoint id>/history
 Read model endpoint creation logs: GET model-endpoints/<endpoint id>/creation-logs
 """
+
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -34,6 +35,7 @@ from model_engine_server.domain.exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
+    PostInferenceHooksException,
 )
 from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
     CreateModelEndpointV1UseCase,
@@ -150,6 +152,7 @@ async def update_model_endpoint(
         EndpointLabelsException,
         ObjectHasInvalidValueException,
         EndpointResourceInvalidRequestException,
+        PostInferenceHooksException,
     ) as exc:
         raise HTTPException(
             status_code=400,
