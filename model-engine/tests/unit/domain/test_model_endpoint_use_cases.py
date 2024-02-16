@@ -25,6 +25,7 @@ from model_engine_server.domain.exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
+    PostInferenceHooksException,
 )
 from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
     CONVERTED_FROM_ARTIFACT_LIKE_KEY,
@@ -463,7 +464,7 @@ async def test_create_model_endpoint_use_case_validates_post_inference_hooks(
 
     request = create_model_endpoint_request_async.copy()
     request.post_inference_hooks = ["invalid_hook"]
-    with pytest.raises(ValueError):
+    with pytest.raises(PostInferenceHooksException):
         await use_case.execute(user=user, request=request)
 
 
