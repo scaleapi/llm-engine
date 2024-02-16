@@ -7,10 +7,7 @@ Read model endpoint creation logs: GET model-endpoints/<endpoint id>/creation-lo
 import re
 from typing import Any, Dict, List, Optional
 
-from model_engine_server.common.constants import (
-    BILLING_POST_INFERENCE_HOOK,
-    CALLBACK_POST_INFERENCE_HOOK,
-)
+from model_engine_server.common.constants import SUPPORTED_POST_INFERENCE_HOOKS
 from model_engine_server.common.dtos.model_endpoints import (
     CreateModelEndpointV1Request,
     CreateModelEndpointV1Response,
@@ -41,6 +38,7 @@ from model_engine_server.domain.exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
+    PostInferenceHooksException,
 )
 from model_engine_server.domain.repositories import ModelBundleRepository
 from model_engine_server.domain.services import ModelEndpointService
@@ -184,11 +182,10 @@ def validate_post_inference_hooks(user: User, post_inference_hooks: Optional[Lis
         return
 
     for hook in post_inference_hooks:
-        if hook not in [
-            BILLING_POST_INFERENCE_HOOK,
-            CALLBACK_POST_INFERENCE_HOOK,
-        ]:
-            raise ValueError(f"Unsupported post-inference hook {hook}")
+        if hook not in SUPPORTED_POST_INFERENCE_HOOKS:
+            raise PostInferenceHooksException(
+                f"Unsupported post-inference hook {hook}. The supported hooks are: {SUPPORTED_POST_INFERENCE_HOOKS}"
+            )
 
 
 class CreateModelEndpointV1UseCase:
