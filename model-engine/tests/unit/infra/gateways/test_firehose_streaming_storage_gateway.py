@@ -17,7 +17,7 @@ def streaming_storage_gateway():
 
 @pytest.fixture
 def fake_record():
-    return {"Data": "fake-data"}
+    return {"RESPONSE_BODY": {"task_id": "fake-task-id"}}
 
 
 def mock_sts_client(*args, **kwargs):
