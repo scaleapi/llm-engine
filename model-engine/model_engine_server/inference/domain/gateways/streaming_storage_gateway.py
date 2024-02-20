@@ -8,7 +8,7 @@ class StreamingStorageGateway(ABC):
     """
 
     @abstractmethod
-    def put_record(self, stream_name: str, record: Dict[str, Any]) -> None:
+    def put_record(self, stream_name: str, record: Dict[str, Any]) -> Any:
         """
         Put a record into a streaming storage mechanism.
 
