@@ -18,6 +18,9 @@ from model_engine_server.inference.common import (
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
     DatadogInferenceMonitoringMetricsGateway,
 )
+from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway import (
+    FirehoseStreamingStorageGateway,
+)
 from model_engine_server.inference.post_inference_hooks import PostInferenceHooksHandler
 
 logger = make_logger(logger_name())
@@ -46,6 +49,11 @@ def init_worker_global():
         default_callback_url=endpoint_config.default_callback_url,
         default_callback_auth=endpoint_config.default_callback_auth,
         monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
+        endpoint_id=endpoint_config.endpoint_id,
+        endpoint_type=endpoint_config.endpoint_type,
+        bundle_id=endpoint_config.bundle_id,
+        labels=endpoint_config.labels,
+        streaming_storage_gateway=FirehoseStreamingStorageGateway(),
     )
     # k8s health check
     with open(READYZ_FPATH, "w") as f:
