@@ -45,7 +45,9 @@ spec:
           command:
             - dumb-init
             - --
+            {{- if .Values.datadog.enabled }}
             - ddtrace-run
+            {{- end }}
           args:
             - python
             - -m

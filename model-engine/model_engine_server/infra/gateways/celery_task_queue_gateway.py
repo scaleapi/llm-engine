@@ -10,32 +10,51 @@ from model_engine_server.core.celery import TaskVisibility, celery_app
 from model_engine_server.core.config import infra_config
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 
+backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
+
 celery_redis = celery_app(
-    None, s3_bucket=infra_config().s3_bucket, broker_type=str(BrokerType.REDIS.value)
+    None,
+    s3_bucket=infra_config().s3_bucket,
+    broker_type=str(BrokerType.REDIS.value),
+    backend_protocol=backend_protocol,
 )
 celery_redis_24h = celery_app(
     None,
     s3_bucket=infra_config().s3_bucket,
     broker_type=str(BrokerType.REDIS.value),
     task_visibility=TaskVisibility.VISIBILITY_24H,
+    backend_protocol=backend_protocol,
 )
 celery_sqs = celery_app(
-    None, s3_bucket=infra_config().s3_bucket, broker_type=str(BrokerType.SQS.value)
+    None,
+    s3_bucket=infra_config().s3_bucket,
+    broker_type=str(BrokerType.SQS.value),
+    backend_protocol=backend_protocol,
+)
+celery_servicebus = celery_app(
+    None, broker_type=str(BrokerType.SERVICEBUS.value), backend_protocol=backend_protocol
 )
 
 
 class CeleryTaskQueueGateway(TaskQueueGateway):
     def __init__(self, broker_type: BrokerType):
         self.broker_type = broker_type
-        assert self.broker_type in [BrokerType.SQS, BrokerType.REDIS, BrokerType.REDIS_24H]
+        assert self.broker_type in [
+            BrokerType.SQS,
+            BrokerType.REDIS,
+            BrokerType.REDIS_24H,
+            BrokerType.SERVICEBUS,
+        ]
 
     def _get_celery_dest(self):
         if self.broker_type == BrokerType.SQS:
             return celery_sqs
         elif self.broker_type == BrokerType.REDIS_24H:
             return celery_redis_24h
-        else:  # self.broker_type == BrokerType.REDIS
+        elif self.broker_type == BrokerType.REDIS:
             return celery_redis
+        else:
+            return celery_servicebus
 
     def send_task(
         self,

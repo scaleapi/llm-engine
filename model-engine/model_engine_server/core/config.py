@@ -31,6 +31,7 @@ CONFIG_PATH: str = os.getenv("ML_INFRA_SERVICES_CONFIG_PATH", str(DEFAULT_CONFIG
 
 @dataclass
 class InfraConfig:
+    cloud_provider: str
     env: str
     k8s_cluster_name: str
     dns_host_domain: str

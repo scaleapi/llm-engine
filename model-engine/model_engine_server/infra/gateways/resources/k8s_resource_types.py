@@ -509,10 +509,17 @@ def get_endpoint_resource_arguments_from_request(
     image_hash = compute_image_hash(request.image)
 
     # In Circle CI, we use Redis on localhost instead of SQS
-    broker_name = BrokerName.SQS.value if not CIRCLECI else BrokerName.REDIS.value
-    broker_type = BrokerType.SQS.value if not CIRCLECI else BrokerType.REDIS.value
+    if CIRCLECI:
+        broker_name = BrokerName.REDIS.value
+        broker_type = BrokerType.REDIS.value
+    elif infra_config().cloud_provider == "azure":
+        broker_name = BrokerName.SERVICEBUS.value
+        broker_type = BrokerType.SERVICEBUS.value
+    else:
+        broker_name = BrokerName.SQS.value
+        broker_type = BrokerType.SQS.value
     dd_trace_enabled = hmi_config.dd_trace_enabled
-    if broker_type == BrokerType.REDIS.value:
+    if broker_type != BrokerType.SQS.value:
         sqs_queue_url = ""
 
     main_env = []

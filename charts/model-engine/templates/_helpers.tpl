@@ -167,8 +167,10 @@ env:
     value: "${LOAD_PREDICT_FN_MODULE_PATH}"
   - name: LOAD_MODEL_FN_MODULE_PATH
     value: "${LOAD_MODEL_FN_MODULE_PATH}"
+  {{- if .Values.aws }}
   - name: AWS_PROFILE
     value: "${AWS_ROLE}"
+  {{- end }}
   - name: RESULTS_S3_BUCKET
     value: "${RESULTS_S3_BUCKET}"
   - name: CHILD_FN_INFO
@@ -219,10 +221,12 @@ env:
     valueFrom:
       fieldRef:
         fieldPath: status.hostIP
+  {{- if .Values.aws }}
   - name: AWS_PROFILE
     value: "${AWS_ROLE}"
   - name: AWS_CONFIG_FILE
     value: /opt/.aws/config
+  {{- end }}
   - name: RESULTS_S3_BUCKET
     value: "${RESULTS_S3_BUCKET}"
   - name: BASE_PATH
@@ -232,6 +236,16 @@ env:
     value: {{ .Values.config.file.infra | quote }}
   {{- else }}
     value: "/workspace/model-engine/model_engine_server/core/configs/config.yaml"
+  {{- end }}
+  {{- if .Values.azure}}
+  - name: AZURE_IDENTITY_NAME
+    value: {{ .Values.azure.identity_name }}
+  - name: AZURE_CLIENT_ID
+    value: {{ .Values.azure.client_id }}
+  - name: AZURE_OBJECT_ID
+    value: {{ .Values.azure.object_id }}
+  - name: ABS_ACCOUNT_NAME
+    value: {{ .Values.azure.abs_account_name }}
   {{- end }}
 {{- end }}
 
@@ -251,6 +265,14 @@ env:
     value: "VISIBILITY_24H"
   - name: S3_BUCKET
     value: "${CELERY_S3_BUCKET}"
+  {{- if .Values.azure}}
+  - name: ABS_ACCOUNT_NAME
+    value: {{ .Values.azure.abs_account_name }}
+  - name: SERVICEBUS_NAMESPACE
+    value: {{ .Values.azure.servicebus_namespace }}
+  - name: SERVICEBUS_SAS_KEY
+    value: {{ .Values.azure.servicebus_sas_key }}
+  {{- end }}
 {{- end }}
 
 {{- define "modelEngine.serviceEnvBase" }}
@@ -290,9 +312,9 @@ env:
       secretKeyRef:
         name: {{ .kubernetesDatabaseSecretName }}
         key: database_url
-  {{- else if .awsDatabaseSecretName }}
+  {{- else if .cloudDatabaseSecretName }}
   - name: DB_SECRET_NAME
-    value: {{ .awsDatabaseSecretName }}
+    value: {{ .cloudDatabaseSecretName }}
   {{- end }}
   {{- end }}
   {{- if .Values.config.file }}
@@ -313,6 +335,22 @@ env:
   {{- if .Values.redis.auth}}
   - name: REDIS_AUTH_TOKEN
     value: {{ .Values.redis.auth }}
+  {{- end }}
+  {{- if .Values.azure}}
+  - name: AZURE_IDENTITY_NAME
+    value: {{ .Values.azure.identity_name }}
+  - name: AZURE_CLIENT_ID
+    value: {{ .Values.azure.client_id }}
+  - name: AZURE_OBJECT_ID
+    value: {{ .Values.azure.object_id }}
+  - name: AZURE_KEYVAULT_IDENTITY_CLIENT_ID
+    value: {{ .Values.azure.keyvault_identity_client_id }}
+  - name: KEYVAULT_NAME
+    value: {{ .Values.azure.keyvault_name }}
+  - name: ABS_ACCOUNT_NAME
+    value: {{ .Values.azure.abs_account_name }}
+  - name: SERVICEBUS_NAMESPACE
+    value: {{ .Values.azure.servicebus_namespace }}
   {{- end }}
   {{- if eq .Values.context "circleci" }}
   - name: CIRCLECI
@@ -405,9 +443,11 @@ volumeMounts:
 
 {{- define "modelEngine.forwarderVolumeMounts" }}
 volumeMounts:
+  {{- if .Values.aws }}
   - name: config-volume
     mountPath: /opt/.aws/config
     subPath: config
+  {{- end }}
   - name: user-config
     mountPath: /workspace/user_config
     subPath: raw_data

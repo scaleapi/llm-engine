@@ -112,7 +112,8 @@ Below are the configurations to specify in the `values_sample.yaml` file.
 | config.values.infra.redis_host | The hostname of the redis cluster you wish to connect | Yes |
 | config.values.infra.s3_bucket | The S3 bucket you wish to connect | Yes |
 | config.values.llm_engine.endpoint_namespace | K8s namespace the endpoints will be created in | Yes |
-| config.values.llm_engine.cache_redis_url | The full url for the redis cluster you wish to connect | Yes |
+| config.values.llm_engine.cache_redis_aws_url | The full url for the redis cluster you wish to connect | No |
+| config.values.llm_engine.cache_redis_azure_host | The redis cluster host when using cloud_provider azure | No |
 | config.values.llm_engine.s3_file_llm_fine_tuning_job_repository | The S3 URI for the S3 bucket/key that you wish to save fine-tuned assets | Yes |
 | config.values.dd_trace_enabled | Whether to enable datadog tracing, datadog must be installed in the cluster | No |
 

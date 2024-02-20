@@ -10,15 +10,14 @@ from model_engine_server.core.aws.roles import session
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
-from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
-    SQSEndpointResourceDelegate,
-    SQSQueueInfo,
+from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
+    QueueEndpointResourceDelegate,
+    QueueInfo,
 )
-from mypy_boto3_sqs.type_defs import GetQueueAttributesResultTypeDef
 
 logger = make_logger(logger_name())
 
-__all__: Sequence[str] = ("LiveSQSEndpointResourceDelegate",)
+__all__: Sequence[str] = ("SQSQueueEndpointResourceDelegate",)
 
 
 def _create_async_sqs_client(sqs_profile: Optional[str]) -> AioBaseClient:
@@ -46,7 +45,7 @@ def _get_queue_tags(
     )
 
 
-class LiveSQSEndpointResourceDelegate(SQSEndpointResourceDelegate):
+class SQSQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
     def __init__(self, sqs_profile: Optional[str]):
         self.sqs_profile = sqs_profile
 
@@ -56,13 +55,13 @@ class LiveSQSEndpointResourceDelegate(SQSEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
-    ) -> SQSQueueInfo:
+    ) -> QueueInfo:
         async with _create_async_sqs_client(sqs_profile=self.sqs_profile) as sqs_client:
-            queue_name = SQSEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
+            queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
 
             try:
                 get_queue_url_response = await sqs_client.get_queue_url(QueueName=queue_name)
-                return SQSQueueInfo(
+                return QueueInfo(
                     queue_name=queue_name,
                     queue_url=get_queue_url_response["QueueUrl"],
                 )
@@ -94,10 +93,10 @@ class LiveSQSEndpointResourceDelegate(SQSEndpointResourceDelegate):
                     f"Creating SQS queue got non-200 response: {create_response}"
                 )
 
-            return SQSQueueInfo(queue_name, create_response["QueueUrl"])
+            return QueueInfo(queue_name, create_response["QueueUrl"])
 
     async def delete_queue(self, endpoint_id: str) -> None:
-        queue_name = SQSEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
+        queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
         async with _create_async_sqs_client(self.sqs_profile) as sqs_client:
             try:
                 queue_url = (await sqs_client.get_queue_url(QueueName=queue_name))["QueueUrl"]
@@ -122,8 +121,8 @@ class LiveSQSEndpointResourceDelegate(SQSEndpointResourceDelegate):
                     f"Deleting SQS queue got non-200 response: {delete_response}"
                 )
 
-    async def get_queue_attributes(self, endpoint_id: str) -> GetQueueAttributesResultTypeDef:
-        queue_name = SQSEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
+    async def get_queue_attributes(self, endpoint_id: str) -> Dict[str, Any]:
+        queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
         async with _create_async_sqs_client(self.sqs_profile) as sqs_client:
             try:
                 queue_url = (await sqs_client.get_queue_url(QueueName=queue_name))["QueueUrl"]

@@ -14,26 +14,34 @@ from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.env_vars import CIRCLECI
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.db.base import SessionAsyncNullPool
 from model_engine_server.domain.repositories import DockerRepository
+from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
+    ASBQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.endpoint_resource_gateway import (
     EndpointResourceGateway,
 )
-from model_engine_server.infra.gateways.resources.fake_sqs_endpoint_resource_delegate import (
-    FakeSQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_delegate import (
+    FakeQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.gateways.resources.image_cache_gateway import ImageCacheGateway
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
 )
-from model_engine_server.infra.gateways.resources.live_sqs_endpoint_resource_delegate import (
-    LiveSQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
+    QueueEndpointResourceDelegate,
 )
-from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
-    SQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
+    SQSQueueEndpointResourceDelegate,
 )
-from model_engine_server.infra.repositories import ECRDockerRepository, FakeDockerRepository
+from model_engine_server.infra.repositories import (
+    ACRDockerRepository,
+    ECRDockerRepository,
+    FakeDockerRepository,
+)
 from model_engine_server.infra.repositories.db_model_endpoint_record_repository import (
     DbModelEndpointRecordRepository,
 )
@@ -98,19 +106,27 @@ async def main(args: Any):
         read_only=True,
     )
 
-    sqs_delegate: SQSEndpointResourceDelegate
+    queue_delegate: QueueEndpointResourceDelegate
     if CIRCLECI:
-        sqs_delegate = FakeSQSEndpointResourceDelegate()
+        queue_delegate = FakeQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "azure":
+        queue_delegate = ASBQueueEndpointResourceDelegate()
     else:
-        sqs_delegate = LiveSQSEndpointResourceDelegate(
+        queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
         )
 
     k8s_resource_manager = LiveEndpointResourceGateway(
-        sqs_delegate=sqs_delegate,
+        queue_delegate=queue_delegate,
     )
     image_cache_gateway = ImageCacheGateway()
-    docker_repo = ECRDockerRepository() if not CIRCLECI else FakeDockerRepository()
+    docker_repo: DockerRepository
+    if CIRCLECI:
+        docker_repo = FakeDockerRepository()
+    elif infra_config().cloud_provider == "azure":
+        docker_repo = ACRDockerRepository()
+    else:
+        docker_repo = ECRDockerRepository()
     while True:
         loop_start = time.time()
         await loop_iteration(
