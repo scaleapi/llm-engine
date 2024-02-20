@@ -17,9 +17,12 @@ image:
   pullPolicy: Always
 
 secrets:
-  # kubernetesDatabaseSecretName or awsDatabaseSecretName [required]
+  # kubernetesDatabaseSecretName or cloudDatabaseSecretName [required]
   # is the name of the secret that contains the database credentials
   kubernetesDatabaseSecretName: llm-engine-postgres-credentials
+
+# Azure Key Vault name to pull secrets from
+keyvaultName: llm-engine-keyvault
 
 db:
   runDbInitScript: false
@@ -139,6 +142,8 @@ serviceTemplate:
 config:
   values:
     infra:
+      # cloud_provider [required]; either "aws" or "azure"
+      cloud_provider: aws
       # k8s_cluster_name [required] is the name of the k8s cluster
       k8s_cluster_name: main_cluster
       # dns_host_domain [required] is the domain name of the k8s cluster
@@ -156,8 +161,11 @@ config:
     launch:
       # endpoint_namespace [required] is K8s namespace the endpoints will be created in
       endpoint_namespace: llm-engine
-      # cache_redis_url [required] is the full url for the redis cluster you wish to connect
-      cache_redis_url: redis://llm-engine-prod-cache.use1.cache.amazonaws.com:6379/15
+      # cache_redis_aws_url is the full url for the redis cluster you wish to connect,
+      # cache_redis_azure_host is the redis cluster host when using cloud_provider azure
+      # one of cache_redis_aws_url and cache_redis_azure_host must be provided
+      cache_redis_aws_url: redis://llm-engine-prod-cache.use1.cache.amazonaws.com:6379/15
+      cache_redis_azure_host: llm-engine-cache.redis.cache.windows.net:6380
       # s3_file_llm_fine_tuning_job_repository [required] is the S3 URI for the S3 bucket/key that you wish to save fine-tuned assests
       s3_file_llm_fine_tuning_job_repository: "s3://llm-engine/llm-ft-job-repository"
       # dd_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
@@ -249,3 +257,6 @@ imageCache:
 
 # celeryBrokerType specifies the celery broker type for async endpoints, either "sqs" or "elasticache"
 celeryBrokerType: sqs
+
+datadog:
+  enabled: false

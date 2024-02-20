@@ -6,7 +6,7 @@
 #
 aiofiles==23.1.0
     # via quart
-aiohttp==3.8.5
+aiohttp==3.9.1
     # via
     #   -r model-engine/requirements.in
     #   kubernetes-asyncio
@@ -19,7 +19,9 @@ alembic==1.8.1
 amqp==5.1.1
     # via kombu
 anyio==3.7.1
-    # via starlette
+    # via
+    #   azure-core
+    #   starlette
 asgiref==3.7.2
     # via uvicorn
 asn1crypto==1.5.1
@@ -38,11 +40,30 @@ attrs==23.1.0
     #   ddtrace
     #   jsonschema
     #   referencing
+azure-common==1.1.28
+    # via azure-keyvault-secrets
+azure-containerregistry==1.2.0
+    # via -r model-engine/requirements.in
+azure-core==1.29.6
+    # via
+    #   azure-containerregistry
+    #   azure-identity
+    #   azure-keyvault-secrets
+    #   azure-servicebus
+    #   azure-storage-blob
+azure-identity==1.15.0
+    # via -r model-engine/requirements.in
+azure-keyvault-secrets==4.7.0
+    # via -r model-engine/requirements.in
+azure-servicebus==7.11.4
+    # via -r model-engine/requirements.in
+azure-storage-blob==12.19.0
+    # via -r model-engine/requirements.in
 backports-zoneinfo[tzdata]==0.2.1
     # via
     #   celery
     #   kombu
-billiard==4.1.0
+billiard==4.2.0
     # via celery
 bleach==6.0.0
     # via readme-renderer
@@ -54,9 +75,7 @@ boto3==1.28.1
     #   celery
     #   kombu
 boto3-stubs[essential]==1.26.67
-    # via
-    #   -r model-engine/requirements.in
-    #   boto3-stubs
+    # via -r model-engine/requirements.in
 botocore==1.31.1
     # via
     #   -r model-engine/requirements.in
@@ -72,20 +91,18 @@ cachetools==5.3.1
     # via google-auth
 cattrs==23.1.2
     # via ddtrace
-celery[redis,sqs,tblib]==5.3.1
-    # via
-    #   -r model-engine/requirements.in
-    #   celery
+celery[redis,sqs,tblib]==5.3.6
+    # via -r model-engine/requirements.in
 certifi==2023.7.22
     # via
     #   datadog-api-client
     #   kubernetes
     #   kubernetes-asyncio
     #   requests
+cffi==1.16.0
+    # via cryptography
 charset-normalizer==3.2.0
-    # via
-    #   aiohttp
-    #   requests
+    # via requests
 click==8.1.4
     # via
     #   -r model-engine/requirements.in
@@ -109,6 +126,13 @@ commonmark==0.9.1
     # via rich
 croniter==1.4.1
     # via -r model-engine/requirements.in
+cryptography==41.0.7
+    # via
+    #   azure-identity
+    #   azure-storage-blob
+    #   msal
+    #   pyjwt
+    #   secretstorage
 dataclasses-json==0.5.9
     # via -r model-engine/requirements.in
 datadog==0.47.0
@@ -191,10 +215,20 @@ importlib-resources==6.1.1
     #   jsonschema
     #   jsonschema-specifications
     #   keyring
+isodate==0.6.1
+    # via
+    #   azure-containerregistry
+    #   azure-keyvault-secrets
+    #   azure-servicebus
+    #   azure-storage-blob
 itsdangerous==2.1.2
     # via quart
 jaraco-classes==3.3.0
     # via keyring
+jeepney==0.8.0
+    # via
+    #   keyring
+    #   secretstorage
 jinja2==3.0.3
     # via
     #   -r model-engine/requirements.in
@@ -211,13 +245,13 @@ jsonschema-specifications==2023.7.1
     # via jsonschema
 keyring==24.2.0
     # via twine
-kombu[sqs]==5.3.1
+kombu[sqs]==5.3.5
     # via celery
 kubeconfig==1.1.1
     # via -r model-engine/requirements.in
 kubernetes==25.3.0
     # via -r model-engine/requirements.in
-kubernetes-asyncio==24.2.2
+kubernetes-asyncio==25.11.0
     # via -r model-engine/requirements.in
 mako==1.2.4
     # via alembic
@@ -235,6 +269,12 @@ marshmallow-enum==1.5.1
     # via dataclasses-json
 more-itertools==9.1.0
     # via jaraco-classes
+msal==1.26.0
+    # via
+    #   azure-identity
+    #   msal-extensions
+msal-extensions==1.1.0
+    # via azure-identity
 multidict==6.0.4
     # via
     #   aiohttp
@@ -268,6 +308,7 @@ packaging==23.1
     #   deprecation
     #   huggingface-hub
     #   marshmallow
+    #   msal-extensions
     #   transformers
 pep517==0.13.0
     # via build
@@ -277,6 +318,8 @@ pkginfo==1.9.6
     # via twine
 pkgutil-resolve-name==1.3.10
     # via jsonschema
+portalocker==2.8.2
+    # via msal-extensions
 priority==2.0.0
     # via hypercorn
 prompt-toolkit==3.0.39
@@ -296,6 +339,8 @@ pyasn1==0.5.0
     #   rsa
 pyasn1-modules==0.3.0
     # via google-auth
+pycparser==2.21
+    # via cffi
 pycurl==7.45.2
     # via
     #   -r model-engine/requirements.in
@@ -309,6 +354,8 @@ pygments==2.15.1
     # via
     #   readme-renderer
     #   rich
+pyjwt[crypto]==2.8.0
+    # via msal
 python-dateutil==2.8.2
     # via
     #   botocore
@@ -342,10 +389,12 @@ regex==2023.10.3
 requests==2.31.0
     # via
     #   -r model-engine/requirements.in
+    #   azure-core
     #   datadog
     #   docker
     #   huggingface-hub
     #   kubernetes
+    #   msal
     #   requests-auth-aws-sigv4
     #   requests-oauthlib
     #   requests-toolbelt
@@ -373,16 +422,20 @@ safetensors==0.4.0
     # via transformers
 scramp==1.4.4
     # via pg8000
+secretstorage==3.3.3
+    # via keyring
 sentencepiece==0.1.99
     # via -r model-engine/requirements.in
 sh==1.14.3
     # via -r model-engine/requirements.in
 six==1.16.0
     # via
+    #   azure-core
     #   bleach
     #   ddsketch
     #   ddtrace
     #   google-auth
+    #   isodate
     #   kubernetes
     #   kubernetes-asyncio
     #   python-dateutil
@@ -401,7 +454,6 @@ sqlalchemy[asyncio]==2.0.4
     # via
     #   -r model-engine/requirements.in
     #   alembic
-    #   sqlalchemy
 sse-starlette==1.6.1
     # via -r model-engine/requirements.in
 sseclient-py==1.7.2
@@ -449,6 +501,10 @@ typing-extensions==4.7.1
     # via
     #   aioredis
     #   asgiref
+    #   azure-core
+    #   azure-keyvault-secrets
+    #   azure-servicebus
+    #   azure-storage-blob
     #   boto3-stubs
     #   botocore-stubs
     #   bytecode
@@ -489,7 +545,7 @@ uvicorn==0.17.6
     # via -r model-engine/requirements.in
 uvloop==0.17.0
     # via -r model-engine/requirements.in
-vine==5.0.0
+vine==5.1.0
     # via
     #   amqp
     #   celery
@@ -518,4 +574,8 @@ zipp==3.16.0
     #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
-# setuptools
+setuptools==69.0.3
+    # via
+    #   gunicorn
+    #   kubernetes
+    #   kubernetes-asyncio

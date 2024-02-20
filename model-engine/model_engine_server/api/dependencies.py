@@ -13,6 +13,7 @@ from model_engine_server.core.auth.authentication_repository import Authenticati
 from model_engine_server.core.auth.fake_authentication_repository import (
     FakeAuthenticationRepository,
 )
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
@@ -50,6 +51,9 @@ from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gat
     FirehoseStreamingStorageGateway,
 )
 from model_engine_server.infra.gateways import (
+    ABSFileStorageGateway,
+    ABSFilesystemGateway,
+    ABSLLMArtifactGateway,
     CeleryTaskQueueGateway,
     FakeMonitoringMetricsGateway,
     LiveAsyncModelEndpointInferenceGateway,
@@ -70,23 +74,29 @@ from model_engine_server.infra.gateways.fake_model_primitive_gateway import (
     FakeModelPrimitiveGateway,
 )
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
+from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
+    ASBQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.endpoint_resource_gateway import (
     EndpointResourceGateway,
 )
-from model_engine_server.infra.gateways.resources.fake_sqs_endpoint_resource_delegate import (
-    FakeSQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_delegate import (
+    FakeQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
 )
-from model_engine_server.infra.gateways.resources.live_sqs_endpoint_resource_delegate import (
-    LiveSQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
+    QueueEndpointResourceDelegate,
 )
-from model_engine_server.infra.gateways.resources.sqs_endpoint_resource_delegate import (
-    SQSEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
+    SQSQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.gateways.s3_file_storage_gateway import S3FileStorageGateway
 from model_engine_server.infra.repositories import (
+    ABSFileLLMFineTuneEventsRepository,
+    ABSFileLLMFineTuneRepository,
+    ACRDockerRepository,
     DbBatchJobRecordRepository,
     DbDockerImageBatchJobBundleRepository,
     DbModelBundleRepository,
@@ -95,6 +105,7 @@ from model_engine_server.infra.repositories import (
     ECRDockerRepository,
     FakeDockerRepository,
     LiveTokenizerRepository,
+    LLMFineTuneRepository,
     RedisModelEndpointCacheRepository,
     S3FileLLMFineTuneEventsRepository,
     S3FileLLMFineTuneRepository,
@@ -174,6 +185,7 @@ def _get_external_interfaces(
     redis_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS)
     redis_24h_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS_24H)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
+    servicebus_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS)
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     model_endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
@@ -181,25 +193,35 @@ def _get_external_interfaces(
         read_only=read_only,
     )
 
-    sqs_delegate: SQSEndpointResourceDelegate
+    queue_delegate: QueueEndpointResourceDelegate
     if CIRCLECI:
-        sqs_delegate = FakeSQSEndpointResourceDelegate()
+        queue_delegate = FakeQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "azure":
+        queue_delegate = ASBQueueEndpointResourceDelegate()
     else:
-        sqs_delegate = LiveSQSEndpointResourceDelegate(
+        queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
         )
 
-    inference_task_queue_gateway = (
-        sqs_task_queue_gateway if not CIRCLECI else redis_24h_task_queue_gateway
-    )
-    resource_gateway = LiveEndpointResourceGateway(sqs_delegate=sqs_delegate)
+    inference_task_queue_gateway: TaskQueueGateway
+    infra_task_queue_gateway: TaskQueueGateway
+    if CIRCLECI:
+        inference_task_queue_gateway = redis_24h_task_queue_gateway
+        infra_task_queue_gateway = redis_task_queue_gateway
+    elif infra_config().cloud_provider == "azure":
+        inference_task_queue_gateway = servicebus_task_queue_gateway
+        infra_task_queue_gateway = servicebus_task_queue_gateway
+    else:
+        inference_task_queue_gateway = sqs_task_queue_gateway
+        infra_task_queue_gateway = sqs_task_queue_gateway
+    resource_gateway = LiveEndpointResourceGateway(queue_delegate=queue_delegate)
     redis_client = aioredis.Redis(connection_pool=get_or_create_aioredis_pool())
     model_endpoint_cache_repo = RedisModelEndpointCacheRepository(
         redis_client=redis_client,
     )
     model_endpoint_infra_gateway = LiveModelEndpointInfraGateway(
         resource_gateway=resource_gateway,
-        task_queue_gateway=redis_task_queue_gateway,
+        task_queue_gateway=infra_task_queue_gateway,
     )
     async_model_endpoint_inference_gateway = LiveAsyncModelEndpointInferenceGateway(
         task_queue_gateway=inference_task_queue_gateway
@@ -211,8 +233,16 @@ def _get_external_interfaces(
     streaming_model_endpoint_inference_gateway = LiveStreamingModelEndpointInferenceGateway(
         use_asyncio=(not CIRCLECI),
     )
-    filesystem_gateway = S3FilesystemGateway()
-    llm_artifact_gateway = S3LLMArtifactGateway()
+    filesystem_gateway = (
+        ABSFilesystemGateway()
+        if infra_config().cloud_provider == "azure"
+        else S3FilesystemGateway()
+    )
+    llm_artifact_gateway = (
+        ABSLLMArtifactGateway()
+        if infra_config().cloud_provider == "azure"
+        else S3LLMArtifactGateway()
+    )
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
@@ -253,22 +283,40 @@ def _get_external_interfaces(
     docker_image_batch_job_gateway = LiveDockerImageBatchJobGateway()
     cron_job_gateway = LiveCronJobGateway()
 
-    llm_fine_tune_repository = S3FileLLMFineTuneRepository(
-        file_path=os.getenv(
-            "S3_FILE_LLM_FINE_TUNE_REPOSITORY",
-            hmi_config.s3_file_llm_fine_tune_repository,
-        ),
+    llm_fine_tune_repository: LLMFineTuneRepository
+    if infra_config().cloud_provider == "azure":
+        llm_fine_tune_repository = ABSFileLLMFineTuneRepository("not supported yet")
+    else:
+        llm_fine_tune_repository = S3FileLLMFineTuneRepository(
+            file_path=os.getenv(
+                "S3_FILE_LLM_FINE_TUNE_REPOSITORY",
+                hmi_config.s3_file_llm_fine_tune_repository,
+            ),
+        )
+    llm_fine_tune_events_repository = (
+        ABSFileLLMFineTuneEventsRepository()
+        if infra_config().cloud_provider == "azure"
+        else S3FileLLMFineTuneEventsRepository()
     )
-    llm_fine_tune_events_repository = S3FileLLMFineTuneEventsRepository()
     llm_fine_tuning_service = DockerImageBatchJobLLMFineTuningService(
         docker_image_batch_job_gateway=docker_image_batch_job_gateway,
         docker_image_batch_job_bundle_repo=docker_image_batch_job_bundle_repository,
         llm_fine_tune_repository=llm_fine_tune_repository,
     )
 
-    file_storage_gateway = S3FileStorageGateway()
+    file_storage_gateway = (
+        ABSFileStorageGateway()
+        if infra_config().cloud_provider == "azure"
+        else S3FileStorageGateway()
+    )
 
-    docker_repository = ECRDockerRepository() if not CIRCLECI else FakeDockerRepository()
+    docker_repository: DockerRepository
+    if CIRCLECI:
+        docker_repository = FakeDockerRepository()
+    elif infra_config().cloud_provider == "azure":
+        docker_repository = ACRDockerRepository()
+    else:
+        docker_repository = ECRDockerRepository()
 
     tokenizer_repository = LiveTokenizerRepository(llm_artifact_gateway=llm_artifact_gateway)
 
@@ -281,8 +329,8 @@ def _get_external_interfaces(
         llm_model_endpoint_service=llm_model_endpoint_service,
         batch_job_service=batch_job_service,
         resource_gateway=resource_gateway,
-        endpoint_creation_task_queue_gateway=redis_task_queue_gateway,
-        inference_task_queue_gateway=sqs_task_queue_gateway,
+        endpoint_creation_task_queue_gateway=infra_task_queue_gateway,
+        inference_task_queue_gateway=inference_task_queue_gateway,
         model_endpoint_infra_gateway=model_endpoint_infra_gateway,
         model_primitive_gateway=model_primitive_gateway,
         docker_image_batch_job_bundle_repository=docker_image_batch_job_bundle_repository,

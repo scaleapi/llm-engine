@@ -1,29 +1,23 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Generic, Sequence, Tuple, TypeVar
 
-from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from model_engine_server.domain.entities import (
     ModelEndpointInfraState,
     ModelEndpointRecord,
     ModelEndpointType,
 )
+from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import QueueInfo
 from pydantic import BaseModel
 
 __all__: Sequence[str] = (
     "EndpointResourceGateway",
-    "QueueInfo",
     "EndpointResourceGatewayCreateOrUpdateResourcesResponse",
 )
 
 
 class EndpointResourceGatewayCreateOrUpdateResourcesResponse(BaseModel):
     destination: str
-
-
-class QueueInfo(BaseModel):
-    queue_name: str
-    broker: BrokerType
 
 
 Q = TypeVar("Q", bound=QueueInfo)

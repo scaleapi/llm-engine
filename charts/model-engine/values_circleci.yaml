@@ -85,6 +85,7 @@ affinity: { }
 config:
   values:
     infra:
+      cloud_provider: aws
       k8s_cluster_name: minikube
       dns_host_domain: localhost
       default_region: us-west-2
@@ -142,7 +143,7 @@ config:
         }
 
       billing_queue_arn: none
-      cache_redis_url: redis://redis-message-broker-master.default/15
+      cache_redis_aws_url: redis://redis-message-broker-master.default/15
       s3_file_llm_fine_tune_repository: "s3://$CIRCLECI_AWS_S3_BUCKET/fine_tune_repository"
       dd_trace_enabled: false
       istio_enabled: true
@@ -221,3 +222,6 @@ imageCache:
           effect: "NoSchedule"
 
 celeryBrokerType: redis
+
+datadog:
+  enabled: false

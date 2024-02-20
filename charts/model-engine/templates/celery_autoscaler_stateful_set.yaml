@@ -5,7 +5,12 @@
 {{- $tag := .Values.tag }}
 {{- $message_broker := .Values.celeryBrokerType }}
 {{- $num_shards := .Values.celery_autoscaler.num_shards }}
-{{- $broker_name := ternary "redis-elasticache-message-broker-master" "sqs-message-broker-master" (eq $message_broker "elasticache") }}
+{{- $broker_name := "redis-elasticache-message-broker-master" }}
+{{- if eq $message_broker "sqs" }}
+{{ $broker_name = "sqs-message-broker-master" }}
+{{- else if eq $message_broker "servicebus" }}
+{{ $broker_name = "servicebus-message-broker-master" }}
+{{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -30,15 +35,19 @@ spec:
     spec:
       containers:
       - args:
+        {{- if .Values.datadog.enabled }}
         - ddtrace-run
+        {{- end }}
         - python
         - -m
         - model_engine_server.core.celery.celery_autoscaler
         env:
+        {{- if .Values.aws }}
         - name: AWS_PROFILE
           value: {{ .Values.aws.profileName }}
         - name: AWS_CONFIG_FILE
           value: /opt/.aws/config
+        {{- end }}
         - name: DD_TRACE_ENABLED
           value: 'false'
         - name: DD_SERVICE
@@ -63,16 +72,26 @@ spec:
               fieldPath: metadata.name
         - name: NUM_SHARDS
           value: '{{ $num_shards }}'
+        {{- if .Values.azure }}
+        - name: AZURE_CLIENT_ID
+          value: {{ .Values.azure.client_id }}
+        - name: AZURE_OBJECT_ID
+          value: {{ .Values.azure.object_id }}
+        - name: SERVICEBUS_NAMESPACE
+          value: {{ .Values.azure.servicebus_namespace }}
+        {{- end }}
         image: "{{ .Values.image.gatewayRepository }}:{{ $tag }}"
         imagePullPolicy: Always
         name: main
         resources:
           requests:
             cpu: 1000m
+        {{- if .Values.aws }}
         volumeMounts:
         - mountPath: /opt/.aws/config
           name: config-volume
           subPath: config
+        {{- end }}
       {{ with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -83,9 +102,11 @@ spec:
           value: 'true'
           effect: NoSchedule
       serviceAccountName: {{ include "modelEngine.fullname" $ }}
+      {{- if .Values.aws }}
       volumes:
       - configMap:
           name: {{ .Values.aws.configMap.name }}
         name: config-volume
+      {{- end}}
 {{- end }}
 {{- end }}

@@ -48,7 +48,7 @@ sqs_queue_tag_template: >
 # Billing
 billing_queue_arn: none
 # There's a separate piece of infra that caches k8s state onto redis, so we need a url to it
-cache_redis_url: redis://127.0.0.1:6379/15
+cache_redis_aws_url: redis://127.0.0.1:6379/15
 
 s3_file_llm_fine_tune_repository: "s3://model-engine-integration-tests/fine_tune_repository/circleci"
 

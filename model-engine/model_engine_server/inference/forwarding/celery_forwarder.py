@@ -44,6 +44,8 @@ def error_response(msg: str, e_unhandled: Exception) -> ErrorResponse:
 def create_celery_service(
     forwarder: Forwarder,
     task_visibility: TaskVisibility,
+    broker_type: str,
+    backend_protocol: str,
     queue_name: Optional[str] = None,
     sqs_url: Optional[str] = None,
 ) -> Celery:
@@ -59,10 +61,11 @@ def create_celery_service(
         s3_bucket=infra_config().s3_bucket,
         aws_role=infra_config().profile_ml_inference_worker,
         task_visibility=task_visibility,
-        broker_type=str(BrokerType.SQS.value if sqs_url else BrokerType.REDIS.value),
+        broker_type=broker_type,
         broker_transport_options={"predefined_queues": {queue_name: {"url": sqs_url}}}
-        if sqs_url
+        if broker_type == str(BrokerType.SQS.value)
         else None,
+        backend_protocol=backend_protocol,
     )
 
     class ErrorHandlingTask(Task):
@@ -157,16 +160,28 @@ def entrypoint():
     parser.add_argument("--set", type=str, action="append")
     parser.add_argument("--task-visibility", type=str, required=True)
     parser.add_argument("--num-workers", type=int, required=True)
+    parser.add_argument("--broker-type", type=str, default=None)
+    parser.add_argument("--backend-protocol", type=str, default="s3")
     parser.add_argument("--queue", type=str, required=True)
     parser.add_argument("--sqs-url", type=str, default=None)
 
     args = parser.parse_args()
 
+    if args.broker_type is None:
+        args.broker_type = str(BrokerType.SQS.value if args.sqs_url else BrokerType.REDIS.value)
+
     forwarder_config = load_named_config(args.config, args.set)
     forwarder_loader = LoadForwarder(**forwarder_config["async"])
     forwader = forwarder_loader.load(None, None)
 
-    app = create_celery_service(forwader, TaskVisibility.VISIBILITY_24H, args.queue, args.sqs_url)
+    app = create_celery_service(
+        forwader,
+        TaskVisibility.VISIBILITY_24H,
+        args.broker_type,
+        args.backend_protocol,
+        args.queue,
+        args.sqs_url,
+    )
     start_celery_service(app, args.queue, args.num_workers)
 
 
