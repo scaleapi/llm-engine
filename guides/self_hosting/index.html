@@ -1013,9 +1013,14 @@ Below are the configurations to specify in the <code>values_sample.yaml</code> f
 <td>Yes</td>
 </tr>
 <tr>
-<td>config.values.llm_engine.cache_redis_url</td>
+<td>config.values.llm_engine.cache_redis_aws_url</td>
 <td>The full url for the redis cluster you wish to connect</td>
-<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>config.values.llm_engine.cache_redis_azure_host</td>
+<td>The redis cluster host when using cloud_provider azure</td>
+<td>No</td>
 </tr>
 <tr>
 <td>config.values.llm_engine.s3_file_llm_fine_tuning_job_repository</td>
