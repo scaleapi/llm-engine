@@ -43,7 +43,7 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
         firehose_client = session.client("firehose", region_name=infra_config().default_region)
         return firehose_client
 
-    def put_record(self, stream_name: str, record: Dict[str, Any]) -> Any:
+    def put_record(self, stream_name: str, record: Dict[str, Any]) -> Dict[str, Any]:
         """
         Put a record into a Firehose stream.
 
