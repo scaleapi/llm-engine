@@ -91,7 +91,7 @@ def send_request(url, request, user=None):
             payload_json = json.loads(payload_data)
             if DEBUG:
                 try:
-                    print(payload_json["output"]["text"])
+                    print(payload_json["output"]["text"], end="")
                 except KeyError:
                     pass
 
