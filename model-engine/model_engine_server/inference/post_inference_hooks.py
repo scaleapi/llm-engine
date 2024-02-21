@@ -135,11 +135,12 @@ class LoggingHook(PostInferenceHook):
             logger.warning("No firehose stream name specified. Logging hook will not be executed.")
             return
         streaming_storage_response = {}
+        # pragma: no cover
         try:
             streaming_storage_response = self._streaming_storage_gateway.put_record(
                 stream_name=stream_name, record=data_record
             )
-        except StreamPutException:  # pragma: no cover
+        except StreamPutException:
             logger.error(
                 f"Failed to put record into firehose stream {stream_name}. Response metadata {streaming_storage_response.get('ResponseMetadata')}."
             )
