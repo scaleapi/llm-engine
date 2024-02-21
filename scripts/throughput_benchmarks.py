@@ -3,6 +3,7 @@ import json
 import os
 import queue
 import random
+import re
 import threading
 import time
 import traceback
@@ -206,11 +207,26 @@ def send_requests(
     return results
 
 
-def generate_prompt(num, hf_model):
-    random.seed(1)
-    text = lorem.words(num // 2)  # Roughly 2 tokens per lorem word
-    tokenizer = AutoTokenizer.from_pretrained(hf_model)
-    return tokenizer.decode(tokenizer.encode(text)[: num - 2])
+# TODO test this
+def read_input_file(input_file: str) -> List[str]:
+    # Only supports csvs for now
+    if re.match(r".*\.csv$", input_file):
+        with open(input_file, "r", newline="") as file:
+            reader = csv.reader(file)
+            # May have to ignore first line
+            return [row[0] for row in reader]
+    raise ValueError(f"Unsupported file type for input file {input_file}")
+
+
+def generate_prompt(num, hf_model, inputs: Optional[List]):
+    # TODO handle inputs
+    if inputs is not None:
+        raise NotImplementedError
+    else:
+        random.seed(1)
+        text = lorem.words(num // 2)  # Roughly 2 tokens per lorem word
+        tokenizer = AutoTokenizer.from_pretrained(hf_model)
+        return tokenizer.decode(tokenizer.encode(text)[: num - 2])
 
 
 def generate_output_token_counts(mean, std, num, input_token_count):
@@ -231,8 +247,14 @@ def run_benchmark(
     concurrency: int,
     verbose: bool,
     local_port: int,
+    input_file: Optional[str] = None,
 ):
-    prompt = generate_prompt(config.input_token_count, hf_model)
+
+    inputs = None
+
+    if input_file is not None:
+        inputs = read_input_file(input_file)
+    prompt = generate_prompt(config.input_token_count, hf_model, inputs)
 
     prompt_num_tokens = config.input_token_count
 
@@ -346,6 +368,7 @@ def run_benchmarks(
     input_token_count: int,
     output_token_count_mean: int,
     num_trials: int = 50,
+    input_file: Optional[str] = None,
     output_file: Optional[str] = None,
     use_localhost: bool = False,
     concurrency: int = 1,
@@ -396,6 +419,7 @@ def run_benchmarks_concurrency_range(
     input_token_count: int,
     output_token_count_mean: int,
     num_trials_per_concurrency: int = 5,
+    input_file: Optional[str] = None,
     output_file: Optional[str] = None,
     use_localhost: bool = False,
     concurrency_min: int = 1,
