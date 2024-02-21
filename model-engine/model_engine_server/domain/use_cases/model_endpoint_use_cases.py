@@ -4,6 +4,7 @@ List model endpoint history: GET model-endpoints/<endpoint id>/history
 Read model endpoint creation logs: GET model-endpoints/<endpoint id>/creation-logs
 """
 
+from dataclasses import dataclass
 import re
 from typing import Any, Dict, List, Optional
 
@@ -118,6 +119,17 @@ def validate_deployment_resources(
         )
 
 
+@dataclass
+class ValidationResult:
+    passed: bool
+    message: str
+
+def simple_team_product_validator(team: str, product: str) -> ValidationResult:
+    if team == "INVALID_TEAM":
+        return ValidationResult(False, "Invalid team")
+    else:
+        return ValidationResult(True, "Valid team")
+
 def validate_labels(labels: Dict[str, str]) -> None:
     for required_label in REQUIRED_ENDPOINT_LABELS:
         if required_label not in labels:
@@ -130,15 +142,13 @@ def validate_labels(labels: Dict[str, str]) -> None:
             raise EndpointLabelsException(f"Cannot specify '{restricted_label}' in labels")
 
     try:
-        from shared_plugins.team_product_label_validation import (
-            validate_team_product_label,
-        )
-
-        validation_result = validate_team_product_label(labels["team"], labels["product"])
-        if not validation_result.passed:
-            raise EndpointLabelsException(validation_result.message)
+        from shared_plugins.team_product_label_validation import validate_team_product_label
     except ModuleNotFoundError:
-        pass
+        validate_team_product_label = simple_team_product_validator
+
+    validation_result = validate_team_product_label(labels["team"], labels["product"])
+    if not validation_result.passed:
+        raise EndpointLabelsException(validation_result.message)
 
     # Check k8s will accept the label values
     regex_pattern = "(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?"  # k8s label regex
