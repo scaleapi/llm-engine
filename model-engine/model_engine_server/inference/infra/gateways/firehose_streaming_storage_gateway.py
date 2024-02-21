@@ -59,6 +59,6 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
                 f"Failed to put record into firehose stream {stream_name}. Response metadata {firehose_response['ResponseMetadata']}."
             )
         logger.info(
-            f"Logged to firehose stream {stream_name}. Record ID: {firehose_response['RecordId']} Task ID: {record['RESPONSE_BODY']['task_id']}"
+            f"Logged to firehose stream {stream_name}. Record ID: {firehose_response['RecordId']}. Task ID: {record['RESPONSE_BODY']['task_id']}"
         )
         return firehose_response
