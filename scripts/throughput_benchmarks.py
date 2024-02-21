@@ -278,7 +278,8 @@ def run_benchmark(
     elapsed = end - start
     results = [result for result in results if result is not None]
 
-    num_sampled_tokens = sum([result["num_completion_tokens"] for result in results])
+    sampled_token_counts = [result["num_completion_tokens"] for result in results]
+    num_sampled_tokens = sum(sampled_token_counts)
     num_prompt_tokens = prompt_num_tokens * len(results)
     n = len(results)
     time_to_process_prompt = []
@@ -314,6 +315,10 @@ def run_benchmark(
     p90_time_to_first_token = np.percentile(time_to_first_token, 90)
     p95_time_to_first_token = np.percentile(time_to_first_token, 95)
     p99_time_to_first_token = np.percentile(time_to_first_token, 99)
+    p50_sampled_token_counts = np.percentile(sampled_token_counts, 50)
+    p90_sampled_token_counts = np.percentile(sampled_token_counts, 90)
+    p95_sampled_token_counts = np.percentile(sampled_token_counts, 95)
+    p99_sampled_token_counts = np.percentile(sampled_token_counts, 99)
 
     statistics = {
         "concurrency": concurrency,
@@ -351,6 +356,14 @@ def run_benchmark(
         "total_num_tokens": total_num_tokens,
         "total_num_sampled_tokens": num_sampled_tokens,
     }
+    if input_file is not None:
+        sampled_token_counts_statistics = {
+            "p50_sampled_token_counts": p50_sampled_token_counts,
+            "p90_sampled_token_counts": p90_sampled_token_counts,
+            "p95_sampled_token_counts": p95_sampled_token_counts,
+            "p99_sampled_token_counts": p99_sampled_token_counts,
+        }
+        statistics.update(sampled_token_counts_statistics)
     if verbose:
         print(f"Statistics: {statistics}")
 
