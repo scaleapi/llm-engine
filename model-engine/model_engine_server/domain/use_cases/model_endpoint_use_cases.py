@@ -134,9 +134,7 @@ def validate_labels(labels: Dict[str, str]) -> None:
             validate_team_product_label,
         )
 
-        validation_result = validate_team_product_label(
-            labels["team"], labels["product"]
-        )
+        validation_result = validate_team_product_label(labels["team"], labels["product"])
         if not validation_result.passed:
             raise EndpointLabelsException(validation_result.message)
     except ModuleNotFoundError:
