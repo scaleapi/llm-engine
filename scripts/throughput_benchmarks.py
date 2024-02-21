@@ -9,7 +9,7 @@ import time
 import traceback
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 import requests
@@ -59,6 +59,9 @@ class InferenceFramework(Enum):
 
 
 def send_request(url, request, user=None):
+    if DEBUG:
+        print(f"Using input {request}")
+        print("---")
     start = time.time()
     response = requests.post(
         url,
@@ -175,17 +178,21 @@ def generate_request(
 
 def send_requests(
     model: str,
-    prompt: str,
+    prompt: Union[str, List[str]],
     output_token_counts: List[int],
     use_localhost: bool,
     concurrency: int,
     framework: InferenceFramework,
     local_port: int = 5005,
 ):
+    if type(prompt) == str:
+        prompt = [prompt]
     thread_results: queue.Queue = queue.Queue()
     requests_queue: queue.Queue = queue.Queue()
-    for output_token_count in output_token_counts:
-        request = generate_request(framework, prompt, output_token_count, use_localhost)
+    for i, output_token_count in enumerate(output_token_counts):
+        request = generate_request(
+            framework, prompt[i % len(prompt)], output_token_count, use_localhost
+        )
         requests_queue.put(request)
     threads = []
     for i in range(concurrency):
@@ -224,12 +231,11 @@ def read_input_file(input_file: str) -> List[str]:
     raise ValueError(f"Unsupported file type for input file {input_file}")
 
 
-def generate_prompt(num, hf_model, inputs: Optional[List]):
+def generate_prompt(
+    num, hf_model, inputs: Optional[List], num_samples: int = 1
+) -> Union[str, List[str]]:
     if inputs is not None:
-        choice = random.choice(inputs)
-        if DEBUG:
-            print(f"Using input {choice}")
-            print("---")
+        choice = random.sample(inputs, min(num_samples, len(inputs)))
         return choice
     else:
         random.seed(1)
@@ -263,7 +269,7 @@ def run_benchmark(
 
     if input_file is not None:
         inputs = read_input_file(input_file)
-    prompt = generate_prompt(config.input_token_count, hf_model, inputs)
+    prompt = generate_prompt(config.input_token_count, hf_model, inputs, num_trials)
 
     prompt_num_tokens = config.input_token_count
 
