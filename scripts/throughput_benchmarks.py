@@ -90,7 +90,10 @@ def send_request(url, request, user=None):
             payload_data = payload.lstrip("data:").rstrip("/n")
             payload_json = json.loads(payload_data)
             if DEBUG:
-                print(payload_json)
+                try:
+                    print(payload_json["output"]["text"])
+                except KeyError:
+                    pass
 
     return {
         "payload": payload_json,
