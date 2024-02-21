@@ -219,9 +219,8 @@ def read_input_file(input_file: str) -> List[str]:
 
 
 def generate_prompt(num, hf_model, inputs: Optional[List]):
-    # TODO handle inputs
     if inputs is not None:
-        raise NotImplementedError
+        return random.choice(inputs)
     else:
         random.seed(1)
         text = lorem.words(num // 2)  # Roughly 2 tokens per lorem word
