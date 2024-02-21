@@ -130,11 +130,15 @@ def validate_labels(labels: Dict[str, str]) -> None:
             raise EndpointLabelsException(f"Cannot specify '{restricted_label}' in labels")
 
     try:
-        from plugins.known_users import ALLOWED_TEAMS
+        from shared_plugins.team_product_label_validation import (
+            validate_team_product_label,
+        )
 
-        # Make sure that the team is one of the values from a canonical set.
-        if labels["team"] not in ALLOWED_TEAMS:
-            raise EndpointLabelsException(f"Invalid team label, must be one of: {ALLOWED_TEAMS}")
+        validation_result = validate_team_product_label(
+            labels["team"], labels["product"]
+        )
+        if not validation_result.passed:
+            raise EndpointLabelsException(validation_result.message)
     except ModuleNotFoundError:
         pass
 
