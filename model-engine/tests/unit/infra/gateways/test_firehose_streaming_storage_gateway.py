@@ -8,6 +8,12 @@ from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gat
 
 stream_name = "fake-stream"
 
+return_value = {
+    "RecordId": "fake-record-id",
+    "Encrypted": False,
+    "ResponseMetadata": {"HTTPStatusCode": 200},
+}
+
 
 @pytest.fixture
 def streaming_storage_gateway():
@@ -34,11 +40,7 @@ def mock_sts_client(*args, **kwargs):
 
 def mock_firehose_client(*args, **kwargs):
     mock_client = mock.Mock()
-    mock_client.put_record.return_value = {
-        "RecordId": "fake-record-id",
-        "Encrypted": False,
-        "ResponseMetadata": {"HTTPStatusCode": 200},
-    }
+    mock_client.put_record.return_value = return_value
     return mock_client
 
 
@@ -76,7 +78,7 @@ def test_firehose_streaming_storage_gateway_put_record(streaming_storage_gateway
         "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.Session",
         mock_session,
     ):
-        assert streaming_storage_gateway.put_record(stream_name, fake_record) is None
+        assert streaming_storage_gateway.put_record(stream_name, fake_record) is return_value
 
 
 def test_firehose_streaming_storage_gateway_put_record_with_exception(
