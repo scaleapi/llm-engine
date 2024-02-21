@@ -136,12 +136,10 @@ class LoggingHook(PostInferenceHook):
             return
         streaming_storage_response = {}
         try:
-            streaming_storage_response = (
-                self._streaming_storage_gateway.put_record(  # pragma: no cover
-                    stream_name=stream_name, record=data_record
-                )
+            streaming_storage_response = self._streaming_storage_gateway.put_record(
+                stream_name=stream_name, record=data_record
             )
-        except StreamPutException:
+        except StreamPutException:  # pragma: no cover
             logger.error(
                 f"Failed to put record into firehose stream {stream_name}. Response metadata {streaming_storage_response.get('ResponseMetadata')}."
             )
