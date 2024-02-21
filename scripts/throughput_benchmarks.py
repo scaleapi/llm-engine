@@ -397,6 +397,7 @@ def run_benchmarks(
             concurrency,
             verbose,
             local_port,
+            input_file,
         )
         all_statistics.append(statistics)
     except Exception:
@@ -439,6 +440,7 @@ def run_benchmarks_concurrency_range(
             input_token_count,
             output_token_count_mean,
             num_trials_per_concurrency * concurrency,
+            input_file,
             output_file,
             use_localhost,
             concurrency,
