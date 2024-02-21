@@ -220,7 +220,7 @@ def read_input_file(input_file: str) -> List[str]:
         with open(input_file, "r", newline="") as file:
             reader = csv.reader(file)
             # May have to ignore first line
-            return [row[0] for row in reader][1:]
+            return [row[1] for row in reader][1:]
     raise ValueError(f"Unsupported file type for input file {input_file}")
 
 
