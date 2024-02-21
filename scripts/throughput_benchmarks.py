@@ -19,6 +19,7 @@ from transformers import AutoTokenizer
 
 AUTH_USER_ID = os.getenv("AUTH_USER_ID")
 GATEWAY_URL = os.getenv("GATEWAY_URL")
+DEBUG = os.getenv("DEBUG")
 app = typer.Typer(name="throughput-benchmarks", add_completion=False)
 
 MAX_CONTEXT_WINDOW = 4096
@@ -88,6 +89,8 @@ def send_request(url, request, user=None):
         if payload.startswith("data:"):
             payload_data = payload.lstrip("data:").rstrip("/n")
             payload_json = json.loads(payload_data)
+            if DEBUG:
+                print(payload_json)
 
     return {
         "payload": payload_json,
@@ -214,13 +217,16 @@ def read_input_file(input_file: str) -> List[str]:
         with open(input_file, "r", newline="") as file:
             reader = csv.reader(file)
             # May have to ignore first line
-            return [row[0] for row in reader]
+            return [row[0] for row in reader][1:]
     raise ValueError(f"Unsupported file type for input file {input_file}")
 
 
 def generate_prompt(num, hf_model, inputs: Optional[List]):
     if inputs is not None:
-        return random.choice(inputs)
+        choice = random.choice(inputs)
+        if DEBUG:
+            print(f"Using input {choice}")
+        return choice
     else:
         random.seed(1)
         text = lorem.words(num // 2)  # Roughly 2 tokens per lorem word
