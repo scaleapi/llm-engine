@@ -229,6 +229,7 @@ def generate_prompt(num, hf_model, inputs: Optional[List]):
         choice = random.choice(inputs)
         if DEBUG:
             print(f"Using input {choice}")
+            print("---")
         return choice
     else:
         random.seed(1)
