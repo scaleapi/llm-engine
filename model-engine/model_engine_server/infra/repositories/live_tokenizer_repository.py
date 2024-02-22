@@ -73,6 +73,10 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "vicuna-13b": ModelInfo("eachadea/vicuna-13b-1.1", None),
         "zephyr-7b-alpha": ModelInfo("HuggingFaceH4/zephyr-7b-alpha", None),
         "zephyr-7b-beta": ModelInfo("HuggingFaceH4/zephyr-7b-beta", None),
+        "gemma-2b": ModelInfo("google/gemma-2b", None),
+        "gemma-2b-instruct": ModelInfo("google/gemma-2b-it", None),
+        "gemma-7b": ModelInfo("google/gemma-7b", None),
+        "gemma-7b-instruct": ModelInfo("google/gemma-7b-it", None),
     }
 
 
