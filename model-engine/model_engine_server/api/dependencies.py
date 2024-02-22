@@ -213,7 +213,7 @@ def _get_external_interfaces(
         infra_task_queue_gateway = servicebus_task_queue_gateway
     else:
         inference_task_queue_gateway = sqs_task_queue_gateway
-        infra_task_queue_gateway = sqs_task_queue_gateway
+        infra_task_queue_gateway = redis_task_queue_gateway
     resource_gateway = LiveEndpointResourceGateway(queue_delegate=queue_delegate)
     redis_client = aioredis.Redis(connection_pool=get_or_create_aioredis_pool())
     model_endpoint_cache_repo = RedisModelEndpointCacheRepository(
