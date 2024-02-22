@@ -60,7 +60,6 @@ async def run_batch_job(
     session = SessionAsyncNullPool
     pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
     redis = aioredis.Redis(connection_pool=pool)
-    redis_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
     servicebus_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS)
 
@@ -88,7 +87,7 @@ async def run_batch_job(
         infra_task_queue_gateway = servicebus_task_queue_gateway
     else:
         inference_task_queue_gateway = sqs_task_queue_gateway
-        infra_task_queue_gateway = redis_task_queue_gateway
+        infra_task_queue_gateway = sqs_task_queue_gateway
 
     model_endpoint_infra_gateway = LiveModelEndpointInfraGateway(
         resource_gateway=resource_gateway,
