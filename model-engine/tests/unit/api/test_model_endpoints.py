@@ -394,7 +394,6 @@ def test_update_model_endpoint_by_id_success(
     assert response.json()["endpoint_creation_task_id"]
 
 
-@pytest.mark.skip(reason="TODO: team validation is currently disabled")
 def test_update_model_endpoint_by_id_invalid_team_returns_400(
     model_bundle_1_v1: Tuple[ModelBundle, Any],
     model_endpoint_1: Tuple[ModelEndpoint, Any],
@@ -418,8 +417,9 @@ def test_update_model_endpoint_by_id_invalid_team_returns_400(
         fake_batch_job_progress_gateway_contents={},
         fake_docker_image_batch_job_bundle_repository_contents={},
     )
+    invalid_team_name = "INVALID_TEAM"
     update_model_endpoint_request["labels"] = {
-        "team": "some_invalid_team",
+        "team": invalid_team_name,
         "product": "my_product",
     }
     response = client.put(

@@ -124,6 +124,7 @@ class ValidationResult:
     passed: bool
     message: str
 
+# Placeholder team and product label validator that only checks for a single invalid team
 def simple_team_product_validator(team: str, product: str) -> ValidationResult:
     if team == "INVALID_TEAM":
         return ValidationResult(False, "Invalid team")
