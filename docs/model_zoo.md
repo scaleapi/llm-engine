@@ -33,9 +33,9 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `zephyr-7b-alpha`        | ✅                       |                            | text-generation-inference, vllm            | 32768                                          |
 | `zephyr-7b-beta`         | ✅                       |                            | text-generation-inference, vllm            | 32768                                          |
 | `gemma-2b`               | ✅                       |                            | vllm                                       | 8192                                           |
-| `gemma-2b-it`            | ✅                       |                            | vllm                                       | 8192                                           |
+| `gemma-2b-instruct`      | ✅                       |                            | vllm                                       | 8192                                           |
 | `gemma-7b`               | ✅                       |                            | vllm                                       | 8192                                           |
-| `gemma-7b=it`            | ✅                       |                            | vllm                                       | 8192                                           |
+| `gemma-7b-instruct`      | ✅                       |                            | vllm                                       | 8192                                           |
 
 ## Usage
 

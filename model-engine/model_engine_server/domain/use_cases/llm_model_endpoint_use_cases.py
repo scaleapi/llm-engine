@@ -186,9 +186,9 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "zephyr-7b-alpha",
             "zephyr-7b-beta",
             "gemma-2b",
-            "gemma-2b-it",
+            "gemma-2b-instruct",
             "gemma-7b",
-            "gemma-7b-it",
+            "gemma-7b-instruct",
         ]
     ),
     LLMInferenceFramework.LIGHTLLM: set(
