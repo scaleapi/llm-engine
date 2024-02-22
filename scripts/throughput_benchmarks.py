@@ -3,13 +3,12 @@ import json
 import os
 import queue
 import random
-import re
 import threading
 import time
 import traceback
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 import requests
@@ -19,7 +18,6 @@ from transformers import AutoTokenizer
 
 AUTH_USER_ID = os.getenv("AUTH_USER_ID")
 GATEWAY_URL = os.getenv("GATEWAY_URL")
-DEBUG = os.getenv("DEBUG")
 app = typer.Typer(name="throughput-benchmarks", add_completion=False)
 
 MAX_CONTEXT_WINDOW = 4096
@@ -59,9 +57,6 @@ class InferenceFramework(Enum):
 
 
 def send_request(url, request, user=None):
-    if DEBUG:
-        print(f"Using input {request}")
-        print("---")
     start = time.time()
     response = requests.post(
         url,
@@ -92,11 +87,6 @@ def send_request(url, request, user=None):
         if payload.startswith("data:"):
             payload_data = payload.lstrip("data:").rstrip("/n")
             payload_json = json.loads(payload_data)
-            if DEBUG:
-                try:
-                    print(payload_json["output"]["text"], end="", flush=True)
-                except KeyError:
-                    pass
 
     return {
         "payload": payload_json,
@@ -178,21 +168,17 @@ def generate_request(
 
 def send_requests(
     model: str,
-    prompt: Union[str, List[str]],
+    prompt: str,
     output_token_counts: List[int],
     use_localhost: bool,
     concurrency: int,
     framework: InferenceFramework,
     local_port: int = 5005,
 ):
-    if type(prompt) == str:
-        prompt = [prompt]
     thread_results: queue.Queue = queue.Queue()
     requests_queue: queue.Queue = queue.Queue()
-    for i, output_token_count in enumerate(output_token_counts):
-        request = generate_request(
-            framework, prompt[i % len(prompt)], output_token_count, use_localhost
-        )
+    for output_token_count in output_token_counts:
+        request = generate_request(framework, prompt, output_token_count, use_localhost)
         requests_queue.put(request)
     threads = []
     for i in range(concurrency):
@@ -220,28 +206,11 @@ def send_requests(
     return results
 
 
-# TODO test this
-def read_input_file(input_file: str) -> List[str]:
-    # Only supports csvs for now
-    if re.match(r".*\.csv$", input_file):
-        with open(input_file, "r", newline="") as file:
-            reader = csv.reader(file)
-            # May have to ignore first line
-            return [row[1] for row in reader][1:]
-    raise ValueError(f"Unsupported file type for input file {input_file}")
-
-
-def generate_prompt(
-    num, hf_model, inputs: Optional[List], num_samples: int = 1
-) -> Union[str, List[str]]:
-    if inputs is not None:
-        choice = random.sample(inputs, min(num_samples, len(inputs)))
-        return choice
-    else:
-        random.seed(1)
-        text = lorem.words(num // 2)  # Roughly 2 tokens per lorem word
-        tokenizer = AutoTokenizer.from_pretrained(hf_model)
-        return tokenizer.decode(tokenizer.encode(text)[: num - 2])
+def generate_prompt(num, hf_model):
+    random.seed(1)
+    text = lorem.words(num // 2)  # Roughly 2 tokens per lorem word
+    tokenizer = AutoTokenizer.from_pretrained(hf_model)
+    return tokenizer.decode(tokenizer.encode(text)[: num - 2])
 
 
 def generate_output_token_counts(mean, std, num, input_token_count):
@@ -262,14 +231,8 @@ def run_benchmark(
     concurrency: int,
     verbose: bool,
     local_port: int,
-    input_file: Optional[str] = None,
 ):
-
-    inputs = None
-
-    if input_file is not None:
-        inputs = read_input_file(input_file)
-    prompt = generate_prompt(config.input_token_count, hf_model, inputs, num_trials)
+    prompt = generate_prompt(config.input_token_count, hf_model)
 
     prompt_num_tokens = config.input_token_count
 
@@ -294,8 +257,7 @@ def run_benchmark(
     elapsed = end - start
     results = [result for result in results if result is not None]
 
-    sampled_token_counts = [result["num_completion_tokens"] for result in results]
-    num_sampled_tokens = sum(sampled_token_counts)
+    num_sampled_tokens = sum([result["num_completion_tokens"] for result in results])
     num_prompt_tokens = prompt_num_tokens * len(results)
     n = len(results)
     time_to_process_prompt = []
@@ -331,10 +293,6 @@ def run_benchmark(
     p90_time_to_first_token = np.percentile(time_to_first_token, 90)
     p95_time_to_first_token = np.percentile(time_to_first_token, 95)
     p99_time_to_first_token = np.percentile(time_to_first_token, 99)
-    p50_sampled_token_counts = np.percentile(sampled_token_counts, 50)
-    p90_sampled_token_counts = np.percentile(sampled_token_counts, 90)
-    p95_sampled_token_counts = np.percentile(sampled_token_counts, 95)
-    p99_sampled_token_counts = np.percentile(sampled_token_counts, 99)
 
     statistics = {
         "concurrency": concurrency,
@@ -372,14 +330,6 @@ def run_benchmark(
         "total_num_tokens": total_num_tokens,
         "total_num_sampled_tokens": num_sampled_tokens,
     }
-    if input_file is not None:
-        sampled_token_counts_statistics = {
-            "p50_sampled_token_counts": p50_sampled_token_counts,
-            "p90_sampled_token_counts": p90_sampled_token_counts,
-            "p95_sampled_token_counts": p95_sampled_token_counts,
-            "p99_sampled_token_counts": p99_sampled_token_counts,
-        }
-        statistics.update(sampled_token_counts_statistics)
     if verbose:
         print(f"Statistics: {statistics}")
 
@@ -396,7 +346,6 @@ def run_benchmarks(
     input_token_count: int,
     output_token_count_mean: int,
     num_trials: int = 50,
-    input_file: Optional[str] = None,
     output_file: Optional[str] = None,
     use_localhost: bool = False,
     concurrency: int = 1,
@@ -426,7 +375,6 @@ def run_benchmarks(
             concurrency,
             verbose,
             local_port,
-            input_file,
         )
         all_statistics.append(statistics)
     except Exception:
@@ -448,7 +396,6 @@ def run_benchmarks_concurrency_range(
     input_token_count: int,
     output_token_count_mean: int,
     num_trials_per_concurrency: int = 5,
-    input_file: Optional[str] = None,
     output_file: Optional[str] = None,
     use_localhost: bool = False,
     concurrency_min: int = 1,
@@ -469,7 +416,6 @@ def run_benchmarks_concurrency_range(
             input_token_count,
             output_token_count_mean,
             num_trials_per_concurrency * concurrency,
-            input_file,
             output_file,
             use_localhost,
             concurrency,
