@@ -86,9 +86,9 @@ def get_sync_endpoint_elb_url(deployment_name: str) -> str:
 
 def get_service_builder_queue(service_identifier=None):
     return (
-        f"{SERVICE_BUILDER_QUEUE_PREFIX}-{service_identifier}.{SERVICE_BUILDER_QUEUE_SUFFIX}"
+        f"{SERVICE_BUILDER_QUEUE_PREFIX}-{service_identifier}-{SERVICE_BUILDER_QUEUE_SUFFIX}"
         if service_identifier
-        else f"{SERVICE_BUILDER_QUEUE_PREFIX}.{SERVICE_BUILDER_QUEUE_SUFFIX}"
+        else f"{SERVICE_BUILDER_QUEUE_PREFIX}-{SERVICE_BUILDER_QUEUE_SUFFIX}"
     )
 
 
