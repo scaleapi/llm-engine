@@ -4,8 +4,8 @@ List model endpoint history: GET model-endpoints/<endpoint id>/history
 Read model endpoint creation logs: GET model-endpoints/<endpoint id>/creation-logs
 """
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from model_engine_server.common.constants import SUPPORTED_POST_INFERENCE_HOOKS
@@ -124,12 +124,14 @@ class ValidationResult:
     passed: bool
     message: str
 
+
 # Placeholder team and product label validator that only checks for a single invalid team
 def simple_team_product_validator(team: str, product: str) -> ValidationResult:
     if team == "INVALID_TEAM":
         return ValidationResult(False, "Invalid team")
     else:
         return ValidationResult(True, "Valid team")
+
 
 def validate_labels(labels: Dict[str, str]) -> None:
     for required_label in REQUIRED_ENDPOINT_LABELS:
