@@ -11,6 +11,7 @@ from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.config import infra_config
 from model_engine_server.db.base import SessionAsyncNullPool
 from model_engine_server.domain.entities import BatchJobSerializationFormat
+from model_engine_server.domain.gateways import TaskQueueGateway
 from model_engine_server.infra.gateways import (
     ABSFilesystemGateway,
     CeleryTaskQueueGateway,
@@ -78,17 +79,22 @@ async def run_batch_job(
         )
 
     resource_gateway = LiveEndpointResourceGateway(queue_delegate=queue_delegate)
-    model_endpoint_cache_repo = RedisModelEndpointCacheRepository(
-        redis_client=redis,
-    )
-    inference_task_queue_gateway = (
-        servicebus_task_queue_gateway
-        if infra_config().cloud_provider == "azure"
-        else sqs_task_queue_gateway
-    )
+
+    inference_task_queue_gateway: TaskQueueGateway
+    infra_task_queue_gateway: TaskQueueGateway
+    if infra_config().cloud_provider == "azure":
+        inference_task_queue_gateway = servicebus_task_queue_gateway
+        infra_task_queue_gateway = servicebus_task_queue_gateway
+    else:
+        inference_task_queue_gateway = sqs_task_queue_gateway
+        infra_task_queue_gateway = sqs_task_queue_gateway
+
     model_endpoint_infra_gateway = LiveModelEndpointInfraGateway(
         resource_gateway=resource_gateway,
-        task_queue_gateway=inference_task_queue_gateway,
+        task_queue_gateway=infra_task_queue_gateway,
+    )
+    model_endpoint_cache_repo = RedisModelEndpointCacheRepository(
+        redis_client=redis,
     )
     async_model_endpoint_inference_gateway = LiveAsyncModelEndpointInferenceGateway(
         task_queue_gateway=inference_task_queue_gateway
