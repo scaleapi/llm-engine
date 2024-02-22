@@ -185,6 +185,10 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "mammoth-coder-llama-2-34b",
             "zephyr-7b-alpha",
             "zephyr-7b-beta",
+            "gemma-2b",
+            "gemma-2b-instruct",
+            "gemma-7b",
+            "gemma-7b-instruct",
         ]
     ),
     LLMInferenceFramework.LIGHTLLM: set(
@@ -223,6 +227,7 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
     },  # setting both for backwards compatibility, will phase code-llama out in a future pr
     # Based on config here: https://huggingface.co/codellama/CodeLlama-7b-hf/blob/main/config.json#L12
     # Can also see 13B, 34B there too
+    "gemma": {"max_model_len": 8192, "max_num_batched_tokens": 8192},
     "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
     "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
     "mixtral": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
