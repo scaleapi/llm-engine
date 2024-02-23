@@ -124,7 +124,7 @@ class LoggingHook(PostInferenceHook):
             return
         response["task_id"] = task_id
         data_record = {
-            "EMITTED_AT": datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%dT%H:%M:%S"),
+            "EMITTED_AT": datetime.now(pytz.timezone("UTC")).strftime("%Y-%m-%dT%H:%M:%S"),
             "REQUEST_BODY": request_payload.json(),
             "RESPONSE_BODY": response,
             "ENDPOINT_ID": self._endpoint_id,
