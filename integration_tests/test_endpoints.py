@@ -94,7 +94,7 @@ def test_async_model_endpoint(
                 user,
             )
             # Let the cache update
-            time.sleep(30)
+            time.sleep(60)
             # Endpoint builds should be cached now.
             ensure_n_ready_endpoints_short(1, user)
 
