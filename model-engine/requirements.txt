@@ -159,7 +159,7 @@ exceptiongroup==1.2.0
     # via
     #   anyio
     #   cattrs
-fastapi==0.78.0
+fastapi==0.109.1
     # via -r requirements.in
 filelock==3.13.1
     # via
@@ -465,7 +465,7 @@ sse-starlette==1.6.1
     # via -r requirements.in
 sseclient-py==1.7.2
     # via -r requirements.in
-starlette==0.19.1
+starlette==0.35.1
     # via
     #   fastapi
     #   sse-starlette
@@ -506,7 +506,7 @@ types-awscrt==0.16.23
     #   types-s3transfer
 types-s3transfer==0.6.1
     # via boto3-stubs
-typing-extensions==4.7.1
+typing-extensions==4.9.0
     # via
     #   aioredis
     #   asgiref
@@ -520,6 +520,7 @@ typing-extensions==4.7.1
     #   cattrs
     #   datadog-api-client
     #   ddtrace
+    #   fastapi
     #   huggingface-hub
     #   kombu
     #   mypy-boto3-cloudformation
