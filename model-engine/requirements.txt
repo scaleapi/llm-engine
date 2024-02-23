@@ -371,7 +371,7 @@ python-dateutil==2.8.2
     #   kubernetes
     #   kubernetes-asyncio
     #   pg8000
-python-multipart==0.0.6
+python-multipart==0.0.7
     # via -r requirements.in
 pyyaml==6.0.1
     # via
