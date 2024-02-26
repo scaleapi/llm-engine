@@ -311,7 +311,9 @@ async def create_completion_sync_task(
     """
     Runs a sync prompt completion on an LLM.
     """
-    if not hmi_config.sensitive_log_mode:
+    if hmi_config.sensitive_log_mode:  # pragma: no cover
+        logger.info(f"POST /completion_sync to endpoint {model_endpoint_name} for {auth}")
+    else:
         logger.info(
             f"POST /completion_sync with {request} to endpoint {model_endpoint_name} for {auth}"
         )
@@ -374,7 +376,9 @@ async def create_completion_stream_task(
     """
     Runs a stream prompt completion on an LLM.
     """
-    if not hmi_config.sensitive_log_mode:  # pragma: no cover
+    if hmi_config.sensitive_log_mode:  # pragma: no cover
+        logger.info(f"POST /completion_stream to endpoint {model_endpoint_name} for {auth}")
+    else:
         logger.info(
             f"POST /completion_stream with {request} to endpoint {model_endpoint_name} for {auth}"
         )
