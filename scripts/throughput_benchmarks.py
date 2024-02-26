@@ -220,7 +220,10 @@ def generate_output_token_counts(mean, std, num, input_token_count):
         output[i] = min(output[i], MAX_CONTEXT_WINDOW - input_token_count)
     return output
 
-def generate_output_token_counts_from_existing(distribution: List[int], num: int, input_token_count: int):
+
+def generate_output_token_counts_from_existing(
+    distribution: List[int], num: int, input_token_count: int
+):
     assert len(distribution) > 0, "Can't have a distribution with 0 tokens"
     output = []
     # Sample without replacement so that we don't have as much variance
@@ -228,7 +231,7 @@ def generate_output_token_counts_from_existing(distribution: List[int], num: int
         random.shuffle(distribution)
         output.extend(distribution)
     random.shuffle(distribution)
-    output.extend(distribution[:num % len(distribution)])
+    output.extend(distribution[: num % len(distribution)])
     assert len(output) == num
 
     for i in range(len(output)):
@@ -242,7 +245,7 @@ def read_distribution_from_file(fpath: str):
         with open(fpath, "r") as fin:
             return json.load(fin)
     except FileNotFoundError:
-        print(f"File not found. Exiting.")
+        print("File not found. Exiting.")
         raise
 
 
@@ -256,15 +259,15 @@ def run_benchmark(
     concurrency: int,
     verbose: bool,
     local_port: int,
-    output_token_count_distribution: Optional[List] = None,
+    response_token_count_distribution: Optional[List] = None,
 ):
     prompt = generate_prompt(config.input_token_count, hf_model)
 
     prompt_num_tokens = config.input_token_count
 
-    if output_token_count_distribution is not None:
+    if response_token_count_distribution is not None:
         output_token_counts = generate_output_token_counts_from_existing(
-            output_token_count_distribution, num_trials, config.input_token_count
+            response_token_count_distribution, num_trials, config.input_token_count
         )
     else:
         output_token_counts = generate_output_token_counts(
@@ -383,15 +386,17 @@ def run_benchmarks(
     verbose: bool = False,
     hf_model: Optional[str] = None,
     local_port: int = 5005,
-    output_token_count_distribution_file: Optional[str] = None,
+    response_token_count_distribution_file: Optional[str] = None,
 ):
     """Run benchmarks."""
     all_statistics = []
     config = BenchmarkConfig(input_token_count, output_token_count_mean)
 
-    output_token_count_distribution = None
-    if output_token_count_distribution_file is not None:
-        output_token_count_distribution = read_distribution_from_file(output_token_count_distribution_file)
+    response_token_count_distribution = None
+    if response_token_count_distribution_file is not None:
+        response_token_count_distribution = read_distribution_from_file(
+            response_token_count_distribution_file
+        )
 
     try:
         if verbose:
@@ -412,7 +417,7 @@ def run_benchmarks(
             concurrency,
             verbose,
             local_port,
-            output_token_count_distribution,
+            response_token_count_distribution,
         )
         all_statistics.append(statistics)
     except Exception:
@@ -442,7 +447,7 @@ def run_benchmarks_concurrency_range(
     verbose: bool = False,
     hf_model: Optional[str] = None,
     local_port: int = 5005,
-    output_token_count_distribution_file: Optional[str] = None,
+    response_token_count_distribution_file: Optional[str] = None,
 ):
     if output_file is not None:
         # Create empty file
@@ -461,7 +466,7 @@ def run_benchmarks_concurrency_range(
             verbose,
             hf_model,
             local_port,
-            output_token_count_distribution_file,
+            response_token_count_distribution_file,
         )
 
 
