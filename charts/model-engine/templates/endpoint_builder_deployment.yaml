@@ -56,9 +56,9 @@ spec:
             - --loglevel=INFO
             - --concurrency=2
             {{- if .Values.serviceIdentifier }}
-            - --queues=model-engine-{{ .Values.serviceIdentifier }}.service-builder
+            - --queues=model-engine-{{ .Values.serviceIdentifier }}-service-builder
             {{- else }}
-            - --queues=model-engine.service-builder
+            - --queues=model-engine-service-builder
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

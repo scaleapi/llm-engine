@@ -43,7 +43,7 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
         firehose_client = session.client("firehose", region_name=infra_config().default_region)
         return firehose_client
 
-    def put_record(self, stream_name: str, record: Dict[str, Any]) -> None:
+    def put_record(self, stream_name: str, record: Dict[str, Any]) -> Dict[str, Any]:
         """
         Put a record into a Firehose stream.
 
@@ -56,8 +56,9 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
         )
         if firehose_response["ResponseMetadata"]["HTTPStatusCode"] != 200:
             raise StreamPutException(
-                f"Failed to put record into firehose stream {stream_name}. Record content: {record}"
+                f"Failed to put record into firehose stream {stream_name}. Response metadata {firehose_response['ResponseMetadata']}."
             )
         logger.info(
-            f"Logged to firehose stream {stream_name}. Record content: {record}, Record ID: {firehose_response['RecordId']}"
+            f"Logged to firehose stream {stream_name}. Record ID: {firehose_response['RecordId']}. Task ID: {record['RESPONSE_BODY']['task_id']}"
         )
+        return firehose_response

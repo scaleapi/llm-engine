@@ -1,7 +1,9 @@
 import json
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
+import pytz
 import requests
 from fastapi.responses import JSONResponse
 from model_engine_server.common.constants import (
@@ -122,6 +124,7 @@ class LoggingHook(PostInferenceHook):
             return
         response["task_id"] = task_id
         data_record = {
+            "EMITTED_AT": datetime.now(pytz.timezone("UTC")).strftime("%Y-%m-%dT%H:%M:%S"),
             "REQUEST_BODY": request_payload.json(),
             "RESPONSE_BODY": response,
             "ENDPOINT_ID": self._endpoint_id,
@@ -134,10 +137,17 @@ class LoggingHook(PostInferenceHook):
         if stream_name is None:
             logger.warning("No firehose stream name specified. Logging hook will not be executed.")
             return
+        streaming_storage_response = {}  # pragma: no cover
         try:
-            self._streaming_storage_gateway.put_record(stream_name=stream_name, record=data_record)
-        except StreamPutException as e:
-            logger.error(f"Error in logging hook {e}")
+            streaming_storage_response = (
+                self._streaming_storage_gateway.put_record(  # pragma: no cover
+                    stream_name=stream_name, record=data_record
+                )
+            )
+        except StreamPutException:  # pragma: no cover
+            logger.error(  # pragma: no cover
+                f"Failed to put record into firehose stream {stream_name}. Response metadata {streaming_storage_response.get('ResponseMetadata')}."
+            )
 
 
 class PostInferenceHooksHandler:

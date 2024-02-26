@@ -9,8 +9,13 @@ from model_engine_server.core.config import infra_config
 
 def open_wrapper(uri: str, mode: str = "rt", **kwargs):
     client: Any
+    cloud_provider: str
     # This follows the 5.1.0 smart_open API
-    if infra_config().cloud_provider == "azure":
+    try:
+        cloud_provider = infra_config().cloud_provider
+    except Exception:
+        cloud_provider = "aws"
+    if cloud_provider == "azure":
         from azure.identity import DefaultAzureCredential
         from azure.storage.blob import BlobServiceClient
 
