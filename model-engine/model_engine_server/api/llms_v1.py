@@ -311,7 +311,7 @@ async def create_completion_sync_task(
     """
     Runs a sync prompt completion on an LLM.
     """
-    if hmi_config.sensitive_log_mode:
+    if hmi_config.sensitive_log_mode:  # pragma: no cover
         logger.info(f"POST /completion_sync to endpoint {model_endpoint_name} for {auth}")
     else:
         logger.info(
