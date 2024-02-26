@@ -1,5 +1,7 @@
 FROM nvcr.io/nvidia/pytorch:23.09-py3
 
+RUN apt-get install gdb python-dbg
+
 RUN pip uninstall torch -y
 COPY requirements.txt /workspace/requirements.txt
 RUN pip install -r requirements.txt

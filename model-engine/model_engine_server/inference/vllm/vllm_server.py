@@ -1,5 +1,8 @@
 import argparse
+import code
 import json
+import signal
+import traceback
 from typing import AsyncGenerator
 
 import uvicorn
@@ -46,9 +49,9 @@ async def generate(request: Request) -> Response:
                 "text": request_output.outputs[-1].text[len(last_output_text) :],
                 "count_prompt_tokens": len(request_output.prompt_token_ids),
                 "count_output_tokens": len(request_output.outputs[0].token_ids),
-                "log_probs": request_output.outputs[0].logprobs[-1]
-                if sampling_params.logprobs
-                else None,
+                "log_probs": (
+                    request_output.outputs[0].logprobs[-1] if sampling_params.logprobs else None
+                ),
                 "finished": request_output.finished,
             }
             last_output_text = request_output.outputs[-1].text
@@ -88,6 +91,19 @@ async def generate(request: Request) -> Response:
     return Response(content=json.dumps(ret))
 
 
+def debug(sig, frame):
+    """Interrupt running process, and provide a python prompt for
+    interactive debugging."""
+    d = {"_frame": frame}  # Allow access to frame object.
+    d.update(frame.f_globals)  # Unless shadowed by global
+    d.update(frame.f_locals)
+
+    i = code.InteractiveConsole(d)
+    message = "Signal received : entering python shell.\nTraceback:\n"
+    message += "".join(traceback.format_stack(frame))
+    i.interact(message)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", type=str, default=None)  # None == IPv4 / IPv6 dualstack
@@ -97,6 +113,8 @@ if __name__ == "__main__":
 
     engine_args = AsyncEngineArgs.from_cli_args(args)
     engine = AsyncLLMEngine.from_engine_args(engine_args)
+
+    signal.signal(signal.SIGUSR1, debug)
 
     uvicorn.run(
         app,
