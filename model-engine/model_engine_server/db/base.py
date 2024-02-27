@@ -81,7 +81,9 @@ def get_engine_url(env: Optional[str] = None, read_only: bool = True, sync: bool
 
     # For async postgres, we need to use an async dialect.
     if not sync:
-        engine_url = engine_url.replace("postgresql://", "postgresql+asyncpg://")
+        engine_url = engine_url.replace("postgresql://", "postgresql+asyncpg://").replace(
+            "sslmode", "ssl"
+        )
     return engine_url
 
 
