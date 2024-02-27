@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from model_engine_server.common.dtos.model_endpoints import GetModelEndpointV1Response
 from model_engine_server.domain.entities import ModelBundle, ModelEndpoint, ModelEndpointStatus
+from model_engine_server.domain.use_cases.model_endpoint_use_cases import DEFAULT_DISALLOWED_TEAMS
 
 
 def test_create_model_endpoint_success(
@@ -58,7 +59,7 @@ def test_create_model_endpoint_invalid_team_returns_400(
         fake_batch_job_progress_gateway_contents={},
         fake_docker_image_batch_job_bundle_repository_contents={},
     )
-    invalid_team_name = "INVALID_TEAM"
+    invalid_team_name = DEFAULT_DISALLOWED_TEAMS[0]
     create_model_endpoint_request_sync["labels"]["team"] = invalid_team_name
     response_1 = client.post(
         "/v1/model-endpoints",
@@ -417,7 +418,7 @@ def test_update_model_endpoint_by_id_invalid_team_returns_400(
         fake_batch_job_progress_gateway_contents={},
         fake_docker_image_batch_job_bundle_repository_contents={},
     )
-    invalid_team_name = "INVALID_TEAM"
+    invalid_team_name = DEFAULT_DISALLOWED_TEAMS[0]
     update_model_endpoint_request["labels"] = {
         "team": invalid_team_name,
         "product": "my_product",

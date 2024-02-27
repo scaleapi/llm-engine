@@ -47,6 +47,8 @@ from model_engine_server.domain.services import ModelEndpointService
 CONVERTED_FROM_ARTIFACT_LIKE_KEY = "_CONVERTED_FROM_ARTIFACT_LIKE"
 MODEL_BUNDLE_CHANGED_KEY = "_MODEL_BUNDLE_CHANGED"
 
+DEFAULT_DISALLOWED_TEAMS = ["_INVALID_TEAM"]
+
 logger = make_logger(logger_name())
 
 
@@ -127,7 +129,7 @@ class ValidationResult:
 
 # Placeholder team and product label validator that only checks for a single invalid team
 def simple_team_product_validator(team: str, product: str) -> ValidationResult:
-    if team == "INVALID_TEAM":
+    if team in DEFAULT_DISALLOWED_TEAMS:
         return ValidationResult(False, "Invalid team")
     else:
         return ValidationResult(True, "Valid team")
