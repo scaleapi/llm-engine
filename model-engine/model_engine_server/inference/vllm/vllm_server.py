@@ -115,6 +115,8 @@ def check_unknown_startup_memory_usage():
             print(
                 f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
             )
+            output = subprocess.check_output(["fuser -v /dev/nvidia*"], shell=True).decode("utf-8")
+            print(f"Processes using GPU: {output}")
 
 
 def debug(sig, frame):
