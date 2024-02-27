@@ -67,7 +67,9 @@ class CallbackHook(PostInferenceHook):
         response: Dict[str, Any],
         task_id: Optional[str],
     ):
-        logger.info(f"Handling a callback hook for endpoint {self._endpoint_name}.")
+        logger.info(
+            f"Handling a callback hook for endpoint {self._endpoint_name}."
+        )  # pragma: no cover
         callback_url = request_payload.callback_url
         if not callback_url:
             callback_url = self._default_callback_url
