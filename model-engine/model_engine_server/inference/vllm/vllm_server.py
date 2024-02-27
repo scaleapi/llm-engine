@@ -1,7 +1,9 @@
 import argparse
 import code
 import json
+import re
 import signal
+import subprocess
 import traceback
 from typing import AsyncGenerator
 
@@ -91,6 +93,30 @@ async def generate(request: Request) -> Response:
     return Response(content=json.dumps(ret))
 
 
+def get_gpu_free_memory():
+    """Get GPU free memory using nvidia-smi."""
+    try:
+        output = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"]
+        ).decode("utf-8")
+        gpu_memory = [int(x) for x in output.strip().split("\n")]
+        return gpu_memory
+    except subprocess.CalledProcessError:
+        return None
+
+
+def check_unknown_startup_memory_usage():
+    """Check for unknown memory usage at startup."""
+    gpu_free_memory = get_gpu_free_memory()
+    if gpu_free_memory is not None:
+        min_mem = min(gpu_free_memory)
+        max_mem = max(gpu_free_memory)
+        if max_mem - min_mem > 10:
+            print(
+                f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
+            )
+
+
 def debug(sig, frame):
     """Interrupt running process, and provide a python prompt for
     interactive debugging."""
@@ -105,6 +131,7 @@ def debug(sig, frame):
 
 
 if __name__ == "__main__":
+    check_unknown_startup_memory_usage()
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", type=str, default=None)  # None == IPv4 / IPv6 dualstack
     parser.add_argument("--port", type=int, default=5005)
