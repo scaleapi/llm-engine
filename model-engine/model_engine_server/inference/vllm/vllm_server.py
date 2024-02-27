@@ -1,7 +1,6 @@
 import argparse
 import code
 import json
-import re
 import signal
 import subprocess
 import traceback
