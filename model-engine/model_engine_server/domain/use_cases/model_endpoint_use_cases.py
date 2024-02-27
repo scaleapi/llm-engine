@@ -5,6 +5,7 @@ Read model endpoint creation logs: GET model-endpoints/<endpoint id>/creation-lo
 """
 
 import re
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from model_engine_server.common.constants import SUPPORTED_POST_INFERENCE_HOOKS
@@ -45,6 +46,8 @@ from model_engine_server.domain.services import ModelEndpointService
 
 CONVERTED_FROM_ARTIFACT_LIKE_KEY = "_CONVERTED_FROM_ARTIFACT_LIKE"
 MODEL_BUNDLE_CHANGED_KEY = "_MODEL_BUNDLE_CHANGED"
+
+DEFAULT_DISALLOWED_TEAMS = ["_INVALID_TEAM"]
 
 logger = make_logger(logger_name())
 
@@ -118,6 +121,20 @@ def validate_deployment_resources(
         )
 
 
+@dataclass
+class ValidationResult:
+    passed: bool
+    message: str
+
+
+# Placeholder team and product label validator that only checks for a single invalid team
+def simple_team_product_validator(team: str, product: str) -> ValidationResult:
+    if team in DEFAULT_DISALLOWED_TEAMS:
+        return ValidationResult(False, "Invalid team")
+    else:
+        return ValidationResult(True, "Valid team")
+
+
 def validate_labels(labels: Dict[str, str]) -> None:
     for required_label in REQUIRED_ENDPOINT_LABELS:
         if required_label not in labels:
@@ -129,6 +146,7 @@ def validate_labels(labels: Dict[str, str]) -> None:
         if restricted_label in labels:
             raise EndpointLabelsException(f"Cannot specify '{restricted_label}' in labels")
 
+    # TODO: remove after we fully migrate to the new team + product validator
     try:
         from plugins.known_users import ALLOWED_TEAMS
 
@@ -137,6 +155,15 @@ def validate_labels(labels: Dict[str, str]) -> None:
             raise EndpointLabelsException(f"Invalid team label, must be one of: {ALLOWED_TEAMS}")
     except ModuleNotFoundError:
         pass
+
+    try:
+        from shared_plugins.team_product_label_validation import validate_team_product_label
+    except ModuleNotFoundError:
+        validate_team_product_label = simple_team_product_validator
+
+    validation_result = validate_team_product_label(labels["team"], labels["product"])
+    if not validation_result.passed:
+        raise EndpointLabelsException(validation_result.message)
 
     # Check k8s will accept the label values
     regex_pattern = "(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?"  # k8s label regex
