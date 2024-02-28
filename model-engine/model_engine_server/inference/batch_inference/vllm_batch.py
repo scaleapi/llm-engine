@@ -33,6 +33,7 @@ def download_model(checkpoint_path, final_weights_folder):
     # Need to override these env vars so s5cmd uses AWS_PROFILE
     env["AWS_ROLE_ARN"] = ""
     env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
+    # nosemgrep
     process = subprocess.Popen(
         s5cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
     )
@@ -193,6 +194,7 @@ async def generate_with_vllm(request, content, model, job_index):
         tensor_parallel_size=request.model_config.num_shards,
         seed=request.model_config.seed or 0,
         disable_log_requests=True,
+        gpu_memory_utilization=0.8,  # To avoid OOM errors when there's host machine GPU usage
     )
 
     llm = AsyncLLMEngine.from_engine_args(engine_args)
@@ -220,5 +222,33 @@ async def generate_with_vllm(request, content, model, job_index):
     return results_generators
 
 
+def get_gpu_free_memory():
+    """Get GPU free memory using nvidia-smi."""
+    try:
+        output = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"]
+        ).decode("utf-8")
+        gpu_memory = [int(x) for x in output.strip().split("\n")]
+        return gpu_memory
+    except subprocess.CalledProcessError:
+        return None
+
+
+def check_unknown_startup_memory_usage():
+    """Check for unknown memory usage at startup."""
+    gpu_free_memory = get_gpu_free_memory()
+    if gpu_free_memory is not None:
+        min_mem = min(gpu_free_memory)
+        max_mem = max(gpu_free_memory)
+        if max_mem - min_mem > 10:
+            print(
+                f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
+            )
+            # nosemgrep
+            output = subprocess.check_output(["fuser -v /dev/nvidia*"], shell=True).decode("utf-8")
+            print(f"Processes using GPU: {output}")
+
+
 if __name__ == "__main__":
+    check_unknown_startup_memory_usage()
     asyncio.run(batch_inference())

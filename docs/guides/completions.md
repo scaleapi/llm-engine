@@ -120,6 +120,55 @@ async def main():
 asyncio.run(main())
 ```
 
+## Batch completions
+
+The Python client also supports batch completins. Batch completions supports distributing data to multiple workers to accelerate inference. It also tries to maximize throughput so the completions should finish quite a bit faster than hitting models through HTTP. Use [Completion.batch_complete](../../api/python_client/#llmengine.completion.Completion.batch_complete) to utilize batch completions.
+
+Some examples of batch completions:
+
+=== "Batch completions with prompts in the request"
+```python
+from llmengine import Completion
+from llmengine.data_types import CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
+
+content = CreateBatchCompletionsRequestContent(
+    prompts=["What is deep learning", "What is a neural network"],
+    max_new_tokens=10,
+    temperature=0.0
+)
+
+response = Completion.batch_create(
+    output_data_path="s3://my-path",
+    model_config=CreateBatchCompletionsModelConfig(
+        model="llama-2-7b",
+        checkpoint_path="s3://checkpoint-path",
+        labels={"team":"my-team", "product":"my-product"}
+    ),
+    content=content
+)
+print(response.job_id)
+```
+
+=== "Batch completions with prompts in a file and with 2 parallel jobs"
+```python
+from llmengine import Completion
+from llmengine.data_types import CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
+
+# Store CreateBatchCompletionsRequestContent data into input file "s3://my-input-path"
+
+response = Completion.batch_create(
+    input_data_path="s3://my-input-path",
+    output_data_path="s3://my-output-path",
+    model_config=CreateBatchCompletionsModelConfig(
+        model="llama-2-7b",
+        checkpoint_path="s3://checkpoint-path",
+        labels={"team":"my-team", "product":"my-product"}
+    ),
+    data_parallelism=2
+)
+print(response.job_id)
+```
+
 ## Which model should I use?
 
 See the [Model Zoo](../../model_zoo) for more information on best practices for which model to use for Completions.
