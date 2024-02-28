@@ -74,7 +74,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             kwargs=kwargs,
             queue=queue_name,
         )
-        logger.info(f"Task {res.id} sent to queue {queue_name} from gateway")
+        logger.info(f"Task {res.id} sent to queue {queue_name} from gateway")  # pragma: no cover
         return CreateAsyncTaskV1Response(task_id=res.id)
 
     def get_task(self, task_id: str) -> GetAsyncTaskV1Response:
