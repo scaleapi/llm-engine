@@ -8,8 +8,10 @@ from model_engine_server.common.dtos.tasks import (
 )
 from model_engine_server.core.celery import TaskVisibility, celery_app
 from model_engine_server.core.config import infra_config
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 
+logger = make_logger(logger_name())
 backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
 
 celery_redis = celery_app(
@@ -72,6 +74,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             kwargs=kwargs,
             queue=queue_name,
         )
+        logger.info(f"Task {res.id} sent to queue {queue_name} from gateway")  # pragma: no cover
         return CreateAsyncTaskV1Response(task_id=res.id)
 
     def get_task(self, task_id: str) -> GetAsyncTaskV1Response:
