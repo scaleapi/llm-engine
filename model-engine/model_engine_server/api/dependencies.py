@@ -51,11 +51,13 @@ from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gat
     FirehoseStreamingStorageGateway,
 )
 from model_engine_server.infra.gateways import (
+    FakeMonitoringMetricsGateway,  # TODO add a DDMonitoringMetricsGateway thing and choose based on config.ddtraceenabled
+)
+from model_engine_server.infra.gateways import (
     ABSFileStorageGateway,
     ABSFilesystemGateway,
     ABSLLMArtifactGateway,
     CeleryTaskQueueGateway,
-    FakeMonitoringMetricsGateway,
     LiveAsyncModelEndpointInferenceGateway,
     LiveBatchJobOrchestrationGateway,
     LiveBatchJobProgressGateway,
