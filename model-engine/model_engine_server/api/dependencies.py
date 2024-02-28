@@ -51,13 +51,12 @@ from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gat
     FirehoseStreamingStorageGateway,
 )
 from model_engine_server.infra.gateways import (
-    FakeMonitoringMetricsGateway,  # TODO add a DDMonitoringMetricsGateway thing and choose based on config.ddtraceenabled
-)
-from model_engine_server.infra.gateways import (
     ABSFileStorageGateway,
     ABSFilesystemGateway,
     ABSLLMArtifactGateway,
     CeleryTaskQueueGateway,
+    DatadogMonitoringMetricsGateway,
+    FakeMonitoringMetricsGateway,
     LiveAsyncModelEndpointInferenceGateway,
     LiveBatchJobOrchestrationGateway,
     LiveBatchJobProgressGateway,
@@ -160,7 +159,11 @@ class ExternalInterfaces:
 
 
 def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
-    monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
+    # TODO read service config
+    if hmi_config.dd_trace_enabled:
+        monitoring_metrics_gateway: MonitoringMetricsGateway = DatadogMonitoringMetricsGateway()
+    else:
+        monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
     return monitoring_metrics_gateway
 
 
