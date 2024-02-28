@@ -222,7 +222,7 @@ async def generate_with_vllm(request, content, model, job_index):
     return results_generators
 
 
-def get_gpu_free_memory():
+def get_gpu_free_memory():  # pragma: no cover
     """Get GPU free memory using nvidia-smi."""
     try:
         output = subprocess.check_output(
@@ -234,7 +234,7 @@ def get_gpu_free_memory():
         return None
 
 
-def check_unknown_startup_memory_usage():
+def check_unknown_startup_memory_usage():  # pragma: no cover
     """Check for unknown memory usage at startup."""
     gpu_free_memory = get_gpu_free_memory()
     if gpu_free_memory is not None:
