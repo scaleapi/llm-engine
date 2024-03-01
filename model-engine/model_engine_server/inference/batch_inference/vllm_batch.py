@@ -177,8 +177,6 @@ async def generate_with_tool(
             file=sys.stdout,
         )
 
-        print(f"Before LLM {generations=}")
-
         outputs = await generate_with_vllm(
             llm,
             content.max_new_tokens,
@@ -192,8 +190,6 @@ async def generate_with_tool(
             [iter[0] for iter in iter_prompts],
             bar,
         )
-
-        print(f"After LLM {outputs=}")
 
         bar = tqdm(
             total=len(iter_prompts),
@@ -261,8 +257,6 @@ async def generate_with_tool(
             if not gen_item.generated_text.endswith(tool.tool_context_end):
                 gen_item.completed = True
                 continue
-
-        print(f"After tool use {generations=}")
 
     results = [
         CompletionOutput(
