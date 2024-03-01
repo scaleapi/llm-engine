@@ -122,7 +122,7 @@ asyncio.run(main())
 
 ## Batch completions
 
-The Python client also supports batch completins. Batch completions supports distributing data to multiple workers to accelerate inference. It also tries to maximize throughput so the completions should finish quite a bit faster than hitting models through HTTP. Use [Completion.batch_complete](../../api/python_client/#llmengine.completion.Completion.batch_complete) to utilize batch completions.
+The Python client also supports batch completions. Batch completions supports distributing data to multiple workers to accelerate inference. It also tries to maximize throughput so the completions should finish quite a bit faster than hitting models through HTTP. Use [Completion.batch_complete](../../api/python_client/#llmengine.completion.Completion.batch_complete) to utilize batch completions.
 
 Some examples of batch completions:
 
