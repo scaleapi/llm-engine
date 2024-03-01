@@ -12,7 +12,7 @@ from model_engine_server.inference.tool_completion.utils import (
 )
 from transformers import LlamaTokenizer
 
-tokenizer = LlamaTokenizer.from_pretrained("openlm-research/open_llama_7b", legacy=False)
+tokenizer = LlamaTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf", legacy=False)
 MAX_CODEBLOCK_RETRIES = 3
 
 
@@ -239,7 +239,7 @@ class CodeBlockEvaluator(BaseTool):
         return output_str
 
 
-class Tools(Enum):
+class Tools(str, Enum):
     CODE_EVALUATOR = "code_evaluator"
 
 
