@@ -158,8 +158,9 @@ async def generate_with_tool(
 
     num_iters = 0
     generations = [IterativeGeneration(prompt, content.max_new_tokens) for prompt in prompts]
+    max_iterations = tool_config.max_iterations or 10
 
-    while num_iters < tool_config.max_iterations:
+    while num_iters < max_iterations:
         num_iters += 1
 
         iter_prompts = [
@@ -228,14 +229,14 @@ async def generate_with_tool(
             except (Exception, FunctionTimedOut) as e:
                 # If the tool failed, we should add the error message to the generated text and keep going. It should be added right after the
                 # tool call token and concluded with the tool_context_end_token.
-                new_text = new_text.rsplit(tool.tool_call_token, 1)
+                new_text_split = new_text.rsplit(tool.tool_call_token, 1)
 
                 # We can guarantee this because the tool is not called if it doesn't have the tool call token
                 # We still want to replace what the LLM thinks the output should be..
                 added_text = str(e) + tool.tool_context_end
-                subtracted_text = new_text[1]
+                subtracted_text = new_text_split[1]
 
-                new_text = f"{new_text[0]}{tool.tool_call_token}{e}{tool.tool_context_end}"
+                new_text = f"{new_text_split[0]}{tool.tool_call_token}{e}{tool.tool_context_end}"
 
                 # Now let's add the additional tokens
                 num_tool_output_tokens = min(

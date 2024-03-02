@@ -1,9 +1,16 @@
+from typing import Optional, Tuple
+
+
 class BaseTool:
     """
     Base class for third-party tools.
     """
 
-    def __call__(self, expression: str) -> str:
+    tool_context_start = ""
+    tool_call_token = ""
+    tool_context_end = ""
+
+    def __call__(self, expression: str, past_context: Optional[str]) -> Tuple[str, int]:
         """
         Call method to be overridden by child classes.
         """

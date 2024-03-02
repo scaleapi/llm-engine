@@ -1,7 +1,7 @@
 import re
 import subprocess
 from enum import Enum
-from typing import Optional
+from typing import Optional, Tuple
 
 import docker
 from model_engine_server.inference.tool_completion.base import BaseTool
@@ -77,7 +77,7 @@ class CodeBlockEvaluator(BaseTool):
         self,
         expression: str,
         past_context: Optional[str] = None,
-    ) -> str:
+    ) -> Tuple[str, int]:
         """
         Given an expression, extract the code block and execute it using a safe python interpreter. Additionally,
         approximate the number of tokens added to the expression from the tool output along with handling retries
@@ -89,6 +89,7 @@ class CodeBlockEvaluator(BaseTool):
 
         Returns:
             str: Formatted output from the code execution tool
+            int: Number of tokens added
 
         Raises:
             RuntimeError: If any errors occur during the code execution or retries for simple code errors.

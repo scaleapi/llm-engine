@@ -77,8 +77,8 @@ def get_responses_to_yield(
 
     # Otherwise, we should yield everything in the queue that *can't* be part of the start of a tool
     concatenated_queue_str = ""
-    responses_to_yield = Queue()  # These are values we're sure we want to return right now
-    undecided_queue = (
+    responses_to_yield: Queue = Queue()  # These are values we're sure we want to return right now
+    undecided_queue: Queue = (
         Queue()
     )  # These are values that could be part of start token but we aren't sure yet
 
