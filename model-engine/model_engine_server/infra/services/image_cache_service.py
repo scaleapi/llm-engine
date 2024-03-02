@@ -3,7 +3,7 @@ from typing import Dict, NamedTuple, Tuple
 
 import pytz
 from model_engine_server.common.config import hmi_config
-from model_engine_server.common.env_vars import GIT_TAG
+from model_engine_server.common.env_vars import CIRCLECI, GIT_TAG
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import GpuType, ModelEndpointInfraState
@@ -69,17 +69,38 @@ class ImageCacheService:
         )
 
         istio_image = DockerImage("gcr.io/istio-release/proxyv2", "1.15.0")
-        tgi_image = DockerImage(
-            f"{infra_config().docker_repo_prefix}/{hmi_config.tgi_repository}", "0.9.3-launch_s3"
+        tgi_image_110 = DockerImage(
+            f"{infra_config().docker_repo_prefix}/{hmi_config.tgi_repository}", "1.1.0"
         )
-        tgi_image_2 = DockerImage(
-            f"{infra_config().docker_repo_prefix}/{hmi_config.tgi_repository}", "0.9.4"
+        vllm_image_027 = DockerImage(
+            f"{infra_config().docker_repo_prefix}/{hmi_config.vllm_repository}", "0.2.7"
+        )
+        vllm_image_032 = DockerImage(
+            f"{infra_config().docker_repo_prefix}/{hmi_config.vllm_repository}", "0.3.2"
+        )
+        latest_tag = (
+            self.docker_repository.get_latest_image_tag(
+                f"{infra_config().docker_repo_prefix}/{hmi_config.batch_inference_vllm_repository}"
+            )
+            if not CIRCLECI
+            else "fake_docker_repository_latest_image_tag"
+        )
+        vllm_batch_image_latest = DockerImage(
+            f"{infra_config().docker_repo_prefix}/{hmi_config.batch_inference_vllm_repository}",
+            latest_tag,
         )
         forwarder_image = DockerImage(
             f"{infra_config().docker_repo_prefix}/launch/gateway", GIT_TAG
         )
 
-        for llm_image in [istio_image, tgi_image, tgi_image_2, forwarder_image]:
+        for llm_image in [
+            istio_image,
+            tgi_image_110,
+            vllm_image_027,
+            vllm_image_032,
+            vllm_batch_image_latest,
+            forwarder_image,
+        ]:
             if self.docker_repository.is_repo_name(
                 llm_image.repo
             ) and not self.docker_repository.image_exists(llm_image.tag, llm_image.repo):

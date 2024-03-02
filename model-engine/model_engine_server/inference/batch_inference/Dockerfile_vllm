@@ -1,7 +1,7 @@
 FROM nvcr.io/nvidia/pytorch:23.09-py3
 
 RUN apt-get update && \
-    apt-get install -y dumb-init && \
+    apt-get install -y dumb-init psmisc && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
