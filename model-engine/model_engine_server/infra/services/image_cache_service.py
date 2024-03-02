@@ -83,7 +83,7 @@ class ImageCacheService:
                 f"{infra_config().docker_repo_prefix}/{hmi_config.batch_inference_vllm_repository}"
             )
             if not CIRCLECI
-            else "latest"
+            else "fake_docker_repository_latest_image_tag"
         )
         vllm_batch_image_latest = DockerImage(
             f"{infra_config().docker_repo_prefix}/{hmi_config.batch_inference_vllm_repository}",
