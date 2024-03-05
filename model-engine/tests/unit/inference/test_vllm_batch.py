@@ -1,5 +1,5 @@
 import json
-from unittest.mock import MagicMock, call, mock_open, patch
+from unittest.mock import call, mock_open, patch
 
 import pytest
 from model_engine_server.inference.batch_inference.vllm_batch import batch_inference, file_exists
