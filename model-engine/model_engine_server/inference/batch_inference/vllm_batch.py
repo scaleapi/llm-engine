@@ -5,7 +5,7 @@ import subprocess
 import sys
 import time
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Type
 from urllib.parse import urlparse
 
 import boto3
@@ -141,7 +141,7 @@ async def generate_with_tool(
     tool_config: ToolConfig,
     content: CreateBatchCompletionsRequestContent,
     prompts,
-    tool: BaseTool,
+    tool: Type[BaseTool],
 ):
     class IterativeGeneration:
         def __init__(self, prompt, max_new_tokens):
@@ -203,6 +203,8 @@ async def generate_with_tool(
             gen_item = generations[iter_prompts[i][1]]
             new_text = response.text
 
+            print(f"before running tool, {new_text=}")
+
             if content.return_token_log_probs:
                 gen_item.token_logits += response.tokens
 
@@ -249,6 +251,10 @@ async def generate_with_tool(
                 gen_item.tool_exception = e
 
             num_completion_tokens = response.num_completion_tokens
+
+            print(
+                f"after running tool, {new_text=} {num_completion_tokens=} {num_tool_output_tokens=}"
+            )
 
             gen_item.remaining_tokens -= num_completion_tokens
             gen_item.remaining_tokens -= num_tool_output_tokens
@@ -303,10 +309,12 @@ async def batch_inference():
             prompts.append(prompt)
 
     if request.tool_config is not None:
+        print("generating with tool")
         tool_enum = Tools(request.tool_config.name)
         tool = TOOL_MAP[tool_enum]
         outputs = await generate_with_tool(llm, request.tool_config, content, prompts, tool)
     else:
+        print("not generating with tool")
         bar = tqdm(total=len(prompts), desc="Processed prompts")
 
         outputs = await generate_with_vllm(
@@ -355,7 +363,6 @@ async def generate_with_vllm(
     bar,
 ) -> List[CompletionOutput]:
     from vllm import SamplingParams
-    from vllm.utils import random_uuid
 
     # Add the requests to the engine.
     sampling_params = SamplingParams(

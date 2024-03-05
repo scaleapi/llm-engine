@@ -1,1 +1,15 @@
-{"prompts": ["FYI: you can write code like this: \n```python\nimport math\nprint(math.sqrt(2))\n```\n1.41...\n>>>\n\nFor reference, the third digit of 4.32 is 2. Also, use \"Final Answer: X\" to indicate your final answer.\n\n### Problem:\n\nWhat is the 4th digit of pi?\n\n### Answer:\n```python\nimport math\nprint(math.pi)\n```\n3.141592653589793\n>>>\n\nFinal Answer: 1\n\n### Problem:\n\nWhat is the 4th digit of the square root of 2?\n\n### Answer: \n", "FYI: you can write code like this: \n```python\nimport math\nprint(math.sqrt(2))\n```\n1.41...\n>>>\n\nFor reference, the third digit of 4.32 is 2. Also, use \"Final Answer: X\" to indicate your final answer.\n\n### Problem:\n\nWhat is the 4th digit of pi?\n\n### Answer:\n```python\nimport math\nprint(math.pi)\n```\n3.141592653589793\n>>>\n\nFinal Answer: 1\n\n### Problem:\n\nWhat is the 5th digit of the square root of 2?\n\n### Answer: \n", "what is deep learning"], "max_new_tokens": 100, "temperature": 0.0, "return_token_log_probs": true, "stop_sequences": ["</s>", "\n### Problem:\n", ">>>\n"]}
+{
+    "prompts": [
+        "FYI: you can write code like this: \n```python\nimport math\nprint(math.sqrt(2))\n```\n1.41...\n>>>\n\nFor reference, the third digit of 4.32 is 2. Also, use \"Final Answer: X\" to indicate your final answer.\n\n### Problem:\n\nWhat is the 4th digit of pi?\n\n### Answer:\n```python\nimport math\nprint(math.pi)\n```\n3.141592653589793\n>>>\n\nFinal Answer: 1\n\n### Problem:\n\nWhat is the 4th digit of the square root of 2?\n\n### Answer: \n",
+        "FYI: you can write code like this: \n```python\nimport math\nprint(math.sqrt(2))\n```\n1.41...\n>>>\n\nFor reference, the third digit of 4.32 is 2. Also, use \"Final Answer: X\" to indicate your final answer.\n\n### Problem:\n\nWhat is the 4th digit of pi?\n\n### Answer:\n```python\nimport math\nprint(math.pi)\n```\n3.141592653589793\n>>>\n\nFinal Answer: 1\n\n### Problem:\n\nWhat is the 5th digit of the square root of 2?\n\n### Answer: \n",
+        "what is deep learning"
+    ],
+    "max_new_tokens": 100,
+    "temperature": 0.0,
+    "return_token_log_probs": true,
+    "stop_sequences": [
+        "</s>",
+        "\n### Problem:\n",
+        ">>>\n"
+    ]
+}
