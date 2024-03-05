@@ -12,7 +12,7 @@ from model_engine_server.inference.tool_completion.utils import (
 )
 from transformers import LlamaTokenizer
 
-tokenizer = LlamaTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf", legacy=False)
+tokenizer = LlamaTokenizer.from_pretrained("openlm-research/open_llama_7b", legacy=False)
 MAX_CODEBLOCK_RETRIES = 3
 
 
