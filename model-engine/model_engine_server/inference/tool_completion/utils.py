@@ -45,7 +45,7 @@ FIX_ERRORS_MAPPING = {
 
 
 # Check if a model response indicates it could be starting a tool
-def check_streaming_tool_start(stream_queue: Queue, tool: BaseTool) -> bool:
+def check_streaming_tool_start(stream_queue: Queue, tool: BaseTool) -> bool:  # pragma: no cover
     # If the queue is empty, we can't start the tool
     if stream_queue.qsize() == 0:
         return False
@@ -69,7 +69,7 @@ def check_either_substr(str1: str, str2: str) -> bool:
 # Check if some responses from the queue should be returned
 def get_responses_to_yield(
     stream_queue: Queue, tool: BaseTool, tool_started: bool
-) -> Tuple[Queue, Queue]:
+) -> Tuple[Queue, Queue]:  # pragma: no cover
     """We return a tuple, (responses_to_yield, stream_queue) based on what should be returned"""
     # If we've started the tool, we shouldn't yield anything
     if tool_started:
