@@ -79,9 +79,7 @@ class ImageCacheService:
             f"{infra_config().docker_repo_prefix}/{hmi_config.vllm_repository}", "0.3.2"
         )
         latest_tag = (
-            self.docker_repository.get_latest_image_tag(
-                hmi_config.batch_inference_vllm_repository
-            )
+            self.docker_repository.get_latest_image_tag(hmi_config.batch_inference_vllm_repository)
             if not CIRCLECI
             else "fake_docker_repository_latest_image_tag"
         )
