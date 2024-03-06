@@ -270,8 +270,6 @@ env:
     value: {{ .Values.azure.abs_account_name }}
   - name: SERVICEBUS_NAMESPACE
     value: {{ .Values.azure.servicebus_namespace }}
-  - name: SERVICEBUS_SAS_KEY
-    value: {{ .Values.azure.servicebus_sas_key }}
   {{- end }}
 {{- end }}
 
