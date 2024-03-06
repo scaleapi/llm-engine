@@ -205,8 +205,6 @@ async def generate_with_tool(
             gen_item = generations[iter_prompts[i][1]]
             new_text = response.text
 
-            print(f"before running tool, {new_text=}")
-
             if content.return_token_log_probs:
                 gen_item.token_logits += response.tokens
 
@@ -253,10 +251,6 @@ async def generate_with_tool(
                 gen_item.tool_exception = e
 
             num_completion_tokens = response.num_completion_tokens
-
-            print(
-                f"after running tool, {new_text=} {num_completion_tokens=} {num_tool_output_tokens=}"
-            )
 
             gen_item.remaining_tokens -= num_completion_tokens
             gen_item.remaining_tokens -= num_tool_output_tokens
@@ -311,12 +305,10 @@ async def batch_inference():
             prompts.append(prompt)
 
     if request.tool_config is not None:
-        print("generating with tool")
         tool_enum = Tools(request.tool_config.name)
         tool = TOOL_MAP[tool_enum]
         outputs = await generate_with_tool(llm, request.tool_config, content, prompts, tool)
     else:
-        print("not generating with tool")
         bar = tqdm(total=len(prompts), desc="Processed prompts")
 
         outputs = await generate_with_vllm(

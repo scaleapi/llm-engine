@@ -171,3 +171,11 @@ def mock_tool_completion_output2():
             TokenOutput(token="\n", log_prob=-0.0021214615553617477),
         ],
     )
+
+
+@pytest.fixture
+def mock_run_output():
+    value = MagicMock()
+    value.stdout = "1.4142135623730951"
+    value.check_returncode = MagicMock()
+    return value
