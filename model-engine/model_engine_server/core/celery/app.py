@@ -475,6 +475,8 @@ def _get_broker_endpoint_and_transport_options(
         # backoff_policy, etc., then we can expose broker_transport_options in the top-level celery() wrapper function.
         # Going to try this with defaults first.
         out_broker_transport_options["region"] = os.environ.get("AWS_REGION", "us-west-2")
+        out_broker_transport_options["wait_time_seconds"] = 0
+        out_broker_transport_options["polling_interval"] = 5
 
         # NOTE: The endpoints should ideally use predefined queues. However, the sender probably needs the flexibility
         # of not requiring predefined queues.
