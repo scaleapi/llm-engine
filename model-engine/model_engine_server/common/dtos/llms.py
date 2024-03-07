@@ -443,7 +443,7 @@ class ToolConfig(BaseModel):
     """
     Maximum number of iterations to run the tool.
     """
-    execution_timeout_sec: Optional[int] = 60
+    execution_timeout_seconds: Optional[int] = 60
     """
     Maximum runtime of the tool in seconds.
     """

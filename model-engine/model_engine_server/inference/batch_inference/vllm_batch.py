@@ -161,6 +161,8 @@ async def generate_with_tool(
     num_iters = 0
     generations = [IterativeGeneration(prompt, content.max_new_tokens) for prompt in prompts]
     max_iterations = tool_config.max_iterations or 10
+    stop_sequences = content.stop_sequences or []
+    stop_sequences.append(tool.tool_context_end)
 
     while num_iters < max_iterations:
         num_iters += 1
@@ -221,7 +223,7 @@ async def generate_with_tool(
             # To-do write tools to receive response object itself rather than the text
             try:
                 # We need to pass the tool/text to a function that times out if the python code can't execute
-                @func_set_timeout(tool_config.execution_timeout_sec)
+                @func_set_timeout(tool_config.execution_timeout_seconds)
                 def tool_func(text: str, past_context: Optional[str]):
                     return tool()(text, past_context)
 
