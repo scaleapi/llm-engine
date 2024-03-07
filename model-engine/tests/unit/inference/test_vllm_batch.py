@@ -316,7 +316,8 @@ def test_file_exists_no_such_key():
 )
 @patch("model_engine_server.inference.batch_inference.vllm_batch.generate_with_vllm")
 @patch("model_engine_server.inference.batch_inference.vllm_batch.get_s3_client")
-@patch("subprocess.Popen")
+@patch("model_engine_server.inference.batch_inference.vllm_batch.subprocess.Popen")
+@patch("subprocess.run")
 @patch(
     "model_engine_server.inference.batch_inference.vllm_batch.smart_open.open",
     new_callable=mock_open,
@@ -324,6 +325,7 @@ def test_file_exists_no_such_key():
 )
 async def test_batch_inference_tool_completion(
     mock_open_func,
+    mock_run,
     mock_popen,
     mock_get_s3_client,
     mock_generate_with_vllm,
@@ -336,8 +338,10 @@ async def test_batch_inference_tool_completion(
     mock_process,
     mock_tool_completion_output,
     mock_tool_completion_output2,
+    mock_run_output,
 ):
     # Mock the necessary objects and data
+    mock_run.return_value = mock_run_output
     mock_popen.return_value = mock_process
     mock_get_s3_client.return_value = mock_s3_client
     mock_create_batch_completions_request.parse_file.return_value = (

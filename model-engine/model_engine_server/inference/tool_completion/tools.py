@@ -16,7 +16,7 @@ tokenizer = LlamaTokenizer.from_pretrained("openlm-research/open_llama_7b", lega
 MAX_CODEBLOCK_RETRIES = 3
 
 
-class CodeBlockEvaluator(BaseTool):
+class CodeBlockEvaluator(BaseTool):  # pragma: no cover
     """
     A evaluator to "pseudo-safely" execute python code blocks.
     Executes code from a model generated response using a safe python interpreter.
