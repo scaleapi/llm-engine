@@ -17,6 +17,7 @@ from tqdm import tqdm
 
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
+MODEL_WEIGHTS_FOLDER = os.getenv("MODEL_WEIGHTS_FOLDER", "./model_weights")
 
 os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
 
@@ -118,7 +119,7 @@ async def batch_inference():
     request = CreateBatchCompletionsRequest.parse_file(CONFIG_FILE)
 
     if request.model_config.checkpoint_path is not None:
-        download_model(request.model_config.checkpoint_path, "./model_weights")
+        download_model(request.model_config.checkpoint_path, MODEL_WEIGHTS_FOLDER)
 
     content = request.content
     if content is None:
@@ -126,7 +127,7 @@ async def batch_inference():
             content = CreateBatchCompletionsRequestContent.parse_raw(f.read())
 
     model = (
-        "./model_weights" if request.model_config.checkpoint_path else request.model_config.model
+        MODEL_WEIGHTS_FOLDER if request.model_config.checkpoint_path else request.model_config.model
     )
 
     results_generators = await generate_with_vllm(request, content, model, job_index)

@@ -6,9 +6,14 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
-RUN pip uninstall torch -y
 COPY model-engine/model_engine_server/inference/batch_inference/requirements.txt /workspace/requirements.txt
 RUN pip install -r requirements.txt
+
+RUN pip uninstall torch -y
+RUN pip install torch==2.1.1 --index-url https://download.pytorch.org/whl/cu121
+
+RUN pip uninstall xformers -y
+RUN pip install xformers==0.0.23 --index-url https://download.pytorch.org/whl/cu121
 
 RUN wget https://github.com/peak/s5cmd/releases/download/v2.2.1/s5cmd_2.2.1_Linux-64bit.tar.gz
 RUN tar -xvzf s5cmd_2.2.1_Linux-64bit.tar.gz
