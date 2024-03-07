@@ -1,0 +1,14 @@
+{
+    "input_data_path":"./sample_data_tool.json",
+    "output_data_path":"./sample_output_tool.json",
+    "model_config":{
+        "model":"mistral-7b",
+        "checkpoint_path":"s3://scale-ml/models/mistral-7b",
+        "num_shards": 1,
+        "labels": {"team": "my_team"}
+    },
+    "data_parallelism":2,
+    "tool_config": {
+        "name": "code_evaluator"
+    }
+}
