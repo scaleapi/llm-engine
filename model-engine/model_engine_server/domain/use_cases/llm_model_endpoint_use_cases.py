@@ -2275,6 +2275,11 @@ class CreateBatchCompletionsUseCase:
             hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
         request.model_config.num_shards = hardware.gpus
 
+        if request.tool_config and request.tool_config.name != "code_evaluator":
+            raise ObjectHasInvalidValueException(
+                "Only code_evaluator tool is supported for batch completions."
+            )
+
         batch_bundle = await self.create_batch_job_bundle(user, request, hardware)
 
         validate_resource_requests(
