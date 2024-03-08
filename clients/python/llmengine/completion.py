@@ -442,6 +442,9 @@ class Completion(APIEngine):
             tool_config (Optional[ToolConfig]):
                 Configuration for tool use.
                 NOTE: this config is highly experimental and signature will change significantly in future iterations.
+                Currently only Python code evaluator is supported.
+                Python code context starts with "\`\`\`python\\n" and ends with "\\n>>>\\n", data before "\\n\`\`\`\\n" and content end will be replaced by the Python execution results.
+                Please format prompts accordingly and provide examples so LLMs could properly generate Python code.
 
         Returns:
             response (CreateBatchCompletionsResponse): The response containing the job id.
@@ -490,7 +493,7 @@ class Completion(APIEngine):
         === "Batch completions with prompts and use tool"
             ```python
             from llmengine import Completion
-            from llmengine.data_types import CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
+            from llmengine.data_types import CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent, ToolConfig
 
             # Store CreateBatchCompletionsRequestContent data into input file "s3://my-input-path"
 
