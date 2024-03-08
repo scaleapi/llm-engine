@@ -10,6 +10,7 @@ from llmengine.data_types import (
     CreateBatchCompletionsRequest,
     CreateBatchCompletionsRequestContent,
     CreateBatchCompletionsResponse,
+    ToolConfig,
 )
 
 COMPLETION_TIMEOUT = 300
@@ -412,6 +413,7 @@ class Completion(APIEngine):
         input_data_path: Optional[str] = None,
         data_parallelism: int = 1,
         max_runtime_sec: int = 24 * 3600,
+        tool_config: Optional[ToolConfig] = None,
     ) -> CreateBatchCompletionsResponse:
         """
         Creates a batch completion for the provided input data. The job runs offline and does not depend on an existing model endpoint.
@@ -436,6 +438,10 @@ class Completion(APIEngine):
 
             max_runtime_sec (int):
                 The maximum runtime of the batch completion in seconds. Defaults to 24 hours.
+
+            tool_config (Optional[ToolConfig]):
+                Configuration for tool use.
+                NOTE: this config is highly experimental and signature will change significantly in future iterations.
 
         Returns:
             response (CreateBatchCompletionsResponse): The response containing the job id.
@@ -480,6 +486,29 @@ class Completion(APIEngine):
             )
             print(response.json())
             ```
+
+        === "Batch completions with prompts and use tool"
+            ```python
+            from llmengine import Completion
+            from llmengine.data_types import CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
+
+            # Store CreateBatchCompletionsRequestContent data into input file "s3://my-input-path"
+
+            response = Completion.batch_create(
+                input_data_path="s3://my-input-path",
+                output_data_path="s3://my-output-path",
+                model_config=CreateBatchCompletionsModelConfig(
+                    model="llama-2-7b",
+                    checkpoint_path="s3://checkpoint-path",
+                    labels={"team":"my-team", "product":"my-product"}
+                ),
+                data_parallelism=2,
+                tool_config=ToolConfig(
+                    name="code_evaluator",
+                )
+            )
+            print(response.json())
+            ```
         """
         data = CreateBatchCompletionsRequest(
             model_config=model_config,
@@ -488,6 +517,7 @@ class Completion(APIEngine):
             output_data_path=output_data_path,
             data_parallelism=data_parallelism,
             max_runtime_sec=max_runtime_sec,
+            tool_config=tool_config,
         ).dict()
         response = cls.post_sync(
             resource_name="v1/llm/batch-completions",
