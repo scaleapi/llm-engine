@@ -1138,6 +1138,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#llmengine.CreateBatchCompletionsRequest.tool_config" class="md-nav__link">
+    tool_config
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1933,6 +1940,13 @@
           <li class="md-nav__item">
   <a href="#llmengine.CreateBatchCompletionsRequest.max_runtime_sec" class="md-nav__link">
     max_runtime_sec
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llmengine.CreateBatchCompletionsRequest.tool_config" class="md-nav__link">
+    tool_config
   </a>
   
 </li>
@@ -4250,6 +4264,31 @@ When input_data_path is provided, the input file should be a JSON file of type B
   <div class="doc doc-contents ">
   
       <p>Maximum runtime of the batch inference in seconds. Default to one day.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="llmengine.CreateBatchCompletionsRequest.tool_config" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">tool_config</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#llmengine.CreateBatchCompletionsRequest.tool_config" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>tool_config: Optional[ToolConfig] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Configuration for tool use.
+NOTE: this config is highly experimental and signature will change significantly in future iterations.</p>
   </div>
 
 </div>
