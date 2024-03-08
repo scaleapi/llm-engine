@@ -143,6 +143,7 @@
             - model_config
             - data_parallelism
             - max_runtime_sec
+            - tool_config
 
 ::: llmengine.CreateBatchCompletionsResponse
     options:
