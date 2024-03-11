@@ -132,7 +132,7 @@ def get_vllm_engine(model, request):
         tensor_parallel_size=request.model_config.num_shards,
         seed=request.model_config.seed or 0,
         disable_log_requests=True,
-        gpu_memory_utilization=0.8,  # To avoid OOM errors when there's host machine GPU usage
+        gpu_memory_utilization=0.9,
     )
 
     llm = AsyncLLMEngine.from_engine_args(engine_args)
@@ -432,6 +432,7 @@ def check_unknown_startup_memory_usage():  # pragma: no cover
     """Check for unknown memory usage at startup."""
     gpu_free_memory = get_gpu_free_memory()
     if gpu_free_memory is not None:
+        print(f"GPU free memory at startup in MB: {gpu_free_memory}")
         min_mem = min(gpu_free_memory)
         max_mem = max(gpu_free_memory)
         if max_mem - min_mem > 10:
