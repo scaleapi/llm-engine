@@ -279,6 +279,7 @@ class CompletionSyncV1Request(BaseModel):
     frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     top_k: Optional[int] = Field(default=None, ge=-1)
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
+    # include_stop_str_in_output: Optional[bool] = Field(default=None)  # TODO
 
 
 class TokenOutput(BaseModel):
@@ -304,6 +305,8 @@ class CompletionOutput(BaseModel):
 
     text: str
     """The text of the completion."""
+
+    num_prompt_tokens: Optional[int] = None
 
     num_completion_tokens: int
     """Number of tokens in the completion."""
@@ -344,6 +347,7 @@ class CompletionStreamV1Request(BaseModel):
     frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     top_k: Optional[int] = Field(default=None, ge=-1)
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
+    # include_stop_str_in_output: Optional[bool] = Field(default=None)  # TODO
 
 
 class CompletionStreamOutput(BaseModel):
@@ -352,6 +356,8 @@ class CompletionStreamOutput(BaseModel):
 
     finished: bool
     """Whether the completion is finished."""
+
+    num_prompt_tokens: Optional[int] = None
 
     num_completion_tokens: Optional[int] = None
     """Number of tokens in the completion."""
