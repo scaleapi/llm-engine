@@ -19,7 +19,6 @@ from model_engine_server.common.dtos.llms import (
     ToolConfig,
 )
 from model_engine_server.inference.tool_completion.tools import TOOL_MAP, BaseTool, Tools, tokenizer
-from multiprocessing.pool import ThreadPool
 from tqdm import tqdm
 
 CONFIG_FILE = os.getenv("CONFIG_FILE")
