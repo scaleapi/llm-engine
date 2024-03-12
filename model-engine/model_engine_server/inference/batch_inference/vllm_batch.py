@@ -264,6 +264,10 @@ async def generate_with_tool(
                 gen_item.completed = True
                 continue
 
+            if gen_item.remaining_tokens <= 0:
+                gen_item.completed = True
+                continue
+
     results = [
         CompletionOutput(
             text=gen_item.generated_text,
