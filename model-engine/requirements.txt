@@ -21,6 +21,7 @@ amqp==5.1.1
 anyio==3.7.1
     # via
     #   azure-core
+    #   httpx
     #   sse-starlette
     #   starlette
 asgiref==3.7.2
@@ -97,6 +98,8 @@ celery[redis,sqs,tblib]==5.3.6
 certifi==2023.7.22
     # via
     #   datadog-api-client
+    #   httpcore
+    #   httpx
     #   kubernetes
     #   kubernetes-asyncio
     #   requests
@@ -183,6 +186,7 @@ gunicorn==20.1.0
     # via -r model-engine/requirements.in
 h11==0.14.0
     # via
+    #   httpcore
     #   hypercorn
     #   uvicorn
     #   wsproto
@@ -190,8 +194,12 @@ h2==4.1.0
     # via hypercorn
 hpack==4.0.0
     # via h2
+httpcore==1.0.4
+    # via httpx
 httptools==0.5.0
     # via -r model-engine/requirements.in
+httpx==0.27.0
+    # via starlette
 huggingface-hub==0.20.3
     # via
     #   tokenizers
@@ -203,6 +211,7 @@ hyperframe==6.0.1
 idna==3.4
     # via
     #   anyio
+    #   httpx
     #   requests
     #   yarl
 importlib-metadata==6.8.0
@@ -224,7 +233,9 @@ isodate==0.6.1
     #   azure-servicebus
     #   azure-storage-blob
 itsdangerous==2.1.2
-    # via quart
+    # via
+    #   quart
+    #   starlette
 jaraco-classes==3.3.0
     # via keyring
 jeepney==0.8.0
@@ -235,6 +246,7 @@ jinja2==3.0.3
     # via
     #   -r model-engine/requirements.in
     #   quart
+    #   starlette
 jmespath==1.0.1
     # via
     #   boto3
@@ -368,13 +380,16 @@ python-dateutil==2.8.2
     #   kubernetes-asyncio
     #   pg8000
 python-multipart==0.0.7
-    # via -r model-engine/requirements.in
+    # via
+    #   -r model-engine/requirements.in
+    #   starlette
 pyyaml==6.0.1
     # via
     #   huggingface-hub
     #   kubeconfig
     #   kubernetes
     #   kubernetes-asyncio
+    #   starlette
     #   transformers
 quart==0.18.3
     # via -r model-engine/requirements.in
@@ -451,7 +466,9 @@ smmap==5.0.0
 smmap2==3.0.1
     # via gitdb2
 sniffio==1.3.0
-    # via anyio
+    # via
+    #   anyio
+    #   httpx
 sqlalchemy[asyncio]==2.0.4
     # via
     #   -r model-engine/requirements.in
@@ -460,7 +477,7 @@ sse-starlette==2.0.0
     # via -r model-engine/requirements.in
 sseclient-py==1.7.2
     # via -r model-engine/requirements.in
-starlette==0.36.3
+starlette[full]==0.36.3
     # via
     #   -r model-engine/requirements.in
     #   fastapi

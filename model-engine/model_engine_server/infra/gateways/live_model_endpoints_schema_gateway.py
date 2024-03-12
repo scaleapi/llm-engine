@@ -3,8 +3,9 @@ from enum import Enum
 from typing import Any, Callable, Dict, Sequence, Set, Type, Union
 
 from fastapi import routing
+from fastapi._compat import GenerateJsonSchema, get_model_definitions
+from fastapi.openapi.constants import REF_TEMPLATE
 from fastapi.openapi.utils import get_openapi_path
-from fastapi.utils import get_model_definitions
 from model_engine_server.common.dtos.tasks import (
     EndpointPredictV1Request,
     GetAsyncTaskV1Response,
@@ -119,8 +120,13 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
             if isinstance(route, routing.APIRoute):
                 prefix = model_endpoint_name
                 model_name_map = LiveModelEndpointsSchemaGateway.get_model_name_map(prefix)
+                schema_generator = GenerateJsonSchema(ref_template=REF_TEMPLATE)
                 result = get_openapi_path(
-                    route=route, model_name_map=model_name_map, operation_ids=operation_ids
+                    route=route,
+                    model_name_map=model_name_map,
+                    operation_ids=operation_ids,
+                    schema_generator=schema_generator,
+                    field_mapping={},
                 )
                 if result:
                     path, security_schemes, path_definitions = result
