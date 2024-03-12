@@ -476,6 +476,11 @@ def _get_broker_endpoint_and_transport_options(
         # Going to try this with defaults first.
         out_broker_transport_options["region"] = os.environ.get("AWS_REGION", "us-west-2")
 
+        # changing wait_time_seconds from the default of 10 based on https://github.com/celery/celery/discussions/7283
+        # goal is to prevent async requests from being stuck in pending when workers die; the hypothesis is that this is caused by SQS long polling
+        out_broker_transport_options["wait_time_seconds"] = 0
+        out_broker_transport_options["polling_interval"] = 5
+
         # NOTE: The endpoints should ideally use predefined queues. However, the sender probably needs the flexibility
         # of not requiring predefined queues.
         # assert (
