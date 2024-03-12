@@ -361,7 +361,7 @@ async def generate_with_vllm(
     top_p,
     prompts,
     bar,
-) -> List[CompletionOutput]:
+) -> List[CompletionOutput]:  # pragma: no cover
     from vllm import SamplingParams
 
     # Add the requests to the engine.
