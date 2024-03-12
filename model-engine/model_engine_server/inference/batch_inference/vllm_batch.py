@@ -19,6 +19,7 @@ from model_engine_server.common.dtos.llms import (
     ToolConfig,
 )
 from model_engine_server.inference.tool_completion.tools import TOOL_MAP, BaseTool, Tools, tokenizer
+from multiprocessing.pool import ThreadPool
 from tqdm import tqdm
 
 CONFIG_FILE = os.getenv("CONFIG_FILE")
@@ -185,7 +186,7 @@ async def generate_with_tool(
 
         outputs = await generate_with_vllm(
             llm,
-            content.max_new_tokens,
+            [generations[iter[1]].remaining_tokens for iter in iter_prompts],
             content.temperature,
             content.stop_sequences,
             content.return_token_log_probs,
@@ -260,11 +261,7 @@ async def generate_with_tool(
             gen_item.generated_text += new_text
 
             # If we didn't just execute a tool, we're done
-            if not gen_item.generated_text.endswith(tool.tool_context_end):
-                gen_item.completed = True
-                continue
-
-            if gen_item.remaining_tokens <= 0:
+            if not gen_item.generated_text.endswith(tool.tool_context_end) or gen_item.remaining_tokens <= 0:
                 gen_item.completed = True
                 continue
 
@@ -320,7 +317,7 @@ async def batch_inference():
 
         outputs = await generate_with_vllm(
             llm,
-            content.max_new_tokens,
+            [content.max_new_tokens] * len(prompts),
             content.temperature,
             content.stop_sequences,
             content.return_token_log_probs,
@@ -366,20 +363,19 @@ async def generate_with_vllm(
     from vllm import SamplingParams
 
     # Add the requests to the engine.
-    sampling_params = SamplingParams(
-        max_tokens=max_new_tokens,
-        temperature=temperature,
-        stop=stop_sequences,
-        logprobs=1 if return_token_log_probs else None,
-        presence_penalty=presence_penalty or 0.0,
-        frequency_penalty=frequency_penalty or 0.0,
-        top_k=top_k or -1,
-        top_p=top_p or 1.0,
-    )
-
     results_generators = []
-    for prompt in prompts:
+    for idx, prompt in enumerate(prompts):
         request_id = random_uuid()
+        sampling_params = SamplingParams(
+            max_tokens=max_new_tokens[idx],
+            temperature=temperature,
+            stop=stop_sequences,
+            logprobs=1 if return_token_log_probs else None,
+            presence_penalty=presence_penalty or 0.0,
+            frequency_penalty=frequency_penalty or 0.0,
+            top_k=top_k or -1,
+            top_p=top_p or 1.0,
+        )
         results_generator = await engine.add_request(
             request_id, prompt, sampling_params, None, time.monotonic()
         )
