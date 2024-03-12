@@ -90,6 +90,11 @@ class HostedModelInferenceServiceConfig:
         return f"rediss://{username}:{password}@{self.cache_redis_azure_host}"
 
     @property
+    def cache_redis_url_expiration(self) -> Optional[int]:
+        global redis_cache_expiration
+        return redis_cache_expiration
+
+    @property
     def cache_redis_host_port(self) -> str:
         # redis://redis.url:6379/<db_index>
         # -> redis.url:6379
