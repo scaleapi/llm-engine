@@ -260,7 +260,10 @@ async def generate_with_tool(
             gen_item.generated_text += new_text
 
             # If we didn't just execute a tool, we're done
-            if not gen_item.generated_text.endswith(tool.tool_context_end) or gen_item.remaining_tokens <= 0:
+            if (
+                not gen_item.generated_text.endswith(tool.tool_context_end)
+                or gen_item.remaining_tokens <= 0
+            ):
                 gen_item.completed = True
                 continue
 
