@@ -2,12 +2,12 @@ from datetime import datetime
 from typing import Dict, NamedTuple, Tuple
 
 import pytz
-from azure.core.exceptions import ResourceNotFoundError
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.env_vars import CIRCLECI, GIT_TAG
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import GpuType, ModelEndpointInfraState
+from model_engine_server.domain.exceptions import DockerRepositoryNotFoundException
 from model_engine_server.domain.repositories import DockerRepository
 from model_engine_server.infra.gateways.resources.image_cache_gateway import (
     CachedImages,
@@ -81,11 +81,11 @@ class ImageCacheService:
         )
         latest_tag = "fake_docker_repository_latest_image_tag"
         if not CIRCLECI:
-            try:
+            try:  # pragma: no cover
                 latest_tag = self.docker_repository.get_latest_image_tag(
                     hmi_config.batch_inference_vllm_repository
                 )
-            except ResourceNotFoundError:
+            except DockerRepositoryNotFoundException:
                 pass
         vllm_batch_image_latest = DockerImage(
             f"{infra_config().docker_repo_prefix}/{hmi_config.batch_inference_vllm_repository}",

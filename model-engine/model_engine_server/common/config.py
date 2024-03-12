@@ -30,7 +30,7 @@ DEFAULT_SERVICE_CONFIG_PATH = str(
 
 SERVICE_CONFIG_PATH = os.environ.get("DEPLOY_SERVICE_CONFIG_PATH", DEFAULT_SERVICE_CONFIG_PATH)
 
-redis_cache_expiration = None
+redis_cache_expiration_timestamp = None
 
 
 # duplicated from llm/ia3_finetune
@@ -85,14 +85,14 @@ class HostedModelInferenceServiceConfig:
         username = os.getenv("AZURE_OBJECT_ID")
         token = DefaultAzureCredential().get_token("https://redis.azure.com/.default")
         password = token.token
-        global redis_cache_expiration
-        redis_cache_expiration = token.expires_on
+        global redis_cache_expiration_timestamp
+        redis_cache_expiration_timestamp = token.expires_on
         return f"rediss://{username}:{password}@{self.cache_redis_azure_host}"
 
     @property
-    def cache_redis_url_expiration(self) -> Optional[int]:
-        global redis_cache_expiration
-        return redis_cache_expiration
+    def cache_redis_url_expiration_timestamp(self) -> Optional[int]:
+        global redis_cache_expiration_timestamp
+        return redis_cache_expiration_timestamp
 
     @property
     def cache_redis_host_port(self) -> str:
