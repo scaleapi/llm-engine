@@ -306,7 +306,10 @@ class CompletionOutput(BaseModel):
     text: str
     """The text of the completion."""
 
+    # We're not guaranteed to have `num_prompt_tokens` in the response in all cases, so to be safe, set a default.
+    # If we send request to api.spellbook.scale.com, we don't get this back.
     num_prompt_tokens: Optional[int] = None
+    """Number of tokens in the prompt."""
 
     num_completion_tokens: int
     """Number of tokens in the completion."""
@@ -357,7 +360,9 @@ class CompletionStreamOutput(BaseModel):
     finished: bool
     """Whether the completion is finished."""
 
+    # We're not guaranteed to have `num_prompt_tokens` in the response in all cases, so to be safe, set a default.
     num_prompt_tokens: Optional[int] = None
+    """Number of tokens in the prompt."""
 
     num_completion_tokens: Optional[int] = None
     """Number of tokens in the completion."""
