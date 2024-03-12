@@ -1,12 +1,13 @@
 import asyncio
 import os
+import time
 from dataclasses import dataclass
 from typing import Callable, Optional
 
 import aioredis
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from model_engine_server.common.config import hmi_config
+from model_engine_server.common.config import hmi_config, redis_cache_expiration
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.auth.authentication_repository import AuthenticationRepository, User
@@ -442,6 +443,8 @@ _pool: Optional[aioredis.BlockingConnectionPool] = None
 def get_or_create_aioredis_pool() -> aioredis.ConnectionPool:
     global _pool
 
-    if _pool is None:
+    if _pool is None or (
+        redis_cache_expiration is not None and time.time() > redis_cache_expiration
+    ):
         _pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
     return _pool
