@@ -1,10 +1,12 @@
 import asyncio
 import json
+import multiprocessing
 import os
 import subprocess
 import sys
 import time
 import uuid
+from multiprocessing.pool import ThreadPool
 from typing import List, Optional, Type
 from urllib.parse import urlparse
 
@@ -26,6 +28,8 @@ AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
 MODEL_WEIGHTS_FOLDER = os.getenv("MODEL_WEIGHTS_FOLDER", "./model_weights")
 
 os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+
+CPU_COUNT = multiprocessing.cpu_count()
 
 
 def get_s3_client():
@@ -202,7 +206,8 @@ async def generate_with_tool(
             desc=f"Running tools, iteration {num_iters}",
             file=sys.stdout,
         )
-        for i in range(len(iter_prompts)):
+
+        def tool_func(i):
             bar.update(1)
             response = outputs[i]
             gen_item = generations[iter_prompts[i][1]]
@@ -217,7 +222,7 @@ async def generate_with_tool(
             # break the loop if generation is complete even if remaining_tokens>0
             if len(new_text) == 0:
                 gen_item.completed = True
-                continue
+                return
 
             # To-do write tools to receive response object itself rather than the text
             try:
@@ -265,7 +270,9 @@ async def generate_with_tool(
                 or gen_item.remaining_tokens <= 0
             ):
                 gen_item.completed = True
-                continue
+
+        pool = ThreadPool(CPU_COUNT)
+        pool.map(tool_func, range(len(iter_prompts)))
 
     results = [
         CompletionOutput(

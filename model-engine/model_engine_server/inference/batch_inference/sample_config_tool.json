@@ -1,13 +1,13 @@
 {
-    "input_data_path":"s3://scale-ml/enterprise/chihuahua/batch_completition_data/21742ba078d844db8b3fc21c07b3d6a9.json",
+    "input_data_path":"./sample_data_tool.json",
     "output_data_path":"./sample_output_tool.json",
     "model_config":{
-        "model":"mistral-7b-instruct",
-        "checkpoint_path":"s3://scale-ml/sagemaker/users/chihuahua/rlxf/copied_checkpoint/chihuahua-rlxf-20240310-235252/checkpoint-852",
+        "model":"mistral-7b",
+        "checkpoint_path":"my_path",
         "num_shards": 1,
         "labels": {"team": "my_team"}
     },
-    "data_parallelism":1,
+    "data_parallelism":2,
     "tool_config": {
         "name": "code_evaluator"
     }
