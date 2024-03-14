@@ -1,5 +1,6 @@
 import argparse
 import json
+from datetime import datetime
 from typing import Any, Dict, Optional, TypedDict, Union
 
 from celery import Celery, Task, states
@@ -112,13 +113,17 @@ def create_celery_service(
     # See documentation for options:
     # https://docs.celeryproject.org/en/stable/userguide/tasks.html#list-of-options
     @app.task(base=ErrorHandlingTask, name=LIRA_CELERY_TASK_NAME, track_started=True)
-    def exec_func(payload, *ignored_args, **ignored_kwargs):
+    def exec_func(payload, arrival_timestamp, *ignored_args, **ignored_kwargs):
+        logger.info(f"Arrival timestamp is {arrival_timestamp}")
         if len(ignored_args) > 0:
             logger.warning(f"Ignoring {len(ignored_args)} positional arguments: {ignored_args=}")
         if len(ignored_kwargs) > 0:
             logger.warning(f"Ignoring {len(ignored_kwargs)} keyword arguments: {ignored_kwargs=}")
         try:
-            return forwarder(payload)
+            result = forwarder(payload)
+            request_duration = datetime.now() - arrival_timestamp
+            logger.info(f"Request duration is {request_duration}")
+            return result
         except Exception:
             logger.exception("Celery service failed to respond to request.")
             raise
