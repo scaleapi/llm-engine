@@ -7,7 +7,11 @@ from celery import Celery, Task, states
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
-from model_engine_server.core.celery import TaskVisibility, celery_app
+from model_engine_server.core.celery import (
+    DEFAULT_TASK_VISIBILITY_SECONDS,
+    TaskVisibility,
+    celery_app,
+)
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.utils.format import format_stacktrace
@@ -124,9 +128,10 @@ def create_celery_service(
         if len(ignored_kwargs) > 0:
             logger.warning(f"Ignoring {len(ignored_kwargs)} keyword arguments: {ignored_kwargs=}")
         try:
+            monitoring_metrics_gateway.emit_async_task_received_metric(queue_name)
             result = forwarder(payload)
             request_duration = datetime.now() - arrival_timestamp
-            if request_duration > timedelta(hours=12):  # longer than default visibility timeout
+            if request_duration > timedelta(seconds=DEFAULT_TASK_VISIBILITY_SECONDS):
                 monitoring_metrics_gateway.emit_async_task_stuck_metric(queue_name)
             return result
         except Exception:
@@ -141,7 +146,7 @@ def create_celery_service(
         name=DEFAULT_CELERY_TASK_NAME,
         track_started=True,
     )
-    def exec_func_pre_lira(payload, *ignored_args, **ignored_kwargs):
+    def exec_func_pre_lira(payload, arrival_timestamp, *ignored_args, **ignored_kwargs):
         return exec_func(payload, *ignored_args, **ignored_kwargs)
 
     return app
