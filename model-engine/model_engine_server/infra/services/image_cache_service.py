@@ -92,7 +92,7 @@ class ImageCacheService:
             latest_tag,
         )
         forwarder_image = DockerImage(
-            f"{infra_config().docker_repo_prefix}/launch/gateway", GIT_TAG
+            f"{infra_config().docker_repo_prefix}/model-engine/gateway", GIT_TAG
         )
 
         for llm_image in [
