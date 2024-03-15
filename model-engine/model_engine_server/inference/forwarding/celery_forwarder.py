@@ -147,7 +147,7 @@ def create_celery_service(
         track_started=True,
     )
     def exec_func_pre_lira(payload, arrival_timestamp, *ignored_args, **ignored_kwargs):
-        return exec_func(payload, *ignored_args, **ignored_kwargs)
+        return exec_func(payload, arrival_timestamp, *ignored_args, **ignored_kwargs)
 
     return app
 
