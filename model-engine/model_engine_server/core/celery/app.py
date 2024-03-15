@@ -31,6 +31,9 @@ backends.BACKEND_ALIASES[
 ] = "model_engine_server.core.celery.abs:AzureBlockBlobBackend"
 
 
+DEFAULT_TASK_VISIBILITY_SECONDS = 86400
+
+
 @unique
 class TaskVisibility(IntEnum):
     """
