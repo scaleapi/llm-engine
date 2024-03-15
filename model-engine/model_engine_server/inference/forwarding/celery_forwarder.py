@@ -1,6 +1,6 @@
 import argparse
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, TypedDict, Union
 
 from celery import Celery, Task, states
@@ -15,6 +15,9 @@ from model_engine_server.inference.forwarding.forwarding import (
     Forwarder,
     LoadForwarder,
     load_named_config,
+)
+from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
+    DatadogInferenceMonitoringMetricsGateway,
 )
 
 logger = make_logger(logger_name())
@@ -69,6 +72,8 @@ def create_celery_service(
         backend_protocol=backend_protocol,
     )
 
+    monitoring_metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
+
     class ErrorHandlingTask(Task):
         """Sets a 'custom' field with error in the Task response for FAILURE.
 
@@ -114,7 +119,6 @@ def create_celery_service(
     # https://docs.celeryproject.org/en/stable/userguide/tasks.html#list-of-options
     @app.task(base=ErrorHandlingTask, name=LIRA_CELERY_TASK_NAME, track_started=True)
     def exec_func(payload, arrival_timestamp, *ignored_args, **ignored_kwargs):
-        logger.info(f"Arrival timestamp is {arrival_timestamp}")
         if len(ignored_args) > 0:
             logger.warning(f"Ignoring {len(ignored_args)} positional arguments: {ignored_args=}")
         if len(ignored_kwargs) > 0:
@@ -122,7 +126,8 @@ def create_celery_service(
         try:
             result = forwarder(payload)
             request_duration = datetime.now() - arrival_timestamp
-            logger.info(f"Request duration is {request_duration}")
+            if request_duration > timedelta(hours=12):  # longer than default visibility timeout
+                monitoring_metrics_gateway.emit_async_task_stuck_metric(queue_name)
             return result
         except Exception:
             logger.exception("Celery service failed to respond to request.")
