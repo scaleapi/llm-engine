@@ -91,9 +91,7 @@ class ImageCacheService:
             f"{infra_config().docker_repo_prefix}/{hmi_config.batch_inference_vllm_repository}",
             latest_tag,
         )
-        forwarder_image = DockerImage(
-            f"{infra_config().docker_repo_prefix}/model-engine/gateway", GIT_TAG
-        )
+        forwarder_image = DockerImage(f"{infra_config().docker_repo_prefix}/model-engine", GIT_TAG)
 
         for llm_image in [
             istio_image,
