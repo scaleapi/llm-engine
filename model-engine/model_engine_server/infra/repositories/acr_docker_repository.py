@@ -6,6 +6,7 @@ from azure.identity import DefaultAzureCredential
 from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.domain.exceptions import DockerRepositoryNotFoundException
 from model_engine_server.domain.repositories import DockerRepository
 
 logger = make_logger(logger_name())
@@ -36,7 +37,11 @@ class ACRDockerRepository(DockerRepository):
         credential = DefaultAzureCredential()
         client = ContainerRegistryClient(endpoint, credential)
 
-        image = client.list_manifest_properties(
-            repository_name, order_by="time_desc", results_per_page=1
-        ).next()
-        return image.tags[0]
+        try:
+            image = client.list_manifest_properties(
+                repository_name, order_by="time_desc", results_per_page=1
+            ).next()
+            # Azure automatically deletes empty ACR repositories, so repos will always have at least one image
+            return image.tags[0]
+        except ResourceNotFoundError:
+            raise DockerRepositoryNotFoundException

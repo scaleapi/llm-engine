@@ -7,6 +7,7 @@ from model_engine_server.common.env_vars import CIRCLECI, GIT_TAG
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import GpuType, ModelEndpointInfraState
+from model_engine_server.domain.exceptions import DockerRepositoryNotFoundException
 from model_engine_server.domain.repositories import DockerRepository
 from model_engine_server.infra.gateways.resources.image_cache_gateway import (
     CachedImages,
@@ -78,11 +79,14 @@ class ImageCacheService:
         vllm_image_032 = DockerImage(
             f"{infra_config().docker_repo_prefix}/{hmi_config.vllm_repository}", "0.3.2"
         )
-        latest_tag = (
-            self.docker_repository.get_latest_image_tag(hmi_config.batch_inference_vllm_repository)
-            if not CIRCLECI
-            else "fake_docker_repository_latest_image_tag"
-        )
+        latest_tag = "fake_docker_repository_latest_image_tag"
+        if not CIRCLECI:
+            try:  # pragma: no cover
+                latest_tag = self.docker_repository.get_latest_image_tag(
+                    hmi_config.batch_inference_vllm_repository
+                )
+            except DockerRepositoryNotFoundException:
+                pass
         vllm_batch_image_latest = DockerImage(
             f"{infra_config().docker_repo_prefix}/{hmi_config.batch_inference_vllm_repository}",
             latest_tag,
