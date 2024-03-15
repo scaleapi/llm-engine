@@ -41,6 +41,12 @@ class DockerImageNotFoundException(DomainException):
     tag: str
 
 
+class DockerRepositoryNotFoundException(DomainException):
+    """
+    Thrown when a Docker repository that is trying to be accessed doesn't exist.
+    """
+
+
 class DockerBuildFailedException(DomainException):
     """
     Thrown if the server failed to build a docker image.

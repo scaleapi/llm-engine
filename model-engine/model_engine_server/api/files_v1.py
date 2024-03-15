@@ -44,7 +44,7 @@ async def upload_file(
     )
     return await use_case.execute(
         user=auth,
-        filename=file.filename,
+        filename=file.filename or "",
         content=file.file.read(),
     )
 

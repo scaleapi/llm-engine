@@ -360,15 +360,14 @@ def test_create_streaming_task_success(
         fake_batch_job_progress_gateway_contents={},
         fake_docker_image_batch_job_bundle_repository_contents={},
     )
-    response = client.post(
-        f"/v1/streaming-tasks?model_endpoint_id={model_endpoint_streaming.record.id}",
+    with client.stream(
+        method="POST",
+        url=f"/v1/streaming-tasks?model_endpoint_id={model_endpoint_streaming.record.id}",
         auth=(test_api_key, ""),
         json=endpoint_predict_request_1[1],
-        stream=True,
-    )
-    assert response.status_code == 200
-    count = 0
-    for message in response:
-        assert message == b'data: {"status": "SUCCESS", "result": null, "traceback": null}\r\n\r\n'
-        count += 1
-    assert count == 1
+    ) as response:
+        assert response.status_code == 200
+        assert (
+            response.read()
+            == b'data: {"status": "SUCCESS", "result": null, "traceback": null}\r\n\r\n'
+        )
