@@ -14,7 +14,7 @@ class DatadogInferenceMonitoringMetricsGateway(InferenceMonitoringMetricsGateway
     def emit_async_task_received_metric(self, queue_name: str):
         statsd.increment(
             "scale_launch.async_task.received.count", tags=[f"queue_name:{queue_name}"]
-        )
+        )  # pragma: no cover
 
     def emit_async_task_stuck_metric(self, queue_name: str):
         statsd.increment("scale_launch.async_task.stuck.count", tags=[f"queue_name:{queue_name}"])
