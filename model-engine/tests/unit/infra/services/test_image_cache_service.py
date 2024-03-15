@@ -66,7 +66,7 @@ async def test_caching_finetune_llm_images(
         f"{infra_config().docker_repo_prefix}/{hmi_config.batch_inference_vllm_repository}",
         latest_tag,
     )
-    forwarder_image = DockerImage(f"{infra_config().docker_repo_prefix}/launch/gateway", GIT_TAG)
+    forwarder_image = DockerImage(f"{infra_config().docker_repo_prefix}/model-engine", GIT_TAG)
 
     for key in ["a10", "a100"]:
         for llm_image in [
