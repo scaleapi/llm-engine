@@ -1,12 +1,17 @@
 import argparse
 import json
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, TypedDict, Union
 
 from celery import Celery, Task, states
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
-from model_engine_server.core.celery import TaskVisibility, celery_app
+from model_engine_server.core.celery import (
+    DEFAULT_TASK_VISIBILITY_SECONDS,
+    TaskVisibility,
+    celery_app,
+)
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.utils.format import format_stacktrace
@@ -14,6 +19,9 @@ from model_engine_server.inference.forwarding.forwarding import (
     Forwarder,
     LoadForwarder,
     load_named_config,
+)
+from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
+    DatadogInferenceMonitoringMetricsGateway,
 )
 
 logger = make_logger(logger_name())
@@ -68,6 +76,8 @@ def create_celery_service(
         backend_protocol=backend_protocol,
     )
 
+    monitoring_metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
+
     class ErrorHandlingTask(Task):
         """Sets a 'custom' field with error in the Task response for FAILURE.
 
@@ -112,13 +122,18 @@ def create_celery_service(
     # See documentation for options:
     # https://docs.celeryproject.org/en/stable/userguide/tasks.html#list-of-options
     @app.task(base=ErrorHandlingTask, name=LIRA_CELERY_TASK_NAME, track_started=True)
-    def exec_func(payload, *ignored_args, **ignored_kwargs):
+    def exec_func(payload, arrival_timestamp, *ignored_args, **ignored_kwargs):
         if len(ignored_args) > 0:
             logger.warning(f"Ignoring {len(ignored_args)} positional arguments: {ignored_args=}")
         if len(ignored_kwargs) > 0:
             logger.warning(f"Ignoring {len(ignored_kwargs)} keyword arguments: {ignored_kwargs=}")
         try:
-            return forwarder(payload)
+            monitoring_metrics_gateway.emit_async_task_received_metric(queue_name)
+            result = forwarder(payload)
+            request_duration = datetime.now() - arrival_timestamp
+            if request_duration > timedelta(seconds=DEFAULT_TASK_VISIBILITY_SECONDS):
+                monitoring_metrics_gateway.emit_async_task_stuck_metric(queue_name)
+            return result
         except Exception:
             logger.exception("Celery service failed to respond to request.")
             raise
@@ -131,8 +146,8 @@ def create_celery_service(
         name=DEFAULT_CELERY_TASK_NAME,
         track_started=True,
     )
-    def exec_func_pre_lira(payload, *ignored_args, **ignored_kwargs):
-        return exec_func(payload, *ignored_args, **ignored_kwargs)
+    def exec_func_pre_lira(payload, arrival_timestamp, *ignored_args, **ignored_kwargs):
+        return exec_func(payload, arrival_timestamp, *ignored_args, **ignored_kwargs)
 
     return app
 

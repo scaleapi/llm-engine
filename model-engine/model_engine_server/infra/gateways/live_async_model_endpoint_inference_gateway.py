@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME
 from model_engine_server.common.dtos.tasks import (
@@ -37,7 +38,7 @@ class LiveAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
         send_task_response = self.task_queue_gateway.send_task(
             task_name=task_name,
             queue_name=topic,
-            args=[predict_args, predict_request.return_pickled],
+            args=[predict_args, datetime.now(), predict_request.return_pickled],
             expires=task_timeout_seconds,
         )
         return CreateAsyncTaskV1Response(task_id=send_task_response.task_id)

@@ -30,3 +30,23 @@ class InferenceMonitoringMetricsGateway(ABC):
         Args:
             hook: The name of the hook
         """
+
+    @abstractmethod
+    def emit_async_task_received_metric(self, queue_name: str):
+        """
+        Async task received metric
+
+        Args:
+            queue_name: The name of the Celery queue
+        """
+        pass
+
+    @abstractmethod
+    def emit_async_task_stuck_metric(self, queue_name: str):
+        """
+        Async task stuck metric
+
+        Args:
+            queue_name: The name of the Celery queue
+        """
+        pass
