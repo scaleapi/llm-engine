@@ -77,7 +77,7 @@ class DockerImageBatchJobLLMFineTuningService(LLMFineTuningService):
             raise LLMFineTuningMethodNotImplementedException("Fine-tuning method not accessible")
 
         # TODO: Pass user-defined labels
-        labels = dict(team="egp", product="llm-fine-tune")
+        labels = dict(team="egp", product="training.llm_engine_fine_tune")
 
         logger.info(
             f"Using bundle {di_batch_job_bundle.id} for fine-tune job: {di_batch_job_bundle.image_repository=}, {di_batch_job_bundle.image_tag=}"
