@@ -15,6 +15,14 @@ BASE_PATH = os.environ.get("BASE_PATH", _DEFAULT_BASE_PATH)
 print(f"Integration tests using gateway {BASE_PATH=}")
 DEFAULT_NETWORK_TIMEOUT_SEC = 10
 
+# add suffix to avoid name collisions
+SERVICE_IDENTIFIER = os.environ.get("SERVICE_IDENTIFIER", "")
+
+
+def format_name(name: str) -> str:
+    return f"{name}-{SERVICE_IDENTIFIER}" if SERVICE_IDENTIFIER else name
+
+
 # Use the scale-launch-integration-tests id
 USER_ID_0 = os.getenv("TEST_USER_ID", "fakeuser")
 
@@ -36,7 +44,7 @@ def echo_load_model_fn():
 
 
 CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
-    "name": "model_bundle_simple",
+    "name": format_name("model_bundle_simple"),
     "schema_location": "s3://model-engine-integration-tests/model_bundles/echo_schemas",
     "metadata": {
         "test_key": "test_value",
@@ -55,7 +63,7 @@ CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
 }
 
 CREATE_MODEL_BUNDLE_REQUEST_RUNNABLE_IMAGE = {
-    "name": "model_bundle_runnable_image",
+    "name": format_name("model_bundle_runnable_image"),
     "schema_location": "s3://model-engine-integration-tests/model_bundles/echo_schemas",
     "metadata": {
         "test_key": "test_value",
@@ -96,8 +104,8 @@ CREATE_MODEL_BUNDLE_REQUEST_RUNNABLE_IMAGE = {
 }
 
 CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_SIMPLE = {
-    "bundle_name": "model_bundle_simple",
-    "name": "model-endpoint-simple-async",
+    "bundle_name": format_name("model_bundle_simple"),
+    "name": format_name("model-endpoint-simple-async"),
     "endpoint_type": "async",
     "cpus": "0.5",
     "memory": "500Mi",
@@ -110,12 +118,12 @@ CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_SIMPLE = {
 }
 
 CREATE_SYNC_MODEL_ENDPOINT_REQUEST_SIMPLE = CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_SIMPLE.copy()
-CREATE_SYNC_MODEL_ENDPOINT_REQUEST_SIMPLE["name"] = "model-endpoint-simple-sync"
+CREATE_SYNC_MODEL_ENDPOINT_REQUEST_SIMPLE["name"] = format_name("model-endpoint-simple-sync")
 CREATE_SYNC_MODEL_ENDPOINT_REQUEST_SIMPLE["endpoint_type"] = "sync"
 
 CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = {
-    "bundle_name": "model_bundle_runnable_image",
-    "name": "model-endpoint-runnable-image-async",
+    "bundle_name": format_name("model_bundle_runnable_image"),
+    "name": format_name("model-endpoint-runnable-async"),
     "post_inference_hooks": [],
     "endpoint_type": "async",
     "cpus": "1",
@@ -132,20 +140,20 @@ CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = {
 CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = (
     CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE.copy()
 )
-CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE[
-    "name"
-] = "model-endpoint-runnable-image-sync-streaming"
+CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE["name"] = format_name(
+    "model-endpoint-runnable-sync-streaming"
+)
 CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE["endpoint_type"] = "streaming"
 
 UPDATE_MODEL_ENDPOINT_REQUEST_SIMPLE = {
-    "bundle_name": "model_bundle_simple",
+    "bundle_name": format_name("model_bundle_simple"),
     "cpus": "1",
     "memory": "1Gi",
     "max_workers": 2,
 }
 
 UPDATE_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = {
-    "bundle_name": "model_bundle_runnable_image",
+    "bundle_name": format_name("model_bundle_runnable_image"),
     "cpus": "2",
     "memory": "2Gi",
     "max_workers": 2,
@@ -163,7 +171,7 @@ INFERENCE_PAYLOAD_RETURN_PICKLED_TRUE: Dict[str, Any] = INFERENCE_PAYLOAD.copy()
 INFERENCE_PAYLOAD_RETURN_PICKLED_TRUE["return_pickled"] = True
 
 CREATE_BATCH_JOB_REQUEST: Dict[str, Any] = {
-    "bundle_name": "model_bundle_simple",
+    "bundle_name": format_name("model_bundle_simple"),
     "input_path": "TBA",
     "serialization_format": "JSON",
     "labels": {"team": "infra", "product": "launch"},
@@ -175,7 +183,7 @@ CREATE_BATCH_JOB_REQUEST: Dict[str, Any] = {
 }
 
 CREATE_DOCKER_IMAGE_BATCH_JOB_BUNDLE_REQUEST: Dict[str, Any] = {
-    "name": "di_batch_job_bundle_1",
+    "name": format_name("di_batch_job_bundle_1"),
     "image_repository": "model-engine",
     "image_tag": "2c1951dfff7159d7d29dd13b4f888e8355f8d51e",
     "command": ["jq", ".", "/launch_mount_location/file"],
@@ -188,14 +196,14 @@ CREATE_DOCKER_IMAGE_BATCH_JOB_BUNDLE_REQUEST: Dict[str, Any] = {
 }
 
 CREATE_DOCKER_IMAGE_BATCH_JOB_REQUEST: Dict[str, Any] = {
-    "docker_image_batch_job_bundle_name": "di_batch_job_bundle_1",
+    "docker_image_batch_job_bundle_name": format_name("di_batch_job_bundle_1"),
     "job_config": {"data": {"to": "mount"}},
     "labels": {"team": "infra", "product": "testing"},
     "resource_requests": {"cpus": 0.15, "memory": "15Mi"},
 }
 
 CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST: Dict[str, Any] = {
-    "name": "fine_tune_di_batch_job_bundle_1",
+    "name": format_name("fine_tune_di_batch_job_bundle_1"),
     "image_repository": "model-engine",
     "image_tag": "2c1951dfff7159d7d29dd13b4f888e8355f8d51e",
     "command": ["cat", "/launch_mount_location/file"],
@@ -700,9 +708,16 @@ def ensure_n_ready_endpoints_short(n: int, user_id: str):
     assert len(ready_endpoints) >= n
 
 
-def delete_all_endpoints(user_id):
+def delete_all_endpoints(user_id: str, delete_suffix_only: bool):
     endpoints = list_model_endpoints(user_id)
     for i, endpoint in enumerate(endpoints):
+        if (
+            delete_suffix_only
+            and SERVICE_IDENTIFIER
+            and not endpoint["name"].endswith(SERVICE_IDENTIFIER)
+        ):
+            continue
+
         response = delete_model_endpoint(endpoint["name"], user_id)
         assert response["deleted"]
         print(f"[{i + 1}/{len(endpoints)}] Deleted {endpoint=}")
@@ -745,7 +760,9 @@ def ensure_all_async_tasks_success(task_ids: List[str], user_id: str, return_pic
         ensure_inference_task_response_is_correct(response, return_pickled)
 
 
-def delete_existing_endpoints(users: Sequence[str] = DEFAULT_USERS) -> None:
+def delete_existing_endpoints(
+    users: Sequence[str] = DEFAULT_USERS, delete_suffix_only: bool = True
+) -> None:
     if len(users) == 0:
         raise ValueError("Must supply at least one user!")
 
@@ -778,8 +795,9 @@ def delete_existing_endpoints(users: Sequence[str] = DEFAULT_USERS) -> None:
     print(f"[{len({users})}] Deleting all user endpoints...")
     try:
         for i, u in enumerate(users):
-            print(f"[{i + 1}/{len(users)}] Deleting all endpoints for user with ID {u}")
-            delete_all_endpoints(u)
+            suffix_msg = f" with suffix {SERVICE_IDENTIFIER}" if delete_suffix_only else ""
+            print(f"[{i + 1}/{len(users)}] Deleting all endpoints{suffix_msg} for user with ID {u}")
+            delete_all_endpoints(u, delete_suffix_only)
     except Exception:  # noqa
         try:
             j: str = json.dumps(all_endpoint_info, indent=2)
@@ -788,5 +806,4 @@ def delete_existing_endpoints(users: Sequence[str] = DEFAULT_USERS) -> None:
         barrier: str = "-" * 80
         print(f"ERROR! Deletion failed. All endpoint information:\n{barrier}\n{j}\n{barrier}")
         raise
-
     time.sleep(15)
