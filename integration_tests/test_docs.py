@@ -2,7 +2,6 @@
 # flake8: noqa: W605
 import importlib.util
 import os
-import random
 import re
 from pathlib import Path
 from textwrap import dedent
@@ -13,6 +12,7 @@ from _pytest.assertion.rewrite import AssertionRewritingHook
 ROOT_DIR = Path(__file__).parent.parent
 
 TEST_SKIP_MAGIC_STRING = "# test='skip'"
+SERVICE_IDENTIFIER = os.environ.get("SERVICE_IDENTIFIER", "")
 
 
 @pytest.fixture
@@ -51,17 +51,11 @@ def env():
 
 
 @pytest.fixture()
-def seed() -> int:
-    """Returns a random seed between 0 and 999, inclusive."""
-    return random.randint(0, 999)
-
-
-@pytest.fixture()
 def integration_test_user_id() -> str:
-    return "62bc820451dbea002b1c5421"
+    return os.getenv("TEST_USER_ID", "fakeuser")
 
 
-def modify_source(source: str, seed: int) -> str:
+def modify_source(source: str) -> str:
     # Adds some custom logic to update code from docs to comply with some requirements.
     source = re.sub(r"('team'|\"team\"): ('\w+'|\"\w+\")", r"'team': 'infra'", source)
     source = re.sub(
@@ -72,15 +66,21 @@ def modify_source(source: str, seed: int) -> str:
 
     # Add suffix to avoid name collisions
     source = re.sub(
-        r"('endpoint_name'|\"endpoint_name\"): ('(\w+)'|\"(\w+)\")",
-        f"'endpoint_name': '\g<3>\g<4>-{seed}'",
+        r"('endpoint_name'|\"endpoint_name\"): ('([\w-]+)'|\"([\w-]+)\")",
+        rf"'endpoint_name': '\g<3>\g<4>-{SERVICE_IDENTIFIER}'",
         source,
     )
     source = re.sub(
-        r"endpoint_name=('(\w+)'|\"(\w+)\")",
-        f"endpoint_name='\g<2>\g<3>-{seed}'",
+        r"endpoint_name=('([\w-]+)'|\"([\w-]+)\")",
+        rf"endpoint_name='\g<2>\g<3>-{SERVICE_IDENTIFIER}'",
         source,
     )
+    source = re.sub(
+        r"get_model_endpoint\(\"([\w-]+)\"\)",
+        rf'get_model_endpoint("\g<1>-{SERVICE_IDENTIFIER}")',
+        source,
+    )
+
     source = re.sub(r'"repository": "..."', '"repository": "launch_rearch"', source)
     source = re.sub(
         r'"tag": "..."', '"tag": "11d9d42047cc9a0c6435b19e5e91bc7e0ad31efc-cpu"', source
@@ -126,7 +126,7 @@ def modify_source(source: str, seed: int) -> str:
 
 @pytest.fixture
 def import_execute(request, tmp_work_path: Path):
-    def _import_execute(module_name: str, source: str, seed: int, rewrite_assertions: bool = False):
+    def _import_execute(module_name: str, source: str, rewrite_assertions: bool = False):
         if rewrite_assertions:
             loader = AssertionRewritingHook(config=request.config)
             loader.mark_rewrite(module_name)
@@ -134,7 +134,7 @@ def import_execute(request, tmp_work_path: Path):
             loader = None
 
         module_path = tmp_work_path / f"{module_name}.py"
-        modified_source = modify_source(source, seed)
+        modified_source = modify_source(source)
         module_path.write_text(modified_source)
         spec = importlib.util.spec_from_file_location("__main__", str(module_path), loader=loader)
         module = importlib.util.module_from_spec(spec)
@@ -196,7 +196,6 @@ def test_docs_examples(
     source_code,
     import_execute,
     env,
-    seed,
     integration_test_user_id,
 ):
     if source_code == "__skip__":
@@ -205,6 +204,6 @@ def test_docs_examples(
     env("LAUNCH_API_KEY", os.getenv("LAUNCH_TEST_API_KEY", integration_test_user_id))
 
     try:
-        import_execute(module_name, source_code, seed, True)
+        import_execute(module_name, source_code, True)
     except Exception:
         raise
