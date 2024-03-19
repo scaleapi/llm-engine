@@ -516,6 +516,7 @@ def get_model_endpoint(name: str, user_id: str) -> Dict[str, Any]:
     return response.json()["model_endpoints"][0]
 
 
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(20))
 def update_model_endpoint(
     endpoint_name: str, update_model_endpoint_request: Dict[str, Any], user_id: str
 ) -> Dict[str, Any]:

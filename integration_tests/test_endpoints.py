@@ -59,6 +59,14 @@ def ensure_async_inference_works(user, create_endpoint_request, inference_payloa
     ensure_all_async_tasks_success(task_ids, user, return_pickled)
 
 
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(20))
+def ensure_endpoint_updated(create_endpoint_request, update_endpoint_request, user):
+    endpoint = get_model_endpoint(create_endpoint_request["name"], user)
+    assert endpoint["resource_state"]["cpus"] == update_endpoint_request["cpus"]
+    assert endpoint["resource_state"]["memory"] == update_endpoint_request["memory"]
+    assert endpoint["deployment_state"]["max_workers"] == update_endpoint_request["max_workers"]
+
+
 @pytest.mark.parametrize(
     "create_endpoint_request,update_endpoint_request,inference_requests",
     [
@@ -99,13 +107,7 @@ def test_async_model_endpoint(
             ensure_n_ready_endpoints_short(1, user)
 
             print("Checking endpoint state...")
-            endpoint = get_model_endpoint(create_endpoint_request["name"], user)
-            assert endpoint["resource_state"]["cpus"] == update_endpoint_request["cpus"]
-            assert endpoint["resource_state"]["memory"] == update_endpoint_request["memory"]
-            assert (
-                endpoint["deployment_state"]["max_workers"]
-                == update_endpoint_request["max_workers"]
-            )
+            ensure_endpoint_updated(create_endpoint_request, update_endpoint_request, user)
 
             time.sleep(20)
 
