@@ -44,7 +44,7 @@ def echo_load_model_fn():
 
 
 CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
-    "name": format_name("model_bundle_simple"),
+    "name": "model_bundle_simple",
     "schema_location": "s3://model-engine-integration-tests/model_bundles/echo_schemas",
     "metadata": {
         "test_key": "test_value",
@@ -63,7 +63,7 @@ CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
 }
 
 CREATE_MODEL_BUNDLE_REQUEST_RUNNABLE_IMAGE = {
-    "name": format_name("model_bundle_runnable_image"),
+    "name": "model_bundle_runnable_image",
     "schema_location": "s3://model-engine-integration-tests/model_bundles/echo_schemas",
     "metadata": {
         "test_key": "test_value",
@@ -104,7 +104,7 @@ CREATE_MODEL_BUNDLE_REQUEST_RUNNABLE_IMAGE = {
 }
 
 CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_SIMPLE = {
-    "bundle_name": format_name("model_bundle_simple"),
+    "bundle_name": "model_bundle_simple",
     "name": format_name("model-endpoint-simple-async"),
     "endpoint_type": "async",
     "cpus": "0.5",
@@ -122,7 +122,7 @@ CREATE_SYNC_MODEL_ENDPOINT_REQUEST_SIMPLE["name"] = format_name("model-endpoint-
 CREATE_SYNC_MODEL_ENDPOINT_REQUEST_SIMPLE["endpoint_type"] = "sync"
 
 CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = {
-    "bundle_name": format_name("model_bundle_runnable_image"),
+    "bundle_name": "model_bundle_runnable_image",
     "name": format_name("model-endpoint-runnable-async"),
     "post_inference_hooks": [],
     "endpoint_type": "async",
@@ -146,14 +146,14 @@ CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE["name"] = format_nam
 CREATE_SYNC_STREAMING_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE["endpoint_type"] = "streaming"
 
 UPDATE_MODEL_ENDPOINT_REQUEST_SIMPLE = {
-    "bundle_name": format_name("model_bundle_simple"),
+    "bundle_name": "model_bundle_simple",
     "cpus": "1",
     "memory": "1Gi",
     "max_workers": 2,
 }
 
 UPDATE_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = {
-    "bundle_name": format_name("model_bundle_runnable_image"),
+    "bundle_name": "model_bundle_runnable_image",
     "cpus": "2",
     "memory": "2Gi",
     "max_workers": 2,
@@ -171,7 +171,7 @@ INFERENCE_PAYLOAD_RETURN_PICKLED_TRUE: Dict[str, Any] = INFERENCE_PAYLOAD.copy()
 INFERENCE_PAYLOAD_RETURN_PICKLED_TRUE["return_pickled"] = True
 
 CREATE_BATCH_JOB_REQUEST: Dict[str, Any] = {
-    "bundle_name": format_name("model_bundle_simple"),
+    "bundle_name": "model_bundle_simple",
     "input_path": "TBA",
     "serialization_format": "JSON",
     "labels": {"team": "infra", "product": "launch"},
