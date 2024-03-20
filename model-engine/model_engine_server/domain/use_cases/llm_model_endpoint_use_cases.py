@@ -1365,6 +1365,14 @@ def validate_and_update_completion_params(
                 "include_stop_str_in_output is only supported in vllm."
             )
 
+    if (
+        request.guided_choice
+        or request.guided_regex
+        or request.guided_json
+        and not inference_framework == LLMInferenceFramework.VLLM
+    ):
+        raise ObjectHasInvalidValueException("Guided decoding is only supported in vllm.")
+
     return request
 
 
@@ -1656,6 +1664,12 @@ class CompletionSyncV1UseCase:
                 vllm_args["logprobs"] = 1
             if request.include_stop_str_in_output is not None:
                 vllm_args["include_stop_str_in_output"] = request.include_stop_str_in_output
+            if request.guided_choice:
+                vllm_args["guided_choice"] = request.guided_choice
+            if request.guided_regex:
+                vllm_args["guided_regex"] = request.guided_regex
+            if request.guided_json:
+                vllm_args["guided_json"] = request.guided_json
 
             inference_request = SyncEndpointPredictV1Request(
                 args=vllm_args,
@@ -1918,6 +1932,12 @@ class CompletionStreamV1UseCase:
                 args["logprobs"] = 1
             if request.include_stop_str_in_output is not None:
                 args["include_stop_str_in_output"] = request.include_stop_str_in_output
+            if request.guided_choice:
+                args["guided_choice"] = request.guided_choice
+            if request.guided_regex:
+                args["guided_regex"] = request.guided_regex
+            if request.guided_json:
+                args["guided_json"] = request.guided_json
             args["stream"] = True
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
             args = {

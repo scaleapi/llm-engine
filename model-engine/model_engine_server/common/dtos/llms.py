@@ -184,6 +184,18 @@ class CompletionSyncV1Request(BaseModel):
     """
     Whether to include the stop strings in output text.
     """
+    guided_json: Optional[Dict[str, Any]] = None
+    """
+    JSON schema for guided decoding.
+    """
+    guided_regex: Optional[str] = None
+    """
+    Regex for guided decoding.
+    """
+    guided_choice: Optional[List[str]] = None
+    """
+    Choices for guided decoding.
+    """
 
 
 class TokenOutput(BaseModel):
@@ -247,6 +259,18 @@ class CompletionStreamV1Request(BaseModel):
     include_stop_str_in_output: Optional[bool] = None
     """
     Whether to include the stop strings in output text.
+    """
+    guided_json: Optional[Dict[str, Any]] = None
+    """
+    JSON schema for guided decoding. Only supported in vllm.
+    """
+    guided_regex: Optional[str] = None
+    """
+    Regex for guided decoding. Only supported in vllm.
+    """
+    guided_choice: Optional[List[str]] = None
+    """
+    Choices for guided decoding. Only supported in vllm.
     """
 
 
