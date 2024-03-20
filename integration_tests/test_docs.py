@@ -9,10 +9,11 @@ from textwrap import dedent
 import pytest
 from _pytest.assertion.rewrite import AssertionRewritingHook
 
+from .rest_api_utils import BASE_PATH, SERVICE_IDENTIFIER
+
 ROOT_DIR = Path(__file__).parent.parent
 
 TEST_SKIP_MAGIC_STRING = "# test='skip'"
-SERVICE_IDENTIFIER = os.environ.get("SERVICE_IDENTIFIER", "")
 
 
 @pytest.fixture
@@ -56,11 +57,17 @@ def integration_test_user_id() -> str:
 
 
 def modify_source(source: str) -> str:
-    # Adds some custom logic to update code from docs to comply with some requirements.
-    source = re.sub(r"('team'|\"team\"): ('\w+'|\"\w+\")", r"'team': 'infra'", source)
+    """Adds some custom logic to update code from docs to comply with some requirements."""
+
+    # Ensure the correct base path is used
     source = re.sub(
-        r"('product'|\"product\"): ('\w+'|\"\w+\")",
-        r"'product': 'launch-integration-test'",
+        r"get_launch_client\((.*)\)\n",
+        rf'get_launch_client(\g<1>, gateway_endpoint="{BASE_PATH}")\n',
+        source,
+    )
+    source = re.sub(
+        r"LaunchClient\((.*)\)\n",
+        rf'LaunchClient(\g<1>, endpoint="{BASE_PATH}")\n',
         source,
     )
 
@@ -78,6 +85,14 @@ def modify_source(source: str) -> str:
     source = re.sub(
         r"get_model_endpoint\(\"([\w-]+)\"\)",
         rf'get_model_endpoint("\g<1>-{SERVICE_IDENTIFIER}")',
+        source,
+    )
+
+    # Set particular tag values
+    source = re.sub(r"('team'|\"team\"): ('\w+'|\"\w+\")", r"'team': 'infra'", source)
+    source = re.sub(
+        r"('product'|\"product\"): ('\w+'|\"\w+\")",
+        r"'product': 'launch-integration-test'",
         source,
     )
 
