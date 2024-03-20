@@ -9,7 +9,6 @@ from typing import AsyncGenerator
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.responses import Response, StreamingResponse
-from pydantic import BaseModel
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.entrypoints.openai.protocol import CompletionRequest as OpenAICompletionRequest

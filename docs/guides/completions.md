@@ -193,6 +193,59 @@ response = Completion.batch_create(
 print(response.json())
 ```
 
+## Guided decoding
+
+Guided decoding is supported by vLLM and backed by [Outlines](https://github.com/outlines-dev/outlines).
+It enforces certain token generation patterns by tinkering with the sampling logits.
+
+=== "Guided decoding with regex"
+```python
+from llmengine import Completion
+
+response = Completion.create(
+    model="llama-2-7b",
+    prompt="Hello, my name is",
+    max_new_tokens=10,
+    temperature=0.2,
+    guided_regex="Sean.*",
+)
+
+print(response.json())
+# {"request_id":"c19f0fae-317e-4f69-8e06-c04189299b9c","output":{"text":"Sean. I'm a 2","num_prompt_tokens":6,"num_completion_tokens":10,"tokens":null}}
+```
+
+=== "Guided decoding with choice"
+```python
+from llmengine import Completion
+
+response = Completion.create(
+    model="llama-2-7b",
+    prompt="Hello, my name is",
+    max_new_tokens=10,
+    temperature=0.2,
+    guided_choice=["Sean", "Brian", "Tim"],
+)
+
+print(response.json())
+# {"request_id":"641e2af3-a3e3-4493-98b9-d38115ba0d22","output":{"text":"Sean","num_prompt_tokens":6,"num_completion_tokens":4,"tokens":null}}
+```
+
+=== "Guided decoding with JSON schema"
+```python
+from llmengine import Completion
+
+response = Completion.create(
+    model="llama-2-7b",
+    prompt="Hello, my name is",
+    max_new_tokens=10,
+    temperature=0.2,
+    guided_json={"properties":{"myString":{"type":"string"}},"required":["myString"]},
+)
+
+print(response.json())
+# {"request_id":"5b184654-96b6-4932-9eb6-382a51fdb3d5","output":{"text":"{\"myString\" : \"John Doe","num_prompt_tokens":6,"num_completion_tokens":10,"tokens":null}}
+```
+
 ## Which model should I use?
 
 See the [Model Zoo](../../model_zoo) for more information on best practices for which model to use for Completions.
