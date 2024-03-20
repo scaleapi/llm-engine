@@ -1365,6 +1365,19 @@ def validate_and_update_completion_params(
                 "include_stop_str_in_output is only supported in vllm."
             )
 
+    guided_count = 0
+    if request.guided_choice:
+        guided_count += 1
+    if request.guided_json:
+        guided_count += 1
+    if request.guided_regex:
+        guided_count += 1
+
+    if guided_count > 1:
+        raise ObjectHasInvalidValueException(
+            "Only one of guided_json, guided_choice, guided_regex can be enabled."
+        )
+
     if (
         request.guided_choice or request.guided_regex or request.guided_json
     ) and not inference_framework == LLMInferenceFramework.VLLM:

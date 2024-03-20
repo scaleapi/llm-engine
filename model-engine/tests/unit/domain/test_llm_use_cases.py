@@ -51,6 +51,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     UpdateLLMModelEndpointV1UseCase,
     _include_safetensors_bin_or_pt,
     infer_hardware_from_model_name,
+    validate_and_update_completion_params,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
@@ -984,6 +985,27 @@ async def test_completion_sync_use_case_not_sync_endpoint_raises(
             user=user,
             model_endpoint_name=llm_model_endpoint_async[0].record.name,
             request=completion_sync_request,
+        )
+
+
+@pytest.mark.asyncio
+async def test_validate_and_update_completion_params(
+    completion_sync_request: CompletionSyncV1Request,
+):
+    # Don't raise exception
+    validate_and_update_completion_params(LLMInferenceFramework.VLLM, completion_sync_request)
+
+    completion_sync_request.guided_regex = ""
+    completion_sync_request.guided_json = ""
+    completion_sync_request.guided_choice = [""]
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_and_update_completion_params(LLMInferenceFramework.VLLM, completion_sync_request)
+
+    completion_sync_request.guided_regex = None
+    completion_sync_request.guided_choice = None
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_and_update_completion_params(
+            LLMInferenceFramework.TENSORRT_LLM, completion_sync_request
         )
 
 
