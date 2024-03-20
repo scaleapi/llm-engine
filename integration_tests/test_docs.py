@@ -57,7 +57,7 @@ def integration_test_user_id() -> str:
 
 
 def modify_source(source: str) -> str:
-    """Adds some custom logic to update code from docs to comply with some requirements."""
+    """Modify the source code from docs to be compatible with the integration tests."""
 
     # Ensure the correct base path is used
     source = re.sub(
@@ -88,7 +88,7 @@ def modify_source(source: str) -> str:
         source,
     )
 
-    # Set particular tag values
+    # Set particular tag values for cost tracking
     source = re.sub(r"('team'|\"team\"): ('\w+'|\"\w+\")", r"'team': 'infra'", source)
     source = re.sub(
         r"('product'|\"product\"): ('\w+'|\"\w+\")",
@@ -96,6 +96,7 @@ def modify_source(source: str) -> str:
         source,
     )
 
+    # Fill in empty values in docs
     source = re.sub(r'"repository": "..."', '"repository": "launch_rearch"', source)
     source = re.sub(
         r'"tag": "..."', '"tag": "11d9d42047cc9a0c6435b19e5e91bc7e0ad31efc-cpu"', source
