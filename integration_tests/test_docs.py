@@ -9,10 +9,16 @@ from textwrap import dedent
 import pytest
 from _pytest.assertion.rewrite import AssertionRewritingHook
 
+from .rest_api_utils import (
+    BASE_PATH,
+    SERVICE_IDENTIFIER,
+    delete_existing_endpoints,
+    ensure_gateway_ready,
+)
+
 ROOT_DIR = Path(__file__).parent.parent
 
 TEST_SKIP_MAGIC_STRING = "# test='skip'"
-SERVICE_IDENTIFIER = os.environ.get("SERVICE_IDENTIFIER", "")
 
 
 @pytest.fixture
@@ -56,11 +62,17 @@ def integration_test_user_id() -> str:
 
 
 def modify_source(source: str) -> str:
-    # Adds some custom logic to update code from docs to comply with some requirements.
-    source = re.sub(r"('team'|\"team\"): ('\w+'|\"\w+\")", r"'team': 'infra'", source)
+    """Modify the source code from docs to be compatible with the integration tests."""
+
+    # Ensure the correct base path is used
     source = re.sub(
-        r"('product'|\"product\"): ('\w+'|\"\w+\")",
-        r"'product': 'launch-integration-test'",
+        r"get_launch_client\((.*)\)\n",
+        rf'get_launch_client(\g<1>, gateway_endpoint="{BASE_PATH}")\n',
+        source,
+    )
+    source = re.sub(
+        r"LaunchClient\((.*)\)\n",
+        rf'LaunchClient(\g<1>, endpoint="{BASE_PATH}")\n',
         source,
     )
 
@@ -81,6 +93,15 @@ def modify_source(source: str) -> str:
         source,
     )
 
+    # Set particular tag values for cost tracking
+    source = re.sub(r"('team'|\"team\"): ('\w+'|\"\w+\")", r"'team': 'infra'", source)
+    source = re.sub(
+        r"('product'|\"product\"): ('\w+'|\"\w+\")",
+        r"'product': 'launch-integration-test'",
+        source,
+    )
+
+    # Fill in empty values in docs
     source = re.sub(r'"repository": "..."', '"repository": "launch_rearch"', source)
     source = re.sub(
         r'"tag": "..."', '"tag": "11d9d42047cc9a0c6435b19e5e91bc7e0ad31efc-cpu"', source
@@ -203,7 +224,11 @@ def test_docs_examples(
 
     env("LAUNCH_API_KEY", os.getenv("LAUNCH_TEST_API_KEY", integration_test_user_id))
 
+    ensure_gateway_ready()
+
     try:
         import_execute(module_name, source_code, True)
     except Exception:
         raise
+    finally:
+        delete_existing_endpoints()
