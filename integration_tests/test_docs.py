@@ -9,7 +9,12 @@ from textwrap import dedent
 import pytest
 from _pytest.assertion.rewrite import AssertionRewritingHook
 
-from .rest_api_utils import BASE_PATH, SERVICE_IDENTIFIER
+from .rest_api_utils import (
+    BASE_PATH,
+    SERVICE_IDENTIFIER,
+    delete_existing_endpoints,
+    ensure_gateway_ready,
+)
 
 ROOT_DIR = Path(__file__).parent.parent
 
@@ -219,7 +224,11 @@ def test_docs_examples(
 
     env("LAUNCH_API_KEY", os.getenv("LAUNCH_TEST_API_KEY", integration_test_user_id))
 
+    ensure_gateway_ready()
+
     try:
         import_execute(module_name, source_code, True)
     except Exception:
         raise
+    finally:
+        delete_existing_endpoints()
