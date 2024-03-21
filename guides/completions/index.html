@@ -389,6 +389,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#guided-decoding" class="md-nav__link">
+    Guided decoding
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#which-model-should-i-use" class="md-nav__link">
     Which model should I use?
   </a>
@@ -636,6 +643,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#guided-decoding" class="md-nav__link">
+    Guided decoding
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#which-model-should-i-use" class="md-nav__link">
     Which model should I use?
   </a>
@@ -850,6 +864,63 @@ to utilize async processing. The function signatures are otherwise identical.</p
 <a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>)
 <a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div></p>
+<h2 id="guided-decoding">Guided decoding<a class="headerlink" href="#guided-decoding" title="Permanent link">&para;</a></h2>
+<p>Guided decoding is supported by vLLM and backed by <a href="https://github.com/outlines-dev/outlines">Outlines</a>.
+It enforces certain token generation patterns by tinkering with the sampling logits.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="8:1"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">Guided decoding with regex</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    max_new_tokens<span style="color: #666666">=10</span>,
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    guided_regex<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Sean.*&quot;</span>,
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>)
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span style="color: #3D7B7B; font-style: italic"># {&quot;request_id&quot;:&quot;c19f0fae-317e-4f69-8e06-c04189299b9c&quot;,&quot;output&quot;:{&quot;text&quot;:&quot;Sean. I&#39;m a 2&quot;,&quot;num_prompt_tokens&quot;:6,&quot;num_completion_tokens&quot;:10,&quot;tokens&quot;:null}}</span>
+</code></pre></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="9:1"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Guided decoding with choice</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    max_new_tokens<span style="color: #666666">=10</span>,
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    guided_choice<span style="color: #666666">=</span>[<span style="color: #BA2121">&quot;Sean&quot;</span>, <span style="color: #BA2121">&quot;Brian&quot;</span>, <span style="color: #BA2121">&quot;Tim&quot;</span>],
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>)
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span style="color: #3D7B7B; font-style: italic"># {&quot;request_id&quot;:&quot;641e2af3-a3e3-4493-98b9-d38115ba0d22&quot;,&quot;output&quot;:{&quot;text&quot;:&quot;Sean&quot;,&quot;num_prompt_tokens&quot;:6,&quot;num_completion_tokens&quot;:4,&quot;tokens&quot;:null}}</span>
+</code></pre></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="10:1"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Guided decoding with JSON schema</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    max_new_tokens<span style="color: #666666">=10</span>,
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    guided_json<span style="color: #666666">=</span>{<span style="color: #BA2121">&quot;properties&quot;</span>:{<span style="color: #BA2121">&quot;myString&quot;</span>:{<span style="color: #BA2121">&quot;type&quot;</span>:<span style="color: #BA2121">&quot;string&quot;</span>}},<span style="color: #BA2121">&quot;required&quot;</span>:[<span style="color: #BA2121">&quot;myString&quot;</span>]},
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>)
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span style="color: #3D7B7B; font-style: italic"># {&quot;request_id&quot;:&quot;5b184654-96b6-4932-9eb6-382a51fdb3d5&quot;,&quot;output&quot;:{&quot;text&quot;:&quot;{\&quot;myString\&quot; : \&quot;John Doe&quot;,&quot;num_prompt_tokens&quot;:6,&quot;num_completion_tokens&quot;:10,&quot;tokens&quot;:null}}</span>
+</code></pre></div>
 <h2 id="which-model-should-i-use">Which model should I use?<a class="headerlink" href="#which-model-should-i-use" title="Permanent link">&para;</a></h2>
 <p>See the <a href="../../model_zoo">Model Zoo</a> for more information on best practices for which model to use for Completions.</p>
 

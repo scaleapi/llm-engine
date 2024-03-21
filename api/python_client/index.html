@@ -1000,12 +1000,16 @@ For each of these modes, you can also choose whether to stream token responses o
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    frequency_penalty: Optional[<span style="color: #008000">float</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    top_k: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    top_p: Optional[<span style="color: #008000">float</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>) <span style="color: #666666">-&gt;</span> Union[
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    CompletionSyncResponse,
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    Iterator[CompletionStreamResponse],
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>]
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    include_stop_str_in_output: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    guided_json: Optional[Dict[<span style="color: #008000">str</span>, Any]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    guided_regex: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    guided_choice: Optional[List[<span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    Iterator[CompletionStreamResponse],
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1187,6 +1191,62 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
           </td>
         </tr>
         <tr>
+          <td><code>include_stop_str_in_output</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[bool]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to include the stop sequence in the output. Default to False.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>guided_json</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If specified, the output will follow the JSON schema.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>guided_regex</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[str]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If specified, the output will follow the regex pattern.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>guided_choice</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[str]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If specified, the output will be exactly one of the choices.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
           <td><code>timeout</code></td>
           <td>
                 <code>int</code>
@@ -1328,12 +1388,16 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    frequency_penalty: Optional[<span style="color: #008000">float</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    top_k: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    top_p: Optional[<span style="color: #008000">float</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>) <span style="color: #666666">-&gt;</span> Union[
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    CompletionSyncResponse,
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    AsyncIterable[CompletionStreamResponse],
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>]
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    include_stop_str_in_output: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    guided_json: Optional[Dict[<span style="color: #008000">str</span>, Any]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    guided_regex: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    guided_choice: Optional[List[<span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    AsyncIterable[CompletionStreamResponse],
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1508,6 +1572,62 @@ Range: [1, infinity). -1 means consider all tokens.</p>
             <div class="doc-md-description">
               <p>Float that controls the cumulative probability of the top tokens to consider.
 Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>include_stop_str_in_output</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[bool]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to include the stop sequence in the output. Default to False.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>guided_json</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If specified, the output will follow the JSON schema. For examples see https://json-schema.org/learn/miscellaneous-examples.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>guided_regex</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[str]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If specified, the output will follow the regex pattern.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>guided_choice</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[str]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If specified, the output will be exactly one of the choices.</p>
             </div>
           </td>
           <td>
