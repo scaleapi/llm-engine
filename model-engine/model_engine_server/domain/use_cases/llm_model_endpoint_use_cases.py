@@ -1674,11 +1674,11 @@ class CompletionSyncV1UseCase:
                 vllm_args["logprobs"] = 1
             if request.include_stop_str_in_output is not None:
                 vllm_args["include_stop_str_in_output"] = request.include_stop_str_in_output
-            if request.guided_choice:
+            if request.guided_choice is not None:
                 vllm_args["guided_choice"] = request.guided_choice
-            if request.guided_regex:
+            if request.guided_regex is not None:
                 vllm_args["guided_regex"] = request.guided_regex
-            if request.guided_json:
+            if request.guided_json is not None:
                 vllm_args["guided_json"] = request.guided_json
 
             inference_request = SyncEndpointPredictV1Request(
