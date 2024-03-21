@@ -421,84 +421,23 @@ class CreateLLMModelBundleV1UseCase:
             raise ObjectNotFoundException(f"Model bundle {bundle_id} was not found after creation.")
         return model_bundle
 
-    async def create_text_generation_inference_bundle(
-        self,
-        user: User,
-        model_name: str,
-        framework_image_tag: str,
-        endpoint_unique_name: str,
-        num_shards: int,
-        quantize: Optional[Quantization],
-        checkpoint_path: Optional[str],
-    ):
-        command = []
-
-        # TGI requires max_input_length < max_total_tokens
-        max_input_length = 1024
-        max_total_tokens = 2048
-        if "llama-2" in model_name:
-            max_input_length = 4095
-            max_total_tokens = 4096
-
-        subcommands = []
-        if checkpoint_path is not None:
-            if checkpoint_path.startswith("s3://"):
-                final_weights_folder = "model_files"
-
-                subcommands += self.load_model_weights_sub_commands(
-                    LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
-                    framework_image_tag,
-                    checkpoint_path,
-                    final_weights_folder,
-                )
-            else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
-        else:
-            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
-
-        subcommands.append(
-            f"text-generation-launcher --hostname :: --model-id {final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
-        )
-
-        if quantize:
-            subcommands[-1] = subcommands[-1] + f" --quantize {quantize}"
-        command = [
-            "/bin/bash",
-            "-c",
-            ";".join(subcommands),
-        ]
-
-        return (
-            await self.create_model_bundle_use_case.execute(
-                user,
-                CreateModelBundleV2Request(
-                    name=endpoint_unique_name,
-                    schema_location="TBA",
-                    flavor=StreamingEnhancedRunnableImageFlavor(
-                        flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
-                        repository=hmi_config.tgi_repository,
-                        tag=framework_image_tag,
-                        command=command,
-                        streaming_command=command,
-                        protocol="http",
-                        readiness_initial_delay_seconds=10,
-                        healthcheck_route="/health",
-                        predict_route="/generate",
-                        streaming_predict_route="/generate_stream",
-                        env={},
-                    ),
-                    metadata={},
-                ),
-                do_auth_check=False,
-                # Skip auth check because llm create endpoint is called as the user itself,
-                # but the user isn't directly making the action. It should come from the fine tune
-                # job.
-            )
-        ).model_bundle_id
-
     def load_model_weights_sub_commands(
+        self, framework, framework_image_tag, checkpoint_path, final_weights_folder
+    ):
+        if checkpoint_path.startswith("s3://"):
+            return self.load_model_weights_sub_commands_s3(
+                framework, framework_image_tag, checkpoint_path, final_weights_folder
+            )
+        elif checkpoint_path.startswith("azure://") or "blob.core.windows.net" in checkpoint_path:
+            return self.load_model_weights_sub_commands_abs(
+                framework, framework_image_tag, checkpoint_path, final_weights_folder
+            )
+        else:
+            raise ObjectHasInvalidValueException(
+                f"Only S3 and Azure Blob Storage paths are supported. Given checkpoint path: {checkpoint_path}."
+            )
+
+    def load_model_weights_sub_commands_s3(
         self, framework, framework_image_tag, checkpoint_path, final_weights_folder
     ):
         subcommands = []
@@ -537,6 +476,44 @@ class CreateLLMModelBundleV1UseCase:
 
         return subcommands
 
+    def load_model_weights_sub_commands_abs(
+        self, framework, framework_image_tag, checkpoint_path, final_weights_folder
+    ):
+        subcommands = []
+
+        subcommands.extend(
+            [
+                "pushd /",
+                "wget https://aka.ms/downloadazcopy-v10-linux",
+                "tar -xf downloadazcopy-v10-linux",
+                'export PATH="$PATH:/azcopy_linux_amd64_10.23.0"',
+                "popd",
+            ]
+        )
+
+        base_path = checkpoint_path.split("/")[-1]
+        if base_path.endswith(".tar"):
+            # If the checkpoint file is a tar file, extract it into final_weights_folder
+            subcommands.extend(
+                [
+                    f"azcopy copy {checkpoint_path} .",
+                    f"mkdir -p {final_weights_folder}",
+                    f"tar --no-same-owner -xf {base_path} -C {final_weights_folder}",
+                ]
+            )
+        else:
+            # Let's check whether to exclude "*.safetensors" or "*.bin" files
+            checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
+            model_files = [f for f in checkpoint_files if "model" in f]
+
+            include_str = _include_safetensors_bin_or_pt(model_files)
+            file_selection_str = f"--include '*.model' --include-pattern '*.json' --include '{include_str}' --exclude-pattern 'optimizer*'"
+            subcommands.append(
+                f"azcopy copy --recursive {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+            )
+
+        return subcommands
+
     def load_model_files_sub_commands_trt_llm(
         self,
         checkpoint_path,
@@ -557,9 +534,27 @@ class CreateLLMModelBundleV1UseCase:
                 "Checkpoint for TensorRT-LLM models must be a folder, not a tar file."
             )
         else:
-            subcommands.append(
-                f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
-            )
+            if checkpoint_path.startswith("s3://"):
+                subcommands.append(
+                    f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
+                )
+            elif (
+                checkpoint_path.startswith("azure://") or "blob.core.windows.net" in checkpoint_path
+            ):
+                subcommands.extend(
+                    [
+                        "pushd /",
+                        "wget https://aka.ms/downloadazcopy-v10-linux",
+                        "tar -xf downloadazcopy-v10-linux",
+                        'export PATH="$PATH:/azcopy_linux_amd64_10.23.0"',
+                        "popd",
+                        f"azcopy copy --recursive {os.path.join(checkpoint_path, '*')} ./",
+                    ]
+                )
+            else:
+                raise ObjectHasInvalidValueException(
+                    f"Only S3 and Azure Blob Storage paths are supported. Given checkpoint path: {checkpoint_path}."
+                )
 
         return subcommands
 
@@ -642,6 +637,77 @@ class CreateLLMModelBundleV1UseCase:
                 )
             ).model_bundle_id
 
+    async def create_text_generation_inference_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        quantize: Optional[Quantization],
+        checkpoint_path: Optional[str],
+    ):
+        command = []
+
+        # TGI requires max_input_length < max_total_tokens
+        max_input_length = 1024
+        max_total_tokens = 2048
+        if "llama-2" in model_name:
+            max_input_length = 4095
+            max_total_tokens = 4096
+
+        subcommands = []
+        if checkpoint_path is not None:
+            final_weights_folder = "model_files"
+            subcommands += self.load_model_weights_sub_commands(
+                LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+                framework_image_tag,
+                checkpoint_path,
+                final_weights_folder,
+            )
+        else:
+            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
+
+        subcommands.append(
+            f"text-generation-launcher --hostname :: --model-id {final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
+        )
+
+        if quantize:
+            subcommands[-1] = subcommands[-1] + f" --quantize {quantize}"
+        command = [
+            "/bin/bash",
+            "-c",
+            ";".join(subcommands),
+        ]
+
+        return (
+            await self.create_model_bundle_use_case.execute(
+                user,
+                CreateModelBundleV2Request(
+                    name=endpoint_unique_name,
+                    schema_location="TBA",
+                    flavor=StreamingEnhancedRunnableImageFlavor(
+                        flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                        repository=hmi_config.tgi_repository,
+                        tag=framework_image_tag,
+                        command=command,
+                        streaming_command=command,
+                        protocol="http",
+                        readiness_initial_delay_seconds=10,
+                        healthcheck_route="/health",
+                        predict_route="/generate",
+                        streaming_predict_route="/generate_stream",
+                        env={},
+                    ),
+                    metadata={},
+                ),
+                do_auth_check=False,
+                # Skip auth check because llm create endpoint is called as the user itself,
+                # but the user isn't directly making the action. It should come from the fine tune
+                # job.
+            )
+        ).model_bundle_id
+
     async def create_vllm_bundle(
         self,
         user: User,
@@ -665,22 +731,17 @@ class CreateLLMModelBundleV1UseCase:
 
         subcommands = []
         if checkpoint_path is not None:
-            if checkpoint_path.startswith("s3://"):
-                # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
-                if "mistral" in model_name:
-                    final_weights_folder = "mistral_files"
-                else:
-                    final_weights_folder = "model_files"
-                subcommands += self.load_model_weights_sub_commands(
-                    LLMInferenceFramework.VLLM,
-                    framework_image_tag,
-                    checkpoint_path,
-                    final_weights_folder,
-                )
+            # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
+            if "mistral" in model_name:
+                final_weights_folder = "mistral_files"
             else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
+                final_weights_folder = "model_files"
+            subcommands += self.load_model_weights_sub_commands(
+                LLMInferenceFramework.VLLM,
+                framework_image_tag,
+                checkpoint_path,
+                final_weights_folder,
+            )
         else:
             final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
 
@@ -763,18 +824,13 @@ class CreateLLMModelBundleV1UseCase:
 
         subcommands = []
         if checkpoint_path is not None:
-            if checkpoint_path.startswith("s3://"):
-                final_weights_folder = "model_files"
-                subcommands += self.load_model_weights_sub_commands(
-                    LLMInferenceFramework.LIGHTLLM,
-                    framework_image_tag,
-                    checkpoint_path,
-                    final_weights_folder,
-                )
-            else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
+            final_weights_folder = "model_files"
+            subcommands += self.load_model_weights_sub_commands(
+                LLMInferenceFramework.LIGHTLLM,
+                framework_image_tag,
+                checkpoint_path,
+                final_weights_folder,
+            )
         else:
             final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
 
@@ -828,14 +884,9 @@ class CreateLLMModelBundleV1UseCase:
 
         subcommands = []
         if checkpoint_path is not None:
-            if checkpoint_path.startswith("s3://"):
-                subcommands += self.load_model_files_sub_commands_trt_llm(
-                    checkpoint_path,
-                )
-            else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
+            subcommands += self.load_model_files_sub_commands_trt_llm(
+                checkpoint_path,
+            )
         else:
             raise ObjectHasInvalidValueException(
                 "Checkpoint must be provided for TensorRT-LLM models."
