@@ -3724,6 +3724,7 @@ def llm_model_endpoint_sync(
     }
     return model_endpoint, model_endpoint_json
 
+
 @pytest.fixture
 def llm_model_endpoint_stream(
     test_api_key: str, model_bundle_1: ModelBundle
