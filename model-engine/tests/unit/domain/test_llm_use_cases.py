@@ -603,6 +603,7 @@ async def test_completion_sync_use_case_success(
     llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
     completion_sync_request: CompletionSyncV1Request,
 ):
+    completion_sync_request.include_stop_str_in_output = True
     completion_sync_request.guided_json = {}
     fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
     fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = (
@@ -1112,6 +1113,116 @@ async def test_completion_stream_use_case_success(
     async for message in response_1:
         assert message.dict()["output"]["text"] == output_texts[i]
         if i == 6:
+            assert message.dict()["output"]["num_prompt_tokens"] == 7
+            assert message.dict()["output"]["num_completion_tokens"] == 6
+        i += 1
+
+
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
+    return_value=7,
+)
+async def test_completion_stream_vllm_use_case_success(
+    test_api_key: str,
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
+    llm_model_endpoint_stream: Tuple[ModelEndpoint, Any],
+    completion_stream_request: CompletionStreamV1Request,
+):
+    completion_stream_request.guided_json = {}
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_stream[0])
+    fake_model_endpoint_service.streaming_model_endpoint_inference_gateway.responses = [
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={
+                "result": {
+                    "text": "I",
+                    "finished": False,
+                    "count_prompt_tokens": 7,
+                    "count_output_tokens": 1,
+                }
+            },
+            traceback=None,
+        ),
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={
+                "result": {
+                    "text": " am",
+                    "finished": False,
+                    "count_prompt_tokens": 7,
+                    "count_output_tokens": 2,
+                }
+            },
+            traceback=None,
+        ),
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={
+                "result": {
+                    "text": " a",
+                    "finished": False,
+                    "count_prompt_tokens": 7,
+                    "count_output_tokens": 3,
+                }
+            },
+            traceback=None,
+        ),
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={
+                "result": {
+                    "text": " new",
+                    "finished": False,
+                    "count_prompt_tokens": 7,
+                    "count_output_tokens": 4,
+                }
+            },
+            traceback=None,
+        ),
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={
+                "result": {
+                    "text": "bie",
+                    "finished": False,
+                    "count_prompt_tokens": 7,
+                    "count_output_tokens": 5,
+                }
+            },
+            traceback=None,
+        ),
+        SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS,
+            result={
+                "result": {
+                    "text": ".",
+                    "finished": True,
+                    "count_prompt_tokens": 7,
+                    "count_output_tokens": 6,
+                }
+            },
+            traceback=None,
+        ),
+    ]
+    use_case = CompletionStreamV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    response_1 = use_case.execute(
+        user=user,
+        model_endpoint_name=llm_model_endpoint_stream[0].record.name,
+        request=completion_stream_request,
+    )
+    output_texts = ["I", " am", " a", " new", "bie", ".", "I am a newbie."]
+    i = 0
+    async for message in response_1:
+        assert message.dict()["output"]["text"] == output_texts[i]
+        if i == 5:
             assert message.dict()["output"]["num_prompt_tokens"] == 7
             assert message.dict()["output"]["num_completion_tokens"] == 6
         i += 1
