@@ -1379,7 +1379,9 @@ def validate_and_update_completion_params(
         )
 
     if (
-        request.guided_choice or request.guided_regex or request.guided_json
+        request.guided_choice is not None
+        or request.guided_regex is not None
+        or request.guided_json is not None
     ) and not inference_framework == LLMInferenceFramework.VLLM:
         raise ObjectHasInvalidValueException("Guided decoding is only supported in vllm.")
 

@@ -461,7 +461,6 @@ def completion_sync_request() -> CompletionSyncV1Request:
         max_new_tokens=10,
         temperature=0.5,
         return_token_log_probs=True,
-        guided_json={},
     )
 
 
@@ -471,7 +470,6 @@ def completion_stream_request() -> CompletionStreamV1Request:
         prompt="What is machine learning?",
         max_new_tokens=10,
         temperature=0.5,
-        guided_json={},
     )
 
 

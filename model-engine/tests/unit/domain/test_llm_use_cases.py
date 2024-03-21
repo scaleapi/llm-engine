@@ -603,6 +603,7 @@ async def test_completion_sync_use_case_success(
     llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
     completion_sync_request: CompletionSyncV1Request,
 ):
+    completion_sync_request.guided_json = {}
     fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
     fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = (
         SyncEndpointPredictV1Response(
@@ -989,14 +990,29 @@ async def test_completion_sync_use_case_not_sync_endpoint_raises(
 
 
 @pytest.mark.asyncio
-async def test_validate_and_update_completion_params(
-    completion_sync_request: CompletionSyncV1Request,
-):
-    # Don't raise exception
+async def test_validate_and_update_completion_params():
+    completion_sync_request = CompletionSyncV1Request(
+        prompt="What is machine learning?",
+        max_new_tokens=10,
+        temperature=0.5,
+        return_token_log_probs=True,
+    )
+
     validate_and_update_completion_params(LLMInferenceFramework.VLLM, completion_sync_request)
 
+    validate_and_update_completion_params(
+        LLMInferenceFramework.TEXT_GENERATION_INFERENCE, completion_sync_request
+    )
+
+    completion_sync_request.include_stop_str_in_output = True
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_and_update_completion_params(
+            LLMInferenceFramework.TEXT_GENERATION_INFERENCE, completion_sync_request
+        )
+    completion_sync_request.include_stop_str_in_output = None
+
     completion_sync_request.guided_regex = ""
-    completion_sync_request.guided_json = ""
+    completion_sync_request.guided_json = {}
     completion_sync_request.guided_choice = [""]
     with pytest.raises(ObjectHasInvalidValueException):
         validate_and_update_completion_params(LLMInferenceFramework.VLLM, completion_sync_request)
@@ -1005,7 +1021,7 @@ async def test_validate_and_update_completion_params(
     completion_sync_request.guided_choice = None
     with pytest.raises(ObjectHasInvalidValueException):
         validate_and_update_completion_params(
-            LLMInferenceFramework.TENSORRT_LLM, completion_sync_request
+            LLMInferenceFramework.TEXT_GENERATION_INFERENCE, completion_sync_request
         )
 
 
