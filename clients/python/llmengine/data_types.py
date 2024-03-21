@@ -279,6 +279,10 @@ class CompletionSyncV1Request(BaseModel):
     frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     top_k: Optional[int] = Field(default=None, ge=-1)
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
+    include_stop_str_in_output: Optional[bool] = Field(default=False)
+    guided_json: Optional[Dict[str, Any]] = Field(default=None)
+    guided_regex: Optional[str] = Field(default=None)
+    guided_choice: Optional[List[str]] = Field(default=None)
 
 
 class TokenOutput(BaseModel):
@@ -349,6 +353,10 @@ class CompletionStreamV1Request(BaseModel):
     frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     top_k: Optional[int] = Field(default=None, ge=-1)
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
+    include_stop_str_in_output: Optional[bool] = Field(default=False)
+    guided_json: Optional[Dict[str, Any]] = Field(default=None)
+    guided_regex: Optional[str] = Field(default=None)
+    guided_choice: Optional[List[str]] = Field(default=None)
 
 
 class CompletionStreamOutput(BaseModel):
