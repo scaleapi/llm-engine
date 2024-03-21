@@ -1942,11 +1942,11 @@ class CompletionStreamV1UseCase:
                 args["logprobs"] = 1
             if request.include_stop_str_in_output is not None:
                 args["include_stop_str_in_output"] = request.include_stop_str_in_output
-            if request.guided_choice:
+            if request.guided_choice is not None:
                 args["guided_choice"] = request.guided_choice
-            if request.guided_regex:
+            if request.guided_regex is not None:
                 args["guided_regex"] = request.guided_regex
-            if request.guided_json:
+            if request.guided_json is not None:
                 args["guided_json"] = request.guided_json
             args["stream"] = True
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
