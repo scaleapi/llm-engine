@@ -1366,11 +1366,11 @@ def validate_and_update_completion_params(
             )
 
     guided_count = 0
-    if request.guided_choice:
+    if request.guided_choice is not None:
         guided_count += 1
-    if request.guided_json:
+    if request.guided_json is not None:
         guided_count += 1
-    if request.guided_regex:
+    if request.guided_regex is not None:
         guided_count += 1
 
     if guided_count > 1:

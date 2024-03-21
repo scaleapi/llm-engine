@@ -7,7 +7,7 @@ import traceback
 from typing import AsyncGenerator
 
 import uvicorn
-from fastapi import BackgroundTasks, FastAPI, Request
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
@@ -46,15 +46,20 @@ async def generate(request: Request) -> Response:
     sampling_params = SamplingParams(**request_dict)
 
     # Dummy request to get guided decode logit processor
-    partial_openai_request = OpenAICompletionRequest.model_validate(
-        {
-            "model": "",
-            "prompt": "",
-            "guided_json": guided_json,
-            "guided_regex": guided_regex,
-            "guided_choice": guided_choice,
-        }
-    )
+    try:
+        partial_openai_request = OpenAICompletionRequest.model_validate(
+            {
+                "model": "",
+                "prompt": "",
+                "guided_json": guided_json,
+                "guided_regex": guided_regex,
+                "guided_choice": guided_choice,
+            }
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=400, detail="Bad request: failed to parse guided decoding parameters."
+        )
 
     guided_decode_logit_processor = await get_guided_decoding_logits_processor(
         partial_openai_request, engine.get_tokenizer()
