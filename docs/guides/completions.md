@@ -120,6 +120,132 @@ async def main():
 asyncio.run(main())
 ```
 
+## Batch completions
+
+The Python client also supports batch completions. Batch completions supports distributing data to multiple workers to accelerate inference. It also tries to maximize throughput so the completions should finish quite a bit faster than hitting models through HTTP. Use [Completion.batch_create](../../api/python_client/#llmengine.Completion.batch_create) to utilize batch completions.
+
+Some examples of batch completions:
+
+=== "Batch completions with prompts in the request"
+```python
+from llmengine import Completion
+from llmengine.data_types import CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
+
+content = CreateBatchCompletionsRequestContent(
+    prompts=["What is deep learning", "What is a neural network"],
+    max_new_tokens=10,
+    temperature=0.0
+)
+
+response = Completion.batch_create(
+    output_data_path="s3://my-path",
+    model_config=CreateBatchCompletionsModelConfig(
+        model="llama-2-7b",
+        checkpoint_path="s3://checkpoint-path",
+        labels={"team":"my-team", "product":"my-product"}
+    ),
+    content=content
+)
+print(response.job_id)
+```
+
+=== "Batch completions with prompts in a file and with 2 parallel jobs"
+```python
+from llmengine import Completion
+from llmengine.data_types import CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
+
+# Store CreateBatchCompletionsRequestContent data into input file "s3://my-input-path"
+
+response = Completion.batch_create(
+    input_data_path="s3://my-input-path",
+    output_data_path="s3://my-output-path",
+    model_config=CreateBatchCompletionsModelConfig(
+        model="llama-2-7b",
+        checkpoint_path="s3://checkpoint-path",
+        labels={"team":"my-team", "product":"my-product"}
+    ),
+    data_parallelism=2
+)
+print(response.job_id)
+```
+
+=== "Batch completions with prompts and use tool"
+For how to properly use the tool please see [Completion.batch_create](../../api/python_client/#llmengine.Completion.batch_create) tool_config doc.
+```python
+from llmengine import Completion
+from llmengine.data_types import CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent, ToolConfig
+
+# Store CreateBatchCompletionsRequestContent data into input file "s3://my-input-path"
+
+response = Completion.batch_create(
+    input_data_path="s3://my-input-path",
+    output_data_path="s3://my-output-path",
+    model_config=CreateBatchCompletionsModelConfig(
+        model="llama-2-7b",
+        checkpoint_path="s3://checkpoint-path",
+        labels={"team":"my-team", "product":"my-product"}
+    ),
+    data_parallelism=2,
+    tool_config=ToolConfig(
+        name="code_evaluator",
+    )
+)
+print(response.json())
+```
+
+## Guided decoding
+
+Guided decoding is supported by vLLM and backed by [Outlines](https://github.com/outlines-dev/outlines).
+It enforces certain token generation patterns by tinkering with the sampling logits.
+
+=== "Guided decoding with regex"
+```python
+from llmengine import Completion
+
+response = Completion.create(
+    model="llama-2-7b",
+    prompt="Hello, my name is",
+    max_new_tokens=10,
+    temperature=0.2,
+    guided_regex="Sean.*",
+)
+
+print(response.json())
+# {"request_id":"c19f0fae-317e-4f69-8e06-c04189299b9c","output":{"text":"Sean. I'm a 2","num_prompt_tokens":6,"num_completion_tokens":10,"tokens":null}}
+```
+
+=== "Guided decoding with choice"
+```python
+from llmengine import Completion
+
+response = Completion.create(
+    model="llama-2-7b",
+    prompt="Hello, my name is",
+    max_new_tokens=10,
+    temperature=0.2,
+    guided_choice=["Sean", "Brian", "Tim"],
+)
+
+print(response.json())
+# {"request_id":"641e2af3-a3e3-4493-98b9-d38115ba0d22","output":{"text":"Sean","num_prompt_tokens":6,"num_completion_tokens":4,"tokens":null}}
+```
+
+=== "Guided decoding with JSON schema"
+```python
+from llmengine import Completion
+
+response = Completion.create(
+    model="llama-2-7b",
+    prompt="Hello, my name is",
+    max_new_tokens=10,
+    temperature=0.2,
+    guided_json={"properties":{"myString":{"type":"string"}},"required":["myString"]},
+)
+
+print(response.json())
+# {"request_id":"5b184654-96b6-4932-9eb6-382a51fdb3d5","output":{"text":"{\"myString\" : \"John Doe","num_prompt_tokens":6,"num_completion_tokens":10,"tokens":null}}
+```
+
 ## Which model should I use?
 
 See the [Model Zoo](../../model_zoo) for more information on best practices for which model to use for Completions.

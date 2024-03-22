@@ -3,6 +3,7 @@ This file is for testing purposes only. It serves as simple server to mock a dep
 """
 import argparse
 import subprocess
+import time
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -19,7 +20,10 @@ def healthcheck():
 
 @app.post("/predict")
 async def predict(request: Request):
-    return await request.json()
+    dictionary = await request.json()
+    if "delay" in dictionary:
+        time.sleep(dictionary["delay"])
+    return dictionary
 
 
 @app.post("/predict500")

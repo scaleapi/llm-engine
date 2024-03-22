@@ -184,6 +184,18 @@ class CompletionSyncV1Request(BaseModel):
     """
     Whether to include the stop strings in output text.
     """
+    guided_json: Optional[Dict[str, Any]] = None
+    """
+    JSON schema for guided decoding.
+    """
+    guided_regex: Optional[str] = None
+    """
+    Regex for guided decoding.
+    """
+    guided_choice: Optional[List[str]] = None
+    """
+    Choices for guided decoding.
+    """
 
 
 class TokenOutput(BaseModel):
@@ -247,6 +259,18 @@ class CompletionStreamV1Request(BaseModel):
     include_stop_str_in_output: Optional[bool] = None
     """
     Whether to include the stop strings in output text.
+    """
+    guided_json: Optional[Dict[str, Any]] = None
+    """
+    JSON schema for guided decoding. Only supported in vllm.
+    """
+    guided_regex: Optional[str] = None
+    """
+    Regex for guided decoding. Only supported in vllm.
+    """
+    guided_choice: Optional[List[str]] = None
+    """
+    Choices for guided decoding. Only supported in vllm.
     """
 
 
@@ -443,6 +467,30 @@ class CreateBatchCompletionsModelConfig(BaseModel):
     """
 
 
+class ToolConfig(BaseModel):
+    """
+    Configuration for tool use.
+    NOTE: this config is highly experimental and signature will change significantly in future iterations.
+    """
+
+    name: str
+    """
+    Name of the tool to use for the batch inference.
+    """
+    max_iterations: Optional[int] = 10
+    """
+    Maximum number of iterations to run the tool.
+    """
+    execution_timeout_seconds: Optional[int] = 60
+    """
+    Maximum runtime of the tool in seconds.
+    """
+    should_retry_on_error: Optional[bool] = True
+    """
+    Whether to retry the tool on error.
+    """
+
+
 class CreateBatchCompletionsRequest(BaseModel):
     """
     Request object for batch completions.
@@ -469,6 +517,11 @@ class CreateBatchCompletionsRequest(BaseModel):
     max_runtime_sec: Optional[int] = Field(default=24 * 3600, ge=1, le=2 * 24 * 3600)
     """
     Maximum runtime of the batch inference in seconds. Default to one day.
+    """
+    tool_config: Optional[ToolConfig] = None
+    """
+    Configuration for tool use.
+    NOTE: this config is highly experimental and signature will change significantly in future iterations.
     """
 
 

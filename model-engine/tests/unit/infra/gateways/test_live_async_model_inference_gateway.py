@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 from typing import Any
 
 import pytest
@@ -22,10 +23,11 @@ def test_task_create_get_url(
     task_id = create_response.task_id
     task_queue_gateway: Any = fake_live_async_model_inference_gateway.task_queue_gateway
     assert len(task_queue_gateway.queue) == 1
-    assert task_queue_gateway.queue[task_id]["args"] == [
-        endpoint_predict_request_1[0].dict(),
-        endpoint_predict_request_1[0].return_pickled,
-    ]
+    assert task_queue_gateway.queue[task_id]["args"][0] == endpoint_predict_request_1[0].dict()
+    assert (datetime.now() - task_queue_gateway.queue[task_id]["args"][1]) < timedelta(seconds=1)
+    assert (
+        task_queue_gateway.queue[task_id]["args"][2] == endpoint_predict_request_1[0].return_pickled
+    )
 
     get_response_1 = fake_live_async_model_inference_gateway.get_task(task_id)
     assert get_response_1 == GetAsyncTaskV1Response(task_id=task_id, status=TaskStatus.PENDING)
@@ -49,17 +51,18 @@ def test_task_create_get_args_callback(
     task_id = create_response.task_id
     task_queue_gateway: Any = fake_live_async_model_inference_gateway.task_queue_gateway
     assert len(task_queue_gateway.queue) == 1
-    assert task_queue_gateway.queue[task_id]["args"] == [
-        {
-            "args": endpoint_predict_request_2[0].args.__root__,
-            "url": None,
-            "cloudpickle": None,
-            "callback_auth": json.loads(endpoint_predict_request_2[0].callback_auth.json()),
-            "callback_url": endpoint_predict_request_2[0].callback_url,
-            "return_pickled": endpoint_predict_request_2[0].return_pickled,
-        },
-        endpoint_predict_request_2[0].return_pickled,
-    ]
+    assert task_queue_gateway.queue[task_id]["args"][0] == {
+        "args": endpoint_predict_request_2[0].args.__root__,
+        "url": None,
+        "cloudpickle": None,
+        "callback_auth": json.loads(endpoint_predict_request_2[0].callback_auth.json()),
+        "callback_url": endpoint_predict_request_2[0].callback_url,
+        "return_pickled": endpoint_predict_request_2[0].return_pickled,
+    }
+    assert (datetime.now() - task_queue_gateway.queue[task_id]["args"][1]) < timedelta(seconds=1)
+    assert (
+        task_queue_gateway.queue[task_id]["args"][2] == endpoint_predict_request_2[0].return_pickled
+    )
 
     get_response_1 = fake_live_async_model_inference_gateway.get_task(task_id)
     assert get_response_1 == GetAsyncTaskV1Response(task_id=task_id, status=TaskStatus.PENDING)

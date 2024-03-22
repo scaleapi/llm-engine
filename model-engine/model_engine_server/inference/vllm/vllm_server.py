@@ -7,10 +7,12 @@ import traceback
 from typing import AsyncGenerator
 
 import uvicorn
-from fastapi import BackgroundTasks, FastAPI, Request
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.entrypoints.openai.protocol import CompletionRequest as OpenAICompletionRequest
+from vllm.model_executor.guided_decoding import get_guided_decoding_logits_processor
 from vllm.sampling_params import SamplingParams
 from vllm.utils import random_uuid
 
@@ -38,7 +40,35 @@ async def generate(request: Request) -> Response:
     request_dict = await request.json()
     prompt = request_dict.pop("prompt")
     stream = request_dict.pop("stream", False)
+    guided_json = request_dict.pop("guided_json", None)
+    guided_regex = request_dict.pop("guided_regex", None)
+    guided_choice = request_dict.pop("guided_choice", None)
     sampling_params = SamplingParams(**request_dict)
+
+    # Dummy request to get guided decode logit processor
+    try:
+        partial_openai_request = OpenAICompletionRequest.model_validate(
+            {
+                "model": "",
+                "prompt": "",
+                "guided_json": guided_json,
+                "guided_regex": guided_regex,
+                "guided_choice": guided_choice,
+            }
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=400, detail="Bad request: failed to parse guided decoding parameters."
+        )
+
+    guided_decode_logit_processor = await get_guided_decoding_logits_processor(
+        partial_openai_request, engine.get_tokenizer()
+    )
+    if guided_decode_logit_processor is not None:
+        if sampling_params.logits_processors is None:
+            sampling_params.logits_processors = []
+        sampling_params.logits_processors.append(guided_decode_logit_processor)
+
     request_id = random_uuid()
     results_generator = engine.generate(prompt, sampling_params, request_id)
 
@@ -114,6 +144,7 @@ def check_unknown_startup_memory_usage():
             print(
                 f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
             )
+            # nosemgrep
             output = subprocess.check_output(["fuser -v /dev/nvidia*"], shell=True).decode("utf-8")
             print(f"Processes using GPU: {output}")
 

@@ -1,6 +1,7 @@
 """
 DTOs for LLM APIs.
 """
+
 import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
@@ -278,6 +279,10 @@ class CompletionSyncV1Request(BaseModel):
     frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     top_k: Optional[int] = Field(default=None, ge=-1)
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
+    include_stop_str_in_output: Optional[bool] = Field(default=False)
+    guided_json: Optional[Dict[str, Any]] = Field(default=None)
+    guided_regex: Optional[str] = Field(default=None)
+    guided_choice: Optional[List[str]] = Field(default=None)
 
 
 class TokenOutput(BaseModel):
@@ -303,6 +308,11 @@ class CompletionOutput(BaseModel):
 
     text: str
     """The text of the completion."""
+
+    # We're not guaranteed to have `num_prompt_tokens` in the response in all cases, so to be safe, set a default.
+    # If we send request to api.spellbook.scale.com, we don't get this back.
+    num_prompt_tokens: Optional[int] = None
+    """Number of tokens in the prompt."""
 
     num_completion_tokens: int
     """Number of tokens in the completion."""
@@ -343,6 +353,10 @@ class CompletionStreamV1Request(BaseModel):
     frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     top_k: Optional[int] = Field(default=None, ge=-1)
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
+    include_stop_str_in_output: Optional[bool] = Field(default=False)
+    guided_json: Optional[Dict[str, Any]] = Field(default=None)
+    guided_regex: Optional[str] = Field(default=None)
+    guided_choice: Optional[List[str]] = Field(default=None)
 
 
 class CompletionStreamOutput(BaseModel):
@@ -351,6 +365,10 @@ class CompletionStreamOutput(BaseModel):
 
     finished: bool
     """Whether the completion is finished."""
+
+    # We're not guaranteed to have `num_prompt_tokens` in the response in all cases, so to be safe, set a default.
+    num_prompt_tokens: Optional[int] = None
+    """Number of tokens in the prompt."""
 
     num_completion_tokens: Optional[int] = None
     """Number of tokens in the completion."""
@@ -658,6 +676,30 @@ class CreateBatchCompletionsModelConfig(BaseModel):
     """
 
 
+class ToolConfig(BaseModel):
+    """
+    Configuration for tool use.
+    NOTE: this config is highly experimental and signature will change significantly in future iterations.
+    """
+
+    name: str
+    """
+    Name of the tool to use for the batch inference.
+    """
+    max_iterations: Optional[int] = 10
+    """
+    Maximum number of iterations to run the tool.
+    """
+    execution_timeout_seconds: Optional[int] = 60
+    """
+    Maximum runtime of the tool in seconds.
+    """
+    should_retry_on_error: Optional[bool] = True
+    """
+    Whether to retry the tool on error.
+    """
+
+
 class CreateBatchCompletionsRequest(BaseModel):
     """
     Request object for batch completions.
@@ -684,6 +726,11 @@ class CreateBatchCompletionsRequest(BaseModel):
     max_runtime_sec: Optional[int] = Field(default=24 * 3600, ge=1, le=2 * 24 * 3600)
     """
     Maximum runtime of the batch inference in seconds. Default to one day.
+    """
+    tool_config: Optional[ToolConfig] = None
+    """
+    Configuration for tool use.
+    NOTE: this config is highly experimental and signature will change significantly in future iterations.
     """
 
 

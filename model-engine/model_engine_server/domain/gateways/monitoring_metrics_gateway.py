@@ -24,14 +24,12 @@ class MonitoringMetricsGateway(ABC):
     def emit_attempted_build_metric(self):
         """
         Service builder attempted metric
-
         """
 
     @abstractmethod
     def emit_successful_build_metric(self):
         """
         Service builder succeeded metric
-
         """
 
     @abstractmethod
@@ -44,42 +42,36 @@ class MonitoringMetricsGateway(ABC):
     def emit_image_build_cache_hit_metric(self, image_type: str):
         """
         Service builder image build cache hit metric
-
         """
 
     @abstractmethod
     def emit_image_build_cache_miss_metric(self, image_type: str):
         """
         Service builder image build cache miss metric
-
         """
 
     @abstractmethod
     def emit_docker_failed_build_metric(self):
         """
         Service builder docker build failed metric
-
         """
 
     @abstractmethod
     def emit_database_cache_hit_metric(self):
         """
         Successful database cache metric
-
         """
 
     @abstractmethod
     def emit_database_cache_miss_metric(self):
         """
         Missed database cache metric
-
         """
 
     @abstractmethod
     def emit_route_call_metric(self, route: str, metadata: MetricMetadata):
         """
         Route call metric
-
         """
         pass
 
@@ -87,6 +79,5 @@ class MonitoringMetricsGateway(ABC):
     def emit_token_count_metrics(self, token_usage: TokenUsage, metadata: MetricMetadata):
         """
         Token count metrics
-
         """
         pass

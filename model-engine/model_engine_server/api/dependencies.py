@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 from dataclasses import dataclass
 from typing import Callable, Optional
 
@@ -447,6 +448,7 @@ _pool: Optional[aioredis.BlockingConnectionPool] = None
 def get_or_create_aioredis_pool() -> aioredis.ConnectionPool:
     global _pool
 
-    if _pool is None:
+    expiration_timestamp = hmi_config.cache_redis_url_expiration_timestamp
+    if _pool is None or (expiration_timestamp is not None and time.time() > expiration_timestamp):
         _pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
     return _pool

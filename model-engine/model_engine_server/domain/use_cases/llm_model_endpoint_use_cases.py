@@ -1365,6 +1365,26 @@ def validate_and_update_completion_params(
                 "include_stop_str_in_output is only supported in vllm."
             )
 
+    guided_count = 0
+    if request.guided_choice is not None:
+        guided_count += 1
+    if request.guided_json is not None:
+        guided_count += 1
+    if request.guided_regex is not None:
+        guided_count += 1
+
+    if guided_count > 1:
+        raise ObjectHasInvalidValueException(
+            "Only one of guided_json, guided_choice, guided_regex can be enabled."
+        )
+
+    if (
+        request.guided_choice is not None
+        or request.guided_regex is not None
+        or request.guided_json is not None
+    ) and not inference_framework == LLMInferenceFramework.VLLM:
+        raise ObjectHasInvalidValueException("Guided decoding is only supported in vllm.")
+
     return request
 
 
@@ -1656,6 +1676,12 @@ class CompletionSyncV1UseCase:
                 vllm_args["logprobs"] = 1
             if request.include_stop_str_in_output is not None:
                 vllm_args["include_stop_str_in_output"] = request.include_stop_str_in_output
+            if request.guided_choice is not None:
+                vllm_args["guided_choice"] = request.guided_choice
+            if request.guided_regex is not None:
+                vllm_args["guided_regex"] = request.guided_regex
+            if request.guided_json is not None:
+                vllm_args["guided_json"] = request.guided_json
 
             inference_request = SyncEndpointPredictV1Request(
                 args=vllm_args,
@@ -1918,6 +1944,12 @@ class CompletionStreamV1UseCase:
                 args["logprobs"] = 1
             if request.include_stop_str_in_output is not None:
                 args["include_stop_str_in_output"] = request.include_stop_str_in_output
+            if request.guided_choice is not None:
+                args["guided_choice"] = request.guided_choice
+            if request.guided_regex is not None:
+                args["guided_regex"] = request.guided_regex
+            if request.guided_json is not None:
+                args["guided_json"] = request.guided_json
             args["stream"] = True
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
             args = {
@@ -2274,6 +2306,11 @@ class CreateBatchCompletionsUseCase:
         if request.model_config.num_shards:
             hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
         request.model_config.num_shards = hardware.gpus
+
+        if request.tool_config and request.tool_config.name != "code_evaluator":
+            raise ObjectHasInvalidValueException(
+                "Only code_evaluator tool is supported for batch completions."
+            )
 
         batch_bundle = await self.create_batch_job_bundle(user, request, hardware)
 
