@@ -507,7 +507,9 @@ class CreateLLMModelBundleV1UseCase:
             model_files = [f for f in checkpoint_files if "model" in f]
 
             include_str = _include_safetensors_bin_or_pt(model_files)
-            file_selection_str = f"--include '*.model' --include-pattern '*.json' --include '{include_str}' --exclude-pattern 'optimizer*'"
+            file_selection_str = (
+                f"--include-pattern '*.model;*.json;{include_str}' --exclude-pattern 'optimizer*'"
+            )
             subcommands.append(
                 f"azcopy copy --recursive {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
             )
