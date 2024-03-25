@@ -77,3 +77,7 @@ class DatadogMonitoringMetricsGateway(MonitoringMetricsGateway):
 
         total_tokens_per_second = f"{self.prefix}.total_tokens_per_second"
         statsd.histogram(total_tokens_per_second, token_usage.total_tokens_per_second, tags=tags)
+
+        inter_token_latency = f"{self.prefix}.inter_token_latency"
+        if token_usage.inter_token_latency is not None:
+            statsd.histogram(inter_token_latency, token_usage.inter_token_latency, tags=tags)
