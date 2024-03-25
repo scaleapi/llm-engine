@@ -160,7 +160,7 @@ class ExternalInterfaces:
 
 
 def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
-    # TODO read service config
+    # dd_trace_enabled is a good enough proxy for determining if we should use Datadog
     if hmi_config.dd_trace_enabled:
         monitoring_metrics_gateway: MonitoringMetricsGateway = DatadogMonitoringMetricsGateway()
     else:
