@@ -80,8 +80,8 @@ class DatadogMonitoringMetricsGateway(MonitoringMetricsGateway):
 
         time_to_first_token = f"{self.prefix}.time_to_first_token"
         if token_usage.time_to_first_token is not None:
-            statsd.histogram(time_to_first_token, token_usage.time_to_first_token, tags=tags)
+            statsd.distribution(time_to_first_token, token_usage.time_to_first_token, tags=tags)
 
         inter_token_latency = f"{self.prefix}.inter_token_latency"
         if token_usage.inter_token_latency is not None:
-            statsd.histogram(inter_token_latency, token_usage.inter_token_latency, tags=tags)
+            statsd.distribution(inter_token_latency, token_usage.inter_token_latency, tags=tags)
