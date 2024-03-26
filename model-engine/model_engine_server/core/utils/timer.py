@@ -33,7 +33,7 @@ class timer:  # pylint: disable=invalid-name
     >>>     f()
     """
 
-    __slots__ = ("logger", "name", "_duration", "start")
+    __slots__ = ("logger", "name", "_duration", "start", "start_lap")
 
     def __init__(self, logger: Optional[Logger] = None, name: str = "") -> None:
         self.logger = logger
