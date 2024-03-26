@@ -337,6 +337,8 @@ class TokenUsage(BaseModel):
 
     @property
     def inter_token_latency(self) -> Optional[float]:  # Only for streaming requests
+        # Note: we calculate a single inter-token latency for the entire request.
+        # Calculating latency between each token seems a bit heavyweight, although we can do this if we wanted
         if (
             self.time_to_first_token is None
             or self.num_completion_tokens is None
@@ -344,7 +346,7 @@ class TokenUsage(BaseModel):
         ):
             return None
         if self.num_completion_tokens < 2:
-            return 0.0
+            return None
         return (self.total_duration - self.time_to_first_token) / (self.num_completion_tokens - 1)
 
 
