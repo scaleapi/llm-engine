@@ -6,6 +6,7 @@ from .abs_llm_artifact_gateway import ABSLLMArtifactGateway
 from .batch_job_orchestration_gateway import BatchJobOrchestrationGateway
 from .batch_job_progress_gateway import BatchJobProgressGateway
 from .celery_task_queue_gateway import CeleryTaskQueueGateway
+from .datadog_monitoring_metrics_gateway import DatadogMonitoringMetricsGateway
 from .fake_model_primitive_gateway import FakeModelPrimitiveGateway
 from .fake_monitoring_metrics_gateway import FakeMonitoringMetricsGateway
 from .live_async_model_endpoint_inference_gateway import LiveAsyncModelEndpointInferenceGateway
@@ -31,6 +32,7 @@ __all__: Sequence[str] = [
     "BatchJobOrchestrationGateway",
     "BatchJobProgressGateway",
     "CeleryTaskQueueGateway",
+    "DatadogMonitoringMetricsGateway",
     "FakeModelPrimitiveGateway",
     "FakeMonitoringMetricsGateway",
     "LiveAsyncModelEndpointInferenceGateway",

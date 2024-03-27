@@ -56,6 +56,7 @@ from model_engine_server.infra.gateways import (
     ABSFilesystemGateway,
     ABSLLMArtifactGateway,
     CeleryTaskQueueGateway,
+    DatadogMonitoringMetricsGateway,
     FakeMonitoringMetricsGateway,
     LiveAsyncModelEndpointInferenceGateway,
     LiveBatchJobOrchestrationGateway,
@@ -159,7 +160,11 @@ class ExternalInterfaces:
 
 
 def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
-    monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
+    # dd_trace_enabled is a good enough proxy for determining if we should use Datadog
+    if hmi_config.dd_trace_enabled:
+        monitoring_metrics_gateway: MonitoringMetricsGateway = DatadogMonitoringMetricsGateway()
+    else:
+        monitoring_metrics_gateway = FakeMonitoringMetricsGateway()
     return monitoring_metrics_gateway
 
 
