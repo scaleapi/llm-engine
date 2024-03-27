@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import FineTuneHparamValueType
 from model_engine_server.domain.entities.batch_job_entity import DockerImageBatchJob
@@ -88,6 +89,11 @@ class DockerImageBatchJobLLMFineTuningService(LLMFineTuningService):
             job_config=dict(
                 **labels,
                 gateway_url=os.getenv("GATEWAY_URL"),
+                cloud_provider=infra_config().cloud_provider,
+                aws_profile=infra_config().profile_ml_worker,
+                s3_bucket=infra_config().s3_bucket,
+                azure_client_id=os.getenv("AZURE_CLIENT_ID"),
+                abs_account_name=os.getenv("ABS_ACCOUNT_NAME"),
                 user_id=owner,
                 training_file=training_file,
                 validation_file=validation_file,
