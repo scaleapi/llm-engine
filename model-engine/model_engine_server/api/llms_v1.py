@@ -391,8 +391,11 @@ async def create_completion_stream_task(
 
     async def event_generator():
         try:
+            time_to_first_token = None
             with timer() as use_case_timer:
                 async for message in response:
+                    if time_to_first_token is None and message.output is not None:
+                        time_to_first_token = use_case_timer.lap()
                     yield {"data": message.json()}
             background_tasks.add_task(
                 external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
@@ -402,6 +405,7 @@ async def create_completion_stream_task(
                     if message.output
                     else None,
                     total_duration=use_case_timer.duration,
+                    time_to_first_token=time_to_first_token,
                 ),
                 metric_metadata,
             )
