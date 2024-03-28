@@ -22,7 +22,6 @@ anyio==3.7.1
     # via
     #   azure-core
     #   httpx
-    #   sse-starlette
     #   starlette
 asgiref==3.7.2
     # via uvicorn
@@ -473,7 +472,7 @@ sqlalchemy[asyncio]==2.0.4
     # via
     #   -r model-engine/requirements.in
     #   alembic
-sse-starlette==2.0.0
+sse-starlette==1.6.1
     # via -r model-engine/requirements.in
 sseclient-py==1.7.2
     # via -r model-engine/requirements.in
@@ -565,9 +564,7 @@ urllib3==1.26.16
     #   kubernetes-asyncio
     #   requests
 uvicorn==0.17.6
-    # via
-    #   -r model-engine/requirements.in
-    #   sse-starlette
+    # via -r model-engine/requirements.in
 uvloop==0.17.0
     # via -r model-engine/requirements.in
 vine==5.1.0
