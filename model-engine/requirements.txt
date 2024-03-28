@@ -161,7 +161,9 @@ exceptiongroup==1.2.0
     #   anyio
     #   cattrs
 fastapi==0.110.0
-    # via -r model-engine/requirements.in
+    # via
+    #   -r model-engine/requirements.in
+    #   sse-starlette
 filelock==3.13.1
     # via
     #   huggingface-hub
@@ -473,7 +475,7 @@ sqlalchemy[asyncio]==2.0.4
     # via
     #   -r model-engine/requirements.in
     #   alembic
-sse-starlette==2.0.0
+sse-starlette==1.8.2
     # via -r model-engine/requirements.in
 sseclient-py==1.7.2
     # via -r model-engine/requirements.in
