@@ -47,7 +47,7 @@ sentencepiece==0.1.99
 sh~=1.13
 smart-open~=5.2
 sqlalchemy[asyncio]~=2.0.4
-sse-starlette==1.8.2
+sse-starlette==1.6.1
 sseclient-py==1.7.2
 starlette[full]>=0.36.2 # not used directly, but needs to be pinned for Microsoft security scan
 stringcase==1.2.0
