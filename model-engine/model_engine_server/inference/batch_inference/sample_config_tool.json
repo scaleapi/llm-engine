@@ -3,7 +3,7 @@
     "output_data_path":"./sample_output_tool.json",
     "model_config":{
         "model":"mistral-7b",
-        "checkpoint_path":"s3://scale-ml/models/mistral-7b",
+        "checkpoint_path":"my_path",
         "num_shards": 1,
         "labels": {"team": "my_team"}
     },
