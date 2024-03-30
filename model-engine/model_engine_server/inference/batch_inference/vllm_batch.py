@@ -368,6 +368,8 @@ async def generate_with_vllm(
 ) -> List[CompletionOutput]:  # pragma: no cover
     from vllm import SamplingParams
 
+    model = (await engine.get_model_config()).model
+
     # Add the requests to the engine.
     results_generators = []
     for idx, prompt in enumerate(prompts):
@@ -419,7 +421,7 @@ async def generate_with_vllm(
             output.tokens = tokens
 
         tags = {
-            "model": engine.get_model_config().model,
+            "model": model,
             "use_tool": use_tool,
         }
         statsd.increment(
