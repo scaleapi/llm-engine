@@ -420,10 +420,10 @@ async def generate_with_vllm(
         if return_token_log_probs:
             output.tokens = tokens
 
-        tags = {
-            "model": model,
-            "use_tool": use_tool,
-        }
+        tags = [
+            f"model:{model}",
+            f"use_tool:{use_tool}",
+        ]
         statsd.increment(
             "model_engine.batch_inference.vllm.generation_count",
             tags=tags,
