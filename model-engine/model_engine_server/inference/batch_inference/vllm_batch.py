@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 import boto3
 import smart_open
+from datadog import statsd
 from func_timeout import FunctionTimedOut, func_set_timeout
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
@@ -195,6 +196,7 @@ async def generate_with_tool(
             content.top_p,
             [iter[0] for iter in iter_prompts],
             bar,
+            use_tool=True,
         )
 
         bar = tqdm(
@@ -329,6 +331,7 @@ async def batch_inference():
             content.top_p,
             prompts,
             bar,
+            use_tool=False,
         )
 
         bar.close()
@@ -361,6 +364,7 @@ async def generate_with_vllm(
     top_p,
     prompts,
     bar,
+    use_tool,
 ) -> List[CompletionOutput]:  # pragma: no cover
     from vllm import SamplingParams
 
@@ -413,6 +417,30 @@ async def generate_with_vllm(
         )
         if return_token_log_probs:
             output.tokens = tokens
+
+        tags = {
+            "model": engine.get_model_config().model,
+            "use_tool": use_tool,
+        }
+        statsd.increment(
+            "model_engine.batch_inference.vllm.generation_count",
+            tags=tags,
+        )
+        statsd.increment(
+            "model_engine.batch_inference.vllm.token_count.total",
+            num_prompt_tokens + num_completion_tokens,
+            tags=tags,
+        )
+        statsd.increment(
+            "model_engine.batch_inference.vllm.token_count.completion",
+            num_completion_tokens,
+            tags=tags,
+        )
+        statsd.increment(
+            "model_engine.batch_inference.vllm.token_count.prompt",
+            num_prompt_tokens,
+            tags=tags,
+        )
 
         outputs.append(output)
     return outputs
