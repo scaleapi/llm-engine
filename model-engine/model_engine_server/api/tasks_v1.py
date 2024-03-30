@@ -18,6 +18,7 @@ from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
     EndpointUnsupportedInferenceTypeException,
+    InvalidRequestException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
     UpstreamServiceError,
@@ -65,6 +66,11 @@ async def create_async_inference_task(
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported inference type: {str(exc)}",
+        ) from exc
+    except InvalidRequestException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid request: {str(exc)}",
         ) from exc
 
 
