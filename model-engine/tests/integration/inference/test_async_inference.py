@@ -4,7 +4,9 @@ import os
 import subprocess
 from functools import lru_cache
 from typing import Any, List, Optional, Tuple
+from unittest.mock import MagicMock
 
+import botocore
 import pytest
 import redis
 import requests
@@ -17,6 +19,7 @@ from model_engine_server.common.dtos.tasks import (
     TaskStatus,
 )
 from model_engine_server.common.env_vars import CIRCLECI
+from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.infra.gateways import (
     CeleryTaskQueueGateway,
     LiveAsyncModelEndpointInferenceGateway,
@@ -157,3 +160,24 @@ def test_async_callbacks(
     assert actual_payload == expected_callback_payload
 
     assert callback_stats["last_auth"][callback_version] == expected_credentials
+
+
+def test_async_callbacks_botocore_exception(
+    queue: str,
+):
+    gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
+
+    mock_dest = MagicMock()
+    mock_dest.send_task = MagicMock(
+        side_effect=botocore.exceptions.ClientError(error_response={}, operation_name="")
+    )
+    mock_get = MagicMock()
+    mock_get.return_value = mock_dest
+    gateway._get_celery_dest = mock_get
+
+    with pytest.raises(InvalidRequestException):
+        gateway.send_task(
+            task_name="test_task",
+            queue_name=queue,
+            args=[1, 2],
+        )
