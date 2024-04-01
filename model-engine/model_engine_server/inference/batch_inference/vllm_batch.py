@@ -19,6 +19,9 @@ from model_engine_server.common.dtos.llms import (
     TokenOutput,
     ToolConfig,
 )
+from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
+    DatadogInferenceMonitoringMetricsGateway,
+)
 from model_engine_server.inference.tool_completion.tools import TOOL_MAP, BaseTool, Tools, tokenizer
 from tqdm import tqdm
 
@@ -370,6 +373,8 @@ async def generate_with_vllm(
 
     model = (await engine.get_model_config()).model
 
+    metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
+
     # Add the requests to the engine.
     results_generators = []
     for idx, prompt in enumerate(prompts):
@@ -420,29 +425,7 @@ async def generate_with_vllm(
         if return_token_log_probs:
             output.tokens = tokens
 
-        tags = [
-            f"model:{model}",
-            f"use_tool:{use_tool}",
-        ]
-        statsd.increment(
-            "model_engine.batch_inference.vllm.generation_count",
-            tags=tags,
-        )
-        statsd.increment(
-            "model_engine.batch_inference.vllm.token_count.total",
-            num_prompt_tokens + num_completion_tokens,
-            tags=tags,
-        )
-        statsd.increment(
-            "model_engine.batch_inference.vllm.token_count.completion",
-            num_completion_tokens,
-            tags=tags,
-        )
-        statsd.increment(
-            "model_engine.batch_inference.vllm.token_count.prompt",
-            num_prompt_tokens,
-            tags=tags,
-        )
+        metrics_gateway.emit_batch_completions_metric(model, use_tool, num_prompt_tokens, num_completion_tokens)
 
         outputs.append(output)
     return outputs

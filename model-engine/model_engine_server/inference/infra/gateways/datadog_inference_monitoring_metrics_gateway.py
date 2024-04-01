@@ -18,3 +18,28 @@ class DatadogInferenceMonitoringMetricsGateway(InferenceMonitoringMetricsGateway
 
     def emit_async_task_stuck_metric(self, queue_name: str):
         statsd.increment("scale_launch.async_task.stuck.count", tags=[f"queue_name:{queue_name}"])
+
+    def emit_batch_completions_metric(self, model: str, use_tool: str, num_prompt_tokens: int, num_completion_tokens: int):
+        tags = [
+            f"model:{model}",
+            f"use_tool:{use_tool}",
+        ]
+        statsd.increment(
+            "model_engine.batch_inference.vllm.generation_count",
+            tags=tags,
+        )
+        statsd.increment(
+            "model_engine.batch_inference.vllm.token_count.total",
+            num_prompt_tokens + num_completion_tokens,
+            tags=tags,
+        )
+        statsd.increment(
+            "model_engine.batch_inference.vllm.token_count.completion",
+            num_completion_tokens,
+            tags=tags,
+        )
+        statsd.increment(
+            "model_engine.batch_inference.vllm.token_count.prompt",
+            num_prompt_tokens,
+            tags=tags,
+        )
