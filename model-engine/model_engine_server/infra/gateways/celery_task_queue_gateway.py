@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+import botocore
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.dtos.tasks import (
     CreateAsyncTaskV1Response,
@@ -9,6 +10,7 @@ from model_engine_server.common.dtos.tasks import (
 from model_engine_server.core.celery import TaskVisibility, celery_app
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 
 logger = make_logger(logger_name())
@@ -68,12 +70,16 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
     ) -> CreateAsyncTaskV1Response:
         celery_dest = self._get_celery_dest()
 
-        res = celery_dest.send_task(
-            name=task_name,
-            args=args,
-            kwargs=kwargs,
-            queue=queue_name,
-        )
+        try:
+            res = celery_dest.send_task(
+                name=task_name,
+                args=args,
+                kwargs=kwargs,
+                queue=queue_name,
+            )
+        except botocore.exceptions.ClientError as e:
+            logger.exception(f"Error sending task to queue {queue_name}: {e}")
+            raise InvalidRequestException(f"Error sending celery task: {e}")
         logger.info(f"Task {res.id} sent to queue {queue_name} from gateway")  # pragma: no cover
         return CreateAsyncTaskV1Response(task_id=res.id)
 
