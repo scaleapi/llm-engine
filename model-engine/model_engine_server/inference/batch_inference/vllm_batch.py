@@ -425,7 +425,9 @@ async def generate_with_vllm(
         if return_token_log_probs:
             output.tokens = tokens
 
-        metrics_gateway.emit_batch_completions_metric(model, use_tool, num_prompt_tokens, num_completion_tokens)
+        metrics_gateway.emit_batch_completions_metric(
+            model, use_tool, num_prompt_tokens, num_completion_tokens
+        )
 
         outputs.append(output)
     return outputs
