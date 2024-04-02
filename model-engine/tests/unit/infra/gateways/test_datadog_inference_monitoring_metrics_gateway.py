@@ -21,8 +21,7 @@ def mock_statsd():
 
 @pytest.fixture
 def datadog_inference_monitoring_metrics_gateway():
-    gateway = DatadogInferenceMonitoringMetricsGateway(prefix="model_engine_unit_test")
-    return gateway
+    return DatadogInferenceMonitoringMetricsGateway()
 
 
 def test_datadog_inference_monitoring_metrics_gateway_batch_completion_metrics(
