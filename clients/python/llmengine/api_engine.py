@@ -12,10 +12,13 @@ from aiohttp import BasicAuth, ClientSession, ClientTimeout
 from llmengine.errors import parse_error
 
 SPELLBOOK_API_URL = "https://api.spellbook.scale.com/llm-engine/"
-LLM_ENGINE_BASE_PATH = os.getenv("LLM_ENGINE_BASE_PATH", SPELLBOOK_API_URL)
 DEFAULT_TIMEOUT: int = 10
 
 api_key = None
+
+
+def get_base_path() -> str:
+    return os.getenv("LLM_ENGINE_BASE_PATH", SPELLBOOK_API_URL)
 
 
 def set_api_key(key):
@@ -33,7 +36,7 @@ def get_api_key() -> str:
 def assert_self_hosted(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        if SPELLBOOK_API_URL == LLM_ENGINE_BASE_PATH:
+        if SPELLBOOK_API_URL == get_base_path():
             raise ValueError("This feature is only available for self-hosted users.")
         return func(*args, **kwargs)
 
@@ -43,16 +46,17 @@ def assert_self_hosted(func):
 class APIEngine:
     @classmethod
     def validate_api_key(cls):
-        if SPELLBOOK_API_URL == LLM_ENGINE_BASE_PATH and not get_api_key():
+        if SPELLBOOK_API_URL == get_base_path() and not get_api_key():
             raise ValueError(
                 "You must set SCALE_API_KEY in your environment to to use the LLM Engine API."
             )
 
     @classmethod
     def _get(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
+        base_path = get_base_path()
         api_key = get_api_key()
         response = requests.get(
-            urljoin(LLM_ENGINE_BASE_PATH, resource_name),
+            urljoin(base_path, resource_name),
             timeout=timeout,
             headers={"x-api-key": api_key},
             auth=(api_key, ""),
@@ -66,9 +70,10 @@ class APIEngine:
     def put(
         cls, resource_name: str, data: Optional[Dict[str, Any]], timeout: int
     ) -> Dict[str, Any]:
+        base_path = get_base_path()
         api_key = get_api_key()
         response = requests.put(
-            urljoin(LLM_ENGINE_BASE_PATH, resource_name),
+            urljoin(base_path, resource_name),
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
@@ -81,9 +86,10 @@ class APIEngine:
 
     @classmethod
     def _delete(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
+        base_path = get_base_path()
         api_key = get_api_key()
         response = requests.delete(
-            urljoin(LLM_ENGINE_BASE_PATH, resource_name),
+            urljoin(base_path, resource_name),
             timeout=timeout,
             headers={"x-api-key": api_key},
             auth=(api_key, ""),
@@ -95,9 +101,10 @@ class APIEngine:
 
     @classmethod
     def post_sync(cls, resource_name: str, data: Dict[str, Any], timeout: int) -> Dict[str, Any]:
+        base_path = get_base_path()
         api_key = get_api_key()
         response = requests.post(
-            urljoin(LLM_ENGINE_BASE_PATH, resource_name),
+            urljoin(base_path, resource_name),
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
@@ -112,9 +119,10 @@ class APIEngine:
     def post_stream(
         cls, resource_name: str, data: Dict[str, Any], timeout: int
     ) -> Iterator[Dict[str, Any]]:
+        base_path = get_base_path()
         api_key = get_api_key()
         response = requests.post(
-            urljoin(LLM_ENGINE_BASE_PATH, resource_name),
+            urljoin(base_path, resource_name),
             json=data,
             timeout=timeout,
             headers={"x-api-key": api_key},
@@ -144,9 +152,10 @@ class APIEngine:
     def post_file(
         cls, resource_name: str, files: Dict[str, BufferedReader], timeout: int
     ) -> Dict[str, Any]:
+        base_path = get_base_path()
         api_key = get_api_key()
         response = requests.post(
-            urljoin(LLM_ENGINE_BASE_PATH, resource_name),
+            urljoin(base_path, resource_name),
             files=files,
             timeout=timeout,
             headers={"x-api-key": api_key},
@@ -161,15 +170,14 @@ class APIEngine:
     async def apost_sync(
         cls, resource_name: str, data: Dict[str, Any], timeout: int
     ) -> Dict[str, Any]:
+        base_path = get_base_path()
         api_key = get_api_key()
         async with ClientSession(
             timeout=ClientTimeout(timeout),
             headers={"x-api-key": api_key},
             auth=BasicAuth(api_key, ""),
         ) as session:
-            async with session.post(
-                urljoin(LLM_ENGINE_BASE_PATH, resource_name), json=data
-            ) as resp:
+            async with session.post(urljoin(base_path, resource_name), json=data) as resp:
                 if resp.status != 200:
                     raise parse_error(resp.status, await resp.read())
                 payload = await resp.json()
@@ -179,15 +187,14 @@ class APIEngine:
     async def apost_stream(
         cls, resource_name: str, data: Dict[str, Any], timeout: int
     ) -> AsyncIterable[Dict[str, Any]]:
+        base_path = get_base_path()
         api_key = get_api_key()
         async with ClientSession(
             timeout=ClientTimeout(timeout),
             headers={"x-api-key": api_key},
             auth=BasicAuth(api_key, ""),
         ) as session:
-            async with session.post(
-                urljoin(LLM_ENGINE_BASE_PATH, resource_name), json=data
-            ) as resp:
+            async with session.post(urljoin(base_path, resource_name), json=data) as resp:
                 if resp.status != 200:
                     raise parse_error(resp.status, await resp.read())
                 async for byte_payload in resp.content:
