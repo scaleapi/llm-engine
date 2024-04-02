@@ -51,11 +51,11 @@ spec:
           resources:
             requests:
               cpu: 3.5
-              memory: 30Gi
+              memory: 90Gi
               ephemeral-storage: 80G
             limits:
               cpu: 3.5
-              memory: 30Gi
+              memory: 90Gi
               ephemeral-storage: 80G
       volumes:
         - name: pipconf
