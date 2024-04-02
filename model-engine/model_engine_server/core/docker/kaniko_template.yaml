@@ -39,6 +39,7 @@ spec:
             - "--use-new-run"
             - "--image-fs-extract-retry=5"
             - "--log-format=json"
+            - "--push-retry=2"
           # The --use-new-run flag should fix docker builds eating up a lot of memory and consequently oom/failing
           env:
             - name: AWS_REGION
@@ -50,11 +51,11 @@ spec:
           resources:
             requests:
               cpu: 3.5
-              memory: 30Gi
+              memory: 90Gi
               ephemeral-storage: 80G
             limits:
               cpu: 3.5
-              memory: 30Gi
+              memory: 90Gi
               ephemeral-storage: 80G
       volumes:
         - name: pipconf
