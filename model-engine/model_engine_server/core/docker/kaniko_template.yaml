@@ -39,6 +39,7 @@ spec:
             - "--use-new-run"
             - "--image-fs-extract-retry=5"
             - "--log-format=json"
+            - "--push-retry=2"
           # The --use-new-run flag should fix docker builds eating up a lot of memory and consequently oom/failing
           env:
             - name: AWS_REGION
