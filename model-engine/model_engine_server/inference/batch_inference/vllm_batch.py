@@ -148,6 +148,7 @@ async def generate_with_tool(
     content: CreateBatchCompletionsRequestContent,
     prompts,
     tool: Type[BaseTool],
+    is_finetuned: bool,
 ):
     class IterativeGeneration:
         def __init__(self, prompt, max_new_tokens):
@@ -199,6 +200,7 @@ async def generate_with_tool(
             [iter[0] for iter in iter_prompts],
             bar,
             use_tool=True,
+            is_finetuned=is_finetuned,
         )
 
         bar = tqdm(
@@ -300,6 +302,7 @@ async def batch_inference():
     model = (
         MODEL_WEIGHTS_FOLDER if request.model_config.checkpoint_path else request.model_config.model
     )
+    is_finetuned = request.model_config.checkpoint_path is not None
 
     llm = get_vllm_engine(model, request)
 
@@ -317,7 +320,9 @@ async def batch_inference():
     if request.tool_config is not None:
         tool_enum = Tools(request.tool_config.name)
         tool = TOOL_MAP[tool_enum]
-        outputs = await generate_with_tool(llm, request.tool_config, content, prompts, tool)
+        outputs = await generate_with_tool(
+            llm, request.tool_config, content, prompts, tool, is_finetuned
+        )
     else:
         bar = tqdm(total=len(prompts), desc="Processed prompts")
 
@@ -334,6 +339,7 @@ async def batch_inference():
             prompts,
             bar,
             use_tool=False,
+            is_finetuned=is_finetuned,
         )
 
         bar.close()
@@ -367,6 +373,7 @@ async def generate_with_vllm(
     prompts,
     bar,
     use_tool,
+    is_finetuned,
 ) -> List[CompletionOutput]:  # pragma: no cover
     from vllm import SamplingParams
 
@@ -425,7 +432,7 @@ async def generate_with_vllm(
             output.tokens = tokens
 
         metrics_gateway.emit_batch_completions_metric(
-            model, use_tool, num_prompt_tokens, num_completion_tokens
+            model, use_tool, num_prompt_tokens, num_completion_tokens, is_finetuned
         )
 
         outputs.append(output)

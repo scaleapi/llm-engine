@@ -104,3 +104,18 @@ def test_datadog_monitoring_metrics_gateway_token_count_metrics(
     statsd.histogram.reset_mock()
     statsd.distribution.assert_called()
     statsd.distribution.reset_mock()
+
+
+def test_datadog_monitoring_metrics_gateway_batch_completion_metrics(
+    datadog_monitoring_metrics_gateway,
+):
+    model = "test_model"
+    use_tool = True
+    num_prompt_tokens = 100
+    num_completion_tokens = 200
+    is_finetuned = True
+    datadog_monitoring_metrics_gateway.emit_batch_completions_metric(
+        model, use_tool, num_prompt_tokens, num_completion_tokens, is_finetuned
+    )
+    statsd.increment.assert_called()
+    statsd.increment.reset_mock()
