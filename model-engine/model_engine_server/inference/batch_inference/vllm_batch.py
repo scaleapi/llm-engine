@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 
 import boto3
 import smart_open
-from datadog import statsd
 from func_timeout import FunctionTimedOut, func_set_timeout
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
