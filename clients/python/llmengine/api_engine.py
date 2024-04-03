@@ -14,10 +14,18 @@ from llmengine.errors import parse_error
 SPELLBOOK_API_URL = "https://api.spellbook.scale.com/llm-engine/"
 DEFAULT_TIMEOUT: int = 10
 
+base_path = None
 api_key = None
 
 
+def set_base_path(path):
+    global base_path
+    base_path = path
+
+
 def get_base_path() -> str:
+    if base_path is not None:
+        return base_path
     return os.getenv("LLM_ENGINE_BASE_PATH", SPELLBOOK_API_URL)
 
 
