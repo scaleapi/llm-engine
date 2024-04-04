@@ -33,7 +33,7 @@ from model_engine_server.domain.exceptions import (
     UpstreamServiceError,
 )
 from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
-    MAX_LLM_ENDPOINTS_PER_INTERNAL_USER,
+    MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER,
     CreateFineTuneV1UseCase,
     GetFineTuneEventsV1UseCase,
     is_model_name_suffix_valid,
@@ -1416,7 +1416,7 @@ async def test_create_fine_tune_limit(
         fake_llm_fine_tuning_events_repository,
         fake_file_storage_gateway,
     )
-    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=False)
     request = CreateFineTuneRequest(
         model="base_model",
         training_file="file1",
@@ -1425,8 +1425,8 @@ async def test_create_fine_tune_limit(
         hyperparameters={},
         suffix=None,
     )
-    for i in range(MAX_LLM_ENDPOINTS_PER_INTERNAL_USER):
-        if i == MAX_LLM_ENDPOINTS_PER_INTERNAL_USER:
+    for i in range(MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER):
+        if i == MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER:
             with pytest.raises(LLMFineTuningQuotaReached):
                 await use_case.execute(user=user, request=request)
         else:
