@@ -28,7 +28,6 @@ DEFAULT_FINE_TUNING_METHOD = "lora"
 REQUIRED_COLUMNS = ["prompt", "response"]
 
 MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER = 5
-MAX_LLM_ENDPOINTS_PER_INTERNAL_USER = 15
 
 MAX_SUFFIX_LENGTH = 28
 # k8s labels need to be <= 62 characters, timestamp takes 13 characters, 2 characters for periods,
@@ -115,17 +114,14 @@ class CreateFineTuneV1UseCase:
 
         current_jobs_and_endpoints = len(in_progress_jobs) + len(model_endpoints)
 
-        max_llm_endpoints_per_user = (
-            MAX_LLM_ENDPOINTS_PER_INTERNAL_USER
-            if user.is_privileged_user
-            else MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER
-        )
-
-        if current_jobs_and_endpoints >= max_llm_endpoints_per_user:
+        if (
+            not user.is_privileged_user
+            and current_jobs_and_endpoints >= MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER
+        ):
             raise LLMFineTuningQuotaReached(
-                f"Limit {max_llm_endpoints_per_user} fine-tunes/fine-tuned endpoints per user. "
+                f"Limit {MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER} fine-tunes/fine-tuned endpoints per user. "
                 f"Cancel/delete a total of "
-                f"{current_jobs_and_endpoints - max_llm_endpoints_per_user + 1} pending or "
+                f"{current_jobs_and_endpoints - MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER + 1} pending or "
                 f"running fine-tune(s) or fine-tuned endpoints to run another fine-tune."
             )
 
