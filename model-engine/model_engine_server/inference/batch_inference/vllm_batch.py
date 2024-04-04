@@ -457,9 +457,11 @@ async def generate_with_vllm(
 def get_gpu_free_memory():  # pragma: no cover
     """Get GPU free memory using nvidia-smi."""
     try:
-        output = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"]
-        ).decode("utf-8")
+        output = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+            capture_output=True,
+            text=True,
+        ).stdout
         gpu_memory = [int(x) for x in output.strip().split("\n")]
         return gpu_memory
     except subprocess.CalledProcessError:
@@ -478,7 +480,9 @@ def check_unknown_startup_memory_usage():  # pragma: no cover
                 f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
             )
             # nosemgrep
-            output = subprocess.check_output(["fuser -v /dev/nvidia*"], shell=True).decode("utf-8")
+            output = subprocess.run(
+                ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
+            ).stdout
             print(f"Processes using GPU: {output}")
 
 
