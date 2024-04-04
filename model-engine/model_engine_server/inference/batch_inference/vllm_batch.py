@@ -149,6 +149,7 @@ async def generate_with_tool(
     prompts,
     tool: Type[BaseTool],
     is_finetuned: bool,
+    model: str,
 ):
     class IterativeGeneration:
         def __init__(self, prompt, max_new_tokens):
@@ -201,6 +202,7 @@ async def generate_with_tool(
             bar,
             use_tool=True,
             is_finetuned=is_finetuned,
+            model=model,
         )
 
         bar = tqdm(
@@ -321,7 +323,13 @@ async def batch_inference():
         tool_enum = Tools(request.tool_config.name)
         tool = TOOL_MAP[tool_enum]
         outputs = await generate_with_tool(
-            llm, request.tool_config, content, prompts, tool, is_finetuned
+            llm,
+            request.tool_config,
+            content,
+            prompts,
+            tool,
+            is_finetuned,
+            request.model_config.model,
         )
     else:
         bar = tqdm(total=len(prompts), desc="Processed prompts")
@@ -340,6 +348,7 @@ async def batch_inference():
             bar,
             use_tool=False,
             is_finetuned=is_finetuned,
+            model=request.model_config.model,
         )
 
         bar.close()
@@ -374,10 +383,9 @@ async def generate_with_vllm(
     bar,
     use_tool,
     is_finetuned,
+    model,
 ) -> List[CompletionOutput]:  # pragma: no cover
     from vllm import SamplingParams
-
-    model = (await engine.get_model_config()).model
 
     metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
 
