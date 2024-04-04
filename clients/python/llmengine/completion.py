@@ -1,4 +1,4 @@
-from typing import AsyncIterable, Iterator, List, Optional, Union
+from typing import Any, AsyncIterable, Dict, Iterator, List, Optional, Union
 
 from llmengine.api_engine import APIEngine
 from llmengine.data_types import (
@@ -43,6 +43,10 @@ class Completion(APIEngine):
         frequency_penalty: Optional[float] = None,
         top_k: Optional[int] = None,
         top_p: Optional[float] = None,
+        include_stop_str_in_output: Optional[bool] = False,
+        guided_json: Optional[Dict[str, Any]] = None,
+        guided_regex: Optional[str] = None,
+        guided_choice: Optional[List[str]] = None,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]:
@@ -101,6 +105,18 @@ class Completion(APIEngine):
             top_p (Optional[float]):
                 Float that controls the cumulative probability of the top tokens to consider.
                 Range: (0.0, 1.0]. 1.0 means consider all tokens.
+
+            include_stop_str_in_output (Optional[bool]):
+                Whether to include the stop sequence in the output. Default to False.
+
+            guided_json (Optional[Dict[str, Any]]):
+                If specified, the output will follow the JSON schema. For examples see https://json-schema.org/learn/miscellaneous-examples.
+
+            guided_regex (Optional[str]):
+                If specified, the output will follow the regex pattern.
+
+            guided_choice (Optional[List[str]]):
+                If specified, the output will be exactly one of the choices.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -198,6 +214,10 @@ class Completion(APIEngine):
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
+                include_stop_str_in_output=include_stop_str_in_output,
+                guided_json=guided_json,
+                guided_regex=guided_regex,
+                guided_choice=guided_choice,
                 timeout=timeout,
             )
 
@@ -237,6 +257,10 @@ class Completion(APIEngine):
         frequency_penalty: Optional[float] = None,
         top_k: Optional[int] = None,
         top_p: Optional[float] = None,
+        include_stop_str_in_output: Optional[bool] = False,
+        guided_json: Optional[Dict[str, Any]] = None,
+        guided_regex: Optional[str] = None,
+        guided_choice: Optional[List[str]] = None,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
@@ -296,6 +320,18 @@ class Completion(APIEngine):
             top_p (Optional[float]):
                 Float that controls the cumulative probability of the top tokens to consider.
                 Range: (0.0, 1.0]. 1.0 means consider all tokens.
+
+            include_stop_str_in_output (Optional[bool]):
+                Whether to include the stop sequence in the output. Default to False.
+
+            guided_json (Optional[Dict[str, Any]]):
+                If specified, the output will follow the JSON schema.
+
+            guided_regex (Optional[str]):
+                If specified, the output will follow the regex pattern.
+
+            guided_choice (Optional[List[str]]):
+                If specified, the output will be exactly one of the choices.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -396,6 +432,10 @@ class Completion(APIEngine):
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
+                include_stop_str_in_output=include_stop_str_in_output,
+                guided_json=guided_json,
+                guided_regex=guided_regex,
+                guided_choice=guided_choice,
             ).dict()
             response = cls.post_sync(
                 resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",
