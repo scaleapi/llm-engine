@@ -68,6 +68,10 @@ def send_request(url, request, user=None):
     inter_token_latencies = []
     last_token_time = None
     for byte_payload in response.iter_lines():
+        # Skip line
+        if byte_payload == b"\n":
+            continue
+
         token_time = time.time()
         if first_line:
             time_to_first_token = token_time - start
@@ -76,10 +80,6 @@ def send_request(url, request, user=None):
         else:
             inter_token_latencies.append(token_time - last_token_time)
             last_token_time = token_time
-
-        # Skip line
-        if byte_payload == b"\n":
-            continue
 
         payload = byte_payload.decode("utf-8")
 
