@@ -32,6 +32,7 @@ MODEL_WEIGHTS_FOLDER = os.getenv("MODEL_WEIGHTS_FOLDER", "./model_weights")
 
 os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
 
+
 def get_CPU_cores_in_container():
     cpu_count = multiprocessing.cpu_count()
     try:
@@ -44,6 +45,7 @@ def get_CPU_cores_in_container():
     except FileNotFoundError:
         pass
     return cpu_count
+
 
 CPU_COUNT = get_CPU_cores_in_container()
 
