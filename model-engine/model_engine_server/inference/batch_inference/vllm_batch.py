@@ -33,7 +33,7 @@ MODEL_WEIGHTS_FOLDER = os.getenv("MODEL_WEIGHTS_FOLDER", "./model_weights")
 os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
 
 
-def get_CPU_cores_in_container():
+def get_cpu_cores_in_container():
     cpu_count = multiprocessing.cpu_count()
     try:
         with open("/sys/fs/cgroup/cpu/cpu.cfs_quota_us") as fp:
@@ -47,9 +47,7 @@ def get_CPU_cores_in_container():
     return cpu_count
 
 
-CPU_COUNT = get_CPU_cores_in_container()
-
-print(f"{CPU_COUNT=}")
+CPU_COUNT = get_cpu_cores_in_container()
 
 
 def get_s3_client():
