@@ -302,7 +302,7 @@ def run_benchmark(
     all_inter_token_latencies = []  # one value per token (except the first generated token)
     for result in results:
         avg_time_per_token = (result["total_time"] - result["time_to_first_token"]) / (
-            result["num_completion_tokens"] - 1
+            max(1, result["num_completion_tokens"] - 1)
         )
         time_to_first_token.append(result["time_to_first_token"])
         time_to_process_prompt.append(result["time_to_first_token"] - avg_time_per_token)
