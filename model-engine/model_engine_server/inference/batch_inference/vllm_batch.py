@@ -1,10 +1,12 @@
 import asyncio
 import json
+import multiprocessing
 import os
 import subprocess
 import sys
 import time
 import uuid
+from multiprocessing.pool import ThreadPool
 from typing import List, Optional, Type
 from urllib.parse import urlparse
 
@@ -29,6 +31,23 @@ AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
 MODEL_WEIGHTS_FOLDER = os.getenv("MODEL_WEIGHTS_FOLDER", "./model_weights")
 
 os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+
+
+def get_cpu_cores_in_container():
+    cpu_count = multiprocessing.cpu_count()
+    try:
+        with open("/sys/fs/cgroup/cpu/cpu.cfs_quota_us") as fp:
+            cfs_quota_us = int(fp.read())
+        with open("/sys/fs/cgroup/cpu/cpu.cfs_period_us") as fp:
+            cfs_period_us = int(fp.read())
+        if cfs_quota_us != -1:
+            cpu_count = cfs_quota_us // cfs_period_us
+    except FileNotFoundError:
+        pass
+    return cpu_count
+
+
+CPU_COUNT = get_cpu_cores_in_container()
 
 
 def get_s3_client():
@@ -210,7 +229,8 @@ async def generate_with_tool(
             desc=f"Running tools, iteration {num_iters}",
             file=sys.stdout,
         )
-        for i in range(len(iter_prompts)):
+
+        def tool_func(i):
             bar.update(1)
             response = outputs[i]
             gen_item = generations[iter_prompts[i][1]]
@@ -225,7 +245,7 @@ async def generate_with_tool(
             # break the loop if generation is complete even if remaining_tokens>0
             if len(new_text) == 0:
                 gen_item.completed = True
-                continue
+                return
 
             # To-do write tools to receive response object itself rather than the text
             try:
@@ -273,7 +293,9 @@ async def generate_with_tool(
                 or gen_item.remaining_tokens <= 0
             ):
                 gen_item.completed = True
-                continue
+
+        pool = ThreadPool(CPU_COUNT)
+        pool.map(tool_func, range(len(iter_prompts)))
 
     results = [
         CompletionOutput(
@@ -450,9 +472,11 @@ async def generate_with_vllm(
 def get_gpu_free_memory():  # pragma: no cover
     """Get GPU free memory using nvidia-smi."""
     try:
-        output = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"]
-        ).decode("utf-8")
+        output = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+            capture_output=True,
+            text=True,
+        ).stdout
         gpu_memory = [int(x) for x in output.strip().split("\n")]
         return gpu_memory
     except subprocess.CalledProcessError:
@@ -471,7 +495,9 @@ def check_unknown_startup_memory_usage():  # pragma: no cover
                 f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
             )
             # nosemgrep
-            output = subprocess.check_output(["fuser -v /dev/nvidia*"], shell=True).decode("utf-8")
+            output = subprocess.run(
+                ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
+            ).stdout
             print(f"Processes using GPU: {output}")
 
 
