@@ -69,7 +69,7 @@ def send_request(url, request, user=None):
     last_token_time = None
     for byte_payload in response.iter_lines():
         # Skip line
-        if byte_payload == b"\n":
+        if byte_payload == b"\n" or byte_payload == b"":
             continue
 
         token_time = time.time()
