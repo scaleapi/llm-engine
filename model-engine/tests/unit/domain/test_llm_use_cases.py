@@ -1015,11 +1015,13 @@ async def test_validate_and_update_completion_params():
     completion_sync_request.guided_regex = ""
     completion_sync_request.guided_json = {}
     completion_sync_request.guided_choice = [""]
+    completion_sync_request.guided_grammar = ""
     with pytest.raises(ObjectHasInvalidValueException):
         validate_and_update_completion_params(LLMInferenceFramework.VLLM, completion_sync_request)
 
     completion_sync_request.guided_regex = None
     completion_sync_request.guided_choice = None
+    completion_sync_request.guided_grammar = None
     with pytest.raises(ObjectHasInvalidValueException):
         validate_and_update_completion_params(
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE, completion_sync_request

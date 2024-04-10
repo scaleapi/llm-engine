@@ -43,6 +43,7 @@ async def generate(request: Request) -> Response:
     guided_json = request_dict.pop("guided_json", None)
     guided_regex = request_dict.pop("guided_regex", None)
     guided_choice = request_dict.pop("guided_choice", None)
+    guided_grammar = request_dict.pop("guided_grammar", None)
     sampling_params = SamplingParams(**request_dict)
 
     # Dummy request to get guided decode logit processor
@@ -54,6 +55,7 @@ async def generate(request: Request) -> Response:
                 "guided_json": guided_json,
                 "guided_regex": guided_regex,
                 "guided_choice": guided_choice,
+                "guided_grammar": guided_grammar,
             }
         )
     except Exception:
@@ -62,7 +64,7 @@ async def generate(request: Request) -> Response:
         )
 
     guided_decode_logit_processor = await get_guided_decoding_logits_processor(
-        partial_openai_request, engine.get_tokenizer()
+        partial_openai_request, await engine.get_tokenizer()
     )
     if guided_decode_logit_processor is not None:
         if sampling_params.logits_processors is None:

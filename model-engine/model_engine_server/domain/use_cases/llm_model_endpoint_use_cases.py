@@ -1372,16 +1372,19 @@ def validate_and_update_completion_params(
         guided_count += 1
     if request.guided_regex is not None:
         guided_count += 1
+    if request.guided_grammar is not None:
+        guided_count += 1
 
     if guided_count > 1:
         raise ObjectHasInvalidValueException(
-            "Only one of guided_json, guided_choice, guided_regex can be enabled."
+            "Only one of guided_json, guided_choice, guided_regex, guided_grammar can be enabled."
         )
 
     if (
         request.guided_choice is not None
         or request.guided_regex is not None
         or request.guided_json is not None
+        or request.guided_grammar is not None
     ) and not inference_framework == LLMInferenceFramework.VLLM:
         raise ObjectHasInvalidValueException("Guided decoding is only supported in vllm.")
 
@@ -1682,6 +1685,8 @@ class CompletionSyncV1UseCase:
                 vllm_args["guided_regex"] = request.guided_regex
             if request.guided_json is not None:
                 vllm_args["guided_json"] = request.guided_json
+            if request.guided_grammar is not None:
+                vllm_args["guided_grammar"] = request.guided_grammar
 
             inference_request = SyncEndpointPredictV1Request(
                 args=vllm_args,
@@ -1950,6 +1955,8 @@ class CompletionStreamV1UseCase:
                 args["guided_regex"] = request.guided_regex
             if request.guided_json is not None:
                 args["guided_json"] = request.guided_json
+            if request.guided_grammar is not None:
+                args["guided_grammar"] = request.guided_grammar
             args["stream"] = True
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
             args = {
