@@ -68,6 +68,7 @@ def send_request(url, request, user=None):
     inter_token_latencies = []
     last_token_time = None
     payload_json: dict = {}
+    num_completion_tokens = 0  # We calculate this value manually since tensorrt llm doesn't give it
     for byte_payload in response.iter_lines():
         # Skip line
         if byte_payload == b"\n" or byte_payload == b"":
@@ -88,12 +89,14 @@ def send_request(url, request, user=None):
         if payload.startswith("data:"):
             payload_data = payload.lstrip("data:").rstrip("/n")
             payload_json = json.loads(payload_data)
+        num_completion_tokens += 1
 
     return {
         "payload": payload_json,
         "time_to_first_token": time_to_first_token,
         "total_time": time.time() - start,
         "inter_token_latencies": inter_token_latencies,
+        "num_completion_tokens": num_completion_tokens,
     }
 
 
@@ -110,10 +113,9 @@ def pull_and_send_request_from_queue(
         if use_localhost:
             if framework == InferenceFramework.VLLM:
                 response = send_request(f"http://localhost:{local_port}/stream", request)
-                response["num_completion_tokens"] = response["payload"]["count_output_tokens"]
+                response["num_completion_tokens"] = response["payload"]["count_output_tokens"]  # vLLM gives us completion token count, use that.
             elif framework == InferenceFramework.TENSORRT_LLM:
                 response = send_request(f"http://localhost:{local_port}/v2/models/ensemble/generate_stream", request)
-                response["num_completion_tokens"] = 0  # TODO don't have this value yet
             else:
                 raise NotImplementedError()
         else:
