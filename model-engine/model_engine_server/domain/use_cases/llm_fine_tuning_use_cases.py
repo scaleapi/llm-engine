@@ -1,5 +1,6 @@
 import csv
 import datetime
+import json
 import re
 from typing import Optional
 
@@ -25,10 +26,9 @@ from model_engine_server.domain.repositories import LLMFineTuneEventsRepository
 from model_engine_server.domain.services import LLMFineTuningService, ModelEndpointService
 
 DEFAULT_FINE_TUNING_METHOD = "lora"
-REQUIRED_COLUMNS = ["prompt", "response"]
+REQUIRED_COLUMNS = [["prompt", "response"], ["input", "output"]]
 
 MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER = 5
-MAX_LLM_ENDPOINTS_PER_INTERNAL_USER = 15
 
 MAX_SUFFIX_LENGTH = 28
 # k8s labels need to be <= 62 characters, timestamp takes 13 characters, 2 characters for periods,
@@ -53,6 +53,7 @@ def ensure_model_name_is_valid_k8s_label(model_name: str):
 def read_csv_headers(file_location: str):
     """
     Read the headers of a csv file.
+    This will also parse for a JSONL file and will return the first row of the file split by comma.
     """
     with smart_open.open(file_location, transport_params=dict(buffer_size=1024)) as file:
         csv_reader = csv.DictReader(file)
@@ -64,18 +65,30 @@ def are_dataset_headers_valid(file_location: str):
     Ensure the dataset headers are valid with required columns 'prompt' and 'response'.
     """
     current_headers = read_csv_headers(file_location)
-    return all(required_header in current_headers for required_header in REQUIRED_COLUMNS)
+    first_line = ",".join(current_headers)
+    try:
+        object = json.loads(first_line)  # JSONL file format
+        current_headers = object.keys()
+    except json.decoder.JSONDecodeError:  # CSV file format
+        pass
+    return any(
+        [
+            all(header in current_headers for header in header_group)
+            for header_group in REQUIRED_COLUMNS
+        ]
+    )
 
 
 def check_file_is_valid(file_name: Optional[str], file_type: str):
     """
     Ensure the file is valid with required columns 'prompt' and 'response', isn't malformatted, and exists.
+    Accepts CSV and JSONL formats.
     file_type: 'training' or 'validation'
     """
     try:
         if file_name is not None and not are_dataset_headers_valid(file_name):
             raise InvalidRequestException(
-                f"Required column headers {','.join(REQUIRED_COLUMNS)} not found in {file_type} dataset"
+                f"Required column headers (one subset of {REQUIRED_COLUMNS}) not found in {file_type} dataset"
             )
     except FileNotFoundError:
         raise InvalidRequestException(
@@ -115,17 +128,14 @@ class CreateFineTuneV1UseCase:
 
         current_jobs_and_endpoints = len(in_progress_jobs) + len(model_endpoints)
 
-        max_llm_endpoints_per_user = (
-            MAX_LLM_ENDPOINTS_PER_INTERNAL_USER
-            if user.is_privileged_user
-            else MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER
-        )
-
-        if current_jobs_and_endpoints >= max_llm_endpoints_per_user:
+        if (
+            not user.is_privileged_user
+            and current_jobs_and_endpoints >= MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER
+        ):
             raise LLMFineTuningQuotaReached(
-                f"Limit {max_llm_endpoints_per_user} fine-tunes/fine-tuned endpoints per user. "
+                f"Limit {MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER} fine-tunes/fine-tuned endpoints per user. "
                 f"Cancel/delete a total of "
-                f"{current_jobs_and_endpoints - max_llm_endpoints_per_user + 1} pending or "
+                f"{current_jobs_and_endpoints - MAX_LLM_ENDPOINTS_PER_EXTERNAL_USER + 1} pending or "
                 f"running fine-tune(s) or fine-tuned endpoints to run another fine-tune."
             )
 

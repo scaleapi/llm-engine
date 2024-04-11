@@ -33,7 +33,7 @@ class timer:  # pylint: disable=invalid-name
     >>>     f()
     """
 
-    __slots__ = ("logger", "name", "_duration", "start")
+    __slots__ = ("logger", "name", "_duration", "start", "start_lap")
 
     def __init__(self, logger: Optional[Logger] = None, name: str = "") -> None:
         self.logger = logger
@@ -42,6 +42,7 @@ class timer:  # pylint: disable=invalid-name
         # for start, -1 is the uninitialized value
         # it is set at the context-block entering method: __enter__
         self.start: float = -1.0
+        self.start_lap: float = -1.0
 
     def __enter__(self) -> "timer":
         """Records start time: context-block entering function."""
@@ -61,6 +62,18 @@ class timer:  # pylint: disable=invalid-name
                 "called!"
             )
         self._maybe_log_end_time()
+
+    def lap(self) -> float:
+        # Records a "lap time". Specifically if start is called at t_0, and lap is
+        # called at t_1 and t_2, then the returned values are t_1 - t_0 and t_2 - t_1.
+        # This does introduce extra overhead, however.
+        current_time = time.monotonic()
+        if self.start_lap == -1:
+            duration = current_time - self.start
+        else:
+            duration = current_time - self.start_lap
+        self.start_lap = current_time
+        return duration
 
     def _maybe_log_end_time(self) -> None:
         if self.logger is not None:

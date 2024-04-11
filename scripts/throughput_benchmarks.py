@@ -68,6 +68,10 @@ def send_request(url, request, user=None):
     inter_token_latencies = []
     last_token_time = None
     for byte_payload in response.iter_lines():
+        # Skip line
+        if byte_payload == b"\n" or byte_payload == b"":
+            continue
+
         token_time = time.time()
         if first_line:
             time_to_first_token = token_time - start
@@ -76,10 +80,6 @@ def send_request(url, request, user=None):
         else:
             inter_token_latencies.append(token_time - last_token_time)
             last_token_time = token_time
-
-        # Skip line
-        if byte_payload == b"\n":
-            continue
 
         payload = byte_payload.decode("utf-8")
 
@@ -174,11 +174,16 @@ def send_requests(
     concurrency: int,
     framework: InferenceFramework,
     local_port: int = 5005,
+    prompts_list_override: Optional[List] = None,
 ):
     thread_results: queue.Queue = queue.Queue()
     requests_queue: queue.Queue = queue.Queue()
-    for output_token_count in output_token_counts:
-        request = generate_request(framework, prompt, output_token_count, use_localhost)
+    for i, output_token_count in enumerate(output_token_counts):
+        if prompts_list_override is not None:
+            new_prompt = prompts_list_override[i % len(prompts_list_override)]
+        else:
+            new_prompt = prompt
+        request = generate_request(framework, new_prompt, output_token_count, use_localhost)
         requests_queue.put(request)
     threads = []
     for i in range(concurrency):
@@ -239,7 +244,7 @@ def generate_output_token_counts_from_existing(
     return output
 
 
-def read_distribution_from_file(fpath: str):
+def read_data_from_json_file(fpath: str):
     # Assumes the distribution is some json-formatted string that represents a list
     try:
         with open(fpath, "r") as fin:
@@ -260,6 +265,7 @@ def run_benchmark(
     verbose: bool,
     local_port: int,
     response_token_count_distribution: Optional[List] = None,
+    prompts_list_override: Optional[List] = None,
 ):
     prompt = generate_prompt(config.input_token_count, hf_model)
 
@@ -286,6 +292,7 @@ def run_benchmark(
         concurrency,
         framework,
         local_port=local_port,
+        prompts_list_override=prompts_list_override,
     )
     end = time.time()
     elapsed = end - start
@@ -302,7 +309,7 @@ def run_benchmark(
     all_inter_token_latencies = []  # one value per token (except the first generated token)
     for result in results:
         avg_time_per_token = (result["total_time"] - result["time_to_first_token"]) / (
-            result["num_completion_tokens"] - 1
+            max(1, result["num_completion_tokens"] - 1)
         )
         time_to_first_token.append(result["time_to_first_token"])
         time_to_process_prompt.append(result["time_to_first_token"] - avg_time_per_token)
@@ -387,6 +394,7 @@ def run_benchmarks(
     hf_model: Optional[str] = None,
     local_port: int = 5005,
     response_token_count_distribution_file: Optional[str] = None,
+    prompts_list_override_file: Optional[str] = None,
 ):
     """Run benchmarks."""
     all_statistics = []
@@ -394,9 +402,12 @@ def run_benchmarks(
 
     response_token_count_distribution = None
     if response_token_count_distribution_file is not None:
-        response_token_count_distribution = read_distribution_from_file(
+        response_token_count_distribution = read_data_from_json_file(
             response_token_count_distribution_file
         )
+    prompts_list_override = None
+    if prompts_list_override_file is not None:
+        prompts_list_override = read_data_from_json_file(prompts_list_override_file)
 
     try:
         if verbose:
@@ -418,6 +429,7 @@ def run_benchmarks(
             verbose,
             local_port,
             response_token_count_distribution,
+            prompts_list_override,
         )
         all_statistics.append(statistics)
     except Exception:
@@ -448,6 +460,7 @@ def run_benchmarks_concurrency_range(
     hf_model: Optional[str] = None,
     local_port: int = 5005,
     response_token_count_distribution_file: Optional[str] = None,
+    prompts_list_override_file: Optional[str] = None,
 ):
     if output_file is not None:
         # Create empty file
@@ -467,6 +480,7 @@ def run_benchmarks_concurrency_range(
             hf_model,
             local_port,
             response_token_count_distribution_file,
+            prompts_list_override_file,
         )
 
 

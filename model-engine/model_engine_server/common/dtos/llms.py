@@ -321,6 +321,8 @@ class TokenUsage(BaseModel):
     total_duration: Optional[float] = None
     """Includes time spent waiting for the model to be ready."""
 
+    time_to_first_token: Optional[float] = None  # Only for streaming requests
+
     @property
     def num_total_tokens(self) -> int:
         return (self.num_prompt_tokens or 0) + (self.num_completion_tokens or 0)
@@ -332,6 +334,20 @@ class TokenUsage(BaseModel):
             if self.total_duration and self.total_duration > 0
             else 0.0
         )
+
+    @property
+    def inter_token_latency(self) -> Optional[float]:  # Only for streaming requests
+        # Note: we calculate a single inter-token latency for the entire request.
+        # Calculating latency between each token seems a bit heavyweight, although we can do this if we wanted
+        if (
+            self.time_to_first_token is None
+            or self.num_completion_tokens is None
+            or self.total_duration is None
+        ):
+            return None
+        if self.num_completion_tokens < 2:
+            return None
+        return (self.total_duration - self.time_to_first_token) / (self.num_completion_tokens - 1)
 
 
 class CreateFineTuneRequest(BaseModel):
