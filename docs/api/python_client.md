@@ -22,6 +22,7 @@
             - create
             - get
             - list
+            - update
             - delete
             - download
 
