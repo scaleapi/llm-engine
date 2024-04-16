@@ -180,6 +180,7 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "mistral-7b-instruct",
             "mixtral-8x7b",
             "mixtral-8x7b-instruct",
+            "mixtral-8x22b",
             "mammoth-coder-llama-2-7b",
             "mammoth-coder-llama-2-13b",
             "mammoth-coder-llama-2-34b",
@@ -230,7 +231,8 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
     "gemma": {"max_model_len": 8192, "max_num_batched_tokens": 8192},
     "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
     "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
-    "mixtral": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
+    "mixtral-8x7b": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
+    "mixtral-8x22b": {"max_model_len": 65536, "max_num_batched_tokens": 65536},
     "zephyr": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
 }
 
@@ -2199,6 +2201,12 @@ def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJob
         gpus = 2
         memory = "160Gi"
         storage = "160Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    elif "mixtral-8x22b" in model_name:
+        cpus = "80"
+        gpus = 8
+        memory = "800Gi"
+        storage = "460Gi"
         gpu_type = GpuType.NVIDIA_AMPERE_A100E
     else:
         numbers = re.findall(r"\d+", model_name)
