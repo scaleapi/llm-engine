@@ -181,6 +181,7 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "mixtral-8x7b",
             "mixtral-8x7b-instruct",
             "mixtral-8x22b",
+            "mixtral-8x22b-instruct",
             "mammoth-coder-llama-2-7b",
             "mammoth-coder-llama-2-13b",
             "mammoth-coder-llama-2-34b",
