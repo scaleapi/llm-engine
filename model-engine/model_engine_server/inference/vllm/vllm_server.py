@@ -4,7 +4,7 @@ import json
 import signal
 import subprocess
 import traceback
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Dict, List, Optional
 
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
@@ -13,14 +13,10 @@ from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.entrypoints.openai.protocol import CompletionRequest as OpenAICompletionRequest
 from vllm.model_executor.guided_decoding import get_guided_decoding_logits_processor
+from vllm.outputs import CompletionOutput
 from vllm.sampling_params import SamplingParams
+from vllm.sequence import Logprob
 from vllm.utils import random_uuid
-
-try:
-    from vllm.sequence import Logprob
-except ImportError:
-    Logprob = None
-
 
 TIMEOUT_KEEP_ALIVE = 5  # seconds.
 TIMEOUT_TO_PREVENT_DEADLOCK = 1  # seconds
@@ -82,17 +78,14 @@ async def generate(request: Request) -> Response:
     async def stream_results() -> AsyncGenerator[str, None]:
         last_output_text = ""
         async for request_output in results_generator:
+            log_probs = format_logprobs(request_output)
             ret = {
                 "text": request_output.outputs[-1].text[len(last_output_text) :],
                 "count_prompt_tokens": len(request_output.prompt_token_ids),
                 "count_output_tokens": len(request_output.outputs[0].token_ids),
-                "log_probs": (
-                    request_output.outputs[0].logprobs[-1] if sampling_params.logprobs else None
-                ),
+                "log_probs": log_probs[-1] if log_probs and sampling_params.logprobs else None,
                 "finished": request_output.finished,
             }
-            if ret["log_probs"] is not None and Logprob is not None:  # post vLLM >= 0.3.4
-                ret["log_probs"] = [log_probs.logprob for log_probs in ret["log_probs"]]
             last_output_text = request_output.outputs[-1].text
             yield f"data:{json.dumps(ret)}\n\n"
 
@@ -124,11 +117,9 @@ async def generate(request: Request) -> Response:
         "text": final_output.outputs[0].text,
         "count_prompt_tokens": len(final_output.prompt_token_ids),
         "count_output_tokens": len(final_output.outputs[0].token_ids),
-        "log_probs": final_output.outputs[0].logprobs,
+        "log_probs": format_logprobs(final_output),
         "tokens": tokens,
     }
-    if ret["log_probs"] is not None and Logprob is not None:  # post vLLM >= 0.3.4
-        ret["log_probs"] = [log_probs.logprob for log_probs in ret["log_probs"]]
     return Response(content=json.dumps(ret))
 
 
@@ -174,6 +165,18 @@ def debug(sig, frame):
     message = "Signal received : entering python shell.\nTraceback:\n"
     message += "".join(traceback.format_stack(frame))
     i.interact(message)
+
+
+def format_logprobs(request_output: CompletionOutput) -> Optional[List[Dict[int, float]]]:
+    """Given a request output, format the logprobs if they exist."""
+    output_logprobs = request_output.outputs[0].logprobs
+    if output_logprobs is None:
+        return None
+
+    def extract_logprobs(logprobs: Dict[int, Logprob]) -> Dict[int, float]:
+        return {k: v.logprob for k, v in logprobs.items()}
+
+    return [extract_logprobs(logprobs) for logprobs in output_logprobs]
 
 
 if __name__ == "__main__":

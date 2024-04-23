@@ -409,11 +409,6 @@ async def generate_with_vllm(
 ) -> List[CompletionOutput]:  # pragma: no cover
     from vllm import SamplingParams
 
-    try:
-        from vllm.sequence import Logprob
-    except ImportError:
-        Logprob = None
-
     metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
 
     # Add the requests to the engine.
@@ -445,8 +440,6 @@ async def generate_with_vllm(
 
             token_text = request_output.outputs[-1].text[len(last_output_text) :]
             log_probs = request_output.outputs[0].logprobs[-1] if return_token_log_probs else None
-            if log_probs is not None and Logprob is not None:  # post vLLM >= 0.3.4
-                log_probs = log_probs.logprob
 
             if return_token_log_probs:
                 tokens.append(
