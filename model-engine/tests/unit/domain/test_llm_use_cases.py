@@ -1707,6 +1707,13 @@ def test_infer_hardware_from_model_name():
     assert hardware.storage == "160Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
 
+    hardware = infer_hardware_from_model_name("mixtral-8x22b")
+    assert hardware.cpus == "80"
+    assert hardware.gpus == 8
+    assert hardware.memory == "800Gi"
+    assert hardware.storage == "460Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+
     hardware = infer_hardware_from_model_name("llama-2-7b")
     assert hardware.cpus == "10"
     assert hardware.gpus == 1

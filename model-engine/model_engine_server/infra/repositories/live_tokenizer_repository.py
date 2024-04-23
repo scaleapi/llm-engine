@@ -62,6 +62,8 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "mistral-7b-instruct": ModelInfo("mistralai/Mistral-7B-Instruct-v0.1", None),
         "mixtral-8x7b": ModelInfo("mistralai/Mixtral-8x7B-v0.1", None),
         "mixtral-8x7b-instruct": ModelInfo("mistralai/Mixtral-8x7B-Instruct-v0.1", None),
+        "mixtral-8x22b": ModelInfo("mistralai/Mixtral-8x22B-v0.1", None),
+        "mixtral-8x22b-instruct": ModelInfo("mistralai/Mixtral-8x22B-Instruct-v0.1", None),
         "mammoth-coder-llama-2-7b": ModelInfo("TIGER-Lab/MAmmoTH-Coder-7B", None),
         "mammoth-coder-llama-2-13b": ModelInfo("TIGER-Lab/MAmmoTH-Coder-13B", None),
         "mammoth-coder-llama-2-34b": ModelInfo("TIGER-Lab/MAmmoTH-Coder-34B", None),
