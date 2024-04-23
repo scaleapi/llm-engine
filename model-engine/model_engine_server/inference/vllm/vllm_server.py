@@ -16,6 +16,12 @@ from vllm.model_executor.guided_decoding import get_guided_decoding_logits_proce
 from vllm.sampling_params import SamplingParams
 from vllm.utils import random_uuid
 
+try:
+    from vllm.sequence import Logprob
+except ImportError:
+    Logprob = None
+
+
 TIMEOUT_KEEP_ALIVE = 5  # seconds.
 TIMEOUT_TO_PREVENT_DEADLOCK = 1  # seconds
 app = FastAPI()
@@ -85,6 +91,8 @@ async def generate(request: Request) -> Response:
                 ),
                 "finished": request_output.finished,
             }
+            if ret["log_probs"] is not None and Logprob is not None:  # post vLLM >= 0.3.4
+                ret["log_probs"] = [log_probs.logprob for log_probs in ret["log_probs"]]
             last_output_text = request_output.outputs[-1].text
             yield f"data:{json.dumps(ret)}\n\n"
 
@@ -119,6 +127,8 @@ async def generate(request: Request) -> Response:
         "log_probs": final_output.outputs[0].logprobs,
         "tokens": tokens,
     }
+    if ret["log_probs"] is not None and Logprob is not None:  # post vLLM >= 0.3.4
+        ret["log_probs"] = [log_probs.logprob for log_probs in ret["log_probs"]]
     return Response(content=json.dumps(ret))
 
 
