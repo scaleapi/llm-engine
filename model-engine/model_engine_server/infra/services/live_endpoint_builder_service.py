@@ -78,6 +78,7 @@ __all__: Sequence[str] = (
 ECR_AWS_PROFILE: str = os.getenv("ECR_READ_AWS_PROFILE", "default")  # type: ignore
 GIT_TAG: str = os.getenv("GIT_TAG")  # type: ignore
 ENV: str = os.getenv("DD_ENV")  # type: ignore
+WORKSPACE_PATH = os.getenv("WORKSPACE", ".")
 
 INITIAL_K8S_CACHE_TTL_SECONDS: int = 60
 MAX_IMAGE_TAG_LEN = 128
@@ -494,9 +495,6 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
         # The context should be whatever WORKDIR is in the container running the build app itself.
         inference_folder = "model-engine/model_engine_server/inference"
-        base_path = os.getenv("WORKSPACE")
-        if not base_path:
-            raise EnvironmentError("WORKSPACE env variable not found")
 
         logger_adapter.info(f"inference_folder: {inference_folder}")
         logger_adapter.info(f"dockerfile: {inference_folder}/{dockerfile}")
@@ -504,7 +502,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             repo=hmi_config.user_inference_base_repository,
             image_tag=resulting_image_tag[:MAX_IMAGE_TAG_LEN],
             aws_profile=ECR_AWS_PROFILE,  # type: ignore
-            base_path=base_path,
+            base_path=WORKSPACE_PATH,
             dockerfile=f"{inference_folder}/{dockerfile}",
             base_image=base_image,
             requirements_folder=None,
@@ -559,11 +557,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
         # The context should be whatever WORKDIR is in the container running the build app itself.
         inference_folder = "model-engine/model_engine_server/inference"
-        base_path = os.getenv("WORKSPACE")
-        if not base_path:
-            raise EnvironmentError("WORKSPACE env variable not found")
-
-        requirements_folder = os.path.join(base_path, f"requirements_{requirements_hash}")
+        requirements_folder = os.path.join(WORKSPACE_PATH, f"requirements_{requirements_hash}")
         try:
             os.mkdir(requirements_folder)
         except FileExistsError:
@@ -581,7 +575,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             repo=ecr_repo,
             image_tag=service_image_tag[:MAX_IMAGE_TAG_LEN],
             aws_profile=ECR_AWS_PROFILE,
-            base_path=base_path,
+            base_path=WORKSPACE_PATH,
             dockerfile=f"{inference_folder}/{dockerfile}",
             base_image=base_image,
             requirements_folder=requirements_folder,
@@ -613,11 +607,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         # The context should be whatever WORKDIR is in the container running the build app itself.
         dockerfile = "inject_bundle.Dockerfile"
         inference_folder = "model-engine/model_engine_server/inference"
-        base_path = os.getenv("WORKSPACE")
-        if not base_path:
-            raise EnvironmentError("WORKSPACE env variable not found")
-
-        bundle_folder = os.path.join(base_path, f"bundle_{service_image_hash}")
+        bundle_folder = os.path.join(WORKSPACE_PATH, f"bundle_{service_image_hash}")
         try:
             os.mkdir(bundle_folder)
         except FileExistsError:
@@ -641,7 +631,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             repo=ecr_repo,
             image_tag=service_image_tag[:MAX_IMAGE_TAG_LEN],
             aws_profile=ECR_AWS_PROFILE,
-            base_path=base_path,
+            base_path=WORKSPACE_PATH,
             dockerfile=f"{inference_folder}/{dockerfile}",
             base_image=base_image,
             requirements_folder=bundle_folder,
