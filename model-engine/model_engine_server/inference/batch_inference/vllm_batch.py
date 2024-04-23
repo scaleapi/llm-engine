@@ -440,6 +440,7 @@ async def generate_with_vllm(
 
             token_text = request_output.outputs[-1].text[len(last_output_text) :]
             log_probs = request_output.outputs[0].logprobs[-1] if return_token_log_probs else None
+            last_output_text = request_output.outputs[-1].text
 
             if return_token_log_probs:
                 tokens.append(
