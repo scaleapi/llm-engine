@@ -65,8 +65,9 @@ async def generate(request: Request) -> Response:
             status_code=400, detail="Bad request: failed to parse guided decoding parameters."
         )
 
+    guided_decoding_backend = engine.engine.decoding_config.guided_decoding_backend
     guided_decode_logit_processor = await get_guided_decoding_logits_processor(
-        partial_openai_request, await engine.get_tokenizer()
+        guided_decoding_backend, partial_openai_request, await engine.get_tokenizer()
     )
     if guided_decode_logit_processor is not None:
         if sampling_params.logits_processors is None:
