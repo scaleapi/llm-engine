@@ -41,3 +41,9 @@ Run `mypy . --install-types` to set up mypy.
 
 Most of the business logic in Model Engine should contain unit tests, located in
 [`tests/unit`](./tests/unit). To run the tests, run `pytest`.
+
+Make sure to set a WORKSPACE env var that points to the root directory of this repo
+
+```bash
+export WORKSPACE=<path/to/llm-engine>
+```

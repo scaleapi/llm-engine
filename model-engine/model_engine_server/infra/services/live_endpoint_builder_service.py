@@ -494,7 +494,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
         # The context should be whatever WORKDIR is in the container running the build app itself.
         inference_folder = "model-engine/model_engine_server/inference"
-        base_path: str = os.getenv("WORKSPACE")  # type: ignore
+        base_path = os.getenv("WORKSPACE")
+        if not base_path:
+            raise EnvironmentError("WORKSPACE env variable not found")
 
         logger_adapter.info(f"inference_folder: {inference_folder}")
         logger_adapter.info(f"dockerfile: {inference_folder}/{dockerfile}")
@@ -557,7 +559,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
         # The context should be whatever WORKDIR is in the container running the build app itself.
         inference_folder = "model-engine/model_engine_server/inference"
-        base_path: str = os.getenv("WORKSPACE")  # type: ignore
+        base_path = os.getenv("WORKSPACE")
+        if not base_path:
+            raise EnvironmentError("WORKSPACE env variable not found")
 
         requirements_folder = os.path.join(base_path, f"requirements_{requirements_hash}")
         try:
@@ -609,7 +613,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         # The context should be whatever WORKDIR is in the container running the build app itself.
         dockerfile = "inject_bundle.Dockerfile"
         inference_folder = "model-engine/model_engine_server/inference"
-        base_path: str = os.getenv("WORKSPACE")  # type: ignore
+        base_path = os.getenv("WORKSPACE")
+        if not base_path:
+            raise EnvironmentError("WORKSPACE env variable not found")
 
         bundle_folder = os.path.join(base_path, f"bundle_{service_image_hash}")
         try:
