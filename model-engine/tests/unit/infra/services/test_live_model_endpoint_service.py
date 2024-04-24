@@ -63,6 +63,7 @@ async def _create_model_endpoint_helper(
         high_priority=high_priority,
         billing_tags=infra_state.user_config_state.endpoint_config.billing_tags,
         owner=model_endpoint.record.owner,
+        git_sha=model_endpoint.record.git_sha,
     )
     return model_endpoint_record
 

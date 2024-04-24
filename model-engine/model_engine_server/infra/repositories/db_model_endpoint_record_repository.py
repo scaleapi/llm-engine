@@ -53,6 +53,7 @@ def translate_model_endpoint_orm_to_model_endpoint_record(
         status=model_endpoint_orm.endpoint_status,
         current_model_bundle=current_model_bundle,
         public_inference=model_endpoint_orm.public_inference,
+        git_sha=model_endpoint_orm.git_sha,
     )
 
 
@@ -120,6 +121,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         status: str,
         owner: str,
         public_inference: Optional[bool] = False,
+        git_sha: Optional[str] = None,
     ) -> ModelEndpointRecord:
         model_endpoint_record = OrmModelEndpoint(
             name=name,
@@ -132,6 +134,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
             endpoint_status=status,
             owner=owner,
             public_inference=public_inference,
+            git_sha=git_sha,
         )
         async with self.session() as session:
             await OrmModelEndpoint.create(session, model_endpoint_record)

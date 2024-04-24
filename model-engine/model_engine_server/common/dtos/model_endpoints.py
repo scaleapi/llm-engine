@@ -68,6 +68,7 @@ class CreateModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrl]
     default_callback_auth: Optional[CallbackAuth]
     public_inference: Optional[bool] = Field(default=False)
+    git_sha: Optional[str] = Field(default=None)
 
 
 class CreateModelEndpointV1Response(BaseModel):
@@ -94,6 +95,7 @@ class UpdateModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrl]
     default_callback_auth: Optional[CallbackAuth]
     public_inference: Optional[bool]
+    git_sha: Optional[str]
 
 
 class UpdateModelEndpointV1Response(BaseModel):
@@ -122,6 +124,7 @@ class GetModelEndpointV1Response(BaseModel):
     resource_state: Optional[ModelEndpointResourceState] = Field(default=None)
     num_queued_items: Optional[int] = Field(default=None)
     public_inference: Optional[bool] = Field(default=None)
+    git_sha: Optional[str] = Field(default=None)
 
 
 class ListModelEndpointsV1Response(BaseModel):
