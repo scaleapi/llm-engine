@@ -12,7 +12,7 @@ azure-storage-blob~=12.19.0
 boto3-stubs[essential]~=1.26.67
 boto3~=1.21
 botocore~=1.24
-build==0.8.0
+build~=1.0.3
 celery[redis,sqs,tblib]~=5.3.6
 click~=8.1
 cloudpickle==2.1.0
@@ -37,7 +37,7 @@ protobuf~=3.20
 psycopg2-binary==2.9.3
 py-xid==0.3.0
 pycurl~=7.44  # For celery[sqs]
-pydantic~=1.10.11
+pydantic==1.10.14
 python-multipart~=0.0.7
 quart==0.18.3
 requests-auth-aws-sigv4~=0.7
