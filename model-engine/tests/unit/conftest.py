@@ -3384,6 +3384,48 @@ def build_endpoint_request_async_custom(
 
 
 @pytest.fixture
+def build_endpoint_request_async_zipartifact_highpri(
+    test_api_key: str, model_bundle_3: ModelBundle
+) -> BuildEndpointRequest:
+    build_endpoint_request = BuildEndpointRequest(
+        model_endpoint_record=ModelEndpointRecord(
+            id="test_model_endpoint_id_3",
+            name="test_model_endpoint_name_3",
+            created_by=test_api_key,
+            created_at=datetime(2022, 1, 4),
+            last_updated_at=datetime(2022, 1, 4),
+            metadata={},
+            creation_task_id="test_creation_task_id",
+            endpoint_type=ModelEndpointType.ASYNC,
+            destination="test_destination",
+            status=ModelEndpointStatus.READY,
+            current_model_bundle=model_bundle_3,
+            owner=test_api_key,
+        ),
+        high_priority=True,
+        deployment_name=f"{test_api_key}-test_model_endpoint_name_3",
+        aws_role="default",
+        results_s3_bucket="test_s3_bucket",
+        child_fn_info=None,
+        post_inference_hooks=None,
+        labels=dict(team="test_team", product="test_product"),
+        min_workers=1,
+        max_workers=3,
+        per_worker=2,
+        cpus=1,
+        gpus=0,
+        memory="1G",
+        gpu_type=None,
+        storage=None,
+        optimize_costs=True,
+        broker_type=BrokerType.SQS,
+        default_callback_url=None,
+        default_callback_auth=None,
+    )
+    return build_endpoint_request
+
+
+@pytest.fixture
 def build_endpoint_request_sync_custom(
     test_api_key: str, model_bundle_3: ModelBundle
 ) -> BuildEndpointRequest:
