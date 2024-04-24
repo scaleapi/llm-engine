@@ -90,6 +90,7 @@ class ModelEndpointService(ABC):
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
+        git_sha: Optional[str] = None,
     ) -> ModelEndpointRecord:
         """
         Creates a model endpoint.
@@ -123,6 +124,7 @@ class ModelEndpointService(ABC):
             default_callback_url: The default callback URL to use for the model endpoint.
             default_callback_auth: The default callback auth to use for the model endpoint.
             public_inference: Whether to allow public inference.
+            git_sha: Git sha to tag the endpoint with.
         Returns:
             A Model Endpoint Record domain entity object of the created endpoint.
         Raises:
@@ -219,6 +221,7 @@ class ModelEndpointService(ABC):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
+        git_sha: Optional[str] = None,
     ) -> ModelEndpointRecord:
         """
         Updates a model endpoint.
@@ -247,6 +250,7 @@ class ModelEndpointService(ABC):
             default_callback_url: The default callback URL to use for the model endpoint.
             default_callback_auth: The default callback auth to use for the model endpoint.
             public_inference: Whether to allow public inference.
+            git_sha: Git sha to tag the endpoint with.
         Returns:
             A Model Endpoint Record domain entity object of the updated endpoint.
         Raises:

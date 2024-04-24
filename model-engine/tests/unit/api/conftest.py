@@ -677,6 +677,7 @@ def model_endpoint_1(
             current_model_bundle=model_bundle_1_v1[0],
             owner=test_api_key,
             public_inference=False,
+            git_sha="18c8fcf9d381d80a8da179c9bb14f5d454c15811",
         ),
         infra_state=ModelEndpointInfraState(
             deployment_name=f"{test_api_key}-test_model_endpoint_name_1",
@@ -760,6 +761,7 @@ def model_endpoint_1(
         },
         "num_queued_items": 1,
         "public_inference": False,
+        "git_sha": "18c8fcf9d381d80a8da179c9bb14f5d454c15811",
     }
     return model_endpoint, model_endpoint_json
 

@@ -50,6 +50,7 @@ class ModelEndpointRecordRepository(ABC):
         status: str,
         owner: str,
         public_inference: Optional[bool] = False,
+        git_sha: Optional[str] = None,
     ) -> ModelEndpointRecord:
         """
         Creates an entry for endpoint tracking data, but not the actual compute resources.
@@ -66,6 +67,7 @@ class ModelEndpointRecordRepository(ABC):
                 used to coordinate edit operations on the endpoint
             owner: Team who owns endpoint
             public_inference: Whether the endpoint is publicly accessible
+            git_sha: Git sha to tag the endpoint with
 
         Returns:
             A Model Endpoint Record domain entity.
@@ -82,6 +84,7 @@ class ModelEndpointRecordRepository(ABC):
         destination: Optional[str] = None,
         status: Optional[str] = None,
         public_inference: Optional[bool] = None,
+        git_sha: Optional[str] = None,
     ) -> Optional[ModelEndpointRecord]:
         """
         Updates the entry for endpoint tracking data with the given new values. Only these values are editable.
@@ -94,6 +97,7 @@ class ModelEndpointRecordRepository(ABC):
             destination: The destination where async tasks should be sent.
             status: Status field on the endpoint, used to coordinate endpoint edit operations
             public_inference: Whether the endpoint is publicly accessible
+            git_sha: Git sha to tag the endpoint with
 
         Returns:
             A Model Endpoint Record domain entity if found, else None.

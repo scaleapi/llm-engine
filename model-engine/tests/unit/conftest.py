@@ -442,6 +442,7 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         status: str,
         owner: str,
         public_inference: Optional[bool] = False,
+        git_sha: Optional[str] = False,
     ) -> ModelEndpointRecord:
         orm_model_endpoint = OrmModelEndpoint(
             name=name,
@@ -454,6 +455,7 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
             endpoint_status=status,
             owner=owner,
             public_inference=public_inference,
+            git_sha=git_sha,
         )
         orm_model_endpoint.created_at = datetime.now()
         orm_model_endpoint.last_updated_at = datetime.now()
@@ -489,6 +491,7 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         destination: Optional[str] = None,
         status: Optional[str] = None,
         public_inference: Optional[bool] = None,
+        git_sha: Optional[str] = None,
     ) -> Optional[ModelEndpointRecord]:
         model_endpoint_record = await self.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id
@@ -1666,6 +1669,7 @@ class FakeModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
+        git_sha: Optional[str] = None,
     ) -> ModelEndpointRecord:
         destination = generate_destination(
             user_id=created_by,
@@ -1689,6 +1693,7 @@ class FakeModelEndpointService(ModelEndpointService):
                 current_model_bundle=current_model_bundle,
                 owner=owner,
                 public_inference=public_inference,
+                git_sha=git_sha,
             ),
             infra_state=ModelEndpointInfraState(
                 deployment_name=name,
@@ -1755,6 +1760,7 @@ class FakeModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
+        git_sha: Optional[str] = None,
     ) -> ModelEndpointRecord:
         model_endpoint = await self.get_model_endpoint(model_endpoint_id=model_endpoint_id)
         if model_endpoint is None:

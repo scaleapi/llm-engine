@@ -126,6 +126,7 @@ class ModelEndpointRecord(OwnedEntity):
     current_model_bundle: ModelBundle
     owner: str
     public_inference: Optional[bool]
+    git_sha: Optional[str]
 
 
 class ModelEndpointInfraState(BaseModel):

@@ -453,6 +453,7 @@ class Endpoint(Base):
     current_bundle = relationship("Bundle")
     owner = Column(String(SHORT_STRING))
     public_inference = Column(Boolean, default=False)
+    git_sha = Column(String, default=None)
 
     def __init__(
         self,
@@ -467,6 +468,7 @@ class Endpoint(Base):
         endpoint_status: Optional[str] = "READY",  # EndpointStatus.ready.value
         owner: Optional[str] = None,
         public_inference: Optional[bool] = False,
+        git_sha: Optional[str] = None,
     ):
         self.id = f"end_{get_xid()}"
         self.name = name
@@ -479,6 +481,7 @@ class Endpoint(Base):
         self.endpoint_status = endpoint_status
         self.owner = owner
         self.public_inference = public_inference
+        self.git_sha = git_sha
 
     @classmethod
     async def create(cls, session: AsyncSession, endpoint: "Endpoint") -> None:
