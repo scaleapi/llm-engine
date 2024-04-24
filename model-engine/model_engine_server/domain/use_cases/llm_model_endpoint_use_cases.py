@@ -162,6 +162,10 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "llama-2-13b-chat",
             "llama-2-70b",
             "llama-2-70b-chat",
+            "llama-3-8b",
+            "llama-3-8b-instruct",
+            "llama-3-70b",
+            "llama-3-70b-instruct",
             "falcon-7b",
             "falcon-7b-instruct",
             "falcon-40b",
@@ -231,6 +235,7 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
     # Can also see 13B, 34B there too
     "gemma": {"max_model_len": 8192, "max_num_batched_tokens": 8192},
     "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
+    "llama-3": {"max_model_len": None, "max_num_batched_tokens": 8192},
     "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
     "mixtral-8x7b": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
     "mixtral-8x22b": {"max_model_len": 65536, "max_num_batched_tokens": 65536},
