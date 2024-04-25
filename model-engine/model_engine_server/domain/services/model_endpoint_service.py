@@ -91,6 +91,7 @@ class ModelEndpointService(ABC):
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
         git_sha: Optional[str] = None,
+        disable_pod_rescheduling: Optional[bool] = None,
     ) -> ModelEndpointRecord:
         """
         Creates a model endpoint.
@@ -125,6 +126,7 @@ class ModelEndpointService(ABC):
             default_callback_auth: The default callback auth to use for the model endpoint.
             public_inference: Whether to allow public inference.
             git_sha: Git sha to tag the endpoint with.
+            disable_pod_rescheduling: Flag to disable pod rescheduling.
         Returns:
             A Model Endpoint Record domain entity object of the created endpoint.
         Raises:
@@ -222,6 +224,7 @@ class ModelEndpointService(ABC):
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
         git_sha: Optional[str] = None,
+        disable_pod_rescheduling: Optional[bool] = None,
     ) -> ModelEndpointRecord:
         """
         Updates a model endpoint.
@@ -251,6 +254,7 @@ class ModelEndpointService(ABC):
             default_callback_auth: The default callback auth to use for the model endpoint.
             public_inference: Whether to allow public inference.
             git_sha: Git sha to tag the endpoint with.
+            disable_pod_rescheduling: Flag to disable pod rescheduling.
         Returns:
             A Model Endpoint Record domain entity object of the updated endpoint.
         Raises:

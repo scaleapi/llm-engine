@@ -546,6 +546,7 @@ data:
         {{- $service_template_labels | nindent 8 }}
     spec:
       minAvailable: 1
+      maxUnavailable: ${MAX_UNAVAILABLE_WORKER}
       selector:
         matchLabels:
           app: ${RESOURCE_NAME}

@@ -33,6 +33,7 @@ class BuildEndpointRequest(BaseModel):
     high_priority: Optional[bool]
     default_callback_url: Optional[str]
     default_callback_auth: Optional[CallbackAuth]
+    disable_pod_rescheduling: Optional[bool]
 
 
 class BuildEndpointStatus(str, Enum):

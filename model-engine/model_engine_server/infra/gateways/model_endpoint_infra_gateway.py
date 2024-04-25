@@ -41,6 +41,7 @@ class ModelEndpointInfraGateway(ABC):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
+        disable_pod_rescheduling: Optional[bool] = None,
     ) -> str:
         """
         Creates the underlying infrastructure for a Model Endpoint.
@@ -69,6 +70,7 @@ class ModelEndpointInfraGateway(ABC):
             billing_tags: Arbitrary tags passed to billing
             default_callback_url: The default callback URL to use for the model endpoint.
             default_callback_auth: The default callback auth to use for the model endpoint.
+            disable_pod_rescheduling: Flag to disable pod rescheduling.
 
         Returns:
             A unique ID for the task to create the infrastructure resources.
@@ -96,6 +98,7 @@ class ModelEndpointInfraGateway(ABC):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth],
+        disable_pod_rescheduling: Optional[bool] = None,
     ) -> str:
         """
         Updates the underlying infrastructure for a Model Endpoint.
@@ -122,6 +125,7 @@ class ModelEndpointInfraGateway(ABC):
                 time. Higher priority pods will displace the lower priority dummy pods from shared pool.
             default_callback_url: The default callback URL to use for the model endpoint.
             default_callback_auth: The default callback auth to use for the model endpoint.
+            disable_pod_rescheduling: Flag to disable pod rescheduling.
 
         Returns:
             A unique ID for the task to update the infrastructure resources.

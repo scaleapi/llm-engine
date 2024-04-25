@@ -57,6 +57,7 @@ class ModelEndpointDeploymentState(BaseModel):
     per_worker: int = Field(..., gt=0)
     available_workers: Optional[int] = Field(default=None, ge=0)
     unavailable_workers: Optional[int] = Field(default=None, ge=0)
+    max_unavailable_workers: Optional[str] = Field(default="50%")
 
 
 class CallbackBasicAuth(BaseModel):
