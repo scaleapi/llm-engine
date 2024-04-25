@@ -672,25 +672,30 @@ class CreateLLMModelBundleV1UseCase:
                 break
 
         subcommands = []
-        if checkpoint_path is not None:
-            if checkpoint_path.startswith("s3://"):
-                # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
-                if "mistral" in model_name:
-                    final_weights_folder = "mistral_files"
-                else:
-                    final_weights_folder = "model_files"
-                subcommands += self.load_model_weights_sub_commands(
-                    LLMInferenceFramework.VLLM,
-                    framework_image_tag,
-                    checkpoint_path,
-                    final_weights_folder,
-                )
+
+        checkpoint_path = (
+            SUPPORTED_MODELS_INFO[model_name].s3_repo if not checkpoint_path else checkpoint_path
+        )
+
+        if not checkpoint_path:
+            raise InvalidRequestException(f"No checkpoint path found for model {model_name}")
+
+        if checkpoint_path.startswith("s3://"):
+            # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
+            if "mistral" in model_name:
+                final_weights_folder = "mistral_files"
             else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
+                final_weights_folder = "model_files"
+            subcommands += self.load_model_weights_sub_commands(
+                LLMInferenceFramework.VLLM,
+                framework_image_tag,
+                checkpoint_path,
+                final_weights_folder,
+            )
         else:
-            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
+            raise ObjectHasInvalidValueException(
+                f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
+            )
 
         if max_model_len:
             subcommands.append(
@@ -770,21 +775,25 @@ class CreateLLMModelBundleV1UseCase:
             max_req_total_len = 4096
 
         subcommands = []
-        if checkpoint_path is not None:
-            if checkpoint_path.startswith("s3://"):
-                final_weights_folder = "model_files"
-                subcommands += self.load_model_weights_sub_commands(
-                    LLMInferenceFramework.LIGHTLLM,
-                    framework_image_tag,
-                    checkpoint_path,
-                    final_weights_folder,
-                )
-            else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
+        checkpoint_path = (
+            SUPPORTED_MODELS_INFO[model_name].s3_repo if not checkpoint_path else checkpoint_path
+        )
+
+        if not checkpoint_path:
+            raise InvalidRequestException(f"No checkpoint path found for model {model_name}")
+
+        if checkpoint_path.startswith("s3://"):
+            final_weights_folder = "model_files"
+            subcommands += self.load_model_weights_sub_commands(
+                LLMInferenceFramework.LIGHTLLM,
+                framework_image_tag,
+                checkpoint_path,
+                final_weights_folder,
+            )
         else:
-            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
+            raise ObjectHasInvalidValueException(
+                f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
+            )
 
         subcommands.append(
             f"python -m lightllm.server.api_server --model_dir {final_weights_folder} --port 5005 --tp {num_shards} --max_total_token_num {max_total_token_num} --max_req_input_len {max_req_input_len} --max_req_total_len {max_req_total_len} --tokenizer_mode auto"
