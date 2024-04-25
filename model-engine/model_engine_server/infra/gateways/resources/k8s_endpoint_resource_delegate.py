@@ -1098,6 +1098,20 @@ class K8SEndpointResourceDelegate:
         return True
 
     @staticmethod
+    async def _get_pdb(
+        name: str,
+    ) -> kubernetes_asyncio.client.models.v1_pod_disruption_budget.V1PodDisruptionBudget:
+        policy_api = get_kubernetes_policy_client()
+        try:
+            return await policy_api.read_namespaced_pod_disruption_budget(
+                namespace=hmi_config.endpoint_namespace,
+                name=name,
+            )
+        except ApiException:
+            logger.exception("Got an exception when trying to apply the PodDisruptionBudget")
+            raise
+
+    @staticmethod
     async def _delete_keda_scaled_object(endpoint_id: str) -> bool:
         custom_objects_client = get_kubernetes_custom_objects_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
@@ -1468,6 +1482,8 @@ class K8SEndpointResourceDelegate:
             deployment_config.spec.template.spec.priority_class_name == LAUNCH_HIGH_PRIORITY_CLASS
         )
 
+        pdb = await self._get_pdb(k8s_resource_group_name)
+
         infra_state = ModelEndpointInfraState(
             deployment_name=k8s_resource_group_name,
             aws_role=common_params["aws_role"],
@@ -1482,6 +1498,7 @@ class K8SEndpointResourceDelegate:
                 per_worker=int(horizontal_autoscaling_params["per_worker"]),
                 available_workers=deployment_config.status.available_replicas or 0,
                 unavailable_workers=deployment_config.status.unavailable_replicas or 0,
+                max_unavailable_workers=pdb.spec.max_unavailable,
             ),
             resource_state=ModelEndpointResourceState(
                 cpus=common_params["cpus"],
@@ -1569,6 +1586,8 @@ class K8SEndpointResourceDelegate:
                     == LAUNCH_HIGH_PRIORITY_CLASS
                 )
 
+                pdb = await self._get_pdb(name)
+
                 if hpa_config:
                     # Assume it's a sync endpoint
                     # TODO I think this is correct but only barely, it introduces a coupling between
@@ -1601,6 +1620,7 @@ class K8SEndpointResourceDelegate:
                         per_worker=horizontal_autoscaling_params["per_worker"],
                         available_workers=deployment_config.status.available_replicas or 0,
                         unavailable_workers=deployment_config.status.unavailable_replicas or 0,
+                        max_unavailable_workers=pdb.spec.max_unavailable,
                     ),
                     resource_state=ModelEndpointResourceState(
                         cpus=common_params["cpus"],

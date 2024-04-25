@@ -337,7 +337,7 @@ class VerticalPodAutoscalerArguments(_BaseEndpointArguments):
 class PodDisruptionBudgetArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into pod disruption budget templates."""
 
-    pass
+    MAX_UNAVAILABLE_WORKER: str
 
 
 class VirtualServiceArguments(_BaseEndpointArguments):
@@ -1226,6 +1226,9 @@ def get_endpoint_resource_arguments_from_request(
             CREATED_BY=created_by,
             OWNER=owner,
             GIT_TAG=GIT_TAG,
+            MAX_UNAVAILABLE_WORKER="0"
+            if request.build_endpoint_request.disable_pod_rescheduling
+            else "50%",
         )
     else:
         raise Exception(f"Unknown resource name: {endpoint_resource_name}")

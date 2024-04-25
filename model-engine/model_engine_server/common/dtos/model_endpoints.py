@@ -69,6 +69,7 @@ class CreateModelEndpointV1Request(BaseModel):
     default_callback_auth: Optional[CallbackAuth]
     public_inference: Optional[bool] = Field(default=False)
     git_sha: Optional[str] = Field(default=None)
+    disable_pod_rescheduling: Optional[bool]
 
 
 class CreateModelEndpointV1Response(BaseModel):
@@ -96,6 +97,7 @@ class UpdateModelEndpointV1Request(BaseModel):
     default_callback_auth: Optional[CallbackAuth]
     public_inference: Optional[bool]
     git_sha: Optional[str]
+    disable_pod_rescheduling: Optional[bool]
 
 
 class UpdateModelEndpointV1Response(BaseModel):

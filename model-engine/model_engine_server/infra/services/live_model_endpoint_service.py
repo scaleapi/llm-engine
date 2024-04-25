@@ -161,6 +161,7 @@ class LiveModelEndpointService(ModelEndpointService):
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
         git_sha: Optional[str] = None,
+        disable_pod_rescheduling: Optional[bool] = None,
     ) -> ModelEndpointRecord:
         existing_endpoints = (
             await self.model_endpoint_record_repository.list_model_endpoint_records(
@@ -205,6 +206,7 @@ class LiveModelEndpointService(ModelEndpointService):
             high_priority=high_priority,
             default_callback_url=default_callback_url,
             default_callback_auth=default_callback_auth,
+            disable_pod_rescheduling=disable_pod_rescheduling,
         )
         await self.model_endpoint_record_repository.update_model_endpoint_record(
             model_endpoint_id=model_endpoint_record.id,
@@ -286,6 +288,7 @@ class LiveModelEndpointService(ModelEndpointService):
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
         git_sha: Optional[str] = None,
+        disable_pod_rescheduling: Optional[bool] = None,
     ) -> ModelEndpointRecord:
         record = await self.model_endpoint_record_repository.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id
@@ -346,6 +349,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 high_priority=high_priority,
                 default_callback_url=default_callback_url,
                 default_callback_auth=default_callback_auth,
+                disable_pod_rescheduling=disable_pod_rescheduling,
             )
 
             # Clean up MODEL_BUNDLE_CHANGED_KEY as it is only for internal use

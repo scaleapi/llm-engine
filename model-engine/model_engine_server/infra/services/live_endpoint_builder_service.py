@@ -295,6 +295,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         min_workers=build_endpoint_request.min_workers,
                         max_workers=build_endpoint_request.max_workers,
                         per_worker=build_endpoint_request.per_worker,
+                        max_unavailable_workers="0"
+                        if build_endpoint_request.disable_pod_rescheduling
+                        else "50%",
                     ),
                     resource_state=ModelEndpointResourceState(
                         cpus=build_endpoint_request.cpus,

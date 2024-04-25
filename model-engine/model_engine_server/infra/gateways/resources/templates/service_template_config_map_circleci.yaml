@@ -2750,6 +2750,7 @@ data:
         endpoint_name: ${ENDPOINT_NAME}
     spec:
       minAvailable: 1
+      maxUnavailable: ${MAX_UNAVAILABLE_WORKER}
       selector:
         matchLabels:
           app: ${RESOURCE_NAME}
