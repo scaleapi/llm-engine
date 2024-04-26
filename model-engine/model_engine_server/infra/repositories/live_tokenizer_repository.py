@@ -1,7 +1,6 @@
 import os
-from collections import namedtuple
 from functools import lru_cache
-from typing import Dict, Optional
+from typing import Dict, NamedTuple, Optional
 
 from huggingface_hub import list_repo_refs
 from huggingface_hub.utils._errors import RepositoryNotFoundError
@@ -25,7 +24,9 @@ TOKENIZER_FILES_OPTIONAL = [
 TOKENIZER_TARGET_DIR = "/opt/.cache/model_engine_server/tokenizers"
 
 
-ModelInfo = namedtuple("ModelInfo", ["hf_repo", "s3_repo"])
+class ModelInfo(NamedTuple):
+    hf_repo: str
+    s3_repo: Optional[str]
 
 
 def get_default_supported_models_info() -> Dict[str, ModelInfo]:
