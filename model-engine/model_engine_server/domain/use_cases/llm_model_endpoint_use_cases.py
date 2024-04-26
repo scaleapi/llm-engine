@@ -336,9 +336,11 @@ def validate_checkpoint_path_uri(checkpoint_path: str) -> None:
         )
 
 
-def validate_checkpoint_path(checkpoint_path: Optional[str], model_name: str) -> str:
+def get_checkpoint_path(model_name: str, checkpoint_path_override: Optional[str]) -> str:
     checkpoint_path = (
-        SUPPORTED_MODELS_INFO[model_name].s3_repo if not checkpoint_path else checkpoint_path
+        SUPPORTED_MODELS_INFO[model_name].s3_repo
+        if not checkpoint_path_override
+        else checkpoint_path_override
     )
 
     if not checkpoint_path:
@@ -469,7 +471,7 @@ class CreateLLMModelBundleV1UseCase:
 
         subcommands = []
 
-        checkpoint_path = validate_checkpoint_path(checkpoint_path, model_name)
+        checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
         final_weights_folder = "model_files"
 
         subcommands += self.load_model_weights_sub_commands(
@@ -686,7 +688,7 @@ class CreateLLMModelBundleV1UseCase:
 
         subcommands = []
 
-        checkpoint_path = validate_checkpoint_path(checkpoint_path, model_name)
+        checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
         # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
         if "mistral" in model_name:
             final_weights_folder = "mistral_files"
@@ -778,7 +780,7 @@ class CreateLLMModelBundleV1UseCase:
 
         subcommands = []
 
-        checkpoint_path = validate_checkpoint_path(checkpoint_path, model_name)
+        checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
         final_weights_folder = "model_files"
         subcommands += self.load_model_weights_sub_commands(
             LLMInferenceFramework.LIGHTLLM,
