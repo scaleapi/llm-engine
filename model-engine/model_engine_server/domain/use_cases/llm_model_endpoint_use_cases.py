@@ -449,22 +449,26 @@ class CreateLLMModelBundleV1UseCase:
             max_total_tokens = 4096
 
         subcommands = []
-        if checkpoint_path is not None:
-            if checkpoint_path.startswith("s3://"):
-                final_weights_folder = "model_files"
+        checkpoint_path = (
+            SUPPORTED_MODELS_INFO[model_name].s3_repo if not checkpoint_path else checkpoint_path
+        )
 
-                subcommands += self.load_model_weights_sub_commands(
-                    LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
-                    framework_image_tag,
-                    checkpoint_path,
-                    final_weights_folder,
-                )
-            else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
+        if not checkpoint_path:
+            raise InvalidRequestException(f"No checkpoint path found for model {model_name}")
+
+        if checkpoint_path.startswith("s3://"):
+            final_weights_folder = "model_files"
+
+            subcommands += self.load_model_weights_sub_commands(
+                LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+                framework_image_tag,
+                checkpoint_path,
+                final_weights_folder,
+            )
         else:
-            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
+            raise ObjectHasInvalidValueException(
+                f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
+            )
 
         subcommands.append(
             f"text-generation-launcher --hostname :: --model-id {final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
