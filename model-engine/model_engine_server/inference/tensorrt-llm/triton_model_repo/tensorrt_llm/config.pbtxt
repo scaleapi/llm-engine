@@ -323,7 +323,7 @@ parameters: {
 parameters: {
   key: "batch_scheduler_policy"
   value: {
-    string_value: "${batch_scheduler_policy}"
+    string_value: "max_utilization"
   }
 }
 parameters: {
@@ -341,7 +341,7 @@ parameters: {
 parameters: {
   key: "exclude_input_in_output"
   value: {
-    string_value: "${exclude_input_in_output}"
+    string_value: "true"
   }
 }
 parameters: {
