@@ -1,7 +1,6 @@
 import os
-from collections import namedtuple
 from functools import lru_cache
-from typing import Dict, Optional
+from typing import Dict, NamedTuple, Optional
 
 from huggingface_hub import list_repo_refs
 from huggingface_hub.utils._errors import RepositoryNotFoundError
@@ -25,7 +24,9 @@ TOKENIZER_FILES_OPTIONAL = [
 TOKENIZER_TARGET_DIR = "/opt/.cache/model_engine_server/tokenizers"
 
 
-ModelInfo = namedtuple("ModelInfo", ["hf_repo", "s3_repo"])
+class ModelInfo(NamedTuple):
+    hf_repo: str
+    s3_repo: Optional[str]
 
 
 def get_default_supported_models_info() -> Dict[str, ModelInfo]:
@@ -40,6 +41,10 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "llama-2-13b-chat": ModelInfo("meta-llama/Llama-2-13b-chat-hf", None),
         "llama-2-70b": ModelInfo("meta-llama/Llama-2-70b-hf", None),
         "llama-2-70b-chat": ModelInfo("meta-llama/Llama-2-70b-chat-hf", None),
+        "llama-3-8b": ModelInfo("meta-llama/Meta-Llama-3-8B", None),
+        "llama-3-8b-instruct": ModelInfo("meta-llama/Meta-Llama-3-8B-Instruct", None),
+        "llama-3-70b": ModelInfo("meta-llama/Meta-Llama-3-70B", None),
+        "llama-3-70b-instruct": ModelInfo("meta-llama/Meta-Llama-3-70B-Instruct", None),
         "falcon-7b": ModelInfo("tiiuae/falcon-7b", None),
         "falcon-7b-instruct": ModelInfo("tiiuae/falcon-7b-instruct", None),
         "falcon-40b": ModelInfo("tiiuae/falcon-40b", None),
