@@ -396,9 +396,22 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#request_id-34621b44-c655-402c-a459-f108b3e49b12-output-text-john-num_prompt_tokens-6-num_completion_tokens-4-tokens-none" class="md-nav__link">
+    {"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}
+  </a>
+  
+    <nav class="md-nav" aria-label="{"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#which-model-should-i-use" class="md-nav__link">
     Which model should I use?
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -650,9 +663,22 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#request_id-34621b44-c655-402c-a459-f108b3e49b12-output-text-john-num_prompt_tokens-6-num_completion_tokens-4-tokens-none" class="md-nav__link">
+    {"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}
+  </a>
+  
+    <nav class="md-nav" aria-label="{"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#which-model-should-i-use" class="md-nav__link">
     Which model should I use?
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -670,8 +696,6 @@
                 
                   
 
-
-  <h1>Completions</h1>
 
 <p>Language Models are trained to predict natural language and provide text outputs as a response
 to their inputs. The inputs are called <em>prompts</em> and outputs are referred to as <em>completions</em>.
@@ -921,6 +945,22 @@ It enforces certain token generation patterns by tinkering with the sampling log
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 <a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span style="color: #3D7B7B; font-style: italic"># {&quot;request_id&quot;:&quot;5b184654-96b6-4932-9eb6-382a51fdb3d5&quot;,&quot;output&quot;:{&quot;text&quot;:&quot;{\&quot;myString\&quot; : \&quot;John Doe&quot;,&quot;num_prompt_tokens&quot;:6,&quot;num_completion_tokens&quot;:10,&quot;tokens&quot;:null}}</span>
 </code></pre></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="11:1"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><div class="tabbed-labels"><label for="__tabbed_11_1">Guided decoding with Context-Free Grammar</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
+<p>```python
+from llmengine import Completion</p>
+<p>response = Completion.create(
+    model="llama-2-7b",
+    prompt="Hello, my name is",
+    max_new_tokens=10,
+    temperature=0.2,
+    guided_grammar="start: \"John\""
+)</p>
+<p>print(response.json())</p>
+<h1 id="request_id-34621b44-c655-402c-a459-f108b3e49b12-output-text-john-num_prompt_tokens-6-num_completion_tokens-4-tokens-none">{"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}<a class="headerlink" href="#request_id-34621b44-c655-402c-a459-f108b3e49b12-output-text-john-num_prompt_tokens-6-num_completion_tokens-4-tokens-none" title="Permanent link">&para;</a></h1>
 <h2 id="which-model-should-i-use">Which model should I use?<a class="headerlink" href="#which-model-should-i-use" title="Permanent link">&para;</a></h2>
 <p>See the <a href="../../model_zoo">Model Zoo</a> for more information on best practices for which model to use for Completions.</p>
 
