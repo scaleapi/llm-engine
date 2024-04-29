@@ -186,15 +186,19 @@ class CompletionSyncV1Request(BaseModel):
     """
     guided_json: Optional[Dict[str, Any]] = None
     """
-    JSON schema for guided decoding.
+    JSON schema for guided decoding. Only supported in vllm.
     """
     guided_regex: Optional[str] = None
     """
-    Regex for guided decoding.
+    Regex for guided decoding. Only supported in vllm.
     """
     guided_choice: Optional[List[str]] = None
     """
-    Choices for guided decoding.
+    Choices for guided decoding. Only supported in vllm.
+    """
+    guided_grammar: Optional[str] = None
+    """
+    Context-free grammar for guided decoding. Only supported in vllm.
     """
 
 
@@ -271,6 +275,10 @@ class CompletionStreamV1Request(BaseModel):
     guided_choice: Optional[List[str]] = None
     """
     Choices for guided decoding. Only supported in vllm.
+    """
+    guided_grammar: Optional[str] = None
+    """
+    Context-free grammar for guided decoding. Only supported in vllm.
     """
 
 
