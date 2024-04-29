@@ -28,7 +28,7 @@ import json
 
 import numpy as np
 import triton_python_backend_utils as pb_utils
-from transformers import AutoTokenizer, LlamaTokenizer, T5Tokenizer
+from transformers import AutoTokenizer, LlamaTokenizer, T5Tokenizer, SPIECE_UNDERLINE
 
 
 class TritonPythonModel:
@@ -191,5 +191,11 @@ class TritonPythonModel:
                 output = self.tokenizer.decode(
                     tokens[:seq_len],
                     skip_special_tokens=self.skip_special_tokens)
+                # Adapted from https://github.com/triton-inference-server/tensorrtllm_backend/pull/423
+                # This is somewhat of a hack: add a space before the output if the first token starts with a space
+                # This may add a space in front of the first token though when we don't want it.
+                token_id_string = self.tokenizer.convert_ids_to_tokens(tokens[:seq_len], skip_special_tokens=self.skip_special_tokens)
+                if len(token_id_string) > 0 and len(token_id_string[0]) > 0 and token_id_string[0][0] == SPIECE_UNDERLINE:
+                    output = " " + output
                 outputs.append(output.encode('utf8'))
         return outputs
