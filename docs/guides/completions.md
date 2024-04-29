@@ -246,6 +246,22 @@ print(response.json())
 # {"request_id":"5b184654-96b6-4932-9eb6-382a51fdb3d5","output":{"text":"{\"myString\" : \"John Doe","num_prompt_tokens":6,"num_completion_tokens":10,"tokens":null}}
 ```
 
+=== "Guided decoding with Context-Free Grammar"
+
+```python
+from llmengine import Completion
+
+response = Completion.create(
+    model="llama-2-7b",
+    prompt="Hello, my name is",
+    max_new_tokens=10,
+    temperature=0.2,
+    guided_grammar="start: \"John\""
+)
+
+print(response.json())
+# {"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}
+
 ## Which model should I use?
 
 See the [Model Zoo](../../model_zoo) for more information on best practices for which model to use for Completions.
