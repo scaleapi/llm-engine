@@ -10,7 +10,7 @@ import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from vllm.engine.arg_utils import AsyncEngineArgs
-from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.engine.async_llm_engine import AsyncEngineDeadError, AsyncLLMEngine
 from vllm.entrypoints.openai.protocol import CompletionRequest as OpenAICompletionRequest
 from vllm.model_executor.guided_decoding import get_guided_decoding_logits_processor
 from vllm.outputs import CompletionOutput
@@ -188,7 +188,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     engine_args = AsyncEngineArgs.from_cli_args(args)
-    engine = AsyncLLMEngine.from_engine_args(engine_args)
+    try:
+        engine = AsyncLLMEngine.from_engine_args(engine_args)
+    except AsyncEngineDeadError as e:
+        print(f"Failed to start the engine: {e}")
+        exit(1)
 
     signal.signal(signal.SIGUSR1, debug)
 
