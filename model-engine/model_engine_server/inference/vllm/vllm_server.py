@@ -10,7 +10,7 @@ import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from vllm.engine.arg_utils import AsyncEngineArgs
-from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.engine.async_llm_engine import AsyncEngineDeadError, AsyncLLMEngine
 from vllm.entrypoints.openai.protocol import CompletionRequest as OpenAICompletionRequest
 from vllm.model_executor.guided_decoding import get_guided_decoding_logits_processor
 from vllm.outputs import CompletionOutput
@@ -75,7 +75,11 @@ async def generate(request: Request) -> Response:
         sampling_params.logits_processors.append(guided_decode_logit_processor)
 
     request_id = random_uuid()
-    results_generator = engine.generate(prompt, sampling_params, request_id)
+    try:
+        results_generator = engine.generate(prompt, sampling_params, request_id)
+    except AsyncEngineDeadError as e:
+        print(f"The vllm engine is dead, exiting the pod: {e}")
+        exit(1)
 
     # Streaming case
     async def stream_results() -> AsyncGenerator[str, None]:
@@ -192,6 +196,7 @@ if __name__ == "__main__":
 
     engine_args = AsyncEngineArgs.from_cli_args(args)
     engine = AsyncLLMEngine.from_engine_args(engine_args)
+    engine.check_health()
 
     signal.signal(signal.SIGUSR1, debug)
 
