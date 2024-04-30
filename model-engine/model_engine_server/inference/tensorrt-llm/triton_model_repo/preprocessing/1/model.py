@@ -284,6 +284,16 @@ class TritonPythonModel:
                 item_flat_ids += ids
                 item_offsets.append(len(ids))
 
+                # Add a case where ids[0] decodes to empty string, then add another set of ids here
+                # Unfortunately, we don't have access to the entire sequence of returned response tokens when decoding, 
+                # so we have to do what we can to get a reasonable list of token ids corresponding to a stop sequence.
+                # True correctness would look like figuring out all the ways of decoding a stop sequence, and then
+                # adding all of them to this item_flat_ids map.
+                if len(ids) > 1 and self.tokenizer.decode(ids[0]) == "":
+                    new_ids = ids[1:]
+                    item_flat_ids += new_ids
+                    item_offsets.append(len(new_ids))
+
             flat_ids.append(np.array(item_flat_ids))
             offsets.append(np.cumsum(np.array(item_offsets)))
 
