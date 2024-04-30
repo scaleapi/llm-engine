@@ -72,7 +72,11 @@ async def generate(request: Request) -> Response:
         sampling_params.logits_processors.append(guided_decode_logit_processor)
 
     request_id = random_uuid()
-    results_generator = engine.generate(prompt, sampling_params, request_id)
+    try:
+        results_generator = engine.generate(prompt, sampling_params, request_id)
+    except AsyncEngineDeadError as e:
+        print(f"The vllm engine is dead, exiting the pod: {e}")
+        exit(1)
 
     # Streaming case
     async def stream_results() -> AsyncGenerator[str, None]:
@@ -188,11 +192,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     engine_args = AsyncEngineArgs.from_cli_args(args)
-    try:
-        engine = AsyncLLMEngine.from_engine_args(engine_args)
-    except AsyncEngineDeadError as e:
-        print(f"Failed to start the engine: {e}")
-        exit(1)
+    engine = AsyncLLMEngine.from_engine_args(engine_args)
+    engine.check_health()
 
     signal.signal(signal.SIGUSR1, debug)
 
