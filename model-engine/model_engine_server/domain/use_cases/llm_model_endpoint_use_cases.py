@@ -39,6 +39,7 @@ from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
+from model_engine_server.core.configmap import read_config_map
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
@@ -67,6 +68,7 @@ from model_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
     InvalidRequestException,
+    LatestImageTagNotFoundException,
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
@@ -246,6 +248,8 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
+LATEST_CONFIG_MAP_NAME = "model-engine-inference-framework-latest-config"
+
 
 def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
     """
@@ -253,6 +257,15 @@ def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRep
     """
     tokenizer = tokenizer_repository.load_tokenizer(model_name)
     return len(tokenizer.encode(input))
+
+
+async def _get_latest_tag(inference_framework: LLMInferenceFramework) -> str:
+    config_map = await read_config_map(LATEST_CONFIG_MAP_NAME)
+    if inference_framework not in config_map:
+        raise LatestImageTagNotFoundException(
+            f"Could not find latest tag for inference framework {inference_framework}."
+        )
+    return config_map[inference_framework]
 
 
 def _include_safetensors_bin_or_pt(model_files: List[str]) -> Optional[str]:
@@ -931,8 +944,8 @@ class CreateLLMModelEndpointV1UseCase:
                 )
 
         if request.inference_framework_image_tag == "latest":
-            request.inference_framework_image_tag = self.docker_repository.get_latest_image_tag(
-                INFERENCE_FRAMEWORK_REPOSITORY[request.inference_framework]
+            request.inference_framework_image_tag = await _get_latest_tag(
+                request.inference_framework
             )
 
         bundle = await self.create_llm_model_bundle_use_case.execute(
@@ -1149,9 +1162,7 @@ class UpdateLLMModelEndpointV1UseCase:
             inference_framework = llm_metadata["inference_framework"]
 
             if request.inference_framework_image_tag == "latest":
-                inference_framework_image_tag = self.docker_repository.get_latest_image_tag(
-                    INFERENCE_FRAMEWORK_REPOSITORY[inference_framework]
-                )
+                request.inference_framework_image_tag = await _get_latest_tag(inference_framework)
             else:
                 inference_framework_image_tag = (
                     request.inference_framework_image_tag
