@@ -6,6 +6,7 @@ from kubernetes_asyncio import client
 from kubernetes_asyncio import config as kube_config
 from kubernetes_asyncio.client.rest import ApiException
 from kubernetes_asyncio.config.config_exception import ConfigException
+from model_engine_server.common.config import hmi_config
 from model_engine_server.core.loggers import logger_name, make_logger
 
 DEFAULT_NAMESPACE = "default"
@@ -14,7 +15,7 @@ logger = make_logger(logger_name())
 
 
 async def read_config_map(
-    config_map_name: str, namespace: str = DEFAULT_NAMESPACE
+    config_map_name: str, namespace: str = hmi_config.gateway_namespace
 ) -> Dict[str, str]:
     try:
         kube_config.load_incluster_config()

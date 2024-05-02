@@ -159,6 +159,8 @@ config:
       # s3_bucket [required] is the S3 bucket you wish to connect 
       s3_bucket: "llm-engine"
     launch:
+      # Config to know where model-engine is running
+      gateway_namespace: default
       # endpoint_namespace [required] is K8s namespace the endpoints will be created in
       endpoint_namespace: llm-engine
       # cache_redis_aws_url is the full url for the redis cluster you wish to connect,
