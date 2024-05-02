@@ -1162,7 +1162,7 @@ class UpdateLLMModelEndpointV1UseCase:
             inference_framework = llm_metadata["inference_framework"]
 
             if request.inference_framework_image_tag == "latest":
-                request.inference_framework_image_tag = await _get_latest_tag(inference_framework)
+                inference_framework_image_tag = await _get_latest_tag(inference_framework)
             else:
                 inference_framework_image_tag = (
                     request.inference_framework_image_tag
