@@ -202,7 +202,7 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "llama-2-70b-chat",
         ]
     ),
-    LLMInferenceFramework.TENSORRT_LLM: set(["llama-2-7b"]),
+    LLMInferenceFramework.TENSORRT_LLM: set(["llama-2-7b", "mixtral-8x7b", "mixtral-8x7b-instruct"]),
 }
 
 _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
