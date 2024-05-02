@@ -65,7 +65,18 @@ def good_models_info() -> Dict[str, ModelInfo]:
     }
 
 
+def mocked__get_latest_tag():
+    async def async_mock(*args, **kwargs):  # noqa
+        return "fake_docker_repository_latest_image_tag"
+
+    return mock.AsyncMock(side_effect=async_mock)
+
+
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_tag",
+    mocked__get_latest_tag(),
+)
 @mock.patch(
     "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.SUPPORTED_MODELS_INFO",
     good_models_info(),
@@ -592,6 +603,10 @@ async def test_get_llm_model_endpoint_use_case_raises_not_authorized(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_tag",
+    mocked__get_latest_tag(),
+)
 async def test_update_model_endpoint_use_case_success(
     test_api_key: str,
     fake_model_bundle_repository,

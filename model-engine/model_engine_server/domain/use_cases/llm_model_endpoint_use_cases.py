@@ -248,7 +248,7 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
-LATEST_CONFIG_MAP_NAME = "model-engine-inference-framework-latest-config"
+LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = "model-engine-inference-framework-latest-config"
 
 
 def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
@@ -260,7 +260,7 @@ def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRep
 
 
 async def _get_latest_tag(inference_framework: LLMInferenceFramework) -> str:
-    config_map = await read_config_map(LATEST_CONFIG_MAP_NAME)
+    config_map = await read_config_map(LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME)
     if inference_framework not in config_map:
         raise LatestImageTagNotFoundException(
             f"Could not find latest tag for inference framework {inference_framework}."
