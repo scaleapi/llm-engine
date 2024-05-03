@@ -47,6 +47,7 @@ def get_model_cache_directory_name(model_name: str):
 
 @dataclass
 class HostedModelInferenceServiceConfig:
+    gateway_namespace: str
     endpoint_namespace: str
     billing_queue_arn: str
     sqs_profile: str
