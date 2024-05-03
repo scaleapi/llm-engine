@@ -6,7 +6,7 @@
 #
 aiofiles==23.1.0
     # via quart
-aiohttp==3.9.2
+aiohttp==3.9.5
     # via
     #   -r model-engine/requirements.in
     #   kubernetes-asyncio

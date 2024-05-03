@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:experimental
 
-FROM python:3.8.18-slim as model-engine
+FROM python:3.8.19-slim as model-engine
 WORKDIR /workspace
 
 RUN apt-get update && apt-get install -y \
