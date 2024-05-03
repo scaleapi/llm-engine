@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any, List, Tuple
 from unittest import mock
 
 import pytest
@@ -54,15 +54,6 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     validate_and_update_completion_params,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
-from model_engine_server.infra.repositories import live_tokenizer_repository
-from model_engine_server.infra.repositories.live_tokenizer_repository import ModelInfo
-
-
-def good_models_info() -> Dict[str, ModelInfo]:
-    return {
-        k: ModelInfo(v.hf_repo, "s3://test-s3.tar")
-        for k, v in live_tokenizer_repository.SUPPORTED_MODELS_INFO.items()
-    }
 
 
 def mocked__get_latest_tag():
@@ -76,10 +67,6 @@ def mocked__get_latest_tag():
 @mock.patch(
     "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_tag",
     mocked__get_latest_tag(),
-)
-@mock.patch(
-    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.SUPPORTED_MODELS_INFO",
-    good_models_info(),
 )
 async def test_create_model_endpoint_use_case_success(
     test_api_key: str,
@@ -194,39 +181,32 @@ async def test_create_model_endpoint_use_case_success(
     assert "--max-total-tokens" in bundle.flavor.command[-1] and "4096" in bundle.flavor.command[-1]
 
 
-def bad_models_info() -> Dict[str, ModelInfo]:
-    info = {
-        k: ModelInfo(v.hf_repo, v.s3_repo)
-        for k, v in live_tokenizer_repository.SUPPORTED_MODELS_INFO.items()
-    }
-    info.update(
-        {
-            "mpt-7b": ModelInfo("mosaicml/mpt-7b", None),
-            "mpt-7b-instruct": ModelInfo("mosaicml/mpt-7b-instruct", "gibberish"),
-        }
-    )
-    return info
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "inference_framework, model_name, expected_error",
+    "inference_framework, model_name, checkpoint_path, expected_error",
     [
-        (LLMInferenceFramework.TEXT_GENERATION_INFERENCE, "mpt-7b", InvalidRequestException),
+        (LLMInferenceFramework.TEXT_GENERATION_INFERENCE, "mpt-7b", None, InvalidRequestException),
         (
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
             "mpt-7b-instruct",
+            "gibberish",
             ObjectHasInvalidValueException,
         ),
-        (LLMInferenceFramework.LIGHTLLM, "mpt-7b", InvalidRequestException),
-        (LLMInferenceFramework.LIGHTLLM, "mpt-7b-instruct", ObjectHasInvalidValueException),
-        (LLMInferenceFramework.VLLM, "mpt-7b", InvalidRequestException),
-        (LLMInferenceFramework.VLLM, "mpt-7b-instruct", ObjectHasInvalidValueException),
+        (LLMInferenceFramework.LIGHTLLM, "mpt-7b", None, InvalidRequestException),
+        (
+            LLMInferenceFramework.LIGHTLLM,
+            "mpt-7b-instruct",
+            "gibberish",
+            ObjectHasInvalidValueException,
+        ),
+        (LLMInferenceFramework.VLLM, "mpt-7b", None, InvalidRequestException),
+        (
+            LLMInferenceFramework.VLLM,
+            "mpt-7b-instruct",
+            "gibberish",
+            ObjectHasInvalidValueException,
+        ),
     ],
-)
-@mock.patch(
-    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.SUPPORTED_MODELS_INFO",
-    bad_models_info(),
 )
 async def test_create_model_bundle_fails_if_no_checkpoint(
     test_api_key: str,
@@ -238,6 +218,7 @@ async def test_create_model_bundle_fails_if_no_checkpoint(
     create_llm_model_endpoint_text_generation_inference_request_streaming: CreateLLMModelEndpointV1Request,
     inference_framework,
     model_name,
+    checkpoint_path,
     expected_error,
 ):
     fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
@@ -266,7 +247,7 @@ async def test_create_model_bundle_fails_if_no_checkpoint(
             endpoint_type=request.endpoint_type,
             num_shards=request.num_shards,
             quantize=request.quantize,
-            checkpoint_path=None,
+            checkpoint_path=checkpoint_path,
         )
 
 
@@ -279,10 +260,6 @@ async def test_create_model_bundle_fails_if_no_checkpoint(
         (False, LLMInferenceFramework.VLLM, "0.1.6"),
         (True, LLMInferenceFramework.VLLM, "0.1.3.6"),
     ],
-)
-@mock.patch(
-    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.SUPPORTED_MODELS_INFO",
-    good_models_info(),
 )
 async def test_create_model_bundle_inference_framework_image_tag_validation(
     test_api_key: str,
@@ -318,6 +295,7 @@ async def test_create_model_bundle_inference_framework_image_tag_validation(
     request = create_llm_model_endpoint_text_generation_inference_request_streaming.copy()
     request.inference_framework = inference_framework
     request.inference_framework_image_tag = inference_framework_image_tag
+    request.checkpoint_path = "s3://test-s3.tar"
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     if valid:
         await use_case.execute(user=user, request=request)
