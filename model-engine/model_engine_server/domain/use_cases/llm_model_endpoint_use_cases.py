@@ -202,7 +202,9 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "llama-2-70b-chat",
         ]
     ),
-    LLMInferenceFramework.TENSORRT_LLM: set(["llama-2-7b", "mixtral-8x7b", "mixtral-8x7b-instruct"]),
+    LLMInferenceFramework.TENSORRT_LLM: set(
+        ["llama-2-7b", "mixtral-8x7b", "mixtral-8x7b-instruct"]
+    ),
 }
 
 _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
@@ -1490,11 +1492,17 @@ class CompletionSyncV1UseCase:
             num_prompt_tokens = count_tokens(
                 prompt, model_content.model_name, self.tokenizer_repository
             )
+            if "token_ids" in model_output:
+                # TensorRT 23.10 has this field, TensorRT 24.03 does not
+                # For backwards compatibility with pre-2024/05/02
+                num_completion_tokens = len(model_output["token_ids"]) - num_prompt_tokens
+            elif "output_log_probs" in model_output:
+                num_completion_tokens = len(model_output["output_log_probs"])
             return CompletionOutput(
                 # Output is "<s> prompt output"
                 text=model_output["text_output"][(len(prompt) + 4) :],
                 num_prompt_tokens=num_prompt_tokens,
-                num_completion_tokens=len(model_output["token_ids"]) - num_prompt_tokens,
+                num_completion_tokens=num_completion_tokens,
             )
         else:
             raise EndpointUnsupportedInferenceTypeException(
