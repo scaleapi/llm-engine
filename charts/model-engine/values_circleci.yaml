@@ -96,8 +96,6 @@ config:
       profile_ml_worker: "default"
       profile_ml_inference_worker: "default"
     launch:
-      # Config to know where model-engine is running
-      gateway_namespace : default
       # Endpoint config
       # K8s namespace the endpoints will be created in
       endpoint_namespace: model-engine
