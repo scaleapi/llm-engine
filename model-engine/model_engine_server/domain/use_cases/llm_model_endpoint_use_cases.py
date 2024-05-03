@@ -1496,11 +1496,14 @@ class CompletionSyncV1UseCase:
                 # TensorRT 23.10 has this field, TensorRT 24.03 does not
                 # For backwards compatibility with pre-2024/05/02
                 num_completion_tokens = len(model_output["token_ids"]) - num_prompt_tokens
+                text = model_output["text_output"][(len(prompt) + 4) :]
             elif "output_log_probs" in model_output:
+                # TensorRT 24.01 + surrounding code.
                 num_completion_tokens = len(model_output["output_log_probs"])
+                text = model_output["text_output"]
             return CompletionOutput(
                 # Output is "<s> prompt output"
-                text=model_output["text_output"][(len(prompt) + 4) :],
+                text=text,
                 num_prompt_tokens=num_prompt_tokens,
                 num_completion_tokens=num_completion_tokens,
             )
