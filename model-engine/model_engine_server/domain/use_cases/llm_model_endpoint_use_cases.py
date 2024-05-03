@@ -84,7 +84,10 @@ from model_engine_server.domain.repositories import (
 )
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
-from model_engine_server.infra.repositories.live_tokenizer_repository import SUPPORTED_MODELS_INFO
+from model_engine_server.infra.repositories.live_tokenizer_repository import (
+    SUPPORTED_MODELS_INFO,
+    get_models_s3_uri,
+)
 
 from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
@@ -351,7 +354,7 @@ def validate_checkpoint_path_uri(checkpoint_path: str) -> None:
 
 def get_checkpoint_path(model_name: str, checkpoint_path_override: Optional[str]) -> str:
     checkpoint_path = (
-        SUPPORTED_MODELS_INFO[model_name].s3_repo
+        get_models_s3_uri(SUPPORTED_MODELS_INFO[model_name].s3_repo, "")
         if not checkpoint_path_override
         else checkpoint_path_override
     )
