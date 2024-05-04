@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: model-engine-inference-framework-latest-config
+  name: {{ include "modelEngine.fullname" . }}-inference-framework-latest-config
   labels:
     product: common
     team: infra
