@@ -251,7 +251,11 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
-LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = "model-engine-inference-framework-latest-config"
+SERVICE_NAME = "model-engine"
+SERVICE_IDENTIFIER = os.getenv("SERVICE_IDENTIFIER")
+if SERVICE_IDENTIFIER:
+    SERVICE_NAME += f"-{SERVICE_IDENTIFIER}"
+LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = f"{SERVICE_NAME}-inference-framework-latest-config"
 
 
 def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
