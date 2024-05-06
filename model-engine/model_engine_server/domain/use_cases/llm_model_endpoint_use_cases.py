@@ -275,24 +275,6 @@ async def _get_latest_tag(inference_framework: LLMInferenceFramework) -> str:
     return config_map[inference_framework]
 
 
-def _include_safetensors_bin_or_pt(model_files: List[str]) -> Optional[str]:
-    """
-    This function is used to determine whether to include "*.safetensors", "*.bin", or "*.pt" files
-    based on which file type is present most often in the checkpoint folder. The most
-    frequently present file type is included.
-    In case of ties, priority is given to "*.safetensors", then "*.bin", then "*.pt".
-    """
-    num_safetensors = len([f for f in model_files if f.endswith(".safetensors")])
-    num_bin = len([f for f in model_files if f.endswith(".bin")])
-    num_pt = len([f for f in model_files if f.endswith(".pt")])
-    maximum = max(num_safetensors, num_bin, num_pt)
-    if num_safetensors == maximum:
-        return "*.safetensors"
-    if num_bin == maximum:
-        return "*.bin"
-    return "*.pt"
-
-
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
     model_endpoint: ModelEndpoint,
 ) -> GetLLMModelEndpointV1Response:
@@ -354,6 +336,10 @@ def validate_checkpoint_path_uri(checkpoint_path: str) -> None:
         raise ObjectHasInvalidValueException(
             f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
         )
+    if checkpoint_path.endswith(".tar"):
+        raise ObjectHasInvalidValueException(
+            f"Tar files are not supported. Given checkpoint path: {checkpoint_path}."
+        )
 
 
 def get_checkpoint_path(model_name: str, checkpoint_path_override: Optional[str]) -> str:
@@ -368,6 +354,14 @@ def get_checkpoint_path(model_name: str, checkpoint_path_override: Optional[str]
 
     validate_checkpoint_path_uri(checkpoint_path)
     return checkpoint_path
+
+
+def validate_checkpoint_files(checkpoint_files: List[str]) -> None:
+    """Require safetensors in the checkpoint path."""
+    model_files = [f for f in checkpoint_files if "model" in f]
+    num_safetensors = len([f for f in model_files if f.endswith(".safetensors")])
+    if num_safetensors == 0:
+        raise ObjectHasInvalidValueException("No safetensors found in the checkpoint path.")
 
 
 class CreateLLMModelBundleV1UseCase:
@@ -557,27 +551,14 @@ class CreateLLMModelBundleV1UseCase:
         else:
             s5cmd = "./s5cmd"
 
-        base_path = checkpoint_path.split("/")[-1]
-        if base_path.endswith(".tar"):
-            # If the checkpoint file is a tar file, extract it into final_weights_folder
-            subcommands.extend(
-                [
-                    f"{s5cmd} cp {checkpoint_path} .",
-                    f"mkdir -p {final_weights_folder}",
-                    f"tar --no-same-owner -xf {base_path} -C {final_weights_folder}",
-                ]
-            )
-        else:
-            # Let's check whether to exclude "*.safetensors" or "*.bin" files
-            checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
-            model_files = [f for f in checkpoint_files if "model" in f]
+        checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
+        validate_checkpoint_files(checkpoint_files)
 
-            include_str = _include_safetensors_bin_or_pt(model_files)
-            file_selection_str = f"--include '*.model' --include '*.json' --include '{include_str}' --exclude 'optimizer*'"
-            subcommands.append(
-                f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-            )
-
+        # filter to configs ('*.model' and '*.json') and weights ('*.safetensors')
+        file_selection_str = "--include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*'"
+        subcommands.append(
+            f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+        )
         return subcommands
 
     def load_model_files_sub_commands_trt_llm(
@@ -591,19 +572,9 @@ class CreateLLMModelBundleV1UseCase:
         See llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/tensorrt_llm/config.pbtxt
         and llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/postprocessing/config.pbtxt
         """
-        subcommands = []
-
-        base_path = checkpoint_path.split("/")[-1]
-
-        if base_path.endswith(".tar"):
-            raise ObjectHasInvalidValueException(
-                "Checkpoint for TensorRT-LLM models must be a folder, not a tar file."
-            )
-        else:
-            subcommands.append(
-                f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
-            )
-
+        subcommands = [
+            f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
+        ]
         return subcommands
 
     async def create_deepspeed_bundle(
