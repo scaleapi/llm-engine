@@ -503,7 +503,7 @@ tomli==2.0.1
     #   build
     #   hypercorn
     #   pep517
-tqdm==4.65.0
+tqdm==4.66.4
     # via
     #   -r model-engine/requirements.in
     #   huggingface-hub
