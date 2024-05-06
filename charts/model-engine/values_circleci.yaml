@@ -144,7 +144,7 @@ config:
 
       billing_queue_arn: none
       cache_redis_aws_url: redis://redis-message-broker-master.default/15
-      s3_file_llm_fine_tune_repository: "s3://$CIRCLECI_AWS_S3_BUCKET/fine_tune_repository"
+      cloud_file_llm_fine_tune_repository: "s3://$CIRCLECI_AWS_S3_BUCKET/fine_tune_repository"
       dd_trace_enabled: false
       istio_enabled: true
       sensitive_log_mode: false

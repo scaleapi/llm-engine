@@ -53,7 +53,7 @@ class HostedModelInferenceServiceConfig:
     sqs_queue_policy_template: str
     sqs_queue_tag_template: str
     model_primitive_host: str
-    s3_file_llm_fine_tune_repository: str
+    cloud_file_llm_fine_tune_repository: str
     hf_user_fine_tuned_weights_prefix: str
     istio_enabled: bool
     dd_trace_enabled: bool

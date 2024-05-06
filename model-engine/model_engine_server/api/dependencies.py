@@ -290,14 +290,17 @@ def _get_external_interfaces(
     cron_job_gateway = LiveCronJobGateway()
 
     llm_fine_tune_repository: LLMFineTuneRepository
+    file_path = os.getenv(
+        "CLOUD_FILE_LLM_FINE_TUNE_REPOSITORY",
+        hmi_config.cloud_file_llm_fine_tune_repository,
+    )
     if infra_config().cloud_provider == "azure":
-        llm_fine_tune_repository = ABSFileLLMFineTuneRepository("not supported yet")
+        llm_fine_tune_repository = ABSFileLLMFineTuneRepository(
+            file_path=file_path,
+        )
     else:
         llm_fine_tune_repository = S3FileLLMFineTuneRepository(
-            file_path=os.getenv(
-                "S3_FILE_LLM_FINE_TUNE_REPOSITORY",
-                hmi_config.s3_file_llm_fine_tune_repository,
-            ),
+            file_path=file_path,
         )
     llm_fine_tune_events_repository = (
         ABSFileLLMFineTuneEventsRepository()

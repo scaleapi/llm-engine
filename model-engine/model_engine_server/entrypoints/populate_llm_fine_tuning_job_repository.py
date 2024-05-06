@@ -1,5 +1,5 @@
 """
-This script initializes the s3 file backing the S3FileLLMFineTuneRepository and adds a test template to it
+This script initializes the file backing the LLMFineTuneRepository and adds a test template to it
 
 The `env` variable should be one of training, prod, launch, circleci, or local
 
@@ -16,8 +16,12 @@ import argparse
 import asyncio
 
 import requests
+from model_engine_server.common.config import hmi_config
 from model_engine_server.domain.entities.llm_fine_tune_entity import LLMFineTuneTemplate
-from model_engine_server.infra.repositories import S3FileLLMFineTuneRepository
+from model_engine_server.infra.repositories import (
+    ABSFileLLMFineTuneEventsRepository,
+    S3FileLLMFineTuneRepository,
+)
 
 FT_IMAGE_TAG = "3c33c1e751d3b64fa671b7a330758c2ff0f0e215"
 
@@ -153,10 +157,13 @@ def create_model_bundle(url, model_type, image_tag):
 async def main(args):
     env = args.env
     url = args.url
-    repository = args.repository
+    repository = args.repository or hmi_config.cloud_file_llm_fine_tune_repository
     initialize_repository = args.initialize_repository
 
-    repo = S3FileLLMFineTuneRepository(file_path=repository)
+    if repository.startswith("s3://"):
+        repo = S3FileLLMFineTuneRepository(file_path=repository)
+    else:
+        repo = ABSFileLLMFineTuneEventsRepository(file_path=repository)
 
     # Clears the file. Needed the first time we're populating data
     if initialize_repository:
@@ -446,7 +453,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--url", help="Url to the model-engine gateway", required=True)
     parser.add_argument(
-        "--repository", help="Url to the LLM fine-tuning job repository", required=True
+        "--repository", help="Url to the LLM fine-tuning job repository", required=False
     )
     parser.add_argument("--initialize-repository", required=False, default=False)
     args = parser.parse_args()

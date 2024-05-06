@@ -1,0 +1,58 @@
+{{- if .Values.populateFineTuningRepository }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "modelEngine.fullname" . }}-populate-fine-tuning-repository
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        sidecar.istio.io/inject: "false"
+        {{- include "modelEngine.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "modelEngine.fullname" . }}
+          image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - dumb-init
+            - --
+          args:
+            - python
+            - -m
+            - model_engine_server.entrypoints.populate_llm_fine_tuning_job_repository
+            - -e
+            - prod
+            - --url
+            - http://model-engine.{{ default "default" .Values.gatewayNamespace }}.svc.cluster.local
+            - --initialize-repository
+          {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 10 }}
+          {{- include "modelEngine.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "modelEngine.fullname" . }}
+      {{- include "modelEngine.volumes" . | indent 6 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
