@@ -49,9 +49,9 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     GpuType,
     ModelDownloadV1UseCase,
     UpdateLLMModelEndpointV1UseCase,
-    _include_safetensors_bin_or_pt,
     infer_hardware_from_model_name,
     validate_and_update_completion_params,
+    validate_checkpoint_files,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
@@ -141,7 +141,7 @@ async def test_create_model_endpoint_use_case_success(
             "inference_framework_image_tag": create_llm_model_endpoint_request_sync.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_request_sync.num_shards,
             "quantize": None,
-            "checkpoint_path": None,
+            "checkpoint_path": create_llm_model_endpoint_request_sync.checkpoint_path,
         }
     }
 
@@ -166,7 +166,7 @@ async def test_create_model_endpoint_use_case_success(
             "inference_framework_image_tag": create_llm_model_endpoint_request_streaming.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
             "quantize": None,
-            "checkpoint_path": None,
+            "checkpoint_path": create_llm_model_endpoint_request_sync.checkpoint_path,
         }
     }
 
@@ -295,7 +295,6 @@ async def test_create_model_bundle_inference_framework_image_tag_validation(
     request = create_llm_model_endpoint_text_generation_inference_request_streaming.copy()
     request.inference_framework = inference_framework
     request.inference_framework_image_tag = inference_framework_image_tag
-    request.checkpoint_path = "s3://test-s3.tar"
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     if valid:
         await use_case.execute(user=user, request=request)
@@ -1755,34 +1754,16 @@ async def test_delete_public_inference_model_raises_not_authorized(
 
 
 @pytest.mark.asyncio
-async def test_include_safetensors_bin_or_pt_majority_safetensors():
-    fake_model_files = ["fake.bin", "fake2.safetensors", "model.json", "optimizer.pt"]
-    assert _include_safetensors_bin_or_pt(fake_model_files) == "*.safetensors"
+async def test_validate_checkpoint_files_no_safetensors():
+    fake_model_files = ["model-fake.bin", "model.json", "optimizer.pt"]
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_checkpoint_files(fake_model_files)
 
 
 @pytest.mark.asyncio
-async def test_include_safetensors_bin_or_pt_majority_bin():
-    fake_model_files = [
-        "fake.bin",
-        "fake2.bin",
-        "fake3.safetensors",
-        "model.json",
-        "optimizer.pt",
-        "fake4.pt",
-    ]
-    assert _include_safetensors_bin_or_pt(fake_model_files) == "*.bin"
-
-
-@pytest.mark.asyncio
-async def test_include_safetensors_bin_or_pt_majority_pt():
-    fake_model_files = [
-        "fake.bin",
-        "fake2.safetensors",
-        "model.json",
-        "optimizer.pt",
-        "fake3.pt",
-    ]
-    assert _include_safetensors_bin_or_pt(fake_model_files) == "*.pt"
+async def test_validate_checkpoint_files_safetensors_with_other_files():
+    fake_model_files = ["model-fake.bin", "model-fake2.safetensors", "model.json", "optimizer.pt"]
+    validate_checkpoint_files(fake_model_files)  # No exception should be raised
 
 
 def test_infer_hardware_from_model_name():
