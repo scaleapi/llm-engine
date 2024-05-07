@@ -19,7 +19,7 @@ import requests
 from model_engine_server.common.config import hmi_config
 from model_engine_server.domain.entities.llm_fine_tune_entity import LLMFineTuneTemplate
 from model_engine_server.infra.repositories import (
-    ABSFileLLMFineTuneEventsRepository,
+    ABSFileLLMFineTuneRepository,
     S3FileLLMFineTuneRepository,
 )
 
@@ -163,7 +163,7 @@ async def main(args):
     if repository.startswith("s3://"):
         repo = S3FileLLMFineTuneRepository(file_path=repository)
     else:
-        repo = ABSFileLLMFineTuneEventsRepository(file_path=repository)
+        repo = ABSFileLLMFineTuneRepository(file_path=repository)
 
     # Clears the file. Needed the first time we're populating data
     if initialize_repository:
