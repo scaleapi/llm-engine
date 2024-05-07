@@ -219,29 +219,6 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
     LLMInferenceFramework.TENSORRT_LLM: [],
 }
 
-# We need a dict where if we need to override we can
-# NOTE: These are in *descending* order of priority. e.g. if you see 'mammoth-coder'
-# you'll use that override and not listen to the 'llama-2' override
-_VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
-    "mammoth-coder": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
-    # Based on config here: https://huggingface.co/TIGER-Lab/MAmmoTH-Coder-7B/blob/main/config.json#L12
-    # Can also see 13B, 34B there too
-    "code-llama": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
-    "codellama": {
-        "max_model_len": 16384,
-        "max_num_batched_tokens": 16384,
-    },  # setting both for backwards compatibility, will phase code-llama out in a future pr
-    # Based on config here: https://huggingface.co/codellama/CodeLlama-7b-hf/blob/main/config.json#L12
-    # Can also see 13B, 34B there too
-    "gemma": {"max_model_len": 8192, "max_num_batched_tokens": 8192},
-    "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
-    "llama-3": {"max_model_len": None, "max_num_batched_tokens": 8192},
-    "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
-    "mixtral-8x7b": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
-    "mixtral-8x22b": {"max_model_len": 65536, "max_num_batched_tokens": 65536},
-    "zephyr": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
-}
-
 
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
@@ -661,16 +638,6 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path: Optional[str],
     ):
         command = []
-
-        max_num_batched_tokens: Optional[int] = 2560  # vLLM's default
-        max_model_len: Optional[int] = None
-
-        for key, value in _VLLM_MODEL_LENGTH_OVERRIDES.items():
-            if key in model_name:
-                max_model_len = value["max_model_len"]
-                max_num_batched_tokens = value["max_num_batched_tokens"]
-                break
-
         subcommands = []
         if checkpoint_path is not None:
             if checkpoint_path.startswith("s3://"):
@@ -692,14 +659,9 @@ class CreateLLMModelBundleV1UseCase:
         else:
             final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
 
-        if max_model_len:
-            subcommands.append(
-                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens} --max-model-len {max_model_len}"
-            )
-        else:
-            subcommands.append(
-                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens}"
-            )
+        subcommands.append(
+            f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
+        )
 
         if quantize:
             if quantize == Quantization.AWQ:
@@ -904,6 +866,7 @@ class CreateLLMModelEndpointV1UseCase:
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
+        fill_hardware_info(request)
         validate_deployment_resources(
             min_workers=request.min_workers,
             max_workers=request.max_workers,
@@ -2199,6 +2162,32 @@ class ModelDownloadV1UseCase:
             public_file_name = model_file.rsplit("/", 1)[-1]
             urls[public_file_name] = self.filesystem_gateway.generate_signed_url(model_file)
         return ModelDownloadResponse(urls=urls)
+
+
+def fill_hardware_info(request: CreateLLMModelEndpointV1Request):
+    if (
+        request.gpus is None
+        or request.gpu_type is None
+        or request.cpus is None
+        or request.memory is None
+        or request.storage is None
+    ):
+        if not (
+            request.gpus is None
+            and request.gpu_type is None
+            and request.cpus is None
+            and request.memory is None
+            and request.storage is None
+        ):
+            raise ObjectHasInvalidValueException(
+                "All hardware spec fields must be provided if any hardware spec field is provided."
+            )
+        hardware_info = infer_hardware_from_model_name(request.model_name)
+        request.gpus = hardware_info.gpus
+        request.gpu_type = hardware_info.gpu_type
+        request.cpus = hardware_info.cpus
+        request.memory = hardware_info.memory
+        request.storage = hardware_info.storage
 
 
 def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJobResourceRequests:
