@@ -182,3 +182,9 @@ class PostInferenceHooksException(DomainException):
     """
     Thrown if the post inference hooks are invalid.
     """
+
+
+class LatestImageTagNotFoundException(DomainException):
+    """
+    Thrown if the latest image tag cannot be found.
+    """
