@@ -455,6 +455,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--repository", help="Url to the LLM fine-tuning job repository", required=False
     )
-    parser.add_argument("--initialize-repository", required=False, default=False)
+    parser.add_argument(
+        "--initialize-repository", action="store_true", required=False, default=False
+    )
     args = parser.parse_args()
     asyncio.run(main(args))
