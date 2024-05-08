@@ -60,6 +60,9 @@ Common labels
 product: model-engine
 helm.sh/chart: {{ include "modelEngine.chart" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.azure }}
+azure.workload.identity/use: "true"
+{{- end }}
 {{- end }}
 
 {{- define "modelEngine.selectorLabels.builder" -}}
@@ -91,6 +94,9 @@ managed-by: {{- include "modelEngine.fullname" . | printf " %s\n" -}}
 use_scale_launch_endpoint_network_policy: "true"
 tags.datadoghq.com/env: {{- .Values.context | printf " %s" }}
 tags.datadoghq.com/version: ${GIT_TAG}
+{{- if .Values.azure }}
+azure.workload.identity/use: "true"
+{{- end }}
 {{- end }}
 
 {{- define "modelEngine.serviceTemplateLabels" -}}
