@@ -196,6 +196,7 @@ def create_llm_model_endpoint_request_sync() -> CreateLLMModelEndpointV1Request:
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://mpt-7b",
     )
 
 
@@ -222,7 +223,7 @@ def create_llm_model_endpoint_request_async() -> CreateLLMModelEndpointV1Request
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
-        checkpoint_path="s3://test_checkpoint_path",
+        checkpoint_path="s3://llama-2-7b",
     )
 
 
@@ -249,6 +250,7 @@ def create_llm_model_endpoint_request_streaming() -> CreateLLMModelEndpointV1Req
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://mpt-7b",
     )
 
 
@@ -256,7 +258,7 @@ def create_llm_model_endpoint_request_streaming() -> CreateLLMModelEndpointV1Req
 def update_llm_model_endpoint_request() -> UpdateLLMModelEndpointV1Request:
     return UpdateLLMModelEndpointV1Request(
         inference_framework_image_tag="latest",
-        checkpoint_path="s3://test_checkpoint_path",
+        checkpoint_path="s3://mpt-7b",
         memory="4G",
         min_workers=0,
         max_workers=1,
@@ -286,6 +288,7 @@ def create_llm_model_endpoint_request_llama_2() -> CreateLLMModelEndpointV1Reque
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://llama-2-7b",
     )
 
 
@@ -314,6 +317,7 @@ def create_llm_model_endpoint_text_generation_inference_request_streaming() -> (
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://mpt-7b",
     )
 
 
