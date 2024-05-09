@@ -1825,7 +1825,15 @@ def test_infer_hardware_from_model_name():
 
 
 def test_fill_hardware_info():
-    request = CreateLLMModelEndpointV1Request(model_name="mixtral-8x7b")
+    request = CreateLLMModelEndpointV1Request(
+        name="mixtral-8x7b",
+        model_name="mixtral-8x7b",
+        metadata={},
+        min_workers=1,
+        max_workers=1,
+        per_worker=1,
+        labels={},
+    )
     _fill_hardware_info(request)
     assert request.cpus == "20"
     assert request.gpus == 2
@@ -1833,7 +1841,16 @@ def test_fill_hardware_info():
     assert request.storage == "160Gi"
     assert request.gpu_type == GpuType.NVIDIA_AMPERE_A100E
 
-    request = CreateLLMModelEndpointV1Request(model_name="mixtral-8x7b", gpus=1)
+    request = CreateLLMModelEndpointV1Request(
+        name="mixtral-8x7b",
+        model_name="mixtral-8x7b",
+        metadata={},
+        min_workers=1,
+        max_workers=1,
+        per_worker=1,
+        labels={},
+        gpus=1,
+    )
 
     with pytest.raises(ObjectHasInvalidValueException):
         _fill_hardware_info(request)

@@ -1177,7 +1177,7 @@ def create_llm_model_endpoint_request_sync() -> Dict[str, Any]:
         "gpus": 2,
         "memory": "1G",
         "gpu_type": "nvidia-tesla-t4",
-        "storage": None,
+        "storage": "1Gi",
         "min_workers": 1,
         "max_workers": 5,
         "per_worker": 3,
