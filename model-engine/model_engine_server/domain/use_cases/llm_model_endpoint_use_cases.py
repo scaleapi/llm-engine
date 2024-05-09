@@ -39,6 +39,7 @@ from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
+from model_engine_server.core.configmap import read_config_map
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
@@ -67,6 +68,7 @@ from model_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
     InvalidRequestException,
+    LatestImageTagNotFoundException,
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
@@ -82,7 +84,10 @@ from model_engine_server.domain.repositories import (
 )
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
-from model_engine_server.infra.repositories.live_tokenizer_repository import SUPPORTED_MODELS_INFO
+from model_engine_server.infra.repositories.live_tokenizer_repository import (
+    SUPPORTED_MODELS_INFO,
+    get_models_s3_uri,
+)
 
 from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
@@ -248,6 +253,12 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
+SERVICE_NAME = "model-engine"
+SERVICE_IDENTIFIER = os.getenv("SERVICE_IDENTIFIER")
+if SERVICE_IDENTIFIER:
+    SERVICE_NAME += f"-{SERVICE_IDENTIFIER}"
+LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = f"{SERVICE_NAME}-inference-framework-latest-config"
+
 
 def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
     """
@@ -257,22 +268,13 @@ def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRep
     return len(tokenizer.encode(input))
 
 
-def _include_safetensors_bin_or_pt(model_files: List[str]) -> Optional[str]:
-    """
-    This function is used to determine whether to include "*.safetensors", "*.bin", or "*.pt" files
-    based on which file type is present most often in the checkpoint folder. The most
-    frequently present file type is included.
-    In case of ties, priority is given to "*.safetensors", then "*.bin", then "*.pt".
-    """
-    num_safetensors = len([f for f in model_files if f.endswith(".safetensors")])
-    num_bin = len([f for f in model_files if f.endswith(".bin")])
-    num_pt = len([f for f in model_files if f.endswith(".pt")])
-    maximum = max(num_safetensors, num_bin, num_pt)
-    if num_safetensors == maximum:
-        return "*.safetensors"
-    if num_bin == maximum:
-        return "*.bin"
-    return "*.pt"
+async def _get_latest_tag(inference_framework: LLMInferenceFramework) -> str:
+    config_map = await read_config_map(LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME)
+    if inference_framework not in config_map:
+        raise LatestImageTagNotFoundException(
+            f"Could not find latest tag for inference framework {inference_framework}."
+        )
+    return config_map[inference_framework]
 
 
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
@@ -329,6 +331,39 @@ def validate_quantization(
         raise ObjectHasInvalidValueException(
             f"Quantization {quantize} is not supported for inference framework {inference_framework}. Supported quantization types are {_SUPPORTED_QUANTIZATIONS[inference_framework]}."
         )
+
+
+def validate_checkpoint_path_uri(checkpoint_path: str) -> None:
+    if not checkpoint_path.startswith("s3://"):
+        raise ObjectHasInvalidValueException(
+            f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
+        )
+    if checkpoint_path.endswith(".tar"):
+        raise ObjectHasInvalidValueException(
+            f"Tar files are not supported. Given checkpoint path: {checkpoint_path}."
+        )
+
+
+def get_checkpoint_path(model_name: str, checkpoint_path_override: Optional[str]) -> str:
+    checkpoint_path = None
+    if SUPPORTED_MODELS_INFO[model_name].s3_repo:
+        checkpoint_path = get_models_s3_uri(SUPPORTED_MODELS_INFO[model_name].s3_repo, "")
+    if checkpoint_path_override:
+        checkpoint_path = checkpoint_path_override
+
+    if not checkpoint_path:
+        raise InvalidRequestException(f"No checkpoint path found for model {model_name}")
+
+    validate_checkpoint_path_uri(checkpoint_path)
+    return checkpoint_path
+
+
+def validate_checkpoint_files(checkpoint_files: List[str]) -> None:
+    """Require safetensors in the checkpoint path."""
+    model_files = [f for f in checkpoint_files if "model" in f]
+    num_safetensors = len([f for f in model_files if f.endswith(".safetensors")])
+    if num_safetensors == 0:
+        raise ObjectHasInvalidValueException("No safetensors found in the checkpoint path.")
 
 
 class CreateLLMModelBundleV1UseCase:
@@ -451,22 +486,16 @@ class CreateLLMModelBundleV1UseCase:
             max_total_tokens = 4096
 
         subcommands = []
-        if checkpoint_path is not None:
-            if checkpoint_path.startswith("s3://"):
-                final_weights_folder = "model_files"
 
-                subcommands += self.load_model_weights_sub_commands(
-                    LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
-                    framework_image_tag,
-                    checkpoint_path,
-                    final_weights_folder,
-                )
-            else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
-        else:
-            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
+        checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
+        final_weights_folder = "model_files"
+
+        subcommands += self.load_model_weights_sub_commands(
+            LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+            framework_image_tag,
+            checkpoint_path,
+            final_weights_folder,
+        )
 
         subcommands.append(
             f"text-generation-launcher --hostname :: --model-id {final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
@@ -524,27 +553,14 @@ class CreateLLMModelBundleV1UseCase:
         else:
             s5cmd = "./s5cmd"
 
-        base_path = checkpoint_path.split("/")[-1]
-        if base_path.endswith(".tar"):
-            # If the checkpoint file is a tar file, extract it into final_weights_folder
-            subcommands.extend(
-                [
-                    f"{s5cmd} cp {checkpoint_path} .",
-                    f"mkdir -p {final_weights_folder}",
-                    f"tar --no-same-owner -xf {base_path} -C {final_weights_folder}",
-                ]
-            )
-        else:
-            # Let's check whether to exclude "*.safetensors" or "*.bin" files
-            checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
-            model_files = [f for f in checkpoint_files if "model" in f]
+        checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
+        validate_checkpoint_files(checkpoint_files)
 
-            include_str = _include_safetensors_bin_or_pt(model_files)
-            file_selection_str = f"--include '*.model' --include '*.json' --include '{include_str}' --exclude 'optimizer*'"
-            subcommands.append(
-                f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-            )
-
+        # filter to configs ('*.model' and '*.json') and weights ('*.safetensors')
+        file_selection_str = "--include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*'"
+        subcommands.append(
+            f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+        )
         return subcommands
 
     def load_model_files_sub_commands_trt_llm(
@@ -558,19 +574,9 @@ class CreateLLMModelBundleV1UseCase:
         See llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/tensorrt_llm/config.pbtxt
         and llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/postprocessing/config.pbtxt
         """
-        subcommands = []
-
-        base_path = checkpoint_path.split("/")[-1]
-
-        if base_path.endswith(".tar"):
-            raise ObjectHasInvalidValueException(
-                "Checkpoint for TensorRT-LLM models must be a folder, not a tar file."
-            )
-        else:
-            subcommands.append(
-                f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
-            )
-
+        subcommands = [
+            f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
+        ]
         return subcommands
 
     async def create_deepspeed_bundle(
@@ -674,25 +680,19 @@ class CreateLLMModelBundleV1UseCase:
                 break
 
         subcommands = []
-        if checkpoint_path is not None:
-            if checkpoint_path.startswith("s3://"):
-                # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
-                if "mistral" in model_name:
-                    final_weights_folder = "mistral_files"
-                else:
-                    final_weights_folder = "model_files"
-                subcommands += self.load_model_weights_sub_commands(
-                    LLMInferenceFramework.VLLM,
-                    framework_image_tag,
-                    checkpoint_path,
-                    final_weights_folder,
-                )
-            else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
+
+        checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
+        # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
+        if "mistral" in model_name:
+            final_weights_folder = "mistral_files"
         else:
-            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
+            final_weights_folder = "model_files"
+        subcommands += self.load_model_weights_sub_commands(
+            LLMInferenceFramework.VLLM,
+            framework_image_tag,
+            checkpoint_path,
+            final_weights_folder,
+        )
 
         if max_model_len:
             subcommands.append(
@@ -772,21 +772,15 @@ class CreateLLMModelBundleV1UseCase:
             max_req_total_len = 4096
 
         subcommands = []
-        if checkpoint_path is not None:
-            if checkpoint_path.startswith("s3://"):
-                final_weights_folder = "model_files"
-                subcommands += self.load_model_weights_sub_commands(
-                    LLMInferenceFramework.LIGHTLLM,
-                    framework_image_tag,
-                    checkpoint_path,
-                    final_weights_folder,
-                )
-            else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
-        else:
-            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
+
+        checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
+        final_weights_folder = "model_files"
+        subcommands += self.load_model_weights_sub_commands(
+            LLMInferenceFramework.LIGHTLLM,
+            framework_image_tag,
+            checkpoint_path,
+            final_weights_folder,
+        )
 
         subcommands.append(
             f"python -m lightllm.server.api_server --model_dir {final_weights_folder} --port 5005 --tp {num_shards} --max_total_token_num {max_total_token_num} --max_req_input_len {max_req_input_len} --max_req_total_len {max_req_total_len} --tokenizer_mode auto"
@@ -837,19 +831,17 @@ class CreateLLMModelBundleV1UseCase:
         command = []
 
         subcommands = []
-        if checkpoint_path is not None:
-            if checkpoint_path.startswith("s3://"):
-                subcommands += self.load_model_files_sub_commands_trt_llm(
-                    checkpoint_path,
-                )
-            else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
-        else:
+
+        if not checkpoint_path:
             raise ObjectHasInvalidValueException(
                 "Checkpoint must be provided for TensorRT-LLM models."
             )
+
+        validate_checkpoint_path_uri(checkpoint_path)
+
+        subcommands += self.load_model_files_sub_commands_trt_llm(
+            checkpoint_path,
+        )
 
         subcommands.append(
             f"python3 launch_triton_server.py --world_size={num_shards} --model_repo=./model_repo/"
@@ -932,8 +924,8 @@ class CreateLLMModelEndpointV1UseCase:
                 )
 
         if request.inference_framework_image_tag == "latest":
-            request.inference_framework_image_tag = self.docker_repository.get_latest_image_tag(
-                INFERENCE_FRAMEWORK_REPOSITORY[request.inference_framework]
+            request.inference_framework_image_tag = await _get_latest_tag(
+                request.inference_framework
             )
 
         bundle = await self.create_llm_model_bundle_use_case.execute(
@@ -1150,9 +1142,7 @@ class UpdateLLMModelEndpointV1UseCase:
             inference_framework = llm_metadata["inference_framework"]
 
             if request.inference_framework_image_tag == "latest":
-                inference_framework_image_tag = self.docker_repository.get_latest_image_tag(
-                    INFERENCE_FRAMEWORK_REPOSITORY[inference_framework]
-                )
+                inference_framework_image_tag = await _get_latest_tag(inference_framework)
             else:
                 inference_framework_image_tag = (
                     request.inference_framework_image_tag
@@ -1382,16 +1372,19 @@ def validate_and_update_completion_params(
         guided_count += 1
     if request.guided_regex is not None:
         guided_count += 1
+    if request.guided_grammar is not None:
+        guided_count += 1
 
     if guided_count > 1:
         raise ObjectHasInvalidValueException(
-            "Only one of guided_json, guided_choice, guided_regex can be enabled."
+            "Only one of guided_json, guided_choice, guided_regex, guided_grammar can be enabled."
         )
 
     if (
         request.guided_choice is not None
         or request.guided_regex is not None
         or request.guided_json is not None
+        or request.guided_grammar is not None
     ) and not inference_framework == LLMInferenceFramework.VLLM:
         raise ObjectHasInvalidValueException("Guided decoding is only supported in vllm.")
 
@@ -1692,6 +1685,8 @@ class CompletionSyncV1UseCase:
                 vllm_args["guided_regex"] = request.guided_regex
             if request.guided_json is not None:
                 vllm_args["guided_json"] = request.guided_json
+            if request.guided_grammar is not None:
+                vllm_args["guided_grammar"] = request.guided_grammar
 
             inference_request = SyncEndpointPredictV1Request(
                 args=vllm_args,
@@ -1960,6 +1955,8 @@ class CompletionStreamV1UseCase:
                 args["guided_regex"] = request.guided_regex
             if request.guided_json is not None:
                 args["guided_json"] = request.guided_json
+            if request.guided_grammar is not None:
+                args["guided_grammar"] = request.guided_grammar
             args["stream"] = True
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
             args = {

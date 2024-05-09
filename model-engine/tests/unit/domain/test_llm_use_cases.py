@@ -49,14 +49,25 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     GpuType,
     ModelDownloadV1UseCase,
     UpdateLLMModelEndpointV1UseCase,
-    _include_safetensors_bin_or_pt,
     infer_hardware_from_model_name,
     validate_and_update_completion_params,
+    validate_checkpoint_files,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
 
+def mocked__get_latest_tag():
+    async def async_mock(*args, **kwargs):  # noqa
+        return "fake_docker_repository_latest_image_tag"
+
+    return mock.AsyncMock(side_effect=async_mock)
+
+
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_tag",
+    mocked__get_latest_tag(),
+)
 async def test_create_model_endpoint_use_case_success(
     test_api_key: str,
     fake_model_bundle_repository,
@@ -130,7 +141,7 @@ async def test_create_model_endpoint_use_case_success(
             "inference_framework_image_tag": create_llm_model_endpoint_request_sync.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_request_sync.num_shards,
             "quantize": None,
-            "checkpoint_path": None,
+            "checkpoint_path": create_llm_model_endpoint_request_sync.checkpoint_path,
         }
     }
 
@@ -155,7 +166,7 @@ async def test_create_model_endpoint_use_case_success(
             "inference_framework_image_tag": create_llm_model_endpoint_request_streaming.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
             "quantize": None,
-            "checkpoint_path": None,
+            "checkpoint_path": create_llm_model_endpoint_request_sync.checkpoint_path,
         }
     }
 
@@ -168,6 +179,76 @@ async def test_create_model_endpoint_use_case_success(
         owner=user.team_id, name=create_llm_model_endpoint_request_llama_2.name
     )
     assert "--max-total-tokens" in bundle.flavor.command[-1] and "4096" in bundle.flavor.command[-1]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "inference_framework, model_name, checkpoint_path, expected_error",
+    [
+        (LLMInferenceFramework.TEXT_GENERATION_INFERENCE, "mpt-7b", None, InvalidRequestException),
+        (
+            LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+            "mpt-7b-instruct",
+            "gibberish",
+            ObjectHasInvalidValueException,
+        ),
+        (LLMInferenceFramework.LIGHTLLM, "mpt-7b", None, InvalidRequestException),
+        (
+            LLMInferenceFramework.LIGHTLLM,
+            "mpt-7b-instruct",
+            "gibberish",
+            ObjectHasInvalidValueException,
+        ),
+        (LLMInferenceFramework.VLLM, "mpt-7b", None, InvalidRequestException),
+        (
+            LLMInferenceFramework.VLLM,
+            "mpt-7b-instruct",
+            "gibberish",
+            ObjectHasInvalidValueException,
+        ),
+    ],
+)
+async def test_create_model_bundle_fails_if_no_checkpoint(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    create_llm_model_endpoint_text_generation_inference_request_streaming: CreateLLMModelEndpointV1Request,
+    inference_framework,
+    model_name,
+    checkpoint_path,
+    expected_error,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    request = create_llm_model_endpoint_text_generation_inference_request_streaming.copy()
+
+    with pytest.raises(expected_error):
+        await use_case.execute(
+            user=user,
+            endpoint_name=request.name,
+            model_name=model_name,
+            source=request.source,
+            framework=inference_framework,
+            framework_image_tag="0.0.0",
+            endpoint_type=request.endpoint_type,
+            num_shards=request.num_shards,
+            quantize=request.quantize,
+            checkpoint_path=checkpoint_path,
+        )
 
 
 @pytest.mark.asyncio
@@ -499,6 +580,10 @@ async def test_get_llm_model_endpoint_use_case_raises_not_authorized(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_tag",
+    mocked__get_latest_tag(),
+)
 async def test_update_model_endpoint_use_case_success(
     test_api_key: str,
     fake_model_bundle_repository,
@@ -1015,11 +1100,13 @@ async def test_validate_and_update_completion_params():
     completion_sync_request.guided_regex = ""
     completion_sync_request.guided_json = {}
     completion_sync_request.guided_choice = [""]
+    completion_sync_request.guided_grammar = ""
     with pytest.raises(ObjectHasInvalidValueException):
         validate_and_update_completion_params(LLMInferenceFramework.VLLM, completion_sync_request)
 
     completion_sync_request.guided_regex = None
     completion_sync_request.guided_choice = None
+    completion_sync_request.guided_grammar = None
     with pytest.raises(ObjectHasInvalidValueException):
         validate_and_update_completion_params(
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE, completion_sync_request
@@ -1667,34 +1754,16 @@ async def test_delete_public_inference_model_raises_not_authorized(
 
 
 @pytest.mark.asyncio
-async def test_include_safetensors_bin_or_pt_majority_safetensors():
-    fake_model_files = ["fake.bin", "fake2.safetensors", "model.json", "optimizer.pt"]
-    assert _include_safetensors_bin_or_pt(fake_model_files) == "*.safetensors"
+async def test_validate_checkpoint_files_no_safetensors():
+    fake_model_files = ["model-fake.bin", "model.json", "optimizer.pt"]
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_checkpoint_files(fake_model_files)
 
 
 @pytest.mark.asyncio
-async def test_include_safetensors_bin_or_pt_majority_bin():
-    fake_model_files = [
-        "fake.bin",
-        "fake2.bin",
-        "fake3.safetensors",
-        "model.json",
-        "optimizer.pt",
-        "fake4.pt",
-    ]
-    assert _include_safetensors_bin_or_pt(fake_model_files) == "*.bin"
-
-
-@pytest.mark.asyncio
-async def test_include_safetensors_bin_or_pt_majority_pt():
-    fake_model_files = [
-        "fake.bin",
-        "fake2.safetensors",
-        "model.json",
-        "optimizer.pt",
-        "fake3.pt",
-    ]
-    assert _include_safetensors_bin_or_pt(fake_model_files) == "*.pt"
+async def test_validate_checkpoint_files_safetensors_with_other_files():
+    fake_model_files = ["model-fake.bin", "model-fake2.safetensors", "model.json", "optimizer.pt"]
+    validate_checkpoint_files(fake_model_files)  # No exception should be raised
 
 
 def test_infer_hardware_from_model_name():

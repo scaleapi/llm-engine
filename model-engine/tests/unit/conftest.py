@@ -757,10 +757,12 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
     def __init__(self):
         self.existing_models = []
         self.s3_bucket = {
-            "fake-checkpoint": ["fake.bin, fake2.bin", "fake3.safetensors"],
+            "fake-checkpoint": ["model-fake.bin, model-fake2.bin", "model-fake.safetensors"],
             "llama-7b/tokenizer.json": ["llama-7b/tokenizer.json"],
             "llama-7b/tokenizer_config.json": ["llama-7b/tokenizer_config.json"],
             "llama-7b/special_tokens_map.json": ["llama-7b/special_tokens_map.json"],
+            "llama-2-7b": ["model-fake.safetensors"],
+            "mpt-7b": ["model-fake.safetensors"],
         }
         self.urls = {"filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"}
 
@@ -768,10 +770,12 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
         self.existing_models.append((owner, model_name))
 
     def list_files(self, path: str, **kwargs) -> List[str]:
+        path = path.lstrip("s3://")
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 
     def download_files(self, path: str, target_path: str, overwrite=False, **kwargs) -> List[str]:
+        path = path.lstrip("s3://")
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 
