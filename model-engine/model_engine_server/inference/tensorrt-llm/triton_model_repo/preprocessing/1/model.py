@@ -271,7 +271,7 @@ class TritonPythonModel:
             len(word_lists) == batch_size
             word_lists[i] means the words associated to batch item i. A "word" may actually be any string. Like "lorem" or "lorem ipsum".
         """
-        assert self.tokenizer != None, "need to set tokenizer"
+        assert self.tokenizer is not None, "need to set tokenizer"
 
         if word_lists is None:
             # Return an empty array of shape (1,2,0)
@@ -317,7 +317,7 @@ class TritonPythonModel:
 
     def _get_embedding_bias(self, embedding_bias_words, embedding_bias_weights, bias_dtype):
 
-        assert self.tokenizer != None, "need to set tokenizer"
+        assert self.tokenizer is not None, "need to set tokenizer"
 
         if embedding_bias_words is None or embedding_bias_weights is None:
             return np.empty([1, 0], dtype=self.embedding_bias_weights_dtype)

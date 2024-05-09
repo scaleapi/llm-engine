@@ -138,7 +138,7 @@ class TritonPythonModel:
         bls_input_tensors_map = {}
         for input_tensor_name in self.bls_input_tensor_names:
             tensor = pb_utils.get_input_tensor_by_name(request, input_tensor_name)
-            if tensor != None:
+            if tensor is not None:
                 bls_input_tensors_map[input_tensor_name] = tensor
 
         return bls_input_tensors_map
