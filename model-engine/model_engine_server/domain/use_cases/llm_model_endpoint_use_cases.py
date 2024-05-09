@@ -859,6 +859,14 @@ class CreateLLMModelEndpointV1UseCase:
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
         _fill_hardware_info(request)
+        if not (
+            request.gpus
+            and request.gpu_type
+            and request.cpus
+            and request.memory
+            and request.storage
+        ):
+            raise RuntimeError("Some hardware info is missing unexpectedly.")
         validate_deployment_resources(
             min_workers=request.min_workers,
             max_workers=request.max_workers,
