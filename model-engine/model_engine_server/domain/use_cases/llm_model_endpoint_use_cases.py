@@ -858,7 +858,7 @@ class CreateLLMModelEndpointV1UseCase:
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
-        fill_hardware_info(request)
+        _fill_hardware_info(request)
         validate_deployment_resources(
             min_workers=request.min_workers,
             max_workers=request.max_workers,
@@ -2161,7 +2161,7 @@ class ModelDownloadV1UseCase:
         return ModelDownloadResponse(urls=urls)
 
 
-def fill_hardware_info(request: CreateLLMModelEndpointV1Request):
+def _fill_hardware_info(request: CreateLLMModelEndpointV1Request):
     if (
         request.gpus is None
         or request.gpu_type is None
@@ -2177,9 +2177,9 @@ def fill_hardware_info(request: CreateLLMModelEndpointV1Request):
             and request.storage is None
         ):
             raise ObjectHasInvalidValueException(
-                "All hardware spec fields must be provided if any hardware spec field is provided."
+                "All hardware spec fields (gpus, gpu_type, cpus, memory, storage) must be provided if any hardware spec field is provided."
             )
-        hardware_info = infer_hardware_from_model_name(request.model_name)
+        hardware_info = _infer_hardware_from_model_name(request.model_name)
         request.gpus = hardware_info.gpus
         request.gpu_type = hardware_info.gpu_type
         request.cpus = hardware_info.cpus
@@ -2187,7 +2187,7 @@ def fill_hardware_info(request: CreateLLMModelEndpointV1Request):
         request.storage = hardware_info.storage
 
 
-def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJobResourceRequests:
+def _infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJobResourceRequests:
     if "mixtral-8x7b" in model_name:
         cpus = "20"
         gpus = 2
@@ -2208,7 +2208,7 @@ def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJob
             )
 
         b_params = int(numbers[-1])
-        if b_params <= 7:
+        if b_params <= 8:
             cpus = "10"
             gpus = 1
             memory = "24Gi"
@@ -2300,7 +2300,7 @@ class CreateBatchCompletionsUseCase:
     async def execute(
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
-        hardware = infer_hardware_from_model_name(request.model_config.model)
+        hardware = _infer_hardware_from_model_name(request.model_config.model)
         # Reconcile gpus count with num_shards from request
         assert hardware.gpus is not None
         if request.model_config.num_shards:

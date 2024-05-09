@@ -49,7 +49,8 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     GpuType,
     ModelDownloadV1UseCase,
     UpdateLLMModelEndpointV1UseCase,
-    infer_hardware_from_model_name,
+    _fill_hardware_info,
+    _infer_hardware_from_model_name,
     validate_and_update_completion_params,
     validate_checkpoint_files,
 )
@@ -1767,42 +1768,49 @@ async def test_validate_checkpoint_files_safetensors_with_other_files():
 
 
 def test_infer_hardware_from_model_name():
-    hardware = infer_hardware_from_model_name("mixtral-8x7b")
+    hardware = _infer_hardware_from_model_name("mixtral-8x7b")
     assert hardware.cpus == "20"
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
 
-    hardware = infer_hardware_from_model_name("mixtral-8x22b")
+    hardware = _infer_hardware_from_model_name("mixtral-8x22b")
     assert hardware.cpus == "80"
     assert hardware.gpus == 8
     assert hardware.memory == "800Gi"
     assert hardware.storage == "460Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
 
-    hardware = infer_hardware_from_model_name("llama-2-7b")
+    hardware = _infer_hardware_from_model_name("llama-2-7b")
     assert hardware.cpus == "10"
     assert hardware.gpus == 1
     assert hardware.memory == "24Gi"
     assert hardware.storage == "80Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
 
-    hardware = infer_hardware_from_model_name("llama-2-13b")
+    hardware = _infer_hardware_from_model_name("llama-3-8b")
+    assert hardware.cpus == "10"
+    assert hardware.gpus == 1
+    assert hardware.memory == "24Gi"
+    assert hardware.storage == "80Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
+
+    hardware = _infer_hardware_from_model_name("llama-2-13b")
     assert hardware.cpus == "20"
     assert hardware.gpus == 2
     assert hardware.memory == "48Gi"
     assert hardware.storage == "80Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
 
-    hardware = infer_hardware_from_model_name("codellama-34b")
+    hardware = _infer_hardware_from_model_name("codellama-34b")
     assert hardware.cpus == "40"
     assert hardware.gpus == 4
     assert hardware.memory == "96Gi"
     assert hardware.storage == "96Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
 
-    hardware = infer_hardware_from_model_name("llama-2-70b")
+    hardware = _infer_hardware_from_model_name("llama-2-70b")
     assert hardware.cpus == "20"
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
@@ -1810,10 +1818,25 @@ def test_infer_hardware_from_model_name():
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
 
     with pytest.raises(ObjectHasInvalidValueException):
-        infer_hardware_from_model_name("unsupported_model")
+        _infer_hardware_from_model_name("unsupported_model")
 
     with pytest.raises(ObjectHasInvalidValueException):
-        infer_hardware_from_model_name("falcon-180b")
+        _infer_hardware_from_model_name("falcon-180b")
+
+
+def test_fill_hardware_info():
+    request = CreateLLMModelEndpointV1Request(model_name="mixtral-8x7b")
+    _fill_hardware_info(request)
+    assert request.cpus == "20"
+    assert request.gpus == 2
+    assert request.memory == "160Gi"
+    assert request.storage == "160Gi"
+    assert request.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+
+    request = CreateLLMModelEndpointV1Request(model_name="mixtral-8x7b", gpus=1)
+
+    with pytest.raises(ObjectHasInvalidValueException):
+        _fill_hardware_info(request)
 
 
 @pytest.mark.asyncio
