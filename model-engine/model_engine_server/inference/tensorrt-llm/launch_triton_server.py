@@ -35,5 +35,7 @@ def get_cmd(world_size, tritonserver, model_repo, http_address, http_port):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    cmd = get_cmd(int(args.world_size), args.tritonserver, args.model_repo, args.http_address, args.http_port)
+    cmd = get_cmd(
+        int(args.world_size), args.tritonserver, args.model_repo, args.http_address, args.http_port
+    )
     subprocess.call(cmd, shell=True)

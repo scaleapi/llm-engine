@@ -113,9 +113,13 @@ def pull_and_send_request_from_queue(
         if use_localhost:
             if framework == InferenceFramework.VLLM:
                 response = send_request(f"http://localhost:{local_port}/stream", request)
-                response["num_completion_tokens"] = response["payload"]["count_output_tokens"]  # vLLM gives us completion token count, use that.
+                response["num_completion_tokens"] = response["payload"][
+                    "count_output_tokens"
+                ]  # vLLM gives us completion token count, use that.
             elif framework == InferenceFramework.TENSORRT_LLM:
-                response = send_request(f"http://localhost:{local_port}/v2/models/ensemble/generate_stream", request)
+                response = send_request(
+                    f"http://localhost:{local_port}/v2/models/ensemble/generate_stream", request
+                )
             else:
                 raise NotImplementedError()
         else:
@@ -172,7 +176,7 @@ def generate_request(
             "parameters": {
                 "temperature": temperature,
                 "stream": True,
-            }
+            },
         }
     else:
         raise NotImplementedError()
