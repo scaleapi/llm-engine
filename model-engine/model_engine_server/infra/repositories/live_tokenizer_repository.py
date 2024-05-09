@@ -1,7 +1,6 @@
 import os
-from collections import namedtuple
 from functools import lru_cache
-from typing import Dict, Optional
+from typing import Dict, NamedTuple, Optional
 
 from huggingface_hub import list_repo_refs
 from huggingface_hub.utils._errors import RepositoryNotFoundError
@@ -25,7 +24,9 @@ TOKENIZER_FILES_OPTIONAL = [
 TOKENIZER_TARGET_DIR = "/opt/.cache/model_engine_server/tokenizers"
 
 
-ModelInfo = namedtuple("ModelInfo", ["hf_repo", "s3_repo"])
+class ModelInfo(NamedTuple):
+    hf_repo: str
+    s3_repo: Optional[str]
 
 
 def get_default_supported_models_info() -> Dict[str, ModelInfo]:
@@ -40,6 +41,10 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "llama-2-13b-chat": ModelInfo("meta-llama/Llama-2-13b-chat-hf", None),
         "llama-2-70b": ModelInfo("meta-llama/Llama-2-70b-hf", None),
         "llama-2-70b-chat": ModelInfo("meta-llama/Llama-2-70b-chat-hf", None),
+        "llama-3-8b": ModelInfo("meta-llama/Meta-Llama-3-8B", None),
+        "llama-3-8b-instruct": ModelInfo("meta-llama/Meta-Llama-3-8B-Instruct", None),
+        "llama-3-70b": ModelInfo("meta-llama/Meta-Llama-3-70B", None),
+        "llama-3-70b-instruct": ModelInfo("meta-llama/Meta-Llama-3-70B-Instruct", None),
         "falcon-7b": ModelInfo("tiiuae/falcon-7b", None),
         "falcon-7b-instruct": ModelInfo("tiiuae/falcon-7b-instruct", None),
         "falcon-40b": ModelInfo("tiiuae/falcon-40b", None),
@@ -62,6 +67,8 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "mistral-7b-instruct": ModelInfo("mistralai/Mistral-7B-Instruct-v0.1", None),
         "mixtral-8x7b": ModelInfo("mistralai/Mixtral-8x7B-v0.1", None),
         "mixtral-8x7b-instruct": ModelInfo("mistralai/Mixtral-8x7B-Instruct-v0.1", None),
+        "mixtral-8x22b": ModelInfo("mistralai/Mixtral-8x22B-v0.1", None),
+        "mixtral-8x22b-instruct": ModelInfo("mistralai/Mixtral-8x22B-Instruct-v0.1", None),
         "mammoth-coder-llama-2-7b": ModelInfo("TIGER-Lab/MAmmoTH-Coder-7B", None),
         "mammoth-coder-llama-2-13b": ModelInfo("TIGER-Lab/MAmmoTH-Coder-13B", None),
         "mammoth-coder-llama-2-34b": ModelInfo("TIGER-Lab/MAmmoTH-Coder-34B", None),

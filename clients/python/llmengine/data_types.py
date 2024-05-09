@@ -254,6 +254,51 @@ class ListLLMEndpointsResponse(BaseModel):
     """
 
 
+class UpdateLLMEndpointRequest(BaseModel):
+    # LLM specific fields
+    model_name: Optional[str]
+    source: Optional[LLMSource]
+    inference_framework_image_tag: Optional[str]
+    num_shards: Optional[int]
+    """
+    Number of shards to distribute the model onto GPUs.
+    """
+
+    quantize: Optional[Quantization]
+    """
+    Whether to quantize the model.
+    """
+
+    checkpoint_path: Optional[str]
+    """
+    Path to the checkpoint to load the model from.
+    """
+
+    # General endpoint fields
+    metadata: Optional[Dict[str, Any]]
+    post_inference_hooks: Optional[List[str]]
+    cpus: Optional[CpuSpecificationType]
+    gpus: Optional[int]
+    memory: Optional[StorageSpecificationType]
+    gpu_type: Optional[GpuType]
+    storage: Optional[StorageSpecificationType]
+    optimize_costs: Optional[bool]
+    min_workers: Optional[int]
+    max_workers: Optional[int]
+    per_worker: Optional[int]
+    labels: Optional[Dict[str, str]]
+    prewarm: Optional[bool]
+    high_priority: Optional[bool]
+    billing_tags: Optional[Dict[str, Any]]
+    default_callback_url: Optional[HttpUrl]
+    default_callback_auth: Optional[CallbackAuth]
+    public_inference: Optional[bool]
+
+
+class UpdateLLMEndpointResponse(BaseModel):
+    endpoint_creation_task_id: str
+
+
 class DeleteLLMEndpointResponse(BaseModel):
     """
     Response object for deleting a Model.
@@ -279,7 +324,7 @@ class CompletionSyncV1Request(BaseModel):
     frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     top_k: Optional[int] = Field(default=None, ge=-1)
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
-    include_stop_str_in_output: Optional[bool] = Field(default=False)
+    include_stop_str_in_output: Optional[bool] = Field(default=None)
     guided_json: Optional[Dict[str, Any]] = Field(default=None)
     guided_regex: Optional[str] = Field(default=None)
     guided_choice: Optional[List[str]] = Field(default=None)
@@ -353,7 +398,7 @@ class CompletionStreamV1Request(BaseModel):
     frequency_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     top_k: Optional[int] = Field(default=None, ge=-1)
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
-    include_stop_str_in_output: Optional[bool] = Field(default=False)
+    include_stop_str_in_output: Optional[bool] = Field(default=None)
     guided_json: Optional[Dict[str, Any]] = Field(default=None)
     guided_regex: Optional[str] = Field(default=None)
     guided_choice: Optional[List[str]] = Field(default=None)

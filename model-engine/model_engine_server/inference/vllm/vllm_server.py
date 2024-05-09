@@ -4,16 +4,18 @@ import json
 import signal
 import subprocess
 import traceback
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Dict, List, Optional
 
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from vllm.engine.arg_utils import AsyncEngineArgs
-from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.engine.async_llm_engine import AsyncEngineDeadError, AsyncLLMEngine
 from vllm.entrypoints.openai.protocol import CompletionRequest as OpenAICompletionRequest
 from vllm.model_executor.guided_decoding import get_guided_decoding_logits_processor
+from vllm.outputs import CompletionOutput
 from vllm.sampling_params import SamplingParams
+from vllm.sequence import Logprob
 from vllm.utils import random_uuid
 
 TIMEOUT_KEEP_ALIVE = 5  # seconds.
@@ -43,6 +45,7 @@ async def generate(request: Request) -> Response:
     guided_json = request_dict.pop("guided_json", None)
     guided_regex = request_dict.pop("guided_regex", None)
     guided_choice = request_dict.pop("guided_choice", None)
+    guided_grammar = request_dict.pop("guided_grammar", None)
     sampling_params = SamplingParams(**request_dict)
 
     # Dummy request to get guided decode logit processor
@@ -54,6 +57,7 @@ async def generate(request: Request) -> Response:
                 "guided_json": guided_json,
                 "guided_regex": guided_regex,
                 "guided_choice": guided_choice,
+                "guided_grammar": guided_grammar,
             }
         )
     except Exception:
@@ -61,8 +65,9 @@ async def generate(request: Request) -> Response:
             status_code=400, detail="Bad request: failed to parse guided decoding parameters."
         )
 
+    guided_decoding_backend = engine.engine.decoding_config.guided_decoding_backend
     guided_decode_logit_processor = await get_guided_decoding_logits_processor(
-        partial_openai_request, engine.get_tokenizer()
+        guided_decoding_backend, partial_openai_request, await engine.get_tokenizer()
     )
     if guided_decode_logit_processor is not None:
         if sampling_params.logits_processors is None:
@@ -70,19 +75,22 @@ async def generate(request: Request) -> Response:
         sampling_params.logits_processors.append(guided_decode_logit_processor)
 
     request_id = random_uuid()
-    results_generator = engine.generate(prompt, sampling_params, request_id)
+    try:
+        results_generator = engine.generate(prompt, sampling_params, request_id)
+    except AsyncEngineDeadError as e:
+        print(f"The vllm engine is dead, exiting the pod: {e}")
+        exit(1)
 
     # Streaming case
     async def stream_results() -> AsyncGenerator[str, None]:
         last_output_text = ""
         async for request_output in results_generator:
+            log_probs = format_logprobs(request_output)
             ret = {
                 "text": request_output.outputs[-1].text[len(last_output_text) :],
                 "count_prompt_tokens": len(request_output.prompt_token_ids),
                 "count_output_tokens": len(request_output.outputs[0].token_ids),
-                "log_probs": (
-                    request_output.outputs[0].logprobs[-1] if sampling_params.logprobs else None
-                ),
+                "log_probs": log_probs[-1] if log_probs and sampling_params.logprobs else None,
                 "finished": request_output.finished,
             }
             last_output_text = request_output.outputs[-1].text
@@ -116,7 +124,7 @@ async def generate(request: Request) -> Response:
         "text": final_output.outputs[0].text,
         "count_prompt_tokens": len(final_output.prompt_token_ids),
         "count_output_tokens": len(final_output.outputs[0].token_ids),
-        "log_probs": final_output.outputs[0].logprobs,
+        "log_probs": format_logprobs(final_output),
         "tokens": tokens,
     }
     return Response(content=json.dumps(ret))
@@ -166,6 +174,18 @@ def debug(sig, frame):
     i.interact(message)
 
 
+def format_logprobs(request_output: CompletionOutput) -> Optional[List[Dict[int, float]]]:
+    """Given a request output, format the logprobs if they exist."""
+    output_logprobs = request_output.outputs[0].logprobs
+    if output_logprobs is None:
+        return None
+
+    def extract_logprobs(logprobs: Dict[int, Logprob]) -> Dict[int, float]:
+        return {k: v.logprob for k, v in logprobs.items()}
+
+    return [extract_logprobs(logprobs) for logprobs in output_logprobs]
+
+
 if __name__ == "__main__":
     check_unknown_startup_memory_usage()
     parser = argparse.ArgumentParser()
@@ -176,6 +196,7 @@ if __name__ == "__main__":
 
     engine_args = AsyncEngineArgs.from_cli_args(args)
     engine = AsyncLLMEngine.from_engine_args(engine_args)
+    engine.check_health()
 
     signal.signal(signal.SIGUSR1, debug)
 

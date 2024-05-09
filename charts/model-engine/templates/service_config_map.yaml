@@ -11,6 +11,7 @@ metadata:
 data:
   launch_service_config: |-
     dd_trace_enabled: {{ .Values.dd_trace_enabled | default false | quote }}
+    gateway_namespace: {{ .Release.Namespace | quote }}
     {{- with .Values.config.values.launch }}
     {{- range $key, $value := . }}
     {{ $key }}: {{ $value | quote }}
@@ -39,6 +40,7 @@ metadata:
 data:
   launch_service_config: |-
     dd_trace_enabled: {{ .Values.dd_trace_enabled | default false | quote }}
+    gateway_namespace: {{ .Release.Namespace | quote }}
     {{- with .Values.config.values.launch }}
     {{- range $key, $value := . }}
     {{ $key }}: {{ $value | quote }}

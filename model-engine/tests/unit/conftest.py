@@ -757,10 +757,12 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
     def __init__(self):
         self.existing_models = []
         self.s3_bucket = {
-            "fake-checkpoint": ["fake.bin, fake2.bin", "fake3.safetensors"],
+            "fake-checkpoint": ["model-fake.bin, model-fake2.bin", "model-fake.safetensors"],
             "llama-7b/tokenizer.json": ["llama-7b/tokenizer.json"],
             "llama-7b/tokenizer_config.json": ["llama-7b/tokenizer_config.json"],
             "llama-7b/special_tokens_map.json": ["llama-7b/special_tokens_map.json"],
+            "llama-2-7b": ["model-fake.safetensors"],
+            "mpt-7b": ["model-fake.safetensors"],
         }
         self.urls = {"filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"}
 
@@ -768,10 +770,12 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
         self.existing_models.append((owner, model_name))
 
     def list_files(self, path: str, **kwargs) -> List[str]:
+        path = path.lstrip("s3://")
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 
     def download_files(self, path: str, target_path: str, overwrite=False, **kwargs) -> List[str]:
+        path = path.lstrip("s3://")
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 
@@ -3361,6 +3365,48 @@ def build_endpoint_request_async_custom(
             current_model_bundle=model_bundle_3,
             owner=test_api_key,
         ),
+        deployment_name=f"{test_api_key}-test_model_endpoint_name_3",
+        aws_role="default",
+        results_s3_bucket="test_s3_bucket",
+        child_fn_info=None,
+        post_inference_hooks=None,
+        labels=dict(team="test_team", product="test_product"),
+        min_workers=1,
+        max_workers=3,
+        per_worker=2,
+        cpus=1,
+        gpus=0,
+        memory="1G",
+        gpu_type=None,
+        storage=None,
+        optimize_costs=True,
+        broker_type=BrokerType.SQS,
+        default_callback_url=None,
+        default_callback_auth=None,
+    )
+    return build_endpoint_request
+
+
+@pytest.fixture
+def build_endpoint_request_async_zipartifact_highpri(
+    test_api_key: str, model_bundle_3: ModelBundle
+) -> BuildEndpointRequest:
+    build_endpoint_request = BuildEndpointRequest(
+        model_endpoint_record=ModelEndpointRecord(
+            id="test_model_endpoint_id_3",
+            name="test_model_endpoint_name_3",
+            created_by=test_api_key,
+            created_at=datetime(2022, 1, 4),
+            last_updated_at=datetime(2022, 1, 4),
+            metadata={},
+            creation_task_id="test_creation_task_id",
+            endpoint_type=ModelEndpointType.ASYNC,
+            destination="test_destination",
+            status=ModelEndpointStatus.READY,
+            current_model_bundle=model_bundle_3,
+            owner=test_api_key,
+        ),
+        high_priority=True,
         deployment_name=f"{test_api_key}-test_model_endpoint_name_3",
         aws_role="default",
         results_s3_bucket="test_s3_bucket",
