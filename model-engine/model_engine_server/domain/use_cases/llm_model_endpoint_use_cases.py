@@ -1501,12 +1501,14 @@ class CompletionSyncV1UseCase:
             elif "output_log_probs" in model_output:
                 # TensorRT 24.01 + surrounding code.
                 # For some reason TRT returns output_log_probs as either a list or a float
+                # Also the log probs don't look right, so returning log-probs is still broken
                 num_completion_tokens = (
                     len(model_output["output_log_probs"])
                     if type(model_output["output_log_probs"]) == list
                     else 1
                 )
-                # Output is just "output"
+                # Output is just "output". See `exclude_input_in_output` inside of
+                # inference/tensorrt-llm/triton_model_repo/tensorrt_llm/config.pbtxt
                 text = model_output["text_output"]
             return CompletionOutput(
                 text=text,
