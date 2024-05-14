@@ -187,14 +187,15 @@ class TritonPythonModel:
                 # Adapted from https://github.com/triton-inference-server/tensorrtllm_backend/pull/423
                 # This is somewhat of a hack: add a space before the output if the first token starts with a space
                 # This may add a space in front of the first token though when we don't want it.
-                token_id_string = self.tokenizer.convert_ids_to_tokens(
-                    tokens[:seq_len], skip_special_tokens=self.skip_special_tokens
-                )
-                if (
-                    len(token_id_string) > 0
-                    and len(token_id_string[0]) > 0
-                    and token_id_string[0][0] == SPIECE_UNDERLINE
-                ):
-                    output = " " + output
+                if seq_len > 0:
+                    token_id_string = self.tokenizer.convert_ids_to_tokens(
+                        tokens[:1], skip_special_tokens=self.skip_special_tokens
+                    )
+                    if (
+                        len(token_id_string) > 0
+                        and len(token_id_string[0]) > 0
+                        and token_id_string[0][0] == SPIECE_UNDERLINE
+                    ):
+                        output = " " + output
                 outputs.append(output.encode("utf8"))
         return outputs
