@@ -21,6 +21,7 @@ from model_engine_server.common.dtos.llms import (
     CompletionStreamV1Response,
     CompletionSyncV1Request,
     CompletionSyncV1Response,
+    CreateBatchCompletionsEngineRequest,
     CreateBatchCompletionsRequest,
     CreateBatchCompletionsResponse,
     CreateLLMModelEndpointV1Request,
@@ -2330,13 +2331,15 @@ class CreateBatchCompletionsUseCase:
         return batch_bundle
 
     async def execute(
-        self, user: User, request: CreateBatchCompletionsRequest
+        self, user: User, _request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
-        hardware = infer_hardware_from_model_name(request.model_config.model)
+        hardware = infer_hardware_from_model_name(_request.model_config.model)
         # Reconcile gpus count with num_shards from request
         assert hardware.gpus is not None
-        if request.model_config.num_shards:
-            hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
+        if _request.model_config.num_shards:
+            hardware.gpus = max(hardware.gpus, _request.model_config.num_shards)
+
+        request = CreateBatchCompletionsEngineRequest.from_api(_request)
         request.model_config.num_shards = hardware.gpus
 
         if request.tool_config and request.tool_config.name != "code_evaluator":
@@ -2347,6 +2350,7 @@ class CreateBatchCompletionsUseCase:
         additional_engine_args = infer_addition_engine_args_from_model_name(
             request.model_config.model
         )
+
         if additional_engine_args.gpu_memory_utilization is not None:
             request.max_gpu_memory_utilization = additional_engine_args.gpu_memory_utilization
 

@@ -528,15 +528,35 @@ class CreateBatchCompletionsRequest(BaseModel):
     """
     Maximum runtime of the batch inference in seconds. Default to one day.
     """
-    max_gpu_memory_utilization: Optional[float] = Field(default=0.9, le=1.0)
-    """
-    Maximum GPU memory utilization for the batch inference. Default to 90%.
-    """
     tool_config: Optional[ToolConfig] = None
     """
     Configuration for tool use.
     NOTE: this config is highly experimental and signature will change significantly in future iterations.
     """
+
+
+class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
+    """
+    Internal model for representing request to the llm engine. This contains additional fields that we want
+    hidden from the DTO exposed to the client.
+    """
+
+    max_gpu_memory_utilization: Optional[float] = Field(default=0.9, le=1.0)
+    """
+    Maximum GPU memory utilization for the batch inference. Default to 90%.
+    """
+
+    @staticmethod
+    def from_api(request: CreateBatchCompletionsRequest) -> "CreateBatchCompletionsEngineRequest":
+        return CreateBatchCompletionsEngineRequest(
+            input_data_path=request.input_data_path,
+            output_data_path=request.output_data_path,
+            content=request.content,
+            model_config=request.model_config,
+            data_parallelism=request.data_parallelism,
+            max_runtime_sec=request.max_runtime_sec,
+            tool_config=request.tool_config,
+        )
 
 
 class CreateBatchCompletionsResponse(BaseModel):

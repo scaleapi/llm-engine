@@ -15,7 +15,7 @@ import smart_open
 from func_timeout import FunctionTimedOut, func_set_timeout
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
-    CreateBatchCompletionsRequest,
+    CreateBatchCompletionsEngineRequest,
     CreateBatchCompletionsRequestContent,
     TokenOutput,
     ToolConfig,
@@ -145,7 +145,7 @@ def random_uuid() -> str:
     return str(uuid.uuid4().hex)
 
 
-def get_vllm_engine(model, request: CreateBatchCompletionsRequest):
+def get_vllm_engine(model: str, request: CreateBatchCompletionsEngineRequest):
     from vllm import AsyncEngineArgs, AsyncLLMEngine
 
     engine_args = AsyncEngineArgs(
@@ -313,7 +313,7 @@ async def generate_with_tool(
 async def batch_inference():
     job_index = int(os.getenv("JOB_COMPLETION_INDEX", 0))
 
-    request = CreateBatchCompletionsRequest.parse_file(CONFIG_FILE)
+    request = CreateBatchCompletionsEngineRequest.parse_file(CONFIG_FILE)
 
     if request.model_config.checkpoint_path is not None:
         download_model(request.model_config.checkpoint_path, MODEL_WEIGHTS_FOLDER)
