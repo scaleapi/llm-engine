@@ -7,7 +7,9 @@ from model_engine_server.inference.batch_inference.vllm_batch import batch_infer
 
 @pytest.mark.asyncio
 @patch("model_engine_server.inference.batch_inference.vllm_batch.get_vllm_engine")
-@patch("model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsRequest")
+@patch(
+    "model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsEngineRequest"
+)
 @patch(
     "model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsRequestContent"
 )
@@ -25,9 +27,9 @@ async def test_batch_inference(
     mock_get_s3_client,
     mock_generate_with_vllm,
     mock_create_batch_completions_request_content,
-    mock_create_batch_completions_request,
+    mock_create_batch_completions_engine_request,
     mock_vllm,
-    create_batch_completions_request,
+    create_batch_completions_engine_request,
     create_batch_completions_request_content,
     mock_s3_client,
     mock_process,
@@ -36,7 +38,9 @@ async def test_batch_inference(
     # Mock the necessary objects and data
     mock_popen.return_value = mock_process
     mock_get_s3_client.return_value = mock_s3_client
-    mock_create_batch_completions_request.parse_file.return_value = create_batch_completions_request
+    mock_create_batch_completions_engine_request.parse_file.return_value = (
+        create_batch_completions_engine_request
+    )
     mock_create_batch_completions_request_content.parse_raw.return_value = (
         create_batch_completions_request_content
     )
@@ -48,7 +52,7 @@ async def test_batch_inference(
     await batch_inference()
 
     # Assertions
-    mock_create_batch_completions_request.parse_file.assert_called_once()
+    mock_create_batch_completions_engine_request.parse_file.assert_called_once()
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -61,7 +65,9 @@ async def test_batch_inference(
 
 @pytest.mark.asyncio
 @patch("model_engine_server.inference.batch_inference.vllm_batch.get_vllm_engine")
-@patch("model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsRequest")
+@patch(
+    "model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsEngineRequest"
+)
 @patch(
     "model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsRequestContent"
 )
@@ -79,9 +85,9 @@ async def test_batch_inference_failed_to_download_model_but_proceed(
     mock_get_s3_client,
     mock_generate_with_vllm,
     mock_create_batch_completions_request_content,
-    mock_create_batch_completions_request,
+    mock_create_batch_completions_engine_request,
     mock_vllm,
-    create_batch_completions_request,
+    create_batch_completions_engine_request,
     create_batch_completions_request_content,
     mock_s3_client,
     mock_process,
@@ -91,7 +97,9 @@ async def test_batch_inference_failed_to_download_model_but_proceed(
     mock_process.returncode = 1  # Failed to download model
     mock_popen.return_value = mock_process
     mock_get_s3_client.return_value = mock_s3_client
-    mock_create_batch_completions_request.parse_file.return_value = create_batch_completions_request
+    mock_create_batch_completions_engine_request.parse_file.return_value = (
+        create_batch_completions_engine_request
+    )
     mock_create_batch_completions_request_content.parse_raw.return_value = (
         create_batch_completions_request_content
     )
@@ -103,7 +111,7 @@ async def test_batch_inference_failed_to_download_model_but_proceed(
     await batch_inference()
 
     # Assertions
-    mock_create_batch_completions_request.parse_file.assert_called_once()
+    mock_create_batch_completions_engine_request.parse_file.assert_called_once()
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -116,7 +124,9 @@ async def test_batch_inference_failed_to_download_model_but_proceed(
 
 @pytest.mark.asyncio
 @patch("model_engine_server.inference.batch_inference.vllm_batch.get_vllm_engine")
-@patch("model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsRequest")
+@patch(
+    "model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsEngineRequest"
+)
 @patch(
     "model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsRequestContent"
 )
@@ -136,9 +146,9 @@ async def test_batch_inference_two_workers(
     mock_get_s3_client,
     mock_generate_with_vllm,
     mock_create_batch_completions_request_content,
-    mock_create_batch_completions_request,
+    mock_create_batch_completions_engine_request,
     mock_vllm,
-    create_batch_completions_request,
+    create_batch_completions_engine_request,
     create_batch_completions_request_content,
     mock_s3_client,
     mock_process,
@@ -147,8 +157,10 @@ async def test_batch_inference_two_workers(
     # Mock the necessary objects and data
     mock_popen.return_value = mock_process
     mock_get_s3_client.return_value = mock_s3_client
-    create_batch_completions_request.data_parallelism = 2
-    mock_create_batch_completions_request.parse_file.return_value = create_batch_completions_request
+    create_batch_completions_engine_request.data_parallelism = 2
+    mock_create_batch_completions_engine_request.parse_file.return_value = (
+        create_batch_completions_engine_request
+    )
     mock_create_batch_completions_request_content.parse_raw.return_value = (
         create_batch_completions_request_content
     )
@@ -168,7 +180,7 @@ async def test_batch_inference_two_workers(
     await batch_inference()
 
     # Assertions
-    mock_create_batch_completions_request.parse_file.assert_called_once()
+    mock_create_batch_completions_engine_request.parse_file.assert_called_once()
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -198,7 +210,9 @@ async def test_batch_inference_two_workers(
 
 @pytest.mark.asyncio
 @patch("model_engine_server.inference.batch_inference.vllm_batch.get_vllm_engine")
-@patch("model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsRequest")
+@patch(
+    "model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsEngineRequest"
+)
 @patch(
     "model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsRequestContent"
 )
@@ -218,9 +232,9 @@ async def test_batch_inference_delete_chunks(
     mock_get_s3_client,
     mock_generate_with_vllm,
     mock_create_batch_completions_request_content,
-    mock_create_batch_completions_request,
+    mock_create_batch_completions_engine_request,
     mock_vllm,
-    create_batch_completions_request,
+    create_batch_completions_engine_request,
     create_batch_completions_request_content,
     mock_s3_client,
     mock_process,
@@ -229,9 +243,11 @@ async def test_batch_inference_delete_chunks(
     # Mock the necessary objects and data
     mock_popen.return_value = mock_process
     mock_get_s3_client.return_value = mock_s3_client
-    create_batch_completions_request.data_parallelism = 2
-    create_batch_completions_request.output_data_path = "s3://bucket/key"
-    mock_create_batch_completions_request.parse_file.return_value = create_batch_completions_request
+    create_batch_completions_engine_request.data_parallelism = 2
+    create_batch_completions_engine_request.output_data_path = "s3://bucket/key"
+    mock_create_batch_completions_engine_request.parse_file.return_value = (
+        create_batch_completions_engine_request
+    )
     mock_create_batch_completions_request_content.parse_raw.return_value = (
         create_batch_completions_request_content
     )
@@ -251,7 +267,7 @@ async def test_batch_inference_delete_chunks(
     await batch_inference()
 
     # Assertions
-    mock_create_batch_completions_request.parse_file.assert_called_once()
+    mock_create_batch_completions_engine_request.parse_file.assert_called_once()
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -310,7 +326,9 @@ def test_file_exists_no_such_key():
 
 @pytest.mark.asyncio
 @patch("model_engine_server.inference.batch_inference.vllm_batch.get_vllm_engine")
-@patch("model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsRequest")
+@patch(
+    "model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsEngineRequest"
+)
 @patch(
     "model_engine_server.inference.batch_inference.vllm_batch.CreateBatchCompletionsRequestContent"
 )
@@ -330,7 +348,7 @@ async def test_batch_inference_tool_completion(
     mock_get_s3_client,
     mock_generate_with_vllm,
     mock_create_batch_completions_request_content,
-    mock_create_batch_completions_request,
+    mock_create_batch_completions_engine_request,
     mock_vllm,
     create_batch_completions_tool_completion_request,
     create_batch_completions_tool_completion_request_content,
@@ -344,7 +362,7 @@ async def test_batch_inference_tool_completion(
     mock_run.return_value = mock_run_output
     mock_popen.return_value = mock_process
     mock_get_s3_client.return_value = mock_s3_client
-    mock_create_batch_completions_request.parse_file.return_value = (
+    mock_create_batch_completions_engine_request.parse_file.return_value = (
         create_batch_completions_tool_completion_request
     )
     mock_create_batch_completions_request_content.parse_raw.return_value = (
@@ -361,7 +379,7 @@ async def test_batch_inference_tool_completion(
     await batch_inference()
 
     # Assertions
-    mock_create_batch_completions_request.parse_file.assert_called_once()
+    mock_create_batch_completions_engine_request.parse_file.assert_called_once()
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
