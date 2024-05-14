@@ -2038,7 +2038,7 @@ def test_fill_hardware_info(fake_llm_artifact_gateway):
     request = CreateLLMModelEndpointV1Request(
         name="mixtral-8x7b",
         model_name="mixtral-8x7b",
-        checkpoint="checkpoint",
+        checkpoint_path="s3://checkpoint",
         metadata={},
         min_workers=1,
         max_workers=1,
@@ -2055,6 +2055,7 @@ def test_fill_hardware_info(fake_llm_artifact_gateway):
     request = CreateLLMModelEndpointV1Request(
         name="mixtral-8x7b",
         model_name="mixtral-8x7b",
+        checkpoint_path="s3://checkpoint",
         metadata={},
         min_workers=1,
         max_workers=1,
@@ -2064,7 +2065,7 @@ def test_fill_hardware_info(fake_llm_artifact_gateway):
     )
 
     with pytest.raises(ObjectHasInvalidValueException):
-        _fill_hardware_info(request)
+        _fill_hardware_info(fake_llm_artifact_gateway, request)
 
 
 @pytest.mark.asyncio
