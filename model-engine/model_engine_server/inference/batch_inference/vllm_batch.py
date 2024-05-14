@@ -145,7 +145,7 @@ def random_uuid() -> str:
     return str(uuid.uuid4().hex)
 
 
-def get_vllm_engine(model, request):
+def get_vllm_engine(model, request: CreateBatchCompletionsRequest):
     from vllm import AsyncEngineArgs, AsyncLLMEngine
 
     engine_args = AsyncEngineArgs(
@@ -154,7 +154,7 @@ def get_vllm_engine(model, request):
         tensor_parallel_size=request.model_config.num_shards,
         seed=request.model_config.seed or 0,
         disable_log_requests=True,
-        gpu_memory_utilization=0.9,
+        gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
     )
 
     llm = AsyncLLMEngine.from_engine_args(engine_args)

@@ -9,7 +9,7 @@ import json
 import math
 import os
 import re
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
 
 from model_engine_server.common.config import hmi_config
@@ -2198,6 +2198,27 @@ class ModelDownloadV1UseCase:
         return ModelDownloadResponse(urls=urls)
 
 
+@dataclass
+class VLLMEngineArgs:
+    gpu_memory_utilization: Optional[float] = None
+
+
+def infer_addition_engine_args_from_model_name(model_name: str) -> VLLMEngineArgs:
+    numbers = re.findall(r"\d+", model_name)
+    if len(numbers) == 0:
+        raise ObjectHasInvalidValueException(
+            f"Model {model_name} is not supported for batch completions."
+        )
+
+    b_params = int(numbers[-1])
+    if b_params >= 70:
+        gpu_memory_utilization = 0.95
+    else:
+        gpu_memory_utilization = 0.9
+
+    return VLLMEngineArgs(gpu_memory_utilization=gpu_memory_utilization)
+
+
 def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJobResourceRequests:
     if "mixtral-8x7b" in model_name:
         cpus = "20"
@@ -2322,6 +2343,12 @@ class CreateBatchCompletionsUseCase:
             raise ObjectHasInvalidValueException(
                 "Only code_evaluator tool is supported for batch completions."
             )
+
+        additional_engine_args = infer_addition_engine_args_from_model_name(
+            request.model_config.model
+        )
+        if additional_engine_args.gpu_memory_utilization is not None:
+            request.max_gpu_memory_utilization = additional_engine_args.gpu_memory_utilization
 
         batch_bundle = await self.create_batch_job_bundle(user, request, hardware)
 

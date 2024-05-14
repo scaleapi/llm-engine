@@ -528,6 +528,10 @@ class CreateBatchCompletionsRequest(BaseModel):
     """
     Maximum runtime of the batch inference in seconds. Default to one day.
     """
+    max_gpu_memory_utilization: Optional[float] = Field(default=0.9, le=1.0)
+    """
+    Maximum GPU memory utilization for the batch inference. Default to 90%.
+    """
     tool_config: Optional[ToolConfig] = None
     """
     Configuration for tool use.
