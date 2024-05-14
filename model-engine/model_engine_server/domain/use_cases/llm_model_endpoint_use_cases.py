@@ -849,16 +849,18 @@ class CreateLLMModelEndpointV1UseCase:
         create_llm_model_bundle_use_case: CreateLLMModelBundleV1UseCase,
         model_endpoint_service: ModelEndpointService,
         docker_repository: DockerRepository,
+        llm_artifact_gateway: LLMArtifactGateway,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_llm_model_bundle_use_case = create_llm_model_bundle_use_case
         self.model_endpoint_service = model_endpoint_service
         self.docker_repository = docker_repository
+        self.llm_artifact_gateway = llm_artifact_gateway
 
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
-        _fill_hardware_info(request)
+        _fill_hardware_info(self.llm_artifact_gateway, request)
         if not (
             request.gpus
             and request.gpu_type
@@ -2169,7 +2171,9 @@ class ModelDownloadV1UseCase:
         return ModelDownloadResponse(urls=urls)
 
 
-def _fill_hardware_info(request: CreateLLMModelEndpointV1Request):
+def _fill_hardware_info(
+    llm_artifact_gateway: LLMArtifactGateway, request: CreateLLMModelEndpointV1Request
+):
     if (
         request.gpus is None
         or request.gpu_type is None
@@ -2185,9 +2189,10 @@ def _fill_hardware_info(request: CreateLLMModelEndpointV1Request):
             and request.storage is None
         ):
             raise ObjectHasInvalidValueException(
-                "All hardware spec fields (gpus, gpu_type, cpus, memory, storage) must be provided if any hardware spec field is provided."
+                "All hardware spec fields (gpus, gpu_type, cpus, memory, storage) must be provided if any hardware spec field is missing."
             )
-        hardware_info = _infer_hardware_from_model_name(request.model_name)
+        checkpoint_path = get_checkpoint_path(request.model_name, request.checkpoint_path)
+        hardware_info = _infer_hardware(llm_artifact_gateway, request.model_name, checkpoint_path)
         request.gpus = hardware_info.gpus
         request.gpu_type = hardware_info.gpu_type
         request.cpus = hardware_info.cpus
@@ -2195,55 +2200,84 @@ def _fill_hardware_info(request: CreateLLMModelEndpointV1Request):
         request.storage = hardware_info.storage
 
 
-def _infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJobResourceRequests:
+def _infer_hardware(
+    llm_artifact_gateway: LLMArtifactGateway,
+    model_name: str,
+    checkpoint_path: str,
+) -> CreateDockerImageBatchJobResourceRequests:
+    print("getting config")
+    config = llm_artifact_gateway.get_model_config(checkpoint_path)
+    print(f"config: {config}")
+
+    dtype_size = 2
+
+    min_kv_cache_size = (
+        2
+        * dtype_size
+        * config["num_hidden_layers"]
+        * config["hidden_size"]
+        * config["max_position_embeddings"]
+        // (config["num_attention_heads"] // config["num_key_value_heads"])
+    )
+
     if "mixtral-8x7b" in model_name:
+        model_param_count_b = 47
+    elif "mixtral-8x22b" in model_name:
+        model_param_count_b = 140
+    else:
+        numbers = re.findall(r"(\d+)b", model_name)
+        if len(numbers) == 0:
+            raise ObjectHasInvalidValueException(
+                f"Unable to infer number of parameters for {model_name}."
+            )
+        model_param_count_b = int(numbers[-1])
+
+    model_weights_size = dtype_size * model_param_count_b * 1_000_000_000
+
+    min_memory_gb = math.ceil((min_kv_cache_size + model_weights_size) / 1_000_000_000 / 0.9)
+
+    print(
+        f"min_memory_gb: {min_memory_gb} for {model_name} with {model_param_count_b}B, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}"
+    )
+
+    if min_memory_gb <= 24:
+        cpus = "10"
+        gpus = 1
+        memory = "24Gi"
+        storage = "80Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A10
+    elif min_memory_gb <= 48:
+        cpus = "20"
+        gpus = 2
+        memory = "48Gi"
+        storage = "80Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A10
+    elif min_memory_gb <= 96:
+        cpus = "40"
+        gpus = 4
+        memory = "96Gi"
+        storage = "96Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A10
+    elif min_memory_gb <= 180:
         cpus = "20"
         gpus = 2
         memory = "160Gi"
         storage = "160Gi"
         gpu_type = GpuType.NVIDIA_AMPERE_A100E
-    elif "mixtral-8x22b" in model_name:
+    elif min_memory_gb <= 320:
+        cpus = "40"
+        gpus = 4
+        memory = "320Gi"
+        storage = "320Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    elif min_memory_gb <= 640:
         cpus = "80"
         gpus = 8
         memory = "800Gi"
         storage = "460Gi"
         gpu_type = GpuType.NVIDIA_AMPERE_A100E
     else:
-        numbers = re.findall(r"\d+", model_name)
-        if len(numbers) == 0:
-            raise ObjectHasInvalidValueException(
-                f"Model {model_name} is not supported for batch completions."
-            )
-
-        b_params = int(numbers[-1])
-        if b_params <= 8:
-            cpus = "10"
-            gpus = 1
-            memory = "24Gi"
-            storage = "80Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A10
-        elif b_params <= 13:
-            cpus = "20"
-            gpus = 2
-            memory = "48Gi"
-            storage = "80Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A10
-        elif b_params <= 34:
-            cpus = "40"
-            gpus = 4
-            memory = "96Gi"
-            storage = "96Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A10
-        elif b_params <= 70:
-            cpus = "20"
-            gpus = 2
-            memory = "160Gi"
-            storage = "160Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A100E
-        else:
-            raise ObjectHasInvalidValueException(
-                f"Model {model_name} is not supported for batch completions."
-            )
+        raise ObjectHasInvalidValueException(f"Unable to infer hardware for {model_name}.")
 
     return CreateDockerImageBatchJobResourceRequests(
         cpus=cpus, gpus=gpus, memory=memory, storage=storage, gpu_type=gpu_type
@@ -2256,10 +2290,12 @@ class CreateBatchCompletionsUseCase:
         docker_image_batch_job_gateway: DockerImageBatchJobGateway,
         docker_repository: DockerRepository,
         docker_image_batch_job_bundle_repo: DockerImageBatchJobBundleRepository,
+        llm_artifact_gateway: LLMArtifactGateway,
     ):
         self.docker_image_batch_job_gateway = docker_image_batch_job_gateway
         self.docker_repository = docker_repository
         self.docker_image_batch_job_bundle_repo = docker_image_batch_job_bundle_repo
+        self.llm_artifact_gateway = llm_artifact_gateway
 
     async def create_batch_job_bundle(
         self,
@@ -2308,7 +2344,14 @@ class CreateBatchCompletionsUseCase:
     async def execute(
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
-        hardware = _infer_hardware_from_model_name(request.model_config.model)
+        request.model_config.checkpoint_path = get_checkpoint_path(
+            request.model_config.model, request.model_config.checkpoint_path
+        )
+        hardware = _infer_hardware(
+            self.llm_artifact_gateway,
+            request.model_config.model,
+            request.model_config.checkpoint_path,
+        )
         # Reconcile gpus count with num_shards from request
         assert hardware.gpus is not None
         if request.model_config.num_shards:

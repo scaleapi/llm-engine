@@ -1,5 +1,6 @@
 """LLM Model Endpoint routes for the hosted model inference service.
 """
+
 import traceback
 from datetime import datetime
 from typing import Optional
@@ -169,6 +170,7 @@ async def create_model_endpoint(
             create_llm_model_bundle_use_case=create_llm_model_bundle_use_case,
             model_endpoint_service=external_interfaces.model_endpoint_service,
             docker_repository=external_interfaces.docker_repository,
+            llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
         )
         return await use_case.execute(user=auth, request=request)
     except ObjectAlreadyExistsException as exc:
@@ -331,9 +333,9 @@ async def create_completion_sync_task(
             external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
             TokenUsage(
                 num_prompt_tokens=response.output.num_prompt_tokens if response.output else None,
-                num_completion_tokens=response.output.num_completion_tokens
-                if response.output
-                else None,
+                num_completion_tokens=(
+                    response.output.num_completion_tokens if response.output else None
+                ),
                 total_duration=use_case_timer.duration,
             ),
             metric_metadata,
@@ -401,9 +403,9 @@ async def create_completion_stream_task(
                 external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
                 TokenUsage(
                     num_prompt_tokens=message.output.num_prompt_tokens if message.output else None,
-                    num_completion_tokens=message.output.num_completion_tokens
-                    if message.output
-                    else None,
+                    num_completion_tokens=(
+                        message.output.num_completion_tokens if message.output else None
+                    ),
                     total_duration=use_case_timer.duration,
                     time_to_first_token=time_to_first_token,
                 ),
@@ -593,6 +595,7 @@ async def create_batch_completions(
             docker_image_batch_job_gateway=external_interfaces.docker_image_batch_job_gateway,
             docker_repository=external_interfaces.docker_repository,
             docker_image_batch_job_bundle_repo=external_interfaces.docker_image_batch_job_bundle_repository,
+            llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
         )
         return await use_case.execute(user=auth, request=request)
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
