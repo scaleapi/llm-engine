@@ -10,6 +10,7 @@ import math
 import os
 import re
 from dataclasses import asdict
+from functools import lru_cache
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
 
 from model_engine_server.common.config import hmi_config
@@ -2201,14 +2202,13 @@ def _fill_hardware_info(
         request.storage = hardware_info.storage
 
 
+@lru_cache()
 def _infer_hardware(
     llm_artifact_gateway: LLMArtifactGateway,
     model_name: str,
     checkpoint_path: str,
 ) -> CreateDockerImageBatchJobResourceRequests:
-    print("getting config")
     config = llm_artifact_gateway.get_model_config(checkpoint_path)
-    print(f"config: {config}")
 
     dtype_size = 2
 
@@ -2237,8 +2237,8 @@ def _infer_hardware(
 
     min_memory_gb = math.ceil((min_kv_cache_size + model_weights_size) / 1_000_000_000 / 0.9)
 
-    print(
-        f"min_memory_gb: {min_memory_gb} for {model_name} with {model_param_count_b}B, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}"
+    logger.info(
+        f"Memory calculation result: {min_memory_gb=} for {model_name}, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}"
     )
 
     if min_memory_gb <= 24:
