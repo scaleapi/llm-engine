@@ -1809,6 +1809,13 @@ def test_infer_hardware_from_model_name():
     assert hardware.storage == "160Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
 
+    hardware = infer_hardware_from_model_name("llama-3-8b-instruct-262k")
+    assert hardware.cpus == "20"
+    assert hardware.gpus == 2
+    assert hardware.memory == "40Gi"
+    assert hardware.storage == "40Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+
     with pytest.raises(ObjectHasInvalidValueException):
         infer_hardware_from_model_name("unsupported_model")
 
