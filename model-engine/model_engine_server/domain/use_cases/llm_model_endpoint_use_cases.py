@@ -169,6 +169,7 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "llama-2-70b-chat",
             "llama-3-8b",
             "llama-3-8b-instruct",
+            "llama-3-8b-instruct-262k",
             "llama-3-70b",
             "llama-3-70b-instruct",
             "falcon-7b",
@@ -2275,6 +2276,12 @@ def _infer_hardware(
         gpus = 8
         memory = "800Gi"
         storage = "460Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    elif "llama-3-8b-instruct-262k" in model_name:
+        cpus = "20"
+        gpus = 2
+        memory = "40Gi"
+        storage = "40Gi"
         gpu_type = GpuType.NVIDIA_AMPERE_A100E
     else:
         raise ObjectHasInvalidValueException(f"Unable to infer hardware for {model_name}.")

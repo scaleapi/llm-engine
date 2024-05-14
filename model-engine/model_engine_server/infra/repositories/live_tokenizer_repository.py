@@ -43,6 +43,7 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "llama-2-70b-chat": ModelInfo("meta-llama/Llama-2-70b-chat-hf", None),
         "llama-3-8b": ModelInfo("meta-llama/Meta-Llama-3-8B", None),
         "llama-3-8b-instruct": ModelInfo("meta-llama/Meta-Llama-3-8B-Instruct", None),
+        "llama-3-8b-instruct-262k": ModelInfo("gradientai/Llama-3-8B-Instruct-262k", None),
         "llama-3-70b": ModelInfo("meta-llama/Meta-Llama-3-70B", None),
         "llama-3-70b-instruct": ModelInfo("meta-llama/Meta-Llama-3-70B-Instruct", None),
         "falcon-7b": ModelInfo("tiiuae/falcon-7b", None),
