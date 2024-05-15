@@ -1,4 +1,4 @@
-# Copyright 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright 2024, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -28,7 +28,7 @@ import json
 
 import numpy as np
 import triton_python_backend_utils as pb_utils
-from transformers import AutoTokenizer, LlamaTokenizer, T5Tokenizer
+from transformers import SPIECE_UNDERLINE, AutoTokenizer, LlamaTokenizer, T5Tokenizer
 
 
 class TritonPythonModel:
@@ -55,11 +55,16 @@ class TritonPythonModel:
         model_config = json.loads(args["model_config"])
         tokenizer_dir = model_config["parameters"]["tokenizer_dir"]["string_value"]
         tokenizer_type = model_config["parameters"]["tokenizer_type"]["string_value"]
+        self.skip_special_tokens = model_config["parameters"].get(
+            "skip_special_tokens", {"string_value": "true"}
+        )["string_value"].lower() in ["true", "1", "t", "y", "yes"]
 
         if tokenizer_type == "t5":
             self.tokenizer = T5Tokenizer(vocab_file=tokenizer_dir, padding_side="left")
         elif tokenizer_type == "auto":
-            self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir, padding_side="left")
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                tokenizer_dir, padding_side="left", trust_remote_code=True
+            )
         elif tokenizer_type == "llama":
             self.tokenizer = LlamaTokenizer.from_pretrained(
                 tokenizer_dir, legacy=False, padding_side="left"
@@ -70,16 +75,9 @@ class TritonPythonModel:
 
         # Parse model output configs
         output_config = pb_utils.get_output_config_by_name(model_config, "OUTPUT")
-        output_token_ids_config = pb_utils.get_output_config_by_name(
-            model_config, "OUTPUT_TOKEN_IDS"
-        )
 
         # Convert Triton types to numpy types
         self.output_dtype = pb_utils.triton_string_to_numpy(output_config["data_type"])
-
-        self.output_token_ids_dtype = pb_utils.triton_string_to_numpy(
-            output_token_ids_config["data_type"]
-        )
 
     def execute(self, requests):
         """`execute` must be implemented in every Python model. `execute`
@@ -109,20 +107,45 @@ class TritonPythonModel:
             # Get input tensors
             tokens_batch = pb_utils.get_input_tensor_by_name(request, "TOKENS_BATCH").as_numpy()
 
+            # Get sequence length
+            sequence_lengths = pb_utils.get_input_tensor_by_name(
+                request, "SEQUENCE_LENGTH"
+            ).as_numpy()
+
+            # Get cum log probs
+            cum_log_probs = pb_utils.get_input_tensor_by_name(request, "CUM_LOG_PROBS").as_numpy()
+
+            # Get sequence length
+            output_log_probs = pb_utils.get_input_tensor_by_name(
+                request, "OUTPUT_LOG_PROBS"
+            ).as_numpy()
+
+            # Get context logits
+            context_logits = pb_utils.get_input_tensor_by_name(request, "CONTEXT_LOGITS").as_numpy()
+
+            # Get generation logits
+            generation_logits = pb_utils.get_input_tensor_by_name(
+                request, "GENERATION_LOGITS"
+            ).as_numpy()
+
             # Reshape Input
             # tokens_batch = tokens_batch.reshape([-1, tokens_batch.shape[0]])
             # tokens_batch = tokens_batch.T
 
             # Postprocessing output data.
-            outputs = self._postprocessing(tokens_batch)
+            outputs = self._postprocessing(tokens_batch, sequence_lengths)
 
             # Create output tensors. You need pb_utils.Tensor
             # objects to create pb_utils.InferenceResponse.
             output_tensor = pb_utils.Tensor("OUTPUT", np.array(outputs).astype(self.output_dtype))
 
-            output_token_ids = pb_utils.Tensor(
-                "OUTPUT_TOKEN_IDS", np.array(tokens_batch).astype(self.output_token_ids_dtype)
-            )
+            out_cum_log_probs = pb_utils.Tensor("OUT_CUM_LOG_PROBS", cum_log_probs)
+
+            out_output_log_probs = pb_utils.Tensor("OUT_OUTPUT_LOG_PROBS", output_log_probs)
+
+            out_context_logits = pb_utils.Tensor("OUT_CONTEXT_LOGITS", context_logits)
+
+            out_generation_logits = pb_utils.Tensor("OUT_GENERATION_LOGITS", generation_logits)
 
             # Create InferenceResponse. You can set an error here in case
             # there was a problem with handling this inference request.
@@ -132,7 +155,13 @@ class TritonPythonModel:
             # pb_utils.InferenceResponse(
             #    output_tensors=..., TritonError("An error occurred"))
             inference_response = pb_utils.InferenceResponse(
-                output_tensors=[output_tensor, output_token_ids]
+                output_tensors=[
+                    output_tensor,
+                    out_cum_log_probs,
+                    out_output_log_probs,
+                    out_context_logits,
+                    out_generation_logits,
+                ]
             )
             responses.append(inference_response)
 
@@ -147,10 +176,26 @@ class TritonPythonModel:
         """
         print("Cleaning up...")
 
-    def _postprocessing(self, tokens_batch):
+    def _postprocessing(self, tokens_batch, sequence_lengths):
         outputs = []
-        for beam_tokens in tokens_batch:
-            for tokens in beam_tokens:
-                output = self.tokenizer.decode(tokens)
+        for batch_idx, beam_tokens in enumerate(tokens_batch):
+            for beam_idx, tokens in enumerate(beam_tokens):
+                seq_len = sequence_lengths[batch_idx][beam_idx]
+                output = self.tokenizer.decode(
+                    tokens[:seq_len], skip_special_tokens=self.skip_special_tokens
+                )
+                # Adapted from https://github.com/triton-inference-server/tensorrtllm_backend/pull/423
+                # This is somewhat of a hack: add a space before the output if the first token starts with a space
+                # This may add a space in front of the first token though when we don't want it.
+                if seq_len > 0:
+                    token_id_string = self.tokenizer.convert_ids_to_tokens(
+                        tokens[:1], skip_special_tokens=self.skip_special_tokens
+                    )
+                    if (
+                        len(token_id_string) > 0
+                        and len(token_id_string[0]) > 0
+                        and token_id_string[0][0] == SPIECE_UNDERLINE
+                    ):
+                        output = " " + output
                 outputs.append(output.encode("utf8"))
         return outputs

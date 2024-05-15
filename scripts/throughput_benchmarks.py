@@ -67,6 +67,8 @@ def send_request(url, request, user=None):
     first_line = True
     inter_token_latencies = []
     last_token_time = None
+    payload_json: dict = {}
+    num_completion_tokens = 0  # We calculate this value manually since tensorrt llm doesn't give it
     for byte_payload in response.iter_lines():
         # Skip line
         if byte_payload == b"\n" or byte_payload == b"":
@@ -87,12 +89,14 @@ def send_request(url, request, user=None):
         if payload.startswith("data:"):
             payload_data = payload.lstrip("data:").rstrip("/n")
             payload_json = json.loads(payload_data)
+        num_completion_tokens += 1
 
     return {
         "payload": payload_json,
         "time_to_first_token": time_to_first_token,
         "total_time": time.time() - start,
         "inter_token_latencies": inter_token_latencies,
+        "num_completion_tokens": num_completion_tokens,
     }
 
 
@@ -109,7 +113,13 @@ def pull_and_send_request_from_queue(
         if use_localhost:
             if framework == InferenceFramework.VLLM:
                 response = send_request(f"http://localhost:{local_port}/stream", request)
-                response["num_completion_tokens"] = response["payload"]["count_output_tokens"]
+                response["num_completion_tokens"] = response["payload"][
+                    "count_output_tokens"
+                ]  # vLLM gives us completion token count, use that.
+            elif framework == InferenceFramework.TENSORRT_LLM:
+                response = send_request(
+                    f"http://localhost:{local_port}/v2/models/ensemble/generate_stream", request
+                )
             else:
                 raise NotImplementedError()
         else:
@@ -128,8 +138,10 @@ def pull_and_send_request_from_queue(
 def generate_request(
     framework: InferenceFramework, prompt: str, output_token_count: int, localhost: bool
 ):
+    temperature = 0.0
+
     if not localhost:
-        return {"prompt": prompt, "max_new_tokens": output_token_count, "temperature": 0.0}
+        return {"prompt": prompt, "max_new_tokens": output_token_count, "temperature": temperature}
 
     if framework == InferenceFramework.TEXT_GENERATION_INFERENCE:
         return {
@@ -144,7 +156,7 @@ def generate_request(
         return {
             "prompt": prompt,
             "max_tokens": output_token_count,
-            "temperature": 0,
+            "temperature": temperature,
             "stream": True,
         }
     elif framework == InferenceFramework.LIGHTLLM:
@@ -161,6 +173,10 @@ def generate_request(
             "text_input": prompt,
             "bad_words": "",
             "stop_words": "",
+            "parameters": {
+                "temperature": temperature,
+                "stream": True,
+            },
         }
     else:
         raise NotImplementedError()

@@ -894,7 +894,7 @@ async def test_completion_sync_text_generation_inference_use_case_success(
     "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
     return_value=6,
 )
-async def test_completion_sync_trt_llm_use_case_success(
+async def test_completion_sync_trt_llm_use_case_success_23_10(
     test_api_key: str,
     fake_model_endpoint_service,
     fake_llm_model_endpoint_service,
@@ -926,6 +926,51 @@ async def test_completion_sync_trt_llm_use_case_success(
         text=" Machine learning is a branch",
         num_prompt_tokens=6,
         num_completion_tokens=5,
+    )
+
+
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.count_tokens",
+    return_value=6,
+)
+@pytest.mark.parametrize(
+    "output_log_probs,output_tokens", [("[0.0,0.0,0.0,0.0,0.0]", 5), ("0.0", 1)]
+)
+async def test_completion_sync_trt_llm_use_case_success_24_01(
+    test_api_key: str,
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
+    llm_model_endpoint_trt_llm: ModelEndpoint,
+    completion_sync_request: CompletionSyncV1Request,
+    output_log_probs: str,
+    output_tokens: int,
+):
+    completion_sync_request.return_token_log_probs = False  # not yet supported
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_trt_llm)
+    fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = SyncEndpointPredictV1Response(
+        status=TaskStatus.SUCCESS,
+        result={
+            "result": f'{{"context_logits":0.0,"cum_log_probs":0.0,"generation_logits":0.0,"model_name":"ensemble","model_version":"1","output_log_probs":{output_log_probs},"sequence_end":false,"sequence_id":0,"sequence_start":false,"text_output":" Machine learning is a branch"}}'
+        },
+        traceback=None,
+    )
+    use_case = CompletionSyncV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    response_1 = await use_case.execute(
+        user=user,
+        model_endpoint_name=llm_model_endpoint_trt_llm.record.name,
+        request=completion_sync_request,
+    )
+    assert response_1.output == CompletionOutput(
+        text=" Machine learning is a branch",
+        num_prompt_tokens=6,
+        num_completion_tokens=output_tokens,
     )
 
 
