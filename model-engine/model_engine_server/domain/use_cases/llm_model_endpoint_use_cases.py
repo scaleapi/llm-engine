@@ -216,7 +216,9 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "llama-2-70b-chat",
         ]
     ),
-    LLMInferenceFramework.TENSORRT_LLM: set(["llama-2-7b"]),
+    LLMInferenceFramework.TENSORRT_LLM: set(
+        ["llama-2-7b", "mixtral-8x7b", "mixtral-8x7b-instruct"]
+    ),
 }
 
 _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
@@ -1467,11 +1469,28 @@ class CompletionSyncV1UseCase:
             num_prompt_tokens = count_tokens(
                 prompt, model_content.model_name, self.tokenizer_repository
             )
-            return CompletionOutput(
+            if "token_ids" in model_output:
+                # TensorRT 23.10 has this field, TensorRT 24.03 does not
+                # For backwards compatibility with pre-2024/05/02
+                num_completion_tokens = len(model_output["token_ids"]) - num_prompt_tokens
                 # Output is "<s> prompt output"
-                text=model_output["text_output"][(len(prompt) + 4) :],
+                text = model_output["text_output"][(len(prompt) + 4) :]
+            elif "output_log_probs" in model_output:
+                # TensorRT 24.01 + surrounding code.
+                # For some reason TRT returns output_log_probs as either a list or a float
+                # Also the log probs don't look right, so returning log-probs is still broken
+                num_completion_tokens = (
+                    len(model_output["output_log_probs"])
+                    if type(model_output["output_log_probs"]) == list
+                    else 1
+                )
+                # Output is just "output". See `exclude_input_in_output` inside of
+                # inference/tensorrt-llm/triton_model_repo/tensorrt_llm/config.pbtxt
+                text = model_output["text_output"]
+            return CompletionOutput(
+                text=text,
                 num_prompt_tokens=num_prompt_tokens,
-                num_completion_tokens=len(model_output["token_ids"]) - num_prompt_tokens,
+                num_completion_tokens=num_completion_tokens,
             )
         else:
             raise EndpointUnsupportedInferenceTypeException(
