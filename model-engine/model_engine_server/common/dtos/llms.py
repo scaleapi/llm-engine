@@ -24,7 +24,7 @@ from model_engine_server.domain.entities import (
 )
 
 if int(pydantic.__version__.split(".")[0]) > 1:
-    from pydantic.v1 import BaseModel, Field, HttpUrl
+    from pydantic.v1 import BaseModel, Field, HttpUrl  # pragma: no cover
 else:
     from pydantic import BaseModel, Field, HttpUrl
 
