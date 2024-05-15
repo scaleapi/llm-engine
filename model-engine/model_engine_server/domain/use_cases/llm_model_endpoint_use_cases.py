@@ -9,7 +9,7 @@ import json
 import math
 import os
 import re
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
 
 from model_engine_server.common.config import hmi_config
@@ -21,6 +21,7 @@ from model_engine_server.common.dtos.llms import (
     CompletionStreamV1Response,
     CompletionSyncV1Request,
     CompletionSyncV1Response,
+    CreateBatchCompletionsEngineRequest,
     CreateBatchCompletionsRequest,
     CreateBatchCompletionsResponse,
     CreateLLMModelEndpointV1Request,
@@ -2200,6 +2201,27 @@ class ModelDownloadV1UseCase:
         return ModelDownloadResponse(urls=urls)
 
 
+@dataclass
+class VLLMEngineArgs:
+    gpu_memory_utilization: Optional[float] = None
+
+
+def infer_addition_engine_args_from_model_name(model_name: str) -> VLLMEngineArgs:
+    numbers = re.findall(r"\d+", model_name)
+    if len(numbers) == 0:
+        raise ObjectHasInvalidValueException(
+            f"Model {model_name} is not supported for batch completions."
+        )
+
+    b_params = int(numbers[-1])
+    if b_params >= 70:
+        gpu_memory_utilization = 0.95
+    else:
+        gpu_memory_utilization = 0.9
+
+    return VLLMEngineArgs(gpu_memory_utilization=gpu_memory_utilization)
+
+
 def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJobResourceRequests:
     if "mixtral-8x7b" in model_name:
         cpus = "20"
@@ -2324,14 +2346,25 @@ class CreateBatchCompletionsUseCase:
         assert hardware.gpus is not None
         if request.model_config.num_shards:
             hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
-        request.model_config.num_shards = hardware.gpus
 
-        if request.tool_config and request.tool_config.name != "code_evaluator":
+        engine_request = CreateBatchCompletionsEngineRequest.from_api(request)
+        engine_request.model_config.num_shards = hardware.gpus
+
+        if engine_request.tool_config and engine_request.tool_config.name != "code_evaluator":
             raise ObjectHasInvalidValueException(
                 "Only code_evaluator tool is supported for batch completions."
             )
 
-        batch_bundle = await self.create_batch_job_bundle(user, request, hardware)
+        additional_engine_args = infer_addition_engine_args_from_model_name(
+            engine_request.model_config.model
+        )
+
+        if additional_engine_args.gpu_memory_utilization is not None:
+            engine_request.max_gpu_memory_utilization = (
+                additional_engine_args.gpu_memory_utilization
+            )
+
+        batch_bundle = await self.create_batch_job_bundle(user, engine_request, hardware)
 
         validate_resource_requests(
             bundle=batch_bundle,
@@ -2342,21 +2375,21 @@ class CreateBatchCompletionsUseCase:
             gpu_type=hardware.gpu_type,
         )
 
-        if request.max_runtime_sec is None or request.max_runtime_sec < 1:
+        if engine_request.max_runtime_sec is None or engine_request.max_runtime_sec < 1:
             raise ObjectHasInvalidValueException("max_runtime_sec must be a positive integer.")
 
         job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
             created_by=user.user_id,
             owner=user.team_id,
-            job_config=request.dict(),
+            job_config=engine_request.dict(),
             env=batch_bundle.env,
             command=batch_bundle.command,
             repo=batch_bundle.image_repository,
             tag=batch_bundle.image_tag,
             resource_requests=hardware,
-            labels=request.model_config.labels,
+            labels=engine_request.model_config.labels,
             mount_location=batch_bundle.mount_location,
-            override_job_max_runtime_s=request.max_runtime_sec,
-            num_workers=request.data_parallelism,
+            override_job_max_runtime_s=engine_request.max_runtime_sec,
+            num_workers=engine_request.data_parallelism,
         )
         return CreateBatchCompletionsResponse(job_id=job_id)
