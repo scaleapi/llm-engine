@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tritonserver:23.10-trtllm-python-py3
+FROM nvcr.io/nvidia/tritonserver:24.03-trtllm-python-py3
 
 COPY requirements.txt /workspace/requirements.txt
 WORKDIR /workspace
