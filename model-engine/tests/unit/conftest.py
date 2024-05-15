@@ -765,6 +765,29 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
             "mpt-7b": ["model-fake.safetensors"],
         }
         self.urls = {"filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"}
+        self.model_config = {
+            "_name_or_path": "meta-llama/Llama-2-7b-hf",
+            "architectures": ["LlamaForCausalLM"],
+            "bos_token_id": 1,
+            "eos_token_id": 2,
+            "hidden_act": "silu",
+            "hidden_size": 4096,
+            "initializer_range": 0.02,
+            "intermediate_size": 11008,
+            "max_position_embeddings": 4096,
+            "model_type": "llama",
+            "num_attention_heads": 32,
+            "num_hidden_layers": 32,
+            "num_key_value_heads": 32,
+            "pretraining_tp": 1,
+            "rms_norm_eps": 1e-05,
+            "rope_scaling": None,
+            "tie_word_embeddings": False,
+            "torch_dtype": "float16",
+            "transformers_version": "4.31.0.dev0",
+            "use_cache": True,
+            "vocab_size": 32000,
+        }
 
     def _add_model(self, owner: str, model_name: str):
         self.existing_models.append((owner, model_name))
@@ -783,6 +806,9 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
         if (owner, model_name) in self.existing_models:
             return self.urls
         raise ObjectNotFoundException
+
+    def get_model_config(self, path: str, **kwargs) -> Dict[str, Any]:
+        return self.model_config
 
 
 class FakeTriggerRepository(TriggerRepository):

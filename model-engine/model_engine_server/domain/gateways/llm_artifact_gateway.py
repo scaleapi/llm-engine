@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Any, Dict, List
 
 
 class LLMArtifactGateway(ABC):
@@ -37,5 +37,15 @@ class LLMArtifactGateway(ABC):
         Args:
             owner (str): owner of the model
             model_name (str): name of the model
+        """
+        pass
+
+    @abstractmethod
+    def get_model_config(self, path: str, **kwargs) -> Dict[str, Any]:
+        """
+        Gets the model config from the model files live at given folder.
+
+        Args:
+            path (str): path to model files
         """
         pass

@@ -51,10 +51,10 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     metadata: Dict[str, Any]  # TODO: JSON type
     post_inference_hooks: Optional[List[str]]
     endpoint_type: ModelEndpointType = ModelEndpointType.SYNC
-    cpus: CpuSpecificationType
-    gpus: int
-    memory: StorageSpecificationType
-    gpu_type: GpuType
+    cpus: Optional[CpuSpecificationType]
+    gpus: Optional[int]
+    memory: Optional[StorageSpecificationType]
+    gpu_type: Optional[GpuType]
     storage: Optional[StorageSpecificationType]
     optimize_costs: Optional[bool]
     min_workers: int

@@ -10,6 +10,7 @@ import math
 import os
 import re
 from dataclasses import asdict, dataclass
+from functools import lru_cache
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
 
 from model_engine_server.common.config import hmi_config
@@ -226,30 +227,6 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
     LLMInferenceFramework.TENSORRT_LLM: [],
 }
 
-# We need a dict where if we need to override we can
-# NOTE: These are in *descending* order of priority. e.g. if you see 'mammoth-coder'
-# you'll use that override and not listen to the 'llama-2' override
-_VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
-    "mammoth-coder": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
-    # Based on config here: https://huggingface.co/TIGER-Lab/MAmmoTH-Coder-7B/blob/main/config.json#L12
-    # Can also see 13B, 34B there too
-    "code-llama": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
-    "codellama": {
-        "max_model_len": 16384,
-        "max_num_batched_tokens": 16384,
-    },  # setting both for backwards compatibility, will phase code-llama out in a future pr
-    # Based on config here: https://huggingface.co/codellama/CodeLlama-7b-hf/blob/main/config.json#L12
-    # Can also see 13B, 34B there too
-    "gemma": {"max_model_len": 8192, "max_num_batched_tokens": 8192},
-    "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
-    "llama-3-8b-instruct-262k": {"max_model_len": None, "max_num_batched_tokens": 262144},
-    "llama-3": {"max_model_len": None, "max_num_batched_tokens": 8192},
-    "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
-    "mixtral-8x7b": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
-    "mixtral-8x22b": {"max_model_len": 65536, "max_num_batched_tokens": 65536},
-    "zephyr": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
-}
-
 
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
@@ -319,9 +296,9 @@ def validate_num_shards(
             raise ObjectHasInvalidValueException(
                 f"Num shard {num_shards} must be the same as number of GPUs {gpus} for DeepSpeed."
             )
-    if num_shards > gpus:
+    if num_shards != gpus:
         raise ObjectHasInvalidValueException(
-            f"Num shard {num_shards} must be less than or equal to the number of GPUs {gpus}."
+            f"Num shard {num_shards} must be equal to the number of GPUs {gpus}."
         )
 
 
@@ -670,16 +647,6 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path: Optional[str],
     ):
         command = []
-
-        max_num_batched_tokens: Optional[int] = 2560  # vLLM's default
-        max_model_len: Optional[int] = None
-
-        for key, value in _VLLM_MODEL_LENGTH_OVERRIDES.items():
-            if key in model_name:
-                max_model_len = value["max_model_len"]
-                max_num_batched_tokens = value["max_num_batched_tokens"]
-                break
-
         subcommands = []
 
         checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
@@ -695,14 +662,9 @@ class CreateLLMModelBundleV1UseCase:
             final_weights_folder,
         )
 
-        if max_model_len:
-            subcommands.append(
-                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens} --max-model-len {max_model_len}"
-            )
-        else:
-            subcommands.append(
-                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens}"
-            )
+        subcommands.append(
+            f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
+        )
 
         if quantize:
             if quantize == Quantization.AWQ:
@@ -890,15 +852,26 @@ class CreateLLMModelEndpointV1UseCase:
         create_llm_model_bundle_use_case: CreateLLMModelBundleV1UseCase,
         model_endpoint_service: ModelEndpointService,
         docker_repository: DockerRepository,
+        llm_artifact_gateway: LLMArtifactGateway,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_llm_model_bundle_use_case = create_llm_model_bundle_use_case
         self.model_endpoint_service = model_endpoint_service
         self.docker_repository = docker_repository
+        self.llm_artifact_gateway = llm_artifact_gateway
 
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
+        _fill_hardware_info(self.llm_artifact_gateway, request)
+        if not (
+            request.gpus
+            and request.gpu_type
+            and request.cpus
+            and request.memory
+            and request.storage
+        ):
+            raise RuntimeError("Some hardware info is missing unexpectedly.")
         validate_deployment_resources(
             min_workers=request.min_workers,
             max_workers=request.max_workers,
@@ -2201,6 +2174,126 @@ class ModelDownloadV1UseCase:
         return ModelDownloadResponse(urls=urls)
 
 
+def _fill_hardware_info(
+    llm_artifact_gateway: LLMArtifactGateway, request: CreateLLMModelEndpointV1Request
+):
+    if (
+        request.gpus is None
+        or request.gpu_type is None
+        or request.cpus is None
+        or request.memory is None
+        or request.storage is None
+    ):
+        if not (
+            request.gpus is None
+            and request.gpu_type is None
+            and request.cpus is None
+            and request.memory is None
+            and request.storage is None
+        ):
+            raise ObjectHasInvalidValueException(
+                "All hardware spec fields (gpus, gpu_type, cpus, memory, storage) must be provided if any hardware spec field is missing."
+            )
+        checkpoint_path = get_checkpoint_path(request.model_name, request.checkpoint_path)
+        hardware_info = _infer_hardware(llm_artifact_gateway, request.model_name, checkpoint_path)
+        request.gpus = hardware_info.gpus
+        request.gpu_type = hardware_info.gpu_type
+        request.cpus = hardware_info.cpus
+        request.memory = hardware_info.memory
+        request.storage = hardware_info.storage
+        if hardware_info.gpus:  # make lint happy
+            request.num_shards = hardware_info.gpus
+
+
+@lru_cache()
+def _infer_hardware(
+    llm_artifact_gateway: LLMArtifactGateway,
+    model_name: str,
+    checkpoint_path: str,
+) -> CreateDockerImageBatchJobResourceRequests:
+    config = llm_artifact_gateway.get_model_config(checkpoint_path)
+
+    dtype_size = 2
+
+    min_kv_cache_size = (
+        2
+        * dtype_size
+        * config["num_hidden_layers"]
+        * config["hidden_size"]
+        * config["max_position_embeddings"]
+        // (config["num_attention_heads"] // config["num_key_value_heads"])
+    )
+
+    if "mixtral-8x7b" in model_name:
+        model_param_count_b = 47
+    elif "mixtral-8x22b" in model_name:
+        model_param_count_b = 140
+    else:
+        numbers = re.findall(r"(\d+)b", model_name)
+        if len(numbers) == 0:
+            raise ObjectHasInvalidValueException(
+                f"Unable to infer number of parameters for {model_name}."
+            )
+        model_param_count_b = int(numbers[-1])
+
+    model_weights_size = dtype_size * model_param_count_b * 1_000_000_000
+
+    min_memory_gb = math.ceil((min_kv_cache_size + model_weights_size) / 1_000_000_000 / 0.9)
+
+    logger.info(
+        f"Memory calculation result: {min_memory_gb=} for {model_name}, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}"
+    )
+
+    if min_memory_gb <= 24:
+        cpus = "10"
+        gpus = 1
+        memory = "24Gi"
+        storage = "80Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A10
+    elif min_memory_gb <= 48:
+        cpus = "20"
+        gpus = 2
+        memory = "48Gi"
+        storage = "80Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A10
+    elif min_memory_gb <= 96:
+        cpus = "40"
+        gpus = 4
+        memory = "96Gi"
+        storage = "96Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A10
+    elif min_memory_gb <= 180:
+        cpus = "20"
+        gpus = 2
+        memory = "160Gi"
+        storage = "160Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    elif min_memory_gb <= 320:
+        cpus = "40"
+        gpus = 4
+        memory = "320Gi"
+        storage = "320Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    elif min_memory_gb <= 640:
+        cpus = "80"
+        gpus = 8
+        memory = "800Gi"
+        storage = "460Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    elif "llama-3-8b-instruct-262k" in model_name:
+        cpus = "20"
+        gpus = 2
+        memory = "40Gi"
+        storage = "40Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    else:
+        raise ObjectHasInvalidValueException(f"Unable to infer hardware for {model_name}.")
+
+    return CreateDockerImageBatchJobResourceRequests(
+        cpus=cpus, gpus=gpus, memory=memory, storage=storage, gpu_type=gpu_type
+    )
+
+
 @dataclass
 class VLLMEngineArgs:
     gpu_memory_utilization: Optional[float] = None
@@ -2222,77 +2315,18 @@ def infer_addition_engine_args_from_model_name(model_name: str) -> VLLMEngineArg
     return VLLMEngineArgs(gpu_memory_utilization=gpu_memory_utilization)
 
 
-def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJobResourceRequests:
-    if "mixtral-8x7b" in model_name:
-        cpus = "20"
-        gpus = 2
-        memory = "160Gi"
-        storage = "160Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A100E
-    elif "mixtral-8x22b" in model_name:
-        cpus = "80"
-        gpus = 8
-        memory = "800Gi"
-        storage = "460Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A100E
-    elif "llama-3-8b-instruct-262k" in model_name:
-        cpus = "20"
-        gpus = 2
-        memory = "40Gi"
-        storage = "40Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A100E
-    else:
-        numbers = re.findall(r"\d+", model_name)
-        if len(numbers) == 0:
-            raise ObjectHasInvalidValueException(
-                f"Model {model_name} is not supported for batch completions."
-            )
-
-        b_params = int(numbers[-1])
-        if b_params <= 7:
-            cpus = "10"
-            gpus = 1
-            memory = "24Gi"
-            storage = "80Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A10
-        elif b_params <= 13:
-            cpus = "20"
-            gpus = 2
-            memory = "48Gi"
-            storage = "80Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A10
-        elif b_params <= 34:
-            cpus = "40"
-            gpus = 4
-            memory = "96Gi"
-            storage = "96Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A10
-        elif b_params <= 70:
-            cpus = "20"
-            gpus = 2
-            memory = "160Gi"
-            storage = "160Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A100E
-        else:
-            raise ObjectHasInvalidValueException(
-                f"Model {model_name} is not supported for batch completions."
-            )
-
-    return CreateDockerImageBatchJobResourceRequests(
-        cpus=cpus, gpus=gpus, memory=memory, storage=storage, gpu_type=gpu_type
-    )
-
-
 class CreateBatchCompletionsUseCase:
     def __init__(
         self,
         docker_image_batch_job_gateway: DockerImageBatchJobGateway,
         docker_repository: DockerRepository,
         docker_image_batch_job_bundle_repo: DockerImageBatchJobBundleRepository,
+        llm_artifact_gateway: LLMArtifactGateway,
     ):
         self.docker_image_batch_job_gateway = docker_image_batch_job_gateway
         self.docker_repository = docker_repository
         self.docker_image_batch_job_bundle_repo = docker_image_batch_job_bundle_repo
+        self.llm_artifact_gateway = llm_artifact_gateway
 
     async def create_batch_job_bundle(
         self,
@@ -2341,7 +2375,14 @@ class CreateBatchCompletionsUseCase:
     async def execute(
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
-        hardware = infer_hardware_from_model_name(request.model_config.model)
+        request.model_config.checkpoint_path = get_checkpoint_path(
+            request.model_config.model, request.model_config.checkpoint_path
+        )
+        hardware = _infer_hardware(
+            self.llm_artifact_gateway,
+            request.model_config.model,
+            request.model_config.checkpoint_path,
+        )
         # Reconcile gpus count with num_shards from request
         assert hardware.gpus is not None
         if request.model_config.num_shards:
