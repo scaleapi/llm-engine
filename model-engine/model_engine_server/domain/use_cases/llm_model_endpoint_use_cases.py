@@ -295,9 +295,9 @@ def validate_num_shards(
             raise ObjectHasInvalidValueException(
                 f"Num shard {num_shards} must be the same as number of GPUs {gpus} for DeepSpeed."
             )
-    if num_shards > gpus:
+    if num_shards != gpus:
         raise ObjectHasInvalidValueException(
-            f"Num shard {num_shards} must be less than or equal to the number of GPUs {gpus}."
+            f"Num shard {num_shards} must be equal to the number of GPUs {gpus}."
         )
 
 
@@ -2200,6 +2200,8 @@ def _fill_hardware_info(
         request.cpus = hardware_info.cpus
         request.memory = hardware_info.memory
         request.storage = hardware_info.storage
+        if hardware_info.gpus:  # make lint happy
+            request.num_shards = hardware_info.gpus
 
 
 @lru_cache()

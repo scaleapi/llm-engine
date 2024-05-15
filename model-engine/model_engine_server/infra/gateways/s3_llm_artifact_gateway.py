@@ -79,7 +79,7 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         bucket = parsed_remote.bucket
         key = os.path.join(parsed_remote.key, "config.json")
         s3_bucket = s3.Bucket(bucket)
-        filepath = os.path.join("/tmp", key)
+        filepath = os.path.join("/tmp", key).replace("/", "_")
         s3_bucket.download_file(key, filepath)
         with open(filepath, "r") as f:
             return json.load(f)
