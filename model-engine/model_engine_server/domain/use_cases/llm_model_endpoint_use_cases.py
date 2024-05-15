@@ -170,6 +170,7 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "llama-2-70b-chat",
             "llama-3-8b",
             "llama-3-8b-instruct",
+            "llama-3-8b-instruct-262k",
             "llama-3-70b",
             "llama-3-70b-instruct",
             "falcon-7b",
@@ -241,6 +242,7 @@ _VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
     # Can also see 13B, 34B there too
     "gemma": {"max_model_len": 8192, "max_num_batched_tokens": 8192},
     "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
+    "llama-3-8b-instruct-262k": {"max_model_len": None, "max_num_batched_tokens": 262144},
     "llama-3": {"max_model_len": None, "max_num_batched_tokens": 8192},
     "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
     "mixtral-8x7b": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
@@ -2232,6 +2234,12 @@ def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJob
         gpus = 8
         memory = "800Gi"
         storage = "460Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    elif "llama-3-8b-instruct-262k" in model_name:
+        cpus = "20"
+        gpus = 2
+        memory = "40Gi"
+        storage = "40Gi"
         gpu_type = GpuType.NVIDIA_AMPERE_A100E
     else:
         numbers = re.findall(r"\d+", model_name)
