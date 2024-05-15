@@ -4,6 +4,7 @@ DTOs for LLM APIs.
 
 from typing import Any, Dict, List, Optional
 
+import pydantic
 from model_engine_server.common.dtos.model_endpoints import (
     CpuSpecificationType,
     GetModelEndpointV1Response,
@@ -21,7 +22,11 @@ from model_engine_server.domain.entities import (
     ModelEndpointStatus,
     Quantization,
 )
-from pydantic import BaseModel, Field, HttpUrl
+
+if int(pydantic.__version__.split(".")[0]) > 1:
+    from pydantic.v1 import BaseModel, Field, HttpUrl
+else:
+    from pydantic import BaseModel, Field, HttpUrl
 
 
 class CreateLLMModelEndpointV1Request(BaseModel):
