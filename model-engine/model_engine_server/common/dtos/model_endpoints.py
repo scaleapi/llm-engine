@@ -10,6 +10,7 @@ import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+import pydantic
 from model_engine_server.domain.entities import (
     CallbackAuth,
     CpuSpecificationType,
@@ -21,7 +22,11 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
     StorageSpecificationType,
 )
-from pydantic import BaseModel, Field, HttpUrl
+
+if int(pydantic.__version__.split(".")[0]) > 1:
+    from pydantic.v1 import BaseModel, Field, HttpUrl  # pragma: no cover
+else:
+    from pydantic import BaseModel, Field, HttpUrl
 
 
 class BrokerType(str, Enum):
