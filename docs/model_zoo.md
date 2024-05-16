@@ -11,6 +11,10 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `llama-2-13b-chat`       | ✅                       |                            | text-generation-inference, vllm            | 4096                                           |
 | `llama-2-70b`            | ✅                       | ✅                         | text-generation-inference, vllm            | 4096                                           |
 | `llama-2-70b-chat`       | ✅                       |                            | text-generation-inference, vllm            | 4096                                           |
+| `llama-3-8b`             | ✅                       |                            | vllm                                       | 8192                                           |
+| `llama-3-8b-instruct`    | ✅                       |                            | vllm                                       | 8192                                           |
+| `llama-3-70b`            | ✅                       |                            | vllm                                       | 8192                                           |
+| `llama-3-70b-instruct`   | ✅                       |                            | vllm                                       | 8192                                           |
 | `falcon-7b`              | ✅                       |                            | text-generation-inference, vllm            | 2048                                           |
 | `falcon-7b-instruct`     | ✅                       |                            | text-generation-inference, vllm            | 2048                                           |
 | `falcon-40b`             | ✅                       |                            | text-generation-inference, vllm            | 2048                                           |
@@ -22,6 +26,8 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `mistral-7b-instruct`    | ✅                       | ✅                         | vllm                                       | 8000                                           |
 | `mixtral-8x7b`           | ✅                       |                            | vllm                                       | 32768                                          |
 | `mixtral-8x7b-instruct`  | ✅                       |                            | vllm                                       | 32768                                          |
+| `mixtral-8x22b`          | ✅                       |                            | vllm                                       | 65536                                          |
+| `mixtral-8x22b-instruct` | ✅                       |                            | vllm                                       | 65536                                          |
 | `codellama-7b`           | ✅                       | ✅                         | text-generation-inference, vllm            | 16384                                          |
 | `codellama-7b-instruct`  | ✅                       | ✅                         | text-generation-inference, vllm            | 16384                                          |
 | `codellama-13b`          | ✅                       | ✅                         | text-generation-inference, vllm            | 16384                                          |

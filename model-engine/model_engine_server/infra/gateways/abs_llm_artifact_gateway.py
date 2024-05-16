@@ -1,5 +1,6 @@
+import json
 import os
-from typing import List
+from typing import Any, Dict, List
 
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient, ContainerClient
@@ -73,3 +74,11 @@ class ABSLLMArtifactGateway(LLMArtifactGateway):
         for blob_name in container_client.list_blob_names(name_starts_with=prefix):
             model_files.append(f"https://{account}.blob.core.windows.net/{bucket}/{blob_name}")
         return model_files
+
+    def get_model_config(self, path: str, **kwargs) -> Dict[str, Any]:
+        parsed_remote = parse_attachment_url(path, clean_key=False)
+        bucket = parsed_remote.bucket
+        key = os.path.join(parsed_remote.key, "config.json")
+
+        container_client = _get_abs_container_client(bucket)
+        return json.loads(container_client.download_blob(blob=key).readall())

@@ -1,3 +1,6 @@
+# Config to know where model-engine is running
+gateway_namespace: default
+
 # Config for Model Engine running in CircleCI
 model_primitive_host: "none"
 

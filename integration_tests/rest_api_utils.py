@@ -2,8 +2,9 @@ import asyncio
 import inspect
 import json
 import os
+import re
 import time
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 import aiohttp
 import requests
@@ -14,6 +15,7 @@ _DEFAULT_BASE_PATH = "http://localhost:5001"
 BASE_PATH = os.environ.get("BASE_PATH", _DEFAULT_BASE_PATH)
 print(f"Integration tests using gateway {BASE_PATH=}")
 DEFAULT_NETWORK_TIMEOUT_SEC = 10
+LONG_NETWORK_TIMEOUT_SEC = 30
 
 # add suffix to avoid name collisions
 SERVICE_IDENTIFIER = os.environ.get("SERVICE_IDENTIFIER", "")
@@ -164,11 +166,86 @@ INFERENCE_PAYLOAD: Dict[str, Any] = {
     "url": None,
 }
 
+CREATE_LLM_MODEL_ENDPOINT_REQUEST: Dict[str, Any] = {
+    "name": format_name("llama-2-7b-test"),
+    "model_name": "llama-2-7b",
+    "source": "hugging_face",
+    "inference_framework": "vllm",
+    "inference_framework_image_tag": "latest",
+    "endpoint_type": "streaming",
+    "cpus": 20,
+    "gpus": 1,
+    "memory": "20Gi",
+    "gpu_type": "nvidia-ampere-a10",
+    "storage": "40Gi",
+    "optimize_costs": False,
+    "min_workers": 1,
+    "max_workers": 1,
+    "per_worker": 1,
+    "labels": {"team": "infra", "product": "launch"},
+    "metadata": {"key": "value"},
+    "public_inference": False,
+}
+
+
 INFERENCE_PAYLOAD_RETURN_PICKLED_FALSE: Dict[str, Any] = INFERENCE_PAYLOAD.copy()
 INFERENCE_PAYLOAD_RETURN_PICKLED_FALSE["return_pickled"] = False
 
 INFERENCE_PAYLOAD_RETURN_PICKLED_TRUE: Dict[str, Any] = INFERENCE_PAYLOAD.copy()
 INFERENCE_PAYLOAD_RETURN_PICKLED_TRUE["return_pickled"] = True
+
+LLM_PAYLOAD: Dict[str, Any] = {
+    "prompt": "Hello, my name is",
+    "max_new_tokens": 10,
+    "temperature": 0.2,
+}
+
+LLM_PAYLOAD_WITH_STOP_SEQUENCE: Dict[str, Any] = LLM_PAYLOAD.copy()
+LLM_PAYLOAD_WITH_STOP_SEQUENCE["stop_sequences"] = ["\n"]
+
+LLM_PAYLOAD_WITH_PRESENCE_PENALTY: Dict[str, Any] = LLM_PAYLOAD.copy()
+LLM_PAYLOAD_WITH_PRESENCE_PENALTY["presence_penalty"] = 0.5
+
+LLM_PAYLOAD_WITH_FREQUENCY_PENALTY: Dict[str, Any] = LLM_PAYLOAD.copy()
+LLM_PAYLOAD_WITH_FREQUENCY_PENALTY["frequency_penalty"] = 0.5
+
+LLM_PAYLOAD_WITH_TOP_K: Dict[str, Any] = LLM_PAYLOAD.copy()
+LLM_PAYLOAD_WITH_TOP_K["top_k"] = 10
+
+LLM_PAYLOAD_WITH_TOP_P: Dict[str, Any] = LLM_PAYLOAD.copy()
+LLM_PAYLOAD_WITH_TOP_P["top_p"] = 0.5
+
+LLM_PAYLOAD_WITH_INCLUDE_STOP_STR_IN_OUTPUT: Dict[str, Any] = LLM_PAYLOAD.copy()
+LLM_PAYLOAD_WITH_INCLUDE_STOP_STR_IN_OUTPUT["include_stop_str_in_output"] = True
+
+LLM_PAYLOAD_WITH_GUIDED_JSON: Dict[str, Any] = LLM_PAYLOAD.copy()
+LLM_PAYLOAD_WITH_GUIDED_JSON["guided_json"] = {
+    "properties": {"myString": {"type": "string"}},
+    "required": ["myString"],
+}
+
+LLM_PAYLOAD_WITH_GUIDED_REGEX: Dict[str, Any] = LLM_PAYLOAD.copy()
+LLM_PAYLOAD_WITH_GUIDED_REGEX["guided_regex"] = "Sean.*"
+
+LLM_PAYLOAD_WITH_GUIDED_CHOICE: Dict[str, Any] = LLM_PAYLOAD.copy()
+LLM_PAYLOAD_WITH_GUIDED_CHOICE["guided_choice"] = ["dog", "cat"]
+
+LLM_PAYLOAD_WITH_GUIDED_GRAMMAR: Dict[str, Any] = LLM_PAYLOAD.copy()
+LLM_PAYLOAD_WITH_GUIDED_GRAMMAR["guided_grammar"] = 'start: "John"'
+
+LLM_PAYLOADS_WITH_EXPECTED_RESPONSES = [
+    (LLM_PAYLOAD, None, None),
+    (LLM_PAYLOAD_WITH_STOP_SEQUENCE, None, None),
+    (LLM_PAYLOAD_WITH_PRESENCE_PENALTY, None, None),
+    (LLM_PAYLOAD_WITH_FREQUENCY_PENALTY, None, None),
+    (LLM_PAYLOAD_WITH_TOP_K, None, None),
+    (LLM_PAYLOAD_WITH_TOP_P, None, None),
+    (LLM_PAYLOAD_WITH_INCLUDE_STOP_STR_IN_OUTPUT, ["tokens"], None),
+    (LLM_PAYLOAD_WITH_GUIDED_JSON, None, None),
+    (LLM_PAYLOAD_WITH_GUIDED_REGEX, None, "Sean.*"),
+    (LLM_PAYLOAD_WITH_GUIDED_CHOICE, None, "dog|cat"),
+    (LLM_PAYLOAD_WITH_GUIDED_GRAMMAR, None, "John"),
+]
 
 CREATE_BATCH_JOB_REQUEST: Dict[str, Any] = {
     "bundle_name": "model_bundle_simple",
@@ -524,6 +601,18 @@ def get_model_endpoint(name: str, user_id: str) -> Dict[str, Any]:
     return response.json()["model_endpoints"][0]
 
 
+@retry(stop=stop_after_attempt(6), wait=wait_fixed(1))
+def get_llm_model_endpoint(name: str, user_id: str) -> Dict[str, Any]:
+    response = requests.get(
+        f"{BASE_PATH}/v1/llm/model-endpoints/{name}",
+        auth=(user_id, ""),
+        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
+    )
+    if not response.ok:
+        raise ValueError(response.content)
+    return response.json()
+
+
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(20))
 def update_model_endpoint(
     endpoint_name: str, update_model_endpoint_request: Dict[str, Any], user_id: str
@@ -556,6 +645,18 @@ def delete_model_endpoint(endpoint_name: str, user_id: str) -> Dict[str, Any]:
     return response.json()
 
 
+def delete_llm_model_endpoint(endpoint_name: str, user_id: str) -> Dict[str, Any]:
+    response = requests.delete(
+        f"{BASE_PATH}/v1/llm/model-endpoints/{endpoint_name}",
+        headers={"Content-Type": "application/json"},
+        auth=(user_id, ""),
+        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
+    )
+    if not response.ok:
+        raise ValueError(response.content)
+    return response.json()
+
+
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
 def list_model_endpoints(user_id: str) -> List[Dict[str, Any]]:
     response = requests.get(
@@ -566,6 +667,44 @@ def list_model_endpoints(user_id: str) -> List[Dict[str, Any]]:
     if not response.ok:
         raise ValueError(response.content)
     return response.json()["model_endpoints"]
+
+
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
+def list_llm_model_endpoints(user_id: str) -> List[Dict[str, Any]]:
+    response = requests.get(
+        f"{BASE_PATH}/v1/llm/model-endpoints",
+        auth=(user_id, ""),
+        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
+    )
+    if not response.ok:
+        raise ValueError(response.content)
+    return response.json()["model_endpoints"]
+
+
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
+def create_llm_model_endpoint(
+    create_llm_model_endpoint_request: Dict[str, Any],
+    user_id: str,
+    inference_framework: Optional[str],
+    inference_framework_image_tag: Optional[str],
+) -> Dict[str, Any]:
+    create_model_endpoint_request = create_llm_model_endpoint_request.copy()
+    if inference_framework:
+        create_model_endpoint_request["inference_framework"] = inference_framework
+    if inference_framework_image_tag:
+        create_model_endpoint_request[
+            "inference_framework_image_tag"
+        ] = inference_framework_image_tag
+    response = requests.post(
+        f"{BASE_PATH}/v1/llm/model-endpoints",
+        json=create_model_endpoint_request,
+        headers={"Content-Type": "application/json"},
+        auth=(user_id, ""),
+        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
+    )
+    if not response.ok:
+        raise ValueError(response.content)
+    return response.json()
 
 
 async def create_async_task(
@@ -615,6 +754,23 @@ async def create_sync_task(
         return await response.json()
 
 
+async def create_llm_sync_task(
+    model_endpoint_name: str,
+    create_sync_task_request: Dict[str, Any],
+    user_id: str,
+    session: aiohttp.ClientSession,
+) -> str:
+    async with session.post(
+        f"{BASE_PATH}/v1/llm/completions-sync?model_endpoint_name={model_endpoint_name}",
+        json=create_sync_task_request,
+        headers={"Content-Type": "application/json"},
+        auth=aiohttp.BasicAuth(user_id, ""),
+        timeout=LONG_NETWORK_TIMEOUT_SEC,
+    ) as response:
+        assert response.status == 200, (await response.read()).decode()
+        return await response.json()
+
+
 async def create_streaming_task(
     model_endpoint_id: str,
     create_streaming_task_request: Dict[str, Any],
@@ -632,6 +788,23 @@ async def create_streaming_task(
         return (await response.read()).decode()
 
 
+async def create_llm_streaming_task(
+    model_endpoint_name: str,
+    create_streaming_task_request: Dict[str, Any],
+    user_id: str,
+    session: aiohttp.ClientSession,
+) -> str:
+    async with session.post(
+        f"{BASE_PATH}/v1/llm/completions-stream?model_endpoint_name={model_endpoint_name}",
+        json=create_streaming_task_request,
+        headers={"Content-Type": "application/json"},
+        auth=aiohttp.BasicAuth(user_id, ""),
+        timeout=LONG_NETWORK_TIMEOUT_SEC,
+    ) as response:
+        assert response.status == 200, (await response.read()).decode()
+        return await response.json()
+
+
 async def create_sync_tasks(
     endpoint_name: str, create_sync_task_requests: List[Dict[str, Any]], user_id: str
 ) -> List[Any]:
@@ -640,6 +813,19 @@ async def create_sync_tasks(
         tasks = []
         for create_sync_task_request in create_sync_task_requests:
             task = create_sync_task(endpoint["id"], create_sync_task_request, user_id, session)
+            tasks.append(asyncio.create_task(task))
+
+        result = await asyncio.gather(*tasks)
+        return result  # type: ignore
+
+
+async def create_llm_sync_tasks(
+    endpoint_name: str, create_sync_task_requests: List[Dict[str, Any]], user_id: str
+) -> List[Any]:
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        for create_sync_task_request in create_sync_task_requests:
+            task = create_llm_sync_task(endpoint_name, create_sync_task_request, user_id, session)
             tasks.append(asyncio.create_task(task))
 
         result = await asyncio.gather(*tasks)
@@ -655,6 +841,21 @@ async def create_streaming_tasks(
         for create_streaming_task_request in create_streaming_task_requests:
             task = create_streaming_task(
                 endpoint["id"], create_streaming_task_request, user_id, session
+            )
+            tasks.append(asyncio.create_task(task))
+
+        result = await asyncio.gather(*tasks)
+        return result  # type: ignore
+
+
+async def create_llm_streaming_tasks(
+    endpoint_name: str, create_streaming_task_requests: List[Dict[str, Any]], user_id: str
+) -> List[Any]:
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        for create_streaming_task_request in create_streaming_task_requests:
+            task = create_llm_streaming_task(
+                endpoint_name, create_streaming_task_request, user_id, session
             )
             tasks.append(asyncio.create_task(task))
 
@@ -708,6 +909,22 @@ def ensure_n_ready_endpoints_short(n: int, user_id: str):
     assert len(ready_endpoints) >= n
 
 
+# Wait 2 minutes (120 seconds) for endpoints to build.
+@retry(stop=stop_after_attempt(12), wait=wait_fixed(10))
+def ensure_n_ready_private_llm_endpoints_short(n: int, user_id: str):
+    endpoints = list_llm_model_endpoints(user_id)
+    private_endpoints = [
+        endpoint for endpoint in endpoints if not endpoint["spec"]["public_inference"]
+    ]
+    ready_endpoints = [endpoint for endpoint in private_endpoints if endpoint["status"] == "READY"]
+    print(
+        f"User {user_id} Current num endpoints: {len(private_endpoints)}, num ready endpoints: {len(ready_endpoints)}"
+    )
+    assert (
+        len(ready_endpoints) >= n
+    ), f"Expected {n} ready endpoints, got {len(ready_endpoints)}. Look through endpoint builder for errors."
+
+
 def delete_all_endpoints(user_id: str, delete_suffix_only: bool):
     endpoints = list_model_endpoints(user_id)
     for i, endpoint in enumerate(endpoints):
@@ -737,6 +954,13 @@ def ensure_nonzero_available_workers(endpoint_name: str, user_id: str):
     assert simple_endpoint.get("deployment_state", {}).get("available_workers", 0)
 
 
+# Wait up to 20 minutes (1200 seconds) for the pods to spin up.
+@retry(stop=stop_after_attempt(120), wait=wait_fixed(10))
+def ensure_nonzero_available_llm_workers(endpoint_name: str, user_id: str):
+    simple_endpoint = get_llm_model_endpoint(endpoint_name, user_id)
+    assert simple_endpoint["spec"].get("deployment_state", {}).get("available_workers", 0)
+
+
 def ensure_inference_task_response_is_correct(response: Dict[str, Any], return_pickled: bool):
     print(response)
     assert response["status"] == "SUCCESS"
@@ -745,6 +969,22 @@ def ensure_inference_task_response_is_correct(response: Dict[str, Any], return_p
         assert response["result"]["result_url"].startswith("s3://")
     else:
         assert response["result"] == {"result": '{"y": 1}'}
+
+
+def ensure_llm_task_response_is_correct(
+    response: Dict[str, Any],
+    required_output_fields: Optional[List[str]],
+    response_text_regex: Optional[str],
+):
+    print(response)
+    assert response["output"] is not None
+
+    if required_output_fields is not None:
+        for field in required_output_fields:
+            assert field in response["output"]
+
+    if response_text_regex is not None:
+        assert re.search(response_text_regex, response["output"]["text"])
 
 
 # Wait up to 30 seconds for the tasks to be returned.

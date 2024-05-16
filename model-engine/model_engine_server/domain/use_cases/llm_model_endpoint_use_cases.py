@@ -9,7 +9,8 @@ import json
 import math
 import os
 import re
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
+from functools import lru_cache
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
 
 from model_engine_server.common.config import hmi_config
@@ -21,6 +22,7 @@ from model_engine_server.common.dtos.llms import (
     CompletionStreamV1Response,
     CompletionSyncV1Request,
     CompletionSyncV1Response,
+    CreateBatchCompletionsEngineRequest,
     CreateBatchCompletionsRequest,
     CreateBatchCompletionsResponse,
     CreateLLMModelEndpointV1Request,
@@ -39,6 +41,7 @@ from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
+from model_engine_server.core.configmap import read_config_map
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
@@ -67,6 +70,7 @@ from model_engine_server.domain.exceptions import (
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
     InvalidRequestException,
+    LatestImageTagNotFoundException,
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
@@ -82,7 +86,10 @@ from model_engine_server.domain.repositories import (
 )
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
-from model_engine_server.infra.repositories.live_tokenizer_repository import SUPPORTED_MODELS_INFO
+from model_engine_server.infra.repositories.live_tokenizer_repository import (
+    SUPPORTED_MODELS_INFO,
+    get_models_s3_uri,
+)
 
 from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
@@ -162,6 +169,11 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "llama-2-13b-chat",
             "llama-2-70b",
             "llama-2-70b-chat",
+            "llama-3-8b",
+            "llama-3-8b-instruct",
+            "llama-3-8b-instruct-262k",
+            "llama-3-70b",
+            "llama-3-70b-instruct",
             "falcon-7b",
             "falcon-7b-instruct",
             "falcon-40b",
@@ -180,6 +192,8 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "mistral-7b-instruct",
             "mixtral-8x7b",
             "mixtral-8x7b-instruct",
+            "mixtral-8x22b",
+            "mixtral-8x22b-instruct",
             "mammoth-coder-llama-2-7b",
             "mammoth-coder-llama-2-13b",
             "mammoth-coder-llama-2-34b",
@@ -202,7 +216,9 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "llama-2-70b-chat",
         ]
     ),
-    LLMInferenceFramework.TENSORRT_LLM: set(["llama-2-7b"]),
+    LLMInferenceFramework.TENSORRT_LLM: set(
+        ["llama-2-7b", "mixtral-8x7b", "mixtral-8x7b-instruct"]
+    ),
 }
 
 _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
@@ -213,30 +229,15 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
     LLMInferenceFramework.TENSORRT_LLM: [],
 }
 
-# We need a dict where if we need to override we can
-# NOTE: These are in *descending* order of priority. e.g. if you see 'mammoth-coder'
-# you'll use that override and not listen to the 'llama-2' override
-_VLLM_MODEL_LENGTH_OVERRIDES: Dict[str, Dict[str, Optional[int]]] = {
-    "mammoth-coder": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
-    # Based on config here: https://huggingface.co/TIGER-Lab/MAmmoTH-Coder-7B/blob/main/config.json#L12
-    # Can also see 13B, 34B there too
-    "code-llama": {"max_model_len": 16384, "max_num_batched_tokens": 16384},
-    "codellama": {
-        "max_model_len": 16384,
-        "max_num_batched_tokens": 16384,
-    },  # setting both for backwards compatibility, will phase code-llama out in a future pr
-    # Based on config here: https://huggingface.co/codellama/CodeLlama-7b-hf/blob/main/config.json#L12
-    # Can also see 13B, 34B there too
-    "gemma": {"max_model_len": 8192, "max_num_batched_tokens": 8192},
-    "llama-2": {"max_model_len": None, "max_num_batched_tokens": 4096},
-    "mistral": {"max_model_len": 8000, "max_num_batched_tokens": 8000},
-    "mixtral": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
-    "zephyr": {"max_model_len": 32768, "max_num_batched_tokens": 32768},
-}
-
 
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
+
+SERVICE_NAME = "model-engine"
+SERVICE_IDENTIFIER = os.getenv("SERVICE_IDENTIFIER")
+if SERVICE_IDENTIFIER:
+    SERVICE_NAME += f"-{SERVICE_IDENTIFIER}"
+LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = f"{SERVICE_NAME}-inference-framework-latest-config"
 
 
 def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
@@ -247,22 +248,13 @@ def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRep
     return len(tokenizer.encode(input))
 
 
-def _include_safetensors_bin_or_pt(model_files: List[str]) -> Optional[str]:
-    """
-    This function is used to determine whether to include "*.safetensors", "*.bin", or "*.pt" files
-    based on which file type is present most often in the checkpoint folder. The most
-    frequently present file type is included.
-    In case of ties, priority is given to "*.safetensors", then "*.bin", then "*.pt".
-    """
-    num_safetensors = len([f for f in model_files if f.endswith(".safetensors")])
-    num_bin = len([f for f in model_files if f.endswith(".bin")])
-    num_pt = len([f for f in model_files if f.endswith(".pt")])
-    maximum = max(num_safetensors, num_bin, num_pt)
-    if num_safetensors == maximum:
-        return "*.safetensors"
-    if num_bin == maximum:
-        return "*.bin"
-    return "*.pt"
+async def _get_latest_tag(inference_framework: LLMInferenceFramework) -> str:
+    config_map = await read_config_map(LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME)
+    if inference_framework not in config_map:
+        raise LatestImageTagNotFoundException(
+            f"Could not find latest tag for inference framework {inference_framework}."
+        )
+    return config_map[inference_framework]
 
 
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
@@ -306,9 +298,9 @@ def validate_num_shards(
             raise ObjectHasInvalidValueException(
                 f"Num shard {num_shards} must be the same as number of GPUs {gpus} for DeepSpeed."
             )
-    if num_shards > gpus:
+    if num_shards != gpus:
         raise ObjectHasInvalidValueException(
-            f"Num shard {num_shards} must be less than or equal to the number of GPUs {gpus}."
+            f"Num shard {num_shards} must be equal to the number of GPUs {gpus}."
         )
 
 
@@ -319,6 +311,43 @@ def validate_quantization(
         raise ObjectHasInvalidValueException(
             f"Quantization {quantize} is not supported for inference framework {inference_framework}. Supported quantization types are {_SUPPORTED_QUANTIZATIONS[inference_framework]}."
         )
+
+
+def validate_checkpoint_path_uri(checkpoint_path: str) -> None:
+    if (
+        not checkpoint_path.startswith("s3://")
+        and not checkpoint_path.startswith("azure://")
+        and "blob.core.windows.net" not in checkpoint_path
+    ):
+        raise ObjectHasInvalidValueException(
+            f"Only S3 and Azure Blob Storage paths are supported. Given checkpoint path: {checkpoint_path}."
+        )
+    if checkpoint_path.endswith(".tar"):
+        raise ObjectHasInvalidValueException(
+            f"Tar files are not supported. Given checkpoint path: {checkpoint_path}."
+        )
+
+
+def get_checkpoint_path(model_name: str, checkpoint_path_override: Optional[str]) -> str:
+    checkpoint_path = None
+    if SUPPORTED_MODELS_INFO[model_name].s3_repo:
+        checkpoint_path = get_models_s3_uri(SUPPORTED_MODELS_INFO[model_name].s3_repo, "")
+    if checkpoint_path_override:
+        checkpoint_path = checkpoint_path_override
+
+    if not checkpoint_path:
+        raise InvalidRequestException(f"No checkpoint path found for model {model_name}")
+
+    validate_checkpoint_path_uri(checkpoint_path)
+    return checkpoint_path
+
+
+def validate_checkpoint_files(checkpoint_files: List[str]) -> None:
+    """Require safetensors in the checkpoint path."""
+    model_files = [f for f in checkpoint_files if "model" in f]
+    num_safetensors = len([f for f in model_files if f.endswith(".safetensors")])
+    if num_safetensors == 0:
+        raise ObjectHasInvalidValueException("No safetensors found in the checkpoint path.")
 
 
 class CreateLLMModelBundleV1UseCase:
@@ -421,6 +450,77 @@ class CreateLLMModelBundleV1UseCase:
             raise ObjectNotFoundException(f"Model bundle {bundle_id} was not found after creation.")
         return model_bundle
 
+    async def create_text_generation_inference_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        quantize: Optional[Quantization],
+        checkpoint_path: Optional[str],
+    ):
+        command = []
+
+        # TGI requires max_input_length < max_total_tokens
+        max_input_length = 1024
+        max_total_tokens = 2048
+        if "llama-2" in model_name:
+            max_input_length = 4095
+            max_total_tokens = 4096
+
+        subcommands = []
+
+        checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
+        final_weights_folder = "model_files"
+
+        subcommands += self.load_model_weights_sub_commands(
+            LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+            framework_image_tag,
+            checkpoint_path,
+            final_weights_folder,
+        )
+
+        subcommands.append(
+            f"text-generation-launcher --hostname :: --model-id {final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
+        )
+
+        if quantize:
+            subcommands[-1] = subcommands[-1] + f" --quantize {quantize}"
+        command = [
+            "/bin/bash",
+            "-c",
+            ";".join(subcommands),
+        ]
+
+        return (
+            await self.create_model_bundle_use_case.execute(
+                user,
+                CreateModelBundleV2Request(
+                    name=endpoint_unique_name,
+                    schema_location="TBA",
+                    flavor=StreamingEnhancedRunnableImageFlavor(
+                        flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                        repository=hmi_config.tgi_repository,
+                        tag=framework_image_tag,
+                        command=command,
+                        streaming_command=command,
+                        protocol="http",
+                        readiness_initial_delay_seconds=10,
+                        healthcheck_route="/health",
+                        predict_route="/generate",
+                        streaming_predict_route="/generate_stream",
+                        env={},
+                    ),
+                    metadata={},
+                ),
+                do_auth_check=False,
+                # Skip auth check because llm create endpoint is called as the user itself,
+                # but the user isn't directly making the action. It should come from the fine tune
+                # job.
+            )
+        ).model_bundle_id
+
     def load_model_weights_sub_commands(
         self, framework, framework_image_tag, checkpoint_path, final_weights_folder
     ):
@@ -453,27 +553,14 @@ class CreateLLMModelBundleV1UseCase:
         else:
             s5cmd = "./s5cmd"
 
-        base_path = checkpoint_path.split("/")[-1]
-        if base_path.endswith(".tar"):
-            # If the checkpoint file is a tar file, extract it into final_weights_folder
-            subcommands.extend(
-                [
-                    f"{s5cmd} cp {checkpoint_path} .",
-                    f"mkdir -p {final_weights_folder}",
-                    f"tar --no-same-owner -xf {base_path} -C {final_weights_folder}",
-                ]
-            )
-        else:
-            # Let's check whether to exclude "*.safetensors" or "*.bin" files
-            checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
-            model_files = [f for f in checkpoint_files if "model" in f]
+        checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
+        validate_checkpoint_files(checkpoint_files)
 
-            include_str = _include_safetensors_bin_or_pt(model_files)
-            file_selection_str = f"--include '*.model' --include '*.json' --include '{include_str}' --exclude 'optimizer*'"
-            subcommands.append(
-                f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-            )
-
+        # filter to configs ('*.model' and '*.json') and weights ('*.safetensors')
+        file_selection_str = "--include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*'"
+        subcommands.append(
+            f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+        )
         return subcommands
 
     def load_model_weights_sub_commands_abs(
@@ -502,13 +589,8 @@ class CreateLLMModelBundleV1UseCase:
                 ]
             )
         else:
-            # Let's check whether to exclude "*.safetensors" or "*.bin" files
-            checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
-            model_files = [f for f in checkpoint_files if "model" in f]
-
-            include_str = _include_safetensors_bin_or_pt(model_files)
             file_selection_str = (
-                f'--include-pattern "*.model;*.json;{include_str}" --exclude-pattern "optimizer*"'
+                '--include-pattern "*.model;*.json;*.safetensors" --exclude-pattern "optimizer*"'
             )
             subcommands.append(
                 f"azcopy copy --recursive {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
@@ -527,37 +609,21 @@ class CreateLLMModelBundleV1UseCase:
         See llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/tensorrt_llm/config.pbtxt
         and llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/postprocessing/config.pbtxt
         """
-        subcommands = []
-
-        base_path = checkpoint_path.split("/")[-1]
-
-        if base_path.endswith(".tar"):
-            raise ObjectHasInvalidValueException(
-                "Checkpoint for TensorRT-LLM models must be a folder, not a tar file."
-            )
+        if checkpoint_path.startswith("s3://"):
+            subcommands = [
+                f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
+            ]
         else:
-            if checkpoint_path.startswith("s3://"):
-                subcommands.append(
-                    f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
-                )
-            elif (
-                checkpoint_path.startswith("azure://") or "blob.core.windows.net" in checkpoint_path
-            ):
-                subcommands.extend(
-                    [
-                        "pushd /",
-                        "wget https://aka.ms/downloadazcopy-v10-linux",
-                        "tar -xf downloadazcopy-v10-linux",
-                        'export PATH="$PATH:/azcopy_linux_amd64_10.23.0"',
-                        "popd",
-                        f"azcopy copy --recursive {os.path.join(checkpoint_path, '*')} ./",
-                    ]
-                )
-            else:
-                raise ObjectHasInvalidValueException(
-                    f"Only S3 and Azure Blob Storage paths are supported. Given checkpoint path: {checkpoint_path}."
-                )
-
+            subcommands.extend(
+                [
+                    "pushd /",
+                    "wget https://aka.ms/downloadazcopy-v10-linux",
+                    "tar -xf downloadazcopy-v10-linux",
+                    'export PATH="$PATH:/azcopy_linux_amd64_10.23.0"',
+                    "popd",
+                    f"azcopy copy --recursive {os.path.join(checkpoint_path, '*')} ./",
+                ]
+            )
         return subcommands
 
     async def create_deepspeed_bundle(
@@ -639,77 +705,6 @@ class CreateLLMModelBundleV1UseCase:
                 )
             ).model_bundle_id
 
-    async def create_text_generation_inference_bundle(
-        self,
-        user: User,
-        model_name: str,
-        framework_image_tag: str,
-        endpoint_unique_name: str,
-        num_shards: int,
-        quantize: Optional[Quantization],
-        checkpoint_path: Optional[str],
-    ):
-        command = []
-
-        # TGI requires max_input_length < max_total_tokens
-        max_input_length = 1024
-        max_total_tokens = 2048
-        if "llama-2" in model_name:
-            max_input_length = 4095
-            max_total_tokens = 4096
-
-        subcommands = []
-        if checkpoint_path is not None:
-            final_weights_folder = "model_files"
-            subcommands += self.load_model_weights_sub_commands(
-                LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
-                framework_image_tag,
-                checkpoint_path,
-                final_weights_folder,
-            )
-        else:
-            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
-
-        subcommands.append(
-            f"text-generation-launcher --hostname :: --model-id {final_weights_folder}  --num-shard {num_shards} --port 5005 --max-input-length {max_input_length} --max-total-tokens {max_total_tokens}"
-        )
-
-        if quantize:
-            subcommands[-1] = subcommands[-1] + f" --quantize {quantize}"
-        command = [
-            "/bin/bash",
-            "-c",
-            ";".join(subcommands),
-        ]
-
-        return (
-            await self.create_model_bundle_use_case.execute(
-                user,
-                CreateModelBundleV2Request(
-                    name=endpoint_unique_name,
-                    schema_location="TBA",
-                    flavor=StreamingEnhancedRunnableImageFlavor(
-                        flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
-                        repository=hmi_config.tgi_repository,
-                        tag=framework_image_tag,
-                        command=command,
-                        streaming_command=command,
-                        protocol="http",
-                        readiness_initial_delay_seconds=10,
-                        healthcheck_route="/health",
-                        predict_route="/generate",
-                        streaming_predict_route="/generate_stream",
-                        env={},
-                    ),
-                    metadata={},
-                ),
-                do_auth_check=False,
-                # Skip auth check because llm create endpoint is called as the user itself,
-                # but the user isn't directly making the action. It should come from the fine tune
-                # job.
-            )
-        ).model_bundle_id
-
     async def create_vllm_bundle(
         self,
         user: User,
@@ -721,40 +716,24 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path: Optional[str],
     ):
         command = []
-
-        max_num_batched_tokens: Optional[int] = 2560  # vLLM's default
-        max_model_len: Optional[int] = None
-
-        for key, value in _VLLM_MODEL_LENGTH_OVERRIDES.items():
-            if key in model_name:
-                max_model_len = value["max_model_len"]
-                max_num_batched_tokens = value["max_num_batched_tokens"]
-                break
-
         subcommands = []
-        if checkpoint_path is not None:
-            # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
-            if "mistral" in model_name:
-                final_weights_folder = "mistral_files"
-            else:
-                final_weights_folder = "model_files"
-            subcommands += self.load_model_weights_sub_commands(
-                LLMInferenceFramework.VLLM,
-                framework_image_tag,
-                checkpoint_path,
-                final_weights_folder,
-            )
-        else:
-            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
 
-        if max_model_len:
-            subcommands.append(
-                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens} --max-model-len {max_model_len}"
-            )
+        checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
+        # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
+        if "mistral" in model_name:
+            final_weights_folder = "mistral_files"
         else:
-            subcommands.append(
-                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005 --max-num-batched-tokens {max_num_batched_tokens}"
-            )
+            final_weights_folder = "model_files"
+        subcommands += self.load_model_weights_sub_commands(
+            LLMInferenceFramework.VLLM,
+            framework_image_tag,
+            checkpoint_path,
+            final_weights_folder,
+        )
+
+        subcommands.append(
+            f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
+        )
 
         if quantize:
             if quantize == Quantization.AWQ:
@@ -825,16 +804,15 @@ class CreateLLMModelBundleV1UseCase:
             max_req_total_len = 4096
 
         subcommands = []
-        if checkpoint_path is not None:
-            final_weights_folder = "model_files"
-            subcommands += self.load_model_weights_sub_commands(
-                LLMInferenceFramework.LIGHTLLM,
-                framework_image_tag,
-                checkpoint_path,
-                final_weights_folder,
-            )
-        else:
-            final_weights_folder = SUPPORTED_MODELS_INFO[model_name].hf_repo
+
+        checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
+        final_weights_folder = "model_files"
+        subcommands += self.load_model_weights_sub_commands(
+            LLMInferenceFramework.LIGHTLLM,
+            framework_image_tag,
+            checkpoint_path,
+            final_weights_folder,
+        )
 
         subcommands.append(
             f"python -m lightllm.server.api_server --model_dir {final_weights_folder} --port 5005 --tp {num_shards} --max_total_token_num {max_total_token_num} --max_req_input_len {max_req_input_len} --max_req_total_len {max_req_total_len} --tokenizer_mode auto"
@@ -885,14 +863,17 @@ class CreateLLMModelBundleV1UseCase:
         command = []
 
         subcommands = []
-        if checkpoint_path is not None:
-            subcommands += self.load_model_files_sub_commands_trt_llm(
-                checkpoint_path,
-            )
-        else:
+
+        if not checkpoint_path:
             raise ObjectHasInvalidValueException(
                 "Checkpoint must be provided for TensorRT-LLM models."
             )
+
+        validate_checkpoint_path_uri(checkpoint_path)
+
+        subcommands += self.load_model_files_sub_commands_trt_llm(
+            checkpoint_path,
+        )
 
         subcommands.append(
             f"python3 launch_triton_server.py --world_size={num_shards} --model_repo=./model_repo/"
@@ -940,15 +921,26 @@ class CreateLLMModelEndpointV1UseCase:
         create_llm_model_bundle_use_case: CreateLLMModelBundleV1UseCase,
         model_endpoint_service: ModelEndpointService,
         docker_repository: DockerRepository,
+        llm_artifact_gateway: LLMArtifactGateway,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_llm_model_bundle_use_case = create_llm_model_bundle_use_case
         self.model_endpoint_service = model_endpoint_service
         self.docker_repository = docker_repository
+        self.llm_artifact_gateway = llm_artifact_gateway
 
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
+        _fill_hardware_info(self.llm_artifact_gateway, request)
+        if not (
+            request.gpus
+            and request.gpu_type
+            and request.cpus
+            and request.memory
+            and request.storage
+        ):
+            raise RuntimeError("Some hardware info is missing unexpectedly.")
         validate_deployment_resources(
             min_workers=request.min_workers,
             max_workers=request.max_workers,
@@ -975,8 +967,8 @@ class CreateLLMModelEndpointV1UseCase:
                 )
 
         if request.inference_framework_image_tag == "latest":
-            request.inference_framework_image_tag = self.docker_repository.get_latest_image_tag(
-                INFERENCE_FRAMEWORK_REPOSITORY[request.inference_framework]
+            request.inference_framework_image_tag = await _get_latest_tag(
+                request.inference_framework
             )
 
         bundle = await self.create_llm_model_bundle_use_case.execute(
@@ -1193,9 +1185,7 @@ class UpdateLLMModelEndpointV1UseCase:
             inference_framework = llm_metadata["inference_framework"]
 
             if request.inference_framework_image_tag == "latest":
-                inference_framework_image_tag = self.docker_repository.get_latest_image_tag(
-                    INFERENCE_FRAMEWORK_REPOSITORY[inference_framework]
-                )
+                inference_framework_image_tag = await _get_latest_tag(inference_framework)
             else:
                 inference_framework_image_tag = (
                     request.inference_framework_image_tag
@@ -1425,16 +1415,19 @@ def validate_and_update_completion_params(
         guided_count += 1
     if request.guided_regex is not None:
         guided_count += 1
+    if request.guided_grammar is not None:
+        guided_count += 1
 
     if guided_count > 1:
         raise ObjectHasInvalidValueException(
-            "Only one of guided_json, guided_choice, guided_regex can be enabled."
+            "Only one of guided_json, guided_choice, guided_regex, guided_grammar can be enabled."
         )
 
     if (
         request.guided_choice is not None
         or request.guided_regex is not None
         or request.guided_json is not None
+        or request.guided_grammar is not None
     ) and not inference_framework == LLMInferenceFramework.VLLM:
         raise ObjectHasInvalidValueException("Guided decoding is only supported in vllm.")
 
@@ -1543,11 +1536,28 @@ class CompletionSyncV1UseCase:
             num_prompt_tokens = count_tokens(
                 prompt, model_content.model_name, self.tokenizer_repository
             )
-            return CompletionOutput(
+            if "token_ids" in model_output:
+                # TensorRT 23.10 has this field, TensorRT 24.03 does not
+                # For backwards compatibility with pre-2024/05/02
+                num_completion_tokens = len(model_output["token_ids"]) - num_prompt_tokens
                 # Output is "<s> prompt output"
-                text=model_output["text_output"][(len(prompt) + 4) :],
+                text = model_output["text_output"][(len(prompt) + 4) :]
+            elif "output_log_probs" in model_output:
+                # TensorRT 24.01 + surrounding code.
+                # For some reason TRT returns output_log_probs as either a list or a float
+                # Also the log probs don't look right, so returning log-probs is still broken
+                num_completion_tokens = (
+                    len(model_output["output_log_probs"])
+                    if type(model_output["output_log_probs"]) == list
+                    else 1
+                )
+                # Output is just "output". See `exclude_input_in_output` inside of
+                # inference/tensorrt-llm/triton_model_repo/tensorrt_llm/config.pbtxt
+                text = model_output["text_output"]
+            return CompletionOutput(
+                text=text,
                 num_prompt_tokens=num_prompt_tokens,
-                num_completion_tokens=len(model_output["token_ids"]) - num_prompt_tokens,
+                num_completion_tokens=num_completion_tokens,
             )
         else:
             raise EndpointUnsupportedInferenceTypeException(
@@ -1735,6 +1745,8 @@ class CompletionSyncV1UseCase:
                 vllm_args["guided_regex"] = request.guided_regex
             if request.guided_json is not None:
                 vllm_args["guided_json"] = request.guided_json
+            if request.guided_grammar is not None:
+                vllm_args["guided_grammar"] = request.guided_grammar
 
             inference_request = SyncEndpointPredictV1Request(
                 args=vllm_args,
@@ -2003,6 +2015,8 @@ class CompletionStreamV1UseCase:
                 args["guided_regex"] = request.guided_regex
             if request.guided_json is not None:
                 args["guided_json"] = request.guided_json
+            if request.guided_grammar is not None:
+                args["guided_grammar"] = request.guided_grammar
             args["stream"] = True
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
             args = {
@@ -2246,53 +2260,145 @@ class ModelDownloadV1UseCase:
         return ModelDownloadResponse(urls=urls)
 
 
-def infer_hardware_from_model_name(model_name: str) -> CreateDockerImageBatchJobResourceRequests:
+def _fill_hardware_info(
+    llm_artifact_gateway: LLMArtifactGateway, request: CreateLLMModelEndpointV1Request
+):
+    if (
+        request.gpus is None
+        or request.gpu_type is None
+        or request.cpus is None
+        or request.memory is None
+        or request.storage is None
+    ):
+        if not (
+            request.gpus is None
+            and request.gpu_type is None
+            and request.cpus is None
+            and request.memory is None
+            and request.storage is None
+        ):
+            raise ObjectHasInvalidValueException(
+                "All hardware spec fields (gpus, gpu_type, cpus, memory, storage) must be provided if any hardware spec field is missing."
+            )
+        checkpoint_path = get_checkpoint_path(request.model_name, request.checkpoint_path)
+        hardware_info = _infer_hardware(llm_artifact_gateway, request.model_name, checkpoint_path)
+        request.gpus = hardware_info.gpus
+        request.gpu_type = hardware_info.gpu_type
+        request.cpus = hardware_info.cpus
+        request.memory = hardware_info.memory
+        request.storage = hardware_info.storage
+        if hardware_info.gpus:  # make lint happy
+            request.num_shards = hardware_info.gpus
+
+
+@lru_cache()
+def _infer_hardware(
+    llm_artifact_gateway: LLMArtifactGateway,
+    model_name: str,
+    checkpoint_path: str,
+) -> CreateDockerImageBatchJobResourceRequests:
+    config = llm_artifact_gateway.get_model_config(checkpoint_path)
+
+    dtype_size = 2
+
+    min_kv_cache_size = (
+        2
+        * dtype_size
+        * config["num_hidden_layers"]
+        * config["hidden_size"]
+        * config["max_position_embeddings"]
+        // (config["num_attention_heads"] // config["num_key_value_heads"])
+    )
+
     if "mixtral-8x7b" in model_name:
+        model_param_count_b = 47
+    elif "mixtral-8x22b" in model_name:
+        model_param_count_b = 140
+    else:
+        numbers = re.findall(r"(\d+)b", model_name)
+        if len(numbers) == 0:
+            raise ObjectHasInvalidValueException(
+                f"Unable to infer number of parameters for {model_name}."
+            )
+        model_param_count_b = int(numbers[-1])
+
+    model_weights_size = dtype_size * model_param_count_b * 1_000_000_000
+
+    min_memory_gb = math.ceil((min_kv_cache_size + model_weights_size) / 1_000_000_000 / 0.9)
+
+    logger.info(
+        f"Memory calculation result: {min_memory_gb=} for {model_name}, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}"
+    )
+
+    if min_memory_gb <= 24:
+        cpus = "10"
+        gpus = 1
+        memory = "24Gi"
+        storage = "80Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A10
+    elif min_memory_gb <= 48:
+        cpus = "20"
+        gpus = 2
+        memory = "48Gi"
+        storage = "80Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A10
+    elif min_memory_gb <= 96:
+        cpus = "40"
+        gpus = 4
+        memory = "96Gi"
+        storage = "96Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A10
+    elif min_memory_gb <= 180:
         cpus = "20"
         gpus = 2
         memory = "160Gi"
         storage = "160Gi"
         gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    elif min_memory_gb <= 320:
+        cpus = "40"
+        gpus = 4
+        memory = "320Gi"
+        storage = "320Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    elif min_memory_gb <= 640:
+        cpus = "80"
+        gpus = 8
+        memory = "800Gi"
+        storage = "460Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    elif "llama-3-8b-instruct-262k" in model_name:
+        cpus = "20"
+        gpus = 2
+        memory = "40Gi"
+        storage = "40Gi"
+        gpu_type = GpuType.NVIDIA_AMPERE_A100E
     else:
-        numbers = re.findall(r"\d+", model_name)
-        if len(numbers) == 0:
-            raise ObjectHasInvalidValueException(
-                f"Model {model_name} is not supported for batch completions."
-            )
-
-        b_params = int(numbers[-1])
-        if b_params <= 7:
-            cpus = "10"
-            gpus = 1
-            memory = "24Gi"
-            storage = "80Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A10
-        elif b_params <= 13:
-            cpus = "20"
-            gpus = 2
-            memory = "48Gi"
-            storage = "80Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A10
-        elif b_params <= 34:
-            cpus = "40"
-            gpus = 4
-            memory = "96Gi"
-            storage = "96Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A10
-        elif b_params <= 70:
-            cpus = "20"
-            gpus = 2
-            memory = "160Gi"
-            storage = "160Gi"
-            gpu_type = GpuType.NVIDIA_AMPERE_A100E
-        else:
-            raise ObjectHasInvalidValueException(
-                f"Model {model_name} is not supported for batch completions."
-            )
+        raise ObjectHasInvalidValueException(f"Unable to infer hardware for {model_name}.")
 
     return CreateDockerImageBatchJobResourceRequests(
         cpus=cpus, gpus=gpus, memory=memory, storage=storage, gpu_type=gpu_type
     )
+
+
+@dataclass
+class VLLMEngineArgs:
+    gpu_memory_utilization: Optional[float] = None
+
+
+def infer_addition_engine_args_from_model_name(model_name: str) -> VLLMEngineArgs:
+    numbers = re.findall(r"\d+", model_name)
+    if len(numbers) == 0:
+        raise ObjectHasInvalidValueException(
+            f"Model {model_name} is not supported for batch completions."
+        )
+
+    b_params = int(numbers[-1])
+    if b_params >= 70:
+        gpu_memory_utilization = 0.95
+    else:
+        gpu_memory_utilization = 0.9
+
+    return VLLMEngineArgs(gpu_memory_utilization=gpu_memory_utilization)
 
 
 class CreateBatchCompletionsUseCase:
@@ -2301,10 +2407,12 @@ class CreateBatchCompletionsUseCase:
         docker_image_batch_job_gateway: DockerImageBatchJobGateway,
         docker_repository: DockerRepository,
         docker_image_batch_job_bundle_repo: DockerImageBatchJobBundleRepository,
+        llm_artifact_gateway: LLMArtifactGateway,
     ):
         self.docker_image_batch_job_gateway = docker_image_batch_job_gateway
         self.docker_repository = docker_repository
         self.docker_image_batch_job_bundle_repo = docker_image_batch_job_bundle_repo
+        self.llm_artifact_gateway = llm_artifact_gateway
 
     async def create_batch_job_bundle(
         self,
@@ -2353,19 +2461,37 @@ class CreateBatchCompletionsUseCase:
     async def execute(
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
-        hardware = infer_hardware_from_model_name(request.model_config.model)
+        request.model_config.checkpoint_path = get_checkpoint_path(
+            request.model_config.model, request.model_config.checkpoint_path
+        )
+        hardware = _infer_hardware(
+            self.llm_artifact_gateway,
+            request.model_config.model,
+            request.model_config.checkpoint_path,
+        )
         # Reconcile gpus count with num_shards from request
         assert hardware.gpus is not None
         if request.model_config.num_shards:
             hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
-        request.model_config.num_shards = hardware.gpus
 
-        if request.tool_config and request.tool_config.name != "code_evaluator":
+        engine_request = CreateBatchCompletionsEngineRequest.from_api(request)
+        engine_request.model_config.num_shards = hardware.gpus
+
+        if engine_request.tool_config and engine_request.tool_config.name != "code_evaluator":
             raise ObjectHasInvalidValueException(
                 "Only code_evaluator tool is supported for batch completions."
             )
 
-        batch_bundle = await self.create_batch_job_bundle(user, request, hardware)
+        additional_engine_args = infer_addition_engine_args_from_model_name(
+            engine_request.model_config.model
+        )
+
+        if additional_engine_args.gpu_memory_utilization is not None:
+            engine_request.max_gpu_memory_utilization = (
+                additional_engine_args.gpu_memory_utilization
+            )
+
+        batch_bundle = await self.create_batch_job_bundle(user, engine_request, hardware)
 
         validate_resource_requests(
             bundle=batch_bundle,
@@ -2376,21 +2502,21 @@ class CreateBatchCompletionsUseCase:
             gpu_type=hardware.gpu_type,
         )
 
-        if request.max_runtime_sec is None or request.max_runtime_sec < 1:
+        if engine_request.max_runtime_sec is None or engine_request.max_runtime_sec < 1:
             raise ObjectHasInvalidValueException("max_runtime_sec must be a positive integer.")
 
         job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
             created_by=user.user_id,
             owner=user.team_id,
-            job_config=request.dict(),
+            job_config=engine_request.dict(),
             env=batch_bundle.env,
             command=batch_bundle.command,
             repo=batch_bundle.image_repository,
             tag=batch_bundle.image_tag,
             resource_requests=hardware,
-            labels=request.model_config.labels,
+            labels=engine_request.model_config.labels,
             mount_location=batch_bundle.mount_location,
-            override_job_max_runtime_s=request.max_runtime_sec,
-            num_workers=request.data_parallelism,
+            override_job_max_runtime_s=engine_request.max_runtime_sec,
+            num_workers=engine_request.data_parallelism,
         )
         return CreateBatchCompletionsResponse(job_id=job_id)

@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
+    CreateBatchCompletionsEngineRequest,
     CreateBatchCompletionsModelConfig,
     CreateBatchCompletionsRequest,
     CreateBatchCompletionsRequestContent,
@@ -12,14 +13,20 @@ from model_engine_server.common.dtos.llms import (
 
 
 @pytest.fixture
-def create_batch_completions_request():
-    return CreateBatchCompletionsRequest(
-        model_config=CreateBatchCompletionsModelConfig(
-            checkpoint_path="checkpoint_path", model="model", num_shards=4, seed=123, labels={}
-        ),
-        data_parallelism=1,
+def create_batch_completions_engine_request() -> CreateBatchCompletionsEngineRequest:
+    return CreateBatchCompletionsEngineRequest(
         input_data_path="input_data_path",
         output_data_path="output_data_path",
+        model_config=CreateBatchCompletionsModelConfig(
+            model="model",
+            checkpoint_path="checkpoint_path",
+            labels={},
+            seed=123,
+            num_shards=4,
+        ),
+        data_parallelism=1,
+        max_runtime_sec=86400,
+        max_gpu_memory_utilization=0.95,
     )
 
 
@@ -58,13 +65,19 @@ def create_batch_completions_request_content():
 
 @pytest.fixture
 def create_vllm_request_outputs():
+    class Logprob:
+        """mock, from https://github.com/vllm-project/vllm/blob/v0.4.1/vllm/sequence.py#L18"""
+
+        def __init__(self, logprob: float):
+            self.logprob = logprob
+
     mock_vllm_request_output1 = MagicMock()
     mock_vllm_request_output1.outputs = [
         MagicMock(text="text1"),
     ]
     mock_vllm_request_output1.prompt_token_ids = [1, 2, 3]
     mock_vllm_request_output1.outputs[0].token_ids = [4]
-    mock_vllm_request_output1.outputs[0].logprobs = [{4: 0.1}]
+    mock_vllm_request_output1.outputs[0].logprobs = [{4: Logprob(0.1)}]
 
     mock_vllm_request_output2 = MagicMock()
     mock_vllm_request_output2.outputs = [
@@ -72,7 +85,7 @@ def create_vllm_request_outputs():
     ]
     mock_vllm_request_output2.prompt_token_ids = [1, 2, 3]
     mock_vllm_request_output2.outputs[0].token_ids = [4, 5]
-    mock_vllm_request_output2.outputs[0].logprobs = [{4: 0.1, 5: 0.2}]
+    mock_vllm_request_output2.outputs[0].logprobs = [{4: Logprob(0.1), 5: Logprob(0.2)}]
 
     mock_vllm_request_output3 = MagicMock()
     mock_vllm_request_output3.outputs = [
@@ -80,7 +93,9 @@ def create_vllm_request_outputs():
     ]
     mock_vllm_request_output3.prompt_token_ids = [1, 2, 3]
     mock_vllm_request_output3.outputs[0].token_ids = [4, 5, 6]
-    mock_vllm_request_output3.outputs[0].logprobs = [{4: 0.1, 5: 0.2, 6: 0.3}]
+    mock_vllm_request_output3.outputs[0].logprobs = [
+        {4: Logprob(0.1), 5: Logprob(0.2), 6: Logprob(0.3)}
+    ]
     return [mock_vllm_request_output1, mock_vllm_request_output2, mock_vllm_request_output3]
 
 

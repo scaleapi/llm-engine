@@ -4,6 +4,7 @@ DTOs for LLM APIs.
 
 from typing import Any, Dict, List, Optional
 
+import pydantic
 from model_engine_server.common.dtos.model_endpoints import (
     CpuSpecificationType,
     GetModelEndpointV1Response,
@@ -21,7 +22,11 @@ from model_engine_server.domain.entities import (
     ModelEndpointStatus,
     Quantization,
 )
-from pydantic import BaseModel, Field, HttpUrl
+
+if int(pydantic.__version__.split(".")[0]) > 1:
+    from pydantic.v1 import BaseModel, Field, HttpUrl  # pragma: no cover
+else:
+    from pydantic import BaseModel, Field, HttpUrl
 
 
 class CreateLLMModelEndpointV1Request(BaseModel):
@@ -51,10 +56,10 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     metadata: Dict[str, Any]  # TODO: JSON type
     post_inference_hooks: Optional[List[str]]
     endpoint_type: ModelEndpointType = ModelEndpointType.SYNC
-    cpus: CpuSpecificationType
-    gpus: int
-    memory: StorageSpecificationType
-    gpu_type: GpuType
+    cpus: Optional[CpuSpecificationType]
+    gpus: Optional[int]
+    memory: Optional[StorageSpecificationType]
+    gpu_type: Optional[GpuType]
     storage: Optional[StorageSpecificationType]
     optimize_costs: Optional[bool]
     min_workers: int
@@ -186,15 +191,19 @@ class CompletionSyncV1Request(BaseModel):
     """
     guided_json: Optional[Dict[str, Any]] = None
     """
-    JSON schema for guided decoding.
+    JSON schema for guided decoding. Only supported in vllm.
     """
     guided_regex: Optional[str] = None
     """
-    Regex for guided decoding.
+    Regex for guided decoding. Only supported in vllm.
     """
     guided_choice: Optional[List[str]] = None
     """
-    Choices for guided decoding.
+    Choices for guided decoding. Only supported in vllm.
+    """
+    guided_grammar: Optional[str] = None
+    """
+    Context-free grammar for guided decoding. Only supported in vllm.
     """
 
 
@@ -271,6 +280,10 @@ class CompletionStreamV1Request(BaseModel):
     guided_choice: Optional[List[str]] = None
     """
     Choices for guided decoding. Only supported in vllm.
+    """
+    guided_grammar: Optional[str] = None
+    """
+    Context-free grammar for guided decoding. Only supported in vllm.
     """
 
 
@@ -525,6 +538,30 @@ class CreateBatchCompletionsRequest(BaseModel):
     Configuration for tool use.
     NOTE: this config is highly experimental and signature will change significantly in future iterations.
     """
+
+
+class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
+    """
+    Internal model for representing request to the llm engine. This contains additional fields that we want
+    hidden from the DTO exposed to the client.
+    """
+
+    max_gpu_memory_utilization: Optional[float] = Field(default=0.9, le=1.0)
+    """
+    Maximum GPU memory utilization for the batch inference. Default to 90%.
+    """
+
+    @staticmethod
+    def from_api(request: CreateBatchCompletionsRequest) -> "CreateBatchCompletionsEngineRequest":
+        return CreateBatchCompletionsEngineRequest(
+            input_data_path=request.input_data_path,
+            output_data_path=request.output_data_path,
+            content=request.content,
+            model_config=request.model_config,
+            data_parallelism=request.data_parallelism,
+            max_runtime_sec=request.max_runtime_sec,
+            tool_config=request.tool_config,
+        )
 
 
 class CreateBatchCompletionsResponse(BaseModel):

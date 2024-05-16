@@ -102,8 +102,11 @@ def set_env_vars():
     live_endpoint_builder_service.ECR_AWS_PROFILE = "default"
     live_endpoint_builder_service.GIT_TAG = "test_tag"
     live_endpoint_builder_service.ENV = "test_env"
+    live_endpoint_builder_service.WORKSPACE_PATH = ".."
     live_endpoint_builder_service.open = mock_open()
     live_endpoint_builder_service.os.mkdir = Mock()
+    live_endpoint_builder_service.open_wrapper = mock_open()
+    live_endpoint_builder_service.tempfile.mkstemp = Mock(return_value=["", ""])
 
 
 @pytest.mark.asyncio
@@ -114,6 +117,7 @@ async def test_build_endpoint(
     build_endpoint_request_async_runnable_image: BuildEndpointRequest,
     build_endpoint_request_sync_runnable_image: BuildEndpointRequest,
     build_endpoint_request_streaming_runnable_image: BuildEndpointRequest,
+    build_endpoint_request_async_zipartifact_highpri: BuildEndpointRequest,
     endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
     endpoint_builder_service_empty_docker_not_built: LiveEndpointBuilderService,
     fake_model_endpoint_cache_repository: ModelEndpointCacheRepository,
@@ -131,6 +135,7 @@ async def test_build_endpoint(
             build_endpoint_request_async_runnable_image,
             build_endpoint_request_sync_runnable_image,
             build_endpoint_request_streaming_runnable_image,
+            build_endpoint_request_async_zipartifact_highpri,
         ]:
             fake_monitoring_metrics_gateway.reset()
             repo.add_model_endpoint_record(request.model_endpoint_record)

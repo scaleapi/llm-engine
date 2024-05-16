@@ -85,7 +85,7 @@ def create_model_endpoint_request_sync(
         gpus=1,
         memory="8G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage=None,
+        storage="10G",
         min_workers=1,
         max_workers=3,
         per_worker=2,
@@ -189,13 +189,14 @@ def create_llm_model_endpoint_request_sync() -> CreateLLMModelEndpointV1Request:
         gpus=2,
         memory="8G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage=None,
+        storage="10G",
         min_workers=1,
         max_workers=3,
         per_worker=2,
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://mpt-7b",
     )
 
 
@@ -215,14 +216,14 @@ def create_llm_model_endpoint_request_async() -> CreateLLMModelEndpointV1Request
         gpus=2,
         memory="8G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage=None,
+        storage="10G",
         min_workers=0,
         max_workers=3,
         per_worker=2,
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
-        checkpoint_path="s3://test_checkpoint_path",
+        checkpoint_path="s3://llama-2-7b",
     )
 
 
@@ -242,13 +243,14 @@ def create_llm_model_endpoint_request_streaming() -> CreateLLMModelEndpointV1Req
         gpus=2,
         memory="8G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage=None,
+        storage="10G",
         min_workers=1,
         max_workers=3,
         per_worker=2,
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://mpt-7b",
     )
 
 
@@ -256,7 +258,7 @@ def create_llm_model_endpoint_request_streaming() -> CreateLLMModelEndpointV1Req
 def update_llm_model_endpoint_request() -> UpdateLLMModelEndpointV1Request:
     return UpdateLLMModelEndpointV1Request(
         inference_framework_image_tag="latest",
-        checkpoint_path="s3://test_checkpoint_path",
+        checkpoint_path="s3://mpt-7b",
         memory="4G",
         min_workers=0,
         max_workers=1,
@@ -279,13 +281,14 @@ def create_llm_model_endpoint_request_llama_2() -> CreateLLMModelEndpointV1Reque
         gpus=2,
         memory="8G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage=None,
+        storage="10G",
         min_workers=1,
         max_workers=3,
         per_worker=2,
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://llama-2-7b",
     )
 
 
@@ -307,13 +310,14 @@ def create_llm_model_endpoint_text_generation_inference_request_streaming() -> (
         gpus=2,
         memory="8G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage=None,
+        storage="10G",
         min_workers=1,
         max_workers=3,
         per_worker=2,
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://mpt-7b",
     )
 
 
@@ -336,7 +340,7 @@ def create_llm_model_endpoint_text_generation_inference_request_async() -> (
         gpus=2,
         memory="8G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage=None,
+        storage="10G",
         min_workers=1,
         max_workers=3,
         per_worker=2,
@@ -362,7 +366,7 @@ def create_llm_model_endpoint_trt_llm_request_streaming() -> CreateLLMModelEndpo
         gpus=2,
         memory="8G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage=None,
+        storage="10G",
         min_workers=1,
         max_workers=3,
         per_worker=2,
@@ -390,7 +394,7 @@ def create_llm_model_endpoint_trt_llm_request_async() -> CreateLLMModelEndpointV
         gpus=2,
         memory="8G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage=None,
+        storage="10G",
         min_workers=1,
         max_workers=3,
         per_worker=2,
@@ -417,7 +421,7 @@ def create_llm_model_endpoint_request_invalid_model_name() -> CreateLLMModelEndp
         gpus=2,
         memory="8G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage=None,
+        storage="10G",
         min_workers=1,
         max_workers=3,
         per_worker=2,
@@ -444,7 +448,7 @@ def create_llm_model_endpoint_request_invalid_quantization() -> CreateLLMModelEn
         gpus=2,
         memory="8G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage=None,
+        storage="10G",
         min_workers=1,
         max_workers=3,
         per_worker=2,
@@ -485,7 +489,7 @@ def create_batch_completions_request() -> CreateBatchCompletionsRequest:
         ),
         model_config=CreateBatchCompletionsModelConfig(
             model="mpt-7b",
-            checkpoint_path="test_checkpoint_path",
+            checkpoint_path="s3://test_checkpoint_path",
             labels=[],
             num_shards=2,
         ),

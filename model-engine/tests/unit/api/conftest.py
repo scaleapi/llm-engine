@@ -1177,7 +1177,7 @@ def create_llm_model_endpoint_request_sync() -> Dict[str, Any]:
         "gpus": 2,
         "memory": "1G",
         "gpu_type": "nvidia-tesla-t4",
-        "storage": None,
+        "storage": "1Gi",
         "min_workers": 1,
         "max_workers": 5,
         "per_worker": 3,
@@ -1282,7 +1282,7 @@ def create_batch_completions_request() -> Dict[str, Any]:
         },
         "model_config": {
             "model": "mpt-7b",
-            "checkpoint_path": "test_checkpoint_path",
+            "checkpoint_path": "s3://test_checkpoint_path",
             "labels": [],
             "num_shards": 2,
         },

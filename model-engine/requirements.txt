@@ -76,7 +76,9 @@ boto3==1.28.1
     #   celery
     #   kombu
 boto3-stubs[essential]==1.26.67
-    # via -r model-engine/requirements.in
+    # via
+    #   -r model-engine/requirements.in
+    #   boto3-stubs
 botocore==1.31.1
     # via
     #   -r model-engine/requirements.in
@@ -84,7 +86,7 @@ botocore==1.31.1
     #   s3transfer
 botocore-stubs==1.29.165
     # via boto3-stubs
-build==0.8.0
+build==1.0.3
     # via -r model-engine/requirements.in
 bytecode==0.14.2
     # via ddtrace
@@ -93,7 +95,9 @@ cachetools==5.3.1
 cattrs==23.1.2
     # via ddtrace
 celery[redis,sqs,tblib]==5.3.6
-    # via -r model-engine/requirements.in
+    # via
+    #   -r model-engine/requirements.in
+    #   celery
 certifi==2023.7.22
     # via
     #   datadog-api-client
@@ -207,7 +211,7 @@ hypercorn==0.14.4
     # via quart
 hyperframe==6.0.1
     # via h2
-idna==3.4
+idna==3.7
     # via
     #   anyio
     #   httpx
@@ -216,6 +220,7 @@ idna==3.4
 importlib-metadata==6.8.0
     # via
     #   alembic
+    #   build
     #   keyring
     #   quart
     #   twine
@@ -323,8 +328,6 @@ packaging==23.1
     #   marshmallow
     #   msal-extensions
     #   transformers
-pep517==0.13.0
-    # via build
 pg8000==1.29.8
     # via testing-postgresql
 pkginfo==1.9.6
@@ -359,7 +362,7 @@ pycurl==7.45.2
     #   -r model-engine/requirements.in
     #   celery
     #   kombu
-pydantic==1.10.11
+pydantic==1.10.14
     # via
     #   -r model-engine/requirements.in
     #   fastapi
@@ -368,7 +371,11 @@ pygments==2.15.1
     #   readme-renderer
     #   rich
 pyjwt[crypto]==2.8.0
-    # via msal
+    # via
+    #   msal
+    #   pyjwt
+pyproject-hooks==1.0.0
+    # via build
 python-dateutil==2.8.2
     # via
     #   botocore
@@ -472,6 +479,7 @@ sqlalchemy[asyncio]==2.0.4
     # via
     #   -r model-engine/requirements.in
     #   alembic
+    #   sqlalchemy
 sse-starlette==1.6.1
     # via -r model-engine/requirements.in
 sseclient-py==1.7.2
@@ -481,6 +489,7 @@ starlette[full]==0.36.3
     #   -r model-engine/requirements.in
     #   fastapi
     #   sse-starlette
+    #   starlette
 stringcase==1.2.0
     # via -r model-engine/requirements.in
 tblib==2.0.0
@@ -501,7 +510,7 @@ tomli==2.0.1
     # via
     #   build
     #   hypercorn
-    #   pep517
+    #   pyproject-hooks
 tqdm==4.65.0
     # via
     #   -r model-engine/requirements.in

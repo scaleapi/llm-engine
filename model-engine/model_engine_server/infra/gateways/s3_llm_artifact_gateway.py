@@ -1,5 +1,6 @@
+import json
 import os
-from typing import List
+from typing import Any, Dict, List
 
 import boto3
 from model_engine_server.common.config import get_model_cache_directory_name, hmi_config
@@ -71,3 +72,14 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         for obj in s3_bucket.objects.filter(Prefix=prefix):
             model_files.append(f"s3://{bucket}/{obj.key}")
         return model_files
+
+    def get_model_config(self, path: str, **kwargs) -> Dict[str, Any]:
+        s3 = self._get_s3_resource(kwargs)
+        parsed_remote = parse_attachment_url(path, clean_key=False)
+        bucket = parsed_remote.bucket
+        key = os.path.join(parsed_remote.key, "config.json")
+        s3_bucket = s3.Bucket(bucket)
+        filepath = os.path.join("/tmp", key).replace("/", "_")
+        s3_bucket.download_file(key, filepath)
+        with open(filepath, "r") as f:
+            return json.load(f)
