@@ -13,7 +13,9 @@ from model_engine_server.domain.repositories.llm_fine_tune_events_repository imp
 )
 
 # Echoes llm/ia3_finetune/docker_image_fine_tuning_entrypoint.py
-ABS_HF_USER_FINE_TUNED_WEIGHTS_PREFIX = f"https://{os.getenv('ABS_ACCOUNT_NAME')}.blob.core.windows.net/hosted-model-inference/fine_tuned_weights"
+ABS_HF_USER_FINE_TUNED_WEIGHTS_PREFIX = (
+    f"azure://{os.getenv('ABS_CONTAINER_NAME')}/hosted-model-inference/fine_tuned_weights"
+)
 
 
 class ABSFileLLMFineTuneEventsRepository(LLMFineTuneEventsRepository):

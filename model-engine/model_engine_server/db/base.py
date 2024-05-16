@@ -50,9 +50,7 @@ def get_engine_url(env: Optional[str] = None, read_only: bool = True, sync: bool
         if infra_config().cloud_provider == "azure":
             client = SecretClient(
                 vault_url=f"https://{os.environ.get('KEYVAULT_NAME')}.vault.azure.net",
-                credential=ManagedIdentityCredential(
-                    client_id=os.getenv("AZURE_KEYVAULT_IDENTITY_CLIENT_ID")
-                ),  # uses a different managed identity than the default
+                credential=ManagedIdentityCredential(client_id=os.getenv("AZURE_CLIENT_ID")),
             )
             db = client.get_secret(key_file).value
             user = os.environ.get("AZURE_IDENTITY_NAME")

@@ -252,6 +252,8 @@ env:
     value: {{ .Values.azure.object_id }}
   - name: ABS_ACCOUNT_NAME
     value: {{ .Values.azure.abs_account_name }}
+  - name: ABS_CONTAINER_NAME
+    value: {{ .Values.azure.abs_container_name }}
   {{- end }}
 {{- end }}
 
@@ -274,6 +276,8 @@ env:
   {{- if .Values.azure}}
   - name: ABS_ACCOUNT_NAME
     value: {{ .Values.azure.abs_account_name }}
+  - name: ABS_CONTAINER_NAME
+    value: {{ .Values.azure.abs_container_name }}
   - name: SERVICEBUS_NAMESPACE
     value: {{ .Values.azure.servicebus_namespace }}
   {{- end }}
@@ -347,12 +351,12 @@ env:
     value: {{ .Values.azure.client_id }}
   - name: AZURE_OBJECT_ID
     value: {{ .Values.azure.object_id }}
-  - name: AZURE_KEYVAULT_IDENTITY_CLIENT_ID
-    value: {{ .Values.azure.keyvault_identity_client_id }}
   - name: KEYVAULT_NAME
     value: {{ .Values.azure.keyvault_name }}
   - name: ABS_ACCOUNT_NAME
     value: {{ .Values.azure.abs_account_name }}
+  - name: ABS_CONTAINER_NAME
+    value: {{ .Values.azure.abs_container_name }}
   - name: SERVICEBUS_NAMESPACE
     value: {{ .Values.azure.servicebus_namespace }}
   {{- end }}
