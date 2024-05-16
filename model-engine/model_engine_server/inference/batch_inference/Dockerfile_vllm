@@ -1,37 +1,3 @@
-#################### BASE BUILD IMAGE ####################
-FROM nvidia/cuda:12.1.0-devel-ubuntu22.04 AS dev
-RUN apt-get update -y \
-    && apt-get install -y python3-pip git
-# Workaround for https://github.com/openai/triton/issues/2507 and
-# https://github.com/pytorch/pytorch/issues/107960 -- hopefully
-# this won't be needed for future versions of this docker image
-# or future versions of triton.
-RUN ldconfig /usr/local/cuda-12.1/compat/
-WORKDIR /workspace
-
-COPY model-engine/model_engine_server/inference/batch_inference/requirements-build.txt requirements-build.txt
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements-build.txt
-#################### BASE BUILD IMAGE ####################
-
-#################### FLASH_ATTENTION Build IMAGE ####################
-FROM dev as flash-attn-builder
-# max jobs used for build
-ARG max_jobs=2
-ENV MAX_JOBS=${max_jobs}
-# flash attention version
-ARG flash_attn_version=v2.5.6
-ENV FLASH_ATTN_VERSION=${flash_attn_version}
-
-WORKDIR /usr/src/flash-attention-v2
-
-# Download the wheel or build it if a pre-compiled release doesn't exist
-RUN pip --verbose wheel flash-attn==${FLASH_ATTN_VERSION} \
-    --no-build-isolation --no-deps --no-cache-dir
-
-#################### FLASH_ATTENTION Build IMAGE ####################
-
-#################### Runtime IMAGE ####################
 FROM nvcr.io/nvidia/pytorch:23.09-py3
 
 RUN apt-get update && \
@@ -39,10 +5,6 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
-
-# Install flash attention (from pre-built wheel)
-RUN --mount=type=bind,from=flash-attn-builder,src=/usr/src/flash-attention-v2,target=/usr/src/flash-attention-v2 \
-    pip install /usr/src/flash-attention-v2/*.whl --no-cache-dir
 
 RUN pip uninstall torch -y
 RUN pip install torch==2.1.1 --index-url https://download.pytorch.org/whl/cu121
@@ -59,5 +21,3 @@ RUN pip install -r requirements.txt
 COPY model-engine /workspace/model-engine
 RUN pip install -e /workspace/model-engine
 COPY model-engine/model_engine_server/inference/batch_inference/vllm_batch.py /workspace/vllm_batch.py
-
-#################### Runtime IMAGE ####################
