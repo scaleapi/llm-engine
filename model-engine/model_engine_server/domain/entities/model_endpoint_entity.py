@@ -2,6 +2,7 @@ import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
+import pydantic
 from fastapi.openapi.models import OpenAPI
 from model_engine_server.common import dict_not_none
 from model_engine_server.common.serialization_utils import b64_to_python_json, python_json_to_b64
@@ -12,7 +13,12 @@ from model_engine_server.domain.entities.common_types import (
 from model_engine_server.domain.entities.gpu_type import GpuType
 from model_engine_server.domain.entities.model_bundle_entity import ModelBundle
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
-from pydantic import BaseModel, Field
+
+if int(pydantic.__version__.split(".")[0]) > 1:
+    from pydantic.v1 import BaseModel, Field  # pragma: no cover
+else:
+    from pydantic import BaseModel, Field
+
 from typing_extensions import Literal
 
 ModelEndpointsSchema = OpenAPI

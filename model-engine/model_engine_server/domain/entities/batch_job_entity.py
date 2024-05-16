@@ -2,10 +2,15 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, Optional
 
+import pydantic
 from model_engine_server.domain.entities.model_bundle_entity import ModelBundle
 from model_engine_server.domain.entities.model_endpoint_entity import ModelEndpoint
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
-from pydantic import BaseModel
+
+if int(pydantic.__version__.split(".")[0]) > 1:
+    from pydantic.v1 import BaseModel  # pragma: no cover
+else:
+    from pydantic import BaseModel
 
 
 class BatchJobStatus(str, Enum):

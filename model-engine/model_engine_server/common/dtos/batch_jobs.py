@@ -4,6 +4,7 @@ DTOs for the batch job abstraction.
 from datetime import datetime, timedelta
 from typing import Any, Collection, Dict, List, Optional
 
+import pydantic
 from model_engine_server.common import dict_not_none
 from model_engine_server.domain.entities import (
     BatchJobSerializationFormat,
@@ -13,7 +14,11 @@ from model_engine_server.domain.entities import (
     GpuType,
     StorageSpecificationType,
 )
-from pydantic import BaseModel, root_validator
+
+if int(pydantic.__version__.split(".")[0]) > 1:
+    from pydantic.v1 import BaseModel, root_validator  # pragma: no cover
+else:
+    from pydantic import BaseModel, root_validator
 
 
 class CreateBatchJobResourceRequests(BaseModel):

@@ -3,9 +3,15 @@ from abc import ABC
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
+import pydantic
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
-from pydantic import BaseModel, Field, root_validator
+
+if int(pydantic.__version__.split(".")[0]) > 1:
+    from pydantic.v1 import BaseModel, Field, root_validator  # pragma: no cover
+else:
+    from pydantic import BaseModel, Field, root_validator
+
 from typing_extensions import Literal
 
 
