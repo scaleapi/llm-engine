@@ -41,6 +41,7 @@ class GpuType(str, Enum):
     NVIDIA_AMPERE_A10 = "nvidia-ampere-a10"
     NVIDIA_AMPERE_A100 = "nvidia-ampere-a100"
     NVIDIA_AMPERE_A100E = "nvidia-ampere-a100e"
+    NVIDIA_HOPPER_H100 = "nvidia-hopper-h100"
 
 
 class ModelEndpointType(str, Enum):

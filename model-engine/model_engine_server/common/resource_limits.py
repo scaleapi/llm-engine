@@ -34,6 +34,7 @@ A10_INSTANCE_LIMITS = dict(
 )  # Should we allow multi-gpu instances? This allows the largest single-gpu g5dn instance.
 # p4d.24xlarge, p4de.24xlarge
 A100_INSTANCE_LIMITS = dict(cpus=95, memory="1000Gi")
+H100_INSTANCE_LIMITS = dict(cpus=191, memory="2000Gi")
 STORAGE_LIMIT = "500G"  # TODO: figure out an actual limit.
 REQUESTS_BY_GPU_TYPE = {
     None: CPU_INSTANCE_LIMITS,
@@ -41,6 +42,7 @@ REQUESTS_BY_GPU_TYPE = {
     GpuType.NVIDIA_AMPERE_A10: A10_INSTANCE_LIMITS,
     GpuType.NVIDIA_AMPERE_A100: A100_INSTANCE_LIMITS,
     GpuType.NVIDIA_AMPERE_A100E: A100_INSTANCE_LIMITS,
+    GpuType.NVIDIA_HOPPER_H100: H100_INSTANCE_LIMITS,
 }
 
 FORWARDER_CPU_USAGE = 1

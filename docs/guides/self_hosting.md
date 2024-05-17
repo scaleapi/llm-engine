@@ -21,8 +21,9 @@ Additionally, they must have the `k8s.amazonaws.com/accelerator` label set appro
 | --- | --- |
 | g4dn | nvidia-tesla-t4 |
 | g5 | nvidia-tesla-a10 |
-| p4d | nvidia-tesla-a100 |
-| p4de | nvidia-tesla-a100e |
+| p4d | nvidia-ampere-a100 |
+| p4de | nvidia-ampere-a100e |
+| p5 | nvidia-hopper-h100 |
 
 We also recommend setting the following taint on your GPU nodes to prevent pods requiring GPU resources from being scheduled on them:
 - { key = "nvidia.com/gpu", value = "true", effect = "NO_SCHEDULE" }
