@@ -148,6 +148,7 @@ class Model(APIEngine):
                 - ``nvidia-ampere-a10``
                 - ``nvidia-ampere-a100``
                 - ``nvidia-ampere-a100e``
+                - ``nvidia-hopper-h100``
 
             high_priority (`Optional[bool]`):
                 Either ``True`` or ``False``. Enabling this will allow the created
@@ -531,6 +532,7 @@ class Model(APIEngine):
                 - ``nvidia-ampere-a10``
                 - ``nvidia-ampere-a100``
                 - ``nvidia-ampere-a100e``
+                - ``nvidia-hopper-h100``
 
             high_priority (`Optional[bool]`):
                 Either ``True`` or ``False``. Enabling this will allow the created
