@@ -1,0 +1,8 @@
+# Copied from https://github.com/vllm-project/vllm/blob/main/requirements-build.txt
+# Needed to build flash-attn into docker image
+cmake>=3.21
+ninja
+packaging
+setuptools>=49.4.0
+torch==2.3.0
+wheel
