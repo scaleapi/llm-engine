@@ -879,6 +879,10 @@ class CreateLLMModelEndpointV1UseCase:
             max_workers=request.max_workers,
             endpoint_type=request.endpoint_type,
         )
+        if request.gpu_type == GpuType.NVIDIA_AMPERE_A100E:
+            raise ObjectHasInvalidValueException(
+                "We have migrated A100 usage to H100. Please request for H100 instead!"
+            )
         if request.labels is None:
             raise EndpointLabelsException("Endpoint labels cannot be None!")
         validate_labels(request.labels)
