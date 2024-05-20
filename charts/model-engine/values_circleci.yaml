@@ -8,6 +8,7 @@ replicaCount:
   balloonA100: 0
   balloonCpu: 0
   balloonT4: 0
+  balloonH100: 0
 
 # tag needs to be set dynamically every time. Usually it is set to the SHA1 hash of the git
 # commit from which the image was built.
