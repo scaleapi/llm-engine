@@ -2286,25 +2286,25 @@ def _infer_hardware(
         gpus = 2
         memory = "160Gi"
         storage = "160Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+        gpu_type = GpuType.NVIDIA_HOPPER_H100
     elif min_memory_gb <= 320:
         cpus = "40"
         gpus = 4
         memory = "320Gi"
         storage = "320Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+        gpu_type = GpuType.NVIDIA_HOPPER_H100
     elif min_memory_gb <= 640:
         cpus = "80"
         gpus = 8
         memory = "800Gi"
         storage = "460Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+        gpu_type = GpuType.NVIDIA_HOPPER_H100
     elif "llama-3-8b-instruct-262k" in model_name:
         cpus = "20"
         gpus = 2
         memory = "40Gi"
         storage = "40Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+        gpu_type = GpuType.NVIDIA_HOPPER_H100
     else:
         raise ObjectHasInvalidValueException(f"Unable to infer hardware for {model_name}.")
 

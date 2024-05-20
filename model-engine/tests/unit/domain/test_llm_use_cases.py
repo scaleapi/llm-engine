@@ -1848,7 +1848,7 @@ def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["MixtralForCausalLM"],
@@ -1879,7 +1879,7 @@ def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.gpus == 8
     assert hardware.memory == "800Gi"
     assert hardware.storage == "460Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     fake_llm_artifact_gateway.model_config = {
         "_name_or_path": "meta-llama/Llama-2-7b-hf",
@@ -2015,7 +2015,7 @@ def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["LlamaForCausalLM"],
@@ -2043,7 +2043,7 @@ def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     # (TODO) figure out how to calculate memory for llama-3-8b-instruct-262k
     # fake_llm_artifact_gateway.model_config = {
@@ -2073,7 +2073,7 @@ def test_infer_hardware(fake_llm_artifact_gateway):
     # assert hardware.gpus == 2
     # assert hardware.memory == "160Gi"
     # assert hardware.storage == "160Gi"
-    # assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    # assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     with pytest.raises(ObjectHasInvalidValueException):
         _infer_hardware(fake_llm_artifact_gateway, "unsupported_model", "")
@@ -2095,7 +2095,7 @@ def test_fill_hardware_info(fake_llm_artifact_gateway):
     assert request.gpus == 2
     assert request.memory == "160Gi"
     assert request.storage == "160Gi"
-    assert request.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    assert request.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     request = CreateLLMModelEndpointV1Request(
         name="mixtral-8x7b",
