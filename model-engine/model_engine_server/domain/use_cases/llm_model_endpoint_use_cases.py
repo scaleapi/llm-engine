@@ -879,8 +879,7 @@ class CreateLLMModelEndpointV1UseCase:
             max_workers=request.max_workers,
             endpoint_type=request.endpoint_type,
         )
-        # pragma: no cover
-        if request.gpu_type == GpuType.NVIDIA_AMPERE_A100E:
+        if request.gpu_type == GpuType.NVIDIA_AMPERE_A100E:  # pragma: no cover
             raise ObjectHasInvalidValueException(
                 "We have migrated A100 usage to H100. Please request for H100 instead!"
             )
