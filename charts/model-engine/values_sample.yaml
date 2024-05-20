@@ -81,6 +81,8 @@ replicaCount:
   balloonCpu: 0
   # balloonT4 is a low priority pod deployment for T4 GPU nodes
   balloonT4: 0
+  # balloonH100 is a low priority pod deployment for H100 GPU nodes
+  balloonH100: 0
 
 # autoscaling is the autoscaling configuration for LLM Engine server deployments (e.g gateway, cache, and builder deployments)
 autoscaling:
@@ -250,6 +252,27 @@ imageCache:
     - name: t4
       nodeSelector:
         k8s.amazonaws.com/accelerator: nvidia-tesla-t4
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: h100
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-hopper-h100
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: h100-mig-1g-20gb
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-hopper-h100-mig-1g-20gb
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: h100-mig-3g-40gb
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-hopper-h100-mig-3g-40gb
       tolerations:
         - key: "nvidia.com/gpu"
           operator: "Exists"
