@@ -763,6 +763,7 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
             "llama-7b/special_tokens_map.json": ["llama-7b/special_tokens_map.json"],
             "llama-2-7b": ["model-fake.safetensors"],
             "mpt-7b": ["model-fake.safetensors"],
+            "llama-3-70b": ["model-fake.safetensors"],
         }
         self.urls = {"filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"}
         self.model_config = {

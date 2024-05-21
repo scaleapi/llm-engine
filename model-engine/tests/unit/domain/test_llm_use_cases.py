@@ -80,6 +80,7 @@ async def test_create_model_endpoint_use_case_success(
     create_llm_model_endpoint_request_sync: CreateLLMModelEndpointV1Request,
     create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
     create_llm_model_endpoint_request_llama_2: CreateLLMModelEndpointV1Request,
+    create_llm_model_endpoint_request_llama_3_70b: CreateLLMModelEndpointV1Request,
 ):
     fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
     bundle_use_case = CreateModelBundleV2UseCase(
@@ -181,6 +182,16 @@ async def test_create_model_endpoint_use_case_success(
         owner=user.team_id, name=create_llm_model_endpoint_request_llama_2.name
     )
     assert "--max-total-tokens" in bundle.flavor.command[-1] and "4096" in bundle.flavor.command[-1]
+
+    response_5 = await use_case.execute(
+        user=user, request=create_llm_model_endpoint_request_llama_3_70b
+    )
+    assert response_5.endpoint_creation_task_id
+    assert isinstance(response_5, CreateLLMModelEndpointV1Response)
+    bundle = await fake_model_bundle_repository.get_latest_model_bundle_by_name(
+        owner=user.team_id, name=create_llm_model_endpoint_request_llama_3_70b.name
+    )
+    assert " --gpu-memory-utilization 0.95" in bundle.flavor.command[-1]
 
 
 @pytest.mark.asyncio
