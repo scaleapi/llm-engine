@@ -677,6 +677,9 @@ class CreateLLMModelBundleV1UseCase:
         if hmi_config.sensitive_log_mode:  # pragma: no cover
             subcommands[-1] = subcommands[-1] + " --disable-log-requests"
 
+        if "llama-3-70b" in model_name:
+            subcommands[-1] = subcommands[-1] + " --gpu-memory-utilization 0.95 --enforce-eager"
+
         command = [
             "/bin/bash",
             "-c",
