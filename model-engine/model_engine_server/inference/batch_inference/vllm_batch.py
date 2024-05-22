@@ -479,7 +479,8 @@ def get_gpu_free_memory():  # pragma: no cover
         ).stdout
         gpu_memory = [int(x) for x in output.strip().split("\n")]
         return gpu_memory
-    except subprocess.CalledProcessError:
+    except Exception as e:
+        print(f"Error getting GPU memory: {e}")
         return None
 
 
@@ -494,11 +495,14 @@ def check_unknown_startup_memory_usage():  # pragma: no cover
             print(
                 f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
             )
-            # nosemgrep
-            output = subprocess.run(
-                ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
-            ).stdout
-            print(f"Processes using GPU: {output}")
+            try:
+                # nosemgrep
+                output = subprocess.run(
+                    ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
+                ).stdout
+                print(f"Processes using GPU: {output}")
+            except Exception as e:
+                print(f"Error getting processes using GPU: {e}")
 
 
 if __name__ == "__main__":
