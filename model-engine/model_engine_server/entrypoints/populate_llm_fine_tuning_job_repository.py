@@ -23,36 +23,12 @@ from model_engine_server.infra.repositories import (
     S3FileLLMFineTuneRepository,
 )
 
-FT_IMAGE_TAG = "ad5fd4eb91926911325a36db755bf3847067e1f2"
+FT_IMAGE_TAG = "af227949e811abfb16e2fee041c7e683decf107e"
 
 BUNDLE_NAME_BY_MODEL = {
     "7b_or_13b": "fine-tune-upload-safetensors",
     "llama_2_34b": "fine-tune-upload-safetensors-34b",
     "llama_2_70b": "fine-tune-upload-safetensors-70b",
-}
-
-RESOURCE_REQUESTS_BY_MODEL = {
-    "7b_or_13b": {
-        "cpus": 40,
-        "memory": "160Gi",
-        "storage": "94Gi",
-        "gpus": 4,
-        "gpu_type": "nvidia-ampere-a10",
-    },
-    "llama_2_34b": {
-        "cpus": 60,
-        "memory": "400Gi",
-        "storage": "300Gi",
-        "gpus": 4,
-        "gpu_type": "nvidia-ampere-a100e",
-    },
-    "llama_2_70b": {
-        "cpus": 80,
-        "memory": "1000Gi",
-        "storage": "500Gi",
-        "gpus": 8,
-        "gpu_type": "nvidia-ampere-a100e",
-    },
 }
 
 DEFAULT_7B_MODEL_CONFIG = {
@@ -89,22 +65,7 @@ DEFAULT_13B_MODEL_CONFIG = {
     "endpoint_type": "streaming",
 }
 
-DEFAULT_34B_MODEL_CONFIG = {
-    "source": "hugging_face",
-    "inference_framework": "vllm",
-    "inference_framework_image_tag": "latest",
-    "num_shards": 4,
-    "quantize": None,
-    "cpus": 32,
-    "memory": "80Gi",
-    "storage": "100Gi",
-    "gpus": 4,
-    "gpu_type": "nvidia-ampere-a10",
-    "min_workers": 0,
-    "max_workers": 1,
-    "per_worker": 10,
-    "endpoint_type": "streaming",
-}
+# DEFAULT_34B_MODEL_CONFIG defined below because it depends on cloud_provider
 
 DEFAULT_70B_MODEL_CONFIG = {
     "source": "hugging_face",
@@ -124,7 +85,31 @@ DEFAULT_70B_MODEL_CONFIG = {
 }
 
 
-def create_model_bundle(url, model_type, image_tag):
+def create_model_bundle(cloud_provider, url, model_type, image_tag):
+    RESOURCE_REQUESTS_BY_MODEL = {
+        "7b_or_13b": {
+            "cpus": 40,
+            "memory": "160Gi",
+            "storage": "94Gi",
+            "gpus": 2 if cloud_provider == "azure" else 4,
+            "gpu_type": "nvidia-ampere-a10",
+        },
+        "llama_2_34b": {
+            "cpus": 60,
+            "memory": "400Gi",
+            "storage": "300Gi",
+            "gpus": 4,
+            "gpu_type": "nvidia-ampere-a100e",
+        },
+        "llama_2_70b": {
+            "cpus": 80,
+            "memory": "1000Gi",
+            "storage": "500Gi",
+            "gpus": 8,
+            "gpu_type": "nvidia-ampere-a100e",
+        },
+    }
+
     name = BUNDLE_NAME_BY_MODEL[model_type]
     resource_requests = RESOURCE_REQUESTS_BY_MODEL[model_type]
 
@@ -156,6 +141,7 @@ def create_model_bundle(url, model_type, image_tag):
 
 async def main(args):
     env = args.env
+    cloud_provider = args.cloud_provider
     url = args.url
     repository = args.repository or hmi_config.cloud_file_llm_fine_tune_repository
     initialize_repository = args.initialize_repository
@@ -169,13 +155,13 @@ async def main(args):
     if initialize_repository:
         await repo.initialize_data()
 
-    lora_7b_or_13b_bun = create_model_bundle(url, "7b_or_13b", FT_IMAGE_TAG)
+    lora_7b_or_13b_bun = create_model_bundle(cloud_provider, url, "7b_or_13b", FT_IMAGE_TAG)
     print(f"lora_7b_or_13b bundle id: {lora_7b_or_13b_bun}")
 
-    lora_llama_2_34b_bun = create_model_bundle(url, "llama_2_34b", FT_IMAGE_TAG)
+    lora_llama_2_34b_bun = create_model_bundle(cloud_provider, url, "llama_2_34b", FT_IMAGE_TAG)
     print(f"lora_34b_bun bundle id: {lora_llama_2_34b_bun}")
 
-    lora_llama_2_70b_bun = create_model_bundle(url, "llama_2_70b", FT_IMAGE_TAG)
+    lora_llama_2_70b_bun = create_model_bundle(cloud_provider, url, "llama_2_70b", FT_IMAGE_TAG)
     print(f"llama_2_70b bundle id: {lora_llama_2_70b_bun}")
 
     if env == "training":
@@ -415,6 +401,23 @@ async def main(args):
     )
     print("Wrote codellama-13b-instruct with lora")
 
+    DEFAULT_34B_MODEL_CONFIG = {
+        "source": "hugging_face",
+        "inference_framework": "vllm",
+        "inference_framework_image_tag": "latest",
+        "num_shards": 2 if cloud_provider == "azure" else 4,
+        "quantize": None,
+        "cpus": 32,
+        "memory": "80Gi",
+        "storage": "100Gi",
+        "gpus": 2 if cloud_provider == "azure" else 4,
+        "gpu_type": "nvidia-ampere-a10",
+        "min_workers": 0,
+        "max_workers": 1,
+        "per_worker": 10,
+        "endpoint_type": "streaming",
+    }
+
     await repo.write_job_template_for_model(
         "codellama-34b",
         "lora",
@@ -450,6 +453,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line arguments.")
     parser.add_argument(
         "-e", "--env", choices=["training", "prod"], help="Environment", required=True
+    )
+    parser.add_argument(
+        "--cloud-provider",
+        choices=["aws", "azure"],
+        help="Cloud provider",
+        required=False,
+        default="aws",
     )
     parser.add_argument("--url", help="Url to the model-engine gateway", required=True)
     parser.add_argument(

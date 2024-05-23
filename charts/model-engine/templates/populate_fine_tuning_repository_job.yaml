@@ -36,6 +36,10 @@ spec:
             - model_engine_server.entrypoints.populate_llm_fine_tuning_job_repository
             - -e
             - prod
+            {{- if .Values.azure }}
+            - --cloud-provider
+            - azure
+            {{- end }}
             - --url
             - http://model-engine.{{ default "default" .Values.gatewayNamespace }}.svc.cluster.local
             - --initialize-repository
