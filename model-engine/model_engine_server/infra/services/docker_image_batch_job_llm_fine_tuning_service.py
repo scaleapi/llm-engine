@@ -94,6 +94,7 @@ class DockerImageBatchJobLLMFineTuningService(LLMFineTuningService):
                 s3_bucket=infra_config().s3_bucket,
                 azure_client_id=os.getenv("AZURE_CLIENT_ID"),
                 abs_account_name=os.getenv("ABS_ACCOUNT_NAME"),
+                abs_container_name=os.getenv("ABS_CONTAINER_NAME"),
                 user_id=owner,
                 training_file=training_file,
                 validation_file=validation_file,
