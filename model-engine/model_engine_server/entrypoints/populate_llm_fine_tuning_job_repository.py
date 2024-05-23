@@ -23,7 +23,7 @@ from model_engine_server.infra.repositories import (
     S3FileLLMFineTuneRepository,
 )
 
-FT_IMAGE_TAG = "af227949e811abfb16e2fee041c7e683decf107e"
+FT_IMAGE_TAG = "00f0edae308d9cd5d9fc24fbd4ee0180e8edc738"
 
 BUNDLE_NAME_BY_MODEL = {
     "7b_or_13b": "fine-tune-upload-safetensors",
