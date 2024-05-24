@@ -8,6 +8,7 @@ from typing import Optional, Sequence
 
 import yaml
 from azure.identity import DefaultAzureCredential
+from model_engine_server.core.aws.secrets import get_key_file
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 
@@ -68,8 +69,12 @@ class HostedModelInferenceServiceConfig:
     user_inference_tensorflow_repository: str
     docker_image_layer_cache_repository: str
     sensitive_log_mode: bool
+    # Exactly one of the following three must be specified
     cache_redis_aws_url: Optional[str] = None  # also using this to store sync autoscaling metrics
     cache_redis_azure_host: Optional[str] = None
+    cache_redis_aws_secret_name: Optional[
+        str
+    ] = None  # Not an env var because the redis cache info is already here
 
     @classmethod
     def from_yaml(cls, yaml_path):
@@ -81,6 +86,10 @@ class HostedModelInferenceServiceConfig:
     def cache_redis_url(self) -> str:
         if self.cache_redis_aws_url:
             return self.cache_redis_aws_url
+        elif self.cache_redis_aws_secret_name:
+            assert infra_config().cloud_provider == "aws"
+            creds = get_key_file(self.cache_redis_aws_secret_name)  # TODO which role?
+            return creds["url"]  # or something idk
 
         assert self.cache_redis_azure_host and infra_config().cloud_provider == "azure"
         username = os.getenv("AZURE_OBJECT_ID")
