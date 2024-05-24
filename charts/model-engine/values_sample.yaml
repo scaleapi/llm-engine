@@ -165,9 +165,12 @@ config:
       endpoint_namespace: llm-engine
       # cache_redis_aws_url is the full url for the redis cluster you wish to connect,
       # cache_redis_azure_host is the redis cluster host when using cloud_provider azure
-      # one of cache_redis_aws_url and cache_redis_azure_host must be provided
+      # cache_redis_aws_secret_name is an AWS secret that contains the Redis credentials.
+      # It has a single field "url" with the full URL of the Redis cluster.
+      # exactly one of cache_redis_aws_url, cache_redis_azure_host, or cache_redis_aws_secret_name must be provided
       cache_redis_aws_url: redis://llm-engine-prod-cache.use1.cache.amazonaws.com:6379/15
       cache_redis_azure_host: llm-engine-cache.redis.cache.windows.net:6380
+      cache_redis_aws_secret_name: sample-prod/redis-credentials
       # s3_file_llm_fine_tuning_job_repository [required] is the S3 URI for the S3 bucket/key that you wish to save fine-tuned assests
       s3_file_llm_fine_tuning_job_repository: "s3://llm-engine/llm-ft-job-repository"
       # dd_trace_enabled specifies whether to enable datadog tracing, datadog must be installed in the cluster
