@@ -85,9 +85,16 @@ class HostedModelInferenceServiceConfig:
     @property
     def cache_redis_url(self) -> str:
         if self.cache_redis_aws_url:
+            assert infra_config().cloud_provider == "aws", "cache_redis_aws_url is only for AWS"
+            if self.cache_redis_aws_secret_name:
+                logger.warning(
+                    "Both cache_redis_aws_url and cache_redis_aws_secret_name are set. Using cache_redis_aws_url"
+                )
             return self.cache_redis_aws_url
         elif self.cache_redis_aws_secret_name:
-            assert infra_config().cloud_provider == "aws"
+            assert (
+                infra_config().cloud_provider == "aws"
+            ), "cache_redis_aws_secret_name is only for AWS"
             creds = get_key_file(self.cache_redis_aws_secret_name)  # TODO which role?
             return creds["url"]  # or something idk
 
