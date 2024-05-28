@@ -261,6 +261,7 @@ response = Completion.create(
 
 print(response.json())
 # {"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}
+```
 
 ## Which model should I use?
 
