@@ -168,7 +168,7 @@ config:
       # cache_redis_aws_url is the full url for the redis cluster you wish to connect,
       # cache_redis_azure_host is the redis cluster host when using cloud_provider azure
       # cache_redis_aws_secret_name is an AWS secret that contains the Redis credentials.
-      # It has a single field "url" with the full URL of the Redis cluster.
+      # It has a single field "cache-url" with the full URL of the Redis cluster (including db number).
       # exactly one of cache_redis_aws_url, cache_redis_azure_host, or cache_redis_aws_secret_name must be provided
       cache_redis_aws_url: redis://llm-engine-prod-cache.use1.cache.amazonaws.com:6379/15
       cache_redis_azure_host: llm-engine-cache.redis.cache.windows.net:6380

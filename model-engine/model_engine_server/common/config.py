@@ -96,7 +96,7 @@ class HostedModelInferenceServiceConfig:
                 infra_config().cloud_provider == "aws"
             ), "cache_redis_aws_secret_name is only for AWS"
             creds = get_key_file(self.cache_redis_aws_secret_name)  # TODO which role?
-            return creds["url"]  # or something idk
+            return creds["cache-url"]
 
         assert self.cache_redis_azure_host and infra_config().cloud_provider == "azure"
         username = os.getenv("AZURE_OBJECT_ID")
