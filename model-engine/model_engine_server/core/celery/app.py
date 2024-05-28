@@ -10,6 +10,7 @@ from celery.app import backends
 from celery.app.control import Inspect
 from celery.result import AsyncResult
 from model_engine_server.core.aws.roles import session
+from model_engine_server.core.aws.secrets import get_key_file
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import (
     CustomJSONFormatter,
@@ -195,6 +196,17 @@ def get_redis_host_port():
 
 
 def get_redis_endpoint(db_index: int = 0) -> str:
+    if infra_config().redis_aws_secret_name is not None:
+        logger.info("Using infra_config().redis_aws_secret_name for Redis endpoint")
+        creds = get_key_file(infra_config().redis_aws_secret_name)  # Use default role
+        scheme = creds.get("scheme", "redis://")
+        host = creds["host"]
+        port = creds["port"]
+        query_params = creds.get("query_params", "")
+        auth_token = creds.get("auth_token", None)
+        if auth_token is not None:
+            return f"{scheme}:{auth_token}@{host}:{port}/{db_index}{query_params}"
+        return f"{scheme}{host}:{port}/{db_index}{query_params}"
     host, port = get_redis_host_port()
     auth_token = os.getenv("REDIS_AUTH_TOKEN")
     if auth_token:
