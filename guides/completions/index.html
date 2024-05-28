@@ -396,22 +396,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#request_id-34621b44-c655-402c-a459-f108b3e49b12-output-text-john-num_prompt_tokens-6-num_completion_tokens-4-tokens-none" class="md-nav__link">
-    {"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}
-  </a>
-  
-    <nav class="md-nav" aria-label="{"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#which-model-should-i-use" class="md-nav__link">
     Which model should I use?
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -663,22 +650,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#request_id-34621b44-c655-402c-a459-f108b3e49b12-output-text-john-num_prompt_tokens-6-num_completion_tokens-4-tokens-none" class="md-nav__link">
-    {"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}
-  </a>
-  
-    <nav class="md-nav" aria-label="{"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#which-model-should-i-use" class="md-nav__link">
     Which model should I use?
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -696,6 +670,8 @@
                 
                   
 
+
+  <h1>Completions</h1>
 
 <p>Language Models are trained to predict natural language and provide text outputs as a response
 to their inputs. The inputs are called <em>prompts</em> and outputs are referred to as <em>completions</em>.
@@ -950,17 +926,19 @@ It enforces certain token generation patterns by tinkering with the sampling log
 <div class="tabbed-block"></div>
 </div>
 </div>
-<p>```python
-from llmengine import Completion</p>
-<p>response = Completion.create(
-    model="llama-2-7b",
-    prompt="Hello, my name is",
-    max_new_tokens=10,
-    temperature=0.2,
-    guided_grammar="start: \"John\""
-)</p>
-<p>print(response.json())</p>
-<h1 id="request_id-34621b44-c655-402c-a459-f108b3e49b12-output-text-john-num_prompt_tokens-6-num_completion_tokens-4-tokens-none">{"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}<a class="headerlink" href="#request_id-34621b44-c655-402c-a459-f108b3e49b12-output-text-john-num_prompt_tokens-6-num_completion_tokens-4-tokens-none" title="Permanent link">&para;</a></h1>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>response <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    max_new_tokens<span style="color: #666666">=10</span>,
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    guided_grammar<span style="color: #666666">=</span><span style="color: #BA2121">&quot;start: </span><span style="color: #AA5D1F; font-weight: bold">\&quot;</span><span style="color: #BA2121">John</span><span style="color: #AA5D1F; font-weight: bold">\&quot;</span><span style="color: #BA2121">&quot;</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>)
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span style="color: #3D7B7B; font-style: italic"># {&quot;request_id&quot;: &quot;34621b44-c655-402c-a459-f108b3e49b12&quot;, &quot;output&quot;: {&quot;text&quot;: &quot;John&quot;, &quot;num_prompt_tokens&quot;: 6, &quot;num_completion_tokens&quot;: 4, &quot;tokens&quot;: None}}</span>
+</code></pre></div>
 <h2 id="which-model-should-i-use">Which model should I use?<a class="headerlink" href="#which-model-should-i-use" title="Permanent link">&para;</a></h2>
 <p>See the <a href="../../model_zoo">Model Zoo</a> for more information on best practices for which model to use for Completions.</p>
 
