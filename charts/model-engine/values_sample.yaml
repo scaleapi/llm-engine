@@ -158,7 +158,17 @@ config:
       docker_repo_prefix: "000000000000.dkr.ecr.us-east-1.amazonaws.com"
       # redis_host [required if redis_aws_secret_name not present] is the hostname of the redis cluster you wish to connect
       redis_host: llm-engine-prod-cache.use1.cache.amazonaws.com
-      # redis_aws_secret_name [optional] is the AWS secret that contains the url of the Redis cluster.
+      # redis_aws_secret_name [optional] is the AWS secret that contains the connection info of the Redis cluster.
+      # The information provided should be as follows: 
+      # scheme: either redis:// or rediss://, will default to redis://
+      # auth_token (optional): an auth token for the Redis cluster
+      # host: the hostname of the Redis cluster
+      # port: the port of the Redis cluster
+      # query_params (optional): additional query parameters for the Redis cluster, will default to ""
+      # The url will be built as follows:
+      # {scheme}{host}:{port}/{db_index}{query_params} if auth_token is not provided,
+      # {scheme}:{auth_token}@{host}:{port}/{db_index}{query_params} if auth_token is provided
+      # db_index will be filled in by LLM Engine.
       # redis_aws_secret_name: sample-prod/redis-credentials
       # s3_bucket [required] is the S3 bucket you wish to connect 
       s3_bucket: "llm-engine"
