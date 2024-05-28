@@ -169,6 +169,8 @@ config:
       # {scheme}{host}:{port}/{db_index}{query_params} if auth_token is not provided,
       # {scheme}:{auth_token}@{host}:{port}/{db_index}{query_params} if auth_token is provided
       # db_index will be filled in by LLM Engine.
+      # This secret must be accessible by the default LLM Engine AWS role
+      # e.g. what is set by profile_ml_worker if provided
       # redis_aws_secret_name: sample-prod/redis-credentials
       # s3_bucket [required] is the S3 bucket you wish to connect 
       s3_bucket: "llm-engine"
@@ -178,7 +180,9 @@ config:
       # cache_redis_aws_url is the full url for the redis cluster you wish to connect,
       # cache_redis_azure_host is the redis cluster host when using cloud_provider azure
       # cache_redis_aws_secret_name is an AWS secret that contains the Redis credentials.
-      # It has a single field "cache-url" with the full URL of the Redis cluster (including db number).
+      # It has a field "cache-url" with the full URL of the Redis cluster (including db number).
+      # Other fields are ignored; e.g. you can use the secret for multiple purposes.
+      # This secret must be accessible by the default LLM Engine AWS role
       # exactly one of cache_redis_aws_url, cache_redis_azure_host, or cache_redis_aws_secret_name must be provided
       cache_redis_aws_url: redis://llm-engine-prod-cache.use1.cache.amazonaws.com:6379/15
       cache_redis_azure_host: llm-engine-cache.redis.cache.windows.net:6380
