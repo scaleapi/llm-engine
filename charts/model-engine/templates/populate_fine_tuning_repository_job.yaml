@@ -40,8 +40,6 @@ spec:
             - --cloud-provider
             - azure
             {{- end }}
-            - --url
-            - http://model-engine.{{ default "default" .Values.gatewayNamespace }}.svc.cluster.local
             - --initialize-repository
           {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 10 }}
           {{- include "modelEngine.volumeMounts" . | indent 10 }}

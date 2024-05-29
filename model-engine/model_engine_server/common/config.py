@@ -107,7 +107,10 @@ class HostedModelInferenceServiceConfig:
     def cache_redis_db_index(self) -> int:
         # redis://redis.url:6379/<db_index>
         # -> <db_index>
-        return int(self.cache_redis_url.split("/")[-1])
+        try:
+            return int(self.cache_redis_url.split("/")[-1])
+        except ValueError:
+            return 0
 
 
 def read_default_config():

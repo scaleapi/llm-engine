@@ -142,7 +142,7 @@ def create_model_bundle(cloud_provider, url, model_type, image_tag):
 async def main(args):
     env = args.env
     cloud_provider = args.cloud_provider
-    url = args.url
+    url = args.url or f"http://model-engine.{hmi_config.gateway_namespace}.svc.cluster.local"
     repository = args.repository or hmi_config.cloud_file_llm_fine_tune_repository
     initialize_repository = args.initialize_repository
 
@@ -461,7 +461,7 @@ if __name__ == "__main__":
         required=False,
         default="aws",
     )
-    parser.add_argument("--url", help="Url to the model-engine gateway", required=True)
+    parser.add_argument("--url", help="Url to the model-engine gateway", required=False)
     parser.add_argument(
         "--repository", help="Url to the LLM fine-tuning job repository", required=False
     )
