@@ -570,11 +570,8 @@ class CreateLLMModelBundleV1UseCase:
 
         subcommands.extend(
             [
-                "pushd /",
-                "wget https://aka.ms/downloadazcopy-v10-linux",
-                "tar -xf downloadazcopy-v10-linux",
-                'export PATH="$PATH:/azcopy_linux_amd64_10.23.0"',
-                "popd",
+                "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
+                "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
             ]
         )
 
@@ -616,11 +613,8 @@ class CreateLLMModelBundleV1UseCase:
         else:
             subcommands.extend(
                 [
-                    "pushd /",
-                    "wget https://aka.ms/downloadazcopy-v10-linux",
-                    "tar -xf downloadazcopy-v10-linux",
-                    'export PATH="$PATH:/azcopy_linux_amd64_10.23.0"',
-                    "popd",
+                    "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
+                    "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
                     f"azcopy copy --recursive {os.path.join(checkpoint_path, '*')} ./",
                 ]
             )
