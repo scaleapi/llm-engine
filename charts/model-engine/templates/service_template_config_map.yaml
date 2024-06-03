@@ -445,8 +445,6 @@ data:
       fallback:
         failureThreshold: 3
         replicas: ${MIN_WORKERS}
-      authenticationRef:
-        name: "${AUTHENTICATION_REF}"
       triggers:
       - type: redis
         metadata:
@@ -458,6 +456,8 @@ data:
           enableTLS: "false"
           unsafeSsl: "false"
           databaseIndex: "${REDIS_DB_INDEX}"
+        authenticationRef:
+          name: "${AUTHENTICATION_REF}"
   service.yaml: |-
     apiVersion: v1
     kind: Service
