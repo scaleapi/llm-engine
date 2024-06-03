@@ -2567,8 +2567,8 @@ data:
     apiVersion: keda.sh/v1alpha1
     kind: ScaledObject
     metadata:
-      name: ${RESOURCE_NAME} 
-      namespace: ${NAMESPACE} 
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
       labels:
         user_id: ${OWNER}
         team: ${TEAM}
@@ -2593,6 +2593,8 @@ data:
       fallback:
         failureThreshold: 3
         replicas: ${MIN_WORKERS}
+      authenticationRef:
+        name: "${AUTHENTICATION_REF}"
       triggers:
       - type: redis
         metadata:

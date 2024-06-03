@@ -445,10 +445,8 @@ data:
       fallback:
         failureThreshold: 3
         replicas: ${MIN_WORKERS}
-      {{- if .Values.azure }}
       authenticationRef:
-        name: azure-workload-identity
-      {{- end }}
+        name: "${AUTHENTICATION_REF}"
       triggers:
       - type: redis
         metadata:
