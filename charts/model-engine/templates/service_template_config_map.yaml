@@ -431,8 +431,8 @@ data:
     apiVersion: keda.sh/v1alpha1
     kind: ScaledObject
     metadata:
-      name: ${RESOURCE_NAME} 
-      namespace: ${NAMESPACE} 
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
       labels:
         {{- $service_template_labels | nindent 8 }}
     spec:
@@ -445,6 +445,10 @@ data:
       fallback:
         failureThreshold: 3
         replicas: ${MIN_WORKERS}
+      {{- if .Values.azure }}
+      authenticationRef:
+        name: azure-workload-identity
+      {{- end }}
       triggers:
       - type: redis
         metadata:

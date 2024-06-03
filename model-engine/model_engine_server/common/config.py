@@ -100,7 +100,7 @@ class HostedModelInferenceServiceConfig:
         # redis://redis.url:6379/<db_index>
         # -> redis.url:6379
         if "rediss://" in self.cache_redis_url:
-            return self.cache_redis_url.split("rediss://")[1].split("/")[0]
+            return self.cache_redis_url.split("rediss://")[1].split("@")[-1].split("/")[0]
         return self.cache_redis_url.split("redis://")[1].split("/")[0]
 
     @property
