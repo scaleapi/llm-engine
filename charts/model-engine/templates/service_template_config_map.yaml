@@ -436,7 +436,6 @@ data:
       labels:
         {{- $service_template_labels | nindent 8 }}
     spec:
-      serviceAccountName: {{ $launch_name }}
       scaleTargetRef:
         name: ${RESOURCE_NAME}
       pollingInterval:  5

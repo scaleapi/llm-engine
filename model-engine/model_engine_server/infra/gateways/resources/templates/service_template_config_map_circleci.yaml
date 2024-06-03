@@ -2584,7 +2584,6 @@ data:
         endpoint_id: ${ENDPOINT_ID}
         endpoint_name: ${ENDPOINT_NAME}
     spec:
-      serviceAccountName: model-engine
       scaleTargetRef:
         name: ${RESOURCE_NAME}
       pollingInterval:  5
