@@ -47,6 +47,7 @@ class Completion(APIEngine):
         guided_json: Optional[Dict[str, Any]] = None,
         guided_regex: Optional[str] = None,
         guided_choice: Optional[List[str]] = None,
+        guided_grammar: Optional[str] = None,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]:
@@ -117,6 +118,9 @@ class Completion(APIEngine):
 
             guided_choice (Optional[List[str]]):
                 If specified, the output will be exactly one of the choices.
+
+            guided_grammar (Optional[str]):
+                If specified, the output will follow the context-free grammar provided.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -218,6 +222,7 @@ class Completion(APIEngine):
                 guided_json=guided_json,
                 guided_regex=guided_regex,
                 guided_choice=guided_choice,
+                guided_grammar=guided_grammar,
                 timeout=timeout,
             )
 
@@ -242,6 +247,11 @@ class Completion(APIEngine):
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
+                include_stop_str_in_output=include_stop_str_in_output,
+                guided_json=guided_json,
+                guided_regex=guided_regex,
+                guided_choice=guided_choice,
+                guided_grammar=guided_grammar,
             )
 
     @classmethod
@@ -261,6 +271,7 @@ class Completion(APIEngine):
         guided_json: Optional[Dict[str, Any]] = None,
         guided_regex: Optional[str] = None,
         guided_choice: Optional[List[str]] = None,
+        guided_grammar: Optional[str] = None,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
     ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
@@ -332,6 +343,9 @@ class Completion(APIEngine):
 
             guided_choice (Optional[List[str]]):
                 If specified, the output will be exactly one of the choices.
+
+            guided_grammar (Optional[str]):
+                If specified, the output will follow the context-free grammar provided.
 
             timeout (int):
                 Timeout in seconds. This is the maximum amount of time you are willing to wait for a response.
@@ -419,6 +433,11 @@ class Completion(APIEngine):
                 frequency_penalty=frequency_penalty,
                 top_k=top_k,
                 top_p=top_p,
+                include_stop_str_in_output=include_stop_str_in_output,
+                guided_json=guided_json,
+                guided_regex=guided_regex,
+                guided_choice=guided_choice,
+                guided_grammar=guided_grammar,
             )
 
         else:
@@ -436,6 +455,7 @@ class Completion(APIEngine):
                 guided_json=guided_json,
                 guided_regex=guided_regex,
                 guided_choice=guided_choice,
+                guided_grammar=guided_grammar,
             ).dict()
             response = cls.post_sync(
                 resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",
