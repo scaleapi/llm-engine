@@ -7,7 +7,6 @@ from typing import Optional
 
 import pytz
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
-from fastapi.responses import JSONResponse
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
@@ -393,7 +392,9 @@ async def create_completion_stream_task(
     # Call execute() synchronously, execute will asynchronously call response streaming logic and return the response object
     # This allows exceptions to be raised prior to the response beginning
     try:
-        response = await use_case.execute(user=auth, model_endpoint_name=model_endpoint_name, request=request)
+        response = await use_case.execute(
+            user=auth, model_endpoint_name=model_endpoint_name, request=request
+        )
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(
             status_code=404,
@@ -408,8 +409,7 @@ async def create_completion_stream_task(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(
-            status_code=500,
-            detail="Internal error occurred. Our team has been notified."
+            status_code=500, detail="Internal error occurred. Our team has been notified."
         ) from exc
 
     async def event_generator():
@@ -441,7 +441,8 @@ async def create_completion_stream_task(
                 f"Upstream service error for request {request_id}. Error detail: {str(exc.content)}"
             )
             yield handle_streaming_exception(
-                exc, 500,
+                exc,
+                500,
                 f"Upstream service error for request_id {request_id}",
             )
         except Exception as exc:

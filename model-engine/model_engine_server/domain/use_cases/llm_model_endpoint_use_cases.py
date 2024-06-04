@@ -2056,7 +2056,8 @@ class CompletionStreamV1UseCase:
                             )
                     # TEXT_GENERATION_INTERFACE
                     elif (
-                        model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+                        model_content.inference_framework
+                        == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
                     ):
                         if result["result"].get("generated_text") is not None:
                             finished = True
@@ -2134,7 +2135,7 @@ class CompletionStreamV1UseCase:
                                 token=token,
                             ),
                         )
-                    # TENSORRT_LLM     
+                    # TENSORRT_LLM
                     elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
                         num_completion_tokens += 1
                         yield CompletionStreamV1Response(
@@ -2146,18 +2147,15 @@ class CompletionStreamV1UseCase:
                                 num_completion_tokens=num_completion_tokens,
                             ),
                         )
-                    # No else clause needed for an unsupported inference framework, since we check 
+                    # No else clause needed for an unsupported inference framework, since we check
                     # model_content.inference_framework in outer scope prior to calling _stream_response(),
                     # raising an exception if it is not one of the frameworks handled above.
-        # end def _stream_response()                    
+
+        # end def _stream_response()
 
         # Note: _stream_response() should be called after all validation and exception handling.
         response = _stream_response()
-        return response    
-        
-            
-    # async def _stream_response(model_content: GetLLMModelEndpointV1Response,
-    #                            request: CompletionStreamV1Request)
+        return response
 
 
 class ModelDownloadV1UseCase:
