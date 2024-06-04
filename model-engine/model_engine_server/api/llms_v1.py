@@ -432,14 +432,6 @@ async def create_completion_stream_task(
                 ),
                 metric_metadata,
             )
-        # except (InvalidRequestException, ObjectHasInvalidValueException) as exc:
-        #     yield handle_streaming_exception(exc, 400, str(exc))
-        # except (
-        #     ObjectNotFoundException,
-        #     ObjectNotAuthorizedException,
-        #     EndpointUnsupportedInferenceTypeException,
-        # ) as exc:
-        #     yield handle_streaming_exception(exc, 404, str(exc))
         # The following two exceptions are only raised after streaming begins, so we wrap the exception within a Response object
         except InvalidRequestException as exc:
             yield handle_streaming_exception(exc, 400, str(exc))
