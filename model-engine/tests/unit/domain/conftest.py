@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 import pytest
 from model_engine_server.common.dtos.batch_jobs import (
     CreateDockerImageBatchJobBundleV1Request,
@@ -522,3 +524,55 @@ def create_batch_completions_request() -> CreateBatchCompletionsRequest:
         ),
         data_parallelism=2,
     )
+
+
+@pytest.fixture
+def recommended_hardware_config_map() -> Dict[str, Any]:
+    return {
+        "byGpuMemoryGb": """
+    - gpu_memory_le: 24
+      cpus: 10
+      gpus: 1
+      memory: 24Gi
+      storage: 80Gi
+      gpu_type: GpuType.NVIDIA_AMPERE_A10
+    - gpu_memory_le: 48
+      cpus: 20
+      gpus: 2
+      memory: 48Gi
+      storage: 80Gi
+      gpu_type: GpuType.NVIDIA_AMPERE_A10
+    - gpu_memory_le: 96
+      cpus: 40
+      gpus: 4
+      memory: 96Gi
+      storage: 96Gi
+      gpu_type: GpuType.NVIDIA_AMPERE_A10
+    - gpu_memory_le: 180
+      cpus: 20
+      gpus: 2
+      memory: 160Gi
+      storage: 160Gi
+      gpu_type: GpuType.NVIDIA_HOPPER_H100
+    - gpu_memory_le: 320
+      cpus: 40
+      gpus: 4
+      memory: 320Gi
+      storage: 320Gi
+      gpu_type: GpuType.NVIDIA_HOPPER_H100
+    - gpu_memory_le: 640
+      cpus: 80
+      gpus: 8
+      memory: 800Gi
+      storage: 460Gi
+      gpu_type: GpuType.NVIDIA_HOPPER_H100
+""",
+        "byModelName": """
+    - model_name: llama-3-8b-instruct-262k
+      cpus: 20,
+      gpus: 2,
+      memory: "40Gi",
+      storage: "40Gi",
+      gpu_type: "GpuType.NVIDIA_HOPPER_H100"
+""",
+    }
