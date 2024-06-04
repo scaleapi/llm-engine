@@ -16,7 +16,7 @@ from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
-from model_engine_server.db.base import SessionAsyncNullPool
+from model_engine_server.db.base import get_session_async_null_pool
 from model_engine_server.domain.repositories import DockerRepository
 from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
     ASBQueueEndpointResourceDelegate,
@@ -61,6 +61,8 @@ from model_engine_server.infra.services.model_endpoint_cache_service import (
 
 logger = make_logger(logger_name())
 # This is the entrypoint to the k8s cacher
+
+SessionAsyncNullPool = get_session_async_null_pool()
 
 try:
     kube_config.load_incluster_config()

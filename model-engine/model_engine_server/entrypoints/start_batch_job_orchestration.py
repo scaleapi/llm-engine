@@ -9,7 +9,7 @@ from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.config import infra_config
-from model_engine_server.db.base import SessionAsyncNullPool
+from model_engine_server.db.base import get_session_async_null_pool
 from model_engine_server.domain.entities import BatchJobSerializationFormat
 from model_engine_server.domain.gateways import TaskQueueGateway
 from model_engine_server.infra.gateways import (
@@ -48,6 +48,8 @@ from model_engine_server.infra.services import (
     LiveBatchJobOrchestrationService,
     LiveModelEndpointService,
 )
+
+SessionAsyncNullPool = get_session_async_null_pool()
 
 
 async def run_batch_job(

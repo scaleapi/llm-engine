@@ -14,7 +14,7 @@ from model_engine_server.common.dtos.endpoint_builder import (
 from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
-from model_engine_server.db.base import SessionAsyncNullPool
+from model_engine_server.db.base import get_session_async_null_pool
 from model_engine_server.domain.repositories import DockerRepository
 from model_engine_server.infra.gateways import ABSFilesystemGateway, S3FilesystemGateway
 from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
@@ -45,6 +45,8 @@ from model_engine_server.infra.repositories import (
 )
 from model_engine_server.infra.services import LiveEndpointBuilderService
 from model_engine_server.service_builder.celery import service_builder_service
+
+SessionAsyncNullPool = get_session_async_null_pool()
 
 # Need to disable lazy loading of k8s clients because each event loop should contain its own k8s
 # client, which constructs the aiohttp.ClientSession in the event loop.

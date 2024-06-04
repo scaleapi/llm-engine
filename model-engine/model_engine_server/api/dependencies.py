@@ -21,7 +21,7 @@ from model_engine_server.core.loggers import (
     logger_name,
     make_logger,
 )
-from model_engine_server.db.base import SessionAsync, SessionReadOnlyAsync
+from model_engine_server.db.base import get_session_async, get_session_read_only_async
 from model_engine_server.domain.gateways import (
     CronJobGateway,
     DockerImageBatchJobGateway,
@@ -125,6 +125,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 logger = make_logger(logger_name())
 
 AUTH = HTTPBasic(auto_error=False)
+
+SessionAsync = get_session_async()
+SessionReadOnlyAsync = get_session_read_only_async()
 
 
 @dataclass
