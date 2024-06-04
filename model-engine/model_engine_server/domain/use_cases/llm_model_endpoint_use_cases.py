@@ -2000,7 +2000,6 @@ class CompletionStreamV1UseCase:
                 model_content.model_name,
                 self.tokenizer_repository,
             )
-
         else:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {model_content.inference_framework}"
@@ -2011,61 +2010,129 @@ class CompletionStreamV1UseCase:
             num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
             timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
         )
-        predict_result = inference_gateway.streaming_predict(
-            topic=model_endpoint.record.destination, predict_request=inference_request
-        )
 
-        num_completion_tokens = 0
-        async for res in predict_result:
-            result = res.result
-            if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
-                if res.status == TaskStatus.SUCCESS and result is not None:
-                    if "token" in result["result"]:
+        async def _stream_response() -> AsyncIterable[CompletionStreamV1Response]:
+            # inform interpreter to reference num_prompt_tokens defined in outer scope during assignment
+            nonlocal num_prompt_tokens
+
+            predict_result = inference_gateway.streaming_predict(
+                topic=model_endpoint.record.destination, predict_request=inference_request
+            )
+
+            num_completion_tokens = 0
+            async for res in predict_result:
+                result = res.result
+                if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
+                    if res.status == TaskStatus.SUCCESS and result is not None:
+                        if "token" in result["result"]:
+                            yield CompletionStreamV1Response(
+                                request_id=request_id,
+                                output=CompletionStreamOutput(
+                                    text=result["result"]["token"],
+                                    finished=False,
+                                    num_prompt_tokens=None,
+                                    num_completion_tokens=None,
+                                ),
+                            )
+                        else:
+                            completion_token_count = len(
+                                result["result"]["response"][0]["token_probs"]["tokens"]
+                            )
+                            yield CompletionStreamV1Response(
+                                request_id=request_id,
+                                output=CompletionStreamOutput(
+                                    text=result["result"]["response"][0]["text"],
+                                    finished=True,
+                                    num_prompt_tokens=num_prompt_tokens,
+                                    num_completion_tokens=completion_token_count,
+                                ),
+                            )
+                    else:
+                        yield CompletionStreamV1Response(
+                            request_id=request_id,
+                            output=None,
+                        )
+                elif (
+                    model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+                ):
+                    if res.status == TaskStatus.SUCCESS and result is not None:
+                        if result["result"].get("generated_text") is not None:
+                            finished = True
+                        else:
+                            finished = False
+
+                        num_completion_tokens += 1
+
+                        token = None
+                        if request.return_token_log_probs:
+                            token = TokenOutput(
+                                token=result["result"]["token"]["text"],
+                                log_prob=result["result"]["token"]["logprob"],
+                            )
+                        try:
+                            yield CompletionStreamV1Response(
+                                request_id=request_id,
+                                output=CompletionStreamOutput(
+                                    text=result["result"]["token"]["text"],
+                                    finished=finished,
+                                    num_prompt_tokens=num_prompt_tokens if finished else None,
+                                    num_completion_tokens=num_completion_tokens,
+                                    token=token,
+                                ),
+                            )
+                        except Exception:
+                            logger.exception(
+                                f"Error parsing text-generation-inference output. Result: {result['result']}"
+                            )
+                            if result["result"].get("error_type") == "validation":
+                                raise InvalidRequestException(
+                                    result["result"].get("error")
+                                )  # trigger a 400
+                            else:
+                                raise UpstreamServiceError(
+                                    status_code=500, content=result.get("error")
+                                )  # also change llms_v1.py that will return a 500 HTTPException so user can retry
+
+                    else:
+                        yield CompletionStreamV1Response(
+                            request_id=request_id,
+                            output=None,
+                        )
+                elif model_content.inference_framework == LLMInferenceFramework.VLLM:
+                    if res.status == TaskStatus.SUCCESS and result is not None:
+                        token = None
+                        if request.return_token_log_probs:
+                            token = TokenOutput(
+                                token=result["result"]["text"],
+                                log_prob=list(result["result"]["log_probs"].values())[0],
+                            )
+                        finished = result["result"]["finished"]
+                        num_prompt_tokens = result["result"]["count_prompt_tokens"]
                         yield CompletionStreamV1Response(
                             request_id=request_id,
                             output=CompletionStreamOutput(
-                                text=result["result"]["token"],
-                                finished=False,
-                                num_prompt_tokens=None,
-                                num_completion_tokens=None,
+                                text=result["result"]["text"],
+                                finished=finished,
+                                num_prompt_tokens=num_prompt_tokens if finished else None,
+                                num_completion_tokens=result["result"]["count_output_tokens"],
+                                token=token,
                             ),
                         )
                     else:
-                        completion_token_count = len(
-                            result["result"]["response"][0]["token_probs"]["tokens"]
-                        )
                         yield CompletionStreamV1Response(
                             request_id=request_id,
-                            output=CompletionStreamOutput(
-                                text=result["result"]["response"][0]["text"],
-                                finished=True,
-                                num_prompt_tokens=num_prompt_tokens,
-                                num_completion_tokens=completion_token_count,
-                            ),
+                            output=None,
                         )
-                else:
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=None,
-                    )
-            elif (
-                model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
-            ):
-                if res.status == TaskStatus.SUCCESS and result is not None:
-                    if result["result"].get("generated_text") is not None:
-                        finished = True
-                    else:
-                        finished = False
-
-                    num_completion_tokens += 1
-
-                    token = None
-                    if request.return_token_log_probs:
-                        token = TokenOutput(
-                            token=result["result"]["token"]["text"],
-                            log_prob=result["result"]["token"]["logprob"],
-                        )
-                    try:
+                elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
+                    if res.status == TaskStatus.SUCCESS and result is not None:
+                        token = None
+                        num_completion_tokens += 1
+                        if request.return_token_log_probs:
+                            token = TokenOutput(
+                                token=result["result"]["token"]["text"],
+                                log_prob=result["result"]["token"]["logprob"],
+                            )
+                        finished = result["result"]["finished"]
                         yield CompletionStreamV1Response(
                             request_id=request_id,
                             output=CompletionStreamOutput(
@@ -2076,95 +2143,37 @@ class CompletionStreamV1UseCase:
                                 token=token,
                             ),
                         )
-                    except Exception:
-                        logger.exception(
-                            f"Error parsing text-generation-inference output. Result: {result['result']}"
+                    else:
+                        yield CompletionStreamV1Response(
+                            request_id=request_id,
+                            output=None,
                         )
-                        if result["result"].get("error_type") == "validation":
-                            raise InvalidRequestException(
-                                result["result"].get("error")
-                            )  # trigger a 400
-                        else:
-                            raise UpstreamServiceError(
-                                status_code=500, content=result.get("error")
-                            )  # also change llms_v1.py that will return a 500 HTTPException so user can retry
+                elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
+                    if res.status == TaskStatus.SUCCESS and result is not None:
+                        num_completion_tokens += 1
+                        yield CompletionStreamV1Response(
+                            request_id=request_id,
+                            output=CompletionStreamOutput(
+                                text=result["result"]["text_output"],
+                                finished=False,  # Tracked by https://github.com/NVIDIA/TensorRT-LLM/issues/240
+                                num_prompt_tokens=num_prompt_tokens,
+                                num_completion_tokens=num_completion_tokens,
+                            ),
+                        )
+                    else:
+                        yield CompletionStreamV1Response(
+                            request_id=request_id,
+                            output=None,
+                        )
+                # No else clause needed, since we check model_content.inference_framework in outer scope,
+                # raising an exception if it is not one of the frameworks handled above.
 
-                else:
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=None,
-                    )
-            elif model_content.inference_framework == LLMInferenceFramework.VLLM:
-                if res.status == TaskStatus.SUCCESS and result is not None:
-                    token = None
-                    if request.return_token_log_probs:
-                        token = TokenOutput(
-                            token=result["result"]["text"],
-                            log_prob=list(result["result"]["log_probs"].values())[0],
-                        )
-                    finished = result["result"]["finished"]
-                    num_prompt_tokens = result["result"]["count_prompt_tokens"]
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=CompletionStreamOutput(
-                            text=result["result"]["text"],
-                            finished=finished,
-                            num_prompt_tokens=num_prompt_tokens if finished else None,
-                            num_completion_tokens=result["result"]["count_output_tokens"],
-                            token=token,
-                        ),
-                    )
-                else:
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=None,
-                    )
-            elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
-                if res.status == TaskStatus.SUCCESS and result is not None:
-                    token = None
-                    num_completion_tokens += 1
-                    if request.return_token_log_probs:
-                        token = TokenOutput(
-                            token=result["result"]["token"]["text"],
-                            log_prob=result["result"]["token"]["logprob"],
-                        )
-                    finished = result["result"]["finished"]
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=CompletionStreamOutput(
-                            text=result["result"]["token"]["text"],
-                            finished=finished,
-                            num_prompt_tokens=num_prompt_tokens if finished else None,
-                            num_completion_tokens=num_completion_tokens,
-                            token=token,
-                        ),
-                    )
-                else:
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=None,
-                    )
-            elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
-                if res.status == TaskStatus.SUCCESS and result is not None:
-                    num_completion_tokens += 1
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=CompletionStreamOutput(
-                            text=result["result"]["text_output"],
-                            finished=False,  # Tracked by https://github.com/NVIDIA/TensorRT-LLM/issues/240
-                            num_prompt_tokens=num_prompt_tokens,
-                            num_completion_tokens=num_completion_tokens,
-                        ),
-                    )
-                else:
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=None,
-                    )
-            else:
-                raise EndpointUnsupportedInferenceTypeException(
-                    f"Unsupported inference framework {model_content.inference_framework}"
-                )
+        response = _stream_response()
+        return response    
+        
+            
+    # async def _stream_response(model_content: GetLLMModelEndpointV1Response,
+    #                            request: CompletionStreamV1Request)
 
 
 class ModelDownloadV1UseCase:

@@ -7,6 +7,7 @@ from typing import Optional
 
 import pytz
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
