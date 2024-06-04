@@ -390,7 +390,27 @@ async def create_completion_stream_task(
         llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
         tokenizer_repository=external_interfaces.tokenizer_repository,
     )
-    response = use_case.execute(user=auth, model_endpoint_name=model_endpoint_name, request=request)
+    # Call execute() synchronously, execute will asynchronously call response streaming logic and return the response object
+    # This allows exceptions to be raised prior to the response beginning
+    try:
+        response = await use_case.execute(user=auth, model_endpoint_name=model_endpoint_name, request=request)
+    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+    except EndpointUnsupportedInferenceTypeException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+    except ObjectHasInvalidValueException as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Internal error occurred. Our team has been notified."
+        ) from exc
 
     async def event_generator():
         try:
@@ -412,14 +432,26 @@ async def create_completion_stream_task(
                 ),
                 metric_metadata,
             )
-        except (InvalidRequestException, ObjectHasInvalidValueException) as exc:
+        # except (InvalidRequestException, ObjectHasInvalidValueException) as exc:
+        #     yield handle_streaming_exception(exc, 400, str(exc))
+        # except (
+        #     ObjectNotFoundException,
+        #     ObjectNotAuthorizedException,
+        #     EndpointUnsupportedInferenceTypeException,
+        # ) as exc:
+        #     yield handle_streaming_exception(exc, 404, str(exc))
+        # The following two exceptions are only raised after streaming begins, so we wrap the exception within a Response object
+        except InvalidRequestException as exc:
             yield handle_streaming_exception(exc, 400, str(exc))
-        except (
-            ObjectNotFoundException,
-            ObjectNotAuthorizedException,
-            EndpointUnsupportedInferenceTypeException,
-        ) as exc:
-            yield handle_streaming_exception(exc, 404, str(exc))
+        except UpstreamServiceError as exc:
+            request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
+            logger.exception(
+                f"Upstream service error for request {request_id}. Error detail: {str(exc.content)}"
+            )
+            yield handle_streaming_exception(
+                exc, 500,
+                f"Upstream service error for request_id {request_id}",
+            )
         except Exception as exc:
             yield handle_streaming_exception(
                 exc, 500, "Internal error occurred. Our team has been notified."
