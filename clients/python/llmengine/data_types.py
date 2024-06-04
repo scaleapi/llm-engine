@@ -331,6 +331,7 @@ class CompletionSyncV1Request(BaseModel):
     guided_json: Optional[Dict[str, Any]] = Field(default=None)
     guided_regex: Optional[str] = Field(default=None)
     guided_choice: Optional[List[str]] = Field(default=None)
+    guided_grammar: Optional[str] = Field(default=None)
 
 
 class TokenOutput(BaseModel):
@@ -405,6 +406,7 @@ class CompletionStreamV1Request(BaseModel):
     guided_json: Optional[Dict[str, Any]] = Field(default=None)
     guided_regex: Optional[str] = Field(default=None)
     guided_choice: Optional[List[str]] = Field(default=None)
+    guided_grammar: Optional[str] = Field(default=None)
 
 
 class CompletionStreamOutput(BaseModel):
