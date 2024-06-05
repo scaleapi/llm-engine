@@ -1827,6 +1827,9 @@ class CompletionStreamV1UseCase:
     ) -> AsyncIterable[CompletionStreamV1Response]:
         """
         Runs the use case to create a stream inference task.
+        NOTE: Must be called with await(), since the function is not a generator itself, but rather creates one and
+        returns a reference to it. This structure allows exceptions that occur before response streaming begins
+        to propagate to the client as HTTP exceptions with the appropriate code.
 
         Args:
             user: The user who is creating the stream inference task.
@@ -1834,11 +1837,17 @@ class CompletionStreamV1UseCase:
             request: The body of the request to forward to the endpoint.
 
         Returns:
-            A response object that contains the status and result of the task.
+            An asynchronous response chunk generator, containing response objects to be iterated through with 'async for'.
+            Each response object contains the status and result of the task.
 
         Raises:
             ObjectNotFoundException: If a model endpoint with the given name could not be found.
+            ObjectHasInvalidValueException: If there are multiple model endpoints with the given name.
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
+            EndpointUnsupportedInferenceTypeException: If the model endpoint does not support streaming or uses
+                an unsupported inference framework.
+            UpstreamServiceError: If an error occurs upstream in the streaming inference API call.
+            InvalidRequestException: If request validation fails during inference.
         """
 
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
@@ -2011,7 +2020,7 @@ class CompletionStreamV1UseCase:
             timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
         )
 
-        async def _stream_response() -> AsyncIterable[CompletionStreamV1Response]:
+        async def _response_chunk_generator() -> AsyncIterable[CompletionStreamV1Response]:
             # inform interpreter to reference num_prompt_tokens defined in outer scope during assignment
             nonlocal num_prompt_tokens
 
@@ -2022,7 +2031,15 @@ class CompletionStreamV1UseCase:
             num_completion_tokens = 0
             async for res in predict_result:
                 if not res.status == TaskStatus.SUCCESS or res.result is None:
-                    # Yield empty response chunk for unsuccessful or empty results
+                    # Raise an UpstreamServiceError if the task has failed
+                    if res.status == TaskStatus.FAILURE:
+                        raise UpstreamServiceError(
+                            status_code=500,
+                            content=(
+                                res.traceback.encode("utf-8") if res.traceback is not None else b""
+                            ),
+                        )
+                    # Otherwise, yield empty response chunk for unsuccessful or empty results
                     yield CompletionStreamV1Response(
                         request_id=request_id,
                         output=None,
@@ -2151,11 +2168,10 @@ class CompletionStreamV1UseCase:
                     # model_content.inference_framework in outer scope prior to calling _stream_response(),
                     # raising an exception if it is not one of the frameworks handled above.
 
-        # end def _stream_response()
+        # end def _response_chunk_generator()
 
-        # Note: _stream_response() should be called after all validation and exception handling.
-        response = _stream_response()
-        return response
+        # Note: _response_chunk_generator() should be called after all validation and exception handling.
+        return _response_chunk_generator()
 
 
 class ModelDownloadV1UseCase:

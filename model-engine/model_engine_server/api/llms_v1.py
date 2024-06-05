@@ -389,9 +389,10 @@ async def create_completion_stream_task(
         llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
         tokenizer_repository=external_interfaces.tokenizer_repository,
     )
-    # Call execute() synchronously, execute will asynchronously call response streaming logic and return the response object
-    # This allows exceptions to be raised prior to the response beginning
+
     try:
+        # Call execute() with await, since it needs to handle exceptions before we begin streaming the response below.
+        # execute() will create a response chunk generator and return a reference to it.
         response = await use_case.execute(
             user=auth, model_endpoint_name=model_endpoint_name, request=request
         )
