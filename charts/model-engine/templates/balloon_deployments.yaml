@@ -1,10 +1,10 @@
 {{- if not .Values.serviceIdentifier }}
 {{- range .Values.balloons }}
-{{- if eq .acceleratorName "cpu" }}
+{{- if not (eq .acceleratorName "cpu") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $.Chart.Name }}-balloon-cpu
+  name: {{ $.Chart.Name }}-balloon-{{ .acceleratorName }}
   labels:
     team: infra
     product: common-warm-nodes
@@ -12,12 +12,12 @@ spec:
   replicas: {{ .replicaCount }}
   selector:
     matchLabels:
-      app: {{ $.Chart.Name }}-balloon-cpu
+      app: {{ $.Chart.Name }}-balloon-{{ .acceleratorName }}
       version: v1
   template:
     metadata:
       labels:
-        app: {{ $.Chart.Name }}-balloon-cpu
+        app: {{ $.Chart.Name }}-balloon-{{ .acceleratorName }}
         product: common-warm-nodes
         team: infra
         env: {{ $.Values.context }}
@@ -25,10 +25,15 @@ spec:
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
-      {{- with $.Values.balloonNodeSelector }}
       nodeSelector:
+        k8s.amazonaws.com/accelerator: {{ .acceleratorName }}
+        {{- with $.Values.balloonNodeSelector }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
       containers:
         - image: public.ecr.aws/ubuntu/ubuntu:latest
           imagePullPolicy: IfNotPresent
@@ -36,13 +41,15 @@ spec:
           resources:
             limits:
               memory: 28Gi
-              cpu: 6
+              nvidia.com/gpu: 1
+              cpu: 4
           command:
             - /bin/bash
             - -c
             - "while true; do sleep 30; done"
       terminationGracePeriodSeconds: 0
       priorityClassName: {{ $.Chart.Name }}-low-priority
+---
 {{- end }}
 {{- end }}
 {{- end }}
