@@ -126,9 +126,6 @@ logger = make_logger(logger_name())
 
 AUTH = HTTPBasic(auto_error=False)
 
-SessionAsync = get_session_async()
-SessionReadOnlyAsync = get_session_read_only_async()
-
 
 @dataclass
 class ExternalInterfaces:
@@ -362,13 +359,13 @@ def _get_external_interfaces(
 
 
 def get_default_external_interfaces() -> ExternalInterfaces:
-    session = async_scoped_session(SessionAsync, scopefunc=asyncio.current_task)  # type: ignore
+    session = async_scoped_session(get_session_async(), scopefunc=asyncio.current_task)  # type: ignore
     return _get_external_interfaces(read_only=False, session=session)
 
 
 def get_default_external_interfaces_read_only() -> ExternalInterfaces:
     session = async_scoped_session(  # type: ignore
-        SessionReadOnlyAsync, scopefunc=asyncio.current_task  # type: ignore
+        get_session_read_only_async(), scopefunc=asyncio.current_task  # type: ignore
     )
     return _get_external_interfaces(read_only=True, session=session)
 

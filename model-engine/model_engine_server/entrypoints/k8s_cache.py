@@ -62,8 +62,6 @@ from model_engine_server.infra.services.model_endpoint_cache_service import (
 logger = make_logger(logger_name())
 # This is the entrypoint to the k8s cacher
 
-SessionAsyncNullPool = get_session_async_null_pool()
-
 try:
     kube_config.load_incluster_config()
 except ConfigException:
@@ -104,7 +102,7 @@ async def main(args: Any):
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
-        session=SessionAsyncNullPool,
+        session=get_session_async_null_pool(),
         read_only=True,
     )
 

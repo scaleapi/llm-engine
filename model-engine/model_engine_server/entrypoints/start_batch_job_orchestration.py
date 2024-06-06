@@ -49,8 +49,6 @@ from model_engine_server.infra.services import (
     LiveModelEndpointService,
 )
 
-SessionAsyncNullPool = get_session_async_null_pool()
-
 
 async def run_batch_job(
     job_id: str,
@@ -59,7 +57,7 @@ async def run_batch_job(
     serialization_format: BatchJobSerializationFormat,
     timeout_seconds: float,
 ):
-    session = SessionAsyncNullPool
+    session = get_session_async_null_pool()
     pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
     redis = aioredis.Redis(connection_pool=pool)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)

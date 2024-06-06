@@ -46,8 +46,6 @@ from model_engine_server.infra.repositories import (
 from model_engine_server.infra.services import LiveEndpointBuilderService
 from model_engine_server.service_builder.celery import service_builder_service
 
-SessionAsyncNullPool = get_session_async_null_pool()
-
 # Need to disable lazy loading of k8s clients because each event loop should contain its own k8s
 # client, which constructs the aiohttp.ClientSession in the event loop.
 set_lazy_load_kubernetes_clients(False)
@@ -98,7 +96,7 @@ def get_live_endpoint_builder_service(
 async def _build_endpoint(
     build_endpoint_request: BuildEndpointRequest,
 ) -> BuildEndpointResponse:
-    session = SessionAsyncNullPool
+    session = get_session_async_null_pool()
     pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
     redis = aioredis.Redis(connection_pool=pool)
     service: LiveEndpointBuilderService = get_live_endpoint_builder_service(session, redis)
