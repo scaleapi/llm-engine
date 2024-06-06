@@ -5,6 +5,7 @@ import pytest
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBasicCredentials
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from model_engine_server.api.app import app
 from model_engine_server.api.dependencies import (
     AUTH,
@@ -157,6 +158,75 @@ def get_test_client_wrapper(get_repositories_generator_wrapper):
         return client
 
     return get_test_client
+
+
+@pytest.fixture
+def get_async_test_client_wrapper(get_repositories_generator_wrapper):
+    def get_async_test_client(
+        fake_docker_repository_image_always_exists=True,
+        fake_model_bundle_repository_contents=None,
+        fake_model_endpoint_record_repository_contents=None,
+        fake_model_endpoint_infra_gateway_contents=None,
+        fake_batch_job_record_repository_contents=None,
+        fake_batch_job_progress_gateway_contents=None,
+        fake_docker_image_batch_job_bundle_repository_contents=None,
+        fake_docker_image_batch_job_gateway_contents=None,
+        fake_llm_fine_tuning_service_contents=None,
+        fake_file_storage_gateway_contents=None,
+        fake_file_system_gateway_contents=None,
+        fake_trigger_repository_contents=None,
+        fake_cron_job_gateway_contents=None,
+        fake_sync_inference_content=None,
+    ) -> AsyncClient:
+        if fake_docker_image_batch_job_gateway_contents is None:
+            fake_docker_image_batch_job_gateway_contents = {}
+        if fake_docker_image_batch_job_bundle_repository_contents is None:
+            fake_docker_image_batch_job_bundle_repository_contents = {}
+        if fake_batch_job_progress_gateway_contents is None:
+            fake_batch_job_progress_gateway_contents = {}
+        if fake_batch_job_record_repository_contents is None:
+            fake_batch_job_record_repository_contents = {}
+        if fake_model_endpoint_infra_gateway_contents is None:
+            fake_model_endpoint_infra_gateway_contents = {}
+        if fake_model_endpoint_record_repository_contents is None:
+            fake_model_endpoint_record_repository_contents = {}
+        if fake_model_bundle_repository_contents is None:
+            fake_model_bundle_repository_contents = {}
+        if fake_llm_fine_tuning_service_contents is None:
+            fake_llm_fine_tuning_service_contents = {}
+        if fake_file_storage_gateway_contents is None:
+            fake_file_storage_gateway_contents = {}
+        if fake_file_system_gateway_contents is None:
+            fake_file_system_gateway_contents = {}
+        if fake_trigger_repository_contents is None:
+            fake_trigger_repository_contents = {}
+        if fake_cron_job_gateway_contents is None:
+            fake_cron_job_gateway_contents = {}
+        if fake_sync_inference_content is None:
+            fake_sync_inference_content = {}
+        app.dependency_overrides[get_external_interfaces] = get_repositories_generator_wrapper(
+            fake_docker_repository_image_always_exists=fake_docker_repository_image_always_exists,
+            fake_model_bundle_repository_contents=fake_model_bundle_repository_contents,
+            fake_model_endpoint_record_repository_contents=fake_model_endpoint_record_repository_contents,
+            fake_model_endpoint_infra_gateway_contents=fake_model_endpoint_infra_gateway_contents,
+            fake_batch_job_record_repository_contents=fake_batch_job_record_repository_contents,
+            fake_batch_job_progress_gateway_contents=fake_batch_job_progress_gateway_contents,
+            fake_docker_image_batch_job_bundle_repository_contents=fake_docker_image_batch_job_bundle_repository_contents,
+            fake_docker_image_batch_job_gateway_contents=fake_docker_image_batch_job_gateway_contents,
+            fake_llm_fine_tuning_service_contents=fake_llm_fine_tuning_service_contents,
+            fake_file_storage_gateway_contents=fake_file_storage_gateway_contents,
+            fake_file_system_gateway_contents=fake_file_system_gateway_contents,
+            fake_trigger_repository_contents=fake_trigger_repository_contents,
+            fake_cron_job_gateway_contents=fake_cron_job_gateway_contents,
+            fake_sync_inference_content=fake_sync_inference_content,
+        )
+        app.dependency_overrides[get_external_interfaces_read_only] = app.dependency_overrides[
+            get_external_interfaces
+        ]
+        client = AsyncClient(app=app, base_url="http://test")
+        return client
+
+    return get_async_test_client
 
 
 @pytest.fixture
