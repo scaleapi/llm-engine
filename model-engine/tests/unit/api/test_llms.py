@@ -203,7 +203,8 @@ def test_completion_stream_success(
     assert count == 1
 
 
-@pytest.mark.skip(reason="Need to figure out FastAPI test client asyncio funkiness")
+# @pytest.mark.skip(reason="Need to figure out FastAPI test client asyncio funkiness")
+# @pytest.mark.asyncio
 def test_completion_stream_endpoint_not_found_returns_404(
     llm_model_endpoint_streaming: ModelEndpoint,
     completion_stream_request: Dict[str, Any],
@@ -220,17 +221,17 @@ def test_completion_stream_endpoint_not_found_returns_404(
         fake_batch_job_progress_gateway_contents={},
         fake_docker_image_batch_job_bundle_repository_contents={},
     )
-    response_1 = client.post(
-        f"/v1/llm/completions-stream?model_endpoint_name={llm_model_endpoint_streaming.record.name}",
+    with client.stream(
+        method="POST",
+        url=f"/v1/llm/completions-stream?model_endpoint_name={llm_model_endpoint_streaming.record.name}",
         auth=("no_user", ""),
         json=completion_stream_request,
-        stream=True,
-    )
+        # stream=True,
+    ) as r:
+        assert r.status_code == 404
 
-    assert response_1.status_code == 200
-
-    for message in response_1:
-        assert "404" in message.decode("utf-8")
+    # for message in response_1:
+    #     assert "404" in message.decode("utf-8")
 
 
 def test_create_batch_completions_success(
