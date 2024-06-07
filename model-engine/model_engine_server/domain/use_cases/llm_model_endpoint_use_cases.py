@@ -1195,6 +1195,10 @@ class UpdateLLMModelEndpointV1UseCase:
                 f"{CONVERTED_FROM_ARTIFACT_LIKE_KEY} is a reserved metadata key and cannot be used by user."
             )
 
+        # Ensure metadata on endpoint is kept since it's required for LLM endpoints
+        if not request.metadata:
+            request.metadata = endpoint_record.metadata
+
         updated_endpoint_record = await self.model_endpoint_service.update_model_endpoint(
             model_endpoint_id=model_endpoint_id,
             model_bundle_id=bundle.id,
