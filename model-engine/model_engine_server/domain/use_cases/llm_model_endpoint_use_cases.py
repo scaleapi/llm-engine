@@ -2236,13 +2236,15 @@ def _infer_hardware(
     llm_artifact_gateway: LLMArtifactGateway,
     model_name: str,
     checkpoint_path: str,
+    is_batch_job: bool = False,
 ) -> CreateDockerImageBatchJobResourceRequests:
     config = llm_artifact_gateway.get_model_config(checkpoint_path)
 
     dtype_size = 2
+    kv_multiplier = 20 if is_batch_job else 2
 
     min_kv_cache_size = (
-        2
+        kv_multiplier
         * dtype_size
         * config["num_hidden_layers"]
         * config["hidden_size"]
@@ -2267,7 +2269,7 @@ def _infer_hardware(
     min_memory_gb = math.ceil((min_kv_cache_size + model_weights_size) / 1_000_000_000 / 0.9)
 
     logger.info(
-        f"Memory calculation result: {min_memory_gb=} for {model_name}, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}"
+        f"Memory calculation result: {min_memory_gb=} for {model_name}, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}, is_batch_job: {is_batch_job}"
     )
 
     if min_memory_gb <= 24:
@@ -2408,6 +2410,7 @@ class CreateBatchCompletionsUseCase:
             self.llm_artifact_gateway,
             request.model_config.model,
             request.model_config.checkpoint_path,
+            is_batch_job=True,
         )
         # Reconcile gpus count with num_shards from request
         assert hardware.gpus is not None
