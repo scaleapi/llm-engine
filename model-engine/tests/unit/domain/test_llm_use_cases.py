@@ -2056,6 +2056,13 @@ def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.storage == "160Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
+    hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-3-70b", "", is_batch_job=True)
+    assert hardware.cpus == "40"
+    assert hardware.gpus == 4
+    assert hardware.memory == "320Gi"
+    assert hardware.storage == "320Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
     # (TODO) figure out how to calculate memory for llama-3-8b-instruct-262k
     # fake_llm_artifact_gateway.model_config = {
     #     "_name_or_path": "gradientai/llama3-8b-stage65k-chat",
