@@ -1861,6 +1861,13 @@ def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.storage == "160Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
+    hardware = _infer_hardware(fake_llm_artifact_gateway, "mixtral-8x7b", "", is_batch_job=True)
+    assert hardware.cpus == "20"
+    assert hardware.gpus == 2
+    assert hardware.memory == "160Gi"
+    assert hardware.storage == "160Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["MixtralForCausalLM"],
         "attention_dropout": 0.0,
@@ -1886,6 +1893,13 @@ def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = _infer_hardware(fake_llm_artifact_gateway, "mixtral-8x22b", "")
+    assert hardware.cpus == "80"
+    assert hardware.gpus == 8
+    assert hardware.memory == "800Gi"
+    assert hardware.storage == "460Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
+    hardware = _infer_hardware(fake_llm_artifact_gateway, "mixtral-8x22b", "", is_batch_job=True)
     assert hardware.cpus == "80"
     assert hardware.gpus == 8
     assert hardware.memory == "800Gi"
@@ -1919,6 +1933,13 @@ def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.storage == "80Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
 
+    hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-2-7b", "", is_batch_job=True)
+    assert hardware.cpus == "20"
+    assert hardware.gpus == 2
+    assert hardware.memory == "48Gi"
+    assert hardware.storage == "80Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
+
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["LlamaForCausalLM"],
         "attention_dropout": 0.0,
@@ -1944,6 +1965,13 @@ def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.cpus == "10"
     assert hardware.gpus == 1
     assert hardware.memory == "24Gi"
+    assert hardware.storage == "80Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
+
+    hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b", "", is_batch_job=True)
+    assert hardware.cpus == "20"
+    assert hardware.gpus == 2
+    assert hardware.memory == "48Gi"
     assert hardware.storage == "80Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
 
@@ -1974,6 +2002,13 @@ def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.storage == "80Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
 
+    hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-2-13b", "", is_batch_job=True)
+    assert hardware.cpus == "40"
+    assert hardware.gpus == 4
+    assert hardware.memory == "96Gi"
+    assert hardware.storage == "96Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
+
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["LlamaForCausalLM"],
         "bos_token_id": 1,
@@ -2001,6 +2036,13 @@ def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.storage == "96Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
 
+    hardware = _infer_hardware(fake_llm_artifact_gateway, "codellama-34b", "", is_batch_job=True)
+    assert hardware.cpus == "20"
+    assert hardware.gpus == 2
+    assert hardware.memory == "160Gi"
+    assert hardware.storage == "160Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
     fake_llm_artifact_gateway.model_config = {
         "_name_or_path": "meta-llama/Llama-2-70b-hf",
         "architectures": ["LlamaForCausalLM"],
@@ -2022,6 +2064,13 @@ def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-2-70b", "")
+    assert hardware.cpus == "20"
+    assert hardware.gpus == 2
+    assert hardware.memory == "160Gi"
+    assert hardware.storage == "160Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
+    hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-2-70b", "", is_batch_job=True)
     assert hardware.cpus == "20"
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
