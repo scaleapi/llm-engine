@@ -1,4 +1,5 @@
 import hashlib
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Sequence, TypedDict, Union
 
@@ -529,6 +530,9 @@ def get_endpoint_resource_arguments_from_request(
     main_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
     # NOTE: /opt/.aws/config is where service_template_config_map.yaml mounts the AWS config file, point to the mount for boto clients
     main_env.append({"name": "AWS_CONFIG_FILE", "value": "/opt/.aws/config"})
+    abs_account_name = os.getenv("ABS_ACCOUNT_NAME")
+    if abs_account_name is not None:
+        main_env.append({"name": "ABS_ACCOUNT_NAME", "value": abs_account_name})
 
     infra_service_config_volume_mount_path = "/infra-config"
     forwarder_config_file_name = "service--forwarder.yaml"
