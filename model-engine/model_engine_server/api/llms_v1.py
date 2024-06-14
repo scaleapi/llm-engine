@@ -237,6 +237,11 @@ async def get_model_endpoint(
         )
         return await use_case.execute(user=auth, model_endpoint_name=model_endpoint_name)
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        if isinstance(exc, ObjectNotAuthorizedException):  # pragma: no cover
+            logger.info(
+                f"GET /llm/model-endpoints/{model_endpoint_name} for {auth} failed with authz error {exc.args}"
+            )
+
         raise HTTPException(
             status_code=404,
             detail=f"Model Endpoint {model_endpoint_name}  was not found.",
