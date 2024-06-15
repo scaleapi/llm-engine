@@ -1,7 +1,9 @@
+import asyncio
 import datetime
 from typing import Any, Dict, Iterator, Tuple
 
 import pytest
+import pytest_asyncio
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBasicCredentials
 from fastapi.testclient import TestClient
@@ -89,6 +91,14 @@ def fake_auth():
         yield
     finally:
         app.dependency_overrides[verify_authentication] = {}
+
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
+def event_loop(request):
+    """Create an instance of the default event loop for each test case."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
 
 @pytest.fixture
