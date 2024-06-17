@@ -1,29 +1,31 @@
 {{- if not .Values.serviceIdentifier }}
+{{- range .Values.balloons }}
+{{- if eq .acceleratorName "cpu" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}-balloon-cpu
+  name: {{ $.Chart.Name }}-balloon-cpu
   labels:
     team: infra
     product: common-warm-nodes
 spec:
-  replicas: {{ .Values.replicaCount.balloonCpu }}
+  replicas: {{ .replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}-balloon-cpu
+      app: {{ $.Chart.Name }}-balloon-cpu
       version: v1
   template:
     metadata:
       labels:
-        app: {{ .Chart.Name }}-balloon-cpu
+        app: {{ $.Chart.Name }}-balloon-cpu
         product: common-warm-nodes
         team: infra
-        env: {{ .Values.context }}
+        env: {{ $.Values.context }}
         version: v1
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
-      {{- with .Values.balloonNodeSelector }}
+      {{- with $.Values.balloonNodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -40,5 +42,7 @@ spec:
             - -c
             - "while true; do sleep 30; done"
       terminationGracePeriodSeconds: 0
-      priorityClassName: {{ .Chart.Name }}-low-priority
+      priorityClassName: {{ $.Chart.Name }}-low-priority
+{{- end }}
+{{- end }}
 {{- end }}
