@@ -228,6 +228,35 @@ def test_completion_stream_endpoint_not_found_returns_404(
         assert r.status_code == 404
 
 
+def test_completion_stream_misc_server_error_returns_500(
+    llm_model_endpoint_streaming: ModelEndpoint,
+    completion_stream_request: Dict[str, Any],
+    get_test_client_wrapper,
+):
+    client = get_test_client_wrapper(
+        fake_docker_repository_image_always_exists=True,
+        fake_model_bundle_repository_contents={},
+        fake_model_endpoint_record_repository_contents={},
+        fake_model_endpoint_infra_gateway_contents={
+            llm_model_endpoint_streaming.infra_state.deployment_name: llm_model_endpoint_streaming.infra_state,
+        },
+        fake_batch_job_record_repository_contents={},
+        fake_batch_job_progress_gateway_contents={},
+        fake_docker_image_batch_job_bundle_repository_contents={},
+    )
+    with mock.patch(
+        "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases.CompletionStreamV1UseCase.execute",
+    ) as mock_stream_usecase:
+        mock_stream_usecase.side_effect = RuntimeError("Some server side runtime error.")
+        with client.stream(
+            method="POST",
+            url=f"/v1/llm/completions-stream?model_endpoint_name={llm_model_endpoint_streaming.record.name}",
+            auth=("no_user", ""),
+            json=completion_stream_request,
+        ) as r:
+            assert r.status_code == 500
+
+
 def test_create_batch_completions_success(
     create_batch_completions_request: Dict[str, Any],
     test_api_key: str,
