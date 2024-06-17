@@ -7,7 +7,7 @@ WORKDIR /app
 # TODO: ffmpeg, libsm6, and lixext6 are essentially hardcoded from lidar.
 # It's probably more correct to add support for arbitrary user-specified base images,
 # otherwise this base image gets bloated over time.
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
       apt-utils \
       dumb-init \
       git \

@@ -73,16 +73,23 @@ replicaCount:
   cacher: 1
   # builder is the endpoint builder deployment
   builder: 1
-  # balloonA10 is a low priority pod deployment for A10 GPU nodes
-  balloonA10: 0
-  # balloonA100 is a low priority pod deployment for A100 GPU nodes
-  balloonA100: 0
-  # balloonCpu is a low priority pod deployment for CPU nodes
-  balloonCpu: 0
-  # balloonT4 is a low priority pod deployment for T4 GPU nodes
-  balloonT4: 0
-  # balloonH100 is a low priority pod deployment for H100 GPU nodes
-  balloonH100: 0
+
+balloons:
+  # A low priority pod deployment for A10 GPU nodes
+  - acceleratorName: nvidia-ampere-a10
+    replicaCount: 0
+  # A low priority pod deployment for A100 GPU nodes
+  - acceleratorName: nvidia-ampere-a100
+    replicaCount: 0
+  # A low priority pod deployment for CPU nodes
+  - acceleratorName: cpu
+    replicaCount: 0
+  # A low priority pod deployment for T4 GPU nodes
+  - acceleratorName: nvidia-tesla-t4
+    replicaCount: 0
+  # A low priority pod deployment for H100 GPU nodes
+  - acceleratorName: nvidia-hopper-h100
+    replicaCount: 0
 
 # autoscaling is the autoscaling configuration for LLM Engine server deployments (e.g gateway, cache, and builder deployments)
 autoscaling:
