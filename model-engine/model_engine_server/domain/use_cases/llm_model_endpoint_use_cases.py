@@ -2301,7 +2301,6 @@ async def _infer_hardware(
         gpu_type = by_model_name[model_name]["gpu_type"]
     else:
         by_gpu_memory_gb = sorted(by_gpu_memory_gb, key=lambda x: x["gpu_memory_le"])
-        found = False
         for recs in by_gpu_memory_gb:
             if min_memory_gb <= recs["gpu_memory_le"]:
                 cpus = recs["cpus"]
@@ -2309,9 +2308,8 @@ async def _infer_hardware(
                 memory = recs["memory"]
                 storage = recs["storage"]
                 gpu_type = recs["gpu_type"]
-                found = True
                 break
-        if not found:
+        else:
             raise ObjectHasInvalidValueException(f"Unable to infer hardware for {model_name}.")
 
     return CreateDockerImageBatchJobResourceRequests(
