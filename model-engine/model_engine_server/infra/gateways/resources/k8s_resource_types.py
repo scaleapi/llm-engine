@@ -296,6 +296,7 @@ class KedaScaledObjectArguments(_BaseEndpointArguments):
     # CONCURRENCY: float  # TODO add in when we scale from 1 -> N pods
     REDIS_HOST_PORT: str
     REDIS_DB_INDEX: str
+    SERVICEBUS_NAMESPACE: Optional[str]
     AUTHENTICATION_REF: str
 
 
@@ -1151,9 +1152,8 @@ def get_endpoint_resource_arguments_from_request(
             # CONCURRENCY=build_endpoint_request.concurrency,
             REDIS_HOST_PORT=hmi_config.cache_redis_host_port,
             REDIS_DB_INDEX=hmi_config.cache_redis_db_index,
-            AUTHENTICATION_REF="azure-workload-identity"
-            if infra_config().cloud_provider == "azure"
-            else "",
+            SERVICEBUS_NAMESPACE=os.getenv("SERVICEBUS_NAMESPACE"),
+            AUTHENTICATION_REF="azure-workload-identity",
         )
     elif endpoint_resource_name == "service":
         # Use ClusterIP by default for sync endpoint.

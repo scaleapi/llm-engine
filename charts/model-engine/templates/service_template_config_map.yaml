@@ -23,6 +23,7 @@
 {{- $node_selector := .Values.nodeSelector }}
 {{- $require_aws_config := not (empty .Values.aws) }}
 {{- $enable_datadog := .Values.datadog.enabled }}
+{{- $azure_cloud_provider := not (empty .Values.azure) }}
 
 {{- if .Values.message }}
 {{- .Values.message }}
@@ -446,6 +447,16 @@ data:
         failureThreshold: 3
         replicas: ${MIN_WORKERS}
       triggers:
+      {{- if $azure_cloud_provider }}
+      - type: azure-servicebus
+        metadata:
+          queueName: "launch-endpoint-autoscaling:${ENDPOINT_ID}"
+          namespace: ${SERVICEBUS_NAMESPACE}
+          messageCount: "100"
+          activationMessageCount: "0"
+        authenticationRef:
+          name: "${AUTHENTICATION_REF}"
+      {{- else }}
       - type: redis
         metadata:
           address: ${REDIS_HOST_PORT} # Format must be host:port
@@ -456,8 +467,7 @@ data:
           enableTLS: "false"
           unsafeSsl: "false"
           databaseIndex: "${REDIS_DB_INDEX}"
-        authenticationRef:
-          name: "${AUTHENTICATION_REF}"
+      {{- end }}
   service.yaml: |-
     apiVersion: v1
     kind: Service

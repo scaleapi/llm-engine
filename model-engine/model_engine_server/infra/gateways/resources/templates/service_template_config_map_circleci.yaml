@@ -2604,8 +2604,6 @@ data:
           enableTLS: "false"
           unsafeSsl: "false"
           databaseIndex: "${REDIS_DB_INDEX}"
-        authenticationRef:
-          name: "${AUTHENTICATION_REF}"
   service.yaml: |-
     apiVersion: v1
     kind: Service

@@ -14,6 +14,7 @@ from model_engine_server.domain.entities import BatchJobSerializationFormat
 from model_engine_server.domain.gateways import TaskQueueGateway
 from model_engine_server.infra.gateways import (
     ABSFilesystemGateway,
+    ASBInferenceAutoscalingMetricsGateway,
     CeleryTaskQueueGateway,
     LiveAsyncModelEndpointInferenceGateway,
     LiveBatchJobProgressGateway,
@@ -113,8 +114,10 @@ async def run_batch_job(
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
-    inference_autoscaling_metrics_gateway = RedisInferenceAutoscalingMetricsGateway(
-        redis_client=redis,
+    inference_autoscaling_metrics_gateway = (
+        ASBInferenceAutoscalingMetricsGateway()
+        if infra_config().cloud_provider == "azure"
+        else RedisInferenceAutoscalingMetricsGateway(redis_client=redis)
     )
     model_endpoint_service = LiveModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,

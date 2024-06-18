@@ -55,6 +55,7 @@ from model_engine_server.infra.gateways import (
     ABSFileStorageGateway,
     ABSFilesystemGateway,
     ABSLLMArtifactGateway,
+    ASBInferenceAutoscalingMetricsGateway,
     CeleryTaskQueueGateway,
     DatadogMonitoringMetricsGateway,
     FakeMonitoringMetricsGateway,
@@ -252,8 +253,10 @@ def _get_external_interfaces(
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
-    inference_autoscaling_metrics_gateway = RedisInferenceAutoscalingMetricsGateway(
-        redis_client=redis_client
+    inference_autoscaling_metrics_gateway = (
+        ASBInferenceAutoscalingMetricsGateway()
+        if infra_config().cloud_provider == "azure"
+        else RedisInferenceAutoscalingMetricsGateway(redis_client=redis_client)
     )  # we can just reuse the existing redis client, we shouldn't get key collisions because of the prefix
     model_endpoint_service = LiveModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,
