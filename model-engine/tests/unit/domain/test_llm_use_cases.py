@@ -56,64 +56,12 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
+from ..conftest import mocked__get_recommended_hardware_config_map
+
 
 def mocked__get_latest_tag():
     async def async_mock(*args, **kwargs):  # noqa
         return "fake_docker_repository_latest_image_tag"
-
-    return mock.AsyncMock(side_effect=async_mock)
-
-
-def mocked__get_recommended_hardware_config_map():
-    async def async_mock(*args, **kwargs):  # noqa
-        return {
-            "byGpuMemoryGb": """
-    - gpu_memory_le: 20
-      cpus: 5
-      gpus: 1
-      memory: 20Gi
-      storage: 40Gi
-      gpu_type: nvidia-hopper-h100-1g20gb
-    - gpu_memory_le: 40
-      cpus: 10
-      gpus: 1
-      memory: 40Gi
-      storage: 80Gi
-      gpu_type: nvidia-hopper-h100-3g40gb
-    - gpu_memory_le: 80
-      cpus: 20
-      gpus: 1
-      memory: 80Gi
-      storage: 96Gi
-      gpu_type: nvidia-hopper-h100
-    - gpu_memory_le: 160
-      cpus: 40
-      gpus: 2
-      memory: 160Gi
-      storage: 160Gi
-      gpu_type: nvidia-hopper-h100
-    - gpu_memory_le: 320
-      cpus: 80
-      gpus: 4
-      memory: 320Gi
-      storage: 320Gi
-      gpu_type: nvidia-hopper-h100
-    - gpu_memory_le: 640
-      cpus: 160
-      gpus: 8
-      memory: 800Gi
-      storage: 640Gi
-      gpu_type: nvidia-hopper-h100
-                """,
-            "byModelName": """
-    - name: llama-3-8b-instruct-262k
-      cpus: 40
-      gpus: 2
-      memory: 160Gi
-      storage: 160Gi
-      gpu_type: nvidia-hopper-h100
-                """,
-        }
 
     return mock.AsyncMock(side_effect=async_mock)
 
@@ -2219,7 +2167,12 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         await _infer_hardware(fake_llm_artifact_gateway, "llama-3-999b", "")
 
 
-def test_fill_hardware_info(fake_llm_artifact_gateway):
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
+    mocked__get_recommended_hardware_config_map(),
+)
+async def test_fill_hardware_info(fake_llm_artifact_gateway):
     request = CreateLLMModelEndpointV1Request(
         name="mixtral-8x7b",
         model_name="mixtral-8x7b",
@@ -2230,7 +2183,7 @@ def test_fill_hardware_info(fake_llm_artifact_gateway):
         per_worker=1,
         labels={},
     )
-    _fill_hardware_info(fake_llm_artifact_gateway, request)
+    await _fill_hardware_info(fake_llm_artifact_gateway, request)
     assert request.cpus == "20"
     assert request.gpus == 2
     assert request.memory == "160Gi"
@@ -2250,10 +2203,14 @@ def test_fill_hardware_info(fake_llm_artifact_gateway):
     )
 
     with pytest.raises(ObjectHasInvalidValueException):
-        _fill_hardware_info(fake_llm_artifact_gateway, request)
+        await _fill_hardware_info(fake_llm_artifact_gateway, request)
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
+    mocked__get_recommended_hardware_config_map(),
+)
 async def test_create_batch_completions(
     fake_docker_image_batch_job_gateway,
     fake_docker_repository_image_always_exists,
