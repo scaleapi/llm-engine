@@ -71,6 +71,7 @@ from model_engine_server.domain.exceptions import (
     EndpointUnsupportedInferenceTypeException,
     InvalidRequestException,
     LatestImageTagNotFoundException,
+    ModelRepoHasInformationNotPresentException,
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
@@ -2238,6 +2239,25 @@ def _infer_hardware(
     checkpoint_path: str,
     is_batch_job: bool = False,
 ) -> CreateDockerImageBatchJobResourceRequests:
+    def _read_max_position_embeddings(config: Dict, model_name: str):
+        if "max_position_embeddings" in config:
+            return config["max_position_embeddings"]
+        if model_name in ["falcon-180b", "falcon-180b-chat"]:
+            # see the model card on HF
+            return 2048
+        raise ModelRepoHasInformationNotPresentException(
+            "Unable to infer max_position_embeddings from model config."
+        )  # TODO exception type
+
+    def _read_num_key_value_heads(config: Dict):
+        if "num_key_value_heads" in config:
+            return config["num_key_value_heads"]
+        elif "num_kv_heads" in config:
+            return config["num_kv_heads"]
+        raise ModelRepoHasInformationNotPresentException(
+            "Unable to infer num_key_value_heads from model config."
+        )
+
     config = llm_artifact_gateway.get_model_config(checkpoint_path)
 
     dtype_size = 2
@@ -2248,8 +2268,8 @@ def _infer_hardware(
         * dtype_size
         * config["num_hidden_layers"]
         * config["hidden_size"]
-        * config["max_position_embeddings"]
-        // (config["num_attention_heads"] // config["num_key_value_heads"])
+        * _read_max_position_embeddings(config, model_name)
+        // (config["num_attention_heads"] // _read_num_key_value_heads(config))
     )
 
     if "mixtral-8x7b" in model_name:
