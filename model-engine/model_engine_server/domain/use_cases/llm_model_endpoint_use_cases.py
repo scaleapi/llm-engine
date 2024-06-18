@@ -2239,20 +2239,54 @@ def _infer_hardware(
     checkpoint_path: str,
     is_batch_job: bool = False,
 ) -> CreateDockerImageBatchJobResourceRequests:
+    def _read_num_hidden_layers(config: Dict):
+        if "num_hidden_layers" in config:
+            return config["num_hidden_layers"]
+        if "n_layer" in config:
+            # jais-13b + chat
+            return config["n_layer"]
+        raise ModelRepoHasInformationNotPresentException(
+            "Unable to infer num_hidden_layers from model config."
+        )
+
+    def _read_hidden_size(config: Dict):
+        if "hidden_size" in config:
+            return config["hidden_size"]
+        if "n_embd" in config:
+            # jais-13b + chat
+            return config["n_embd"]
+        raise ModelRepoHasInformationNotPresentException(
+            "Unable to infer hidden_size from model config."
+        )
+
     def _read_max_position_embeddings(config: Dict, model_name: str):
         if "max_position_embeddings" in config:
             return config["max_position_embeddings"]
+        if "n_positions" in config:
+            # jais-13b + chat
+            return config["n_positions"]
         if model_name in ["falcon-180b", "falcon-180b-chat"]:
             # see the model card on HF
             return 2048
         raise ModelRepoHasInformationNotPresentException(
             "Unable to infer max_position_embeddings from model config."
-        )  # TODO exception type
+        )
+
+    def _read_num_attention_heads(config: Dict):
+        if "num_attention_heads" in config:
+            return config["num_attention_heads"]
+        elif "n_head" in config:
+            # jais-13b + chat
+            return config["n_head"]
+        raise ModelRepoHasInformationNotPresentException(
+            "Unable to infer num_attention_heads from model config."
+        )
 
     def _read_num_key_value_heads(config: Dict):
         if "num_key_value_heads" in config:
             return config["num_key_value_heads"]
         elif "num_kv_heads" in config:
+            # falcon 180b + chat
             return config["num_kv_heads"]
         raise ModelRepoHasInformationNotPresentException(
             "Unable to infer num_key_value_heads from model config."
@@ -2266,10 +2300,10 @@ def _infer_hardware(
     min_kv_cache_size = (
         kv_multiplier
         * dtype_size
-        * config["num_hidden_layers"]
-        * config["hidden_size"]
+        * _read_num_hidden_layers(config)
+        * _read_hidden_size(config)
         * _read_max_position_embeddings(config, model_name)
-        // (config["num_attention_heads"] // _read_num_key_value_heads(config))
+        // (_read_num_attention_heads(config) // _read_num_key_value_heads(config))
     )
 
     if "mixtral-8x7b" in model_name:
