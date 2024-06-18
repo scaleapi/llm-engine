@@ -1687,6 +1687,8 @@ class CompletionSyncV1UseCase:
                 vllm_args["guided_json"] = request.guided_json
             if request.guided_grammar is not None:
                 vllm_args["guided_grammar"] = request.guided_grammar
+            if request.skip_special_tokens is not None:
+                vllm_args["skip_special_tokens"] = request.skip_special_tokens
 
             inference_request = SyncEndpointPredictV1Request(
                 args=vllm_args,
@@ -1957,6 +1959,8 @@ class CompletionStreamV1UseCase:
                 args["guided_json"] = request.guided_json
             if request.guided_grammar is not None:
                 args["guided_grammar"] = request.guided_grammar
+            if request.skip_special_tokens is not None:
+                args["skip_special_tokens"] = request.skip_special_tokens
             args["stream"] = True
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
             args = {
