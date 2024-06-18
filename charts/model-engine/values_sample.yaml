@@ -310,7 +310,7 @@ celeryBrokerType: sqs
 datadog:
   enabled: false
 
-recommendedHardwares:
+recommendedHardware:
   byGpuMemoryGb:
     - gpu_memory_le: 24
       cpus: 10
@@ -349,7 +349,7 @@ recommendedHardwares:
       storage: 460Gi
       gpu_type: nvidia-hopper-h100
   byModelName:
-    llama-3-8b-instruct-262k:
+    - name: llama-3-8b-instruct-262k
       cpus: 20
       gpus: 2
       memory: 40Gi

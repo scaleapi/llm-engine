@@ -106,12 +106,12 @@ def mocked__get_recommended_hardware_config_map():
       gpu_type: nvidia-hopper-h100
                 """,
             "byModelName": """
-    llama-3-8b-instruct-262k:
+    - name: llama-3-8b-instruct-262k
       cpus: 40
       gpus: 2
-      memory: "160Gi"
-      storage: "160Gi"
-      gpu_type: "nvidia-hopper-h100"
+      memory: 160Gi
+      storage: 160Gi
+      gpu_type: nvidia-hopper-h100
                 """,
         }
 

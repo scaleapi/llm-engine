@@ -70,6 +70,7 @@ from model_engine_server.domain.exceptions import (
     EndpointInfraStateNotFound,
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
+    FailToInferHardwareException,
     InvalidRequestException,
     LatestImageTagNotFoundException,
     ObjectHasInvalidValueException,
@@ -266,7 +267,9 @@ async def _get_recommended_hardware_config_map() -> Dict[str, Any]:
         logger.error(
             f"Failed to read config map {RECOMMENDED_HARDWARE_CONFIG_MAP_NAME}, can't infer hardware config."
         )
-        raise e
+        raise FailToInferHardwareException(
+            f"Failed to read config map {RECOMMENDED_HARDWARE_CONFIG_MAP_NAME}, can't infer hardware config."
+        ) from e
     return config_map
 
 
@@ -2288,7 +2291,7 @@ async def _infer_hardware(
     )
 
     config_map = await _get_recommended_hardware_config_map()
-    by_model_name = yaml.safe_load(config_map["byModelName"])
+    by_model_name = {item["name"]: item for item in yaml.safe_load(config_map["byModelName"])}
     by_gpu_memory_gb = yaml.safe_load(config_map["byGpuMemoryGb"])
     if model_name in by_model_name:
         cpus = by_model_name[model_name]["cpus"]

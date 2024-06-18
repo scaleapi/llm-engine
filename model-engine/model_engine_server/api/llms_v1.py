@@ -56,6 +56,7 @@ from model_engine_server.domain.exceptions import (
     EndpointResourceInvalidRequestException,
     EndpointUnsupportedInferenceTypeException,
     ExistingEndpointOperationInProgressException,
+    FailToInferHardwareException,
     InvalidRequestException,
     LLMFineTuningMethodNotImplementedException,
     LLMFineTuningQuotaReached,
@@ -199,6 +200,11 @@ async def create_model_endpoint(
         raise HTTPException(
             status_code=404,
             detail="The specified docker image could not be found.",
+        ) from exc
+    except FailToInferHardwareException as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to infer hardware exception.",
         ) from exc
 
 
