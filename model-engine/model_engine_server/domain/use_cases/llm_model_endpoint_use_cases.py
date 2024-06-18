@@ -2288,9 +2288,10 @@ def _infer_hardware(
         elif "num_kv_heads" in config:
             # falcon 180b + chat
             return config["num_kv_heads"]
-        raise ModelRepoHasInformationNotPresentException(
-            "Unable to infer num_key_value_heads from model config."
-        )
+        else:
+            # Assume we don't have GQA, this may overestimate the amount of kv cache but that
+            # is probably fine
+            return _read_num_attention_heads(config)
 
     config = llm_artifact_gateway.get_model_config(checkpoint_path)
 
