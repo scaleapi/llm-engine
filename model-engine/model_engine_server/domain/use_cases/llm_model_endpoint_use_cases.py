@@ -327,10 +327,10 @@ def validate_checkpoint_path_uri(checkpoint_path: str) -> None:
 
 def get_checkpoint_path(model_name: str, checkpoint_path_override: Optional[str]) -> str:
     checkpoint_path = None
-    if SUPPORTED_MODELS_INFO[model_name].s3_repo:
-        checkpoint_path = get_models_s3_uri(SUPPORTED_MODELS_INFO[model_name].s3_repo, "")
     if checkpoint_path_override:
         checkpoint_path = checkpoint_path_override
+    if SUPPORTED_MODELS_INFO[model_name].s3_repo:
+        checkpoint_path = get_models_s3_uri(SUPPORTED_MODELS_INFO[model_name].s3_repo, "")
 
     if not checkpoint_path:
         raise InvalidRequestException(f"No checkpoint path found for model {model_name}")
