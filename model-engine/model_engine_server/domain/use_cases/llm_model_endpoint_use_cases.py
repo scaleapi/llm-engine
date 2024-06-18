@@ -2288,18 +2288,19 @@ async def _infer_hardware(
     )
 
     config_map = await _get_recommended_hardware_config_map()
-    recommendations = yaml.safe_load(config_map)
-    if model_name in recommendations["byModelName"]:
-        cpus = recommendations["byModelName"][model_name]["cpus"]
-        gpus = recommendations["byModelName"][model_name]["gpus"]
-        memory = recommendations["byModelName"][model_name]["memory"]
-        storage = recommendations["byModelName"][model_name]["storage"]
-        gpu_type = recommendations["byModelName"][model_name]["gpu_type"]
+    by_model_name = yaml.safe_load(config_map["byModelName"])
+    by_gpu_memory_gb = yaml.safe_load(config_map["byGpuMemoryGb"])
+    if model_name in by_model_name:
+        cpus = by_model_name[model_name]["cpus"]
+        gpus = by_model_name[model_name]["gpus"]
+        memory = by_model_name[model_name]["memory"]
+        storage = by_model_name[model_name]["storage"]
+        gpu_type = by_model_name[model_name]["gpu_type"]
     else:
-        gpu_mem_recommendations = recommendations["byGpuMemoryGb"]
+        by_gpu_memory_gb = sorted(by_gpu_memory_gb, key=lambda x: x["gpu_memory_le"])
         found = False
-        for gpu_mem, recs in gpu_mem_recommendations.items():
-            if min_memory_gb <= gpu_mem["gpu_memory_le"]:
+        for recs in by_gpu_memory_gb:
+            if min_memory_gb <= recs["gpu_memory_le"]:
                 cpus = recs["cpus"]
                 gpus = recs["gpus"]
                 memory = recs["memory"]
