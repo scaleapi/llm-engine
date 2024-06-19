@@ -2184,7 +2184,7 @@ async def test_fill_hardware_info(fake_llm_artifact_gateway):
         labels={},
     )
     await _fill_hardware_info(fake_llm_artifact_gateway, request)
-    assert request.cpus == "20"
+    assert request.cpus == "40"
     assert request.gpus == 2
     assert request.memory == "160Gi"
     assert request.storage == "160Gi"
