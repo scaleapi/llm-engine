@@ -188,3 +188,12 @@ class LatestImageTagNotFoundException(DomainException):
     """
     Thrown if the latest image tag cannot be found.
     """
+
+
+@dataclass
+class FailToInferHardwareException(DomainException):
+    """
+    Thrown if failed to infer hardware.
+    """
+
+    message: str
