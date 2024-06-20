@@ -1659,7 +1659,7 @@ class FakeModelEndpointService(ModelEndpointService):
     ) -> SyncModelEndpointInferenceGateway:
         return self.sync_model_endpoint_inference_gateway
 
-    def get_inference_auto_scaling_metrics_gateway(
+    def get_inference_autoscaling_metrics_gateway(
         self,
     ) -> InferenceAutoscalingMetricsGateway:
         return self.inference_autoscaling_metrics_gateway

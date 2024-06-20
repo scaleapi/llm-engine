@@ -221,8 +221,16 @@ def _get_external_interfaces(
     else:
         inference_task_queue_gateway = sqs_task_queue_gateway
         infra_task_queue_gateway = sqs_task_queue_gateway
-    resource_gateway = LiveEndpointResourceGateway(queue_delegate=queue_delegate)
     redis_client = aioredis.Redis(connection_pool=get_or_create_aioredis_pool())
+    inference_autoscaling_metrics_gateway = (
+        ASBInferenceAutoscalingMetricsGateway()
+        if infra_config().cloud_provider == "azure"
+        else RedisInferenceAutoscalingMetricsGateway(redis_client=redis_client)
+    )  # we can just reuse the existing redis client, we shouldn't get key collisions because of the prefix
+    resource_gateway = LiveEndpointResourceGateway(
+        queue_delegate=queue_delegate,
+        inference_autoscaling_metrics_gateway=inference_autoscaling_metrics_gateway,
+    )
     model_endpoint_cache_repo = RedisModelEndpointCacheRepository(
         redis_client=redis_client,
     )
@@ -253,11 +261,6 @@ def _get_external_interfaces(
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
-    inference_autoscaling_metrics_gateway = (
-        ASBInferenceAutoscalingMetricsGateway()
-        if infra_config().cloud_provider == "azure"
-        else RedisInferenceAutoscalingMetricsGateway(redis_client=redis_client)
-    )  # we can just reuse the existing redis client, we shouldn't get key collisions because of the prefix
     model_endpoint_service = LiveModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,
         model_endpoint_infra_gateway=model_endpoint_infra_gateway,

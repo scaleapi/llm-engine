@@ -79,7 +79,15 @@ async def run_batch_job(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
         )
 
-    resource_gateway = LiveEndpointResourceGateway(queue_delegate=queue_delegate)
+    inference_autoscaling_metrics_gateway = (
+        ASBInferenceAutoscalingMetricsGateway()
+        if infra_config().cloud_provider == "azure"
+        else RedisInferenceAutoscalingMetricsGateway(redis_client=redis)
+    )
+    resource_gateway = LiveEndpointResourceGateway(
+        queue_delegate=queue_delegate,
+        inference_autoscaling_metrics_gateway=inference_autoscaling_metrics_gateway,
+    )
 
     inference_task_queue_gateway: TaskQueueGateway
     infra_task_queue_gateway: TaskQueueGateway
@@ -113,11 +121,6 @@ async def run_batch_job(
     )
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
-    )
-    inference_autoscaling_metrics_gateway = (
-        ASBInferenceAutoscalingMetricsGateway()
-        if infra_config().cloud_provider == "azure"
-        else RedisInferenceAutoscalingMetricsGateway(redis_client=redis)
     )
     model_endpoint_service = LiveModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,

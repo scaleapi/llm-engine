@@ -16,7 +16,12 @@ from model_engine_server.core.config import infra_config
 from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
 from model_engine_server.db.base import get_session_async_null_pool
 from model_engine_server.domain.repositories import DockerRepository
-from model_engine_server.infra.gateways import ABSFilesystemGateway, S3FilesystemGateway
+from model_engine_server.infra.gateways import (
+    ABSFilesystemGateway,
+    ASBInferenceAutoscalingMetricsGateway,
+    RedisInferenceAutoscalingMetricsGateway,
+    S3FilesystemGateway,
+)
 from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
     ASBQueueEndpointResourceDelegate,
 )
@@ -73,10 +78,16 @@ def get_live_endpoint_builder_service(
         docker_repository = ACRDockerRepository()
     else:
         docker_repository = ECRDockerRepository()
+    inference_autoscaling_metrics_gateway = (
+        ASBInferenceAutoscalingMetricsGateway()
+        if infra_config().cloud_provider == "azure"
+        else RedisInferenceAutoscalingMetricsGateway(redis_client=redis)
+    )
     service = LiveEndpointBuilderService(
         docker_repository=docker_repository,
         resource_gateway=LiveEndpointResourceGateway(
             queue_delegate=queue_delegate,
+            inference_autoscaling_metrics_gateway=inference_autoscaling_metrics_gateway,
         ),
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         model_endpoint_record_repository=DbModelEndpointRecordRepository(

@@ -118,6 +118,7 @@ async def main(args: Any):
 
     k8s_resource_manager = LiveEndpointResourceGateway(
         queue_delegate=queue_delegate,
+        inference_autoscaling_metrics_gateway=None,
     )
     image_cache_gateway = ImageCacheGateway()
     docker_repo: DockerRepository

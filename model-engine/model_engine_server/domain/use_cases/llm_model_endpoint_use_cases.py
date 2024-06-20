@@ -1042,7 +1042,7 @@ class CreateLLMModelEndpointV1UseCase:
             post_inference_hooks=request.post_inference_hooks,
         )
 
-        await self.model_endpoint_service.get_inference_auto_scaling_metrics_gateway().emit_prewarm_metric(
+        await self.model_endpoint_service.get_inference_autoscaling_metrics_gateway().emit_prewarm_metric(
             model_endpoint_record.id
         )
 
@@ -1611,7 +1611,7 @@ class CompletionSyncV1UseCase:
 
         inference_gateway = self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
         autoscaling_metrics_gateway = (
-            self.model_endpoint_service.get_inference_auto_scaling_metrics_gateway()
+            self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
         )
         await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
             endpoint_id=model_endpoint.record.id
@@ -1928,7 +1928,7 @@ class CompletionStreamV1UseCase:
             self.model_endpoint_service.get_streaming_model_endpoint_inference_gateway()
         )
         autoscaling_metrics_gateway = (
-            self.model_endpoint_service.get_inference_auto_scaling_metrics_gateway()
+            self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
         )
         await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
             endpoint_id=model_endpoint.record.id
