@@ -1,6 +1,7 @@
 import argparse
 import code
 import json
+import os
 import signal
 import subprocess
 import traceback
@@ -44,7 +45,7 @@ async def generate(request: Request) -> Response:
         await engine.check_health()
     except Exception as e:
         print(f"The vllm engine is dead, exiting the pod: {e}")
-        exit(1)
+        os.kill(os.getpid(), signal.SIGINT)
 
     request_dict = await request.json()
     prompt = request_dict.pop("prompt")
