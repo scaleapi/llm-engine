@@ -450,7 +450,7 @@ data:
       {{- if $azure_cloud_provider }}
       - type: azure-servicebus
         metadata:
-          queueName: "launch-endpoint-autoscaling:${ENDPOINT_ID}"
+          queueName: "launch-endpoint-autoscaling.${ENDPOINT_ID}"
           namespace: ${SERVICEBUS_NAMESPACE}
           messageCount: "100"
           activationMessageCount: "0"

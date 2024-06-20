@@ -24,7 +24,7 @@ class ASBInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway):
     @staticmethod
     def _find_queue_name(endpoint_id: str):
         # Keep in line with keda scaled object yaml
-        return f"launch-endpoint-autoscaling:{endpoint_id}"
+        return f"launch-endpoint-autoscaling.{endpoint_id}"
 
     async def _emit_metric(self, endpoint_id: str, expiry_time: int):
         queue_name = self._find_queue_name(endpoint_id)
