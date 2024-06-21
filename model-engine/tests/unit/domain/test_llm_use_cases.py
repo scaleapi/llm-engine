@@ -711,6 +711,7 @@ async def test_completion_sync_use_case_success(
 ):
     completion_sync_request.include_stop_str_in_output = True
     completion_sync_request.guided_json = {}
+    completion_sync_request.skip_special_tokens = False
     fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
     fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = (
         SyncEndpointPredictV1Response(
