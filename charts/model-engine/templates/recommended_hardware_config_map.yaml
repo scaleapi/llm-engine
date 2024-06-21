@@ -1,0 +1,28 @@
+{{ if .Values.recommendedHardware }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "modelEngine.fullname" . }}-recommended-hardware-config
+  labels:
+    product: common
+    team: infra
+data:
+  byGpuMemoryGb: |-
+{{- range $.Values.recommendedHardware.byGpuMemoryGb }}
+    - gpu_memory_le: {{ .gpu_memory_le }}
+      cpus: {{ .cpus }}
+      gpus: {{ .gpus }}
+      memory: {{ .memory }}
+      storage: {{ .storage }}
+      gpu_type: {{ .gpu_type }}
+{{- end }}
+  byModelName: |-
+{{- range $.Values.recommendedHardware.byModelName }}
+    - name: {{ .name }}
+      cpus: {{ .cpus }}
+      gpus: {{ .gpus }}
+      memory: {{ .memory }}
+      storage: {{ .storage }}
+      gpu_type: {{ .gpu_type }}
+{{- end }}
+{{- end }}
