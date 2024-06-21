@@ -13,6 +13,7 @@ from dataclasses import asdict, dataclass
 from functools import lru_cache
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
 
+import yaml
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import (
@@ -69,6 +70,7 @@ from model_engine_server.domain.exceptions import (
     EndpointInfraStateNotFound,
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
+    FailToInferHardwareException,
     InvalidRequestException,
     LatestImageTagNotFoundException,
     ObjectHasInvalidValueException,
@@ -238,6 +240,7 @@ SERVICE_IDENTIFIER = os.getenv("SERVICE_IDENTIFIER")
 if SERVICE_IDENTIFIER:
     SERVICE_NAME += f"-{SERVICE_IDENTIFIER}"
 LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = f"{SERVICE_NAME}-inference-framework-latest-config"
+RECOMMENDED_HARDWARE_CONFIG_MAP_NAME = f"{SERVICE_NAME}-recommended-hardware-config"
 
 
 def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
@@ -255,6 +258,19 @@ async def _get_latest_tag(inference_framework: LLMInferenceFramework) -> str:
             f"Could not find latest tag for inference framework {inference_framework}."
         )
     return config_map[inference_framework]
+
+
+async def _get_recommended_hardware_config_map() -> Dict[str, Any]:
+    try:
+        config_map = await read_config_map(RECOMMENDED_HARDWARE_CONFIG_MAP_NAME)
+    except Exception as e:
+        logger.error(
+            f"Failed to read config map {RECOMMENDED_HARDWARE_CONFIG_MAP_NAME}, can't infer hardware config."
+        )
+        raise FailToInferHardwareException(
+            f"Failed to read config map {RECOMMENDED_HARDWARE_CONFIG_MAP_NAME}, can't infer hardware config."
+        ) from e
+    return config_map
 
 
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
@@ -738,6 +754,9 @@ class CreateLLMModelBundleV1UseCase:
         if hmi_config.sensitive_log_mode:  # pragma: no cover
             subcommands[-1] = subcommands[-1] + " --disable-log-requests"
 
+        if "llama-3-70b" in model_name:
+            subcommands[-1] = subcommands[-1] + " --gpu-memory-utilization 0.95 --enforce-eager"
+
         command = [
             "/bin/bash",
             "-c",
@@ -926,7 +945,7 @@ class CreateLLMModelEndpointV1UseCase:
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
-        _fill_hardware_info(self.llm_artifact_gateway, request)
+        await _fill_hardware_info(self.llm_artifact_gateway, request)
         if not (
             request.gpus
             and request.gpu_type
@@ -940,6 +959,10 @@ class CreateLLMModelEndpointV1UseCase:
             max_workers=request.max_workers,
             endpoint_type=request.endpoint_type,
         )
+        if request.gpu_type == GpuType.NVIDIA_AMPERE_A100E:  # pragma: no cover
+            raise ObjectHasInvalidValueException(
+                "We have migrated A100 usage to H100. Please request for H100 instead!"
+            )
         if request.labels is None:
             raise EndpointLabelsException("Endpoint labels cannot be None!")
         validate_labels(request.labels)
@@ -1741,6 +1764,8 @@ class CompletionSyncV1UseCase:
                 vllm_args["guided_json"] = request.guided_json
             if request.guided_grammar is not None:
                 vllm_args["guided_grammar"] = request.guided_grammar
+            if request.skip_special_tokens is not None:
+                vllm_args["skip_special_tokens"] = request.skip_special_tokens
 
             inference_request = SyncEndpointPredictV1Request(
                 args=vllm_args,
@@ -2011,6 +2036,8 @@ class CompletionStreamV1UseCase:
                 args["guided_json"] = request.guided_json
             if request.guided_grammar is not None:
                 args["guided_grammar"] = request.guided_grammar
+            if request.skip_special_tokens is not None:
+                args["skip_special_tokens"] = request.skip_special_tokens
             args["stream"] = True
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
             args = {
@@ -2254,7 +2281,7 @@ class ModelDownloadV1UseCase:
         return ModelDownloadResponse(urls=urls)
 
 
-def _fill_hardware_info(
+async def _fill_hardware_info(
     llm_artifact_gateway: LLMArtifactGateway, request: CreateLLMModelEndpointV1Request
 ):
     if (
@@ -2275,7 +2302,9 @@ def _fill_hardware_info(
                 "All hardware spec fields (gpus, gpu_type, cpus, memory, storage) must be provided if any hardware spec field is missing."
             )
         checkpoint_path = get_checkpoint_path(request.model_name, request.checkpoint_path)
-        hardware_info = _infer_hardware(llm_artifact_gateway, request.model_name, checkpoint_path)
+        hardware_info = await _infer_hardware(
+            llm_artifact_gateway, request.model_name, checkpoint_path
+        )
         request.gpus = hardware_info.gpus
         request.gpu_type = hardware_info.gpu_type
         request.cpus = hardware_info.cpus
@@ -2286,17 +2315,19 @@ def _fill_hardware_info(
 
 
 @lru_cache()
-def _infer_hardware(
+async def _infer_hardware(
     llm_artifact_gateway: LLMArtifactGateway,
     model_name: str,
     checkpoint_path: str,
+    is_batch_job: bool = False,
 ) -> CreateDockerImageBatchJobResourceRequests:
     config = llm_artifact_gateway.get_model_config(checkpoint_path)
 
     dtype_size = 2
+    kv_multiplier = 20 if is_batch_job else 2
 
     min_kv_cache_size = (
-        2
+        kv_multiplier
         * dtype_size
         * config["num_hidden_layers"]
         * config["hidden_size"]
@@ -2321,53 +2352,30 @@ def _infer_hardware(
     min_memory_gb = math.ceil((min_kv_cache_size + model_weights_size) / 1_000_000_000 / 0.9)
 
     logger.info(
-        f"Memory calculation result: {min_memory_gb=} for {model_name}, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}"
+        f"Memory calculation result: {min_memory_gb=} for {model_name}, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}, is_batch_job: {is_batch_job}"
     )
 
-    if min_memory_gb <= 24:
-        cpus = "10"
-        gpus = 1
-        memory = "24Gi"
-        storage = "80Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A10
-    elif min_memory_gb <= 48:
-        cpus = "20"
-        gpus = 2
-        memory = "48Gi"
-        storage = "80Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A10
-    elif min_memory_gb <= 96:
-        cpus = "40"
-        gpus = 4
-        memory = "96Gi"
-        storage = "96Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A10
-    elif min_memory_gb <= 180:
-        cpus = "20"
-        gpus = 2
-        memory = "160Gi"
-        storage = "160Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A100E
-    elif min_memory_gb <= 320:
-        cpus = "40"
-        gpus = 4
-        memory = "320Gi"
-        storage = "320Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A100E
-    elif min_memory_gb <= 640:
-        cpus = "80"
-        gpus = 8
-        memory = "800Gi"
-        storage = "460Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A100E
-    elif "llama-3-8b-instruct-262k" in model_name:
-        cpus = "20"
-        gpus = 2
-        memory = "40Gi"
-        storage = "40Gi"
-        gpu_type = GpuType.NVIDIA_AMPERE_A100E
+    config_map = await _get_recommended_hardware_config_map()
+    by_model_name = {item["name"]: item for item in yaml.safe_load(config_map["byModelName"])}
+    by_gpu_memory_gb = yaml.safe_load(config_map["byGpuMemoryGb"])
+    if model_name in by_model_name:
+        cpus = by_model_name[model_name]["cpus"]
+        gpus = by_model_name[model_name]["gpus"]
+        memory = by_model_name[model_name]["memory"]
+        storage = by_model_name[model_name]["storage"]
+        gpu_type = by_model_name[model_name]["gpu_type"]
     else:
-        raise ObjectHasInvalidValueException(f"Unable to infer hardware for {model_name}.")
+        by_gpu_memory_gb = sorted(by_gpu_memory_gb, key=lambda x: x["gpu_memory_le"])
+        for recs in by_gpu_memory_gb:
+            if min_memory_gb <= recs["gpu_memory_le"]:
+                cpus = recs["cpus"]
+                gpus = recs["gpus"]
+                memory = recs["memory"]
+                storage = recs["storage"]
+                gpu_type = recs["gpu_type"]
+                break
+        else:
+            raise ObjectHasInvalidValueException(f"Unable to infer hardware for {model_name}.")
 
     return CreateDockerImageBatchJobResourceRequests(
         cpus=cpus, gpus=gpus, memory=memory, storage=storage, gpu_type=gpu_type
@@ -2458,10 +2466,11 @@ class CreateBatchCompletionsUseCase:
         request.model_config.checkpoint_path = get_checkpoint_path(
             request.model_config.model, request.model_config.checkpoint_path
         )
-        hardware = _infer_hardware(
+        hardware = await _infer_hardware(
             self.llm_artifact_gateway,
             request.model_config.model,
             request.model_config.checkpoint_path,
+            is_batch_job=True,
         )
         # Reconcile gpus count with num_shards from request
         assert hardware.gpus is not None

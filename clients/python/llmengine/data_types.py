@@ -41,6 +41,9 @@ class GpuType(str, Enum):
     NVIDIA_AMPERE_A10 = "nvidia-ampere-a10"
     NVIDIA_AMPERE_A100 = "nvidia-ampere-a100"
     NVIDIA_AMPERE_A100E = "nvidia-ampere-a100e"
+    NVIDIA_HOPPER_H100 = "nvidia-hopper-h100"
+    NVIDIA_HOPPER_H100_1G_20GB = "nvidia-hopper-h100-1g20gb"
+    NVIDIA_HOPPER_H100_3G_40GB = "nvidia-hopper-h100-3g40gb"
 
 
 class ModelEndpointType(str, Enum):
@@ -328,6 +331,8 @@ class CompletionSyncV1Request(BaseModel):
     guided_json: Optional[Dict[str, Any]] = Field(default=None)
     guided_regex: Optional[str] = Field(default=None)
     guided_choice: Optional[List[str]] = Field(default=None)
+    guided_grammar: Optional[str] = Field(default=None)
+    skip_special_tokens: Optional[bool] = Field(default=True)
 
 
 class TokenOutput(BaseModel):
@@ -402,6 +407,8 @@ class CompletionStreamV1Request(BaseModel):
     guided_json: Optional[Dict[str, Any]] = Field(default=None)
     guided_regex: Optional[str] = Field(default=None)
     guided_choice: Optional[List[str]] = Field(default=None)
+    guided_grammar: Optional[str] = Field(default=None)
+    skip_special_tokens: Optional[bool] = Field(default=True)
 
 
 class CompletionStreamOutput(BaseModel):
@@ -693,6 +700,10 @@ class CreateBatchCompletionsRequestContent(BaseModel):
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
     """
     Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
+    """
+    skip_special_tokens: Optional[bool] = True
+    """
+    Whether to skip special tokens in the output.
     """
 
 

@@ -56,6 +56,8 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
+from ..conftest import mocked__get_recommended_hardware_config_map
+
 
 def mocked__get_latest_tag():
     async def async_mock(*args, **kwargs):  # noqa
@@ -80,6 +82,7 @@ async def test_create_model_endpoint_use_case_success(
     create_llm_model_endpoint_request_sync: CreateLLMModelEndpointV1Request,
     create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
     create_llm_model_endpoint_request_llama_2: CreateLLMModelEndpointV1Request,
+    create_llm_model_endpoint_request_llama_3_70b: CreateLLMModelEndpointV1Request,
 ):
     fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
     bundle_use_case = CreateModelBundleV2UseCase(
@@ -181,6 +184,16 @@ async def test_create_model_endpoint_use_case_success(
         owner=user.team_id, name=create_llm_model_endpoint_request_llama_2.name
     )
     assert "--max-total-tokens" in bundle.flavor.command[-1] and "4096" in bundle.flavor.command[-1]
+
+    response_5 = await use_case.execute(
+        user=user, request=create_llm_model_endpoint_request_llama_3_70b
+    )
+    assert response_5.endpoint_creation_task_id
+    assert isinstance(response_5, CreateLLMModelEndpointV1Response)
+    bundle = await fake_model_bundle_repository.get_latest_model_bundle_by_name(
+        owner=user.team_id, name=create_llm_model_endpoint_request_llama_3_70b.name
+    )
+    assert " --gpu-memory-utilization 0.95" in bundle.flavor.command[-1]
 
 
 @pytest.mark.asyncio
@@ -698,6 +711,7 @@ async def test_completion_sync_use_case_success(
 ):
     completion_sync_request.include_stop_str_in_output = True
     completion_sync_request.guided_json = {}
+    completion_sync_request.skip_special_tokens = False
     fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync[0])
     fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = (
         SyncEndpointPredictV1Response(
@@ -1819,7 +1833,12 @@ async def test_validate_checkpoint_files_safetensors_with_other_files():
     validate_checkpoint_files(fake_model_files)  # No exception should be raised
 
 
-def test_infer_hardware(fake_llm_artifact_gateway):
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
+    mocked__get_recommended_hardware_config_map(),
+)
+async def test_infer_hardware(fake_llm_artifact_gateway):
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["MixtralForCausalLM"],
         "attention_dropout": 0.0,
@@ -1843,12 +1862,21 @@ def test_infer_hardware(fake_llm_artifact_gateway):
         "transformers_version": "4.36.0.dev0",
         "vocab_size": 32000,
     }
-    hardware = _infer_hardware(fake_llm_artifact_gateway, "mixtral-8x7b", "")
-    assert hardware.cpus == "20"
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "mixtral-8x7b", "")
+    assert hardware.cpus == "40"
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "mixtral-8x7b", "", is_batch_job=True
+    )
+    assert hardware.cpus == "40"
+    assert hardware.gpus == 2
+    assert hardware.memory == "160Gi"
+    assert hardware.storage == "160Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["MixtralForCausalLM"],
@@ -1874,12 +1902,21 @@ def test_infer_hardware(fake_llm_artifact_gateway):
         "transformers_version": "4.40.0.dev0",
         "vocab_size": 32000,
     }
-    hardware = _infer_hardware(fake_llm_artifact_gateway, "mixtral-8x22b", "")
-    assert hardware.cpus == "80"
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "mixtral-8x22b", "")
+    assert hardware.cpus == "160"
     assert hardware.gpus == 8
     assert hardware.memory == "800Gi"
-    assert hardware.storage == "460Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    assert hardware.storage == "640Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "mixtral-8x22b", "", is_batch_job=True
+    )
+    assert hardware.cpus == "160"
+    assert hardware.gpus == 8
+    assert hardware.memory == "800Gi"
+    assert hardware.storage == "640Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     fake_llm_artifact_gateway.model_config = {
         "_name_or_path": "meta-llama/Llama-2-7b-hf",
@@ -1901,12 +1938,19 @@ def test_infer_hardware(fake_llm_artifact_gateway):
         "transformers_version": "4.31.0.dev0",
         "vocab_size": 32000,
     }
-    hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-2-7b", "")
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-7b", "")
+    assert hardware.cpus == "5"
+    assert hardware.gpus == 1
+    assert hardware.memory == "20Gi"
+    assert hardware.storage == "40Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_1G_20GB
+
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-7b", "", is_batch_job=True)
     assert hardware.cpus == "10"
     assert hardware.gpus == 1
-    assert hardware.memory == "24Gi"
+    assert hardware.memory == "40Gi"
     assert hardware.storage == "80Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_3G_40GB
 
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["LlamaForCausalLM"],
@@ -1929,12 +1973,19 @@ def test_infer_hardware(fake_llm_artifact_gateway):
         "transformers_version": "4.40.0.dev0",
         "vocab_size": 128256,
     }
-    hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b", "")
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b", "")
+    assert hardware.cpus == "5"
+    assert hardware.gpus == 1
+    assert hardware.memory == "20Gi"
+    assert hardware.storage == "40Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_1G_20GB
+
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b", "", is_batch_job=True)
     assert hardware.cpus == "10"
     assert hardware.gpus == 1
-    assert hardware.memory == "24Gi"
+    assert hardware.memory == "40Gi"
     assert hardware.storage == "80Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_3G_40GB
 
     fake_llm_artifact_gateway.model_config = {
         "_name_or_path": "meta-llama/Llama-2-13b-hf",
@@ -1956,12 +2007,21 @@ def test_infer_hardware(fake_llm_artifact_gateway):
         "transformers_version": "4.32.0.dev0",
         "vocab_size": 32000,
     }
-    hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-2-13b", "")
-    assert hardware.cpus == "20"
-    assert hardware.gpus == 2
-    assert hardware.memory == "48Gi"
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-13b", "")
+    assert hardware.cpus == "10"
+    assert hardware.gpus == 1
+    assert hardware.memory == "40Gi"
     assert hardware.storage == "80Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_3G_40GB
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "llama-2-13b", "", is_batch_job=True
+    )
+    assert hardware.cpus == "20"
+    assert hardware.gpus == 1
+    assert hardware.memory == "80Gi"
+    assert hardware.storage == "96Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["LlamaForCausalLM"],
@@ -1983,12 +2043,21 @@ def test_infer_hardware(fake_llm_artifact_gateway):
         "transformers_version": "4.32.0.dev0",
         "vocab_size": 32000,
     }
-    hardware = _infer_hardware(fake_llm_artifact_gateway, "codellama-34b", "")
-    assert hardware.cpus == "40"
-    assert hardware.gpus == 4
-    assert hardware.memory == "96Gi"
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "codellama-34b", "")
+    assert hardware.cpus == "20"
+    assert hardware.gpus == 1
+    assert hardware.memory == "80Gi"
     assert hardware.storage == "96Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A10
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "codellama-34b", "", is_batch_job=True
+    )
+    assert hardware.cpus == "40"
+    assert hardware.gpus == 2
+    assert hardware.memory == "160Gi"
+    assert hardware.storage == "160Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     fake_llm_artifact_gateway.model_config = {
         "_name_or_path": "meta-llama/Llama-2-70b-hf",
@@ -2010,12 +2079,21 @@ def test_infer_hardware(fake_llm_artifact_gateway):
         "transformers_version": "4.32.0.dev0",
         "vocab_size": 32000,
     }
-    hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-2-70b", "")
-    assert hardware.cpus == "20"
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-70b", "")
+    assert hardware.cpus == "40"
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "llama-2-70b", "", is_batch_job=True
+    )
+    assert hardware.cpus == "80"
+    assert hardware.gpus == 4
+    assert hardware.memory == "320Gi"
+    assert hardware.storage == "320Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["LlamaForCausalLM"],
@@ -2038,48 +2116,64 @@ def test_infer_hardware(fake_llm_artifact_gateway):
         "transformers_version": "4.40.0.dev0",
         "vocab_size": 128256,
     }
-    hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-3-70b", "")
-    assert hardware.cpus == "20"
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-70b", "")
+    assert hardware.cpus == "40"
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
-    assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
-    # (TODO) figure out how to calculate memory for llama-3-8b-instruct-262k
-    # fake_llm_artifact_gateway.model_config = {
-    #     "_name_or_path": "gradientai/llama3-8b-stage65k-chat",
-    #     "architectures": ["LlamaForCausalLM"],
-    #     "attention_dropout": 0.0,
-    #     "bos_token_id": 128000,
-    #     "eos_token_id": 128001,
-    #     "hidden_act": "silu",
-    #     "hidden_size": 4096,
-    #     "initializer_range": 0.02,
-    #     "intermediate_size": 14336,
-    #     "max_position_embeddings": 262144,
-    #     "model_type": "llama",
-    #     "num_attention_heads": 32,
-    #     "num_hidden_layers": 32,
-    #     "num_key_value_heads": 8,
-    #     "pretraining_tp": 1,
-    #     "rms_norm_eps": 1e-05,
-    #     "rope_theta": 283461213.0,
-    #     "torch_dtype": "bfloat16",
-    #     "transformers_version": "4.41.0.dev0",
-    #     "vocab_size": 128256,
-    # }
-    # hardware = _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b-instruct-262k", "")
-    # assert hardware.cpus == "20"
-    # assert hardware.gpus == 2
-    # assert hardware.memory == "160Gi"
-    # assert hardware.storage == "160Gi"
-    # assert hardware.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "llama-3-70b", "", is_batch_job=True
+    )
+    assert hardware.cpus == "80"
+    assert hardware.gpus == 4
+    assert hardware.memory == "320Gi"
+    assert hardware.storage == "320Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
+    fake_llm_artifact_gateway.model_config = {
+        "_name_or_path": "gradientai/llama3-8b-stage65k-chat",
+        "architectures": ["LlamaForCausalLM"],
+        "attention_dropout": 0.0,
+        "bos_token_id": 128000,
+        "eos_token_id": 128001,
+        "hidden_act": "silu",
+        "hidden_size": 4096,
+        "initializer_range": 0.02,
+        "intermediate_size": 14336,
+        "max_position_embeddings": 262144,
+        "model_type": "llama",
+        "num_attention_heads": 32,
+        "num_hidden_layers": 32,
+        "num_key_value_heads": 8,
+        "pretraining_tp": 1,
+        "rms_norm_eps": 1e-05,
+        "rope_theta": 283461213.0,
+        "torch_dtype": "bfloat16",
+        "transformers_version": "4.41.0.dev0",
+        "vocab_size": 128256,
+    }
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b-instruct-262k", "")
+    assert hardware.cpus == "40"
+    assert hardware.gpus == 2
+    assert hardware.memory == "160Gi"
+    assert hardware.storage == "160Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     with pytest.raises(ObjectHasInvalidValueException):
-        _infer_hardware(fake_llm_artifact_gateway, "unsupported_model", "")
+        await _infer_hardware(fake_llm_artifact_gateway, "unsupported_model", "")
+
+    with pytest.raises(ObjectHasInvalidValueException):
+        await _infer_hardware(fake_llm_artifact_gateway, "llama-3-999b", "")
 
 
-def test_fill_hardware_info(fake_llm_artifact_gateway):
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
+    mocked__get_recommended_hardware_config_map(),
+)
+async def test_fill_hardware_info(fake_llm_artifact_gateway):
     request = CreateLLMModelEndpointV1Request(
         name="mixtral-8x7b",
         model_name="mixtral-8x7b",
@@ -2090,12 +2184,12 @@ def test_fill_hardware_info(fake_llm_artifact_gateway):
         per_worker=1,
         labels={},
     )
-    _fill_hardware_info(fake_llm_artifact_gateway, request)
-    assert request.cpus == "20"
+    await _fill_hardware_info(fake_llm_artifact_gateway, request)
+    assert request.cpus == "40"
     assert request.gpus == 2
     assert request.memory == "160Gi"
     assert request.storage == "160Gi"
-    assert request.gpu_type == GpuType.NVIDIA_AMPERE_A100E
+    assert request.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     request = CreateLLMModelEndpointV1Request(
         name="mixtral-8x7b",
@@ -2110,10 +2204,14 @@ def test_fill_hardware_info(fake_llm_artifact_gateway):
     )
 
     with pytest.raises(ObjectHasInvalidValueException):
-        _fill_hardware_info(fake_llm_artifact_gateway, request)
+        await _fill_hardware_info(fake_llm_artifact_gateway, request)
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
+    mocked__get_recommended_hardware_config_map(),
+)
 async def test_create_batch_completions(
     fake_docker_image_batch_job_gateway,
     fake_docker_repository_image_always_exists,

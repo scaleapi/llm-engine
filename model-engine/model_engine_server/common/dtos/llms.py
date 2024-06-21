@@ -4,7 +4,6 @@ DTOs for LLM APIs.
 
 from typing import Any, Dict, List, Optional
 
-import pydantic
 from model_engine_server.common.dtos.model_endpoints import (
     CpuSpecificationType,
     GetModelEndpointV1Response,
@@ -22,11 +21,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointStatus,
     Quantization,
 )
-
-if int(pydantic.__version__.split(".")[0]) > 1:
-    from pydantic.v1 import BaseModel, Field, HttpUrl  # pragma: no cover
-else:
-    from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class CreateLLMModelEndpointV1Request(BaseModel):
@@ -205,6 +200,10 @@ class CompletionSyncV1Request(BaseModel):
     """
     Context-free grammar for guided decoding. Only supported in vllm.
     """
+    skip_special_tokens: Optional[bool] = True
+    """
+    Whether to skip special tokens in the output. Only supported in vllm.
+    """
 
 
 class TokenOutput(BaseModel):
@@ -284,6 +283,10 @@ class CompletionStreamV1Request(BaseModel):
     guided_grammar: Optional[str] = None
     """
     Context-free grammar for guided decoding. Only supported in vllm.
+    """
+    skip_special_tokens: Optional[bool] = True
+    """
+    Whether to skip special tokens in the output. Only supported in vllm.
     """
 
 
@@ -454,6 +457,10 @@ class CreateBatchCompletionsRequestContent(BaseModel):
     top_p: Optional[float] = Field(default=None, gt=0.0, le=1.0)
     """
     Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
+    """
+    skip_special_tokens: Optional[bool] = True
+    """
+    Whether to skip special tokens in the output.
     """
 
 

@@ -38,8 +38,9 @@ class InfraConfig:
     default_region: str
     ml_account_id: str
     docker_repo_prefix: str
-    redis_host: str
     s3_bucket: str
+    redis_host: Optional[str] = None
+    redis_aws_secret_name: Optional[str] = None
     profile_ml_worker: str = "default"
     profile_ml_inference_worker: str = "default"
     identity_service_url: Optional[str] = None

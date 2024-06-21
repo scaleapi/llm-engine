@@ -35,6 +35,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      priorityClassName: model-engine-high-priority
       containers:
         - name: {{ include "modelEngine.fullname" . }}
           image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"

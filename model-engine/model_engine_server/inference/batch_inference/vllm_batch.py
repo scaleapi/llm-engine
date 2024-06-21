@@ -217,6 +217,7 @@ async def generate_with_tool(
             content.frequency_penalty,
             content.top_k,
             content.top_p,
+            content.skip_special_tokens,
             [iter[0] for iter in iter_prompts],
             bar,
             use_tool=True,
@@ -366,6 +367,7 @@ async def batch_inference():
             content.frequency_penalty,
             content.top_k,
             content.top_p,
+            content.skip_special_tokens,
             prompts,
             bar,
             use_tool=False,
@@ -401,6 +403,7 @@ async def generate_with_vllm(
     frequency_penalty,
     top_k,
     top_p,
+    skip_special_tokens,
     prompts,
     bar,
     use_tool,
@@ -424,6 +427,7 @@ async def generate_with_vllm(
             frequency_penalty=frequency_penalty or 0.0,
             top_k=top_k or -1,
             top_p=top_p or 1.0,
+            skip_special_tokens=skip_special_tokens if skip_special_tokens is not None else True,
         )
         results_generator = await engine.add_request(
             request_id, prompt, sampling_params, None, time.monotonic()
@@ -479,7 +483,8 @@ def get_gpu_free_memory():  # pragma: no cover
         ).stdout
         gpu_memory = [int(x) for x in output.strip().split("\n")]
         return gpu_memory
-    except subprocess.CalledProcessError:
+    except Exception as e:
+        print(f"Error getting GPU memory: {e}")
         return None
 
 
@@ -494,11 +499,14 @@ def check_unknown_startup_memory_usage():  # pragma: no cover
             print(
                 f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
             )
-            # nosemgrep
-            output = subprocess.run(
-                ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
-            ).stdout
-            print(f"Processes using GPU: {output}")
+            try:
+                # nosemgrep
+                output = subprocess.run(
+                    ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
+                ).stdout
+                print(f"Processes using GPU: {output}")
+            except Exception as e:
+                print(f"Error getting processes using GPU: {e}")
 
 
 if __name__ == "__main__":

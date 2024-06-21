@@ -1,31 +1,33 @@
 {{- if not .Values.serviceIdentifier }}
+{{- range .Values.balloons }}
+{{- if not (eq .acceleratorName "cpu") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}-balloon-a100
+  name: {{ $.Chart.Name }}-balloon-{{ .acceleratorName }}
   labels:
     team: infra
     product: common-warm-nodes
 spec:
-  replicas: {{ .Values.replicaCount.balloonA100 }}
+  replicas: {{ .replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}-balloon-a100
+      app: {{ $.Chart.Name }}-balloon-{{ .acceleratorName }}
       version: v1
   template:
     metadata:
       labels:
-        app: {{ .Chart.Name }}-balloon-a100
+        app: {{ $.Chart.Name }}-balloon-{{ .acceleratorName }}
         product: common-warm-nodes
         team: infra
-        env: {{ .Values.context }}
+        env: {{ $.Values.context }}
         version: v1
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
       nodeSelector:
-        k8s.amazonaws.com/accelerator: nvidia-ampere-a100
-        {{- with .Values.balloonNodeSelector }}
+        k8s.amazonaws.com/accelerator: {{ .acceleratorName }}
+        {{- with $.Values.balloonNodeSelector }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       tolerations:
@@ -46,5 +48,8 @@ spec:
             - -c
             - "while true; do sleep 30; done"
       terminationGracePeriodSeconds: 0
-      priorityClassName: {{ .Chart.Name }}-low-priority
+      priorityClassName: {{ $.Chart.Name }}-low-priority
+---
+{{- end }}
+{{- end }}
 {{- end }}

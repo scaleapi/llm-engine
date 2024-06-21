@@ -293,6 +293,33 @@ def create_llm_model_endpoint_request_llama_2() -> CreateLLMModelEndpointV1Reque
 
 
 @pytest.fixture
+def create_llm_model_endpoint_request_llama_3_70b() -> CreateLLMModelEndpointV1Request:
+    return CreateLLMModelEndpointV1Request(
+        name="test_llm_endpoint_name_llama_3_70b",
+        model_name="llama-3-70b",
+        source="hugging_face",
+        inference_framework="vllm",
+        inference_framework_image_tag="1.0.0",
+        num_shards=2,
+        endpoint_type=ModelEndpointType.STREAMING,
+        metadata={},
+        post_inference_hooks=["billing"],
+        cpus=1,
+        gpus=2,
+        memory="8G",
+        gpu_type=GpuType.NVIDIA_HOPPER_H100,
+        storage="10G",
+        min_workers=1,
+        max_workers=3,
+        per_worker=2,
+        labels={"team": "infra", "product": "my_product"},
+        aws_role="test_aws_role",
+        results_s3_bucket="test_s3_bucket",
+        checkpoint_path="s3://llama-3-70b",
+    )
+
+
+@pytest.fixture
 def create_llm_model_endpoint_text_generation_inference_request_streaming() -> (
     CreateLLMModelEndpointV1Request
 ):

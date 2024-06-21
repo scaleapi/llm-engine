@@ -1,6 +1,7 @@
 import argparse
 import code
 import json
+import os
 import signal
 import subprocess
 import traceback
@@ -10,7 +11,7 @@ import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from vllm.engine.arg_utils import AsyncEngineArgs
-from vllm.engine.async_llm_engine import AsyncEngineDeadError, AsyncLLMEngine
+from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.entrypoints.openai.protocol import CompletionRequest as OpenAICompletionRequest
 from vllm.model_executor.guided_decoding import get_guided_decoding_logits_processor
 from vllm.outputs import CompletionOutput
@@ -39,6 +40,13 @@ async def generate(request: Request) -> Response:
     - stream: whether to stream the results or not.
     - other fields: the sampling parameters (See `SamplingParams` for details).
     """
+    # check health before accepting request and fail fast if engine isn't healthy
+    try:
+        await engine.check_health()
+    except Exception as e:
+        print(f"The vllm engine is dead, exiting the pod: {e}")
+        os.kill(os.getpid(), signal.SIGINT)
+
     request_dict = await request.json()
     prompt = request_dict.pop("prompt")
     stream = request_dict.pop("stream", False)
@@ -75,34 +83,32 @@ async def generate(request: Request) -> Response:
         sampling_params.logits_processors.append(guided_decode_logit_processor)
 
     request_id = random_uuid()
-    try:
-        results_generator = engine.generate(prompt, sampling_params, request_id)
-    except AsyncEngineDeadError as e:
-        print(f"The vllm engine is dead, exiting the pod: {e}")
-        exit(1)
 
-    # Streaming case
-    async def stream_results() -> AsyncGenerator[str, None]:
-        last_output_text = ""
-        async for request_output in results_generator:
-            log_probs = format_logprobs(request_output)
-            ret = {
-                "text": request_output.outputs[-1].text[len(last_output_text) :],
-                "count_prompt_tokens": len(request_output.prompt_token_ids),
-                "count_output_tokens": len(request_output.outputs[0].token_ids),
-                "log_probs": log_probs[-1] if log_probs and sampling_params.logprobs else None,
-                "finished": request_output.finished,
-            }
-            last_output_text = request_output.outputs[-1].text
-            yield f"data:{json.dumps(ret)}\n\n"
+    results_generator = engine.generate(prompt, sampling_params, request_id)
 
     async def abort_request() -> None:
         await engine.abort(request_id)
 
     if stream:
+        # Streaming case
+        async def stream_results() -> AsyncGenerator[str, None]:
+            last_output_text = ""
+            async for request_output in results_generator:
+                log_probs = format_logprobs(request_output)
+                ret = {
+                    "text": request_output.outputs[-1].text[len(last_output_text) :],
+                    "count_prompt_tokens": len(request_output.prompt_token_ids),
+                    "count_output_tokens": len(request_output.outputs[0].token_ids),
+                    "log_probs": log_probs[-1] if log_probs and sampling_params.logprobs else None,
+                    "finished": request_output.finished,
+                }
+                last_output_text = request_output.outputs[-1].text
+                yield f"data:{json.dumps(ret)}\n\n"
+
         background_tasks = BackgroundTasks()
         # Abort the request if the client disconnects.
         background_tasks.add_task(abort_request)
+
         return StreamingResponse(stream_results(), background=background_tasks)
 
     # Non-streaming case
@@ -140,7 +146,8 @@ def get_gpu_free_memory():
         ).stdout
         gpu_memory = [int(x) for x in output.strip().split("\n")]
         return gpu_memory
-    except subprocess.CalledProcessError:
+    except Exception as e:
+        print(f"Error getting GPU memory: {e}")
         return None
 
 
@@ -154,11 +161,14 @@ def check_unknown_startup_memory_usage():
             print(
                 f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
             )
-            # nosemgrep
-            output = subprocess.run(
-                ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
-            ).stdout
-            print(f"Processes using GPU: {output}")
+            try:
+                # nosemgrep
+                output = subprocess.run(
+                    ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
+                ).stdout
+                print(f"Processes using GPU: {output}")
+            except Exception as e:
+                print(f"Error getting processes using GPU: {e}")
 
 
 def debug(sig, frame):

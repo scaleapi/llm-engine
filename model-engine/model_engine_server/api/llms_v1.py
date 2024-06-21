@@ -56,6 +56,7 @@ from model_engine_server.domain.exceptions import (
     EndpointResourceInvalidRequestException,
     EndpointUnsupportedInferenceTypeException,
     ExistingEndpointOperationInProgressException,
+    FailToInferHardwareException,
     InvalidRequestException,
     LLMFineTuningMethodNotImplementedException,
     LLMFineTuningQuotaReached,
@@ -200,6 +201,11 @@ async def create_model_endpoint(
             status_code=404,
             detail="The specified docker image could not be found.",
         ) from exc
+    except FailToInferHardwareException as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to infer hardware exception.",
+        ) from exc
 
 
 @llm_router_v1.get("/model-endpoints", response_model=ListLLMModelEndpointsV1Response)
@@ -237,6 +243,11 @@ async def get_model_endpoint(
         )
         return await use_case.execute(user=auth, model_endpoint_name=model_endpoint_name)
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        if isinstance(exc, ObjectNotAuthorizedException):  # pragma: no cover
+            logger.info(
+                f"GET /llm/model-endpoints/{model_endpoint_name} for {auth} failed with authz error {exc.args}"
+            )
+
         raise HTTPException(
             status_code=404,
             detail=f"Model Endpoint {model_endpoint_name}  was not found.",
@@ -314,10 +325,10 @@ async def create_completion_sync_task(
     Runs a sync prompt completion on an LLM.
     """
     if hmi_config.sensitive_log_mode:  # pragma: no cover
-        logger.info(f"POST /completion_sync to endpoint {model_endpoint_name} for {auth}")
+        logger.info(f"POST /completions-sync to endpoint {model_endpoint_name} for {auth}")
     else:
         logger.info(
-            f"POST /completion_sync with {request} to endpoint {model_endpoint_name} for {auth}"
+            f"POST /completions-sync with {request} to endpoint {model_endpoint_name} for {auth}"
         )
     try:
         use_case = CompletionSyncV1UseCase(
@@ -351,6 +362,11 @@ async def create_completion_sync_task(
             detail=f"Upstream service error for request_id {request_id}",
         )
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        if isinstance(exc, ObjectNotAuthorizedException):  # pragma: no cover
+            logger.info(
+                f"POST /completions-sync to endpoint {model_endpoint_name} for {auth} failed with authz error {exc.args}"
+            )
+
         raise HTTPException(
             status_code=404,
             detail="The specified endpoint could not be found.",
@@ -379,10 +395,10 @@ async def create_completion_stream_task(
     Runs a stream prompt completion on an LLM.
     """
     if hmi_config.sensitive_log_mode:  # pragma: no cover
-        logger.info(f"POST /completion_stream to endpoint {model_endpoint_name} for {auth}")
+        logger.info(f"POST /completions-stream to endpoint {model_endpoint_name} for {auth}")
     else:
         logger.info(
-            f"POST /completion_stream with {request} to endpoint {model_endpoint_name} for {auth}"
+            f"POST /completions-stream with {request} to endpoint {model_endpoint_name} for {auth}"
         )
     use_case = CompletionStreamV1UseCase(
         model_endpoint_service=external_interfaces.model_endpoint_service,
