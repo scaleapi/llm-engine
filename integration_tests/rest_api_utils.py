@@ -176,7 +176,7 @@ CREATE_LLM_MODEL_ENDPOINT_REQUEST: Dict[str, Any] = {
     "cpus": 20,
     "gpus": 1,
     "memory": "20Gi",
-    "gpu_type": "nvidia-ampere-a10",
+    "gpu_type": "nvidia-hopper-h100-1g20gb",
     "storage": "40Gi",
     "optimize_costs": False,
     "min_workers": 1,
