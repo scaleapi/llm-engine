@@ -992,19 +992,12 @@ def ensure_llm_task_stream_response_is_correct(
     required_output_fields: Optional[List[str]],
     response_text_regex: Optional[str],
 ):
-    print("raw response", response)
     # parse response
     #  data has format "data: <data>\n\ndata: <data>\n\n"
     #  We want to get a list of dictionaries parsing out the 'data:' field
     parsed_response = [
         json.loads(r.split("data: ")[1]) for r in response.split("\n") if "data:" in r.strip()
     ]
-
-    print("parsed response: ", parsed_response)
-    # if required_output_fields is not None:
-    #     for field in required_output_fields:
-    #         for response in parsed_response:
-    #             assert field in response["output"]
 
     # Join the text field of the response
     response_text = "".join([r["output"]["text"] for r in parsed_response])
