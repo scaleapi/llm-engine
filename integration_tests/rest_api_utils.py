@@ -168,7 +168,7 @@ INFERENCE_PAYLOAD: Dict[str, Any] = {
 
 CREATE_LLM_MODEL_ENDPOINT_REQUEST: Dict[str, Any] = {
     "name": format_name("llama-2-7b-test"),
-    "model_name": "llama-2-7b",
+    "model_name": "llama-2-7b-chat",
     "source": "hugging_face",
     "inference_framework": "vllm",
     "inference_framework_image_tag": "latest",
@@ -802,7 +802,7 @@ async def create_llm_streaming_task(
         timeout=LONG_NETWORK_TIMEOUT_SEC,
     ) as response:
         assert response.status == 200, (await response.read()).decode()
-        return await response.json()
+        return (await response.read()).decode()
 
 
 async def create_sync_tasks(
@@ -985,6 +985,27 @@ def ensure_llm_task_response_is_correct(
 
     if response_text_regex is not None:
         assert re.search(response_text_regex, response["output"]["text"])
+
+
+def ensure_llm_task_stream_response_is_correct(
+    response: str,
+    required_output_fields: Optional[List[str]],
+    response_text_regex: Optional[str],
+):
+    # parse response
+    #  data has format "data: <data>\n\ndata: <data>\n\n"
+    #  We want to get a list of dictionaries parsing out the 'data:' field
+    parsed_response = [
+        json.loads(r.split("data: ")[1]) for r in response.split("\n") if "data:" in r.strip()
+    ]
+
+    # Join the text field of the response
+    response_text = "".join([r["output"]["text"] for r in parsed_response])
+    print("response text: ", response_text)
+    assert response_text is not None
+
+    if response_text_regex is not None:
+        assert re.search(response_text_regex, response_text)
 
 
 # Wait up to 30 seconds for the tasks to be returned.

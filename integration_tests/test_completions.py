@@ -13,6 +13,7 @@ from .rest_api_utils import (
     delete_llm_model_endpoint,
     ensure_launch_gateway_healthy,
     ensure_llm_task_response_is_correct,
+    ensure_llm_task_stream_response_is_correct,
     ensure_n_ready_private_llm_endpoints_short,
     ensure_nonzero_available_llm_workers,
 )
@@ -86,7 +87,7 @@ def test_completions(capsys):
                         )
                     )
                     for response in task_responses:
-                        ensure_llm_task_response_is_correct(
+                        ensure_llm_task_stream_response_is_correct(
                             response, required_output_fields, response_text_regex
                         )
                 except Exception as e:
