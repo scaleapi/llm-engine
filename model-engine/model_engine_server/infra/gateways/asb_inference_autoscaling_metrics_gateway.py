@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
@@ -40,9 +41,9 @@ class ASBInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway):
             sender = servicebus_client.get_queue_sender(queue_name=queue_name)
             with sender:
                 message = ServiceBusMessage(
-                    "message"
+                    "message", time_to_live=timedelta(seconds=expiry_time)
                 )  # we only care about the length of the queue, not the message values
-                sender.send_messages(message=message, timeout=expiry_time)
+                sender.send_messages(message=message)
 
     async def emit_inference_autoscaling_metric(self, endpoint_id: str):
         await self._emit_metric(endpoint_id, EXPIRY_SECONDS)
