@@ -553,6 +553,14 @@ class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
     hidden from the DTO exposed to the client.
     """
 
+    model_cfg: CreateBatchCompletionsModelConfig
+    """
+    Model configuration for the batch inference. Hardware configurations are inferred.
+
+    We rename model_config from api to model_cfg in engine since engine uses pydantic v2 which
+    reserves model_config as a keyword.
+    """
+
     max_gpu_memory_utilization: Optional[float] = Field(default=0.9, le=1.0)
     """
     Maximum GPU memory utilization for the batch inference. Default to 90%.
@@ -565,6 +573,7 @@ class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
             output_data_path=request.output_data_path,
             content=request.content,
             model_config=request.model_config,
+            model_cfg=request.model_config,
             data_parallelism=request.data_parallelism,
             max_runtime_sec=request.max_runtime_sec,
             tool_config=request.tool_config,
