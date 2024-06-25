@@ -11,7 +11,9 @@ from .rest_api_utils import (
     create_llm_streaming_tasks,
     create_llm_sync_tasks,
     delete_llm_model_endpoint,
+    ensure_launch_gateway_healthy,
     ensure_llm_task_response_is_correct,
+    ensure_llm_task_stream_response_is_correct,
     ensure_n_ready_private_llm_endpoints_short,
     ensure_nonzero_available_llm_workers,
 )
@@ -26,6 +28,7 @@ print(f"TEST_INFERENCE_FRAMEWORK={TEST_INFERENCE_FRAMEWORK}")
     reason="Skip unless running inference framework tests",
 )
 def test_completions(capsys):
+    ensure_launch_gateway_healthy()
     with capsys.disabled():
         try:
             user = USER_ID_0
@@ -84,7 +87,7 @@ def test_completions(capsys):
                         )
                     )
                     for response in task_responses:
-                        ensure_llm_task_response_is_correct(
+                        ensure_llm_task_stream_response_is_correct(
                             response, required_output_fields, response_text_regex
                         )
                 except Exception as e:

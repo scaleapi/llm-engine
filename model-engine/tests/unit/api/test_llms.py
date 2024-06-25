@@ -7,6 +7,8 @@ from model_engine_server.common.dtos.llms import GetLLMModelEndpointV1Response
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Response, TaskStatus
 from model_engine_server.domain.entities import ModelEndpoint
 
+from ..conftest import mocked__get_recommended_hardware_config_map
+
 
 def test_create_llm_model_endpoint_success(
     create_llm_model_endpoint_request_sync: Dict[str, Any],
@@ -257,6 +259,10 @@ def test_completion_stream_misc_server_error_returns_500(
             assert r.status_code == 500
 
 
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
+    mocked__get_recommended_hardware_config_map(),
+)
 def test_create_batch_completions_success(
     create_batch_completions_request: Dict[str, Any],
     test_api_key: str,
