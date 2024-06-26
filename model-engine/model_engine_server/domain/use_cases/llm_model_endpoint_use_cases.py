@@ -78,7 +78,10 @@ from model_engine_server.domain.exceptions import (
     ObjectNotFoundException,
     UpstreamServiceError,
 )
-from model_engine_server.domain.gateways import DockerImageBatchJobGateway
+from model_engine_server.domain.gateways import (
+    DockerImageBatchJobGateway,
+    StreamingModelEndpointInferenceGateway,
+)
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway
 from model_engine_server.domain.repositories import (
     DockerImageBatchJobBundleRepository,
@@ -1845,6 +1848,9 @@ class CompletionStreamV1UseCase:
     ) -> AsyncIterable[CompletionStreamV1Response]:
         """
         Runs the use case to create a stream inference task.
+        NOTE: Must be called with await(), since the function is not a generator itself, but rather creates one and
+        returns a reference to it. This structure allows exceptions that occur before response streaming begins
+        to propagate to the client as HTTP exceptions with the appropriate code.
 
         Args:
             user: The user who is creating the stream inference task.
@@ -1852,11 +1858,17 @@ class CompletionStreamV1UseCase:
             request: The body of the request to forward to the endpoint.
 
         Returns:
-            A response object that contains the status and result of the task.
+            An asynchronous response chunk generator, containing response objects to be iterated through with 'async for'.
+            Each response object contains the status and result of the task.
 
         Raises:
             ObjectNotFoundException: If a model endpoint with the given name could not be found.
+            ObjectHasInvalidValueException: If there are multiple model endpoints with the given name.
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
+            EndpointUnsupportedInferenceTypeException: If the model endpoint does not support streaming or uses
+                an unsupported inference framework.
+            UpstreamServiceError: If an error occurs upstream in the streaming inference API call.
+            InvalidRequestException: If request validation fails during inference.
         """
 
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
@@ -2020,7 +2032,6 @@ class CompletionStreamV1UseCase:
                 model_content.model_name,
                 self.tokenizer_repository,
             )
-
         else:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {model_content.inference_framework}"
@@ -2031,15 +2042,55 @@ class CompletionStreamV1UseCase:
             num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
             timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
         )
+
+        return self._response_chunk_generator(
+            request=request,
+            request_id=request_id,
+            model_endpoint=model_endpoint,
+            model_content=model_content,
+            inference_gateway=inference_gateway,
+            inference_request=inference_request,
+            num_prompt_tokens=num_prompt_tokens,
+        )
+
+    async def _response_chunk_generator(
+        self,
+        request: CompletionStreamV1Request,
+        request_id: Optional[str],
+        model_endpoint: ModelEndpoint,
+        model_content: GetLLMModelEndpointV1Response,
+        inference_gateway: StreamingModelEndpointInferenceGateway,
+        inference_request: SyncEndpointPredictV1Request,
+        num_prompt_tokens: Optional[int],
+    ) -> AsyncIterable[CompletionStreamV1Response]:
+        """
+        Async generator yielding tokens to stream for the completions response. Should only be called when
+        returned directly by execute().
+        """
         predict_result = inference_gateway.streaming_predict(
             topic=model_endpoint.record.destination, predict_request=inference_request
         )
 
         num_completion_tokens = 0
         async for res in predict_result:
-            result = res.result
-            if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
-                if res.status == TaskStatus.SUCCESS and result is not None:
+            if not res.status == TaskStatus.SUCCESS or res.result is None:
+                # Raise an UpstreamServiceError if the task has failed
+                if res.status == TaskStatus.FAILURE:
+                    raise UpstreamServiceError(
+                        status_code=500,
+                        content=(
+                            res.traceback.encode("utf-8") if res.traceback is not None else b""
+                        ),
+                    )
+                # Otherwise, yield empty response chunk for unsuccessful or empty results
+                yield CompletionStreamV1Response(
+                    request_id=request_id,
+                    output=None,
+                )
+            else:
+                result = res.result
+                # DEEPSPEED
+                if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
                     if "token" in result["result"]:
                         yield CompletionStreamV1Response(
                             request_id=request_id,
@@ -2063,15 +2114,11 @@ class CompletionStreamV1UseCase:
                                 num_completion_tokens=completion_token_count,
                             ),
                         )
-                else:
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=None,
-                    )
-            elif (
-                model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
-            ):
-                if res.status == TaskStatus.SUCCESS and result is not None:
+                # TEXT_GENERATION_INTERFACE
+                elif (
+                    model_content.inference_framework
+                    == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+                ):
                     if result["result"].get("generated_text") is not None:
                         finished = True
                     else:
@@ -2108,14 +2155,8 @@ class CompletionStreamV1UseCase:
                             raise UpstreamServiceError(
                                 status_code=500, content=result.get("error")
                             )  # also change llms_v1.py that will return a 500 HTTPException so user can retry
-
-                else:
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=None,
-                    )
-            elif model_content.inference_framework == LLMInferenceFramework.VLLM:
-                if res.status == TaskStatus.SUCCESS and result is not None:
+                # VLLM
+                elif model_content.inference_framework == LLMInferenceFramework.VLLM:
                     token = None
                     if request.return_token_log_probs:
                         token = TokenOutput(
@@ -2134,13 +2175,8 @@ class CompletionStreamV1UseCase:
                             token=token,
                         ),
                     )
-                else:
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=None,
-                    )
-            elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
-                if res.status == TaskStatus.SUCCESS and result is not None:
+                # LIGHTLLM
+                elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
                     token = None
                     num_completion_tokens += 1
                     if request.return_token_log_probs:
@@ -2159,13 +2195,8 @@ class CompletionStreamV1UseCase:
                             token=token,
                         ),
                     )
-                else:
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=None,
-                    )
-            elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
-                if res.status == TaskStatus.SUCCESS and result is not None:
+                # TENSORRT_LLM
+                elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
                     num_completion_tokens += 1
                     yield CompletionStreamV1Response(
                         request_id=request_id,
@@ -2176,15 +2207,9 @@ class CompletionStreamV1UseCase:
                             num_completion_tokens=num_completion_tokens,
                         ),
                     )
-                else:
-                    yield CompletionStreamV1Response(
-                        request_id=request_id,
-                        output=None,
-                    )
-            else:
-                raise EndpointUnsupportedInferenceTypeException(
-                    f"Unsupported inference framework {model_content.inference_framework}"
-                )
+                # No else clause needed for an unsupported inference framework, since we check
+                # model_content.inference_framework in execute() prior to calling _response_chunk_generator,
+                # raising an exception if it is not one of the frameworks handled above.
 
 
 class ModelDownloadV1UseCase:
