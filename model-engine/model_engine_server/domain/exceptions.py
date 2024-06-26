@@ -31,6 +31,13 @@ class ObjectHasInvalidValueException(DomainException, ValueError):
     """
 
 
+class ModelRepoHasInformationNotPresentException(DomainException):
+    """
+    Thrown when a user tries to create some resource that asks for information not present in a server-side repository
+    storing model information or hard-coded, e.g. context length for some LLM.
+    """
+
+
 @dataclass
 class DockerImageNotFoundException(DomainException):
     """

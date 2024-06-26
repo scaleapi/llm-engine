@@ -60,6 +60,7 @@ from model_engine_server.domain.exceptions import (
     InvalidRequestException,
     LLMFineTuningMethodNotImplementedException,
     LLMFineTuningQuotaReached,
+    ModelRepoHasInformationNotPresentException,
     ObjectAlreadyExistsException,
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
@@ -648,3 +649,5 @@ async def create_batch_completions(
         ) from exc
     except (InvalidRequestException, ObjectHasInvalidValueException) as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    except ModelRepoHasInformationNotPresentException as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
