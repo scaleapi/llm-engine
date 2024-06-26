@@ -419,7 +419,7 @@ def test_load_model_weights_sub_commands(
 
     framework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
     framework_image_tag = "1.0.0"
-    checkpoint_path = "fake-checkpoint"
+    checkpoint_path = "s3://fake-checkpoint"
     final_weights_folder = "test_folder"
 
     subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
