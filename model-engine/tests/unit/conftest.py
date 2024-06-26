@@ -1589,6 +1589,12 @@ class FakeInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway)
     async def emit_prewarm_metric(self, endpoint_id: str):
         pass
 
+    async def create_or_update_resources(self, endpoint_id: str):
+        pass
+
+    async def delete_resources(self, endpoint_id: str):
+        pass
+
 
 class FakeStreamingStorageGateway(StreamingStorageGateway):
     def put_record(self, stream_name: str, record: Dict[str, Any]):
