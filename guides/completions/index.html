@@ -372,6 +372,19 @@
     Token streaming
   </a>
   
+    <nav class="md-nav" aria-label="Token streaming">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#streaming-error-handling" class="md-nav__link">
+    Streaming Error Handling
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -626,6 +639,19 @@
     Token streaming
   </a>
   
+    <nav class="md-nav" aria-label="Token streaming">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#streaming-error-handling" class="md-nav__link">
+    Streaming Error Handling
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -738,7 +764,10 @@ that can be used for producing completions to prompts.</p>
 applications. When streaming, tokens will be sent as data-only
 <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format">server-side events</a>.</p>
 <p>To enable token streaming, pass <code>stream=True</code> to either <a href="../../api/python_client/#llmengine.completion.Completion.create">Completion.create</a> or <a href="../../api/python_client/#llmengine.completion.Completion.acreate">Completion.acreate</a>.</p>
-<p>Note that errors from streaming calls are returned back to the user as plain-text messages and currently need to be handled by the client.</p>
+<h3 id="streaming-error-handling">Streaming Error Handling<a class="headerlink" href="#streaming-error-handling" title="Permanent link">&para;</a></h3>
+<p>Note: Error handling semantics are mixed for streaming calls:
+- Errors that arise <em>before</em> streaming begins are returned back to the user as <code>HTTP</code> errors with the appropriate status code.
+- Errors that arise <em>after</em> streaming begins within a <code>HTTP 200</code> response are returned back to the user as plain-text messages and currently need to be handled by the client. </p>
 <p>An example of token streaming using the synchronous Completions API looks as follows:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Token streaming with synchronous API in python</label></div>
 <div class="tabbed-content">
@@ -749,21 +778,22 @@ applications. When streaming, tokens will be sent as data-only
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>stream <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Give me a 200 word summary on the current economic events in the US.&quot;</span>,
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    max_new_tokens<span style="color: #666666">=1000</span>,
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    temperature<span style="color: #666666">=0.2</span>,
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    stream<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">True</span>,
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>)
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span style="color: #008000; font-weight: bold">for</span> response <span style="color: #AA22FF; font-weight: bold">in</span> stream:
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span style="color: #008000; font-weight: bold">if</span> response<span style="color: #666666">.</span>output:
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>output<span style="color: #666666">.</span>text, end<span style="color: #666666">=</span><span style="color: #BA2121">&quot;&quot;</span>)
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>        sys<span style="color: #666666">.</span>stdout<span style="color: #666666">.</span>flush()
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    <span style="color: #008000; font-weight: bold">else</span>: <span style="color: #3D7B7B; font-style: italic"># an error occurred</span>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>        <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>error) <span style="color: #3D7B7B; font-style: italic"># print the error message out </span>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>        <span style="color: #008000; font-weight: bold">break</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span style="color: #3D7B7B; font-style: italic"># errors occurring before streaming begins will be thrown here</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>stream <span style="color: #666666">=</span> Completion<span style="color: #666666">.</span>create(
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    model<span style="color: #666666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    prompt<span style="color: #666666">=</span><span style="color: #BA2121">&quot;Give me a 200 word summary on the current economic events in the US.&quot;</span>,
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    max_new_tokens<span style="color: #666666">=1000</span>,
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    temperature<span style="color: #666666">=0.2</span>,
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    stream<span style="color: #666666">=</span><span style="color: #008000; font-weight: bold">True</span>,
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>)
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span style="color: #008000; font-weight: bold">for</span> response <span style="color: #AA22FF; font-weight: bold">in</span> stream:
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span style="color: #008000; font-weight: bold">if</span> response<span style="color: #666666">.</span>output:
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>        <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>output<span style="color: #666666">.</span>text, end<span style="color: #666666">=</span><span style="color: #BA2121">&quot;&quot;</span>)
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>        sys<span style="color: #666666">.</span>stdout<span style="color: #666666">.</span>flush()
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span style="color: #008000; font-weight: bold">else</span>: <span style="color: #3D7B7B; font-style: italic"># an error occurred after streaming began</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>        <span style="color: #008000">print</span>(response<span style="color: #666666">.</span>error) <span style="color: #3D7B7B; font-style: italic"># print the error message out </span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>        <span style="color: #008000; font-weight: bold">break</span>
 </code></pre></div>
 <h2 id="async-requests">Async requests<a class="headerlink" href="#async-requests" title="Permanent link">&para;</a></h2>
 <p>The Python client supports <code>asyncio</code> for creating Completions. Use <a href="../../api/python_client/#llmengine.completion.Completion.acreate">Completion.acreate</a> instead of <a href="../../api/python_client/#llmengine.completion.Completion.create">Completion.create</a>
