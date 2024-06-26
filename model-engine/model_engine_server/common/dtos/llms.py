@@ -1,5 +1,7 @@
 """
 DTOs for LLM APIs.
+
+Make sure to keep this in sync with inference/batch_inference/dto.py.
 """
 
 from typing import Any, Dict, List, Optional
