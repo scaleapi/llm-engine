@@ -55,7 +55,9 @@ class ASBInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway):
         queue_name = self._find_queue_name(endpoint_id)
         with _get_servicebus_administration_client() as client:
             try:
-                client.create_queue(queue_name=queue_name)
+                client.create_queue(
+                    queue_name=queue_name, dead_lettering_on_message_expiration=True
+                )
             except ResourceExistsError:
                 pass
 
