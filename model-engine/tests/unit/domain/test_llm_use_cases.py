@@ -405,7 +405,7 @@ def test_load_model_weights_sub_commands(
 
     framework = LLMInferenceFramework.VLLM
     framework_image_tag = "0.2.7"
-    checkpoint_path = "fake-checkpoint"
+    checkpoint_path = "s3://fake-checkpoint"
     final_weights_folder = "test_folder"
 
     subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
