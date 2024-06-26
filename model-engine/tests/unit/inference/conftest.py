@@ -1,11 +1,10 @@
 from unittest.mock import MagicMock
 
 import pytest
-from model_engine_server.common.dtos.llms import (
+from model_engine_server.inference.batch_inference.dto import (
     CompletionOutput,
     CreateBatchCompletionsEngineRequest,
     CreateBatchCompletionsModelConfig,
-    CreateBatchCompletionsRequest,
     CreateBatchCompletionsRequestContent,
     TokenOutput,
     ToolConfig,
@@ -14,16 +13,18 @@ from model_engine_server.common.dtos.llms import (
 
 @pytest.fixture
 def create_batch_completions_engine_request() -> CreateBatchCompletionsEngineRequest:
+    model_config = CreateBatchCompletionsModelConfig(
+        model="model",
+        checkpoint_path="checkpoint_path",
+        labels={},
+        seed=123,
+        num_shards=4,
+    )
     return CreateBatchCompletionsEngineRequest(
         input_data_path="input_data_path",
         output_data_path="output_data_path",
-        model_config=CreateBatchCompletionsModelConfig(
-            model="model",
-            checkpoint_path="checkpoint_path",
-            labels={},
-            seed=123,
-            num_shards=4,
-        ),
+        model_cfg=model_config,
+        model_config=model_config,
         data_parallelism=1,
         max_runtime_sec=86400,
         max_gpu_memory_utilization=0.95,
@@ -32,10 +33,13 @@ def create_batch_completions_engine_request() -> CreateBatchCompletionsEngineReq
 
 @pytest.fixture
 def create_batch_completions_tool_completion_request():
-    return CreateBatchCompletionsRequest(
-        model_config=CreateBatchCompletionsModelConfig(
-            checkpoint_path="checkpoint_path", model="model", num_shards=4, seed=123, labels={}
-        ),
+    model_config = CreateBatchCompletionsModelConfig(
+        checkpoint_path="checkpoint_path", model="model", num_shards=4, seed=123, labels={}
+    )
+
+    return CreateBatchCompletionsEngineRequest(
+        model_cfg=model_config,
+        model_config=model_config,
         data_parallelism=1,
         input_data_path="input_data_path",
         output_data_path="output_data_path",
