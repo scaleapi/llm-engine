@@ -18,7 +18,7 @@ from sqlalchemy.pool import NullPool
 
 logger = make_logger(logger_name())
 
-database_credential_expiration_timestamp = None
+database_credential_expiration_timestamp = time.time()
 
 
 def get_key_file_name(environment: str) -> str:
