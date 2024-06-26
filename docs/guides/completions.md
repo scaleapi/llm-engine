@@ -67,7 +67,11 @@ applications. When streaming, tokens will be sent as data-only
 
 To enable token streaming, pass `stream=True` to either [Completion.create](../../api/python_client/#llmengine.completion.Completion.create) or [Completion.acreate](../../api/python_client/#llmengine.completion.Completion.acreate).
 
-Note that errors from streaming calls are returned back to the user as plain-text messages and currently need to be handled by the client.
+### Streaming Error Handling
+
+Note: Error handling semantics are mixed for streaming calls:
+- Errors that arise *before* streaming begins are returned back to the user as `HTTP` errors with the appropriate status code.
+- Errors that arise *after* streaming begins within a `HTTP 200` response are returned back to the user as plain-text messages and currently need to be handled by the client. 
 
 An example of token streaming using the synchronous Completions API looks as follows:
 
@@ -78,6 +82,7 @@ import sys
 
 from llmengine import Completion
 
+# errors occurring before streaming begins will be thrown here
 stream = Completion.create(
     model="llama-2-7b",
     prompt="Give me a 200 word summary on the current economic events in the US.",
@@ -90,7 +95,7 @@ for response in stream:
     if response.output:
         print(response.output.text, end="")
         sys.stdout.flush()
-    else: # an error occurred
+    else: # an error occurred after streaming began
         print(response.error) # print the error message out 
         break
 ```
