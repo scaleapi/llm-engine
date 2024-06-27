@@ -1257,7 +1257,7 @@ async def test_completion_stream_use_case_success(
         tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
-    response_1 = use_case.execute(
+    response_1 = await use_case.execute(
         user=user,
         model_endpoint_name=llm_model_endpoint_streaming.record.name,
         request=completion_stream_request,
@@ -1367,7 +1367,7 @@ async def test_completion_stream_vllm_use_case_success(
         tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
-    response_1 = use_case.execute(
+    response_1 = await use_case.execute(
         user=user,
         model_endpoint_name=llm_model_endpoint_stream[0].record.name,
         request=completion_stream_request,
@@ -1434,7 +1434,7 @@ async def test_completion_stream_text_generation_inference_use_case_success(
         tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
-    response_1 = use_case.execute(
+    response_1 = await use_case.execute(
         user=user,
         model_endpoint_name=llm_model_endpoint_text_generation_inference.record.name,
         request=completion_stream_request,
@@ -1496,7 +1496,7 @@ async def test_completion_stream_trt_llm_use_case_success(
         tokenizer_repository=fake_tokenizer_repository,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
-    response_1 = use_case.execute(
+    response_1 = await use_case.execute(
         user=user,
         model_endpoint_name=llm_model_endpoint_trt_llm.record.name,
         request=completion_stream_request,
