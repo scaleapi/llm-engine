@@ -160,6 +160,7 @@ config:
       vllm_repository: "vllm"
       lightllm_repository: "lightllm"
       tensorrt_llm_repository: "tensorrt-llm"
+      nemo_repository: "nemo"
       batch_inference_vllm_repository: "llm-engine/batch-infer-vllm"
       user_inference_base_repository: "launch/inference"
       user_inference_pytorch_repository: "hosted-model-inference/async-pytorch"

@@ -13,6 +13,7 @@ class LLMInferenceFramework(str, Enum):
     VLLM = "vllm"
     LIGHTLLM = "lightllm"
     TENSORRT_LLM = "tensorrt_llm"
+    NEMO = "nemo"
 
 
 class Quantization(str, Enum):
