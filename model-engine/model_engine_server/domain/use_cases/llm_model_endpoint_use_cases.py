@@ -118,6 +118,7 @@ INFERENCE_FRAMEWORK_REPOSITORY: Dict[LLMInferenceFramework, str] = {
     LLMInferenceFramework.VLLM: hmi_config.vllm_repository,
     LLMInferenceFramework.LIGHTLLM: hmi_config.lightllm_repository,
     LLMInferenceFramework.TENSORRT_LLM: hmi_config.tensorrt_llm_repository,
+    LLMInferenceFramework.NEMO: hmi_config.nemo_repository,
 }
 
 _SUPPORTED_MODELS_BY_FRAMEWORK = {
@@ -224,6 +225,7 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
     LLMInferenceFramework.TENSORRT_LLM: set(
         ["llama-2-7b", "mixtral-8x7b", "mixtral-8x7b-instruct"]
     ),
+    LLMInferenceFramework.NEMO: set(["llama-2-7b", "llama-2-70b"]),
 }
 
 _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
@@ -232,6 +234,7 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
     LLMInferenceFramework.VLLM: [Quantization.AWQ],
     LLMInferenceFramework.LIGHTLLM: [],
     LLMInferenceFramework.TENSORRT_LLM: [],
+    LLMInferenceFramework.NEMO: [],
 }
 
 
@@ -453,6 +456,15 @@ class CreateLLMModelBundleV1UseCase:
                     num_shards,
                     checkpoint_path,
                 )
+            elif framework == LLMInferenceFramework.NEMO:
+                bundle_id = await self.create_nemo_bundle(
+                    user,
+                    model_name,
+                    framework_image_tag,
+                    endpoint_name,
+                    num_shards,
+                    checkpoint_path,
+                )
             else:
                 raise ObjectHasInvalidValueException(
                     f"Framework {framework} is not supported for source {source}."
@@ -576,6 +588,31 @@ class CreateLLMModelBundleV1UseCase:
         subcommands = [
             f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
         ]
+        return subcommands
+
+    def load_model_files_sub_commands_nemo(
+        self,
+        checkpoint_path,
+    ):
+        """
+        This function generates subcommands to load model files for NeMo.
+        The checkpoint path should point to the model-store folder that results from running the
+        `ngc registry model download-version ...` and `tar -xzf <model_name>.tar.gz` commands described in
+        https://developer.nvidia.com/docs/nemo-microservices/deploy-docker.html
+        """
+        subcommands = []
+
+        base_path = checkpoint_path.split("/")[-1]
+
+        if base_path.endswith(".tar"):
+            raise ObjectHasInvalidValueException(
+                "Checkpoint for NeMo models must be a folder, not a tar file."
+            )
+        else:
+            subcommands.append(
+                f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
+            )
+
         return subcommands
 
     async def create_deepspeed_bundle(
@@ -869,6 +906,66 @@ class CreateLLMModelBundleV1UseCase:
             )
         ).model_bundle_id
 
+    async def create_nemo_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        checkpoint_path: Optional[str],
+    ):
+        command = []
+
+        subcommands = []
+        if checkpoint_path is not None:
+            if checkpoint_path.startswith("s3://"):
+                subcommands += self.load_model_files_sub_commands_nemo(
+                    checkpoint_path,
+                )
+            else:
+                raise ObjectHasInvalidValueException(
+                    f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
+                )
+        else:
+            raise ObjectHasInvalidValueException("Checkpoint must be provided for NeMo models.")
+
+        subcommands.append(f"nemollm_inference_ms --model {model_name} --num_gpus {num_shards}")
+
+        command = [
+            "/bin/bash",
+            "-c",
+            ";".join(subcommands),
+        ]
+
+        return (
+            await self.create_model_bundle_use_case.execute(
+                user,
+                CreateModelBundleV2Request(
+                    name=endpoint_unique_name,
+                    schema_location="TBA",
+                    flavor=StreamingEnhancedRunnableImageFlavor(
+                        flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                        repository=hmi_config.nemo_repository,
+                        tag=framework_image_tag,
+                        command=command,
+                        streaming_command=command,
+                        protocol="http",
+                        readiness_initial_delay_seconds=10,
+                        healthcheck_route="/v1/health/ready",
+                        predict_route="/v1/completions",
+                        streaming_predict_route="/v1/completions",
+                        env={},
+                    ),
+                    metadata={},
+                ),
+                do_auth_check=False,
+                # Skip auth check because llm create endpoint is called as the user itself,
+                # but the user isn't directly making the action. It should come from the fine tune
+                # job.
+            )
+        ).model_bundle_id
+
 
 class CreateLLMModelEndpointV1UseCase:
     def __init__(
@@ -919,10 +1016,11 @@ class CreateLLMModelEndpointV1UseCase:
             LLMInferenceFramework.VLLM,
             LLMInferenceFramework.LIGHTLLM,
             LLMInferenceFramework.TENSORRT_LLM,
+            LLMInferenceFramework.NEMO,
         ]:
             if request.endpoint_type != ModelEndpointType.STREAMING:
                 raise ObjectHasInvalidValueException(
-                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM, LightLLM, and TensorRT-LLM."
+                    f"Creating endpoint type {str(request.endpoint_type)} is not allowed. Can only create streaming endpoints for text-generation-inference, vLLM, LightLLM, TensorRT-LLM, and NeMo."
                 )
 
         if request.inference_framework_image_tag == "latest":
@@ -1518,6 +1616,18 @@ class CompletionSyncV1UseCase:
                 num_prompt_tokens=num_prompt_tokens,
                 num_completion_tokens=num_completion_tokens,
             )
+        elif model_content.inference_framework == LLMInferenceFramework.NEMO:
+            if not model_content.model_name:
+                raise InvalidRequestException(
+                    f"Invalid endpoint {model_content.name} has no base model"
+                )
+            if not prompt:
+                raise InvalidRequestException("Prompt must be provided for NeMo models.")
+            return CompletionOutput(
+                text=model_output["choices"][0]["text"],
+                num_prompt_tokens=model_output["usage"]["prompt_tokens"],
+                num_completion_tokens=model_output["usage"]["completion_tokens"],
+            )
         else:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {model_content.inference_framework}"
@@ -1558,6 +1668,7 @@ class CompletionSyncV1UseCase:
             )
 
         model_endpoint = model_endpoints[0]
+        model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
         if not self.authz_module.check_access_read_owned_entity(
             user, model_endpoint.record
@@ -1821,6 +1932,44 @@ class CompletionSyncV1UseCase:
                     output, model_endpoint, request.prompt, request.return_token_log_probs
                 ),
             )
+        elif endpoint_content.inference_framework == LLMInferenceFramework.NEMO:
+            nemo_args: Any = {
+                "model": model_content.model_name,
+                "prompt": request.prompt,
+                "max_tokens": request.max_new_tokens,
+                "temperature": request.temperature,
+                "stop": request.stop_sequences if request.stop_sequences else "",
+                "top_p": request.top_p,
+                "frequency_penalty": request.frequency_penalty,
+            }
+
+            inference_request = SyncEndpointPredictV1Request(
+                args=nemo_args,
+                num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+                timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
+            )
+            predict_result = await inference_gateway.predict(
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
+            )
+
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
+                raise UpstreamServiceError(
+                    status_code=500,
+                    content=(
+                        predict_result.traceback.encode("utf-8")
+                        if predict_result.traceback is not None
+                        else b""
+                    ),
+                )
+
+            output = json.loads(predict_result.result["result"])
+            return CompletionSyncV1Response(
+                request_id=request_id,
+                output=self.model_output_to_completion_output(
+                    output, model_endpoint, request.prompt, request.return_token_log_probs
+                ),
+            )
         else:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {endpoint_content.inference_framework}"
@@ -2025,6 +2174,22 @@ class CompletionStreamV1UseCase:
                 "stop_words": request.stop_sequences if request.stop_sequences else "",
                 "bad_words": "",
                 "temperature": request.temperature,
+                "stream": True,
+            }
+            num_prompt_tokens = count_tokens(
+                request.prompt,
+                model_content.model_name,
+                self.tokenizer_repository,
+            )
+        elif model_content.inference_framework == LLMInferenceFramework.NEMO:
+            args = {
+                "model": model_content.model_name,
+                "prompt": request.prompt,
+                "max_tokens": request.max_new_tokens,
+                "temperature": request.temperature,
+                "stop": request.stop_sequences if request.stop_sequences else "",
+                "top_p": request.top_p,
+                "frequency_penalty": request.frequency_penalty,
                 "stream": True,
             }
             num_prompt_tokens = count_tokens(
