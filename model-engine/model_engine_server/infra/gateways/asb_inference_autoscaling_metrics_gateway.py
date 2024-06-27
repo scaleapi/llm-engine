@@ -53,7 +53,7 @@ class ASBInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway):
         await self._emit_metric(endpoint_id, EXPIRY_SECONDS)
 
     async def emit_prewarm_metric(self, endpoint_id: str):
-        pass
+        await self._emit_metric(endpoint_id, PREWARM_EXPIRY_SECONDS)
 
     async def create_or_update_resources(self, endpoint_id: str):
         queue_name = self._find_queue_name(endpoint_id)
