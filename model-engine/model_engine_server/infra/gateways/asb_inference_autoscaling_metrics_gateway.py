@@ -45,19 +45,21 @@ class ASBInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway):
                 )  # we only care about the length of the queue, not the message values
                 sender.send_messages(message=message)
 
+            receiver = servicebus_client.get_queue_receiver(queue_name=queue_name)
+            with receiver:
+                receiver.peek_messages(max_message_count=1, timeout=10)
+
     async def emit_inference_autoscaling_metric(self, endpoint_id: str):
         await self._emit_metric(endpoint_id, EXPIRY_SECONDS)
 
     async def emit_prewarm_metric(self, endpoint_id: str):
-        await self._emit_metric(endpoint_id, PREWARM_EXPIRY_SECONDS)
+        pass
 
     async def create_or_update_resources(self, endpoint_id: str):
         queue_name = self._find_queue_name(endpoint_id)
         with _get_servicebus_administration_client() as client:
             try:
-                client.create_queue(
-                    queue_name=queue_name, dead_lettering_on_message_expiration=True
-                )
+                client.create_queue(queue_name=queue_name)
             except ResourceExistsError:
                 pass
 
