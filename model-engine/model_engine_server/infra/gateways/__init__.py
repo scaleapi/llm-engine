@@ -3,6 +3,7 @@ from typing import Sequence
 from .abs_file_storage_gateway import ABSFileStorageGateway
 from .abs_filesystem_gateway import ABSFilesystemGateway
 from .abs_llm_artifact_gateway import ABSLLMArtifactGateway
+from .asb_inference_autoscaling_metrics_gateway import ASBInferenceAutoscalingMetricsGateway
 from .batch_job_orchestration_gateway import BatchJobOrchestrationGateway
 from .batch_job_progress_gateway import BatchJobProgressGateway
 from .celery_task_queue_gateway import CeleryTaskQueueGateway
@@ -29,6 +30,7 @@ __all__: Sequence[str] = [
     "ABSFileStorageGateway",
     "ABSFilesystemGateway",
     "ABSLLMArtifactGateway",
+    "ASBInferenceAutoscalingMetricsGateway",
     "BatchJobOrchestrationGateway",
     "BatchJobProgressGateway",
     "CeleryTaskQueueGateway",

@@ -1,0 +1,11 @@
+{{- if .Values.azure }}
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: azure-workload-identity
+  namespace: {{ .Values.config.values.launch.endpoint_namespace }}
+spec:
+  podIdentity:
+    provider: azure-workload
+    identityId: {{ .Values.azure.client_id }}
+{{- end }}

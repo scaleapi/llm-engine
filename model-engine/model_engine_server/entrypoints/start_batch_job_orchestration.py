@@ -9,11 +9,12 @@ from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.config import infra_config
-from model_engine_server.db.base import SessionAsyncNullPool
+from model_engine_server.db.base import get_session_async_null_pool
 from model_engine_server.domain.entities import BatchJobSerializationFormat
 from model_engine_server.domain.gateways import TaskQueueGateway
 from model_engine_server.infra.gateways import (
     ABSFilesystemGateway,
+    ASBInferenceAutoscalingMetricsGateway,
     CeleryTaskQueueGateway,
     LiveAsyncModelEndpointInferenceGateway,
     LiveBatchJobProgressGateway,
@@ -57,7 +58,7 @@ async def run_batch_job(
     serialization_format: BatchJobSerializationFormat,
     timeout_seconds: float,
 ):
-    session = SessionAsyncNullPool
+    session = get_session_async_null_pool()
     pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
     redis = aioredis.Redis(connection_pool=pool)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
@@ -78,7 +79,15 @@ async def run_batch_job(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
         )
 
-    resource_gateway = LiveEndpointResourceGateway(queue_delegate=queue_delegate)
+    inference_autoscaling_metrics_gateway = (
+        ASBInferenceAutoscalingMetricsGateway()
+        if infra_config().cloud_provider == "azure"
+        else RedisInferenceAutoscalingMetricsGateway(redis_client=redis)
+    )
+    resource_gateway = LiveEndpointResourceGateway(
+        queue_delegate=queue_delegate,
+        inference_autoscaling_metrics_gateway=inference_autoscaling_metrics_gateway,
+    )
 
     inference_task_queue_gateway: TaskQueueGateway
     infra_task_queue_gateway: TaskQueueGateway
@@ -112,9 +121,6 @@ async def run_batch_job(
     )
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
-    )
-    inference_autoscaling_metrics_gateway = RedisInferenceAutoscalingMetricsGateway(
-        redis_client=redis,
     )
     model_endpoint_service = LiveModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,

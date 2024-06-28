@@ -20,3 +20,17 @@ class InferenceAutoscalingMetricsGateway(ABC):
         If you want to prewarm an endpoint, emit a metric here
         """
         pass
+
+    @abstractmethod
+    async def create_or_update_resources(self, endpoint_id: str):
+        """
+        Create necessary resources for autoscaling metrics
+        """
+        pass
+
+    @abstractmethod
+    async def delete_resources(self, endpoint_id: str):
+        """
+        Delete necessary resources for autoscaling metrics
+        """
+        pass

@@ -1,0 +1,57 @@
+# needed for the Azure bicep deployment due to using the default keda installation and a workload identity for auth
+# see note in https://learn.microsoft.com/en-us/azure/aks/keda-deploy-add-on-arm
+# keda-operator pods need AZURE_TENANT_ID, AZURE_FEDERATED_TOKEN_FILE, and AZURE_AUTHORITY_HOST env vars injected
+{{- if .Values.restartKedaOperator }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "modelEngine.fullname" . }}-restart-keda-operator
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        sidecar.istio.io/inject: "false"
+        {{- include "modelEngine.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "modelEngine.fullname" . }}
+          image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - kubectl
+            - rollout
+            - restart
+            - deployment
+            - keda-operator
+            - -n
+            - kube-system
+          {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 10 }}
+          {{- include "modelEngine.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "modelEngine.fullname" . }}
+      {{- include "modelEngine.volumes" . | indent 6 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
