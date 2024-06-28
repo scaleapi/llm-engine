@@ -1,3 +1,6 @@
+# needed for the Azure bicep deployment due to using the default keda installation and a workload identity for auth
+# see note in https://learn.microsoft.com/en-us/azure/aks/keda-deploy-add-on-arm
+# keda-operator pods need AZURE_TENANT_ID, AZURE_FEDERATED_TOKEN_FILE, and AZURE_AUTHORITY_HOST env vars injected
 {{- if .Values.restartKedaOperator }}
 apiVersion: batch/v1
 kind: Job

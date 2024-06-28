@@ -126,7 +126,7 @@ class HostedModelInferenceServiceConfig:
         try:
             return int(self.cache_redis_url.split("/")[-1])
         except ValueError:
-            return 0
+            return 0  # 0 is the default index used by redis if it's not specified
 
 
 def read_default_config():

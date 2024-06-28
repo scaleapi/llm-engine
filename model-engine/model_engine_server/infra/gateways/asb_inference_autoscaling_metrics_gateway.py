@@ -47,7 +47,7 @@ class ASBInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway):
 
             receiver = servicebus_client.get_queue_receiver(queue_name=queue_name)
             with receiver:
-                receiver.peek_messages(max_message_count=1, timeout=10)
+                receiver.peek_messages(max_message_count=1, timeout=1)
 
     async def emit_inference_autoscaling_metric(self, endpoint_id: str):
         await self._emit_metric(endpoint_id, EXPIRY_SECONDS)

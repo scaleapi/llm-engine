@@ -34,8 +34,6 @@ spec:
             - python
             - -m
             - model_engine_server.entrypoints.populate_llm_fine_tuning_job_repository
-            - -e
-            - prod
             {{- if .Values.azure }}
             - --cloud-provider
             - azure

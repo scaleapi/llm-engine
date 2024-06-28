@@ -1,8 +1,6 @@
 """
 This script initializes the file backing the LLMFineTuneRepository and adds a test template to it
 
-The `env` variable should be one of training, prod, launch, circleci, or local
-
 FOR TESTING:
 To get the bundle id, print the result of calling
 `get_or_create_docker_image_batch_job_bundle(CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST, users[0])`
@@ -85,7 +83,7 @@ DEFAULT_70B_MODEL_CONFIG = {
 }
 
 
-def create_model_bundle(cloud_provider, url, model_type, image_tag):
+def create_model_bundle(cloud_provider, url, user, model_type, image_tag):
     RESOURCE_REQUESTS_BY_MODEL = {
         "7b_or_13b": {
             "cpus": 40,
@@ -133,17 +131,16 @@ def create_model_bundle(cloud_provider, url, model_type, image_tag):
             "public": True,
         },
         headers={"Content-Type": "application/json"},
-        # Use Spellbook api key
-        auth=requests.auth.HTTPBasicAuth("63bf1777e487096169d50214", ""),
+        auth=requests.auth.HTTPBasicAuth(user, ""),
     ).json()
     return response["docker_image_batch_job_bundle_id"]
 
 
 async def main(args):
-    env = args.env
     cloud_provider = args.cloud_provider
     url = args.url or f"http://model-engine.{hmi_config.gateway_namespace}.svc.cluster.local"
     repository = args.repository or hmi_config.cloud_file_llm_fine_tune_repository
+    user = args.user or "test-user"
     initialize_repository = args.initialize_repository
 
     if repository.startswith("s3://"):
@@ -155,41 +152,18 @@ async def main(args):
     if initialize_repository:
         await repo.initialize_data()
 
-    lora_7b_or_13b_bun = create_model_bundle(cloud_provider, url, "7b_or_13b", FT_IMAGE_TAG)
+    lora_7b_or_13b_bun = create_model_bundle(cloud_provider, url, user, "7b_or_13b", FT_IMAGE_TAG)
     print(f"lora_7b_or_13b bundle id: {lora_7b_or_13b_bun}")
 
-    lora_llama_2_34b_bun = create_model_bundle(cloud_provider, url, "llama_2_34b", FT_IMAGE_TAG)
+    lora_llama_2_34b_bun = create_model_bundle(
+        cloud_provider, url, user, "llama_2_34b", FT_IMAGE_TAG
+    )
     print(f"lora_34b_bun bundle id: {lora_llama_2_34b_bun}")
 
-    lora_llama_2_70b_bun = create_model_bundle(cloud_provider, url, "llama_2_70b", FT_IMAGE_TAG)
+    lora_llama_2_70b_bun = create_model_bundle(
+        cloud_provider, url, user, "llama_2_70b", FT_IMAGE_TAG
+    )
     print(f"llama_2_70b bundle id: {lora_llama_2_70b_bun}")
-
-    if env == "training":
-        await repo.write_job_template_for_model(
-            "test_base_model",
-            "test_fine_tuning_method",
-            LLMFineTuneTemplate(
-                docker_image_batch_job_bundle_id="batbun_cioa1g58sre002btvid0",
-                launch_bundle_config={},
-                launch_endpoint_config={},
-                default_hparams={},
-                required_params=[],
-            ),
-        )
-        print("Wrote test_base_model with test_fine_tuning_method")
-
-        await repo.write_job_template_for_model(
-            "test_base_model",
-            "lora",
-            LLMFineTuneTemplate(
-                docker_image_batch_job_bundle_id="batbun_cioa1g58sre002btvid0",
-                launch_bundle_config={},
-                launch_endpoint_config={},
-                default_hparams={},
-                required_params=[],
-            ),
-        )
-        print("Wrote test_base_model with lora")
 
     await repo.write_job_template_for_model(
         "mpt-7b",
@@ -452,9 +426,6 @@ async def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line arguments.")
     parser.add_argument(
-        "-e", "--env", choices=["training", "prod"], help="Environment", required=True
-    )
-    parser.add_argument(
         "--cloud-provider",
         choices=["aws", "azure"],
         help="Cloud provider",
@@ -464,6 +435,9 @@ if __name__ == "__main__":
     parser.add_argument("--url", help="Url to the model-engine gateway", required=False)
     parser.add_argument(
         "--repository", help="Url to the LLM fine-tuning job repository", required=False
+    )
+    parser.add_argument(
+        "--user", help="User ID to create Docker image batch job bundles with", required=False
     )
     parser.add_argument(
         "--initialize-repository", action="store_true", required=False, default=False
