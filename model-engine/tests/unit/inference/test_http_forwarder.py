@@ -10,6 +10,7 @@ from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.inference.forwarding.forwarding import Forwarder
 from model_engine_server.inference.forwarding.http_forwarder import (
     MultiprocessingConcurrencyLimiter,
+    get_concurrency_limiter,
     predict,
 )
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
@@ -55,6 +56,32 @@ def mocked_post(*args, **kwargs):  # noqa
             return PAYLOAD  # type: ignore
 
     return mocked_static_json()
+
+
+def mocked_get_config():
+    return {
+        "sync": {
+            "user_port": 5005,
+            "user_hostname": "localhost",
+            "use_grpc": False,
+            "predict_route": "/predict",
+            "healthcheck_route": "/readyz",
+            "batch_route": None,
+            "model_engine_unwrap": True,
+            "serialize_results_as_string": True,
+            "forward_http_status": True,
+        },
+        "stream": {
+            "user_port": 5005,
+            "user_hostname": "localhost",
+            "predict_route": "/stream",
+            "healthcheck_route": "/readyz",
+            "batch_route": None,
+            "model_engine_unwrap": True,
+            "serialize_results_as_string": False,
+        },
+        "max_concurrency": 42,
+    }
 
 
 @pytest.fixture
@@ -106,6 +133,13 @@ def mock_request():
         return_pickled=False,
         args={"x": 1},
     )
+
+
+@mock.patch("model_engine_server.inference.forwarding.http_forwarder.get_config", mocked_get_config)
+def test_get_concurrency_limiter():
+    limiter = get_concurrency_limiter()
+    assert isinstance(limiter, MultiprocessingConcurrencyLimiter)
+    assert limiter.concurrency == 42
 
 
 @mock.patch("requests.post", mocked_post)
