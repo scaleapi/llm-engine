@@ -51,7 +51,7 @@ def get_streaming_forwarder_loader():
 @lru_cache()
 def get_concurrency_limiter():
     config = get_config()
-    concurrency = int(config.get("max_concurrency", 5))
+    concurrency = int(config.get("max_concurrency", 100))
     return MultiprocessingConcurrencyLimiter(
         concurrency=concurrency, fail_on_concurrency_limit=True
     )
