@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 import boto3
 import smart_open
 from func_timeout import FunctionTimedOut, func_set_timeout
-from model_engine_server.common.dtos.llms import (
+from model_engine_server.inference.batch_inference.dto import (
     CompletionOutput,
     CreateBatchCompletionsEngineRequest,
     CreateBatchCompletionsRequestContent,
@@ -150,9 +150,9 @@ def get_vllm_engine(model: str, request: CreateBatchCompletionsEngineRequest):
 
     engine_args = AsyncEngineArgs(
         model=model,
-        quantization=request.model_config.quantize,
-        tensor_parallel_size=request.model_config.num_shards,
-        seed=request.model_config.seed or 0,
+        quantization=request.model_cfg.quantize,
+        tensor_parallel_size=request.model_cfg.num_shards,
+        seed=request.model_cfg.seed or 0,
         disable_log_requests=True,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
     )
@@ -217,6 +217,7 @@ async def generate_with_tool(
             content.frequency_penalty,
             content.top_k,
             content.top_p,
+            content.skip_special_tokens,
             [iter[0] for iter in iter_prompts],
             bar,
             use_tool=True,
@@ -315,18 +316,16 @@ async def batch_inference():
 
     request = CreateBatchCompletionsEngineRequest.parse_file(CONFIG_FILE)
 
-    if request.model_config.checkpoint_path is not None:
-        download_model(request.model_config.checkpoint_path, MODEL_WEIGHTS_FOLDER)
+    if request.model_cfg.checkpoint_path is not None:
+        download_model(request.model_cfg.checkpoint_path, MODEL_WEIGHTS_FOLDER)
 
     content = request.content
     if content is None:
         with smart_open.open(request.input_data_path, "r") as f:
             content = CreateBatchCompletionsRequestContent.parse_raw(f.read())
 
-    model = (
-        MODEL_WEIGHTS_FOLDER if request.model_config.checkpoint_path else request.model_config.model
-    )
-    is_finetuned = request.model_config.checkpoint_path is not None
+    model = MODEL_WEIGHTS_FOLDER if request.model_cfg.checkpoint_path else request.model_cfg.model
+    is_finetuned = request.model_cfg.checkpoint_path is not None
 
     llm = get_vllm_engine(model, request)
 
@@ -351,7 +350,7 @@ async def batch_inference():
             prompts,
             tool,
             is_finetuned,
-            request.model_config.model,
+            request.model_cfg.model,
         )
     else:
         bar = tqdm(total=len(prompts), desc="Processed prompts")
@@ -366,11 +365,12 @@ async def batch_inference():
             content.frequency_penalty,
             content.top_k,
             content.top_p,
+            content.skip_special_tokens,
             prompts,
             bar,
             use_tool=False,
             is_finetuned=is_finetuned,
-            model=request.model_config.model,
+            model=request.model_cfg.model,
         )
 
         bar.close()
@@ -401,6 +401,7 @@ async def generate_with_vllm(
     frequency_penalty,
     top_k,
     top_p,
+    skip_special_tokens,
     prompts,
     bar,
     use_tool,
@@ -424,29 +425,28 @@ async def generate_with_vllm(
             frequency_penalty=frequency_penalty or 0.0,
             top_k=top_k or -1,
             top_p=top_p or 1.0,
+            skip_special_tokens=skip_special_tokens if skip_special_tokens is not None else True,
         )
         results_generator = await engine.add_request(
-            request_id, prompt, sampling_params, None, time.monotonic()
+            request_id, prompt, sampling_params, time.monotonic(), None
         )
         results_generators.append(results_generator)
 
     outputs = []
     for generator in results_generators:
-        last_output_text = ""
         tokens = []
         async for request_output in generator:
             if request_output.finished:
                 bar.update(1)
 
-            token_text = request_output.outputs[-1].text[len(last_output_text) :]
-            log_probs = request_output.outputs[0].logprobs[-1] if return_token_log_probs else None
-            last_output_text = request_output.outputs[-1].text
-
             if return_token_log_probs:
+                output = request_output.outputs[0]
+                log_probs = output.logprobs[-1] if return_token_log_probs else None
+                token_id = output.token_ids[-1]
                 tokens.append(
                     TokenOutput(
-                        token=token_text,
-                        log_prob=log_probs[request_output.outputs[0].token_ids[-1]],
+                        token=log_probs[token_id].decoded_token,
+                        log_prob=log_probs[token_id].logprob,
                     )
                 )
 

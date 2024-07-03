@@ -1,5 +1,7 @@
 """
 DTOs for LLM APIs.
+
+Make sure to keep this in sync with inference/batch_inference/dto.py.
 """
 
 from typing import Any, Dict, List, Optional
@@ -200,6 +202,10 @@ class CompletionSyncV1Request(BaseModel):
     """
     Context-free grammar for guided decoding. Only supported in vllm.
     """
+    skip_special_tokens: Optional[bool] = True
+    """
+    Whether to skip special tokens in the output. Only supported in vllm.
+    """
 
 
 class TokenOutput(BaseModel):
@@ -279,6 +285,10 @@ class CompletionStreamV1Request(BaseModel):
     guided_grammar: Optional[str] = None
     """
     Context-free grammar for guided decoding. Only supported in vllm.
+    """
+    skip_special_tokens: Optional[bool] = True
+    """
+    Whether to skip special tokens in the output. Only supported in vllm.
     """
 
 
@@ -450,6 +460,10 @@ class CreateBatchCompletionsRequestContent(BaseModel):
     """
     Controls the cumulative probability of the top tokens to consider. 1.0 means consider all tokens.
     """
+    skip_special_tokens: Optional[bool] = True
+    """
+    Whether to skip special tokens in the output.
+    """
 
 
 class CreateBatchCompletionsModelConfig(BaseModel):
@@ -541,6 +555,14 @@ class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
     hidden from the DTO exposed to the client.
     """
 
+    model_cfg: CreateBatchCompletionsModelConfig
+    """
+    Model configuration for the batch inference. Hardware configurations are inferred.
+
+    We rename model_config from api to model_cfg in engine since engine uses pydantic v2 which
+    reserves model_config as a keyword.
+    """
+
     max_gpu_memory_utilization: Optional[float] = Field(default=0.9, le=1.0)
     """
     Maximum GPU memory utilization for the batch inference. Default to 90%.
@@ -553,6 +575,7 @@ class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
             output_data_path=request.output_data_path,
             content=request.content,
             model_config=request.model_config,
+            model_cfg=request.model_config,
             data_parallelism=request.data_parallelism,
             max_runtime_sec=request.max_runtime_sec,
             tool_config=request.tool_config,
