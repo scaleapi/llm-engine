@@ -1,6 +1,7 @@
 from typing import Any, Dict, Tuple
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.domain.entities import ModelBundle, ModelEndpoint
 from model_engine_server.domain.exceptions import (
@@ -375,15 +376,16 @@ def test_create_sync_task_returns_failure(
         assert response.json()["status"] == "FAILURE"
 
 
-def test_create_streaming_task_success(
+@pytest.mark.asyncio
+async def test_create_streaming_task_success(
     model_bundle_5: ModelBundle,
     model_endpoint_streaming: ModelEndpoint,
     endpoint_predict_request_1: Tuple[EndpointPredictV1Request, Dict[str, Any]],
     test_api_key: str,
-    get_test_client_wrapper,
+    get_async_test_client_wrapper,
 ):
     assert model_endpoint_streaming.infra_state is not None
-    client = get_test_client_wrapper(
+    async with get_async_test_client_wrapper(
         fake_docker_repository_image_always_exists=True,
         fake_model_bundle_repository_contents={
             model_bundle_5.id: model_bundle_5,
@@ -397,15 +399,19 @@ def test_create_streaming_task_success(
         fake_batch_job_record_repository_contents={},
         fake_batch_job_progress_gateway_contents={},
         fake_docker_image_batch_job_bundle_repository_contents={},
-    )
-    with client.stream(
-        method="POST",
-        url=f"/v1/streaming-tasks?model_endpoint_id={model_endpoint_streaming.record.id}",
-        auth=(test_api_key, ""),
-        json=endpoint_predict_request_1[1],
-    ) as response:
-        assert response.status_code == 200
-        assert (
-            response.read()
-            == b'data: {"status": "SUCCESS", "result": null, "traceback": null}\r\n\r\n'
-        )
+    ) as client:
+        async with client.stream(
+            method="POST",
+            url=f"/v1/streaming-tasks?model_endpoint_id={model_endpoint_streaming.record.id}",
+            auth=(test_api_key, ""),
+            json=endpoint_predict_request_1[1],
+        ) as response:
+            assert response.status_code == 200
+            count = 0
+            async for message in response.aiter_bytes():
+                assert (
+                    message
+                    == b'data: {"status": "SUCCESS", "result": null, "traceback": null}\r\n\r\n'
+                )
+                count += 1
+            assert count == 1
