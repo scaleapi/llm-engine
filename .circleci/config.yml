@@ -197,8 +197,6 @@ jobs:
           command: |
             pushd $HOME/project
             kubectl port-forward svc/model-engine 5001:80 &
-            export AWS_ACCESS_KEY_ID=$CIRCLECI_AWS_ACCESS_KEY
-            export AWS_SECRET_ACCESS_KEY=$CIRCLECI_AWS_SECRET_KEY
             export GIT_TAG=$CIRCLE_SHA1
             pytest integration_tests
 
