@@ -164,9 +164,9 @@ class CreateLLMEndpointRequest(BaseModel):
     metadata: Dict[str, Any]  # TODO: JSON type
     post_inference_hooks: Optional[List[str]]
     endpoint_type: ModelEndpointType = ModelEndpointType.STREAMING
-    cpus: CpuSpecificationType
-    gpus: int
-    memory: StorageSpecificationType
+    cpus: Optional[CpuSpecificationType]
+    gpus: Optional[int]
+    memory: Optional[StorageSpecificationType]
     gpu_type: Optional[GpuType]
     storage: Optional[StorageSpecificationType]
     optimize_costs: Optional[bool] = None
