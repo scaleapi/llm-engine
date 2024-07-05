@@ -3,9 +3,9 @@
 # See expect syntax here: https://manpages.ubuntu.com/manpages/trusty/man1/expect.1.html
 spawn minikube addons configure registry-creds
 expect "Do you want to enable AWS Elastic Container Registry?" { send "y\r" }
-expect "Enter AWS Access Key ID:" { send "$CIRCLECI_AWS_ACCESS_KEY\r" }
-expect "Enter AWS Secret Access Key:" { send "$CIRCLECI_AWS_SECRET_KEY\r" }
-expect "Enter AWS Session Token:" { send "\r" }
+expect "Enter AWS Access Key ID:" { send "$AWS_ACCESS_KEY_ID\r" }
+expect "Enter AWS Secret Access Key:" { send "$AWS_SECRET_ACCESS_KEY\r" }
+expect "Enter AWS Session Token:" { send "$AWS_SESSION_TOKEN\r" }
 expect "Enter AWS Region:" { send "us-west-2\r" }
 expect "Enter 12 digit AWS Account ID (Comma separated list):" { send "$CIRCLECI_AWS_ACCOUNT_ID\r" }
 expect "Enter ARN of AWS role to assume:" { send "\r" }
