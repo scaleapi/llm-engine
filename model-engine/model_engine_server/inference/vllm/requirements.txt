@@ -1,2 +1,2 @@
-vllm==0.5.1
+vllm==0.5.0.post1
 pydantic>=2.0
