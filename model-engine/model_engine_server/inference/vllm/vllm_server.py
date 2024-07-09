@@ -1,33 +1,86 @@
 import argparse
+import asyncio
 import code
 import json
+import logging
 import os
 import signal
 import subprocess
 import traceback
+from logging import Logger
 from typing import AsyncGenerator, Dict, List, Optional
 
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncEngineDeadError, AsyncLLMEngine
+from vllm.entrypoints.openai.cli_args import make_arg_parser
+from vllm.entrypoints.openai.protocol import ChatCompletionRequest as OpenAIChatCompletionRequest
+from vllm.entrypoints.openai.protocol import ChatCompletionResponse as OpenAIChatCompletionResponse
 from vllm.entrypoints.openai.protocol import CompletionRequest as OpenAICompletionRequest
+from vllm.entrypoints.openai.protocol import ErrorResponse
+from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
+from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
+from vllm.entrypoints.openai.serving_embedding import OpenAIServingEmbedding
 from vllm.model_executor.guided_decoding import get_guided_decoding_logits_processor
 from vllm.outputs import CompletionOutput
 from vllm.sampling_params import SamplingParams
 from vllm.sequence import Logprob
 from vllm.utils import random_uuid
+from vllm.version import __version__ as VLLM_VERSION
+
+logging.basicConfig(
+    format="%(asctime)s | %(levelname)s: %(message)s",
+    datefmt="%b/%d %H:%M:%S",
+    level=logging.INFO,
+)
+
+logger = Logger("vllm_server")
 
 TIMEOUT_KEEP_ALIVE = 5  # seconds.
 TIMEOUT_TO_PREVENT_DEADLOCK = 1  # seconds
 app = FastAPI()
 
+openai_serving_chat: OpenAIServingChat
+openai_serving_completion: OpenAIServingCompletion
+openai_serving_embedding: OpenAIServingEmbedding
+
 
 @app.get("/healthz")
 @app.get("/health")
-def healthcheck():
-    return "OK"
+async def healthcheck():
+    await openai_serving_chat.engine.check_health()
+    return Response(status_code=200)
+
+
+@app.get("/v1/models")
+async def show_available_models():
+    models = await openai_serving_chat.show_available_models()
+    return JSONResponse(content=models.model_dump())
+
+
+@app.post("/v1/chat/completions")
+async def create_chat_completion(request: OpenAIChatCompletionRequest, raw_request: Request):
+    generator = await openai_serving_chat.create_chat_completion(request, raw_request)
+    if isinstance(generator, ErrorResponse):
+        return JSONResponse(content=generator.model_dump(), status_code=generator.code)
+    if request.stream:
+        return StreamingResponse(content=generator, media_type="text/event-stream")
+    else:
+        assert isinstance(generator, OpenAIChatCompletionResponse)
+        return JSONResponse(content=generator.model_dump())
+
+
+@app.post("/v1/completions")
+async def create_completion(request: OpenAICompletionRequest, raw_request: Request):
+    generator = await openai_serving_completion.create_completion(request, raw_request)
+    if isinstance(generator, ErrorResponse):
+        return JSONResponse(content=generator.model_dump(), status_code=generator.code)
+    if request.stream:
+        return StreamingResponse(content=generator, media_type="text/event-stream")
+    else:
+        return JSONResponse(content=generator.model_dump())
 
 
 @app.post("/predict")
@@ -135,7 +188,7 @@ async def generate(request: Request) -> Response:
         return Response(content=json.dumps(ret))
 
     except AsyncEngineDeadError as e:
-        print(f"The vllm engine is dead, exiting the pod: {e}")
+        logger.error(f"The vllm engine is dead, exiting the pod: {e}")
         os.kill(os.getpid(), signal.SIGINT)
         raise e
 
@@ -151,7 +204,7 @@ def get_gpu_free_memory():
         gpu_memory = [int(x) for x in output.strip().split("\n")]
         return gpu_memory
     except Exception as e:
-        print(f"Error getting GPU memory: {e}")
+        logger.warn(f"Error getting GPU memory: {e}")
         return None
 
 
@@ -162,7 +215,7 @@ def check_unknown_startup_memory_usage():
         min_mem = min(gpu_free_memory)
         max_mem = max(gpu_free_memory)
         if max_mem - min_mem > 10:
-            print(
+            logger.warn(
                 f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
             )
             try:
@@ -170,9 +223,9 @@ def check_unknown_startup_memory_usage():
                 output = subprocess.run(
                     ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
                 ).stdout
-                print(f"Processes using GPU: {output}")
+                logger.info(f"Processes using GPU: {output}")
             except Exception as e:
-                print(f"Error getting processes using GPU: {e}")
+                logger.error(f"Error getting processes using GPU: {e}")
 
 
 def debug(sig, frame):
@@ -200,23 +253,63 @@ def format_logprobs(request_output: CompletionOutput) -> Optional[List[Dict[int,
     return [extract_logprobs(logprobs) for logprobs in output_logprobs]
 
 
+def parse_args():
+    parser = make_arg_parser()
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
     check_unknown_startup_memory_usage()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", type=str, default=None)  # None == IPv4 / IPv6 dualstack
     parser.add_argument("--port", type=int, default=5005)
     parser = AsyncEngineArgs.add_cli_args(parser)
-    args = parser.parse_args()
+    args = parse_args()
+
+    logger.info("vLLM version %s", VLLM_VERSION)
+    logger.info("args: %s", args)
+
+    if args.served_model_name is not None:
+        served_model_names = args.served_model_name
+    else:
+        served_model_names = [args.model]
+
+    signal.signal(signal.SIGUSR1, debug)
 
     engine_args = AsyncEngineArgs.from_cli_args(args)
     engine = AsyncLLMEngine.from_engine_args(engine_args)
 
-    signal.signal(signal.SIGUSR1, debug)
+    event_loop: Optional[asyncio.AbstractEventLoop]
+    try:
+        event_loop = asyncio.get_running_loop()
+    except RuntimeError:
+        event_loop = None
+
+    if event_loop is not None and event_loop.is_running():
+        # If the current is instanced by Ray Serve,
+        # there is already a running event loop
+        model_config = event_loop.run_until_complete(engine.get_model_config())
+    else:
+        # When using single vLLM without engine_use_ray
+        model_config = asyncio.run(engine.get_model_config())
+
+    openai_serving_chat = OpenAIServingChat(
+        engine,
+        model_config,
+        served_model_names,
+        args.response_role,
+        args.lora_modules,
+        args.chat_template,
+    )
+    openai_serving_completion = OpenAIServingCompletion(
+        engine, model_config, served_model_names, args.lora_modules
+    )
 
     uvicorn.run(
         app,
         host=args.host,
         port=args.port,
-        log_level="debug",
+        log_level=args.uvicorn_log_level,
         timeout_keep_alive=TIMEOUT_KEEP_ALIVE,
     )
