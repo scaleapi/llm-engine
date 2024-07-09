@@ -280,7 +280,6 @@ if __name__ == "__main__":
     engine_args = AsyncEngineArgs.from_cli_args(args)
     engine = AsyncLLMEngine.from_engine_args(engine_args)
 
-    # When using single vLLM without engine_use_ray
     model_config = asyncio.run(engine.get_model_config())
 
     openai_serving_chat = OpenAIServingChat(
