@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic.v1 import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class LLMFineTuneTemplate(BaseModel):
@@ -8,9 +8,7 @@ class LLMFineTuneTemplate(BaseModel):
     launch_endpoint_config: Dict[str, Any]
     default_hparams: Dict[str, Any]
     required_params: List[str]
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LLMFineTuneEvent(BaseModel):

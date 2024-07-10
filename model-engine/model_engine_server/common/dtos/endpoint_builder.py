@@ -8,7 +8,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointRecord,
     StorageSpecificationType,
 )
-from pydantic.v1 import BaseModel
+from pydantic import BaseModel
 
 
 class BuildEndpointRequest(BaseModel):
@@ -20,19 +20,19 @@ class BuildEndpointRequest(BaseModel):
     cpus: CpuSpecificationType
     gpus: int
     memory: StorageSpecificationType
-    gpu_type: Optional[GpuType]
-    storage: Optional[StorageSpecificationType]
+    gpu_type: Optional[GpuType] = None
+    storage: Optional[StorageSpecificationType] = None
     optimize_costs: bool
     aws_role: str
     results_s3_bucket: str
-    child_fn_info: Optional[Dict[str, Any]]  # TODO: remove this if we don't need it.
-    post_inference_hooks: Optional[List[str]]
+    child_fn_info: Optional[Dict[str, Any]] = None  # TODO: remove this if we don't need it.
+    post_inference_hooks: Optional[List[str]] = None
     labels: Dict[str, str]
-    billing_tags: Optional[Dict[str, Any]]
+    billing_tags: Optional[Dict[str, Any]] = None
     prewarm: bool = True
-    high_priority: Optional[bool]
-    default_callback_url: Optional[str]
-    default_callback_auth: Optional[CallbackAuth]
+    high_priority: Optional[bool] = None
+    default_callback_url: Optional[str] = None
+    default_callback_auth: Optional[CallbackAuth] = None
 
 
 class BuildEndpointStatus(str, Enum):

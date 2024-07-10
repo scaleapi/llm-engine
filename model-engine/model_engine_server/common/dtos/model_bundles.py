@@ -10,7 +10,7 @@ from model_engine_server.domain.entities import (
     ModelBundleFlavors,
     ModelBundlePackagingType,
 )
-from pydantic.v1 import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreateModelBundleV1Request(BaseModel):
@@ -23,9 +23,9 @@ class CreateModelBundleV1Request(BaseModel):
     requirements: List[str]
     env_params: ModelBundleEnvironmentParams
     packaging_type: ModelBundlePackagingType
-    metadata: Optional[Dict[str, Any]]
-    app_config: Optional[Dict[str, Any]]
-    schema_location: Optional[str]
+    metadata: Optional[Dict[str, Any]] = None
+    app_config: Optional[Dict[str, Any]] = None
+    schema_location: Optional[str] = None
 
 
 class CloneModelBundleV1Request(BaseModel):
@@ -38,7 +38,7 @@ class CloneModelBundleV1Request(BaseModel):
     The ID of the ModelBundle to copy from.
     """
 
-    new_app_config: Optional[Dict[str, Any]]
+    new_app_config: Optional[Dict[str, Any]] = None
     """
     The app_config of the new ModelBundle. If not specified, then the new ModelBundle will use the same app_config
     as the original.
@@ -65,17 +65,11 @@ class ModelBundleV1Response(BaseModel):
     env_params: ModelBundleEnvironmentParams
     packaging_type: ModelBundlePackagingType
     metadata: Dict[str, Any]
-    app_config: Optional[Dict[str, Any]]
+    app_config: Optional[Dict[str, Any]] = None
     created_at: datetime.datetime
     model_artifact_ids: List[str]
-    schema_location: Optional[str]
-
-    class Config:
-        """
-        ModelBundleResponse Config class.
-        """
-
-        orm_mode = True
+    schema_location: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ListModelBundlesV1Response(BaseModel):
@@ -92,7 +86,7 @@ class CreateModelBundleV2Request(BaseModel):
     """
 
     name: str
-    metadata: Optional[Dict[str, Any]]
+    metadata: Optional[Dict[str, Any]] = None
     schema_location: str
     flavor: ModelBundleFlavors = Field(..., discriminator="flavor")
 
@@ -107,7 +101,7 @@ class CloneModelBundleV2Request(BaseModel):
     The ID of the ModelBundle to copy from.
     """
 
-    new_app_config: Optional[Dict[str, Any]]
+    new_app_config: Optional[Dict[str, Any]] = None
     """
     The app_config of the new ModelBundle. If not specified, then the new ModelBundle will use the same app_config
     as the original.
@@ -132,15 +126,9 @@ class ModelBundleV2Response(BaseModel):
     metadata: Dict[str, Any]
     created_at: datetime.datetime
     model_artifact_ids: List[str]
-    schema_location: Optional[str]
+    schema_location: Optional[str] = None
     flavor: ModelBundleFlavors = Field(..., discriminator="flavor")
-
-    class Config:
-        """
-        ModelBundleResponse Config class.
-        """
-
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ListModelBundlesV2Response(BaseModel):

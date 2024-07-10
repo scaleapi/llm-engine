@@ -1,6 +1,6 @@
 from typing import Dict, Optional
 
-from pydantic.v1 import BaseModel
+from pydantic import BaseModel
 
 
 class BuildImageRequest(BaseModel):
@@ -10,8 +10,8 @@ class BuildImageRequest(BaseModel):
     base_path: str
     dockerfile: str
     base_image: str
-    requirements_folder: Optional[str]
-    substitution_args: Optional[Dict[str, str]]
+    requirements_folder: Optional[str] = None
+    substitution_args: Optional[Dict[str, str]] = None
 
 
 class BuildImageResponse(BaseModel):

@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from pydantic.v1 import BaseModel
+from pydantic import BaseModel
 
 
 class EndpointPredictPayload(BaseModel):

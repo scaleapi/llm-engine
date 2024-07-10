@@ -530,7 +530,7 @@ def create_batch_completions_request() -> CreateBatchCompletionsRequest:
             max_new_tokens=10,
             temperature=0.5,
         ),
-        model_config=CreateBatchCompletionsModelConfig(
+        model_cfg=CreateBatchCompletionsModelConfig(
             model="mpt-7b",
             checkpoint_path="s3://test_checkpoint_path",
             labels=[],

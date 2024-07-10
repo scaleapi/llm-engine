@@ -11,12 +11,12 @@ from typing import Optional
 
 from model_engine_server.common.dtos.llms import TokenUsage
 from model_engine_server.core.auth.authentication_repository import User
-from pydantic.v1 import BaseModel
+from pydantic import BaseModel
 
 
 class MetricMetadata(BaseModel):
     user: User
-    model_name: Optional[str]
+    model_name: Optional[str] = None
 
 
 class MonitoringMetricsGateway(ABC):

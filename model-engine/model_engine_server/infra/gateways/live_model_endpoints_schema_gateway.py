@@ -25,7 +25,7 @@ from model_engine_server.domain.entities import (
 )
 from model_engine_server.domain.gateways import ModelEndpointsSchemaGateway
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
-from pydantic.v1 import BaseModel
+from pydantic import BaseModel
 from starlette.routing import BaseRoute
 
 # Caches the default model definition so we don't need to recompute every time
