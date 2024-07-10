@@ -54,6 +54,7 @@ logger = make_logger(logger_name())
 
 autoscaler_broker = os.environ.get("BROKER_NAME", SQS_BROKER)
 aws_profile = os.environ.get("AWS_PROFILE")
+aws_region = os.environ.get("AWS_REGION", "us-west-2")
 
 
 @dataclasses.dataclass
@@ -403,7 +404,7 @@ class RedisBroker(AutoscalerBroker):
 class SQSBroker(AutoscalerBroker):
     @staticmethod
     def _get_sqs_queue_size(queue_name: str):
-        sqs_client = session(aws_profile).client("sqs", region_name="us-west-2")
+        sqs_client = session(aws_profile).client("sqs", region_name=aws_region)
         try:
             total_start_time = time.time()
             queue_size_hist = []
