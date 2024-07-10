@@ -99,6 +99,9 @@ jobs:
     executor: ubuntu-large
     steps:
       - checkout
+      - aws-cli/setup:
+          role-arn: ${CIRCLECI_ROLE_ARN}
+          aws-region: AWS_REGION
       - run:
           name: Build Docker Image
           command: |
@@ -176,9 +179,6 @@ jobs:
             pip install -r model-engine/requirements.txt
       - install_client
       - install_server
-      - aws-cli/setup:
-          role-arn: ${CIRCLECI_ROLE_ARN}
-          aws-region: AWS_REGION
       - run:
           name: Run integration tests
           command: |
