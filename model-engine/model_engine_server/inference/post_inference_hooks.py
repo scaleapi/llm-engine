@@ -76,8 +76,8 @@ class CallbackHook(PostInferenceHook):
 
         response["task_id"] = task_id
         auth = request_payload.callback_auth or self._default_callback_auth
-        if auth and isinstance(auth.__root__, CallbackBasicAuth):
-            auth_tuple = (auth.__root__.username, auth.__root__.password)
+        if auth and isinstance(auth.root, CallbackBasicAuth):
+            auth_tuple = (auth.root.username, auth.root.password)
         else:
             auth_tuple = (self._user_id, "")
 

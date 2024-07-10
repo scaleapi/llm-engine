@@ -50,6 +50,8 @@ class CreateModelBundleV1Response(BaseModel):
     Response object for creating a Model Bundle.
     """
 
+    model_config = ConfigDict(protected_namespaces=())
+
     model_bundle_id: str
 
 
@@ -57,6 +59,8 @@ class ModelBundleV1Response(BaseModel):
     """
     Response object for a single Model Bundle.
     """
+
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
     id: str
     name: str
@@ -69,13 +73,14 @@ class ModelBundleV1Response(BaseModel):
     created_at: datetime.datetime
     model_artifact_ids: List[str]
     schema_location: Optional[str] = None
-    model_config = ConfigDict(from_attributes=True)
 
 
 class ListModelBundlesV1Response(BaseModel):
     """
     Response object for listing Model Bundles.
     """
+
+    model_config = ConfigDict(protected_namespaces=())
 
     model_bundles: List[ModelBundleV1Response]
 
@@ -113,6 +118,8 @@ class CreateModelBundleV2Response(BaseModel):
     Response object for creating a Model Bundle.
     """
 
+    model_config = ConfigDict(protected_namespaces=())
+
     model_bundle_id: str
 
 
@@ -121,6 +128,8 @@ class ModelBundleV2Response(BaseModel):
     Response object for a single Model Bundle.
     """
 
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
+
     id: str
     name: str
     metadata: Dict[str, Any]
@@ -128,13 +137,14 @@ class ModelBundleV2Response(BaseModel):
     model_artifact_ids: List[str]
     schema_location: Optional[str] = None
     flavor: ModelBundleFlavors = Field(..., discriminator="flavor")
-    model_config = ConfigDict(from_attributes=True)
 
 
 class ListModelBundlesV2Response(BaseModel):
     """
     Response object for listing Model Bundles.
     """
+
+    model_config = ConfigDict(protected_namespaces=())
 
     model_bundles: List[ModelBundleV2Response]
 

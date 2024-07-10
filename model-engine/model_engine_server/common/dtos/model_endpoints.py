@@ -21,7 +21,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
     StorageSpecificationType,
 )
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class BrokerType(str, Enum):
@@ -143,6 +143,7 @@ class ModelEndpointOrderBy(str, Enum):
 
 
 class GetModelEndpointsSchemaV1Response(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
     model_endpoints_schema: ModelEndpointsSchema
 
 

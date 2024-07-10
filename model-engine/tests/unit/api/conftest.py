@@ -789,7 +789,7 @@ def model_endpoint_1(
                     post_inference_hooks=["callback"],
                     default_callback_url="http://www.example.com",
                     default_callback_auth=CallbackAuth(
-                        __root__=CallbackBasicAuth(
+                        root=CallbackBasicAuth(
                             kind="basic",
                             username="test_username",
                             password="test_password",

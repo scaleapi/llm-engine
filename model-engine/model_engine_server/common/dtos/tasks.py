@@ -6,15 +6,10 @@ from enum import Enum
 from typing import Any, Optional
 
 from model_engine_server.domain.entities import CallbackAuth
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
-
-class ResponseSchema(BaseModel):
-    __root__: Any = None
-
-
-class RequestSchema(BaseModel):
-    __root__: Any = None
+ResponseSchema = RootModel[Any]
+RequestSchema = RootModel[Any]
 
 
 class TaskStatus(str, Enum):

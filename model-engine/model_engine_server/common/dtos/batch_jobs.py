@@ -27,6 +27,7 @@ class CreateBatchJobResourceRequests(BaseModel):
 
 
 class CreateBatchJobV1Request(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
     model_bundle_id: str
     input_path: str
     serialization_format: BatchJobSerializationFormat
