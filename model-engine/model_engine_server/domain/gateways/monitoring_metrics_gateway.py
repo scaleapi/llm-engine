@@ -11,7 +11,7 @@ from typing import Optional
 
 from model_engine_server.common.dtos.llms import TokenUsage
 from model_engine_server.core.auth.authentication_repository import User
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 
 class MetricMetadata(BaseModel):

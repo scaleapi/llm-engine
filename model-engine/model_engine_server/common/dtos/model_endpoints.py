@@ -21,7 +21,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
     StorageSpecificationType,
 )
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic.v1 import BaseModel, Field, HttpUrl
 
 
 class BrokerType(str, Enum):

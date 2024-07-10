@@ -4,7 +4,7 @@ Contains various input and output types relating to Triggers for the server.
 import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 
 
 class CreateTriggerV1Request(BaseModel):

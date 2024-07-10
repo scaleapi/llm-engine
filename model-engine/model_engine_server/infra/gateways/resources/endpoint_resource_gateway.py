@@ -8,7 +8,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
 )
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import QueueInfo
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 __all__: Sequence[str] = (
     "EndpointResourceGateway",

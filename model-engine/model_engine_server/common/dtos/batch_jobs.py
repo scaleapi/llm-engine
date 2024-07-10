@@ -13,7 +13,7 @@ from model_engine_server.domain.entities import (
     GpuType,
     StorageSpecificationType,
 )
-from pydantic import BaseModel, root_validator
+from pydantic.v1 import BaseModel, root_validator
 
 
 class CreateBatchJobResourceRequests(BaseModel):

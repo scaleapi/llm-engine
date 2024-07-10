@@ -5,7 +5,7 @@ from typing import Dict, Optional
 from model_engine_server.domain.entities.model_bundle_entity import ModelBundle
 from model_engine_server.domain.entities.model_endpoint_entity import ModelEndpoint
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 
 class BatchJobStatus(str, Enum):

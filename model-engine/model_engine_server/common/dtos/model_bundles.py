@@ -10,7 +10,7 @@ from model_engine_server.domain.entities import (
     ModelBundleFlavors,
     ModelBundlePackagingType,
 )
-from pydantic import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 
 
 class CreateModelBundleV1Request(BaseModel):

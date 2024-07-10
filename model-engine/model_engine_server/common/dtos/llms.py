@@ -23,7 +23,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointStatus,
     Quantization,
 )
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic.v1 import BaseModel, Field, HttpUrl
 
 
 class CreateLLMModelEndpointV1Request(BaseModel):

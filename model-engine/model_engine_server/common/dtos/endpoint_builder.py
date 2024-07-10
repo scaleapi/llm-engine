@@ -8,7 +8,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointRecord,
     StorageSpecificationType,
 )
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 
 class BuildEndpointRequest(BaseModel):

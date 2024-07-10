@@ -12,7 +12,7 @@ from model_engine_server.domain.entities.common_types import (
 from model_engine_server.domain.entities.gpu_type import GpuType
 from model_engine_server.domain.entities.model_bundle_entity import ModelBundle
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
-from pydantic import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 from typing_extensions import Literal
 
 ModelEndpointsSchema = OpenAPI

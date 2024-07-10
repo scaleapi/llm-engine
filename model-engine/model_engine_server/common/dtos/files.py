@@ -3,7 +3,7 @@ DTOs for Files API.
 """
 from typing import List
 
-from pydantic import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 
 
 class UploadFileResponse(BaseModel):

@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Any, Optional
 
 from model_engine_server.domain.entities import CallbackAuth
-from pydantic import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 
 
 class ResponseSchema(BaseModel):
