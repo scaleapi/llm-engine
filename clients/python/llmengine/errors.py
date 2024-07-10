@@ -81,7 +81,7 @@ def parse_error(status_code: int, content: bytes) -> Exception:
     try:
         payload = json.loads(content)
         message = payload["detail"]
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, KeyError):
         message = content.decode("utf-8")
 
     # Try to parse a APIInference error
@@ -93,7 +93,7 @@ def parse_error(status_code: int, content: bytes) -> Exception:
         return NotFoundError(message)
     if status_code == 429:
         return RateLimitExceededError(message)
-    if 600 < status_code <= 500:
+    if 500 <= status_code < 600:
         return ServerError(status_code, message)
 
     # Fallback to an unknown error
