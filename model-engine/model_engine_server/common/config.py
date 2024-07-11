@@ -34,7 +34,7 @@ SERVICE_CONFIG_PATH = os.environ.get("DEPLOY_SERVICE_CONFIG_PATH", DEFAULT_SERVI
 redis_cache_expiration_timestamp = None
 
 
-# duplicated from llm/ia3_finetune
+# duplicated from llm/finetune_pipeline
 def get_model_cache_directory_name(model_name: str):
     """How huggingface maps model names to directory names in their cache for model files.
     We adopt this when storing model cache files in s3.

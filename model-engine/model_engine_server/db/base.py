@@ -19,7 +19,7 @@ from sqlalchemy.pool import NullPool
 logger = make_logger(logger_name())
 
 database_credential_expiration_timestamp = time.time()
-expiration_buffer = 300  # 5 minutes
+EXPIRATION_BUFFER = 300  # 5 minutes
 
 
 def get_key_file_name(environment: str) -> str:
@@ -206,7 +206,7 @@ def get_session():
     global _Session
     global database_credential_expiration_timestamp
 
-    if time.time() > database_credential_expiration_timestamp - expiration_buffer:
+    if time.time() > database_credential_expiration_timestamp - EXPIRATION_BUFFER:
         refresh_sessions()
 
     return _Session
@@ -216,7 +216,7 @@ def get_session_read_only():
     global _SessionReadOnly
     global database_credential_expiration_timestamp
 
-    if time.time() > database_credential_expiration_timestamp - expiration_buffer:
+    if time.time() > database_credential_expiration_timestamp - EXPIRATION_BUFFER:
         refresh_sessions()
 
     return _SessionReadOnly
@@ -226,7 +226,7 @@ def get_session_async():
     global _SessionAsync
     global database_credential_expiration_timestamp
 
-    if time.time() > database_credential_expiration_timestamp - expiration_buffer:
+    if time.time() > database_credential_expiration_timestamp - EXPIRATION_BUFFER:
         refresh_sessions()
 
     return _SessionAsync
@@ -236,7 +236,7 @@ def get_session_async_null_pool():
     global _SessionAsyncNullPool
     global database_credential_expiration_timestamp
 
-    if time.time() > database_credential_expiration_timestamp - expiration_buffer:
+    if time.time() > database_credential_expiration_timestamp - EXPIRATION_BUFFER:
         refresh_sessions()
 
     return _SessionAsyncNullPool
@@ -246,7 +246,7 @@ def get_session_read_only_async():
     global _SessionReadOnlyAsync
     global database_credential_expiration_timestamp
 
-    if time.time() > database_credential_expiration_timestamp - expiration_buffer:
+    if time.time() > database_credential_expiration_timestamp - EXPIRATION_BUFFER:
         refresh_sessions()
 
     return _SessionReadOnlyAsync

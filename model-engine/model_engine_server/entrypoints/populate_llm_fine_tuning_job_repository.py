@@ -145,8 +145,10 @@ async def main(args):
 
     if repository.startswith("s3://"):
         repo = S3FileLLMFineTuneRepository(file_path=repository)
-    else:
+    elif repository.startswith("azure://") or "blob.core.windows.net" in repository:
         repo = ABSFileLLMFineTuneRepository(file_path=repository)
+    else:
+        raise ValueError(f"LLM fine-tune repository must be S3 or ABS file; got {repository}")
 
     # Clears the file. Needed the first time we're populating data
     if initialize_repository:
