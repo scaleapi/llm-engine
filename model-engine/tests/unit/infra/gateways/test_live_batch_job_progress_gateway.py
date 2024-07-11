@@ -34,4 +34,4 @@ def test_update_progress(test_api_key: str, fake_filesystem_gateway):
         progress=BatchJobProgress(num_tasks_pending=4, num_tasks_completed=5),
     )
     handle = fake_filesystem_gateway.mock_open()
-    handle.write.assert_called_once_with('{"num_tasks_pending": 4, "num_tasks_completed": 5}')
+    handle.write.assert_called_once_with('{"num_tasks_pending":4,"num_tasks_completed":5}')

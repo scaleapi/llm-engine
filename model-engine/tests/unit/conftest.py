@@ -3651,7 +3651,7 @@ def llm_model_endpoint_async(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
@@ -3783,7 +3783,7 @@ def llm_model_endpoint_sync(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
@@ -3915,7 +3915,7 @@ def llm_model_endpoint_stream(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
@@ -4047,7 +4047,7 @@ def llm_model_endpoint_sync_tgi(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
@@ -4179,7 +4179,7 @@ def llm_model_endpoint_sync_lightllm(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
@@ -4311,7 +4311,7 @@ def llm_model_endpoint_sync_trt_llm(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",

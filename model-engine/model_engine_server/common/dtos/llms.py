@@ -23,7 +23,8 @@ from model_engine_server.domain.entities import (
     ModelEndpointStatus,
     Quantization,
 )
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field
+from model_engine_server.common.dtos.core import HttpUrlStr
 
 
 class CreateLLMModelEndpointV1Request(BaseModel):
@@ -66,7 +67,7 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     prewarm: Optional[bool] = None
     high_priority: Optional[bool] = None
     billing_tags: Optional[Dict[str, Any]] = None
-    default_callback_url: Optional[HttpUrl] = None
+    default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = True  # LLM endpoints are public by default.
 
@@ -133,7 +134,7 @@ class UpdateLLMModelEndpointV1Request(BaseModel):
     prewarm: Optional[bool] = None
     high_priority: Optional[bool] = None
     billing_tags: Optional[Dict[str, Any]] = None
-    default_callback_url: Optional[HttpUrl] = None
+    default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = None
 
@@ -572,7 +573,7 @@ class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
             input_data_path=request.input_data_path,
             output_data_path=request.output_data_path,
             content=request.content,
-            model_config=request.model_config,
+            model_config=request.model_cfg,
             model_cfg=request.model_cfg,
             data_parallelism=request.data_parallelism,
             max_runtime_sec=request.max_runtime_sec,

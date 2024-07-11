@@ -1002,7 +1002,7 @@ class CreateLLMModelEndpointV1UseCase:
             prewarm=prewarm,
             high_priority=high_priority,
             owner=user.team_id,
-            default_callback_url=str(request.default_callback_url),
+            default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
         )
@@ -1252,7 +1252,7 @@ class UpdateLLMModelEndpointV1UseCase:
             labels=request.labels,
             prewarm=request.prewarm,
             high_priority=request.high_priority,
-            default_callback_url=str(request.default_callback_url),
+            default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
         )
