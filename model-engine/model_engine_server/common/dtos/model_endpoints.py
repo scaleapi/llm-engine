@@ -10,6 +10,7 @@ import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from model_engine_server.common.dtos.core import HttpUrlStr
 from model_engine_server.domain.entities import (
     CallbackAuth,
     CpuSpecificationType,
@@ -21,7 +22,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
     StorageSpecificationType,
 )
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BrokerType(str, Enum):
@@ -51,22 +52,22 @@ class CreateModelEndpointV1Request(BaseModel):
     model_bundle_id: str
     endpoint_type: ModelEndpointType
     metadata: Dict[str, Any]  # TODO: JSON type
-    post_inference_hooks: Optional[List[str]]
+    post_inference_hooks: Optional[List[str]] = None
     cpus: CpuSpecificationType
     gpus: int = Field(..., ge=0)
     memory: StorageSpecificationType
-    gpu_type: Optional[GpuType]
-    storage: Optional[StorageSpecificationType]
-    optimize_costs: Optional[bool]
+    gpu_type: Optional[GpuType] = None
+    storage: Optional[StorageSpecificationType] = None
+    optimize_costs: Optional[bool] = None
     min_workers: int = Field(..., ge=0)
     max_workers: int = Field(..., ge=0)
     per_worker: int = Field(..., gt=0)
     labels: Dict[str, str]
-    prewarm: Optional[bool]
-    high_priority: Optional[bool]
-    billing_tags: Optional[Dict[str, Any]]
-    default_callback_url: Optional[HttpUrl]
-    default_callback_auth: Optional[CallbackAuth]
+    prewarm: Optional[bool] = None
+    high_priority: Optional[bool] = None
+    billing_tags: Optional[Dict[str, Any]] = None
+    default_callback_url: Optional[HttpUrlStr] = None
+    default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = Field(default=False)
 
 
@@ -75,25 +76,25 @@ class CreateModelEndpointV1Response(BaseModel):
 
 
 class UpdateModelEndpointV1Request(BaseModel):
-    model_bundle_id: Optional[str]
-    metadata: Optional[Dict[str, Any]]  # TODO: JSON type
-    post_inference_hooks: Optional[List[str]]
-    cpus: Optional[CpuSpecificationType]
+    model_bundle_id: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None  # TODO: JSON type
+    post_inference_hooks: Optional[List[str]] = None
+    cpus: Optional[CpuSpecificationType] = None
     gpus: Optional[int] = Field(default=None, ge=0)
-    memory: Optional[StorageSpecificationType]
-    gpu_type: Optional[GpuType]
-    storage: Optional[StorageSpecificationType]
-    optimize_costs: Optional[bool]
+    memory: Optional[StorageSpecificationType] = None
+    gpu_type: Optional[GpuType] = None
+    storage: Optional[StorageSpecificationType] = None
+    optimize_costs: Optional[bool] = None
     min_workers: Optional[int] = Field(default=None, ge=0)
     max_workers: Optional[int] = Field(default=None, ge=0)
     per_worker: Optional[int] = Field(default=None, gt=0)
-    labels: Optional[Dict[str, str]]
-    prewarm: Optional[bool]
-    high_priority: Optional[bool]
-    billing_tags: Optional[Dict[str, Any]]
-    default_callback_url: Optional[HttpUrl]
-    default_callback_auth: Optional[CallbackAuth]
-    public_inference: Optional[bool]
+    labels: Optional[Dict[str, str]] = None
+    prewarm: Optional[bool] = None
+    high_priority: Optional[bool] = None
+    billing_tags: Optional[Dict[str, Any]] = None
+    default_callback_url: Optional[HttpUrlStr] = None
+    default_callback_auth: Optional[CallbackAuth] = None
+    public_inference: Optional[bool] = None
 
 
 class UpdateModelEndpointV1Response(BaseModel):
@@ -110,7 +111,7 @@ class GetModelEndpointV1Response(BaseModel):
     bundle_name: str
     status: ModelEndpointStatus
     post_inference_hooks: Optional[List[str]] = Field(default=None)
-    default_callback_url: Optional[HttpUrl] = Field(default=None)
+    default_callback_url: Optional[HttpUrlStr] = Field(default=None)
     default_callback_auth: Optional[CallbackAuth] = Field(default=None)
     labels: Optional[Dict[str, str]] = Field(default=None)
     aws_role: Optional[str] = Field(default=None)
@@ -143,6 +144,7 @@ class ModelEndpointOrderBy(str, Enum):
 
 
 class GetModelEndpointsSchemaV1Response(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
     model_endpoints_schema: ModelEndpointsSchema
 
 

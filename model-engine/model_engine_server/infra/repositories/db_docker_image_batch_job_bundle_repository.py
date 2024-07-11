@@ -15,7 +15,7 @@ from model_engine_server.infra.repositories.db_repository_mixin import (
     DbRepositoryMixin,
     raise_if_read_only,
 )
-from pydantic.error_wrappers import ValidationError
+from pydantic import ValidationError
 
 
 class DbDockerImageBatchJobBundleRepository(DockerImageBatchJobBundleRepository, DbRepositoryMixin):

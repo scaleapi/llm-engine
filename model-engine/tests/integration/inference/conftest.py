@@ -47,7 +47,7 @@ def test_user_id() -> str:
 @pytest.fixture(scope="session")
 def test_default_callback_auth() -> CallbackAuth:
     return CallbackAuth(
-        __root__=CallbackBasicAuth(kind="basic", username="test_user", password="test_password")
+        root=CallbackBasicAuth(kind="basic", username="test_user", password="test_password")
     )
 
 
@@ -100,7 +100,7 @@ def launch_celery_app(
         f"--loglevel=INFO --concurrency=1 --queues={queue}"
     )
     # Wait up to 10 seconds for process to start and be ready.
-    with subprocess.Popen(
+    with subprocess.Popen(  # nosemgrep
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     ) as process:
         for attempt in Retrying(

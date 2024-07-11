@@ -59,7 +59,12 @@ CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
             "framework_type": "pytorch",
             "pytorch_image_tag": "1.7.1-cuda11.0-cudnn8-runtime",
         },
-        "requirements": ["cloudpickle==2.1.0", "pyyaml==6.0"],
+        "requirements": [
+            "cloudpickle==2.1.0",
+            "pyyaml==6.0",
+            "pydantic==2.8.2",
+            "fastapi==0.110.0",
+        ],
         "location": "s3://model-engine-integration-tests/model_bundles/echo_bundle",
     },
 }

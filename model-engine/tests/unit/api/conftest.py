@@ -789,7 +789,7 @@ def model_endpoint_1(
                     post_inference_hooks=["callback"],
                     default_callback_url="http://www.example.com",
                     default_callback_auth=CallbackAuth(
-                        __root__=CallbackBasicAuth(
+                        root=CallbackBasicAuth(
                             kind="basic",
                             username="test_username",
                             password="test_password",
@@ -831,7 +831,7 @@ def model_endpoint_1(
             "unavailable_workers": 1,
         },
         "resource_state": {
-            "cpus": "1",
+            "cpus": 1,
             "gpus": 1,
             "memory": "1G",
             "gpu_type": "nvidia-tesla-t4",
@@ -1363,7 +1363,7 @@ def create_batch_completions_request() -> Dict[str, Any]:
         "model_config": {
             "model": "mpt-7b",
             "checkpoint_path": "s3://test_checkpoint_path",
-            "labels": [],
+            "labels": {},
             "num_shards": 2,
         },
         "data_parallelism": 1,

@@ -1961,7 +1961,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "mixtral-8x7b", "")
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -1970,7 +1970,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "mixtral-8x7b", "", is_batch_job=True
     )
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -2001,7 +2001,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "mixtral-8x22b", "")
-    assert hardware.cpus == "160"
+    assert hardware.cpus == 160
     assert hardware.gpus == 8
     assert hardware.memory == "800Gi"
     assert hardware.storage == "640Gi"
@@ -2010,7 +2010,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "mixtral-8x22b", "", is_batch_job=True
     )
-    assert hardware.cpus == "160"
+    assert hardware.cpus == 160
     assert hardware.gpus == 8
     assert hardware.memory == "800Gi"
     assert hardware.storage == "640Gi"
@@ -2037,14 +2037,14 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-7b", "")
-    assert hardware.cpus == "5"
+    assert hardware.cpus == 5
     assert hardware.gpus == 1
     assert hardware.memory == "20Gi"
     assert hardware.storage == "40Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_1G_20GB
 
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-7b", "", is_batch_job=True)
-    assert hardware.cpus == "10"
+    assert hardware.cpus == 10
     assert hardware.gpus == 1
     assert hardware.memory == "40Gi"
     assert hardware.storage == "80Gi"
@@ -2072,14 +2072,14 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 128256,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b", "")
-    assert hardware.cpus == "5"
+    assert hardware.cpus == 5
     assert hardware.gpus == 1
     assert hardware.memory == "20Gi"
     assert hardware.storage == "40Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_1G_20GB
 
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b", "", is_batch_job=True)
-    assert hardware.cpus == "10"
+    assert hardware.cpus == 10
     assert hardware.gpus == 1
     assert hardware.memory == "40Gi"
     assert hardware.storage == "80Gi"
@@ -2106,7 +2106,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-13b", "")
-    assert hardware.cpus == "10"
+    assert hardware.cpus == 10
     assert hardware.gpus == 1
     assert hardware.memory == "40Gi"
     assert hardware.storage == "80Gi"
@@ -2115,7 +2115,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "llama-2-13b", "", is_batch_job=True
     )
-    assert hardware.cpus == "20"
+    assert hardware.cpus == 20
     assert hardware.gpus == 1
     assert hardware.memory == "80Gi"
     assert hardware.storage == "96Gi"
@@ -2142,7 +2142,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "codellama-34b", "")
-    assert hardware.cpus == "20"
+    assert hardware.cpus == 20
     assert hardware.gpus == 1
     assert hardware.memory == "80Gi"
     assert hardware.storage == "96Gi"
@@ -2151,7 +2151,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "codellama-34b", "", is_batch_job=True
     )
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -2178,7 +2178,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-70b", "")
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -2187,7 +2187,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "llama-2-70b", "", is_batch_job=True
     )
-    assert hardware.cpus == "80"
+    assert hardware.cpus == 80
     assert hardware.gpus == 4
     assert hardware.memory == "320Gi"
     assert hardware.storage == "320Gi"
@@ -2215,7 +2215,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 128256,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-70b", "")
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -2224,7 +2224,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "llama-3-70b", "", is_batch_job=True
     )
-    assert hardware.cpus == "80"
+    assert hardware.cpus == 80
     assert hardware.gpus == 4
     assert hardware.memory == "320Gi"
     assert hardware.storage == "320Gi"
@@ -2253,7 +2253,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 128256,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b-instruct-262k", "")
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -2283,7 +2283,7 @@ async def test_fill_hardware_info(fake_llm_artifact_gateway):
         labels={},
     )
     await _fill_hardware_info(fake_llm_artifact_gateway, request)
-    assert request.cpus == "40"
+    assert request.cpus == 40
     assert request.gpus == 2
     assert request.memory == "160Gi"
     assert request.storage == "160Gi"

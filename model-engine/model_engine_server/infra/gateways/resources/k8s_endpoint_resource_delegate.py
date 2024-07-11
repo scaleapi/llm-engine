@@ -50,7 +50,7 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
     get_endpoint_resource_arguments_from_request,
 )
 from packaging import version
-from pydantic.utils import deep_update
+from pydantic.v1.utils import deep_update
 
 logger = make_logger(logger_name())
 
