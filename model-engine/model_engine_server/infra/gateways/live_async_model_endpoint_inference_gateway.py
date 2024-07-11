@@ -31,8 +31,8 @@ class LiveAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
         *,
         task_name: str = DEFAULT_CELERY_TASK_NAME,
     ) -> CreateAsyncTaskV1Response:
-        # Use json.loads instead of predict_request.dict() because we have overridden the '__root__'
-        # key in some fields, and __root__ overriding only reflects in the json() output.
+        # Use json.loads instead of predict_request.dict() because we have overridden the 'root'
+        # key in some fields, and root overriding only reflects in the json() output.
         predict_args = json.loads(predict_request.json())
 
         send_task_response = self.task_queue_gateway.send_task(

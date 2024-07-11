@@ -3,6 +3,7 @@ from typing import Dict, List, Optional
 
 from model_engine_server.domain.entities import GpuType
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
+from pydantic import ConfigDict
 
 
 class DockerImageBatchJobBundle(OwnedEntity):
@@ -15,13 +16,11 @@ class DockerImageBatchJobBundle(OwnedEntity):
     image_tag: str
     command: List[str]
     env: Dict[str, str]
-    mount_location: Optional[str]
-    cpus: Optional[str]
-    memory: Optional[str]
-    storage: Optional[str]
-    gpus: Optional[int]
-    gpu_type: Optional[GpuType]
-    public: Optional[bool]
-
-    class Config:
-        orm_mode = True
+    mount_location: Optional[str] = None
+    cpus: Optional[str] = None
+    memory: Optional[str] = None
+    storage: Optional[str] = None
+    gpus: Optional[int] = None
+    gpu_type: Optional[GpuType] = None
+    public: Optional[bool] = None
+    model_config = ConfigDict(from_attributes=True)

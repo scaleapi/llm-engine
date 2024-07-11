@@ -52,7 +52,7 @@ def test_task_create_get_args_callback(
     task_queue_gateway: Any = fake_live_async_model_inference_gateway.task_queue_gateway
     assert len(task_queue_gateway.queue) == 1
     assert task_queue_gateway.queue[task_id]["args"][0] == {
-        "args": endpoint_predict_request_2[0].args.__root__,
+        "args": endpoint_predict_request_2[0].args.root,
         "url": None,
         "cloudpickle": None,
         "callback_auth": json.loads(endpoint_predict_request_2[0].callback_auth.json()),

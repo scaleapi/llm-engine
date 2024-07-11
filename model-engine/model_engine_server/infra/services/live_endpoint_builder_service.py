@@ -307,6 +307,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     user_config_state=ModelEndpointUserConfigState(
                         app_config=build_endpoint_request.model_endpoint_record.current_model_bundle.app_config,
                         endpoint_config=ModelEndpointConfig(
+                            endpoint_type=build_endpoint_request.model_endpoint_record.endpoint_type,
                             endpoint_name=build_endpoint_request.model_endpoint_record.name,
                             bundle_name=build_endpoint_request.model_endpoint_record.current_model_bundle.name,
                             post_inference_hooks=build_endpoint_request.post_inference_hooks,

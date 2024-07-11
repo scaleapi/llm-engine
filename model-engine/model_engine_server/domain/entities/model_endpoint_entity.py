@@ -12,7 +12,7 @@ from model_engine_server.domain.entities.common_types import (
 from model_engine_server.domain.entities.gpu_type import GpuType
 from model_engine_server.domain.entities.model_bundle_entity import ModelBundle
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 from typing_extensions import Literal
 
 ModelEndpointsSchema = OpenAPI
@@ -42,9 +42,9 @@ class ModelEndpointResourceState(BaseModel):
     cpus: CpuSpecificationType  # TODO(phil): try to use decimal.Decimal
     gpus: int = Field(..., ge=0)
     memory: StorageSpecificationType
-    gpu_type: Optional[GpuType]
-    storage: Optional[StorageSpecificationType]
-    optimize_costs: Optional[bool]
+    gpu_type: Optional[GpuType] = None
+    storage: Optional[StorageSpecificationType] = None
+    optimize_costs: Optional[bool] = None
 
 
 class ModelEndpointDeploymentState(BaseModel):
@@ -71,8 +71,8 @@ class CallbackmTLSAuth(BaseModel):
     key: str
 
 
-class CallbackAuth(BaseModel):
-    __root__: Union[CallbackBasicAuth, CallbackmTLSAuth] = Field(..., discriminator="kind")
+class CallbackAuth(RootModel):
+    root: Union[CallbackBasicAuth, CallbackmTLSAuth] = Field(..., discriminator="kind")
 
 
 class ModelEndpointConfig(BaseModel):
@@ -82,14 +82,14 @@ class ModelEndpointConfig(BaseModel):
 
     endpoint_name: str
     bundle_name: str
-    post_inference_hooks: Optional[List[str]]
+    post_inference_hooks: Optional[List[str]] = None
     user_id: Optional[str] = None
     billing_queue: Optional[str] = None
     billing_tags: Optional[Dict[str, Any]] = None
     default_callback_url: Optional[str] = None
-    default_callback_auth: Optional[CallbackAuth]
+    default_callback_auth: Optional[CallbackAuth] = None
     endpoint_id: Optional[str] = None
-    endpoint_type: Optional[ModelEndpointType]
+    endpoint_type: Optional[ModelEndpointType] = None
     bundle_id: Optional[str] = None
     labels: Optional[Dict[str, str]] = None
 
@@ -102,8 +102,8 @@ class ModelEndpointConfig(BaseModel):
 
 
 class ModelEndpointUserConfigState(BaseModel):
-    app_config: Optional[Dict[str, Any]]
-    endpoint_config: Optional[ModelEndpointConfig]
+    app_config: Optional[Dict[str, Any]] = None
+    endpoint_config: Optional[ModelEndpointConfig] = None
 
 
 class ModelEndpointRecord(OwnedEntity):
@@ -117,15 +117,15 @@ class ModelEndpointRecord(OwnedEntity):
     name: str
     created_by: str
     created_at: datetime.datetime
-    last_updated_at: Optional[datetime.datetime]
-    metadata: Optional[Dict[str, Any]]
+    last_updated_at: Optional[datetime.datetime] = None
+    metadata: Optional[Dict[str, Any]] = None
     creation_task_id: Optional[str] = Field(default=None)
     endpoint_type: ModelEndpointType
     destination: str
     status: ModelEndpointStatus
     current_model_bundle: ModelBundle
     owner: str
-    public_inference: Optional[bool]
+    public_inference: Optional[bool] = None
 
 
 class ModelEndpointInfraState(BaseModel):
@@ -136,14 +136,14 @@ class ModelEndpointInfraState(BaseModel):
     deployment_name: str
     aws_role: str
     results_s3_bucket: str
-    child_fn_info: Optional[Dict[str, Any]]
+    child_fn_info: Optional[Dict[str, Any]] = None
     labels: Dict[str, str]
     deployment_state: ModelEndpointDeploymentState
     resource_state: ModelEndpointResourceState
     user_config_state: ModelEndpointUserConfigState
     prewarm: Optional[bool] = None
-    high_priority: Optional[bool]
-    num_queued_items: Optional[int]
+    high_priority: Optional[bool] = None
+    num_queued_items: Optional[int] = None
     image: str
 
 
@@ -153,4 +153,4 @@ class ModelEndpoint(BaseModel):
     """
 
     record: ModelEndpointRecord
-    infra_state: Optional[ModelEndpointInfraState]
+    infra_state: Optional[ModelEndpointInfraState] = None

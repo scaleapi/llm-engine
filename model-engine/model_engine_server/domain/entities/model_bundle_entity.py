@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing_extensions import Literal
 
 
@@ -38,12 +38,12 @@ class ModelBundleEnvironmentParams(BaseModel):
     """
 
     framework_type: ModelBundleFrameworkType
-    pytorch_image_tag: Optional[str]  # for pytorch
-    tensorflow_version: Optional[str]  # for tensorflow
-    ecr_repo: Optional[str]  # for custom base image
-    image_tag: Optional[str]  # for custom base image
+    pytorch_image_tag: Optional[str] = None  # for pytorch
+    tensorflow_version: Optional[str] = None  # for tensorflow
+    ecr_repo: Optional[str] = None  # for custom base image
+    image_tag: Optional[str] = None  # for custom base image
 
-    @root_validator
+    @model_validator(mode="before")
     @classmethod
     def validate_fields_present_for_framework_type(cls, field_values):
         """
@@ -72,12 +72,7 @@ class ModelBundleEnvironmentParams(BaseModel):
             )
         return field_values
 
-    class Config:
-        """
-        Model Bundle Environment Params Config class.
-        """
-
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PytorchFramework(BaseModel):
@@ -127,7 +122,7 @@ class ArtifactLike(BaseModel, ABC):
     framework: Union[PytorchFramework, TensorflowFramework, CustomFramework] = Field(
         ..., discriminator="framework_type"
     )
-    app_config: Optional[Dict[str, Any]]
+    app_config: Optional[Dict[str, Any]] = None
     location: str
 
 
@@ -159,7 +154,7 @@ class RunnableImageLike(BaseModel, ABC):
     command: List[str]
     predict_route: str = "/predict"
     healthcheck_route: str = "/readyz"
-    env: Optional[Dict[str, str]]
+    env: Optional[Dict[str, str]] = None
     protocol: Literal["http"]  # TODO: add support for other protocols (e.g. grpc)
     readiness_initial_delay_seconds: int = 120
 
@@ -177,11 +172,11 @@ class TritonEnhancedRunnableImageFlavor(RunnableImageLike):
 
     flavor: Literal[ModelBundleFlavorType.TRITON_ENHANCED_RUNNABLE_IMAGE]
     triton_model_repository: str
-    triton_model_replicas: Optional[Dict[str, str]]
+    triton_model_replicas: Optional[Dict[str, str]] = None
     triton_num_cpu: float
     triton_commit_tag: str
-    triton_storage: Optional[str]
-    triton_memory: Optional[str]
+    triton_storage: Optional[str] = None
+    triton_memory: Optional[str] = None
     triton_readiness_initial_delay_seconds: int = 300  # will default to 300 seconds
 
 
@@ -217,23 +212,17 @@ class ModelBundle(OwnedEntity):
     created_at: datetime.datetime
     metadata: Dict[str, Any]
     model_artifact_ids: List[str]
-    schema_location: Optional[str]
+    schema_location: Optional[str] = None
     owner: str
     flavor: ModelBundleFlavors = Field(..., discriminator="flavor")
 
     # LEGACY FIELDS
-    requirements: Optional[List[str]]  # FIXME: Delete
-    location: Optional[str]  # FIXME: Delete
-    env_params: Optional[ModelBundleEnvironmentParams]  # FIXME: Delete
-    packaging_type: Optional[ModelBundlePackagingType]  # FIXME: Delete
-    app_config: Optional[Dict[str, Any]]  # FIXME: Delete
-
-    class Config:
-        """
-        Model Bundle Config class.
-        """
-
-        orm_mode = True
+    requirements: Optional[List[str]] = None  # FIXME: Delete
+    location: Optional[str] = None  # FIXME: Delete
+    env_params: Optional[ModelBundleEnvironmentParams] = None  # FIXME: Delete
+    packaging_type: Optional[ModelBundlePackagingType] = None  # FIXME: Delete
+    app_config: Optional[Dict[str, Any]] = None  # FIXME: Delete
+    model_config = ConfigDict(from_attributes=True)
 
     def is_runnable(self) -> bool:
         """True iff the model bundle calls for it.

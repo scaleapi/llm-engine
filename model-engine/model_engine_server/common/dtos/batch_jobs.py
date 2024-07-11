@@ -13,20 +13,21 @@ from model_engine_server.domain.entities import (
     GpuType,
     StorageSpecificationType,
 )
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class CreateBatchJobResourceRequests(BaseModel):
-    cpus: Optional[CpuSpecificationType]
-    memory: Optional[StorageSpecificationType]
-    gpus: Optional[int]
-    gpu_type: Optional[GpuType]
-    storage: Optional[StorageSpecificationType]
-    max_workers: Optional[int]
-    per_worker: Optional[int]
+    cpus: Optional[CpuSpecificationType] = None
+    memory: Optional[StorageSpecificationType] = None
+    gpus: Optional[int] = None
+    gpu_type: Optional[GpuType] = None
+    storage: Optional[StorageSpecificationType] = None
+    max_workers: Optional[int] = None
+    per_worker: Optional[int] = None
 
 
 class CreateBatchJobV1Request(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
     model_bundle_id: str
     input_path: str
     serialization_format: BatchJobSerializationFormat
@@ -41,10 +42,10 @@ class CreateBatchJobV1Response(BaseModel):
 
 class GetBatchJobV1Response(BaseModel):
     status: BatchJobStatus
-    result: Optional[str]
+    result: Optional[str] = None
     duration: timedelta
-    num_tasks_pending: Optional[int]
-    num_tasks_completed: Optional[int]
+    num_tasks_pending: Optional[int] = None
+    num_tasks_completed: Optional[int] = None
 
 
 class UpdateBatchJobV1Request(BaseModel):
@@ -64,9 +65,7 @@ class CreateDockerImageBatchJobResourceRequests(BaseModel):
     gpus: Optional[int] = None
     gpu_type: Optional[GpuType] = None
     storage: Optional[StorageSpecificationType] = None
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
     @classmethod
     def merge_requests(
@@ -93,7 +92,7 @@ class CreateDockerImageBatchJobResourceRequests(BaseModel):
 class CreateDockerImageBatchJobV1Request(BaseModel):
     docker_image_batch_job_bundle_name: Optional[str] = None
     docker_image_batch_job_bundle_id: Optional[str] = None
-    job_config: Optional[Dict[str, Any]]
+    job_config: Optional[Dict[str, Any]] = None
     # TODO also expose a separate argument to pass an s3file to the job, as opposed to job_config
     labels: Dict[str, str]  # TODO this probably should go in the bundle
 
@@ -103,7 +102,7 @@ class CreateDockerImageBatchJobV1Request(BaseModel):
 
     override_job_max_runtime_s: Optional[int] = None
 
-    @root_validator
+    @model_validator(mode="before")
     def exactly_one_name_or_id(cls, values):
         bundle_name = values.get("docker_image_batch_job_bundle_name")
         bundle_id = values.get("docker_image_batch_job_bundle_id")
@@ -166,16 +165,14 @@ class DockerImageBatchJobBundleV1Response(BaseModel):
     image_tag: str
     command: List[str]
     env: Dict[str, str]
-    mount_location: Optional[str]
-    cpus: Optional[str]
-    memory: Optional[str]
-    storage: Optional[str]
-    gpus: Optional[int]
-    gpu_type: Optional[str]
-    public: Optional[bool]
-
-    class Config:
-        orm_mode = True
+    mount_location: Optional[str] = None
+    cpus: Optional[str] = None
+    memory: Optional[str] = None
+    storage: Optional[str] = None
+    gpus: Optional[int] = None
+    gpu_type: Optional[str] = None
+    public: Optional[bool] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ListDockerImageBatchJobBundleV1Response(BaseModel):

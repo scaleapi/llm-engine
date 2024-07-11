@@ -2408,7 +2408,7 @@ class CreateBatchCompletionsUseCase:
         hardware: CreateDockerImageBatchJobResourceRequests,
     ) -> DockerImageBatchJobBundle:
         bundle_name = (
-            f"{request.model_config.model}_{datetime.datetime.utcnow().strftime('%y%m%d-%H%M%S')}"
+            f"{request.model_cfg.model}_{datetime.datetime.utcnow().strftime('%y%m%d-%H%M%S')}"
         )
 
         image_tag = self.docker_repository.get_latest_image_tag(
@@ -2448,22 +2448,22 @@ class CreateBatchCompletionsUseCase:
     async def execute(
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
-        request.model_config.checkpoint_path = get_checkpoint_path(
-            request.model_config.model, request.model_config.checkpoint_path
+        request.model_cfg.checkpoint_path = get_checkpoint_path(
+            request.model_cfg.model, request.model_cfg.checkpoint_path
         )
         hardware = await _infer_hardware(
             self.llm_artifact_gateway,
-            request.model_config.model,
-            request.model_config.checkpoint_path,
+            request.model_cfg.model,
+            request.model_cfg.checkpoint_path,
             is_batch_job=True,
         )
         # Reconcile gpus count with num_shards from request
         assert hardware.gpus is not None
-        if request.model_config.num_shards:
-            hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
+        if request.model_cfg.num_shards:
+            hardware.gpus = max(hardware.gpus, request.model_cfg.num_shards)
 
         engine_request = CreateBatchCompletionsEngineRequest.from_api(request)
-        engine_request.model_config.num_shards = hardware.gpus
+        engine_request.model_cfg.num_shards = hardware.gpus
 
         if engine_request.tool_config and engine_request.tool_config.name != "code_evaluator":
             raise ObjectHasInvalidValueException(
@@ -2471,7 +2471,7 @@ class CreateBatchCompletionsUseCase:
             )
 
         additional_engine_args = infer_addition_engine_args_from_model_name(
-            engine_request.model_config.model
+            engine_request.model_cfg.model
         )
 
         if additional_engine_args.gpu_memory_utilization is not None:
@@ -2502,7 +2502,7 @@ class CreateBatchCompletionsUseCase:
             repo=batch_bundle.image_repository,
             tag=batch_bundle.image_tag,
             resource_requests=hardware,
-            labels=engine_request.model_config.labels,
+            labels=engine_request.model_cfg.labels,
             mount_location=batch_bundle.mount_location,
             override_job_max_runtime_s=engine_request.max_runtime_sec,
             num_workers=engine_request.data_parallelism,
