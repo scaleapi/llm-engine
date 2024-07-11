@@ -8,8 +8,13 @@ from typing import Any, Optional
 from model_engine_server.domain.entities import CallbackAuth
 from pydantic import BaseModel, Field, RootModel
 
-ResponseSchema = RootModel[Any]
-RequestSchema = RootModel[Any]
+
+class ResponseSchema(RootModel):
+    root: Any
+
+
+class RequestSchema(RootModel):
+    root: Any
 
 
 class TaskStatus(str, Enum):

@@ -13,7 +13,7 @@ from model_engine_server.domain.entities.gpu_type import GpuType
 from model_engine_server.domain.entities.model_bundle_entity import ModelBundle
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
 from pydantic import BaseModel, Field, RootModel
-from typing_extensions import Annotated, Literal
+from typing_extensions import Literal
 
 ModelEndpointsSchema = OpenAPI
 
@@ -72,7 +72,7 @@ class CallbackmTLSAuth(BaseModel):
 
 
 class CallbackAuth(RootModel):
-    root: Annotated[Union[CallbackBasicAuth, CallbackmTLSAuth], Field(..., discriminator="kind")]
+    root: Union[CallbackBasicAuth, CallbackmTLSAuth] = Field(..., discriminator="kind")
 
 
 class ModelEndpointConfig(BaseModel):

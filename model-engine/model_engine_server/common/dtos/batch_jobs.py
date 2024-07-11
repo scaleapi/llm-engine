@@ -102,7 +102,7 @@ class CreateDockerImageBatchJobV1Request(BaseModel):
 
     override_job_max_runtime_s: Optional[int] = None
 
-    @model_validator(mode="after")
+    @model_validator(mode="before")
     def exactly_one_name_or_id(cls, values):
         bundle_name = values.get("docker_image_batch_job_bundle_name")
         bundle_id = values.get("docker_image_batch_job_bundle_id")

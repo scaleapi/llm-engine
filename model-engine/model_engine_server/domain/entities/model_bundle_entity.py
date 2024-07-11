@@ -43,7 +43,7 @@ class ModelBundleEnvironmentParams(BaseModel):
     ecr_repo: Optional[str] = None  # for custom base image
     image_tag: Optional[str] = None  # for custom base image
 
-    @model_validator(mode="after")
+    @model_validator(mode="before")
     @classmethod
     def validate_fields_present_for_framework_type(cls, field_values):
         """

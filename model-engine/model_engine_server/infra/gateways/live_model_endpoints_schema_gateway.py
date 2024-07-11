@@ -1,11 +1,11 @@
 import json
 from enum import Enum
-from typing import Any, Callable, Dict, Sequence, Set, Type, Union
+from typing import Any, Callable, Dict, List, Sequence, Set, Type, Union
 
 from fastapi import routing
-from fastapi._compat import GenerateJsonSchema, get_model_definitions
+from fastapi._compat import GenerateJsonSchema, get_definitions
 from fastapi.openapi.constants import REF_TEMPLATE
-from fastapi.openapi.utils import get_openapi_path
+from fastapi.openapi.utils import get_fields_from_routes, get_openapi_path
 from model_engine_server.common.dtos.tasks import (
     EndpointPredictV1Request,
     GetAsyncTaskV1Response,
@@ -72,6 +72,7 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
                 methods=["POST"],
             )
             routes.append(route)
+
             definitions = self.get_schemas_from_model_endpoint_record(record)
             definitions = LiveModelEndpointsSchemaGateway.update_model_definitions_with_prefix(
                 prefix=record.name, model_definitions=definitions
@@ -121,12 +122,19 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
                 prefix = model_endpoint_name
                 model_name_map = LiveModelEndpointsSchemaGateway.get_model_name_map(prefix)
                 schema_generator = GenerateJsonSchema(ref_template=REF_TEMPLATE)
+                all_fields = get_fields_from_routes([route])
+                field_mapping, _ = get_definitions(
+                    fields=all_fields,
+                    schema_generator=schema_generator,
+                    model_name_map=model_name_map,
+                )
+
                 result = get_openapi_path(
                     route=route,
-                    model_name_map=model_name_map,
                     operation_ids=operation_ids,
                     schema_generator=schema_generator,
-                    field_mapping={},
+                    model_name_map=model_name_map,
+                    field_mapping=field_mapping,
                 )
                 if result:
                     path, security_schemes, path_definitions = result
@@ -156,19 +164,17 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
         Returns:
             Dict[str, Any]: The updated model definitions.
         """
-        models: Set[Union[Type[BaseModel], Type[Enum]]] = {
-            CallbackAuth,
-            CallbackBasicAuth,
-            CallbackmTLSAuth,
-            TaskStatus,
+        models: List[Type[BaseModel]] = [
             EndpointPredictV1Request,
             GetAsyncTaskV1Response,
             SyncEndpointPredictV1Response,
-        }
-        definitions = get_model_definitions(
-            flat_models=models,
-            model_name_map=LiveModelEndpointsSchemaGateway.get_model_name_map(prefix),
+        ]
+
+        model_name_map = LiveModelEndpointsSchemaGateway.get_model_name_map(prefix)
+        definitions: Dict[str, Any] = LiveModelEndpointsSchemaGateway.get_model_definitions(
+            models=models, model_name_map=model_name_map
         )
+
         user_definitions = {}
         for k, v in model_definitions.items():
             LiveModelEndpointsSchemaGateway.update_schema_refs_with_prefix(v, prefix)
@@ -236,8 +242,8 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
         global _default_model_definitions
 
         if _default_model_definitions is None:
-            _default_model_definitions = get_model_definitions(
-                flat_models={RequestSchema, ResponseSchema},
+            _default_model_definitions = LiveModelEndpointsSchemaGateway.get_model_definitions(
+                models=[RequestSchema, ResponseSchema],
                 model_name_map={
                     RequestSchema: "RequestSchema",
                     ResponseSchema: "ResponseSchema",
@@ -245,3 +251,21 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
             )
 
         return _default_model_definitions
+
+    @staticmethod
+    def get_model_definitions(
+        models: Sequence[Type[BaseModel]],
+        model_name_map: Dict[Union[Type[BaseModel], Type[Enum]], str],
+    ) -> Dict[str, Any]:
+        """Get OpenAPI definitions for provided models using the name provided in model_name_map"""
+
+        definitions = {}
+        for model in models:
+            schema = model.model_json_schema(
+                schema_generator=GenerateJsonSchema, ref_template=REF_TEMPLATE
+            )
+            m_defs = schema.pop("$defs", {})
+            definitions.update(m_defs)
+            model_name = model_name_map.get(model, model.__name__)
+            definitions[model_name] = schema
+        return definitions
