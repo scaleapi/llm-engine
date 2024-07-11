@@ -6,6 +6,7 @@ Make sure to keep this in sync with inference/batch_inference/dto.py.
 
 from typing import Any, Dict, List, Optional
 
+from model_engine_server.common.dtos.core import HttpUrlStr
 from model_engine_server.common.dtos.model_endpoints import (
     CpuSpecificationType,
     GetModelEndpointV1Response,
@@ -24,7 +25,6 @@ from model_engine_server.domain.entities import (
     Quantization,
 )
 from pydantic import BaseModel, ConfigDict, Field
-from model_engine_server.common.dtos.core import HttpUrlStr
 
 
 class CreateLLMModelEndpointV1Request(BaseModel):

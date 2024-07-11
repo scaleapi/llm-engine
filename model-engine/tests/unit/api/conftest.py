@@ -1363,7 +1363,7 @@ def create_batch_completions_request() -> Dict[str, Any]:
         "model_config": {
             "model": "mpt-7b",
             "checkpoint_path": "s3://test_checkpoint_path",
-            "labels": {}, 
+            "labels": {},
             "num_shards": 2,
         },
         "data_parallelism": 1,

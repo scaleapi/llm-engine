@@ -10,6 +10,7 @@ import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from model_engine_server.common.dtos.core import HttpUrlStr
 from model_engine_server.domain.entities import (
     CallbackAuth,
     CpuSpecificationType,
@@ -22,7 +23,6 @@ from model_engine_server.domain.entities import (
     StorageSpecificationType,
 )
 from pydantic import BaseModel, ConfigDict, Field
-from model_engine_server.common.dtos.core import HttpUrlStr
 
 
 class BrokerType(str, Enum):
