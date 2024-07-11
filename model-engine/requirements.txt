@@ -18,6 +18,8 @@ alembic==1.8.1
     # via -r model-engine/requirements.in
 amqp==5.1.1
     # via kombu
+annotated-types==0.7.0
+    # via pydantic
 anyio==3.7.1
     # via
     #   azure-core
@@ -362,10 +364,12 @@ pycurl==7.45.2
     #   -r model-engine/requirements.in
     #   celery
     #   kombu
-pydantic==1.10.14
+pydantic==2.8.2
     # via
     #   -r model-engine/requirements.in
     #   fastapi
+pydantic-core==2.20.1
+    # via pydantic
 pygments==2.15.1
     # via
     #   readme-renderer
@@ -530,6 +534,7 @@ types-s3transfer==0.6.1
 typing-extensions==4.10.0
     # via
     #   aioredis
+    #   annotated-types
     #   asgiref
     #   azure-core
     #   azure-keyvault-secrets
@@ -552,6 +557,7 @@ typing-extensions==4.10.0
     #   mypy-boto3-s3
     #   mypy-boto3-sqs
     #   pydantic
+    #   pydantic-core
     #   rich
     #   sqlalchemy
     #   starlette

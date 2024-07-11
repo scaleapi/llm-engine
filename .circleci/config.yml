@@ -1,6 +1,7 @@
 version: 2.1
 orbs:
   python: circleci/python@2.1.1
+  aws-cli: circleci/aws-cli@3.1.5
 
 workflows:
   ci:
@@ -73,7 +74,7 @@ jobs:
     resource_class: small
     parallelism: 1
     steps:
-      - add_ssh_keys:  # gives write access to CircleCI worker
+      - add_ssh_keys: # gives write access to CircleCI worker
           fingerprints:
             - "76:0c:1b:9e:e3:6a:c3:5c:6f:24:91:ef:7c:54:d2:7a"
       - checkout # checkout source code to working directory
@@ -98,6 +99,9 @@ jobs:
     executor: ubuntu-large
     steps:
       - checkout
+      - aws-cli/setup:
+          role-arn: ${CIRCLECI_ROLE_ARN}
+          aws-region: AWS_REGION
       - run:
           name: Build Docker Image
           command: |
@@ -153,10 +157,10 @@ jobs:
             DOCKER_BUILDKIT=1 docker build -f model-engine/model_engine_server/inference/pytorch_or_tf.user.Dockerfile \
             --build-arg BASE_IMAGE=temp:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1 \
             --build-arg REQUIREMENTS_FILE="$CIRCLE_SHA1-requirements.txt" \
-            -t $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1-021694 .
+            -t $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1-b8c25b .
             rm $CIRCLE_SHA1-requirements.txt
 
-            minikube --logtostderr -v 1 image load $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1-021694
+            minikube --logtostderr -v 1 image load $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1-b8c25b
       - run:
           name: Install helm chart
           command: |
@@ -180,8 +184,6 @@ jobs:
           command: |
             pushd $HOME/project
             kubectl port-forward svc/model-engine 5001:80 &
-            export AWS_ACCESS_KEY_ID=$CIRCLECI_AWS_ACCESS_KEY
-            export AWS_SECRET_ACCESS_KEY=$CIRCLECI_AWS_SECRET_KEY
             export GIT_TAG=$CIRCLE_SHA1
             pytest integration_tests
 
@@ -205,23 +207,23 @@ commands:
   install_server:
     description: Installs LLM Engine server
     steps:
-     - python/install-packages:
-         pkg-manager: pip
-         app-dir: model-engine
-     - python/install-packages:
-         pkg-manager: pip
-         app-dir: model-engine
-         pip-dependency-file: requirements-test.txt
-     - python/install-packages:
-         pkg-manager: pip
-         app-dir: model-engine
-         pip-dependency-file: requirements_override.txt
-     - run:
-         name: Install Server
-         command: |
-           pushd model-engine
-           pip install -e .
-           popd
+      - python/install-packages:
+          pkg-manager: pip
+          app-dir: model-engine
+      - python/install-packages:
+          pkg-manager: pip
+          app-dir: model-engine
+          pip-dependency-file: requirements-test.txt
+      - python/install-packages:
+          pkg-manager: pip
+          app-dir: model-engine
+          pip-dependency-file: requirements_override.txt
+      - run:
+          name: Install Server
+          command: |
+            pushd model-engine
+            pip install -e .
+            popd
   install_client:
     description: Install LLM Engine client
     steps:

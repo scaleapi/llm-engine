@@ -25,9 +25,7 @@ from model_engine_server.domain.entities import (
             user_id="test_user",
             billing_queue="test_queue",
             default_callback_auth=CallbackAuth(
-                __root__=CallbackBasicAuth(
-                    kind="basic", username="test_user", password="test_password"
-                )
+                root=CallbackBasicAuth(kind="basic", username="test_user", password="test_password")
             ),
         ),
     ],

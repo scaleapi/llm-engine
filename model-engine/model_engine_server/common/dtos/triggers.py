@@ -4,15 +4,15 @@ Contains various input and output types relating to Triggers for the server.
 import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreateTriggerV1Request(BaseModel):
     name: str
     cron_schedule: str
     bundle_id: str
-    default_job_config: Optional[Dict[str, Any]]
-    default_job_metadata: Optional[Dict[str, str]]
+    default_job_config: Optional[Dict[str, Any]] = None
+    default_job_metadata: Optional[Dict[str, str]] = None
 
 
 class CreateTriggerV1Response(BaseModel):
@@ -29,9 +29,7 @@ class GetTriggerV1Response(BaseModel):
     docker_image_batch_job_bundle_id: str
     default_job_config: Optional[Dict[str, Any]] = Field(default=None)
     default_job_metadata: Optional[Dict[str, str]] = Field(default=None)
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ListTriggersV1Response(BaseModel):
@@ -39,8 +37,8 @@ class ListTriggersV1Response(BaseModel):
 
 
 class UpdateTriggerV1Request(BaseModel):
-    cron_schedule: Optional[str]
-    suspend: Optional[bool]
+    cron_schedule: Optional[str] = None
+    suspend: Optional[bool] = None
 
 
 class UpdateTriggerV1Response(BaseModel):

@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 class MetricMetadata(BaseModel):
     user: User
-    model_name: Optional[str]
+    model_name: Optional[str] = None
 
 
 class MonitoringMetricsGateway(ABC):

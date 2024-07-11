@@ -42,7 +42,7 @@ def redis_available() -> bool:
 @pytest.mark.parametrize(
     "task_args,cloudpickle,expected_status,expected_result",
     [
-        ({"y": 1}, False, TaskStatus.SUCCESS, ResponseSchema(__root__={"result": "1"})),
+        ({"y": 1}, False, TaskStatus.SUCCESS, ResponseSchema(root={"result": "1"})),
         ({"x": False, "y": 1}, False, TaskStatus.FAILURE, None),
     ],
 )

@@ -10,8 +10,8 @@ class BuildImageRequest(BaseModel):
     base_path: str
     dockerfile: str
     base_image: str
-    requirements_folder: Optional[str]
-    substitution_args: Optional[Dict[str, str]]
+    requirements_folder: Optional[str] = None
+    substitution_args: Optional[Dict[str, str]] = None
 
 
 class BuildImageResponse(BaseModel):

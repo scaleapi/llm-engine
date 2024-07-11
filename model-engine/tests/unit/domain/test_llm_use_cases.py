@@ -51,6 +51,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     UpdateLLMModelEndpointV1UseCase,
     _fill_hardware_info,
     _infer_hardware,
+    merge_metadata,
     validate_and_update_completion_params,
     validate_checkpoint_files,
 )
@@ -614,6 +615,7 @@ async def test_update_model_endpoint_use_case_success(
     fake_llm_model_endpoint_service,
     create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
     update_llm_model_endpoint_request: UpdateLLMModelEndpointV1Request,
+    update_llm_model_endpoint_request_only_workers: UpdateLLMModelEndpointV1Request,
 ):
     fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
     bundle_use_case = CreateModelBundleV2UseCase(
@@ -686,6 +688,102 @@ async def test_update_model_endpoint_use_case_success(
         endpoint.infra_state.deployment_state.max_workers
         == update_llm_model_endpoint_request.max_workers
     )
+
+    update_response2 = await update_use_case.execute(
+        user=user,
+        model_endpoint_name=create_llm_model_endpoint_request_streaming.name,
+        request=update_llm_model_endpoint_request_only_workers,
+    )
+    assert update_response2.endpoint_creation_task_id
+
+    endpoint = (
+        await fake_model_endpoint_service.list_model_endpoints(
+            owner=None,
+            name=create_llm_model_endpoint_request_streaming.name,
+            order_by=None,
+        )
+    )[0]
+    assert endpoint.record.metadata == {
+        "_llm": {
+            "model_name": create_llm_model_endpoint_request_streaming.model_name,
+            "source": create_llm_model_endpoint_request_streaming.source,
+            "inference_framework": create_llm_model_endpoint_request_streaming.inference_framework,
+            "inference_framework_image_tag": "fake_docker_repository_latest_image_tag",
+            "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
+            "quantize": None,
+            "checkpoint_path": update_llm_model_endpoint_request.checkpoint_path,
+        }
+    }
+    assert endpoint.infra_state.resource_state.memory == update_llm_model_endpoint_request.memory
+    assert (
+        endpoint.infra_state.deployment_state.min_workers
+        == update_llm_model_endpoint_request_only_workers.min_workers
+    )
+    assert (
+        endpoint.infra_state.deployment_state.max_workers
+        == update_llm_model_endpoint_request_only_workers.max_workers
+    )
+
+
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_tag",
+    mocked__get_latest_tag(),
+)
+async def test_update_model_endpoint_use_case_failure(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    fake_llm_model_endpoint_service,
+    create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
+    update_llm_model_endpoint_request_bad_metadata: UpdateLLMModelEndpointV1Request,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    create_use_case = CreateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    update_use_case = UpdateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+
+    await create_use_case.execute(user=user, request=create_llm_model_endpoint_request_streaming)
+    endpoint = (
+        await fake_model_endpoint_service.list_model_endpoints(
+            owner=None,
+            name=create_llm_model_endpoint_request_streaming.name,
+            order_by=None,
+        )
+    )[0]
+    fake_llm_model_endpoint_service.add_model_endpoint(endpoint)
+
+    with pytest.raises(ObjectHasInvalidValueException):
+        await update_use_case.execute(
+            user=user,
+            model_endpoint_name=create_llm_model_endpoint_request_streaming.name,
+            request=update_llm_model_endpoint_request_bad_metadata,
+        )
 
 
 def mocked_auto_tokenizer_from_pretrained(*args, **kwargs):  # noqa
@@ -1863,7 +1961,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "mixtral-8x7b", "")
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -1872,7 +1970,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "mixtral-8x7b", "", is_batch_job=True
     )
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -1903,7 +2001,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "mixtral-8x22b", "")
-    assert hardware.cpus == "160"
+    assert hardware.cpus == 160
     assert hardware.gpus == 8
     assert hardware.memory == "800Gi"
     assert hardware.storage == "640Gi"
@@ -1912,7 +2010,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "mixtral-8x22b", "", is_batch_job=True
     )
-    assert hardware.cpus == "160"
+    assert hardware.cpus == 160
     assert hardware.gpus == 8
     assert hardware.memory == "800Gi"
     assert hardware.storage == "640Gi"
@@ -1939,14 +2037,14 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-7b", "")
-    assert hardware.cpus == "5"
+    assert hardware.cpus == 5
     assert hardware.gpus == 1
     assert hardware.memory == "20Gi"
     assert hardware.storage == "40Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_1G_20GB
 
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-7b", "", is_batch_job=True)
-    assert hardware.cpus == "10"
+    assert hardware.cpus == 10
     assert hardware.gpus == 1
     assert hardware.memory == "40Gi"
     assert hardware.storage == "80Gi"
@@ -1974,14 +2072,14 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 128256,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b", "")
-    assert hardware.cpus == "5"
+    assert hardware.cpus == 5
     assert hardware.gpus == 1
     assert hardware.memory == "20Gi"
     assert hardware.storage == "40Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_1G_20GB
 
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b", "", is_batch_job=True)
-    assert hardware.cpus == "10"
+    assert hardware.cpus == 10
     assert hardware.gpus == 1
     assert hardware.memory == "40Gi"
     assert hardware.storage == "80Gi"
@@ -2008,7 +2106,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-13b", "")
-    assert hardware.cpus == "10"
+    assert hardware.cpus == 10
     assert hardware.gpus == 1
     assert hardware.memory == "40Gi"
     assert hardware.storage == "80Gi"
@@ -2017,7 +2115,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "llama-2-13b", "", is_batch_job=True
     )
-    assert hardware.cpus == "20"
+    assert hardware.cpus == 20
     assert hardware.gpus == 1
     assert hardware.memory == "80Gi"
     assert hardware.storage == "96Gi"
@@ -2044,7 +2142,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "codellama-34b", "")
-    assert hardware.cpus == "20"
+    assert hardware.cpus == 20
     assert hardware.gpus == 1
     assert hardware.memory == "80Gi"
     assert hardware.storage == "96Gi"
@@ -2053,7 +2151,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "codellama-34b", "", is_batch_job=True
     )
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -2080,7 +2178,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 32000,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-2-70b", "")
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -2089,7 +2187,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "llama-2-70b", "", is_batch_job=True
     )
-    assert hardware.cpus == "80"
+    assert hardware.cpus == 80
     assert hardware.gpus == 4
     assert hardware.memory == "320Gi"
     assert hardware.storage == "320Gi"
@@ -2117,7 +2215,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 128256,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-70b", "")
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -2126,7 +2224,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "llama-3-70b", "", is_batch_job=True
     )
-    assert hardware.cpus == "80"
+    assert hardware.cpus == 80
     assert hardware.gpus == 4
     assert hardware.memory == "320Gi"
     assert hardware.storage == "320Gi"
@@ -2155,7 +2253,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "vocab_size": 128256,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "llama-3-8b-instruct-262k", "")
-    assert hardware.cpus == "40"
+    assert hardware.cpus == 40
     assert hardware.gpus == 2
     assert hardware.memory == "160Gi"
     assert hardware.storage == "160Gi"
@@ -2185,7 +2283,7 @@ async def test_fill_hardware_info(fake_llm_artifact_gateway):
         labels={},
     )
     await _fill_hardware_info(fake_llm_artifact_gateway, request)
-    assert request.cpus == "40"
+    assert request.cpus == 40
     assert request.gpus == 2
     assert request.memory == "160Gi"
     assert request.storage == "160Gi"
@@ -2241,3 +2339,23 @@ async def test_create_batch_completions(
         "-c",
         "ddtrace-run python vllm_batch.py",
     ]
+
+
+def test_merge_metadata():
+    request_metadata = {
+        "key1": "value1",
+        "key2": "value2",
+    }
+
+    endpoint_metadata = {
+        "key1": "value0",
+        "key3": "value3",
+    }
+
+    assert merge_metadata(request_metadata, None) == request_metadata
+    assert merge_metadata(None, endpoint_metadata) == endpoint_metadata
+    assert merge_metadata(request_metadata, endpoint_metadata) == {
+        "key1": "value1",
+        "key2": "value2",
+        "key3": "value3",
+    }

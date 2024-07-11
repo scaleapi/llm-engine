@@ -117,7 +117,7 @@ class CreateBatchCompletionsRequest(BaseModel):
     Request object for batch completions.
     """
 
-    input_data_path: Optional[str]
+    input_data_path: Optional[str] = None
     output_data_path: str
     """
     Path to the output file. The output file will be a JSON file of type List[CompletionOutput].

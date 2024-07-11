@@ -198,7 +198,7 @@ def predict_on_url(predict_fn: Callable, request_url: str, return_pickled: bool)
 def predict_on_args(
     predict_fn: Callable, inputs: RequestSchema, return_pickled: bool
 ) -> Dict[str, str]:
-    inputs_kwargs = inputs.__root__
+    inputs_kwargs = inputs.root
     output = predict_fn(**inputs_kwargs)
 
     if return_pickled:

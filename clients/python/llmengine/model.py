@@ -43,15 +43,15 @@ class Model(APIEngine):
         quantize: Optional[Quantization] = None,
         checkpoint_path: Optional[str] = None,
         # General endpoint fields
-        cpus: int = 8,
-        memory: str = "24Gi",
-        storage: str = "40Gi",
-        gpus: int = 1,
+        cpus: Optional[int] = None,
+        memory: Optional[str] = None,
+        storage: Optional[str] = None,
+        gpus: Optional[int] = None,
         min_workers: int = 0,
         max_workers: int = 1,
         per_worker: int = 2,
         endpoint_type: ModelEndpointType = ModelEndpointType.STREAMING,
-        gpu_type: Optional[str] = "nvidia-ampere-a10",
+        gpu_type: Optional[str] = None,
         high_priority: Optional[bool] = False,
         post_inference_hooks: Optional[List[PostInferenceHooks]] = None,
         default_callback_url: Optional[str] = None,
@@ -91,21 +91,23 @@ class Model(APIEngine):
                 Can be either a folder or a tar file. Folder is preferred since we don't need to untar and model loads faster.
                 For model weights, safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be longer).
 
-            cpus (`int`):
+            cpus (`Optional[int]`):
                 Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
-                than or equal to 1. Recommendation is set it to 8 * GPU count.
+                than or equal to 1. Recommendation is set it to 8 * GPU count. Can be inferred from the model size.
 
-            memory (`str`):
+            memory (`Optional[str]`):
                 Amount of memory each worker should get, e.g. "4Gi", "512Mi", etc. This must
                 be a positive amount of memory. Recommendation is set it to 24Gi * GPU count.
+                Can be inferred from the model size.
 
-            storage (`str`):
+            storage (`Optional[str]`):
                 Amount of local ephemeral storage each worker should get, e.g. "4Gi",
                 "512Mi", etc. This must be a positive amount of storage.
                 Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B models.
+                Can be inferred from the model size.
 
-            gpus (`int`):
-                Number of gpus each worker should get, e.g. 0, 1, etc.
+            gpus (`Optional[int]`):
+                Number of gpus each worker should get, e.g. 0, 1, etc. Can be inferred from the model size.
 
             min_workers (`int`):
                 The minimum number of workers. Must be greater than or equal to 0. This
@@ -142,15 +144,15 @@ class Model(APIEngine):
 
             gpu_type (`Optional[str]`):
                 If specifying a non-zero number of gpus, this controls the type of gpu
-                requested. Here are the supported values:
+                requested. Can be inferred from the model size. Here are the supported values:
 
                 - ``nvidia-tesla-t4``
                 - ``nvidia-ampere-a10``
                 - ``nvidia-ampere-a100``
                 - ``nvidia-ampere-a100e``
                 - ``nvidia-hopper-h100``
-                - ``nvidia-hopper-h100-1g20gb``
-                - ``nvidia-hopper-h100-3g40gb``
+                - ``nvidia-hopper-h100-1g20gb`` # 1 slice of MIG with 1g compute and 20GB memory
+                - ``nvidia-hopper-h100-3g40gb`` # 1 slice of MIG with 3g compute and 40GB memory
 
             high_priority (`Optional[bool]`):
                 Either ``True`` or ``False``. Enabling this will allow the created
@@ -173,7 +175,27 @@ class Model(APIEngine):
         Returns:
             CreateLLMEndpointResponse: creation task ID of the created Model. Currently not used.
 
-        === "Create Llama 2 7B model in Python"
+        === "Create Llama 2 70B model with hardware specs inferred in Python"
+            ```python
+            from llmengine import Model
+
+            response = Model.create(
+                name="llama-2-70b-test"
+                model="llama-2-70b",
+                inference_framework_image_tag="0.9.4",
+                inference_framework=LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+                num_shards=4,
+                checkpoint_path="s3://path/to/checkpoint",
+                min_workers=0,
+                max_workers=1,
+                per_worker=10,
+                endpoint_type=ModelEndpointType.STREAMING,
+                public_inference=False,
+            )
+
+            print(response.json())
+            ```
+        === "Create Llama 2 7B model with hardware specs specified in Python"
             ```python
             from llmengine import Model
 

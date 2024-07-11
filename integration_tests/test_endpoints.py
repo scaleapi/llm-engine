@@ -232,7 +232,7 @@ def test_sync_streaming_model_endpoint(capsys):
             for response in task_responses:
                 assert (
                     response.strip()
-                    == 'data: {"status": "SUCCESS", "result": {"result": {"y": 1}}, "traceback": null}'
+                    == 'data: {"status":"SUCCESS","result":{"result":{"y":1}},"traceback":null}'
                 )
         finally:
             delete_model_endpoint(create_endpoint_request["name"], user)

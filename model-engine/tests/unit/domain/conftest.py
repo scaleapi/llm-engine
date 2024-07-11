@@ -31,6 +31,9 @@ from model_engine_server.domain.entities import (
     Quantization,
     StreamingEnhancedRunnableImageFlavor,
 )
+from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
+    CONVERTED_FROM_ARTIFACT_LIKE_KEY,
+)
 
 
 @pytest.fixture
@@ -263,6 +266,19 @@ def update_llm_model_endpoint_request() -> UpdateLLMModelEndpointV1Request:
         min_workers=0,
         max_workers=1,
     )
+
+
+@pytest.fixture
+def update_llm_model_endpoint_request_only_workers() -> UpdateLLMModelEndpointV1Request:
+    return UpdateLLMModelEndpointV1Request(
+        min_workers=5,
+        max_workers=10,
+    )
+
+
+@pytest.fixture
+def update_llm_model_endpoint_request_bad_metadata() -> UpdateLLMModelEndpointV1Request:
+    return UpdateLLMModelEndpointV1Request(metadata={CONVERTED_FROM_ARTIFACT_LIKE_KEY: {}})
 
 
 @pytest.fixture
@@ -517,7 +533,7 @@ def create_batch_completions_request() -> CreateBatchCompletionsRequest:
         model_config=CreateBatchCompletionsModelConfig(
             model="mpt-7b",
             checkpoint_path="s3://test_checkpoint_path",
-            labels=[],
+            labels={},
             num_shards=2,
         ),
         data_parallelism=2,

@@ -111,6 +111,8 @@ from .model_endpoint_use_cases import (
 
 logger = make_logger(logger_name())
 
+LLM_METADATA_KEY = "_llm"
+RESERVED_METADATA_KEYS = [LLM_METADATA_KEY, CONVERTED_FROM_ARTIFACT_LIKE_KEY]
 
 INFERENCE_FRAMEWORK_REPOSITORY: Dict[LLMInferenceFramework, str] = {
     LLMInferenceFramework.DEEPSPEED: "instant-llm",
@@ -279,11 +281,14 @@ async def _get_recommended_hardware_config_map() -> Dict[str, Any]:
 def _model_endpoint_entity_to_get_llm_model_endpoint_response(
     model_endpoint: ModelEndpoint,
 ) -> GetLLMModelEndpointV1Response:
-    if model_endpoint.record.metadata is None or "_llm" not in model_endpoint.record.metadata:
+    if (
+        model_endpoint.record.metadata is None
+        or LLM_METADATA_KEY not in model_endpoint.record.metadata
+    ):
         raise ObjectHasInvalidValueException(
             f"Can't translate model entity to response, endpoint {model_endpoint.record.id} does not have LLM metadata."
         )
-    llm_metadata = model_endpoint.record.metadata.get("_llm", {})
+    llm_metadata = model_endpoint.record.metadata.get(LLM_METADATA_KEY, {})
     response = GetLLMModelEndpointV1Response(
         id=model_endpoint.record.id,
         name=model_endpoint.record.name,
@@ -1023,7 +1028,7 @@ class CreateLLMModelEndpointV1UseCase:
         aws_role = self.authz_module.get_aws_role_for_user(user)
         results_s3_bucket = self.authz_module.get_s3_bucket_for_user(user)
 
-        request.metadata["_llm"] = asdict(
+        request.metadata[LLM_METADATA_KEY] = asdict(
             LLMMetadata(
                 model_name=request.model_name,
                 source=request.source,
@@ -1149,6 +1154,16 @@ class GetLLMModelEndpointByNameV1UseCase:
         return _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
 
+def merge_metadata(
+    request: Optional[Dict[str, Any]], record: Optional[Dict[str, Any]]
+) -> Optional[Dict[str, Any]]:
+    if request is None:
+        return record
+    if record is None:
+        return request
+    return {**record, **request}
+
+
 class UpdateLLMModelEndpointV1UseCase:
     def __init__(
         self,
@@ -1192,6 +1207,7 @@ class UpdateLLMModelEndpointV1UseCase:
             raise EndpointInfraStateNotFound(error_msg)
 
         infra_state = model_endpoint.infra_state
+        metadata: Optional[Dict[str, Any]]
 
         if (
             request.model_name
@@ -1201,7 +1217,7 @@ class UpdateLLMModelEndpointV1UseCase:
             or request.quantize
             or request.checkpoint_path
         ):
-            llm_metadata = (model_endpoint.record.metadata or {}).get("_llm", {})
+            llm_metadata = (model_endpoint.record.metadata or {}).get(LLM_METADATA_KEY, {})
             inference_framework = llm_metadata["inference_framework"]
 
             if request.inference_framework_image_tag == "latest":
@@ -1238,7 +1254,7 @@ class UpdateLLMModelEndpointV1UseCase:
             )
 
             metadata = endpoint_record.metadata or {}
-            metadata["_llm"] = asdict(
+            metadata[LLM_METADATA_KEY] = asdict(
                 LLMMetadata(
                     model_name=model_name,
                     source=source,
@@ -1249,7 +1265,7 @@ class UpdateLLMModelEndpointV1UseCase:
                     checkpoint_path=checkpoint_path,
                 )
             )
-            request.metadata = metadata
+            endpoint_record.metadata = metadata
 
         # For resources that are not specified in the update endpoint request, pass in resource from
         # infra_state to make sure that after the update, all resources are valid and in sync.
@@ -1270,15 +1286,20 @@ class UpdateLLMModelEndpointV1UseCase:
             endpoint_type=endpoint_record.endpoint_type,
         )
 
-        if request.metadata is not None and CONVERTED_FROM_ARTIFACT_LIKE_KEY in request.metadata:
-            raise ObjectHasInvalidValueException(
-                f"{CONVERTED_FROM_ARTIFACT_LIKE_KEY} is a reserved metadata key and cannot be used by user."
-            )
+        if request.metadata is not None:
+            # If reserved metadata key is provided, throw ObjectHasInvalidValueException
+            for key in RESERVED_METADATA_KEYS:
+                if key in request.metadata:
+                    raise ObjectHasInvalidValueException(
+                        f"{key} is a reserved metadata key and cannot be used by user."
+                    )
+
+        metadata = merge_metadata(request.metadata, endpoint_record.metadata)
 
         updated_endpoint_record = await self.model_endpoint_service.update_model_endpoint(
             model_endpoint_id=model_endpoint_id,
             model_bundle_id=bundle.id,
-            metadata=request.metadata,
+            metadata=metadata,
             post_inference_hooks=request.post_inference_hooks,
             cpus=request.cpus,
             gpus=request.gpus,
@@ -2448,7 +2469,7 @@ class CreateBatchCompletionsUseCase:
         hardware: CreateDockerImageBatchJobResourceRequests,
     ) -> DockerImageBatchJobBundle:
         bundle_name = (
-            f"{request.model_config.model}_{datetime.datetime.utcnow().strftime('%y%m%d-%H%M%S')}"
+            f"{request.model_cfg.model}_{datetime.datetime.utcnow().strftime('%y%m%d-%H%M%S')}"
         )
 
         image_tag = self.docker_repository.get_latest_image_tag(
@@ -2488,22 +2509,22 @@ class CreateBatchCompletionsUseCase:
     async def execute(
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
-        request.model_config.checkpoint_path = get_checkpoint_path(
-            request.model_config.model, request.model_config.checkpoint_path
+        request.model_cfg.checkpoint_path = get_checkpoint_path(
+            request.model_cfg.model, request.model_cfg.checkpoint_path
         )
         hardware = await _infer_hardware(
             self.llm_artifact_gateway,
-            request.model_config.model,
-            request.model_config.checkpoint_path,
+            request.model_cfg.model,
+            request.model_cfg.checkpoint_path,
             is_batch_job=True,
         )
         # Reconcile gpus count with num_shards from request
         assert hardware.gpus is not None
-        if request.model_config.num_shards:
-            hardware.gpus = max(hardware.gpus, request.model_config.num_shards)
+        if request.model_cfg.num_shards:
+            hardware.gpus = max(hardware.gpus, request.model_cfg.num_shards)
 
         engine_request = CreateBatchCompletionsEngineRequest.from_api(request)
-        engine_request.model_config.num_shards = hardware.gpus
+        engine_request.model_cfg.num_shards = hardware.gpus
 
         if engine_request.tool_config and engine_request.tool_config.name != "code_evaluator":
             raise ObjectHasInvalidValueException(
@@ -2511,7 +2532,7 @@ class CreateBatchCompletionsUseCase:
             )
 
         additional_engine_args = infer_addition_engine_args_from_model_name(
-            engine_request.model_config.model
+            engine_request.model_cfg.model
         )
 
         if additional_engine_args.gpu_memory_utilization is not None:
@@ -2542,7 +2563,7 @@ class CreateBatchCompletionsUseCase:
             repo=batch_bundle.image_repository,
             tag=batch_bundle.image_tag,
             resource_requests=hardware,
-            labels=engine_request.model_config.labels,
+            labels=engine_request.model_cfg.labels,
             mount_location=batch_bundle.mount_location,
             override_job_max_runtime_s=engine_request.max_runtime_sec,
             num_workers=engine_request.data_parallelism,

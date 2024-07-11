@@ -6,6 +6,7 @@ Make sure to keep this in sync with inference/batch_inference/dto.py.
 
 from typing import Any, Dict, List, Optional
 
+from model_engine_server.common.dtos.core import HttpUrlStr
 from model_engine_server.common.dtos.model_endpoints import (
     CpuSpecificationType,
     GetModelEndpointV1Response,
@@ -23,7 +24,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointStatus,
     Quantization,
 )
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreateLLMModelEndpointV1Request(BaseModel):
@@ -51,23 +52,23 @@ class CreateLLMModelEndpointV1Request(BaseModel):
 
     # General endpoint fields
     metadata: Dict[str, Any]  # TODO: JSON type
-    post_inference_hooks: Optional[List[str]]
+    post_inference_hooks: Optional[List[str]] = None
     endpoint_type: ModelEndpointType = ModelEndpointType.SYNC
-    cpus: Optional[CpuSpecificationType]
-    gpus: Optional[int]
-    memory: Optional[StorageSpecificationType]
-    gpu_type: Optional[GpuType]
-    storage: Optional[StorageSpecificationType]
-    optimize_costs: Optional[bool]
+    cpus: Optional[CpuSpecificationType] = None
+    gpus: Optional[int] = None
+    memory: Optional[StorageSpecificationType] = None
+    gpu_type: Optional[GpuType] = None
+    storage: Optional[StorageSpecificationType] = None
+    optimize_costs: Optional[bool] = None
     min_workers: int
     max_workers: int
     per_worker: int
     labels: Dict[str, str]
-    prewarm: Optional[bool]
-    high_priority: Optional[bool]
-    billing_tags: Optional[Dict[str, Any]]
-    default_callback_url: Optional[HttpUrl]
-    default_callback_auth: Optional[CallbackAuth]
+    prewarm: Optional[bool] = None
+    high_priority: Optional[bool] = None
+    billing_tags: Optional[Dict[str, Any]] = None
+    default_callback_url: Optional[HttpUrlStr] = None
+    default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = True  # LLM endpoints are public by default.
 
 
@@ -99,43 +100,43 @@ class ListLLMModelEndpointsV1Response(BaseModel):
 
 class UpdateLLMModelEndpointV1Request(BaseModel):
     # LLM specific fields
-    model_name: Optional[str]
-    source: Optional[LLMSource]
-    inference_framework_image_tag: Optional[str]
-    num_shards: Optional[int]
+    model_name: Optional[str] = None
+    source: Optional[LLMSource] = None
+    inference_framework_image_tag: Optional[str] = None
+    num_shards: Optional[int] = None
     """
     Number of shards to distribute the model onto GPUs.
     """
 
-    quantize: Optional[Quantization]
+    quantize: Optional[Quantization] = None
     """
     Whether to quantize the model.
     """
 
-    checkpoint_path: Optional[str]
+    checkpoint_path: Optional[str] = None
     """
     Path to the checkpoint to load the model from.
     """
 
     # General endpoint fields
-    metadata: Optional[Dict[str, Any]]
-    post_inference_hooks: Optional[List[str]]
-    cpus: Optional[CpuSpecificationType]
-    gpus: Optional[int]
-    memory: Optional[StorageSpecificationType]
-    gpu_type: Optional[GpuType]
-    storage: Optional[StorageSpecificationType]
-    optimize_costs: Optional[bool]
-    min_workers: Optional[int]
-    max_workers: Optional[int]
-    per_worker: Optional[int]
-    labels: Optional[Dict[str, str]]
-    prewarm: Optional[bool]
-    high_priority: Optional[bool]
-    billing_tags: Optional[Dict[str, Any]]
-    default_callback_url: Optional[HttpUrl]
-    default_callback_auth: Optional[CallbackAuth]
-    public_inference: Optional[bool]
+    metadata: Optional[Dict[str, Any]] = None
+    post_inference_hooks: Optional[List[str]] = None
+    cpus: Optional[CpuSpecificationType] = None
+    gpus: Optional[int] = None
+    memory: Optional[StorageSpecificationType] = None
+    gpu_type: Optional[GpuType] = None
+    storage: Optional[StorageSpecificationType] = None
+    optimize_costs: Optional[bool] = None
+    min_workers: Optional[int] = None
+    max_workers: Optional[int] = None
+    per_worker: Optional[int] = None
+    labels: Optional[Dict[str, str]] = None
+    prewarm: Optional[bool] = None
+    high_priority: Optional[bool] = None
+    billing_tags: Optional[Dict[str, Any]] = None
+    default_callback_url: Optional[HttpUrlStr] = None
+    default_callback_auth: Optional[CallbackAuth] = None
+    public_inference: Optional[bool] = None
 
 
 class UpdateLLMModelEndpointV1Response(BaseModel):
@@ -225,7 +226,7 @@ class CompletionSyncV1Response(BaseModel):
     Response object for a synchronous prompt completion task.
     """
 
-    request_id: Optional[str]
+    request_id: Optional[str] = None
     output: Optional[CompletionOutput] = None
 
 
@@ -323,7 +324,7 @@ class CompletionStreamV1Response(BaseModel):
     Response object for a stream prompt completion task.
     """
 
-    request_id: Optional[str]
+    request_id: Optional[str] = None
     output: Optional[CompletionStreamOutput] = None
     error: Optional[StreamError] = None
     """Error of the response (if any)."""
@@ -520,7 +521,9 @@ class CreateBatchCompletionsRequest(BaseModel):
     Request object for batch completions.
     """
 
-    input_data_path: Optional[str]
+    model_config = ConfigDict(protected_namespaces=())
+
+    input_data_path: Optional[str] = None
     output_data_path: str
     """
     Path to the output file. The output file will be a JSON file of type List[CompletionOutput].
@@ -530,10 +533,14 @@ class CreateBatchCompletionsRequest(BaseModel):
     Either `input_data_path` or `content` needs to be provided.
     When input_data_path is provided, the input file should be a JSON file of type BatchCompletionsRequestContent.
     """
-    model_config: CreateBatchCompletionsModelConfig
+    model_cfg: CreateBatchCompletionsModelConfig = Field(alias="model_config")
     """
     Model configuration for the batch inference. Hardware configurations are inferred.
+
+    We rename model_config from api to model_cfg in engine since engine uses pydantic v2 which
+    reserves model_config as a keyword.
     """
+
     data_parallelism: Optional[int] = Field(default=1, ge=1, le=64)
     """
     Number of replicas to run the batch inference. More replicas are slower to schedule but faster to inference.
@@ -555,14 +562,6 @@ class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
     hidden from the DTO exposed to the client.
     """
 
-    model_cfg: CreateBatchCompletionsModelConfig
-    """
-    Model configuration for the batch inference. Hardware configurations are inferred.
-
-    We rename model_config from api to model_cfg in engine since engine uses pydantic v2 which
-    reserves model_config as a keyword.
-    """
-
     max_gpu_memory_utilization: Optional[float] = Field(default=0.9, le=1.0)
     """
     Maximum GPU memory utilization for the batch inference. Default to 90%.
@@ -574,8 +573,8 @@ class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
             input_data_path=request.input_data_path,
             output_data_path=request.output_data_path,
             content=request.content,
-            model_config=request.model_config,
-            model_cfg=request.model_config,
+            model_config=request.model_cfg,
+            model_cfg=request.model_cfg,
             data_parallelism=request.data_parallelism,
             max_runtime_sec=request.max_runtime_sec,
             tool_config=request.tool_config,

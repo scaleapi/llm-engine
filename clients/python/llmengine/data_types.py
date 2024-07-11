@@ -6,9 +6,10 @@ import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
-import pydantic
+from pydantic.version import VERSION as PYDANTIC_VERSION
 
-if int(pydantic.__version__.split(".")[0]) > 1:
+PYDANTIC_V2 = PYDANTIC_VERSION.startswith("2.")
+if PYDANTIC_V2:
     from pydantic.v1 import BaseModel, Field, HttpUrl
 else:
     from pydantic import BaseModel, Field, HttpUrl  # type: ignore
@@ -164,9 +165,9 @@ class CreateLLMEndpointRequest(BaseModel):
     metadata: Dict[str, Any]  # TODO: JSON type
     post_inference_hooks: Optional[List[str]]
     endpoint_type: ModelEndpointType = ModelEndpointType.STREAMING
-    cpus: CpuSpecificationType
-    gpus: int
-    memory: StorageSpecificationType
+    cpus: Optional[CpuSpecificationType]
+    gpus: Optional[int]
+    memory: Optional[StorageSpecificationType]
     gpu_type: Optional[GpuType]
     storage: Optional[StorageSpecificationType]
     optimize_costs: Optional[bool] = None

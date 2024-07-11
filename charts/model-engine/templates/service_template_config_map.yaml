@@ -221,9 +221,9 @@ data:
                 - --task-visibility
                 - "VISIBILITY_24H"
                 - --set
-                - "forwarder.model.args.predict_route=${PREDICT_ROUTE}"
+                - "forwarder.async.predict_route=${PREDICT_ROUTE}"
                 - --set
-                - "forwarder.model.args.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 {{- if eq $celery_broker_type "sqs" }}
                 - --sqs-url
                 - "${SQS_QUEUE_URL}"

@@ -3203,7 +3203,7 @@ def build_endpoint_request_async_runnable_image(
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
         default_callback_auth=CallbackAuth(
-            __root__=CallbackBasicAuth(kind="basic", username="username", password="password")
+            root=CallbackBasicAuth(kind="basic", username="username", password="password")
         ),
     )
     return build_endpoint_request
@@ -3246,7 +3246,7 @@ def build_endpoint_request_streaming_runnable_image(
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
         default_callback_auth=CallbackAuth(
-            __root__=CallbackBasicAuth(kind="basic", username="username", password="password")
+            root=CallbackBasicAuth(kind="basic", username="username", password="password")
         ),
     )
     return build_endpoint_request
@@ -3289,7 +3289,7 @@ def build_endpoint_request_sync_runnable_image(
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
         default_callback_auth=CallbackAuth(
-            __root__=CallbackBasicAuth(kind="basic", username="username", password="password")
+            root=CallbackBasicAuth(kind="basic", username="username", password="password")
         ),
     )
     return build_endpoint_request
@@ -3332,7 +3332,7 @@ def build_endpoint_request_sync_pytorch(
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
         default_callback_auth=CallbackAuth(
-            __root__=CallbackBasicAuth(kind="basic", username="username", password="password")
+            root=CallbackBasicAuth(kind="basic", username="username", password="password")
         ),
     )
     return build_endpoint_request
@@ -3374,7 +3374,7 @@ def build_endpoint_request_async_tensorflow(
         optimize_costs=False,
         default_callback_url="https://example.com/path",
         default_callback_auth=CallbackAuth(
-            __root__=CallbackBasicAuth(kind="basic", username="username", password="password")
+            root=CallbackBasicAuth(kind="basic", username="username", password="password")
         ),
     )
     return build_endpoint_request
@@ -3519,9 +3519,7 @@ def endpoint_predict_request_2() -> Tuple[EndpointPredictV1Request, Dict[str, An
         args=["test_arg_1", "test_arg_2"],
         callback_url="http://test_callback_url.xyz",
         callback_auth=CallbackAuth(
-            __root__=CallbackBasicAuth(
-                kind="basic", username="test_username", password="test_password"
-            )
+            root=CallbackBasicAuth(kind="basic", username="test_username", password="test_password")
         ),
         return_pickled=True,
     )
@@ -3600,7 +3598,7 @@ def llm_model_endpoint_async(
                     post_inference_hooks=["callback"],
                     default_callback_url="http://www.example.com",
                     default_callback_auth=CallbackAuth(
-                        __root__=CallbackBasicAuth(
+                        root=CallbackBasicAuth(
                             kind="basic",
                             username="test_username",
                             password="test_password",
@@ -3659,7 +3657,7 @@ def llm_model_endpoint_async(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
@@ -3732,7 +3730,7 @@ def llm_model_endpoint_sync(
                     post_inference_hooks=["callback"],
                     default_callback_url="http://www.example.com",
                     default_callback_auth=CallbackAuth(
-                        __root__=CallbackBasicAuth(
+                        root=CallbackBasicAuth(
                             kind="basic",
                             username="test_username",
                             password="test_password",
@@ -3791,7 +3789,7 @@ def llm_model_endpoint_sync(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
@@ -3864,7 +3862,7 @@ def llm_model_endpoint_stream(
                     post_inference_hooks=["callback"],
                     default_callback_url="http://www.example.com",
                     default_callback_auth=CallbackAuth(
-                        __root__=CallbackBasicAuth(
+                        root=CallbackBasicAuth(
                             kind="basic",
                             username="test_username",
                             password="test_password",
@@ -3923,7 +3921,7 @@ def llm_model_endpoint_stream(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
@@ -3996,7 +3994,7 @@ def llm_model_endpoint_sync_tgi(
                     post_inference_hooks=["callback"],
                     default_callback_url="http://www.example.com",
                     default_callback_auth=CallbackAuth(
-                        __root__=CallbackBasicAuth(
+                        root=CallbackBasicAuth(
                             kind="basic",
                             username="test_username",
                             password="test_password",
@@ -4055,7 +4053,7 @@ def llm_model_endpoint_sync_tgi(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
@@ -4128,7 +4126,7 @@ def llm_model_endpoint_sync_lightllm(
                     post_inference_hooks=["callback"],
                     default_callback_url="http://www.example.com",
                     default_callback_auth=CallbackAuth(
-                        __root__=CallbackBasicAuth(
+                        root=CallbackBasicAuth(
                             kind="basic",
                             username="test_username",
                             password="test_password",
@@ -4187,7 +4185,7 @@ def llm_model_endpoint_sync_lightllm(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
@@ -4260,7 +4258,7 @@ def llm_model_endpoint_sync_trt_llm(
                     post_inference_hooks=["callback"],
                     default_callback_url="http://www.example.com",
                     default_callback_auth=CallbackAuth(
-                        __root__=CallbackBasicAuth(
+                        root=CallbackBasicAuth(
                             kind="basic",
                             username="test_username",
                             password="test_password",
@@ -4319,7 +4317,7 @@ def llm_model_endpoint_sync_trt_llm(
                 "unavailable_workers": 1,
             },
             "resource_state": {
-                "cpus": "1",
+                "cpus": 1,
                 "gpus": 1,
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
@@ -4457,7 +4455,7 @@ def llm_model_endpoint_text_generation_inference(
                     post_inference_hooks=["callback"],
                     default_callback_url="http://www.example.com",
                     default_callback_auth=CallbackAuth(
-                        __root__=CallbackBasicAuth(
+                        root=CallbackBasicAuth(
                             kind="basic",
                             username="test_username",
                             password="test_password",
@@ -4530,7 +4528,7 @@ def llm_model_endpoint_trt_llm(
                     post_inference_hooks=["callback"],
                     default_callback_url="http://www.example.com",
                     default_callback_auth=CallbackAuth(
-                        __root__=CallbackBasicAuth(
+                        root=CallbackBasicAuth(
                             kind="basic",
                             username="test_username",
                             password="test_password",
