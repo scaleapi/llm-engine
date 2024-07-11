@@ -6,9 +6,10 @@ import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
-import pydantic
+from pydantic.version import VERSION as PYDANTIC_VERSION
 
-if int(pydantic.__version__.split(".")[0]) > 1:
+PYDANTIC_V2 = PYDANTIC_VERSION.startswith("2.")
+if PYDANTIC_V2:
     from pydantic.v1 import BaseModel, Field, HttpUrl
 else:
     from pydantic import BaseModel, Field, HttpUrl  # type: ignore
