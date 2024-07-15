@@ -187,11 +187,14 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
             logger.error(f"Service error on sync task: {exc.content!r}")
             try:
                 error_json = orjson.loads(exc.content.decode("utf-8"))
-                result_traceback = (
-                    error_json.get("detail", {}).get("traceback")
-                    if isinstance(error_json, dict)
-                    else None
-                )
+                if not isinstance(error_json, dict):
+                    result_traceback = None
+                else:
+                    if "result" in error_json:
+                        error_json = error_json["result"]
+                    result_traceback = error_json.get("detail", {}).get(
+                        "traceback", "Failed to parse traceback"
+                    )
                 return SyncEndpointPredictV1Response(
                     status=TaskStatus.FAILURE,
                     traceback=result_traceback,
