@@ -2330,6 +2330,12 @@ async def _infer_hardware(
         model_param_count_b = 47
     elif "mixtral-8x22b" in model_name:
         model_param_count_b = 140
+    elif "phi-3-mini" in model_name:
+        model_param_count_b = 4
+    elif "phi-3-small" in model_name:
+        model_param_count_b = 8
+    elif "phi-3-medium" in model_name:
+        model_param_count_b = 15
     else:
         numbers = re.findall(r"(\d+)b", model_name)
         if len(numbers) == 0:
