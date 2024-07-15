@@ -210,6 +210,12 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "gemma-2b-instruct",
             "gemma-7b",
             "gemma-7b-instruct",
+            "phi-3-mini-4k-instruct",
+            "phi-3-mini-128k-instruct",
+            "phi-3-small-8k-instruct",
+            "phi-3-small-128k-instruct",
+            "phi-3-medium-4-instruct",
+            "phi-3-medium-128k-instruct",
         ]
     ),
     LLMInferenceFramework.LIGHTLLM: set(

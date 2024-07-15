@@ -85,6 +85,12 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "gemma-2b-instruct": ModelInfo("google/gemma-2b-it", None),
         "gemma-7b": ModelInfo("google/gemma-7b", None),
         "gemma-7b-instruct": ModelInfo("google/gemma-7b-it", None),
+        "phi-3-mini-4k-instruct": ModelInfo("microsoft/phi-3-mini-4k-instruct", None),
+        "phi-3-mini-128k-instruct": ModelInfo("microsoft/phi-3-mini-128k-instruct", None),
+        "phi-3-small-8k-instruct": ModelInfo("microsoft/phi-3-small-8k-instruct", None),
+        "phi-3-small-128k-instruct": ModelInfo("microsoft/phi-3-small-128k-instruct", None),
+        "phi-3-medium-4-instruct": ModelInfo("microsoft/phi-3-medium-4k-instruct", None),
+        "phi-3-medium-128k-instruct": ModelInfo("microsoft/phi-3-medium-128k-instruct", None),
     }
 
 
