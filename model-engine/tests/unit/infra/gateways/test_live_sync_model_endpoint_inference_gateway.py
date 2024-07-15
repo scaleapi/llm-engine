@@ -187,7 +187,7 @@ async def test_predict_raises_traceback_wrapped_traceback(
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
 
-    content = json.dumps({"response": {"detail": {"traceback": "test_traceback"}}}).encode("utf-8")
+    content = json.dumps({"result": {"detail": {"traceback": "test_traceback"}}}).encode("utf-8")
     fake_response = FakeResponse(status=500, content=content)
     mock_client_session = _get_mock_client_session(fake_response)
     with patch(
