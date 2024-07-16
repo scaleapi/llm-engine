@@ -21,7 +21,6 @@ from model_engine_server.domain.gateways.sync_model_endpoint_inference_gateway i
     SyncModelEndpointInferenceGateway,
 )
 from model_engine_server.infra.gateways.k8s_resource_parser import get_node_port
-from orjson import JSONDecodeError
 from tenacity import (
     AsyncRetrying,
     RetryError,
@@ -186,27 +185,27 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         except UpstreamServiceError as exc:
             logger.error(f"Service error on sync task: {exc.content!r}")
             try:
-                # Try to parse traceback from the response, fallback to just return all the content if failed
+                # Try to parse traceback from the response, fallback to just return all the content if failed.
+                # Three cases considered:
+                # detail.traceback
+                # result."detail.traceback"
+                # result."detail[]"
                 error_json = orjson.loads(exc.content.decode("utf-8"))
-                if not isinstance(error_json, dict):
-                    result_traceback = None
+                if "result" in error_json:
+                    error_json = orjson.loads(error_json["result"])
+                detail = error_json.get("detail", {})
+                if not isinstance(detail, dict):
+                    result_traceback = orjson.dumps(error_json)
                 else:
-                    if "result" in error_json:
-                        error_json = error_json["result"]
-                        if not isinstance(error_json, dict):
-                            error_json = orjson.loads(error_json)
-                    detail = error_json.get("detail", {})
-                    if not isinstance(detail, dict):
-                        result_traceback = orjson.dumps(error_json)
-                    else:
-                        result_traceback = error_json.get("detail", {}).get(
-                            "traceback", "Failed to parse traceback"
-                        )
+                    result_traceback = error_json.get("detail", {}).get(
+                        "traceback", "Failed to parse traceback"
+                    )
                 return SyncEndpointPredictV1Response(
                     status=TaskStatus.FAILURE,
                     traceback=result_traceback,
                 )
-            except JSONDecodeError:
+            except Exception as e:
+                logger.error(f"Failed to parse error: {e}")
                 return SyncEndpointPredictV1Response(
                     status=TaskStatus.FAILURE, traceback=exc.content.decode()
                 )

@@ -227,5 +227,5 @@ async def test_predict_raises_traceback_wrapped_detail_array(
         assert response.dict() == {
             "status": "FAILURE",
             "result": None,
-            "traceback": """{"detail": [{"error": "error"}]}""",
+            "traceback": """{"detail":[{"error":"error"}]}""",
         }
