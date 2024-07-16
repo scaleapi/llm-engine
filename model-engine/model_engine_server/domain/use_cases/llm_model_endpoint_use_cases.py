@@ -2508,7 +2508,7 @@ class CreateBatchCompletionsUseCase:
         job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
             created_by=user.user_id,
             owner=user.team_id,
-            job_config=engine_request.dict(),
+            job_config=engine_request.model_dump(by_alias=True),
             env=batch_bundle.env,
             command=batch_bundle.command,
             repo=batch_bundle.image_repository,
