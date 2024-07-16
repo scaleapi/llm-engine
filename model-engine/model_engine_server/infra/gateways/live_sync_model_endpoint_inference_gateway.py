@@ -186,15 +186,22 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         except UpstreamServiceError as exc:
             logger.error(f"Service error on sync task: {exc.content!r}")
             try:
+                # Try to parse traceback from the response, fallback to just return all the content if failed
                 error_json = orjson.loads(exc.content.decode("utf-8"))
                 if not isinstance(error_json, dict):
                     result_traceback = None
                 else:
                     if "result" in error_json:
                         error_json = error_json["result"]
-                    result_traceback = error_json.get("detail", {}).get(
-                        "traceback", "Failed to parse traceback"
-                    )
+                        if not isinstance(error_json, dict):
+                            error_json = orjson.loads(error_json)
+                    detail = error_json.get("detail", {})
+                    if not isinstance(detail, dict):
+                        result_traceback = orjson.dumps(error_json)
+                    else:
+                        result_traceback = error_json.get("detail", {}).get(
+                            "traceback", "Failed to parse traceback"
+                        )
                 return SyncEndpointPredictV1Response(
                     status=TaskStatus.FAILURE,
                     traceback=result_traceback,

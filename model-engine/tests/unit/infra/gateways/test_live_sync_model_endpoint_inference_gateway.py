@@ -182,12 +182,14 @@ async def test_predict_raises_traceback_not_json(
 
 
 @pytest.mark.asyncio
-async def test_predict_raises_traceback_wrapped_traceback(
+async def test_predict_raises_traceback_wrapped(
     sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
 
-    content = json.dumps({"result": {"detail": {"traceback": "test_traceback"}}}).encode("utf-8")
+    content = json.dumps(
+        {"result": json.dumps({"detail": {"traceback": "test_traceback"}})}
+    ).encode("utf-8")
     fake_response = FakeResponse(status=500, content=content)
     mock_client_session = _get_mock_client_session(fake_response)
     with patch(
@@ -202,4 +204,28 @@ async def test_predict_raises_traceback_wrapped_traceback(
             "status": "FAILURE",
             "result": None,
             "traceback": "test_traceback",
+        }
+
+
+@pytest.mark.asyncio
+async def test_predict_raises_traceback_wrapped_detail_array(
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+):
+    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+
+    content = json.dumps({"result": json.dumps({"detail": [{"error": "error"}]})}).encode("utf-8")
+    fake_response = FakeResponse(status=500, content=content)
+    mock_client_session = _get_mock_client_session(fake_response)
+    with patch(
+        "model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
+        mock_client_session,
+    ):
+        response = await gateway.predict(
+            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+        )
+        assert isinstance(response, SyncEndpointPredictV1Response)
+        assert response.dict() == {
+            "status": "FAILURE",
+            "result": None,
+            "traceback": """{"detail": [{"error": "error"}]}""",
         }
