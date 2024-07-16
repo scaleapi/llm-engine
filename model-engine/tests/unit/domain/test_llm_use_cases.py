@@ -1937,6 +1937,158 @@ async def test_validate_checkpoint_files_safetensors_with_other_files():
     mocked__get_recommended_hardware_config_map(),
 )
 async def test_infer_hardware(fake_llm_artifact_gateway):
+    # Phi 3 mini from https://huggingface.co/microsoft/Phi-3-mini-4k-instruct/blob/main/config.json
+    fake_llm_artifact_gateway.model_config = {
+        "architectures": ["Phi3ForCausalLM"],
+        "attention_dropout": 0.0,
+        "bos_token_id": 1,
+        "embd_pdrop": 0.0,
+        "eos_token_id": 32000,
+        "hidden_act": "silu",
+        "hidden_size": 3072,
+        "initializer_range": 0.02,
+        "intermediate_size": 8192,
+        "max_position_embeddings": 4096,
+        "model_type": "phi3",
+        "num_attention_heads": 32,
+        "num_hidden_layers": 32,
+        "num_key_value_heads": 32,
+        "original_max_position_embeddings": 4096,
+        "pad_token_id": 32000,
+        "resid_pdrop": 0.0,
+        "rms_norm_eps": 1e-05,
+        "rope_theta": 10000.0,
+        "sliding_window": 2047,
+        "tie_word_embeddings": False,
+        "torch_dtype": "bfloat16",
+        "transformers_version": "4.40.2",
+        "use_cache": True,
+        "attention_bias": False,
+        "vocab_size": 32064,
+    }
+
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "phi-3-mini-4k-instruct", "")
+    assert hardware.cpus == 5
+    assert hardware.gpus == 1
+    assert hardware.memory == "20Gi"
+    assert hardware.storage == "40Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_1G_20GB
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "phi-3-mini-4k-instruct", "", is_batch_job=True
+    )
+    assert hardware.cpus == 10
+    assert hardware.gpus == 1
+    assert hardware.memory == "40Gi"
+    assert hardware.storage == "80Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_3G_40GB
+
+    # Phi 3 small from https://huggingface.co/microsoft/Phi-3-small-8k-instruct/blob/main/config.json
+    fake_llm_artifact_gateway.model_config = {
+        "architectures": ["Phi3SmallForCausalLM"],
+        "attention_dropout_prob": 0.0,
+        "blocksparse_block_size": 64,
+        "blocksparse_homo_head_pattern": False,
+        "blocksparse_num_local_blocks": 16,
+        "blocksparse_triton_kernel_block_size": 64,
+        "blocksparse_vert_stride": 8,
+        "bos_token_id": 100257,
+        "dense_attention_every_n_layers": 2,
+        "embedding_dropout_prob": 0.1,
+        "eos_token_id": 100257,
+        "ff_dim_multiplier": None,
+        "ff_intermediate_size": 14336,
+        "ffn_dropout_prob": 0.1,
+        "gegelu_limit": 20.0,
+        "gegelu_pad_to_256": True,
+        "hidden_act": "gegelu",
+        "hidden_size": 4096,
+        "initializer_range": 0.02,
+        "layer_norm_epsilon": 1e-05,
+        "max_position_embeddings": 8192,
+        "model_type": "phi3small",
+        "mup_attn_multiplier": 1.0,
+        "mup_embedding_multiplier": 10.0,
+        "mup_use_scaling": True,
+        "mup_width_multiplier": 8.0,
+        "num_attention_heads": 32,
+        "num_hidden_layers": 32,
+        "num_key_value_heads": 8,
+        "pad_sequence_to_multiple_of_64": True,
+        "reorder_and_upcast_attn": False,
+        "rope_embedding_base": 1000000,
+        "rope_position_scale": 1.0,
+        "torch_dtype": "bfloat16",
+        "transformers_version": "4.38.1",
+        "use_cache": True,
+        "attention_bias": False,
+        "vocab_size": 100352,
+    }
+
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "phi-3-small-8k-instruct", "")
+    print(hardware)
+    assert hardware.cpus == 5
+    assert hardware.gpus == 1
+    assert hardware.memory == "20Gi"
+    assert hardware.storage == "40Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_1G_20GB
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "phi-3-small-8k-instruct", "", is_batch_job=True
+    )
+    print(hardware)
+    assert hardware.cpus == 10
+    assert hardware.gpus == 1
+    assert hardware.memory == "40Gi"
+    assert hardware.storage == "80Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_3G_40GB
+
+    fake_llm_artifact_gateway.model_config = {
+        "architectures": ["Phi3ForCausalLM"],
+        "attention_dropout": 0.0,
+        "bos_token_id": 1,
+        "embd_pdrop": 0.0,
+        "eos_token_id": 32000,
+        "hidden_act": "silu",
+        "hidden_size": 5120,
+        "initializer_range": 0.02,
+        "intermediate_size": 17920,
+        "max_position_embeddings": 4096,
+        "model_type": "phi3",
+        "num_attention_heads": 40,
+        "num_hidden_layers": 40,
+        "num_key_value_heads": 10,
+        "original_max_position_embeddings": 4096,
+        "pad_token_id": 32000,
+        "resid_pdrop": 0.0,
+        "rms_norm_eps": 1e-05,
+        "rope_scaling": None,
+        "rope_theta": 10000.0,
+        "sliding_window": 2047,
+        "tie_word_embeddings": False,
+        "torch_dtype": "bfloat16",
+        "transformers_version": "4.39.3",
+        "use_cache": True,
+        "attention_bias": False,
+        "vocab_size": 32064,
+    }
+
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "phi-3-medium-8k-instruct", "")
+    assert hardware.cpus == 10
+    assert hardware.gpus == 1
+    assert hardware.memory == "40Gi"
+    assert hardware.storage == "80Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_3G_40GB
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "phi-3-medium-8k-instruct", "", is_batch_job=True
+    )
+    assert hardware.cpus == 20
+    assert hardware.gpus == 1
+    assert hardware.memory == "80Gi"
+    assert hardware.storage == "96Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["MixtralForCausalLM"],
         "attention_dropout": 0.0,
