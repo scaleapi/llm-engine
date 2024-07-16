@@ -210,6 +210,12 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "gemma-2b-instruct",
             "gemma-7b",
             "gemma-7b-instruct",
+            "phi-3-mini-4k-instruct",
+            "phi-3-mini-128k-instruct",
+            "phi-3-small-8k-instruct",
+            "phi-3-small-128k-instruct",
+            "phi-3-medium-4-instruct",
+            "phi-3-medium-128k-instruct",
         ]
     ),
     LLMInferenceFramework.LIGHTLLM: set(
@@ -2324,6 +2330,12 @@ async def _infer_hardware(
         model_param_count_b = 47
     elif "mixtral-8x22b" in model_name:
         model_param_count_b = 140
+    elif "phi-3-mini" in model_name:
+        model_param_count_b = 4
+    elif "phi-3-small" in model_name:
+        model_param_count_b = 8
+    elif "phi-3-medium" in model_name:
+        model_param_count_b = 15
     else:
         numbers = re.findall(r"(\d+)b", model_name)
         if len(numbers) == 0:
