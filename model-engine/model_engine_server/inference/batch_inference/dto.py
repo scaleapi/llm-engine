@@ -4,7 +4,7 @@
 from enum import Enum
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TokenOutput(BaseModel):
@@ -148,6 +148,8 @@ class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
     Internal model for representing request to the llm engine. This contains additional fields that we want
     hidden from the DTO exposed to the client.
     """
+
+    model_config = ConfigDict(populate_by_name=True)
 
     model_cfg: CreateBatchCompletionsModelConfig = Field(alias="model_config")
     """
