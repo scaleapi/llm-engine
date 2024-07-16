@@ -42,6 +42,8 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `gemma-2b-instruct`      | ✅                       |                            | vllm                                       | 8192                                           |
 | `gemma-7b`               | ✅                       |                            | vllm                                       | 8192                                           |
 | `gemma-7b-instruct`      | ✅                       |                            | vllm                                       | 8192                                           |
+| `phi-3-mini-4k-instruct` | ✅                       |                            | vllm                                       | 4096                                           |
+
 
 ## Usage
 
