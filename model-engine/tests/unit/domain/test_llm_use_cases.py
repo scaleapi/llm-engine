@@ -2046,10 +2046,10 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     hardware = await _infer_hardware(
         fake_llm_artifact_gateway, "deepseek-coder-v2-lite-instruct", ""
     )
-    assert hardware.cpus == 160
-    assert hardware.gpus == 8
-    assert hardware.memory == "800Gi"
-    assert hardware.storage == "640Gi"
+    assert hardware.cpus == 20
+    assert hardware.gpus == 1
+    assert hardware.memory == "80Gi"
+    assert hardware.storage == "96Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     hardware = await _infer_hardware(
