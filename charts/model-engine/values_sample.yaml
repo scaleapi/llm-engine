@@ -346,7 +346,7 @@ recommendedHardware:
       cpus: 80
       gpus: 8
       memory: 800Gi
-      storage: 460Gi
+      storage: 640Gi
       gpu_type: nvidia-hopper-h100
   byModelName:
     - name: llama-3-8b-instruct-262k
@@ -354,4 +354,28 @@ recommendedHardware:
       gpus: 2
       memory: 40Gi
       storage: 40Gi
+      gpu_type: nvidia-hopper-h100
+    - name: deepseek-coder-v2-lite
+      cpus: 160
+      gpus: 8
+      memory: 800Gi
+      storage: 640Gi
+      gpu_type: nvidia-hopper-h100
+    - name: deepseek-coder-v2-lite-instruct
+      cpus: 160
+      gpus: 8
+      memory: 800Gi
+      storage: 640Gi
+      gpu_type: nvidia-hopper-h100
+    - name: deepseek-coder-v2
+      cpus: 160
+      gpus: 8
+      memory: 800Gi
+      storage: 640Gi
+      gpu_type: nvidia-hopper-h100
+    - name: deepseek-coder-v2-instruct
+      cpus: 160
+      gpus: 8
+      memory: 800Gi
+      storage: 640Gi
       gpu_type: nvidia-hopper-h100

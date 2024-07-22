@@ -216,6 +216,10 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "phi-3-small-128k-instruct",
             "phi-3-medium-4-instruct",
             "phi-3-medium-128k-instruct",
+            "deepseek-coder-v2",
+            "deepseek-coder-v2-instruct",
+            "deepseek-coder-v2-lite",
+            "deepseek-coder-v2-lite-instruct",
         ]
     ),
     LLMInferenceFramework.LIGHTLLM: set(
@@ -2336,6 +2340,10 @@ async def _infer_hardware(
         model_param_count_b = 8
     elif "phi-3-medium" in model_name:
         model_param_count_b = 15
+    elif "deepseek-coder-v2-lite" in model_name:
+        model_param_count_b = 16
+    elif "deepseek-coder-v2" in model_name:
+        model_param_count_b = 237
     else:
         numbers = re.findall(r"(\d+)b", model_name)
         if len(numbers) == 0:
@@ -2355,6 +2363,7 @@ async def _infer_hardware(
     config_map = await _get_recommended_hardware_config_map()
     by_model_name = {item["name"]: item for item in yaml.safe_load(config_map["byModelName"])}
     by_gpu_memory_gb = yaml.safe_load(config_map["byGpuMemoryGb"])
+    print(min_memory_gb)
     if model_name in by_model_name:
         cpus = by_model_name[model_name]["cpus"]
         gpus = by_model_name[model_name]["gpus"]
