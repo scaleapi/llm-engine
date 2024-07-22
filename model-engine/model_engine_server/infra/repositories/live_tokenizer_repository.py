@@ -91,6 +91,12 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "phi-3-small-128k-instruct": ModelInfo("microsoft/phi-3-small-128k-instruct", None),
         "phi-3-medium-4-instruct": ModelInfo("microsoft/phi-3-medium-4k-instruct", None),
         "phi-3-medium-128k-instruct": ModelInfo("microsoft/phi-3-medium-128k-instruct", None),
+        "deepseek-coder-v2": ModelInfo("deepseek-ai/DeepSeek-Coder-V2-Base", None),
+        "deepseek-coder-v2-instruct": ModelInfo("deepseek-ai/DeepSeek-Coder-V2-Instruct", None),
+        "deepseek-coder-v2-lite": ModelInfo("deepseek-ai/DeepSeek-Coder-V2-Lite-Base", None),
+        "deepseek-coder-v2-lite-instruct": ModelInfo(
+            "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct", None
+        ),
     }
 
 
