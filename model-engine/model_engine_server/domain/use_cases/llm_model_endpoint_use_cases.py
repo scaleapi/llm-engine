@@ -2363,7 +2363,6 @@ async def _infer_hardware(
     config_map = await _get_recommended_hardware_config_map()
     by_model_name = {item["name"]: item for item in yaml.safe_load(config_map["byModelName"])}
     by_gpu_memory_gb = yaml.safe_load(config_map["byGpuMemoryGb"])
-    print(min_memory_gb)
     if model_name in by_model_name:
         cpus = by_model_name[model_name]["cpus"]
         gpus = by_model_name[model_name]["gpus"]
