@@ -2460,7 +2460,9 @@ class CreateBatchCompletionsUseCase:
     async def execute(
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
-        if request.data_parallelism is not None and request.data_parallelism > 1: # pragma: no cover
+        if (
+            request.data_parallelism is not None and request.data_parallelism > 1
+        ):  # pragma: no cover
             raise ObjectHasInvalidValueException(
                 "Data parallelism is disabled for batch completions."
             )
