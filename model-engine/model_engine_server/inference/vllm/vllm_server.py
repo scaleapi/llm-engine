@@ -261,10 +261,10 @@ if __name__ == "__main__":
     check_unknown_startup_memory_usage()
 
     parser = FlexibleArgumentParser()
-    # host and port are already given by make_arg_parser() in parse_args()
+    # host, port, and AsyncEngineArgs are already given by make_arg_parser() in parse_args()
     # parser.add_argument("--host", type=str, default=None)  # None == IPv4 / IPv6 dualstack
     # parser.add_argument("--port", type=int, default=5005)
-    parser = AsyncEngineArgs.add_cli_args(parser)
+    # parser = AsyncEngineArgs.add_cli_args(parser)
     args = parse_args(parser)
 
     logger.info("vLLM version %s", VLLM_VERSION)
