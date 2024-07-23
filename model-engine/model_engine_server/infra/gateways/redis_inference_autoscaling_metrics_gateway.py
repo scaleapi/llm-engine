@@ -47,3 +47,9 @@ class RedisInferenceAutoscalingMetricsGateway(InferenceAutoscalingMetricsGateway
 
     async def emit_prewarm_metric(self, endpoint_id: str):
         await self._emit_metric(endpoint_id, PREWARM_EXPIRY_SECONDS)
+
+    async def create_or_update_resources(self, endpoint_id: str):
+        pass  # no extra resources needed
+
+    async def delete_resources(self, endpoint_id: str):
+        pass

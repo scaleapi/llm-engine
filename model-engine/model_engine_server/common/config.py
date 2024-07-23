@@ -34,7 +34,7 @@ SERVICE_CONFIG_PATH = os.environ.get("DEPLOY_SERVICE_CONFIG_PATH", DEFAULT_SERVI
 redis_cache_expiration_timestamp = None
 
 
-# duplicated from llm/ia3_finetune
+# duplicated from llm/finetune_pipeline
 def get_model_cache_directory_name(model_name: str):
     """How huggingface maps model names to directory names in their cache for model files.
     We adopt this when storing model cache files in s3.
@@ -55,7 +55,7 @@ class HostedModelInferenceServiceConfig:
     sqs_queue_policy_template: str
     sqs_queue_tag_template: str
     model_primitive_host: str
-    s3_file_llm_fine_tune_repository: str
+    cloud_file_llm_fine_tune_repository: str
     hf_user_fine_tuned_weights_prefix: str
     istio_enabled: bool
     dd_trace_enabled: bool
@@ -116,14 +116,17 @@ class HostedModelInferenceServiceConfig:
         # redis://redis.url:6379/<db_index>
         # -> redis.url:6379
         if "rediss://" in self.cache_redis_url:
-            return self.cache_redis_url.split("rediss://")[1].split("/")[0]
+            return self.cache_redis_url.split("rediss://")[1].split("@")[-1].split("/")[0]
         return self.cache_redis_url.split("redis://")[1].split("/")[0]
 
     @property
     def cache_redis_db_index(self) -> int:
         # redis://redis.url:6379/<db_index>
         # -> <db_index>
-        return int(self.cache_redis_url.split("/")[-1])
+        try:
+            return int(self.cache_redis_url.split("/")[-1])
+        except ValueError:
+            return 0  # 0 is the default index used by redis if it's not specified
 
 
 def read_default_config():
