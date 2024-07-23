@@ -293,7 +293,7 @@ if __name__ == "__main__":
         request_logger=None,
     )
     openai_serving_completion = OpenAIServingCompletion(
-        engine, model_config, served_model_names, args.lora_modules
+        engine, model_config, served_model_names, lora_modules=args.lora_modules, prompt_adapters=args.prompt_adapters, request_logger=None,
     )
 
     uvicorn.run(
