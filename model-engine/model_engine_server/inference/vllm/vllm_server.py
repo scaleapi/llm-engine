@@ -27,7 +27,7 @@ from vllm.model_executor.guided_decoding import get_guided_decoding_logits_proce
 from vllm.outputs import CompletionOutput
 from vllm.sampling_params import SamplingParams
 from vllm.sequence import Logprob
-from vllm.utils import random_uuid
+from vllm.utils import FlexibleArgumentParser, random_uuid
 from vllm.version import __version__ as VLLM_VERSION
 
 logging.basicConfig(
@@ -253,19 +253,19 @@ def format_logprobs(request_output: CompletionOutput) -> Optional[List[Dict[int,
     return [extract_logprobs(logprobs) for logprobs in output_logprobs]
 
 
-def parse_args():
-    parser = make_arg_parser()
+def parse_args(parser: FlexibleArgumentParser):
+    parser = make_arg_parser(parser)
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     check_unknown_startup_memory_usage()
 
-    parser = argparse.ArgumentParser()
+    parser = FlexibleArgumentParser()
     parser.add_argument("--host", type=str, default=None)  # None == IPv4 / IPv6 dualstack
     parser.add_argument("--port", type=int, default=5005)
     parser = AsyncEngineArgs.add_cli_args(parser)
-    args = parse_args()
+    args = parse_args(parser)
 
     logger.info("vLLM version %s", VLLM_VERSION)
     logger.info("args: %s", args)
