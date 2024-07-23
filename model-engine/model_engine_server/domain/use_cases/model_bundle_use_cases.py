@@ -57,7 +57,7 @@ class CreateModelBundleV1UseCase:
         self.docker_repository = docker_repository
         self.model_primitive_gateway = model_primitive_gateway
 
-    async def execute(
+    async def execute(  # TODO handle multinode (unless we don't need this)
         self, user: User, request: CreateModelBundleV1Request
     ) -> CreateModelBundleV1Response:
         """
@@ -184,7 +184,7 @@ class CloneModelBundleV1UseCase:
         self.model_bundle_repository = model_bundle_repository
         self.authz_module = LiveAuthorizationModule()
 
-    async def execute(
+    async def execute(  # TODO multinode? probably not
         self,
         user: User,
         request: CloneModelBundleV1Request,
@@ -248,7 +248,7 @@ class ListModelBundlesV1UseCase:
     def __init__(self, model_bundle_repository: ModelBundleRepository):
         self.model_bundle_repository = model_bundle_repository
 
-    async def execute(
+    async def execute(  # TODO multinode? maybe not
         self,
         user: User,
         model_name: Optional[str],
@@ -351,7 +351,7 @@ class CreateModelBundleV2UseCase:
         self.docker_repository = docker_repository
         self.model_primitive_gateway = model_primitive_gateway
 
-    async def execute(
+    async def execute(  # TODO multinode
         self,
         user: User,
         request: CreateModelBundleV2Request,
@@ -444,7 +444,7 @@ class CreateModelBundleV2UseCase:
             packaging_type = ModelBundlePackagingType.LIRA
             app_config = None
 
-        model_bundle = await self.model_bundle_repository.create_model_bundle(
+        model_bundle = await self.model_bundle_repository.create_model_bundle(  # TODO multinode? likely don't need to change anything here
             name=request.name,
             created_by=created_by,
             owner=owner,
@@ -472,7 +472,7 @@ class CloneModelBundleV2UseCase:
         self.model_bundle_repository = model_bundle_repository
         self.authz_module = LiveAuthorizationModule()
 
-    async def execute(
+    async def execute(  # TODO multinode?
         self,
         user: User,
         request: CloneModelBundleV2Request,
