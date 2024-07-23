@@ -289,6 +289,8 @@ if __name__ == "__main__":
         args.response_role,
         lora_modules=args.lora_modules,
         chat_template=args.chat_template,
+        prompt_adapters=args.prompt_adapters,
+        request_logger=None,
     )
     openai_serving_completion = OpenAIServingCompletion(
         engine, model_config, served_model_names, args.lora_modules
