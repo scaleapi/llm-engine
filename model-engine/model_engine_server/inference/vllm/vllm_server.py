@@ -287,8 +287,8 @@ if __name__ == "__main__":
         model_config,
         served_model_names,
         args.response_role,
-        args.lora_modules,
-        args.chat_template,
+        lora_modules=args.lora_modules,
+        chat_template=args.chat_template,
     )
     openai_serving_completion = OpenAIServingCompletion(
         engine, model_config, served_model_names, args.lora_modules
