@@ -534,7 +534,7 @@ def create_batch_completions_request() -> CreateBatchCompletionsRequest:
             model="mpt-7b",
             checkpoint_path="s3://test_checkpoint_path",
             labels={},
-            num_shards=2,
+            num_shards=1,
         ),
-        data_parallelism=2,
+        data_parallelism=1,
     )

@@ -4590,6 +4590,18 @@ def mocked__get_recommended_hardware_config_map():
       memory: 160Gi
       storage: 160Gi
       gpu_type: nvidia-hopper-h100
+    - name: deepseek-coder-v2
+      cpus: 160
+      gpus: 8
+      memory: 800Gi
+      storage: 640Gi
+      gpu_type: nvidia-hopper-h100
+    - name: deepseek-coder-v2-instruct
+      cpus: 160
+      gpus: 8
+      memory: 800Gi
+      storage: 640Gi
+      gpu_type: nvidia-hopper-h100
                 """,
         }
 

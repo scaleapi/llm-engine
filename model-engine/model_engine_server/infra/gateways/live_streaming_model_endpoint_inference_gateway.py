@@ -208,7 +208,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
             async for item in response:
                 yield SyncEndpointPredictV1Response(status=TaskStatus.SUCCESS, result=item)
         except UpstreamServiceError as exc:
-            logger.error(f"Service error on sync task: {exc.content!r}")
+            logger.error(f"Service error on streaming task: {exc.content!r}")
             try:
                 error_json = orjson.loads(exc.content.decode("utf-8"))
                 result_traceback = (

@@ -1953,6 +1953,282 @@ async def test_validate_checkpoint_files_safetensors_with_other_files():
     mocked__get_recommended_hardware_config_map(),
 )
 async def test_infer_hardware(fake_llm_artifact_gateway):
+    # deepseek from https://huggingface.co/deepseek-ai/DeepSeek-Coder-V2-Instruct/raw/main/config.json
+    fake_llm_artifact_gateway.model_config = {
+        "architectures": ["DeepseekV2ForCausalLM"],
+        "attention_bias": False,
+        "attention_dropout": 0.0,
+        "aux_loss_alpha": 0.001,
+        "bos_token_id": 100000,
+        "eos_token_id": 100001,
+        "ep_size": 1,
+        "first_k_dense_replace": 1,
+        "hidden_act": "silu",
+        "hidden_size": 5120,
+        "initializer_range": 0.02,
+        "intermediate_size": 12288,
+        "kv_lora_rank": 512,
+        "max_position_embeddings": 163840,
+        "model_type": "deepseek_v2",
+        "moe_intermediate_size": 1536,
+        "moe_layer_freq": 1,
+        "n_group": 8,
+        "n_routed_experts": 160,
+        "n_shared_experts": 2,
+        "norm_topk_prob": False,
+        "num_attention_heads": 128,
+        "num_experts_per_tok": 6,
+        "num_hidden_layers": 60,
+        "num_key_value_heads": 128,
+        "pretraining_tp": 1,
+        "q_lora_rank": 1536,
+        "qk_nope_head_dim": 128,
+        "qk_rope_head_dim": 64,
+        "rms_norm_eps": 1e-06,
+        "rope_theta": 10000,
+        "routed_scaling_factor": 16.0,
+        "scoring_func": "softmax",
+        "seq_aux": True,
+        "tie_word_embeddings": False,
+        "topk_group": 3,
+        "topk_method": "group_limited_greedy",
+        "torch_dtype": "bfloat16",
+        "transformers_version": "4.39.3",
+        "use_cache": True,
+        "v_head_dim": 128,
+        "vocab_size": 102400,
+    }
+
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "deepseek-coder-v2-instruct", "")
+    assert hardware.cpus == 160
+    assert hardware.gpus == 8
+    assert hardware.memory == "800Gi"
+    assert hardware.storage == "640Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "deepseek-coder-v2-instruct", "", is_batch_job=True
+    )
+    assert hardware.cpus == 160
+    assert hardware.gpus == 8
+    assert hardware.memory == "800Gi"
+    assert hardware.storage == "640Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
+    # deepseek lite https://huggingface.co/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct/raw/main/config.json
+    fake_llm_artifact_gateway.model_config = {
+        "architectures": ["DeepseekV2ForCausalLM"],
+        "attention_bias": False,
+        "attention_dropout": 0.0,
+        "aux_loss_alpha": 0.001,
+        "bos_token_id": 100000,
+        "eos_token_id": 100001,
+        "first_k_dense_replace": 1,
+        "hidden_act": "silu",
+        "hidden_size": 2048,
+        "initializer_range": 0.02,
+        "intermediate_size": 10944,
+        "kv_lora_rank": 512,
+        "max_position_embeddings": 163840,
+        "model_type": "deepseek_v2",
+        "moe_intermediate_size": 1408,
+        "moe_layer_freq": 1,
+        "n_group": 1,
+        "n_routed_experts": 64,
+        "n_shared_experts": 2,
+        "norm_topk_prob": False,
+        "num_attention_heads": 16,
+        "num_experts_per_tok": 6,
+        "num_hidden_layers": 27,
+        "num_key_value_heads": 16,
+        "pretraining_tp": 1,
+        "qk_nope_head_dim": 128,
+        "qk_rope_head_dim": 64,
+        "rms_norm_eps": 1e-06,
+        "rope_theta": 10000,
+        "routed_scaling_factor": 1.0,
+        "scoring_func": "softmax",
+        "seq_aux": True,
+        "tie_word_embeddings": False,
+        "topk_group": 1,
+        "topk_method": "greedy",
+        "torch_dtype": "bfloat16",
+        "transformers_version": "4.39.3",
+        "use_cache": True,
+        "v_head_dim": 128,
+        "vocab_size": 102400,
+    }
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "deepseek-coder-v2-lite-instruct", ""
+    )
+    assert hardware.cpus == 20
+    assert hardware.gpus == 1
+    assert hardware.memory == "80Gi"
+    assert hardware.storage == "96Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "deepseek-coder-v2-lite-instruct", "", is_batch_job=True
+    )
+    assert hardware.cpus == 160
+    assert hardware.gpus == 8
+    assert hardware.memory == "800Gi"
+    assert hardware.storage == "640Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
+    # Phi 3 mini from https://huggingface.co/microsoft/Phi-3-mini-4k-instruct/blob/main/config.json
+    fake_llm_artifact_gateway.model_config = {
+        "architectures": ["Phi3ForCausalLM"],
+        "attention_dropout": 0.0,
+        "bos_token_id": 1,
+        "embd_pdrop": 0.0,
+        "eos_token_id": 32000,
+        "hidden_act": "silu",
+        "hidden_size": 3072,
+        "initializer_range": 0.02,
+        "intermediate_size": 8192,
+        "max_position_embeddings": 4096,
+        "model_type": "phi3",
+        "num_attention_heads": 32,
+        "num_hidden_layers": 32,
+        "num_key_value_heads": 32,
+        "original_max_position_embeddings": 4096,
+        "pad_token_id": 32000,
+        "resid_pdrop": 0.0,
+        "rms_norm_eps": 1e-05,
+        "rope_theta": 10000.0,
+        "sliding_window": 2047,
+        "tie_word_embeddings": False,
+        "torch_dtype": "bfloat16",
+        "transformers_version": "4.40.2",
+        "use_cache": True,
+        "attention_bias": False,
+        "vocab_size": 32064,
+    }
+
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "phi-3-mini-4k-instruct", "")
+    assert hardware.cpus == 5
+    assert hardware.gpus == 1
+    assert hardware.memory == "20Gi"
+    assert hardware.storage == "40Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_1G_20GB
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "phi-3-mini-4k-instruct", "", is_batch_job=True
+    )
+    assert hardware.cpus == 10
+    assert hardware.gpus == 1
+    assert hardware.memory == "40Gi"
+    assert hardware.storage == "80Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_3G_40GB
+
+    # Phi 3 small from https://huggingface.co/microsoft/Phi-3-small-8k-instruct/blob/main/config.json
+    fake_llm_artifact_gateway.model_config = {
+        "architectures": ["Phi3SmallForCausalLM"],
+        "attention_dropout_prob": 0.0,
+        "blocksparse_block_size": 64,
+        "blocksparse_homo_head_pattern": False,
+        "blocksparse_num_local_blocks": 16,
+        "blocksparse_triton_kernel_block_size": 64,
+        "blocksparse_vert_stride": 8,
+        "bos_token_id": 100257,
+        "dense_attention_every_n_layers": 2,
+        "embedding_dropout_prob": 0.1,
+        "eos_token_id": 100257,
+        "ff_dim_multiplier": None,
+        "ff_intermediate_size": 14336,
+        "ffn_dropout_prob": 0.1,
+        "gegelu_limit": 20.0,
+        "gegelu_pad_to_256": True,
+        "hidden_act": "gegelu",
+        "hidden_size": 4096,
+        "initializer_range": 0.02,
+        "layer_norm_epsilon": 1e-05,
+        "max_position_embeddings": 8192,
+        "model_type": "phi3small",
+        "mup_attn_multiplier": 1.0,
+        "mup_embedding_multiplier": 10.0,
+        "mup_use_scaling": True,
+        "mup_width_multiplier": 8.0,
+        "num_attention_heads": 32,
+        "num_hidden_layers": 32,
+        "num_key_value_heads": 8,
+        "pad_sequence_to_multiple_of_64": True,
+        "reorder_and_upcast_attn": False,
+        "rope_embedding_base": 1000000,
+        "rope_position_scale": 1.0,
+        "torch_dtype": "bfloat16",
+        "transformers_version": "4.38.1",
+        "use_cache": True,
+        "attention_bias": False,
+        "vocab_size": 100352,
+    }
+
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "phi-3-small-8k-instruct", "")
+    print(hardware)
+    assert hardware.cpus == 5
+    assert hardware.gpus == 1
+    assert hardware.memory == "20Gi"
+    assert hardware.storage == "40Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_1G_20GB
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "phi-3-small-8k-instruct", "", is_batch_job=True
+    )
+    print(hardware)
+    assert hardware.cpus == 10
+    assert hardware.gpus == 1
+    assert hardware.memory == "40Gi"
+    assert hardware.storage == "80Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_3G_40GB
+
+    fake_llm_artifact_gateway.model_config = {
+        "architectures": ["Phi3ForCausalLM"],
+        "attention_dropout": 0.0,
+        "bos_token_id": 1,
+        "embd_pdrop": 0.0,
+        "eos_token_id": 32000,
+        "hidden_act": "silu",
+        "hidden_size": 5120,
+        "initializer_range": 0.02,
+        "intermediate_size": 17920,
+        "max_position_embeddings": 4096,
+        "model_type": "phi3",
+        "num_attention_heads": 40,
+        "num_hidden_layers": 40,
+        "num_key_value_heads": 10,
+        "original_max_position_embeddings": 4096,
+        "pad_token_id": 32000,
+        "resid_pdrop": 0.0,
+        "rms_norm_eps": 1e-05,
+        "rope_scaling": None,
+        "rope_theta": 10000.0,
+        "sliding_window": 2047,
+        "tie_word_embeddings": False,
+        "torch_dtype": "bfloat16",
+        "transformers_version": "4.39.3",
+        "use_cache": True,
+        "attention_bias": False,
+        "vocab_size": 32064,
+    }
+
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "phi-3-medium-8k-instruct", "")
+    assert hardware.cpus == 10
+    assert hardware.gpus == 1
+    assert hardware.memory == "40Gi"
+    assert hardware.storage == "80Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100_3G_40GB
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway, "phi-3-medium-8k-instruct", "", is_batch_job=True
+    )
+    assert hardware.cpus == 20
+    assert hardware.gpus == 1
+    assert hardware.memory == "80Gi"
+    assert hardware.storage == "96Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["MixtralForCausalLM"],
         "attention_dropout": 0.0,

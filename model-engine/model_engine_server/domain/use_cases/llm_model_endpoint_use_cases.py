@@ -210,6 +210,16 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "gemma-2b-instruct",
             "gemma-7b",
             "gemma-7b-instruct",
+            "phi-3-mini-4k-instruct",
+            "phi-3-mini-128k-instruct",
+            "phi-3-small-8k-instruct",
+            "phi-3-small-128k-instruct",
+            "phi-3-medium-4-instruct",
+            "phi-3-medium-128k-instruct",
+            "deepseek-coder-v2",
+            "deepseek-coder-v2-instruct",
+            "deepseek-coder-v2-lite",
+            "deepseek-coder-v2-lite-instruct",
         ]
     ),
     LLMInferenceFramework.LIGHTLLM: set(
@@ -2385,6 +2395,16 @@ async def _infer_hardware(
         model_param_count_b = 47
     elif "mixtral-8x22b" in model_name:
         model_param_count_b = 140
+    elif "phi-3-mini" in model_name:
+        model_param_count_b = 4
+    elif "phi-3-small" in model_name:
+        model_param_count_b = 8
+    elif "phi-3-medium" in model_name:
+        model_param_count_b = 15
+    elif "deepseek-coder-v2-lite" in model_name:
+        model_param_count_b = 16
+    elif "deepseek-coder-v2" in model_name:
+        model_param_count_b = 237
     else:
         numbers = re.findall(r"(\d+)b", model_name)
         if len(numbers) == 0:
@@ -2509,6 +2529,13 @@ class CreateBatchCompletionsUseCase:
     async def execute(
         self, user: User, request: CreateBatchCompletionsRequest
     ) -> CreateBatchCompletionsResponse:
+        if (
+            request.data_parallelism is not None and request.data_parallelism > 1
+        ):  # pragma: no cover
+            raise ObjectHasInvalidValueException(
+                "Data parallelism is disabled for batch completions."
+            )
+
         request.model_cfg.checkpoint_path = get_checkpoint_path(
             request.model_cfg.model, request.model_cfg.checkpoint_path
         )
@@ -2557,7 +2584,7 @@ class CreateBatchCompletionsUseCase:
         job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
             created_by=user.user_id,
             owner=user.team_id,
-            job_config=engine_request.dict(),
+            job_config=engine_request.model_dump(by_alias=True),
             env=batch_bundle.env,
             command=batch_bundle.command,
             repo=batch_bundle.image_repository,
