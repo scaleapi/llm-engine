@@ -328,7 +328,7 @@ def _get_external_interfaces(
     docker_repository: DockerRepository
     if CIRCLECI:
         docker_repository = FakeDockerRepository()
-    elif infra_config().cloud_provider == "azure":
+    elif infra_config().docker_repo_prefix.endswith("azurecr.io"):
         docker_repository = ACRDockerRepository()
     else:
         docker_repository = ECRDockerRepository()

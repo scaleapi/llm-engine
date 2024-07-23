@@ -50,6 +50,9 @@ team: infra
 app.kubernetes.io/version: {{ .Values.tag }}
 tags.datadoghq.com/version: {{ .Values.tag }}
 tags.datadoghq.com/env: {{ .Values.context }}
+{{- if .Values.azure }}
+azure.workload.identity/use: "true"
+{{- end }}
 {{- end }}
 
 {{/*
@@ -60,9 +63,6 @@ Common labels
 product: model-engine
 helm.sh/chart: {{ include "modelEngine.chart" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- if .Values.azure }}
-azure.workload.identity/use: "true"
-{{- end }}
 {{- end }}
 
 {{- define "modelEngine.selectorLabels.builder" -}}
