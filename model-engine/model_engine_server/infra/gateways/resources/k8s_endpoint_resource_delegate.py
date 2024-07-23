@@ -329,6 +329,8 @@ class K8SEndpointResourceDelegate:
                 return envvar.value
         return None
 
+    # TODO analogous fns for the LWS config
+
     def _get_common_endpoint_params(self, deployment_config: V1Deployment) -> CommonEndpointParams:
         """
         Reads some values from k8s common to both sync and async endpoints
@@ -418,6 +420,8 @@ class K8SEndpointResourceDelegate:
         return name_to_container["main"]
 
     # --- Private low level fns that interact with k8s
+
+    # TODO _create_lws which also handles update
 
     @staticmethod
     async def _create_deployment(
@@ -880,6 +884,8 @@ class K8SEndpointResourceDelegate:
             endpoint_config=endpoint_config,
         )
 
+    # TODO delete lws
+
     @staticmethod
     async def _delete_deployment(endpoint_id: str, deployment_name: str) -> bool:
         apps_client = get_kubernetes_apps_client()
@@ -1138,7 +1144,7 @@ class K8SEndpointResourceDelegate:
         deployment_resource_name = f"deployment-{flavor_class}-{mode}-{device}"
         return deployment_resource_name
 
-    async def _create_or_update_resources(
+    async def _create_or_update_resources(  # TODO multinode
         self,
         request: CreateOrUpdateResourcesRequest,
         sqs_queue_name: Optional[str] = None,
@@ -1379,7 +1385,7 @@ class K8SEndpointResourceDelegate:
             per_worker=1,  # TODO dummy value, fill in when we autoscale from 0 to 1
         )
 
-    async def _get_resources(
+    async def _get_resources(  # TODO multinode
         self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
     ) -> ModelEndpointInfraState:
         apps_client = get_kubernetes_apps_client()
@@ -1499,7 +1505,7 @@ class K8SEndpointResourceDelegate:
         )
         return infra_state
 
-    async def _get_all_resources(
+    async def _get_all_resources(  # TODO multinode
         self,
     ) -> Dict[str, Tuple[bool, ModelEndpointInfraState]]:
         apps_client = get_kubernetes_apps_client()
@@ -1629,6 +1635,7 @@ class K8SEndpointResourceDelegate:
         return infra_states
 
     async def _delete_resources_async(self, endpoint_id: str, deployment_name: str) -> bool:
+        # TODO multinode (but not really)
         deployment_delete_succeeded = await self._delete_deployment(
             endpoint_id=endpoint_id, deployment_name=deployment_name
         )
@@ -1640,6 +1647,7 @@ class K8SEndpointResourceDelegate:
         return deployment_delete_succeeded and config_map_delete_succeeded
 
     async def _delete_resources_sync(self, endpoint_id: str, deployment_name: str) -> bool:
+        # TODO multinode
         deployment_delete_succeeded = await self._delete_deployment(
             endpoint_id=endpoint_id,
             deployment_name=deployment_name,
