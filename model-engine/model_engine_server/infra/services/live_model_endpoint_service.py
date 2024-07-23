@@ -146,6 +146,7 @@ class LiveModelEndpointService(ModelEndpointService):
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
         storage: Optional[StorageSpecificationType],
+        nodes_per_worker: int,
         optimize_costs: bool,
         min_workers: int,
         max_workers: int,
@@ -193,6 +194,7 @@ class LiveModelEndpointService(ModelEndpointService):
             memory=memory,
             gpu_type=gpu_type,
             storage=storage,
+            nodes_per_worker=nodes_per_worker,
             optimize_costs=optimize_costs,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,
@@ -272,6 +274,7 @@ class LiveModelEndpointService(ModelEndpointService):
         memory: Optional[StorageSpecificationType] = None,
         gpu_type: Optional[GpuType] = None,
         storage: Optional[StorageSpecificationType] = None,
+        # TODO do we include update here? looks like we omit endpoint_type as well
         optimize_costs: Optional[bool] = None,
         min_workers: Optional[int] = None,
         max_workers: Optional[int] = None,
@@ -335,6 +338,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 memory=memory,
                 gpu_type=gpu_type,
                 storage=storage,
+                nodes_per_worker=1,  # TODO multinode if you want
                 optimize_costs=optimize_costs,
                 post_inference_hooks=post_inference_hooks,
                 labels=labels,

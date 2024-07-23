@@ -770,7 +770,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
     @staticmethod
     def _validate_build_endpoint_request(
-        build_endpoint_request: BuildEndpointRequest,
+        build_endpoint_request: BuildEndpointRequest,  # TODO maybe multinode val
     ) -> None:
         """Raises ValueError if the request's AWS role isn't allowed."""
         allowed_aws_roles = {

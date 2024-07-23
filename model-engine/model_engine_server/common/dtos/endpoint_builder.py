@@ -11,7 +11,7 @@ from model_engine_server.domain.entities import (
 from pydantic import BaseModel
 
 
-class BuildEndpointRequest(BaseModel):  # TODO multinode?
+class BuildEndpointRequest(BaseModel):  # TODO update callsites
     model_endpoint_record: ModelEndpointRecord
     deployment_name: str
     min_workers: int
@@ -22,6 +22,7 @@ class BuildEndpointRequest(BaseModel):  # TODO multinode?
     memory: StorageSpecificationType
     gpu_type: Optional[GpuType] = None
     storage: Optional[StorageSpecificationType] = None
+    nodes_per_worker: int = 1  # Multinode support. >1 = multinode.
     optimize_costs: bool
     aws_role: str
     results_s3_bucket: str

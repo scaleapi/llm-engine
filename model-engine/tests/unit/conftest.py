@@ -989,7 +989,7 @@ class FakeTaskQueueGateway(TaskQueueGateway):
         return True
 
 
-class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
+class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):  # TODO handle multinode
     db: Dict[str, ModelEndpointInfraState]
     in_flight_infra: Dict[str, ModelEndpointInfraState]
     model_endpoint_record_repository: ModelEndpointRecordRepository
@@ -1024,6 +1024,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
         storage: Optional[StorageSpecificationType],
+        nodes_per_worker: int,
         optimize_costs: bool,
         aws_role: str,
         results_s3_bucket: str,
@@ -1125,6 +1126,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         memory: Optional[StorageSpecificationType] = None,
         gpu_type: Optional[GpuType] = None,
         storage: Optional[StorageSpecificationType] = None,
+        nodes_per_worker: int,
         optimize_costs: Optional[bool] = None,
         child_fn_info: Optional[Dict[str, Any]] = None,
         post_inference_hooks: Optional[List[str]] = None,
