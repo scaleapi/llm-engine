@@ -21,7 +21,7 @@ from model_engine_server.core.loggers import (
     logger_name,
     make_logger,
 )
-from model_engine_server.db.base import SessionAsync, SessionReadOnlyAsync
+from model_engine_server.db.base import get_session_async, get_session_read_only_async
 from model_engine_server.domain.gateways import (
     CronJobGateway,
     DockerImageBatchJobGateway,
@@ -55,6 +55,7 @@ from model_engine_server.infra.gateways import (
     ABSFileStorageGateway,
     ABSFilesystemGateway,
     ABSLLMArtifactGateway,
+    ASBInferenceAutoscalingMetricsGateway,
     CeleryTaskQueueGateway,
     DatadogMonitoringMetricsGateway,
     FakeMonitoringMetricsGateway,
@@ -220,8 +221,16 @@ def _get_external_interfaces(
     else:
         inference_task_queue_gateway = sqs_task_queue_gateway
         infra_task_queue_gateway = sqs_task_queue_gateway
-    resource_gateway = LiveEndpointResourceGateway(queue_delegate=queue_delegate)
     redis_client = aioredis.Redis(connection_pool=get_or_create_aioredis_pool())
+    inference_autoscaling_metrics_gateway = (
+        ASBInferenceAutoscalingMetricsGateway()
+        if infra_config().cloud_provider == "azure"
+        else RedisInferenceAutoscalingMetricsGateway(redis_client=redis_client)
+    )  # we can just reuse the existing redis client, we shouldn't get key collisions because of the prefix
+    resource_gateway = LiveEndpointResourceGateway(
+        queue_delegate=queue_delegate,
+        inference_autoscaling_metrics_gateway=inference_autoscaling_metrics_gateway,
+    )
     model_endpoint_cache_repo = RedisModelEndpointCacheRepository(
         redis_client=redis_client,
     )
@@ -252,9 +261,6 @@ def _get_external_interfaces(
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
-    inference_autoscaling_metrics_gateway = RedisInferenceAutoscalingMetricsGateway(
-        redis_client=redis_client
-    )  # we can just reuse the existing redis client, we shouldn't get key collisions because of the prefix
     model_endpoint_service = LiveModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,
         model_endpoint_infra_gateway=model_endpoint_infra_gateway,
@@ -290,14 +296,17 @@ def _get_external_interfaces(
     cron_job_gateway = LiveCronJobGateway()
 
     llm_fine_tune_repository: LLMFineTuneRepository
+    file_path = os.getenv(
+        "CLOUD_FILE_LLM_FINE_TUNE_REPOSITORY",
+        hmi_config.cloud_file_llm_fine_tune_repository,
+    )
     if infra_config().cloud_provider == "azure":
-        llm_fine_tune_repository = ABSFileLLMFineTuneRepository("not supported yet")
+        llm_fine_tune_repository = ABSFileLLMFineTuneRepository(
+            file_path=file_path,
+        )
     else:
         llm_fine_tune_repository = S3FileLLMFineTuneRepository(
-            file_path=os.getenv(
-                "S3_FILE_LLM_FINE_TUNE_REPOSITORY",
-                hmi_config.s3_file_llm_fine_tune_repository,
-            ),
+            file_path=file_path,
         )
     llm_fine_tune_events_repository = (
         ABSFileLLMFineTuneEventsRepository()
@@ -319,7 +328,7 @@ def _get_external_interfaces(
     docker_repository: DockerRepository
     if CIRCLECI:
         docker_repository = FakeDockerRepository()
-    elif infra_config().cloud_provider == "azure":
+    elif infra_config().docker_repo_prefix.endswith("azurecr.io"):
         docker_repository = ACRDockerRepository()
     else:
         docker_repository = ECRDockerRepository()
@@ -356,13 +365,13 @@ def _get_external_interfaces(
 
 
 def get_default_external_interfaces() -> ExternalInterfaces:
-    session = async_scoped_session(SessionAsync, scopefunc=asyncio.current_task)  # type: ignore
+    session = async_scoped_session(get_session_async(), scopefunc=asyncio.current_task)  # type: ignore
     return _get_external_interfaces(read_only=False, session=session)
 
 
 def get_default_external_interfaces_read_only() -> ExternalInterfaces:
     session = async_scoped_session(  # type: ignore
-        SessionReadOnlyAsync, scopefunc=asyncio.current_task  # type: ignore
+        get_session_read_only_async(), scopefunc=asyncio.current_task  # type: ignore
     )
     return _get_external_interfaces(read_only=True, session=session)
 
