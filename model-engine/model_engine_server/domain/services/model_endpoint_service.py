@@ -53,7 +53,7 @@ class ModelEndpointService(ABC):
         """
 
     @abstractmethod
-    def get_inference_auto_scaling_metrics_gateway(
+    def get_inference_autoscaling_metrics_gateway(
         self,
     ) -> InferenceAutoscalingMetricsGateway:
         """

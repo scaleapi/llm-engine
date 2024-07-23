@@ -16,7 +16,7 @@ from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
-from model_engine_server.db.base import SessionAsyncNullPool
+from model_engine_server.db.base import get_session_async_null_pool
 from model_engine_server.domain.repositories import DockerRepository
 from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
     ASBQueueEndpointResourceDelegate,
@@ -102,7 +102,7 @@ async def main(args: Any):
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
-        session=SessionAsyncNullPool,
+        session=get_session_async_null_pool(),
         read_only=True,
     )
 
@@ -118,12 +118,13 @@ async def main(args: Any):
 
     k8s_resource_manager = LiveEndpointResourceGateway(
         queue_delegate=queue_delegate,
+        inference_autoscaling_metrics_gateway=None,
     )
     image_cache_gateway = ImageCacheGateway()
     docker_repo: DockerRepository
     if CIRCLECI:
         docker_repo = FakeDockerRepository()
-    elif infra_config().cloud_provider == "azure":
+    elif infra_config().docker_repo_prefix.endswith("azurecr.io"):
         docker_repo = ACRDockerRepository()
     else:
         docker_repo = ECRDockerRepository()
