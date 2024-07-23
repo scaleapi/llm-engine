@@ -131,7 +131,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 )
         return state
 
-    async def create_model_endpoint(
+    async def create_model_endpoint(  # TODO multinode
         self,
         *,
         name: str,

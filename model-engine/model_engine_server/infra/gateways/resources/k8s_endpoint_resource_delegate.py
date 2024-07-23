@@ -262,7 +262,7 @@ def add_datadog_env_to_main_container(deployment_template: Dict[str, Any]) -> No
 
 
 class K8SEndpointResourceDelegate:
-    async def create_or_update_resources(
+    async def create_or_update_resources(  # TODO multinode
         self,
         request: CreateOrUpdateResourcesRequest,
         sqs_queue_name: Optional[str] = None,

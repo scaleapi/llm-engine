@@ -18,7 +18,7 @@ class ModelEndpointInfraGateway(ABC):
     """
 
     @abstractmethod
-    def create_model_endpoint_infra(
+    def create_model_endpoint_infra(  # TODO multinode
         self,
         *,
         model_endpoint_record: ModelEndpointRecord,

@@ -11,7 +11,7 @@ from model_engine_server.domain.entities import (
 from pydantic import BaseModel
 
 
-class BuildEndpointRequest(BaseModel):
+class BuildEndpointRequest(BaseModel):  # TODO multinode?
     model_endpoint_record: ModelEndpointRecord
     deployment_name: str
     min_workers: int

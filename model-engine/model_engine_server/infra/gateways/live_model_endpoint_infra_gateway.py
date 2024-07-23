@@ -50,7 +50,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         self.resource_gateway = resource_gateway
         self.task_queue_gateway = task_queue_gateway
 
-    def create_model_endpoint_infra(
+    def create_model_endpoint_infra(  # TODO multinode
         self,
         *,
         model_endpoint_record: ModelEndpointRecord,
@@ -108,7 +108,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         )
         return response.task_id
 
-    async def update_model_endpoint_infra(
+    async def update_model_endpoint_infra(  # TODO multinode maybe?
         self,
         *,
         model_endpoint_record: ModelEndpointRecord,

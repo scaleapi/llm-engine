@@ -226,7 +226,7 @@ class CreateModelEndpointV1UseCase:
         self.authz_module = LiveAuthorizationModule()
 
     async def execute(
-        self, user: User, request: CreateModelEndpointV1Request
+        self, user: User, request: CreateModelEndpointV1Request  # TODO potential multinode here?
     ) -> CreateModelEndpointV1Response:
         validate_deployment_resources(
             min_workers=request.min_workers,
@@ -287,32 +287,34 @@ class CreateModelEndpointV1UseCase:
         aws_role = self.authz_module.get_aws_role_for_user(user)
         results_s3_bucket = self.authz_module.get_s3_bucket_for_user(user)
 
-        model_endpoint_record = await self.model_endpoint_service.create_model_endpoint(
-            name=request.name,
-            created_by=user.user_id,
-            model_bundle_id=request.model_bundle_id,
-            endpoint_type=request.endpoint_type,
-            metadata=request.metadata,
-            post_inference_hooks=request.post_inference_hooks,
-            child_fn_info=None,
-            cpus=request.cpus,
-            gpus=request.gpus,
-            memory=request.memory,
-            gpu_type=request.gpu_type,
-            storage=request.storage,
-            optimize_costs=bool(request.optimize_costs),
-            min_workers=request.min_workers,
-            max_workers=request.max_workers,
-            per_worker=request.per_worker,
-            labels=request.labels,
-            aws_role=aws_role,
-            results_s3_bucket=results_s3_bucket,
-            prewarm=prewarm,
-            high_priority=high_priority,
-            owner=user.team_id,
-            default_callback_url=request.default_callback_url,
-            default_callback_auth=request.default_callback_auth,
-            public_inference=request.public_inference,
+        model_endpoint_record = (
+            await self.model_endpoint_service.create_model_endpoint(  # TODO multinode
+                name=request.name,
+                created_by=user.user_id,
+                model_bundle_id=request.model_bundle_id,
+                endpoint_type=request.endpoint_type,
+                metadata=request.metadata,
+                post_inference_hooks=request.post_inference_hooks,
+                child_fn_info=None,
+                cpus=request.cpus,
+                gpus=request.gpus,
+                memory=request.memory,
+                gpu_type=request.gpu_type,
+                storage=request.storage,
+                optimize_costs=bool(request.optimize_costs),
+                min_workers=request.min_workers,
+                max_workers=request.max_workers,
+                per_worker=request.per_worker,
+                labels=request.labels,
+                aws_role=aws_role,
+                results_s3_bucket=results_s3_bucket,
+                prewarm=prewarm,
+                high_priority=high_priority,
+                owner=user.team_id,
+                default_callback_url=request.default_callback_url,
+                default_callback_auth=request.default_callback_auth,
+                public_inference=request.public_inference,
+            )
         )
         _handle_post_inference_hooks(
             created_by=user.user_id,
@@ -415,7 +417,7 @@ class UpdateModelEndpointByIdV1UseCase:
                 f"{CONVERTED_FROM_ARTIFACT_LIKE_KEY} is a reserved metadata key and cannot be used by user."
             )
 
-        updated_endpoint_record = await self.model_endpoint_service.update_model_endpoint(
+        updated_endpoint_record = await self.model_endpoint_service.update_model_endpoint(  # TODO handle multinode? but we probably can't go from one to the other
             model_endpoint_id=model_endpoint_id,
             model_bundle_id=request.model_bundle_id,
             metadata=request.metadata,
