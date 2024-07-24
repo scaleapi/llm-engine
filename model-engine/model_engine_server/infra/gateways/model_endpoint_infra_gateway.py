@@ -88,7 +88,7 @@ class ModelEndpointInfraGateway(ABC):
         memory: Optional[StorageSpecificationType] = None,
         gpu_type: Optional[GpuType] = None,
         storage: Optional[StorageSpecificationType] = None,
-        nodes_per_worker: int,
+        nodes_per_worker: Optional[int] = None,
         optimize_costs: Optional[bool] = None,
         child_fn_info: Optional[Dict[str, Any]] = None,
         post_inference_hooks: Optional[List[str]] = None,

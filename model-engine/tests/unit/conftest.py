@@ -1099,6 +1099,8 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):  # TODO handle m
             model_endpoint_infra.resource_state.gpu_type = kwargs["gpu_type"]
         if kwargs["storage"] is not None:
             model_endpoint_infra.resource_state.storage = kwargs["storage"]
+        if kwargs["nodes_per_worker"] is not None:
+            pass  # TODO
         if kwargs["child_fn_info"] is not None:
             model_endpoint_infra.child_fn_info = kwargs["child_fn_info"]
         if kwargs["post_inference_hooks"] is not None:
@@ -1126,7 +1128,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):  # TODO handle m
         memory: Optional[StorageSpecificationType] = None,
         gpu_type: Optional[GpuType] = None,
         storage: Optional[StorageSpecificationType] = None,
-        nodes_per_worker: int,
+        nodes_per_worker: Optional[int] = None,  # TODO can we have this here?
         optimize_costs: Optional[bool] = None,
         child_fn_info: Optional[Dict[str, Any]] = None,
         post_inference_hooks: Optional[List[str]] = None,
