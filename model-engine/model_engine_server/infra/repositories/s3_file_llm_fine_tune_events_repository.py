@@ -12,7 +12,7 @@ from model_engine_server.domain.repositories.llm_fine_tune_events_repository imp
     LLMFineTuneEventsRepository,
 )
 
-# Echoes llm/ia3_finetune/docker_image_fine_tuning_entrypoint.py
+# Echoes llm/finetune_pipeline/docker_image_fine_tuning_entrypoint.py
 S3_HF_USER_FINE_TUNED_WEIGHTS_PREFIX = (
     f"s3://{infra_config().s3_bucket}/hosted-model-inference/fine_tuned_weights"
 )
@@ -36,7 +36,7 @@ class S3FileLLMFineTuneEventsRepository(LLMFineTuneEventsRepository):
         transport_params = {"client": client}
         return smart_open.open(uri, mode, transport_params=transport_params)
 
-    # echoes llm/ia3_finetune/docker_image_fine_tuning_entrypoint.py
+    # echoes llm/finetune_pipeline/docker_image_fine_tuning_entrypoint.py
     def _get_model_cache_directory_name(self, model_name: str):
         """How huggingface maps model names to directory names in their cache for model files.
         We adopt this when storing model cache files in s3.
