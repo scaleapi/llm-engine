@@ -424,11 +424,44 @@ class K8SEndpointResourceDelegate:
     # TODO _create_lws which also handles update
     @staticmethod
     async def _create_lws(
-        model_endpoint_record: ModelEndpointRecord,
-        deployment: Dict[str, Any],
+        lws: Dict[str, Any],
         name: str,
     ) -> None:
-        pass
+        """
+        TODO docstring
+        """
+        custom_objects_client = get_kubernetes_custom_objects_client()
+        try:
+            custom_objects_client.create_namespaced_custom_object(
+                group="leaderworkerset.x-k8s.io",
+                version="v1",
+                namespace=hmi_config.endpoint_namespace,
+                plural="leaderworkersets",
+                body=lws,
+            )
+        except ApiException as exc:
+            # TODO do we actually want to replace things here? or do we want to not allow this?
+            if exc.status == 409:
+                logger.info(f"LeaderWorkerSet {name} already exists, replacing")
+                existing_lws = await custom_objects_client.get_namespaced_custom_object(
+                    group="leaderworkerset.x-k8s.io",
+                    version="v1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="leaderworkersets",
+                    name=name,
+                )
+                new_lws = deep_update(existing_lws, lws)
+                await custom_objects_client.replace_namespaced_custom_object(
+                    group="leaderworkerset.x-k8s.io",
+                    version="v1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="leaderworkersets",
+                    name=name,
+                    body=new_lws,
+                )
+            else:
+                logger.exception("Got an exception when trying to apply the LeaderWorkerSet")
+                raise
 
     @staticmethod
     async def _create_deployment(
