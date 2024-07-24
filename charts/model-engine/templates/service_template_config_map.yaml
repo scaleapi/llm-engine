@@ -456,6 +456,392 @@ data:
           enableTLS: "false"
           unsafeSsl: "false"
           databaseIndex: "${REDIS_DB_INDEX}"
+  {{- range $device := tuple "gpu" }}
+  {{- range $mode := tuple "streaming"}}
+  leader-worker-set-{{ $mode }}-{{ $device }}.yaml: |-
+    apiVersion: leaderworkerset.x-k8s.io/v1
+    kind: LeaderWorkerSet
+    metadata:
+      name: ${RESOURCE_NAME} 
+      namespace: ${NAMESPACE} 
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    spec:
+      replicas: ${MIN_WORKERS}
+      leaderWorkerTemplate:
+        size: ${LWS_SIZE}
+        restartPolicy: RecreateGroupOnPodRestart  # TODO un-hardcode? if necessary
+        leaderTemplate:
+          metadata:
+            labels:
+              app: ${RESOURCE_NAME}
+              {{- $service_template_labels | nindent 14 }}
+              {{- if eq $mode "async" }}
+              sidecar.istio.io/inject: "false"  # TODO: switch to scuttle
+              {{- end }}
+              version: v1
+            annotations:
+              ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
+              kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+          spec:
+            affinity:
+              {{- include "modelEngine.serviceTemplateAffinity" . | nindent 14 }}
+            {{- if eq $mode "async" }}  # TODO
+            terminationGracePeriodSeconds: 1800
+            {{- else }}
+            terminationGracePeriodSeconds: 600
+            {{- end }}
+            {{- if $service_template_service_account_name }}
+            serviceAccount: {{ $service_template_service_account_name }}
+            {{- else }}
+            serviceAccount: {{ $launch_name }}
+            {{- end }}
+            {{- with $node_selector }}
+            nodeSelector:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            {{- if eq $device "gpu" }}
+            {{- if empty $node_selector }}
+            nodeSelector:
+            {{- end }}
+              k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+            tolerations:
+              - key: "nvidia.com/gpu"
+                operator: "Exists"
+                effect: "NoSchedule"
+            {{- end }}
+            priorityClassName: ${PRIORITY}
+            containers:
+              {{- if contains "runnable-image" $flavor }}  # TODO remove
+              {{- if eq $mode "sync" }}
+              - name: http-forwarder
+                image: {{ $forwarder_repository }}:${GIT_TAG}
+                imagePullPolicy: IfNotPresent
+                command:
+                  - /usr/bin/dumb-init
+                  - --
+                  {{- if $enable_datadog }}
+                  - ddtrace-run
+                  {{- end }}
+                  - python
+                  - -m
+                  - model_engine_server.inference.forwarding.http_forwarder
+                  - --config
+                  - /workspace/model-engine/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                  - --port
+                  - "${FORWARDER_PORT}"
+                  - --num-workers
+                  - "${FORWARDER_WORKER_COUNT}"
+                  - --set
+                  - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
+                  - --set
+                  - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                  - --set
+                  - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                {{- $sync_forwarder_template_env | nindent 16 }}
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: ${FORWARDER_PORT}
+                  initialDelaySeconds: ${READINESS_INITIAL_DELAY}
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                resources:
+                  requests:
+                    cpu: ${FORWARDER_CPUS_LIMIT}
+                    memory: "100M"
+                    ephemeral-storage: "100M"
+                  limits:
+                    cpu: ${FORWARDER_CPUS_LIMIT}
+                    memory: ${FORWARDER_MEMORY_LIMIT}
+                    ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
+                {{ $forwarder_volume_mounts | nindent 16 }}
+                ports:
+                  - containerPort: ${FORWARDER_PORT}
+                    name: http
+              {{- else if eq $mode "streaming" }}
+              - name: http-forwarder
+                image: {{ $forwarder_repository }}:${GIT_TAG}
+                imagePullPolicy: IfNotPresent
+                command:
+                  - /usr/bin/dumb-init
+                  - --
+                  {{- if $enable_datadog }}
+                  - ddtrace-run
+                  {{- end }}
+                  - python
+                  - -m
+                  - model_engine_server.inference.forwarding.http_forwarder
+                  - --config
+                  - /workspace/model-engine/model_engine_server/inference/configs/service--http_forwarder.yaml
+                  - --port
+                  - "${FORWARDER_PORT}"
+                  - --num-workers
+                  - "${FORWARDER_WORKER_COUNT}"
+                  - --set
+                  - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
+                  - --set
+                  - "forwarder.stream.predict_route=${STREAMING_PREDICT_ROUTE}"
+                  - --set
+                  - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                  - --set
+                  - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                {{- $sync_forwarder_template_env | nindent 16 }}
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: ${FORWARDER_PORT}
+                  initialDelaySeconds: ${READINESS_INITIAL_DELAY}
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                resources:
+                  requests:
+                    cpu: ${FORWARDER_CPUS_LIMIT}
+                    memory: "100M"
+                    ephemeral-storage: "100M"
+                  limits:
+                    cpu: ${FORWARDER_CPUS_LIMIT}
+                    memory: ${FORWARDER_MEMORY_LIMIT}
+                    ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
+                {{ $forwarder_volume_mounts | nindent 16 }}
+                ports:
+                  - containerPort: ${FORWARDER_PORT}
+                    name: http
+              {{- else if eq $mode "async" }}
+              - name: celery-forwarder
+                image: {{ $forwarder_repository }}:${GIT_TAG}
+                imagePullPolicy: IfNotPresent
+                command:
+                  - /usr/bin/dumb-init
+                  - --
+                  {{- if $enable_datadog }}
+                  - ddtrace-run
+                  {{- end }}
+                  - python
+                  - -m
+                  - model_engine_server.inference.forwarding.celery_forwarder
+                  - --config
+                  - /workspace/model-engine/model_engine_server/inference/configs/${FORWARDER_CONFIG_FILE_NAME}
+                  - --queue
+                  - "${QUEUE}"
+                  - --task-visibility
+                  - "VISIBILITY_24H"
+                  - --set
+                  - "forwarder.async.predict_route=${PREDICT_ROUTE}"
+                  - --set
+                  - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                  {{- if eq $celery_broker_type "sqs" }}
+                  - --sqs-url
+                  - "${SQS_QUEUE_URL}"
+                  {{- end }}
+                  - --num-workers
+                  - "${PER_WORKER}"
+                  - --broker-type
+                  - {{ $celery_broker_type }}
+                  {{- if eq $celery_broker_type "servicebus" }}
+                  - --backend-protocol
+                  - abs
+                  {{- end }}
+                {{- $async_forwarder_template_env | nindent 16 }}
+                resources:
+                  requests:
+                    cpu: 0.1
+                    memory: "100M"
+                    ephemeral-storage: "100M"
+                  limits:
+                    cpu: ${FORWARDER_CPUS_LIMIT}
+                    memory: ${FORWARDER_MEMORY_LIMIT}
+                    ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
+                {{ $forwarder_volume_mounts | nindent 16 }}
+              {{- end }}
+              - name: lws_leader
+                image: ${IMAGE}
+                imagePullPolicy: IfNotPresent
+                command: ${COMMAND}
+                env: ${MAIN_ENV}
+                readinessProbe:
+                  httpGet:
+                    path: ${HEALTHCHECK_ROUTE}
+                    port: ${USER_CONTAINER_PORT}
+                  initialDelaySeconds: ${READINESS_INITIAL_DELAY}
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                resources:
+                  requests:
+                    {{- if eq $device "gpu" }}
+                    nvidia.com/gpu: ${GPUS}
+                    {{- end }}
+                    cpu: ${CPUS}
+                    memory: ${MEMORY}
+                    ${STORAGE_DICT}
+                  limits:
+                    {{- if eq $device "gpu" }}
+                    nvidia.com/gpu: ${GPUS}
+                    {{- end }}
+                    cpu: ${CPUS}
+                    memory: ${MEMORY}
+                    ${STORAGE_DICT}
+                volumeMounts:
+                  {{- if $require_aws_config }}
+                  - name: config-volume
+                    mountPath: /opt/.aws/config
+                    subPath: config
+                  {{- end }}
+                  - mountPath: /dev/shm
+                    name: dshm
+                  {{- if $mount_infra_config }}
+                  - name: infra-service-config-volume
+                    mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
+                  {{- end }}
+                  - name: user-config
+                    mountPath: /app/user_config
+                    subPath: raw_data
+                  - name: endpoint-config
+                    mountPath: /app/endpoint_config
+                    subPath: raw_data
+                ports:
+                  - containerPort: ${USER_CONTAINER_PORT}
+                    name: http
+              {{- end }}
+            volumes:
+              {{- if $require_aws_config }}
+              - name: config-volume
+                configMap:
+                  {{- if $service_template_aws_config_map_name }}
+                  name: {{ $service_template_aws_config_map_name }}
+                  {{- else }}
+                  name: {{ $aws_config_map_name }}
+                  {{- end }}  
+              {{- end }}
+              - name: user-config
+                configMap:
+                  name: ${RESOURCE_NAME}
+              - name: endpoint-config
+                configMap:
+                  name: ${RESOURCE_NAME}-endpoint-config
+              - name: dshm
+                emptyDir:
+                  medium: Memory
+              {{- if $config_values }}
+              - name: infra-service-config-volume
+                configMap:
+                  name: {{ $launch_name }}-service-config
+                  items:
+                    - key: infra_service_config
+                      path: config.yaml
+              {{- end }}
+        workerTemplate:
+          metadata:
+            labels:
+              app: ${RESOURCE_NAME}
+              {{- $service_template_labels | nindent 14 }}
+              {{- if eq $mode "async" }}
+              sidecar.istio.io/inject: "false"  # TODO: switch to scuttle
+              {{- end }}
+              version: v1
+            annotations:
+              ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
+              kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+          spec:
+            affinity:
+              {{- include "modelEngine.serviceTemplateAffinity" . | nindent 14 }}
+            {{- if eq $mode "async" }}  # TODO
+            terminationGracePeriodSeconds: 1800
+            {{- else }}
+            terminationGracePeriodSeconds: 600
+            {{- end }}
+            {{- if $service_template_service_account_name }}
+            serviceAccount: {{ $service_template_service_account_name }}
+            {{- else }}
+            serviceAccount: {{ $launch_name }}
+            {{- end }}
+            {{- with $node_selector }}
+            nodeSelector:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            {{- if eq $device "gpu" }}
+            {{- if empty $node_selector }}
+            nodeSelector:
+            {{- end }}
+              k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+            tolerations:
+              - key: "nvidia.com/gpu"
+                operator: "Exists"
+                effect: "NoSchedule"
+            {{- end }}
+            priorityClassName: ${PRIORITY}
+            containers:
+              - name: lws_worker
+                image: ${IMAGE}
+                imagePullPolicy: IfNotPresent
+                command: ${WORKER_COMMAND}
+                env: ${WORKER_ENV}
+                resources:
+                  requests:
+                    {{- if eq $device "gpu" }}
+                    nvidia.com/gpu: ${GPUS}
+                    {{- end }}
+                    cpu: ${CPUS}
+                    memory: ${MEMORY}
+                    ${STORAGE_DICT}
+                  limits:
+                    {{- if eq $device "gpu" }}
+                    nvidia.com/gpu: ${GPUS}
+                    {{- end }}
+                    cpu: ${CPUS}
+                    memory: ${MEMORY}
+                    ${STORAGE_DICT}
+                volumeMounts:
+                  {{- if $require_aws_config }}
+                  - name: config-volume
+                    mountPath: /opt/.aws/config
+                    subPath: config
+                  {{- end }}
+                  - mountPath: /dev/shm
+                    name: dshm
+                  {{- if $mount_infra_config }}
+                  - name: infra-service-config-volume
+                    mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
+                  {{- end }}
+                  - name: user-config
+                    mountPath: /app/user_config
+                    subPath: raw_data
+                  - name: endpoint-config
+                    mountPath: /app/endpoint_config
+                    subPath: raw_data
+                ports:
+                  - containerPort: ${USER_CONTAINER_PORT}
+                    name: http
+              {{- end }}
+            volumes:
+              {{- if $require_aws_config }}
+              - name: config-volume
+                configMap:
+                  {{- if $service_template_aws_config_map_name }}
+                  name: {{ $service_template_aws_config_map_name }}
+                  {{- else }}
+                  name: {{ $aws_config_map_name }}
+                  {{- end }}  
+              {{- end }}
+              - name: user-config
+                configMap:
+                  name: ${RESOURCE_NAME}
+              - name: endpoint-config
+                configMap:
+                  name: ${RESOURCE_NAME}-endpoint-config
+              - name: dshm
+                emptyDir:
+                  medium: Memory
+              {{- if $config_values }}
+              - name: infra-service-config-volume
+                configMap:
+                  name: {{ $launch_name }}-service-config
+                  items:
+                    - key: infra_service_config
+                      path: config.yaml
+              {{- end }}
+  {{- end }}
+  {{- end }}
   service.yaml: |-
     apiVersion: v1
     kind: Service
