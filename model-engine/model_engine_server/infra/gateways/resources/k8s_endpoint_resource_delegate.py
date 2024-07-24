@@ -1220,7 +1220,7 @@ class K8SEndpointResourceDelegate:
         )
 
         if request.build_endpoint_request.nodes_per_worker > 1:
-            # TODO create the LWS
+            # TODO create the LWS, set the env vars, pull the bundle commands in a call to get_endpoint_resource_args_from_request
             pass
         else:
             deployment_resource_name = self._get_deployment_resource_name(request)
