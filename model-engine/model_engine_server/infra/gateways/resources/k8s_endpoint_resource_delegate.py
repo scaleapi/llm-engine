@@ -891,9 +891,9 @@ class K8SEndpointResourceDelegate:
             endpoint_config=endpoint_config,
         )
 
-    # TODO delete lws
+    # TODO test
     @staticmethod
-    async def _delete_lws(endpoint_id: str, deployment_name: str) -> bool:
+    async def _delete_lws(endpoint_id: str) -> bool:
         custom_objects_client = get_kubernetes_custom_objects_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
         try:
@@ -1700,9 +1700,7 @@ class K8SEndpointResourceDelegate:
     async def _delete_resources_async(self, endpoint_id: str, deployment_name: str) -> bool:
 
         # TODO multinode (but not really)
-        lws_delete_succeeded = await self._delete_lws(
-            endpoint_id=endpoint_id, deployment_name=deployment_name
-        )
+        lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
         deployment_delete_succeeded = await self._delete_deployment(
             endpoint_id=endpoint_id, deployment_name=deployment_name
         )
@@ -1715,9 +1713,7 @@ class K8SEndpointResourceDelegate:
 
     async def _delete_resources_sync(self, endpoint_id: str, deployment_name: str) -> bool:
         # TODO multinode
-        lws_delete_succeeded = await self._delete_lws(
-            endpoint_id=endpoint_id, deployment_name=deployment_name
-        )
+        lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
 
         deployment_delete_succeeded = await self._delete_deployment(
             endpoint_id=endpoint_id,
