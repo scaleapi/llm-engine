@@ -262,9 +262,7 @@ if __name__ == "__main__":
 
     parser = FlexibleArgumentParser()
     # host, port, and AsyncEngineArgs are already given by make_arg_parser() in parse_args()
-    # parser.add_argument("--host", type=str, default=None)  # None == IPv4 / IPv6 dualstack
-    # parser.add_argument("--port", type=int, default=5005)
-    # parser = AsyncEngineArgs.add_cli_args(parser)
+    # host == None -> IPv4 / IPv6 dualstack
     args = parse_args(parser)
 
     logger.info("vLLM version %s", VLLM_VERSION)
