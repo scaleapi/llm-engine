@@ -894,8 +894,25 @@ class K8SEndpointResourceDelegate:
     # TODO delete lws
     @staticmethod
     async def _delete_lws(endpoint_id: str, deployment_name: str) -> bool:
-        return False
-        pass
+        custom_objects_client = get_kubernetes_custom_objects_client()
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        try:
+            await custom_objects_client.delete_namespaced_custom_object(
+                group="leaderworkerset.x-k8s.io",
+                version="v1",
+                namespace=hmi_config.endpoint_namespace,
+                plural="leaderworkersets",
+                name=k8s_resource_group_name,
+            )
+        except ApiException as e:
+            if e.status == 404:
+                logger.warning(
+                    f"Trying to delete nonexistent LeaderWorkerSet {k8s_resource_group_name}"
+                )
+            else:
+                logger.exception(f"Deletion of LeaderWorkerSet {k8s_resource_group_name} failed")
+                return False
+        return True
 
     @staticmethod
     async def _delete_deployment(endpoint_id: str, deployment_name: str) -> bool:
