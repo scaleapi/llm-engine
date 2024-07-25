@@ -27,8 +27,12 @@ from model_engine_server.domain.authorization.live_authorization_module import (
     LiveAuthorizationModule,
 )
 from model_engine_server.domain.entities import (
+    WORKER_COMMAND_METADATA_KEY,
+    WORKER_ENV_METADATA_KEY,
+    ModelBundle,
     ModelEndpoint,
     ModelEndpointType,
+    RunnableImageFlavor,
     StreamingEnhancedRunnableImageFlavor,
 )
 from model_engine_server.domain.exceptions import (
@@ -215,6 +219,23 @@ def validate_post_inference_hooks(user: User, post_inference_hooks: Optional[Lis
             )
 
 
+def validate_bundle_multinode_compatibility(bundle: ModelBundle, nodes_per_worker: int):
+    """
+    Only some bundles can be multinode compatible.
+    """
+    if nodes_per_worker == 1:
+        return
+    if (
+        type(bundle.flavor) in {RunnableImageFlavor, StreamingEnhancedRunnableImageFlavor}
+        and WORKER_ENV_METADATA_KEY in bundle.metadata
+        and WORKER_COMMAND_METADATA_KEY in bundle.metadata
+    ):
+        return
+    raise ObjectHasInvalidValueException(
+        f"Bundle {bundle.name} is not multinode compatible. It must have _worker_command and _worker_args metadata."
+    )
+
+
 class CreateModelEndpointV1UseCase:
     def __init__(
         self,
@@ -241,8 +262,10 @@ class CreateModelEndpointV1UseCase:
         bundle = await self.model_bundle_repository.get_model_bundle(
             model_bundle_id=request.model_bundle_id
         )
+
         if bundle is None:
             raise ObjectNotFoundException
+        validate_bundle_multinode_compatibility(bundle, request.nodes_per_worker)
         if not self.authz_module.check_access_read_owned_entity(user, bundle):
             raise ObjectNotAuthorizedException
         if not isinstance(bundle.flavor, StreamingEnhancedRunnableImageFlavor) and (
