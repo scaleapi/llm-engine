@@ -43,6 +43,7 @@ def test_create_model_endpoint_infra(
             memory=endpoint.infra_state.resource_state.memory,
             gpu_type=endpoint.infra_state.resource_state.gpu_type,
             storage=endpoint.infra_state.resource_state.storage,
+            nodes_per_worker=endpoint.infra_state.resource_state.nodes_per_worker,
             optimize_costs=bool(endpoint.infra_state.resource_state.optimize_costs),
             aws_role=endpoint.infra_state.aws_role,
             results_s3_bucket=endpoint.infra_state.results_s3_bucket,
