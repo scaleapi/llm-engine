@@ -209,6 +209,12 @@ class _TritonArguments(TypedDict):
     TRITON_COMMIT_TAG: str
 
 
+class _LeaderWorkerSetArguments(TypedDict):
+    LWS_SIZE: int
+    WORKER_COMMAND: List[str]
+    WORKER_ENV: List[Dict[str, Any]]
+
+
 class DeploymentRunnableImageSyncCpuArguments(
     _RunnableImageDeploymentArguments, _SyncRunnableImageDeploymentArguments
 ):
@@ -278,6 +284,15 @@ class DeploymentTritonEnhancedRunnableImageAsyncGpuArguments(
     """Keyword-arguments for substituting GPU async deployment templates for triton-enhanced
     runnable images.
     """
+
+
+class LeaderWorkerSetRunnableImageStreamingGpuArguments(
+    _RunnableImageDeploymentArguments,
+    _StreamingDeploymentArguments,
+    _GpuArguments,
+    _LeaderWorkerSetArguments,
+):
+    """Keyword-arguments for substituting into GPU streaming LeaderWorkerSet templates for runnable images."""
 
 
 class HorizontalPodAutoscalerArguments(_BaseEndpointArguments):
