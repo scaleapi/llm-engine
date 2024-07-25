@@ -4569,36 +4569,49 @@ def mocked__get_recommended_hardware_config_map():
       memory: 20Gi
       storage: 40Gi
       gpu_type: nvidia-hopper-h100-1g20gb
+      nodes_per_worker: 1
     - gpu_memory_le: 40
       cpus: 10
       gpus: 1
       memory: 40Gi
       storage: 80Gi
       gpu_type: nvidia-hopper-h100-3g40gb
+      nodes_per_worker: 1
     - gpu_memory_le: 80
       cpus: 20
       gpus: 1
       memory: 80Gi
       storage: 96Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
     - gpu_memory_le: 160
       cpus: 40
       gpus: 2
       memory: 160Gi
       storage: 160Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
     - gpu_memory_le: 320
       cpus: 80
       gpus: 4
       memory: 320Gi
       storage: 320Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
     - gpu_memory_le: 640
       cpus: 160
       gpus: 8
       memory: 800Gi
       storage: 640Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
+    - gpu_memory_le: 1280
+      cpus: 160
+      gpus: 8
+      memory: 800Gi
+      storage: 640Gi
+      gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 2
                 """,
             "byModelName": """
     - name: llama-3-8b-instruct-262k
@@ -4607,18 +4620,21 @@ def mocked__get_recommended_hardware_config_map():
       memory: 160Gi
       storage: 160Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
     - name: deepseek-coder-v2
       cpus: 160
       gpus: 8
       memory: 800Gi
       storage: 640Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
     - name: deepseek-coder-v2-instruct
       cpus: 160
       gpus: 8
       memory: 800Gi
       storage: 640Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
                 """,
         }
 
