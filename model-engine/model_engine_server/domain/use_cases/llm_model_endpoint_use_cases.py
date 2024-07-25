@@ -419,6 +419,7 @@ class CreateLLMModelBundleV1UseCase:
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
     ) -> ModelBundle:
+        # TODO handle multinode here
         if source == LLMSource.HUGGING_FACE:
             self.check_docker_image_exists_for_image_tag(
                 framework_image_tag, INFERENCE_FRAMEWORK_REPOSITORY[framework]
@@ -946,6 +947,7 @@ class CreateLLMModelEndpointV1UseCase:
                 request.inference_framework
             )
 
+        # TODO make the bundle for multinode
         bundle = await self.create_llm_model_bundle_use_case.execute(
             user,
             endpoint_name=request.name,
@@ -1132,6 +1134,7 @@ class UpdateLLMModelEndpointV1UseCase:
     async def execute(
         self, user: User, model_endpoint_name: str, request: UpdateLLMModelEndpointV1Request
     ) -> UpdateLLMModelEndpointV1Response:
+        # TODO do we want to check if LWS here?
         if request.labels is not None:
             validate_labels(request.labels)
         validate_billing_tags(request.billing_tags)
@@ -2287,6 +2290,7 @@ async def _fill_hardware_info(
         or request.cpus is None
         or request.memory is None
         or request.storage is None
+        or request.nodes_per_worker is None
     ):
         if not (
             request.gpus is None
@@ -2294,9 +2298,10 @@ async def _fill_hardware_info(
             and request.cpus is None
             and request.memory is None
             and request.storage is None
+            and request.nodes_per_worker is None
         ):
             raise ObjectHasInvalidValueException(
-                "All hardware spec fields (gpus, gpu_type, cpus, memory, storage) must be provided if any hardware spec field is missing."
+                "All hardware spec fields (gpus, gpu_type, cpus, memory, storage, nodes_per_worker) must be provided if any hardware spec field is missing."
             )
         checkpoint_path = get_checkpoint_path(request.model_name, request.checkpoint_path)
         hardware_info = await _infer_hardware(
@@ -2307,6 +2312,7 @@ async def _fill_hardware_info(
         request.cpus = hardware_info.cpus
         request.memory = hardware_info.memory
         request.storage = hardware_info.storage
+        request.nodes_per_worker = hardware_info.nodes_per_worker
         if hardware_info.gpus:  # make lint happy
             request.num_shards = hardware_info.gpus
 
@@ -2317,7 +2323,7 @@ async def _infer_hardware(
     model_name: str,
     checkpoint_path: str,
     is_batch_job: bool = False,
-) -> CreateDockerImageBatchJobResourceRequests:
+) -> CreateDockerImageBatchJobResourceRequests:  # TODO nodes_per_worker???
     config = llm_artifact_gateway.get_model_config(checkpoint_path)
 
     dtype_size = 2
@@ -2371,6 +2377,7 @@ async def _infer_hardware(
         memory = by_model_name[model_name]["memory"]
         storage = by_model_name[model_name]["storage"]
         gpu_type = by_model_name[model_name]["gpu_type"]
+        nodes_per_worker = by_model_name[model_name]["nodes_per_worker"]
     else:
         by_gpu_memory_gb = sorted(by_gpu_memory_gb, key=lambda x: x["gpu_memory_le"])
         for recs in by_gpu_memory_gb:
@@ -2380,12 +2387,18 @@ async def _infer_hardware(
                 memory = recs["memory"]
                 storage = recs["storage"]
                 gpu_type = recs["gpu_type"]
+                nodes_per_worker = recs["nodes_per_worker"]
                 break
         else:
             raise ObjectHasInvalidValueException(f"Unable to infer hardware for {model_name}.")
 
     return CreateDockerImageBatchJobResourceRequests(
-        cpus=cpus, gpus=gpus, memory=memory, storage=storage, gpu_type=gpu_type
+        cpus=cpus,
+        gpus=gpus,
+        memory=memory,
+        storage=storage,
+        gpu_type=gpu_type,
+        nodes_per_worker=nodes_per_worker,
     )
 
 

@@ -65,6 +65,7 @@ class CreateDockerImageBatchJobResourceRequests(BaseModel):
     gpus: Optional[int] = None
     gpu_type: Optional[GpuType] = None
     storage: Optional[StorageSpecificationType] = None
+    nodes_per_worker: Optional[int] = None  # TODO used only for inferring hardware
     model_config = ConfigDict(from_attributes=True)
 
     @classmethod
