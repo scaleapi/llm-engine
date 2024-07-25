@@ -902,13 +902,14 @@ class CreateLLMModelEndpointV1UseCase:
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
-        await _fill_hardware_info(self.llm_artifact_gateway, request)
+        await _fill_hardware_info(self.llm_artifact_gateway, request)  # TODO multinode
         if not (
             request.gpus
             and request.gpu_type
             and request.cpus
             and request.memory
             and request.storage
+            and request.nodes_per_worker
         ):
             raise RuntimeError("Some hardware info is missing unexpectedly.")
         validate_deployment_resources(
@@ -1002,6 +1003,7 @@ class CreateLLMModelEndpointV1UseCase:
             memory=request.memory,
             gpu_type=request.gpu_type,
             storage=request.storage,
+            nodes_per_worker=request.nodes_per_worker,
             optimize_costs=bool(request.optimize_costs),
             min_workers=request.min_workers,
             max_workers=request.max_workers,
