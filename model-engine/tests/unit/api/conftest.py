@@ -779,6 +779,7 @@ def model_endpoint_1(
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -884,6 +885,7 @@ def model_endpoint_2(
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=False,
             ),
             user_config_state=ModelEndpointUserConfigState(

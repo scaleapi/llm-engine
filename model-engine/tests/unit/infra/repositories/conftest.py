@@ -276,6 +276,7 @@ def entity_model_endpoint_infra_state() -> ModelEndpointInfraState:
             memory="1G",
             gpu_type=GpuType.NVIDIA_TESLA_T4,
             storage="10G",
+            nodes_per_worker=1,
             optimize_costs=False,
         ),
         user_config_state=ModelEndpointUserConfigState(

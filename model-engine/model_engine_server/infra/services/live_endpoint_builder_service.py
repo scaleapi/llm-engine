@@ -304,6 +304,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         memory=build_endpoint_request.memory,
                         gpu_type=build_endpoint_request.gpu_type,
                         storage=build_endpoint_request.storage,
+                        nodes_per_worker=build_endpoint_request.nodes_per_worker,
                         optimize_costs=build_endpoint_request.optimize_costs,
                     ),
                     user_config_state=ModelEndpointUserConfigState(

@@ -1568,6 +1568,7 @@ class K8SEndpointResourceDelegate:
                 gpu_type=common_params["gpu_type"],  # type: ignore
                 memory=common_params["memory"],
                 storage=common_params["storage"],
+                nodes_per_worker=1,  # TODO think we're in Deployment case here
                 optimize_costs=(vertical_autoscaling_params is not None),
             ),
             user_config_state=self._translate_k8s_config_maps_to_user_config_data(
@@ -1706,8 +1707,8 @@ class K8SEndpointResourceDelegate:
                         gpu_type=common_params["gpu_type"],  # type: ignore
                         memory=common_params["memory"],
                         storage=common_params["storage"],
+                        nodes_per_worker=1,  # We're in a Deployment case, so nodes_per_worker is 1
                         optimize_costs=(vertical_autoscaling_params is not None),
-                        nodes_per_worker=1,
                     ),
                     user_config_state=self._translate_k8s_config_maps_to_user_config_data(
                         name, all_config_maps

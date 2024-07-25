@@ -301,6 +301,7 @@ class CreateModelEndpointV1UseCase:
                 memory=request.memory,
                 gpu_type=request.gpu_type,
                 storage=request.storage,
+                nodes_per_worker=request.nodes_per_worker,
                 optimize_costs=bool(request.optimize_costs),
                 min_workers=request.min_workers,
                 max_workers=request.max_workers,
