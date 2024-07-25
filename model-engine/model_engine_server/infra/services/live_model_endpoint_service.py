@@ -338,7 +338,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 memory=memory,
                 gpu_type=gpu_type,
                 storage=storage,
-                nodes_per_worker=1,  # TODO multinode if you want
+                # nodes_per_worker=1,  # TODO multinode if you want
                 optimize_costs=optimize_costs,
                 post_inference_hooks=post_inference_hooks,
                 labels=labels,
