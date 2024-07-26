@@ -15,6 +15,8 @@ from model_engine_server.common.resource_limits import (
 from model_engine_server.common.serialization_utils import python_json_to_b64
 from model_engine_server.core.config import infra_config
 from model_engine_server.domain.entities import (
+    WORKER_COMMAND_METADATA_KEY,
+    WORKER_ENV_METADATA_KEY,
     ModelEndpointConfig,
     RunnableImageLike,
     StreamingEnhancedRunnableImageFlavor,
@@ -546,6 +548,21 @@ def get_endpoint_resource_arguments_from_request(
     main_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
     # NOTE: /opt/.aws/config is where service_template_config_map.yaml mounts the AWS config file, point to the mount for boto clients
     main_env.append({"name": "AWS_CONFIG_FILE", "value": "/opt/.aws/config"})
+
+    # LeaderWorkerSet exclusive
+    worker_env = None
+    if WORKER_ENV_METADATA_KEY in model_bundle.metadata:
+        worker_env = [
+            {"name": key, "value": value}
+            for key, value in model_bundle.metadata[WORKER_ENV_METADATA_KEY].items()
+        ]
+        worker_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
+        worker_env.append({"name": "AWS_CONFIG_FILE", "value": "/opt/.aws/config"})
+
+    worker_command = None
+    if WORKER_COMMAND_METADATA_KEY in model_bundle.metadata:
+        worker_command = model_bundle.metadata[WORKER_COMMAND_METADATA_KEY]
+    # TODO maybe validate here? idk
 
     infra_service_config_volume_mount_path = "/infra-config"
     forwarder_config_file_name = "service--forwarder.yaml"
@@ -1083,6 +1100,60 @@ def get_endpoint_resource_arguments_from_request(
             TRITON_COMMIT_TAG=flavor.triton_commit_tag,
         )
     # TODO elif lws streaming gpu
+    elif endpoint_resource_name == "leader-worker-set-streaming-gpu":
+        assert isinstance(flavor, StreamingEnhancedRunnableImageFlavor)
+        assert build_endpoint_request.gpu_type is not None
+        assert worker_command is not None
+        assert worker_env is not None
+        return LeaderWorkerSetRunnableImageStreamingGpuArguments(
+            # Base resource arguments
+            RESOURCE_NAME=k8s_resource_group_name,
+            NAMESPACE=hmi_config.endpoint_namespace,
+            ENDPOINT_ID=model_endpoint_record.id,
+            ENDPOINT_NAME=model_endpoint_record.name,
+            TEAM=team,
+            PRODUCT=product,
+            CREATED_BY=created_by,
+            OWNER=owner,
+            GIT_TAG=GIT_TAG,
+            # Base deployment arguments
+            CHANGE_CAUSE_MESSAGE=change_cause_message,
+            AWS_ROLE=build_endpoint_request.aws_role,
+            PRIORITY=priority,
+            IMAGE=request.image,
+            IMAGE_HASH=image_hash,
+            DD_TRACE_ENABLED=dd_trace_enabled,
+            CPUS=str(build_endpoint_request.cpus),
+            MEMORY=str(build_endpoint_request.memory),
+            STORAGE_DICT=storage_dict,
+            PER_WORKER=build_endpoint_request.per_worker,
+            MIN_WORKERS=build_endpoint_request.min_workers,
+            MAX_WORKERS=build_endpoint_request.max_workers,
+            RESULTS_S3_BUCKET=s3_bucket,
+            # Runnable Image Arguments
+            MAIN_ENV=main_env,
+            COMMAND=flavor.streaming_command,
+            PREDICT_ROUTE=flavor.predict_route,
+            STREAMING_PREDICT_ROUTE=flavor.streaming_predict_route,
+            HEALTHCHECK_ROUTE=flavor.healthcheck_route,
+            READINESS_INITIAL_DELAY=flavor.readiness_initial_delay_seconds,
+            INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH=infra_service_config_volume_mount_path,
+            FORWARDER_CONFIG_FILE_NAME=forwarder_config_file_name,
+            FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
+            FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
+            FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            # Streaming Arguments
+            FORWARDER_PORT=FORWARDER_PORT,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
+            # GPU Arguments
+            GPU_TYPE=build_endpoint_request.gpu_type.value,
+            GPUS=build_endpoint_request.gpus,
+            # Leader Worker Set Arguments
+            LWS_SIZE=build_endpoint_request.nodes_per_worker,
+            WORKER_COMMAND=worker_command,
+            WORKER_ENV=worker_env,
+        )
     elif endpoint_resource_name == "user-config":
         app_config_serialized = python_json_to_b64(model_bundle.app_config)
         return UserConfigArguments(
