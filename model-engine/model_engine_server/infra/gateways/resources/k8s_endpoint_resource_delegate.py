@@ -1205,6 +1205,29 @@ class K8SEndpointResourceDelegate:
         deployment_resource_name = f"deployment-{flavor_class}-{mode}-{device}"
         return deployment_resource_name
 
+    @staticmethod
+    def _get_lws_resource_name(request: CreateOrUpdateResourcesRequest) -> str:
+        build_endpoint_request = request.build_endpoint_request
+        model_endpoint_record = build_endpoint_request.model_endpoint_record
+        flavor = model_endpoint_record.current_model_bundle.flavor
+        if isinstance(flavor, TritonEnhancedRunnableImageFlavor):
+            flavor_class = "triton-enhanced-runnable-image"
+        else:
+            flavor_class = "runnable-image"
+        if flavor_class == "triton-enhanced-runnable-image":
+            raise ValueError("LWS is not supported for Triton Enhanced Runnable Image")
+        # TODO we should really check this error earlier
+
+        mode = model_endpoint_record.endpoint_type.value
+        device = "gpu" if build_endpoint_request.gpus > 0 else "cpu"
+        if mode not in ["streaming"]:
+            raise ValueError("LWS is not supported for async or sync endpoints")
+        if device not in ["gpu"]:
+            raise ValueError("LWS is not supported for CPU endpoints")
+
+        lws_resource_name = f"leader-worker-set-{mode}-{device}"
+        return lws_resource_name
+
     async def _create_or_update_resources(  # TODO multinode
         self,
         request: CreateOrUpdateResourcesRequest,
@@ -1221,6 +1244,20 @@ class K8SEndpointResourceDelegate:
 
         if request.build_endpoint_request.nodes_per_worker > 1:
             # TODO create the LWS, set the env vars, pull the bundle commands in a call to get_endpoint_resource_args_from_request
+            lws_resource_name = self._get_lws_resource_name(request)
+            lws_arguments = get_endpoint_resource_arguments_from_request(
+                k8s_resource_group_name=k8s_resource_group_name,
+                request=request,
+                sqs_queue_name=sqs_queue_name_str,
+                sqs_queue_url=sqs_queue_url_str,
+                endpoint_resource_name=lws_resource_name,
+            )
+            lws_template = load_k8s_yaml(f"{lws_resource_name}.yaml", lws_arguments)
+
+            await self._create_lws(
+                lws=lws_template,
+                name=k8s_resource_group_name,
+            )
             pass
         else:
             deployment_resource_name = self._get_deployment_resource_name(request)
@@ -1238,7 +1275,7 @@ class K8SEndpointResourceDelegate:
                 request.build_endpoint_request.model_endpoint_record.current_model_bundle.flavor,
                 RunnableImageLike,
             ):
-                add_datadog_env_to_main_container(deployment_template)
+                add_datadog_env_to_main_container(deployment_template)  # TODO refactor
             await self._create_deployment(
                 model_endpoint_record=request.build_endpoint_request.model_endpoint_record,
                 deployment=deployment_template,

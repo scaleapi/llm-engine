@@ -236,6 +236,29 @@ def validate_bundle_multinode_compatibility(bundle: ModelBundle, nodes_per_worke
     )
 
 
+def validate_endpoint_resource_multinode_compatibility(
+    gpu_type: Optional[str],
+    gpus: Optional[int],
+    endpoint_type: ModelEndpointType,
+    nodes_per_worker: int,
+):
+    """
+    Only gpu streaming endpoints can be multinode compatible.
+    """
+    if nodes_per_worker == 1:
+        return
+    if (
+        endpoint_type == ModelEndpointType.STREAMING
+        and gpu_type is not None
+        and gpus is not None
+        and gpus > 0
+    ):
+        return
+    raise ObjectHasInvalidValueException(
+        "Endpoint is not multinode compatible. Only streaming GPU endpoints can be multinode compatible."
+    )
+
+
 class CreateModelEndpointV1UseCase:
     def __init__(
         self,
@@ -266,6 +289,9 @@ class CreateModelEndpointV1UseCase:
         if bundle is None:
             raise ObjectNotFoundException
         validate_bundle_multinode_compatibility(bundle, request.nodes_per_worker)
+        validate_endpoint_resource_multinode_compatibility(
+            request.gpu_type, request.gpus, request.endpoint_type, request.nodes_per_worker
+        )
         if not self.authz_module.check_access_read_owned_entity(user, bundle):
             raise ObjectNotAuthorizedException
         if not isinstance(bundle.flavor, StreamingEnhancedRunnableImageFlavor) and (
