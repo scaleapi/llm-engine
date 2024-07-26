@@ -5,8 +5,8 @@ DTOs for the task abstraction.
 from enum import Enum
 from typing import Any, Optional
 
+from model_engine_server.common.pydantic_types import BaseModel, Field, RootModel
 from model_engine_server.domain.entities import CallbackAuth
-from pydantic import BaseModel, Field, RootModel
 
 
 class ResponseSchema(RootModel):

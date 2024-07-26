@@ -10,8 +10,8 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from model_engine_server.common.dtos.llms import TokenUsage
+from model_engine_server.common.pydantic_types import BaseModel
 from model_engine_server.core.auth.authentication_repository import User
-from pydantic import BaseModel
 
 
 class MetricMetadata(BaseModel):
