@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional, Sequence
 
 from model_engine_server.common import dict_not_none
+from model_engine_server.common.pydantic_types import ValidationError
 from model_engine_server.db.models import Trigger as OrmTrigger
 from model_engine_server.domain.entities.trigger_entity import Trigger
 from model_engine_server.domain.exceptions import (
@@ -12,7 +13,6 @@ from model_engine_server.infra.repositories.db_repository_mixin import (
     DbRepositoryMixin,
     raise_if_read_only,
 )
-from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 
