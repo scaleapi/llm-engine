@@ -1497,6 +1497,7 @@ class K8SEndpointResourceDelegate:
     async def _get_resources(  # TODO multinode
         self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
     ) -> ModelEndpointInfraState:
+        custom_objects_client = get_kubernetes_custom_objects_client()
         apps_client = get_kubernetes_apps_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
         # TODO check LWS here too
@@ -1557,7 +1558,7 @@ class K8SEndpointResourceDelegate:
             raise ValueError(f"Unexpected endpoint type {endpoint_type}")
 
         vertical_autoscaling_params = None
-        custom_objects_client = get_kubernetes_custom_objects_client()
+
         try:
             vpa_config = await custom_objects_client.get_namespaced_custom_object(
                 group="autoscaling.k8s.io",
