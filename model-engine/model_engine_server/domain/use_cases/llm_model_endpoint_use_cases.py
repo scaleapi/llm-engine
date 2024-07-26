@@ -418,13 +418,28 @@ class CreateLLMModelBundleV1UseCase:
         num_shards: int,
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
+        multinode: bool,
     ) -> ModelBundle:
         # TODO handle multinode here
         if source == LLMSource.HUGGING_FACE:
             self.check_docker_image_exists_for_image_tag(
                 framework_image_tag, INFERENCE_FRAMEWORK_REPOSITORY[framework]
             )
-            if framework == LLMInferenceFramework.DEEPSPEED:
+            if multinode and framework == LLMInferenceFramework.VLLM:
+                bundle_id = await self.create_vllm_multinode_bundle(
+                    user,
+                    model_name,
+                    framework_image_tag,
+                    endpoint_name,
+                    num_shards,
+                    quantize,
+                    checkpoint_path,
+                )
+            elif multinode:
+                raise ObjectHasInvalidValueException(
+                    f"Multinode is not supported for source {source}."
+                )
+            elif framework == LLMInferenceFramework.DEEPSPEED:
                 bundle_id = await self.create_deepspeed_bundle(
                     user,
                     model_name,
@@ -749,6 +764,19 @@ class CreateLLMModelBundleV1UseCase:
             )
         ).model_bundle_id
 
+    async def create_vllm_multinode_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        quantize: Optional[Quantization],
+        checkpoint_path: Optional[str],
+    ):
+        # TODO
+        pass
+
     async def create_lightllm_bundle(
         self,
         user: User,
@@ -947,6 +975,14 @@ class CreateLLMModelEndpointV1UseCase:
                 request.inference_framework
             )
 
+        if (
+            request.nodes_per_worker > 1
+            and not request.inference_framework == LLMInferenceFramework.VLLM
+        ):
+            raise ObjectHasInvalidValueException(
+                "Multinode endpoints are only supported for VLLM models."
+            )
+
         # TODO make the bundle for multinode
         bundle = await self.create_llm_model_bundle_use_case.execute(
             user,
@@ -959,6 +995,8 @@ class CreateLLMModelEndpointV1UseCase:
             num_shards=request.num_shards,
             quantize=request.quantize,
             checkpoint_path=request.checkpoint_path,
+            multinode=(request.nodes_per_worker > 1),
+            # TODO multinode option here
         )
         validate_resource_requests(
             bundle=bundle,
@@ -1205,6 +1243,7 @@ class UpdateLLMModelEndpointV1UseCase:
                 num_shards=num_shards,
                 quantize=quantize,
                 checkpoint_path=checkpoint_path,
+                multinode=(model_endpoint.infra_state.resource_state.nodes_per_worker > 1),
             )
 
             metadata = endpoint_record.metadata or {}

@@ -264,6 +264,7 @@ async def test_create_model_bundle_fails_if_no_checkpoint(
             num_shards=request.num_shards,
             quantize=request.quantize,
             checkpoint_path=checkpoint_path,
+            multinode=False,
         )
 
 
