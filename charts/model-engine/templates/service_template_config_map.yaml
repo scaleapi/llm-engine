@@ -524,7 +524,6 @@ data:
             {{- end }}
             priorityClassName: ${PRIORITY}
             containers:
-              {{- if contains "runnable-image" $flavor }}  # TODO remove
               {{- if eq $mode "sync" }}
               - name: http-forwarder
                 image: {{ $forwarder_repository }}:${GIT_TAG}
@@ -665,7 +664,6 @@ data:
                     memory: ${FORWARDER_MEMORY_LIMIT}
                     ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
                 {{ $forwarder_volume_mounts | nindent 16 }}
-              {{- end }}
               - name: lws_leader
                 image: ${IMAGE}
                 imagePullPolicy: IfNotPresent

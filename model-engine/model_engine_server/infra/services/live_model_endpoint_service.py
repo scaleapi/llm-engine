@@ -225,7 +225,7 @@ class LiveModelEndpointService(ModelEndpointService):
         # TODO we might encounter weird cache staleness issues, as the cache is potentially up
         #   to a minute behind
         model_endpoint_infra_state = await self._get_model_endpoint_infra_state(
-            record=model_endpoint_record, use_cache=True
+            record=model_endpoint_record, use_cache=False  # TODO temporarily turn off cache
         )
         return ModelEndpoint(record=model_endpoint_record, infra_state=model_endpoint_infra_state)
 
@@ -258,7 +258,7 @@ class LiveModelEndpointService(ModelEndpointService):
         )
         endpoints: List[ModelEndpoint] = []
         for record in records:
-            infra_state = await self._get_model_endpoint_infra_state(record=record, use_cache=True)
+            infra_state = await self._get_model_endpoint_infra_state(record=record, use_cache=False)  # TODO temporarily turn off cache
             endpoints.append(ModelEndpoint(record=record, infra_state=infra_state))
         return endpoints
 
