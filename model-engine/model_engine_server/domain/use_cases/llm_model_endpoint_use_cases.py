@@ -907,11 +907,12 @@ class CreateLLMModelBundleV1UseCase:
 
         # These env vars e.g. leader name, lws name, namespaceshould be filled in by Launch automatically
         common_vllm_envs = {
-            "VLLM_HOST_IP": "$(K8S_LEADER_NAME).$(K8S_LWS_NAME).$(K8S_OWN_NAMESPACE).svc.cluster.local",
+            "VLLM_HOST_IP": "$(K8S_LWS_LEADER_NAME).$(K8S_LWS_NAME).$(K8S_OWN_NAMESPACE).svc.cluster.local",
             "NCCL_SOCKET_IFNAME": "eth0",
             "GLOO_SOCKET_IFNAME": "eth0",  # maybe don't need
             "NCCL_DEBUG": "INFO",  # TODO remove once fully tested
             "VLLM_LOGGING_LEVEL": "INFO",  # TODO remove once fully tested
+            "RAY_CLUSTER_SIZE": "$(K8S_LWS_CLUSTER_SIZE)",
         }
 
         leader_env = common_vllm_envs.copy()
