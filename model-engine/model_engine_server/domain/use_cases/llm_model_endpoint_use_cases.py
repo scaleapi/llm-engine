@@ -792,7 +792,7 @@ class CreateLLMModelBundleV1UseCase:
             )
         elif multinode and not is_leader:
             subcommands.append(
-                "/workspace/init_ray.sh worker --ray_cluster_size=$RAY_CLUSTER_SIZE --ray_address=$K8S_LEADER_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
+                "/workspace/init_ray.sh worker --ray_cluster_size=$RAY_CLUSTER_SIZE --ray_address=$K8S_LWS_LEADER_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
             )
 
         if is_leader:
