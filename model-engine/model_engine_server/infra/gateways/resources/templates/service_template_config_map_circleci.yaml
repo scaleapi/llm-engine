@@ -2567,8 +2567,8 @@ data:
     apiVersion: keda.sh/v1alpha1
     kind: ScaledObject
     metadata:
-      name: ${RESOURCE_NAME} 
-      namespace: ${NAMESPACE} 
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
       labels:
         user_id: ${OWNER}
         team: ${TEAM}

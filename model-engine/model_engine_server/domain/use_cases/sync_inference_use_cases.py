@@ -66,7 +66,7 @@ class CreateSyncInferenceTaskV1UseCase:
 
         inference_gateway = self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
         autoscaling_metrics_gateway = (
-            self.model_endpoint_service.get_inference_auto_scaling_metrics_gateway()
+            self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
         )
         await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
             endpoint_id=model_endpoint_id

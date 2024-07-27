@@ -14,6 +14,7 @@ from model_engine_server.common.dtos.model_endpoints import (
     ModelEndpointType,
     StorageSpecificationType,
 )
+from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Field
 from model_engine_server.domain.entities import (
     BatchJobStatus,
     CallbackAuth,
@@ -24,7 +25,6 @@ from model_engine_server.domain.entities import (
     ModelEndpointStatus,
     Quantization,
 )
-from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreateLLMModelEndpointV1Request(BaseModel):

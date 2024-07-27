@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Any, Collection, Dict, List, Optional
 
 from model_engine_server.common import dict_not_none
+from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, model_validator
 from model_engine_server.domain.entities import (
     BatchJobSerializationFormat,
     BatchJobStatus,
@@ -13,7 +14,6 @@ from model_engine_server.domain.entities import (
     GpuType,
     StorageSpecificationType,
 )
-from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class CreateBatchJobResourceRequests(BaseModel):
@@ -27,7 +27,6 @@ class CreateBatchJobResourceRequests(BaseModel):
 
 
 class CreateBatchJobV1Request(BaseModel):
-    model_config = ConfigDict(protected_namespaces=())
     model_bundle_id: str
     input_path: str
     serialization_format: BatchJobSerializationFormat

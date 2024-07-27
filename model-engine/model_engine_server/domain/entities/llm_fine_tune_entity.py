@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from model_engine_server.common.pydantic_types import BaseModel, ConfigDict
 
 
 class LLMFineTuneTemplate(BaseModel):

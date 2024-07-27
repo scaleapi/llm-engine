@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from model_engine_server.common.pydantic_types import BaseModel
 from model_engine_server.domain.entities import (
     CallbackAuth,
     CpuSpecificationType,
@@ -8,7 +9,6 @@ from model_engine_server.domain.entities import (
     ModelEndpointRecord,
     StorageSpecificationType,
 )
-from pydantic import BaseModel
 
 
 class BuildEndpointRequest(BaseModel):  # TODO update callsites

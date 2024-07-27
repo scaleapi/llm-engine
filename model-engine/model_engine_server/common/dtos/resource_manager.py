@@ -1,5 +1,5 @@
 from model_engine_server.common.dtos.endpoint_builder import BuildEndpointRequest
-from pydantic import BaseModel
+from model_engine_server.common.pydantic_types import BaseModel
 
 
 class CreateOrUpdateResourcesRequest(BaseModel):

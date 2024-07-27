@@ -1,4 +1,3 @@
-import argparse
 import asyncio
 import code
 import json
@@ -27,7 +26,7 @@ from vllm.model_executor.guided_decoding import get_guided_decoding_logits_proce
 from vllm.outputs import CompletionOutput
 from vllm.sampling_params import SamplingParams
 from vllm.sequence import Logprob
-from vllm.utils import random_uuid
+from vllm.utils import FlexibleArgumentParser, random_uuid
 from vllm.version import __version__ as VLLM_VERSION
 
 logging.basicConfig(
@@ -253,19 +252,18 @@ def format_logprobs(request_output: CompletionOutput) -> Optional[List[Dict[int,
     return [extract_logprobs(logprobs) for logprobs in output_logprobs]
 
 
-def parse_args():
-    parser = make_arg_parser()
+def parse_args(parser: FlexibleArgumentParser):
+    parser = make_arg_parser(parser)
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     check_unknown_startup_memory_usage()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--host", type=str, default=None)  # None == IPv4 / IPv6 dualstack
-    parser.add_argument("--port", type=int, default=5005)
-    parser = AsyncEngineArgs.add_cli_args(parser)
-    args = parse_args()
+    parser = FlexibleArgumentParser()
+    # host, port, and AsyncEngineArgs are already given by make_arg_parser() in parse_args()
+    # host == None -> IPv4 / IPv6 dualstack
+    args = parse_args(parser)
 
     logger.info("vLLM version %s", VLLM_VERSION)
     logger.info("args: %s", args)
@@ -287,11 +285,18 @@ if __name__ == "__main__":
         model_config,
         served_model_names,
         args.response_role,
-        args.lora_modules,
-        args.chat_template,
+        lora_modules=args.lora_modules,
+        chat_template=args.chat_template,
+        prompt_adapters=args.prompt_adapters,
+        request_logger=None,
     )
     openai_serving_completion = OpenAIServingCompletion(
-        engine, model_config, served_model_names, args.lora_modules
+        engine,
+        model_config,
+        served_model_names,
+        lora_modules=args.lora_modules,
+        prompt_adapters=args.prompt_adapters,
+        request_logger=None,
     )
 
     uvicorn.run(

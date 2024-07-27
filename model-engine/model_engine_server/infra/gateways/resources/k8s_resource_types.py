@@ -1,4 +1,5 @@
 import hashlib
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Sequence, TypedDict, Union
 
@@ -312,6 +313,8 @@ class KedaScaledObjectArguments(_BaseEndpointArguments):
     # CONCURRENCY: float  # TODO add in when we scale from 1 -> N pods
     REDIS_HOST_PORT: str
     REDIS_DB_INDEX: str
+    SERVICEBUS_NAMESPACE: Optional[str]
+    AUTHENTICATION_REF: str
 
 
 class UserConfigArguments(_BaseEndpointArguments):
@@ -548,6 +551,9 @@ def get_endpoint_resource_arguments_from_request(
     main_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
     # NOTE: /opt/.aws/config is where service_template_config_map.yaml mounts the AWS config file, point to the mount for boto clients
     main_env.append({"name": "AWS_CONFIG_FILE", "value": "/opt/.aws/config"})
+    abs_account_name = os.getenv("ABS_ACCOUNT_NAME")
+    if abs_account_name is not None:
+        main_env.append({"name": "ABS_ACCOUNT_NAME", "value": abs_account_name})
 
     # LeaderWorkerSet exclusive
     worker_env = None
@@ -1236,6 +1242,8 @@ def get_endpoint_resource_arguments_from_request(
             # CONCURRENCY=build_endpoint_request.concurrency,
             REDIS_HOST_PORT=hmi_config.cache_redis_host_port,
             REDIS_DB_INDEX=hmi_config.cache_redis_db_index,
+            SERVICEBUS_NAMESPACE=os.getenv("SERVICEBUS_NAMESPACE"),
+            AUTHENTICATION_REF="azure-workload-identity",
         )
     elif endpoint_resource_name == "service":
         # Use ClusterIP by default for sync endpoint.

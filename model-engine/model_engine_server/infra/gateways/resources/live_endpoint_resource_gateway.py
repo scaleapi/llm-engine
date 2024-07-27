@@ -8,6 +8,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
 )
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
+from model_engine_server.domain.gateways import InferenceAutoscalingMetricsGateway
 from model_engine_server.infra.gateways.resources.endpoint_resource_gateway import (
     EndpointResourceGateway,
     EndpointResourceGatewayCreateOrUpdateResourcesResponse,
@@ -24,9 +25,14 @@ logger = make_logger(logger_name())
 
 
 class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
-    def __init__(self, queue_delegate: QueueEndpointResourceDelegate):
+    def __init__(
+        self,
+        queue_delegate: QueueEndpointResourceDelegate,
+        inference_autoscaling_metrics_gateway: Optional[InferenceAutoscalingMetricsGateway],
+    ):
         self.k8s_delegate = K8SEndpointResourceDelegate()
         self.queue_delegate = queue_delegate
+        self.inference_autoscaling_metrics_gateway = inference_autoscaling_metrics_gateway
 
     async def create_queue(
         self,
@@ -59,7 +65,16 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
             queue_name = None
             queue_url = None
 
+<<<<<<< HEAD
         await self.k8s_delegate.create_or_update_resources(  # TODO multinode
+=======
+            if self.inference_autoscaling_metrics_gateway is not None:
+                await self.inference_autoscaling_metrics_gateway.create_or_update_resources(
+                    endpoint_record.id
+                )
+
+        await self.k8s_delegate.create_or_update_resources(
+>>>>>>> main
             request=request,
             sqs_queue_name=queue_name,
             sqs_queue_url=queue_url,
@@ -108,5 +123,8 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         except EndpointResourceInfraException as e:
             logger.warning("Could not delete SQS resources", exc_info=e)
             sqs_result = False
+
+        if self.inference_autoscaling_metrics_gateway is not None:
+            await self.inference_autoscaling_metrics_gateway.delete_resources(endpoint_id)
 
         return k8s_result and sqs_result

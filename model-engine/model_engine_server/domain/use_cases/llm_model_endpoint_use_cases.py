@@ -183,6 +183,12 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "llama-3-8b-instruct-262k",
             "llama-3-70b",
             "llama-3-70b-instruct",
+            "llama-3-1-8b",
+            "llama-3-1-8b-instruct",
+            "llama-3-1-70b",
+            "llama-3-1-70b-instruct",
+            "llama-3-1-405b",
+            "llama-3-1-405b-instruct",
             "falcon-7b",
             "falcon-7b-instruct",
             "falcon-40b",
@@ -350,9 +356,13 @@ def validate_quantization(
 
 
 def validate_checkpoint_path_uri(checkpoint_path: str) -> None:
-    if not checkpoint_path.startswith("s3://"):
+    if (
+        not checkpoint_path.startswith("s3://")
+        and not checkpoint_path.startswith("azure://")
+        and "blob.core.windows.net" not in checkpoint_path
+    ):
         raise ObjectHasInvalidValueException(
-            f"Only S3 paths are supported. Given checkpoint path: {checkpoint_path}."
+            f"Only S3 and Azure Blob Storage paths are supported. Given checkpoint path: {checkpoint_path}."
         )
     if checkpoint_path.endswith(".tar"):
         raise ObjectHasInvalidValueException(
@@ -572,6 +582,22 @@ class CreateLLMModelBundleV1UseCase:
     def load_model_weights_sub_commands(
         self, framework, framework_image_tag, checkpoint_path, final_weights_folder
     ):
+        if checkpoint_path.startswith("s3://"):
+            return self.load_model_weights_sub_commands_s3(
+                framework, framework_image_tag, checkpoint_path, final_weights_folder
+            )
+        elif checkpoint_path.startswith("azure://") or "blob.core.windows.net" in checkpoint_path:
+            return self.load_model_weights_sub_commands_abs(
+                framework, framework_image_tag, checkpoint_path, final_weights_folder
+            )
+        else:
+            raise ObjectHasInvalidValueException(
+                f"Only S3 and Azure Blob Storage paths are supported. Given checkpoint path: {checkpoint_path}."
+            )
+
+    def load_model_weights_sub_commands_s3(
+        self, framework, framework_image_tag, checkpoint_path, final_weights_folder
+    ):
         subcommands = []
         s5cmd = "s5cmd"
 
@@ -595,6 +621,38 @@ class CreateLLMModelBundleV1UseCase:
         )
         return subcommands
 
+    def load_model_weights_sub_commands_abs(
+        self, framework, framework_image_tag, checkpoint_path, final_weights_folder
+    ):
+        subcommands = []
+
+        subcommands.extend(
+            [
+                "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
+                "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
+            ]
+        )
+
+        base_path = checkpoint_path.split("/")[-1]
+        if base_path.endswith(".tar"):
+            # If the checkpoint file is a tar file, extract it into final_weights_folder
+            subcommands.extend(
+                [
+                    f"azcopy copy {checkpoint_path} .",
+                    f"mkdir -p {final_weights_folder}",
+                    f"tar --no-same-owner -xf {base_path} -C {final_weights_folder}",
+                ]
+            )
+        else:
+            file_selection_str = (
+                '--include-pattern "*.model;*.json;*.safetensors" --exclude-pattern "optimizer*"'
+            )
+            subcommands.append(
+                f"azcopy copy --recursive {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+            )
+
+        return subcommands
+
     def load_model_files_sub_commands_trt_llm(
         self,
         checkpoint_path,
@@ -606,9 +664,18 @@ class CreateLLMModelBundleV1UseCase:
         See llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/tensorrt_llm/config.pbtxt
         and llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/postprocessing/config.pbtxt
         """
-        subcommands = [
-            f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
-        ]
+        if checkpoint_path.startswith("s3://"):
+            subcommands = [
+                f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
+            ]
+        else:
+            subcommands.extend(
+                [
+                    "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
+                    "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
+                    f"azcopy copy --recursive {os.path.join(checkpoint_path, '*')} ./",
+                ]
+            )
         return subcommands
 
     async def create_deepspeed_bundle(
@@ -1170,7 +1237,7 @@ class CreateLLMModelEndpointV1UseCase:
             post_inference_hooks=request.post_inference_hooks,
         )
 
-        await self.model_endpoint_service.get_inference_auto_scaling_metrics_gateway().emit_prewarm_metric(
+        await self.model_endpoint_service.get_inference_autoscaling_metrics_gateway().emit_prewarm_metric(
             model_endpoint_record.id
         )
 
@@ -1757,7 +1824,7 @@ class CompletionSyncV1UseCase:
 
         inference_gateway = self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
         autoscaling_metrics_gateway = (
-            self.model_endpoint_service.get_inference_auto_scaling_metrics_gateway()
+            self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
         )
         await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
             endpoint_id=model_endpoint.record.id
@@ -2085,7 +2152,7 @@ class CompletionStreamV1UseCase:
             self.model_endpoint_service.get_streaming_model_endpoint_inference_gateway()
         )
         autoscaling_metrics_gateway = (
-            self.model_endpoint_service.get_inference_auto_scaling_metrics_gateway()
+            self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
         )
         await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
             endpoint_id=model_endpoint.record.id

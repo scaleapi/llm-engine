@@ -2,6 +2,7 @@ import json
 from enum import Enum
 from typing import Any, Callable, Dict, List, Sequence, Set, Type, Union
 
+import pydantic
 from fastapi import routing
 from fastapi._compat import GenerateJsonSchema, get_definitions
 from fastapi.openapi.constants import REF_TEMPLATE
@@ -25,7 +26,6 @@ from model_engine_server.domain.entities import (
 )
 from model_engine_server.domain.gateways import ModelEndpointsSchemaGateway
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
-from pydantic import BaseModel
 from starlette.routing import BaseRoute
 
 # Caches the default model definition so we don't need to recompute every time
@@ -57,7 +57,7 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
         model_endpoint_names = []
         model_definitions = {}
         for record in model_endpoint_records:
-            response_model: Type[BaseModel] = GetAsyncTaskV1Response
+            response_model: Type[pydantic.BaseModel] = GetAsyncTaskV1Response
             predict_stub: Callable[[EndpointPredictV1Request], Any] = predict_stub_async
             base_route = "/v1/async-tasks"
             if record.endpoint_type == ModelEndpointType.SYNC:
@@ -164,7 +164,7 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
         Returns:
             Dict[str, Any]: The updated model definitions.
         """
-        models: List[Type[BaseModel]] = [
+        models: List[Type[pydantic.BaseModel]] = [
             EndpointPredictV1Request,
             GetAsyncTaskV1Response,
             SyncEndpointPredictV1Response,
@@ -198,7 +198,7 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
                         LiveModelEndpointsSchemaGateway.update_schema_refs_with_prefix(item, prefix)
 
     @staticmethod
-    def get_model_name_map(prefix: str) -> Dict[Union[Type[BaseModel], Type[Enum]], str]:
+    def get_model_name_map(prefix: str) -> Dict[Union[Type[pydantic.BaseModel], Type[Enum]], str]:
         return {
             CallbackAuth: "CallbackAuth",
             CallbackBasicAuth: "CallbackBasicAuth",
@@ -254,8 +254,8 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
 
     @staticmethod
     def get_model_definitions(
-        models: Sequence[Type[BaseModel]],
-        model_name_map: Dict[Union[Type[BaseModel], Type[Enum]], str],
+        models: Sequence[Type[pydantic.BaseModel]],
+        model_name_map: Dict[Union[Type[pydantic.BaseModel], Type[Enum]], str],
     ) -> Dict[str, Any]:
         """Get OpenAPI definitions for provided models using the name provided in model_name_map"""
 
