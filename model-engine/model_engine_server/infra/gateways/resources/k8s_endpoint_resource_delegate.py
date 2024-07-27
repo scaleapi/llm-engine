@@ -508,9 +508,9 @@ class K8SEndpointResourceDelegate:
         """
         TODO docstring
         """
-        custom_objects_client = get_kubernetes_custom_objects_client()
+        custom_objects_api = get_kubernetes_custom_objects_client()
         try:
-            custom_objects_client.create_namespaced_custom_object(
+            await custom_objects_api.create_namespaced_custom_object(
                 group="leaderworkerset.x-k8s.io",
                 version="v1",
                 namespace=hmi_config.endpoint_namespace,
@@ -521,7 +521,7 @@ class K8SEndpointResourceDelegate:
             # TODO do we actually want to replace things here? or do we want to not allow this?
             if exc.status == 409:
                 logger.info(f"LeaderWorkerSet {name} already exists, replacing")
-                existing_lws = await custom_objects_client.get_namespaced_custom_object(
+                existing_lws = await custom_objects_api.get_namespaced_custom_object(
                     group="leaderworkerset.x-k8s.io",
                     version="v1",
                     namespace=hmi_config.endpoint_namespace,
@@ -529,7 +529,7 @@ class K8SEndpointResourceDelegate:
                     name=name,
                 )
                 new_lws = deep_update(existing_lws, lws)
-                await custom_objects_client.replace_namespaced_custom_object(
+                await custom_objects_api.replace_namespaced_custom_object(
                     group="leaderworkerset.x-k8s.io",
                     version="v1",
                     namespace=hmi_config.endpoint_namespace,
