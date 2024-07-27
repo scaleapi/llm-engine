@@ -488,9 +488,7 @@ data:
             labels:
               app: ${RESOURCE_NAME}
               {{- $service_template_labels | nindent 14 }}
-              {{- if eq $mode "async" }}
-              sidecar.istio.io/inject: "false"  # TODO: switch to scuttle
-              {{- end }}
+              sidecar.istio.io/inject: "false"  # Never inject istio, it screws up networking
               version: v1
             annotations:
               ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
@@ -664,6 +662,7 @@ data:
                     memory: ${FORWARDER_MEMORY_LIMIT}
                     ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
                 {{ $forwarder_volume_mounts | nindent 16 }}
+              {{- end }}
               - name: lws_leader
                 image: ${IMAGE}
                 imagePullPolicy: IfNotPresent
@@ -712,7 +711,6 @@ data:
                 ports:
                   - containerPort: ${USER_CONTAINER_PORT}
                     name: http
-              {{- end }}
             volumes:
               {{- if $require_aws_config }}
               - name: config-volume
@@ -745,9 +743,7 @@ data:
             labels:
               app: ${RESOURCE_NAME}
               {{- $service_template_labels | nindent 14 }}
-              {{- if eq $mode "async" }}
-              sidecar.istio.io/inject: "false"  # TODO: switch to scuttle
-              {{- end }}
+              sidecar.istio.io/inject: "false"  # Never inject istio for LWS, it screws up networking
               version: v1
             annotations:
               ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
@@ -822,7 +818,6 @@ data:
                 ports:
                   - containerPort: ${USER_CONTAINER_PORT}
                     name: http
-              {{- end }}
             volumes:
               {{- if $require_aws_config }}
               - name: config-volume
@@ -850,8 +845,8 @@ data:
                     - key: infra_service_config
                       path: config.yaml
               {{- end }}
-  {{- end }}
-  {{- end }}
+  {{- end }}  # mode
+  {{- end }}  # device
   service.yaml: |-
     apiVersion: v1
     kind: Service
