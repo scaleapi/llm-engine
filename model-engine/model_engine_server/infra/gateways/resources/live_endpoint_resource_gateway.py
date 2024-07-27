@@ -65,16 +65,12 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
             queue_name = None
             queue_url = None
 
-<<<<<<< HEAD
-        await self.k8s_delegate.create_or_update_resources(  # TODO multinode
-=======
             if self.inference_autoscaling_metrics_gateway is not None:
                 await self.inference_autoscaling_metrics_gateway.create_or_update_resources(
                     endpoint_record.id
                 )
 
-        await self.k8s_delegate.create_or_update_resources(
->>>>>>> main
+        await self.k8s_delegate.create_or_update_resources(  # TODO multinode
             request=request,
             sqs_queue_name=queue_name,
             sqs_queue_url=queue_url,
