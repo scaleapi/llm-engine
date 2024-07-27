@@ -61,6 +61,13 @@ HTTP_PORT = 5000
 BASE_PATH_IN_ENDPOINT = "/app"
 
 DATADOG_ENV_VAR = {"DD_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
+LWS_DEFAULT_ENV_VAR = {
+    "K8S_OWN_POD_NAME",
+    "K8S_OWN_NAMESPACE",
+    "K8S_LWS_NAME",
+    "K8S_LWS_LEADER_NAME",
+    "K8S_LWS_CLUSTER_SIZE",
+}
 
 _lazy_load_kubernetes_clients = True
 _kubernetes_apps_api = None
@@ -225,8 +232,39 @@ def get_main_container_from_deployment_template(deployment_template: Dict[str, A
     return user_container
 
 
-def add_datadog_env_to_main_container(deployment_template: Dict[str, Any]) -> None:
-    user_container = get_main_container_from_deployment_template(deployment_template)
+def get_leader_container_from_lws_template(lws_template: Dict[str, Any]):
+    containers = lws_template["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+        "containers"
+    ]
+    for container in containers:
+        if container["name"] == "lws_leader":
+            leader_container = container
+            break
+    else:
+        raise ValueError(
+            "leader container (container['name'] == 'lws_leader') not found in lws template when adding datadog env to leader container."
+        )
+    return leader_container
+
+
+def get_worker_container_from_lws_template(lws_template: Dict[str, Any]):
+    containers = lws_template["spec"]["leaderWorkerTemplate"]["workerTemplate"]["spec"][
+        "containers"
+    ]
+    for container in containers:
+        if container["name"] == "lws_worker":
+            worker_container = container
+            break
+    else:
+        raise ValueError(
+            "worker container (container['name'] == 'lws_worker') not found in lws template when adding datadog env to worker container."
+        )
+    return worker_container
+
+
+def add_datadog_env_to_container(
+    deployment_template: Dict[str, Any], user_container: Dict[str, Any]
+) -> None:
 
     user_container_envs = []
     for env in user_container["env"]:
@@ -259,6 +297,46 @@ def add_datadog_env_to_main_container(deployment_template: Dict[str, Any]) -> No
     )
 
     user_container["env"] = user_container_envs
+
+
+def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
+    container_envs = []
+    for env in container["env"]:
+        if env["name"] not in LWS_DEFAULT_ENV_VAR:
+            container_envs.append(env)
+
+    container_envs.extend(
+        [
+            {"name": "K8S_OWN_POD_NAME", "valueFrom": {"fieldRef": {"fieldPath": "metadata.name"}}},
+            {
+                "name": "K8S_OWN_NAMESPACE",
+                "valueFrom": {"fieldRef": {"fieldPath": "metadata.namespace"}},
+            },
+            {
+                "name": "K8S_LWS_NAME",
+                "valueFrom": {
+                    "fieldRef": {"fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/name']"}
+                },
+            },
+            {
+                "name": "K8S_LWS_LEADER_NAME",
+                "valueFrom": {
+                    "fieldRef": {
+                        "fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/leader-name']"
+                    }
+                },
+            },
+            {
+                "name": "K8S_LWS_CLUSTER_SIZE",
+                "valueFrom": {
+                    "fieldRef": {
+                        "fieldPath": "metadata.annotations['leaderworkerset.sigs.k8s.io/size']"
+                    }
+                },
+            },
+        ]
+    )
+    container["env"] = container_envs
 
 
 class K8SEndpointResourceDelegate:
@@ -1253,7 +1331,12 @@ class K8SEndpointResourceDelegate:
                 endpoint_resource_name=lws_resource_name,
             )
             lws_template = load_k8s_yaml(f"{lws_resource_name}.yaml", lws_arguments)
-
+            leader_template = get_leader_container_from_lws_template(lws_template)
+            worker_template = get_worker_container_from_lws_template(lws_template)
+            add_lws_default_env_vars_to_container(leader_template)
+            add_lws_default_env_vars_to_container(worker_template)
+            add_datadog_env_to_container(lws_template, leader_template)
+            add_datadog_env_to_container(lws_template, worker_template)
             await self._create_lws(
                 lws=lws_template,
                 name=k8s_resource_group_name,
@@ -1275,7 +1358,8 @@ class K8SEndpointResourceDelegate:
                 request.build_endpoint_request.model_endpoint_record.current_model_bundle.flavor,
                 RunnableImageLike,
             ):
-                add_datadog_env_to_main_container(deployment_template)  # TODO refactor
+                user_container = get_main_container_from_deployment_template(deployment_template)
+                add_datadog_env_to_container(deployment_template, user_container)  # TODO refactor
             await self._create_deployment(
                 model_endpoint_record=request.build_endpoint_request.model_endpoint_record,
                 deployment=deployment_template,

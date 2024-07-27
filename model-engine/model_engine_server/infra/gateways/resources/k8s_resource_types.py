@@ -562,7 +562,7 @@ def get_endpoint_resource_arguments_from_request(
     worker_command = None
     if WORKER_COMMAND_METADATA_KEY in model_bundle.metadata:
         worker_command = model_bundle.metadata[WORKER_COMMAND_METADATA_KEY]
-    # TODO maybe validate here? idk
+    # TODO maybe validate worker command/env here? idk
 
     infra_service_config_volume_mount_path = "/infra-config"
     forwarder_config_file_name = "service--forwarder.yaml"

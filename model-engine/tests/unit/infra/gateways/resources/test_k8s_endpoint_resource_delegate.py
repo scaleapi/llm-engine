@@ -15,7 +15,7 @@ from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     DATADOG_ENV_VAR,
     K8SEndpointResourceDelegate,
-    add_datadog_env_to_main_container,
+    add_datadog_env_to_container,
     get_main_container_from_deployment_template,
     load_k8s_yaml,
 )
@@ -165,7 +165,8 @@ def test_resource_arguments_type_and_add_datadog_env_to_main_container(resource_
 
     deployment_template = load_k8s_yaml(f"{resource_arguments_type_name}.yaml", resource_arguments)
     if "runnable-image" in resource_arguments_type_name:
-        add_datadog_env_to_main_container(deployment_template)
+        user_container = get_main_container_from_deployment_template(deployment_template)
+        add_datadog_env_to_container(deployment_template, user_container)
 
         user_container = get_main_container_from_deployment_template(deployment_template)
 
