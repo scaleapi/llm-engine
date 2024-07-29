@@ -1,6 +1,7 @@
 # Keep in line with service_config_{*}.yaml
 # This file loads sensitive data that shouldn't make it to inference docker images
 # Do not include this file in our inference/endpoint code
+import inspect
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -77,10 +78,14 @@ class HostedModelInferenceServiceConfig:
     ] = None  # Not an env var because the redis cache info is already here
 
     @classmethod
+    def from_json(cls, json):
+        return cls(**{k: v for k, v in json.items() if k in inspect.signature(cls).parameters})
+
+    @classmethod
     def from_yaml(cls, yaml_path):
         with open(yaml_path, "r") as f:
             raw_data = yaml.safe_load(f)
-        return HostedModelInferenceServiceConfig(**raw_data)
+        return HostedModelInferenceServiceConfig.from_json(raw_data)
 
     @property
     def cache_redis_url(self) -> str:
