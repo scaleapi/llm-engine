@@ -932,7 +932,7 @@ class K8SEndpointResourceDelegate:
     ) -> List[kubernetes_asyncio.client.models.v1_config_map.V1ConfigMap]:
         """
         Gets ConfigMaps associated with a given user id + endpoint name
-        This should be considered the same abstraction level as get_deployment
+        This should be considered the same abstraction level as _get_deployment
 
         """
         k8s_core_api = get_kubernetes_core_client()
@@ -954,6 +954,34 @@ class K8SEndpointResourceDelegate:
                 label_selector=deployment_name_label_selector,
             )
             return config_maps.items
+    
+    @staticmethod
+    async def _get_deployment(endpoint_id, deployment_name):
+        """
+        Gets the Deployment associated with a given endpoint_id + deployment name
+        Handles a legacy fallback case as well, where Deployments were named differently.
+
+        """
+        apps_client = get_kubernetes_apps_client()
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        try:
+            deployment_config = await apps_client.read_namespaced_deployment(
+                name=k8s_resource_group_name, namespace=hmi_config.endpoint_namespace
+            )
+        except ApiException as e:
+            if e.status == 404:
+                logger.warning(
+                    f"Could not find resource, falling back to legacy deployment_name: "
+                    f"{k8s_resource_group_name=}, {endpoint_id=}, {deployment_name=}"
+                )
+                k8s_resource_group_name = deployment_name
+                deployment_config = await apps_client.read_namespaced_deployment(
+                    name=k8s_resource_group_name,
+                    namespace=hmi_config.endpoint_namespace,
+                )
+            else:
+                raise
+        return deployment_config
 
     @staticmethod
     async def _get_all_config_maps() -> List[
@@ -1582,26 +1610,28 @@ class K8SEndpointResourceDelegate:
         self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
     ) -> ModelEndpointInfraState:
         custom_objects_client = get_kubernetes_custom_objects_client()
-        apps_client = get_kubernetes_apps_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
-        # TODO check LWS here too
+
+        config_maps = await self._get_config_maps(
+            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
+        )
+
         try:
-            deployment_config = await apps_client.read_namespaced_deployment(
-                name=k8s_resource_group_name, namespace=hmi_config.endpoint_namespace
+            lws_config = custom_objects_client.get_namespaced_custom_object(
+                group="TODO",
+                version="v1",
+                namespace=hmi_config.endpoint_namespace,
+                plural="leaderworkersets",
+                name=k8s_resource_group_name,
             )
         except ApiException as e:
-            if e.status == 404:
-                logger.warning(
-                    f"Could not find resource, falling back to legacy deployment_name: "
-                    f"{k8s_resource_group_name=}, {endpoint_id=}, {deployment_name=}"
-                )
-                k8s_resource_group_name = deployment_name
-                deployment_config = await apps_client.read_namespaced_deployment(
-                    name=k8s_resource_group_name,
-                    namespace=hmi_config.endpoint_namespace,
-                )
-            else:
-                raise
+            lws_config = None
+
+        # TODO parse out lws_config
+
+        # TODO maybe refactor all the deployment stuff out into its own fn?
+
+        deployment_config = await self._get_deployment(endpoint_id, deployment_name)
 
         common_params = self._get_common_endpoint_params(deployment_config)
         if endpoint_type == ModelEndpointType.ASYNC:
@@ -1656,9 +1686,7 @@ class K8SEndpointResourceDelegate:
             if e.status == 404:
                 pass
 
-        config_maps = await self._get_config_maps(
-            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
-        )
+        
         launch_container = self._get_launch_container(deployment_config)
         envlist = launch_container.env
         # Note: the env var PREWARM is either "true" or "false" string (or doesn't exist for legacy)
@@ -1700,6 +1728,8 @@ class K8SEndpointResourceDelegate:
             num_queued_items=None,
         )
         return infra_state
+
+    
 
     async def _get_all_resources(  # TODO multinode
         self,
