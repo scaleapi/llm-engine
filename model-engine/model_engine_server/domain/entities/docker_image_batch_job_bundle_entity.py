@@ -1,9 +1,9 @@
 import datetime
 from typing import Dict, List, Optional
 
+from model_engine_server.common.pydantic_types import ConfigDict
 from model_engine_server.domain.entities import GpuType
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
-from pydantic import ConfigDict
 
 
 class DockerImageBatchJobBundle(OwnedEntity):

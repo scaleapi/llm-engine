@@ -1,8 +1,8 @@
 import datetime
 from typing import Any, Dict, Optional
 
+from model_engine_server.common.pydantic_types import ConfigDict
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
-from pydantic import ConfigDict
 
 
 class Trigger(OwnedEntity):
