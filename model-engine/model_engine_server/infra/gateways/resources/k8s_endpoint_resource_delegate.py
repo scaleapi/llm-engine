@@ -1612,25 +1612,32 @@ class K8SEndpointResourceDelegate:
         custom_objects_client = get_kubernetes_custom_objects_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
 
-        config_maps = await self._get_config_maps(
-            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
-        )
-
         try:
             lws_config = custom_objects_client.get_namespaced_custom_object(
-                group="TODO",
+                group="leaderworkerset.x-k8s.io",
                 version="v1",
                 namespace=hmi_config.endpoint_namespace,
                 plural="leaderworkersets",
                 name=k8s_resource_group_name,
             )
         except ApiException as e:
+            # Need to handle the case where lws CRD isn't installed as well as the lws not existing.
             lws_config = None
 
         # TODO parse out lws_config
 
         # TODO maybe refactor all the deployment stuff out into its own fn?
 
+        if lws_config is None:
+            infra_state = await self._get_resources_from_deployment_type(endpoint_id=endpoint_id, deployment_name=deployment_name, endpoint_type=endpoint_type)
+        else:
+            infra_state = await self._get_resources_from_lws_type(endpoint_id=endpoint_id, deployment_name=deployment_name, endpoint_type=endpoint_type, lws_config=lws_config)
+        return infra_state
+
+    async def _get_resources_from_deployment_type(self, endpoint_id, deployment_name, endpoint_type) -> ModelEndpointInfraState:
+        custom_objects_client = get_kubernetes_custom_objects_client()
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        
         deployment_config = await self._get_deployment(endpoint_id, deployment_name)
 
         common_params = self._get_common_endpoint_params(deployment_config)
@@ -1685,7 +1692,7 @@ class K8SEndpointResourceDelegate:
         except ApiException as e:
             if e.status == 404:
                 pass
-
+        
         
         launch_container = self._get_launch_container(deployment_config)
         envlist = launch_container.env
@@ -1695,6 +1702,10 @@ class K8SEndpointResourceDelegate:
 
         high_priority = (
             deployment_config.spec.template.spec.priority_class_name == LAUNCH_HIGH_PRIORITY_CLASS
+        )
+
+        config_maps = await self._get_config_maps(
+            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
         )
 
         infra_state = ModelEndpointInfraState(
@@ -1727,9 +1738,55 @@ class K8SEndpointResourceDelegate:
             image=common_params["image"],
             num_queued_items=None,
         )
+        
         return infra_state
 
-    
+    async def _get_resources_from_lws_type(self, endpoint_id, deployment_name, endpoint_type, lws_config) -> ModelEndpointInfraState:
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        
+        config_maps = await self._get_config_maps(
+            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
+        )
+
+        # TODO pull common_params out, get horizontal_autoscaling_params
+        common_params = None
+
+        replicas = 42  # TODO
+        prewarm = False  # TODO high priority?
+        high_priority = False  # TODO high priority?
+
+        infra_state = ModelEndpointInfraState(
+            deployment_name=k8s_resource_group_name,
+            aws_role=common_params["aws_role"],
+            results_s3_bucket=common_params["results_s3_bucket"],
+            child_fn_info=None,
+            labels=common_params["labels"],
+            prewarm=prewarm,
+            high_priority=high_priority,
+            deployment_state=ModelEndpointDeploymentState(
+                min_workers=replicas,
+                max_workers=replicas,
+                per_worker=int(1),  # TODO?
+                available_workers=lws_config.status.available_replicas or 0,  # TODO verify?
+                unavailable_workers=lws_config.status.unavailable_replicas or 0,
+            ),
+            resource_state=ModelEndpointResourceState(
+                cpus=common_params["cpus"],
+                gpus=common_params["gpus"],
+                gpu_type=common_params["gpu_type"],  # type: ignore
+                memory=common_params["memory"],
+                storage=common_params["storage"],
+                nodes_per_worker=42,  # TODO fill this in
+                optimize_costs=False,
+            ),
+            user_config_state=self._translate_k8s_config_maps_to_user_config_data(
+                k8s_resource_group_name, config_maps
+            ),
+            image=common_params["image"],
+            num_queued_items=None,
+        )
+        
+        return infra_state
 
     async def _get_all_resources(  # TODO multinode
         self,
