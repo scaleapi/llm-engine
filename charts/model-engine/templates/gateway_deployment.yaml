@@ -26,6 +26,8 @@ spec:
             "service": {{ include "modelEngine.fullname" . | quote }},
             "source": "python"
           }]
+        sidecar.istio.io/proxyMemoryLimit: "5Gi"
+        sidecar.istio.io/proxyMemory: "1Gi"
       labels:
         {{- include "modelEngine.selectorLabels.gateway" . | nindent 8 }}
         {{- include "modelEngine.labels" . | nindent 8 }}
