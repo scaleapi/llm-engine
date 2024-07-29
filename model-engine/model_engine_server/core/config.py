@@ -51,6 +51,9 @@ class InfraConfig:
     def from_yaml(cls, yaml_path) -> "InfraConfig":
         with open(yaml_path, "r") as f:
             raw_data = yaml.safe_load(f)
+        raw_data = {
+            key: value for key, value in raw_data.items() if key in InfraConfig.__annotations__
+        }
         return InfraConfig(**raw_data)
 
 

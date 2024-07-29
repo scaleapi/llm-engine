@@ -80,6 +80,11 @@ class HostedModelInferenceServiceConfig:
     def from_yaml(cls, yaml_path):
         with open(yaml_path, "r") as f:
             raw_data = yaml.safe_load(f)
+        raw_data = {
+            key: value
+            for key, value in raw_data.items()
+            if key in HostedModelInferenceServiceConfig.__annotations__
+        }
         return HostedModelInferenceServiceConfig(**raw_data)
 
     @property
