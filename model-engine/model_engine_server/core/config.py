@@ -4,6 +4,7 @@ The configuration file is loaded from the ML_INFRA_SERVICES_CONFIG_PATH environm
 If this is not set, the default configuration file is used from
 model_engine_server.core/configs/default.yaml.
 """
+import inspect
 import os
 from contextlib import contextmanager
 from copy import deepcopy
@@ -48,13 +49,14 @@ class InfraConfig:
     firehose_stream_name: Optional[str] = None
 
     @classmethod
+    def from_json(cls, json):
+        return cls(**{k: v for k, v in json.items() if k in inspect.signature(cls).parameters})
+
+    @classmethod
     def from_yaml(cls, yaml_path) -> "InfraConfig":
         with open(yaml_path, "r") as f:
             raw_data = yaml.safe_load(f)
-        raw_data = {
-            key: value for key, value in raw_data.items() if key in InfraConfig.__annotations__
-        }
-        return InfraConfig(**raw_data)
+        return InfraConfig.from_json(raw_data)
 
 
 def read_default_config():
