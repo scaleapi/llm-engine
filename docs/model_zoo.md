@@ -15,6 +15,10 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `llama-3-8b-instruct`             | ✅                       |                            | vllm                                       | 8192                                           |
 | `llama-3-70b`                     | ✅                       |                            | vllm                                       | 8192                                           |
 | `llama-3-70b-instruct`            | ✅                       |                            | vllm                                       | 8192                                           |
+| `llama-3-1-8b`                    | ✅                       |                            | vllm                                       | 131072                                         |
+| `llama-3-1-8b-instruct`           | ✅                       |                            | vllm                                       | 131072                                         |
+| `llama-3-1-70b`                   | ✅                       |                            | vllm                                       | 131072                                         |
+| `llama-3-1-70b-instruct`          | ✅                       |                            | vllm                                       | 131072                                         |
 | `falcon-7b`                       | ✅                       |                            | text-generation-inference, vllm            | 2048                                           |
 | `falcon-7b-instruct`              | ✅                       |                            | text-generation-inference, vllm            | 2048                                           |
 | `falcon-40b`                      | ✅                       |                            | text-generation-inference, vllm            | 2048                                           |

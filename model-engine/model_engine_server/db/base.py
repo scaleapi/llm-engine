@@ -127,32 +127,32 @@ def refresh_sessions():
         echo=False,
         future=True,
         pool_pre_ping=True,
-        pool_size=20,
-        max_overflow=30,
+        pool_size=10,
+        max_overflow=10,
     )
     pg_engine_read_only = create_engine(
         get_engine_url(read_only=True, sync=True),
         echo=False,
         future=True,
         pool_pre_ping=True,
-        pool_size=20,
-        max_overflow=30,
+        pool_size=10,
+        max_overflow=10,
     )
     pg_engine_async = create_async_engine(
         get_engine_url(read_only=False, sync=False),
         echo=False,
         future=True,
         pool_pre_ping=True,
-        pool_size=20,
-        max_overflow=30,
+        pool_size=10,
+        max_overflow=10,
     )
     pg_engine_read_only_async = create_async_engine(
         get_engine_url(read_only=True, sync=False),
         echo=False,
         future=True,
         pool_pre_ping=True,
-        pool_size=20,
-        max_overflow=30,
+        pool_size=10,
+        max_overflow=10,
     )
     pg_engine_async_null_pool = create_async_engine(
         get_engine_url(read_only=False, sync=False),
