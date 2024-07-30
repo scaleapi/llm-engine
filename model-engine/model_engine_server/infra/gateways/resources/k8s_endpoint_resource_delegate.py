@@ -1719,17 +1719,18 @@ class K8SEndpointResourceDelegate:
             print(e)
             lws_config = None
 
-        # TODO parse out lws_config
-
-        # TODO maybe refactor all the deployment stuff out into its own fn?
+        # Make the call here so we can use it in both places, also this makes _get_resources_from_lws_type make zero requests to k8s
+        config_maps = await self._get_config_maps(
+            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
+        )
 
         if lws_config is None:
-            infra_state = await self._get_resources_from_deployment_type(endpoint_id=endpoint_id, deployment_name=deployment_name, endpoint_type=endpoint_type)
+            infra_state = await self._get_resources_from_deployment_type(endpoint_id=endpoint_id, deployment_name=deployment_name, endpoint_type=endpoint_type, config_maps=config_maps)
         else:
-            infra_state = await self._get_resources_from_lws_type(endpoint_id=endpoint_id, deployment_name=deployment_name, endpoint_type=endpoint_type, lws_config=lws_config)
+            infra_state = await self._get_resources_from_lws_type(endpoint_id=endpoint_id, deployment_name=deployment_name, endpoint_type=endpoint_type, lws_config=lws_config, config_maps=config_maps)
         return infra_state
 
-    async def _get_resources_from_deployment_type(self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType) -> ModelEndpointInfraState:
+    async def _get_resources_from_deployment_type(self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType, config_maps) -> ModelEndpointInfraState:
         custom_objects_client = get_kubernetes_custom_objects_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
         
@@ -1799,9 +1800,9 @@ class K8SEndpointResourceDelegate:
             deployment_config.spec.template.spec.priority_class_name == LAUNCH_HIGH_PRIORITY_CLASS
         )
 
-        config_maps = await self._get_config_maps(
-            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
-        )
+        # config_maps = await self._get_config_maps(
+        #     endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
+        # )
 
         infra_state = ModelEndpointInfraState(
             deployment_name=k8s_resource_group_name,
@@ -1836,16 +1837,15 @@ class K8SEndpointResourceDelegate:
         
         return infra_state
 
-    async def _get_resources_from_lws_type(self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType, lws_config) -> ModelEndpointInfraState:
+    async def _get_resources_from_lws_type(self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType, lws_config, config_maps: List) -> ModelEndpointInfraState:
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
         
-        config_maps = await self._get_config_maps(
-            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
-        )
+        # config_maps = await self._get_config_maps(
+        #     endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
+        # )
 
         # import pdb; pdb.set_trace()
 
-        # TODO pull common_params out, get horizontal_autoscaling_params
         # Assume leader + worker share the same user-set env vars
         common_params = self._get_common_endpoint_params_for_lws_type(lws_config)
 
@@ -1853,7 +1853,7 @@ class K8SEndpointResourceDelegate:
         prewarm = False  # not provided here
         high_priority = (
             lws_config['spec']['leaderWorkerTemplate']['leaderTemplate']['spec']['priorityClassName'] == LAUNCH_HIGH_PRIORITY_CLASS
-        )  # TODO we do have a high priority priority-class-name
+        )
         nodes_per_worker = lws_config['spec']['leaderWorkerTemplate']['size']
 
         infra_state = ModelEndpointInfraState(
@@ -1936,10 +1936,10 @@ class K8SEndpointResourceDelegate:
             # TODO
             leader_worker_sets = (
                 await custom_objects_client.list_namespaced_custom_object(
-                    group="keda.sh",
-                    version="v1alpha1",
+                    group="leaderworkerset.x-k8s.io",
+                    version="v1",
                     namespace=hmi_config.endpoint_namespace,
-                    plural="scaledobjects",
+                    plural="leaderworkersets",
                 )
             )["items"]
         except ApiException as e:
@@ -1953,6 +1953,7 @@ class K8SEndpointResourceDelegate:
         vpas_by_name = {vpa["metadata"]["name"]: vpa for vpa in vpas}
         keda_scaled_objects_by_name = {kso["metadata"]["name"]: kso for kso in keda_scaled_objects}
         leader_worker_sets_by_name = {lws["metadata"]["name"]: lws for lws in leader_worker_sets}
+        # import pdb; pdb.set_trace()
         all_config_maps = await self._get_all_config_maps()
         # can safely assume hpa with same name as deployment corresponds to the same Launch Endpoint
         logger.info(f"Orphaned hpas: {set(hpas_by_name).difference(set(deployments_by_name))}")
@@ -2037,8 +2038,13 @@ class K8SEndpointResourceDelegate:
             except Exception:
                 logger.exception(f"Error parsing deployment {name}")
         for name, lws_config in leader_worker_sets_by_name.items():
-            # TODO
-            pass
+            # name.startswith("launch-endpoint-id-") should always be true, the other case is a legacy.
+            key = _k8s_resource_group_name_to_endpoint_id(name)
+            is_key_an_endpoint_id = True
+            endpoint_id = key
+            deployment_name = name
+            endpoint_type = ModelEndpointType.STREAMING  # TODO
+            infra_states[key] = (is_key_an_endpoint_id, await self._get_resources_from_lws_type(endpoint_id, deployment_name, endpoint_type, lws_config, all_config_maps))
         return infra_states
 
     async def _delete_resources_async(self, endpoint_id: str, deployment_name: str) -> bool:
