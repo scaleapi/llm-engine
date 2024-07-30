@@ -449,7 +449,7 @@ class CreateLLMModelBundleV1UseCase:
                 )
             elif multinode:
                 raise ObjectHasInvalidValueException(
-                    f"Multinode is not supported for source {source}."
+                    f"Multinode is not supported for framework {framework}."
                 )
             elif framework == LLMInferenceFramework.DEEPSPEED:
                 bundle_id = await self.create_deepspeed_bundle(

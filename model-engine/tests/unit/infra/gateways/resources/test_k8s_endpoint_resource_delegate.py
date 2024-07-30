@@ -564,6 +564,8 @@ async def test_get_resources_async_success(
     mock_policy_client,
     mock_custom_objects_client,
 ):
+    # TODO do I need to mock out custom_objects_client.get_namespaced_custom_object to return ApiException
+    # if it's asking for a LWS?
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_common_endpoint_params",
         Mock(
@@ -624,6 +626,8 @@ async def test_get_resources_sync_success(
     mock_policy_client,
     mock_custom_objects_client,
 ):
+    # TODO do I need to mock out custom_objects_client.get_namespaced_custom_object to return ApiException
+    # if it's asking for a LWS?
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_common_endpoint_params",
         Mock(
