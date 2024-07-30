@@ -406,6 +406,18 @@ class K8SEndpointResourceDelegate:
             if envvar.name == name:
                 return envvar.value
         return None
+    
+    @staticmethod
+    def _get_env_value_from_envlist_for_lws(
+        envlist: Optional[List[Dict]], name: str
+    ):  # pragma: no cover
+        # Custom objects client returns nested Dicts, not objects.
+        if envlist is None:
+            return None
+        for envvar in envlist:
+            if envvar["name"] == name:
+                return envvar["value"]
+        return None
 
     # TODO analogous fns for the LWS config
 
@@ -470,6 +482,60 @@ class K8SEndpointResourceDelegate:
             labels=labels,
         )
         return common_build_endpoint_request
+    
+    def _get_common_endpoint_params_for_lws_type(self, lws_config: Any) -> CommonEndpointParams:
+        main_container = self._get_main_leader_container_from_lws(lws_config)
+        launch_container = self._get_launch_container_from_lws(lws_config)
+
+        resources = main_container["resources"]
+        image = main_container["image"]
+
+        cpus = resources["requests"]["cpu"]
+        memory = resources["requests"]["memory"]
+        gpus = int((resources["limits"] or dict()).get("nvidia.com/gpu", 0))
+        storage = resources["requests"].get("ephemeral-storage")
+
+        envlist = launch_container["env"]
+        # There really isn't a bundle_url for LWS since those use RunnableImages
+        bundle_url = self._get_env_value_from_envlist_for_lws(envlist, "BUNDLE_URL") or image
+        aws_role = self._get_env_value_from_envlist_for_lws(envlist, "AWS_PROFILE")
+        results_s3_bucket = self._get_env_value_from_envlist_for_lws(envlist, "RESULTS_S3_BUCKET")
+
+        # Temporary fix: new LIRA endpoints created should have these env vars
+        # but old ones don't, so we can fetch them from the config.
+        if aws_role is None:
+            aws_role = infra_config().profile_ml_inference_worker
+        if results_s3_bucket is None:
+            results_s3_bucket = infra_config().s3_bucket
+
+        if bundle_url is None or aws_role is None or results_s3_bucket is None:
+            raise ValueError("Failed to fetch common endpoint values.")
+
+        try:
+            node_selector = lws_config['spec']['leaderWorkerTemplate']['leaderTemplate']['spec']['nodeSelector']
+            gpu_type = node_selector.get("k8s.amazonaws.com/accelerator", None)
+        except KeyError:
+            gpu_type = None
+
+        try:
+            labels = lws_config['spec']['leaderWorkerTemplate']['leaderTemplate']['metadata']['labels']
+        except KeyError:
+            labels = None  # TODO do we need to parse this into an object? Hope not!
+
+        common_build_endpoint_request: CommonEndpointParams = dict(
+            cpus=cpus,
+            memory=memory,
+            gpus=gpus,
+            gpu_type=gpu_type,
+            storage=storage,
+            bundle_url=bundle_url,
+            aws_role=aws_role,
+            results_s3_bucket=results_s3_bucket,
+            image=image,
+            labels=labels,
+        )
+        return common_build_endpoint_request
+
 
     @staticmethod
     def _get_main_container(deployment_config: V1Deployment) -> V1Container:
@@ -496,6 +562,33 @@ class K8SEndpointResourceDelegate:
         if "main" not in name_to_container:
             raise ValueError("No main container detected")
         return name_to_container["main"]
+    
+    @staticmethod
+    def _get_main_leader_container_from_lws(lws_config: Any):
+        """
+        Similar to _get_main_container, this returns a nested dict.
+        """
+        leader_containers = lws_config['spec']['leaderWorkerTemplate']['leaderTemplate']['spec']['containers']
+        name_to_container = {container['name']: container for container in leader_containers}
+        if "lws_leader" not in name_to_container:
+            raise ValueError("No main leader container detected")
+        return name_to_container["lws_leader"]
+    
+    @staticmethod
+    def _get_launch_container_from_lws(lws_config: Any):
+        # TODO do I need you?
+        leader_containers = lws_config['spec']['leaderWorkerTemplate']['leaderTemplate']['spec']['containers']
+        name_to_container = {container['name']: container for container in leader_containers}
+         # If a celery forwarder is present, use that
+        if "celery-forwarder" in name_to_container:
+            return name_to_container["celery-forwarder"]
+
+        # If a http forwarder is present, use that
+        if "http-forwarder" in name_to_container:
+            return name_to_container["http-forwarder"]
+        
+        # Don't need backwards compatibility here
+        raise ValueError("No forwarder container detected")
 
     # --- Private low level fns that interact with k8s
 
@@ -1612,8 +1705,9 @@ class K8SEndpointResourceDelegate:
         custom_objects_client = get_kubernetes_custom_objects_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
 
+        print(f"trying to find lws at {k8s_resource_group_name}, {hmi_config.endpoint_namespace}")
         try:
-            lws_config = custom_objects_client.get_namespaced_custom_object(
+            lws_config = await custom_objects_client.get_namespaced_custom_object(
                 group="leaderworkerset.x-k8s.io",
                 version="v1",
                 namespace=hmi_config.endpoint_namespace,
@@ -1622,6 +1716,7 @@ class K8SEndpointResourceDelegate:
             )
         except ApiException as e:
             # Need to handle the case where lws CRD isn't installed as well as the lws not existing.
+            print(e)
             lws_config = None
 
         # TODO parse out lws_config
@@ -1634,7 +1729,7 @@ class K8SEndpointResourceDelegate:
             infra_state = await self._get_resources_from_lws_type(endpoint_id=endpoint_id, deployment_name=deployment_name, endpoint_type=endpoint_type, lws_config=lws_config)
         return infra_state
 
-    async def _get_resources_from_deployment_type(self, endpoint_id, deployment_name, endpoint_type) -> ModelEndpointInfraState:
+    async def _get_resources_from_deployment_type(self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType) -> ModelEndpointInfraState:
         custom_objects_client = get_kubernetes_custom_objects_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
         
@@ -1741,19 +1836,23 @@ class K8SEndpointResourceDelegate:
         
         return infra_state
 
-    async def _get_resources_from_lws_type(self, endpoint_id, deployment_name, endpoint_type, lws_config) -> ModelEndpointInfraState:
+    async def _get_resources_from_lws_type(self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType, lws_config) -> ModelEndpointInfraState:
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
         
         config_maps = await self._get_config_maps(
             endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
         )
 
-        # TODO pull common_params out, get horizontal_autoscaling_params
-        common_params = None
+        # import pdb; pdb.set_trace()
 
-        replicas = 42  # TODO
+        # TODO pull common_params out, get horizontal_autoscaling_params
+        # Assume leader + worker share the same user-set env vars
+        common_params = self._get_common_endpoint_params_for_lws_type(lws_config)
+
+        replicas = lws_config['spec']['replicas']  # TODO
         prewarm = False  # TODO high priority?
         high_priority = False  # TODO high priority?
+        nodes_per_worker = lws_config['spec']['leaderWorkerTemplate']['size']
 
         infra_state = ModelEndpointInfraState(
             deployment_name=k8s_resource_group_name,
@@ -1767,8 +1866,8 @@ class K8SEndpointResourceDelegate:
                 min_workers=replicas,
                 max_workers=replicas,
                 per_worker=int(1),  # TODO?
-                available_workers=lws_config.status.available_replicas or 0,  # TODO verify?
-                unavailable_workers=lws_config.status.unavailable_replicas or 0,
+                available_workers=replicas,  # TODO verify?
+                unavailable_workers=0,  # TODO we may need to check more carefully
             ),
             resource_state=ModelEndpointResourceState(
                 cpus=common_params["cpus"],
@@ -1776,7 +1875,7 @@ class K8SEndpointResourceDelegate:
                 gpu_type=common_params["gpu_type"],  # type: ignore
                 memory=common_params["memory"],
                 storage=common_params["storage"],
-                nodes_per_worker=42,  # TODO fill this in
+                nodes_per_worker=nodes_per_worker,
                 optimize_costs=False,
             ),
             user_config_state=self._translate_k8s_config_maps_to_user_config_data(
