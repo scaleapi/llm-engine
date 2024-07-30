@@ -258,7 +258,9 @@ class LiveModelEndpointService(ModelEndpointService):
         )
         endpoints: List[ModelEndpoint] = []
         for record in records:
-            infra_state = await self._get_model_endpoint_infra_state(record=record, use_cache=False)  # TODO temporarily turn off cache
+            infra_state = await self._get_model_endpoint_infra_state(
+                record=record, use_cache=False
+            )  # TODO temporarily turn off cache
             endpoints.append(ModelEndpoint(record=record, infra_state=infra_state))
         return endpoints
 
@@ -338,7 +340,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 memory=memory,
                 gpu_type=gpu_type,
                 storage=storage,
-                # nodes_per_worker=1,  # TODO multinode if you want
+                # nodes_per_worker=1,  # TODO make sure that this keeps nodes_per_worker the same
                 optimize_costs=optimize_costs,
                 post_inference_hooks=post_inference_hooks,
                 labels=labels,

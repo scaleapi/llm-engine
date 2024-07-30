@@ -406,7 +406,7 @@ class K8SEndpointResourceDelegate:
             if envvar.name == name:
                 return envvar.value
         return None
-    
+
     @staticmethod
     def _get_env_value_from_envlist_for_lws(
         envlist: Optional[List[Dict]], name: str
@@ -482,7 +482,7 @@ class K8SEndpointResourceDelegate:
             labels=labels,
         )
         return common_build_endpoint_request
-    
+
     def _get_common_endpoint_params_for_lws_type(self, lws_config: Any) -> CommonEndpointParams:
         main_container = self._get_main_leader_container_from_lws(lws_config)
         launch_container = self._get_launch_container_from_lws(lws_config)
@@ -512,13 +512,17 @@ class K8SEndpointResourceDelegate:
             raise ValueError("Failed to fetch common endpoint values.")
 
         try:
-            node_selector = lws_config['spec']['leaderWorkerTemplate']['leaderTemplate']['spec']['nodeSelector']
+            node_selector = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+                "nodeSelector"
+            ]
             gpu_type = node_selector.get("k8s.amazonaws.com/accelerator", None)
         except KeyError:
             gpu_type = None
 
         try:
-            labels = lws_config['spec']['leaderWorkerTemplate']['leaderTemplate']['metadata']['labels']
+            labels = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["metadata"][
+                "labels"
+            ]
         except KeyError:
             labels = None  # TODO do we need to parse this into an object? Hope not!
 
@@ -535,7 +539,6 @@ class K8SEndpointResourceDelegate:
             labels=labels,
         )
         return common_build_endpoint_request
-
 
     @staticmethod
     def _get_main_container(deployment_config: V1Deployment) -> V1Container:
@@ -562,31 +565,35 @@ class K8SEndpointResourceDelegate:
         if "main" not in name_to_container:
             raise ValueError("No main container detected")
         return name_to_container["main"]
-    
+
     @staticmethod
     def _get_main_leader_container_from_lws(lws_config: Any):
         """
         Similar to _get_main_container, this returns a nested dict.
         """
-        leader_containers = lws_config['spec']['leaderWorkerTemplate']['leaderTemplate']['spec']['containers']
-        name_to_container = {container['name']: container for container in leader_containers}
+        leader_containers = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+            "containers"
+        ]
+        name_to_container = {container["name"]: container for container in leader_containers}
         if "lws_leader" not in name_to_container:
             raise ValueError("No main leader container detected")
         return name_to_container["lws_leader"]
-    
+
     @staticmethod
     def _get_launch_container_from_lws(lws_config: Any):
         # TODO do I need you?
-        leader_containers = lws_config['spec']['leaderWorkerTemplate']['leaderTemplate']['spec']['containers']
-        name_to_container = {container['name']: container for container in leader_containers}
-         # If a celery forwarder is present, use that
+        leader_containers = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+            "containers"
+        ]
+        name_to_container = {container["name"]: container for container in leader_containers}
+        # If a celery forwarder is present, use that
         if "celery-forwarder" in name_to_container:
             return name_to_container["celery-forwarder"]
 
         # If a http forwarder is present, use that
         if "http-forwarder" in name_to_container:
             return name_to_container["http-forwarder"]
-        
+
         # Don't need backwards compatibility here
         raise ValueError("No forwarder container detected")
 
@@ -1047,7 +1054,7 @@ class K8SEndpointResourceDelegate:
                 label_selector=deployment_name_label_selector,
             )
             return config_maps.items
-    
+
     @staticmethod
     async def _get_deployment(endpoint_id, deployment_name):
         """
@@ -1725,15 +1732,28 @@ class K8SEndpointResourceDelegate:
         )
 
         if lws_config is None:
-            infra_state = await self._get_resources_from_deployment_type(endpoint_id=endpoint_id, deployment_name=deployment_name, endpoint_type=endpoint_type, config_maps=config_maps)
+            infra_state = await self._get_resources_from_deployment_type(
+                endpoint_id=endpoint_id,
+                deployment_name=deployment_name,
+                endpoint_type=endpoint_type,
+                config_maps=config_maps,
+            )
         else:
-            infra_state = await self._get_resources_from_lws_type(endpoint_id=endpoint_id, deployment_name=deployment_name, endpoint_type=endpoint_type, lws_config=lws_config, config_maps=config_maps)
+            infra_state = await self._get_resources_from_lws_type(
+                endpoint_id=endpoint_id,
+                deployment_name=deployment_name,
+                endpoint_type=endpoint_type,
+                lws_config=lws_config,
+                config_maps=config_maps,
+            )
         return infra_state
 
-    async def _get_resources_from_deployment_type(self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType, config_maps) -> ModelEndpointInfraState:
+    async def _get_resources_from_deployment_type(
+        self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType, config_maps
+    ) -> ModelEndpointInfraState:
         custom_objects_client = get_kubernetes_custom_objects_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
-        
+
         deployment_config = await self._get_deployment(endpoint_id, deployment_name)
 
         common_params = self._get_common_endpoint_params(deployment_config)
@@ -1788,8 +1808,7 @@ class K8SEndpointResourceDelegate:
         except ApiException as e:
             if e.status == 404:
                 pass
-        
-        
+
         launch_container = self._get_launch_container(deployment_config)
         envlist = launch_container.env
         # Note: the env var PREWARM is either "true" or "false" string (or doesn't exist for legacy)
@@ -1834,12 +1853,19 @@ class K8SEndpointResourceDelegate:
             image=common_params["image"],
             num_queued_items=None,
         )
-        
+
         return infra_state
 
-    async def _get_resources_from_lws_type(self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType, lws_config, config_maps: List) -> ModelEndpointInfraState:
+    async def _get_resources_from_lws_type(
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        endpoint_type: ModelEndpointType,
+        lws_config,
+        config_maps: List,
+    ) -> ModelEndpointInfraState:
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
-        
+
         # config_maps = await self._get_config_maps(
         #     endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
         # )
@@ -1849,12 +1875,15 @@ class K8SEndpointResourceDelegate:
         # Assume leader + worker share the same user-set env vars
         common_params = self._get_common_endpoint_params_for_lws_type(lws_config)
 
-        replicas = lws_config['spec']['replicas']  # TODO
+        replicas = lws_config["spec"]["replicas"]  # TODO
         prewarm = False  # not provided here
         high_priority = (
-            lws_config['spec']['leaderWorkerTemplate']['leaderTemplate']['spec']['priorityClassName'] == LAUNCH_HIGH_PRIORITY_CLASS
+            lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+                "priorityClassName"
+            ]
+            == LAUNCH_HIGH_PRIORITY_CLASS
         )
-        nodes_per_worker = lws_config['spec']['leaderWorkerTemplate']['size']
+        nodes_per_worker = lws_config["spec"]["leaderWorkerTemplate"]["size"]
 
         infra_state = ModelEndpointInfraState(
             deployment_name=k8s_resource_group_name,
@@ -1886,7 +1915,7 @@ class K8SEndpointResourceDelegate:
             image=common_params["image"],
             num_queued_items=None,
         )
-        
+
         return infra_state
 
     async def _get_all_resources(  # TODO multinode
@@ -2044,7 +2073,12 @@ class K8SEndpointResourceDelegate:
             endpoint_id = key
             deployment_name = name
             endpoint_type = ModelEndpointType.STREAMING  # TODO
-            infra_states[key] = (is_key_an_endpoint_id, await self._get_resources_from_lws_type(endpoint_id, deployment_name, endpoint_type, lws_config, all_config_maps))
+            infra_states[key] = (
+                is_key_an_endpoint_id,
+                await self._get_resources_from_lws_type(
+                    endpoint_id, deployment_name, endpoint_type, lws_config, all_config_maps
+                ),
+            )
         return infra_states
 
     async def _delete_resources_async(self, endpoint_id: str, deployment_name: str) -> bool:
