@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from model_engine_server.common.pydantic_types import BaseModel
 
 
 class FileMetadata(BaseModel):

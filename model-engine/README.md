@@ -41,3 +41,9 @@ Run `mypy . --install-types` to set up mypy.
 
 Most of the business logic in Model Engine should contain unit tests, located in
 [`tests/unit`](./tests/unit). To run the tests, run `pytest`.
+
+## Generating OpenAI types
+We've decided to make our V2 APIs OpenAI compatible. We generate the
+corresponding Pydantic models:
+1. Fetch the OpenAPI spec from https://github.com/openai/openai-openapi/blob/master/openapi.yaml
+2. Run scripts/generate-openai-types.sh

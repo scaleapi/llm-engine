@@ -2,10 +2,10 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, Optional
 
+from model_engine_server.common.pydantic_types import BaseModel
 from model_engine_server.domain.entities.model_bundle_entity import ModelBundle
 from model_engine_server.domain.entities.model_endpoint_entity import ModelEndpoint
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
-from pydantic import BaseModel
 
 
 class BatchJobStatus(str, Enum):
