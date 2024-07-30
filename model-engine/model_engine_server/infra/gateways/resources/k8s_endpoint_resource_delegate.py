@@ -1850,8 +1850,10 @@ class K8SEndpointResourceDelegate:
         common_params = self._get_common_endpoint_params_for_lws_type(lws_config)
 
         replicas = lws_config['spec']['replicas']  # TODO
-        prewarm = False  # TODO high priority?
-        high_priority = False  # TODO high priority?
+        prewarm = False  # not provided here
+        high_priority = (
+            lws_config['spec']['leaderWorkerTemplate']['leaderTemplate']['spec']['priorityClassName'] == LAUNCH_HIGH_PRIORITY_CLASS
+        )  # TODO we do have a high priority priority-class-name
         nodes_per_worker = lws_config['spec']['leaderWorkerTemplate']['size']
 
         infra_state = ModelEndpointInfraState(
