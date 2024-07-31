@@ -316,6 +316,9 @@ async def test_create_update_model_endpoint_lock_not_acquired_raises_existing_op
         )
 
 
+# TODO multinode create model endpoint case?
+
+
 @pytest.mark.asyncio
 async def test_update_model_endpoint_raises_not_found(
     fake_live_model_endpoint_service: LiveModelEndpointService,

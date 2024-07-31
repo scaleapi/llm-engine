@@ -525,6 +525,12 @@ async def test_create_sync_endpoint_has_correct_k8s_service_type(
 
 
 @pytest.mark.asyncio
+async def test_create_multinode_endpoint_creates_lws():
+    # TODO
+    pass
+
+
+@pytest.mark.asyncio
 async def test_create_endpoint_raises_k8s_endpoint_resource_delegate(
     k8s_endpoint_resource_delegate,
     create_resources_request_sync_pytorch: CreateOrUpdateResourcesRequest,
@@ -678,6 +684,12 @@ async def test_get_resources_sync_success(
 
 
 @pytest.mark.asyncio
+async def test_get_resources_multinode_success():
+    # TODO
+    pass
+
+
+@pytest.mark.asyncio
 async def test_delete_resources_invalid_endpoint_type_returns_false(
     k8s_endpoint_resource_delegate,
 ):
@@ -715,3 +727,9 @@ async def test_delete_resources_sync_success(
         endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.SYNC
     )
     assert deleted
+
+
+@pytest.mark.asyncio
+async def test_delete_resources_multinode_success():
+    # TODO
+    pass

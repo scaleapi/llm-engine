@@ -619,11 +619,24 @@ async def test_create_model_endpoint_use_case_sets_high_priority(
 
 
 @pytest.mark.asyncio
+async def test_create_multinode_endpoint_with_nonmultinode_bundle_fails():
+    # TODO
+    pass
+
+
+@pytest.mark.asyncio
+async def test_create_multinode_endpoint_with_multinode_bundle_succeeds():
+    # TODO
+    pass
+
+
+@pytest.mark.asyncio
 async def test_get_model_endpoint_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     model_endpoint_1: ModelEndpoint,
 ):
+    # TODO maybe try a multinode endpoint here
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     use_case = GetModelEndpointByIdV1UseCase(model_endpoint_service=fake_model_endpoint_service)
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
@@ -1425,6 +1438,12 @@ async def test_update_model_endpoint_raises_billing_tags_exception(
             model_endpoint_id=model_endpoint_1.record.id,
             request=request,
         )
+
+
+@pytest.mark.asyncio
+async def test_update_model_endpoint_multinode_to_nonmultinode_fails():
+    # TODO
+    pass
 
 
 @pytest.mark.asyncio

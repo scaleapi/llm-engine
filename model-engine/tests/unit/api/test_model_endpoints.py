@@ -225,6 +225,11 @@ def test_create_model_endpoint_endpoint_already_exists_returns_400(
     assert response_1.status_code == 400
 
 
+def test_create_model_endpoint_multinode_from_nonmultinode_bundle_returns_400_():
+    # TODO
+    pass
+
+
 def test_list_model_endpoints(
     model_bundle_1_v1: Tuple[ModelBundle, Any],
     model_endpoint_1: Tuple[ModelEndpoint, Any],
@@ -587,6 +592,11 @@ def test_update_model_endpoint_by_id_operation_in_progress_returns_409(
         json=update_model_endpoint_request,
     )
     assert response.status_code == 409
+
+
+def test_update_model_endpoint_from_nonmultinode_to_multinode_returns_400():
+    # TODO
+    pass
 
 
 def test_delete_model_endpoint_by_id_success(
