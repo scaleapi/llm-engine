@@ -78,6 +78,8 @@ def get_engine_url(
             password = token.token
             logger.info(f"Connecting to db {db} as user {user}")
 
+            # TODO: https://docs.sqlalchemy.org/en/20/core/engines.html#generating-dynamic-authentication-tokens
+            # for recommendations on how to work with rotating auth credentials
             engine_url = f"postgresql://{user}:{password}@{db}?sslmode=require"
             expiry_in_sec = token.expires_on
         else:
@@ -140,6 +142,9 @@ class DBManager:
     credential_expiration_timestamp: Optional[float] = None
     credential_expiration_buffer_sec: int = 300
 
+    def _get_engine_url(self, read_only: bool, sync: bool) -> DBConnection:
+        return get_engine_url(read_only=read_only, sync=sync)
+
     def __init__(self, infra_config: InfraConfig):
         self.pool_pre_ping = infra_config.db_engine_disconnect_strategy == "pessimistic"
         self.pool_size = infra_config.db_engine_pool_size
@@ -149,8 +154,6 @@ class DBManager:
         self.sessions = self.refresh_sessions()
 
     def refresh_sessions(self) -> DBSessions:
-        self.sessions.session_sync.session.close_all()
-
         db_connection = get_engine_url(read_only=False, sync=True)
         # use sync engine as proxy for credential expiration
         self.credential_expiration_timestamp = db_connection.expiry_in_sec
@@ -255,29 +258,34 @@ class DBManager:
             > self.credential_expiration_timestamp - self.credential_expiration_buffer_sec
         )
 
-    def get_session_sync(self):
+    def _maybe_refresh_sessions(self):
         if self._is_credentials_expired():
-            self.refresh_sessions()
+            old_sessions = self.sessions
+            self.sessions = self.refresh_sessions()
+            old_sessions.session_sync.engine.dispose()
+            old_sessions.session_sync_ro.engine.dispose()
+            old_sessions.session_async.engine.dispose()
+            old_sessions.session_async_ro.engine.dispose()
+            old_sessions.session_async_null_pool.engine.dispose()
+
+    def get_session_sync(self):
+        self._maybe_refresh_sessions()
         return self.sessions.session_sync.session
 
     def get_session_sync_ro(self):
-        if self._is_credentials_expired():
-            self.refresh_sessions()
+        self._maybe_refresh_sessions()
         return self.sessions.session_sync_ro.session
 
     def get_session_async(self):
-        if self._is_credentials_expired():
-            self.refresh_sessions()
+        self._maybe_refresh_sessions()
         return self.sessions.session_async.session
 
     def get_session_async_ro(self):
-        if self._is_credentials_expired():
-            self.refresh_sessions()
+        self._maybe_refresh_sessions()
         return self.sessions.session_async_ro.session
 
     def get_session_async_null_pool(self):
-        if self._is_credentials_expired():
-            self.refresh_sessions()
+        self._maybe_refresh_sessions()
         return self.sessions.session_async_null_pool.session
 
 
