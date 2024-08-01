@@ -50,6 +50,7 @@ team: infra
 app.kubernetes.io/version: {{ .Values.tag }}
 tags.datadoghq.com/version: {{ .Values.tag }}
 tags.datadoghq.com/env: {{ .Values.context }}
+env: {{ .Values.context }}
 {{- if .Values.azure }}
 azure.workload.identity/use: "true"
 {{- end }}
