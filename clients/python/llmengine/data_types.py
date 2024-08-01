@@ -171,6 +171,7 @@ class CreateLLMEndpointRequest(BaseModel):
     memory: Optional[StorageSpecificationType]
     gpu_type: Optional[GpuType]
     storage: Optional[StorageSpecificationType]
+    nodes_per_worker: Optional[int] = None
     optimize_costs: Optional[bool] = None
     min_workers: int
     max_workers: int
@@ -287,6 +288,7 @@ class UpdateLLMEndpointRequest(BaseModel):
     memory: Optional[StorageSpecificationType]
     gpu_type: Optional[GpuType]
     storage: Optional[StorageSpecificationType]
+    nodes_per_worker: Optional[int]  # TODO can I have you here actually?
     optimize_costs: Optional[bool]
     min_workers: Optional[int]
     max_workers: Optional[int]

@@ -47,6 +47,7 @@ class Model(APIEngine):
         memory: Optional[str] = None,
         storage: Optional[str] = None,
         gpus: Optional[int] = None,
+        nodes_per_worker: int = 1,
         min_workers: int = 0,
         max_workers: int = 1,
         per_worker: int = 2,
@@ -108,6 +109,13 @@ class Model(APIEngine):
 
             gpus (`Optional[int]`):
                 Number of gpus each worker should get, e.g. 0, 1, etc. Can be inferred from the model size.
+
+            nodes_per_worker (`int`):
+                Number of nodes per worker. Used to request multinode serving. This must be greater than or equal to 1.
+                Controls how many nodes to dedicate to one instance of the model.
+                Any compute resource requests (i.e. cpus, memory, storage) apply to each node, thus the total resources
+                allocated are multiplied by this number. This is useful for models that require more memory than a single node can provide.
+                Note: autoscaling is not supported for multinode serving.
 
             min_workers (`int`):
                 The minimum number of workers. Must be greater than or equal to 0. This
@@ -296,6 +304,7 @@ class Model(APIEngine):
             endpoint_type=ModelEndpointType(endpoint_type),
             gpus=gpus,
             gpu_type=GpuType(gpu_type) if gpu_type is not None else None,
+            nodes_per_worker=nodes_per_worker,
             labels=labels or {},
             max_workers=max_workers,
             memory=memory,
@@ -471,6 +480,7 @@ class Model(APIEngine):
         public_inference: Optional[bool] = None,
         labels: Optional[Dict[str, str]] = None,
     ) -> UpdateLLMEndpointResponse:
+        # TODO nodes_per_worker?
         """
         Update an LLM model. Note: This API is only available for self-hosted users.
 
