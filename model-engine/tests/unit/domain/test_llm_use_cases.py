@@ -515,6 +515,12 @@ async def test_create_model_endpoint_trt_llm_use_case_success(
 
 
 @pytest.mark.asyncio
+async def test_create_model_endpoint_vllm_multinode_use_case_success():
+    # TODO
+    pass
+
+
+@pytest.mark.asyncio
 async def test_create_llm_model_endpoint_use_case_raises_invalid_value_exception(
     test_api_key: str,
     fake_model_bundle_repository,
