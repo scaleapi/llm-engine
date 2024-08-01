@@ -18,6 +18,10 @@ from model_engine_server.common.resource_limits import (
 )
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.domain.entities import ModelBundle, ModelEndpoint
+from model_engine_server.domain.entities.model_bundle_entity import (
+    WORKER_COMMAND_METADATA_KEY,
+    WORKER_ENV_METADATA_KEY,
+)
 from model_engine_server.domain.exceptions import (
     EndpointBillingTagsMalformedException,
     EndpointLabelsException,
@@ -619,15 +623,49 @@ async def test_create_model_endpoint_use_case_sets_high_priority(
 
 
 @pytest.mark.asyncio
-async def test_create_multinode_endpoint_with_nonmultinode_bundle_fails():
-    # TODO
-    pass
+async def test_create_multinode_endpoint_with_nonmultinode_bundle_fails(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    create_model_endpoint_request_streaming: CreateModelEndpointV1Request,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = CreateModelEndpointV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_bundle_1.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+
+    create_model_endpoint_request_streaming.nodes_per_worker = 2
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        # TODO which exception should this raise?
+        await use_case.execute(user=user, request=create_model_endpoint_request_streaming)
 
 
 @pytest.mark.asyncio
-async def test_create_multinode_endpoint_with_multinode_bundle_succeeds():
-    # TODO
-    pass
+async def test_create_multinode_endpoint_with_multinode_bundle_succeeds(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    create_model_endpoint_request_streaming: CreateModelEndpointV1Request,
+):
+    model_bundle_1.metadata[WORKER_ENV_METADATA_KEY] = {"fake_env": "fake_value"}
+    model_bundle_1.metadata[WORKER_COMMAND_METADATA_KEY] = ["fake_command"]
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = CreateModelEndpointV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_bundle_1.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+
+    create_model_endpoint_request_streaming.nodes_per_worker = 2
+    response = await use_case.execute(user=user, request=create_model_endpoint_request_streaming)
+    assert response.endpoint_creation_task_id
+    assert isinstance(response, CreateModelEndpointV1Response)
 
 
 @pytest.mark.asyncio
