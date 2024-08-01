@@ -673,14 +673,20 @@ async def test_get_model_endpoint_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     model_endpoint_1: ModelEndpoint,
+    model_endpoint_2: ModelEndpoint,
 ):
     # TODO maybe try a multinode endpoint here
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    model_endpoint_2.infra_state.resource_state.nodes_per_worker = 2
     use_case = GetModelEndpointByIdV1UseCase(model_endpoint_service=fake_model_endpoint_service)
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response = await use_case.execute(user=user, model_endpoint_id=model_endpoint_1.record.id)
 
     assert isinstance(response, GetModelEndpointV1Response)
+
+    response_2 = await use_case.execute(user=user, model_endpoint_id=model_endpoint_2.record.id)
+    assert isinstance(response_2, GetModelEndpointV1Response)
+    assert response_2.resource_state.nodes_per_worker == 2
 
 
 @pytest.mark.asyncio
