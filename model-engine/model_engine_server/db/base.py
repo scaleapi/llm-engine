@@ -1,4 +1,3 @@
-import asyncio
 import os
 import sys
 import time
@@ -12,12 +11,7 @@ from model_engine_server.core.aws.secrets import get_key_file
 from model_engine_server.core.config import InfraConfig, infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from sqlalchemy import Engine, create_engine
-from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
-    async_scoped_session,
-    async_sessionmaker,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
@@ -114,7 +108,7 @@ class SyncDBSession:
 @dataclass
 class AsyncDBSession:
     engine: AsyncEngine
-    session: async_scoped_session
+    session: async_sessionmaker
 
 
 @dataclass
@@ -182,7 +176,10 @@ class DBManager:
             future=True,
             logging_name="sync_ro",
         )
-        session_sync_ro = sessionmaker(autocommit=False, autoflush=False, bind=pg_engine_ro)
+        session_sync_ro = SyncDBSession(
+            engine=pg_engine_ro,
+            session=sessionmaker(autocommit=False, autoflush=False, bind=pg_engine_ro),
+        )
 
         pg_engine_async = create_async_engine(
             url=get_engine_url(read_only=False, sync=False).url,
@@ -194,14 +191,14 @@ class DBManager:
             future=True,
             logging_name="async",
         )
-        session_async = async_scoped_session(
-            session_factory=async_sessionmaker(
+        session_async = AsyncDBSession(
+            engine=pg_engine_async,
+            session=async_sessionmaker(
                 autocommit=False,
                 autoflush=False,
                 bind=pg_engine_async,
                 expire_on_commit=False,
             ),
-            scopefunc=asyncio.current_task,
         )
 
         pg_engine_async_ro = create_async_engine(
@@ -214,14 +211,14 @@ class DBManager:
             future=True,
             logging_name="async_ro",
         )
-        session_async_ro = async_scoped_session(
-            async_sessionmaker(
+        session_async_ro = AsyncDBSession(
+            engine=pg_engine_async_ro,
+            session=async_sessionmaker(
                 autocommit=False,
                 autoflush=False,
                 bind=pg_engine_async_ro,
                 expire_on_commit=False,
             ),
-            scopefunc=asyncio.current_task,
         )
 
         pg_engine_async_null_pool = create_async_engine(
@@ -233,14 +230,14 @@ class DBManager:
             logging_name="async_null",
         )
 
-        session_async_null_pool = async_scoped_session(
-            session_factory=async_sessionmaker(
+        session_async_null_pool = AsyncDBSession(
+            engine=pg_engine_async_null_pool,
+            session=async_sessionmaker(
                 autocommit=False,
                 autoflush=False,
                 bind=pg_engine_async_null_pool,
                 expire_on_commit=False,
             ),
-            scopefunc=asyncio.current_task,
         )
 
         return DBSessions(
@@ -268,23 +265,23 @@ class DBManager:
             old_sessions.session_async_ro.engine.dispose()
             old_sessions.session_async_null_pool.engine.dispose()
 
-    def get_session_sync(self):
+    def get_session_sync(self) -> sessionmaker:
         self._maybe_refresh_sessions()
         return self.sessions.session_sync.session
 
-    def get_session_sync_ro(self):
+    def get_session_sync_ro(self) -> sessionmaker:
         self._maybe_refresh_sessions()
         return self.sessions.session_sync_ro.session
 
-    def get_session_async(self):
+    def get_session_async(self) -> async_sessionmaker:
         self._maybe_refresh_sessions()
         return self.sessions.session_async.session
 
-    def get_session_async_ro(self):
+    def get_session_async_ro(self) -> async_sessionmaker:
         self._maybe_refresh_sessions()
         return self.sessions.session_async_ro.session
 
-    def get_session_async_null_pool(self):
+    def get_session_async_null_pool(self) -> async_sessionmaker:
         self._maybe_refresh_sessions()
         return self.sessions.session_async_null_pool.session
 
