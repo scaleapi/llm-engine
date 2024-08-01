@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # If we are at this point, we want to init the db.
     if url is None:
         print("No k8s secret for DB url found, trying AWS secret")
-        url = get_engine_url(read_only=False, sync=True)
+        url = get_engine_url(read_only=False, sync=True).url
     for attempt in Retrying(
         stop=stop_after_attempt(6),
         wait=wait_exponential(),

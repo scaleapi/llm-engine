@@ -370,7 +370,7 @@ def get_default_external_interfaces() -> ExternalInterfaces:
 
 
 def get_default_external_interfaces_read_only() -> ExternalInterfaces:
-    session = async_scoped_session(  # type: ignore
+    session = async_scoped_session(
         get_session_read_only_async(), scopefunc=asyncio.current_task  # type: ignore
     )
     return _get_external_interfaces(read_only=True, session=session)
