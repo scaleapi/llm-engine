@@ -125,41 +125,51 @@ def refresh_sessions():
     pg_engine = create_engine(
         get_engine_url(read_only=False, sync=True, reset_expiration_timestamp=True),
         echo=False,
+        echo_pool=True,
         future=True,
         pool_pre_ping=True,
         pool_size=10,
         max_overflow=10,
+        logging_name="sync",
     )
     pg_engine_read_only = create_engine(
         get_engine_url(read_only=True, sync=True),
         echo=False,
+        echo_pool=True,
         future=True,
         pool_pre_ping=True,
         pool_size=10,
         max_overflow=10,
+        logging_name="sync_ro",
     )
     pg_engine_async = create_async_engine(
         get_engine_url(read_only=False, sync=False),
         echo=False,
+        echo_pool=True,
         future=True,
         pool_pre_ping=True,
         pool_size=10,
         max_overflow=10,
+        logging_name="async",
     )
     pg_engine_read_only_async = create_async_engine(
         get_engine_url(read_only=True, sync=False),
         echo=False,
+        echo_pool=True,
         future=True,
         pool_pre_ping=True,
         pool_size=10,
         max_overflow=10,
+        logging_name="async_ro",
     )
     pg_engine_async_null_pool = create_async_engine(
         get_engine_url(read_only=False, sync=False),
         echo=False,
+        echo_pool=True,
         future=True,
         poolclass=NullPool,
         pool_pre_ping=True,
+        logging_name="async_null",
     )
 
     global _Session
