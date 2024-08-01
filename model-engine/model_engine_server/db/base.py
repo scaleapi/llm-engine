@@ -54,7 +54,7 @@ def get_engine_url(
             env = infra_config().env
         if key_file is None:
             key_file = get_key_file_name(env)  # type: ignore
-        logger.info(f"Using key file {key_file}")
+        logger.debug(f"Using key file {key_file}")
 
         if infra_config().cloud_provider == "azure":
             client = SecretClient(
@@ -171,9 +171,6 @@ def refresh_sessions():
         get_engine_url(read_only=False, sync=False),
         echo=echo,
         echo_pool=echo_pool,
-        pool_pre_ping=pool_pre_ping,
-        pool_size=pool_size,
-        max_overflow=max_overflow,
         future=True,
         poolclass=NullPool,
         logging_name="async_null",
