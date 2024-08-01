@@ -340,7 +340,6 @@ class LiveModelEndpointService(ModelEndpointService):
                 memory=memory,
                 gpu_type=gpu_type,
                 storage=storage,
-                # nodes_per_worker=1,  # TODO make sure that this keeps nodes_per_worker the same
                 optimize_costs=optimize_costs,
                 post_inference_hooks=post_inference_hooks,
                 labels=labels,

@@ -1127,7 +1127,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):  # TODO handle m
         memory: Optional[StorageSpecificationType] = None,
         gpu_type: Optional[GpuType] = None,
         storage: Optional[StorageSpecificationType] = None,
-        nodes_per_worker: Optional[int] = None,  # TODO can we have this here?
+        # nodes_per_worker: Optional[int] = None,  # TODO can we have this here?
         optimize_costs: Optional[bool] = None,
         child_fn_info: Optional[Dict[str, Any]] = None,
         post_inference_hooks: Optional[List[str]] = None,

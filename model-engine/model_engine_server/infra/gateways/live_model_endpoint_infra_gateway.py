@@ -122,7 +122,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         memory: Optional[StorageSpecificationType] = None,
         gpu_type: Optional[GpuType] = None,
         storage: Optional[StorageSpecificationType] = None,
-        nodes_per_worker: Optional[int] = None,  # TODO do we want to not include this here?
+        # nodes_per_worker: Optional[int] = None,  # TODO do we want to not include this here?
         optimize_costs: Optional[bool] = None,
         child_fn_info: Optional[Dict[str, Any]] = None,
         post_inference_hooks: Optional[List[str]] = None,
@@ -155,8 +155,8 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         if storage is None:
             storage = infra_state.resource_state.storage
         # TODO nodes_per_worker, need to check somewhere if it's None and fail if not None probably
-        if nodes_per_worker is None:
-            nodes_per_worker = infra_state.resource_state.nodes_per_worker
+        # if nodes_per_worker is None:
+        nodes_per_worker = infra_state.resource_state.nodes_per_worker
         if optimize_costs is None:
             optimize_costs = infra_state.resource_state.optimize_costs or False
         if child_fn_info is None:
