@@ -139,4 +139,14 @@ def read_default_config():
     return HostedModelInferenceServiceConfig.from_yaml(SERVICE_CONFIG_PATH)
 
 
-hmi_config = read_default_config()
+_hmi_config: Optional[HostedModelInferenceServiceConfig] = None
+
+
+def get_hm_config() -> HostedModelInferenceServiceConfig:
+    global _hmi_config
+    if _hmi_config is None:
+        _hmi_config = read_default_config()
+    return _hmi_config
+
+
+hmi_config = get_hm_config()

@@ -121,54 +121,61 @@ def refresh_sessions():
     # (I profiled 2.7 ms -> 3.3 ms on GET model_bundles/)
     # but hopefully should completely eliminate
     # any of the postgres connection errors we've been seeing.
+    pool_pre_ping = infra_config().db_engine_disconnect_strategy == "pessimistic"
+    pool_size = infra_config().db_engine_pool_size
+    max_overflow = infra_config().db_engine_max_overflow
+    echo = infra_config().db_engine_echo
+    echo_pool = infra_config().db_engine_echo_pool
 
     pg_engine = create_engine(
         get_engine_url(read_only=False, sync=True, reset_expiration_timestamp=True),
-        echo=False,
-        echo_pool=True,
+        echo=echo,
+        echo_pool=echo_pool,
+        pool_pre_ping=pool_pre_ping,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
         future=True,
-        pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=10,
         logging_name="sync",
     )
     pg_engine_read_only = create_engine(
         get_engine_url(read_only=True, sync=True),
-        echo=False,
-        echo_pool=True,
+        echo=echo,
+        echo_pool=echo_pool,
+        pool_pre_ping=pool_pre_ping,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
         future=True,
-        pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=10,
         logging_name="sync_ro",
     )
     pg_engine_async = create_async_engine(
         get_engine_url(read_only=False, sync=False),
-        echo=False,
-        echo_pool=True,
+        echo=echo,
+        echo_pool=echo_pool,
+        pool_pre_ping=pool_pre_ping,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
         future=True,
-        pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=10,
         logging_name="async",
     )
     pg_engine_read_only_async = create_async_engine(
         get_engine_url(read_only=True, sync=False),
-        echo=False,
-        echo_pool=True,
+        echo=echo,
+        echo_pool=echo_pool,
+        pool_pre_ping=pool_pre_ping,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
         future=True,
-        pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=10,
         logging_name="async_ro",
     )
     pg_engine_async_null_pool = create_async_engine(
         get_engine_url(read_only=False, sync=False),
-        echo=False,
-        echo_pool=True,
+        echo=echo,
+        echo_pool=echo_pool,
+        pool_pre_ping=pool_pre_ping,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
         future=True,
         poolclass=NullPool,
-        pool_pre_ping=True,
         logging_name="async_null",
     )
 
