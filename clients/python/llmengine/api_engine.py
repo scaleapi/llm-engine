@@ -129,6 +129,7 @@ class APIEngine:
             urljoin(base_path, resource_name),
             json=data,
             timeout=timeout,
+            auth=(api_key, ""),
             headers={"x-api-key": api_key, **(headers or {})},
         )
         if response.status_code != 200:
