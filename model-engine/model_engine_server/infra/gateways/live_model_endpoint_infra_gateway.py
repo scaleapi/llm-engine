@@ -50,7 +50,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         self.resource_gateway = resource_gateway
         self.task_queue_gateway = task_queue_gateway
 
-    def create_model_endpoint_infra(
+    def create_model_endpoint_infra(  # TODO multinode
         self,
         *,
         model_endpoint_record: ModelEndpointRecord,
@@ -62,6 +62,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
         storage: Optional[StorageSpecificationType],
+        nodes_per_worker: int,
         optimize_costs: bool,
         aws_role: str,
         results_s3_bucket: str,
@@ -88,6 +89,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             memory=memory,
             gpu_type=gpu_type,
             storage=storage,
+            nodes_per_worker=nodes_per_worker,
             optimize_costs=optimize_costs,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,
@@ -120,6 +122,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         memory: Optional[StorageSpecificationType] = None,
         gpu_type: Optional[GpuType] = None,
         storage: Optional[StorageSpecificationType] = None,
+        # nodes_per_worker: Optional[int] = None,  # TODO do we want to not include this here?
         optimize_costs: Optional[bool] = None,
         child_fn_info: Optional[Dict[str, Any]] = None,
         post_inference_hooks: Optional[List[str]] = None,
@@ -151,6 +154,9 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             gpu_type = infra_state.resource_state.gpu_type
         if storage is None:
             storage = infra_state.resource_state.storage
+        # TODO nodes_per_worker, need to check somewhere if it's None and fail if not None probably
+        # if nodes_per_worker is None:
+        nodes_per_worker = infra_state.resource_state.nodes_per_worker
         if optimize_costs is None:
             optimize_costs = infra_state.resource_state.optimize_costs or False
         if child_fn_info is None:
@@ -199,6 +205,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             memory=memory,
             gpu_type=gpu_type,
             storage=storage,
+            nodes_per_worker=nodes_per_worker,
             optimize_costs=optimize_costs,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,

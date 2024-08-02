@@ -15,7 +15,7 @@ from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     DATADOG_ENV_VAR,
     K8SEndpointResourceDelegate,
-    add_datadog_env_to_main_container,
+    add_datadog_env_to_container,
     get_main_container_from_deployment_template,
     load_k8s_yaml,
 )
@@ -165,7 +165,8 @@ def test_resource_arguments_type_and_add_datadog_env_to_main_container(resource_
 
     deployment_template = load_k8s_yaml(f"{resource_arguments_type_name}.yaml", resource_arguments)
     if "runnable-image" in resource_arguments_type_name:
-        add_datadog_env_to_main_container(deployment_template)
+        user_container = get_main_container_from_deployment_template(deployment_template)
+        add_datadog_env_to_container(deployment_template, user_container)
 
         user_container = get_main_container_from_deployment_template(deployment_template)
 
@@ -524,6 +525,12 @@ async def test_create_sync_endpoint_has_correct_k8s_service_type(
 
 
 @pytest.mark.asyncio
+async def test_create_multinode_endpoint_creates_lws():
+    # TODO
+    pass
+
+
+@pytest.mark.asyncio
 async def test_create_endpoint_raises_k8s_endpoint_resource_delegate(
     k8s_endpoint_resource_delegate,
     create_resources_request_sync_pytorch: CreateOrUpdateResourcesRequest,
@@ -563,6 +570,10 @@ async def test_get_resources_async_success(
     mock_policy_client,
     mock_custom_objects_client,
 ):
+    # TODO do I need to mock out custom_objects_client.get_namespaced_custom_object to return ApiException
+    # if it's asking for a LWS?
+    # Pretend that LWS get gives an ApiException
+    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(side_effect=ApiException)
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_common_endpoint_params",
         Mock(
@@ -623,6 +634,10 @@ async def test_get_resources_sync_success(
     mock_policy_client,
     mock_custom_objects_client,
 ):
+    # TODO do I need to mock out custom_objects_client.get_namespaced_custom_object to return ApiException
+    # if it's asking for a LWS?
+    # Pretend that LWS get gives an ApiException. TODO may need to mock out the keda call
+    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(side_effect=ApiException)
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_common_endpoint_params",
         Mock(
@@ -669,6 +684,12 @@ async def test_get_resources_sync_success(
 
 
 @pytest.mark.asyncio
+async def test_get_resources_multinode_success():
+    # TODO
+    pass
+
+
+@pytest.mark.asyncio
 async def test_delete_resources_invalid_endpoint_type_returns_false(
     k8s_endpoint_resource_delegate,
 ):
@@ -706,3 +727,9 @@ async def test_delete_resources_sync_success(
         endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.SYNC
     )
     assert deleted
+
+
+@pytest.mark.asyncio
+async def test_delete_resources_multinode_success():
+    # TODO
+    pass

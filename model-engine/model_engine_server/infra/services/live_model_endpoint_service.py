@@ -131,7 +131,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 )
         return state
 
-    async def create_model_endpoint(
+    async def create_model_endpoint(  # TODO multinode
         self,
         *,
         name: str,
@@ -146,6 +146,7 @@ class LiveModelEndpointService(ModelEndpointService):
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
         storage: Optional[StorageSpecificationType],
+        nodes_per_worker: int,
         optimize_costs: bool,
         min_workers: int,
         max_workers: int,
@@ -193,6 +194,7 @@ class LiveModelEndpointService(ModelEndpointService):
             memory=memory,
             gpu_type=gpu_type,
             storage=storage,
+            nodes_per_worker=nodes_per_worker,
             optimize_costs=optimize_costs,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,
@@ -223,7 +225,7 @@ class LiveModelEndpointService(ModelEndpointService):
         # TODO we might encounter weird cache staleness issues, as the cache is potentially up
         #   to a minute behind
         model_endpoint_infra_state = await self._get_model_endpoint_infra_state(
-            record=model_endpoint_record, use_cache=True
+            record=model_endpoint_record, use_cache=False  # TODO temporarily turn off cache
         )
         return ModelEndpoint(record=model_endpoint_record, infra_state=model_endpoint_infra_state)
 
@@ -256,7 +258,9 @@ class LiveModelEndpointService(ModelEndpointService):
         )
         endpoints: List[ModelEndpoint] = []
         for record in records:
-            infra_state = await self._get_model_endpoint_infra_state(record=record, use_cache=True)
+            infra_state = await self._get_model_endpoint_infra_state(
+                record=record, use_cache=False
+            )  # TODO temporarily turn off cache
             endpoints.append(ModelEndpoint(record=record, infra_state=infra_state))
         return endpoints
 
@@ -272,6 +276,7 @@ class LiveModelEndpointService(ModelEndpointService):
         memory: Optional[StorageSpecificationType] = None,
         gpu_type: Optional[GpuType] = None,
         storage: Optional[StorageSpecificationType] = None,
+        # TODO do we include update here? looks like we omit endpoint_type as well
         optimize_costs: Optional[bool] = None,
         min_workers: Optional[int] = None,
         max_workers: Optional[int] = None,

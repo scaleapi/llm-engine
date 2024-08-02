@@ -59,6 +59,7 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     memory: Optional[StorageSpecificationType] = None
     gpu_type: Optional[GpuType] = None
     storage: Optional[StorageSpecificationType] = None
+    nodes_per_worker: Optional[int] = None
     optimize_costs: Optional[bool] = None
     min_workers: int
     max_workers: int

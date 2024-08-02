@@ -132,7 +132,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         self.feature_flag_repo = feature_flag_repo
 
     async def build_endpoint(
-        self, build_endpoint_request: BuildEndpointRequest
+        self, build_endpoint_request: BuildEndpointRequest  # TODO multinode?
     ) -> BuildEndpointResponse:
         time_build_endpoint_start = time.time()
         self.monitoring_metrics_gateway.emit_attempted_build_metric()
@@ -271,7 +271,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         image=image,
                     )
                     create_or_update_response = (
-                        await self.resource_gateway.create_or_update_resources(params)
+                        await self.resource_gateway.create_or_update_resources(
+                            params
+                        )  # TODO multinode
                     )
 
                 except EndpointResourceInfraException:
@@ -302,6 +304,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         memory=build_endpoint_request.memory,
                         gpu_type=build_endpoint_request.gpu_type,
                         storage=build_endpoint_request.storage,
+                        nodes_per_worker=build_endpoint_request.nodes_per_worker,
                         optimize_costs=build_endpoint_request.optimize_costs,
                     ),
                     user_config_state=ModelEndpointUserConfigState(
@@ -768,7 +771,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
     @staticmethod
     def _validate_build_endpoint_request(
-        build_endpoint_request: BuildEndpointRequest,
+        build_endpoint_request: BuildEndpointRequest,  # TODO maybe multinode val
     ) -> None:
         """Raises ValueError if the request's AWS role isn't allowed."""
         allowed_aws_roles = {

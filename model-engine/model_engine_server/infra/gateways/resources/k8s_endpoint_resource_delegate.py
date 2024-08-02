@@ -61,6 +61,13 @@ HTTP_PORT = 5000
 BASE_PATH_IN_ENDPOINT = "/app"
 
 DATADOG_ENV_VAR = {"DD_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
+LWS_DEFAULT_ENV_VAR = {
+    "K8S_OWN_POD_NAME",
+    "K8S_OWN_NAMESPACE",
+    "K8S_LWS_NAME",
+    "K8S_LWS_LEADER_NAME",
+    "K8S_LWS_CLUSTER_SIZE",
+}
 
 _lazy_load_kubernetes_clients = True
 _kubernetes_apps_api = None
@@ -225,8 +232,39 @@ def get_main_container_from_deployment_template(deployment_template: Dict[str, A
     return user_container
 
 
-def add_datadog_env_to_main_container(deployment_template: Dict[str, Any]) -> None:
-    user_container = get_main_container_from_deployment_template(deployment_template)
+def get_leader_container_from_lws_template(lws_template: Dict[str, Any]):
+    containers = lws_template["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+        "containers"
+    ]
+    for container in containers:
+        if container["name"] == "lws_leader":
+            leader_container = container
+            break
+    else:
+        raise ValueError(
+            "leader container (container['name'] == 'lws_leader') not found in lws template when adding datadog env to leader container."
+        )
+    return leader_container
+
+
+def get_worker_container_from_lws_template(lws_template: Dict[str, Any]):
+    containers = lws_template["spec"]["leaderWorkerTemplate"]["workerTemplate"]["spec"][
+        "containers"
+    ]
+    for container in containers:
+        if container["name"] == "lws_worker":
+            worker_container = container
+            break
+    else:
+        raise ValueError(
+            "worker container (container['name'] == 'lws_worker') not found in lws template when adding datadog env to worker container."
+        )
+    return worker_container
+
+
+def add_datadog_env_to_container(
+    deployment_template: Dict[str, Any], user_container: Dict[str, Any]
+) -> None:
 
     user_container_envs = []
     for env in user_container["env"]:
@@ -261,8 +299,48 @@ def add_datadog_env_to_main_container(deployment_template: Dict[str, Any]) -> No
     user_container["env"] = user_container_envs
 
 
+def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
+    container_envs = []
+    for env in container["env"]:
+        if env["name"] not in LWS_DEFAULT_ENV_VAR:
+            container_envs.append(env)
+
+    container_envs.extend(
+        [
+            {"name": "K8S_OWN_POD_NAME", "valueFrom": {"fieldRef": {"fieldPath": "metadata.name"}}},
+            {
+                "name": "K8S_OWN_NAMESPACE",
+                "valueFrom": {"fieldRef": {"fieldPath": "metadata.namespace"}},
+            },
+            {
+                "name": "K8S_LWS_NAME",
+                "valueFrom": {
+                    "fieldRef": {"fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/name']"}
+                },
+            },
+            {
+                "name": "K8S_LWS_LEADER_NAME",
+                "valueFrom": {
+                    "fieldRef": {
+                        "fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/leader-name']"
+                    }
+                },
+            },
+            {
+                "name": "K8S_LWS_CLUSTER_SIZE",
+                "valueFrom": {
+                    "fieldRef": {
+                        "fieldPath": "metadata.annotations['leaderworkerset.sigs.k8s.io/size']"
+                    }
+                },
+            },
+        ]
+    )
+    container["env"] = container_envs
+
+
 class K8SEndpointResourceDelegate:
-    async def create_or_update_resources(
+    async def create_or_update_resources(  # TODO multinode
         self,
         request: CreateOrUpdateResourcesRequest,
         sqs_queue_name: Optional[str] = None,
@@ -329,6 +407,20 @@ class K8SEndpointResourceDelegate:
                 return envvar.value
         return None
 
+    @staticmethod
+    def _get_env_value_from_envlist_for_lws(
+        envlist: Optional[List[Dict]], name: str
+    ):  # pragma: no cover
+        # Custom objects client returns nested Dicts, not objects.
+        if envlist is None:
+            return None
+        for envvar in envlist:
+            if envvar["name"] == name:
+                return envvar["value"]
+        return None
+
+    # TODO analogous fns for the LWS config
+
     def _get_common_endpoint_params(self, deployment_config: V1Deployment) -> CommonEndpointParams:
         """
         Reads some values from k8s common to both sync and async endpoints
@@ -391,6 +483,63 @@ class K8SEndpointResourceDelegate:
         )
         return common_build_endpoint_request
 
+    def _get_common_endpoint_params_for_lws_type(self, lws_config: Any) -> CommonEndpointParams:
+        main_container = self._get_main_leader_container_from_lws(lws_config)
+        launch_container = self._get_launch_container_from_lws(lws_config)
+
+        resources = main_container["resources"]
+        image = main_container["image"]
+
+        cpus = resources["requests"]["cpu"]
+        memory = resources["requests"]["memory"]
+        gpus = int((resources["limits"] or dict()).get("nvidia.com/gpu", 0))
+        storage = resources["requests"].get("ephemeral-storage")
+
+        envlist = launch_container["env"]
+        # There really isn't a bundle_url for LWS since those use RunnableImages
+        bundle_url = self._get_env_value_from_envlist_for_lws(envlist, "BUNDLE_URL") or image
+        aws_role = self._get_env_value_from_envlist_for_lws(envlist, "AWS_PROFILE")
+        results_s3_bucket = self._get_env_value_from_envlist_for_lws(envlist, "RESULTS_S3_BUCKET")
+
+        # Temporary fix: new LIRA endpoints created should have these env vars
+        # but old ones don't, so we can fetch them from the config.
+        if aws_role is None:
+            aws_role = infra_config().profile_ml_inference_worker
+        if results_s3_bucket is None:
+            results_s3_bucket = infra_config().s3_bucket
+
+        if bundle_url is None or aws_role is None or results_s3_bucket is None:
+            raise ValueError("Failed to fetch common endpoint values.")
+
+        try:
+            node_selector = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+                "nodeSelector"
+            ]
+            gpu_type = node_selector.get("k8s.amazonaws.com/accelerator", None)
+        except KeyError:
+            gpu_type = None
+
+        try:
+            labels = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["metadata"][
+                "labels"
+            ]
+        except KeyError:
+            labels = None  # TODO do we need to parse this into an object? Hope not!
+
+        common_build_endpoint_request: CommonEndpointParams = dict(
+            cpus=cpus,
+            memory=memory,
+            gpus=gpus,
+            gpu_type=gpu_type,
+            storage=storage,
+            bundle_url=bundle_url,
+            aws_role=aws_role,
+            results_s3_bucket=results_s3_bucket,
+            image=image,
+            labels=labels,
+        )
+        return common_build_endpoint_request
+
     @staticmethod
     def _get_main_container(deployment_config: V1Deployment) -> V1Container:
         pod_containers = deployment_config.spec.template.spec.containers
@@ -417,7 +566,80 @@ class K8SEndpointResourceDelegate:
             raise ValueError("No main container detected")
         return name_to_container["main"]
 
+    @staticmethod
+    def _get_main_leader_container_from_lws(lws_config: Any):
+        """
+        Similar to _get_main_container, this returns a nested dict.
+        """
+        leader_containers = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+            "containers"
+        ]
+        name_to_container = {container["name"]: container for container in leader_containers}
+        if "lws_leader" not in name_to_container:
+            raise ValueError("No main leader container detected")
+        return name_to_container["lws_leader"]
+
+    @staticmethod
+    def _get_launch_container_from_lws(lws_config: Any):
+        # TODO do I need you?
+        leader_containers = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+            "containers"
+        ]
+        name_to_container = {container["name"]: container for container in leader_containers}
+        # If a celery forwarder is present, use that
+        if "celery-forwarder" in name_to_container:
+            return name_to_container["celery-forwarder"]
+
+        # If a http forwarder is present, use that
+        if "http-forwarder" in name_to_container:
+            return name_to_container["http-forwarder"]
+
+        # Don't need backwards compatibility here
+        raise ValueError("No forwarder container detected")
+
     # --- Private low level fns that interact with k8s
+
+    # TODO _create_lws which also handles update
+    @staticmethod
+    async def _create_lws(
+        lws: Dict[str, Any],
+        name: str,
+    ) -> None:
+        """
+        TODO docstring
+        """
+        custom_objects_api = get_kubernetes_custom_objects_client()
+        try:
+            await custom_objects_api.create_namespaced_custom_object(
+                group="leaderworkerset.x-k8s.io",
+                version="v1",
+                namespace=hmi_config.endpoint_namespace,
+                plural="leaderworkersets",
+                body=lws,
+            )
+        except ApiException as exc:
+            # TODO do we actually want to replace things here? or do we want to not allow this?
+            if exc.status == 409:
+                logger.info(f"LeaderWorkerSet {name} already exists, replacing")
+                existing_lws = await custom_objects_api.get_namespaced_custom_object(
+                    group="leaderworkerset.x-k8s.io",
+                    version="v1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="leaderworkersets",
+                    name=name,
+                )
+                new_lws = deep_update(existing_lws, lws)
+                await custom_objects_api.replace_namespaced_custom_object(
+                    group="leaderworkerset.x-k8s.io",
+                    version="v1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="leaderworkersets",
+                    name=name,
+                    body=new_lws,
+                )
+            else:
+                logger.exception("Got an exception when trying to apply the LeaderWorkerSet")
+                raise
 
     @staticmethod
     async def _create_deployment(
@@ -810,7 +1032,7 @@ class K8SEndpointResourceDelegate:
     ) -> List[kubernetes_asyncio.client.models.v1_config_map.V1ConfigMap]:
         """
         Gets ConfigMaps associated with a given user id + endpoint name
-        This should be considered the same abstraction level as get_deployment
+        This should be considered the same abstraction level as _get_deployment
 
         """
         k8s_core_api = get_kubernetes_core_client()
@@ -832,6 +1054,34 @@ class K8SEndpointResourceDelegate:
                 label_selector=deployment_name_label_selector,
             )
             return config_maps.items
+
+    @staticmethod
+    async def _get_deployment(endpoint_id, deployment_name):
+        """
+        Gets the Deployment associated with a given endpoint_id + deployment name
+        Handles a legacy fallback case as well, where Deployments were named differently.
+
+        """
+        apps_client = get_kubernetes_apps_client()
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        try:
+            deployment_config = await apps_client.read_namespaced_deployment(
+                name=k8s_resource_group_name, namespace=hmi_config.endpoint_namespace
+            )
+        except ApiException as e:
+            if e.status == 404:
+                logger.warning(
+                    f"Could not find resource, falling back to legacy deployment_name: "
+                    f"{k8s_resource_group_name=}, {endpoint_id=}, {deployment_name=}"
+                )
+                k8s_resource_group_name = deployment_name
+                deployment_config = await apps_client.read_namespaced_deployment(
+                    name=k8s_resource_group_name,
+                    namespace=hmi_config.endpoint_namespace,
+                )
+            else:
+                raise
+        return deployment_config
 
     @staticmethod
     async def _get_all_config_maps() -> List[
@@ -879,6 +1129,29 @@ class K8SEndpointResourceDelegate:
             app_config=app_config_data,
             endpoint_config=endpoint_config,
         )
+
+    # TODO test
+    @staticmethod
+    async def _delete_lws(endpoint_id: str) -> bool:
+        custom_objects_client = get_kubernetes_custom_objects_client()
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        try:
+            await custom_objects_client.delete_namespaced_custom_object(
+                group="leaderworkerset.x-k8s.io",
+                version="v1",
+                namespace=hmi_config.endpoint_namespace,
+                plural="leaderworkersets",
+                name=k8s_resource_group_name,
+            )
+        except ApiException as e:
+            if e.status == 404:
+                logger.warning(
+                    f"Trying to delete nonexistent LeaderWorkerSet {k8s_resource_group_name}"
+                )
+            else:
+                logger.exception(f"Deletion of LeaderWorkerSet {k8s_resource_group_name} failed")
+                return False
+        return True
 
     @staticmethod
     async def _delete_deployment(endpoint_id: str, deployment_name: str) -> bool:
@@ -1138,7 +1411,30 @@ class K8SEndpointResourceDelegate:
         deployment_resource_name = f"deployment-{flavor_class}-{mode}-{device}"
         return deployment_resource_name
 
-    async def _create_or_update_resources(
+    @staticmethod
+    def _get_lws_resource_name(request: CreateOrUpdateResourcesRequest) -> str:
+        build_endpoint_request = request.build_endpoint_request
+        model_endpoint_record = build_endpoint_request.model_endpoint_record
+        flavor = model_endpoint_record.current_model_bundle.flavor
+        if isinstance(flavor, TritonEnhancedRunnableImageFlavor):
+            flavor_class = "triton-enhanced-runnable-image"
+        else:
+            flavor_class = "runnable-image"
+        if flavor_class == "triton-enhanced-runnable-image":
+            raise ValueError("LWS is not supported for Triton Enhanced Runnable Image")
+        # TODO we should really check this error earlier
+
+        mode = model_endpoint_record.endpoint_type.value
+        device = "gpu" if build_endpoint_request.gpus > 0 else "cpu"
+        if mode not in ["streaming"]:
+            raise ValueError("LWS is not supported for async or sync endpoints")
+        if device not in ["gpu"]:
+            raise ValueError("LWS is not supported for CPU endpoints")
+
+        lws_resource_name = f"leader-worker-set-{mode}-{device}"
+        return lws_resource_name
+
+    async def _create_or_update_resources(  # TODO multinode
         self,
         request: CreateOrUpdateResourcesRequest,
         sqs_queue_name: Optional[str] = None,
@@ -1152,27 +1448,51 @@ class K8SEndpointResourceDelegate:
             build_endpoint_request.model_endpoint_record.id
         )
 
-        deployment_resource_name = self._get_deployment_resource_name(request)
-        deployment_arguments = get_endpoint_resource_arguments_from_request(
-            k8s_resource_group_name=k8s_resource_group_name,
-            request=request,
-            sqs_queue_name=sqs_queue_name_str,
-            sqs_queue_url=sqs_queue_url_str,
-            endpoint_resource_name=deployment_resource_name,
-        )
-        deployment_template = load_k8s_yaml(
-            f"{deployment_resource_name}.yaml", deployment_arguments
-        )
-        if isinstance(
-            request.build_endpoint_request.model_endpoint_record.current_model_bundle.flavor,
-            RunnableImageLike,
-        ):
-            add_datadog_env_to_main_container(deployment_template)
-        await self._create_deployment(
-            model_endpoint_record=request.build_endpoint_request.model_endpoint_record,
-            deployment=deployment_template,
-            name=k8s_resource_group_name,
-        )
+        if request.build_endpoint_request.nodes_per_worker > 1:
+            # TODO create the LWS, set the env vars, pull the bundle commands in a call to get_endpoint_resource_args_from_request
+            lws_resource_name = self._get_lws_resource_name(request)
+            lws_arguments = get_endpoint_resource_arguments_from_request(
+                k8s_resource_group_name=k8s_resource_group_name,
+                request=request,
+                sqs_queue_name=sqs_queue_name_str,
+                sqs_queue_url=sqs_queue_url_str,
+                endpoint_resource_name=lws_resource_name,
+            )
+            lws_template = load_k8s_yaml(f"{lws_resource_name}.yaml", lws_arguments)
+            leader_template = get_leader_container_from_lws_template(lws_template)
+            worker_template = get_worker_container_from_lws_template(lws_template)
+            add_lws_default_env_vars_to_container(leader_template)
+            add_lws_default_env_vars_to_container(worker_template)
+            add_datadog_env_to_container(lws_template, leader_template)
+            add_datadog_env_to_container(lws_template, worker_template)
+            await self._create_lws(
+                lws=lws_template,
+                name=k8s_resource_group_name,
+            )
+            pass
+        else:
+            deployment_resource_name = self._get_deployment_resource_name(request)
+            deployment_arguments = get_endpoint_resource_arguments_from_request(
+                k8s_resource_group_name=k8s_resource_group_name,
+                request=request,
+                sqs_queue_name=sqs_queue_name_str,
+                sqs_queue_url=sqs_queue_url_str,
+                endpoint_resource_name=deployment_resource_name,
+            )
+            deployment_template = load_k8s_yaml(
+                f"{deployment_resource_name}.yaml", deployment_arguments
+            )
+            if isinstance(
+                request.build_endpoint_request.model_endpoint_record.current_model_bundle.flavor,
+                RunnableImageLike,
+            ):
+                user_container = get_main_container_from_deployment_template(deployment_template)
+                add_datadog_env_to_container(deployment_template, user_container)  # TODO refactor
+            await self._create_deployment(
+                model_endpoint_record=request.build_endpoint_request.model_endpoint_record,
+                deployment=deployment_template,
+                name=k8s_resource_group_name,
+            )
 
         user_config_arguments = get_endpoint_resource_arguments_from_request(
             k8s_resource_group_name=k8s_resource_group_name,
@@ -1214,23 +1534,30 @@ class K8SEndpointResourceDelegate:
                 name=k8s_resource_group_name,
             )
 
-        pdb_config_arguments = get_endpoint_resource_arguments_from_request(
-            k8s_resource_group_name=k8s_resource_group_name,
-            request=request,
-            sqs_queue_name=sqs_queue_name_str,
-            sqs_queue_url=sqs_queue_url_str,
-            endpoint_resource_name="pod-disruption-budget",
-        )
-        pdb_template = load_k8s_yaml("pod-disruption-budget.yaml", pdb_config_arguments)
-        await self._create_pdb(
-            pdb=pdb_template,
-            name=k8s_resource_group_name,
-        )
+        if request.build_endpoint_request.nodes_per_worker == 1:
+            # Only create PDB if we're not using LWS
+            pdb_config_arguments = get_endpoint_resource_arguments_from_request(
+                k8s_resource_group_name=k8s_resource_group_name,
+                request=request,
+                sqs_queue_name=sqs_queue_name_str,
+                sqs_queue_url=sqs_queue_url_str,
+                endpoint_resource_name="pod-disruption-budget",
+            )
+            pdb_template = load_k8s_yaml("pod-disruption-budget.yaml", pdb_config_arguments)
+            await self._create_pdb(
+                pdb=pdb_template,
+                name=k8s_resource_group_name,
+            )
 
-        if model_endpoint_record.endpoint_type in {
-            ModelEndpointType.SYNC,
-            ModelEndpointType.STREAMING,
-        }:
+        if (
+            model_endpoint_record.endpoint_type
+            in {
+                ModelEndpointType.SYNC,
+                ModelEndpointType.STREAMING,
+            }
+            and request.build_endpoint_request.nodes_per_worker == 1
+        ):
+            # Don't need HPA, keda, istio resources for LWS or async endpoints
             cluster_version = get_kubernetes_cluster_version()
             # For k8s cluster versions 1.23 - 1.25 we need to use the v2beta2 api
             # For 1.26+ v2beta2 has been deperecated and merged into v2
@@ -1379,28 +1706,55 @@ class K8SEndpointResourceDelegate:
             per_worker=1,  # TODO dummy value, fill in when we autoscale from 0 to 1
         )
 
-    async def _get_resources(
+    async def _get_resources(  # TODO multinode
         self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
     ) -> ModelEndpointInfraState:
-        apps_client = get_kubernetes_apps_client()
+        custom_objects_client = get_kubernetes_custom_objects_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+
+        print(f"trying to find lws at {k8s_resource_group_name}, {hmi_config.endpoint_namespace}")
         try:
-            deployment_config = await apps_client.read_namespaced_deployment(
-                name=k8s_resource_group_name, namespace=hmi_config.endpoint_namespace
+            lws_config = await custom_objects_client.get_namespaced_custom_object(
+                group="leaderworkerset.x-k8s.io",
+                version="v1",
+                namespace=hmi_config.endpoint_namespace,
+                plural="leaderworkersets",
+                name=k8s_resource_group_name,
             )
         except ApiException as e:
-            if e.status == 404:
-                logger.warning(
-                    f"Could not find resource, falling back to legacy deployment_name: "
-                    f"{k8s_resource_group_name=}, {endpoint_id=}, {deployment_name=}"
-                )
-                k8s_resource_group_name = deployment_name
-                deployment_config = await apps_client.read_namespaced_deployment(
-                    name=k8s_resource_group_name,
-                    namespace=hmi_config.endpoint_namespace,
-                )
-            else:
-                raise
+            # Need to handle the case where lws CRD isn't installed as well as the lws not existing.
+            print(e)
+            lws_config = None
+
+        # Make the call here so we can use it in both places, also this makes _get_resources_from_lws_type make zero requests to k8s
+        config_maps = await self._get_config_maps(
+            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
+        )
+
+        if lws_config is None:
+            infra_state = await self._get_resources_from_deployment_type(
+                endpoint_id=endpoint_id,
+                deployment_name=deployment_name,
+                endpoint_type=endpoint_type,
+                config_maps=config_maps,
+            )
+        else:
+            infra_state = await self._get_resources_from_lws_type(
+                endpoint_id=endpoint_id,
+                deployment_name=deployment_name,
+                endpoint_type=endpoint_type,
+                lws_config=lws_config,
+                config_maps=config_maps,
+            )
+        return infra_state
+
+    async def _get_resources_from_deployment_type(
+        self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType, config_maps
+    ) -> ModelEndpointInfraState:
+        custom_objects_client = get_kubernetes_custom_objects_client()
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+
+        deployment_config = await self._get_deployment(endpoint_id, deployment_name)
 
         common_params = self._get_common_endpoint_params(deployment_config)
         if endpoint_type == ModelEndpointType.ASYNC:
@@ -1441,7 +1795,7 @@ class K8SEndpointResourceDelegate:
             raise ValueError(f"Unexpected endpoint type {endpoint_type}")
 
         vertical_autoscaling_params = None
-        custom_objects_client = get_kubernetes_custom_objects_client()
+
         try:
             vpa_config = await custom_objects_client.get_namespaced_custom_object(
                 group="autoscaling.k8s.io",
@@ -1455,9 +1809,6 @@ class K8SEndpointResourceDelegate:
             if e.status == 404:
                 pass
 
-        config_maps = await self._get_config_maps(
-            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
-        )
         launch_container = self._get_launch_container(deployment_config)
         envlist = launch_container.env
         # Note: the env var PREWARM is either "true" or "false" string (or doesn't exist for legacy)
@@ -1467,6 +1818,10 @@ class K8SEndpointResourceDelegate:
         high_priority = (
             deployment_config.spec.template.spec.priority_class_name == LAUNCH_HIGH_PRIORITY_CLASS
         )
+
+        # config_maps = await self._get_config_maps(
+        #     endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
+        # )
 
         infra_state = ModelEndpointInfraState(
             deployment_name=k8s_resource_group_name,
@@ -1489,6 +1844,7 @@ class K8SEndpointResourceDelegate:
                 gpu_type=common_params["gpu_type"],  # type: ignore
                 memory=common_params["memory"],
                 storage=common_params["storage"],
+                nodes_per_worker=1,  # TODO think we're in Deployment case here
                 optimize_costs=(vertical_autoscaling_params is not None),
             ),
             user_config_state=self._translate_k8s_config_maps_to_user_config_data(
@@ -1497,9 +1853,72 @@ class K8SEndpointResourceDelegate:
             image=common_params["image"],
             num_queued_items=None,
         )
+
         return infra_state
 
-    async def _get_all_resources(
+    async def _get_resources_from_lws_type(
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        endpoint_type: ModelEndpointType,
+        lws_config,
+        config_maps: List,
+    ) -> ModelEndpointInfraState:
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+
+        # config_maps = await self._get_config_maps(
+        #     endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
+        # )
+
+        # import pdb; pdb.set_trace()
+
+        # Assume leader + worker share the same user-set env vars
+        common_params = self._get_common_endpoint_params_for_lws_type(lws_config)
+
+        replicas = lws_config["spec"]["replicas"]  # TODO
+        prewarm = False  # not provided here
+        high_priority = (
+            lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+                "priorityClassName"
+            ]
+            == LAUNCH_HIGH_PRIORITY_CLASS
+        )
+        nodes_per_worker = lws_config["spec"]["leaderWorkerTemplate"]["size"]
+
+        infra_state = ModelEndpointInfraState(
+            deployment_name=k8s_resource_group_name,
+            aws_role=common_params["aws_role"],
+            results_s3_bucket=common_params["results_s3_bucket"],
+            child_fn_info=None,
+            labels=common_params["labels"],
+            prewarm=prewarm,
+            high_priority=high_priority,
+            deployment_state=ModelEndpointDeploymentState(
+                min_workers=replicas,
+                max_workers=replicas,
+                per_worker=int(1),  # TODO?
+                available_workers=replicas,  # TODO verify?
+                unavailable_workers=0,  # TODO we may need to check more carefully
+            ),
+            resource_state=ModelEndpointResourceState(
+                cpus=common_params["cpus"],
+                gpus=common_params["gpus"],
+                gpu_type=common_params["gpu_type"],  # type: ignore
+                memory=common_params["memory"],
+                storage=common_params["storage"],
+                nodes_per_worker=nodes_per_worker,
+                optimize_costs=False,
+            ),
+            user_config_state=self._translate_k8s_config_maps_to_user_config_data(
+                k8s_resource_group_name, config_maps
+            ),
+            image=common_params["image"],
+            num_queued_items=None,
+        )
+
+        return infra_state
+
+    async def _get_all_resources(  # TODO multinode
         self,
     ) -> Dict[str, Tuple[bool, ModelEndpointInfraState]]:
         apps_client = get_kubernetes_apps_client()
@@ -1542,16 +1961,36 @@ class K8SEndpointResourceDelegate:
             else:
                 raise
 
+        try:
+            # TODO
+            leader_worker_sets = (
+                await custom_objects_client.list_namespaced_custom_object(
+                    group="leaderworkerset.x-k8s.io",
+                    version="v1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="leaderworkersets",
+                )
+            )["items"]
+        except ApiException as e:
+            if e.status == 404:
+                leader_worker_sets = []
+            else:
+                raise
+
         deployments_by_name = {deployment.metadata.name: deployment for deployment in deployments}
         hpas_by_name = {hpa.metadata.name: hpa for hpa in hpas}
         vpas_by_name = {vpa["metadata"]["name"]: vpa for vpa in vpas}
         keda_scaled_objects_by_name = {kso["metadata"]["name"]: kso for kso in keda_scaled_objects}
+        leader_worker_sets_by_name = {lws["metadata"]["name"]: lws for lws in leader_worker_sets}
+        # import pdb; pdb.set_trace()
         all_config_maps = await self._get_all_config_maps()
         # can safely assume hpa with same name as deployment corresponds to the same Launch Endpoint
         logger.info(f"Orphaned hpas: {set(hpas_by_name).difference(set(deployments_by_name))}")
         logger.info(f"Orphaned vpas: {set(vpas_by_name).difference(set(deployments_by_name))}")
         infra_states = {}
-        logger.info(f"Got data for {list(deployments_by_name.keys())}")
+        logger.info(
+            f"Got data for {list(deployments_by_name.keys())} and {list(leader_worker_sets_by_name.keys())}"
+        )
         for name, deployment_config in deployments_by_name.items():
             try:
                 hpa_config = hpas_by_name.get(name, None)
@@ -1608,6 +2047,7 @@ class K8SEndpointResourceDelegate:
                         gpu_type=common_params["gpu_type"],  # type: ignore
                         memory=common_params["memory"],
                         storage=common_params["storage"],
+                        nodes_per_worker=1,  # We're in a Deployment case, so nodes_per_worker is 1
                         optimize_costs=(vertical_autoscaling_params is not None),
                     ),
                     user_config_state=self._translate_k8s_config_maps_to_user_config_data(
@@ -1626,9 +2066,25 @@ class K8SEndpointResourceDelegate:
                 infra_states[key] = (is_key_an_endpoint_id, infra_state)
             except Exception:
                 logger.exception(f"Error parsing deployment {name}")
+        for name, lws_config in leader_worker_sets_by_name.items():
+            # name.startswith("launch-endpoint-id-") should always be true, the other case is a legacy.
+            key = _k8s_resource_group_name_to_endpoint_id(name)
+            is_key_an_endpoint_id = True
+            endpoint_id = key
+            deployment_name = name
+            endpoint_type = ModelEndpointType.STREAMING  # TODO
+            infra_states[key] = (
+                is_key_an_endpoint_id,
+                await self._get_resources_from_lws_type(
+                    endpoint_id, deployment_name, endpoint_type, lws_config, all_config_maps
+                ),
+            )
         return infra_states
 
     async def _delete_resources_async(self, endpoint_id: str, deployment_name: str) -> bool:
+
+        # TODO multinode (but not really)
+        lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
         deployment_delete_succeeded = await self._delete_deployment(
             endpoint_id=endpoint_id, deployment_name=deployment_name
         )
@@ -1637,9 +2093,12 @@ class K8SEndpointResourceDelegate:
         )
         await self._delete_vpa(endpoint_id=endpoint_id)
         await self._delete_pdb(endpoint_id=endpoint_id)
-        return deployment_delete_succeeded and config_map_delete_succeeded
+        return (deployment_delete_succeeded or lws_delete_succeeded) and config_map_delete_succeeded
 
     async def _delete_resources_sync(self, endpoint_id: str, deployment_name: str) -> bool:
+        # TODO multinode
+        lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
+
         deployment_delete_succeeded = await self._delete_deployment(
             endpoint_id=endpoint_id,
             deployment_name=deployment_name,
@@ -1674,4 +2133,4 @@ class K8SEndpointResourceDelegate:
             and (hpa_delete_succeeded or keda_scaled_object_succeeded)
             and destination_rule_delete_succeeded
             and virtual_service_delete_succeeded
-        )
+        ) or (lws_delete_succeeded and config_map_delete_succeeded)

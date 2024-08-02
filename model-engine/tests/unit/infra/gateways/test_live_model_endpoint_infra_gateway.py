@@ -24,6 +24,7 @@ def test_create_model_endpoint_infra(
     model_endpoint_1: ModelEndpoint,
     model_endpoint_2: ModelEndpoint,
 ):
+    # TODO multinode here?
     for endpoint in [model_endpoint_1, model_endpoint_2]:
         assert endpoint.infra_state is not None
         prewarm = endpoint.infra_state.prewarm
@@ -43,6 +44,7 @@ def test_create_model_endpoint_infra(
             memory=endpoint.infra_state.resource_state.memory,
             gpu_type=endpoint.infra_state.resource_state.gpu_type,
             storage=endpoint.infra_state.resource_state.storage,
+            nodes_per_worker=endpoint.infra_state.resource_state.nodes_per_worker,
             optimize_costs=bool(endpoint.infra_state.resource_state.optimize_costs),
             aws_role=endpoint.infra_state.aws_role,
             results_s3_bucket=endpoint.infra_state.results_s3_bucket,
@@ -70,6 +72,7 @@ async def test_update_model_endpoint_infra(
     model_endpoint_2: ModelEndpoint,
     fake_task_queue_gateway,
 ):
+    # TODO multinode here?
     resource_gateway: Any = model_endpoint_infra_gateway.resource_gateway
     existing_infra_state = model_endpoint_1.infra_state
     assert existing_infra_state is not None

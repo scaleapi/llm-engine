@@ -50,6 +50,8 @@ from model_engine_server.core.loggers import (
     make_logger,
 )
 from model_engine_server.domain.entities import (
+    WORKER_COMMAND_METADATA_KEY,
+    WORKER_ENV_METADATA_KEY,
     GpuType,
     LLMInferenceFramework,
     LLMMetadata,
@@ -428,12 +430,28 @@ class CreateLLMModelBundleV1UseCase:
         num_shards: int,
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
+        multinode: bool,
     ) -> ModelBundle:
+        # TODO handle multinode here
         if source == LLMSource.HUGGING_FACE:
             self.check_docker_image_exists_for_image_tag(
                 framework_image_tag, INFERENCE_FRAMEWORK_REPOSITORY[framework]
             )
-            if framework == LLMInferenceFramework.DEEPSPEED:
+            if multinode and framework == LLMInferenceFramework.VLLM:
+                bundle_id = await self.create_vllm_multinode_bundle(
+                    user,
+                    model_name,
+                    framework_image_tag,
+                    endpoint_name,
+                    num_shards,
+                    quantize,
+                    checkpoint_path,
+                )
+            elif multinode:
+                raise ObjectHasInvalidValueException(
+                    f"Multinode is not supported for framework {framework}."
+                )
+            elif framework == LLMInferenceFramework.DEEPSPEED:
                 bundle_id = await self.create_deepspeed_bundle(
                     user,
                     model_name,
@@ -739,16 +757,19 @@ class CreateLLMModelBundleV1UseCase:
                 )
             ).model_bundle_id
 
-    async def create_vllm_bundle(
+    def _create_vllm_bundle_command(
         self,
-        user: User,
         model_name: str,
         framework_image_tag: str,
-        endpoint_unique_name: str,
         num_shards: int,
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
+        multinode: bool,
+        is_leader: bool,
     ):
+        """
+        VLLM start command for the single worker, or the leader in a LeaderWorkerSet.
+        """
         command = []
         subcommands = []
 
@@ -765,21 +786,37 @@ class CreateLLMModelBundleV1UseCase:
             final_weights_folder,
         )
 
-        subcommands.append(
-            f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
-        )
+        if multinode and is_leader:
+            subcommands.append(
+                "/workspace/init_ray.sh leader --ray_cluster_size=$RAY_CLUSTER_SIZE --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
+            )
+        elif multinode and not is_leader:
+            subcommands.append(
+                "/workspace/init_ray.sh worker --ray_cluster_size=$RAY_CLUSTER_SIZE --ray_address=$K8S_LWS_LEADER_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
+            )
 
-        if quantize:
-            if quantize == Quantization.AWQ:
-                subcommands[-1] = subcommands[-1] + f" --quantization {quantize}"
-            else:
-                raise InvalidRequestException(f"Quantization {quantize} is not supported by vLLM.")
+        if is_leader:
+            subcommands.append(
+                f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
+            )
 
-        if hmi_config.sensitive_log_mode:  # pragma: no cover
-            subcommands[-1] = subcommands[-1] + " --disable-log-requests"
+            if quantize:
+                if quantize == Quantization.AWQ:
+                    subcommands[-1] = subcommands[-1] + f" --quantization {quantize}"
+                else:
+                    raise InvalidRequestException(
+                        f"Quantization {quantize} is not supported by vLLM."
+                    )
 
-        if "llama-3-70b" in model_name:
-            subcommands[-1] = subcommands[-1] + " --gpu-memory-utilization 0.95 --enforce-eager"
+            if hmi_config.sensitive_log_mode:  # pragma: no cover
+                subcommands[-1] = subcommands[-1] + " --disable-log-requests"
+
+            if "llama-3-70b" in model_name:
+                subcommands[-1] = subcommands[-1] + " --gpu-memory-utilization 0.95 --enforce-eager"
+
+            if multinode:
+                # CUDA graphs seem to break with multinode, turn them off.
+                subcommands[-1] = subcommands[-1] + "--enforce-eager"
 
         command = [
             "/bin/bash",
@@ -787,27 +824,126 @@ class CreateLLMModelBundleV1UseCase:
             ";".join(subcommands),
         ]
 
+        return command
+
+    async def create_vllm_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        quantize: Optional[Quantization],
+        checkpoint_path: Optional[str],
+    ):
+        command = self._create_vllm_bundle_command(
+            model_name,
+            framework_image_tag,
+            num_shards,
+            quantize,
+            checkpoint_path,
+            multinode=False,
+            is_leader=True,
+        )
+
+        create_model_bundle_v2_request = CreateModelBundleV2Request(
+            name=endpoint_unique_name,
+            schema_location="TBA",
+            flavor=StreamingEnhancedRunnableImageFlavor(
+                flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                repository=hmi_config.vllm_repository,
+                tag=framework_image_tag,
+                command=command,
+                streaming_command=command,
+                protocol="http",
+                readiness_initial_delay_seconds=10,
+                healthcheck_route="/health",
+                predict_route="/predict",
+                streaming_predict_route="/stream",
+                env={},
+            ),
+            metadata={},
+        )
+
         return (
             await self.create_model_bundle_use_case.execute(
                 user,
-                CreateModelBundleV2Request(
-                    name=endpoint_unique_name,
-                    schema_location="TBA",
-                    flavor=StreamingEnhancedRunnableImageFlavor(
-                        flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
-                        repository=hmi_config.vllm_repository,
-                        tag=framework_image_tag,
-                        command=command,
-                        streaming_command=command,
-                        protocol="http",
-                        readiness_initial_delay_seconds=10,
-                        healthcheck_route="/health",
-                        predict_route="/predict",
-                        streaming_predict_route="/stream",
-                        env={},
-                    ),
-                    metadata={},
-                ),
+                create_model_bundle_v2_request,
+                do_auth_check=False,
+                # Skip auth check because llm create endpoint is called as the user itself,
+                # but the user isn't directly making the action. It should come from the fine tune
+                # job.
+            )
+        ).model_bundle_id
+
+    async def create_vllm_multinode_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        quantize: Optional[Quantization],
+        checkpoint_path: Optional[str],
+    ):
+        leader_command = self._create_vllm_bundle_command(
+            model_name,
+            framework_image_tag,
+            num_shards,
+            quantize,
+            checkpoint_path,
+            multinode=True,
+            is_leader=True,
+        )
+        worker_command = self._create_vllm_bundle_command(
+            model_name,
+            framework_image_tag,
+            num_shards,
+            quantize,
+            checkpoint_path,
+            multinode=True,
+            is_leader=False,
+        )
+
+        # These env vars e.g. leader name, lws name, namespaceshould be filled in by Launch automatically
+        common_vllm_envs = {
+            "VLLM_HOST_IP": "$(K8S_LWS_LEADER_NAME).$(K8S_LWS_NAME).$(K8S_OWN_NAMESPACE).svc.cluster.local",
+            "NCCL_SOCKET_IFNAME": "eth0",
+            "GLOO_SOCKET_IFNAME": "eth0",  # maybe don't need
+            "NCCL_DEBUG": "INFO",  # TODO remove once fully tested
+            "VLLM_LOGGING_LEVEL": "INFO",  # TODO remove once fully tested
+            "RAY_CLUSTER_SIZE": "$(K8S_LWS_CLUSTER_SIZE)",
+        }
+
+        leader_env = common_vllm_envs.copy()
+        worker_env = common_vllm_envs.copy()
+
+        create_model_bundle_v2_request = CreateModelBundleV2Request(
+            name=endpoint_unique_name,
+            schema_location="TBA",
+            flavor=StreamingEnhancedRunnableImageFlavor(
+                flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                repository=hmi_config.vllm_repository,
+                tag=framework_image_tag,
+                command=leader_command,
+                streaming_command=leader_command,
+                protocol="http",
+                readiness_initial_delay_seconds=10,
+                healthcheck_route="/health",
+                predict_route="/predict",
+                streaming_predict_route="/stream",
+                env=leader_env,
+            ),
+            metadata={
+                WORKER_COMMAND_METADATA_KEY: worker_command,
+                WORKER_ENV_METADATA_KEY: worker_env,
+            },
+        )
+
+        return (
+            await self.create_model_bundle_use_case.execute(
+                user,
+                create_model_bundle_v2_request,
                 do_auth_check=False,
                 # Skip auth check because llm create endpoint is called as the user itself,
                 # but the user isn't directly making the action. It should come from the fine tune
@@ -969,13 +1105,14 @@ class CreateLLMModelEndpointV1UseCase:
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
-        await _fill_hardware_info(self.llm_artifact_gateway, request)
+        await _fill_hardware_info(self.llm_artifact_gateway, request)  # TODO multinode
         if not (
             request.gpus
             and request.gpu_type
             and request.cpus
             and request.memory
             and request.storage
+            and request.nodes_per_worker
         ):
             raise RuntimeError("Some hardware info is missing unexpectedly.")
         validate_deployment_resources(
@@ -1012,6 +1149,15 @@ class CreateLLMModelEndpointV1UseCase:
                 request.inference_framework
             )
 
+        if (
+            request.nodes_per_worker > 1
+            and not request.inference_framework == LLMInferenceFramework.VLLM
+        ):
+            raise ObjectHasInvalidValueException(
+                "Multinode endpoints are only supported for VLLM models."
+            )
+
+        # TODO make the bundle for multinode
         bundle = await self.create_llm_model_bundle_use_case.execute(
             user,
             endpoint_name=request.name,
@@ -1023,6 +1169,8 @@ class CreateLLMModelEndpointV1UseCase:
             num_shards=request.num_shards,
             quantize=request.quantize,
             checkpoint_path=request.checkpoint_path,
+            multinode=(request.nodes_per_worker > 1),
+            # TODO multinode option here
         )
         validate_resource_requests(
             bundle=bundle,
@@ -1069,6 +1217,7 @@ class CreateLLMModelEndpointV1UseCase:
             memory=request.memory,
             gpu_type=request.gpu_type,
             storage=request.storage,
+            nodes_per_worker=request.nodes_per_worker,
             optimize_costs=bool(request.optimize_costs),
             min_workers=request.min_workers,
             max_workers=request.max_workers,
@@ -1197,6 +1346,7 @@ class UpdateLLMModelEndpointV1UseCase:
     async def execute(
         self, user: User, model_endpoint_name: str, request: UpdateLLMModelEndpointV1Request
     ) -> UpdateLLMModelEndpointV1Response:
+        # TODO do we want to check if LWS here?
         if request.labels is not None:
             validate_labels(request.labels)
         validate_billing_tags(request.billing_tags)
@@ -1267,6 +1417,7 @@ class UpdateLLMModelEndpointV1UseCase:
                 num_shards=num_shards,
                 quantize=quantize,
                 checkpoint_path=checkpoint_path,
+                multinode=(model_endpoint.infra_state.resource_state.nodes_per_worker > 1),
             )
 
             metadata = endpoint_record.metadata or {}
@@ -2352,6 +2503,7 @@ async def _fill_hardware_info(
         or request.cpus is None
         or request.memory is None
         or request.storage is None
+        or request.nodes_per_worker is None
     ):
         if not (
             request.gpus is None
@@ -2359,9 +2511,10 @@ async def _fill_hardware_info(
             and request.cpus is None
             and request.memory is None
             and request.storage is None
+            and request.nodes_per_worker is None
         ):
             raise ObjectHasInvalidValueException(
-                "All hardware spec fields (gpus, gpu_type, cpus, memory, storage) must be provided if any hardware spec field is missing."
+                "All hardware spec fields (gpus, gpu_type, cpus, memory, storage, nodes_per_worker) must be provided if any hardware spec field is missing."
             )
         checkpoint_path = get_checkpoint_path(request.model_name, request.checkpoint_path)
         hardware_info = await _infer_hardware(
@@ -2372,6 +2525,7 @@ async def _fill_hardware_info(
         request.cpus = hardware_info.cpus
         request.memory = hardware_info.memory
         request.storage = hardware_info.storage
+        request.nodes_per_worker = hardware_info.nodes_per_worker
         if hardware_info.gpus:  # make lint happy
             request.num_shards = hardware_info.gpus
 
@@ -2382,7 +2536,7 @@ async def _infer_hardware(
     model_name: str,
     checkpoint_path: str,
     is_batch_job: bool = False,
-) -> CreateDockerImageBatchJobResourceRequests:
+) -> CreateDockerImageBatchJobResourceRequests:  # TODO nodes_per_worker???
     config = llm_artifact_gateway.get_model_config(checkpoint_path)
 
     dtype_size = 2
@@ -2436,6 +2590,7 @@ async def _infer_hardware(
         memory = by_model_name[model_name]["memory"]
         storage = by_model_name[model_name]["storage"]
         gpu_type = by_model_name[model_name]["gpu_type"]
+        nodes_per_worker = by_model_name[model_name]["nodes_per_worker"]
     else:
         by_gpu_memory_gb = sorted(by_gpu_memory_gb, key=lambda x: x["gpu_memory_le"])
         for recs in by_gpu_memory_gb:
@@ -2445,12 +2600,18 @@ async def _infer_hardware(
                 memory = recs["memory"]
                 storage = recs["storage"]
                 gpu_type = recs["gpu_type"]
+                nodes_per_worker = recs["nodes_per_worker"]
                 break
         else:
             raise ObjectHasInvalidValueException(f"Unable to infer hardware for {model_name}.")
 
     return CreateDockerImageBatchJobResourceRequests(
-        cpus=cpus, gpus=gpus, memory=memory, storage=storage, gpu_type=gpu_type
+        cpus=cpus,
+        gpus=gpus,
+        memory=memory,
+        storage=storage,
+        gpu_type=gpu_type,
+        nodes_per_worker=nodes_per_worker,
     )
 
 

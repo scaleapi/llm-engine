@@ -52,6 +52,7 @@ async def _create_model_endpoint_helper(
         memory=infra_state.resource_state.memory,
         gpu_type=infra_state.resource_state.gpu_type,
         storage=infra_state.resource_state.storage,
+        nodes_per_worker=infra_state.resource_state.nodes_per_worker,
         optimize_costs=bool(infra_state.resource_state.optimize_costs),
         min_workers=infra_state.deployment_state.min_workers,
         max_workers=infra_state.deployment_state.max_workers,
@@ -156,6 +157,7 @@ async def test_create_model_endpoint_raises_already_exists(
             memory=infra_state.resource_state.memory,
             gpu_type=infra_state.resource_state.gpu_type,
             storage=infra_state.resource_state.storage,
+            nodes_per_worker=infra_state.resource_state.nodes_per_worker,
             optimize_costs=bool(infra_state.resource_state.optimize_costs),
             min_workers=infra_state.deployment_state.min_workers,
             max_workers=infra_state.deployment_state.max_workers,
@@ -312,6 +314,9 @@ async def test_create_update_model_endpoint_lock_not_acquired_raises_existing_op
         await fake_live_model_endpoint_service.update_model_endpoint(
             model_endpoint_id=model_endpoint_record.id, **update_kwargs
         )
+
+
+# TODO multinode create model endpoint case?
 
 
 @pytest.mark.asyncio

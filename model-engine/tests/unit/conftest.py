@@ -765,6 +765,7 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
             "llama-2-7b": ["model-fake.safetensors"],
             "mpt-7b": ["model-fake.safetensors"],
             "llama-3-70b": ["model-fake.safetensors"],
+            "llama-3-1-405b-instruct": ["model-fake.safetensors"],
         }
         self.urls = {"filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"}
         self.model_config = {
@@ -989,7 +990,7 @@ class FakeTaskQueueGateway(TaskQueueGateway):
         return True
 
 
-class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
+class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):  # TODO handle multinode
     db: Dict[str, ModelEndpointInfraState]
     in_flight_infra: Dict[str, ModelEndpointInfraState]
     model_endpoint_record_repository: ModelEndpointRecordRepository
@@ -1024,6 +1025,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
         storage: Optional[StorageSpecificationType],
+        nodes_per_worker: int,
         optimize_costs: bool,
         aws_role: str,
         results_s3_bucket: str,
@@ -1058,6 +1060,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
                 gpu_type=gpu_type,
                 memory=memory,
                 storage=storage,
+                nodes_per_worker=nodes_per_worker,
                 optimize_costs=optimize_costs,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -1125,6 +1128,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         memory: Optional[StorageSpecificationType] = None,
         gpu_type: Optional[GpuType] = None,
         storage: Optional[StorageSpecificationType] = None,
+        # nodes_per_worker: Optional[int] = None,  # TODO can we have this here?
         optimize_costs: Optional[bool] = None,
         child_fn_info: Optional[Dict[str, Any]] = None,
         post_inference_hooks: Optional[List[str]] = None,
@@ -1224,6 +1228,7 @@ class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
                 gpu_type=build_endpoint_request.gpu_type,
                 memory=build_endpoint_request.memory,
                 storage=build_endpoint_request.storage,
+                nodes_per_worker=build_endpoint_request.nodes_per_worker,
                 optimize_costs=build_endpoint_request.optimize_costs,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -1690,6 +1695,7 @@ class FakeModelEndpointService(ModelEndpointService):
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
         storage: Optional[StorageSpecificationType],
+        nodes_per_worker: int,
         optimize_costs: bool,
         min_workers: int,
         max_workers: int,
@@ -1748,6 +1754,7 @@ class FakeModelEndpointService(ModelEndpointService):
                     memory=memory,
                     gpu_type=gpu_type,
                     storage=storage,
+                    nodes_per_worker=nodes_per_worker,
                     optimize_costs=optimize_costs,
                 ),
                 user_config_state=ModelEndpointUserConfigState(
@@ -2616,6 +2623,7 @@ def model_endpoint_1(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEnd
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -2681,6 +2689,7 @@ def model_endpoint_2(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEnd
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=False,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -2736,6 +2745,7 @@ def model_endpoint_3(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEnd
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=False,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -2791,6 +2801,7 @@ def model_endpoint_4(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEnd
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=False,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -2846,6 +2857,7 @@ def model_endpoint_public(test_api_key: str, model_bundle_1: ModelBundle) -> Mod
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -2911,6 +2923,7 @@ def model_endpoint_public_sync(test_api_key: str, model_bundle_1: ModelBundle) -
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -2977,6 +2990,7 @@ def model_endpoint_runnable(test_api_key: str, model_bundle_4: ModelBundle) -> M
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=False,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -3033,6 +3047,7 @@ def model_endpoint_streaming(test_api_key: str, model_bundle_5: ModelBundle) -> 
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=False,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -3199,6 +3214,7 @@ def build_endpoint_request_async_runnable_image(
         memory="3G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
         storage="10G",
+        nodes_per_worker=1,
         optimize_costs=False,
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
@@ -3242,6 +3258,7 @@ def build_endpoint_request_streaming_runnable_image(
         memory="4G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
         storage="10G",
+        nodes_per_worker=1,
         optimize_costs=False,
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
@@ -3285,6 +3302,7 @@ def build_endpoint_request_sync_runnable_image(
         memory="4G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
         storage="10G",
+        nodes_per_worker=1,
         optimize_costs=False,
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
@@ -3328,6 +3346,7 @@ def build_endpoint_request_sync_pytorch(
         memory="1G",
         gpu_type=GpuType.NVIDIA_TESLA_T4,
         storage="10G",
+        nodes_per_worker=1,
         optimize_costs=False,
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
@@ -3371,6 +3390,7 @@ def build_endpoint_request_async_tensorflow(
         memory="1G",
         gpu_type=None,
         storage=None,
+        nodes_per_worker=1,
         optimize_costs=False,
         default_callback_url="https://example.com/path",
         default_callback_auth=CallbackAuth(
@@ -3413,6 +3433,7 @@ def build_endpoint_request_async_custom(
         memory="1G",
         gpu_type=None,
         storage=None,
+        nodes_per_worker=1,
         optimize_costs=True,
         broker_type=BrokerType.SQS,
         default_callback_url=None,
@@ -3455,6 +3476,7 @@ def build_endpoint_request_async_zipartifact_highpri(
         memory="1G",
         gpu_type=None,
         storage=None,
+        nodes_per_worker=1,
         optimize_costs=True,
         broker_type=BrokerType.SQS,
         default_callback_url=None,
@@ -3496,6 +3518,7 @@ def build_endpoint_request_sync_custom(
         memory="1G",
         gpu_type=None,
         storage=None,
+        nodes_per_worker=1,
         optimize_costs=True,
         default_callback_url=None,
         default_callback_auth=None,
@@ -3588,6 +3611,7 @@ def llm_model_endpoint_async(
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -3662,6 +3686,7 @@ def llm_model_endpoint_async(
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
                 "storage": "10G",
+                "nodes_per_worker": 1,
                 "optimize_costs": True,
             },
             "num_queued_items": 1,
@@ -3720,6 +3745,7 @@ def llm_model_endpoint_sync(
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -3794,6 +3820,7 @@ def llm_model_endpoint_sync(
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
                 "storage": "10G",
+                "nodes_per_worker": 1,
                 "optimize_costs": True,
             },
             "num_queued_items": 1,
@@ -3852,6 +3879,7 @@ def llm_model_endpoint_stream(
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -3926,6 +3954,7 @@ def llm_model_endpoint_stream(
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
                 "storage": "10G",
+                "nodes_per_worker": 1,
                 "optimize_costs": True,
             },
             "num_queued_items": 1,
@@ -3984,6 +4013,7 @@ def llm_model_endpoint_sync_tgi(
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -4058,6 +4088,7 @@ def llm_model_endpoint_sync_tgi(
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
                 "storage": "10G",
+                "nodes_per_worker": 1,
                 "optimize_costs": True,
             },
             "num_queued_items": 1,
@@ -4116,6 +4147,7 @@ def llm_model_endpoint_sync_lightllm(
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -4190,6 +4222,7 @@ def llm_model_endpoint_sync_lightllm(
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
                 "storage": "10G",
+                "nodes_per_worker": 1,
                 "optimize_costs": True,
             },
             "num_queued_items": 1,
@@ -4248,6 +4281,7 @@ def llm_model_endpoint_sync_trt_llm(
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -4322,6 +4356,7 @@ def llm_model_endpoint_sync_trt_llm(
                 "memory": "1G",
                 "gpu_type": "nvidia-tesla-t4",
                 "storage": "10G",
+                "nodes_per_worker": 1,
                 "optimize_costs": True,
             },
             "num_queued_items": 1,
@@ -4380,6 +4415,7 @@ def llm_model_endpoint_streaming(test_api_key: str, model_bundle_5: ModelBundle)
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=False,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -4445,6 +4481,7 @@ def llm_model_endpoint_text_generation_inference(
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -4518,6 +4555,7 @@ def llm_model_endpoint_trt_llm(
                 memory="1G",
                 gpu_type=GpuType.NVIDIA_TESLA_T4,
                 storage="10G",
+                nodes_per_worker=1,
                 optimize_costs=True,
             ),
             user_config_state=ModelEndpointUserConfigState(
@@ -4552,36 +4590,49 @@ def mocked__get_recommended_hardware_config_map():
       memory: 20Gi
       storage: 40Gi
       gpu_type: nvidia-hopper-h100-1g20gb
+      nodes_per_worker: 1
     - gpu_memory_le: 40
       cpus: 10
       gpus: 1
       memory: 40Gi
       storage: 80Gi
       gpu_type: nvidia-hopper-h100-3g40gb
+      nodes_per_worker: 1
     - gpu_memory_le: 80
       cpus: 20
       gpus: 1
       memory: 80Gi
       storage: 96Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
     - gpu_memory_le: 160
       cpus: 40
       gpus: 2
       memory: 160Gi
       storage: 160Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
     - gpu_memory_le: 320
       cpus: 80
       gpus: 4
       memory: 320Gi
       storage: 320Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
     - gpu_memory_le: 640
       cpus: 160
       gpus: 8
       memory: 800Gi
       storage: 640Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
+    - gpu_memory_le: 1280
+      cpus: 160
+      gpus: 8
+      memory: 800Gi
+      storage: 640Gi
+      gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 2
                 """,
             "byModelName": """
     - name: llama-3-8b-instruct-262k
@@ -4590,18 +4641,21 @@ def mocked__get_recommended_hardware_config_map():
       memory: 160Gi
       storage: 160Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
     - name: deepseek-coder-v2
       cpus: 160
       gpus: 8
       memory: 800Gi
       storage: 640Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
     - name: deepseek-coder-v2-instruct
       cpus: 160
       gpus: 8
       memory: 800Gi
       storage: 640Gi
       gpu_type: nvidia-hopper-h100
+      nodes_per_worker: 1
                 """,
         }
 

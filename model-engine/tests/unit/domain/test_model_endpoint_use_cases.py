@@ -18,6 +18,10 @@ from model_engine_server.common.resource_limits import (
 )
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.domain.entities import ModelBundle, ModelEndpoint
+from model_engine_server.domain.entities.model_bundle_entity import (
+    WORKER_COMMAND_METADATA_KEY,
+    WORKER_ENV_METADATA_KEY,
+)
 from model_engine_server.domain.exceptions import (
     EndpointBillingTagsMalformedException,
     EndpointLabelsException,
@@ -619,17 +623,73 @@ async def test_create_model_endpoint_use_case_sets_high_priority(
 
 
 @pytest.mark.asyncio
+async def test_create_multinode_endpoint_with_nonmultinode_bundle_fails(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    create_model_endpoint_request_streaming: CreateModelEndpointV1Request,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = CreateModelEndpointV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_bundle_1.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+
+    create_model_endpoint_request_streaming.nodes_per_worker = 2
+    create_model_endpoint_request_streaming.model_bundle_id = model_bundle_1.id
+    with pytest.raises(ObjectHasInvalidValueException):
+        await use_case.execute(user=user, request=create_model_endpoint_request_streaming)
+
+
+@pytest.mark.asyncio
+async def test_create_multinode_endpoint_with_multinode_bundle_succeeds(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_5: ModelBundle,
+    create_model_endpoint_request_streaming: CreateModelEndpointV1Request,
+):
+    # mb5 is a streaming runnable image bundle
+    model_bundle_5.metadata[WORKER_ENV_METADATA_KEY] = {"fake_env": "fake_value"}
+    model_bundle_5.metadata[WORKER_COMMAND_METADATA_KEY] = ["fake_command"]
+    fake_model_bundle_repository.add_model_bundle(model_bundle_5)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = CreateModelEndpointV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_bundle_5.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+
+    create_model_endpoint_request_streaming.nodes_per_worker = 2
+    create_model_endpoint_request_streaming.model_bundle_id = model_bundle_5.id
+    response = await use_case.execute(user=user, request=create_model_endpoint_request_streaming)
+    assert response.endpoint_creation_task_id
+    assert isinstance(response, CreateModelEndpointV1Response)
+
+
+@pytest.mark.asyncio
 async def test_get_model_endpoint_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     model_endpoint_1: ModelEndpoint,
+    model_endpoint_2: ModelEndpoint,
 ):
+    # TODO maybe try a multinode endpoint here
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    model_endpoint_2.infra_state.resource_state.nodes_per_worker = 2
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_2)
     use_case = GetModelEndpointByIdV1UseCase(model_endpoint_service=fake_model_endpoint_service)
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response = await use_case.execute(user=user, model_endpoint_id=model_endpoint_1.record.id)
 
     assert isinstance(response, GetModelEndpointV1Response)
+
+    response_2 = await use_case.execute(user=user, model_endpoint_id=model_endpoint_2.record.id)
+    assert isinstance(response_2, GetModelEndpointV1Response)
+    assert response_2.resource_state.nodes_per_worker == 2
 
 
 @pytest.mark.asyncio
@@ -1425,6 +1485,12 @@ async def test_update_model_endpoint_raises_billing_tags_exception(
             model_endpoint_id=model_endpoint_1.record.id,
             request=request,
         )
+
+
+@pytest.mark.asyncio
+async def test_update_model_endpoint_multinode_to_nonmultinode_fails():
+    # TODO
+    pass
 
 
 @pytest.mark.asyncio

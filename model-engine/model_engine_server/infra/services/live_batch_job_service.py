@@ -102,6 +102,7 @@ class LiveBatchJobService(BatchJobService):
             memory=memory,  # type: ignore
             gpu_type=gpu_type,  # type: ignore
             storage=resource_requests.storage,
+            nodes_per_worker=1,  # TODO override?
             optimize_costs=False,
             min_workers=0,
             max_workers=max_workers,  # type: ignore

@@ -107,7 +107,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         return self.DbLockContext(lock_id=lock_id, session=self.session)
 
     @raise_if_read_only
-    async def create_model_endpoint_record(
+    async def create_model_endpoint_record(  # TODO probably don't need multinode
         self,
         *,
         name: str,

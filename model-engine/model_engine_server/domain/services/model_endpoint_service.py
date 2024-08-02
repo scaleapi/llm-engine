@@ -61,7 +61,7 @@ class ModelEndpointService(ABC):
         """
 
     @abstractmethod
-    async def create_model_endpoint(
+    async def create_model_endpoint(  # TODO multinode
         self,
         *,
         name: str,
@@ -76,6 +76,7 @@ class ModelEndpointService(ABC):
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
         storage: Optional[StorageSpecificationType],
+        nodes_per_worker: int,
         optimize_costs: bool,
         min_workers: int,
         max_workers: int,
@@ -196,7 +197,7 @@ class ModelEndpointService(ABC):
         """
 
     @abstractmethod
-    async def update_model_endpoint(
+    async def update_model_endpoint(  # TODO multinode
         self,
         *,
         model_endpoint_id: str,
