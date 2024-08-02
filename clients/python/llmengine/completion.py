@@ -50,7 +50,7 @@ class Completion(APIEngine):
         guided_grammar: Optional[str] = None,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
-        request_headers: Optional[Dict[str, Any]] = None,
+        request_headers: Optional[Dict[str, str]] = None,
     ) -> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]:
         """
         Creates a completion for the provided prompt and parameters asynchronously (with `asyncio`).
@@ -277,7 +277,7 @@ class Completion(APIEngine):
         guided_grammar: Optional[str] = None,
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
-        request_headers: Optional[Dict[str, Any]] = None,
+        request_headers: Optional[Dict[str, str]] = None,
     ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
         """
         Creates a completion for the provided prompt and parameters synchronously.
@@ -423,7 +423,7 @@ class Completion(APIEngine):
                     resource_name=f"v1/llm/completions-stream?model_endpoint_name={model}",
                     data=data_stream,
                     timeout=timeout,
-                    request_headers=request_headers,
+                    headers=request_headers,
                 )
                 for chunk in response_stream:
                     yield CompletionStreamResponse.parse_obj(chunk)
@@ -480,7 +480,7 @@ class Completion(APIEngine):
         data_parallelism: int = 1,
         max_runtime_sec: int = 24 * 3600,
         tool_config: Optional[ToolConfig] = None,
-        request_headers: Optional[Dict[str, Any]] = None,
+        request_headers: Optional[Dict[str, str]] = None,
     ) -> CreateBatchCompletionsResponse:
         """
         Creates a batch completion for the provided input data. The job runs offline and does not depend on an existing model endpoint.

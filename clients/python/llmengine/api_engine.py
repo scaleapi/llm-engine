@@ -61,7 +61,7 @@ class APIEngine:
 
     @classmethod
     def _get(
-        cls, resource_name: str, timeout: int, headers: Optional[Dict[str, Any]] = None
+        cls, resource_name: str, timeout: int, headers: Optional[Dict[str, str]] = None
     ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
@@ -82,7 +82,7 @@ class APIEngine:
         resource_name: str,
         data: Optional[Dict[str, Any]],
         timeout: int,
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
@@ -100,7 +100,7 @@ class APIEngine:
 
     @classmethod
     def _delete(
-        cls, resource_name: str, timeout: int, headers: Optional[Dict[str, Any]] = None
+        cls, resource_name: str, timeout: int, headers: Optional[Dict[str, str]] = None
     ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
@@ -121,7 +121,7 @@ class APIEngine:
         resource_name: str,
         data: Dict[str, Any],
         timeout: int,
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
@@ -142,7 +142,7 @@ class APIEngine:
         resource_name: str,
         data: Dict[str, Any],
         timeout: int,
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Iterator[Dict[str, Any]]:
         base_path = get_base_path()
         api_key = get_api_key()
@@ -179,7 +179,7 @@ class APIEngine:
         resource_name: str,
         files: Dict[str, BufferedReader],
         timeout: int,
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
@@ -201,7 +201,7 @@ class APIEngine:
         resource_name: str,
         data: Dict[str, Any],
         timeout: int,
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
@@ -222,7 +222,7 @@ class APIEngine:
         resource_name: str,
         data: Dict[str, Any],
         timeout: int,
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> AsyncIterable[Dict[str, Any]]:
         base_path = get_base_path()
         api_key = get_api_key()
