@@ -60,13 +60,15 @@ class APIEngine:
             )
 
     @classmethod
-    def _get(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
+    def _get(
+        cls, resource_name: str, timeout: int, headers: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
         response = requests.get(
             urljoin(base_path, resource_name),
             timeout=timeout,
-            headers={"x-api-key": api_key},
+            headers={"x-api-key": api_key, **(headers or {})},
             auth=(api_key, ""),
         )
         if response.status_code != 200:
@@ -76,7 +78,11 @@ class APIEngine:
 
     @classmethod
     def put(
-        cls, resource_name: str, data: Optional[Dict[str, Any]], timeout: int
+        cls,
+        resource_name: str,
+        data: Optional[Dict[str, Any]],
+        timeout: int,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
@@ -84,7 +90,7 @@ class APIEngine:
             urljoin(base_path, resource_name),
             json=data,
             timeout=timeout,
-            headers={"x-api-key": api_key},
+            headers={"x-api-key": api_key, **(headers or {})},
             auth=(api_key, ""),
         )
         if response.status_code != 200:
@@ -93,13 +99,15 @@ class APIEngine:
         return payload
 
     @classmethod
-    def _delete(cls, resource_name: str, timeout: int) -> Dict[str, Any]:
+    def _delete(
+        cls, resource_name: str, timeout: int, headers: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
         response = requests.delete(
             urljoin(base_path, resource_name),
             timeout=timeout,
-            headers={"x-api-key": api_key},
+            headers={"x-api-key": api_key, **(headers or {})},
             auth=(api_key, ""),
         )
         if response.status_code != 200:
@@ -108,15 +116,20 @@ class APIEngine:
         return payload
 
     @classmethod
-    def post_sync(cls, resource_name: str, data: Dict[str, Any], timeout: int) -> Dict[str, Any]:
+    def post_sync(
+        cls,
+        resource_name: str,
+        data: Dict[str, Any],
+        timeout: int,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
         response = requests.post(
             urljoin(base_path, resource_name),
             json=data,
             timeout=timeout,
-            headers={"x-api-key": api_key},
-            auth=(api_key, ""),
+            headers={"x-api-key": api_key, **(headers or {})},
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -125,7 +138,11 @@ class APIEngine:
 
     @classmethod
     def post_stream(
-        cls, resource_name: str, data: Dict[str, Any], timeout: int
+        cls,
+        resource_name: str,
+        data: Dict[str, Any],
+        timeout: int,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Iterator[Dict[str, Any]]:
         base_path = get_base_path()
         api_key = get_api_key()
@@ -133,7 +150,7 @@ class APIEngine:
             urljoin(base_path, resource_name),
             json=data,
             timeout=timeout,
-            headers={"x-api-key": api_key},
+            headers={"x-api-key": api_key, **(headers or {})},
             auth=(api_key, ""),
             stream=True,
         )
@@ -158,7 +175,11 @@ class APIEngine:
 
     @classmethod
     def post_file(
-        cls, resource_name: str, files: Dict[str, BufferedReader], timeout: int
+        cls,
+        resource_name: str,
+        files: Dict[str, BufferedReader],
+        timeout: int,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
@@ -166,7 +187,7 @@ class APIEngine:
             urljoin(base_path, resource_name),
             files=files,
             timeout=timeout,
-            headers={"x-api-key": api_key},
+            headers={"x-api-key": api_key, **(headers or {})},
             auth=(api_key, ""),
         )
         if response.status_code != 200:
@@ -176,13 +197,17 @@ class APIEngine:
 
     @classmethod
     async def apost_sync(
-        cls, resource_name: str, data: Dict[str, Any], timeout: int
+        cls,
+        resource_name: str,
+        data: Dict[str, Any],
+        timeout: int,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         base_path = get_base_path()
         api_key = get_api_key()
         async with ClientSession(
             timeout=ClientTimeout(timeout),
-            headers={"x-api-key": api_key},
+            headers={"x-api-key": api_key, **(headers or {})},
             auth=BasicAuth(api_key, ""),
         ) as session:
             async with session.post(urljoin(base_path, resource_name), json=data) as resp:
@@ -193,13 +218,17 @@ class APIEngine:
 
     @classmethod
     async def apost_stream(
-        cls, resource_name: str, data: Dict[str, Any], timeout: int
+        cls,
+        resource_name: str,
+        data: Dict[str, Any],
+        timeout: int,
+        headers: Optional[Dict[str, str]] = None,
     ) -> AsyncIterable[Dict[str, Any]]:
         base_path = get_base_path()
         api_key = get_api_key()
         async with ClientSession(
             timeout=ClientTimeout(timeout),
-            headers={"x-api-key": api_key},
+            headers={"x-api-key": api_key, **(headers or {})},
             auth=BasicAuth(api_key, ""),
         ) as session:
             async with session.post(urljoin(base_path, resource_name), json=data) as resp:
