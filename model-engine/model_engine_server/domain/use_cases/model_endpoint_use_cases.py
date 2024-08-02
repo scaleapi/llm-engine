@@ -232,7 +232,7 @@ def validate_bundle_multinode_compatibility(bundle: ModelBundle, nodes_per_worke
     ):
         return
     raise ObjectHasInvalidValueException(
-        f"Bundle {bundle.name} is not multinode compatible. It must have _worker_command and _worker_args metadata."
+        f"Bundle {bundle.name} is not multinode compatible. It must be a RunnableImage and have _worker_command and _worker_args metadata."
     )
 
 

@@ -623,6 +623,7 @@ def test_update_model_endpoint_from_nonmultinode_to_multinode_returns_400(
     get_test_client_wrapper,
 ):
     # if the request doesn't take in nodes_per_worker, that works too
+    # TODO maybe just delete this? does the thing allow ignoring extra args or something idk
     assert model_endpoint_1[0].infra_state is not None
     client = get_test_client_wrapper(
         fake_docker_repository_image_always_exists=True,

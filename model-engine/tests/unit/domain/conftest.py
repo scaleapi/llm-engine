@@ -347,10 +347,10 @@ def create_llm_model_endpoint_request_llama_3_70b() -> CreateLLMModelEndpointV1R
 
 
 @pytest.fixture
-def create_llm_model_endpoint_request_llama_3_1_405b() -> CreateLLMModelEndpointV1Request:
+def create_llm_model_endpoint_request_llama_3_1_405b_instruct() -> CreateLLMModelEndpointV1Request:
     return CreateLLMModelEndpointV1Request(
-        name="test_llm_endpoint_name_llama_3_1_405b",
-        model_name="llama-3-1-405b",
+        name="test_llm_endpoint_name_llama_3_1_405b_instruct",
+        model_name="llama-3-1-405b-instruct",
         source="hugging_face",
         inference_framework="vllm",
         inference_framework_image_tag="1.0.0",
@@ -370,7 +370,7 @@ def create_llm_model_endpoint_request_llama_3_1_405b() -> CreateLLMModelEndpoint
         labels={"team": "infra", "product": "my_product"},
         aws_role="test_aws_role",
         results_s3_bucket="test_s3_bucket",
-        checkpoint_path="s3://llama-3-1-405b",
+        checkpoint_path="s3://llama-3-1-405b-instruct",
     )
 
 

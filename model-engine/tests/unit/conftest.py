@@ -765,6 +765,7 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
             "llama-2-7b": ["model-fake.safetensors"],
             "mpt-7b": ["model-fake.safetensors"],
             "llama-3-70b": ["model-fake.safetensors"],
+            "llama-3-1-405b-instruct": ["model-fake.safetensors"],
         }
         self.urls = {"filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"}
         self.model_config = {

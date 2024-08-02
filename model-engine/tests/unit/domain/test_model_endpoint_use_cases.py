@@ -639,8 +639,8 @@ async def test_create_multinode_endpoint_with_nonmultinode_bundle_fails(
     user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
 
     create_model_endpoint_request_streaming.nodes_per_worker = 2
-    with pytest.raises(EndpointResourceInvalidRequestException):
-        # TODO which exception should this raise?
+    create_model_endpoint_request_streaming.model_bundle_id = model_bundle_1.id
+    with pytest.raises(ObjectHasInvalidValueException):
         await use_case.execute(user=user, request=create_model_endpoint_request_streaming)
 
 
@@ -648,21 +648,23 @@ async def test_create_multinode_endpoint_with_nonmultinode_bundle_fails(
 async def test_create_multinode_endpoint_with_multinode_bundle_succeeds(
     fake_model_bundle_repository,
     fake_model_endpoint_service,
-    model_bundle_1: ModelBundle,
+    model_bundle_5: ModelBundle,
     create_model_endpoint_request_streaming: CreateModelEndpointV1Request,
 ):
-    model_bundle_1.metadata[WORKER_ENV_METADATA_KEY] = {"fake_env": "fake_value"}
-    model_bundle_1.metadata[WORKER_COMMAND_METADATA_KEY] = ["fake_command"]
-    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    # mb5 is a streaming runnable image bundle
+    model_bundle_5.metadata[WORKER_ENV_METADATA_KEY] = {"fake_env": "fake_value"}
+    model_bundle_5.metadata[WORKER_COMMAND_METADATA_KEY] = ["fake_command"]
+    fake_model_bundle_repository.add_model_bundle(model_bundle_5)
     fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
     use_case = CreateModelEndpointV1UseCase(
         model_bundle_repository=fake_model_bundle_repository,
         model_endpoint_service=fake_model_endpoint_service,
     )
-    user_id = model_bundle_1.created_by
+    user_id = model_bundle_5.created_by
     user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
 
     create_model_endpoint_request_streaming.nodes_per_worker = 2
+    create_model_endpoint_request_streaming.model_bundle_id = model_bundle_5.id
     response = await use_case.execute(user=user, request=create_model_endpoint_request_streaming)
     assert response.endpoint_creation_task_id
     assert isinstance(response, CreateModelEndpointV1Response)
@@ -678,6 +680,7 @@ async def test_get_model_endpoint_use_case_success(
     # TODO maybe try a multinode endpoint here
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     model_endpoint_2.infra_state.resource_state.nodes_per_worker = 2
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_2)
     use_case = GetModelEndpointByIdV1UseCase(model_endpoint_service=fake_model_endpoint_service)
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response = await use_case.execute(user=user, model_endpoint_id=model_endpoint_1.record.id)
