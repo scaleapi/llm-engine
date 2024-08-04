@@ -136,6 +136,7 @@ CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_RUNNABLE_IMAGE = {
     "cpus": "1",
     "gpus": 0,
     "memory": "1Gi",
+    "storage": "2Gi",
     "optimize_costs": False,
     "min_workers": 1,
     "max_workers": 1,
