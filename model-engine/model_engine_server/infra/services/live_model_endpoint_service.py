@@ -145,7 +145,7 @@ class LiveModelEndpointService(ModelEndpointService):
         gpus: int,
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
-        storage: Optional[StorageSpecificationType],
+        storage: StorageSpecificationType,
         optimize_costs: bool,
         min_workers: int,
         max_workers: int,
