@@ -116,6 +116,7 @@ CREATE_ASYNC_MODEL_ENDPOINT_REQUEST_SIMPLE = {
     "endpoint_type": "async",
     "cpus": "0.5",
     "memory": "500Mi",
+    "storage": "1Gi",
     "min_workers": 1,
     "max_workers": 1,
     "gpus": 0,
