@@ -1,15 +1,18 @@
 # TODO this should initialize multinode and ray. Should look similar to the set up for multinode online serving.
 # TODO a few things differ here, we need to look at a bunch of env vars to determine if 1. we're leader, 2. ray address, port, cluster_size, own_address.
 # In one case, we have JOB_COMPLETION_INDEX, NUM_INSTANCES, MASTER_ADDR, MASTER_PORT as available env vars.
-# Need to get own_address from somewhere. In serving, it's from a few env vars, and is a k8s dns name.
+# (May) need to get own_address from somewhere. In serving, it's from a few env vars, and is a k8s dns name.
 
 import argparse
+import os
 import subprocess
 import sys
 import time
 
+RAY_INIT_TIMEOUT = 1200
 
-def start_worker(ray_address, ray_port, ray_init_timeout, own_address):
+
+def start_worker(ray_address, ray_port, ray_init_timeout):
     for i in range(0, ray_init_timeout, 5):
         result = subprocess.run(
             [
@@ -18,8 +21,8 @@ def start_worker(ray_address, ray_port, ray_init_timeout, own_address):
                 "--address",
                 f"{ray_address}:{ray_port}",
                 "--block",
-                "--node-ip-address",
-                own_address,
+                # "--node-ip-address",
+                # own_address,
             ],
             capture_output=True,
         )
@@ -33,9 +36,9 @@ def start_worker(ray_address, ray_port, ray_init_timeout, own_address):
     sys.exit(1)
 
 
-def start_leader(ray_port, ray_cluster_size, ray_init_timeout, own_address):
+def start_leader(ray_port, ray_cluster_size, ray_init_timeout):
     subprocess.run(
-        ["ray", "start", "--head", "--port", str(ray_port), "--node-ip-address", own_address]
+        ["ray", "start", "--head", "--port", str(ray_port)]  # , "--node-ip-address", own_address]
     )
     for i in range(0, ray_init_timeout, 5):
         active_nodes = subprocess.run(
@@ -59,29 +62,19 @@ def start_leader(ray_port, ray_cluster_size, ray_init_timeout, own_address):
 
 def main():
     parser = argparse.ArgumentParser(description="Ray cluster initialization script")
-    subparsers = parser.add_subparsers(dest="subcommand")
-
-    worker_parser = subparsers.add_parser("worker")
-    worker_parser.add_argument("--ray_address", required=True)
-    worker_parser.add_argument("--ray_port", type=int, default=6379)
-    worker_parser.add_argument("--ray_init_timeout", type=int, default=1200)
-    worker_parser.add_argument("--own_address", required=True)
-
-    leader_parser = subparsers.add_parser("leader")
-    leader_parser.add_argument("--ray_port", type=int, default=6379)
-    leader_parser.add_argument("--ray_cluster_size", type=int, required=True)
-    leader_parser.add_argument("--ray_init_timeout", type=int, default=1200)
-    leader_parser.add_argument("--own_address", required=True)
+    parser.add_argument("--ray_init_timeout", type=int, default=RAY_INIT_TIMEOUT)
 
     args = parser.parse_args()
 
-    if args.subcommand == "worker":
-        start_worker(args.ray_address, args.ray_port, args.ray_init_timeout, args.own_address)
-    elif args.subcommand == "leader":
-        start_leader(args.ray_port, args.ray_cluster_size, args.ray_init_timeout, args.own_address)
+    is_leader = os.getenv("JOB_COMPLETION_INDEX") == "0"
+    ray_address = os.getenv("MASTER_ADDR")
+    ray_port = os.getenv("MASTER_PORT")
+    ray_cluster_size = os.getenv("NUM_INSTANCES")
+
+    if is_leader:
+        start_leader(ray_port, ray_cluster_size, args.ray_init_timeout)
     else:
-        print("unknown subcommand:", args.subcommand)
-        sys.exit(1)
+        start_worker(ray_address, ray_port, args.ray_init_timeout)
 
 
 if __name__ == "__main__":
