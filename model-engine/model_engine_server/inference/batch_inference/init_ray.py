@@ -1,6 +1,7 @@
 # TODO this should initialize multinode and ray. Should look similar to the set up for multinode online serving.
 # TODO a few things differ here, we need to look at a bunch of env vars to determine if 1. we're leader, 2. ray address, port, cluster_size, own_address.
-
+# In one case, we have JOB_COMPLETION_INDEX, NUM_INSTANCES, MASTER_ADDR, MASTER_PORT as available env vars.
+# Need to get own_address from somewhere. In serving, it's from a few env vars, and is a k8s dns name.
 
 import argparse
 import subprocess
