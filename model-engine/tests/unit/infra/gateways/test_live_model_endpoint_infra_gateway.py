@@ -72,7 +72,6 @@ async def test_update_model_endpoint_infra(
     model_endpoint_2: ModelEndpoint,
     fake_task_queue_gateway,
 ):
-    # TODO multinode here?
     resource_gateway: Any = model_endpoint_infra_gateway.resource_gateway
     existing_infra_state = model_endpoint_1.infra_state
     assert existing_infra_state is not None
@@ -134,6 +133,14 @@ async def test_update_model_endpoint_infra(
         .get("idempotencyKeyPrefix")
         == "new_value_1"
     )
+
+
+@pytest.mark.asyncio
+async def test_update_multinode_endpoint_keeps_nodes_per_worker(
+
+):
+    # TODO
+    pass
 
 
 @pytest.mark.asyncio
