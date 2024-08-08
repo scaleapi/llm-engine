@@ -519,7 +519,7 @@ if __name__ == "__main__":
         "--config_file_data",
         type=str,
         default=None,
-        description="Optional override for the config file data, as a json string",
+        help="Optional override for the config file data, as a json string",
     )
     args = parser.parse_args()
     check_unknown_startup_memory_usage()
