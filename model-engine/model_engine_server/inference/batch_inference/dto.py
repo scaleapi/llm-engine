@@ -128,7 +128,7 @@ class CreateBatchCompletionsRequest(BaseModel):
     When input_data_path is provided, the input file should be a JSON file of type BatchCompletionsRequestContent.
     """
 
-    data_parallelism: Optional[int] = Field(default=1, ge=1, le=64)
+    data_parallelism: int = Field(default=1, ge=1, le=64)
     """
     Number of replicas to run the batch inference. More replicas are slower to schedule but faster to inference.
     """
