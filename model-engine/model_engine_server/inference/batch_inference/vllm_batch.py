@@ -312,12 +312,14 @@ async def generate_with_tool(
 
 
 async def batch_inference():
-    job_index = int(os.getenv("JOB_COMPLETION_INDEX", 0))
+    job_index = int(os.getenv("JOB_COMPLETION_INDEX", 0))  # TODO this conflicts with multinode
 
     request = CreateBatchCompletionsEngineRequest.parse_file(CONFIG_FILE)
 
     if request.model_cfg.checkpoint_path is not None:
-        download_model(request.model_cfg.checkpoint_path, MODEL_WEIGHTS_FOLDER)
+        download_model(
+            request.model_cfg.checkpoint_path, MODEL_WEIGHTS_FOLDER
+        )  # TODO move this out
 
     content = request.content
     if content is None:

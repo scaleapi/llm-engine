@@ -14,8 +14,14 @@ if [ -z "$2" ]; then
   exit 1;
 fi
 
+if [ -z "$3" ]; then
+  echo "Must supply the repo name"
+  exit 1;
+fi
+
+REPO_NAME=$3
 IMAGE_TAG=$2
 ACCOUNT=$1
 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin $ACCOUNT.dkr.ecr.us-west-2.amazonaws.com
-DOCKER_BUILDKIT=1 docker build -t $ACCOUNT.dkr.ecr.us-west-2.amazonaws.com/llm-engine/batch-infer-vllm:$IMAGE_TAG -f Dockerfile_vllm ../../../../
-docker push $ACCOUNT.dkr.ecr.us-west-2.amazonaws.com/llm-engine/batch-infer-vllm:$IMAGE_TAG
+DOCKER_BUILDKIT=1 docker build -t $ACCOUNT.dkr.ecr.us-west-2.amazonaws.com/$REPO_NAME:$IMAGE_TAG -f Dockerfile_vllm ../../../../
+docker push $ACCOUNT.dkr.ecr.us-west-2.amazonaws.com/$REPO_NAME:$IMAGE_TAG
