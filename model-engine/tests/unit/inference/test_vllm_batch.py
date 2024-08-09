@@ -51,7 +51,7 @@ async def test_batch_inference(
     mock_generate_with_vllm.return_value = [mock_completion_output]
 
     # Call the function
-    await batch_inference(None)
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
 
     # Assertions
     mock_create_batch_completions_engine_request.model_validate_json.assert_called_once()
@@ -112,7 +112,7 @@ async def test_batch_inference_failed_to_download_model_but_proceed(
     mock_generate_with_vllm.return_value = [mock_completion_output]
 
     # Call the function
-    await batch_inference(None)
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
 
     # Assertions
     mock_create_batch_completions_engine_request.model_validate_json.assert_called_once()
@@ -183,7 +183,7 @@ async def test_batch_inference_two_workers(
 
     mock_getenv.side_effect = side_effect
     # Batch completion worker 1
-    await batch_inference(None)
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
 
     # Assertions
     mock_create_batch_completions_engine_request.model_validate_json.assert_called_once()
@@ -197,7 +197,7 @@ async def test_batch_inference_two_workers(
     )
 
     # Batch completion worker 0
-    await batch_inference()
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -272,7 +272,7 @@ async def test_batch_inference_delete_chunks(
 
     mock_getenv.side_effect = side_effect
     # Batch completion worker 1
-    await batch_inference(None)
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
 
     # Assertions
     mock_create_batch_completions_engine_request.model_validate_json.assert_called_once()
@@ -286,7 +286,7 @@ async def test_batch_inference_delete_chunks(
     )
 
     # Batch completion worker 0
-    await batch_inference()
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -386,7 +386,7 @@ async def test_batch_inference_tool_completion(
     ]
 
     # Call the function
-    await batch_inference(None)
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
 
     # Assertions
     mock_create_batch_completions_engine_request.model_validate_json.assert_called_once()
