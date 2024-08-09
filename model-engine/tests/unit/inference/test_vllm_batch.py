@@ -49,7 +49,7 @@ async def test_batch_inference(
     mock_generate_with_vllm.return_value = [mock_completion_output]
 
     # Call the function
-    await batch_inference()
+    await batch_inference(None)
 
     # Assertions
     mock_create_batch_completions_engine_request.parse_file.assert_called_once()
@@ -108,7 +108,7 @@ async def test_batch_inference_failed_to_download_model_but_proceed(
     mock_generate_with_vllm.return_value = [mock_completion_output]
 
     # Call the function
-    await batch_inference()
+    await batch_inference(None)
 
     # Assertions
     mock_create_batch_completions_engine_request.parse_file.assert_called_once()
@@ -177,7 +177,7 @@ async def test_batch_inference_two_workers(
 
     mock_getenv.side_effect = side_effect
     # Batch completion worker 1
-    await batch_inference()
+    await batch_inference(None)
 
     # Assertions
     mock_create_batch_completions_engine_request.parse_file.assert_called_once()
@@ -264,7 +264,7 @@ async def test_batch_inference_delete_chunks(
 
     mock_getenv.side_effect = side_effect
     # Batch completion worker 1
-    await batch_inference()
+    await batch_inference(None)
 
     # Assertions
     mock_create_batch_completions_engine_request.parse_file.assert_called_once()
@@ -376,7 +376,7 @@ async def test_batch_inference_tool_completion(
     ]
 
     # Call the function
-    await batch_inference()
+    await batch_inference(None)
 
     # Assertions
     mock_create_batch_completions_engine_request.parse_file.assert_called_once()
