@@ -21,7 +21,9 @@ from model_engine_server.inference.batch_inference.vllm_batch import batch_infer
     new_callable=mock_open,
     read_data="Mocked content",
 )
+@patch("builtins.open", new_callable=mock_open, read_data="Mocked content")
 async def test_batch_inference(
+    mock_builtins_open_func,
     mock_open_func,
     mock_popen,
     mock_get_s3_client,
@@ -38,10 +40,10 @@ async def test_batch_inference(
     # Mock the necessary objects and data
     mock_popen.return_value = mock_process
     mock_get_s3_client.return_value = mock_s3_client
-    mock_create_batch_completions_engine_request.parse_file.return_value = (
+    mock_create_batch_completions_engine_request.model_validate_json.return_value = (
         create_batch_completions_engine_request
     )
-    mock_create_batch_completions_request_content.parse_raw.return_value = (
+    mock_create_batch_completions_request_content.model_validate_json.return_value = (
         create_batch_completions_request_content
     )
 
@@ -49,10 +51,10 @@ async def test_batch_inference(
     mock_generate_with_vllm.return_value = [mock_completion_output]
 
     # Call the function
-    await batch_inference()
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
 
     # Assertions
-    mock_create_batch_completions_engine_request.parse_file.assert_called_once()
+    mock_create_batch_completions_engine_request.model_validate_json.assert_called_once()
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -79,7 +81,9 @@ async def test_batch_inference(
     new_callable=mock_open,
     read_data="Mocked content",
 )
+@patch("builtins.open", new_callable=mock_open, read_data="Mocked content")
 async def test_batch_inference_failed_to_download_model_but_proceed(
+    mock_builtins_open_func,
     mock_open_func,
     mock_popen,
     mock_get_s3_client,
@@ -97,10 +101,10 @@ async def test_batch_inference_failed_to_download_model_but_proceed(
     mock_process.returncode = 1  # Failed to download model
     mock_popen.return_value = mock_process
     mock_get_s3_client.return_value = mock_s3_client
-    mock_create_batch_completions_engine_request.parse_file.return_value = (
+    mock_create_batch_completions_engine_request.model_validate_json.return_value = (
         create_batch_completions_engine_request
     )
-    mock_create_batch_completions_request_content.parse_raw.return_value = (
+    mock_create_batch_completions_request_content.model_validate_json.return_value = (
         create_batch_completions_request_content
     )
 
@@ -108,10 +112,10 @@ async def test_batch_inference_failed_to_download_model_but_proceed(
     mock_generate_with_vllm.return_value = [mock_completion_output]
 
     # Call the function
-    await batch_inference()
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
 
     # Assertions
-    mock_create_batch_completions_engine_request.parse_file.assert_called_once()
+    mock_create_batch_completions_engine_request.model_validate_json.assert_called_once()
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -138,9 +142,11 @@ async def test_batch_inference_failed_to_download_model_but_proceed(
     new_callable=mock_open,
     read_data="Mocked content",
 )
+@patch("builtins.open", new_callable=mock_open, read_data="Mocked content")
 @patch("model_engine_server.inference.batch_inference.vllm_batch.os.getenv")
 async def test_batch_inference_two_workers(
     mock_getenv,
+    mock_builtins_open_func,
     mock_open_func,
     mock_popen,
     mock_get_s3_client,
@@ -158,10 +164,10 @@ async def test_batch_inference_two_workers(
     mock_popen.return_value = mock_process
     mock_get_s3_client.return_value = mock_s3_client
     create_batch_completions_engine_request.data_parallelism = 2
-    mock_create_batch_completions_engine_request.parse_file.return_value = (
+    mock_create_batch_completions_engine_request.model_validate_json.return_value = (
         create_batch_completions_engine_request
     )
-    mock_create_batch_completions_request_content.parse_raw.return_value = (
+    mock_create_batch_completions_request_content.model_validate_json.return_value = (
         create_batch_completions_request_content
     )
 
@@ -177,10 +183,10 @@ async def test_batch_inference_two_workers(
 
     mock_getenv.side_effect = side_effect
     # Batch completion worker 1
-    await batch_inference()
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
 
     # Assertions
-    mock_create_batch_completions_engine_request.parse_file.assert_called_once()
+    mock_create_batch_completions_engine_request.model_validate_json.assert_called_once()
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -191,7 +197,7 @@ async def test_batch_inference_two_workers(
     )
 
     # Batch completion worker 0
-    await batch_inference()
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -224,9 +230,11 @@ async def test_batch_inference_two_workers(
     new_callable=mock_open,
     read_data="Mocked content",
 )
+@patch("builtins.open", new_callable=mock_open, read_data="Mocked content")
 @patch("model_engine_server.inference.batch_inference.vllm_batch.os.getenv")
 async def test_batch_inference_delete_chunks(
     mock_getenv,
+    mock_builtins_open_func,
     mock_open_func,
     mock_popen,
     mock_get_s3_client,
@@ -245,10 +253,10 @@ async def test_batch_inference_delete_chunks(
     mock_get_s3_client.return_value = mock_s3_client
     create_batch_completions_engine_request.data_parallelism = 2
     create_batch_completions_engine_request.output_data_path = "s3://bucket/key"
-    mock_create_batch_completions_engine_request.parse_file.return_value = (
+    mock_create_batch_completions_engine_request.model_validate_json.return_value = (
         create_batch_completions_engine_request
     )
-    mock_create_batch_completions_request_content.parse_raw.return_value = (
+    mock_create_batch_completions_request_content.model_validate_json.return_value = (
         create_batch_completions_request_content
     )
 
@@ -264,10 +272,10 @@ async def test_batch_inference_delete_chunks(
 
     mock_getenv.side_effect = side_effect
     # Batch completion worker 1
-    await batch_inference()
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
 
     # Assertions
-    mock_create_batch_completions_engine_request.parse_file.assert_called_once()
+    mock_create_batch_completions_engine_request.model_validate_json.assert_called_once()
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -278,7 +286,7 @@ async def test_batch_inference_delete_chunks(
     )
 
     # Batch completion worker 0
-    await batch_inference()
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
@@ -341,7 +349,9 @@ def test_file_exists_no_such_key():
     new_callable=mock_open,
     read_data="Mocked content",
 )
+@patch("builtins.open", new_callable=mock_open, read_data="Mocked content")
 async def test_batch_inference_tool_completion(
+    mock_builtins_open_func,
     mock_open_func,
     mock_run,
     mock_popen,
@@ -362,10 +372,10 @@ async def test_batch_inference_tool_completion(
     mock_run.return_value = mock_run_output
     mock_popen.return_value = mock_process
     mock_get_s3_client.return_value = mock_s3_client
-    mock_create_batch_completions_engine_request.parse_file.return_value = (
+    mock_create_batch_completions_engine_request.model_validate_json.return_value = (
         create_batch_completions_tool_completion_request
     )
-    mock_create_batch_completions_request_content.parse_raw.return_value = (
+    mock_create_batch_completions_request_content.model_validate_json.return_value = (
         create_batch_completions_tool_completion_request_content
     )
 
@@ -376,10 +386,10 @@ async def test_batch_inference_tool_completion(
     ]
 
     # Call the function
-    await batch_inference()
+    await batch_inference("this config data gets ignored because we mock model_validate_json")
 
     # Assertions
-    mock_create_batch_completions_engine_request.parse_file.assert_called_once()
+    mock_create_batch_completions_engine_request.model_validate_json.assert_called_once()
     mock_open_func.assert_has_calls(
         [
             call("input_data_path", "r"),
