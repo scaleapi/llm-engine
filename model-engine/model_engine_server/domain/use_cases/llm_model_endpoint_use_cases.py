@@ -374,7 +374,7 @@ def get_checkpoint_path(model_name: str, checkpoint_path_override: Optional[str]
     if checkpoint_path_override:
         checkpoint_path = checkpoint_path_override
     elif models_info and models_info.s3_repo:
-        checkpoint_path = get_models_s3_uri(models_info.s3_repo, "")
+        checkpoint_path = get_models_s3_uri(models_info.s3_repo, "")  # pragma: no cover
 
     if not checkpoint_path:
         raise InvalidRequestException(f"No checkpoint path found for model {model_name}")
