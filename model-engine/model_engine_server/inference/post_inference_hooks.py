@@ -124,9 +124,7 @@ class LoggingHook(PostInferenceHook):
             return
         response["task_id"] = task_id
         data_record = {
-            "EMITTED_AT": datetime.now(pytz.timezone("UTC")).strftime(
-                "%Y-%m-%dT%H:%M:%S"
-            ),
+            "EMITTED_AT": datetime.now(pytz.timezone("UTC")).strftime("%Y-%m-%dT%H:%M:%S"),
             "REQUEST_BODY": request_payload.json(),
             "RESPONSE_BODY": response,
             "ENDPOINT_ID": self._endpoint_id,
@@ -150,15 +148,11 @@ class LoggingHook(PostInferenceHook):
             else:
                 logger.info("The JSON string is valid.")
         except (TypeError, ValueError) as e:
-            logger.warning(
-                f"Error: The data_record object is not a valid JSON object. {e}"
-            )
+            logger.warning(f"Error: The data_record object is not a valid JSON object. {e}")
 
         stream_name = infra_config().firehose_stream_name
         if stream_name is None:
-            logger.warning(
-                "No firehose stream name specified. Logging hook will not be executed."
-            )
+            logger.warning("No firehose stream name specified. Logging hook will not be executed.")
             return
         streaming_storage_response = {}  # pragma: no cover
         try:
@@ -231,15 +225,9 @@ class PostInferenceHooksHandler:
         else:
             loaded_response = response
         for hook_name, hook in self._hooks.items():
-            self._monitoring_metrics_gateway.emit_attempted_post_inference_hook(
-                hook_name
-            )
+            self._monitoring_metrics_gateway.emit_attempted_post_inference_hook(hook_name)
             try:
-                hook.handle(
-                    request_payload, loaded_response, task_id
-                )  # pragma: no cover
-                self._monitoring_metrics_gateway.emit_successful_post_inference_hook(
-                    hook_name
-                )
+                hook.handle(request_payload, loaded_response, task_id)  # pragma: no cover
+                self._monitoring_metrics_gateway.emit_successful_post_inference_hook(hook_name)
             except Exception:
                 logger.exception(f"Hook {hook_name} failed.")
