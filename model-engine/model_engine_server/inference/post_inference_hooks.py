@@ -136,8 +136,11 @@ class LoggingHook(PostInferenceHook):
         try:
             json_string = json.dumps(data_record)
             # Check for unexpected double quotes or escape characters
-            if '"' in json_string or '\\' in json_string:
-                logger.info("The JSON string contains double quotes or escape characters.", extra={"json_string": json_string})
+            import re
+            pattern = r'\\[ntrbfv\'"]|["\']'
+            matches = re.findall(pattern, repr(json_string))
+            if matches:
+                logger.info("The JSON string contains double quotes or escape characters.", extra={"json_string": json_string, "matches": matches})
             else:
                 logger.info("The JSON string is valid.")
         except (TypeError, ValueError) as e:
