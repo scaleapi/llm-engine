@@ -6,6 +6,7 @@ import pytest
 from model_engine_server.common.dtos.llms import GetLLMModelEndpointV1Response
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Response, TaskStatus
 from model_engine_server.domain.entities import ModelEndpoint
+from tests.unit.domain.test_llm_use_cases import mocked__get_latest_batch_tag
 
 from ..conftest import mocked__get_recommended_hardware_config_map
 
@@ -262,6 +263,10 @@ def test_completion_stream_misc_server_error_returns_500(
 @mock.patch(
     "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
     mocked__get_recommended_hardware_config_map(),
+)
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_batch_tag",
+    mocked__get_latest_batch_tag(),
 )
 def test_create_batch_completions_success(
     create_batch_completions_request: Dict[str, Any],

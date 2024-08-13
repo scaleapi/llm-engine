@@ -38,7 +38,8 @@ class CompletionV2Request(CreateCompletionRequest):
     ]
 
     include_stop_str_in_output: Annotated[
-        Optional[bool], Field(None, "Whether to include the stop strings in output text.")
+        Optional[bool],
+        Field(None, description="Whether to include the stop strings in output text."),
     ]
 
 

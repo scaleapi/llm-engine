@@ -20,8 +20,8 @@ from model_engine_server.common.dtos.llms import (
     CompletionStreamV1Response,
     CompletionSyncV1Request,
     CompletionSyncV1Response,
-    CreateBatchCompletionsRequest,
-    CreateBatchCompletionsResponse,
+    CreateBatchCompletionsV1Request,
+    CreateBatchCompletionsV1Response,
     CreateFineTuneRequest,
     CreateFineTuneResponse,
     CreateLLMModelEndpointV1Request,
@@ -226,7 +226,8 @@ async def list_model_endpoints(
 
 
 @llm_router_v1.get(
-    "/model-endpoints/{model_endpoint_name}", response_model=GetLLMModelEndpointV1Response
+    "/model-endpoints/{model_endpoint_name}",
+    response_model=GetLLMModelEndpointV1Response,
 )
 async def get_model_endpoint(
     model_endpoint_name: str,
@@ -255,7 +256,8 @@ async def get_model_endpoint(
 
 
 @llm_router_v1.put(
-    "/model-endpoints/{model_endpoint_name}", response_model=UpdateLLMModelEndpointV1Response
+    "/model-endpoints/{model_endpoint_name}",
+    response_model=UpdateLLMModelEndpointV1Response,
 )
 async def update_model_endpoint(
     model_endpoint_name: str,
@@ -343,7 +345,7 @@ async def create_completion_sync_task(
         background_tasks.add_task(
             external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
             TokenUsage(
-                num_prompt_tokens=response.output.num_prompt_tokens if response.output else None,
+                num_prompt_tokens=(response.output.num_prompt_tokens if response.output else None),
                 num_completion_tokens=(
                     response.output.num_completion_tokens if response.output else None
                 ),
@@ -426,7 +428,8 @@ async def create_completion_stream_task(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(
-            status_code=500, detail="Internal error occurred. Our team has been notified."
+            status_code=500,
+            detail="Internal error occurred. Our team has been notified.",
         ) from exc
 
     async def event_generator():
@@ -440,7 +443,9 @@ async def create_completion_stream_task(
             background_tasks.add_task(
                 external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
                 TokenUsage(
-                    num_prompt_tokens=message.output.num_prompt_tokens if message.output else None,
+                    num_prompt_tokens=(
+                        message.output.num_prompt_tokens if message.output else None
+                    ),
                     num_completion_tokens=(
                         message.output.num_completion_tokens if message.output else None
                     ),
@@ -626,12 +631,12 @@ async def delete_llm_model_endpoint(
         ) from exc
 
 
-@llm_router_v1.post("/batch-completions", response_model=CreateBatchCompletionsResponse)
+@llm_router_v1.post("/batch-completions", response_model=CreateBatchCompletionsV1Response)
 async def create_batch_completions(
-    request: CreateBatchCompletionsRequest,
+    request: CreateBatchCompletionsV1Request,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
-) -> CreateBatchCompletionsResponse:
+) -> CreateBatchCompletionsV1Response:
     logger.info(f"POST /batch-completions with {request} for {auth}")
     try:
         use_case = CreateBatchCompletionsUseCase(

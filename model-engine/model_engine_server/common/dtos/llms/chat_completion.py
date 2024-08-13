@@ -12,35 +12,50 @@ UNSUPPORTED_FIELDS = ["service_tier"]
 
 
 class VLLMAdditionalFields:
-    chat_template: Optional[str] = Field(
-        default=None,
-        description=(
-            "A Jinja template to use for this conversion. "
-            "As of transformers v4.44, default chat template is no longer "
-            "allowed, so you must provide a chat template if the tokenizer "
-            "does not define one."
+    chat_template: Annotated[
+        Optional[str],
+        Field(
+            default=None,
+            description=(
+                "A Jinja template to use for this conversion. "
+                "As of transformers v4.44, default chat template is no longer "
+                "allowed, so you must provide a chat template if the tokenizer "
+                "does not define one."
+            ),
         ),
-    )
-    chat_template_kwargs: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description=(
-            "Additional kwargs to pass to the template renderer. "
-            "Will be accessible by the chat template."
+    ]
+    chat_template_kwargs: Annotated[
+        Optional[Dict[str, Any]],
+        Field(
+            default=None,
+            description=(
+                "Additional kwargs to pass to the template renderer. "
+                "Will be accessible by the chat template."
+            ),
         ),
-    )
+    ]
 
     guided_json: Annotated[
         Optional[Dict[str, Any]],
-        Field(default=None, description="JSON schema for guided decoding. Only supported in vllm."),
+        Field(
+            default=None,
+            description="JSON schema for guided decoding. Only supported in vllm.",
+        ),
     ]
 
     guided_regex: Annotated[
         Optional[str],
-        Field(default=None, description="Regex for guided decoding. Only supported in vllm."),
+        Field(
+            default=None,
+            description="Regex for guided decoding. Only supported in vllm.",
+        ),
     ]
     guided_choice: Annotated[
         Optional[List[str]],
-        Field(default=None, description="Choices for guided decoding. Only supported in vllm."),
+        Field(
+            default=None,
+            description="Choices for guided decoding. Only supported in vllm.",
+        ),
     ]
 
     guided_grammar: Annotated[
@@ -76,7 +91,10 @@ class VLLMAdditionalFields:
 
     skip_special_tokens: Annotated[
         Optional[bool],
-        Field(True, "Whether to skip special tokens in the output. Only supported in vllm."),
+        Field(
+            True,
+            description="Whether to skip special tokens in the output. Only supported in vllm.",
+        ),
     ]
 
 
@@ -107,7 +125,8 @@ class ChatCompletionV2Request(CreateChatCompletionRequest, VLLMAdditionalFields)
     ]
 
     include_stop_str_in_output: Annotated[
-        Optional[bool], Field(None, "Whether to include the stop strings in output text.")
+        Optional[bool],
+        Field(None, description="Whether to include the stop strings in output text."),
     ]
 
 
