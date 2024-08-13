@@ -175,7 +175,7 @@ class CreateBatchCompletionsV2Request(BatchCompletionsRequestBase):
         default=None,
         description="""
 Either `input_data_path` or `content` needs to be provided.
-When input_data_path is provided, the input file should be a JSON file of type List[CreateBatchCompletionsRequestConttent].
+When input_data_path is provided, the input file should be a JSON file of type List[CreateBatchCompletionsRequestContent].
 """,
     )
 
@@ -188,7 +188,7 @@ When input_data_path is provided, the input file should be a JSON file of type L
 
 
 class BatchCompletionsJobStatus(Enum):
-    Queued = "Queued"
+    Queued = "queued"
     Running = "running"
     Completed = "completed"
     Failed = "failed"
