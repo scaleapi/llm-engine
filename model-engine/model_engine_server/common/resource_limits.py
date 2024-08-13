@@ -58,7 +58,7 @@ logger = make_logger(logger_name())
 
 
 def validate_resource_requests(
-    bundle: Union[ModelBundle, DockerImageBatchJobBundle],
+    bundle: Optional[Union[ModelBundle, DockerImageBatchJobBundle]],
     cpus: Optional[CpuSpecificationType],
     memory: Optional[StorageSpecificationType],
     storage: Optional[StorageSpecificationType],
