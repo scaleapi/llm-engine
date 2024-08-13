@@ -1,3 +1,4 @@
+# Make sure to keep this in sync with inference/batch_inference/dto.py.
 from enum import Enum
 from typing import Dict, List, Optional, Union
 
@@ -47,6 +48,16 @@ class BatchCompletionsModelConfig(BaseModel):
     checkpoint_path: Optional[str] = Field(
         default=None, description="Path to the checkpoint to load the model from."
     )
+
+    num_shards: Optional[int] = Field(
+        default=1,
+        ge=1,
+        description="""
+Suggested number of shards to distribute the model. When not specified, will infer the number of shards based on model config.
+System may decide to use a different number than the given value.
+""",
+    )
+
     seed: Optional[int] = Field(default=None, description="Random seed for the model.")
 
 

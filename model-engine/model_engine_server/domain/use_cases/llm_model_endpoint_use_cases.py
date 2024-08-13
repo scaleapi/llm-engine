@@ -2598,6 +2598,7 @@ class CreateBatchCompletionsUseCase:
         assert hardware.gpus is not None
 
         engine_request = CreateBatchCompletionsEngineRequest.from_api_v1(request)
+        engine_request.model_cfg.num_shards = hardware.gpus
         if engine_request.tool_config and engine_request.tool_config.name != "code_evaluator":
             raise ObjectHasInvalidValueException(
                 "Only code_evaluator tool is supported for batch completions."
@@ -2666,6 +2667,7 @@ class CreateBatchCompletionsV2UseCase:
         )
 
         engine_request = CreateBatchCompletionsEngineRequest.from_api_v2(request)
+        engine_request.model_cfg.num_shards = hardware.gpus
 
         validate_resource_requests(
             bundle=None,

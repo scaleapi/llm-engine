@@ -1,29 +1,10 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import CreateBatchCompletionsEngineRequest
 from model_engine_server.common.dtos.llms.batch_completion import BatchCompletionsJob
 from model_engine_server.core.auth.authentication_repository import User
-
-
-@dataclass
-class ImageArgs:
-    repo: str
-    tag: str
-    command: List[str]
-    env: Optional[Dict[str, str]] = None
-    """
-    Arguments for a docker image execution
-
-    Args:
-        repo: The docker repo where the image is stored
-        tag: The tag of the batch completions image
-        command: The command to run in the image
-        env: Optional environment variables to set in the image
-
-    """
 
 
 class LLMBatchCompletionsService(ABC):
