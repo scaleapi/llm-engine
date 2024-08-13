@@ -2552,9 +2552,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     fake_llm_artifact_gateway.model_config = {
-        "architectures": [
-            "Qwen2ForCausalLM"
-        ],
+        "architectures": ["Qwen2ForCausalLM"],
         "attention_dropout": 0.0,
         "bos_token_id": 151643,
         "eos_token_id": 151645,
@@ -2576,7 +2574,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
         "transformers_version": "4.40.1",
         "use_cache": True,
         "use_sliding_window": False,
-        "vocab_size": 152064
+        "vocab_size": 152064,
     }
     hardware = await _infer_hardware(fake_llm_artifact_gateway, "qwen2-72b-instruct", "")
     assert hardware.cpus == 80
