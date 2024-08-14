@@ -103,6 +103,10 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "deepseek-coder-v2-lite-instruct": ModelInfo(
             "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct", None
         ),
+        "qwen2-72b-instruct": ModelInfo(
+            "Qwen/Qwen2-72B-Instruct",
+            None,
+        ),
     }
 
 

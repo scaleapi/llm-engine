@@ -2571,6 +2571,38 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.storage == "160Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
+    fake_llm_artifact_gateway.model_config = {
+        "architectures": ["Qwen2ForCausalLM"],
+        "attention_dropout": 0.0,
+        "bos_token_id": 151643,
+        "eos_token_id": 151645,
+        "hidden_act": "silu",
+        "hidden_size": 8192,
+        "initializer_range": 0.02,
+        "intermediate_size": 29568,
+        "max_position_embeddings": 32768,
+        "max_window_layers": 80,
+        "model_type": "qwen2",
+        "num_attention_heads": 64,
+        "num_hidden_layers": 80,
+        "num_key_value_heads": 8,
+        "rms_norm_eps": 1e-06,
+        "rope_theta": 1000000.0,
+        "sliding_window": 131072,
+        "tie_word_embeddings": False,
+        "torch_dtype": "bfloat16",
+        "transformers_version": "4.40.1",
+        "use_cache": True,
+        "use_sliding_window": False,
+        "vocab_size": 152064,
+    }
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "qwen2-72b-instruct", "")
+    assert hardware.cpus == 80
+    assert hardware.gpus == 4
+    assert hardware.memory == "320Gi"
+    assert hardware.storage == "320Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
     with pytest.raises(ObjectHasInvalidValueException):
         await _infer_hardware(fake_llm_artifact_gateway, "unsupported_model", "")
 
