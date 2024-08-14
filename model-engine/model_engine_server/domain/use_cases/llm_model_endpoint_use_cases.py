@@ -24,8 +24,10 @@ from model_engine_server.common.dtos.llms import (
     CompletionSyncV1Request,
     CompletionSyncV1Response,
     CreateBatchCompletionsEngineRequest,
-    CreateBatchCompletionsRequest,
-    CreateBatchCompletionsResponse,
+    CreateBatchCompletionsV1Request,
+    CreateBatchCompletionsV1Response,
+    CreateBatchCompletionsV2Request,
+    CreateBatchCompletionsV2Response,
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
     DeleteLLMEndpointResponse,
@@ -90,6 +92,9 @@ from model_engine_server.domain.repositories import (
     TokenizerRepository,
 )
 from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
+from model_engine_server.domain.services.llm_batch_completions_service import (
+    LLMBatchCompletionsService,
+)
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
 from model_engine_server.infra.repositories.live_tokenizer_repository import (
     SUPPORTED_MODELS_INFO,
@@ -271,6 +276,16 @@ def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRep
     """
     tokenizer = tokenizer_repository.load_tokenizer(model_name)
     return len(tokenizer.encode(input))
+
+
+async def _get_latest_batch_tag(inference_framework: LLMInferenceFramework) -> str:
+    config_map = await read_config_map(LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME)
+    batch_key = f"{inference_framework}_batch"
+    if batch_key not in config_map:
+        raise LatestImageTagNotFoundException(
+            f"Could not find latest batch job tag for inference framework {inference_framework}."
+        )
+    return config_map[batch_key]
 
 
 async def _get_latest_tag(inference_framework: LLMInferenceFramework) -> str:
@@ -1197,7 +1212,10 @@ class UpdateLLMModelEndpointV1UseCase:
         self.docker_repository = docker_repository
 
     async def execute(
-        self, user: User, model_endpoint_name: str, request: UpdateLLMModelEndpointV1Request
+        self,
+        user: User,
+        model_endpoint_name: str,
+        request: UpdateLLMModelEndpointV1Request,
     ) -> UpdateLLMModelEndpointV1Response:
         if request.labels is not None:
             validate_labels(request.labels)
@@ -1254,7 +1272,9 @@ class UpdateLLMModelEndpointV1UseCase:
 
             validate_model_name(model_name, inference_framework)
             validate_num_shards(
-                num_shards, inference_framework, request.gpus or infra_state.resource_state.gpus
+                num_shards,
+                inference_framework,
+                request.gpus or infra_state.resource_state.gpus,
             )
             validate_quantization(quantize, inference_framework)
 
@@ -1421,7 +1441,10 @@ def validate_and_update_completion_params(
         if inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
             request.top_k = None if request.top_k == -1 else request.top_k
             request.top_p = None if request.top_p == 1.0 else request.top_p
-        if inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
+        if inference_framework in [
+            LLMInferenceFramework.VLLM,
+            LLMInferenceFramework.LIGHTLLM,
+        ]:
             request.top_k = -1 if request.top_k is None else request.top_k
             request.top_p = 1.0 if request.top_p is None else request.top_p
     else:
@@ -1431,7 +1454,10 @@ def validate_and_update_completion_params(
             )
 
     # presence_penalty, frequency_penalty
-    if inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.LIGHTLLM]:
+    if inference_framework in [
+        LLMInferenceFramework.VLLM,
+        LLMInferenceFramework.LIGHTLLM,
+    ]:
         request.presence_penalty = (
             0.0 if request.presence_penalty is None else request.presence_penalty
         )
@@ -1559,7 +1585,10 @@ class CompletionSyncV1UseCase:
             tokens = None
             if with_token_probs:
                 tokens = [
-                    TokenOutput(token=model_output["tokens"][index], log_prob=list(t.values())[0])
+                    TokenOutput(
+                        token=model_output["tokens"][index],
+                        log_prob=list(t.values())[0],
+                    )
                     for index, t in enumerate(model_output["log_probs"])
                 ]
             return CompletionOutput(
@@ -1712,7 +1741,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status == TaskStatus.SUCCESS and predict_result.result is not None:
@@ -1760,7 +1790,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1778,7 +1809,10 @@ class CompletionSyncV1UseCase:
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
-                    output, model_endpoint, request.prompt, request.return_token_log_probs
+                    output,
+                    model_endpoint,
+                    request.prompt,
+                    request.return_token_log_probs,
                 ),
             )
         elif endpoint_content.inference_framework == LLMInferenceFramework.VLLM:
@@ -1815,7 +1849,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1832,7 +1867,10 @@ class CompletionSyncV1UseCase:
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
-                    output, model_endpoint, request.prompt, request.return_token_log_probs
+                    output,
+                    model_endpoint,
+                    request.prompt,
+                    request.return_token_log_probs,
                 ),
             )
         elif endpoint_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
@@ -1861,7 +1899,8 @@ class CompletionSyncV1UseCase:
                 timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
             )
             predict_result = await inference_gateway.predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -1878,7 +1917,10 @@ class CompletionSyncV1UseCase:
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
-                    output, model_endpoint, request.prompt, request.return_token_log_probs
+                    output,
+                    model_endpoint,
+                    request.prompt,
+                    request.return_token_log_probs,
                 ),
             )
         elif endpoint_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
@@ -1918,7 +1960,10 @@ class CompletionSyncV1UseCase:
             return CompletionSyncV1Response(
                 request_id=request_id,
                 output=self.model_output_to_completion_output(
-                    output, model_endpoint, request.prompt, request.return_token_log_probs
+                    output,
+                    model_endpoint,
+                    request.prompt,
+                    request.return_token_log_probs,
                 ),
             )
         else:
@@ -2238,7 +2283,7 @@ class CompletionStreamV1UseCase:
                             output=CompletionStreamOutput(
                                 text=result["result"]["token"]["text"],
                                 finished=finished,
-                                num_prompt_tokens=num_prompt_tokens if finished else None,
+                                num_prompt_tokens=(num_prompt_tokens if finished else None),
                                 num_completion_tokens=num_completion_tokens,
                                 token=token,
                             ),
@@ -2493,20 +2538,18 @@ class CreateBatchCompletionsUseCase:
     async def create_batch_job_bundle(
         self,
         user: User,
-        request: CreateBatchCompletionsRequest,
+        request: CreateBatchCompletionsEngineRequest,
         hardware: CreateDockerImageBatchJobResourceRequests,
     ) -> DockerImageBatchJobBundle:
+        assert hardware.gpu_type is not None
+
         bundle_name = (
             f"{request.model_cfg.model}_{datetime.datetime.utcnow().strftime('%y%m%d-%H%M%S')}"
         )
 
-        image_tag = self.docker_repository.get_latest_image_tag(
-            hmi_config.batch_inference_vllm_repository
-        )
+        image_tag = await _get_latest_batch_tag(LLMInferenceFramework.VLLM)
 
         config_file_path = "/opt/config.json"
-
-        assert hardware.gpu_type is not None
 
         batch_bundle = (
             await self.docker_image_batch_job_bundle_repo.create_docker_image_batch_job_bundle(
@@ -2535,8 +2578,8 @@ class CreateBatchCompletionsUseCase:
         return batch_bundle
 
     async def execute(
-        self, user: User, request: CreateBatchCompletionsRequest
-    ) -> CreateBatchCompletionsResponse:
+        self, user: User, request: CreateBatchCompletionsV1Request
+    ) -> CreateBatchCompletionsV1Response:
         if (
             request.data_parallelism is not None and request.data_parallelism > 1
         ):  # pragma: no cover
@@ -2553,14 +2596,10 @@ class CreateBatchCompletionsUseCase:
             request.model_cfg.checkpoint_path,
             is_batch_job=True,
         )
-        # Reconcile gpus count with num_shards from request
         assert hardware.gpus is not None
-        if request.model_cfg.num_shards:
-            hardware.gpus = max(hardware.gpus, request.model_cfg.num_shards)
 
-        engine_request = CreateBatchCompletionsEngineRequest.from_api(request)
+        engine_request = CreateBatchCompletionsEngineRequest.from_api_v1(request)
         engine_request.model_cfg.num_shards = hardware.gpus
-
         if engine_request.tool_config and engine_request.tool_config.name != "code_evaluator":
             raise ObjectHasInvalidValueException(
                 "Only code_evaluator tool is supported for batch completions."
@@ -2598,9 +2637,72 @@ class CreateBatchCompletionsUseCase:
             repo=batch_bundle.image_repository,
             tag=batch_bundle.image_tag,
             resource_requests=hardware,
-            labels=engine_request.model_cfg.labels,
+            labels=engine_request.labels,
             mount_location=batch_bundle.mount_location,
             override_job_max_runtime_s=engine_request.max_runtime_sec,
             num_workers=engine_request.data_parallelism,
         )
-        return CreateBatchCompletionsResponse(job_id=job_id)
+        return CreateBatchCompletionsV1Response(job_id=job_id)
+
+
+class CreateBatchCompletionsV2UseCase:
+    def __init__(
+        self,
+        llm_batch_completions_service: LLMBatchCompletionsService,
+        llm_artifact_gateway: LLMArtifactGateway,
+    ):
+        self.llm_batch_completions_service = llm_batch_completions_service
+        self.llm_artifact_gateway = llm_artifact_gateway
+
+    async def execute(
+        self, user: User, request: CreateBatchCompletionsV2Request
+    ) -> CreateBatchCompletionsV2Response:
+        request.model_cfg.checkpoint_path = get_checkpoint_path(
+            request.model_cfg.model, request.model_cfg.checkpoint_path
+        )
+        hardware = await _infer_hardware(
+            self.llm_artifact_gateway,
+            request.model_cfg.model,
+            request.model_cfg.checkpoint_path,
+            is_batch_job=True,
+        )
+
+        engine_request = CreateBatchCompletionsEngineRequest.from_api_v2(request)
+        engine_request.model_cfg.num_shards = hardware.gpus
+
+        validate_resource_requests(
+            bundle=None,
+            cpus=hardware.cpus,
+            memory=hardware.memory,
+            storage=hardware.storage,
+            gpus=hardware.gpus,
+            gpu_type=hardware.gpu_type,
+        )
+
+        if engine_request.max_runtime_sec is None or engine_request.max_runtime_sec < 1:
+            raise ObjectHasInvalidValueException("max_runtime_sec must be a positive integer.")
+
+        # Right now we only support VLLM for batch inference. Refactor this if we support more inference frameworks.
+        image_repo = hmi_config.batch_inference_vllm_repository
+        image_tag = await _get_latest_batch_tag(LLMInferenceFramework.VLLM)
+
+        additional_engine_args = infer_addition_engine_args_from_model_name(
+            engine_request.model_cfg.model
+        )
+
+        if additional_engine_args.gpu_memory_utilization is not None:
+            engine_request.max_gpu_memory_utilization = (
+                additional_engine_args.gpu_memory_utilization
+            )
+
+        return await self.llm_batch_completions_service.create_batch_job(
+            user=user,
+            job_request=engine_request,
+            image_repo=image_repo,
+            image_tag=image_tag,
+            resource_requests=hardware,
+            labels=engine_request.labels,
+            max_runtime_sec=engine_request.max_runtime_sec,
+            priority=engine_request.priority,
+            num_workers=engine_request.data_parallelism,
+        )
