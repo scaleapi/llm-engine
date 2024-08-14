@@ -9,7 +9,7 @@ import json
 import math
 import os
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from functools import lru_cache
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
 
@@ -39,6 +39,7 @@ from model_engine_server.common.dtos.llms import (
     UpdateLLMModelEndpointV1Request,
     UpdateLLMModelEndpointV1Response,
 )
+from model_engine_server.common.dtos.llms.batch_completion import VLLMEngineAdditionalArgs
 from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Request
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
@@ -796,6 +797,9 @@ class CreateLLMModelBundleV1UseCase:
 
         if "llama-3-70b" in model_name:
             subcommands[-1] = subcommands[-1] + " --gpu-memory-utilization 0.95 --enforce-eager"
+
+        if "gemma-2" in model_name:
+            subcommands[-1] = subcommands[-1] + " --attention-backend FLASHINFER"
 
         command = [
             "/bin/bash",
@@ -2422,27 +2426,8 @@ async def _fill_hardware_info(
             request.num_shards = hardware_info.gpus
 
 
-@lru_cache()
-async def _infer_hardware(
-    llm_artifact_gateway: LLMArtifactGateway,
-    model_name: str,
-    checkpoint_path: str,
-    is_batch_job: bool = False,
-) -> CreateDockerImageBatchJobResourceRequests:
-    config = llm_artifact_gateway.get_model_config(checkpoint_path)
-
-    dtype_size = 2
-    kv_multiplier = 20 if is_batch_job else 2
-
-    min_kv_cache_size = (
-        kv_multiplier
-        * dtype_size
-        * config["num_hidden_layers"]
-        * config["hidden_size"]
-        * config["max_position_embeddings"]
-        // (config["num_attention_heads"] // config["num_key_value_heads"])
-    )
-
+def get_model_param_count_b(model_name: str) -> int:
+    """Get the number of parameters in the model in billions"""
     if "mixtral-8x7b" in model_name:
         model_param_count_b = 47
     elif "mixtral-8x22b" in model_name:
@@ -2464,7 +2449,31 @@ async def _infer_hardware(
                 f"Unable to infer number of parameters for {model_name}."
             )
         model_param_count_b = int(numbers[-1])
+    return model_param_count_b
 
+
+@lru_cache()
+async def _infer_hardware(
+    llm_artifact_gateway: LLMArtifactGateway,
+    model_name: str,
+    checkpoint_path: str,
+    is_batch_job: bool = False,
+) -> CreateDockerImageBatchJobResourceRequests:
+    config = llm_artifact_gateway.get_model_config(checkpoint_path)
+
+    dtype_size = 2
+    kv_multiplier = 20 if is_batch_job else 2
+
+    min_kv_cache_size = (
+        kv_multiplier
+        * dtype_size
+        * config["num_hidden_layers"]
+        * config["hidden_size"]
+        * config["max_position_embeddings"]
+        // (config["num_attention_heads"] // config["num_key_value_heads"])
+    )
+
+    model_param_count_b = get_model_param_count_b(model_name)
     model_weights_size = dtype_size * model_param_count_b * 1_000_000_000
 
     min_memory_gb = math.ceil((min_kv_cache_size + model_weights_size) / 1_000_000_000 / 0.9)
@@ -2500,25 +2509,25 @@ async def _infer_hardware(
     )
 
 
-@dataclass
-class VLLMEngineArgs:
-    gpu_memory_utilization: Optional[float] = None
-
-
-def infer_addition_engine_args_from_model_name(model_name: str) -> VLLMEngineArgs:
-    numbers = re.findall(r"\d+", model_name)
-    if len(numbers) == 0:
-        raise ObjectHasInvalidValueException(
-            f"Model {model_name} is not supported for batch completions."
-        )
-
-    b_params = int(numbers[-1])
-    if b_params >= 70:
+def infer_addition_engine_args_from_model_name(
+    model_name: str,
+) -> VLLMEngineAdditionalArgs:
+    # Increase max gpu utilization for larger models
+    model_param_count_b = get_model_param_count_b(model_name)
+    if model_param_count_b >= 70:
         gpu_memory_utilization = 0.95
     else:
         gpu_memory_utilization = 0.9
 
-    return VLLMEngineArgs(gpu_memory_utilization=gpu_memory_utilization)
+    # Gemma 2 requires flashinfer attention backend
+    attention_backend = None
+    if model_name.startswith("gemma-2"):
+        attention_backend = "FLASHINFER"
+
+    return VLLMEngineAdditionalArgs(
+        max_gpu_memory_utilization=gpu_memory_utilization,
+        attention_backend=attention_backend,
+    )
 
 
 class CreateBatchCompletionsUseCase:
@@ -2608,10 +2617,10 @@ class CreateBatchCompletionsUseCase:
             engine_request.model_cfg.model
         )
 
-        if additional_engine_args.gpu_memory_utilization is not None:
-            engine_request.max_gpu_memory_utilization = (
-                additional_engine_args.gpu_memory_utilization
-            )
+        engine_request.max_gpu_memory_utilization = (
+            additional_engine_args.max_gpu_memory_utilization
+        )
+        engine_request.attention_backend = additional_engine_args.attention_backend
 
         batch_bundle = await self.create_batch_job_bundle(user, engine_request, hardware)
 
@@ -2688,11 +2697,10 @@ class CreateBatchCompletionsV2UseCase:
         additional_engine_args = infer_addition_engine_args_from_model_name(
             engine_request.model_cfg.model
         )
-
-        if additional_engine_args.gpu_memory_utilization is not None:
-            engine_request.max_gpu_memory_utilization = (
-                additional_engine_args.gpu_memory_utilization
-            )
+        engine_request.max_gpu_memory_utilization = (
+            additional_engine_args.max_gpu_memory_utilization
+        )
+        engine_request.attention_backend = additional_engine_args.attention_backend
 
         return await self.llm_batch_completions_service.create_batch_job(
             user=user,
