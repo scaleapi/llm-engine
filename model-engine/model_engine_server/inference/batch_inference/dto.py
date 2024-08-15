@@ -142,6 +142,12 @@ class CreateBatchCompletionsRequest(BaseModel):
     NOTE: this config is highly experimental and signature will change significantly in future iterations.
     """
 
+    max_context_length: Optional[int] = Field(
+        default=None,
+        ge=1,
+        description="Maximum context length to use for the model. Defaults to the max allowed by the model",
+    )
+
 
 class VLLMEngineAdditionalArgs(BaseModel):
     max_gpu_memory_utilization: Optional[float] = Field(
