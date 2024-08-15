@@ -58,6 +58,12 @@ System may decide to use a different number than the given value.
 """,
     )
 
+    max_context_length: Optional[int] = Field(
+        default=None,
+        ge=1,
+        description="Maximum context length to use for the model. Defaults to the max allowed by the model",
+    )
+
     seed: Optional[int] = Field(default=None, description="Random seed for the model.")
 
 

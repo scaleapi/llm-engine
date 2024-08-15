@@ -2097,6 +2097,19 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.storage == "640Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway,
+        "deepseek-coder-v2-lite-instruct",
+        "",
+        is_batch_job=True,
+        max_context_length=4096,
+    )
+    assert hardware.cpus == 20
+    assert hardware.gpus == 1
+    assert hardware.memory == "80Gi"
+    assert hardware.storage == "96Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
     # Phi 3 mini from https://huggingface.co/microsoft/Phi-3-mini-4k-instruct/blob/main/config.json
     fake_llm_artifact_gateway.model_config = {
         "architectures": ["Phi3ForCausalLM"],
