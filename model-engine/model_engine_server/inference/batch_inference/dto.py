@@ -69,10 +69,6 @@ class CreateBatchCompletionsModelConfig(BaseModel):
     """
     Path to the checkpoint to load the model from.
     """
-    labels: Dict[str, str]
-    """
-    Labels to attach to the batch inference job.
-    """
     num_shards: Optional[int] = 1
     """
     Suggested number of shards to distribute the model. When not specified, will infer the number of shards based on model config.
@@ -122,6 +118,9 @@ class CreateBatchCompletionsRequest(BaseModel):
     """
     Path to the output file. The output file will be a JSON file of type List[CompletionOutput].
     """
+    labels: Dict[str, str] = Field(
+        default={}, description="Labels to attach to the batch inference job."
+    )
     content: Optional[CreateBatchCompletionsRequestContent] = None
     """
     Either `input_data_path` or `content` needs to be provided.
