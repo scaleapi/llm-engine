@@ -160,6 +160,7 @@ def get_vllm_engine(model: str, request: CreateBatchCompletionsEngineRequest):
         seed=request.model_cfg.seed or 0,
         disable_log_requests=True,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
+        max_model_len=request.max_context_length,
     )
 
     llm = AsyncLLMEngine.from_engine_args(engine_args)

@@ -2459,18 +2459,25 @@ async def _infer_hardware(
     model_name: str,
     checkpoint_path: str,
     is_batch_job: bool = False,
+    max_context_length: Optional[int] = None,
 ) -> CreateDockerImageBatchJobResourceRequests:
     config = llm_artifact_gateway.get_model_config(checkpoint_path)
 
     dtype_size = 2
     kv_multiplier = 20 if is_batch_job else 2
 
+    max_position_embeddings = (
+        min(max_context_length, config["max_position_embeddings"])
+        if max_context_length
+        else config["max_position_embeddings"]
+    )
+
     min_kv_cache_size = (
         kv_multiplier
         * dtype_size
         * config["num_hidden_layers"]
         * config["hidden_size"]
-        * config["max_position_embeddings"]
+        * max_position_embeddings
         // (config["num_attention_heads"] // config["num_key_value_heads"])
     )
 
@@ -2480,7 +2487,7 @@ async def _infer_hardware(
     min_memory_gb = math.ceil((min_kv_cache_size + model_weights_size) / 1_000_000_000 / 0.9)
 
     logger.info(
-        f"Memory calculation result: {min_memory_gb=} for {model_name}, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}, is_batch_job: {is_batch_job}"
+        f"Memory calculation result: {min_memory_gb=} for {model_name} context_size: {max_position_embeddings}, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}, is_batch_job: {is_batch_job}"
     )
 
     config_map = await _get_recommended_hardware_config_map()
@@ -2604,6 +2611,7 @@ class CreateBatchCompletionsUseCase:
             request.model_cfg.model,
             request.model_cfg.checkpoint_path,
             is_batch_job=True,
+            max_context_length=request.model_cfg.max_context_length,
         )
         assert hardware.gpus is not None
 
@@ -2674,6 +2682,7 @@ class CreateBatchCompletionsV2UseCase:
             request.model_cfg.model,
             request.model_cfg.checkpoint_path,
             is_batch_job=True,
+            max_context_length=request.model_cfg.max_context_length,
         )
 
         engine_request = CreateBatchCompletionsEngineRequest.from_api_v2(request)
