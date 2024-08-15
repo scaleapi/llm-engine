@@ -25,9 +25,6 @@ FROM base AS vllm
 
 WORKDIR /workspace
 
-COPY model-engine/model_engine_server/inference/vllm/requirements.txt /workspace/requirements.txt
-RUN pip install -r requirements.txt
-
 COPY model-engine/model_engine_server/inference/vllm/vllm_server.py /workspace/vllm_server.py
 
 # Need to override entrypoint from parent image
