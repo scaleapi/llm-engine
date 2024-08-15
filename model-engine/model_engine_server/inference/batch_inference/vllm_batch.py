@@ -165,7 +165,7 @@ def get_vllm_engine(model: str, request: CreateBatchCompletionsEngineRequest):
 async def generate_with_tool(
     llm,
     tool_config: ToolConfig,
-    content: CreateBatchCompletionsRequestContent,
+    content: CreateBatchCompletionsRequestContent,  # TODO adjust typing most likely
     prompts,
     tool: Type[BaseTool],
     is_finetuned: bool,
@@ -326,7 +326,7 @@ async def batch_inference(config_file_data: Optional[str]):
     if request.model_cfg.checkpoint_path is not None:
         download_model(request.model_cfg.checkpoint_path, MODEL_WEIGHTS_FOLDER)
 
-    content = request.content
+    content = request.content  # TODO typing
     if content is None:
         with smart_open.open(request.input_data_path, "r") as f:
             content = CreateBatchCompletionsRequestContent.model_validate_json(f.read())
