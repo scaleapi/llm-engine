@@ -63,10 +63,9 @@ def download_model(checkpoint_path, final_weights_folder):
     # Need to override these env vars so s5cmd uses AWS_PROFILE
     env["AWS_ROLE_ARN"] = ""
     env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
-    # nosemgrep
     process = subprocess.Popen(
         s5cmd,
-        shell=False,
+        shell=True,  # nosemgrep
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -329,7 +328,7 @@ async def batch_inference(config_file_data: Optional[str]):
     request = CreateBatchCompletionsEngineRequest.model_validate_json(config_file_data)
 
     if request.attention_backend is not None:
-        os.environ["ATTENTION_BACKEND"] = request.attention_backend
+        os.environ["VLLM_ATTENTION_BACKEND"] = request.attention_backend
 
     if request.model_cfg.checkpoint_path is not None:
         download_model(request.model_cfg.checkpoint_path, MODEL_WEIGHTS_FOLDER)
@@ -511,10 +510,9 @@ def check_unknown_startup_memory_usage():  # pragma: no cover
                 f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
             )
             try:
-                # nosemgrep
                 output = subprocess.run(
                     ["fuser -v /dev/nvidia*"],
-                    shell=False,
+                    shell=True,  # nosemgrep
                     capture_output=True,
                     text=True,
                 ).stdout

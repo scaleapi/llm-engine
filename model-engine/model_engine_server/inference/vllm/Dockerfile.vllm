@@ -15,6 +15,8 @@ RUN apt-get update \
 RUN pip uninstall flashinfer -y
 RUN pip install flashinfer==0.0.8 --index-url https://flashinfer.ai/whl/cu121/torch2.3
 
+WORKDIR /workspace
+
 RUN wget https://github.com/peak/s5cmd/releases/download/v2.2.1/s5cmd_2.2.1_Linux-64bit.tar.gz
 RUN tar -xvzf s5cmd_2.2.1_Linux-64bit.tar.gz
 
@@ -23,16 +25,12 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 FROM base AS vllm
 
-WORKDIR /workspace
-
 COPY model-engine/model_engine_server/inference/vllm/vllm_server.py /workspace/vllm_server.py
 
 # Need to override entrypoint from parent image
 ENTRYPOINT ["/bin/env"]
 
 FROM base AS vllm_batch
-
-WORKDIR /workspace
 
 COPY model-engine/model_engine_server/inference/batch_inference/requirements.txt /workspace/requirements.txt
 RUN pip install -r requirements.txt

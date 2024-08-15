@@ -162,7 +162,7 @@ class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest, VLLMEng
     hidden from the DTO exposed to the client.
     """
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
 
     model_cfg: CreateBatchCompletionsModelConfig = Field(alias="model_config")
     """
