@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "scale-llm-engine"
-version = "0.0.0.beta35"
+version = "0.0.0.beta36"
 description = "Scale LLM Engine Python client"
 license = "Apache-2.0"
 authors = ["Phil Chen <phil.chen@scale.com>"]

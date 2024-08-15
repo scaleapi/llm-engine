@@ -621,7 +621,8 @@ class ModelDownloadResponse(BaseModel):
     """
 
     urls: Dict[str, str] = Field(
-        ..., description="Dictionary of (file_name, url) pairs to download the model from."
+        ...,
+        description="Dictionary of (file_name, url) pairs to download the model from.",
     )
 
 
@@ -731,6 +732,12 @@ class CreateBatchCompletionsModelConfig(BaseModel):
     """
     Random seed for the model.
     """
+
+    max_context_length: Optional[int] = Field(
+        default=None,
+        ge=1,
+        description="Maximum context length to use for the model. Defaults to the max allowed by the model",
+    )
 
 
 class ToolConfig(BaseModel):
