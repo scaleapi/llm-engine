@@ -63,9 +63,13 @@ def download_model(checkpoint_path, final_weights_folder):
     # Need to override these env vars so s5cmd uses AWS_PROFILE
     env["AWS_ROLE_ARN"] = ""
     env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
-    # nosemgrep
     process = subprocess.Popen(
-        s5cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
+        s5cmd,
+        shell=True,  # nosemgrep
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=env,
     )
     for line in process.stdout:
         print(line, flush=True)
@@ -323,6 +327,9 @@ async def batch_inference(config_file_data: Optional[str]):
 
     request = CreateBatchCompletionsEngineRequest.model_validate_json(config_file_data)
 
+    if request.attention_backend is not None:
+        os.environ["VLLM_ATTENTION_BACKEND"] = request.attention_backend
+
     if request.model_cfg.checkpoint_path is not None:
         download_model(request.model_cfg.checkpoint_path, MODEL_WEIGHTS_FOLDER)
 
@@ -432,7 +439,7 @@ async def generate_with_vllm(
             frequency_penalty=frequency_penalty or 0.0,
             top_k=top_k or -1,
             top_p=top_p or 1.0,
-            skip_special_tokens=skip_special_tokens if skip_special_tokens is not None else True,
+            skip_special_tokens=(skip_special_tokens if skip_special_tokens is not None else True),
         )
         results_generator = await engine.add_request(
             request_id, prompt, sampling_params, time.monotonic(), None
@@ -503,9 +510,11 @@ def check_unknown_startup_memory_usage():  # pragma: no cover
                 f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
             )
             try:
-                # nosemgrep
                 output = subprocess.run(
-                    ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
+                    ["fuser -v /dev/nvidia*"],
+                    shell=True,  # nosemgrep
+                    capture_output=True,
+                    text=True,
                 ).stdout
                 print(f"Processes using GPU: {output}")
             except Exception as e:
@@ -522,5 +531,6 @@ if __name__ == "__main__":
         help="Optional override for the config file data, as a json string",
     )
     args = parser.parse_args()
+
     check_unknown_startup_memory_usage()
     asyncio.run(batch_inference(args.config_file_data))
