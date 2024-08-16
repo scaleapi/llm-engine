@@ -1,0 +1,43 @@
+# syntax=docker/dockerfile:1
+ARG VLLM_VERSION=0.5.3.post1
+ARG VLLM_BASE_IMAGE=vllm/vllm-openai:v${VLLM_VERSION}
+FROM ${VLLM_BASE_IMAGE} AS base
+
+RUN apt-get update \
+    && apt-get install -y wget gdb psmisc dumb-init \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* \
+    apt-get clean
+
+# Need to fix flashinfer at 0.0.8 to support gemma models
+# See https://github.com/vllm-project/vllm/issues/7060#issuecomment-2266248014
+#  vLLM 0.5.3 depends on torch 2.3.1
+RUN pip uninstall flashinfer -y
+RUN pip install flashinfer==0.0.8 --index-url https://flashinfer.ai/whl/cu121/torch2.3
+
+WORKDIR /workspace
+
+RUN wget https://github.com/peak/s5cmd/releases/download/v2.2.1/s5cmd_2.2.1_Linux-64bit.tar.gz
+RUN tar -xvzf s5cmd_2.2.1_Linux-64bit.tar.gz
+
+# symlink python to python3
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+FROM base AS vllm
+
+COPY model-engine/model_engine_server/inference/vllm/vllm_server.py /workspace/vllm_server.py
+
+# Need to override entrypoint from parent image
+ENTRYPOINT ["/bin/env"]
+
+FROM base AS vllm_batch
+
+COPY model-engine/model_engine_server/inference/batch_inference/requirements.txt /workspace/requirements.txt
+RUN pip install -r requirements.txt
+
+COPY model-engine /workspace/model-engine
+RUN pip install -e /workspace/model-engine
+COPY model-engine/model_engine_server/inference/batch_inference/vllm_batch.py /workspace/vllm_batch.py
+
+# Need to override entrypoint from parent image
+ENTRYPOINT ["/bin/env"]

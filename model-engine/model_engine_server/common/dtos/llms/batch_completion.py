@@ -58,6 +58,12 @@ System may decide to use a different number than the given value.
 """,
     )
 
+    max_context_length: Optional[int] = Field(
+        default=None,
+        ge=1,
+        description="Maximum context length to use for the model. Defaults to the max allowed by the model",
+    )
+
     seed: Optional[int] = Field(default=None, description="Random seed for the model.")
 
 
@@ -250,7 +256,20 @@ BatchCompletionContent = Union[
 ]
 
 
-class CreateBatchCompletionsEngineRequest(BatchCompletionsRequestBase):
+class VLLMEngineAdditionalArgs(BaseModel):
+    max_gpu_memory_utilization: Optional[float] = Field(
+        default=0.9,
+        le=1.0,
+        description="Maximum GPU memory utilization for the batch inference. Default to 90%.",
+    )
+
+    attention_backend: Optional[str] = Field(
+        default=None,
+        description="Attention backend to use for vLLM. Default to None.",
+    )
+
+
+class CreateBatchCompletionsEngineRequest(BatchCompletionsRequestBase, VLLMEngineAdditionalArgs):
     """
     Internal model for representing request to the inference framework. This contains additional fields that we want
     hidden from the DTO exposed to the client.
@@ -263,12 +282,6 @@ class CreateBatchCompletionsEngineRequest(BatchCompletionsRequestBase):
 
     model_cfg: BatchCompletionsModelConfig = Field(
         description="""Model configuration for the batch inference. Hardware configurations are inferred.""",
-    )
-
-    max_gpu_memory_utilization: Optional[float] = Field(
-        default=0.9,
-        le=1.0,
-        description="Maximum GPU memory utilization for the batch inference. Default to 90%.",
     )
 
     @staticmethod
