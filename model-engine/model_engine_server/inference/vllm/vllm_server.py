@@ -1,7 +1,6 @@
 import asyncio
 import code
 import json
-import logging
 import os
 import signal
 import subprocess
@@ -9,19 +8,14 @@ import traceback
 from logging import Logger
 from typing import AsyncGenerator, Dict, List, Optional
 
-import uvicorn
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, Response, StreamingResponse
-from vllm.engine.arg_utils import AsyncEngineArgs
-from vllm.engine.async_llm_engine import AsyncEngineDeadError, AsyncLLMEngine
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi.responses import Response, StreamingResponse
+from vllm.engine.async_llm_engine import AsyncEngineDeadError
+from vllm.engine.protocol import AsyncEngineClient
+from vllm.entrypoints.launcher import serve_http
+from vllm.entrypoints.openai.api_server import build_async_engine_client, init_app
 from vllm.entrypoints.openai.cli_args import make_arg_parser
-from vllm.entrypoints.openai.protocol import ChatCompletionRequest as OpenAIChatCompletionRequest
-from vllm.entrypoints.openai.protocol import ChatCompletionResponse as OpenAIChatCompletionResponse
 from vllm.entrypoints.openai.protocol import CompletionRequest as OpenAICompletionRequest
-from vllm.entrypoints.openai.protocol import ErrorResponse
-from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
-from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
-from vllm.entrypoints.openai.serving_embedding import OpenAIServingEmbedding
 from vllm.model_executor.guided_decoding import get_guided_decoding_logits_processor
 from vllm.outputs import CompletionOutput
 from vllm.sampling_params import SamplingParams
@@ -29,61 +23,18 @@ from vllm.sequence import Logprob
 from vllm.utils import FlexibleArgumentParser, random_uuid
 from vllm.version import __version__ as VLLM_VERSION
 
-logging.basicConfig(
-    format="%(asctime)s | %(levelname)s: %(message)s",
-    datefmt="%b/%d %H:%M:%S",
-    level=logging.INFO,
-)
-
 logger = Logger("vllm_server")
+
+async_engine_client: AsyncEngineClient
 
 TIMEOUT_KEEP_ALIVE = 5  # seconds.
 TIMEOUT_TO_PREVENT_DEADLOCK = 1  # seconds
-app = FastAPI()
 
-openai_serving_chat: OpenAIServingChat
-openai_serving_completion: OpenAIServingCompletion
-openai_serving_embedding: OpenAIServingEmbedding
+router = APIRouter()
 
 
-@app.get("/healthz")
-@app.get("/health")
-async def healthcheck():
-    await openai_serving_chat.engine.check_health()
-    return Response(status_code=200)
-
-
-@app.get("/v1/models")
-async def show_available_models():
-    models = await openai_serving_chat.show_available_models()
-    return JSONResponse(content=models.model_dump())
-
-
-@app.post("/v1/chat/completions")
-async def create_chat_completion(request: OpenAIChatCompletionRequest, raw_request: Request):
-    generator = await openai_serving_chat.create_chat_completion(request, raw_request)
-    if isinstance(generator, ErrorResponse):
-        return JSONResponse(content=generator.model_dump(), status_code=generator.code)
-    if request.stream:
-        return StreamingResponse(content=generator, media_type="text/event-stream")
-    else:
-        assert isinstance(generator, OpenAIChatCompletionResponse)
-        return JSONResponse(content=generator.model_dump())
-
-
-@app.post("/v1/completions")
-async def create_completion(request: OpenAICompletionRequest, raw_request: Request):
-    generator = await openai_serving_completion.create_completion(request, raw_request)
-    if isinstance(generator, ErrorResponse):
-        return JSONResponse(content=generator.model_dump(), status_code=generator.code)
-    if request.stream:
-        return StreamingResponse(content=generator, media_type="text/event-stream")
-    else:
-        return JSONResponse(content=generator.model_dump())
-
-
-@app.post("/predict")
-@app.post("/stream")
+@router.post("/predict")
+@router.post("/stream")
 async def generate(request: Request) -> Response:
     """Generate completion for the request.
 
@@ -94,7 +45,7 @@ async def generate(request: Request) -> Response:
     """
     # check health before accepting request and fail fast if engine isn't healthy
     try:
-        await engine.check_health()
+        await async_engine_client.check_health()
 
         request_dict = await request.json()
         prompt = request_dict.pop("prompt")
@@ -119,12 +70,17 @@ async def generate(request: Request) -> Response:
             )
         except Exception:
             raise HTTPException(
-                status_code=400, detail="Bad request: failed to parse guided decoding parameters."
+                status_code=400,
+                detail="Bad request: failed to parse guided decoding parameters.",
             )
 
-        guided_decoding_backend = engine.engine.decoding_config.guided_decoding_backend
+        guided_decoding_backend = (
+            await async_engine_client.get_decoding_config()
+        ).guided_decoding_backend
         guided_decode_logit_processor = await get_guided_decoding_logits_processor(
-            guided_decoding_backend, partial_openai_request, await engine.get_tokenizer()
+            guided_decoding_backend,
+            partial_openai_request,
+            await async_engine_client.get_tokenizer(lora_request=None),
         )
         if guided_decode_logit_processor is not None:
             if sampling_params.logits_processors is None:
@@ -133,10 +89,10 @@ async def generate(request: Request) -> Response:
 
         request_id = random_uuid()
 
-        results_generator = engine.generate(prompt, sampling_params, request_id)
+        results_generator = async_engine_client.generate(prompt, sampling_params, request_id)
 
         async def abort_request() -> None:
-            await engine.abort(request_id)
+            await async_engine_client.abort(request_id)
 
         if stream:
             # Streaming case
@@ -148,9 +104,9 @@ async def generate(request: Request) -> Response:
                         "text": request_output.outputs[-1].text[len(last_output_text) :],
                         "count_prompt_tokens": len(request_output.prompt_token_ids),
                         "count_output_tokens": len(request_output.outputs[0].token_ids),
-                        "log_probs": log_probs[-1]
-                        if log_probs and sampling_params.logprobs
-                        else None,
+                        "log_probs": (
+                            log_probs[-1] if log_probs and sampling_params.logprobs else None
+                        ),
                         "finished": request_output.finished,
                     }
                     last_output_text = request_output.outputs[-1].text
@@ -171,7 +127,7 @@ async def generate(request: Request) -> Response:
             last_output_text = request_output.outputs[-1].text
             if await request.is_disconnected():
                 # Abort the request if the client disconnects.
-                await engine.abort(request_id)
+                await async_engine_client.abort(request_id)
                 return Response(status_code=499)
             final_output = request_output
 
@@ -220,7 +176,10 @@ def check_unknown_startup_memory_usage():
             try:
                 # nosemgrep
                 output = subprocess.run(
-                    ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
+                    ["fuser -v /dev/nvidia*"],
+                    shell=False,
+                    capture_output=True,
+                    text=True,
                 ).stdout
                 logger.info(f"Processes using GPU: {output}")
             except Exception as e:
@@ -240,7 +199,9 @@ def debug(sig, frame):
     i.interact(message)
 
 
-def format_logprobs(request_output: CompletionOutput) -> Optional[List[Dict[int, float]]]:
+def format_logprobs(
+    request_output: CompletionOutput,
+) -> Optional[List[Dict[int, float]]]:
     """Given a request output, format the logprobs if they exist."""
     output_logprobs = request_output.outputs[0].logprobs
     if output_logprobs is None:
@@ -254,55 +215,41 @@ def format_logprobs(request_output: CompletionOutput) -> Optional[List[Dict[int,
 
 def parse_args(parser: FlexibleArgumentParser):
     parser = make_arg_parser(parser)
+    parser.add_argument("--attention-backend", type=str, help="The attention backend to use")
     return parser.parse_args()
+
+
+async def run_server(args, **uvicorn_kwargs) -> None:
+    logger.info("vLLM API server version %s", VLLM_VERSION)
+    logger.info("args: %s", args)
+
+    global async_engine_client
+    async with build_async_engine_client(args) as async_engine_client:
+        app = await init_app(async_engine_client, args)
+        app.include_router(router)
+
+        shutdown_task = await serve_http(
+            app,
+            host=args.host,
+            port=args.port,
+            log_level=args.uvicorn_log_level,
+            timeout_keep_alive=TIMEOUT_KEEP_ALIVE,
+            ssl_keyfile=args.ssl_keyfile,
+            ssl_certfile=args.ssl_certfile,
+            ssl_ca_certs=args.ssl_ca_certs,
+            ssl_cert_reqs=args.ssl_cert_reqs,
+            **uvicorn_kwargs,
+        )
+
+    # NB: Await server shutdown only after the backend context is exited
+    await shutdown_task
 
 
 if __name__ == "__main__":
     check_unknown_startup_memory_usage()
 
     parser = FlexibleArgumentParser()
-    # host, port, and AsyncEngineArgs are already given by make_arg_parser() in parse_args()
-    # host == None -> IPv4 / IPv6 dualstack
     args = parse_args(parser)
-
-    logger.info("vLLM version %s", VLLM_VERSION)
-    logger.info("args: %s", args)
-
-    if args.served_model_name is not None:
-        served_model_names = args.served_model_name
-    else:
-        served_model_names = [args.model]
-
-    signal.signal(signal.SIGUSR1, debug)
-
-    engine_args = AsyncEngineArgs.from_cli_args(args)
-    engine = AsyncLLMEngine.from_engine_args(engine_args)
-
-    model_config = asyncio.run(engine.get_model_config())
-
-    openai_serving_chat = OpenAIServingChat(
-        engine,
-        model_config,
-        served_model_names,
-        args.response_role,
-        lora_modules=args.lora_modules,
-        chat_template=args.chat_template,
-        prompt_adapters=args.prompt_adapters,
-        request_logger=None,
-    )
-    openai_serving_completion = OpenAIServingCompletion(
-        engine,
-        model_config,
-        served_model_names,
-        lora_modules=args.lora_modules,
-        prompt_adapters=args.prompt_adapters,
-        request_logger=None,
-    )
-
-    uvicorn.run(
-        app,
-        host=args.host,
-        port=args.port,
-        log_level=args.uvicorn_log_level,
-        timeout_keep_alive=TIMEOUT_KEEP_ALIVE,
-    )
+    if args.attention_backend is not None:
+        os.environ["VLLM_ATTENTION_BACKEND"] = args.attention_backend
+    asyncio.run(run_server(args))
