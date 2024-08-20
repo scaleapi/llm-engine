@@ -6,6 +6,7 @@ import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
+from openai.types.chat.completion_create_params import CompletionCreateParamsNonStreaming
 from pydantic.version import VERSION as PYDANTIC_VERSION
 
 PYDANTIC_V2 = PYDANTIC_VERSION.startswith("2.")
@@ -739,6 +740,11 @@ class CreateBatchCompletionsModelConfig(BaseModel):
         description="Maximum context length to use for the model. Defaults to the max allowed by the model",
     )
 
+    response_role: Optional[str] = Field(
+        default=None,
+        description="Role of the response in the conversation. Only supported in chat completions.",
+    )
+
 
 class ToolConfig(BaseModel):
     """
@@ -774,10 +780,12 @@ class CreateBatchCompletionsRequest(BaseModel):
     """
     Path to the output file. The output file will be a JSON file of type List[CompletionOutput].
     """
-    content: Optional[CreateBatchCompletionsRequestContent] = None
+    content: Optional[
+        Union[CreateBatchCompletionsRequestContent, CompletionCreateParamsNonStreaming]
+    ] = None
     """
     Either `input_data_path` or `content` needs to be provided.
-    When input_data_path is provided, the input file should be a JSON file of type BatchCompletionsRequestContent.
+    When input_data_path is provided, the input file should be a JSON file of type CreateBatchCompletionsRequestContent | openai.types.chat.completion_create_params.CompletionCreateParamsNonStreaming.
     """
     model_config: CreateBatchCompletionsModelConfig
     """

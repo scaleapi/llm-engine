@@ -215,7 +215,7 @@ async def init_engine(
         async_engine_client,
         model_config,
         served_model_names,
-        response_role=request.model_cfg.response_role,
+        response_role=request.model_cfg.response_role or "assistant",
         lora_modules=None,
         prompt_adapters=None,
         request_logger=None,
