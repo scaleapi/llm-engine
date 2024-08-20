@@ -2739,12 +2739,15 @@ class GetBatchCompletionV2UseCase:
         batch_completion_id: str,
         user: User,
     ) -> GetBatchCompletionV2Response:
-        return GetBatchCompletionV2Response(
-            job=await self.llm_batch_completions_service.get_batch_job(
-                batch_completion_id,
-                user=user,
-            )
+        job = await self.llm_batch_completions_service.get_batch_job(
+            batch_completion_id,
+            user=user,
         )
+
+        if not job:
+            raise ObjectNotFoundException(f"Batch completion {batch_completion_id} not found.")
+
+        return GetBatchCompletionV2Response(job=job)
 
 
 class UpdateBatchCompletionV2UseCase:
