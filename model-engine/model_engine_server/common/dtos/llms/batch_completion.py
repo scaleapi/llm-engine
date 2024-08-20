@@ -10,7 +10,7 @@ from model_engine_server.common.dtos.llms.completion import (
     CompletionV2Request,
     CompletionV2Response,
 )
-from model_engine_server.common.pydantic_types import BaseModel, Field
+from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Field
 from typing_extensions import TypeAlias
 
 
@@ -66,6 +66,11 @@ System may decide to use a different number than the given value.
 
     seed: Optional[int] = Field(default=None, description="Random seed for the model.")
 
+    response_role: str = Field(
+        default="assistant",
+        description="Role of the response in the conversation. Only supported in chat completions.",
+    )
+
 
 class BatchCompletionsRequestBase(BaseModel):
     input_data_path: Optional[str] = Field(
@@ -108,6 +113,18 @@ NOTE: this config is highly experimental and signature will change significantly
 
 
 # V1 DTOs for batch completions
+class TokenOutput(BaseModel):
+    token: str
+    log_prob: float
+
+
+class CompletionV1Output(BaseModel):
+    text: str
+    num_prompt_tokens: int
+    num_completion_tokens: int
+    tokens: Optional[List[TokenOutput]] = None
+
+
 class CreateBatchCompletionsV1ModelConfig(BatchCompletionsModelConfig):
     labels: Dict[str, str] = Field(
         default={}, description="Labels to attach to the batch inference job."
@@ -176,10 +193,22 @@ class CreateBatchCompletionsV1Response(BaseModel):
     job_id: str
 
 
+class FilteredCompletionV2Request(CompletionV2Request):
+    model: Optional[str] = None  # type: ignore[assignment]
+    stream: Optional[bool] = False
+
+
+class FilteredChatCompletionV2Request(ChatCompletionV2Request):
+    model: Optional[str] = None  # type: ignore[assignment]
+    stream: Optional[bool] = False
+
+
 # V2 DTOs for batch completions
-CompletionRequest: TypeAlias = Union[CompletionV2Request, ChatCompletionV2Request]
+CompletionRequest: TypeAlias = Union[FilteredCompletionV2Request, FilteredChatCompletionV2Request]
 CompletionResponse: TypeAlias = Union[CompletionV2Response, ChatCompletionV2Response]
-CreateBatchCompletionsV2RequestContent: TypeAlias = List[CompletionRequest]
+CreateBatchCompletionsV2RequestContent: TypeAlias = Union[
+    List[FilteredCompletionV2Request], List[FilteredChatCompletionV2Request]
+]
 CreateBatchCompletionsV2ModelConfig: TypeAlias = BatchCompletionsModelConfig
 
 
@@ -275,12 +304,15 @@ class CreateBatchCompletionsEngineRequest(BatchCompletionsRequestBase, VLLMEngin
     hidden from the DTO exposed to the client.
     """
 
+    model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
+
     content: Optional[BatchCompletionContent] = Field(
         default=None,
         description="Content is a union of the content from v1 and v2 requests.",
     )
 
     model_cfg: BatchCompletionsModelConfig = Field(
+        alias="model_config",
         description="""Model configuration for the batch inference. Hardware configurations are inferred.""",
     )
 
