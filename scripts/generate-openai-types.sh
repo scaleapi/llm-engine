@@ -12,5 +12,6 @@ datamodel-codegen \
     --input-file-type openapi \
     --output ${DEST_DIR}/openai.py \
     --output-model-type pydantic_v2.BaseModel \
+    --enum-field-as-literal all \
     --field-constraints \
     --use-annotated
