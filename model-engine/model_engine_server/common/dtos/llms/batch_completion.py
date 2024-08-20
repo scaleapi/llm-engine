@@ -67,8 +67,8 @@ System may decide to use a different number than the given value.
 
     seed: Optional[int] = Field(default=None, description="Random seed for the model.")
 
-    response_role: str = Field(
-        default="assistant",
+    response_role: Optional[str] = Field(
+        default=None,
         description="Role of the response in the conversation. Only supported in chat completions.",
     )
 
