@@ -7,6 +7,7 @@ from model_engine_server.common.dtos.llms.chat_completion import (
     ChatCompletionV2Response,
 )
 from model_engine_server.common.dtos.llms.completion import (
+    CompletionOutput,
     CompletionV2Request,
     CompletionV2Response,
 )
@@ -113,16 +114,7 @@ NOTE: this config is highly experimental and signature will change significantly
 
 
 # V1 DTOs for batch completions
-class TokenOutput(BaseModel):
-    token: str
-    log_prob: float
-
-
-class CompletionV1Output(BaseModel):
-    text: str
-    num_prompt_tokens: int
-    num_completion_tokens: int
-    tokens: Optional[List[TokenOutput]] = None
+CompletionV1Output = CompletionOutput
 
 
 class CreateBatchCompletionsV1ModelConfig(BatchCompletionsModelConfig):
