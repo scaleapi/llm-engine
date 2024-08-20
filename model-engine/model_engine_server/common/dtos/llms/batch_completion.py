@@ -100,7 +100,7 @@ class BatchCompletionsRequestBase(BaseModel):
         description="Maximum runtime of the batch inference in seconds. Default to one day.",
     )
 
-    priority: Optional[int] = Field(
+    priority: Optional[str] = Field(
         default=None,
         description="Priority of the batch inference job. Default to None.",
     )
@@ -231,6 +231,7 @@ class BatchCompletionsJobStatus(Enum):
     Completed = "completed"
     Failed = "failed"
     Cancelled = "cancelled"
+    Unknown = "unknown"
 
 
 class BatchCompletionsJob(BaseModel):
@@ -262,6 +263,26 @@ class BatchCompletionsJob(BaseModel):
 
 
 CreateBatchCompletionsV2Response: TypeAlias = BatchCompletionsJob
+
+
+class UpdateBatchCompletionsV2Request(BaseModel):
+    job_id: str = Field(description="ID of the batch completions job")
+    priority: Optional[int] = Field(
+        default=None,
+        description="Priority of the batch inference job. Default to None.",
+    )
+
+
+class UpdateBatchCompletionsV2Response(BatchCompletionsJob):
+    success: bool = Field(description="Whether the update was successful")
+
+
+class CancelBatchCompletionsV2Request(BaseModel):
+    job_id: str = Field(description="ID of the batch completions job")
+
+
+class CancelBatchCompletionsV2Response(BaseModel):
+    success: bool = Field(description="Whether the cancellation was successful")
 
 
 class ListBatchCompletionV2Response(BaseModel):

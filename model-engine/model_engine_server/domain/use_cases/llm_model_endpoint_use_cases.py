@@ -39,7 +39,13 @@ from model_engine_server.common.dtos.llms import (
     UpdateLLMModelEndpointV1Request,
     UpdateLLMModelEndpointV1Response,
 )
-from model_engine_server.common.dtos.llms.batch_completion import VLLMEngineAdditionalArgs
+from model_engine_server.common.dtos.llms.batch_completion import (
+    CancelBatchCompletionsV2Response,
+    GetBatchCompletionV2Response,
+    UpdateBatchCompletionsV2Request,
+    UpdateBatchCompletionsV2Response,
+    VLLMEngineAdditionalArgs,
+)
 from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Request
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
@@ -2672,7 +2678,7 @@ class CreateBatchCompletionsV2UseCase:
         self.llm_artifact_gateway = llm_artifact_gateway
 
     async def execute(
-        self, user: User, request: CreateBatchCompletionsV2Request
+        self, request: CreateBatchCompletionsV2Request, user: User
     ) -> CreateBatchCompletionsV2Response:
         request.model_cfg.checkpoint_path = get_checkpoint_path(
             request.model_cfg.model, request.model_cfg.checkpoint_path
@@ -2720,6 +2726,63 @@ class CreateBatchCompletionsV2UseCase:
             resource_requests=hardware,
             labels=engine_request.labels,
             max_runtime_sec=engine_request.max_runtime_sec,
-            priority=engine_request.priority,
             num_workers=engine_request.data_parallelism,
+        )
+
+
+class GetBatchCompletionV2UseCase:
+    def __init__(self, llm_batch_completions_service: LLMBatchCompletionsService):
+        self.llm_batch_completions_service = llm_batch_completions_service
+
+    async def execute(
+        self,
+        batch_completion_id: str,
+        user: User,
+    ) -> GetBatchCompletionV2Response:
+        return GetBatchCompletionV2Response(
+            job=await self.llm_batch_completions_service.get_batch_job(
+                batch_completion_id,
+                user=user,
+            )
+        )
+
+
+class UpdateBatchCompletionV2UseCase:
+    def __init__(self, llm_batch_completions_service: LLMBatchCompletionsService):
+        self.llm_batch_completions_service = llm_batch_completions_service
+
+    async def execute(
+        self,
+        batch_completion_id: str,
+        request: UpdateBatchCompletionsV2Request,
+        user: User,
+    ) -> UpdateBatchCompletionsV2Response:
+        result = await self.llm_batch_completions_service.update_batch_job(
+            batch_completion_id,
+            user=user,
+            request=request,
+        )
+        if not result:
+            raise ObjectNotFoundException(f"Batch completion {batch_completion_id} not found.")
+
+        return UpdateBatchCompletionsV2Response(
+            **result.model_dump(by_alias=True, exclude_none=True),
+            success=True,
+        )
+
+
+class CancelBatchCompletionV2UseCase:
+    def __init__(self, llm_batch_completions_service: LLMBatchCompletionsService):
+        self.llm_batch_completions_service = llm_batch_completions_service
+
+    async def execute(
+        self,
+        batch_completion_id: str,
+        user: User,
+    ) -> CancelBatchCompletionsV2Response:
+        return CancelBatchCompletionsV2Response(
+            success=await self.llm_batch_completions_service.cancel_batch_job(
+                batch_completion_id,
+                user=user,
+            )
         )
