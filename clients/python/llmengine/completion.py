@@ -480,6 +480,7 @@ class Completion(APIEngine):
         data_parallelism: int = 1,
         max_runtime_sec: int = 24 * 3600,
         tool_config: Optional[ToolConfig] = None,
+        use_v2: Optional[bool] = False,
         request_headers: Optional[Dict[str, str]] = None,
     ) -> CreateBatchCompletionsResponse:
         """
@@ -505,6 +506,9 @@ class Completion(APIEngine):
 
             max_runtime_sec (int):
                 The maximum runtime of the batch completion in seconds. Defaults to 24 hours.
+
+            use_v2 (bool):
+                Whether to use the v2 API. Defaults to False
 
             tool_config (Optional[ToolConfig]):
                 Configuration for tool use.
@@ -590,7 +594,7 @@ class Completion(APIEngine):
             tool_config=tool_config,
         ).dict()
         response = cls.post_sync(
-            resource_name="v1/llm/batch-completions",
+            resource_name=f"{'v2' if use_v2 else 'v1'}/llm/batch-completions",
             data=data,
             timeout=HTTP_TIMEOUT,
             headers=request_headers,
