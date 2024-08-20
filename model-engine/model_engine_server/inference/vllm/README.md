@@ -49,8 +49,8 @@ docker run \
     --shm-size=16gb \
     --gpus '"device=6,7"' \
     -v $MODEL_PATH:/workspace/model_files:ro \
-    -v /mnt/home/dmchoi/repos/scale/llm-engine/model-engine/model_engine_server/inference/vllm/examples:/workspace/examples \
-        -v /mnt/home/dmchoi/repos/scale/llm-engine/model-engine/model_engine_server/inference/vllm/vllm_batch.py:/workspace/vllm_batch.py \
+    -v ${REPO_PATH}/llm-engine/model-engine/model_engine_server/inference/vllm/examples:/workspace/examples \
+    -v ${REPO_PATH}/llm-engine/model-engine/model_engine_server/inference/vllm/vllm_batch.py:/workspace/vllm_batch.py \
     -p 5005:5005 \
     -e CONFIG_FILE=/workspace/examples/sample_config_gemma.json \
     -e MODEL_WEIGHTS_FOLDER=/workspace/model_files \
