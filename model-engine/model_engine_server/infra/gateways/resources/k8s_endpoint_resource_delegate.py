@@ -631,7 +631,7 @@ class K8SEndpointResourceDelegate:
             if exc.status == 409:
                 logger.info(f"PodDisruptionBudget {name} already exists, replacing")
 
-                await policy_api.patch_namespaced_pod_disruption_budget(
+                await policy_api.replace_namespaced_pod_disruption_budget(
                     name=name,
                     namespace=hmi_config.endpoint_namespace,
                     body=pdb,
@@ -834,9 +834,9 @@ class K8SEndpointResourceDelegate:
             return config_maps.items
 
     @staticmethod
-    async def _get_all_config_maps() -> List[
-        kubernetes_asyncio.client.models.v1_config_map.V1ConfigMap
-    ]:
+    async def _get_all_config_maps() -> (
+        List[kubernetes_asyncio.client.models.v1_config_map.V1ConfigMap]
+    ):
         k8s_core_api = get_kubernetes_core_client()
         config_maps = await k8s_core_api.list_namespaced_config_map(
             namespace=hmi_config.endpoint_namespace
