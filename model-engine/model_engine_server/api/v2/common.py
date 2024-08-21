@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import Depends, Request
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces_read_only,
@@ -19,6 +19,8 @@ async def get_metric_metadata(
     request: Request,
     auth: User = Depends(verify_authentication),
 ) -> MetricMetadata:
+    print("body")
+    print(request.body)
     model_name = request.query_params.get("model", None)
     return MetricMetadata(user=auth, model_name=model_name)
 
@@ -29,6 +31,3 @@ async def record_route_call(
     metric_metadata: MetricMetadata = Depends(get_metric_metadata),
 ):
     external_interfaces.monitoring_metrics_gateway.emit_route_call_metric(route, metric_metadata)
-
-
-llm_router_v2 = APIRouter(prefix="/v2", dependencies=[Depends(record_route_call)])

@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
@@ -27,12 +27,17 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     UpdateBatchCompletionV2UseCase,
 )
 
-from .common import get_metric_metadata, llm_router_v2
+from .common import get_metric_metadata, record_route_call
 
 logger = make_logger(logger_name())
 
 
-@llm_router_v2.post("/batch-completions", response_model=CreateBatchCompletionsV2Response)
+batch_completions_router_v2 = APIRouter(
+    prefix="/batch-completions", dependencies=[Depends(record_route_call)]
+)
+
+
+@batch_completions_router_v2.post("/", response_model=CreateBatchCompletionsV2Response)
 async def batch_completions(
     request: CreateBatchCompletionsV2Request,
     auth: User = Depends(verify_authentication),
@@ -60,8 +65,8 @@ async def batch_completions(
         ) from exc
 
 
-@llm_router_v2.get(
-    "/batch-completions/{batch_completion_id}",
+@batch_completions_router_v2.get(
+    "/{batch_completion_id}",
     response_model=GetBatchCompletionV2Response,
 )
 async def get_batch_completion(
@@ -83,8 +88,8 @@ async def get_batch_completion(
         ) from exc
 
 
-@llm_router_v2.post(
-    "/batch-completions/{batch_completion_id}",
+@batch_completions_router_v2.post(
+    "/{batch_completion_id}",
     response_model=UpdateBatchCompletionsV2Response,
 )
 async def update_batch_completion(
@@ -114,8 +119,8 @@ async def update_batch_completion(
         ) from exc
 
 
-@llm_router_v2.post(
-    "/batch-completions/{batch_completion_id}/actions/cancel",
+@batch_completions_router_v2.post(
+    "/{batch_completion_id}/actions/cancel",
     response_model=CancelBatchCompletionsV2Response,
 )
 async def cancel_batch_completion(
