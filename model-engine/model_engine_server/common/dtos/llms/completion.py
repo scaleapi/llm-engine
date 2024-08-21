@@ -75,24 +75,57 @@ class CompletionSyncV1Request(BaseModel):
 
 
 class TokenOutput(BaseModel):
+    """
+    Detailed token information.
+    """
+
     token: str
+    """
+    The token text.
+    """
+
     log_prob: float
+    """
+    The log probability of the token.
+    """
 
 
 class CompletionOutput(BaseModel):
+    """
+    Represents the output of a completion request to a model.
+    """
+
     text: str
-    num_prompt_tokens: int
+    """The text of the completion."""
+
+    # We're not guaranteed to have `num_prompt_tokens` in the response in all cases, so to be safe, set a default.
+    # If we send request to api.spellbook.scale.com, we don't get this back.
+    num_prompt_tokens: Optional[int] = None
+    """Number of tokens in the prompt."""
+
     num_completion_tokens: int
+    """Number of tokens in the completion."""
+
     tokens: Optional[List[TokenOutput]] = None
+    """Detailed token information."""
 
 
 class CompletionSyncV1Response(BaseModel):
     """
-    Response object for a synchronous prompt completion task.
+    Response object for a synchronous prompt completion.
     """
 
     request_id: Optional[str] = None
+    """The unique ID of the corresponding Completion request. This `request_id` is generated on the server, and all logs 
+    associated with the request are grouped by the `request_id`, which allows for easier troubleshooting of errors as
+    follows:
+
+    * When running the *Scale-hosted* LLM Engine, please provide the `request_id` in any bug reports.
+    * When running the *self-hosted* LLM Engine, the `request_id` serves as a trace ID in your observability 
+    provider."""
+
     output: Optional[CompletionOutput] = None
+    """Completion output."""
 
 
 class CompletionStreamV1Request(BaseModel):
@@ -160,10 +193,20 @@ class CompletionStreamV1Request(BaseModel):
 
 class CompletionStreamOutput(BaseModel):
     text: str
+    """The text of the completion."""
+
     finished: bool
+    """Whether the completion is finished."""
+
+    # We're not guaranteed to have `num_prompt_tokens` in the response in all cases, so to be safe, set a default.
     num_prompt_tokens: Optional[int] = None
+    """Number of tokens in the prompt."""
+
     num_completion_tokens: Optional[int] = None
+    """Number of tokens in the completion."""
+
     token: Optional[TokenOutput] = None
+    """Detailed token information."""
 
 
 class StreamErrorContent(BaseModel):
@@ -185,12 +228,24 @@ class StreamError(BaseModel):
 
 
 class CompletionStreamV1Response(BaseModel):
+    """Error of the response (if any)."""
+
     """
     Response object for a stream prompt completion task.
     """
 
-    request_id: Optional[str] = None
+    request_id: str
+    """The unique ID of the corresponding Completion request. This `request_id` is generated on the server, and all logs 
+    associated with the request are grouped by the `request_id`, which allows for easier troubleshooting of errors as
+    follows:
+
+    * When running the *Scale-hosted* LLM Engine, please provide the `request_id` in any bug reports.
+    * When running the *self-hosted* LLM Engine, the `request_id` serves as a trace ID in your observability 
+    provider."""
+
     output: Optional[CompletionStreamOutput] = None
+    """Completion output."""
+
     error: Optional[StreamError] = None
     """Error of the response (if any)."""
 

@@ -225,7 +225,7 @@ When input_data_path is provided, the input file should be a JSON file of type L
     )
 
 
-class BatchCompletionsJobStatus(Enum):
+class BatchCompletionsJobStatus(str, Enum):
     Queued = "queued"
     Running = "running"
     Completed = "completed"
