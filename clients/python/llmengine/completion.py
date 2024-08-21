@@ -2,6 +2,7 @@ from typing import Any, AsyncIterable, Dict, Iterator, List, Optional, Union
 
 from llmengine.api_engine import APIEngine
 from llmengine.data_types import (
+    BatchCompletionsModelConfig,
     CompletionStreamResponse,
     CompletionStreamV1Request,
     CompletionSyncResponse,
@@ -10,6 +11,9 @@ from llmengine.data_types import (
     CreateBatchCompletionsRequest,
     CreateBatchCompletionsRequestContent,
     CreateBatchCompletionsResponse,
+    CreateBatchCompletionsV2Request,
+    CreateBatchCompletionsV2RequestContent,
+    CreateBatchCompletionsV2Response,
     ToolConfig,
 )
 
@@ -480,7 +484,6 @@ class Completion(APIEngine):
         data_parallelism: int = 1,
         max_runtime_sec: int = 24 * 3600,
         tool_config: Optional[ToolConfig] = None,
-        use_v2: Optional[bool] = False,
         request_headers: Optional[Dict[str, str]] = None,
     ) -> CreateBatchCompletionsResponse:
         """
@@ -506,9 +509,6 @@ class Completion(APIEngine):
 
             max_runtime_sec (int):
                 The maximum runtime of the batch completion in seconds. Defaults to 24 hours.
-
-            use_v2 (bool):
-                Whether to use the v2 API. Defaults to False
 
             tool_config (Optional[ToolConfig]):
                 Configuration for tool use.
@@ -594,9 +594,111 @@ class Completion(APIEngine):
             tool_config=tool_config,
         ).dict()
         response = cls.post_sync(
-            resource_name=f"{'v2' if use_v2 else 'v1'}/llm/batch-completions",
+            resource_name="v1/llm/batch-completions",
             data=data,
             timeout=HTTP_TIMEOUT,
             headers=request_headers,
         )
         return CreateBatchCompletionsResponse.parse_obj(response)
+
+    @classmethod
+    def batch_create_v2(
+        cls,
+        *,
+        output_data_path: str,
+        model_config: BatchCompletionsModelConfig,
+        content: Optional[List[CreateBatchCompletionsV2RequestContent]] = None,
+        input_data_path: Optional[str] = None,
+        data_parallelism: int = 1,
+        max_runtime_sec: int = 24 * 3600,
+        labels: Dict[str, str] = {},
+        tool_config: Optional[ToolConfig] = None,
+        request_headers: Optional[Dict[str, str]] = None,
+    ) -> CreateBatchCompletionsV2Response:
+        """
+        Creates a batch completion for the provided input data. The job runs offline and does not depend on an existing model endpoint.
+
+        Prompts can be passed in from an input file, or as a part of the request.
+
+        Args:
+            output_data_path (str):
+                The path to the output file. The output file will be a JSON file containing the completions.
+
+            model_config (BatchCompletionsModelConfig):
+                The model configuration to use for the batch completion.
+
+            content (Optional[List[CreateBatchCompletionsV2RequestContent]]):
+                The content to use for the batch completion. Either one of `content` or `input_data_path` must be provided.
+
+            input_data_path (Optional[str]):
+                The path to the input file. The input file should be a JSON file with data of type `BatchCompletionsRequestContent`. Either one of `content` or `input_data_path` must be provided.
+
+            data_parallelism (int):
+                The number of parallel jobs to run. Data will be evenly distributed to the jobs. Defaults to 1.
+
+            max_runtime_sec (int):
+                The maximum runtime of the batch completion in seconds. Defaults to 24 hours.
+
+            tool_config (Optional[ToolConfig]):
+                Configuration for tool use.
+                NOTE: this config is highly experimental and signature will change significantly in future iterations.
+                Currently only Python code evaluator is supported.
+                Python code context starts with "\`\`\`python\\n" and ends with "\\n>>>\\n", data before "\\n\`\`\`\\n" and content end will be replaced by the Python execution results.
+                Please format prompts accordingly and provide examples so LLMs could properly generate Python code.
+
+        Returns:
+            response (CreateBatchCompletionsV2Response): The response containing the job id.
+
+        === "Batch completions with prompts in the request"
+            ```python
+            from llmengine import (
+                Completion,
+            )
+            from llmengine import Completion
+            from llmengine.data_types import CreateBatchCompletionsModelConfig, FilteredChatCompletionV2Request,
+
+            model_config = CreateBatchCompletionsModelConfig(
+                model="gemma-2-2b-it",
+                checkpoint_path="s3://path-to-checkpoint",
+            )
+
+            content = {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "What is a good place for travel in the US?",
+                    },
+                    {"role": "assistant", "content": "California."},
+                    {"role": "user", "content": "What can I do in California?"},
+                ],
+                "logprobs": True,
+            }
+
+            response = Completion.batch_create_v2(
+                output_data_path="testoutput",
+                model_config=model_config,
+                content=[FilteredChatCompletionV2Request(**content)],
+                labels={"team": "my-team", "product": "my-product"},
+            )
+
+            print(response.json())
+            ```
+
+        """
+        data = CreateBatchCompletionsV2Request(
+            model_config=model_config,
+            content=content,
+            input_data_path=input_data_path,
+            output_data_path=output_data_path,
+            data_parallelism=data_parallelism,
+            labels=labels,
+            max_runtime_sec=max_runtime_sec,
+            tool_config=tool_config,
+        ).model_dump(exclude_none=True, by_alias=True)
+        response = cls.post_sync(
+            resource_name="v2/batch-completions",
+            data=data,
+            timeout=HTTP_TIMEOUT,
+            headers=request_headers,
+        )
+        return CreateBatchCompletionsV2Response.parse_obj(response)
