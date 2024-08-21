@@ -99,7 +99,6 @@ class CompletionOutput(BaseModel):
     """The text of the completion."""
 
     # We're not guaranteed to have `num_prompt_tokens` in the response in all cases, so to be safe, set a default.
-    # If we send request to api.spellbook.scale.com, we don't get this back.
     num_prompt_tokens: Optional[int] = None
     """Number of tokens in the prompt."""
 
@@ -234,7 +233,7 @@ class CompletionStreamV1Response(BaseModel):
     Response object for a stream prompt completion task.
     """
 
-    request_id: str
+    request_id: Optional[str]
     """The unique ID of the corresponding Completion request. This `request_id` is generated on the server, and all logs 
     associated with the request are grouped by the `request_id`, which allows for easier troubleshooting of errors as
     follows:
