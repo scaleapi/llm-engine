@@ -16,6 +16,7 @@ from model_engine_server.common.dtos.llms.batch_completion import (
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
+    ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
 )
@@ -51,6 +52,8 @@ async def batch_completions(
         )
 
         return await use_case.execute(request, user=auth)
+    except ObjectHasInvalidValueException as exc:  # pragma: no cover
+        raise HTTPException(status_code=400, detail=str(exc))
     except ObjectNotFoundException as exc:
         raise HTTPException(
             status_code=404,
