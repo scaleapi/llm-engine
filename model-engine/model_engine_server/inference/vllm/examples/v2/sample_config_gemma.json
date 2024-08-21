@@ -1,0 +1,15 @@
+{
+    "input_data_path": "./examples/v2/sample_data_chat_gemma.json",
+    "output_data_path": "./examples/v2/sample_output.json",
+    "model_config": {
+        "model": "gemma-2-2b-it",
+        "checkpoint_path": "my_path",
+        "num_shards": 1,
+        "response_role": "assistant",
+        "labels": {
+            "team": "my_team"
+        }
+    },
+    "attention_backend": "FLASHINFER",
+    "data_parallelism": 1
+}

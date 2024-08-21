@@ -1,11 +1,9 @@
 from typing import Any, Dict, List, Optional
 
-from model_engine_server.common.pydantic_types import BaseModel, Field
-from model_engine_server.common.types.gen.openai import (
-    CreateCompletionRequest,
-    CreateCompletionResponse,
-)
 from typing_extensions import Annotated
+
+from .gen.openai import CreateCompletionRequest, CreateCompletionResponse
+from .pydantic_types import BaseModel, Field
 
 # Fields that are a part of OpenAI spec but are not supported by model engine
 UNSUPPORTED_FIELDS = ["service_tier"]
@@ -99,6 +97,7 @@ class CompletionOutput(BaseModel):
     """The text of the completion."""
 
     # We're not guaranteed to have `num_prompt_tokens` in the response in all cases, so to be safe, set a default.
+    # If we send request to api.spellbook.scale.com, we don't get this back.
     num_prompt_tokens: Optional[int] = None
     """Number of tokens in the prompt."""
 
@@ -114,7 +113,7 @@ class CompletionSyncV1Response(BaseModel):
     Response object for a synchronous prompt completion.
     """
 
-    request_id: Optional[str] = None
+    request_id: str
     """The unique ID of the corresponding Completion request. This `request_id` is generated on the server, and all logs 
     associated with the request are grouped by the `request_id`, which allows for easier troubleshooting of errors as
     follows:
@@ -123,7 +122,7 @@ class CompletionSyncV1Response(BaseModel):
     * When running the *self-hosted* LLM Engine, the `request_id` serves as a trace ID in your observability 
     provider."""
 
-    output: Optional[CompletionOutput] = None
+    output: CompletionOutput
     """Completion output."""
 
 
@@ -233,7 +232,7 @@ class CompletionStreamV1Response(BaseModel):
     Response object for a stream prompt completion task.
     """
 
-    request_id: Optional[str]
+    request_id: str
     """The unique ID of the corresponding Completion request. This `request_id` is generated on the server, and all logs 
     associated with the request are grouped by the `request_id`, which allows for easier troubleshooting of errors as
     follows:
