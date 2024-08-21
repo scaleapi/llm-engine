@@ -37,7 +37,7 @@ batch_completions_router_v2 = APIRouter(
 )
 
 
-@batch_completions_router_v2.post("/", response_model=CreateBatchCompletionsV2Response)
+@batch_completions_router_v2.post("", response_model=CreateBatchCompletionsV2Response)
 async def batch_completions(
     request: CreateBatchCompletionsV2Request,
     auth: User = Depends(verify_authentication),

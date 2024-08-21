@@ -19,8 +19,6 @@ async def get_metric_metadata(
     request: Request,
     auth: User = Depends(verify_authentication),
 ) -> MetricMetadata:
-    print("body")
-    print(request.body)
     model_name = request.query_params.get("model", None)
     return MetricMetadata(user=auth, model_name=model_name)
 
