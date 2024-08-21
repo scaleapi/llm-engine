@@ -7,13 +7,12 @@ from typing import Any, AsyncGenerator, AsyncIterator, Coroutine, Dict, List, Op
 
 import smart_open
 from model_engine_server.common.dtos.llms import (
+    BatchCompletionContent,
     BatchCompletionsModelConfig,
     CompletionResponse,
     CompletionV1Output,
     CreateBatchCompletionsEngineRequest,
     CreateBatchCompletionsV1RequestContent,
-    FilteredChatCompletionV2Request,
-    FilteredCompletionV2Request,
     TokenOutput,
 )
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
@@ -25,7 +24,7 @@ from model_engine_server.inference.utils import (
     get_cpu_cores_in_container,
     random_uuid,
 )
-from pydantic import ValidationError
+from pydantic import TypeAdapter
 from tqdm import tqdm
 from typing_extensions import TypeAlias, assert_never
 from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
@@ -46,7 +45,7 @@ openai_serving_completion: OpenAIServingCompletion
 
 CPU_COUNT = get_cpu_cores_in_container()
 
-BatchCompletionContent: TypeAlias = Union[
+_BatchCompletionContent: TypeAlias = Union[
     CreateBatchCompletionsV1RequestContent,
     List[CompletionRequest],
     List[ChatCompletionRequest],
@@ -178,7 +177,7 @@ async def generate_v2_completions(
 
 
 async def generate_completions(
-    engine: AsyncEngineClient, request: BatchCompletionContent
+    engine: AsyncEngineClient, request: _BatchCompletionContent
 ) -> Union[List[Optional[CompletionV1Output]], List[Optional[CompletionResponse]]]:
     if isinstance(request, CreateBatchCompletionsV1RequestContent):
         return await generate_v1_completions(engine, request)
@@ -242,41 +241,21 @@ def overwrite_request(request: Dict[str, Any], model: str) -> Dict[str, Any]:
 
 def load_batch_content(
     request: CreateBatchCompletionsEngineRequest,
-) -> BatchCompletionContent:
+) -> _BatchCompletionContent:
     content = request.content
     if content is None:
         with smart_open.open(request.input_data_path, "r") as f:
             data = json.load(f)
-            try:
-                return CreateBatchCompletionsV1RequestContent.model_validate(data)
-            except ValidationError:
-                model = get_model_name(request.model_cfg)
-                if not isinstance(data, List) or len(data) == 0:
-                    raise ValueError("Input data must be a list of completion requests")
+            content = TypeAdapter(BatchCompletionContent).validate_python(data)
 
-                sample = data[0]
-                # Kinda jank, but we first serialize to FilteredCompletionV2Request before serializing to
-                #  vLLM's ChatCompletionRequest since their schemas are more strict and don't allow extra args
-                if "messages" in sample:
-                    return [
-                        ChatCompletionRequest.model_validate(
-                            FilteredChatCompletionV2Request.model_validate(
-                                overwrite_request(req, model)
-                            ).model_dump(exclude_none=True)
-                        )
-                        for req in data
-                    ]
-                elif "prompt" in sample:
-                    return [
-                        CompletionRequest.model_validate(
-                            FilteredCompletionV2Request.model_validate(
-                                overwrite_request(req, model)
-                            ).model_dump(exclude_none=True)
-                        )
-                        for req in data
-                    ]
-
-                raise ValueError(f"Missing 'messages' or 'prompt' field in request: {sample}")
+    # Recast the content to vLLMs schema
+    if isinstance(content, List) and len(content) > 0:
+        model = get_model_name(request.model_cfg)
+        return TypeAdapter(
+            Union[List[CompletionRequest], List[ChatCompletionRequest]]
+        ).validate_python(
+            [overwrite_request(req.model_dump(exclude_none=True), model) for req in content]
+        )
 
     return content
 

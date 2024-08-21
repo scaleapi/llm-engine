@@ -271,10 +271,10 @@ DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
 SERVICE_NAME = "model-engine"
 SERVICE_IDENTIFIER = os.getenv("SERVICE_IDENTIFIER")
-if SERVICE_IDENTIFIER:
-    SERVICE_NAME += f"-{SERVICE_IDENTIFIER}"
 LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = f"{SERVICE_NAME}-inference-framework-latest-config"
 RECOMMENDED_HARDWARE_CONFIG_MAP_NAME = f"{SERVICE_NAME}-recommended-hardware-config"
+if SERVICE_IDENTIFIER:
+    SERVICE_NAME += f"-{SERVICE_IDENTIFIER}"
 
 
 def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
@@ -285,12 +285,23 @@ def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRep
     return len(tokenizer.encode(input))
 
 
+async def _get_latest_batch_v2_tag(inference_framework: LLMInferenceFramework) -> str:
+    config_map = await read_config_map(LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME)
+    print(config_map)
+    batch_key = f"{inference_framework}_batch_v2"
+    if batch_key not in config_map:
+        raise LatestImageTagNotFoundException(
+            f"Could not find latest batch job tag for inference framework {inference_framework}. key: {batch_key}"
+        )
+    return config_map[batch_key]
+
+
 async def _get_latest_batch_tag(inference_framework: LLMInferenceFramework) -> str:
     config_map = await read_config_map(LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME)
     batch_key = f"{inference_framework}_batch"
     if batch_key not in config_map:
         raise LatestImageTagNotFoundException(
-            f"Could not find latest batch job tag for inference framework {inference_framework}."
+            f"Could not find latest batch job tag for inference framework {inference_framework}. key: {batch_key}"
         )
     return config_map[batch_key]
 
@@ -2708,7 +2719,7 @@ class CreateBatchCompletionsV2UseCase:
 
         # Right now we only support VLLM for batch inference. Refactor this if we support more inference frameworks.
         image_repo = hmi_config.batch_inference_vllm_repository
-        image_tag = await _get_latest_batch_tag(LLMInferenceFramework.VLLM)
+        image_tag = await _get_latest_batch_v2_tag(LLMInferenceFramework.VLLM)
 
         additional_engine_args = infer_addition_engine_args_from_model_name(
             engine_request.model_cfg.model

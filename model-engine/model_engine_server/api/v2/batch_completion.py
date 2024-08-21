@@ -75,7 +75,7 @@ async def get_batch_completion(
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
     metric_metadata: MetricMetadata = Depends(get_metric_metadata),
 ) -> GetBatchCompletionV2Response:
-    logger.info("GET /v2/batch-completions/{batch_completion_id} for {auth}")
+    logger.info(f"GET /v2/batch-completions/{batch_completion_id} for {auth}")
     try:
         use_case = GetBatchCompletionV2UseCase(
             llm_batch_completions_service=external_interfaces.llm_batch_completions_service,
