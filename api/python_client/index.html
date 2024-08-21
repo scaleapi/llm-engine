@@ -1042,7 +1042,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -1053,7 +1053,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>model</code></td>
           <td>
                 <code>str</code>
@@ -1067,7 +1067,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>prompt</code></td>
           <td>
                 <code>str</code>
@@ -1081,7 +1081,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>max_new_tokens</code></td>
           <td>
                 <code>int</code>
@@ -1097,7 +1097,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
                 <code>20</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>temperature</code></td>
           <td>
                 <code>float</code>
@@ -1113,7 +1113,7 @@ When temperature is 0 <a href="https://huggingface.co/docs/transformers/generati
                 <code>0.2</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>stop_sequences</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[str]]</code>
@@ -1127,7 +1127,7 @@ When temperature is 0 <a href="https://huggingface.co/docs/transformers/generati
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>return_token_log_probs</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[bool]</code>
@@ -1142,7 +1142,7 @@ When True, the response will include a list of tokens and their log probabilitie
                 <code>False</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>presence_penalty</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[float]</code>
@@ -1159,7 +1159,7 @@ Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>frequency_penalty</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[float]</code>
@@ -1176,7 +1176,7 @@ Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>top_k</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[int]</code>
@@ -1191,7 +1191,7 @@ Range: [1, infinity). -1 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>top_p</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[float]</code>
@@ -1206,7 +1206,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>include_stop_str_in_output</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[bool]</code>
@@ -1220,7 +1220,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>guided_json</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]]</code>
@@ -1234,7 +1234,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>guided_regex</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[str]</code>
@@ -1248,7 +1248,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>guided_choice</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[str]]</code>
@@ -1262,7 +1262,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>guided_grammar</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[str]</code>
@@ -1276,7 +1276,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>timeout</code></td>
           <td>
                 <code>int</code>
@@ -1290,7 +1290,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code><span title="llmengine.completion.COMPLETION_TIMEOUT">COMPLETION_TIMEOUT</span></code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>stream</code></td>
           <td>
                 <code>bool</code>
@@ -1311,7 +1311,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -1320,7 +1320,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>response</code></td>          <td>
                 <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncResponse" href="../data_types/#llmengine.CompletionSyncResponse">CompletionSyncResponse</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamResponse" href="../data_types/#llmengine.CompletionStreamResponse">CompletionStreamResponse</a>]]</code>
           </td>
@@ -1446,7 +1446,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -1457,7 +1457,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>model</code></td>
           <td>
                 <code>str</code>
@@ -1471,7 +1471,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>prompt</code></td>
           <td>
                 <code>str</code>
@@ -1485,7 +1485,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>max_new_tokens</code></td>
           <td>
                 <code>int</code>
@@ -1501,7 +1501,7 @@ with <code>request_id</code> and <code>outputs</code> fields.</p>
                 <code>20</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>temperature</code></td>
           <td>
                 <code>float</code>
@@ -1517,7 +1517,7 @@ When temperature is 0 <a href="https://huggingface.co/docs/transformers/generati
                 <code>0.2</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>stop_sequences</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[str]]</code>
@@ -1531,7 +1531,7 @@ When temperature is 0 <a href="https://huggingface.co/docs/transformers/generati
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>return_token_log_probs</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[bool]</code>
@@ -1546,7 +1546,7 @@ When True, the response will include a list of tokens and their log probabilitie
                 <code>False</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>presence_penalty</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[float]</code>
@@ -1563,7 +1563,7 @@ Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>frequency_penalty</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[float]</code>
@@ -1580,7 +1580,7 @@ Range: [0.0, 2.0]. Higher values encourage the model to use new tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>top_k</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[int]</code>
@@ -1595,7 +1595,7 @@ Range: [1, infinity). -1 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>top_p</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[float]</code>
@@ -1610,7 +1610,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>include_stop_str_in_output</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[bool]</code>
@@ -1624,7 +1624,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>guided_json</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]]</code>
@@ -1638,7 +1638,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>guided_regex</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[str]</code>
@@ -1652,7 +1652,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>guided_choice</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[str]]</code>
@@ -1666,7 +1666,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>guided_grammar</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[str]</code>
@@ -1680,7 +1680,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>timeout</code></td>
           <td>
                 <code>int</code>
@@ -1694,7 +1694,7 @@ Range: (0.0, 1.0]. 1.0 means consider all tokens.</p>
                 <code><span title="llmengine.completion.COMPLETION_TIMEOUT">COMPLETION_TIMEOUT</span></code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>stream</code></td>
           <td>
                 <code>bool</code>
@@ -1715,7 +1715,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -1724,7 +1724,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>response</code></td>          <td>
                 <code><span title="typing.Union">Union</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionSyncResponse" href="../data_types/#llmengine.CompletionSyncResponse">CompletionSyncResponse</a>, <span title="typing.AsyncIterable">AsyncIterable</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CompletionStreamResponse" href="../data_types/#llmengine.CompletionStreamResponse">CompletionStreamResponse</a>]]</code>
           </td>
@@ -1839,7 +1839,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -1850,7 +1850,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>output_data_path</code></td>
           <td>
                 <code>str</code>
@@ -1864,7 +1864,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>model_config</code></td>
           <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CreateBatchCompletionsModelConfig" href="../data_types/#llmengine.CreateBatchCompletionsModelConfig">CreateBatchCompletionsModelConfig</a></code>
@@ -1878,7 +1878,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>content</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" title="llmengine.data_types.CreateBatchCompletionsRequestContent" href="../data_types/#llmengine.CreateBatchCompletionsRequestContent">CreateBatchCompletionsRequestContent</a>]</code>
@@ -1892,7 +1892,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>input_data_path</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[str]</code>
@@ -1906,7 +1906,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>data_parallelism</code></td>
           <td>
                 <code>int</code>
@@ -1920,7 +1920,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
                 <code>1</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>max_runtime_sec</code></td>
           <td>
                 <code>int</code>
@@ -1934,7 +1934,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
                 <code>24 * 3600</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>tool_config</code></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="llmengine.data_types.ToolConfig">ToolConfig</span>]</code>
@@ -1957,7 +1957,7 @@ Please format prompts accordingly and provide examples so LLMs could properly ge
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -1966,7 +1966,7 @@ Please format prompts accordingly and provide examples so LLMs could properly ge
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>response</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CreateBatchCompletionsResponse" href="../data_types/#llmengine.CreateBatchCompletionsResponse">CreateBatchCompletionsResponse</a></code>
           </td>
@@ -2135,7 +2135,7 @@ and several hours for larger ones.</p>
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -2146,7 +2146,7 @@ and several hours for larger ones.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>model</code></td>
           <td>
                 <code>`str`</code>
@@ -2160,7 +2160,7 @@ and several hours for larger ones.</p>
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>training_file</code></td>
           <td>
                 <code>`str`</code>
@@ -2174,7 +2174,7 @@ and several hours for larger ones.</p>
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>validation_file</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -2188,7 +2188,7 @@ and several hours for larger ones.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>hyperparameters</code></td>
           <td>
                 <code>`Optional[Dict[str, Union[str, int, float, Dict[str, Any]]]]`</code>
@@ -2210,7 +2210,7 @@ and several hours for larger ones.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>wandb_config</code></td>
           <td>
                 <code>`Optional[Dict[str, Any]]`</code>
@@ -2227,7 +2227,7 @@ Also supports setting <code>base_url</code> to use a custom Weights &amp; Biases
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>suffix</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -2251,7 +2251,7 @@ Note: <code>suffix</code> must be between 1 and 28 characters long, and can only
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -2260,7 +2260,7 @@ Note: <code>suffix</code> must be between 1 and 28 characters long, and can only
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>CreateFineTuneResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CreateFineTuneResponse" href="../data_types/#llmengine.CreateFineTuneResponse">CreateFineTuneResponse</a></code>
           </td>
@@ -2359,7 +2359,7 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -2370,7 +2370,7 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>fine_tune_id</code></td>
           <td>
                 <code>`str`</code>
@@ -2389,7 +2389,7 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -2398,7 +2398,7 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>GetFineTuneResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.GetFineTuneResponse" href="../data_types/#llmengine.GetFineTuneResponse">GetFineTuneResponse</a></code>
           </td>
@@ -2464,7 +2464,7 @@ evaluation of the eval loss. This API will return all events for the fine-tuning
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -2475,7 +2475,7 @@ evaluation of the eval loss. This API will return all events for the fine-tuning
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>fine_tune_id</code></td>
           <td>
                 <code>`str`</code>
@@ -2494,7 +2494,7 @@ evaluation of the eval loss. This API will return all events for the fine-tuning
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -2503,7 +2503,7 @@ evaluation of the eval loss. This API will return all events for the fine-tuning
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>GetFineTuneEventsResponse</code></td>          <td>
                 <code><span title="llmengine.data_types.GetFineTuneEventsResponse">GetFineTuneEventsResponse</span></code>
           </td>
@@ -2585,7 +2585,7 @@ all existing jobs.</p>
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -2594,7 +2594,7 @@ all existing jobs.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>ListFineTunesResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.ListFineTunesResponse" href="../data_types/#llmengine.ListFineTunesResponse">ListFineTunesResponse</a></code>
           </td>
@@ -2664,7 +2664,7 @@ confirming if the cancellation was successful.</p>
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -2675,7 +2675,7 @@ confirming if the cancellation was successful.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>fine_tune_id</code></td>
           <td>
                 <code>`str`</code>
@@ -2694,7 +2694,7 @@ confirming if the cancellation was successful.</p>
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -2703,7 +2703,7 @@ confirming if the cancellation was successful.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>CancelFineTuneResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.CancelFineTuneResponse" href="../data_types/#llmengine.CancelFineTuneResponse">CancelFineTuneResponse</a></code>
           </td>
@@ -2829,7 +2829,7 @@ models built into LLM Engine, and fine-tuned models that you create through the
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -2840,7 +2840,7 @@ models built into LLM Engine, and fine-tuned models that you create through the
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>name</code></td>
           <td>
                 <code>`str`</code>
@@ -2854,7 +2854,7 @@ models built into LLM Engine, and fine-tuned models that you create through the
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>model</code></td>
           <td>
                 <code>`str`</code>
@@ -2868,7 +2868,7 @@ models built into LLM Engine, and fine-tuned models that you create through the
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>inference_framework_image_tag</code></td>
           <td>
                 <code>`str`</code>
@@ -2882,7 +2882,7 @@ models built into LLM Engine, and fine-tuned models that you create through the
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>source</code></td>
           <td>
                 <code>`LLMSource`</code>
@@ -2896,7 +2896,7 @@ models built into LLM Engine, and fine-tuned models that you create through the
                 <code><span title="llmengine.data_types.LLMSource.HUGGING_FACE">HUGGING_FACE</span></code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>inference_framework</code></td>
           <td>
                 <code>`LLMInferenceFramework`</code>
@@ -2912,7 +2912,7 @@ LLMInferenceFramework.VLLM and LLMInferenceFramework.LIGHTLLM</p>
                 <code><span title="llmengine.data_types.LLMInferenceFramework.VLLM">VLLM</span></code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>num_shards</code></td>
           <td>
                 <code>`int`</code>
@@ -2927,7 +2927,7 @@ to multiple GPUs. Number of GPUs must be equal or larger than num_shards.</p>
                 <code>1</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>quantize</code></td>
           <td>
                 <code>`Optional[Quantization]`</code>
@@ -2941,7 +2941,7 @@ to multiple GPUs. Number of GPUs must be equal or larger than num_shards.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>checkpoint_path</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -2957,7 +2957,7 @@ For model weights, safetensors are preferred but PyTorch checkpoints are also ac
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>cpus</code></td>
           <td>
                 <code>`Optional[int]`</code>
@@ -2972,7 +2972,7 @@ than or equal to 1. Recommendation is set it to 8 * GPU count. Can be inferred f
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>memory</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -2988,7 +2988,7 @@ Can be inferred from the model size.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>storage</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -3005,7 +3005,7 @@ Can be inferred from the model size.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>gpus</code></td>
           <td>
                 <code>`Optional[int]`</code>
@@ -3019,7 +3019,7 @@ Can be inferred from the model size.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>min_workers</code></td>
           <td>
                 <code>`int`</code>
@@ -3038,7 +3038,7 @@ greater or equal to min_workers.</p>
                 <code>0</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>max_workers</code></td>
           <td>
                 <code>`int`</code>
@@ -3055,7 +3055,7 @@ of a single worker</p>
                 <code>1</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>per_worker</code></td>
           <td>
                 <code>`int`</code>
@@ -3082,7 +3082,7 @@ this ensures that the number of workers will "climb" to <code>max_workers</code>
                 <code>2</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>endpoint_type</code></td>
           <td>
                 <code>`ModelEndpointType`</code>
@@ -3096,7 +3096,7 @@ this ensures that the number of workers will "climb" to <code>max_workers</code>
                 <code><span title="llmengine.data_types.ModelEndpointType.STREAMING">STREAMING</span></code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>gpu_type</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -3120,7 +3120,7 @@ requested. Can be inferred from the model size. Here are the supported values:</
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>high_priority</code></td>
           <td>
                 <code>`Optional[bool]`</code>
@@ -3135,7 +3135,7 @@ endpoint to leverage the shared pool of prewarmed nodes for faster spinup time</
                 <code>False</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>post_inference_hooks</code></td>
           <td>
                 <code>`Optional[List[PostInferenceHooks]]`</code>
@@ -3149,7 +3149,7 @@ endpoint to leverage the shared pool of prewarmed nodes for faster spinup time</
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>default_callback_url</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -3165,7 +3165,7 @@ post_inference_hooks must contain "callback" for the callback to be triggered</p
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>public_inference</code></td>
           <td>
                 <code>`Optional[bool]`</code>
@@ -3180,7 +3180,7 @@ inference</p>
                 <code>True</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>labels</code></td>
           <td>
                 <code>`Optional[Dict[str, str]]`</code>
@@ -3335,7 +3335,7 @@ object.</p>
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -3346,7 +3346,7 @@ object.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>model</code></td>
           <td>
                 <code>`str`</code>
@@ -3365,7 +3365,7 @@ object.</p>
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -3374,7 +3374,7 @@ object.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>GetLLMEndpointResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.GetLLMEndpointResponse" href="../data_types/#llmengine.GetLLMEndpointResponse">GetLLMEndpointResponse</a></code>
           </td>
@@ -3448,7 +3448,7 @@ objects for all models. The most important field is the model <code>name</code>.
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -3457,7 +3457,7 @@ objects for all models. The most important field is the model <code>name</code>.
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>ListLLMEndpointsResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.ListLLMEndpointsResponse" href="../data_types/#llmengine.ListLLMEndpointsResponse">ListLLMEndpointsResponse</a></code>
           </td>
@@ -3584,7 +3584,7 @@ objects for all models. The most important field is the model <code>name</code>.
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -3595,7 +3595,7 @@ objects for all models. The most important field is the model <code>name</code>.
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>name</code></td>
           <td>
                 <code>`str`</code>
@@ -3609,7 +3609,7 @@ objects for all models. The most important field is the model <code>name</code>.
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>model</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -3623,7 +3623,7 @@ objects for all models. The most important field is the model <code>name</code>.
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>inference_framework_image_tag</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -3637,7 +3637,7 @@ objects for all models. The most important field is the model <code>name</code>.
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>source</code></td>
           <td>
                 <code>`Optional[LLMSource]`</code>
@@ -3651,7 +3651,7 @@ objects for all models. The most important field is the model <code>name</code>.
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>num_shards</code></td>
           <td>
                 <code>`Optional[int]`</code>
@@ -3666,7 +3666,7 @@ to multiple GPUs. Number of GPUs must be equal or larger than num_shards.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>quantize</code></td>
           <td>
                 <code>`Optional[Quantization]`</code>
@@ -3680,7 +3680,7 @@ to multiple GPUs. Number of GPUs must be equal or larger than num_shards.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>checkpoint_path</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -3696,7 +3696,7 @@ For model weights, safetensors are preferred but PyTorch checkpoints are also ac
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>cpus</code></td>
           <td>
                 <code>`Optional[int]`</code>
@@ -3711,7 +3711,7 @@ than or equal to 1. Recommendation is set it to 8 * GPU count.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>memory</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -3726,7 +3726,7 @@ be a positive amount of memory. Recommendation is set it to 24Gi * GPU count.</p
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>storage</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -3742,7 +3742,7 @@ Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B mod
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>gpus</code></td>
           <td>
                 <code>`Optional[int]`</code>
@@ -3756,7 +3756,7 @@ Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B mod
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>min_workers</code></td>
           <td>
                 <code>`Optional[int]`</code>
@@ -3775,7 +3775,7 @@ greater or equal to min_workers.</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>max_workers</code></td>
           <td>
                 <code>`Optional[int]`</code>
@@ -3792,7 +3792,7 @@ of a single worker</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>per_worker</code></td>
           <td>
                 <code>`Optional[int]`</code>
@@ -3819,7 +3819,7 @@ this ensures that the number of workers will "climb" to <code>max_workers</code>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>endpoint_type</code></td>
           <td>
                 <code>`Optional[ModelEndpointType]`</code>
@@ -3833,7 +3833,7 @@ this ensures that the number of workers will "climb" to <code>max_workers</code>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>gpu_type</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -3857,7 +3857,7 @@ requested. Here are the supported values:</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>high_priority</code></td>
           <td>
                 <code>`Optional[bool]`</code>
@@ -3872,7 +3872,7 @@ endpoint to leverage the shared pool of prewarmed nodes for faster spinup time</
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>post_inference_hooks</code></td>
           <td>
                 <code>`Optional[List[PostInferenceHooks]]`</code>
@@ -3886,7 +3886,7 @@ endpoint to leverage the shared pool of prewarmed nodes for faster spinup time</
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>default_callback_url</code></td>
           <td>
                 <code>`Optional[str]`</code>
@@ -3902,7 +3902,7 @@ post_inference_hooks must contain "callback" for the callback to be triggered</p
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>public_inference</code></td>
           <td>
                 <code>`Optional[bool]`</code>
@@ -3917,7 +3917,7 @@ inference</p>
                 <code>None</code>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>labels</code></td>
           <td>
                 <code>`Optional[Dict[str, str]]`</code>
@@ -3971,7 +3971,7 @@ Engine, an error will be thrown.</p>
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -3982,7 +3982,7 @@ Engine, an error will be thrown.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>model_endpoint_name</code></td>
           <td>
                 <code>`str`</code>
@@ -4001,7 +4001,7 @@ Engine, an error will be thrown.</p>
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -4010,7 +4010,7 @@ Engine, an error will be thrown.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>response</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.DeleteLLMEndpointResponse" href="../data_types/#llmengine.DeleteLLMEndpointResponse">DeleteLLMEndpointResponse</a></code>
           </td>
@@ -4074,7 +4074,7 @@ the fine-tuned model. If called on a nonexistent model, an error will be thrown.
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -4085,7 +4085,7 @@ the fine-tuned model. If called on a nonexistent model, an error will be thrown.
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>model_name</code></td>
           <td>
                 <code>`str`</code>
@@ -4099,7 +4099,7 @@ the fine-tuned model. If called on a nonexistent model, an error will be thrown.
               <em>required</em>
           </td>
         </tr>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>download_format</code></td>
           <td>
                 <code>`str`</code>
@@ -4206,7 +4206,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -4217,7 +4217,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>file</code></td>
           <td>
                 <code>`BufferedReader`</code>
@@ -4236,7 +4236,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -4245,7 +4245,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>UploadFileResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.UploadFileResponse" href="../data_types/#llmengine.UploadFileResponse">UploadFileResponse</a></code>
           </td>
@@ -4303,7 +4303,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -4314,7 +4314,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>file_id</code></td>
           <td>
                 <code>`str`</code>
@@ -4333,7 +4333,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -4342,7 +4342,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>GetFileResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.GetFileResponse" href="../data_types/#llmengine.GetFileResponse">GetFileResponse</a></code>
           </td>
@@ -4404,7 +4404,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -4415,7 +4415,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>file_id</code></td>
           <td>
                 <code>`str`</code>
@@ -4434,7 +4434,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -4443,7 +4443,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>GetFileContentResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.GetFileContentResponse" href="../data_types/#llmengine.GetFileContentResponse">GetFileContentResponse</a></code>
           </td>
@@ -4501,7 +4501,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -4510,7 +4510,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>ListFilesResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.ListFilesResponse" href="../data_types/#llmengine.ListFilesResponse">ListFilesResponse</a></code>
           </td>
@@ -4578,7 +4578,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 
 
 
-  <p><strong>Parameters:</strong></p>
+  <p><span class="doc-section-title">Parameters:</span></p>
   <table>
     <thead>
       <tr>
@@ -4589,7 +4589,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
           <td><code>file_id</code></td>
           <td>
                 <code>`str`</code>
@@ -4608,7 +4608,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 
 
 
-  <p><strong>Returns:</strong></p>
+  <p><span class="doc-section-title">Returns:</span></p>
   <table>
     <thead>
       <tr>
@@ -4617,7 +4617,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
       </tr>
     </thead>
     <tbody>
-        <tr>
+        <tr class="doc-section-item">
 <td><code>DeleteFileResponse</code></td>          <td>
                 <code><a class="autorefs autorefs-internal" title="llmengine.data_types.DeleteFileResponse" href="../data_types/#llmengine.DeleteFileResponse">DeleteFileResponse</a></code>
           </td>
