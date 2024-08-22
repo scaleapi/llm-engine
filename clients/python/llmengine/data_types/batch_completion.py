@@ -193,13 +193,17 @@ CreateBatchCompletionsV2RequestContent: TypeAlias = Union[
 ]
 CreateBatchCompletionsV2ModelConfig: TypeAlias = BatchCompletionsModelConfig
 
+BatchCompletionContent = Union[
+    CreateBatchCompletionsV1RequestContent, CreateBatchCompletionsV2RequestContent
+]
+
 
 class CreateBatchCompletionsV2Request(BatchCompletionsRequestBase):
     """
     Request object for batch completions.
     """
 
-    content: Optional[CreateBatchCompletionsV2RequestContent] = Field(
+    content: Optional[BatchCompletionContent] = Field(
         default=None,
         description="""
 Either `input_data_path` or `content` needs to be provided.
@@ -275,8 +279,3 @@ class ListBatchCompletionV2Response(BaseModel):
 
 class GetBatchCompletionV2Response(BaseModel):
     job: BatchCompletionsJob
-
-
-BatchCompletionContent = Union[
-    CreateBatchCompletionsV1RequestContent, CreateBatchCompletionsV2RequestContent
-]

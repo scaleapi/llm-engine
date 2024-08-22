@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterable, Dict, Iterator, List, Optional, Union
+from typing import Any, AsyncIterable, Dict, Iterator, List, Optional, Union, cast
 
 from llmengine.api_engine import APIEngine
 from llmengine.data_types import (
@@ -9,6 +9,7 @@ from llmengine.data_types import (
     CompletionSyncV1Request,
     CreateBatchCompletionsModelConfig,
     CreateBatchCompletionsV1Request,
+    CreateBatchCompletionsV1RequestContent,
     CreateBatchCompletionsV1Response,
     CreateBatchCompletionsV2Request,
     CreateBatchCompletionsV2Response,
@@ -644,6 +645,14 @@ class Completion(APIEngine):
             )
             return CreateBatchCompletionsV2Response.parse_obj(response)
         else:
+            if input_data_path is None and not isinstance(
+                content, CreateBatchCompletionsV1RequestContent
+            ):
+                raise ValueError(
+                    "Either input_data_path or content must be provided. If content is provided, it must be of type CreateBatchCompletionsV1RequestContent."
+                )
+
+            content = cast(Optional[CreateBatchCompletionsV1RequestContent], content)
             data = CreateBatchCompletionsV1Request(
                 model_config=model_config,
                 content=content,
