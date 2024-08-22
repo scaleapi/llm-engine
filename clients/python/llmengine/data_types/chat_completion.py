@@ -1,8 +1,7 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import Field
-
 from .gen.openai import CreateChatCompletionRequest, CreateChatCompletionResponse
+from .pydantic_types import Field
 
 # Fields that are a part of OpenAI spec but are not supported by model engine
 UNSUPPORTED_FIELDS = ["service_tier"]

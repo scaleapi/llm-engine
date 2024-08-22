@@ -607,7 +607,7 @@ class Completion(APIEngine):
         *,
         output_data_path: str,
         model_config: BatchCompletionsModelConfig,
-        content: Optional[List[CreateBatchCompletionsV2RequestContent]] = None,
+        content: Optional[CreateBatchCompletionsV2RequestContent] = None,
         input_data_path: Optional[str] = None,
         data_parallelism: int = 1,
         max_runtime_sec: int = 24 * 3600,
@@ -707,3 +707,66 @@ class Completion(APIEngine):
             headers=request_headers,
         )
         return CreateBatchCompletionsV2Response.parse_obj(response)
+
+    @classmethod
+    def get_batch_completion(
+        cls,
+        job_id: str,
+        request_headers: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Get the status of a batch completion job.
+
+        Args:
+            job_id (str):
+                The job id of the batch completion job.
+
+        Returns:
+            response (Dict[str, Any]): The response containing the job status.
+
+        === "Get batch completion status"
+            ```python
+            from llmengine import Completion
+
+            response = Completion.get_batch_completion(job_id="job-id")
+            print(response)
+            ```
+        """
+        response = cls._get(
+            resource_name=f"v2/batch-completions/{job_id}",
+            timeout=HTTP_TIMEOUT,
+            headers=request_headers,
+        )
+        return response
+
+    @classmethod
+    def cancel_batch_completion(
+        cls,
+        job_id: str,
+        request_headers: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Cancel a batch completion job.
+
+        Args:
+            job_id (str):
+                The job id of the batch completion job.
+
+        Returns:
+            response (Dict[str, Any]): The response containing the job status.
+
+        === "Cancel batch completion job"
+            ```python
+            from llmengine import Completion
+
+            response = Completion.cancel_batch_completion(job_id="job-id")
+            print(response)
+            ```
+        """
+        response = cls.post_sync(
+            resource_name=f"v2/batch-completions/{job_id}/actions/cancel",
+            data={},
+            timeout=HTTP_TIMEOUT,
+            headers=request_headers,
+        )
+        return response
