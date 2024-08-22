@@ -1,15 +1,9 @@
-from pydantic import BaseModel as PydanticBaseModel
-from pydantic import (  # noqa: F401
-    ConfigDict,
-    Field,
-    HttpUrl,
-    RootModel,
-    ValidationError,
-    model_validator,
-)
+import pydantic
 
+PYDANTIC_V2 = hasattr(pydantic, "VERSION") and pydantic.VERSION.startswith("2.")
 
-class BaseModel(PydanticBaseModel):
-    """Common pydantic configurations for model engine"""
+if PYDANTIC_V2:
+    from pydantic.v1 import BaseModel, Field, HttpUrl  # noqa: F401
 
-    model_config = ConfigDict(protected_namespaces=())
+else:
+    from pydantic import BaseModel, Field, HttpUrl  # type: ignore # noqa: F401

@@ -699,7 +699,7 @@ class Completion(APIEngine):
             max_runtime_sec=max_runtime_sec,
             tool_config=tool_config,
             priority=priority,
-        ).model_dump(exclude_none=True, by_alias=True)
+        ).dict()
         response = cls.post_sync(
             resource_name="v2/batch-completions",
             data=data,
