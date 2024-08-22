@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0beta37"
+__version__ = "0.0.0beta38"
 
 import os
 from typing import Sequence
@@ -38,6 +38,9 @@ from llmengine.data_types import (
     CreateBatchCompletionsRequest,
     CreateBatchCompletionsRequestContent,
     CreateBatchCompletionsResponse,
+    CreateBatchCompletionsV1Request,
+    CreateBatchCompletionsV1RequestContent,
+    CreateBatchCompletionsV1Response,
     CreateBatchCompletionsV2ModelConfig,
     CreateBatchCompletionsV2Request,
     CreateBatchCompletionsV2RequestContent,
@@ -87,6 +90,9 @@ __all__: Sequence[str] = (
     "CreateBatchCompletionsRequest",
     "CreateBatchCompletionsRequestContent",
     "CreateBatchCompletionsResponse",
+    "CreateBatchCompletionsV1Request",
+    "CreateBatchCompletionsV1RequestContent",
+    "CreateBatchCompletionsV1Response",
     "CreateBatchCompletionsV2Request",
     "CreateBatchCompletionsV2RequestContent",
     "CreateBatchCompletionsV2ModelConfig",

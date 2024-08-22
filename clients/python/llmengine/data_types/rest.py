@@ -6,7 +6,7 @@ import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from .pydantic_types import BaseModel, Field, HttpUrl, RootModel
+from .pydantic_types import BaseModel, Field, HttpUrl
 
 CpuSpecificationType = Union[str, int, float]
 StorageSpecificationType = Union[str, int, float]
@@ -67,8 +67,8 @@ class CallbackmTLSAuth(BaseModel):
     key: str
 
 
-class CallbackAuth(RootModel):
-    root: Union[CallbackBasicAuth, CallbackmTLSAuth] = Field(..., discriminator="kind")
+class CallbackAuth(BaseModel):
+    __root__: Union[CallbackBasicAuth, CallbackmTLSAuth] = Field(..., discriminator="kind")
 
 
 class ModelEndpointDeploymentState(BaseModel):
