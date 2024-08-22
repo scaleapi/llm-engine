@@ -1821,15 +1821,19 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <div class="doc-signature highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>batch_create(
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    output_data_path: <span style="color: #008000">str</span>,
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    model_config: CreateBatchCompletionsModelConfig,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    content: Optional[
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        CreateBatchCompletionsRequestContent
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    ] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    input_data_path: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    data_parallelism: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    max_runtime_sec: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">24</span> <span style="color: #666666">*</span> <span style="color: #666666">3600</span>,
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    tool_config: Optional[ToolConfig] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    request_headers: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>) <span style="color: #666666">-&gt;</span> CreateBatchCompletionsResponse
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    content: Optional[BatchCompletionContent] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    input_data_path: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    data_parallelism: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    max_runtime_sec: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">24</span> <span style="color: #666666">*</span> <span style="color: #666666">3600</span>,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    labels: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    priority: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    use_v2: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    tool_config: Optional[ToolConfig] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    request_headers: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    CreateBatchCompletionsV1Response,
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    CreateBatchCompletionsV2Response,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1921,6 +1925,20 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
           </td>
         </tr>
         <tr class="doc-section-item">
+          <td><code>priority</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Priority of the batch inference job. Default to None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
           <td><code>max_runtime_sec</code></td>
           <td>
                 <code>int</code>
@@ -1932,6 +1950,20 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
           </td>
           <td>
                 <code>24 * 3600</code>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code>use_v2</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to use the v2 batch completion API. Defaults to False.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
           </td>
         </tr>
         <tr class="doc-section-item">
@@ -1978,7 +2010,7 @@ Please format prompts accordingly and provide examples so LLMs could properly ge
         </tr>
     </tbody>
   </table>
-      <div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="llmengine.Completion.batch_create--__tabbed_1_1" name="llmengine.Completion.batch_create--__tabbed_1" type="radio" /><input id="llmengine.Completion.batch_create--__tabbed_1_2" name="llmengine.Completion.batch_create--__tabbed_1" type="radio" /><input id="llmengine.Completion.batch_create--__tabbed_1_3" name="llmengine.Completion.batch_create--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.Completion.batch_create--__tabbed_1_1">Batch completions with prompts in the request</label><label for="llmengine.Completion.batch_create--__tabbed_1_2">Batch completions with prompts in a file and with 2 parallel jobs</label><label for="llmengine.Completion.batch_create--__tabbed_1_3">Batch completions with prompts and use tool</label></div>
+      <div class="tabbed-set tabbed-alternate" data-tabs="1:4"><input checked="checked" id="llmengine.Completion.batch_create--__tabbed_1_1" name="llmengine.Completion.batch_create--__tabbed_1" type="radio" /><input id="llmengine.Completion.batch_create--__tabbed_1_2" name="llmengine.Completion.batch_create--__tabbed_1" type="radio" /><input id="llmengine.Completion.batch_create--__tabbed_1_3" name="llmengine.Completion.batch_create--__tabbed_1" type="radio" /><input id="llmengine.Completion.batch_create--__tabbed_1_4" name="llmengine.Completion.batch_create--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="llmengine.Completion.batch_create--__tabbed_1_1">Batch completions with prompts in the request</label><label for="llmengine.Completion.batch_create--__tabbed_1_2">Batch completions with prompts in a file and with 2 parallel jobs</label><label for="llmengine.Completion.batch_create--__tabbed_1_3">Batch completions with prompts and use tool</label><label for="llmengine.Completion.batch_create--__tabbed_1_4">V2 Batch completions with prompts in the request</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">llmengine</span> <span style="color: #008000; font-weight: bold">import</span> Completion
@@ -2040,6 +2072,34 @@ Please format prompts accordingly and provide examples so LLMs could properly ge
 <a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>)
 <a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span style="color: #008000">print</span>(response<span style="color: #666666">.</span>json())
 </code></pre></div>
+</div>
+<div class="tabbed-block">
+<p>```python
+from llmengine import Completion
+from llmengine.data_types import CreateBatchCompletionsModelConfig, FilteredChatCompletionV2Request</p>
+<p>model_config = CreateBatchCompletionsModelConfig(
+    model="gemma-2-2b-it",
+    checkpoint_path="s3://path-to-checkpoint",
+)</p>
+<p>content = {
+    "messages": [
+        {
+            "role": "user",
+            "content": "What is a good place for travel in the US?",
+        },
+        {"role": "assistant", "content": "California."},
+        {"role": "user", "content": "What can I do in California?"},
+    ],
+    "logprobs": True,
+}</p>
+<p>response = Completion.batch_create(
+    output_data_path="testoutput",
+    model_config=model_config,
+    content=[FilteredChatCompletionV2Request(**content)],
+    use_v2=True,
+    labels={"team": "my-team", "product": "my-product"},
+)</p>
+<p>print(response.json())</p>
 </div>
 </div>
 </div>
