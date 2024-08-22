@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "scale-llm-engine"
-version = "0.0.0.beta37"
+version = "0.0.0.beta38"
 description = "Scale LLM Engine Python client"
 license = "Apache-2.0"
 authors = ["Phil Chen <phil.chen@scale.com>"]
@@ -13,7 +13,7 @@ packages = [{include = "llmengine"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pydantic = ">=2.0"
+pydantic = ">=1.10.17"
 aiohttp = "^3.8"
 requests = "^2.31.0"
 openai = "^1.30.0"
@@ -28,6 +28,7 @@ pytest-mypy-plugins = "^1.10.1"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

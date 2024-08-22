@@ -165,12 +165,9 @@ class CreateBatchCompletionsV1Request(BatchCompletionsRequestBase):
     Either `input_data_path` or `content` needs to be provided.
     When input_data_path is provided, the input file should be a JSON file of type BatchCompletionsRequestContent.
     """
-    model_cfg: CreateBatchCompletionsV1ModelConfig = Field(alias="model_config")
+    model_config: CreateBatchCompletionsV1ModelConfig = Field(alias="model_config")
     """
     Model configuration for the batch inference. Hardware configurations are inferred.
-
-    We rename model_config from api to model_cfg in engine since engine uses pydantic v2 which
-    reserves model_config as a keyword.
     """
 
 
@@ -196,13 +193,17 @@ CreateBatchCompletionsV2RequestContent: TypeAlias = Union[
 ]
 CreateBatchCompletionsV2ModelConfig: TypeAlias = BatchCompletionsModelConfig
 
+BatchCompletionContent = Union[
+    CreateBatchCompletionsV1RequestContent, CreateBatchCompletionsV2RequestContent
+]
+
 
 class CreateBatchCompletionsV2Request(BatchCompletionsRequestBase):
     """
     Request object for batch completions.
     """
 
-    content: Optional[CreateBatchCompletionsV2RequestContent] = Field(
+    content: Optional[BatchCompletionContent] = Field(
         default=None,
         description="""
 Either `input_data_path` or `content` needs to be provided.
@@ -210,10 +211,7 @@ When input_data_path is provided, the input file should be a JSON file of type L
 """,
     )
 
-    # We rename model_config from api to model_cfg in engine since engine uses pydantic v2 which
-    #  reserves model_config as a keyword.
-    model_cfg: BatchCompletionsModelConfig = Field(
-        alias="model_config",
+    model_config: BatchCompletionsModelConfig = Field(
         description="""Model configuration for the batch inference. Hardware configurations are inferred.""",
     )
 
@@ -237,10 +235,7 @@ class BatchCompletionsJob(BaseModel):
         description="Path to the output file. The output file will be a JSON file of type List[CompletionOutput]."
     )
 
-    # We rename model_config from api to model_cfg in engine since engine uses pydantic v2 which
-    #  reserves model_config as a keyword.
-    model_cfg: BatchCompletionsModelConfig = Field(
-        alias="model_config",
+    model_config: BatchCompletionsModelConfig = Field(
         description="""Model configuration for the batch inference. Hardware configurations are inferred.""",
     )
 
@@ -284,8 +279,3 @@ class ListBatchCompletionV2Response(BaseModel):
 
 class GetBatchCompletionV2Response(BaseModel):
     job: BatchCompletionsJob
-
-
-BatchCompletionContent = Union[
-    CreateBatchCompletionsV1RequestContent, CreateBatchCompletionsV2RequestContent
-]
