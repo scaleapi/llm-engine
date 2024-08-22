@@ -18,7 +18,8 @@ datamodel-codegen \
 
 CLIENT_DIR=${BASE_DIR}/clients/python/llmengine/data_types/gen
 
-# Generate OpenAPI types for server
+# Generate OpenAPI types for client
+#   Client is using pydantic v1
 datamodel-codegen \
     --input ${OPENAI_SPEC} \
     --input-file-type openapi \
@@ -28,10 +29,13 @@ datamodel-codegen \
     --field-constraints \
     --use-annotated
 
+# Ignore mypy for this file
+#   I tried updating mypy.ini to ignore this file, but it didn't work
 sed -i '1s/^/# mypy: ignore-errors\n/' ${CLIENT_DIR}/openai.py
 
 # Add conditional import for pydantic v1 and v2
 # replace line starting with 'from pydantic <import stuff>' with the following multiline python code
+# import pydantic
 # PYDANTIC_V2 = hasattr(pydantic, "VERSION") and pydantic.VERSION.startswith("2.")
 # 
 # if PYDANTIC_V2:
