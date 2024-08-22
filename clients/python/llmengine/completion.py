@@ -612,6 +612,7 @@ class Completion(APIEngine):
         data_parallelism: int = 1,
         max_runtime_sec: int = 24 * 3600,
         labels: Dict[str, str] = {},
+        priority: Optional[str] = None,
         tool_config: Optional[ToolConfig] = None,
         request_headers: Optional[Dict[str, str]] = None,
     ) -> CreateBatchCompletionsV2Response:
@@ -638,6 +639,9 @@ class Completion(APIEngine):
 
             max_runtime_sec (int):
                 The maximum runtime of the batch completion in seconds. Defaults to 24 hours.
+
+            priority (str):
+                Priority of the batch inference job. Default to None.
 
             tool_config (Optional[ToolConfig]):
                 Configuration for tool use.
@@ -694,6 +698,7 @@ class Completion(APIEngine):
             labels=labels,
             max_runtime_sec=max_runtime_sec,
             tool_config=tool_config,
+            priority=priority,
         ).model_dump(exclude_none=True, by_alias=True)
         response = cls.post_sync(
             resource_name="v2/batch-completions",

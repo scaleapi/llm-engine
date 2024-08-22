@@ -251,7 +251,7 @@ class BatchCompletionsJob(BaseModel):
         description="""Model configuration for the batch inference. Hardware configurations are inferred.""",
     )
 
-    priority: Optional[int] = Field(
+    priority: Optional[str] = Field(
         default=None,
         description="Priority of the batch inference job. Default to None.",
     )
@@ -267,7 +267,7 @@ CreateBatchCompletionsV2Response: TypeAlias = BatchCompletionsJob
 
 class UpdateBatchCompletionsV2Request(BaseModel):
     job_id: str = Field(description="ID of the batch completions job")
-    priority: Optional[int] = Field(
+    priority: Optional[str] = Field(
         default=None,
         description="Priority of the batch inference job. Default to None.",
     )
