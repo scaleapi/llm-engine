@@ -29,3 +29,14 @@ datamodel-codegen \
     --use-annotated
 
 sed -i '1s/^/# mypy: ignore-errors\n/' ${CLIENT_DIR}/openai.py
+
+# Add conditional import for pydantic v1 and v2
+# replace line starting with 'from pydantic <import stuff>' with the following multiline python code
+# PYDANTIC_V2 = hasattr(pydantic, "VERSION") and pydantic.VERSION.startswith("2.")
+# 
+# if PYDANTIC_V2:
+#     from pydantic.v1 <import stuff>
+# 
+# else:
+#     from pydantic <import stuff>
+sed -i -E '/^from pydantic import /{s/^from pydantic import (.*)$/import pydantic\nPYDANTIC_V2 = hasattr(pydantic, "VERSION") and pydantic.VERSION.startswith("2.")\nif PYDANTIC_V2:\n    from pydantic.v1 import \1  # noqa: F401\nelse:\n    from pydantic import \1  # type: ignore # noqa: F401/}' ${CLIENT_DIR}/openai.py
