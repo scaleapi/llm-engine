@@ -115,7 +115,7 @@ async def generate_v1_completions(
 
     generator = merge_async_iterators(*results_generators)
     outputs: List[Optional[CompletionV1Output]] = [None] * len(prompts)
-    tokens: List[List[TokenOutput]] = [list()] * len(prompts)
+    tokens: List[List[TokenOutput]] = [list() for _ in prompts]
     async for i, res in generator:
         # There should only be one output
         output = res.outputs[-1]
