@@ -690,8 +690,10 @@ class Completion(APIEngine):
             ```python
             from llmengine import Completion
 
-            response = Completion.get_batch_completion(job_id="job-id")
-            print(response)
+            response = Completion.get_batch_completion(job_id="job_id")
+            print(
+                f"Current job status for {job_id} is {job.status}"
+            )
             ```
         """
         response = cls._get(
