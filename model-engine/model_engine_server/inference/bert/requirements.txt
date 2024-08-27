@@ -1,0 +1,6 @@
+datasets==2.15.0
+tokenizers==0.15.0
+transformers==4.35.2
+optimum[onnxruntime-gpu]==1.21.4
+fastapi==0.112.2
+uvicorn==0.30.6

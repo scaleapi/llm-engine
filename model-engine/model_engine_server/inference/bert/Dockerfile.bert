@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1
+# 23.07-py3 is the latest version of Triton using CUDA 12.1
+FROM nvcr.io/nvidia/tritonserver:23.07-py3 AS base
+
+RUN apt-get update \
+    && apt-get install -y wget gdb psmisc dumb-init \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* \
+    apt-get clean
+
+# RUN pip uninstall onnxruntime
+RUN pip install torch==2.1.1
+# RUN pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+WORKDIR /workspace
+
+FROM base AS bert
+
+COPY model-engine/model_engine_server/inference/bert/requirements.txt /workspace/requirements.txt
+RUN pip install -r /workspace/requirements.txt
+
+
+COPY model-engine/model_engine_server/inference/bert/bert_server.py /workspace/bert_server.py
+
+# Need to override entrypoint from parent image
+ENTRYPOINT ["/bin/env"]
