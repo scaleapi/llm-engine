@@ -8,9 +8,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     apt-get clean
 
-# RUN pip uninstall onnxruntime
 RUN pip install torch==2.1.1
-# RUN pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
@@ -20,6 +18,7 @@ FROM base AS bert
 
 COPY model-engine/model_engine_server/inference/bert/requirements.txt /workspace/requirements.txt
 RUN pip install -r /workspace/requirements.txt
+# RUN pip install --upgrade-strategy eager optimum[onnxruntime,onnxruntime-gpu]==1.21.4
 
 
 COPY model-engine/model_engine_server/inference/bert/bert_server.py /workspace/bert_server.py
