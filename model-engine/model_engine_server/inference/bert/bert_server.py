@@ -1,31 +1,28 @@
-import time
-from typing import List
-from tqdm import tqdm
-from transformers import AutoTokenizer, pipeline
-from fastapi import FastAPI, HTTPException, Request, Response
-from pydantic import BaseModel
-import uvicorn
 import subprocess
+import time
 from logging import Logger
-from fastapi import HTTPException
-import torch
-from optimum.onnxruntime import ORTModelForSequenceClassification
-from transformers import (
-    AutoTokenizer,
-    pipeline,
-    PreTrainedModel,
-    PreTrainedTokenizer,
-    Pipeline,
-)
+from typing import List
 
 import onnxruntime as ort
+import torch
+import uvicorn
+from fastapi import FastAPI, HTTPException, Request, Response
+from optimum.onnxruntime import ORTModelForSequenceClassification
+from pydantic import BaseModel
+from tqdm import tqdm
+from transformers import (
+    AutoTokenizer,
+    Pipeline,
+    PreTrainedModel,
+    PreTrainedTokenizer,
+    pipeline,
+)
 
-
-logger = Logger("vllm_server")
+logger = Logger("bert_server")
 
 TIMEOUT_KEEP_ALIVE = 5  # seconds.
 TIMEOUT_TO_PREVENT_DEADLOCK = 1  # seconds
-BATCH_SIZE=20
+BATCH_SIZE = 40
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -46,10 +43,10 @@ def predict_batch(req: InputBatch) -> Response:
     global classifier
 
     try:
-        for out in tqdm(classifier(req.text, batch_size=BATCH_SIZE), total=len(req.text)):
-            print(f"TTFT: {time.time() - start}")
-            print(out)
-            yield {"prediction": out}
+        result = classifier(req.text, batch_size=BATCH_SIZE)
+        print(f"TTFT: {time.time() - start}")
+        return {"prediction": result}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -62,6 +59,8 @@ def predict(req: InputText) -> Response:
 
     try:
         result = classifier(req.text)
+        print(f"TTFT: {time.time() - start}")
+
         print(result)
         return {"prediction": result}
     except Exception as e:
@@ -130,10 +129,15 @@ def parse_args():
     return parser.parse_args()
 
 
-def init_classifier():
+def init_classifier_onnx():
     from optimum.onnxruntime import ORTModelForSequenceClassification
-    from transformers import AutoTokenizer, pipeline
+    from transformers import AutoTokenizer, pipeline, AutoModelForSequenceClassification
+    import torch
+    import onnxruntime
 
+    print(onnxruntime.get_available_providers())
+    print(onnxruntime.get_device())
+    print(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
     tokenizer = AutoTokenizer.from_pretrained(
         "ProtectAI/deberta-v3-base-prompt-injection", subfolder="onnx"
     )
@@ -143,16 +147,37 @@ def init_classifier():
         export=False,
         subfolder="onnx",
         file_name="model.onnx",
+        use_io_binding=True,
     )
-
     classifier = pipeline(
         task="text-classification",
         model=model,
         tokenizer=tokenizer,
         truncation=True,
-        max_length=512 * BATCH_SIZE,
+        max_length=512 * 100,
+        device=torch.device("cuda"),
     )
+    return classifier
 
+
+def init_classifier():
+    from transformers import AutoTokenizer, pipeline, AutoModelForSequenceClassification
+    import torch
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        "ProtectAI/deberta-v3-base-prompt-injection"
+    )
+    model = AutoModelForSequenceClassification.from_pretrained(
+        "ProtectAI/deberta-v3-base-prompt-injection"
+    )
+    classifier = pipeline(
+        task="text-classification",
+        model=model,
+        tokenizer=tokenizer,
+        truncation=True,
+        max_length=512 * 100,
+        device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+    )
     return classifier
 
 
@@ -162,8 +187,11 @@ if __name__ == "__main__":
     args = parse_args()
 
     global classifier
-    classifier = init_classifier()
-    print(classifier("hello world"))
+    classifier = init_classifier_onnx()
+
+    # result = classifier(req.text, batch_size=BATCH_SIZE)
+
+    # print(classifier("hello world"))
 
     uvicorn.run(
         app,
