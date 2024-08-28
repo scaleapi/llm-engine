@@ -38,10 +38,13 @@ MAX_CONTEXT_WINDOW = 512
 PROMPT_SIZE = 512
 
 SINGLE_REQUEST_TIMEOUT = 90  # They impose a timeout of 90 seconds for sync
-SINGLE_REQUEST_STREAMING_TIMEOUT = 300  # I'm gonna impose a timeout of 300 seconds for streaming
+SINGLE_REQUEST_STREAMING_TIMEOUT = (
+    300  # I'm gonna impose a timeout of 300 seconds for streaming
+)
 
 
 def generate_prompt(num, hf_model):
+    random.seed(random.randint(0, 1000000))
     text = lorem.words(num // 2)  # Roughly 2 tokens per lorem word
     tokenizer = AutoTokenizer.from_pretrained(hf_model)
     return tokenizer.decode(tokenizer.encode(text)[: num - 2])
@@ -171,7 +174,13 @@ def run_benchmark(
         requests = [{"text": prompt} for prompt in prompts]
     else:
         requests = [
-            {"text": (prompts[i : i + batch_size] if i + batch_size < num_trials else prompts[i:])}
+            {
+                "text": (
+                    prompts[i : i + batch_size]
+                    if i + batch_size < num_trials
+                    else prompts[i:]
+                )
+            }
             for i in range(0, num_trials, batch_size)
         ]
 
@@ -187,17 +196,22 @@ def run_benchmark(
     completion_tokens = [
         result["num_completion_tokens"]
         for result in results
-        if "num_completion_tokens" in result and result["num_completion_tokens"] is not None
+        if "num_completion_tokens" in result
+        and result["num_completion_tokens"] is not None
     ]
     num_sampled_tokens = sum(completion_tokens)
     n = len(results)
     # time_to_process_prompt = []
     # time_per_completion = []
     time_to_first_token = []
-    inter_token_latency = []  # one value per request, average inter-token latency in the request
+    inter_token_latency = (
+        []
+    )  # one value per request, average inter-token latency in the request
     total_request_time = []
     status_codes = []
-    all_inter_token_latencies = []  # one value per token (except the first generated token)
+    all_inter_token_latencies = (
+        []
+    )  # one value per token (except the first generated token)
     for result in results:
         #     avg_time_per_token = (result["total_time"] - result["time_to_first_token"]) / (
         #         result["num_completion_tokens"] - 1
@@ -379,7 +393,9 @@ def run_benchmarks_bulk(
     try:
         for setting in settings:
             if verbose:
-                print(f"Running benchmark with {setting[0]} trials and {setting[1]} concurrency")
+                print(
+                    f"Running benchmark with {setting[0]} trials and {setting[1]} concurrency"
+                )
             if extra_verbose:
                 VERBOSE = True  # Hacky way of not needing to pass verbose around
 
