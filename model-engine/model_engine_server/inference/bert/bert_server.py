@@ -3,26 +3,20 @@ import time
 from logging import Logger
 from typing import List
 
-import onnxruntime as ort
-import torch
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request, Response
-from optimum.onnxruntime import ORTModelForSequenceClassification
+from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
-from tqdm import tqdm
-from transformers import (
-    AutoTokenizer,
-    Pipeline,
-    PreTrainedModel,
-    PreTrainedTokenizer,
-    pipeline,
-)
+
 
 logger = Logger("bert_server")
 
 TIMEOUT_KEEP_ALIVE = 5  # seconds.
 TIMEOUT_TO_PREVENT_DEADLOCK = 1  # seconds
 BATCH_SIZE = 40
+
+
+model_name = "protectai/deberta-v3-base-prompt-injection-v2"
+model_name = "ProtectAI/deberta-v3-base-prompt-injection"
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -138,12 +132,10 @@ def init_classifier_onnx():
     print(onnxruntime.get_available_providers())
     print(onnxruntime.get_device())
     print(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
-    tokenizer = AutoTokenizer.from_pretrained(
-        "ProtectAI/deberta-v3-base-prompt-injection", subfolder="onnx"
-    )
+    tokenizer = AutoTokenizer.from_pretrained(model_name, subfolder="onnx")
     tokenizer.model_input_names = ["input_ids", "attention_mask"]
     model = ORTModelForSequenceClassification.from_pretrained(
-        "ProtectAI/deberta-v3-base-prompt-injection",
+        model_name,
         export=False,
         subfolder="onnx",
         file_name="model.onnx",
@@ -164,12 +156,8 @@ def init_classifier():
     from transformers import AutoTokenizer, pipeline, AutoModelForSequenceClassification
     import torch
 
-    tokenizer = AutoTokenizer.from_pretrained(
-        "ProtectAI/deberta-v3-base-prompt-injection"
-    )
-    model = AutoModelForSequenceClassification.from_pretrained(
-        "ProtectAI/deberta-v3-base-prompt-injection"
-    )
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
     classifier = pipeline(
         task="text-classification",
         model=model,
