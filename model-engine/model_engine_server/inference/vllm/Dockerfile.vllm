@@ -41,3 +41,15 @@ COPY model-engine/model_engine_server/inference/batch_inference/vllm_batch.py /w
 
 # Need to override entrypoint from parent image
 ENTRYPOINT ["/bin/env"]
+
+FROM base AS vllm_batch_v2
+
+COPY model-engine/model_engine_server/inference/vllm/requirements-batch.txt /workspace/requirements.txt
+RUN pip install -r requirements.txt
+
+COPY model-engine /workspace/model-engine
+RUN pip install -e /workspace/model-engine
+COPY model-engine/model_engine_server/inference/vllm/vllm_batch.py /workspace/vllm_batch.py
+
+# Need to override entrypoint from parent image
+ENTRYPOINT ["/bin/env"]

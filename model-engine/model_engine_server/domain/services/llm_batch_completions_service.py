@@ -3,7 +3,10 @@ from typing import Dict, Optional
 
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import CreateBatchCompletionsEngineRequest
-from model_engine_server.common.dtos.llms.batch_completion import BatchCompletionsJob
+from model_engine_server.common.dtos.llms.batch_completion import (
+    BatchCompletionsJob,
+    UpdateBatchCompletionsV2Request,
+)
 from model_engine_server.core.auth.authentication_repository import User
 
 
@@ -23,7 +26,6 @@ class LLMBatchCompletionsService(ABC):
         resource_requests: CreateDockerImageBatchJobResourceRequests,
         max_runtime_sec: int = 24 * 60 * 60,
         labels: Dict[str, str] = {},
-        priority: Optional[int] = 0,
         num_workers: Optional[int] = 1,
     ) -> BatchCompletionsJob:
         """
@@ -45,7 +47,7 @@ class LLMBatchCompletionsService(ABC):
         pass
 
     @abstractmethod
-    async def get_batch_job(self, batch_job_id: str) -> Optional[BatchCompletionsJob]:
+    async def get_batch_job(self, batch_job_id: str, user: User) -> Optional[BatchCompletionsJob]:
         """
         Get a batch job.
 
@@ -58,7 +60,22 @@ class LLMBatchCompletionsService(ABC):
         pass
 
     @abstractmethod
-    async def cancel_batch_job(self, batch_job_id: str) -> bool:
+    async def update_batch_job(
+        self, batch_job_id: str, request: UpdateBatchCompletionsV2Request, user: User
+    ) -> Optional[BatchCompletionsJob]:
+        """
+        Get a batch job.
+
+        Args:
+            batch_job_id: The ID of the batch job.
+
+        Returns:
+            The batch job, or None if it does not exist.
+        """
+        pass
+
+    @abstractmethod
+    async def cancel_batch_job(self, batch_job_id: str, user: User) -> bool:
         """
         Update a batch job.
 

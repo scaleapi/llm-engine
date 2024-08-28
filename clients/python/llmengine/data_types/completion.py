@@ -1,11 +1,7 @@
 from typing import Any, Dict, List, Optional
 
-from model_engine_server.common.pydantic_types import BaseModel, Field
-from model_engine_server.common.types.gen.openai import (
-    CreateCompletionRequest,
-    CreateCompletionResponse,
-)
-from typing_extensions import Annotated
+from .gen.openai import CreateCompletionRequest, CreateCompletionResponse
+from .pydantic_types import BaseModel, Field
 
 # Fields that are a part of OpenAI spec but are not supported by model engine
 UNSUPPORTED_FIELDS = ["service_tier"]
@@ -99,6 +95,7 @@ class CompletionOutput(BaseModel):
     """The text of the completion."""
 
     # We're not guaranteed to have `num_prompt_tokens` in the response in all cases, so to be safe, set a default.
+    # If we send request to api.spellbook.scale.com, we don't get this back.
     num_prompt_tokens: Optional[int] = None
     """Number of tokens in the prompt."""
 
@@ -114,7 +111,7 @@ class CompletionSyncV1Response(BaseModel):
     Response object for a synchronous prompt completion.
     """
 
-    request_id: Optional[str] = None
+    request_id: str
     """The unique ID of the corresponding Completion request. This `request_id` is generated on the server, and all logs 
     associated with the request are grouped by the `request_id`, which allows for easier troubleshooting of errors as
     follows:
@@ -123,7 +120,7 @@ class CompletionSyncV1Response(BaseModel):
     * When running the *self-hosted* LLM Engine, the `request_id` serves as a trace ID in your observability 
     provider."""
 
-    output: Optional[CompletionOutput] = None
+    output: CompletionOutput
     """Completion output."""
 
 
@@ -233,7 +230,7 @@ class CompletionStreamV1Response(BaseModel):
     Response object for a stream prompt completion task.
     """
 
-    request_id: Optional[str]
+    request_id: str
     """The unique ID of the corresponding Completion request. This `request_id` is generated on the server, and all logs 
     associated with the request are grouped by the `request_id`, which allows for easier troubleshooting of errors as
     follows:
@@ -289,35 +286,25 @@ class TokenUsage(BaseModel):
 
 
 class CompletionV2Request(CreateCompletionRequest):
-    model: Annotated[
-        str,
-        Field(
-            description="ID of the model to use.",
-            examples=["mixtral-8x7b-instruct"],
-        ),
-    ]
+    model: str = Field(
+        description="ID of the model to use.",
+        examples=["mixtral-8x7b-instruct"],
+    )
 
-    stream: Annotated[
-        Optional[bool],
-        Field(
-            False,
-            description="If set, partial message deltas will be sent. Tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format) as they become available, with the stream terminated by a `data: [DONE]` message. [Example Python code](https://cookbook.openai.com/examples/how_to_stream_completions).\n",
-        ),
-    ]
+    stream: Optional[bool] = Field(
+        False,
+        description="If set, partial message deltas will be sent. Tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format) as they become available, with the stream terminated by a `data: [DONE]` message. [Example Python code](https://cookbook.openai.com/examples/how_to_stream_completions).\n",
+    )
 
-    top_k: Annotated[
-        Optional[int],
-        Field(
-            None,
-            ge=-1,
-            description="Controls the number of top tokens to consider. -1 means consider all tokens.",
-        ),
-    ]
+    top_k: Optional[int] = Field(
+        None,
+        ge=-1,
+        description="Controls the number of top tokens to consider. -1 means consider all tokens.",
+    )
 
-    include_stop_str_in_output: Annotated[
-        Optional[bool],
-        Field(None, description="Whether to include the stop strings in output text."),
-    ]
+    include_stop_str_in_output: Optional[bool] = Field(
+        None, description="Whether to include the stop strings in output text."
+    )
 
 
 class CompletionV2Response(CreateCompletionResponse):
