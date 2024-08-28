@@ -190,7 +190,7 @@ jobs:
 executors:
   ubuntu-large:
     machine:
-      image: "ubuntu-2004:202201-02"
+      image: default
     resource_class: 2xlarge
 
 commands:
