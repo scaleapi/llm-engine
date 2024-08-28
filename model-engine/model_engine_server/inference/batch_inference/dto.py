@@ -1,4 +1,4 @@
-# This is a copy of model_engine_server.common.dtos.llm
+# This is a copy of model_engine_server.common.dtos.llms.batch_completion.py
 # This is done to decouple the pydantic requirements since vllm requires pydantic >2
 # while model engine is on 1.x
 from enum import Enum
@@ -69,10 +69,6 @@ class CreateBatchCompletionsModelConfig(BaseModel):
     """
     Path to the checkpoint to load the model from.
     """
-    labels: Dict[str, str]
-    """
-    Labels to attach to the batch inference job.
-    """
     num_shards: Optional[int] = 1
     """
     Suggested number of shards to distribute the model. When not specified, will infer the number of shards based on model config.
@@ -122,6 +118,9 @@ class CreateBatchCompletionsRequest(BaseModel):
     """
     Path to the output file. The output file will be a JSON file of type List[CompletionOutput].
     """
+    labels: Dict[str, str] = Field(
+        default={}, description="Labels to attach to the batch inference job."
+    )
     content: Optional[CreateBatchCompletionsRequestContent] = None
     """
     Either `input_data_path` or `content` needs to be provided.
@@ -142,14 +141,33 @@ class CreateBatchCompletionsRequest(BaseModel):
     NOTE: this config is highly experimental and signature will change significantly in future iterations.
     """
 
+    max_context_length: Optional[int] = Field(
+        default=None,
+        ge=1,
+        description="Maximum context length to use for the model. Defaults to the max allowed by the model",
+    )
 
-class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
+
+class VLLMEngineAdditionalArgs(BaseModel):
+    max_gpu_memory_utilization: Optional[float] = Field(
+        default=0.9,
+        le=1.0,
+        description="Maximum GPU memory utilization for the model. Default to 90%.",
+    )
+
+    attention_backend: Optional[str] = Field(
+        default=None,
+        description="Attention backend to use for vLLM. Default to None.",
+    )
+
+
+class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest, VLLMEngineAdditionalArgs):
     """
-    Internal model for representing request to the llm engine. This contains additional fields that we want
+    Internal model for representing request to the inference framework. This contains additional fields that we want
     hidden from the DTO exposed to the client.
     """
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
 
     model_cfg: CreateBatchCompletionsModelConfig = Field(alias="model_config")
     """
@@ -159,9 +177,4 @@ class CreateBatchCompletionsEngineRequest(CreateBatchCompletionsRequest):
     reserves model_config as a keyword.
 
     We alias `model_config` for deserialization for backwards compatibility.
-    """
-
-    max_gpu_memory_utilization: Optional[float] = Field(default=0.9, le=1.0)
-    """
-    Maximum GPU memory utilization for the batch inference. Default to 90%.
     """

@@ -1,18 +1,11 @@
-# Make sure to keep this in sync with inference/batch_inference/dto.py.
 from enum import Enum
 from typing import Dict, List, Optional, Union
 
-from model_engine_server.common.dtos.llms.chat_completion import (
-    ChatCompletionV2Request,
-    ChatCompletionV2Response,
-)
-from model_engine_server.common.dtos.llms.completion import (
-    CompletionOutput,
-    CompletionV2Request,
-    CompletionV2Response,
-)
-from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Field
 from typing_extensions import TypeAlias
+
+from .chat_completion import ChatCompletionV2Request, ChatCompletionV2Response
+from .completion import CompletionOutput, CompletionV2Request, CompletionV2Response
+from .pydantic_types import BaseModel, Field
 
 
 # Common DTOs for batch completions
@@ -172,12 +165,9 @@ class CreateBatchCompletionsV1Request(BatchCompletionsRequestBase):
     Either `input_data_path` or `content` needs to be provided.
     When input_data_path is provided, the input file should be a JSON file of type BatchCompletionsRequestContent.
     """
-    model_cfg: CreateBatchCompletionsV1ModelConfig = Field(alias="model_config")
+    model_config: CreateBatchCompletionsV1ModelConfig = Field(alias="model_config")
     """
     Model configuration for the batch inference. Hardware configurations are inferred.
-
-    We rename model_config from api to model_cfg in engine since engine uses pydantic v2 which
-    reserves model_config as a keyword.
     """
 
 
@@ -202,6 +192,7 @@ CreateBatchCompletionsV2RequestContent: TypeAlias = Union[
     List[FilteredCompletionV2Request], List[FilteredChatCompletionV2Request]
 ]
 CreateBatchCompletionsV2ModelConfig: TypeAlias = BatchCompletionsModelConfig
+
 BatchCompletionContent = Union[
     CreateBatchCompletionsV1RequestContent, CreateBatchCompletionsV2RequestContent
 ]
@@ -220,10 +211,7 @@ When input_data_path is provided, the input file should be a JSON file of type L
 """,
     )
 
-    # We rename model_config from api to model_cfg in engine since engine uses pydantic v2 which
-    #  reserves model_config as a keyword.
-    model_cfg: BatchCompletionsModelConfig = Field(
-        alias="model_config",
+    model_config: BatchCompletionsModelConfig = Field(
         description="""Model configuration for the batch inference. Hardware configurations are inferred.""",
     )
 
@@ -247,10 +235,7 @@ class BatchCompletionsJob(BaseModel):
         description="Path to the output file. The output file will be a JSON file of type List[CompletionOutput]."
     )
 
-    # We rename model_config from api to model_cfg in engine since engine uses pydantic v2 which
-    #  reserves model_config as a keyword.
-    model_cfg: BatchCompletionsModelConfig = Field(
-        alias="model_config",
+    model_config: BatchCompletionsModelConfig = Field(
         description="""Model configuration for the batch inference. Hardware configurations are inferred.""",
     )
 
@@ -294,68 +279,3 @@ class ListBatchCompletionV2Response(BaseModel):
 
 class GetBatchCompletionV2Response(BaseModel):
     job: BatchCompletionsJob
-
-
-class VLLMEngineAdditionalArgs(BaseModel):
-    max_gpu_memory_utilization: Optional[float] = Field(
-        default=0.9,
-        le=1.0,
-        description="Maximum GPU memory utilization for the batch inference. Default to 90%.",
-    )
-
-    attention_backend: Optional[str] = Field(
-        default=None,
-        description="Attention backend to use for vLLM. Default to None.",
-    )
-
-
-class CreateBatchCompletionsEngineRequest(BatchCompletionsRequestBase, VLLMEngineAdditionalArgs):
-    """
-    Internal model for representing request to the inference framework. This contains additional fields that we want
-    hidden from the DTO exposed to the client.
-    """
-
-    model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
-
-    content: Optional[BatchCompletionContent] = Field(
-        default=None,
-        description="Content is a union of the content from v1 and v2 requests.",
-    )
-
-    model_cfg: BatchCompletionsModelConfig = Field(
-        alias="model_config",
-        description="""Model configuration for the batch inference. Hardware configurations are inferred.""",
-    )
-
-    @staticmethod
-    def from_api_v1(
-        request: CreateBatchCompletionsV1Request,
-    ) -> "CreateBatchCompletionsEngineRequest":
-        return CreateBatchCompletionsEngineRequest(
-            input_data_path=request.input_data_path,
-            output_data_path=request.output_data_path,
-            content=request.content,
-            model_config=request.model_cfg,
-            model_cfg=request.model_cfg,
-            data_parallelism=request.data_parallelism,
-            max_runtime_sec=request.max_runtime_sec,
-            tool_config=request.tool_config,
-            labels=request.model_cfg.labels,
-            priority=request.priority,
-        )
-
-    @staticmethod
-    def from_api_v2(
-        request: CreateBatchCompletionsV2Request,
-    ) -> "CreateBatchCompletionsEngineRequest":
-        return CreateBatchCompletionsEngineRequest(
-            input_data_path=request.input_data_path,
-            output_data_path=request.output_data_path,
-            content=request.content,
-            model_config=request.model_cfg,
-            model_cfg=request.model_cfg,
-            data_parallelism=request.data_parallelism,
-            max_runtime_sec=request.max_runtime_sec,
-            labels=request.labels,
-            priority=request.priority,
-        )

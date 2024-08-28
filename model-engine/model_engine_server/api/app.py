@@ -21,6 +21,7 @@ from model_engine_server.api.model_endpoints_docs_v1 import model_endpoints_docs
 from model_engine_server.api.model_endpoints_v1 import model_endpoint_router_v1
 from model_engine_server.api.tasks_v1 import inference_task_router_v1
 from model_engine_server.api.triggers_v1 import trigger_router_v1
+from model_engine_server.api.v2 import llm_router_v2
 from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
 from model_engine_server.core.loggers import (
     LoggerTagKey,
@@ -83,7 +84,10 @@ class CustomMiddleware(BaseHTTPMiddleware):
 
 
 app = FastAPI(
-    title="launch", version="1.0.0", redoc_url="/api", middleware=[Middleware(CustomMiddleware)]
+    title="launch",
+    version="1.0.0",
+    redoc_url="/api",
+    middleware=[Middleware(CustomMiddleware)],
 )
 
 app.include_router(batch_job_router_v1)
@@ -96,6 +100,7 @@ app.include_router(docker_image_batch_job_bundle_router_v1)
 app.include_router(llm_router_v1)
 app.include_router(file_router_v1)
 app.include_router(trigger_router_v1)
+app.include_router(llm_router_v2)
 
 
 # TODO: Remove this once we have a better way to serve internal docs

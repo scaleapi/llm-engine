@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0beta35"
+__version__ = "0.0.0beta38"
 
 import os
 from typing import Sequence
@@ -20,19 +20,37 @@ from typing import Sequence
 import requests
 from llmengine.completion import Completion
 from llmengine.data_types import (
+    BatchCompletionsJob,
+    BatchCompletionsJobStatus,
+    BatchCompletionsModelConfig,
     CancelFineTuneResponse,
+    ChatCompletionV2Request,
+    ChatCompletionV2Response,
     CompletionOutput,
     CompletionStreamOutput,
     CompletionStreamResponse,
+    CompletionStreamV1Request,
+    CompletionStreamV1Response,
     CompletionSyncResponse,
+    CompletionSyncV1Request,
+    CompletionSyncV1Response,
     CreateBatchCompletionsModelConfig,
     CreateBatchCompletionsRequest,
     CreateBatchCompletionsRequestContent,
     CreateBatchCompletionsResponse,
+    CreateBatchCompletionsV1Request,
+    CreateBatchCompletionsV1RequestContent,
+    CreateBatchCompletionsV1Response,
+    CreateBatchCompletionsV2ModelConfig,
+    CreateBatchCompletionsV2Request,
+    CreateBatchCompletionsV2RequestContent,
+    CreateBatchCompletionsV2Response,
     CreateFineTuneRequest,
     CreateFineTuneResponse,
     DeleteFileResponse,
     DeleteLLMEndpointResponse,
+    FilteredChatCompletionV2Request,
+    FilteredCompletionV2Request,
     GetFileContentResponse,
     GetFileResponse,
     GetFineTuneResponse,
@@ -43,13 +61,26 @@ from llmengine.data_types import (
     ModelDownloadRequest,
     ModelDownloadResponse,
     UploadFileResponse,
+    VLLMAdditionalFields,
 )
 from llmengine.file import File
 from llmengine.fine_tuning import FineTune
 from llmengine.model import Model
 
 __all__: Sequence[str] = (
+    "BatchCompletionsJob",
+    "CreateBatchCompletionsV2Response",
+    "FilteredCompletionV2Request",
+    "FilteredChatCompletionV2Request",
+    "BatchCompletionsJobStatus",
+    "CompletionSyncV1Request",
+    "CompletionSyncV1Response",
+    "CompletionStreamV1Request",
+    "CompletionStreamV1Response",
     "CancelFineTuneResponse",
+    "ChatCompletionV2Request",
+    "ChatCompletionV2Response",
+    "VLLMAdditionalFields",
     "Completion",
     "CompletionOutput",
     "CompletionStreamOutput",
@@ -59,6 +90,13 @@ __all__: Sequence[str] = (
     "CreateBatchCompletionsRequest",
     "CreateBatchCompletionsRequestContent",
     "CreateBatchCompletionsResponse",
+    "CreateBatchCompletionsV1Request",
+    "CreateBatchCompletionsV1RequestContent",
+    "CreateBatchCompletionsV1Response",
+    "CreateBatchCompletionsV2Request",
+    "CreateBatchCompletionsV2RequestContent",
+    "CreateBatchCompletionsV2ModelConfig",
+    "BatchCompletionsModelConfig",
     "CreateFineTuneRequest",
     "CreateFineTuneResponse",
     "DeleteFileResponse",

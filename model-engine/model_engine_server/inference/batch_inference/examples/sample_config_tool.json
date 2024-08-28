@@ -1,0 +1,16 @@
+{
+    "input_data_path": "./sample_data_tool.json",
+    "output_data_path": "./sample_output_tool.json",
+    "model_config": {
+        "model": "gemma-2-2b-it",
+        "checkpoint_path": "/workspace/model_files/gemma-2-2b-it",
+        "num_shards": 1,
+        "labels": {
+            "team": "my_team"
+        }
+    },
+    "data_parallelism": 2,
+    "tool_config": {
+        "name": "code_evaluator"
+    }
+}
