@@ -51,6 +51,7 @@ Scale hosts the following models in the LLM Engine Model Zoo:
 | `deepseek-coder-v2-instruct`      | ✅                       |                            | vllm                                       | 131072                                         |
 | `deepseek-coder-v2-lite`          | ✅                       |                            | vllm                                       | 131072                                         |
 | `deepseek-coder-v2-lite-instruct` | ✅                       |                            | vllm                                       | 131072                                         |
+| `qwen2-72b-instruct`              | ✅                       |                            | vllm                                       | 32768                                          |
  
 
 ## Usage
