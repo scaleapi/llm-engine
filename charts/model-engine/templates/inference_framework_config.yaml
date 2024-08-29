@@ -12,5 +12,7 @@ data:
   deepspeed: "latest"
   text_generation_inference: "latest"
   vllm: "latest"
+  vllm_batch: "latest"
+  vllm_batch_v2: "latest"
   lightllm: "latest"
   tensorrt_llm: "latest"

@@ -39,7 +39,13 @@ from model_engine_server.common.dtos.llms import (
     UpdateLLMModelEndpointV1Request,
     UpdateLLMModelEndpointV1Response,
 )
-from model_engine_server.common.dtos.llms.batch_completion import VLLMEngineAdditionalArgs
+from model_engine_server.common.dtos.llms.batch_completion import (
+    CancelBatchCompletionsV2Response,
+    GetBatchCompletionV2Response,
+    UpdateBatchCompletionsV2Request,
+    UpdateBatchCompletionsV2Response,
+    VLLMEngineAdditionalArgs,
+)
 from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Request
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
@@ -265,10 +271,10 @@ DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
 SERVICE_NAME = "model-engine"
 SERVICE_IDENTIFIER = os.getenv("SERVICE_IDENTIFIER")
-if SERVICE_IDENTIFIER:
-    SERVICE_NAME += f"-{SERVICE_IDENTIFIER}"
 LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = f"{SERVICE_NAME}-inference-framework-latest-config"
 RECOMMENDED_HARDWARE_CONFIG_MAP_NAME = f"{SERVICE_NAME}-recommended-hardware-config"
+if SERVICE_IDENTIFIER:
+    SERVICE_NAME += f"-{SERVICE_IDENTIFIER}"
 
 
 def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
@@ -279,12 +285,23 @@ def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRep
     return len(tokenizer.encode(input))
 
 
+async def _get_latest_batch_v2_tag(inference_framework: LLMInferenceFramework) -> str:
+    config_map = await read_config_map(LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME)
+    print(config_map)
+    batch_key = f"{inference_framework}_batch_v2"
+    if batch_key not in config_map:
+        raise LatestImageTagNotFoundException(
+            f"Could not find latest batch job tag for inference framework {inference_framework}. key: {batch_key}"
+        )
+    return config_map[batch_key]
+
+
 async def _get_latest_batch_tag(inference_framework: LLMInferenceFramework) -> str:
     config_map = await read_config_map(LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME)
     batch_key = f"{inference_framework}_batch"
     if batch_key not in config_map:
         raise LatestImageTagNotFoundException(
-            f"Could not find latest batch job tag for inference framework {inference_framework}."
+            f"Could not find latest batch job tag for inference framework {inference_framework}. key: {batch_key}"
         )
     return config_map[batch_key]
 
@@ -2672,7 +2689,7 @@ class CreateBatchCompletionsV2UseCase:
         self.llm_artifact_gateway = llm_artifact_gateway
 
     async def execute(
-        self, user: User, request: CreateBatchCompletionsV2Request
+        self, request: CreateBatchCompletionsV2Request, user: User
     ) -> CreateBatchCompletionsV2Response:
         request.model_cfg.checkpoint_path = get_checkpoint_path(
             request.model_cfg.model, request.model_cfg.checkpoint_path
@@ -2702,7 +2719,7 @@ class CreateBatchCompletionsV2UseCase:
 
         # Right now we only support VLLM for batch inference. Refactor this if we support more inference frameworks.
         image_repo = hmi_config.batch_inference_vllm_repository
-        image_tag = await _get_latest_batch_tag(LLMInferenceFramework.VLLM)
+        image_tag = await _get_latest_batch_v2_tag(LLMInferenceFramework.VLLM)
 
         additional_engine_args = infer_addition_engine_args_from_model_name(
             engine_request.model_cfg.model
@@ -2720,6 +2737,66 @@ class CreateBatchCompletionsV2UseCase:
             resource_requests=hardware,
             labels=engine_request.labels,
             max_runtime_sec=engine_request.max_runtime_sec,
-            priority=engine_request.priority,
             num_workers=engine_request.data_parallelism,
+        )
+
+
+class GetBatchCompletionV2UseCase:
+    def __init__(self, llm_batch_completions_service: LLMBatchCompletionsService):
+        self.llm_batch_completions_service = llm_batch_completions_service
+
+    async def execute(
+        self,
+        batch_completion_id: str,
+        user: User,
+    ) -> GetBatchCompletionV2Response:
+        job = await self.llm_batch_completions_service.get_batch_job(
+            batch_completion_id,
+            user=user,
+        )
+
+        if not job:
+            raise ObjectNotFoundException(f"Batch completion {batch_completion_id} not found.")
+
+        return GetBatchCompletionV2Response(job=job)
+
+
+class UpdateBatchCompletionV2UseCase:
+    def __init__(self, llm_batch_completions_service: LLMBatchCompletionsService):
+        self.llm_batch_completions_service = llm_batch_completions_service
+
+    async def execute(
+        self,
+        batch_completion_id: str,
+        request: UpdateBatchCompletionsV2Request,
+        user: User,
+    ) -> UpdateBatchCompletionsV2Response:
+        result = await self.llm_batch_completions_service.update_batch_job(
+            batch_completion_id,
+            user=user,
+            request=request,
+        )
+        if not result:
+            raise ObjectNotFoundException(f"Batch completion {batch_completion_id} not found.")
+
+        return UpdateBatchCompletionsV2Response(
+            **result.model_dump(by_alias=True, exclude_none=True),
+            success=True,
+        )
+
+
+class CancelBatchCompletionV2UseCase:
+    def __init__(self, llm_batch_completions_service: LLMBatchCompletionsService):
+        self.llm_batch_completions_service = llm_batch_completions_service
+
+    async def execute(
+        self,
+        batch_completion_id: str,
+        user: User,
+    ) -> CancelBatchCompletionsV2Response:
+        return CancelBatchCompletionsV2Response(
+            success=await self.llm_batch_completions_service.cancel_batch_job(
+                batch_completion_id,
+                user=user,
+            )
         )

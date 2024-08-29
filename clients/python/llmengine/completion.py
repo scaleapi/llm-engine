@@ -1,15 +1,18 @@
-from typing import Any, AsyncIterable, Dict, Iterator, List, Optional, Union
+from typing import Any, AsyncIterable, Dict, Iterator, List, Optional, Union, cast
 
 from llmengine.api_engine import APIEngine
 from llmengine.data_types import (
+    BatchCompletionContent,
     CompletionStreamResponse,
     CompletionStreamV1Request,
     CompletionSyncResponse,
     CompletionSyncV1Request,
     CreateBatchCompletionsModelConfig,
-    CreateBatchCompletionsRequest,
-    CreateBatchCompletionsRequestContent,
-    CreateBatchCompletionsResponse,
+    CreateBatchCompletionsV1Request,
+    CreateBatchCompletionsV1RequestContent,
+    CreateBatchCompletionsV1Response,
+    CreateBatchCompletionsV2Request,
+    CreateBatchCompletionsV2Response,
     ToolConfig,
 )
 
@@ -475,13 +478,16 @@ class Completion(APIEngine):
         cls,
         output_data_path: str,
         model_config: CreateBatchCompletionsModelConfig,
-        content: Optional[CreateBatchCompletionsRequestContent] = None,
+        content: Optional[BatchCompletionContent] = None,
         input_data_path: Optional[str] = None,
         data_parallelism: int = 1,
         max_runtime_sec: int = 24 * 3600,
+        labels: Optional[Dict[str, str]] = None,
+        priority: Optional[str] = None,
+        use_v2: bool = False,
         tool_config: Optional[ToolConfig] = None,
         request_headers: Optional[Dict[str, str]] = None,
-    ) -> CreateBatchCompletionsResponse:
+    ) -> Union[CreateBatchCompletionsV1Response, CreateBatchCompletionsV2Response]:
         """
         Creates a batch completion for the provided input data. The job runs offline and does not depend on an existing model endpoint.
 
@@ -503,8 +509,14 @@ class Completion(APIEngine):
             data_parallelism (int):
                 The number of parallel jobs to run. Data will be evenly distributed to the jobs. Defaults to 1.
 
+            priority (str):
+                Priority of the batch inference job. Default to None.
+
             max_runtime_sec (int):
                 The maximum runtime of the batch completion in seconds. Defaults to 24 hours.
+
+            use_v2 (bool):
+                Whether to use the v2 batch completion API. Defaults to False.
 
             tool_config (Optional[ToolConfig]):
                 Configuration for tool use.
@@ -579,20 +591,144 @@ class Completion(APIEngine):
             )
             print(response.json())
             ```
+
+        === "V2 Batch completions with prompts in the request"
+            ```python
+            from llmengine import Completion
+            from llmengine.data_types import CreateBatchCompletionsModelConfig, FilteredChatCompletionV2Request
+
+            model_config = CreateBatchCompletionsModelConfig(
+                model="gemma-2-2b-it",
+                checkpoint_path="s3://path-to-checkpoint",
+            )
+
+            content = {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "What is a good place for travel in the US?",
+                    },
+                    {"role": "assistant", "content": "California."},
+                    {"role": "user", "content": "What can I do in California?"},
+                ],
+                "logprobs": True,
+            }
+
+            response = Completion.batch_create(
+                output_data_path="testoutput",
+                model_config=model_config,
+                content=[FilteredChatCompletionV2Request(**content)],
+                use_v2=True,
+                labels={"team": "my-team", "product": "my-product"},
+            )
+
+            print(response.json())
         """
-        data = CreateBatchCompletionsRequest(
-            model_config=model_config,
-            content=content,
-            input_data_path=input_data_path,
-            output_data_path=output_data_path,
-            data_parallelism=data_parallelism,
-            max_runtime_sec=max_runtime_sec,
-            tool_config=tool_config,
-        ).dict()
-        response = cls.post_sync(
-            resource_name="v1/llm/batch-completions",
-            data=data,
+        labels = labels if labels else model_config.labels
+        if use_v2:
+            data = CreateBatchCompletionsV2Request(
+                model_config=model_config,
+                content=content,
+                input_data_path=input_data_path,
+                output_data_path=output_data_path,
+                data_parallelism=data_parallelism,
+                labels=labels,
+                max_runtime_sec=max_runtime_sec,
+                tool_config=tool_config,
+                priority=priority,
+            ).dict()
+            response = cls.post_sync(
+                resource_name="v2/batch-completions",
+                data=data,
+                timeout=HTTP_TIMEOUT,
+                headers=request_headers,
+            )
+            return CreateBatchCompletionsV2Response.parse_obj(response)
+        else:
+            if input_data_path is None and not isinstance(
+                content, CreateBatchCompletionsV1RequestContent
+            ):
+                raise ValueError(
+                    "Either input_data_path or content must be provided. If content is provided, it must be of type CreateBatchCompletionsV1RequestContent."
+                )
+
+            content = cast(Optional[CreateBatchCompletionsV1RequestContent], content)
+            data = CreateBatchCompletionsV1Request(
+                model_config=model_config,
+                content=content,
+                input_data_path=input_data_path,
+                output_data_path=output_data_path,
+                data_parallelism=data_parallelism,
+                max_runtime_sec=max_runtime_sec,
+                tool_config=tool_config,
+            ).dict()
+            response = cls.post_sync(
+                resource_name="v1/llm/batch-completions",
+                data=data,
+                timeout=HTTP_TIMEOUT,
+                headers=request_headers,
+            )
+            return CreateBatchCompletionsV1Response.parse_obj(response)
+
+    @classmethod
+    def get_batch_completion(
+        cls,
+        job_id: str,
+        request_headers: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Get the status of a batch completion job.
+
+        Args:
+            job_id (str):
+                The job id of the batch completion job.
+
+        Returns:
+            response (Dict[str, Any]): The response containing the job status.
+
+        === "Get batch completion status"
+            ```python
+            from llmengine import Completion
+
+            response = Completion.get_batch_completion(job_id="job-id")
+            print(response)
+            ```
+        """
+        response = cls._get(
+            resource_name=f"v2/batch-completions/{job_id}",
             timeout=HTTP_TIMEOUT,
             headers=request_headers,
         )
-        return CreateBatchCompletionsResponse.parse_obj(response)
+        return response
+
+    @classmethod
+    def cancel_batch_completion(
+        cls,
+        job_id: str,
+        request_headers: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Cancel a batch completion job.
+
+        Args:
+            job_id (str):
+                The job id of the batch completion job.
+
+        Returns:
+            response (Dict[str, Any]): The response containing the job status.
+
+        === "Cancel batch completion job"
+            ```python
+            from llmengine import Completion
+
+            response = Completion.cancel_batch_completion(job_id="job-id")
+            print(response)
+            ```
+        """
+        response = cls.post_sync(
+            resource_name=f"v2/batch-completions/{job_id}/actions/cancel",
+            data={},
+            timeout=HTTP_TIMEOUT,
+            headers=request_headers,
+        )
+        return response
