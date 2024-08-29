@@ -557,7 +557,7 @@ data:
       labels:
         {{- $service_template_labels | nindent 8 }}
     spec:
-      minAvailable: 1
+      maxUnavailable: 50%
       selector:
         matchLabels:
           app: ${RESOURCE_NAME}
