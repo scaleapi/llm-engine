@@ -37,9 +37,10 @@ def make_sync_request_with_retries(
             wait=wait_exponential(multiplier=1, min=1, max=timeout_seconds),
         ):
             with attempt:
-                logger.debug(
-                    f"Retry number {attempt.retry_state.attempt_number}"
-                )  # pragma: no cover
+                if attempt.retry_state.attempt_number > 1:
+                    logger.info(
+                        f"Retry number {attempt.retry_state.attempt_number}"
+                    )  # pragma: no cover
                 resp = requests.post(
                     request_url,
                     json=payload_json,

@@ -2,15 +2,18 @@ import argparse
 import json
 import os
 import subprocess
-from functools import lru_cache
+from functools import lru_cache, partial
+from typing import Dict, Optional, Tuple
 
 from fastapi import BackgroundTasks, Depends, FastAPI
 from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.inference.forwarding.forwarding import (
+    Forwarder,
     LoadForwarder,
     LoadStreamingForwarder,
+    StreamingForwarder,
     load_named_config,
 )
 from sse_starlette.sse import EventSourceResponse
@@ -36,15 +39,19 @@ def get_config():
     )
 
 
-def get_forwarder_loader():
-    config = get_config()
-    forwarder_loader = LoadForwarder(**config["sync"])
+def get_forwarder_loader(destination_path: Optional[str] = None):
+    config = get_config()["sync"]
+    if destination_path:
+        config["predict_route"] = destination_path
+    forwarder_loader = LoadForwarder(**config)
     return forwarder_loader
 
 
-def get_streaming_forwarder_loader():
-    config = get_config()
-    streaming_forwarder_loader = LoadStreamingForwarder(**config["stream"])
+def get_streaming_forwarder_loader(destination_path: Optional[str] = None):
+    config = get_config()["stream"]
+    if destination_path:
+        config["predict_route"] = destination_path
+    streaming_forwarder_loader = LoadStreamingForwarder(**config)
     return streaming_forwarder_loader
 
 
@@ -58,13 +65,13 @@ def get_concurrency_limiter():
 
 
 @lru_cache()
-def load_forwarder():
-    return get_forwarder_loader().load(None, None)
+def load_forwarder(destination_path: Optional[str] = None):
+    return get_forwarder_loader(destination_path).load(None, None)
 
 
 @lru_cache()
-def load_streaming_forwarder():
-    return get_streaming_forwarder_loader().load(None, None)
+def load_streaming_forwarder(destination_path: Optional[str] = None):
+    return get_streaming_forwarder_loader(destination_path).load(None, None)
 
 
 @app.post("/predict")
@@ -111,6 +118,47 @@ async def stream(
         return EventSourceResponse(event_generator())
 
 
+# This route is a catch-all for any requests that don't match the /predict or /stream routes
+# It will treat the request as a streaming request if the "stream" body parameter is set to true
+# NOTE: it is important for this to be defined AFTER the /predict and /stream endpoints
+# because FastAPI will match the first route that matches the request path
+async def predict_or_stream(
+    request: EndpointPredictV1Request,
+    background_tasks: BackgroundTasks,
+    sync_forwarder: Optional[Forwarder],
+    stream_forwarder: Optional[StreamingForwarder],
+    limiter=Depends(get_concurrency_limiter),
+):
+    if stream_forwarder and request.args and request.args.root.get("stream", False):
+        return stream(request, stream_forwarder, limiter)
+    elif sync_forwarder:
+        return predict(request, background_tasks, sync_forwarder, limiter)
+    else:
+        raise Exception("No forwarder configured for this route")
+
+
+def add_extra_routes():
+    """Read extra_routes from config and dynamically add routes to app"""
+    config = get_config()
+    # aggregate a list of routes -> (sync, stream) support
+    extra_routes: Dict[str, Tuple[Optional[Forwarder], Optional[StreamingForwarder]]] = dict()
+    for route in config.get("sync", {}).get("extra_routes", []):
+        extra_routes[route] = (load_forwarder(route), None)
+    for route in config.get("stream", {}).get("extra_routes", []):
+        extra_routes[route] = (
+            extra_routes.get(route, (None, None))[0],
+            load_streaming_forwarder(route),
+        )
+
+    for route, (sync_forwarder, stream_forwarder) in extra_routes.items():
+        fn = partial(
+            predict_or_stream,
+            sync_forwarder=sync_forwarder,
+            stream_forwarder=stream_forwarder,
+        )
+        app.add_api_route(path=route, endpoint=fn, methods=["POST"])
+
+
 def entrypoint():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True)
@@ -128,6 +176,8 @@ def entrypoint():
     envs = []
     for v in values:
         envs.extend(["--env", v])
+
+    add_extra_routes()
 
     command = [
         "gunicorn",
