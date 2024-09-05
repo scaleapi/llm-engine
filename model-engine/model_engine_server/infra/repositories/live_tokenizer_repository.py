@@ -87,10 +87,10 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "vicuna-13b": ModelInfo("eachadea/vicuna-13b-1.1", None),
         "zephyr-7b-alpha": ModelInfo("HuggingFaceH4/zephyr-7b-alpha", None),
         "zephyr-7b-beta": ModelInfo("HuggingFaceH4/zephyr-7b-beta", None),
-        "gemma-2b": ModelInfo("google/gemma-2b", None),
-        "gemma-2b-instruct": ModelInfo("google/gemma-2b-it", None),
-        "gemma-7b": ModelInfo("google/gemma-7b", None),
-        "gemma-7b-instruct": ModelInfo("google/gemma-7b-it", None),
+        "gemma-2-2b": ModelInfo("google/gemma-2-2b", None),
+        "gemma-2-2b-instruct": ModelInfo("google/gemma-2-2b-it", None),
+        "gemma-2-7b": ModelInfo("google/gemma-2-7b", None),
+        "gemma-2-7b-instruct": ModelInfo("google/gemma-2-7b-it", None),
         "phi-3-mini-4k-instruct": ModelInfo("microsoft/phi-3-mini-4k-instruct", None),
         "phi-3-mini-128k-instruct": ModelInfo("microsoft/phi-3-mini-128k-instruct", None),
         "phi-3-small-8k-instruct": ModelInfo("microsoft/phi-3-small-8k-instruct", None),
@@ -102,6 +102,10 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
         "deepseek-coder-v2-lite": ModelInfo("deepseek-ai/DeepSeek-Coder-V2-Lite-Base", None),
         "deepseek-coder-v2-lite-instruct": ModelInfo(
             "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct", None
+        ),
+        "qwen2-72b-instruct": ModelInfo(
+            "Qwen/Qwen2-72B-Instruct",
+            None,
         ),
     }
 

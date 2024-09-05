@@ -153,6 +153,9 @@ from model_engine_server.infra.repositories.db_model_bundle_repository import (
 )
 from model_engine_server.infra.services import LiveBatchJobService, LiveModelEndpointService
 from model_engine_server.infra.services.image_cache_service import ImageCacheService
+from model_engine_server.infra.services.live_llm_batch_completions_service import (
+    LiveLLMBatchCompletionsService,
+)
 from model_engine_server.infra.services.live_llm_model_endpoint_service import (
     LiveLLMModelEndpointService,
 )
@@ -1024,7 +1027,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):  # TODO handle m
         gpus: int,
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
-        storage: Optional[StorageSpecificationType],
+        storage: StorageSpecificationType,
         nodes_per_worker: int,
         optimize_costs: bool,
         aws_role: str,
@@ -1694,7 +1697,7 @@ class FakeModelEndpointService(ModelEndpointService):
         gpus: int,
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
-        storage: Optional[StorageSpecificationType],
+        storage: StorageSpecificationType,
         nodes_per_worker: int,
         optimize_costs: bool,
         min_workers: int,
@@ -2241,6 +2244,9 @@ def get_repositories_generator_wrapper():
                 model_endpoint_record_repository=fake_model_endpoint_record_repository,
                 model_endpoint_service=fake_model_endpoint_service,
             )
+            fake_llm_batch_completions_service = LiveLLMBatchCompletionsService(
+                docker_image_batch_job_gateway=fake_docker_image_batch_job_gateway
+            )
             fake_llm_fine_tuning_service = FakeLLMFineTuningService(
                 fake_llm_fine_tuning_service_contents
             )
@@ -2256,6 +2262,7 @@ def get_repositories_generator_wrapper():
                 model_bundle_repository=fake_model_bundle_repository,
                 model_endpoint_service=fake_model_endpoint_service,
                 llm_model_endpoint_service=fake_llm_model_endpoint_service,
+                llm_batch_completions_service=fake_llm_batch_completions_service,
                 batch_job_service=fake_batch_job_service,
                 resource_gateway=FakeEndpointResourceGateway(),
                 endpoint_creation_task_queue_gateway=FakeTaskQueueGateway(),

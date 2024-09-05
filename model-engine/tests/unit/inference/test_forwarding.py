@@ -14,6 +14,7 @@ from model_engine_server.inference.forwarding.forwarding import (
     LoadForwarder,
     LoadStreamingForwarder,
     StreamingForwarder,
+    load_named_config,
 )
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
     DatadogInferenceMonitoringMetricsGateway,
@@ -22,6 +23,7 @@ from model_engine_server.inference.post_inference_hooks import PostInferenceHook
 from tests.unit.conftest import FakeStreamingStorageGateway
 
 PAYLOAD: Mapping[str, str] = {"hello": "world"}
+PAYLOAD_END = "[DONE]"
 
 
 def mocked_get(*args, **kwargs):  # noqa
@@ -63,7 +65,11 @@ def mocked_sse_client(*args, **kwargs):  # noqa
     class mocked_static_events:
         def events(self) -> list:
             payload_json = json.dumps(PAYLOAD)
-            return [Event(data=payload_json), Event(data=payload_json)]
+            return [
+                Event(data=payload_json),
+                Event(data=payload_json),
+                Event(data=PAYLOAD_END),
+            ]
 
     return mocked_static_events()
 
@@ -94,6 +100,76 @@ def post_inference_hooks_handler():
         streaming_storage_gateway=FakeStreamingStorageGateway(),
     )
     return handler
+
+
+def mocked_config_content():
+    return {
+        "forwarder": {
+            "sync": {
+                "user_port": 5005,
+                "user_hostname": "localhost",
+                "use_grpc": False,
+                "predict_route": "/predict",
+                "healthcheck_route": "/readyz",
+                "batch_route": None,
+                "model_engine_unwrap": True,
+                "serialize_results_as_string": True,
+                "forward_http_status": True,
+            },
+            "stream": {
+                "user_port": 5005,
+                "user_hostname": "localhost",
+                "predict_route": "/stream",
+                "healthcheck_route": "/readyz",
+                "batch_route": None,
+                "model_engine_unwrap": True,
+                "serialize_results_as_string": False,
+            },
+            "max_concurrency": 42,
+        }
+    }
+
+
+def mocked_config_overrides():
+    return [
+        "forwarder.sync.extra_routes=[/v1/chat/completions]",
+        "forwarder.stream.extra_routes=[/v1/chat/completions]",
+        "forwarder.sync.healthcheck_route=/health",
+        "forwarder.stream.healthcheck_route=/health",
+    ]
+
+
+# patch open(config_uri, "rt") and have output be mocked_config_content
+@mock.patch("builtins.open", mock.mock_open(read_data=json.dumps(mocked_config_content())))
+def test_load_named_config():
+    output = load_named_config("dummy.yml", config_overrides=mocked_config_overrides())
+    expected_output = {
+        "name": "forwarder",
+        "sync": {
+            "user_port": 5005,
+            "user_hostname": "localhost",
+            "use_grpc": False,
+            "predict_route": "/predict",
+            "healthcheck_route": "/health",
+            "batch_route": None,
+            "model_engine_unwrap": True,
+            "serialize_results_as_string": True,
+            "forward_http_status": True,
+            "extra_routes": ["/v1/chat/completions"],
+        },
+        "stream": {
+            "user_port": 5005,
+            "user_hostname": "localhost",
+            "predict_route": "/stream",
+            "healthcheck_route": "/health",
+            "batch_route": None,
+            "model_engine_unwrap": True,
+            "serialize_results_as_string": False,
+            "extra_routes": ["/v1/chat/completions"],
+        },
+        "max_concurrency": 42,
+    }
+    assert output == expected_output
 
 
 @mock.patch("requests.post", mocked_post)
@@ -131,16 +207,18 @@ def _check_responses_not_wrapped(json_response) -> None:
 
 def _check_streaming(streaming_response) -> None:
     streaming_response_list = list(streaming_response)
-    assert len(streaming_response_list) == 2
+    assert len(streaming_response_list) == 3
     assert streaming_response_list[0] == {"result": PAYLOAD}
     assert streaming_response_list[1] == {"result": PAYLOAD}
+    assert streaming_response_list[2] == {"result": PAYLOAD_END}
 
 
 def _check_streaming_serialized(streaming_response) -> None:
     streaming_response_list = list(streaming_response)
-    assert len(streaming_response_list) == 2
+    assert len(streaming_response_list) == 3
     assert streaming_response_list[0] == {"result": json.dumps(PAYLOAD)}
     assert streaming_response_list[1] == {"result": json.dumps(PAYLOAD)}
+    assert streaming_response_list[2] == {"result": PAYLOAD_END}
 
 
 @mock.patch("requests.post", mocked_post)

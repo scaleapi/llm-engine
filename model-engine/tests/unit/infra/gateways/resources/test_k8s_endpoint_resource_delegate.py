@@ -733,3 +733,56 @@ async def test_delete_resources_sync_success(
 async def test_delete_resources_multinode_success():
     # TODO
     pass
+
+
+@pytest.mark.asyncio
+async def test_create_pdb(
+    k8s_endpoint_resource_delegate,
+    mock_policy_client,
+):
+    # Mock the necessary objects and functions
+    pdb = {
+        "metadata": {"name": "test-pdb", "namespace": "test-namespace"},
+        "spec": {"maxUnavailable": "50%"},
+    }
+    name = "test-pdb"
+
+    # Test successful creation
+    await k8s_endpoint_resource_delegate._create_pdb(pdb, name)
+
+    mock_policy_client.create_namespaced_pod_disruption_budget.assert_called_once_with(
+        namespace=hmi_config.endpoint_namespace,
+        body=pdb,
+    )
+
+    # Test creation when PDB already exists
+    mock_policy_client.create_namespaced_pod_disruption_budget.side_effect = ApiException(
+        status=409
+    )
+
+    existing_pdb = Mock()
+    existing_pdb.metadata.resource_version = "123"
+    mock_policy_client.read_namespaced_pod_disruption_budget.return_value = existing_pdb
+
+    await k8s_endpoint_resource_delegate._create_pdb(pdb, name)
+
+    mock_policy_client.read_namespaced_pod_disruption_budget.assert_called_once_with(
+        name=name, namespace=hmi_config.endpoint_namespace
+    )
+
+    expected_replace_pdb = pdb.copy()
+    expected_replace_pdb["metadata"]["resourceVersion"] = "123"
+
+    mock_policy_client.replace_namespaced_pod_disruption_budget.assert_called_once_with(
+        name=name,
+        namespace=hmi_config.endpoint_namespace,
+        body=expected_replace_pdb,
+    )
+
+    # Test creation with other API exception
+    mock_policy_client.create_namespaced_pod_disruption_budget.side_effect = ApiException(
+        status=500
+    )
+
+    with pytest.raises(ApiException):
+        await k8s_endpoint_resource_delegate._create_pdb(pdb, name)

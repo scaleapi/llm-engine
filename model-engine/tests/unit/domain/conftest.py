@@ -6,9 +6,9 @@ from model_engine_server.common.dtos.batch_jobs import (
 from model_engine_server.common.dtos.llms import (
     CompletionStreamV1Request,
     CompletionSyncV1Request,
-    CreateBatchCompletionsModelConfig,
-    CreateBatchCompletionsRequest,
-    CreateBatchCompletionsRequestContent,
+    CreateBatchCompletionsV1ModelConfig,
+    CreateBatchCompletionsV1Request,
+    CreateBatchCompletionsV1RequestContent,
     CreateLLMModelEndpointV1Request,
     UpdateLLMModelEndpointV1Request,
 )
@@ -168,7 +168,7 @@ def update_model_endpoint_request(
 
 
 @pytest.fixture
-def create_docker_image_batch_job_bundle_request() -> CreateDockerImageBatchJobBundleV1Request:
+def create_docker_image_batch_job_bundle_request() -> (CreateDockerImageBatchJobBundleV1Request):
     return CreateDockerImageBatchJobBundleV1Request(
         name="name",
         image_repository="repo",
@@ -435,7 +435,7 @@ def create_llm_model_endpoint_text_generation_inference_request_async() -> (
 
 
 @pytest.fixture
-def create_llm_model_endpoint_trt_llm_request_streaming() -> CreateLLMModelEndpointV1Request:
+def create_llm_model_endpoint_trt_llm_request_streaming() -> (CreateLLMModelEndpointV1Request):
     return CreateLLMModelEndpointV1Request(
         name="test_llm_endpoint_name_trt_llm_streaming",
         model_name="llama-2-7b",
@@ -463,7 +463,7 @@ def create_llm_model_endpoint_trt_llm_request_streaming() -> CreateLLMModelEndpo
 
 
 @pytest.fixture
-def create_llm_model_endpoint_trt_llm_request_async() -> CreateLLMModelEndpointV1Request:
+def create_llm_model_endpoint_trt_llm_request_async() -> (CreateLLMModelEndpointV1Request):
     return CreateLLMModelEndpointV1Request(
         name="test_llm_endpoint_name_tgi_async",
         model_name="llama-2-7b",
@@ -492,7 +492,7 @@ def create_llm_model_endpoint_trt_llm_request_async() -> CreateLLMModelEndpointV
 
 
 @pytest.fixture
-def create_llm_model_endpoint_request_invalid_model_name() -> CreateLLMModelEndpointV1Request:
+def create_llm_model_endpoint_request_invalid_model_name() -> (CreateLLMModelEndpointV1Request):
     return CreateLLMModelEndpointV1Request(
         name="test_llm_endpoint_name_1",
         model_name="nonexist",
@@ -519,7 +519,7 @@ def create_llm_model_endpoint_request_invalid_model_name() -> CreateLLMModelEndp
 
 
 @pytest.fixture
-def create_llm_model_endpoint_request_invalid_quantization() -> CreateLLMModelEndpointV1Request:
+def create_llm_model_endpoint_request_invalid_quantization() -> (CreateLLMModelEndpointV1Request):
     return CreateLLMModelEndpointV1Request(
         name="test_llm_endpoint_name_1",
         model_name="nonexist",
@@ -566,16 +566,16 @@ def completion_stream_request() -> CompletionStreamV1Request:
 
 
 @pytest.fixture
-def create_batch_completions_request() -> CreateBatchCompletionsRequest:
-    return CreateBatchCompletionsRequest(
+def create_batch_completions_v1_request() -> CreateBatchCompletionsV1Request:
+    return CreateBatchCompletionsV1Request(
         input_data_path="test_input_data_path",
         output_data_path="test_output_data_path",
-        content=CreateBatchCompletionsRequestContent(
+        content=CreateBatchCompletionsV1RequestContent(
             prompts=["What is machine learning?"],
             max_new_tokens=10,
             temperature=0.5,
         ),
-        model_config=CreateBatchCompletionsModelConfig(
+        model_config=CreateBatchCompletionsV1ModelConfig(
             model="mpt-7b",
             checkpoint_path="s3://test_checkpoint_path",
             labels={},

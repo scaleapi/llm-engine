@@ -45,6 +45,9 @@ from model_engine_server.domain.services import (
     LLMModelEndpointService,
     ModelEndpointService,
 )
+from model_engine_server.domain.services.llm_batch_completions_service import (
+    LLMBatchCompletionsService,
+)
 from model_engine_server.inference.domain.gateways.streaming_storage_gateway import (
     StreamingStorageGateway,
 )
@@ -118,6 +121,9 @@ from model_engine_server.infra.services import (
     LiveBatchJobService,
     LiveModelEndpointService,
 )
+from model_engine_server.infra.services.live_llm_batch_completions_service import (
+    LiveLLMBatchCompletionsService,
+)
 from model_engine_server.infra.services.live_llm_model_endpoint_service import (
     LiveLLMModelEndpointService,
 )
@@ -142,6 +148,7 @@ class ExternalInterfaces:
     model_endpoint_service: ModelEndpointService
     batch_job_service: BatchJobService
     llm_model_endpoint_service: LLMModelEndpointService
+    llm_batch_completions_service: LLMBatchCompletionsService
     llm_fine_tuning_service: LLMFineTuningService
     llm_fine_tune_events_repository: LLMFineTuneEventsRepository
 
@@ -319,6 +326,10 @@ def _get_external_interfaces(
         llm_fine_tune_repository=llm_fine_tune_repository,
     )
 
+    llm_batch_completions_service = LiveLLMBatchCompletionsService(
+        docker_image_batch_job_gateway=docker_image_batch_job_gateway
+    )
+
     file_storage_gateway = (
         ABSFileStorageGateway()
         if infra_config().cloud_provider == "azure"
@@ -342,6 +353,7 @@ def _get_external_interfaces(
         model_bundle_repository=model_bundle_repository,
         model_endpoint_service=model_endpoint_service,
         llm_model_endpoint_service=llm_model_endpoint_service,
+        llm_batch_completions_service=llm_batch_completions_service,
         batch_job_service=batch_job_service,
         resource_gateway=resource_gateway,
         endpoint_creation_task_queue_gateway=infra_task_queue_gateway,
@@ -370,7 +382,7 @@ def get_default_external_interfaces() -> ExternalInterfaces:
 
 
 def get_default_external_interfaces_read_only() -> ExternalInterfaces:
-    session = async_scoped_session(  # type: ignore
+    session = async_scoped_session(
         get_session_read_only_async(), scopefunc=asyncio.current_task  # type: ignore
     )
     return _get_external_interfaces(read_only=True, session=session)

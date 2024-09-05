@@ -57,6 +57,6 @@ tokenizers~=0.15.2
 tqdm~=4.64
 transformers==4.38.0
 twine==3.7.1
-uvicorn==0.17.6
+uvicorn==0.30.6
 uvloop==0.17.0
 yarl~=1.4

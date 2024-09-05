@@ -9,6 +9,7 @@ forwarder:
     model_engine_unwrap: true
     serialize_results_as_string: true
     forward_http_status: true
+    extra_routes: []
   stream:
     user_port: 5005
     user_hostname: "localhost"
@@ -17,4 +18,5 @@ forwarder:
     batch_route: null
     model_engine_unwrap: true
     serialize_results_as_string: false
+    extra_routes: []
   max_concurrency: 100

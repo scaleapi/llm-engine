@@ -21,6 +21,7 @@ logger = make_logger(logger_name())
 
 DEFAULT_ENDPOINT_CPUS_BATCH_JOB = 3
 DEFAULT_ENDPOINT_MEMORY_BATCH_JOB = "12Gi"
+DEFAULT_ENDPOINT_STORAGE_BATCH_JOB = "16Gi"  # to match launch-python-client endpoint default
 DEFAULT_ENDPOINT_GPUS_BATCH_JOB = 1
 DEFAULT_ENDPOINT_GPU_TYPE_BATCH_JOB = GpuType.NVIDIA_TESLA_T4
 DEFAULT_ENDPOINT_MAX_WORKERS_BATCH_JOB = 50
@@ -76,6 +77,7 @@ class LiveBatchJobService(BatchJobService):
             else DEFAULT_ENDPOINT_GPUS_BATCH_JOB
         )
         memory = resource_requests.memory or DEFAULT_ENDPOINT_MEMORY_BATCH_JOB
+        storage = resource_requests.storage or DEFAULT_ENDPOINT_STORAGE_BATCH_JOB
         gpu_type = None
         if gpus == 0 and resource_requests.gpu_type is not None:
             raise EndpointResourceInvalidRequestException(
@@ -101,7 +103,7 @@ class LiveBatchJobService(BatchJobService):
             gpus=gpus,  # type: ignore
             memory=memory,  # type: ignore
             gpu_type=gpu_type,  # type: ignore
-            storage=resource_requests.storage,
+            storage=storage,
             nodes_per_worker=1,  # TODO override?
             optimize_costs=False,
             min_workers=0,

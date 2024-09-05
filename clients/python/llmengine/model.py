@@ -58,6 +58,7 @@ class Model(APIEngine):
         default_callback_url: Optional[str] = None,
         public_inference: Optional[bool] = True,
         labels: Optional[Dict[str, str]] = None,
+        request_headers: Optional[Dict[str, str]] = None,
     ) -> CreateLLMEndpointResponse:
         """
         Create an LLM model. Note: This API is only available for self-hosted users.
@@ -322,6 +323,7 @@ class Model(APIEngine):
             resource_name="v1/llm/model-endpoints",
             data=request.dict(),
             timeout=DEFAULT_TIMEOUT,
+            headers=request_headers,
         )
         return CreateLLMEndpointResponse.parse_obj(response)
 
@@ -329,6 +331,7 @@ class Model(APIEngine):
     def get(
         cls,
         model: str,
+        request_headers: Optional[Dict[str, str]] = None,
     ) -> GetLLMEndpointResponse:
         """
         Get information about an LLM model.
@@ -372,11 +375,16 @@ class Model(APIEngine):
             }
             ```
         """
-        response = cls._get(f"v1/llm/model-endpoints/{model}", timeout=DEFAULT_TIMEOUT)
+        response = cls._get(
+            f"v1/llm/model-endpoints/{model}", timeout=DEFAULT_TIMEOUT, headers=request_headers
+        )
         return GetLLMEndpointResponse.parse_obj(response)
 
     @classmethod
-    def list(cls) -> ListLLMEndpointsResponse:
+    def list(
+        cls,
+        request_headers: Optional[Dict[str, str]] = None,
+    ) -> ListLLMEndpointsResponse:
         """
         List LLM models available to call inference on.
 
@@ -449,7 +457,9 @@ class Model(APIEngine):
             }
             ```
         """
-        response = cls._get("v1/llm/model-endpoints", timeout=DEFAULT_TIMEOUT)
+        response = cls._get(
+            "v1/llm/model-endpoints", timeout=DEFAULT_TIMEOUT, headers=request_headers
+        )
         return ListLLMEndpointsResponse.parse_obj(response)
 
     @classmethod
@@ -479,6 +489,7 @@ class Model(APIEngine):
         default_callback_url: Optional[str] = None,
         public_inference: Optional[bool] = None,
         labels: Optional[Dict[str, str]] = None,
+        request_headers: Optional[Dict[str, str]] = None,
     ) -> UpdateLLMEndpointResponse:
         # TODO nodes_per_worker?
         """
@@ -628,11 +639,16 @@ class Model(APIEngine):
             resource_name=f"v1/llm/model-endpoints/{name}",
             data=request.dict(),
             timeout=DEFAULT_TIMEOUT,
+            headers=request_headers,
         )
         return UpdateLLMEndpointResponse.parse_obj(response)
 
     @classmethod
-    def delete(cls, model_endpoint_name: str) -> DeleteLLMEndpointResponse:
+    def delete(
+        cls,
+        model_endpoint_name: str,
+        request_headers: Optional[Dict[str, str]] = None,
+    ) -> DeleteLLMEndpointResponse:
         """
         Deletes an LLM model.
 
@@ -665,7 +681,9 @@ class Model(APIEngine):
             ```
         """
         response = cls._delete(
-            f"v1/llm/model-endpoints/{model_endpoint_name}", timeout=DEFAULT_TIMEOUT
+            f"v1/llm/model-endpoints/{model_endpoint_name}",
+            timeout=DEFAULT_TIMEOUT,
+            headers=request_headers,
         )
         return DeleteLLMEndpointResponse.parse_obj(response)
 

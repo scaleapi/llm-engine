@@ -4,6 +4,7 @@ The configuration file is loaded from the ML_INFRA_SERVICES_CONFIG_PATH environm
 If this is not set, the default configuration file is used from
 model_engine_server.core/configs/default.yaml.
 """
+import inspect
 import os
 from contextlib import contextmanager
 from copy import deepcopy
@@ -30,7 +31,7 @@ CONFIG_PATH: str = os.getenv("ML_INFRA_SERVICES_CONFIG_PATH", str(DEFAULT_CONFIG
 
 
 @dataclass
-class InfraConfig:
+class _InfraConfig:
     cloud_provider: str
     env: str
     k8s_cluster_name: str
@@ -47,11 +48,27 @@ class InfraConfig:
     firehose_role_arn: Optional[str] = None
     firehose_stream_name: Optional[str] = None
 
+
+@dataclass
+class DBEngineConfig:
+    db_engine_pool_size: int = 10
+    db_engine_max_overflow: int = 10
+    db_engine_echo: bool = False
+    db_engine_echo_pool: bool = False
+    db_engine_disconnect_strategy: str = "pessimistic"
+
+
+@dataclass
+class InfraConfig(DBEngineConfig, _InfraConfig):
+    @classmethod
+    def from_json(cls, json):
+        return cls(**{k: v for k, v in json.items() if k in inspect.signature(cls).parameters})
+
     @classmethod
     def from_yaml(cls, yaml_path) -> "InfraConfig":
         with open(yaml_path, "r") as f:
             raw_data = yaml.safe_load(f)
-        return InfraConfig(**raw_data)
+        return InfraConfig.from_json(raw_data)
 
 
 def read_default_config():

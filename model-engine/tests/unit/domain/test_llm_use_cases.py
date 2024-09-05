@@ -7,7 +7,7 @@ from model_engine_server.common.dtos.llms import (
     CompletionOutput,
     CompletionStreamV1Request,
     CompletionSyncV1Request,
-    CreateBatchCompletionsRequest,
+    CreateBatchCompletionsV1Request,
     CreateFineTuneRequest,
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
@@ -58,6 +58,13 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
 from ..conftest import mocked__get_recommended_hardware_config_map
+
+
+def mocked__get_latest_batch_tag():
+    async def async_mock(*args, **kwargs):  # noqa
+        return "fake_docker_repository_latest_image_tag"
+
+    return mock.AsyncMock(side_effect=async_mock)
 
 
 def mocked__get_latest_tag():
@@ -220,7 +227,12 @@ async def test_create_model_endpoint_use_case_success(
 @pytest.mark.parametrize(
     "inference_framework, model_name, checkpoint_path, expected_error",
     [
-        (LLMInferenceFramework.TEXT_GENERATION_INFERENCE, "mpt-7b", None, InvalidRequestException),
+        (
+            LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
+            "mpt-7b",
+            None,
+            InvalidRequestException,
+        ),
         (
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
             "mpt-7b-instruct",
@@ -1963,7 +1975,12 @@ async def test_validate_checkpoint_files_no_safetensors():
 
 @pytest.mark.asyncio
 async def test_validate_checkpoint_files_safetensors_with_other_files():
-    fake_model_files = ["model-fake.bin", "model-fake2.safetensors", "model.json", "optimizer.pt"]
+    fake_model_files = [
+        "model-fake.bin",
+        "model-fake2.safetensors",
+        "model.json",
+        "optimizer.pt",
+    ]
     validate_checkpoint_files(fake_model_files)  # No exception should be raised
 
 
@@ -2092,7 +2109,10 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.nodes_per_worker == 1
 
     hardware = await _infer_hardware(
-        fake_llm_artifact_gateway, "deepseek-coder-v2-lite-instruct", "", is_batch_job=True
+        fake_llm_artifact_gateway,
+        "deepseek-coder-v2-lite-instruct",
+        "",
+        is_batch_job=True,
     )
     assert hardware.cpus == 160
     assert hardware.gpus == 8
@@ -2100,6 +2120,19 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.storage == "640Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
     assert hardware.nodes_per_worker == 1
+
+    hardware = await _infer_hardware(
+        fake_llm_artifact_gateway,
+        "deepseek-coder-v2-lite-instruct",
+        "",
+        is_batch_job=True,
+        max_context_length=4096,
+    )
+    assert hardware.cpus == 20
+    assert hardware.gpus == 1
+    assert hardware.memory == "80Gi"
+    assert hardware.storage == "96Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
 
     # Phi 3 mini from https://huggingface.co/microsoft/Phi-3-mini-4k-instruct/blob/main/config.json
     fake_llm_artifact_gateway.model_config = {
@@ -2598,6 +2631,38 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
     assert hardware.nodes_per_worker == 1
 
+    fake_llm_artifact_gateway.model_config = {
+        "architectures": ["Qwen2ForCausalLM"],
+        "attention_dropout": 0.0,
+        "bos_token_id": 151643,
+        "eos_token_id": 151645,
+        "hidden_act": "silu",
+        "hidden_size": 8192,
+        "initializer_range": 0.02,
+        "intermediate_size": 29568,
+        "max_position_embeddings": 32768,
+        "max_window_layers": 80,
+        "model_type": "qwen2",
+        "num_attention_heads": 64,
+        "num_hidden_layers": 80,
+        "num_key_value_heads": 8,
+        "rms_norm_eps": 1e-06,
+        "rope_theta": 1000000.0,
+        "sliding_window": 131072,
+        "tie_word_embeddings": False,
+        "torch_dtype": "bfloat16",
+        "transformers_version": "4.40.1",
+        "use_cache": True,
+        "use_sliding_window": False,
+        "vocab_size": 152064,
+    }
+    hardware = await _infer_hardware(fake_llm_artifact_gateway, "qwen2-72b-instruct", "")
+    assert hardware.cpus == 80
+    assert hardware.gpus == 4
+    assert hardware.memory == "320Gi"
+    assert hardware.storage == "320Gi"
+    assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+
     with pytest.raises(ObjectHasInvalidValueException):
         await _infer_hardware(fake_llm_artifact_gateway, "unsupported_model", "")
 
@@ -2650,13 +2715,17 @@ async def test_fill_hardware_info(fake_llm_artifact_gateway):
     "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
     mocked__get_recommended_hardware_config_map(),
 )
-async def test_create_batch_completions(
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_batch_tag",
+    mocked__get_latest_batch_tag(),
+)
+async def test_create_batch_completions_v1(
     fake_docker_image_batch_job_gateway,
     fake_docker_repository_image_always_exists,
     fake_docker_image_batch_job_bundle_repository,
     fake_llm_artifact_gateway,
     test_api_key: str,
-    create_batch_completions_request: CreateBatchCompletionsRequest,
+    create_batch_completions_v1_request: CreateBatchCompletionsV1Request,
 ):
     use_case = CreateBatchCompletionsUseCase(
         docker_image_batch_job_gateway=fake_docker_image_batch_job_gateway,
@@ -2666,10 +2735,10 @@ async def test_create_batch_completions(
     )
 
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
-    result = await use_case.execute(user, create_batch_completions_request)
+    result = await use_case.execute(user, create_batch_completions_v1_request)
 
     job = await fake_docker_image_batch_job_gateway.get_docker_image_batch_job(result.job_id)
-    assert job.num_workers == create_batch_completions_request.data_parallelism
+    assert job.num_workers == create_batch_completions_v1_request.data_parallelism
 
     bundle = list(fake_docker_image_batch_job_bundle_repository.db.values())[0]
     assert bundle.command == [

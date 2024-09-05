@@ -175,6 +175,7 @@ jobs:
       - run:
           name: Install integration test dependencies
           command: |
+            export DEBIAN_FRONTEND=noninteractive
             sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libssl-dev python3-dev
             pip install -r model-engine/requirements.txt
       - install_client
@@ -190,7 +191,7 @@ jobs:
 executors:
   ubuntu-large:
     machine:
-      image: "ubuntu-2004:202201-02"
+      image: default
     resource_class: 2xlarge
 
 commands:

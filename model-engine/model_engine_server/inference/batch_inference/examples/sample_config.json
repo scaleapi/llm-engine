@@ -1,0 +1,14 @@
+{
+    "input_data_path": "./examples/sample_data.json",
+    "output_data_path": "./examples/sample_output.json",
+    "model_config": {
+        "model": "mixtral-8x7b-instruct-v0.1",
+        "checkpoint_path": "my_path",
+        "num_shards": 2,
+        "labels": {
+            "team": "my_team"
+        }
+    },
+    "attention_backend": "FLASHINFER",
+    "data_parallelism": 1
+}

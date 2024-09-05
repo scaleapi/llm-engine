@@ -37,7 +37,7 @@ A100_INSTANCE_LIMITS = dict(cpus=95, memory="1000Gi")
 H100_INSTANCE_LIMITS = dict(cpus=191, memory="2000Gi")
 H100_1G_20GB_INSTANCE_LIMITS = dict(cpus=47, memory="500Gi")
 H100_3G_40GB_INSTANCE_LIMITS = dict(cpus=95, memory="1000Gi")
-STORAGE_LIMIT = "500G"  # TODO: figure out an actual limit.
+STORAGE_LIMIT = "640Gi"  # TODO: figure out an actual limit.
 REQUESTS_BY_GPU_TYPE = {
     None: CPU_INSTANCE_LIMITS,
     GpuType.NVIDIA_TESLA_T4: T4_INSTANCE_LIMITS,
@@ -58,7 +58,7 @@ logger = make_logger(logger_name())
 
 
 def validate_resource_requests(
-    bundle: Union[ModelBundle, DockerImageBatchJobBundle],
+    bundle: Optional[Union[ModelBundle, DockerImageBatchJobBundle]],
     cpus: Optional[CpuSpecificationType],
     memory: Optional[StorageSpecificationType],
     storage: Optional[StorageSpecificationType],

@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import json
 import multiprocessing
@@ -62,9 +63,13 @@ def download_model(checkpoint_path, final_weights_folder):
     # Need to override these env vars so s5cmd uses AWS_PROFILE
     env["AWS_ROLE_ARN"] = ""
     env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
-    # nosemgrep
     process = subprocess.Popen(
-        s5cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
+        s5cmd,
+        shell=True,  # nosemgrep
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=env,
     )
     for line in process.stdout:
         print(line, flush=True)
@@ -155,6 +160,7 @@ def get_vllm_engine(model: str, request: CreateBatchCompletionsEngineRequest):
         seed=request.model_cfg.seed or 0,
         disable_log_requests=True,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
+        max_model_len=request.max_context_length,
     )
 
     llm = AsyncLLMEngine.from_engine_args(engine_args)
@@ -311,10 +317,19 @@ async def generate_with_tool(
     return results
 
 
-async def batch_inference():
+async def batch_inference(config_file_data: Optional[str]):
     job_index = int(os.getenv("JOB_COMPLETION_INDEX", 0))
 
-    request = CreateBatchCompletionsEngineRequest.parse_file(CONFIG_FILE)
+    if config_file_data is None:
+        if CONFIG_FILE is None or not os.path.exists(CONFIG_FILE):
+            raise FileNotFoundError(f"Config file {CONFIG_FILE} not found")
+        with open(CONFIG_FILE, "r") as f:
+            config_file_data = f.read()
+
+    request = CreateBatchCompletionsEngineRequest.model_validate_json(config_file_data)
+
+    if request.attention_backend is not None:
+        os.environ["VLLM_ATTENTION_BACKEND"] = request.attention_backend
 
     if request.model_cfg.checkpoint_path is not None:
         download_model(request.model_cfg.checkpoint_path, MODEL_WEIGHTS_FOLDER)
@@ -322,7 +337,7 @@ async def batch_inference():
     content = request.content
     if content is None:
         with smart_open.open(request.input_data_path, "r") as f:
-            content = CreateBatchCompletionsRequestContent.parse_raw(f.read())
+            content = CreateBatchCompletionsRequestContent.model_validate_json(f.read())
 
     model = MODEL_WEIGHTS_FOLDER if request.model_cfg.checkpoint_path else request.model_cfg.model
     is_finetuned = request.model_cfg.checkpoint_path is not None
@@ -425,7 +440,7 @@ async def generate_with_vllm(
             frequency_penalty=frequency_penalty or 0.0,
             top_k=top_k or -1,
             top_p=top_p or 1.0,
-            skip_special_tokens=skip_special_tokens if skip_special_tokens is not None else True,
+            skip_special_tokens=(skip_special_tokens if skip_special_tokens is not None else True),
         )
         results_generator = await engine.add_request(
             request_id, prompt, sampling_params, time.monotonic(), None
@@ -496,9 +511,11 @@ def check_unknown_startup_memory_usage():  # pragma: no cover
                 f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
             )
             try:
-                # nosemgrep
                 output = subprocess.run(
-                    ["fuser -v /dev/nvidia*"], shell=True, capture_output=True, text=True
+                    ["fuser -v /dev/nvidia*"],
+                    shell=True,  # nosemgrep
+                    capture_output=True,
+                    text=True,
                 ).stdout
                 print(f"Processes using GPU: {output}")
             except Exception as e:
@@ -506,5 +523,15 @@ def check_unknown_startup_memory_usage():  # pragma: no cover
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config-file-data",
+        "--config_file_data",
+        type=str,
+        default=None,
+        help="Optional override for the config file data, as a json string",
+    )
+    args = parser.parse_args()
+
     check_unknown_startup_memory_usage()
-    asyncio.run(batch_inference())
+    asyncio.run(batch_inference(args.config_file_data))

@@ -2749,7 +2749,7 @@ data:
         endpoint_id: ${ENDPOINT_ID}
         endpoint_name: ${ENDPOINT_NAME}
     spec:
-      minAvailable: 1
+      maxUnavailable: 50%
       selector:
         matchLabels:
           app: ${RESOURCE_NAME}

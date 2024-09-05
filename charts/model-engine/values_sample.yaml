@@ -181,6 +181,12 @@ config:
       # redis_aws_secret_name: sample-prod/redis-credentials
       # s3_bucket [required] is the S3 bucket you wish to connect 
       s3_bucket: "llm-engine"
+      # DB engine configs (This is SQLAlchemy heavy)
+      db_engine_pool_size: 10
+      db_engine_max_overflow: 10
+      db_engine_echo: false
+      db_engine_echo_pool: false
+      db_engine_disconnect_strategy: "pessimistic"
     launch:
       # endpoint_namespace [required] is K8s namespace the endpoints will be created in
       endpoint_namespace: llm-engine
