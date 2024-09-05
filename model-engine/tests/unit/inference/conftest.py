@@ -12,6 +12,11 @@ from model_engine_server.inference.batch_inference.dto import (
 
 
 @pytest.fixture
+def anyio_backend():
+    return "asyncio"
+
+
+@pytest.fixture
 def create_batch_completions_engine_request() -> CreateBatchCompletionsEngineRequest:
     model_config = CreateBatchCompletionsModelConfig(
         model="model",
@@ -34,7 +39,11 @@ def create_batch_completions_engine_request() -> CreateBatchCompletionsEngineReq
 @pytest.fixture
 def create_batch_completions_tool_completion_request():
     model_config = CreateBatchCompletionsModelConfig(
-        checkpoint_path="checkpoint_path", model="model", num_shards=4, seed=123, labels={}
+        checkpoint_path="checkpoint_path",
+        model="model",
+        num_shards=4,
+        seed=123,
+        labels={},
     )
 
     return CreateBatchCompletionsEngineRequest(
@@ -100,7 +109,11 @@ def create_vllm_request_outputs():
     mock_vllm_request_output3.outputs[0].logprobs = [
         {4: Logprob(0.1), 5: Logprob(0.2), 6: Logprob(0.3)}
     ]
-    return [mock_vllm_request_output1, mock_vllm_request_output2, mock_vllm_request_output3]
+    return [
+        mock_vllm_request_output1,
+        mock_vllm_request_output2,
+        mock_vllm_request_output3,
+    ]
 
 
 @pytest.fixture
