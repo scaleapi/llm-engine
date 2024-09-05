@@ -10,7 +10,7 @@ importlib-metadata<5.0;python_version<"3.8"
 scale-launch>=0.1.0
 smart_open==5.1.0
 typing-extensions>=4.1.1
-uvicorn==0.17.6
+uvicorn==0.30.6
 waitress==2.0.0
 
 # HACK: at time of adding, these deps are imported by model-engine/model_engine_server files
