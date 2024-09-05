@@ -853,8 +853,8 @@ class CreateLLMModelBundleV1UseCase:
                 # CUDA graphs seem to break with multinode, turn them off.
                 subcommands[-1] = subcommands[-1] + "--enforce-eager"
 
-        if "gemma-2" in model_name:
-            subcommands[-1] = subcommands[-1] + " --attention-backend FLASHINFER"
+            if "gemma-2" in model_name:
+                subcommands[-1] = subcommands[-1] + " --attention-backend FLASHINFER"
 
         command = [
             "/bin/bash",
@@ -2700,11 +2700,11 @@ def infer_addition_engine_args_from_model_name(
 ) -> VLLMEngineAdditionalArgs:
     # Increase max gpu utilization for larger models
     # TODO do I need to remove you here
-    numbers = re.findall(r"\d+", model_name)
-    if len(numbers) == 0:
-        raise ObjectHasInvalidValueException(
-            f"Model {model_name} is not supported for batch completions."
-        )
+    # numbers = re.findall(r"\d+", model_name)
+    # if len(numbers) == 0:
+    #     raise ObjectHasInvalidValueException(
+    #         f"Model {model_name} is not supported for batch completions."
+    #     )
     model_param_count_b = get_model_param_count_b(model_name)
     if model_param_count_b >= 70:
         gpu_memory_utilization = 0.95
