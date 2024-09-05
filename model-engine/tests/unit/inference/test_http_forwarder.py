@@ -160,7 +160,7 @@ def test_get_forwarder_loader():
 )
 def test_get_streaming_forwarder_loader():
     loader = get_streaming_forwarder_loader()
-    assert loader.predict_route == "/predict"
+    assert loader.predict_route == "/stream"
 
     loader = get_streaming_forwarder_loader("/v1/chat/completions")
     assert loader.predict_route == "/v1/chat/completions"

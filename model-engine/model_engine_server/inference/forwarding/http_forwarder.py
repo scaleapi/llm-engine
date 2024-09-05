@@ -36,7 +36,8 @@ def get_config():
 
 def get_forwarder_loader(destination_path: Optional[str] = None):
     config = get_config()["sync"]
-    del config["extra_routes"]
+    if "extra_routes" in config:
+        del config["extra_routes"]
     if destination_path:
         config["predict_route"] = destination_path
     forwarder_loader = LoadForwarder(**config)
@@ -45,7 +46,8 @@ def get_forwarder_loader(destination_path: Optional[str] = None):
 
 def get_streaming_forwarder_loader(destination_path: Optional[str] = None):
     config = get_config()["stream"]
-    del config["extra_routes"]
+    if "extra_routes" in config:
+        del config["extra_routes"]
     if destination_path:
         config["predict_route"] = destination_path
     streaming_forwarder_loader = LoadStreamingForwarder(**config)
