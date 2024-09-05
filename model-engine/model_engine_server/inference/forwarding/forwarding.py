@@ -104,6 +104,21 @@ class ModelEngineSerializationMixin:
 
         return {"result": response}
 
+    @staticmethod
+    def get_response_payload_stream(using_serialize_results_as_string: bool, response: str):
+        """Event stream is needs to be treated as a stream of strings, not JSON objects"""
+        if using_serialize_results_as_string:
+            return {"result": response}
+
+        return {"result": parse_to_object_or_string(response)}
+
+
+def parse_to_object_or_string(value: str) -> object:
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
+
 
 @dataclass
 class Forwarder(ModelEngineSerializationMixin):
@@ -123,9 +138,9 @@ class Forwarder(ModelEngineSerializationMixin):
     predict_endpoint: str
     model_engine_unwrap: bool
     serialize_results_as_string: bool
-    post_inference_hooks_handler: PostInferenceHooksHandler
     wrap_response: bool
     forward_http_status: bool
+    post_inference_hooks_handler: PostInferenceHooksHandler
 
     def __call__(self, json_payload: Any) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
@@ -344,9 +359,7 @@ class StreamingForwarder(ModelEngineSerializationMixin):
 
         client = sseclient.SSEClient(response)
         for event in client.events():
-            yield self.get_response_payload(
-                using_serialize_results_as_string, json.loads(event.data)
-            )
+            yield self.get_response_payload_stream(using_serialize_results_as_string, event.data)
 
 
 @dataclass(frozen=True)
@@ -509,13 +522,22 @@ def _substitute_config_overrides(config: dict, config_overrides: List[str]) -> N
             raise ValueError(f"Error setting {key_path} to {value} in {config}") from e
 
 
+def _cast_value(value: Any) -> Any:
+    if value.isdigit():
+        return int(value)
+    elif value.startswith("[") and value.endswith("]"):
+        return [_cast_value(v) for v in value[1:-1].split(",")]
+    else:
+        return value
+
+
 def _set_value(config: dict, key_path: List[str], value: Any) -> None:
     """
     Modifies config by setting the value at config[key_path[0]][key_path[1]]... to be `value`.
     """
     key = key_path[0]
     if len(key_path) == 1:
-        config[key] = value if not value.isdigit() else int(value)
+        config[key] = _cast_value(value)
     else:
         if key not in config:
             config[key] = dict()
