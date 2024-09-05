@@ -44,6 +44,7 @@ class SyncEndpointPredictV1Response(BaseModel):
 
 class EndpointPredictV1Request(BaseModel):
     url: Optional[str] = None
+    path_override: Optional[str] = None
     args: Optional[RequestSchema] = None
     cloudpickle: Optional[str] = None
     callback_url: Optional[str] = None

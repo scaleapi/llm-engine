@@ -139,7 +139,8 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 ),
             ):
                 with attempt:
-                    logger.info(f"Retry number {attempt.retry_state.attempt_number}")
+                    if attempt.retry_state.attempt_number > 1:  # pragma: no cover
+                        logger.info(f"Retry number {attempt.retry_state.attempt_number}")
                     return await self.make_single_request(request_url, payload_json)
         except RetryError as e:
             if type(e.last_attempt.exception()) == TooManyRequestsException:

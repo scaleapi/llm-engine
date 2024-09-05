@@ -14,7 +14,8 @@ logger = make_logger(logger_name())
 
 def _get_abs_container_client(bucket: str) -> ContainerClient:
     blob_service_client = BlobServiceClient(
-        f"https://{os.getenv('ABS_ACCOUNT_NAME')}.blob.core.windows.net", DefaultAzureCredential()
+        f"https://{os.getenv('ABS_ACCOUNT_NAME')}.blob.core.windows.net",
+        DefaultAzureCredential(),
     )
     return blob_service_client.get_container_client(container=bucket)
 
@@ -79,6 +80,14 @@ class ABSLLMArtifactGateway(LLMArtifactGateway):
         parsed_remote = parse_attachment_url(path, clean_key=False)
         bucket = parsed_remote.bucket
         key = os.path.join(parsed_remote.key, "config.json")
+
+        container_client = _get_abs_container_client(bucket)
+        return json.loads(container_client.download_blob(blob=key).readall())
+
+    def get_tokenizer_config(self, path: str, **kwargs) -> Dict[str, Any]:
+        parsed_remote = parse_attachment_url(path, clean_key=False)
+        bucket = parsed_remote.bucket
+        key = os.path.join(parsed_remote.key, "tokenizer_config.json")
 
         container_client = _get_abs_container_client(bucket)
         return json.loads(container_client.download_blob(blob=key).readall())
