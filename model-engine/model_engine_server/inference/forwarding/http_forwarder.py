@@ -115,7 +115,7 @@ async def stream(
         return EventSourceResponse(event_generator())
 
 
-async def serve_http(app: FastAPI, **uvicorn_kwargs: Any):
+async def serve_http(app: FastAPI, **uvicorn_kwargs: Any):  # pragma: no cover
     logger.info("Available routes are:")
     for route in app.routes:
         methods = getattr(route, "methods", None)
@@ -151,7 +151,7 @@ async def serve_http(app: FastAPI, **uvicorn_kwargs: Any):
         return server.shutdown()
 
 
-async def run_server(args, **uvicorn_kwargs) -> None:
+async def run_server(args, **uvicorn_kwargs) -> None:  # pragma: no cover
     app = await init_app()
     shutdown_task = await serve_http(
         app,
@@ -218,7 +218,7 @@ async def init_app():
     return app
 
 
-def entrypoint():
+def entrypoint():  # pragma: no cover
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--num-workers", type=int, required=True)
