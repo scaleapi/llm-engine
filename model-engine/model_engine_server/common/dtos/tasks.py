@@ -44,12 +44,12 @@ class SyncEndpointPredictV1Response(BaseModel):
 
 class EndpointPredictV1Request(BaseModel):
     url: Optional[str] = None
-    path_override: Optional[str] = None
     args: Optional[RequestSchema] = None
     cloudpickle: Optional[str] = None
     callback_url: Optional[str] = None
     callback_auth: Optional[CallbackAuth] = None
     return_pickled: bool = False
+    destination_path: str = "/stream"
 
 
 class SyncEndpointPredictV1Request(EndpointPredictV1Request):

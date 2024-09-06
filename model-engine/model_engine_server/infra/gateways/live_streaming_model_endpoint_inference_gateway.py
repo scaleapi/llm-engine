@@ -44,7 +44,7 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
 )
 
 
-def _get_streaming_endpoint_url(deployment_name: str, path: str = "stream") -> str:
+def _get_streaming_endpoint_url(deployment_name: str, path: str = "/stream") -> str:
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
         # The IP address is obtained from `minikube ip`.
@@ -58,7 +58,7 @@ def _get_streaming_endpoint_url(deployment_name: str, path: str = "stream") -> s
         protocol = "http"
         # no need to hit external DNS resolution if we're w/in the k8s cluster
         hostname = f"{deployment_name}.{hmi_config.endpoint_namespace}.svc.cluster.local"
-    return f"{protocol}://{hostname}/{path}"
+    return f"{protocol}://{hostname}{path}"
 
 
 def _serialize_json(data) -> str:
@@ -190,9 +190,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
     async def streaming_predict(
         self, topic: str, predict_request: SyncEndpointPredictV1Request
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
-        deployment_url = _get_streaming_endpoint_url(
-            topic, path=predict_request.path_override or "stream"
-        )
+        deployment_url = _get_streaming_endpoint_url(topic, path=predict_request.destination_path)
 
         try:
             timeout_seconds = (

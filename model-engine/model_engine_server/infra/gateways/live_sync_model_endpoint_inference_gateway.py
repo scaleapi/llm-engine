@@ -41,7 +41,7 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
 )
 
 
-def _get_sync_endpoint_url(deployment_name: str) -> str:
+def _get_sync_endpoint_url(deployment_name: str, destination_path: str = "/predict") -> str:
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
         # The IP address is obtained from `minikube ip`.
@@ -55,7 +55,7 @@ def _get_sync_endpoint_url(deployment_name: str) -> str:
         protocol = "http"
         # no need to hit external DNS resolution if we're w/in the k8s cluster
         hostname = f"{deployment_name}.{hmi_config.endpoint_namespace}.svc.cluster.local"
-    return f"{protocol}://{hostname}/predict"
+    return f"{protocol}://{hostname}{destination_path}"
 
 
 def _serialize_json(data) -> str:
@@ -164,7 +164,9 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
     async def predict(
         self, topic: str, predict_request: SyncEndpointPredictV1Request
     ) -> SyncEndpointPredictV1Response:
-        deployment_url = _get_sync_endpoint_url(topic)
+        deployment_url = _get_sync_endpoint_url(
+            topic, destination_path=predict_request.destination_path
+        )
 
         try:
             timeout_seconds = (
