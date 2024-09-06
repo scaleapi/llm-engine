@@ -57,7 +57,7 @@ class CreateModelBundleV1UseCase:
         self.docker_repository = docker_repository
         self.model_primitive_gateway = model_primitive_gateway
 
-    async def execute(  # TODO handle multinode (unless we don't need this)
+    async def execute(
         self, user: User, request: CreateModelBundleV1Request
     ) -> CreateModelBundleV1Response:
         """
@@ -184,7 +184,7 @@ class CloneModelBundleV1UseCase:
         self.model_bundle_repository = model_bundle_repository
         self.authz_module = LiveAuthorizationModule()
 
-    async def execute(  # TODO multinode? probably not
+    async def execute(
         self,
         user: User,
         request: CloneModelBundleV1Request,
@@ -248,7 +248,7 @@ class ListModelBundlesV1UseCase:
     def __init__(self, model_bundle_repository: ModelBundleRepository):
         self.model_bundle_repository = model_bundle_repository
 
-    async def execute(  # TODO multinode? maybe not
+    async def execute(
         self,
         user: User,
         model_name: Optional[str],
@@ -351,7 +351,7 @@ class CreateModelBundleV2UseCase:
         self.docker_repository = docker_repository
         self.model_primitive_gateway = model_primitive_gateway
 
-    async def execute(  # TODO multinode
+    async def execute(
         self,
         user: User,
         request: CreateModelBundleV2Request,
@@ -359,6 +359,8 @@ class CreateModelBundleV2UseCase:
     ) -> CreateModelBundleV2Response:
         """
         Runs the use case to create a Model Bundle.
+        Note (2024-09-05): to create a multinode Model Bundle there are various fields in metadata that must be stored.
+        This is because db migrations are quite hairy.
 
         Args:
             user: The user who is creating the Model Bundle.

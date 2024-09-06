@@ -61,7 +61,7 @@ class ModelEndpointService(ABC):
         """
 
     @abstractmethod
-    async def create_model_endpoint(  # TODO multinode
+    async def create_model_endpoint(
         self,
         *,
         name: str,
@@ -197,7 +197,7 @@ class ModelEndpointService(ABC):
         """
 
     @abstractmethod
-    async def update_model_endpoint(  # TODO multinode
+    async def update_model_endpoint(
         self,
         *,
         model_endpoint_id: str,

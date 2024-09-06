@@ -11,7 +11,7 @@ from model_engine_server.domain.entities import (
 )
 
 
-class BuildEndpointRequest(BaseModel):  # TODO update callsites
+class BuildEndpointRequest(BaseModel):
     model_endpoint_record: ModelEndpointRecord
     deployment_name: str
     min_workers: int
