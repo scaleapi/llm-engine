@@ -48,7 +48,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         )
         return QueueInfo(queue_name, queue_url)
 
-    async def create_or_update_resources(  # TODO multinode
+    async def create_or_update_resources(
         self, request: CreateOrUpdateResourcesRequest
     ) -> EndpointResourceGatewayCreateOrUpdateResourcesResponse:
         endpoint_record = request.build_endpoint_request.model_endpoint_record
@@ -70,7 +70,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
                     endpoint_record.id
                 )
 
-        await self.k8s_delegate.create_or_update_resources(  # TODO multinode
+        await self.k8s_delegate.create_or_update_resources(
             request=request,
             sqs_queue_name=queue_name,
             sqs_queue_url=queue_url,

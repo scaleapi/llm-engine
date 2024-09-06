@@ -273,7 +273,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     create_or_update_response = (
                         await self.resource_gateway.create_or_update_resources(
                             params
-                        )  # TODO multinode
+                        )
                     )
 
                 except EndpointResourceInfraException:

@@ -1442,7 +1442,7 @@ class K8SEndpointResourceDelegate:
         lws_resource_name = f"leader-worker-set-{mode}-{device}"
         return lws_resource_name
 
-    async def _create_or_update_resources(  # TODO multinode
+    async def _create_or_update_resources(  # TODO multinode, think this is correct
         self,
         request: CreateOrUpdateResourcesRequest,
         sqs_queue_name: Optional[str] = None,
