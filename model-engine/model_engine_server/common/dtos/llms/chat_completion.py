@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from model_engine_server.common.dtos.llms.vllm import VLLMChatCompletionAdditionalParams
 from model_engine_server.common.pydantic_types import Field
@@ -31,9 +31,6 @@ class ChatCompletionV2Request(CreateChatCompletionRequest, VLLMChatCompletionAdd
     ]
 
 
-class ChatCompletionV2Response(CreateChatCompletionResponse):
-    pass
-
-
-class ChatCompletionV2Chunk(CreateChatCompletionStreamResponse):
-    pass
+ChatCompletionV2SyncResponse = CreateChatCompletionResponse
+ChatCompletionV2Chunk = CreateChatCompletionStreamResponse
+ChatCompletionV2Response = Union[ChatCompletionV2SyncResponse, ChatCompletionV2Chunk]
