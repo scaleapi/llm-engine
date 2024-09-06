@@ -79,6 +79,10 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = True  # LLM endpoints are public by default.
+    chat_template_override: Optional[str] = Field(
+        default=None,
+        description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
+    )
 
 
 class CreateLLMModelEndpointV1Response(BaseModel):
@@ -100,6 +104,10 @@ class GetLLMModelEndpointV1Response(BaseModel):
     num_shards: Optional[int] = None
     quantize: Optional[Quantization] = None
     checkpoint_path: Optional[str] = None
+    chat_template_override: Optional[str] = Field(
+        default=None,
+        description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
+    )
     spec: Optional[GetModelEndpointV1Response] = None
 
 
@@ -156,6 +164,10 @@ class UpdateLLMModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = None
+    chat_template_override: Optional[str] = Field(
+        default=None,
+        description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
+    )
 
 
 class UpdateLLMModelEndpointV1Response(BaseModel):

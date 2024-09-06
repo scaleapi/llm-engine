@@ -108,6 +108,8 @@ from model_engine_server.infra.repositories.live_tokenizer_repository import (
     get_models_s3_uri,
 )
 
+from clients.python.llmengine.data_types.chat_completion import ChatCompletionV2Response
+
 from ...common.datadog_utils import add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
 from .model_bundle_use_cases import CreateModelBundleV2UseCase
@@ -123,6 +125,7 @@ from .model_endpoint_use_cases import (
 
 logger = make_logger(logger_name())
 
+CHAT_TEMPLATE_MAX_LENGTH = 1000
 LLM_METADATA_KEY = "_llm"
 RESERVED_METADATA_KEYS = [LLM_METADATA_KEY, CONVERTED_FROM_ARTIFACT_LIKE_KEY]
 
@@ -350,6 +353,7 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
         num_shards=llm_metadata["num_shards"],
         quantize=llm_metadata.get("quantize"),
         checkpoint_path=llm_metadata.get("checkpoint_path"),
+        chat_template_override=llm_metadata.get("chat_template_override"),
         spec=model_endpoint_entity_to_get_model_endpoint_response(model_endpoint),
     )
     return response
@@ -385,6 +389,21 @@ def validate_quantization(
         raise ObjectHasInvalidValueException(
             f"Quantization {quantize} is not supported for inference framework {inference_framework}. Supported quantization types are {_SUPPORTED_QUANTIZATIONS[inference_framework]}."
         )
+
+
+def validate_chat_template(
+    chat_template: Optional[str], inference_framework: LLMInferenceFramework
+) -> None:
+    if chat_template is not None:
+        if len(chat_template) > CHAT_TEMPLATE_MAX_LENGTH:
+            raise ObjectHasInvalidValueException(
+                f"Chat template length must be less than {CHAT_TEMPLATE_MAX_LENGTH}."
+            )
+
+        if inference_framework != LLMInferenceFramework.VLLM:
+            raise ObjectHasInvalidValueException(
+                f"Chat template is only supported for inference framework {LLMInferenceFramework.VLLM}."
+            )
 
 
 def validate_checkpoint_path_uri(checkpoint_path: str) -> None:
@@ -425,6 +444,14 @@ def validate_checkpoint_files(checkpoint_files: List[str]) -> None:
         raise ObjectHasInvalidValueException("No safetensors found in the checkpoint path.")
 
 
+def encode_template(chat_template: str) -> str:
+    """Base64 encode the chat template to safely pass it to bash."""
+    import base64
+
+    encoded = base64.b64encode(chat_template.encode("utf-8")).decode("utf-8")
+    return encoded
+
+
 class CreateLLMModelBundleV1UseCase:
     def __init__(
         self,
@@ -463,6 +490,7 @@ class CreateLLMModelBundleV1UseCase:
         num_shards: int,
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
+        chat_template_override: Optional[str],
     ) -> ModelBundle:
         if source == LLMSource.HUGGING_FACE:
             self.check_docker_image_exists_for_image_tag(
@@ -495,6 +523,7 @@ class CreateLLMModelBundleV1UseCase:
                     num_shards,
                     quantize,
                     checkpoint_path,
+                    chat_template_override,
                 )
             elif framework == LLMInferenceFramework.LIGHTLLM:
                 bundle_id = await self.create_lightllm_bundle(
@@ -783,6 +812,7 @@ class CreateLLMModelBundleV1UseCase:
         num_shards: int,
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
+        chat_template_override: Optional[str],
     ):
         command = []
         subcommands = []
@@ -800,25 +830,34 @@ class CreateLLMModelBundleV1UseCase:
             final_weights_folder,
         )
 
-        subcommands.append(
-            f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
-        )
+        vllm_cmd = f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
+
+        chat_template_cmd = None
+        if chat_template_override:
+            # We encode the chat template as base64 to avoid issues with special characters
+            # and decode it via bash
+            chat_template_cmd = f'export CHAT_TEMPLATE=$(echo "{encode_template(chat_template_override)}" | base64 --decode)'
+            subcommands.append(chat_template_cmd)
+            vllm_cmd += ' --chat-template "$CHAT_TEMPLATE"'
 
         if quantize:
-            if quantize == Quantization.AWQ:
-                subcommands[-1] = subcommands[-1] + f" --quantization {quantize}"
-            else:
+            if quantize != Quantization.AWQ:
                 raise InvalidRequestException(f"Quantization {quantize} is not supported by vLLM.")
 
+            vllm_cmd += f" --quantization {quantize}"
+
         if hmi_config.sensitive_log_mode:  # pragma: no cover
-            subcommands[-1] = subcommands[-1] + " --disable-log-requests"
+            vllm_cmd += " --disable-log-requests"
 
-        if "llama-3-70b" in model_name:
-            subcommands[-1] = subcommands[-1] + " --gpu-memory-utilization 0.95 --enforce-eager"
+        additional_args = infer_addition_engine_args_from_model_name(model_name)
 
-        if "gemma-2" in model_name:
-            subcommands[-1] = subcommands[-1] + " --attention-backend FLASHINFER"
+        if additional_args.max_gpu_memory_utilization:
+            vllm_cmd += f" --gpu-memory-utilization {additional_args.max_gpu_memory_utilization} --enforce-eager"
 
+        if additional_args.attention_backend:
+            vllm_cmd += " --attention-backend FLASHINFER"
+
+        subcommands.append(vllm_cmd)
         command = [
             "/bin/bash",
             "-c",
@@ -842,6 +881,7 @@ class CreateLLMModelBundleV1UseCase:
                         healthcheck_route="/health",
                         predict_route="/predict",
                         streaming_predict_route="/stream",
+                        extra_routes=["v1/chat/completions"],
                         env={},
                     ),
                     metadata={},
@@ -990,6 +1030,12 @@ class CreateLLMModelBundleV1UseCase:
         ).model_bundle_id
 
 
+async def get_chat_template(
+    llm_artifact_gateway: LLMArtifactGateway, checkpoint_path: str
+) -> Optional[str]:
+    return llm_artifact_gateway.get_tokenizer_config(checkpoint_path).get("chat_template", None)
+
+
 class CreateLLMModelEndpointV1UseCase:
     def __init__(
         self,
@@ -1027,12 +1073,20 @@ class CreateLLMModelEndpointV1UseCase:
             )
         if request.labels is None:
             raise EndpointLabelsException("Endpoint labels cannot be None!")
+
         validate_labels(request.labels)
         validate_billing_tags(request.billing_tags)
         validate_post_inference_hooks(user, request.post_inference_hooks)
         validate_model_name(request.model_name, request.inference_framework)
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
         validate_quantization(request.quantize, request.inference_framework)
+        validate_chat_template(request.chat_template_override, request.inference_framework)
+        # checkpoint_path = get_checkpoint_path(
+        #     request.model_name, request.checkpoint_path
+        # )
+        # chat_template = request.chat_template_override or get_chat_template(
+        #     self.llm_artifact_gateway, checkpoint_path=checkpoint_path
+        # )
 
         if request.inference_framework in [
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
@@ -1061,6 +1115,7 @@ class CreateLLMModelEndpointV1UseCase:
             num_shards=request.num_shards,
             quantize=request.quantize,
             checkpoint_path=request.checkpoint_path,
+            chat_template_override=request.chat_template_override,
         )
         validate_resource_requests(
             bundle=bundle,
@@ -1091,6 +1146,7 @@ class CreateLLMModelEndpointV1UseCase:
                 num_shards=request.num_shards,
                 quantize=request.quantize,
                 checkpoint_path=request.checkpoint_path,
+                chat_template_override=request.chat_template_override,
             )
         )
 
@@ -1273,6 +1329,7 @@ class UpdateLLMModelEndpointV1UseCase:
             or request.num_shards
             or request.quantize
             or request.checkpoint_path
+            or request.chat_template_override
         ):
             llm_metadata = (model_endpoint.record.metadata or {}).get(LLM_METADATA_KEY, {})
             inference_framework = llm_metadata["inference_framework"]
@@ -1298,6 +1355,10 @@ class UpdateLLMModelEndpointV1UseCase:
                 request.gpus or infra_state.resource_state.gpus,
             )
             validate_quantization(quantize, inference_framework)
+            validate_chat_template(request.chat_template_override, inference_framework)
+            chat_template_override = request.chat_template_override or llm_metadata.get(
+                "chat_template_override"
+            )
 
             bundle = await self.create_llm_model_bundle_use_case.execute(
                 user,
@@ -1310,6 +1371,7 @@ class UpdateLLMModelEndpointV1UseCase:
                 num_shards=num_shards,
                 quantize=quantize,
                 checkpoint_path=checkpoint_path,
+                chat_template_override=chat_template_override,
             )
 
             metadata = endpoint_record.metadata or {}
@@ -1322,6 +1384,7 @@ class UpdateLLMModelEndpointV1UseCase:
                     num_shards=num_shards,
                     quantize=quantize,
                     checkpoint_path=checkpoint_path,
+                    chat_template_override=chat_template_override,
                 )
             )
             endpoint_record.metadata = metadata
@@ -1991,6 +2054,18 @@ class CompletionSyncV1UseCase:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Unsupported inference framework {endpoint_content.inference_framework}"
             )
+
+
+class ChatCompletionStreamV2UseCase:
+    """
+    Use case for running a chat completion on an LLM endpoint.
+    """
+
+    def __init__(self) -> None:
+        pass
+
+    async def execute(self) -> AsyncIterable[ChatCompletionV2Response]:
+        raise NotImplementedError()
 
 
 class CompletionStreamV1UseCase:
