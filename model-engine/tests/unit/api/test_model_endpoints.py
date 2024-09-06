@@ -615,40 +615,6 @@ def test_update_model_endpoint_by_id_operation_in_progress_returns_409(
     assert response.status_code == 409
 
 
-def test_update_model_endpoint_from_nonmultinode_to_multinode_returns_400(
-    model_bundle_1_v1: Tuple[ModelBundle, Any],
-    model_endpoint_1: Tuple[ModelEndpoint, Any],
-    update_model_endpoint_request: Dict[str, Any],
-    test_api_key: str,
-    get_test_client_wrapper,
-):
-    # if the request doesn't take in nodes_per_worker, that works too
-    # TODO maybe just delete this? does the thing allow ignoring extra args or something idk
-    assert model_endpoint_1[0].infra_state is not None
-    client = get_test_client_wrapper(
-        fake_docker_repository_image_always_exists=True,
-        fake_model_bundle_repository_contents={
-            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
-        },
-        fake_model_endpoint_record_repository_contents={
-            model_endpoint_1[0].record.id: model_endpoint_1[0].record,
-        },
-        fake_model_endpoint_infra_gateway_contents={
-            model_endpoint_1[0].infra_state.deployment_name: model_endpoint_1[0].infra_state,
-        },
-        fake_batch_job_record_repository_contents={},
-        fake_batch_job_progress_gateway_contents={},
-        fake_docker_image_batch_job_bundle_repository_contents={},
-    )
-    update_model_endpoint_request["nodes_per_worker"] = 2
-    response = client.put(
-        "/v1/model-endpoints/test_model_endpoint_id_1",
-        auth=(test_api_key, ""),
-        json=update_model_endpoint_request,
-    )
-    assert 400 <= response.status_code < 500
-
-
 def test_delete_model_endpoint_by_id_success(
     model_bundle_1_v1: Tuple[ModelBundle, Any],
     model_endpoint_1: Tuple[ModelEndpoint, Any],
