@@ -1,12 +1,14 @@
 from typing import Optional, Union
 
+from model_engine_server.common.dtos.llms.completion import StreamError
 from model_engine_server.common.dtos.llms.vllm import VLLMChatCompletionAdditionalParams
-from model_engine_server.common.pydantic_types import Field
+from model_engine_server.common.pydantic_types import BaseModel, Field
 from model_engine_server.common.types.gen.openai import (
     CreateChatCompletionRequest,
     CreateChatCompletionResponse,
     CreateChatCompletionStreamResponse,
 )
+from sse_starlette import EventSourceResponse
 from typing_extensions import Annotated
 
 # Fields that are a part of OpenAI spec but are not supported by model engine
@@ -33,4 +35,11 @@ class ChatCompletionV2Request(CreateChatCompletionRequest, VLLMChatCompletionAdd
 
 ChatCompletionV2SyncResponse = CreateChatCompletionResponse
 ChatCompletionV2Chunk = CreateChatCompletionStreamResponse
-ChatCompletionV2Response = Union[ChatCompletionV2SyncResponse, ChatCompletionV2Chunk]
+ChatCompletionV2StreamResponse = EventSourceResponse
+
+
+class ChatCompletionV2ErrorChunk(BaseModel):
+    error: StreamError
+
+
+ChatCompletionV2Response = Union[ChatCompletionV2SyncResponse, ChatCompletionV2StreamResponse]
