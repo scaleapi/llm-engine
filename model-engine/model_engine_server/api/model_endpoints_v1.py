@@ -137,7 +137,7 @@ async def update_model_endpoint(
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> UpdateModelEndpointV1Response:
     """
-    Lists the Models owned by the current owner.
+    Updates the Model endpoint.
     """
     logger.info(f"PUT /model-endpoints/{model_endpoint_id} with {request} for {auth}")
     try:

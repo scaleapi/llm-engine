@@ -270,7 +270,7 @@ class CreateModelEndpointV1UseCase:
         self.authz_module = LiveAuthorizationModule()
 
     async def execute(
-        self, user: User, request: CreateModelEndpointV1Request  # TODO potential multinode here?
+        self, user: User, request: CreateModelEndpointV1Request 
     ) -> CreateModelEndpointV1Response:
         validate_deployment_resources(
             min_workers=request.min_workers,
@@ -337,7 +337,7 @@ class CreateModelEndpointV1UseCase:
         results_s3_bucket = self.authz_module.get_s3_bucket_for_user(user)
 
         model_endpoint_record = (
-            await self.model_endpoint_service.create_model_endpoint(  # TODO multinode
+            await self.model_endpoint_service.create_model_endpoint(
                 name=request.name,
                 created_by=user.user_id,
                 model_bundle_id=request.model_bundle_id,
@@ -467,7 +467,7 @@ class UpdateModelEndpointByIdV1UseCase:
                 f"{CONVERTED_FROM_ARTIFACT_LIKE_KEY} is a reserved metadata key and cannot be used by user."
             )
 
-        updated_endpoint_record = await self.model_endpoint_service.update_model_endpoint(  # TODO handle multinode? but we probably can't go from one to the other
+        updated_endpoint_record = await self.model_endpoint_service.update_model_endpoint(
             model_endpoint_id=model_endpoint_id,
             model_bundle_id=request.model_bundle_id,
             metadata=request.metadata,

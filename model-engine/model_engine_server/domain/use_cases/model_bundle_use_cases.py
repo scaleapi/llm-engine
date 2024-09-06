@@ -446,7 +446,7 @@ class CreateModelBundleV2UseCase:
             packaging_type = ModelBundlePackagingType.LIRA
             app_config = None
 
-        model_bundle = await self.model_bundle_repository.create_model_bundle(  # TODO multinode? likely don't need to change anything here
+        model_bundle = await self.model_bundle_repository.create_model_bundle(
             name=request.name,
             created_by=created_by,
             owner=owner,
@@ -474,7 +474,7 @@ class CloneModelBundleV2UseCase:
         self.model_bundle_repository = model_bundle_repository
         self.authz_module = LiveAuthorizationModule()
 
-    async def execute(  # TODO multinode?
+    async def execute(
         self,
         user: User,
         request: CloneModelBundleV2Request,
