@@ -793,6 +793,50 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
             "use_cache": True,
             "vocab_size": 32000,
         }
+        self.tokenizer_config = {
+            "add_bos_token": True,
+            "add_eos_token": False,
+            "add_prefix_space": None,
+            "added_tokens_decoder": {
+                "0": {
+                    "content": "<unk>",
+                    "lstrip": False,
+                    "normalized": False,
+                    "rstrip": False,
+                    "single_word": False,
+                    "special": True,
+                },
+                "1": {
+                    "content": "<s>",
+                    "lstrip": False,
+                    "normalized": False,
+                    "rstrip": False,
+                    "single_word": False,
+                    "special": True,
+                },
+                "2": {
+                    "content": "</s>",
+                    "lstrip": False,
+                    "normalized": False,
+                    "rstrip": False,
+                    "single_word": False,
+                    "special": True,
+                },
+            },
+            "additional_special_tokens": [],
+            "bos_token": "<s>",
+            "chat_template": "{%- if messages[0]['role'] == 'system' %}\n    {%- set system_message = messages[0]['content'] %}\n    {%- set loop_messages = messages[1:] %}\n{%- else %}\n    {%- set loop_messages = messages %}\n{%- endif %}\n\n{{- bos_token }}\n{%- for message in loop_messages %}\n    {%- if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}\n        {{- raise_exception('After the optional system message, conversation roles must alternate user/assistant/user/assistant/...') }}\n    {%- endif %}\n    {%- if message['role'] == 'user' %}\n        {%- if loop.first and system_message is defined %}\n            {{- ' [INST] ' + system_message + '\\n\\n' + message['content'] + ' [/INST]' }}\n        {%- else %}\n            {{- ' [INST] ' + message['content'] + ' [/INST]' }}\n        {%- endif %}\n    {%- elif message['role'] == 'assistant' %}\n        {{- ' ' + message['content'] + eos_token}}\n    {%- else %}\n        {{- raise_exception('Only user and assistant roles are supported, with the exception of an initial optional system message!') }}\n    {%- endif %}\n{%- endfor %}\n",
+            "clean_up_tokenization_spaces": False,
+            "eos_token": "</s>",
+            "legacy": False,
+            "model_max_length": 1000000000000000019884624838656,
+            "pad_token": None,
+            "sp_model_kwargs": {},
+            "spaces_between_special_tokens": False,
+            "tokenizer_class": "LlamaTokenizer",
+            "unk_token": "<unk>",
+            "use_default_system_prompt": False,
+        }
 
     def _add_model(self, owner: str, model_name: str):
         self.existing_models.append((owner, model_name))
@@ -814,6 +858,9 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
 
     def get_model_config(self, path: str, **kwargs) -> Dict[str, Any]:
         return self.model_config
+
+    def get_tokenizer_config(self, path: str, **kwargs) -> Dict[str, Any]:
+        return self.tokenizer_config
 
 
 class FakeTriggerRepository(TriggerRepository):

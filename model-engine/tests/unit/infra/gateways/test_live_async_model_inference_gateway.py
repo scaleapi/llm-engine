@@ -58,6 +58,7 @@ def test_task_create_get_args_callback(
         "callback_auth": json.loads(endpoint_predict_request_2[0].callback_auth.json()),
         "callback_url": endpoint_predict_request_2[0].callback_url,
         "return_pickled": endpoint_predict_request_2[0].return_pickled,
+        "destination_path": "/stream",
     }
     assert (datetime.now() - task_queue_gateway.queue[task_id]["args"][1]) < timedelta(seconds=1)
     assert (

@@ -132,6 +132,7 @@ async def test_create_model_endpoint_use_case_success(
             "num_shards": create_llm_model_endpoint_request_async.num_shards,
             "quantize": None,
             "checkpoint_path": create_llm_model_endpoint_request_async.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_async.chat_template_override,
         }
     }
 
@@ -155,6 +156,7 @@ async def test_create_model_endpoint_use_case_success(
             "num_shards": create_llm_model_endpoint_request_sync.num_shards,
             "quantize": None,
             "checkpoint_path": create_llm_model_endpoint_request_sync.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_sync.chat_template_override,
         }
     }
 
@@ -179,7 +181,8 @@ async def test_create_model_endpoint_use_case_success(
             "inference_framework_image_tag": create_llm_model_endpoint_request_streaming.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
             "quantize": None,
-            "checkpoint_path": create_llm_model_endpoint_request_sync.checkpoint_path,
+            "checkpoint_path": create_llm_model_endpoint_request_streaming.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_streaming.chat_template_override,
         }
     }
 
@@ -276,6 +279,7 @@ async def test_create_model_bundle_fails_if_no_checkpoint(
             num_shards=request.num_shards,
             quantize=request.quantize,
             checkpoint_path=checkpoint_path,
+            chat_template_override=request.chat_template_override,
         )
 
 
@@ -386,6 +390,7 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
             "num_shards": create_llm_model_endpoint_text_generation_inference_request_streaming.num_shards,
             "quantize": create_llm_model_endpoint_text_generation_inference_request_streaming.quantize,
             "checkpoint_path": create_llm_model_endpoint_text_generation_inference_request_streaming.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_text_generation_inference_request_streaming.chat_template_override,
         }
     }
 
@@ -515,6 +520,7 @@ async def test_create_model_endpoint_trt_llm_use_case_success(
             "num_shards": create_llm_model_endpoint_trt_llm_request_streaming.num_shards,
             "quantize": create_llm_model_endpoint_trt_llm_request_streaming.quantize,
             "checkpoint_path": create_llm_model_endpoint_trt_llm_request_streaming.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_trt_llm_request_streaming.chat_template_override,
         }
     }
 
@@ -705,6 +711,7 @@ async def test_update_model_endpoint_use_case_success(
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
             "quantize": None,
             "checkpoint_path": update_llm_model_endpoint_request.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_streaming.chat_template_override,
         }
     }
     assert endpoint.infra_state.resource_state.memory == update_llm_model_endpoint_request.memory
@@ -740,6 +747,7 @@ async def test_update_model_endpoint_use_case_success(
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
             "quantize": None,
             "checkpoint_path": update_llm_model_endpoint_request.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_streaming.chat_template_override,
         }
     }
     assert endpoint.infra_state.resource_state.memory == update_llm_model_endpoint_request.memory

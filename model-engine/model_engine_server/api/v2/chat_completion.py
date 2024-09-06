@@ -13,6 +13,7 @@ from model_engine_server.common.dtos.llms import (
     ChatCompletionV2ErrorChunk,
     ChatCompletionV2Request,
     ChatCompletionV2Response,
+    ChatCompletionV2ResponseItem,
     StreamError,
     StreamErrorContent,
     TokenUsage,
@@ -221,7 +222,7 @@ async def handle_sync_request(
         ) from exc
 
 
-@chat_router_v2.post("/chat/completion", response_model=ChatCompletionV2Response)
+@chat_router_v2.post("/chat/completion", response_model=ChatCompletionV2ResponseItem)
 async def chat_completion(
     request: ChatCompletionV2Request,
     background_tasks: BackgroundTasks,

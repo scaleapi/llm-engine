@@ -2,7 +2,7 @@ from typing import Optional, Union
 
 from model_engine_server.common.dtos.llms.completion import StreamError
 from model_engine_server.common.dtos.llms.vllm import VLLMChatCompletionAdditionalParams
-from model_engine_server.common.pydantic_types import BaseModel, Field, RootModel
+from model_engine_server.common.pydantic_types import BaseModel, Field
 from model_engine_server.common.types.gen.openai import (
     CreateChatCompletionRequest,
     CreateChatCompletionResponse,
@@ -34,13 +34,20 @@ class ChatCompletionV2Request(CreateChatCompletionRequest, VLLMChatCompletionAdd
 
 
 ChatCompletionV2SyncResponse = CreateChatCompletionResponse
-ChatCompletionV2Chunk = CreateChatCompletionStreamResponse
-ChatCompletionV2StreamResponse = EventSourceResponse  # EventSourceResponse[ChatCompletionV2Chunk]
+ChatCompletionV2SuccessChunk = CreateChatCompletionStreamResponse
 
 
 class ChatCompletionV2ErrorChunk(BaseModel):
     error: StreamError
 
 
-class ChatCompletionV2Response(RootModel):
-    root: Union[ChatCompletionV2SyncResponse, ChatCompletionV2StreamResponse]
+ChatCompletionV2Chunk = Union[ChatCompletionV2SuccessChunk, ChatCompletionV2ErrorChunk]
+ChatCompletionV2StreamResponse = (
+    EventSourceResponse  # EventSourceResponse[ChatCompletionV2Chunk | ChatCompletionV2ErrorChunk]
+)
+
+ChatCompletionV2Response = Union[ChatCompletionV2SyncResponse, ChatCompletionV2StreamResponse]
+
+# This is a version of ChatCompletionV2Response that is used by pydantic to determine the response model
+# Since EventSourceResponse isn't a pydanitc model, we need to use a Union of the two response types
+ChatCompletionV2ResponseItem = Union[ChatCompletionV2SyncResponse, ChatCompletionV2Chunk]

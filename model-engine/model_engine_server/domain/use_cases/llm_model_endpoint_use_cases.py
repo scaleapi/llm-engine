@@ -17,8 +17,8 @@ import yaml
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import (
-    ChatCompletionV2Chunk,
     ChatCompletionV2Request,
+    ChatCompletionV2SuccessChunk,
     ChatCompletionV2SyncResponse,
     CompletionOutput,
     CompletionStreamOutput,
@@ -2589,7 +2589,7 @@ class ChatCompletionStreamV2UseCase:
 
     async def execute(
         self, model_endpoint_name: str, request: ChatCompletionV2Request, user: User
-    ) -> AsyncIterable[ChatCompletionV2Chunk]:
+    ) -> AsyncIterable[ChatCompletionV2SuccessChunk]:
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
@@ -2654,7 +2654,7 @@ class ChatCompletionStreamV2UseCase:
         model_content: GetLLMModelEndpointV1Response,
         inference_gateway: StreamingModelEndpointInferenceGateway,
         inference_request: SyncEndpointPredictV1Request,
-    ) -> AsyncIterable[ChatCompletionV2Chunk]:
+    ) -> AsyncIterable[ChatCompletionV2SuccessChunk]:
         """
         Async generator yielding tokens to stream for the completions response. Should only be called when
         returned directly by execute().
@@ -2676,7 +2676,7 @@ class ChatCompletionStreamV2UseCase:
                 )
             else:
                 result = res.result
-                yield ChatCompletionV2Chunk.model_validate(result)
+                yield ChatCompletionV2SuccessChunk.model_validate(result)
 
 
 class ModelDownloadV1UseCase:
