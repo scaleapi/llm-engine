@@ -491,7 +491,7 @@ class Model(APIEngine):
         labels: Optional[Dict[str, str]] = None,
         request_headers: Optional[Dict[str, str]] = None,
     ) -> UpdateLLMEndpointResponse:
-        # TODO nodes_per_worker?
+        # Can't adjust nodes_per_worker
         """
         Update an LLM model. Note: This API is only available for self-hosted users.
 

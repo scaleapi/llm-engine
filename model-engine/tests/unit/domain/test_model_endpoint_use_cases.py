@@ -677,7 +677,7 @@ async def test_get_model_endpoint_use_case_success(
     model_endpoint_1: ModelEndpoint,
     model_endpoint_2: ModelEndpoint,
 ):
-    # TODO maybe try a multinode endpoint here
+    # Tests single node + multinode
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
     model_endpoint_2.infra_state.resource_state.nodes_per_worker = 2
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_2)
