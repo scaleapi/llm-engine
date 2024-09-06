@@ -2,7 +2,7 @@ from typing import Optional, Union
 
 from model_engine_server.common.dtos.llms.completion import StreamError
 from model_engine_server.common.dtos.llms.vllm import VLLMChatCompletionAdditionalParams
-from model_engine_server.common.pydantic_types import BaseModel, Field
+from model_engine_server.common.pydantic_types import BaseModel, Field, RootModel
 from model_engine_server.common.types.gen.openai import (
     CreateChatCompletionRequest,
     CreateChatCompletionResponse,
@@ -35,11 +35,12 @@ class ChatCompletionV2Request(CreateChatCompletionRequest, VLLMChatCompletionAdd
 
 ChatCompletionV2SyncResponse = CreateChatCompletionResponse
 ChatCompletionV2Chunk = CreateChatCompletionStreamResponse
-ChatCompletionV2StreamResponse = EventSourceResponse
+ChatCompletionV2StreamResponse = EventSourceResponse  # EventSourceResponse[ChatCompletionV2Chunk]
 
 
 class ChatCompletionV2ErrorChunk(BaseModel):
     error: StreamError
 
 
-ChatCompletionV2Response = Union[ChatCompletionV2SyncResponse, ChatCompletionV2StreamResponse]
+class ChatCompletionV2Response(RootModel):
+    root: Union[ChatCompletionV2SyncResponse, ChatCompletionV2StreamResponse]
