@@ -49,16 +49,6 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     Path to the checkpoint to load the model from.
     """
 
-    chat_template: Optional[str] = Field(
-        default=None,
-        description=(
-            "A Jinja template to use for this conversion. "
-            "As of transformers v4.44, default chat template is no longer "
-            "allowed, so you must provide a chat template if the tokenizer "
-            "does not define one."
-        ),
-    )
-
     # General endpoint fields
     metadata: Dict[str, Any]  # TODO: JSON type
     post_inference_hooks: Optional[List[str]] = None
@@ -134,16 +124,6 @@ class UpdateLLMModelEndpointV1Request(BaseModel):
     """
     Path to the checkpoint to load the model from.
     """
-
-    chat_template: Optional[str] = Field(
-        default=None,
-        description=(
-            "A Jinja template to use for this conversion. "
-            "As of transformers v4.44, default chat template is no longer "
-            "allowed, so you must provide a chat template if the tokenizer "
-            "does not define one."
-        ),
-    )
 
     # General endpoint fields
     metadata: Optional[Dict[str, Any]] = None

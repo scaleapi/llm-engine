@@ -128,7 +128,7 @@ from .model_endpoint_use_cases import (
 logger = make_logger(logger_name())
 
 OPENAI_CHAT_COMPLETION_PATH = "/v1/chat/completions"
-CHAT_TEMPLATE_MAX_LENGTH = 1000
+CHAT_TEMPLATE_MAX_LENGTH = 10_000
 CHAT_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM]
 
 LLM_METADATA_KEY = "_llm"
@@ -1086,12 +1086,6 @@ class CreateLLMModelEndpointV1UseCase:
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
         validate_quantization(request.quantize, request.inference_framework)
         validate_chat_template(request.chat_template_override, request.inference_framework)
-        # checkpoint_path = get_checkpoint_path(
-        #     request.model_name, request.checkpoint_path
-        # )
-        # chat_template = request.chat_template_override or get_chat_template(
-        #     self.llm_artifact_gateway, checkpoint_path=checkpoint_path
-        # )
 
         if request.inference_framework in [
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
@@ -2661,7 +2655,8 @@ class ChatCompletionStreamV2UseCase:
         """
         try:
             predict_result = inference_gateway.streaming_predict(
-                topic=model_endpoint.record.destination, predict_request=inference_request
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
             )
         except UpstreamServiceError as exc:
             # Expect upstream inference service to handle bulk of input validation

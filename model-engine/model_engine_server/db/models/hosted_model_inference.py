@@ -206,7 +206,7 @@ class Bundle(Base):
         runnable_image_env: Optional[Dict[str, Any]] = None,
         runnable_image_protocol: Optional[str] = None,
         runnable_image_readiness_initial_delay_seconds: Optional[int] = None,
-        runnable_image_extra_routes: Optional[str] = None,
+        runnable_image_extra_routes: Optional[List[str]] = None,
         # Streaming Enhanced Runnable Image fields
         streaming_enhanced_runnable_image_streaming_command: Optional[List[str]] = None,
         streaming_enhanced_runnable_image_streaming_predict_route: Optional[str] = None,
