@@ -286,7 +286,7 @@ class DBManager:
         return self.sessions.session_async_null_pool.session
 
 
-db_manager: Optional[DBManager]
+db_manager: Optional[DBManager] = None
 
 
 def get_db_manager():
