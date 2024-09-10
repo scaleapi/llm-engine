@@ -1036,12 +1036,6 @@ class CreateLLMModelBundleV1UseCase:
         ).model_bundle_id
 
 
-async def get_chat_template(
-    llm_artifact_gateway: LLMArtifactGateway, checkpoint_path: str
-) -> Optional[str]:
-    return llm_artifact_gateway.get_tokenizer_config(checkpoint_path).get("chat_template", None)
-
-
 class CreateLLMModelEndpointV1UseCase:
     def __init__(
         self,
