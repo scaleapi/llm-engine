@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 import time
@@ -526,7 +527,8 @@ def _cast_value(value: Any) -> Any:
     if value.isdigit():
         return int(value)
     elif value.startswith("[") and value.endswith("]"):
-        return json.loads(value)
+        # Can't use json because it doesn't support single quotes
+        return ast.literal_eval(value)
     else:
         return value
 
@@ -537,7 +539,7 @@ def _set_value(config: dict, key_path: List[str], value: Any) -> None:
     """
     key = key_path[0]
     if len(key_path) == 1:
-        config[key] = _cast_value
+        config[key] = _cast_value(value)
     else:
         if key not in config:
             config[key] = dict()
