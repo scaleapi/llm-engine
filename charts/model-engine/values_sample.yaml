@@ -26,6 +26,7 @@ keyvaultName: llm-engine-keyvault
 
 db:
   runDbInitScript: false
+  runDbMigrationScript: false
 
 # serviceAccount [required] specifies the service account for LLM Engine server deployments (e.g gateway, cache, and builder deployments).
 serviceAccount:

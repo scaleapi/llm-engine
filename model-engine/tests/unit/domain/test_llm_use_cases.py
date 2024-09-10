@@ -446,7 +446,7 @@ def test_load_model_weights_sub_commands(
 
     expected_result = [
         "s5cmd > /dev/null || conda install -c conda-forge -y s5cmd",
-        './s5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.json" --include "*.safetensors" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
+        's5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.json" --include "*.safetensors" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 
