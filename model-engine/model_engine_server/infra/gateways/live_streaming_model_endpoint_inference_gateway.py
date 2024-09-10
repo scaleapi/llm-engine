@@ -14,6 +14,7 @@ from model_engine_server.common.env_vars import CIRCLECI, LOCAL
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
+    InvalidRequestException,
     NoHealthyUpstreamException,
     TooManyRequestsException,
     UpstreamServiceError,
@@ -190,7 +191,9 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
     async def streaming_predict(
         self, topic: str, predict_request: SyncEndpointPredictV1Request
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
-        deployment_url = _get_streaming_endpoint_url(topic, path=predict_request.destination_path)
+        deployment_url = _get_streaming_endpoint_url(
+            topic, path=predict_request.destination_path or "/stream"
+        )
 
         try:
             timeout_seconds = (
@@ -205,7 +208,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
             )
             response = self.make_request_with_retries(
                 request_url=deployment_url,
-                payload_json=predict_request.dict(),
+                payload_json=predict_request.model_dump(exclude_none=True),
                 timeout_seconds=timeout_seconds,
                 num_retries=num_retries,
             )
@@ -213,6 +216,13 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 yield SyncEndpointPredictV1Response(status=TaskStatus.SUCCESS, result=item)
         except UpstreamServiceError as exc:
             logger.error(f"Service error on streaming task: {exc.content!r}")
+
+            if exc.status_code == 400:
+                error_json = orjson.loads(exc.content.decode("utf-8"))
+                if "result" in error_json:
+                    error_json = orjson.loads(error_json["result"])
+                raise InvalidRequestException(error_json)
+
             try:
                 error_json = orjson.loads(exc.content.decode("utf-8"))
                 result_traceback = (

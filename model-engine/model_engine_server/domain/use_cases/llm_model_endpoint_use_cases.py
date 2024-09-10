@@ -72,6 +72,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
     Quantization,
     RunnableImageFlavor,
+    RunnableImageLike,
     StreamingEnhancedRunnableImageFlavor,
 )
 from model_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
@@ -133,6 +134,7 @@ CHAT_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM]
 
 LLM_METADATA_KEY = "_llm"
 RESERVED_METADATA_KEYS = [LLM_METADATA_KEY, CONVERTED_FROM_ARTIFACT_LIKE_KEY]
+VLLM_MODEL_WEIGHTS_FOLDER = "model_files"
 
 INFERENCE_FRAMEWORK_REPOSITORY: Dict[LLMInferenceFramework, str] = {
     LLMInferenceFramework.DEEPSPEED: "instant-llm",
@@ -274,7 +276,7 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
 }
 
 
-NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
+NUM_DOWNSTREAM_REQUEST_RETRIES = 3  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
 SERVICE_NAME = "model-engine"
@@ -295,7 +297,6 @@ def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRep
 
 async def _get_latest_batch_v2_tag(inference_framework: LLMInferenceFramework) -> str:
     config_map = await read_config_map(LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME)
-    print(config_map)
     batch_key = f"{inference_framework}_batch_v2"
     if batch_key not in config_map:
         raise LatestImageTagNotFoundException(
@@ -666,7 +667,7 @@ class CreateLLMModelBundleV1UseCase:
         validate_checkpoint_files(checkpoint_files)
 
         # filter to configs ('*.model' and '*.json') and weights ('*.safetensors')
-        file_selection_str = "--include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*'"
+        file_selection_str = '--include "*.model" --include "*.json" --include "*.safetensors" --exclude "optimizer*"'
         subcommands.append(
             f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
         )
@@ -841,9 +842,9 @@ class CreateLLMModelBundleV1UseCase:
         if chat_template_override:
             # We encode the chat template as base64 to avoid issues with special characters
             # and decode it via bash
-            chat_template_cmd = f"export CHAT_TEMPLATE=$(echo '{encode_template(chat_template_override)}' | base64 --decode)"
+            chat_template_cmd = f'export CHAT_TEMPLATE=$(echo "{encode_template(chat_template_override)}" | base64 --decode)'
             subcommands.append(chat_template_cmd)
-            vllm_cmd += " --chat-template $CHAT_TEMPLATE"
+            vllm_cmd += ' --chat-template "$CHAT_TEMPLATE"'
 
         if quantize:
             if quantize != Quantization.AWQ:
@@ -1778,10 +1779,10 @@ class CompletionSyncV1UseCase:
         ):
             raise ObjectNotAuthorizedException
 
-        if (
-            model_endpoint.record.endpoint_type is not ModelEndpointType.SYNC
-            and model_endpoint.record.endpoint_type is not ModelEndpointType.STREAMING
-        ):
+        if model_endpoint.record.endpoint_type not in [
+            ModelEndpointType.SYNC,
+            ModelEndpointType.STREAMING,
+        ]:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Endpoint {model_endpoint_name} does not serve sync requests."
             )
@@ -2449,7 +2450,7 @@ def validate_endpoint_supports_chat_completion(
         )
 
     if (
-        not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageFlavor)
+        not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike)
         or OPENAI_CHAT_COMPLETION_PATH
         not in endpoint.record.current_model_bundle.flavor.extra_routes
     ):
@@ -2534,8 +2535,12 @@ class ChatCompletionSyncV2UseCase:
 
         validate_endpoint_supports_chat_completion(model_endpoint, endpoint_content)
 
+        # if inference framework is VLLM, we need to set the model to use the weights folder
+        if endpoint_content.inference_framework == LLMInferenceFramework.VLLM:
+            request.model = VLLM_MODEL_WEIGHTS_FOLDER
+
         inference_request = SyncEndpointPredictV1Request(
-            args=request.model_dump(),
+            args=request.model_dump(exclude_none=True),
             destination_path=OPENAI_CHAT_COMPLETION_PATH,
             num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
             timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
@@ -2557,11 +2562,13 @@ class ChatCompletionSyncV2UseCase:
                 )
 
             output = json.loads(predict_result.result["result"])
+            # reset model name to correct value
+            output["model"] = model_endpoint.record.name
             return ChatCompletionV2SyncResponse.model_validate(output)
         except UpstreamServiceError as exc:
             # Expect upstream inference service to handle bulk of input validation
             if 400 <= exc.status_code < 500:
-                raise InvalidRequestException(str(exc))
+                raise InvalidRequestException(exc.content)
             raise exc
 
 
@@ -2626,8 +2633,12 @@ class ChatCompletionStreamV2UseCase:
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
         validate_endpoint_supports_chat_completion(model_endpoint, model_content)
 
+        # if inference framework is VLLM, we need to set the model to use the weights folder
+        if model_content.inference_framework == LLMInferenceFramework.VLLM:
+            request.model = VLLM_MODEL_WEIGHTS_FOLDER
+
         inference_request = SyncEndpointPredictV1Request(
-            args=request,
+            args=request.model_dump(exclude_none=True),
             destination_path=OPENAI_CHAT_COMPLETION_PATH,
             num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
             timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
@@ -2663,6 +2674,8 @@ class ChatCompletionStreamV2UseCase:
             if 400 <= exc.status_code < 500:
                 raise InvalidRequestException(str(exc))
 
+            raise exc
+
         async for res in predict_result:
             if not res.status == TaskStatus.SUCCESS or res.result is None:
                 raise UpstreamServiceError(
@@ -2671,7 +2684,9 @@ class ChatCompletionStreamV2UseCase:
                 )
             else:
                 result = res.result
-                yield ChatCompletionV2SuccessChunk.model_validate(result)
+                # Reset model name to correct value
+                result["result"]["model"] = model_endpoint.record.name
+                yield ChatCompletionV2SuccessChunk.model_validate(result["result"])
 
 
 class ModelDownloadV1UseCase:
