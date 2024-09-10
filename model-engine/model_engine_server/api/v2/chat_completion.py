@@ -1,5 +1,6 @@
 import traceback
 from datetime import datetime
+from typing import Any
 
 import pytz
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -100,7 +101,10 @@ async def handle_stream_request(
             status_code=404,
             detail=str(exc),
         ) from exc
-    except (EndpointUnsupportedInferenceTypeException, EndpointUnsupportedRequestException) as exc:
+    except (
+        EndpointUnsupportedInferenceTypeException,
+        EndpointUnsupportedRequestException,
+    ) as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),
@@ -116,24 +120,27 @@ async def handle_stream_request(
     async def event_generator():
         try:
             ttft = None
+            message = None
             with timer() as use_case_timer:  # todo, this should be move to start of method
                 async for message in response:
                     if ttft is None:
                         ttft = use_case_timer.lap()
                     # if ttft is None and message.startswith("data"):
                     #     ttft = use_case_timer.lap()
-                    yield {"data": message.model_dump()}
-            background_tasks.add_task(
-                external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
-                TokenUsage(
-                    num_prompt_tokens=(message.usage.prompt_tokens if message.usage else None),
-                    num_completion_tokens=(
-                        message.usage.completion_tokens if message.usage else None
+                    yield {"data": message.model_dump(exclude_none=True)}
+
+            if message:
+                background_tasks.add_task(
+                    external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
+                    TokenUsage(
+                        num_prompt_tokens=(message.usage.prompt_tokens if message.usage else None),
+                        num_completion_tokens=(
+                            message.usage.completion_tokens if message.usage else None
+                        ),
+                        total_duration=use_case_timer.duration,
                     ),
-                    total_duration=use_case_timer.duration,
-                ),
-                metric_metadata,
-            )
+                    metric_metadata,
+                )
 
         # The following two exceptions are only raised after streaming begins, so we wrap the exception within a Response object
         except InvalidRequestException as exc:
@@ -207,9 +214,9 @@ async def handle_sync_request(
             detail="The specified endpoint could not be found.",
         ) from exc
     except ObjectHasInvalidValueException as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=to_error_details(exc))
     except InvalidRequestException as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=to_error_details(exc))
     except EndpointUnsupportedRequestException as exc:
         raise HTTPException(
             status_code=400,
@@ -222,7 +229,16 @@ async def handle_sync_request(
         ) from exc
 
 
-@chat_router_v2.post("/chat/completion", response_model=ChatCompletionV2ResponseItem)
+def to_error_details(exc: Exception) -> Any:
+    if not exc.args or len(exc.args) == 0:
+        return str(exc)
+    if len(exc.args) == 1:
+        return exc.args[0]
+    else:
+        return exc.args
+
+
+@chat_router_v2.post("/chat/completions", response_model=ChatCompletionV2ResponseItem)
 async def chat_completion(
     request: ChatCompletionV2Request,
     background_tasks: BackgroundTasks,
@@ -232,10 +248,12 @@ async def chat_completion(
 ) -> ChatCompletionV2Response:
     model_endpoint_name = request.model
     if hmi_config.sensitive_log_mode:
-        logger.info(f"POST /v2/chat/completion to endpoint {model_endpoint_name} for {auth}")
+        logger.info(
+            f"POST /v2/chat/completion ({('stream' if request.stream else 'sync')}) to endpoint {model_endpoint_name} for {auth}"
+        )
     else:
         logger.info(
-            f"POST /v2/chat/completion with {request} to endpoint {model_endpoint_name} for {auth}"
+            f"POST /v2/chat/completion ({('stream' if request.stream else 'sync')}) with {request} to endpoint {model_endpoint_name} for {auth}"
         )
 
     if request.stream:
