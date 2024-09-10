@@ -17,6 +17,7 @@ exclude = '''
     | build
     | dist
     | alembic
+    | gen
   )/
 )
 '''
