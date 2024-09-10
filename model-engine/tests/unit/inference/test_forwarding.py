@@ -132,8 +132,8 @@ def mocked_config_content():
 
 def mocked_config_overrides():
     return [
-        "forwarder.sync.extra_routes=[/v1/chat/completions]",
-        "forwarder.stream.extra_routes=[/v1/chat/completions]",
+        "forwarder.sync.extra_routes=['/v1/chat/completions']",
+        "forwarder.stream.extra_routes=['/v1/chat/completions']",
         "forwarder.sync.healthcheck_route=/health",
         "forwarder.stream.healthcheck_route=/health",
     ]
