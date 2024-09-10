@@ -56,6 +56,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         version_table=ALEMBIC_TABLE_NAME,
+        version_table_schema="public",
     )
 
     try:
@@ -84,6 +85,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             version_table=ALEMBIC_TABLE_NAME,
+            version_table_schema="public",
         )
 
         try:
