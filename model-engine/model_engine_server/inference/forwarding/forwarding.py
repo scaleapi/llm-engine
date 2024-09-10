@@ -526,7 +526,7 @@ def _cast_value(value: Any) -> Any:
     if value.isdigit():
         return int(value)
     elif value.startswith("[") and value.endswith("]"):
-        return [_cast_value(v) for v in value[1:-1].split(",")]
+        return json.loads(value)
     else:
         return value
 
@@ -537,7 +537,7 @@ def _set_value(config: dict, key_path: List[str], value: Any) -> None:
     """
     key = key_path[0]
     if len(key_path) == 1:
-        config[key] = _cast_value(value)
+        config[key] = _cast_value
     else:
         if key not in config:
             config[key] = dict()

@@ -843,7 +843,7 @@ class CreateLLMModelBundleV1UseCase:
             # and decode it via bash
             chat_template_cmd = f"export CHAT_TEMPLATE=$(echo '{encode_template(chat_template_override)}' | base64 --decode)"
             subcommands.append(chat_template_cmd)
-            vllm_cmd += " --chat-template '$CHAT_TEMPLATE'"
+            vllm_cmd += " --chat-template $CHAT_TEMPLATE"
 
         if quantize:
             if quantize != Quantization.AWQ:
