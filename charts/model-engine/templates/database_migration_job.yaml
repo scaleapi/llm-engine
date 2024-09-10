@@ -8,7 +8,7 @@ metadata:
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-1"
-    "helm.sh/hook-delete-policy": hook-succeeded
+    # "helm.sh/hook-delete-policy": hook-succeeded
 spec:
   backoffLimit: 0
   activeDeadlineSeconds: 600
@@ -32,7 +32,7 @@ spec:
             - --
           args:
             - bash
-            - model_engine_server/db/migrations/run_database_migration.sh
+            - /workspace/model-engine/model_engine_server/db/migrations/run_database_migration.sh
           {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 10 }}
           {{- include "modelEngine.volumeMounts" . | indent 10 }}
       serviceAccountName: {{ include "modelEngine.fullname" . }}
