@@ -2677,10 +2677,12 @@ class ChatCompletionStreamV2UseCase:
                     content=(res.traceback.encode("utf-8") if res.traceback is not None else b""),
                 )
             else:
-                result = res.result
+                result = res.result["result"]
                 # Reset model name to correct value
-                result["result"]["model"] = model_endpoint.record.name
-                yield ChatCompletionV2SuccessChunk.model_validate(result["result"])
+                if "DONE" in result:
+                    continue
+                result["model"] = model_endpoint.record.name
+                yield ChatCompletionV2SuccessChunk.model_validate(result)
 
 
 class ModelDownloadV1UseCase:

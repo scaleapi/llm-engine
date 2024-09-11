@@ -74,7 +74,7 @@ def handle_streaming_exception(
                     timestamp=timestamp,
                 ),
             ),
-        ).model_dump()
+        ).model_dump_json(exclude_none=True)
     }
 
 
@@ -127,7 +127,8 @@ async def handle_stream_request(
                         ttft = use_case_timer.lap()
                     # if ttft is None and message.startswith("data"):
                     #     ttft = use_case_timer.lap()
-                    yield {"data": message.model_dump(exclude_none=True)}
+                    print("message", message.model_dump_json(exclude_none=True))
+                    yield {"data": message.model_dump_json(exclude_none=True)}
 
             if message:
                 background_tasks.add_task(
