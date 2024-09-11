@@ -39,6 +39,7 @@ from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
     is_model_name_suffix_valid,
 )
 from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
+    CHAT_TEMPLATE_MAX_LENGTH,
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateBatchCompletionsUseCase,
@@ -53,6 +54,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     _infer_hardware,
     merge_metadata,
     validate_and_update_completion_params,
+    validate_chat_template,
     validate_checkpoint_files,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
@@ -366,6 +368,7 @@ async def test_create_model_endpoint_w_chat_template(
         llm_artifact_gateway=fake_llm_artifact_gateway,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    print(create_llm_model_endpoint_request_llama_3_70b_chat)
     response = await use_case.execute(
         user=user,
         request=create_llm_model_endpoint_request_llama_3_70b_chat,
@@ -2785,3 +2788,16 @@ def test_merge_metadata():
         "key2": "value2",
         "key3": "value3",
     }
+
+
+def test_validate_chat_template():
+    assert validate_chat_template(None, LLMInferenceFramework.DEEPSPEED) is None
+    good_chat_template = CHAT_TEMPLATE_MAX_LENGTH * "_"
+    assert validate_chat_template(good_chat_template, LLMInferenceFramework.VLLM) is None
+
+    bad_chat_template = (CHAT_TEMPLATE_MAX_LENGTH + 1) * "_"
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_chat_template(bad_chat_template, LLMInferenceFramework.DEEPSPEED)
+
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_chat_template(good_chat_template, LLMInferenceFramework.DEEPSPEED)

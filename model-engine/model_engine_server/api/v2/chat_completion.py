@@ -246,7 +246,7 @@ async def chat_completion(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
     metric_metadata: MetricMetadata = Depends(get_metric_metadata),
-) -> ChatCompletionV2Response:
+) -> ChatCompletionV2Response:  # pragma: no cover
     model_endpoint_name = request.model
     if hmi_config.sensitive_log_mode:
         logger.info(

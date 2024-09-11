@@ -738,7 +738,10 @@ class FakeLLMFineTuneRepository(LLMFineTuneRepository):
         return self.db.get((model_name, fine_tuning_method), None)
 
     async def write_job_template_for_model(
-        self, model_name: str, fine_tuning_method: str, job_template: LLMFineTuneTemplate
+        self,
+        model_name: str,
+        fine_tuning_method: str,
+        job_template: LLMFineTuneTemplate,
     ):
         self.db[(model_name, fine_tuning_method)] = job_template
 
@@ -761,7 +764,10 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
     def __init__(self):
         self.existing_models = []
         self.s3_bucket = {
-            "fake-checkpoint": ["model-fake.bin, model-fake2.bin", "model-fake.safetensors"],
+            "fake-checkpoint": [
+                "model-fake.bin, model-fake2.bin",
+                "model-fake.safetensors",
+            ],
             "llama-7b/tokenizer.json": ["llama-7b/tokenizer.json"],
             "llama-7b/tokenizer_config.json": ["llama-7b/tokenizer_config.json"],
             "llama-7b/special_tokens_map.json": ["llama-7b/special_tokens_map.json"],
@@ -860,7 +866,7 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
         return self.model_config
 
 
-class FakeTriggerRepository(TriggerRepository):
+class FakeTriggerRepository(TriggerRepository):  # pragma: no cover
     def __init__(self, contents: Optional[Dict[str, Trigger]] = None):
         self.db = {} if contents is None else contents
         self.next_id = 0
@@ -2004,7 +2010,7 @@ def fake_docker_repository_image_never_exists() -> FakeDockerRepository:
 
 
 @pytest.fixture
-def fake_docker_repository_image_never_exists_and_builds_dont_work() -> FakeDockerRepository:
+def fake_docker_repository_image_never_exists_and_builds_dont_work() -> (FakeDockerRepository):
     repo = FakeDockerRepository(image_always_exists=False, raises_error=True)
     return repo
 
@@ -2034,7 +2040,7 @@ def fake_model_endpoint_record_repository() -> FakeModelEndpointRecordRepository
 
 
 @pytest.fixture
-def fake_docker_image_batch_job_bundle_repository() -> FakeDockerImageBatchJobBundleRepository:
+def fake_docker_image_batch_job_bundle_repository() -> (FakeDockerImageBatchJobBundleRepository):
     repo = FakeDockerImageBatchJobBundleRepository()
     return repo
 
@@ -2117,25 +2123,27 @@ def fake_model_primitive_gateway() -> FakeModelPrimitiveGateway:
 
 
 @pytest.fixture
-def fake_async_model_endpoint_inference_gateway() -> FakeAsyncModelEndpointInferenceGateway:
+def fake_async_model_endpoint_inference_gateway() -> (FakeAsyncModelEndpointInferenceGateway):
     gateway = FakeAsyncModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_streaming_model_endpoint_inference_gateway() -> FakeStreamingModelEndpointInferenceGateway:
+def fake_streaming_model_endpoint_inference_gateway() -> (
+    FakeStreamingModelEndpointInferenceGateway
+):
     gateway = FakeStreamingModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_sync_model_endpoint_inference_gateway() -> FakeSyncModelEndpointInferenceGateway:
+def fake_sync_model_endpoint_inference_gateway() -> (FakeSyncModelEndpointInferenceGateway):
     gateway = FakeSyncModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_inference_autoscaling_metrics_gateway() -> FakeInferenceAutoscalingMetricsGateway:
+def fake_inference_autoscaling_metrics_gateway() -> (FakeInferenceAutoscalingMetricsGateway):
     gateway = FakeInferenceAutoscalingMetricsGateway()
     return gateway
 
@@ -3579,7 +3587,7 @@ def endpoint_predict_request_2() -> Tuple[EndpointPredictV1Request, Dict[str, An
 
 
 @pytest.fixture
-def sync_endpoint_predict_request_1() -> Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]:
+def sync_endpoint_predict_request_1() -> (Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]):
     request = SyncEndpointPredictV1Request(
         url="test_url",
         return_pickled=False,

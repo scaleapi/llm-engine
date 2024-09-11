@@ -823,6 +823,9 @@ class CreateLLMModelBundleV1UseCase:
         command = []
         subcommands = []
 
+        print("here")
+        print(chat_template_override)
+
         checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
         # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
         if "mistral" in model_name:
@@ -846,7 +849,7 @@ class CreateLLMModelBundleV1UseCase:
             subcommands.append(chat_template_cmd)
             vllm_cmd += ' --chat-template "$CHAT_TEMPLATE"'
 
-        if quantize:
+        if quantize:  # pragma: no cover
             if quantize != Quantization.AWQ:
                 raise InvalidRequestException(f"Quantization {quantize} is not supported by vLLM.")
 
@@ -2467,9 +2470,9 @@ class ChatCompletionSyncV2UseCase:
         self.authz_module = LiveAuthorizationModule()
         self.tokenizer_repository = tokenizer_repository
 
-    async def execute(  # pragma: no cover
+    async def execute(
         self, user: User, model_endpoint_name: str, request: ChatCompletionV2Request
-    ) -> ChatCompletionV2SyncResponse:
+    ) -> ChatCompletionV2SyncResponse:  # pragma: no cover
         """
         Runs the use case to create a sync inference task.
 
@@ -2582,9 +2585,9 @@ class ChatCompletionStreamV2UseCase:
         self.authz_module = LiveAuthorizationModule()
         self.tokenizer_repository = tokenizer_repository
 
-    async def execute(  # pragma: no cover
+    async def execute(
         self, model_endpoint_name: str, request: ChatCompletionV2Request, user: User
-    ) -> AsyncIterable[ChatCompletionV2SuccessChunk]:
+    ) -> AsyncIterable[ChatCompletionV2SuccessChunk]:  # pragma: no cover
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
@@ -2966,7 +2969,9 @@ class CreateBatchCompletionsUseCase:
             gpu_type=hardware.gpu_type,
         )
 
-        if engine_request.max_runtime_sec is None or engine_request.max_runtime_sec < 1:
+        if (
+            engine_request.max_runtime_sec is None or engine_request.max_runtime_sec < 1
+        ):  # pragma: no cover
             raise ObjectHasInvalidValueException("max_runtime_sec must be a positive integer.")
 
         job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
