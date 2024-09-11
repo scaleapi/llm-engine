@@ -4,7 +4,6 @@ from unittest import mock
 
 import pytest
 from model_engine_server.common.dtos.llms import (
-    ChatCompletionV2Request,
     CompletionOutput,
     CompletionStreamV1Request,
     CompletionSyncV1Request,
@@ -40,7 +39,6 @@ from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
     is_model_name_suffix_valid,
 )
 from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
-    ChatCompletionSyncV2UseCase,
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateBatchCompletionsUseCase,
@@ -2786,67 +2784,4 @@ def test_merge_metadata():
         "key1": "value1",
         "key2": "value2",
         "key3": "value3",
-    }
-
-
-# conftest for chat_completion_sync_v2_request
-@pytest.fixture
-def chat_completion_sync_v2_request():
-    # openai compatible chat message
-    payload = {
-        "messages": [
-            {"role": "system", "content": "Hello, how are you?"},
-            {"role": "user", "content": "I'm good, how are you?"},
-        ],
-        "max_tokens": 50,
-        "temperature": 0.7,
-        "top_p": 0.9,
-        "top_k": 50,
-        "num_return_sequences": 1,
-        "logprobs": True,
-        "num_logprobs": 3,
-    }
-    return ChatCompletionV2Request.model_validate(payload)
-
-
-# Chat completion use case tests
-#  Write tests for ChatCompletionSyncV2UseCase
-#   provide the mocks all the relevant dependencies
-#    - dependencies are model_endpoint_service, llm_model_endpoint_service, and tokenizer_repository
-#  - test the execute method
-
-
-@pytest.mark.asyncio
-@mock.patch(
-    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
-    mocked__get_recommended_hardware_config_map(),
-)
-@mock.patch(
-    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_batch_tag",
-    mocked__get_latest_batch_tag(),
-)
-async def test_chat_completion_sync_v2_use_case(
-    fake_model_endpoint_service,
-    fake_llm_model_endpoint_service,
-    fake_tokenizer_repository,
-    chat_completion_sync_v2_request: ChatCompletionV2Request,
-):
-    use_case = ChatCompletionSyncV2UseCase(
-        model_endpoint_service=fake_model_endpoint_service,
-        llm_model_endpoint_service=fake_llm_model_endpoint_service,
-        tokenizer_repository=fake_tokenizer_repository,
-    )
-
-    user = User(user_id="test", team_id="test", is_privileged_user=True)
-    result = await use_case.execute(user, chat_completion_sync_v2_request)
-
-    assert result.completions[0].text == "I'm good, how are you?"
-    assert result.completions[0].metadata == {
-        "model_name": "llama-2-7b",
-        "context": "Hello, how are you?",
-        "max_tokens": 50,
-        "temperature": 0.7,
-        "top_p": 0.9,
-        "top_k": 50,
-        "num_return_sequences": 1,
     }
