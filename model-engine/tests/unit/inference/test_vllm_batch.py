@@ -333,7 +333,6 @@ def test_file_exists_no_such_key():
     assert result is False
 
 
-@pytest.mark.skip(reason="doesn't work locally")
 @pytest.mark.asyncio
 @patch("model_engine_server.inference.batch_inference.vllm_batch.get_vllm_engine")
 @patch(

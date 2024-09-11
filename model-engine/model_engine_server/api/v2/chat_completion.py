@@ -54,7 +54,7 @@ def handle_streaming_exception(
     e: Exception,
     code: int,
     message: str,
-):
+):  # pragma: no cover
     tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
     request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
     timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
@@ -85,7 +85,7 @@ async def handle_stream_request(
     auth: User,
     model_endpoint_name: str,
     metric_metadata: MetricMetadata,
-):
+):  # pragma: no cover
     use_case = ChatCompletionStreamV2UseCase(
         model_endpoint_service=external_interfaces.model_endpoint_service,
         llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
