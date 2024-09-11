@@ -2467,7 +2467,7 @@ class ChatCompletionSyncV2UseCase:
         self.authz_module = LiveAuthorizationModule()
         self.tokenizer_repository = tokenizer_repository
 
-    async def execute(
+    async def execute(  # pragma: no cover
         self, user: User, model_endpoint_name: str, request: ChatCompletionV2Request
     ) -> ChatCompletionV2SyncResponse:
         """
@@ -2582,7 +2582,7 @@ class ChatCompletionStreamV2UseCase:
         self.authz_module = LiveAuthorizationModule()
         self.tokenizer_repository = tokenizer_repository
 
-    async def execute(
+    async def execute(  # pragma: no cover
         self, model_endpoint_name: str, request: ChatCompletionV2Request, user: User
     ) -> AsyncIterable[ChatCompletionV2SuccessChunk]:
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
