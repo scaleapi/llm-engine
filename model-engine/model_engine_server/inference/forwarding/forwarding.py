@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, List, Optional, Sequence, Tuple
 
-import orjson
 import requests
 import sseclient
 import yaml
@@ -315,12 +314,6 @@ class LoadForwarder:
             wrap_response=self.wrap_response,
             forward_http_status=self.forward_http_status,
         )
-
-
-def _serialize_json(data) -> str:
-    # Use orjson, which is faster and more correct than native Python json library.
-    # This is more important for sync endpoints, which are more latency-sensitive.
-    return orjson.dumps(data).decode()
 
 
 @dataclass
