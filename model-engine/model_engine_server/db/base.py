@@ -286,27 +286,34 @@ class DBManager:
         return self.sessions.session_async_null_pool.session
 
 
-db_manager = DBManager(infra_config())
+db_manager: Optional[DBManager] = None
+
+
+def get_db_manager():
+    global db_manager
+    if db_manager is None:
+        db_manager = DBManager(infra_config())
+    return db_manager
 
 
 def get_session():
-    return db_manager.get_session_sync()
+    return get_db_manager().get_session_sync()
 
 
 def get_session_read_only():
-    return db_manager.get_session_sync_ro()
+    return get_db_manager().get_session_sync_ro()
 
 
 def get_session_async():
-    return db_manager.get_session_async()
+    return get_db_manager().get_session_async()
 
 
 def get_session_async_null_pool():
-    return db_manager.get_session_async_null_pool()
+    return get_db_manager().get_session_async_null_pool()
 
 
 def get_session_read_only_async():
-    return db_manager.get_session_async_ro()
+    return get_db_manager().get_session_async_ro()
 
 
 Base = declarative_base()

@@ -6,6 +6,11 @@ Create Date: 2024-09-09 17:36:30.097136
 
 """
 
+from pathlib import Path
+
+INITIAL_MIGRATION_PATH = Path(__file__).parent / "../../initial.sql"
+
+
 import sqlalchemy as sa
 from alembic import op
 
@@ -17,7 +22,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    with open("migrations/initial.sql") as fd:
+    with open(INITIAL_MIGRATION_PATH) as fd:
         op.execute(fd.read())
 
 

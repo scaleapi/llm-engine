@@ -180,6 +180,10 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - --set
+                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
               {{- $sync_forwarder_template_env | nindent 14 }}
               readinessProbe:
                 httpGet:

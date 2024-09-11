@@ -39,6 +39,7 @@ from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
     is_model_name_suffix_valid,
 )
 from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
+    CHAT_TEMPLATE_MAX_LENGTH,
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateBatchCompletionsUseCase,
@@ -53,6 +54,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     _infer_hardware,
     merge_metadata,
     validate_and_update_completion_params,
+    validate_chat_template,
     validate_checkpoint_files,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
@@ -132,6 +134,7 @@ async def test_create_model_endpoint_use_case_success(
             "num_shards": create_llm_model_endpoint_request_async.num_shards,
             "quantize": None,
             "checkpoint_path": create_llm_model_endpoint_request_async.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_async.chat_template_override,
         }
     }
 
@@ -155,6 +158,7 @@ async def test_create_model_endpoint_use_case_success(
             "num_shards": create_llm_model_endpoint_request_sync.num_shards,
             "quantize": None,
             "checkpoint_path": create_llm_model_endpoint_request_sync.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_sync.chat_template_override,
         }
     }
 
@@ -179,7 +183,8 @@ async def test_create_model_endpoint_use_case_success(
             "inference_framework_image_tag": create_llm_model_endpoint_request_streaming.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
             "quantize": None,
-            "checkpoint_path": create_llm_model_endpoint_request_sync.checkpoint_path,
+            "checkpoint_path": create_llm_model_endpoint_request_streaming.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_streaming.chat_template_override,
         }
     }
 
@@ -276,6 +281,7 @@ async def test_create_model_bundle_fails_if_no_checkpoint(
             num_shards=request.num_shards,
             quantize=request.quantize,
             checkpoint_path=checkpoint_path,
+            chat_template_override=request.chat_template_override,
         )
 
 
@@ -334,6 +340,64 @@ async def test_create_model_bundle_inference_framework_image_tag_validation(
 
 
 @pytest.mark.asyncio
+async def test_create_model_endpoint_w_chat_template(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    create_llm_model_endpoint_request_llama_3_70b_chat: CreateLLMModelEndpointV1Request,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    use_case = CreateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    print(create_llm_model_endpoint_request_llama_3_70b_chat)
+    response = await use_case.execute(
+        user=user,
+        request=create_llm_model_endpoint_request_llama_3_70b_chat,
+    )
+    assert response.endpoint_creation_task_id
+    assert isinstance(response, CreateLLMModelEndpointV1Response)
+    endpoint = (
+        await fake_model_endpoint_service.list_model_endpoints(
+            owner=None,
+            name=create_llm_model_endpoint_request_llama_3_70b_chat.name,
+            order_by=None,
+        )
+    )[0]
+    assert endpoint.record.endpoint_type == ModelEndpointType.STREAMING
+    assert endpoint.record.metadata == {
+        "_llm": {
+            "model_name": create_llm_model_endpoint_request_llama_3_70b_chat.model_name,
+            "source": create_llm_model_endpoint_request_llama_3_70b_chat.source,
+            "inference_framework": create_llm_model_endpoint_request_llama_3_70b_chat.inference_framework,
+            "inference_framework_image_tag": create_llm_model_endpoint_request_llama_3_70b_chat.inference_framework_image_tag,
+            "num_shards": create_llm_model_endpoint_request_llama_3_70b_chat.num_shards,
+            "quantize": create_llm_model_endpoint_request_llama_3_70b_chat.quantize,
+            "checkpoint_path": create_llm_model_endpoint_request_llama_3_70b_chat.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_llama_3_70b_chat.chat_template_override,
+        }
+    }
+
+
+@pytest.mark.asyncio
 async def test_create_model_endpoint_text_generation_inference_use_case_success(
     test_api_key: str,
     fake_model_bundle_repository,
@@ -386,6 +450,7 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
             "num_shards": create_llm_model_endpoint_text_generation_inference_request_streaming.num_shards,
             "quantize": create_llm_model_endpoint_text_generation_inference_request_streaming.quantize,
             "checkpoint_path": create_llm_model_endpoint_text_generation_inference_request_streaming.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_text_generation_inference_request_streaming.chat_template_override,
         }
     }
 
@@ -426,7 +491,7 @@ def test_load_model_weights_sub_commands(
     )
 
     expected_result = [
-        "./s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*' s3://fake-checkpoint/* test_folder",
+        './s5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.json" --include "*.safetensors" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 
@@ -441,7 +506,7 @@ def test_load_model_weights_sub_commands(
 
     expected_result = [
         "s5cmd > /dev/null || conda install -c conda-forge -y s5cmd",
-        "s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*' s3://fake-checkpoint/* test_folder",
+        's5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.json" --include "*.safetensors" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 
@@ -515,6 +580,7 @@ async def test_create_model_endpoint_trt_llm_use_case_success(
             "num_shards": create_llm_model_endpoint_trt_llm_request_streaming.num_shards,
             "quantize": create_llm_model_endpoint_trt_llm_request_streaming.quantize,
             "checkpoint_path": create_llm_model_endpoint_trt_llm_request_streaming.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_trt_llm_request_streaming.chat_template_override,
         }
     }
 
@@ -705,6 +771,7 @@ async def test_update_model_endpoint_use_case_success(
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
             "quantize": None,
             "checkpoint_path": update_llm_model_endpoint_request.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_streaming.chat_template_override,
         }
     }
     assert endpoint.infra_state.resource_state.memory == update_llm_model_endpoint_request.memory
@@ -740,6 +807,7 @@ async def test_update_model_endpoint_use_case_success(
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
             "quantize": None,
             "checkpoint_path": update_llm_model_endpoint_request.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_streaming.chat_template_override,
         }
     }
     assert endpoint.infra_state.resource_state.memory == update_llm_model_endpoint_request.memory
@@ -2720,3 +2788,16 @@ def test_merge_metadata():
         "key2": "value2",
         "key3": "value3",
     }
+
+
+def test_validate_chat_template():
+    assert validate_chat_template(None, LLMInferenceFramework.DEEPSPEED) is None
+    good_chat_template = CHAT_TEMPLATE_MAX_LENGTH * "_"
+    assert validate_chat_template(good_chat_template, LLMInferenceFramework.VLLM) is None
+
+    bad_chat_template = (CHAT_TEMPLATE_MAX_LENGTH + 1) * "_"
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_chat_template(bad_chat_template, LLMInferenceFramework.DEEPSPEED)
+
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_chat_template(good_chat_template, LLMInferenceFramework.DEEPSPEED)
