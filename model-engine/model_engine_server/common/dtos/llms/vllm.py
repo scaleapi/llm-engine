@@ -97,8 +97,8 @@ class VLLMChatCompletionAdditionalParams(VLLMSamplingParams):
         description=(
             "A Jinja template to use for this conversion. "
             "As of transformers v4.44, default chat template is no longer "
-            "allowed, so you must provide a chat template if the tokenizer "
-            "does not define one."
+            "allowed, so you must provide a chat template if the model's tokenizer "
+            "does not define one and no override template is given"
         ),
     )
     chat_template_kwargs: Optional[Dict[str, Any]] = Field(

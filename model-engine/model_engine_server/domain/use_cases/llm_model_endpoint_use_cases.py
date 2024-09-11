@@ -4,6 +4,7 @@ List model endpoint history: GET model-endpoints/<endpoint id>/history
 Read model endpoint creation logs: GET model-endpoints/<endpoint id>/creation-logs
 """
 
+import base64
 import datetime
 import json
 import math
@@ -276,7 +277,7 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
 }
 
 
-NUM_DOWNSTREAM_REQUEST_RETRIES = 3  # has to be high enough so that the retries take the 5 minutes
+NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
 SERVICE_NAME = "model-engine"
@@ -452,7 +453,6 @@ def validate_checkpoint_files(checkpoint_files: List[str]) -> None:
 
 def encode_template(chat_template: str) -> str:
     """Base64 encode the chat template to safely pass it to bash."""
-    import base64
 
     encoded = base64.b64encode(chat_template.encode("utf-8")).decode("utf-8")
     return encoded

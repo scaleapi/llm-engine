@@ -4,6 +4,7 @@ from unittest import mock
 
 import pytest
 from model_engine_server.common.dtos.llms import (
+    ChatCompletionV2Request,
     CompletionOutput,
     CompletionStreamV1Request,
     CompletionSyncV1Request,
@@ -39,6 +40,7 @@ from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
     is_model_name_suffix_valid,
 )
 from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
+    ChatCompletionSyncV2UseCase,
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateBatchCompletionsUseCase,
@@ -335,6 +337,63 @@ async def test_create_model_bundle_inference_framework_image_tag_validation(
         llm_bundle_use_case.docker_repository = fake_docker_repository_image_never_exists
         with pytest.raises(DockerImageNotFoundException):
             await use_case.execute(user=user, request=request)
+
+
+@pytest.mark.asyncio
+async def test_create_model_endpoint_w_chat_template(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    create_llm_model_endpoint_request_llama_3_70b_chat: CreateLLMModelEndpointV1Request,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    use_case = CreateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    response = await use_case.execute(
+        user=user,
+        request=create_llm_model_endpoint_request_llama_3_70b_chat,
+    )
+    assert response.endpoint_creation_task_id
+    assert isinstance(response, CreateLLMModelEndpointV1Response)
+    endpoint = (
+        await fake_model_endpoint_service.list_model_endpoints(
+            owner=None,
+            name=create_llm_model_endpoint_request_llama_3_70b_chat.name,
+            order_by=None,
+        )
+    )[0]
+    assert endpoint.record.endpoint_type == ModelEndpointType.STREAMING
+    assert endpoint.record.metadata == {
+        "_llm": {
+            "model_name": create_llm_model_endpoint_request_llama_3_70b_chat.model_name,
+            "source": create_llm_model_endpoint_request_llama_3_70b_chat.source,
+            "inference_framework": create_llm_model_endpoint_request_llama_3_70b_chat.inference_framework,
+            "inference_framework_image_tag": create_llm_model_endpoint_request_llama_3_70b_chat.inference_framework_image_tag,
+            "num_shards": create_llm_model_endpoint_request_llama_3_70b_chat.num_shards,
+            "quantize": create_llm_model_endpoint_request_llama_3_70b_chat.quantize,
+            "checkpoint_path": create_llm_model_endpoint_request_llama_3_70b_chat.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_llama_3_70b_chat.chat_template_override,
+        }
+    }
 
 
 @pytest.mark.asyncio
@@ -2727,4 +2786,67 @@ def test_merge_metadata():
         "key1": "value1",
         "key2": "value2",
         "key3": "value3",
+    }
+
+
+# conftest for chat_completion_sync_v2_request
+@pytest.fixture
+def chat_completion_sync_v2_request():
+    # openai compatible chat message
+    payload = {
+        "messages": [
+            {"role": "system", "content": "Hello, how are you?"},
+            {"role": "user", "content": "I'm good, how are you?"},
+        ],
+        "max_tokens": 50,
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "top_k": 50,
+        "num_return_sequences": 1,
+        "logprobs": True,
+        "num_logprobs": 3,
+    }
+    return ChatCompletionV2Request.model_validate(payload)
+
+
+# Chat completion use case tests
+#  Write tests for ChatCompletionSyncV2UseCase
+#   provide the mocks all the relevant dependencies
+#    - dependencies are model_endpoint_service, llm_model_endpoint_service, and tokenizer_repository
+#  - test the execute method
+
+
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
+    mocked__get_recommended_hardware_config_map(),
+)
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_batch_tag",
+    mocked__get_latest_batch_tag(),
+)
+async def test_chat_completion_sync_v2_use_case(
+    fake_model_endpoint_service,
+    fake_llm_model_endpoint_service,
+    fake_tokenizer_repository,
+    chat_completion_sync_v2_request: ChatCompletionV2Request,
+):
+    use_case = ChatCompletionSyncV2UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        tokenizer_repository=fake_tokenizer_repository,
+    )
+
+    user = User(user_id="test", team_id="test", is_privileged_user=True)
+    result = await use_case.execute(user, chat_completion_sync_v2_request)
+
+    assert result.completions[0].text == "I'm good, how are you?"
+    assert result.completions[0].metadata == {
+        "model_name": "llama-2-7b",
+        "context": "Hello, how are you?",
+        "max_tokens": 50,
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "top_k": 50,
+        "num_return_sequences": 1,
     }
