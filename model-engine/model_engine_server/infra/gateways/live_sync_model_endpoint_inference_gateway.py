@@ -13,6 +13,7 @@ from model_engine_server.common.env_vars import CIRCLECI, LOCAL
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
+    InvalidRequestException,
     NoHealthyUpstreamException,
     TooManyRequestsException,
     UpstreamServiceError,
@@ -41,7 +42,7 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
 )
 
 
-def _get_sync_endpoint_url(deployment_name: str) -> str:
+def _get_sync_endpoint_url(deployment_name: str, destination_path: str = "/predict") -> str:
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
         # The IP address is obtained from `minikube ip`.
@@ -55,7 +56,7 @@ def _get_sync_endpoint_url(deployment_name: str) -> str:
         protocol = "http"
         # no need to hit external DNS resolution if we're w/in the k8s cluster
         hostname = f"{deployment_name}.{hmi_config.endpoint_namespace}.svc.cluster.local"
-    return f"{protocol}://{hostname}/predict"
+    return f"{protocol}://{hostname}{destination_path}"
 
 
 def _serialize_json(data) -> str:
@@ -139,7 +140,8 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 ),
             ):
                 with attempt:
-                    logger.info(f"Retry number {attempt.retry_state.attempt_number}")
+                    if attempt.retry_state.attempt_number > 1:  # pragma: no cover
+                        logger.info(f"Retry number {attempt.retry_state.attempt_number}")
                     return await self.make_single_request(request_url, payload_json)
         except RetryError as e:
             if type(e.last_attempt.exception()) == TooManyRequestsException:
@@ -163,7 +165,9 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
     async def predict(
         self, topic: str, predict_request: SyncEndpointPredictV1Request
     ) -> SyncEndpointPredictV1Response:
-        deployment_url = _get_sync_endpoint_url(topic)
+        deployment_url = _get_sync_endpoint_url(
+            topic, destination_path=predict_request.destination_path or "/predict"
+        )
 
         try:
             timeout_seconds = (
@@ -178,12 +182,20 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
             )
             response = await self.make_request_with_retries(
                 request_url=deployment_url,
-                payload_json=predict_request.dict(),
+                payload_json=predict_request.model_dump(exclude_none=True),
                 timeout_seconds=timeout_seconds,
                 num_retries=num_retries,
             )
         except UpstreamServiceError as exc:
             logger.error(f"Service error on sync task: {exc.content!r}")
+
+            if exc.status_code == 400:
+                error_json = orjson.loads(exc.content.decode("utf-8"))
+                if "result" in error_json:
+                    error_json = orjson.loads(error_json["result"])
+
+                raise InvalidRequestException(error_json)
+
             try:
                 # Try to parse traceback from the response, fallback to just return all the content if failed.
                 # Three cases considered:
@@ -193,6 +205,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 error_json = orjson.loads(exc.content.decode("utf-8"))
                 if "result" in error_json:
                     error_json = orjson.loads(error_json["result"])
+
                 detail = error_json.get("detail", {})
                 if not isinstance(detail, dict):
                     result_traceback = orjson.dumps(error_json)
@@ -204,6 +217,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                     status=TaskStatus.FAILURE,
                     traceback=result_traceback,
                 )
+
             except Exception as e:
                 logger.error(f"Failed to parse error: {e}")
                 return SyncEndpointPredictV1Response(

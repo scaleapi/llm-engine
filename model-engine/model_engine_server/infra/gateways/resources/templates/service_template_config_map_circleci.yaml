@@ -617,6 +617,10 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - --set
+                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -885,6 +889,10 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - --set
+                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -1111,6 +1119,10 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - --set
+                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -1852,6 +1864,10 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - --set
+                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -2127,6 +2143,10 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - --set
+                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -2360,6 +2380,10 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - --set
+                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"

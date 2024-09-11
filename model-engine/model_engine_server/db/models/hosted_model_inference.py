@@ -146,6 +146,7 @@ class Bundle(Base):
     runnable_image_env = Column(JSON, nullable=True)
     runnable_image_protocol = Column(Text, nullable=True)
     runnable_image_readiness_initial_delay_seconds = Column(Integer, nullable=True)
+    runnable_image_extra_routes = Column(ARRAY(Text), nullable=True)
 
     # Streaming Enhanced Runnable Image fields
     streaming_enhanced_runnable_image_streaming_command = Column(ARRAY(Text), nullable=True)
@@ -205,6 +206,7 @@ class Bundle(Base):
         runnable_image_env: Optional[Dict[str, Any]] = None,
         runnable_image_protocol: Optional[str] = None,
         runnable_image_readiness_initial_delay_seconds: Optional[int] = None,
+        runnable_image_extra_routes: Optional[List[str]] = None,
         # Streaming Enhanced Runnable Image fields
         streaming_enhanced_runnable_image_streaming_command: Optional[List[str]] = None,
         streaming_enhanced_runnable_image_streaming_predict_route: Optional[str] = None,
@@ -260,6 +262,7 @@ class Bundle(Base):
         self.runnable_image_healthcheck_route = runnable_image_healthcheck_route
         self.runnable_image_env = runnable_image_env
         self.runnable_image_protocol = runnable_image_protocol
+        self.runnable_image_extra_routes = runnable_image_extra_routes
         self.runnable_image_readiness_initial_delay_seconds = (
             runnable_image_readiness_initial_delay_seconds
         )
@@ -632,7 +635,9 @@ class BatchJob(Base):
     created_by = Column(String(SHORT_STRING), index=True, nullable=False)
     owner = Column(String(SHORT_STRING), index=True, nullable=False)
     model_bundle_id = Column(
-        Text, ForeignKey("hosted_model_inference.bundles.id", ondelete="SET NULL"), nullable=False
+        Text,
+        ForeignKey("hosted_model_inference.bundles.id", ondelete="SET NULL"),
+        nullable=False,
     )
     model_endpoint_id = Column(
         Text, ForeignKey("hosted_model_inference.endpoints.id"), nullable=True

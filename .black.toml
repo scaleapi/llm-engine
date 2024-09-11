@@ -16,6 +16,8 @@ exclude = '''
     | buck-out
     | build
     | dist
+    | alembic
+    | gen
   )/
 )
 '''

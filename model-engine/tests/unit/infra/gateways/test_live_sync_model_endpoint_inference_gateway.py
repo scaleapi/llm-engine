@@ -9,7 +9,7 @@ from model_engine_server.common.dtos.tasks import (
     SyncEndpointPredictV1Request,
     SyncEndpointPredictV1Response,
 )
-from model_engine_server.domain.exceptions import UpstreamServiceError
+from model_engine_server.domain.exceptions import InvalidRequestException, UpstreamServiceError
 from model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway import (
     LiveSyncModelEndpointInferenceGateway,
 )
@@ -229,3 +229,23 @@ async def test_predict_raises_traceback_wrapped_detail_array(
             "result": None,
             "traceback": """{"detail":[{"error":"error"}]}""",
         }
+
+
+@pytest.mark.asyncio
+async def test_predict_upstream_raises_400(
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+):
+    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+
+    content = json.dumps({"result": json.dumps({"error": "error"})}).encode("utf-8")
+    fake_response = FakeResponse(status=400, content=content)
+    mock_client_session = _get_mock_client_session(fake_response)
+    with patch(
+        "model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
+        mock_client_session,
+    ):
+        # assert that the exception is raised
+        with pytest.raises(InvalidRequestException):
+            await gateway.predict(
+                topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            )

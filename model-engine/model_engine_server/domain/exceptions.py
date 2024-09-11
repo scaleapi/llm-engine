@@ -80,6 +80,12 @@ class EndpointUnsupportedInferenceTypeException(DomainException):
     """
 
 
+class EndpointUnsupportedRequestException(DomainException):
+    """
+    Throw if the request is unsupported by the endpoint.
+    """
+
+
 class EndpointResourceInvalidRequestException(DomainException):
     """
     Thrown if the endpoint resource requests are invalid.

@@ -14,7 +14,8 @@ logger = make_logger(logger_name())
 
 def _get_abs_container_client(bucket: str) -> ContainerClient:
     blob_service_client = BlobServiceClient(
-        f"https://{os.getenv('ABS_ACCOUNT_NAME')}.blob.core.windows.net", DefaultAzureCredential()
+        f"https://{os.getenv('ABS_ACCOUNT_NAME')}.blob.core.windows.net",
+        DefaultAzureCredential(),
     )
     return blob_service_client.get_container_client(container=bucket)
 
