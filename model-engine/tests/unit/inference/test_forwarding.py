@@ -4,6 +4,7 @@ from typing import Mapping
 from unittest import mock
 
 import pytest
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from model_engine_server.core.utils.env import environment
 from model_engine_server.domain.entities import ModelEndpointConfig
@@ -38,6 +39,17 @@ def mocked_post(*args, **kwargs):  # noqa
     @dataclass
     class mocked_static_json:
         status_code: int = 200
+
+        def json(self) -> dict:
+            return PAYLOAD  # type: ignore
+
+    return mocked_static_json()
+
+
+def mocked_post_400(*args, **kwargs):  # noqa
+    @dataclass
+    class mocked_static_json:
+        status_code: int = 400
 
         def json(self) -> dict:
             return PAYLOAD  # type: ignore
@@ -404,6 +416,22 @@ def test_streaming_forwarders(post_inference_hooks_handler):
     )
     response = fwd({"ignore": "me"})
     _check_streaming(response)
+
+
+@mock.patch("requests.post", mocked_post_400)
+@mock.patch("requests.get", mocked_get)
+@mock.patch("sseclient.SSEClient", mocked_sse_client)
+def test_streaming_forwarder_400_upstream(post_inference_hooks_handler):
+    fwd = StreamingForwarder(
+        "ignored",
+        model_engine_unwrap=True,
+        serialize_results_as_string=False,
+        post_inference_hooks_handler=post_inference_hooks_handler,
+    )
+    with pytest.raises(HTTPException) as e:
+        fwd({"ignore": "me"})
+
+    assert e.value.status_code == 400
 
 
 @mock.patch("requests.post", mocked_post)
