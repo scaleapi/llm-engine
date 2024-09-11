@@ -4,11 +4,11 @@ import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, AsyncIterable, List, Optional, Sequence, Tuple
+from typing import Any, Iterable, List, Optional, Sequence, Tuple
 
-import aiohttp
 import orjson
 import requests
+import sseclient
 import yaml
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
@@ -21,7 +21,6 @@ from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gat
     FirehoseStreamingStorageGateway,
 )
 from model_engine_server.inference.post_inference_hooks import PostInferenceHooksHandler
-from model_engine_server.infra.gateways.aiohttp_sse_client import EventSource
 
 __all__: Sequence[str] = (
     "Forwarder",
@@ -345,33 +344,25 @@ class StreamingForwarder(ModelEngineSerializationMixin):
     serialize_results_as_string: bool
     post_inference_hooks_handler: PostInferenceHooksHandler  # unused for now
 
-    async def __call__(self, json_payload: Any) -> AsyncIterable[Any]:
+    def __call__(self, json_payload: Any) -> Iterable[Any]:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
         try:
-            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
-                response = await aioclient.post(
-                    self.predict_endpoint,
-                    json=json_payload,
-                    headers={
-                        "Content-Type": "application/json",
-                    },
-                )
+            response = requests.post(
+                self.predict_endpoint,
+                json=json_payload,
+                headers={
+                    "Content-Type": "application/json",
+                },
+                stream=True,
+            )
 
-                if response.status != 200:
-                    raise HTTPException(status_code=response.status, detail=await response.json())
-
-                async def event_stream():
-                    async with EventSource(response=response) as event_source:
-                        async for event in event_source:
-                            yield self.get_response_payload_stream(
-                                using_serialize_results_as_string, event.data
-                            )
-
-                return event_stream()
+            if response.status_code != 200:
+                print(response.json())
+                raise HTTPException(status_code=response.status_code, detail=response.json())
 
         except Exception:
             logger.exception(
@@ -379,6 +370,16 @@ class StreamingForwarder(ModelEngineSerializationMixin):
                 "from user-defined inference service."
             )
             raise
+
+        client = sseclient.SSEClient(response)
+
+        def event_stream():
+            for event in client.events():
+                yield self.get_response_payload_stream(
+                    using_serialize_results_as_string, event.data
+                )
+
+        return event_stream()
 
 
 @dataclass(frozen=True)
