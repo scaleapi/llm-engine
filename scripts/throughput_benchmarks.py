@@ -20,7 +20,7 @@ AUTH_USER_ID = os.getenv("AUTH_USER_ID")
 GATEWAY_URL = os.getenv("GATEWAY_URL")
 app = typer.Typer(name="throughput-benchmarks", add_completion=False)
 
-MAX_CONTEXT_WINDOW = 4096
+MAX_CONTEXT_WINDOW = 100000
 
 
 @dataclass
@@ -141,7 +141,9 @@ def generate_request(
     temperature = 0.0
 
     if not localhost:
-        return {"prompt": prompt, "max_new_tokens": output_token_count, "temperature": temperature}
+        # return {"prompt": prompt, "max_new_tokens": output_token_count, "temperature": temperature}
+        # vllm 0.6:
+        return {"prompt": prompt, "max_tokens": output_token_count, "temperature": temperature}
 
     if framework == InferenceFramework.TEXT_GENERATION_INFERENCE:
         return {
@@ -453,11 +455,17 @@ def run_benchmarks(
 
     if output_file is not None:
         header = all_statistics[0].keys()
-
-        with open(output_file, "a") as csvfile:
-            csv_writer = csv.DictWriter(csvfile, fieldnames=header)
-            csv_writer.writeheader()
-            csv_writer.writerows(all_statistics)
+        import os
+        if not os.path.exists(output_file):
+            with open(output_file, "w") as csvfile:
+                print("creating the data in csv")
+                csv_writer = csv.DictWriter(csvfile, fieldnames=header)
+                csv_writer.writeheader()
+                csv_writer.writerows(all_statistics)
+        else:
+            with open(output_file, "a") as csvfile:
+                csv_writer = csv.DictWriter(csvfile, fieldnames=header)
+                csv_writer.writerows(all_statistics)
 
 
 @app.command()
@@ -478,10 +486,6 @@ def run_benchmarks_concurrency_range(
     response_token_count_distribution_file: Optional[str] = None,
     prompts_list_override_file: Optional[str] = None,
 ):
-    if output_file is not None:
-        # Create empty file
-        with open(output_file, "w"):
-            pass
     for concurrency in range(concurrency_min, concurrency_max + 1, concurrency_step):
         run_benchmarks(
             model,
