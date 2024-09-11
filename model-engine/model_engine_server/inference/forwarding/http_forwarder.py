@@ -105,10 +105,10 @@ async def stream(
         else:
             logger.debug(f"Received request: {payload}")
 
-        responses = await forwarder(payload)
+        responses = forwarder(payload)
 
         async def event_generator():
-            async for response in responses:
+            for response in responses:
                 yield {"data": orjson.dumps(response).decode("utf-8")}
 
         return EventSourceResponse(event_generator())
