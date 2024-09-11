@@ -49,13 +49,3 @@ class LLMArtifactGateway(ABC):
             path (str): path to model files
         """
         pass
-
-    @abstractmethod
-    def get_tokenizer_config(self, path: str, **kwargs) -> Dict[str, Any]:
-        """
-        Gets the tokenizer config from the model files live at given folder.
-
-        Args:
-            path (str): path to tokenizer_config.json
-        """
-        pass

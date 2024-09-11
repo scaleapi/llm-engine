@@ -83,11 +83,3 @@ class ABSLLMArtifactGateway(LLMArtifactGateway):
 
         container_client = _get_abs_container_client(bucket)
         return json.loads(container_client.download_blob(blob=key).readall())
-
-    def get_tokenizer_config(self, path: str, **kwargs) -> Dict[str, Any]:
-        parsed_remote = parse_attachment_url(path, clean_key=False)
-        bucket = parsed_remote.bucket
-        key = os.path.join(parsed_remote.key, "tokenizer_config.json")
-
-        container_client = _get_abs_container_client(bucket)
-        return json.loads(container_client.download_blob(blob=key).readall())

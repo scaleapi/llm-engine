@@ -83,14 +83,3 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         s3_bucket.download_file(key, filepath)
         with open(filepath, "r") as f:
             return json.load(f)
-
-    def get_tokenizer_config(self, path: str, **kwargs) -> Dict[str, Any]:
-        s3 = self._get_s3_resource(kwargs)
-        parsed_remote = parse_attachment_url(path, clean_key=False)
-        bucket = parsed_remote.bucket
-        key = os.path.join(parsed_remote.key, "tokenizer_config.json")
-        s3_bucket = s3.Bucket(bucket)
-        filepath = os.path.join("/tmp", key).replace("/", "_")
-        s3_bucket.download_file(key, filepath)
-        with open(filepath, "r") as f:
-            return json.load(f)

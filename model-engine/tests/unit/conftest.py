@@ -859,9 +859,6 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
     def get_model_config(self, path: str, **kwargs) -> Dict[str, Any]:
         return self.model_config
 
-    def get_tokenizer_config(self, path: str, **kwargs) -> Dict[str, Any]:
-        return self.tokenizer_config
-
 
 class FakeTriggerRepository(TriggerRepository):
     def __init__(self, contents: Optional[Dict[str, Trigger]] = None):
