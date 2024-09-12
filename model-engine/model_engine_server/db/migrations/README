@@ -1,0 +1,43 @@
+# Setup
+
+We introduce alembic by
+1. dumping the current db schemas into 'initial.sql' via pg_dump
+
+```
+pg_dump -h $HOST  -U postgres -O -s -d $DB_NAME -n hosted_model_inference -n model -f initial.sql 
+```
+
+2. writing an initial revision that reads and applies intial.sql script
+
+```
+alembic revision -m “initial”
+```
+
+3. Stamping the current revision to our production db to avoid actually running it on production
+
+```
+alembic stamp fa3267c80731
+```
+
+
+# Test db migration from scratch
+
+## Set up postgresql
+
+```
+docker pull postgres
+docker run --name postgres -e POSTGRES_PASSWORD=password -d -p 5432:5432 postgres
+```
+
+## Run migration script
+
+```
+PYTHONPATH="${PYTHONPATH}:<path/to/repo>"
+ML_INFRA_DATABASE_URL="postgresql://postgres:password@localhost:54320/postgres" bash run_database_migration.sh
+```
+
+
+To reset db, you can recreate docker or run
+```
+psql "$ML_INFRA_DATABASE_URL" -c "DROP table if exists public.alembic_version_model_engine; DROP schema if exists hosted_model_inference CASCADE; DROP schema if exists model CASCADE"
+```

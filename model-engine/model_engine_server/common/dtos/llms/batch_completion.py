@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Union
 
 from model_engine_server.common.dtos.llms.chat_completion import (
     ChatCompletionV2Request,
-    ChatCompletionV2Response,
+    ChatCompletionV2SyncResponse,
 )
 from model_engine_server.common.dtos.llms.completion import (
     CompletionOutput,
@@ -197,7 +197,7 @@ class FilteredChatCompletionV2Request(ChatCompletionV2Request):
 
 # V2 DTOs for batch completions
 CompletionRequest: TypeAlias = Union[FilteredCompletionV2Request, FilteredChatCompletionV2Request]
-CompletionResponse: TypeAlias = Union[CompletionV2Response, ChatCompletionV2Response]
+CompletionResponse: TypeAlias = Union[CompletionV2Response, ChatCompletionV2SyncResponse]
 CreateBatchCompletionsV2RequestContent: TypeAlias = Union[
     List[FilteredCompletionV2Request], List[FilteredChatCompletionV2Request]
 ]

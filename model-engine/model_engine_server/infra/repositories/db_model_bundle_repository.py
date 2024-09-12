@@ -122,14 +122,16 @@ def translate_model_bundle_orm_to_model_bundle(
             flavor=model_bundle_orm.flavor,
             requirements=model_bundle_orm.artifact_requirements,
             location=model_bundle_orm.artifact_location,
-            framework=None
-            if model_bundle_orm.artifact_framework_type is None
-            else dict_not_none(
-                framework_type=model_bundle_orm.artifact_framework_type,
-                pytorch_image_tag=model_bundle_orm.artifact_pytorch_image_tag,
-                tensorflow_version=model_bundle_orm.artifact_tensorflow_version,
-                image_repository=model_bundle_orm.artifact_image_repository,
-                image_tag=model_bundle_orm.artifact_image_tag,
+            framework=(
+                None
+                if model_bundle_orm.artifact_framework_type is None
+                else dict_not_none(
+                    framework_type=model_bundle_orm.artifact_framework_type,
+                    pytorch_image_tag=model_bundle_orm.artifact_pytorch_image_tag,
+                    tensorflow_version=model_bundle_orm.artifact_tensorflow_version,
+                    image_repository=model_bundle_orm.artifact_image_repository,
+                    image_tag=model_bundle_orm.artifact_image_tag,
+                )
             ),
             app_config=model_bundle_orm.artifact_app_config,
             load_predict_fn=model_bundle_orm.cloudpickle_artifact_load_predict_fn,
@@ -144,6 +146,7 @@ def translate_model_bundle_orm_to_model_bundle(
             env=model_bundle_orm.runnable_image_env,
             protocol=model_bundle_orm.runnable_image_protocol,
             readiness_initial_delay_seconds=model_bundle_orm.runnable_image_readiness_initial_delay_seconds,
+            extra_routes=model_bundle_orm.runnable_image_extra_routes,
             streaming_command=model_bundle_orm.streaming_enhanced_runnable_image_streaming_command,
             streaming_predict_route=model_bundle_orm.streaming_enhanced_runnable_image_streaming_predict_route,
             triton_model_repository=model_bundle_orm.triton_enhanced_runnable_image_model_repository,
@@ -161,7 +164,7 @@ def translate_model_bundle_orm_to_model_bundle(
         packaging_type=model_bundle_orm.packaging_type,
         app_config=model_bundle_orm.app_config,
     )
-    return ModelBundle.parse_obj(kwargs)
+    return ModelBundle.model_validate(kwargs)
 
 
 def translate_kwargs_to_model_bundle_orm(
@@ -212,6 +215,7 @@ def translate_kwargs_to_model_bundle_orm(
         runnable_image_readiness_initial_delay_seconds=flavor_dict.get(
             "readiness_initial_delay_seconds"
         ),
+        runnable_image_extra_routes=flavor_dict.get("extra_routes"),
         streaming_enhanced_runnable_image_streaming_command=flavor_dict.get("streaming_command"),
         streaming_enhanced_runnable_image_streaming_predict_route=flavor_dict.get(
             "streaming_predict_route"

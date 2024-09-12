@@ -49,6 +49,7 @@ class EndpointPredictV1Request(BaseModel):
     callback_url: Optional[str] = None
     callback_auth: Optional[CallbackAuth] = None
     return_pickled: bool = False
+    destination_path: Optional[str] = None
 
 
 class SyncEndpointPredictV1Request(EndpointPredictV1Request):

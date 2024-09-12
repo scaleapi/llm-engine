@@ -1,13 +1,13 @@
 from typing import Any, Dict, List, Optional
 
 from .gen.openai import CreateChatCompletionRequest, CreateChatCompletionResponse
-from .pydantic_types import Field
+from .pydantic_types import BaseModel, Field
 
 # Fields that are a part of OpenAI spec but are not supported by model engine
 UNSUPPORTED_FIELDS = ["service_tier"]
 
 
-class VLLMAdditionalFields:
+class VLLMAdditionalFields(BaseModel):
     chat_template: Optional[str] = Field(
         default=None,
         description=(

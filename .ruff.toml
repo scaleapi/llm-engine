@@ -2,4 +2,4 @@
 line-length = 100
 
 ignore = ["E501"]
-exclude = ["gen"]
+exclude = ["gen", "alembic"]

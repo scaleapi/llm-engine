@@ -1,11 +1,11 @@
 import argparse
 import asyncio
-import json
 import os
 import signal
 from functools import lru_cache
 from typing import Any, Dict, Optional
 
+import orjson
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI
 from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
@@ -105,12 +105,11 @@ async def stream(
         else:
             logger.debug(f"Received request: {payload}")
 
-        # has internal error logging for each processing stage
         responses = forwarder(payload)
 
         async def event_generator():
             for response in responses:
-                yield {"data": json.dumps(response)}
+                yield {"data": orjson.dumps(response).decode("utf-8")}
 
         return EventSourceResponse(event_generator())
 

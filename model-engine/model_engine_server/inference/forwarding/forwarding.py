@@ -1,13 +1,15 @@
+import ast
 import json
 import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterator, List, Optional, Sequence, Tuple
+from typing import Any, Iterable, List, Optional, Sequence, Tuple
 
 import requests
 import sseclient
 import yaml
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.inference.common import get_endpoint_config
@@ -335,7 +337,7 @@ class StreamingForwarder(ModelEngineSerializationMixin):
     serialize_results_as_string: bool
     post_inference_hooks_handler: PostInferenceHooksHandler  # unused for now
 
-    def __call__(self, json_payload: Any) -> Iterator[Any]:
+    def __call__(self, json_payload: Any) -> Iterable[Any]:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
@@ -350,6 +352,11 @@ class StreamingForwarder(ModelEngineSerializationMixin):
                 },
                 stream=True,
             )
+
+            if response.status_code != 200:
+                print(response.json())
+                raise HTTPException(status_code=response.status_code, detail=response.json())
+
         except Exception:
             logger.exception(
                 f"Failed to get response for request ({json_payload_repr}) "
@@ -358,8 +365,14 @@ class StreamingForwarder(ModelEngineSerializationMixin):
             raise
 
         client = sseclient.SSEClient(response)
-        for event in client.events():
-            yield self.get_response_payload_stream(using_serialize_results_as_string, event.data)
+
+        def event_stream():
+            for event in client.events():
+                yield self.get_response_payload_stream(
+                    using_serialize_results_as_string, event.data
+                )
+
+        return event_stream()
 
 
 @dataclass(frozen=True)
@@ -526,7 +539,8 @@ def _cast_value(value: Any) -> Any:
     if value.isdigit():
         return int(value)
     elif value.startswith("[") and value.endswith("]"):
-        return [_cast_value(v) for v in value[1:-1].split(",")]
+        # Can't use json because it doesn't support single quotes
+        return ast.literal_eval(value)
     else:
         return value
 

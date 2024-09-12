@@ -738,7 +738,10 @@ class FakeLLMFineTuneRepository(LLMFineTuneRepository):
         return self.db.get((model_name, fine_tuning_method), None)
 
     async def write_job_template_for_model(
-        self, model_name: str, fine_tuning_method: str, job_template: LLMFineTuneTemplate
+        self,
+        model_name: str,
+        fine_tuning_method: str,
+        job_template: LLMFineTuneTemplate,
     ):
         self.db[(model_name, fine_tuning_method)] = job_template
 
@@ -761,7 +764,10 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
     def __init__(self):
         self.existing_models = []
         self.s3_bucket = {
-            "fake-checkpoint": ["model-fake.bin, model-fake2.bin", "model-fake.safetensors"],
+            "fake-checkpoint": [
+                "model-fake.bin, model-fake2.bin",
+                "model-fake.safetensors",
+            ],
             "llama-7b/tokenizer.json": ["llama-7b/tokenizer.json"],
             "llama-7b/tokenizer_config.json": ["llama-7b/tokenizer_config.json"],
             "llama-7b/special_tokens_map.json": ["llama-7b/special_tokens_map.json"],
@@ -794,6 +800,50 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
             "use_cache": True,
             "vocab_size": 32000,
         }
+        self.tokenizer_config = {
+            "add_bos_token": True,
+            "add_eos_token": False,
+            "add_prefix_space": None,
+            "added_tokens_decoder": {
+                "0": {
+                    "content": "<unk>",
+                    "lstrip": False,
+                    "normalized": False,
+                    "rstrip": False,
+                    "single_word": False,
+                    "special": True,
+                },
+                "1": {
+                    "content": "<s>",
+                    "lstrip": False,
+                    "normalized": False,
+                    "rstrip": False,
+                    "single_word": False,
+                    "special": True,
+                },
+                "2": {
+                    "content": "</s>",
+                    "lstrip": False,
+                    "normalized": False,
+                    "rstrip": False,
+                    "single_word": False,
+                    "special": True,
+                },
+            },
+            "additional_special_tokens": [],
+            "bos_token": "<s>",
+            "chat_template": "{%- if messages[0]['role'] == 'system' %}\n    {%- set system_message = messages[0]['content'] %}\n    {%- set loop_messages = messages[1:] %}\n{%- else %}\n    {%- set loop_messages = messages %}\n{%- endif %}\n\n{{- bos_token }}\n{%- for message in loop_messages %}\n    {%- if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}\n        {{- raise_exception('After the optional system message, conversation roles must alternate user/assistant/user/assistant/...') }}\n    {%- endif %}\n    {%- if message['role'] == 'user' %}\n        {%- if loop.first and system_message is defined %}\n            {{- ' [INST] ' + system_message + '\\n\\n' + message['content'] + ' [/INST]' }}\n        {%- else %}\n            {{- ' [INST] ' + message['content'] + ' [/INST]' }}\n        {%- endif %}\n    {%- elif message['role'] == 'assistant' %}\n        {{- ' ' + message['content'] + eos_token}}\n    {%- else %}\n        {{- raise_exception('Only user and assistant roles are supported, with the exception of an initial optional system message!') }}\n    {%- endif %}\n{%- endfor %}\n",
+            "clean_up_tokenization_spaces": False,
+            "eos_token": "</s>",
+            "legacy": False,
+            "model_max_length": 1000000000000000019884624838656,
+            "pad_token": None,
+            "sp_model_kwargs": {},
+            "spaces_between_special_tokens": False,
+            "tokenizer_class": "LlamaTokenizer",
+            "unk_token": "<unk>",
+            "use_default_system_prompt": False,
+        }
 
     def _add_model(self, owner: str, model_name: str):
         self.existing_models.append((owner, model_name))
@@ -817,7 +867,7 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
         return self.model_config
 
 
-class FakeTriggerRepository(TriggerRepository):
+class FakeTriggerRepository(TriggerRepository):  # pragma: no cover
     def __init__(self, contents: Optional[Dict[str, Trigger]] = None):
         self.db = {} if contents is None else contents
         self.next_id = 0
@@ -1967,7 +2017,7 @@ def fake_docker_repository_image_never_exists() -> FakeDockerRepository:
 
 
 @pytest.fixture
-def fake_docker_repository_image_never_exists_and_builds_dont_work() -> FakeDockerRepository:
+def fake_docker_repository_image_never_exists_and_builds_dont_work() -> (FakeDockerRepository):
     repo = FakeDockerRepository(image_always_exists=False, raises_error=True)
     return repo
 
@@ -1997,7 +2047,7 @@ def fake_model_endpoint_record_repository() -> FakeModelEndpointRecordRepository
 
 
 @pytest.fixture
-def fake_docker_image_batch_job_bundle_repository() -> FakeDockerImageBatchJobBundleRepository:
+def fake_docker_image_batch_job_bundle_repository() -> (FakeDockerImageBatchJobBundleRepository):
     repo = FakeDockerImageBatchJobBundleRepository()
     return repo
 
@@ -2080,25 +2130,27 @@ def fake_model_primitive_gateway() -> FakeModelPrimitiveGateway:
 
 
 @pytest.fixture
-def fake_async_model_endpoint_inference_gateway() -> FakeAsyncModelEndpointInferenceGateway:
+def fake_async_model_endpoint_inference_gateway() -> (FakeAsyncModelEndpointInferenceGateway):
     gateway = FakeAsyncModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_streaming_model_endpoint_inference_gateway() -> FakeStreamingModelEndpointInferenceGateway:
+def fake_streaming_model_endpoint_inference_gateway() -> (
+    FakeStreamingModelEndpointInferenceGateway
+):
     gateway = FakeStreamingModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_sync_model_endpoint_inference_gateway() -> FakeSyncModelEndpointInferenceGateway:
+def fake_sync_model_endpoint_inference_gateway() -> (FakeSyncModelEndpointInferenceGateway):
     gateway = FakeSyncModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_inference_autoscaling_metrics_gateway() -> FakeInferenceAutoscalingMetricsGateway:
+def fake_inference_autoscaling_metrics_gateway() -> (FakeInferenceAutoscalingMetricsGateway):
     gateway = FakeInferenceAutoscalingMetricsGateway()
     return gateway
 
@@ -3558,7 +3610,7 @@ def endpoint_predict_request_2() -> Tuple[EndpointPredictV1Request, Dict[str, An
 
 
 @pytest.fixture
-def sync_endpoint_predict_request_1() -> Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]:
+def sync_endpoint_predict_request_1() -> (Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]):
     request = SyncEndpointPredictV1Request(
         url="test_url",
         return_pickled=False,

@@ -9556,7 +9556,7 @@ components:
       required:
         - role
         - content
-        - refusal
+        # - refusal
 
     ChatCompletionStreamResponseDelta:
       type: object
@@ -9822,7 +9822,7 @@ components:
               - finish_reason
               - index
               - message
-              - logprobs
+              # - logprobs
             properties:
               finish_reason:
                 type: string
@@ -9863,7 +9863,7 @@ components:
                     nullable: true
                 required:
                   - content
-                  - refusal
+                  # - refusal
 
         created:
           type: integer

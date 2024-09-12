@@ -164,6 +164,7 @@ class _RunnableImageDeploymentArguments(_BaseDeploymentArguments):
     FORWARDER_CPUS_LIMIT: float
     FORWARDER_MEMORY_LIMIT: str
     FORWARDER_STORAGE_LIMIT: str
+    FORWARDER_EXTRA_ROUTES: List[str]
     USER_CONTAINER_PORT: int
 
 
@@ -225,7 +226,9 @@ class DeploymentRunnableImageSyncCpuArguments(
 
 
 class DeploymentRunnableImageSyncGpuArguments(
-    _RunnableImageDeploymentArguments, _SyncRunnableImageDeploymentArguments, _GpuArguments
+    _RunnableImageDeploymentArguments,
+    _SyncRunnableImageDeploymentArguments,
+    _GpuArguments,
 ):
     """Keyword-arguments for substituting into GPU sync deployment templates for runnable images."""
 
@@ -255,7 +258,9 @@ class DeploymentRunnableImageAsyncGpuArguments(
 
 
 class DeploymentTritonEnhancedRunnableImageSyncCpuArguments(
-    _RunnableImageDeploymentArguments, _SyncRunnableImageDeploymentArguments, _TritonArguments
+    _RunnableImageDeploymentArguments,
+    _SyncRunnableImageDeploymentArguments,
+    _TritonArguments,
 ):
     """Keyword-arguments for substituting into CPU sync deployment templates for triton-enhanced
     runnable images.
@@ -282,7 +287,10 @@ class DeploymentTritonEnhancedRunnableImageAsyncCpuArguments(
 
 
 class DeploymentTritonEnhancedRunnableImageAsyncGpuArguments(
-    _RunnableImageDeploymentArguments, _AsyncDeploymentArguments, _GpuArguments, _TritonArguments
+    _RunnableImageDeploymentArguments,
+    _AsyncDeploymentArguments,
+    _GpuArguments,
+    _TritonArguments,
 ):
     """Keyword-arguments for substituting GPU async deployment templates for triton-enhanced
     runnable images.
@@ -644,6 +652,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
             QUEUE=sqs_queue_name,
@@ -692,6 +701,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
             QUEUE=sqs_queue_name,
@@ -743,6 +753,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             # Streaming Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
@@ -788,6 +799,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             # Streaming Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
@@ -834,6 +846,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
@@ -878,6 +891,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
@@ -924,6 +938,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
             QUEUE=sqs_queue_name,
@@ -980,6 +995,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
             QUEUE=sqs_queue_name,
@@ -1038,6 +1054,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
@@ -1090,6 +1107,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
@@ -1149,6 +1167,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             # Streaming Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,

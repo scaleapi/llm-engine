@@ -14,6 +14,7 @@ from model_engine_server.common.env_vars import CIRCLECI, LOCAL
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
+    InvalidRequestException,
     NoHealthyUpstreamException,
     TooManyRequestsException,
     UpstreamServiceError,
@@ -44,7 +45,7 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
 )
 
 
-def _get_streaming_endpoint_url(deployment_name: str) -> str:
+def _get_streaming_endpoint_url(deployment_name: str, path: str = "/stream") -> str:
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
         # The IP address is obtained from `minikube ip`.
@@ -58,7 +59,7 @@ def _get_streaming_endpoint_url(deployment_name: str) -> str:
         protocol = "http"
         # no need to hit external DNS resolution if we're w/in the k8s cluster
         hostname = f"{deployment_name}.{hmi_config.endpoint_namespace}.svc.cluster.local"
-    return f"{protocol}://{hostname}/stream"
+    return f"{protocol}://{hostname}{path}"
 
 
 def _serialize_json(data) -> str:
@@ -89,6 +90,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                     headers={"Content-Type": "application/json"},
                 )
                 status = aio_resp.status
+                print(status)
                 if status == 200:
                     async with EventSource(response=aio_resp) as event_source:
                         async for event in event_source:
@@ -139,7 +141,8 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         try:
             async for attempt in AsyncRetrying(
                 stop=stop_any(
-                    stop_after_attempt(num_retries + 1), stop_after_delay(timeout_seconds)
+                    stop_after_attempt(num_retries + 1),
+                    stop_after_delay(timeout_seconds),
                 ),
                 retry=retry_if_exception_type(
                     (
@@ -156,7 +159,10 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 ),
             ):
                 with attempt:
-                    logger.info(f"Retry number {attempt.retry_state.attempt_number}")
+                    if attempt.retry_state.attempt_number > 1:
+                        logger.info(
+                            f"Retry number {attempt.retry_state.attempt_number}"
+                        )  # pragma: no cover
                     response = self.make_single_request(request_url, payload_json)
                     async for item in response:
                         yield orjson.loads(item)
@@ -186,7 +192,9 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
     async def streaming_predict(
         self, topic: str, predict_request: SyncEndpointPredictV1Request
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
-        deployment_url = _get_streaming_endpoint_url(topic)
+        deployment_url = _get_streaming_endpoint_url(
+            topic, path=predict_request.destination_path or "/stream"
+        )
 
         try:
             timeout_seconds = (
@@ -201,14 +209,22 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
             )
             response = self.make_request_with_retries(
                 request_url=deployment_url,
-                payload_json=predict_request.dict(),
+                payload_json=predict_request.model_dump(exclude_none=True),
                 timeout_seconds=timeout_seconds,
                 num_retries=num_retries,
             )
+            print(response)
             async for item in response:
                 yield SyncEndpointPredictV1Response(status=TaskStatus.SUCCESS, result=item)
         except UpstreamServiceError as exc:
             logger.error(f"Service error on streaming task: {exc.content!r}")
+
+            if exc.status_code == 400:
+                error_json = orjson.loads(exc.content.decode("utf-8"))
+                if "result" in error_json:
+                    error_json = orjson.loads(error_json["result"])
+                raise InvalidRequestException(error_json)
+
             try:
                 error_json = orjson.loads(exc.content.decode("utf-8"))
                 result_traceback = (
