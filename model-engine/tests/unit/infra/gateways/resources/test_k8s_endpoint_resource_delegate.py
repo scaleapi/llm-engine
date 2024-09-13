@@ -7,9 +7,14 @@ from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from model_engine_server.common.env_vars import GIT_TAG
 from model_engine_server.domain.entities import (
+    ModelBundle,
     ModelEndpointConfig,
     ModelEndpointType,
     ModelEndpointUserConfigState,
+)
+from model_engine_server.domain.entities.model_bundle_entity import (
+    WORKER_COMMAND_METADATA_KEY,
+    WORKER_ENV_METADATA_KEY,
 )
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
@@ -525,9 +530,32 @@ async def test_create_sync_endpoint_has_correct_k8s_service_type(
 
 
 @pytest.mark.asyncio
-async def test_create_multinode_endpoint_creates_lws():
-    # TODO
-    pass
+async def test_create_multinode_endpoint_creates_lws(
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+    mock_get_kubernetes_cluster_version,
+    create_resources_request_streaming_runnable_image: CreateOrUpdateResourcesRequest,
+    model_bundle_5: ModelBundle
+):  
+    # Patch model bundle so that it supports multinode
+    model_bundle_5.metadata[WORKER_ENV_METADATA_KEY] = {"fake_env": "fake_value"}
+    model_bundle_5.metadata[WORKER_COMMAND_METADATA_KEY] = ["fake_command"]
+    create_resources_request_streaming_runnable_image.build_endpoint_request.model_endpoint_record.current_model_bundle = model_bundle_5
+    create_resources_request_streaming_runnable_image.build_endpoint_request.model_endpoint_record.endpoint_type = ModelEndpointType.STREAMING
+    
+    create_resources_request_streaming_runnable_image.build_endpoint_request.nodes_per_worker = 2
+    await k8s_endpoint_resource_delegate.create_or_update_resources(
+        create_resources_request_streaming_runnable_image,
+        sqs_queue_name="my_queue",
+        sqs_queue_url="https://my_queue",
+    )
+    # Verify call to custom objects client with LWS is made
+    create_custom_objects_call_args = mock_custom_objects_client.create_namespaced_custom_object.call_args
+    assert create_custom_objects_call_args["group"] == "leaderworkerset.x-k8s.io"
 
 
 @pytest.mark.asyncio
@@ -684,9 +712,74 @@ async def test_get_resources_sync_success(
 
 
 @pytest.mark.asyncio
-async def test_get_resources_multinode_success():
-    # TODO
-    pass
+async def test_get_resources_multinode_success(
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+):
+    k8s_endpoint_resource_delegate.__setattr__(
+        "_get_common_endpoint_params_for_lws_type",
+        Mock(
+            return_value=dict(
+                aws_role="test_aws_role",
+                results_s3_bucket="test_bucket",
+                labels={},
+                cpus="1",
+                gpus=1,
+                gpu_type="nvidia-tesla-t4",
+                memory="8G",
+                storage="10G",
+                image="test_image",
+            )
+        ),
+    )
+    # k8s_endpoint_resource_delegate.__setattr__(
+    #     "_get_sync_autoscaling_params",
+    #     Mock(return_value=dict(min_workers=1, max_workers=3, per_worker=2)),
+    # )
+    k8s_endpoint_resource_delegate.__setattr__(
+        "_get_main_leader_container_from_lws", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
+    )
+    k8s_endpoint_resource_delegate.__setattr__(
+        "_get_launch_container_from_lws", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
+    )
+    k8s_endpoint_resource_delegate.__setattr__(
+        "_translate_k8s_config_maps_to_user_config_data",
+        Mock(
+            return_value=ModelEndpointUserConfigState(
+                app_config=None,
+                endpoint_config=ModelEndpointConfig(
+                    endpoint_name="test_endpoint",
+                    bundle_name="test_bundle",
+                    post_inference_hooks=["callback"],
+                ),
+            )
+        ),
+    )
+
+    # This is kinda brittle TODO
+    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(return_value={
+        "spec": {
+            "replicas": 1,
+            "leaderWorkerTemplate": {
+                "leaderTemplate": {
+                    "spec": {
+                        "priorityClassName": "model-engine-high-priority",
+                    }
+                },
+                "size": 2,
+            }
+        }
+    })
+
+    infra_state = await k8s_endpoint_resource_delegate.get_resources(
+        endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.STREAMING
+    )
+    assert infra_state
+    assert infra_state.resource_state.nodes_per_worker == 2
 
 
 @pytest.mark.asyncio
