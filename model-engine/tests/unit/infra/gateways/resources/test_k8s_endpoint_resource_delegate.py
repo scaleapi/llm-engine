@@ -555,7 +555,7 @@ async def test_create_multinode_endpoint_creates_lws(
     )
     # Verify call to custom objects client with LWS is made
     create_custom_objects_call_args = mock_custom_objects_client.create_namespaced_custom_object.call_args
-    assert create_custom_objects_call_args["group"] == "leaderworkerset.x-k8s.io"
+    assert create_custom_objects_call_args.kwargs["group"] == "leaderworkerset.x-k8s.io"
 
 
 @pytest.mark.asyncio
