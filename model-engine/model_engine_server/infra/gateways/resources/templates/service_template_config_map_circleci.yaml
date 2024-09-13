@@ -7,12 +7,13 @@ metadata:
   name: model-engine-service-template-config
   labels:
     team: infra
-    product: model-engine
-    helm.sh/chart: model-engine-0.1.0
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/version: a93c7fe34529efde2b468b9cbbf3abf300308164
-    tags.datadoghq.com/version: a93c7fe34529efde2b468b9cbbf3abf300308164
+    app.kubernetes.io/version: 3286f1a6c567a6fbc2c35da6f9a3b992cb490297
+    tags.datadoghq.com/version: 3286f1a6c567a6fbc2c35da6f9a3b992cb490297
     tags.datadoghq.com/env: circleci
+    env: circleci
+    product: model-engine
+    helm.sh/chart: model-engine-0.1.3
+    app.kubernetes.io/managed-by: Helm
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-2"
@@ -99,19 +100,16 @@ data:
                       values:
                       - "True"
                   topologyKey: kubernetes.io/hostname
-          terminationGracePeriodSeconds: 600
+          terminationGracePeriodSeconds: 1800
           serviceAccount: default
-          nodeSelector:
-            node-lifecycle: normal
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
-                - ddtrace-run
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.celery_forwarder
@@ -127,9 +125,13 @@ data:
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
                 - "${PER_WORKER}"
+                - --broker-type
+                - redis
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
+                  value: "false"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -142,6 +144,8 @@ data:
                       fieldPath: status.hostIP
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: RESULTS_S3_BUCKET
                   value: "${RESULTS_S3_BUCKET}"
                 - name: BASE_PATH
@@ -178,7 +182,7 @@ data:
                 - name: infra-service-config-volume
                   mountPath: /workspace/model-engine/model_engine_server/core/configs
             - name: tritonserver
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
+              image: nvidia/tritonserver:${TRITON_COMMIT_TAG}-triton
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -189,6 +193,8 @@ data:
               env:
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
               ports:
                 - containerPort: 8000
                   name: http
@@ -236,6 +242,7 @@ data:
                   port: ${USER_CONTAINER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
                   cpu: ${CPUS}
@@ -253,10 +260,6 @@ data:
                   name: dshm
                 - name: infra-service-config-volume
                   mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
-                # LIRA: For compatibility with runnable image converted from artifactlike bundle
-                - name: config-volume
-                  mountPath: /home/modelengine/.aws/config
-                  subPath: config
                 - name: user-config
                   mountPath: /app/user_config
                   subPath: raw_data
@@ -272,7 +275,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: default-config  
+                name: default-config
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -370,19 +373,16 @@ data:
                       values:
                       - "True"
                   topologyKey: kubernetes.io/hostname
-          terminationGracePeriodSeconds: 600
+          terminationGracePeriodSeconds: 1800
           serviceAccount: default
-          nodeSelector:
-            node-lifecycle: normal
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
-                - ddtrace-run
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.celery_forwarder
@@ -398,9 +398,13 @@ data:
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
                 - "${PER_WORKER}"
+                - --broker-type
+                - redis
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
+                  value: "false"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -413,6 +417,8 @@ data:
                       fieldPath: status.hostIP
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: RESULTS_S3_BUCKET
                   value: "${RESULTS_S3_BUCKET}"
                 - name: BASE_PATH
@@ -463,6 +469,7 @@ data:
                   port: ${USER_CONTAINER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
                   cpu: ${CPUS}
@@ -480,10 +487,6 @@ data:
                   name: dshm
                 - name: infra-service-config-volume
                   mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
-                # LIRA: For compatibility with runnable image converted from artifactlike bundle
-                - name: config-volume
-                  mountPath: /home/modelengine/.aws/config
-                  subPath: config
                 - name: user-config
                   mountPath: /app/user_config
                   subPath: raw_data
@@ -499,7 +502,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: default-config  
+                name: default-config
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -591,17 +594,14 @@ data:
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
           serviceAccount: default
-          nodeSelector:
-            node-lifecycle: normal
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
-                - ddtrace-run
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.http_forwarder
@@ -617,13 +617,11 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
-                - --set
-                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
-                - --set
-                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
+                  value: "false"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -636,6 +634,8 @@ data:
                       fieldPath: status.hostIP
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: RESULTS_S3_BUCKET
                   value: "${RESULTS_S3_BUCKET}"
                 - name: BASE_PATH
@@ -650,9 +650,10 @@ data:
                   port: ${FORWARDER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
-                  cpu: 0.1
+                  cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: "100M"
                   ephemeral-storage: "100M"
                 limits:
@@ -677,7 +678,7 @@ data:
                 - containerPort: ${FORWARDER_PORT}
                   name: http
             - name: tritonserver
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
+              image: nvidia/tritonserver:${TRITON_COMMIT_TAG}-triton
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -688,6 +689,8 @@ data:
               env:
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
               ports:
                 - containerPort: 8000
                   name: http
@@ -735,6 +738,7 @@ data:
                   port: ${USER_CONTAINER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
                   cpu: ${CPUS}
@@ -752,10 +756,6 @@ data:
                   name: dshm
                 - name: infra-service-config-volume
                   mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
-                # LIRA: For compatibility with runnable image converted from artifactlike bundle
-                - name: config-volume
-                  mountPath: /home/modelengine/.aws/config
-                  subPath: config
                 - name: user-config
                   mountPath: /app/user_config
                   subPath: raw_data
@@ -771,7 +771,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: default-config  
+                name: default-config
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -863,17 +863,14 @@ data:
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
           serviceAccount: default
-          nodeSelector:
-            node-lifecycle: normal
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
-                - ddtrace-run
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.http_forwarder
@@ -889,13 +886,11 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
-                - --set
-                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
-                - --set
-                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
+                  value: "false"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -908,6 +903,8 @@ data:
                       fieldPath: status.hostIP
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: RESULTS_S3_BUCKET
                   value: "${RESULTS_S3_BUCKET}"
                 - name: BASE_PATH
@@ -922,9 +919,10 @@ data:
                   port: ${FORWARDER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
-                  cpu: 0.1
+                  cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: "100M"
                   ephemeral-storage: "100M"
                 limits:
@@ -963,6 +961,7 @@ data:
                   port: ${USER_CONTAINER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
                   cpu: ${CPUS}
@@ -980,10 +979,6 @@ data:
                   name: dshm
                 - name: infra-service-config-volume
                   mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
-                # LIRA: For compatibility with runnable image converted from artifactlike bundle
-                - name: config-volume
-                  mountPath: /home/modelengine/.aws/config
-                  subPath: config
                 - name: user-config
                   mountPath: /app/user_config
                   subPath: raw_data
@@ -999,7 +994,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: default-config  
+                name: default-config
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -1091,17 +1086,14 @@ data:
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
           serviceAccount: default
-          nodeSelector:
-            node-lifecycle: normal
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
-                - ddtrace-run
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.http_forwarder
@@ -1126,6 +1118,8 @@ data:
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
+                  value: "false"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1138,6 +1132,8 @@ data:
                       fieldPath: status.hostIP
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: RESULTS_S3_BUCKET
                   value: "${RESULTS_S3_BUCKET}"
                 - name: BASE_PATH
@@ -1152,9 +1148,10 @@ data:
                   port: ${FORWARDER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
-                  cpu: 0.1
+                  cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: "100M"
                   ephemeral-storage: "100M"
                 limits:
@@ -1193,6 +1190,7 @@ data:
                   port: ${USER_CONTAINER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
                   cpu: ${CPUS}
@@ -1210,10 +1208,6 @@ data:
                   name: dshm
                 - name: infra-service-config-volume
                   mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
-                # LIRA: For compatibility with runnable image converted from artifactlike bundle
-                - name: config-volume
-                  mountPath: /home/modelengine/.aws/config
-                  subPath: config
                 - name: user-config
                   mountPath: /app/user_config
                   subPath: raw_data
@@ -1229,7 +1223,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: default-config  
+                name: default-config
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -1327,10 +1321,9 @@ data:
                       values:
                       - "True"
                   topologyKey: kubernetes.io/hostname
-          terminationGracePeriodSeconds: 600
+          terminationGracePeriodSeconds: 1800
           serviceAccount: default
           nodeSelector:
-            node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
             - key: "nvidia.com/gpu"
@@ -1339,12 +1332,11 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
-                - ddtrace-run
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.celery_forwarder
@@ -1360,9 +1352,13 @@ data:
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
                 - "${PER_WORKER}"
+                - --broker-type
+                - redis
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
+                  value: "false"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1375,6 +1371,8 @@ data:
                       fieldPath: status.hostIP
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: RESULTS_S3_BUCKET
                   value: "${RESULTS_S3_BUCKET}"
                 - name: BASE_PATH
@@ -1411,7 +1409,7 @@ data:
                 - name: infra-service-config-volume
                   mountPath: /workspace/model-engine/model_engine_server/core/configs
             - name: tritonserver
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
+              image: nvidia/tritonserver:${TRITON_COMMIT_TAG}-triton
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -1422,6 +1420,8 @@ data:
               env:
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
               ports:
                 - containerPort: 8000
                   name: http
@@ -1469,6 +1469,7 @@ data:
                   port: ${USER_CONTAINER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
                   nvidia.com/gpu: ${GPUS}
@@ -1488,10 +1489,6 @@ data:
                   name: dshm
                 - name: infra-service-config-volume
                   mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
-                # LIRA: For compatibility with runnable image converted from artifactlike bundle
-                - name: config-volume
-                  mountPath: /home/modelengine/.aws/config
-                  subPath: config
                 - name: user-config
                   mountPath: /app/user_config
                   subPath: raw_data
@@ -1507,7 +1504,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: default-config  
+                name: default-config
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -1605,10 +1602,9 @@ data:
                       values:
                       - "True"
                   topologyKey: kubernetes.io/hostname
-          terminationGracePeriodSeconds: 600
+          terminationGracePeriodSeconds: 1800
           serviceAccount: default
           nodeSelector:
-            node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
             - key: "nvidia.com/gpu"
@@ -1617,12 +1613,11 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
-                - ddtrace-run
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.celery_forwarder
@@ -1638,9 +1633,13 @@ data:
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
                 - "${PER_WORKER}"
+                - --broker-type
+                - redis
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
+                  value: "false"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1653,6 +1652,8 @@ data:
                       fieldPath: status.hostIP
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: RESULTS_S3_BUCKET
                   value: "${RESULTS_S3_BUCKET}"
                 - name: BASE_PATH
@@ -1703,6 +1704,7 @@ data:
                   port: ${USER_CONTAINER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
                   nvidia.com/gpu: ${GPUS}
@@ -1722,10 +1724,6 @@ data:
                   name: dshm
                 - name: infra-service-config-volume
                   mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
-                # LIRA: For compatibility with runnable image converted from artifactlike bundle
-                - name: config-volume
-                  mountPath: /home/modelengine/.aws/config
-                  subPath: config
                 - name: user-config
                   mountPath: /app/user_config
                   subPath: raw_data
@@ -1741,7 +1739,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: default-config  
+                name: default-config
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -1834,7 +1832,6 @@ data:
           terminationGracePeriodSeconds: 600
           serviceAccount: default
           nodeSelector:
-            node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
             - key: "nvidia.com/gpu"
@@ -1843,12 +1840,11 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
-                - ddtrace-run
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.http_forwarder
@@ -1864,13 +1860,11 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
-                - --set
-                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
-                - --set
-                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
+                  value: "false"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -1883,6 +1877,8 @@ data:
                       fieldPath: status.hostIP
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: RESULTS_S3_BUCKET
                   value: "${RESULTS_S3_BUCKET}"
                 - name: BASE_PATH
@@ -1897,9 +1893,10 @@ data:
                   port: ${FORWARDER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
-                  cpu: 0.1
+                  cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: "100M"
                   ephemeral-storage: "100M"
                 limits:
@@ -1924,7 +1921,7 @@ data:
                 - containerPort: ${FORWARDER_PORT}
                   name: http
             - name: tritonserver
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/std-ml-srv:${TRITON_COMMIT_TAG}-triton
+              image: nvidia/tritonserver:${TRITON_COMMIT_TAG}-triton
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
@@ -1935,6 +1932,8 @@ data:
               env:
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
               ports:
                 - containerPort: 8000
                   name: http
@@ -1982,6 +1981,7 @@ data:
                   port: ${USER_CONTAINER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
                   nvidia.com/gpu: ${GPUS}
@@ -2001,10 +2001,6 @@ data:
                   name: dshm
                 - name: infra-service-config-volume
                   mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
-                # LIRA: For compatibility with runnable image converted from artifactlike bundle
-                - name: config-volume
-                  mountPath: /home/modelengine/.aws/config
-                  subPath: config
                 - name: user-config
                   mountPath: /app/user_config
                   subPath: raw_data
@@ -2020,7 +2016,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: default-config  
+                name: default-config
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -2113,7 +2109,6 @@ data:
           terminationGracePeriodSeconds: 600
           serviceAccount: default
           nodeSelector:
-            node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
             - key: "nvidia.com/gpu"
@@ -2122,12 +2117,11 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
-                - ddtrace-run
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.http_forwarder
@@ -2143,13 +2137,11 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
-                - --set
-                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
-                - --set
-                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
+                  value: "false"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -2162,6 +2154,8 @@ data:
                       fieldPath: status.hostIP
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: RESULTS_S3_BUCKET
                   value: "${RESULTS_S3_BUCKET}"
                 - name: BASE_PATH
@@ -2176,9 +2170,10 @@ data:
                   port: ${FORWARDER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
-                  cpu: 0.1
+                  cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: "100M"
                   ephemeral-storage: "100M"
                 limits:
@@ -2217,6 +2212,7 @@ data:
                   port: ${USER_CONTAINER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
                   nvidia.com/gpu: ${GPUS}
@@ -2236,10 +2232,6 @@ data:
                   name: dshm
                 - name: infra-service-config-volume
                   mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
-                # LIRA: For compatibility with runnable image converted from artifactlike bundle
-                - name: config-volume
-                  mountPath: /home/modelengine/.aws/config
-                  subPath: config
                 - name: user-config
                   mountPath: /app/user_config
                   subPath: raw_data
@@ -2255,7 +2247,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: default-config  
+                name: default-config
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -2348,7 +2340,6 @@ data:
           terminationGracePeriodSeconds: 600
           serviceAccount: default
           nodeSelector:
-            node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
             - key: "nvidia.com/gpu"
@@ -2357,12 +2348,11 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
               imagePullPolicy: IfNotPresent
               command:
                 - /usr/bin/dumb-init
                 - --
-                - ddtrace-run
                 - python
                 - -m
                 - model_engine_server.inference.forwarding.http_forwarder
@@ -2387,6 +2377,8 @@ data:
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
+                  value: "false"
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
@@ -2399,6 +2391,8 @@ data:
                       fieldPath: status.hostIP
                 - name: AWS_PROFILE
                   value: "${AWS_ROLE}"
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: RESULTS_S3_BUCKET
                   value: "${RESULTS_S3_BUCKET}"
                 - name: BASE_PATH
@@ -2413,9 +2407,10 @@ data:
                   port: ${FORWARDER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
-                  cpu: 0.1
+                  cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: "100M"
                   ephemeral-storage: "100M"
                 limits:
@@ -2454,6 +2449,7 @@ data:
                   port: ${USER_CONTAINER_PORT}
                 initialDelaySeconds: ${READINESS_INITIAL_DELAY}
                 periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 requests:
                   nvidia.com/gpu: ${GPUS}
@@ -2473,10 +2469,6 @@ data:
                   name: dshm
                 - name: infra-service-config-volume
                   mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
-                # LIRA: For compatibility with runnable image converted from artifactlike bundle
-                - name: config-volume
-                  mountPath: /home/modelengine/.aws/config
-                  subPath: config
                 - name: user-config
                   mountPath: /app/user_config
                   subPath: raw_data
@@ -2492,7 +2484,7 @@ data:
           volumes:
             - name: config-volume
               configMap:
-                name: default-config  
+                name: default-config
             - name: user-config
               configMap:
                 name: ${RESOURCE_NAME}
@@ -2628,6 +2620,333 @@ data:
           enableTLS: "false"
           unsafeSsl: "false"
           databaseIndex: "${REDIS_DB_INDEX}"
+  leader-worker-set-streaming-gpu.yaml: |-
+    apiVersion: leaderworkerset.x-k8s.io/v1
+    kind: LeaderWorkerSet
+    metadata:
+      name: ${RESOURCE_NAME} 
+      namespace: ${NAMESPACE} 
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        env: circleci
+        managed-by: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/version: ${GIT_TAG}
+        tags.datadoghq.com/service: ${ENDPOINT_NAME}
+        endpoint_id: ${ENDPOINT_ID}
+        endpoint_name: ${ENDPOINT_NAME}
+    spec:
+      replicas: ${MIN_WORKERS}
+      leaderWorkerTemplate:
+        size: ${LWS_SIZE}
+        restartPolicy: RecreateGroupOnPodRestart  # TODO un-hardcode? if necessary
+        leaderTemplate:
+          metadata:
+            labels:
+              app: ${RESOURCE_NAME}
+              user_id: ${OWNER}
+              team: ${TEAM}
+              product: ${PRODUCT}
+              created_by: ${CREATED_BY}
+              owner: ${OWNER}
+              env: circleci
+              managed-by: model-engine
+              use_scale_launch_endpoint_network_policy: "true"
+              tags.datadoghq.com/env: circleci
+              tags.datadoghq.com/version: ${GIT_TAG}
+              tags.datadoghq.com/service: ${ENDPOINT_NAME}
+              endpoint_id: ${ENDPOINT_ID}
+              endpoint_name: ${ENDPOINT_NAME}
+              sidecar.istio.io/inject: "false"  # Never inject istio, it screws up networking
+              version: v1
+            annotations:
+              ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
+              kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+          spec:
+            affinity:
+              podAffinity:
+                preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 1
+                  podAffinityTerm:
+                    labelSelector:
+                      matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                        - ${RESOURCE_NAME}
+                    topologyKey: kubernetes.io/hostname
+                - weight: 100
+                  podAffinityTerm:
+                    labelSelector:
+                      matchExpressions:
+                      - key: ${IMAGE_HASH}
+                        operator: In
+                        values:
+                        - "True"
+                    topologyKey: kubernetes.io/hostname
+            terminationGracePeriodSeconds: 600
+            serviceAccount: default
+            nodeSelector:
+              k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+            tolerations:
+              - key: "nvidia.com/gpu"
+                operator: "Exists"
+                effect: "NoSchedule"
+            priorityClassName: ${PRIORITY}
+            containers:
+              - name: http-forwarder
+                image: model-engine:${GIT_TAG}
+                imagePullPolicy: IfNotPresent
+                command:
+                  - /usr/bin/dumb-init
+                  - --
+                  - python
+                  - -m
+                  - model_engine_server.inference.forwarding.http_forwarder
+                  - --config
+                  - /workspace/model-engine/model_engine_server/inference/configs/service--http_forwarder.yaml
+                  - --port
+                  - "${FORWARDER_PORT}"
+                  - --num-workers
+                  - "${FORWARDER_WORKER_COUNT}"
+                  - --set
+                  - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
+                  - --set
+                  - "forwarder.stream.predict_route=${STREAMING_PREDICT_ROUTE}"
+                  - --set
+                  - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                  - --set
+                  - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                env:
+                  - name: DD_TRACE_ENABLED
+                    value: "${DD_TRACE_ENABLED}"
+                  - name: DD_REMOTE_CONFIGURATION_ENABLED
+                    value: "false"
+                  - name: DD_SERVICE
+                    value: "${ENDPOINT_NAME}"
+                  - name: DD_ENV
+                    value: circleci
+                  - name: DD_VERSION
+                    value: "${GIT_TAG}"
+                  - name: DD_AGENT_HOST
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: status.hostIP
+                  - name: AWS_PROFILE
+                    value: "${AWS_ROLE}"
+                  - name: AWS_CONFIG_FILE
+                    value: /opt/.aws/config
+                  - name: RESULTS_S3_BUCKET
+                    value: "${RESULTS_S3_BUCKET}"
+                  - name: BASE_PATH
+                    value: "/workspace"
+                  - name: ML_INFRA_SERVICES_CONFIG_PATH
+                    value: "/workspace/model-engine/model_engine_server/core/configs/config.yaml"
+                  - name: HTTP_HOST
+                    value: "0.0.0.0"
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: ${FORWARDER_PORT}
+                  initialDelaySeconds: ${READINESS_INITIAL_DELAY}
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                resources:
+                  requests:
+                    cpu: ${FORWARDER_CPUS_LIMIT}
+                    memory: "100M"
+                    ephemeral-storage: "100M"
+                  limits:
+                    cpu: ${FORWARDER_CPUS_LIMIT}
+                    memory: ${FORWARDER_MEMORY_LIMIT}
+                    ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
+                
+                
+                volumeMounts:
+                  - name: config-volume
+                    mountPath: /opt/.aws/config
+                    subPath: config
+                  - name: user-config
+                    mountPath: /workspace/user_config
+                    subPath: raw_data
+                  - name: endpoint-config
+                    mountPath: /workspace/endpoint_config
+                    subPath: raw_data
+                  - name: infra-service-config-volume
+                    mountPath: /workspace/model-engine/model_engine_server/core/configs
+                ports:
+                  - containerPort: ${FORWARDER_PORT}
+                    name: http
+              - name: lws_leader
+                image: ${IMAGE}
+                imagePullPolicy: IfNotPresent
+                command: ${COMMAND}
+                env: ${MAIN_ENV}
+                readinessProbe:
+                  httpGet:
+                    path: ${HEALTHCHECK_ROUTE}
+                    port: ${USER_CONTAINER_PORT}
+                  initialDelaySeconds: ${READINESS_INITIAL_DELAY}
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                resources:
+                  requests:
+                    nvidia.com/gpu: ${GPUS}
+                    cpu: ${CPUS}
+                    memory: ${MEMORY}
+                    ${STORAGE_DICT}
+                  limits:
+                    nvidia.com/gpu: ${GPUS}
+                    cpu: ${CPUS}
+                    memory: ${MEMORY}
+                    ${STORAGE_DICT}
+                volumeMounts:
+                  - name: config-volume
+                    mountPath: /opt/.aws/config
+                    subPath: config
+                  - mountPath: /dev/shm
+                    name: dshm
+                  - name: infra-service-config-volume
+                    mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
+                  - name: user-config
+                    mountPath: /app/user_config
+                    subPath: raw_data
+                  - name: endpoint-config
+                    mountPath: /app/endpoint_config
+                    subPath: raw_data
+                ports:
+                  - containerPort: ${USER_CONTAINER_PORT}
+                    name: http
+            volumes:
+              - name: config-volume
+                configMap:
+                  name: default-config
+              - name: user-config
+                configMap:
+                  name: ${RESOURCE_NAME}
+              - name: endpoint-config
+                configMap:
+                  name: ${RESOURCE_NAME}-endpoint-config
+              - name: dshm
+                emptyDir:
+                  medium: Memory
+              - name: infra-service-config-volume
+                configMap:
+                  name: model-engine-service-config
+                  items:
+                    - key: infra_service_config
+                      path: config.yaml
+        workerTemplate:
+          metadata:
+            labels:
+              app: ${RESOURCE_NAME}
+              user_id: ${OWNER}
+              team: ${TEAM}
+              product: ${PRODUCT}
+              created_by: ${CREATED_BY}
+              owner: ${OWNER}
+              env: circleci
+              managed-by: model-engine
+              use_scale_launch_endpoint_network_policy: "true"
+              tags.datadoghq.com/env: circleci
+              tags.datadoghq.com/version: ${GIT_TAG}
+              tags.datadoghq.com/service: ${ENDPOINT_NAME}
+              endpoint_id: ${ENDPOINT_ID}
+              endpoint_name: ${ENDPOINT_NAME}
+              sidecar.istio.io/inject: "false"  # Never inject istio for LWS, it screws up networking
+              version: v1
+            annotations:
+              ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
+              kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+          spec:
+            affinity:
+              podAffinity:
+                preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 1
+                  podAffinityTerm:
+                    labelSelector:
+                      matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                        - ${RESOURCE_NAME}
+                    topologyKey: kubernetes.io/hostname
+                - weight: 100
+                  podAffinityTerm:
+                    labelSelector:
+                      matchExpressions:
+                      - key: ${IMAGE_HASH}
+                        operator: In
+                        values:
+                        - "True"
+                    topologyKey: kubernetes.io/hostname
+            terminationGracePeriodSeconds: 600
+            serviceAccount: default
+            nodeSelector:
+              k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+            tolerations:
+              - key: "nvidia.com/gpu"
+                operator: "Exists"
+                effect: "NoSchedule"
+            priorityClassName: ${PRIORITY}
+            containers:
+              - name: lws_worker
+                image: ${IMAGE}
+                imagePullPolicy: IfNotPresent
+                command: ${WORKER_COMMAND}
+                env: ${WORKER_ENV}
+                resources:
+                  requests:
+                    nvidia.com/gpu: ${GPUS}
+                    cpu: ${CPUS}
+                    memory: ${MEMORY}
+                    ${STORAGE_DICT}
+                  limits:
+                    nvidia.com/gpu: ${GPUS}
+                    cpu: ${CPUS}
+                    memory: ${MEMORY}
+                    ${STORAGE_DICT}
+                volumeMounts:
+                  - name: config-volume
+                    mountPath: /opt/.aws/config
+                    subPath: config
+                  - mountPath: /dev/shm
+                    name: dshm
+                  - name: infra-service-config-volume
+                    mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
+                  - name: user-config
+                    mountPath: /app/user_config
+                    subPath: raw_data
+                  - name: endpoint-config
+                    mountPath: /app/endpoint_config
+                    subPath: raw_data
+                ports:
+                  - containerPort: ${USER_CONTAINER_PORT}
+                    name: http
+            volumes:
+              - name: config-volume
+                configMap:
+                  name: default-config
+              - name: user-config
+                configMap:
+                  name: ${RESOURCE_NAME}
+              - name: endpoint-config
+                configMap:
+                  name: ${RESOURCE_NAME}-endpoint-config
+              - name: dshm
+                emptyDir:
+                  medium: Memory
+              - name: infra-service-config-volume
+                configMap:
+                  name: model-engine-service-config
+                  items:
+                    - key: infra_service_config
+                      path: config.yaml  # mode  # device
   service.yaml: |-
     apiVersion: v1
     kind: Service
@@ -2794,7 +3113,10 @@ data:
         tags.datadoghq.com/env: circleci
         tags.datadoghq.com/version: ${GIT_TAG}
         launch_job_id: ${JOB_ID}
+        tags.datadoghq.com/request_id: ${REQUEST_ID}
         tags.datadoghq.com/service: ${JOB_ID}
+        tags.datadoghq.com/user_id: ${OWNER}
+        tags.datadoghq.com/team: ${TEAM}
     spec:
       backoffLimit: 0
       activeDeadlineSeconds: ${BATCH_JOB_MAX_RUNTIME}
@@ -2813,7 +3135,10 @@ data:
             tags.datadoghq.com/env: circleci
             tags.datadoghq.com/version: ${GIT_TAG}
             launch_job_id: ${JOB_ID}
+            tags.datadoghq.com/request_id: ${REQUEST_ID}
             tags.datadoghq.com/service: ${JOB_ID}
+            tags.datadoghq.com/user_id: ${OWNER}
+            tags.datadoghq.com/team: ${TEAM}
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
@@ -2821,8 +3146,6 @@ data:
             cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
           restartPolicy: Never
-          nodeSelector:
-            node-lifecycle: normal
           serviceAccountName: model-engine
           volumes:
             - name: config-volume
@@ -2830,11 +3153,15 @@ data:
                 name: default-config
           containers:
             - name: main
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
                 - name: DD_TRACE_ENABLED
+                  value: "true"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
                   value: "false"
                 - name: DD_ENV
                   value: circleci
@@ -2847,12 +3174,19 @@ data:
                   value: http://model-engine.default:80
                 - name: AWS_PROFILE
                   value: default
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: ECR_READ_AWS_PROFILE
+                  value: default
+                - name: DB_SECRET_AWS_PROFILE
                   value: default
                 - name: S3_WRITE_AWS_PROFILE
                   value: default
-                - name: DB_SECRET_NAME
-                  value: prod/ml_infra_pg
+                - name: ML_INFRA_DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: database_url
+                      name: model-engine-postgres-credentials
                 - name: DEPLOY_SERVICE_CONFIG_PATH
                   value: /workspace/model-engine/service_configs/service_config.yaml
                 - name: ML_INFRA_SERVICES_CONFIG_PATH
@@ -2871,7 +3205,6 @@ data:
               command:
                 - dumb-init
                 - --
-                - ddtrace-run
               args:
                 - python
                 - -m
@@ -2915,11 +3248,17 @@ data:
         tags.datadoghq.com/env: circleci
         tags.datadoghq.com/version: ${GIT_TAG}
         launch_job_id: ${JOB_ID}
+        tags.datadoghq.com/request_id: ${REQUEST_ID}
         tags.datadoghq.com/service: ${JOB_ID}
+        tags.datadoghq.com/user_id: ${OWNER}
+        tags.datadoghq.com/team: ${TEAM}
     spec:
       backoffLimit: 0
       activeDeadlineSeconds: ${BATCH_JOB_MAX_RUNTIME}
       ttlSecondsAfterFinished: ${BATCH_JOB_TTL_SECONDS_AFTER_FINISHED}
+      completions: ${BATCH_JOB_NUM_WORKERS}
+      parallelism: ${BATCH_JOB_NUM_WORKERS}
+      completionMode: "Indexed"
       template:
         metadata:
           labels:
@@ -2934,15 +3273,17 @@ data:
             tags.datadoghq.com/env: circleci
             tags.datadoghq.com/version: ${GIT_TAG}
             launch_job_id: ${JOB_ID}
+            tags.datadoghq.com/request_id: ${REQUEST_ID}
             tags.datadoghq.com/service: ${JOB_ID}
+            tags.datadoghq.com/user_id: ${OWNER}
+            tags.datadoghq.com/team: ${TEAM}
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
             ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:circleci", "launch_job_id:${JOB_ID}"]}]'
+            cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
           restartPolicy: Never
-          nodeSelector:
-            node-lifecycle: normal
           serviceAccountName: default
           volumes:
             - name: config-volume
@@ -2959,7 +3300,11 @@ data:
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
                 - name: DD_TRACE_ENABLED
+                  value: "true"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
                   value: "false"
                 - name: DD_ENV
                   value: circleci
@@ -2972,12 +3317,19 @@ data:
                   value: http://model-engine.default:80
                 - name: AWS_PROFILE
                   value: default
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: ECR_READ_AWS_PROFILE
+                  value: default
+                - name: DB_SECRET_AWS_PROFILE
                   value: default
                 - name: S3_WRITE_AWS_PROFILE
                   value: default
-                - name: DB_SECRET_NAME
-                  value: prod/ml_infra_pg
+                - name: ML_INFRA_DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: database_url
+                      name: model-engine-postgres-credentials
                 - name: DEPLOY_SERVICE_CONFIG_PATH
                   value: /workspace/model-engine/service_configs/service_config.yaml
                 - name: ML_INFRA_SERVICES_CONFIG_PATH
@@ -3014,7 +3366,10 @@ data:
                   name: dshm
           initContainers:
             - name: input-downloader
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
+              env:
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
               command:
                 - python
                 - -m
@@ -3056,11 +3411,17 @@ data:
         tags.datadoghq.com/env: circleci
         tags.datadoghq.com/version: ${GIT_TAG}
         launch_job_id: ${JOB_ID}
+        tags.datadoghq.com/request_id: ${REQUEST_ID}
         tags.datadoghq.com/service: ${JOB_ID}
+        tags.datadoghq.com/user_id: ${OWNER}
+        tags.datadoghq.com/team: ${TEAM}
     spec:
       backoffLimit: 0
       activeDeadlineSeconds: ${BATCH_JOB_MAX_RUNTIME}
       ttlSecondsAfterFinished: ${BATCH_JOB_TTL_SECONDS_AFTER_FINISHED}
+      completions: ${BATCH_JOB_NUM_WORKERS}
+      parallelism: ${BATCH_JOB_NUM_WORKERS}
+      completionMode: "Indexed"
       template:
         metadata:
           labels:
@@ -3075,15 +3436,18 @@ data:
             tags.datadoghq.com/env: circleci
             tags.datadoghq.com/version: ${GIT_TAG}
             launch_job_id: ${JOB_ID}
+            tags.datadoghq.com/request_id: ${REQUEST_ID}
             tags.datadoghq.com/service: ${JOB_ID}
+            tags.datadoghq.com/user_id: ${OWNER}
+            tags.datadoghq.com/team: ${TEAM}
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
             ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:circleci", "launch_job_id:${JOB_ID}"]}]'
+            cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
           restartPolicy: Never
           nodeSelector:
-            node-lifecycle: normal
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
             - key: "nvidia.com/gpu"
@@ -3105,7 +3469,11 @@ data:
               env:
                 - name: DD_SERVICE
                   value: ${RESOURCE_NAME}
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
                 - name: DD_TRACE_ENABLED
+                  value: "true"
+                - name: DD_REMOTE_CONFIGURATION_ENABLED
                   value: "false"
                 - name: DD_ENV
                   value: circleci
@@ -3118,12 +3486,19 @@ data:
                   value: http://model-engine.default:80
                 - name: AWS_PROFILE
                   value: default
+                - name: AWS_CONFIG_FILE
+                  value: /opt/.aws/config
                 - name: ECR_READ_AWS_PROFILE
+                  value: default
+                - name: DB_SECRET_AWS_PROFILE
                   value: default
                 - name: S3_WRITE_AWS_PROFILE
                   value: default
-                - name: DB_SECRET_NAME
-                  value: prod/ml_infra_pg
+                - name: ML_INFRA_DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: database_url
+                      name: model-engine-postgres-credentials
                 - name: DEPLOY_SERVICE_CONFIG_PATH
                   value: /workspace/model-engine/service_configs/service_config.yaml
                 - name: ML_INFRA_SERVICES_CONFIG_PATH
@@ -3162,7 +3537,10 @@ data:
                   name: dshm
           initContainers:
             - name: input-downloader
-              image: 000000000000.dkr.ecr.us-west-2.amazonaws.com/model-engine:${GIT_TAG}
+              image: model-engine:${GIT_TAG}
+              env:
+                - name: AWS_CONFIG_FILE
+                  value: "/opt/.aws/config"
               command:
                 - python
                 - -m
