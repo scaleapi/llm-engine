@@ -35,7 +35,7 @@ from tests.unit.infra.gateways.k8s_fake_objects import FakeK8sDeploymentContaine
 
 MODULE_PATH = "model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate"
 
-EXAMPLE_LWS_CONFIG_PATH = os.path.join(__file__, "..", "example_lws_config.yaml")
+EXAMPLE_LWS_CONFIG_PATH = os.path.abspath(os.path.join(__file__, "..", "example_lws_config.json"))
 with open(EXAMPLE_LWS_CONFIG_PATH, "r") as f:
     EXAMPLE_LWS_CONFIG = json.load(f)
 
