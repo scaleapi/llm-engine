@@ -1488,12 +1488,6 @@ async def test_update_model_endpoint_raises_billing_tags_exception(
 
 
 @pytest.mark.asyncio
-async def test_update_model_endpoint_multinode_to_nonmultinode_fails():
-    # TODO
-    pass
-
-
-@pytest.mark.asyncio
 async def test_delete_model_endpoint_success(
     fake_model_endpoint_service,
     model_endpoint_1: ModelEndpoint,
