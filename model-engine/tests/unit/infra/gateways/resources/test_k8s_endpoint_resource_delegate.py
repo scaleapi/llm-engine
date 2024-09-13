@@ -840,7 +840,14 @@ async def test_delete_resources_multinode_success(
         endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.STREAMING
     )
     assert deleted
-    mock_custom_objects_client.delete_namespaced_custom_object.assert_called_once()
+    delete_called_for_lws = False
+    for call_args in mock_custom_objects_client.delete_namespaced_custom_object.call_args_list:
+        # 'group' is kwargs in delete_namespaced_custom_object
+        if call_args[1]['group'] == "leaderworkerset.x-k8s.io":
+            delete_called_for_lws = True
+            break
+    assert delete_called_for_lws
+
 
 
 @pytest.mark.asyncio
