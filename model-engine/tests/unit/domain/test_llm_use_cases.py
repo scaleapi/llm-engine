@@ -209,15 +209,11 @@ async def test_create_model_endpoint_use_case_success(
     )
     assert " --gpu-memory-utilization 0.95" in bundle.flavor.command[-1]
 
-    response_5 = await use_case.execute(
+    response_6 = await use_case.execute(
         user=user, request=create_llm_model_endpoint_request_llama_3_1_405b_instruct
     )
-    assert response_5.endpoint_creation_task_id
-    assert isinstance(response_5, CreateLLMModelEndpointV1Response)
-    bundle = await fake_model_bundle_repository.get_latest_model_bundle_by_name(
-        owner=user.team_id, name=create_llm_model_endpoint_request_llama_3_1_405b_instruct.name
-    )
-    # TODO some assert here maybe idk, or remove bundle call
+    assert response_6.endpoint_creation_task_id
+    assert isinstance(response_6, CreateLLMModelEndpointV1Response)
     endpoint = (
         await fake_model_endpoint_service.list_model_endpoints(
             owner=None,
@@ -2730,6 +2726,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     assert hardware.memory == "320Gi"
     assert hardware.storage == "320Gi"
     assert hardware.gpu_type == GpuType.NVIDIA_HOPPER_H100
+    assert hardware.nodes_per_worker == 1
 
     with pytest.raises(ObjectHasInvalidValueException):
         await _infer_hardware(fake_llm_artifact_gateway, "unsupported_model", "")

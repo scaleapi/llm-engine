@@ -645,11 +645,13 @@ async def test_create_multinode_endpoint_with_nonmultinode_bundle_fails(
 
 
 @pytest.mark.asyncio
-async def test_create_multinode_endpoint_with_multinode_bundle_succeeds(
+@pytest.mark.parametrize("nodes_per_worker", [1,2])
+async def test_create_multinode_or_nonmultinode_endpoint_with_multinode_bundle_succeeds(
     fake_model_bundle_repository,
     fake_model_endpoint_service,
     model_bundle_5: ModelBundle,
     create_model_endpoint_request_streaming: CreateModelEndpointV1Request,
+    nodes_per_worker: int,
 ):
     # mb5 is a streaming runnable image bundle
     model_bundle_5.metadata[WORKER_ENV_METADATA_KEY] = {"fake_env": "fake_value"}
@@ -663,7 +665,7 @@ async def test_create_multinode_endpoint_with_multinode_bundle_succeeds(
     user_id = model_bundle_5.created_by
     user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
 
-    create_model_endpoint_request_streaming.nodes_per_worker = 2
+    create_model_endpoint_request_streaming.nodes_per_worker = nodes_per_worker
     create_model_endpoint_request_streaming.model_bundle_id = model_bundle_5.id
     response = await use_case.execute(user=user, request=create_model_endpoint_request_streaming)
     assert response.endpoint_creation_task_id
