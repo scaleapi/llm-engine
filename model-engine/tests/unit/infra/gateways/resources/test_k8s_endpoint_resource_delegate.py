@@ -1,3 +1,5 @@
+import json
+import os
 from typing import Any, Dict, List
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -32,6 +34,10 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
 from tests.unit.infra.gateways.k8s_fake_objects import FakeK8sDeploymentContainer, FakeK8sEnvVar
 
 MODULE_PATH = "model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate"
+
+EXAMPLE_LWS_CONFIG_PATH = os.path.join(__file__, "..", "example_lws_config.yaml")
+with open(EXAMPLE_LWS_CONFIG_PATH, "r") as f:
+    EXAMPLE_LWS_CONFIG = json.load(f)
 
 
 @pytest.fixture
@@ -117,11 +123,6 @@ def common_endpoint_params():
         image="test_image",
         labels=dict(team="test_team", product="test_product"),
     )
-
-
-@pytest.fixture
-def lws_config():
-    return "TODO"
 
 
 @pytest.fixture
@@ -771,21 +772,8 @@ async def test_get_resources_multinode_success(
         ),
     )
 
-    # This is kinda brittle TODO
     mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(
-        return_value={
-            "spec": {
-                "replicas": 1,
-                "leaderWorkerTemplate": {
-                    "leaderTemplate": {
-                        "spec": {
-                            "priorityClassName": "model-engine-high-priority",
-                        }
-                    },
-                    "size": 2,
-                },
-            }
-        }
+        return_value=EXAMPLE_LWS_CONFIG
     )
 
     infra_state = await k8s_endpoint_resource_delegate.get_resources(
@@ -844,10 +832,15 @@ async def test_delete_resources_multinode_success(
     mock_policy_client,
     mock_custom_objects_client,
 ):
+    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(
+        return_value=EXAMPLE_LWS_CONFIG
+    )
+    mock_custom_objects_client.delete_namespaced_custom_object = AsyncMock()
     deleted = await k8s_endpoint_resource_delegate.delete_resources(
         endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.STREAMING
     )
     assert deleted
+    mock_custom_objects_client.delete_namespaced_custom_object.assert_called_once()
 
 
 @pytest.mark.asyncio
