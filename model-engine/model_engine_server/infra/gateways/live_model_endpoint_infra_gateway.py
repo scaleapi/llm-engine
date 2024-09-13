@@ -50,7 +50,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         self.resource_gateway = resource_gateway
         self.task_queue_gateway = task_queue_gateway
 
-    def create_model_endpoint_infra(  # TODO multinode
+    def create_model_endpoint_infra(
         self,
         *,
         model_endpoint_record: ModelEndpointRecord,
@@ -154,8 +154,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             gpu_type = infra_state.resource_state.gpu_type
         if storage is None:
             storage = infra_state.resource_state.storage
-        # TODO nodes_per_worker, need to check somewhere if it's None and fail if not None probably
-        # if nodes_per_worker is None:
+        # Don't allow changing nodes_per_worker
         nodes_per_worker = infra_state.resource_state.nodes_per_worker
         if optimize_costs is None:
             optimize_costs = infra_state.resource_state.optimize_costs or False

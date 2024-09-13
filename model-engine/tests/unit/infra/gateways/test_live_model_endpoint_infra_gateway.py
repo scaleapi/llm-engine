@@ -24,7 +24,6 @@ def test_create_model_endpoint_infra(
     model_endpoint_1: ModelEndpoint,
     model_endpoint_2: ModelEndpoint,
 ):
-    # TODO multinode here?
     for endpoint in [model_endpoint_1, model_endpoint_2]:
         assert endpoint.infra_state is not None
         prewarm = endpoint.infra_state.prewarm
