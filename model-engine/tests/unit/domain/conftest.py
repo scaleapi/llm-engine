@@ -363,6 +363,7 @@ def create_llm_model_endpoint_request_llama_3_70b_chat() -> (CreateLLMModelEndpo
         memory="8G",
         gpu_type=GpuType.NVIDIA_HOPPER_H100,
         storage="10G",
+        nodes_per_worker=1,
         min_workers=1,
         max_workers=3,
         per_worker=2,
