@@ -340,7 +340,7 @@ def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
 
 
 class K8SEndpointResourceDelegate:
-    async def create_or_update_resources(  # TODO multinode
+    async def create_or_update_resources(
         self,
         request: CreateOrUpdateResourcesRequest,
         sqs_queue_name: Optional[str] = None,
@@ -581,7 +581,6 @@ class K8SEndpointResourceDelegate:
 
     @staticmethod
     def _get_launch_container_from_lws(lws_config: Any):
-        # TODO do I need you?
         leader_containers = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
             "containers"
         ]
@@ -599,14 +598,18 @@ class K8SEndpointResourceDelegate:
 
     # --- Private low level fns that interact with k8s
 
-    # TODO _create_lws which also handles update
     @staticmethod
     async def _create_lws(
         lws: Dict[str, Any],
         name: str,
     ) -> None:
         """
-        TODO docstring
+        Lower-level function to create/replace a LWS
+        Args:
+            lws: LWS body (a nested Dict in format specified by Kubernetes)
+            name: The name of the LWS on k8s
+        Returns:
+            Nothing: raises k8s APIException if failure
         """
         custom_objects_api = get_kubernetes_custom_objects_client()
         try:
@@ -618,7 +621,6 @@ class K8SEndpointResourceDelegate:
                 body=lws,
             )
         except ApiException as exc:
-            # TODO do we actually want to replace things here? or do we want to not allow this?
             if exc.status == 409:
                 logger.info(f"LeaderWorkerSet {name} already exists, replacing")
                 existing_lws = await custom_objects_api.get_namespaced_custom_object(
@@ -1442,7 +1444,7 @@ class K8SEndpointResourceDelegate:
         lws_resource_name = f"leader-worker-set-{mode}-{device}"
         return lws_resource_name
 
-    async def _create_or_update_resources(  # TODO multinode, think this is correct
+    async def _create_or_update_resources(  # TODO think this is correct, need to e2e test
         self,
         request: CreateOrUpdateResourcesRequest,
         sqs_queue_name: Optional[str] = None,
@@ -1457,7 +1459,6 @@ class K8SEndpointResourceDelegate:
         )
 
         if request.build_endpoint_request.nodes_per_worker > 1:
-            # TODO create the LWS, set the env vars, pull the bundle commands in a call to get_endpoint_resource_args_from_request
             lws_resource_name = self._get_lws_resource_name(request)
             lws_arguments = get_endpoint_resource_arguments_from_request(
                 k8s_resource_group_name=k8s_resource_group_name,
@@ -1477,7 +1478,6 @@ class K8SEndpointResourceDelegate:
                 lws=lws_template,
                 name=k8s_resource_group_name,
             )
-            pass
         else:
             deployment_resource_name = self._get_deployment_resource_name(request)
             deployment_arguments = get_endpoint_resource_arguments_from_request(
@@ -1852,7 +1852,7 @@ class K8SEndpointResourceDelegate:
                 gpu_type=common_params["gpu_type"],  # type: ignore
                 memory=common_params["memory"],
                 storage=common_params["storage"],
-                nodes_per_worker=1,  # TODO think we're in Deployment case here
+                nodes_per_worker=1,  # We're in "Deployment" case thus nodes_per_worker=1
                 optimize_costs=(vertical_autoscaling_params is not None),
             ),
             user_config_state=self._translate_k8s_config_maps_to_user_config_data(
