@@ -50,8 +50,6 @@ async def generate(request: Request) -> Response:
         request_dict = await request.json()
         prompt = request_dict.pop("prompt")
         stream = request_dict.pop("stream", False)
-        max_tokens = request_dict.pop("max_new_tokens")
-        request_dict["max_tokens"] = max_tokens
         guided_json = request_dict.pop("guided_json", None)
         guided_regex = request_dict.pop("guided_regex", None)
         guided_choice = request_dict.pop("guided_choice", None)
