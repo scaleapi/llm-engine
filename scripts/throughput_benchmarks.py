@@ -141,9 +141,7 @@ def generate_request(
     temperature = 0.0
 
     if not localhost:
-        # return {"prompt": prompt, "max_new_tokens": output_token_count, "temperature": temperature}
-        # vllm 0.6:
-        return {"prompt": prompt, "max_tokens": output_token_count, "temperature": temperature}
+        return {"prompt": prompt, "max_new_tokens": output_token_count, "temperature": temperature}
 
     if framework == InferenceFramework.TEXT_GENERATION_INFERENCE:
         return {
@@ -456,6 +454,7 @@ def run_benchmarks(
     if output_file is not None:
         header = all_statistics[0].keys()
         import os
+
         if not os.path.exists(output_file):
             with open(output_file, "w") as csvfile:
                 print("creating the data in csv")
