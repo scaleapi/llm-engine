@@ -4,3 +4,4 @@ smart-open==6.4.0
 ddtrace==2.11.0
 datadog==0.49.1
 dataclasses-json~=0.6.7
+sse-starlette==2.1.3
