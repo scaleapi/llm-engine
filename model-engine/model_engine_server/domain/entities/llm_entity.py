@@ -29,3 +29,4 @@ class LLMMetadata:
     num_shards: int
     quantize: Optional[Quantization] = None
     checkpoint_path: Optional[str] = None
+    chat_template_override: Optional[str] = None

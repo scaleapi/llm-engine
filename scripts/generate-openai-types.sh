@@ -14,6 +14,7 @@ datamodel-codegen \
     --output-model-type pydantic_v2.BaseModel \
     --enum-field-as-literal all \
     --field-constraints \
+    --strict-nullable \
     --use-annotated
 
 CLIENT_DIR=${BASE_DIR}/clients/python/llmengine/data_types/gen
@@ -27,6 +28,7 @@ datamodel-codegen \
     --output-model-type pydantic.BaseModel \
     --enum-field-as-literal all \
     --field-constraints \
+    --strict-nullable \
     --use-annotated
 
 # Ignore mypy for this file

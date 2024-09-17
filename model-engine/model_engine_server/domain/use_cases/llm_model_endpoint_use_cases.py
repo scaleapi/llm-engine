@@ -4,6 +4,7 @@ List model endpoint history: GET model-endpoints/<endpoint id>/history
 Read model endpoint creation logs: GET model-endpoints/<endpoint id>/creation-logs
 """
 
+import base64
 import datetime
 import json
 import math
@@ -17,6 +18,9 @@ import yaml
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import (
+    ChatCompletionV2Request,
+    ChatCompletionV2SuccessChunk,
+    ChatCompletionV2SyncResponse,
     CompletionOutput,
     CompletionStreamOutput,
     CompletionStreamV1Request,
@@ -69,6 +73,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
     Quantization,
     RunnableImageFlavor,
+    RunnableImageLike,
     StreamingEnhancedRunnableImageFlavor,
 )
 from model_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
@@ -79,6 +84,7 @@ from model_engine_server.domain.exceptions import (
     EndpointInfraStateNotFound,
     EndpointLabelsException,
     EndpointUnsupportedInferenceTypeException,
+    EndpointUnsupportedRequestException,
     FailToInferHardwareException,
     InvalidRequestException,
     LatestImageTagNotFoundException,
@@ -123,8 +129,13 @@ from .model_endpoint_use_cases import (
 
 logger = make_logger(logger_name())
 
+OPENAI_CHAT_COMPLETION_PATH = "/v1/chat/completions"
+CHAT_TEMPLATE_MAX_LENGTH = 10_000
+CHAT_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM]
+
 LLM_METADATA_KEY = "_llm"
 RESERVED_METADATA_KEYS = [LLM_METADATA_KEY, CONVERTED_FROM_ARTIFACT_LIKE_KEY]
+VLLM_MODEL_WEIGHTS_FOLDER = "model_files"
 
 INFERENCE_FRAMEWORK_REPOSITORY: Dict[LLMInferenceFramework, str] = {
     LLMInferenceFramework.DEEPSPEED: "instant-llm",
@@ -287,7 +298,6 @@ def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRep
 
 async def _get_latest_batch_v2_tag(inference_framework: LLMInferenceFramework) -> str:
     config_map = await read_config_map(LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME)
-    print(config_map)
     batch_key = f"{inference_framework}_batch_v2"
     if batch_key not in config_map:
         raise LatestImageTagNotFoundException(
@@ -350,6 +360,7 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
         num_shards=llm_metadata["num_shards"],
         quantize=llm_metadata.get("quantize"),
         checkpoint_path=llm_metadata.get("checkpoint_path"),
+        chat_template_override=llm_metadata.get("chat_template_override"),
         spec=model_endpoint_entity_to_get_model_endpoint_response(model_endpoint),
     )
     return response
@@ -385,6 +396,21 @@ def validate_quantization(
         raise ObjectHasInvalidValueException(
             f"Quantization {quantize} is not supported for inference framework {inference_framework}. Supported quantization types are {_SUPPORTED_QUANTIZATIONS[inference_framework]}."
         )
+
+
+def validate_chat_template(
+    chat_template: Optional[str], inference_framework: LLMInferenceFramework
+) -> None:
+    if chat_template is not None:
+        if len(chat_template) > CHAT_TEMPLATE_MAX_LENGTH:
+            raise ObjectHasInvalidValueException(
+                f"Chat template length must be less than {CHAT_TEMPLATE_MAX_LENGTH}."
+            )
+
+        if inference_framework != LLMInferenceFramework.VLLM:
+            raise ObjectHasInvalidValueException(
+                f"Chat template is only supported for inference framework {LLMInferenceFramework.VLLM}."
+            )
 
 
 def validate_checkpoint_path_uri(checkpoint_path: str) -> None:
@@ -425,6 +451,13 @@ def validate_checkpoint_files(checkpoint_files: List[str]) -> None:
         raise ObjectHasInvalidValueException("No safetensors found in the checkpoint path.")
 
 
+def encode_template(chat_template: str) -> str:
+    """Base64 encode the chat template to safely pass it to bash."""
+
+    encoded = base64.b64encode(chat_template.encode("utf-8")).decode("utf-8")
+    return encoded
+
+
 class CreateLLMModelBundleV1UseCase:
     def __init__(
         self,
@@ -463,6 +496,7 @@ class CreateLLMModelBundleV1UseCase:
         num_shards: int,
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
+        chat_template_override: Optional[str],
     ) -> ModelBundle:
         if source == LLMSource.HUGGING_FACE:
             self.check_docker_image_exists_for_image_tag(
@@ -495,6 +529,7 @@ class CreateLLMModelBundleV1UseCase:
                     num_shards,
                     quantize,
                     checkpoint_path,
+                    chat_template_override,
                 )
             elif framework == LLMInferenceFramework.LIGHTLLM:
                 bundle_id = await self.create_lightllm_bundle(
@@ -632,7 +667,7 @@ class CreateLLMModelBundleV1UseCase:
         validate_checkpoint_files(checkpoint_files)
 
         # filter to configs ('*.model' and '*.json') and weights ('*.safetensors')
-        file_selection_str = "--include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*'"
+        file_selection_str = '--include "*.model" --include "*.json" --include "*.safetensors" --exclude "optimizer*"'
         subcommands.append(
             f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
         )
@@ -783,9 +818,13 @@ class CreateLLMModelBundleV1UseCase:
         num_shards: int,
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
+        chat_template_override: Optional[str],
     ):
         command = []
         subcommands = []
+
+        print("here")
+        print(chat_template_override)
 
         checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
         # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
@@ -800,25 +839,34 @@ class CreateLLMModelBundleV1UseCase:
             final_weights_folder,
         )
 
-        subcommands.append(
-            f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
-        )
+        vllm_cmd = f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
 
-        if quantize:
-            if quantize == Quantization.AWQ:
-                subcommands[-1] = subcommands[-1] + f" --quantization {quantize}"
-            else:
+        chat_template_cmd = None
+        if chat_template_override:
+            # We encode the chat template as base64 to avoid issues with special characters
+            # and decode it via bash
+            chat_template_cmd = f'export CHAT_TEMPLATE=$(echo "{encode_template(chat_template_override)}" | base64 --decode)'
+            subcommands.append(chat_template_cmd)
+            vllm_cmd += ' --chat-template "$CHAT_TEMPLATE"'
+
+        if quantize:  # pragma: no cover
+            if quantize != Quantization.AWQ:
                 raise InvalidRequestException(f"Quantization {quantize} is not supported by vLLM.")
 
+            vllm_cmd += f" --quantization {quantize}"
+
         if hmi_config.sensitive_log_mode:  # pragma: no cover
-            subcommands[-1] = subcommands[-1] + " --disable-log-requests"
+            vllm_cmd += " --disable-log-requests"
 
-        if "llama-3-70b" in model_name:
-            subcommands[-1] = subcommands[-1] + " --gpu-memory-utilization 0.95 --enforce-eager"
+        additional_args = infer_addition_engine_args_from_model_name(model_name)
 
-        if "gemma-2" in model_name:
-            subcommands[-1] = subcommands[-1] + " --attention-backend FLASHINFER"
+        if additional_args.max_gpu_memory_utilization:
+            vllm_cmd += f" --gpu-memory-utilization {additional_args.max_gpu_memory_utilization} --enforce-eager"
 
+        if additional_args.attention_backend:
+            vllm_cmd += " --attention-backend FLASHINFER"
+
+        subcommands.append(vllm_cmd)
         command = [
             "/bin/bash",
             "-c",
@@ -842,6 +890,7 @@ class CreateLLMModelBundleV1UseCase:
                         healthcheck_route="/health",
                         predict_route="/predict",
                         streaming_predict_route="/stream",
+                        extra_routes=[OPENAI_CHAT_COMPLETION_PATH],
                         env={},
                     ),
                     metadata={},
@@ -1027,12 +1076,14 @@ class CreateLLMModelEndpointV1UseCase:
             )
         if request.labels is None:
             raise EndpointLabelsException("Endpoint labels cannot be None!")
+
         validate_labels(request.labels)
         validate_billing_tags(request.billing_tags)
         validate_post_inference_hooks(user, request.post_inference_hooks)
         validate_model_name(request.model_name, request.inference_framework)
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
         validate_quantization(request.quantize, request.inference_framework)
+        validate_chat_template(request.chat_template_override, request.inference_framework)
 
         if request.inference_framework in [
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
@@ -1061,6 +1112,7 @@ class CreateLLMModelEndpointV1UseCase:
             num_shards=request.num_shards,
             quantize=request.quantize,
             checkpoint_path=request.checkpoint_path,
+            chat_template_override=request.chat_template_override,
         )
         validate_resource_requests(
             bundle=bundle,
@@ -1091,6 +1143,7 @@ class CreateLLMModelEndpointV1UseCase:
                 num_shards=request.num_shards,
                 quantize=request.quantize,
                 checkpoint_path=request.checkpoint_path,
+                chat_template_override=request.chat_template_override,
             )
         )
 
@@ -1273,6 +1326,7 @@ class UpdateLLMModelEndpointV1UseCase:
             or request.num_shards
             or request.quantize
             or request.checkpoint_path
+            or request.chat_template_override
         ):
             llm_metadata = (model_endpoint.record.metadata or {}).get(LLM_METADATA_KEY, {})
             inference_framework = llm_metadata["inference_framework"]
@@ -1298,6 +1352,10 @@ class UpdateLLMModelEndpointV1UseCase:
                 request.gpus or infra_state.resource_state.gpus,
             )
             validate_quantization(quantize, inference_framework)
+            validate_chat_template(request.chat_template_override, inference_framework)
+            chat_template_override = request.chat_template_override or llm_metadata.get(
+                "chat_template_override"
+            )
 
             bundle = await self.create_llm_model_bundle_use_case.execute(
                 user,
@@ -1310,6 +1368,7 @@ class UpdateLLMModelEndpointV1UseCase:
                 num_shards=num_shards,
                 quantize=quantize,
                 checkpoint_path=checkpoint_path,
+                chat_template_override=chat_template_override,
             )
 
             metadata = endpoint_record.metadata or {}
@@ -1322,6 +1381,7 @@ class UpdateLLMModelEndpointV1UseCase:
                     num_shards=num_shards,
                     quantize=quantize,
                     checkpoint_path=checkpoint_path,
+                    chat_template_override=chat_template_override,
                 )
             )
             endpoint_record.metadata = metadata
@@ -1716,10 +1776,10 @@ class CompletionSyncV1UseCase:
         ):
             raise ObjectNotAuthorizedException
 
-        if (
-            model_endpoint.record.endpoint_type is not ModelEndpointType.SYNC
-            and model_endpoint.record.endpoint_type is not ModelEndpointType.STREAMING
-        ):
+        if model_endpoint.record.endpoint_type not in [
+            ModelEndpointType.SYNC,
+            ModelEndpointType.STREAMING,
+        ]:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Endpoint {model_endpoint_name} does not serve sync requests."
             )
@@ -2378,6 +2438,256 @@ class CompletionStreamV1UseCase:
                 # raising an exception if it is not one of the frameworks handled above.
 
 
+def validate_endpoint_supports_chat_completion(
+    endpoint: ModelEndpoint, endpoint_content: GetLLMModelEndpointV1Response
+):
+    if endpoint_content.inference_framework not in CHAT_SUPPORTED_INFERENCE_FRAMEWORKS:
+        raise EndpointUnsupportedInferenceTypeException(
+            f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support chat completion."
+        )
+
+    if (
+        not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike)
+        or OPENAI_CHAT_COMPLETION_PATH
+        not in endpoint.record.current_model_bundle.flavor.extra_routes
+    ):
+        raise EndpointUnsupportedRequestException("Endpoint does not support chat completion")
+
+
+class ChatCompletionSyncV2UseCase:
+    """
+    Use case for running a chat completion on an LLM endpoint.
+    """
+
+    def __init__(
+        self,
+        model_endpoint_service: ModelEndpointService,
+        llm_model_endpoint_service: LLMModelEndpointService,
+        tokenizer_repository: TokenizerRepository,
+    ):
+        self.model_endpoint_service = model_endpoint_service
+        self.llm_model_endpoint_service = llm_model_endpoint_service
+        self.authz_module = LiveAuthorizationModule()
+        self.tokenizer_repository = tokenizer_repository
+
+    async def execute(
+        self, user: User, model_endpoint_name: str, request: ChatCompletionV2Request
+    ) -> ChatCompletionV2SyncResponse:  # pragma: no cover
+        """
+        Runs the use case to create a sync inference task.
+
+        Args:
+            user: The user who is creating the sync inference task.
+            model_endpoint_name: The name of the model endpoint for the task.
+            request: The body of the request to forward to the endpoint.
+
+        Returns:
+            A response object that contains the status and result of the task.
+
+        Raises:
+            ObjectNotFoundException: If a model endpoint with the given name could not be found.
+            ObjectNotAuthorizedException: If the owner does not own the model endpoint.
+        """
+
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
+        add_trace_request_id(request_id)
+
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.team_id, name=model_endpoint_name, order_by=None
+        )
+
+        if len(model_endpoints) == 0:
+            raise ObjectNotFoundException
+
+        if len(model_endpoints) > 1:
+            raise ObjectHasInvalidValueException(
+                f"Expected 1 LLM model endpoint for model name {model_endpoint_name}, got {len(model_endpoints)}"
+            )
+
+        model_endpoint = model_endpoints[0]
+
+        if not self.authz_module.check_access_read_owned_entity(
+            user, model_endpoint.record
+        ) and not self.authz_module.check_endpoint_public_inference_for_user(
+            user, model_endpoint.record
+        ):
+            raise ObjectNotAuthorizedException
+
+        if (
+            model_endpoint.record.endpoint_type is not ModelEndpointType.SYNC
+            and model_endpoint.record.endpoint_type is not ModelEndpointType.STREAMING
+        ):
+            raise EndpointUnsupportedInferenceTypeException(
+                f"Endpoint {model_endpoint_name} does not serve sync requests."
+            )
+
+        inference_gateway = self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
+        autoscaling_metrics_gateway = (
+            self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
+        )
+        await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
+            endpoint_id=model_endpoint.record.id
+        )
+        endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+
+        validate_endpoint_supports_chat_completion(model_endpoint, endpoint_content)
+
+        # if inference framework is VLLM, we need to set the model to use the weights folder
+        if endpoint_content.inference_framework == LLMInferenceFramework.VLLM:
+            request.model = VLLM_MODEL_WEIGHTS_FOLDER
+
+        inference_request = SyncEndpointPredictV1Request(
+            args=request.model_dump(exclude_none=True),
+            destination_path=OPENAI_CHAT_COMPLETION_PATH,
+            num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+            timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
+        )
+        try:
+            predict_result = await inference_gateway.predict(
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
+            )
+
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
+                raise UpstreamServiceError(
+                    status_code=500,
+                    content=(
+                        predict_result.traceback.encode("utf-8")
+                        if predict_result.traceback is not None
+                        else b""
+                    ),
+                )
+
+            output = json.loads(predict_result.result["result"])
+            # reset model name to correct value
+            output["model"] = model_endpoint.record.name
+            return ChatCompletionV2SyncResponse.model_validate(output)
+        except UpstreamServiceError as exc:
+            # Expect upstream inference service to handle bulk of input validation
+            if 400 <= exc.status_code < 500:
+                raise InvalidRequestException(exc.content)
+            raise exc
+
+
+class ChatCompletionStreamV2UseCase:
+    """
+    Use case for running a chat completion on an LLM endpoint.
+    """
+
+    def __init__(
+        self,
+        model_endpoint_service: ModelEndpointService,
+        llm_model_endpoint_service: LLMModelEndpointService,
+        tokenizer_repository: TokenizerRepository,
+    ):
+        self.model_endpoint_service = model_endpoint_service
+        self.llm_model_endpoint_service = llm_model_endpoint_service
+        self.authz_module = LiveAuthorizationModule()
+        self.tokenizer_repository = tokenizer_repository
+
+    async def execute(
+        self, model_endpoint_name: str, request: ChatCompletionV2Request, user: User
+    ) -> AsyncIterable[ChatCompletionV2SuccessChunk]:  # pragma: no cover
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
+        add_trace_request_id(request_id)
+
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.team_id, name=model_endpoint_name, order_by=None
+        )
+
+        if len(model_endpoints) == 0:
+            raise ObjectNotFoundException(f"Model endpoint {model_endpoint_name} not found.")
+
+        if len(model_endpoints) > 1:
+            raise ObjectHasInvalidValueException(
+                f"Expected 1 LLM model endpoint for model name {model_endpoint_name}, got {len(model_endpoints)}"
+            )
+
+        model_endpoint = model_endpoints[0]
+
+        if not self.authz_module.check_access_read_owned_entity(
+            user, model_endpoint.record
+        ) and not self.authz_module.check_endpoint_public_inference_for_user(
+            user, model_endpoint.record
+        ):
+            raise ObjectNotAuthorizedException
+
+        if model_endpoint.record.endpoint_type != ModelEndpointType.STREAMING:
+            raise EndpointUnsupportedInferenceTypeException(
+                f"Endpoint {model_endpoint_name} is not a streaming endpoint."
+            )
+
+        inference_gateway = (
+            self.model_endpoint_service.get_streaming_model_endpoint_inference_gateway()
+        )
+        autoscaling_metrics_gateway = (
+            self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
+        )
+        await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
+            endpoint_id=model_endpoint.record.id
+        )
+
+        model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+        validate_endpoint_supports_chat_completion(model_endpoint, model_content)
+
+        # if inference framework is VLLM, we need to set the model to use the weights folder
+        if model_content.inference_framework == LLMInferenceFramework.VLLM:
+            request.model = VLLM_MODEL_WEIGHTS_FOLDER
+
+        inference_request = SyncEndpointPredictV1Request(
+            args=request.model_dump(exclude_none=True),
+            destination_path=OPENAI_CHAT_COMPLETION_PATH,
+            num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+            timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
+        )
+
+        return self._response_chunk_generator(
+            request_id=request_id,
+            model_endpoint=model_endpoint,
+            model_content=model_content,
+            inference_gateway=inference_gateway,
+            inference_request=inference_request,
+        )
+
+    async def _response_chunk_generator(
+        self,
+        request_id: Optional[str],
+        model_endpoint: ModelEndpoint,
+        model_content: GetLLMModelEndpointV1Response,
+        inference_gateway: StreamingModelEndpointInferenceGateway,
+        inference_request: SyncEndpointPredictV1Request,
+    ) -> AsyncIterable[ChatCompletionV2SuccessChunk]:
+        """
+        Async generator yielding tokens to stream for the completions response. Should only be called when
+        returned directly by execute().
+        """
+        try:
+            predict_result = inference_gateway.streaming_predict(
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
+            )
+        except UpstreamServiceError as exc:
+            # Expect upstream inference service to handle bulk of input validation
+            if 400 <= exc.status_code < 500:
+                raise InvalidRequestException(str(exc))
+
+            raise exc
+
+        async for res in predict_result:
+            if not res.status == TaskStatus.SUCCESS or res.result is None:
+                raise UpstreamServiceError(
+                    status_code=500,
+                    content=(res.traceback.encode("utf-8") if res.traceback is not None else b""),
+                )
+            else:
+                result = res.result["result"]
+                # Reset model name to correct value
+                if "DONE" in result:
+                    continue
+                result["model"] = model_endpoint.record.name
+                yield ChatCompletionV2SuccessChunk.model_validate(result)
+
+
 class ModelDownloadV1UseCase:
     def __init__(
         self,
@@ -2659,7 +2969,9 @@ class CreateBatchCompletionsUseCase:
             gpu_type=hardware.gpu_type,
         )
 
-        if engine_request.max_runtime_sec is None or engine_request.max_runtime_sec < 1:
+        if (
+            engine_request.max_runtime_sec is None or engine_request.max_runtime_sec < 1
+        ):  # pragma: no cover
             raise ObjectHasInvalidValueException("max_runtime_sec must be a positive integer.")
 
         job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(

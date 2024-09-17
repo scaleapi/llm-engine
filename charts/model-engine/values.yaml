@@ -5,6 +5,7 @@ redis:
   auth:
 db:
   runDbInitScript: false
+  runDbMigrationScript: false
 balloonNodeSelector:
   node-lifecycle: normal
 nodeSelector:
