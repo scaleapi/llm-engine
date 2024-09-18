@@ -52,7 +52,7 @@ docker run \
     -v ${REPO_PATH}/llm-engine/model-engine/model_engine_server/inference/vllm/examples:/workspace/examples \
     -v ${REPO_PATH}/llm-engine/model-engine/model_engine_server/inference/vllm/vllm_batch.py:/workspace/vllm_batch.py \
     -p 5005:5005 \
-    -e CONFIG_FILE=/workspace/examples/sample_config_gemma.json \
+    -e CONFIG_FILE=/workspace/examples/v2/sample_config_gemma.json \
     -e MODEL_WEIGHTS_FOLDER=/workspace/model_files \
     --name vllm_batch \
     ${IMAGE_BATCH} \
