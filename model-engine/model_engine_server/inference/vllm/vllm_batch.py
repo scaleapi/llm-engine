@@ -37,7 +37,10 @@ from vllm.utils import merge_async_iterators
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
 MODEL_WEIGHTS_FOLDER = os.getenv("MODEL_WEIGHTS_FOLDER", "./model_weights")
-os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+
+SKIP_AWS_PROFILE_SET = os.getenv("SKIP_AWS_PROFILE_SET", "false").lower() == "true"
+if not SKIP_AWS_PROFILE_SET:
+    os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
 
 
 openai_serving_chat: OpenAIServingChat
