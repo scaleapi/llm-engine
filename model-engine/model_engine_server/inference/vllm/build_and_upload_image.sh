@@ -4,7 +4,7 @@ set -eo pipefail
 
 # Build and push vLLM docker image to AWS ECR.
 #
-# Usage: VLLM_VERSION=0.5.3.post1 ./build_and_upload_image.sh <AWS_ACCOUNT_ID> <IMAGE_TAG> vllm|vllm_batch
+# Usage: VLLM_VERSION=0.5.3.post1 ./build_and_upload_image.sh <AWS_ACCOUNT_ID> <IMAGE_TAG> vllm|vllm_batch|vllm_batch_v2
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PROJECT_DIR=$SCRIPT_DIR/../../../..

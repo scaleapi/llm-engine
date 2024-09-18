@@ -20,7 +20,7 @@ AUTH_USER_ID = os.getenv("AUTH_USER_ID")
 GATEWAY_URL = os.getenv("GATEWAY_URL")
 app = typer.Typer(name="throughput-benchmarks", add_completion=False)
 
-MAX_CONTEXT_WINDOW = 4096
+MAX_CONTEXT_WINDOW = 100000
 
 
 @dataclass
@@ -453,11 +453,18 @@ def run_benchmarks(
 
     if output_file is not None:
         header = all_statistics[0].keys()
+        import os
 
-        with open(output_file, "a") as csvfile:
-            csv_writer = csv.DictWriter(csvfile, fieldnames=header)
-            csv_writer.writeheader()
-            csv_writer.writerows(all_statistics)
+        if not os.path.exists(output_file):
+            with open(output_file, "w") as csvfile:
+                print("creating the data in csv")
+                csv_writer = csv.DictWriter(csvfile, fieldnames=header)
+                csv_writer.writeheader()
+                csv_writer.writerows(all_statistics)
+        else:
+            with open(output_file, "a") as csvfile:
+                csv_writer = csv.DictWriter(csvfile, fieldnames=header)
+                csv_writer.writerows(all_statistics)
 
 
 @app.command()
@@ -478,10 +485,6 @@ def run_benchmarks_concurrency_range(
     response_token_count_distribution_file: Optional[str] = None,
     prompts_list_override_file: Optional[str] = None,
 ):
-    if output_file is not None:
-        # Create empty file
-        with open(output_file, "w"):
-            pass
     for concurrency in range(concurrency_min, concurrency_max + 1, concurrency_step):
         run_benchmarks(
             model,
