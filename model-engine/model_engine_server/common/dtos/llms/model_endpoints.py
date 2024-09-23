@@ -149,12 +149,12 @@ class UpdateLLMModelEndpointV1Request(BaseModel):
         description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
     )
 
-    force_redeploy: Optional[bool] = False
+    force_bundle_recreation: Optional[bool] = False
     """
-    Whether to force redeploy the endpoint.
+    Whether to force recreate the underlying bundle.
 
-    If True, the endpoint will be redeployed even if the update request does not change the endpoint spec.
-    This enables users to redeploy an endpoint if there are some implementation changes that we'd like to apply to the endpoint
+    If True, the underlying bundle will be recreated. This is useful if there are underlying implementation changes with how bundles are created
+    that we would like to pick up for existing endpoints
     """
 
 

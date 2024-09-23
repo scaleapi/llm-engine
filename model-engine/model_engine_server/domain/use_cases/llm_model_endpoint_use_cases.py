@@ -1320,7 +1320,7 @@ class UpdateLLMModelEndpointV1UseCase:
         metadata: Optional[Dict[str, Any]]
 
         if (
-            request.force_redeploy
+            request.force_bundle_recreation
             or request.model_name
             or request.source
             or request.inference_framework_image_tag
