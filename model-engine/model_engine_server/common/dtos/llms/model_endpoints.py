@@ -149,6 +149,14 @@ class UpdateLLMModelEndpointV1Request(BaseModel):
         description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
     )
 
+    force_redeploy: Optional[bool] = False
+    """
+    Whether to force redeploy the endpoint.
+
+    If True, the endpoint will be redeployed even if the update request does not change the endpoint spec.
+    This enables users to redeploy an endpoint if there are some implementation changes that we'd like to apply to the endpoint
+    """
+
 
 class UpdateLLMModelEndpointV1Response(BaseModel):
     endpoint_creation_task_id: str
