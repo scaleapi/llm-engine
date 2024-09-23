@@ -149,6 +149,14 @@ class UpdateLLMModelEndpointV1Request(BaseModel):
         description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
     )
 
+    force_bundle_recreation: Optional[bool] = False
+    """
+    Whether to force recreate the underlying bundle.
+
+    If True, the underlying bundle will be recreated. This is useful if there are underlying implementation changes with how bundles are created
+    that we would like to pick up for existing endpoints
+    """
+
 
 class UpdateLLMModelEndpointV1Response(BaseModel):
     endpoint_creation_task_id: str
