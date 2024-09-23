@@ -823,9 +823,6 @@ class CreateLLMModelBundleV1UseCase:
         command = []
         subcommands = []
 
-        print("here")
-        print(chat_template_override)
-
         checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
         # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
         if "mistral" in model_name:
