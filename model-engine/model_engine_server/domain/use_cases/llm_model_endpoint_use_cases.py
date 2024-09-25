@@ -845,9 +845,6 @@ class CreateLLMModelBundleV1UseCase:
         command = []
         subcommands = []
 
-        print("here")
-        print(chat_template_override)
-
         checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
         # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
         if "mistral" in model_name:
@@ -1471,7 +1468,8 @@ class UpdateLLMModelEndpointV1UseCase:
         metadata: Optional[Dict[str, Any]]
 
         if (
-            request.model_name
+            request.force_bundle_recreation
+            or request.model_name
             or request.source
             or request.inference_framework_image_tag
             or request.num_shards

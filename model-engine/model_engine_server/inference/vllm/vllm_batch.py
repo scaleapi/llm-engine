@@ -3,9 +3,20 @@ import asyncio
 import json
 import os
 import subprocess
-from typing import Any, AsyncGenerator, AsyncIterator, Coroutine, Dict, List, Optional, Union
+from typing import (
+    Any,
+    AsyncGenerator,
+    AsyncIterator,
+    Coroutine,
+    Dict,
+    List,
+    MutableMapping,
+    Optional,
+    Union,
+)
 
 import smart_open
+from fastapi import Request
 from model_engine_server.common.dtos.llms import (
     BatchCompletionContent,
     BatchCompletionsModelConfig,
@@ -25,6 +36,7 @@ from model_engine_server.inference.utils import (
     random_uuid,
 )
 from pydantic import TypeAdapter
+from starlette.datastructures import Headers
 from tqdm import tqdm
 from typing_extensions import TypeAlias, assert_never
 from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
@@ -37,7 +49,10 @@ from vllm.utils import merge_async_iterators
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
 MODEL_WEIGHTS_FOLDER = os.getenv("MODEL_WEIGHTS_FOLDER", "./model_weights")
-os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+
+SKIP_AWS_PROFILE_SET = os.getenv("SKIP_AWS_PROFILE_SET", "false").lower() == "true"
+if not SKIP_AWS_PROFILE_SET:
+    os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
 
 
 openai_serving_chat: OpenAIServingChat
@@ -50,6 +65,26 @@ _BatchCompletionContent: TypeAlias = Union[
     List[CompletionRequest],
     List[ChatCompletionRequest],
 ]
+
+
+async def dummy_receive() -> MutableMapping[str, Any]:
+    return {"type": "continue"}
+
+
+# jank but create_completion expects a FastAPI Request object
+dummy_request = Request(
+    scope={
+        "type": "http",
+        "path": "/",
+        "headers": Headers().raw,
+        "http_version": "1.1",
+        "method": "GET",
+        "scheme": "https",
+        "client": ("127.0.0.1", 8080),
+    },
+    # receive fn that doesn't terminate
+    receive=dummy_receive,
+)
 
 
 async def download_model(checkpoint_path: str, target_dir: str) -> None:
@@ -159,7 +194,9 @@ async def generate_v2_completions(
     ] = []
     for request in requests:
         if isinstance(request, CompletionRequest):
-            results_generators.append(openai_serving_completion.create_completion(request))
+            results_generators.append(
+                openai_serving_completion.create_completion(request, dummy_request)
+            )
         elif isinstance(request, ChatCompletionRequest):
             results_generators.append(openai_serving_chat.create_chat_completion(request))
         else:
