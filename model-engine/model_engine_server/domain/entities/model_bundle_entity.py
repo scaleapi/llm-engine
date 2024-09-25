@@ -158,6 +158,8 @@ class RunnableImageLike(BaseModel, ABC):
     protocol: Literal["http"]  # TODO: add support for other protocols (e.g. grpc)
     readiness_initial_delay_seconds: int = 120
     extra_routes: List[str] = Field(default_factory=list)
+    worker_command: Optional[List[str]] = None
+    worker_env: Optional[Dict[str, str]] = None
 
 
 class RunnableImageFlavor(RunnableImageLike):
