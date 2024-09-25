@@ -64,7 +64,9 @@ class CreateDockerImageBatchJobResourceRequests(BaseModel):
     gpus: Optional[int] = None
     gpu_type: Optional[GpuType] = None
     storage: Optional[StorageSpecificationType] = None
-    nodes_per_worker: Optional[int] = None  # TODO this is used only for inferring hardware, if multinode batch jobs is added we can reuse this field
+    nodes_per_worker: Optional[
+        int
+    ] = None  # TODO this is used only for inferring hardware, if multinode batch jobs is added we can reuse this field
     model_config = ConfigDict(from_attributes=True)
 
     @classmethod

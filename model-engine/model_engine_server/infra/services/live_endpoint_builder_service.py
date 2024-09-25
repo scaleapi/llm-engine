@@ -271,9 +271,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         image=image,
                     )
                     create_or_update_response = (
-                        await self.resource_gateway.create_or_update_resources(
-                            params
-                        )
+                        await self.resource_gateway.create_or_update_resources(params)
                     )
 
                 except EndpointResourceInfraException:
