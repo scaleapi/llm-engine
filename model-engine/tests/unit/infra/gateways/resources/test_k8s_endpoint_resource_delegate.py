@@ -14,10 +14,6 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
     ModelEndpointUserConfigState,
 )
-from model_engine_server.domain.entities.model_bundle_entity import (
-    WORKER_COMMAND_METADATA_KEY,
-    WORKER_ENV_METADATA_KEY,
-)
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     DATADOG_ENV_VAR,
@@ -548,8 +544,8 @@ async def test_create_multinode_endpoint_creates_lws(
     model_bundle_5: ModelBundle,
 ):
     # Patch model bundle so that it supports multinode
-    model_bundle_5.metadata[WORKER_ENV_METADATA_KEY] = {"fake_env": "fake_value"}
-    model_bundle_5.metadata[WORKER_COMMAND_METADATA_KEY] = ["fake_command"]
+    model_bundle_5.flavor.worker_env = {"fake_env": "fake_value"}
+    model_bundle_5.flavor.worker_command = ["fake_command"]
     create_resources_request_streaming_runnable_image.build_endpoint_request.model_endpoint_record.current_model_bundle = (
         model_bundle_5
     )
@@ -843,11 +839,10 @@ async def test_delete_resources_multinode_success(
     delete_called_for_lws = False
     for call_args in mock_custom_objects_client.delete_namespaced_custom_object.call_args_list:
         # 'group' is kwargs in delete_namespaced_custom_object
-        if call_args[1]['group'] == "leaderworkerset.x-k8s.io":
+        if call_args[1]["group"] == "leaderworkerset.x-k8s.io":
             delete_called_for_lws = True
             break
     assert delete_called_for_lws
-
 
 
 @pytest.mark.asyncio

@@ -8,12 +8,6 @@ from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Fie
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
 from typing_extensions import Literal
 
-# DB migrations are quite hairy at this point, there isn't a good way to do this in customer environments.
-# Hence we'll stuff some bundle information into the metadata field. This is pretty ugly.
-# TODO can we have pydantic validate these?
-WORKER_COMMAND_METADATA_KEY = "_worker_command"  # Should be List[str]
-WORKER_ENV_METADATA_KEY = "_worker_env"  # Should be Dict[str, str]
-
 
 class ModelBundlePackagingType(str, Enum):
     """

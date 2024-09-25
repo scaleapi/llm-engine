@@ -18,10 +18,6 @@ from model_engine_server.common.resource_limits import (
 )
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.domain.entities import ModelBundle, ModelEndpoint
-from model_engine_server.domain.entities.model_bundle_entity import (
-    WORKER_COMMAND_METADATA_KEY,
-    WORKER_ENV_METADATA_KEY,
-)
 from model_engine_server.domain.exceptions import (
     EndpointBillingTagsMalformedException,
     EndpointLabelsException,
@@ -645,7 +641,7 @@ async def test_create_multinode_endpoint_with_nonmultinode_bundle_fails(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("nodes_per_worker", [1,2])
+@pytest.mark.parametrize("nodes_per_worker", [1, 2])
 async def test_create_multinode_or_nonmultinode_endpoint_with_multinode_bundle_succeeds(
     fake_model_bundle_repository,
     fake_model_endpoint_service,
@@ -654,8 +650,8 @@ async def test_create_multinode_or_nonmultinode_endpoint_with_multinode_bundle_s
     nodes_per_worker: int,
 ):
     # mb5 is a streaming runnable image bundle
-    model_bundle_5.metadata[WORKER_ENV_METADATA_KEY] = {"fake_env": "fake_value"}
-    model_bundle_5.metadata[WORKER_COMMAND_METADATA_KEY] = ["fake_command"]
+    model_bundle_5.flavor.worker_env = {"fake_env": "fake_value"}
+    model_bundle_5.flavor.worker_command = ["fake_command"]
     fake_model_bundle_repository.add_model_bundle(model_bundle_5)
     fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
     use_case = CreateModelEndpointV1UseCase(

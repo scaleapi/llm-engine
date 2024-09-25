@@ -63,8 +63,6 @@ from model_engine_server.core.loggers import (
     make_logger,
 )
 from model_engine_server.domain.entities import (
-    WORKER_COMMAND_METADATA_KEY,
-    WORKER_ENV_METADATA_KEY,
     GpuType,
     LLMInferenceFramework,
     LLMMetadata,
@@ -1018,11 +1016,10 @@ class CreateLLMModelBundleV1UseCase:
                 streaming_predict_route="/stream",
                 extra_routes=[OPENAI_CHAT_COMPLETION_PATH],
                 env=leader_env,
+                worker_command=worker_command,
+                worker_env=worker_env,
             ),
-            metadata={
-                WORKER_COMMAND_METADATA_KEY: worker_command,
-                WORKER_ENV_METADATA_KEY: worker_env,
-            },
+            metadata={},
         )
 
         return (

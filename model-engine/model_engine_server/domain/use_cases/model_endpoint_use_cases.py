@@ -27,8 +27,6 @@ from model_engine_server.domain.authorization.live_authorization_module import (
     LiveAuthorizationModule,
 )
 from model_engine_server.domain.entities import (
-    WORKER_COMMAND_METADATA_KEY,
-    WORKER_ENV_METADATA_KEY,
     ModelBundle,
     ModelEndpoint,
     ModelEndpointType,
@@ -225,10 +223,11 @@ def validate_bundle_multinode_compatibility(bundle: ModelBundle, nodes_per_worke
     """
     if nodes_per_worker == 1:
         return
+    # can type ignore, bundle.flavor is a RunnableImageFlavor/StreamingEnhancedRunnableImageFlavor thus it has worker_command and worker_env
     if (
         type(bundle.flavor) in {RunnableImageFlavor, StreamingEnhancedRunnableImageFlavor}
-        and WORKER_ENV_METADATA_KEY in bundle.metadata
-        and WORKER_COMMAND_METADATA_KEY in bundle.metadata
+        and bundle.flavor.worker_command is not None  # type: ignore
+        and bundle.flavor.worker_env is not None  # type: ignore
     ):
         return
     raise ObjectHasInvalidValueException(
@@ -270,7 +269,7 @@ class CreateModelEndpointV1UseCase:
         self.authz_module = LiveAuthorizationModule()
 
     async def execute(
-        self, user: User, request: CreateModelEndpointV1Request 
+        self, user: User, request: CreateModelEndpointV1Request
     ) -> CreateModelEndpointV1Response:
         validate_deployment_resources(
             min_workers=request.min_workers,
@@ -336,35 +335,33 @@ class CreateModelEndpointV1UseCase:
         aws_role = self.authz_module.get_aws_role_for_user(user)
         results_s3_bucket = self.authz_module.get_s3_bucket_for_user(user)
 
-        model_endpoint_record = (
-            await self.model_endpoint_service.create_model_endpoint(
-                name=request.name,
-                created_by=user.user_id,
-                model_bundle_id=request.model_bundle_id,
-                endpoint_type=request.endpoint_type,
-                metadata=request.metadata,
-                post_inference_hooks=request.post_inference_hooks,
-                child_fn_info=None,
-                cpus=request.cpus,
-                gpus=request.gpus,
-                memory=request.memory,
-                gpu_type=request.gpu_type,
-                storage=request.storage,
-                nodes_per_worker=request.nodes_per_worker,
-                optimize_costs=bool(request.optimize_costs),
-                min_workers=request.min_workers,
-                max_workers=request.max_workers,
-                per_worker=request.per_worker,
-                labels=request.labels,
-                aws_role=aws_role,
-                results_s3_bucket=results_s3_bucket,
-                prewarm=prewarm,
-                high_priority=high_priority,
-                owner=user.team_id,
-                default_callback_url=request.default_callback_url,
-                default_callback_auth=request.default_callback_auth,
-                public_inference=request.public_inference,
-            )
+        model_endpoint_record = await self.model_endpoint_service.create_model_endpoint(
+            name=request.name,
+            created_by=user.user_id,
+            model_bundle_id=request.model_bundle_id,
+            endpoint_type=request.endpoint_type,
+            metadata=request.metadata,
+            post_inference_hooks=request.post_inference_hooks,
+            child_fn_info=None,
+            cpus=request.cpus,
+            gpus=request.gpus,
+            memory=request.memory,
+            gpu_type=request.gpu_type,
+            storage=request.storage,
+            nodes_per_worker=request.nodes_per_worker,
+            optimize_costs=bool(request.optimize_costs),
+            min_workers=request.min_workers,
+            max_workers=request.max_workers,
+            per_worker=request.per_worker,
+            labels=request.labels,
+            aws_role=aws_role,
+            results_s3_bucket=results_s3_bucket,
+            prewarm=prewarm,
+            high_priority=high_priority,
+            owner=user.team_id,
+            default_callback_url=request.default_callback_url,
+            default_callback_auth=request.default_callback_auth,
+            public_inference=request.public_inference,
         )
         _handle_post_inference_hooks(
             created_by=user.user_id,

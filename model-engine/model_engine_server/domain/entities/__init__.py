@@ -14,8 +14,6 @@ from .gpu_type import GpuType
 from .llm_entity import LLMInferenceFramework, LLMMetadata, LLMSource, Quantization
 from .llm_fine_tune_entity import LLMFineTuneEvent
 from .model_bundle_entity import (
-    WORKER_COMMAND_METADATA_KEY,
-    WORKER_ENV_METADATA_KEY,
     ArtifactLike,
     CloudpickleArtifactFlavor,
     CustomFramework,
@@ -99,6 +97,4 @@ __all__: Sequence[str] = [
     "Trigger",
     "TritonEnhancedRunnableImageFlavor",
     "ZipArtifactFlavor",
-    "WORKER_COMMAND_METADATA_KEY",
-    "WORKER_ENV_METADATA_KEY",
 ]

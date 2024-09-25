@@ -16,8 +16,6 @@ from model_engine_server.common.resource_limits import (
 from model_engine_server.common.serialization_utils import python_json_to_b64
 from model_engine_server.core.config import infra_config
 from model_engine_server.domain.entities import (
-    WORKER_COMMAND_METADATA_KEY,
-    WORKER_ENV_METADATA_KEY,
     ModelEndpointConfig,
     RunnableImageLike,
     StreamingEnhancedRunnableImageFlavor,
@@ -565,17 +563,14 @@ def get_endpoint_resource_arguments_from_request(
 
     # LeaderWorkerSet exclusive
     worker_env = None
-    if WORKER_ENV_METADATA_KEY in model_bundle.metadata:
-        worker_env = [
-            {"name": key, "value": value}
-            for key, value in model_bundle.metadata[WORKER_ENV_METADATA_KEY].items()
-        ]
+    if isinstance(flavor, RunnableImageLike) and flavor.worker_env is not None:
+        worker_env = [{"name": key, "value": value} for key, value in flavor.worker_env.items()]
         worker_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
         worker_env.append({"name": "AWS_CONFIG_FILE", "value": "/opt/.aws/config"})
 
     worker_command = None
-    if WORKER_COMMAND_METADATA_KEY in model_bundle.metadata:
-        worker_command = model_bundle.metadata[WORKER_COMMAND_METADATA_KEY]
+    if isinstance(flavor, RunnableImageLike) and flavor.worker_command is not None:
+        worker_command = flavor.worker_command
     # TODO maybe validate worker command/env here? idk
 
     infra_service_config_volume_mount_path = "/infra-config"
