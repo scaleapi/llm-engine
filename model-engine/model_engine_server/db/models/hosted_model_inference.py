@@ -147,6 +147,8 @@ class Bundle(Base):
     runnable_image_protocol = Column(Text, nullable=True)
     runnable_image_readiness_initial_delay_seconds = Column(Integer, nullable=True)
     runnable_image_extra_routes = Column(ARRAY(Text), nullable=True)
+    runnable_image_worker_command = Column(ARRAY(Text), nullable=True)
+    runnable_image_worker_env = Column(JSON, nullable=True)
 
     # Streaming Enhanced Runnable Image fields
     streaming_enhanced_runnable_image_streaming_command = Column(ARRAY(Text), nullable=True)

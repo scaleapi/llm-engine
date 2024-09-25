@@ -7,6 +7,7 @@ Create Date: 2024-09-24 14:56:36.287001
 """
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects.postgresql import ARRAY
 
 # revision identifiers, used by Alembic.
 revision = "f55525c81eb5"
@@ -16,10 +17,26 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # TODO
-    pass
+    op.add_column(
+        "bundles",
+        sa.Column("runnable_image_worker_command", ARRAY(sa.Text), nullable=True),
+        schema="hosted_model_inference",
+    )
+    op.add_column(
+        "bundles",
+        sa.Column("runnable_image_worker_args", sa.JSON, nullable=True),
+        schema="hosted_model_inference",
+    )
 
 
 def downgrade() -> None:
-    # TODO
-    pass
+    op.drop_column(
+        "bundles",
+        "runnable_image_worker_command",
+        schema="hosted_model_inference",
+    )
+    op.drop_column(
+        "bundles",
+        "runnable_image_worker_args",
+        schema="hosted_model_inference",
+    )
