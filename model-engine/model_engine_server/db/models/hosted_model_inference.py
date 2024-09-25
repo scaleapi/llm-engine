@@ -209,6 +209,8 @@ class Bundle(Base):
         runnable_image_protocol: Optional[str] = None,
         runnable_image_readiness_initial_delay_seconds: Optional[int] = None,
         runnable_image_extra_routes: Optional[List[str]] = None,
+        runnable_image_worker_command: Optional[List[str]] = None,
+        runnable_image_worker_env: Optional[Dict[str, Any]] = None,
         # Streaming Enhanced Runnable Image fields
         streaming_enhanced_runnable_image_streaming_command: Optional[List[str]] = None,
         streaming_enhanced_runnable_image_streaming_predict_route: Optional[str] = None,
@@ -265,6 +267,8 @@ class Bundle(Base):
         self.runnable_image_env = runnable_image_env
         self.runnable_image_protocol = runnable_image_protocol
         self.runnable_image_extra_routes = runnable_image_extra_routes
+        self.runnable_image_worker_command = runnable_image_worker_command
+        self.runnable_image_worker_env = runnable_image_worker_env
         self.runnable_image_readiness_initial_delay_seconds = (
             runnable_image_readiness_initial_delay_seconds
         )
