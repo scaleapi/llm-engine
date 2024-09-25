@@ -24,7 +24,7 @@ def upgrade() -> None:
     )
     op.add_column(
         "bundles",
-        sa.Column("runnable_image_worker_args", sa.JSON, nullable=True),
+        sa.Column("runnable_image_worker_env", sa.JSON, nullable=True),
         schema="hosted_model_inference",
     )
 
@@ -37,6 +37,6 @@ def downgrade() -> None:
     )
     op.drop_column(
         "bundles",
-        "runnable_image_worker_args",
+        "runnable_image_worker_env",
         schema="hosted_model_inference",
     )
