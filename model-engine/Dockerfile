@@ -30,11 +30,11 @@ RUN curl -LO "https://dl.k8s.io/release/v1.23.13/bin/linux/amd64/kubectl" \
   && mv kubectl /usr/local/bin/kubectl
 
 # Pin pip version
-RUN pip install pip==23.0.1
+RUN pip install pip==24.2
 RUN chmod -R 777 /workspace
 
 # Install AWS CLI
-RUN pip install awscli==1.25.62 --no-cache-dir
+RUN pip install awscli==1.34.28 --no-cache-dir
 
 ## grab model_engine_server project (w/ requirements install layer caching)
 WORKDIR /workspace/model-engine/
