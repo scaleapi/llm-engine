@@ -699,9 +699,9 @@ def create_llm_model_endpoint(
     if inference_framework:
         create_model_endpoint_request["inference_framework"] = inference_framework
     if inference_framework_image_tag:
-        create_model_endpoint_request[
-            "inference_framework_image_tag"
-        ] = inference_framework_image_tag
+        create_model_endpoint_request["inference_framework_image_tag"] = (
+            inference_framework_image_tag
+        )
     response = requests.post(
         f"{BASE_PATH}/v1/llm/model-endpoints",
         json=create_model_endpoint_request,

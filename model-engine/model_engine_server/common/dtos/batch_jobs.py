@@ -1,6 +1,7 @@
 """
 DTOs for the batch job abstraction.
 """
+
 from datetime import datetime, timedelta
 from typing import Any, Collection, Dict, List, Optional
 

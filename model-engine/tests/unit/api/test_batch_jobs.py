@@ -293,9 +293,9 @@ def test_create_docker_image_batch_job_unauthorized(
         }
     )
     del create_docker_image_batch_job_request["docker_image_batch_job_bundle_name"]
-    create_docker_image_batch_job_request[
-        "docker_image_batch_job_bundle_id"
-    ] = docker_image_batch_job_bundle_1_v1[0].id
+    create_docker_image_batch_job_request["docker_image_batch_job_bundle_id"] = (
+        docker_image_batch_job_bundle_1_v1[0].id
+    )
     response = client.post(
         "/v1/docker-image-batch-jobs",
         auth=(test_api_key_2, ""),
@@ -335,9 +335,9 @@ def test_create_docker_image_batch_job_bundle_id_and_name(
             docker_image_batch_job_bundle_1_v1[0].id: docker_image_batch_job_bundle_1_v1[0]
         }
     )
-    create_docker_image_batch_job_request[
-        "docker_image_batch_job_bundle_id"
-    ] = docker_image_batch_job_bundle_1_v1[0].id
+    create_docker_image_batch_job_request["docker_image_batch_job_bundle_id"] = (
+        docker_image_batch_job_bundle_1_v1[0].id
+    )
     response = client.post(
         "/v1/docker-image-batch-jobs",
         auth=(test_api_key, ""),

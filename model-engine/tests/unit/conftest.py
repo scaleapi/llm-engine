@@ -2010,7 +2010,7 @@ def fake_docker_repository_image_never_exists() -> FakeDockerRepository:
 
 
 @pytest.fixture
-def fake_docker_repository_image_never_exists_and_builds_dont_work() -> (FakeDockerRepository):
+def fake_docker_repository_image_never_exists_and_builds_dont_work() -> FakeDockerRepository:
     repo = FakeDockerRepository(image_always_exists=False, raises_error=True)
     return repo
 
@@ -2040,7 +2040,7 @@ def fake_model_endpoint_record_repository() -> FakeModelEndpointRecordRepository
 
 
 @pytest.fixture
-def fake_docker_image_batch_job_bundle_repository() -> (FakeDockerImageBatchJobBundleRepository):
+def fake_docker_image_batch_job_bundle_repository() -> FakeDockerImageBatchJobBundleRepository:
     repo = FakeDockerImageBatchJobBundleRepository()
     return repo
 
@@ -2123,27 +2123,25 @@ def fake_model_primitive_gateway() -> FakeModelPrimitiveGateway:
 
 
 @pytest.fixture
-def fake_async_model_endpoint_inference_gateway() -> (FakeAsyncModelEndpointInferenceGateway):
+def fake_async_model_endpoint_inference_gateway() -> FakeAsyncModelEndpointInferenceGateway:
     gateway = FakeAsyncModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_streaming_model_endpoint_inference_gateway() -> (
-    FakeStreamingModelEndpointInferenceGateway
-):
+def fake_streaming_model_endpoint_inference_gateway() -> FakeStreamingModelEndpointInferenceGateway:
     gateway = FakeStreamingModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_sync_model_endpoint_inference_gateway() -> (FakeSyncModelEndpointInferenceGateway):
+def fake_sync_model_endpoint_inference_gateway() -> FakeSyncModelEndpointInferenceGateway:
     gateway = FakeSyncModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_inference_autoscaling_metrics_gateway() -> (FakeInferenceAutoscalingMetricsGateway):
+def fake_inference_autoscaling_metrics_gateway() -> FakeInferenceAutoscalingMetricsGateway:
     gateway = FakeInferenceAutoscalingMetricsGateway()
     return gateway
 
@@ -3587,7 +3585,7 @@ def endpoint_predict_request_2() -> Tuple[EndpointPredictV1Request, Dict[str, An
 
 
 @pytest.fixture
-def sync_endpoint_predict_request_1() -> (Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]):
+def sync_endpoint_predict_request_1() -> Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]:
     request = SyncEndpointPredictV1Request(
         url="test_url",
         return_pickled=False,

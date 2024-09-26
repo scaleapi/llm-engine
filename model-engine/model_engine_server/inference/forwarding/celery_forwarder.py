@@ -70,9 +70,11 @@ def create_celery_service(
         aws_role=infra_config().profile_ml_inference_worker,
         task_visibility=task_visibility,
         broker_type=broker_type,
-        broker_transport_options={"predefined_queues": {queue_name: {"url": sqs_url}}}
-        if broker_type == str(BrokerType.SQS.value)
-        else None,
+        broker_transport_options=(
+            {"predefined_queues": {queue_name: {"url": sqs_url}}}
+            if broker_type == str(BrokerType.SQS.value)
+            else None
+        ),
         backend_protocol=backend_protocol,
     )
 

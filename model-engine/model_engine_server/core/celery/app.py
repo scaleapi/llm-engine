@@ -27,9 +27,9 @@ logger = make_logger(logger_name())
 # override the backend with a class instead of a URL, despite the fact
 # that the `backend` constructor arg type is a Union[str, Type[celery.backends.base.Backend]]
 backends.BACKEND_ALIASES["s3"] = "model_engine_server.core.celery.s3:S3Backend"
-backends.BACKEND_ALIASES[
-    "azureblockblob"
-] = "model_engine_server.core.celery.abs:AzureBlockBlobBackend"
+backends.BACKEND_ALIASES["azureblockblob"] = (
+    "model_engine_server.core.celery.abs:AzureBlockBlobBackend"
+)
 
 
 DEFAULT_TASK_VISIBILITY_SECONDS = 86400

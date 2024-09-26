@@ -1,4 +1,5 @@
 """URL-based utility functions."""
+
 import re
 from typing import NamedTuple, Optional
 

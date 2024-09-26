@@ -3,6 +3,7 @@ Starts the Gateway Service.
 
 You can do this with `start-fastapi-server`.
 """
+
 import argparse
 import subprocess
 from typing import List

@@ -73,9 +73,9 @@ class HostedModelInferenceServiceConfig:
     # Exactly one of the following three must be specified
     cache_redis_aws_url: Optional[str] = None  # also using this to store sync autoscaling metrics
     cache_redis_azure_host: Optional[str] = None
-    cache_redis_aws_secret_name: Optional[
-        str
-    ] = None  # Not an env var because the redis cache info is already here
+    cache_redis_aws_secret_name: Optional[str] = (
+        None  # Not an env var because the redis cache info is already here
+    )
 
     @classmethod
     def from_json(cls, json):
