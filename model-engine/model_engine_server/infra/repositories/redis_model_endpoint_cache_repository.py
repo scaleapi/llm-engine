@@ -35,9 +35,10 @@ class RedisModelEndpointCacheRepository(ModelEndpointCacheRepository):
 
     @staticmethod
     def _find_redis_key(key: str):
-        if SERVICE_IDENTIFIER is None:
+        if SERVICE_IDENTIFIER:
+            return f"launch-k8s-cache:{SERVICE_IDENTIFIER}:{key}"
+        else:
             return f"launch-k8s-cache:{key}"
-        return f"launch-k8s-cache:{SERVICE_IDENTIFIER}:{key}"
 
     async def write_endpoint_info(
         self,
