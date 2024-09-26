@@ -256,7 +256,7 @@ commands:
       - run:
           name: Ruff Lint Check
           command: |
-            ruff .
+            ruff check .
       - run:
           name: Type Check
           command: |
