@@ -103,6 +103,10 @@ jobs:
           role-arn: ${CIRCLECI_ROLE_ARN}
           aws-region: AWS_REGION
       - run:
+          name: Debug pyenv
+          command: |
+            pyenv install --list
+      - run:
           name: Build Docker Image
           command: |
             docker build . -f model-engine/Dockerfile -t model-engine:$CIRCLE_SHA1
