@@ -37,7 +37,7 @@ class ModelEndpointRecordRepository(ABC):
         """
 
     @abstractmethod
-    async def create_model_endpoint_record(  # TODO probably don't need multinode
+    async def create_model_endpoint_record(
         self,
         *,
         name: str,

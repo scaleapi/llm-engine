@@ -132,7 +132,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         self.feature_flag_repo = feature_flag_repo
 
     async def build_endpoint(
-        self, build_endpoint_request: BuildEndpointRequest  # TODO multinode?
+        self, build_endpoint_request: BuildEndpointRequest
     ) -> BuildEndpointResponse:
         time_build_endpoint_start = time.time()
         self.monitoring_metrics_gateway.emit_attempted_build_metric()

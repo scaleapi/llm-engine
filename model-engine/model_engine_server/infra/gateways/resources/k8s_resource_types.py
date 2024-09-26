@@ -491,9 +491,6 @@ def container_start_triton_cmd(
     return triton_start_command
 
 
-# TODO add lws to the following
-
-
 def get_endpoint_resource_arguments_from_request(
     k8s_resource_group_name: str,
     request: CreateOrUpdateResourcesRequest,
@@ -571,7 +568,6 @@ def get_endpoint_resource_arguments_from_request(
     worker_command = None
     if isinstance(flavor, RunnableImageLike) and flavor.worker_command is not None:
         worker_command = flavor.worker_command
-    # TODO maybe validate worker command/env here? idk
 
     infra_service_config_volume_mount_path = "/infra-config"
     forwarder_config_file_name = "service--forwarder.yaml"
@@ -1118,7 +1114,6 @@ def get_endpoint_resource_arguments_from_request(
             TRITON_COMMAND=triton_command,
             TRITON_COMMIT_TAG=flavor.triton_commit_tag,
         )
-    # TODO elif lws streaming gpu
     elif endpoint_resource_name == "leader-worker-set-streaming-gpu":
         assert isinstance(flavor, StreamingEnhancedRunnableImageFlavor)
         assert build_endpoint_request.gpu_type is not None
