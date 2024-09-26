@@ -103,10 +103,6 @@ jobs:
           role-arn: ${CIRCLECI_ROLE_ARN}
           aws-region: AWS_REGION
       - run:
-          name: Debug pyenv
-          command: |
-            pyenv install --list
-      - run:
           name: Build Docker Image
           command: |
             docker build . -f model-engine/Dockerfile -t model-engine:$CIRCLE_SHA1
@@ -172,10 +168,10 @@ jobs:
             cat model-engine/values_circleci.yaml | envsubst > model-engine/values_circleci_subst.yaml
             helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
       - run:
-          name: Change python version to 3.10.15
+          name: Change python version to 3.10.14
           command: |
-            pyenv install 3.10.15
-            pyenv global 3.10.15
+            pyenv install 3.10.14
+            pyenv global 3.10.14
       - run:
           name: Install integration test dependencies
           command: |
