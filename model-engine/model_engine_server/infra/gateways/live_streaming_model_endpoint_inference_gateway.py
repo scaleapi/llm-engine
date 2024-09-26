@@ -168,13 +168,13 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                         yield orjson.loads(item)
                     return
         except RetryError as e:
-            if type(e.last_attempt.exception()) == TooManyRequestsException:
+            if isinstance(e.last_attempt.exception(), TooManyRequestsException):
                 logger.warning("Hit max # of retries, returning 429 to client")
                 raise UpstreamServiceError(status_code=429, content=b"Too many concurrent requests")
-            elif type(e.last_attempt.exception()) == NoHealthyUpstreamException:
+            elif isinstance(e.last_attempt.exception(), NoHealthyUpstreamException):
                 logger.warning("Pods didn't spin up in time, returning 503 to client")
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
-            elif type(e.last_attempt.exception()) == aiohttp.ClientConnectorError:
+            elif isinstance(e.last_attempt.exception(), aiohttp.ClientConnectorError):
                 logger.warning("ClientConnectorError, returning 503 to client")
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
             else:
