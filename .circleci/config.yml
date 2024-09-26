@@ -20,7 +20,7 @@ workflows:
 jobs:
   run_unit_tests_python_client:
     docker:
-      - image: python:3.8-bookworm
+      - image: python:3.10-bookworm
     resource_class: small
     parallelism: 1
     steps:
@@ -34,7 +34,7 @@ jobs:
       - run_unit_tests_python_client
   run_unit_tests_server:
     docker:
-      - image: python:3.8-bookworm
+      - image: python:3.10-bookworm
         environment:
           ML_INFRA_DATABASE_URL: postgresql://postgres@localhost/circle_test
       - image: circleci/postgres:12.9-postgis-ram
@@ -54,7 +54,7 @@ jobs:
       - run_unit_tests_server
   build_docs:
     docker:
-      - image: python:3.8-bookworm
+      - image: python:3.10-bookworm
     resource_class: small
     parallelism: 1
     steps:
@@ -70,7 +70,7 @@ jobs:
             mkdocs build --strict
   deploy_docs:
     docker:
-      - image: python:3.8-bookworm
+      - image: python:3.10-bookworm
     resource_class: small
     parallelism: 1
     steps:
@@ -147,7 +147,7 @@ jobs:
           name: Pre-load integration test images to minikube
           command: |
             docker build -f model-engine/model_engine_server/inference/pytorch_or_tf.base.Dockerfile \
-            --build-arg BASE_IMAGE=python:3.8-slim \
+            --build-arg BASE_IMAGE=python:3.10-slim \
             --build-arg REQUIREMENTS_FILE="$CIRCLE_SHA1-base-requirements.txt" \
             -t temp:1.7.1-cuda11.0-cudnn8-runtime-$CIRCLE_SHA1 .
 
@@ -168,10 +168,10 @@ jobs:
             cat model-engine/values_circleci.yaml | envsubst > model-engine/values_circleci_subst.yaml
             helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
       - run:
-          name: Change python version to 3.8.12
+          name: Change python version to 3.10.15
           command: |
-            pyenv install 3.8.12
-            pyenv global 3.8.12
+            pyenv install 3.10.15
+            pyenv global 3.10.15
       - run:
           name: Install integration test dependencies
           command: |
