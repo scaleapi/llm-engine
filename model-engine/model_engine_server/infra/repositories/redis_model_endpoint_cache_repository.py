@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Optional
 
 import aioredis
@@ -6,6 +7,8 @@ from model_engine_server.domain.entities import ModelEndpointInfraState
 from model_engine_server.infra.repositories.model_endpoint_cache_repository import (
     ModelEndpointCacheRepository,
 )
+
+SERVICE_IDENTIFIER = os.getenv("SERVICE_IDENTIFIER")
 
 
 class RedisModelEndpointCacheRepository(ModelEndpointCacheRepository):
@@ -32,7 +35,10 @@ class RedisModelEndpointCacheRepository(ModelEndpointCacheRepository):
 
     @staticmethod
     def _find_redis_key(key: str):
-        return f"launch-k8s-cache:{key}"
+        if SERVICE_IDENTIFIER:
+            return f"launch-k8s-cache:{SERVICE_IDENTIFIER}:{key}"
+        else:
+            return f"launch-k8s-cache:{key}"
 
     async def write_endpoint_info(
         self,
