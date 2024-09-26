@@ -94,7 +94,7 @@ cachetools==5.3.1
     # via google-auth
 cattrs==23.1.2
     # via ddtrace
-celery[redis,sqs,tblib]==5.3.6
+celery[redis,sqs,tblib]==5.4.0
     # via
     #   -r model-engine/requirements.in
     #   celery
