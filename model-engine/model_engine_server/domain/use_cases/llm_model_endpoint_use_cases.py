@@ -499,7 +499,6 @@ class CreateLLMModelBundleV1UseCase:
         chat_template_override: Optional[str],
         multinode: bool,
     ) -> ModelBundle:
-        # TODO handle multinode here
         if source == LLMSource.HUGGING_FACE:
             self.check_docker_image_exists_for_image_tag(
                 framework_image_tag, INFERENCE_FRAMEWORK_REPOSITORY[framework]
@@ -987,7 +986,7 @@ class CreateLLMModelBundleV1UseCase:
             is_leader=False,
         )
 
-        # These env vars e.g. leader name, lws name, namespaceshould be filled in by Launch automatically
+        # These env vars e.g. leader name, lws name, namespace should be filled in by Launch automatically
         common_vllm_envs = {
             "VLLM_HOST_IP": "$(K8S_LWS_LEADER_NAME).$(K8S_LWS_NAME).$(K8S_OWN_NAMESPACE).svc.cluster.local",
             "NCCL_SOCKET_IFNAME": "eth0",
@@ -1187,7 +1186,7 @@ class CreateLLMModelEndpointV1UseCase:
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
-        await _fill_hardware_info(self.llm_artifact_gateway, request)  # TODO multinode
+        await _fill_hardware_info(self.llm_artifact_gateway, request)
         if not (
             request.gpus
             and request.gpu_type
@@ -1241,7 +1240,6 @@ class CreateLLMModelEndpointV1UseCase:
                 "Multinode endpoints are only supported for VLLM models."
             )
 
-        # TODO make the bundle for multinode
         bundle = await self.create_llm_model_bundle_use_case.execute(
             user,
             endpoint_name=request.name,
@@ -1255,7 +1253,6 @@ class CreateLLMModelEndpointV1UseCase:
             checkpoint_path=request.checkpoint_path,
             chat_template_override=request.chat_template_override,
             multinode=(request.nodes_per_worker > 1),
-            # TODO multinode option here
         )
         validate_resource_requests(
             bundle=bundle,
@@ -1435,7 +1432,6 @@ class UpdateLLMModelEndpointV1UseCase:
         model_endpoint_name: str,
         request: UpdateLLMModelEndpointV1Request,
     ) -> UpdateLLMModelEndpointV1Response:
-        # TODO do we want to check if LWS here?
         if request.labels is not None:
             validate_labels(request.labels)
         validate_billing_tags(request.billing_tags)
@@ -3005,12 +3001,6 @@ def infer_addition_engine_args_from_model_name(
     model_name: str,
 ) -> VLLMEngineAdditionalArgs:
     # Increase max gpu utilization for larger models
-    # TODO do I need to remove you here
-    # numbers = re.findall(r"\d+", model_name)
-    # if len(numbers) == 0:
-    #     raise ObjectHasInvalidValueException(
-    #         f"Model {model_name} is not supported for batch completions."
-    #     )
     model_param_count_b = get_model_param_count_b(model_name)
     if model_param_count_b >= 70:
         gpu_memory_utilization = 0.95

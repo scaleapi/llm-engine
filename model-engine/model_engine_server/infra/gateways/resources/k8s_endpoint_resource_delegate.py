@@ -1970,7 +1970,7 @@ class K8SEndpointResourceDelegate:
                 raise
 
         try:
-            # TODO
+            # TODO test?
             leader_worker_sets = (
                 await custom_objects_client.list_namespaced_custom_object(
                     group="leaderworkerset.x-k8s.io",
@@ -1990,7 +1990,6 @@ class K8SEndpointResourceDelegate:
         vpas_by_name = {vpa["metadata"]["name"]: vpa for vpa in vpas}
         keda_scaled_objects_by_name = {kso["metadata"]["name"]: kso for kso in keda_scaled_objects}
         leader_worker_sets_by_name = {lws["metadata"]["name"]: lws for lws in leader_worker_sets}
-        # import pdb; pdb.set_trace()
         all_config_maps = await self._get_all_config_maps()
         # can safely assume hpa with same name as deployment corresponds to the same Launch Endpoint
         logger.info(f"Orphaned hpas: {set(hpas_by_name).difference(set(deployments_by_name))}")
@@ -2080,7 +2079,9 @@ class K8SEndpointResourceDelegate:
             is_key_an_endpoint_id = True
             endpoint_id = key
             deployment_name = name
-            endpoint_type = ModelEndpointType.STREAMING  # TODO
+            endpoint_type = (
+                ModelEndpointType.STREAMING
+            )  # TODO change if we ever support other endpoint types
             infra_states[key] = (
                 is_key_an_endpoint_id,
                 await self._get_resources_from_lws_type(
