@@ -1714,13 +1714,15 @@ class K8SEndpointResourceDelegate:
             per_worker=1,  # TODO dummy value, fill in when we autoscale from 0 to 1
         )
 
-    async def _get_resources(  # TODO multinode
+    async def _get_resources(
         self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
     ) -> ModelEndpointInfraState:
         custom_objects_client = get_kubernetes_custom_objects_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
 
-        print(f"trying to find lws at {k8s_resource_group_name}, {hmi_config.endpoint_namespace}")
+        logger.info(
+            f"trying to find lws at {k8s_resource_group_name}, {hmi_config.endpoint_namespace}"
+        )
         try:
             lws_config = await custom_objects_client.get_namespaced_custom_object(
                 group="leaderworkerset.x-k8s.io",
@@ -1731,7 +1733,7 @@ class K8SEndpointResourceDelegate:
             )
         except ApiException as e:
             # Need to handle the case where lws CRD isn't installed as well as the lws not existing.
-            print(e)
+            logger.info(e)
             lws_config = None
 
         # Make the call here so we can use it in both places, also this makes _get_resources_from_lws_type make zero requests to k8s
@@ -1827,9 +1829,9 @@ class K8SEndpointResourceDelegate:
             deployment_config.spec.template.spec.priority_class_name == LAUNCH_HIGH_PRIORITY_CLASS
         )
 
-        # config_maps = await self._get_config_maps(
-        #     endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
-        # )
+        config_maps = await self._get_config_maps(
+            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
+        )
 
         infra_state = ModelEndpointInfraState(
             deployment_name=k8s_resource_group_name,
@@ -1874,11 +1876,9 @@ class K8SEndpointResourceDelegate:
     ) -> ModelEndpointInfraState:
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
 
-        # config_maps = await self._get_config_maps(
-        #     endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
-        # )
-
-        # import pdb; pdb.set_trace()
+        config_maps = await self._get_config_maps(
+            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
+        )
 
         # Assume leader + worker share the same user-set env vars
         common_params = self._get_common_endpoint_params_for_lws_type(lws_config)
