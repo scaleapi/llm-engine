@@ -437,12 +437,12 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         if isinstance(model_bundle.flavor, ZipArtifactFlavor):
             if new_flavor.env is None:
                 new_flavor.env = {}
-            new_flavor.env[
-                "LOAD_PREDICT_FN_MODULE_PATH"
-            ] = model_bundle.flavor.load_predict_fn_module_path
-            new_flavor.env[
-                "LOAD_MODEL_FN_MODULE_PATH"
-            ] = model_bundle.flavor.load_model_fn_module_path
+            new_flavor.env["LOAD_PREDICT_FN_MODULE_PATH"] = (
+                model_bundle.flavor.load_predict_fn_module_path
+            )
+            new_flavor.env["LOAD_MODEL_FN_MODULE_PATH"] = (
+                model_bundle.flavor.load_model_fn_module_path
+            )
 
         new_model_bundle.flavor = new_flavor
         new_model_bundle.model_artifact_ids = []

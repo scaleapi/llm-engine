@@ -1,6 +1,7 @@
 """
 Contains various input and output types relating to Model Bundles for the server.
 """
+
 import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional

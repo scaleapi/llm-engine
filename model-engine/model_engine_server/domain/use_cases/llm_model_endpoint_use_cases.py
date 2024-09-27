@@ -1715,7 +1715,7 @@ class CompletionSyncV1UseCase:
                 # Also the log probs don't look right, so returning log-probs is still broken
                 num_completion_tokens = (
                     len(model_output["output_log_probs"])
-                    if type(model_output["output_log_probs"]) == list
+                    if type(model_output["output_log_probs"]) is list
                     else 1
                 )
                 # Output is just "output". See `exclude_input_in_output` inside of

@@ -2,23 +2,23 @@ fail_fast: false
 repos:
   - repo: https://github.com/psf/black
     # Make sure to update requirements-dev-extra.txt to match versions!
-    rev: 22.12.0
+    rev: 24.8.0
     hooks:
       - id: black
         name: "python:black"
         entry: black --config .black.toml
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.278
+    rev: v0.6.8
     hooks:
       - id: ruff
         name: "python:ruff"
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
         name: "python:isort"
   - repo: https://github.com/jazzband/pip-tools
-    rev: 7.0.0
+    rev: 7.4.1
     hooks:
       - id: pip-compile
         files: model-engine/requirements\.(in|txt)
@@ -31,7 +31,7 @@ repos:
             --index-url=https://pypi.org/simple,
           ]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0  # https://github.com/pre-commit/pre-commit-hooks/releases
+    rev: v4.6.0  # https://github.com/pre-commit/pre-commit-hooks/releases
     hooks:
       - id: check-added-large-files
         args:
@@ -51,7 +51,7 @@ repos:
       - id: check-toml
         language: python
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.3.0'  # Make sure this matches the version in requirements-dev.txt!
+    rev: 'v1.11.2'  # Make sure this matches the version in requirements-dev.txt!
     hooks:
       - id: mypy
         name: mypy-clients-python
@@ -59,7 +59,7 @@ repos:
         entry: mypy --config-file clients/python/mypy.ini
         language: system
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.3.0'  # Make sure this matches the version in requirements-dev.txt!
+    rev: 'v1.11.2'  # Make sure this matches the version in requirements-dev.txt!
     hooks:
       - id: mypy
         name: mypy-server
@@ -74,7 +74,7 @@ repos:
         language: system
         stages: ["commit", "push"]
   - repo: https://github.com/returntocorp/semgrep
-    rev: 'v1.36.0'
+    rev: 'v1.89.0'
     hooks:
       - id: semgrep
         args: [ '--config', 'p/python', '--error' ]

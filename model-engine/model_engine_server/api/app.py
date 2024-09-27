@@ -64,7 +64,7 @@ class CustomMiddleware(BaseHTTPMiddleware):
                 },
             )
         except Exception as e:
-            tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
+            tb_str = traceback.format_exception(e)
             request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
             timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
             structured_log = {

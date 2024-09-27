@@ -1,4 +1,5 @@
 """Utilities for formatting and printing messages, especially for CLI programs."""
+
 import traceback
 from logging import Logger
 from typing import Any, List, Optional, Sequence, Tuple, Union

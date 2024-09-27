@@ -9,7 +9,7 @@ from model_engine_server.common.types.gen.openai import (
     CreateChatCompletionStreamResponse,
 )
 from sse_starlette import EventSourceResponse
-from typing_extensions import Annotated
+from typing_extensions import Annotated, TypeAlias
 
 # Fields that are a part of OpenAI spec but are not supported by model engine
 UNSUPPORTED_FIELDS = ["service_tier"]
@@ -41,13 +41,15 @@ class ChatCompletionV2ErrorChunk(BaseModel):
     error: StreamError
 
 
-ChatCompletionV2Chunk = Union[ChatCompletionV2SuccessChunk, ChatCompletionV2ErrorChunk]
-ChatCompletionV2StreamResponse = (
+ChatCompletionV2Chunk: TypeAlias = Union[ChatCompletionV2SuccessChunk, ChatCompletionV2ErrorChunk]
+ChatCompletionV2StreamResponse: TypeAlias = (
     EventSourceResponse  # EventSourceResponse[ChatCompletionV2Chunk | ChatCompletionV2ErrorChunk]
 )
 
-ChatCompletionV2Response = Union[ChatCompletionV2SyncResponse, ChatCompletionV2StreamResponse]
+ChatCompletionV2Response: TypeAlias = Union[
+    ChatCompletionV2SyncResponse, ChatCompletionV2StreamResponse
+]
 
 # This is a version of ChatCompletionV2Response that is used by pydantic to determine the response model
 # Since EventSourceResponse isn't a pydanitc model, we need to use a Union of the two response types
-ChatCompletionV2ResponseItem = Union[ChatCompletionV2SyncResponse, ChatCompletionV2Chunk]
+ChatCompletionV2ResponseItem: TypeAlias = Union[ChatCompletionV2SyncResponse, ChatCompletionV2Chunk]

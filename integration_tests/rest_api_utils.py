@@ -57,7 +57,7 @@ CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
         "load_model_fn": inspect.getsource(echo_load_model_fn),
         "framework": {
             "framework_type": "pytorch",
-            "pytorch_image_tag": "1.7.1-cuda11.0-cudnn8-runtime",
+            "pytorch_image_tag": "1.11.0-cuda11.3-cudnn8-runtime",
         },
         "requirements": [
             "cloudpickle==2.1.0",
@@ -699,9 +699,9 @@ def create_llm_model_endpoint(
     if inference_framework:
         create_model_endpoint_request["inference_framework"] = inference_framework
     if inference_framework_image_tag:
-        create_model_endpoint_request[
-            "inference_framework_image_tag"
-        ] = inference_framework_image_tag
+        create_model_endpoint_request["inference_framework_image_tag"] = (
+            inference_framework_image_tag
+        )
     response = requests.post(
         f"{BASE_PATH}/v1/llm/model-endpoints",
         json=create_model_endpoint_request,

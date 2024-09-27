@@ -1,4 +1,5 @@
 """Utilities for timing code blocks."""
+
 import inspect
 import time
 from datetime import timedelta
