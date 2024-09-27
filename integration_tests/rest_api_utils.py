@@ -57,7 +57,7 @@ CREATE_MODEL_BUNDLE_REQUEST_SIMPLE = {
         "load_model_fn": inspect.getsource(echo_load_model_fn),
         "framework": {
             "framework_type": "pytorch",
-            "pytorch_image_tag": "1.7.1-cuda11.0-cudnn8-runtime",
+            "pytorch_image_tag": "1.11.0-cuda11.3-cudnn8-runtime",
         },
         "requirements": [
             "cloudpickle==2.1.0",
