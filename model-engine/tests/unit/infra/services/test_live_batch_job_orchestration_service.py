@@ -50,9 +50,9 @@ def live_batch_job_orchestration_service(
     assert model_endpoint_1.infra_state is not None
     assert model_endpoint_runnable.infra_state is not None
     gateway.db[model_endpoint_1.infra_state.deployment_name] = model_endpoint_1.infra_state
-    gateway.db[
-        model_endpoint_runnable.infra_state.deployment_name
-    ] = model_endpoint_runnable.infra_state
+    gateway.db[model_endpoint_runnable.infra_state.deployment_name] = (
+        model_endpoint_runnable.infra_state
+    )
     return LiveBatchJobOrchestrationService(
         model_endpoint_service=fake_live_model_endpoint_service,
         batch_job_record_repository=fake_batch_job_record_repository,

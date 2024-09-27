@@ -230,9 +230,9 @@ class ListFineTunesV1UseCase:
                 GetFineTuneResponse(
                     id=job.id,
                     status=job.status,
-                    fine_tuned_model=job.annotations.get("fine_tuned_model")
-                    if job.annotations
-                    else None,
+                    fine_tuned_model=(
+                        job.annotations.get("fine_tuned_model") if job.annotations else None
+                    ),
                 )
                 for job in di_batch_jobs
             ]

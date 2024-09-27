@@ -94,9 +94,11 @@ def get_live_endpoint_builder_service(
             monitoring_metrics_gateway=monitoring_metrics_gateway, session=session, read_only=False
         ),
         model_endpoint_cache_repository=RedisModelEndpointCacheRepository(redis_client=redis),
-        filesystem_gateway=ABSFilesystemGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3FilesystemGateway(),
+        filesystem_gateway=(
+            ABSFilesystemGateway()
+            if infra_config().cloud_provider == "azure"
+            else S3FilesystemGateway()
+        ),
         notification_gateway=notification_gateway,
         feature_flag_repo=RedisFeatureFlagRepository(redis_client=redis),
     )

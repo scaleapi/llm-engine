@@ -178,7 +178,7 @@ def validate_billing_tags(billing_tags: Optional[Dict[str, Any]]) -> None:
     if billing_tags is None:
         return
 
-    if type(billing_tags) != dict:
+    if type(billing_tags) is not dict:
         raise EndpointBillingTagsMalformedException("Billing tags must be a json dictionary")
 
     required_keys = {
@@ -195,7 +195,7 @@ def validate_billing_tags(billing_tags: Optional[Dict[str, Any]]) -> None:
     if len(missing_keys) > 0:
         raise EndpointBillingTagsMalformedException(f"Missing billing tag keys {missing_keys}")
     for k, v in billing_tags.items():
-        if type(k) != str or type(v) not in [str, dict]:
+        if type(k) is not str or type(v) not in [str, dict]:
             raise EndpointBillingTagsMalformedException(
                 "Billing tags must have string keys and string/dict values"
             )
