@@ -74,9 +74,6 @@ def create_model_bundle_v2_request() -> CreateModelBundleV2Request:
     )
 
 
-# TODO test with nodes_per_worker not specified
-
-
 @pytest.fixture
 def create_model_endpoint_request_sync(
     model_bundle_1: ModelBundle,
