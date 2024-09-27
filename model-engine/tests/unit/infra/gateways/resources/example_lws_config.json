@@ -520,7 +520,7 @@
               }
             ],
             "nodeSelector": {
-              "k8s.amazonaws.com/accelerator": "nvidia-blackwell-b9000",
+              "k8s.amazonaws.com/accelerator": "nvidia-hopper-h100",
               "node-lifecycle": "normal"
             },
             "priorityClassName": "model-engine-high-priority",
@@ -778,7 +778,7 @@
               }
             ],
             "nodeSelector": {
-              "k8s.amazonaws.com/accelerator": "nvidia-blackwell-b9000",
+              "k8s.amazonaws.com/accelerator": "nvidia-hopper-h100",
               "node-lifecycle": "normal"
             },
             "priorityClassName": "model-engine-high-priority",
