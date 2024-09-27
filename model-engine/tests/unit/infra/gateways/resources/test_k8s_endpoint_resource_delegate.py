@@ -728,32 +728,32 @@ async def test_get_resources_multinode_success(
     mock_policy_client,
     mock_custom_objects_client,
 ):
-    k8s_endpoint_resource_delegate.__setattr__(
-        "_get_common_endpoint_params_for_lws_type",
-        Mock(
-            return_value=dict(
-                aws_role="test_aws_role",
-                results_s3_bucket="test_bucket",
-                labels={},
-                cpus="1",
-                gpus=1,
-                gpu_type="nvidia-tesla-t4",
-                memory="8G",
-                storage="10G",
-                image="test_image",
-            )
-        ),
-    )
+    # k8s_endpoint_resource_delegate.__setattr__(
+    #     "_get_common_endpoint_params_for_lws_type",
+    #     Mock(
+    #         return_value=dict(
+    #             aws_role="test_aws_role",
+    #             results_s3_bucket="test_bucket",
+    #             labels={},
+    #             cpus="1",
+    #             gpus=1,
+    #             gpu_type="nvidia-tesla-t4",
+    #             memory="8G",
+    #             storage="10G",
+    #             image="test_image",
+    #         )
+    #     ),
+    # )
     # k8s_endpoint_resource_delegate.__setattr__(
     #     "_get_sync_autoscaling_params",
     #     Mock(return_value=dict(min_workers=1, max_workers=3, per_worker=2)),
     # )
-    k8s_endpoint_resource_delegate.__setattr__(
-        "_get_main_leader_container_from_lws", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
-    )
-    k8s_endpoint_resource_delegate.__setattr__(
-        "_get_launch_container_from_lws", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
-    )
+    # k8s_endpoint_resource_delegate.__setattr__(
+    #     "_get_main_leader_container_from_lws", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
+    # )
+    # k8s_endpoint_resource_delegate.__setattr__(
+    #     "_get_launch_container_from_lws", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
+    # )
     k8s_endpoint_resource_delegate.__setattr__(
         "_translate_k8s_config_maps_to_user_config_data",
         Mock(
