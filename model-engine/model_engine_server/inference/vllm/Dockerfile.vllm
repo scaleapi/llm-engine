@@ -20,7 +20,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 FROM base AS vllm
 
 COPY model-engine/model_engine_server/inference/vllm/vllm_server.py /workspace/vllm_server.py
-COPY init_ray.sh /workspace/init_ray.sh
+COPY model-engine/model_engine_server/inference/vllm/init_ray.sh /workspace/init_ray.sh
 
 # Need to override entrypoint from parent image
 ENTRYPOINT ["/bin/env"]
