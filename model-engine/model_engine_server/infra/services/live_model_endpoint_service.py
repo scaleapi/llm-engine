@@ -274,7 +274,6 @@ class LiveModelEndpointService(ModelEndpointService):
         memory: Optional[StorageSpecificationType] = None,
         gpu_type: Optional[GpuType] = None,
         storage: Optional[StorageSpecificationType] = None,
-        # TODO do we include update here? looks like we omit endpoint_type as well
         optimize_costs: Optional[bool] = None,
         min_workers: Optional[int] = None,
         max_workers: Optional[int] = None,

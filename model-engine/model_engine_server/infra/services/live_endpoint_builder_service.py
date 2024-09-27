@@ -769,7 +769,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
     @staticmethod
     def _validate_build_endpoint_request(
-        build_endpoint_request: BuildEndpointRequest,  # TODO maybe multinode val
+        build_endpoint_request: BuildEndpointRequest,
     ) -> None:
         """Raises ValueError if the request's AWS role isn't allowed."""
         allowed_aws_roles = {
@@ -794,6 +794,13 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 raise ValueError(
                     f"Runnable image endpoints cannot set the following env vars: {restriced_env_vars}"
                 )
+        if (
+            not isinstance(model_bundle.flavor, RunnableImageLike)
+            and build_endpoint_request.nodes_per_worker > 1
+        ):
+            raise ValueError(
+                "Multi-node deployment is only supported for RunnableImageLike model bundles."
+            )
 
     @staticmethod
     def _get_restricted_env_vars(env_vars: Dict[str, str]) -> Set[str]:
