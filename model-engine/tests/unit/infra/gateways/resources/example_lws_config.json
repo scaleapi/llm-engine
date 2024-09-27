@@ -295,7 +295,7 @@
                   },
                   {
                     "name": "AWS_PROFILE",
-                    "value": "ml-worker"
+                    "value": "aws-profile"
                   },
                   {
                     "name": "AWS_CONFIG_FILE",
@@ -392,7 +392,7 @@
                   },
                   {
                     "name": "AWS_PROFILE",
-                    "value": "ml-worker"
+                    "value": "aws-profile"
                   },
                   {
                     "name": "AWS_CONFIG_FILE",
@@ -524,7 +524,7 @@
               "node-lifecycle": "normal"
             },
             "priorityClassName": "model-engine-high-priority",
-            "serviceAccount": "ml-worker",
+            "serviceAccount": "aws-profile",
             "terminationGracePeriodSeconds": 600,
             "tolerations": [
               {
@@ -536,7 +536,7 @@
             "volumes": [
               {
                 "configMap": {
-                  "name": "ml-worker-config"
+                  "name": "aws-profile-config"
                 },
                 "name": "config-volume"
               },
@@ -659,7 +659,7 @@
                   },
                   {
                     "name": "AWS_PROFILE",
-                    "value": "ml-worker"
+                    "value": "aws-profile"
                   },
                   {
                     "name": "AWS_CONFIG_FILE",
@@ -782,7 +782,7 @@
               "node-lifecycle": "normal"
             },
             "priorityClassName": "model-engine-high-priority",
-            "serviceAccount": "ml-worker",
+            "serviceAccount": "aws-profile",
             "terminationGracePeriodSeconds": 600,
             "tolerations": [
               {
@@ -794,7 +794,7 @@
             "volumes": [
               {
                 "configMap": {
-                  "name": "ml-worker-config"
+                  "name": "aws-profile-config"
                 },
                 "name": "config-volume"
               },

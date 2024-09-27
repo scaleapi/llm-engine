@@ -419,8 +419,6 @@ class K8SEndpointResourceDelegate:
                 return envvar["value"]
         return None
 
-    # TODO analogous fns for the LWS config
-
     def _get_common_endpoint_params(self, deployment_config: V1Deployment) -> CommonEndpointParams:
         """
         Reads some values from k8s common to both sync and async endpoints
@@ -1495,7 +1493,7 @@ class K8SEndpointResourceDelegate:
                 RunnableImageLike,
             ):
                 user_container = get_main_container_from_deployment_template(deployment_template)
-                add_datadog_env_to_container(deployment_template, user_container)  # TODO refactor
+                add_datadog_env_to_container(deployment_template, user_container)
             await self._create_deployment(
                 model_endpoint_record=request.build_endpoint_request.model_endpoint_record,
                 deployment=deployment_template,
@@ -1904,9 +1902,9 @@ class K8SEndpointResourceDelegate:
             deployment_state=ModelEndpointDeploymentState(
                 min_workers=replicas,
                 max_workers=replicas,
-                per_worker=int(1),  # TODO?
-                available_workers=replicas,  # TODO verify?
-                unavailable_workers=0,  # TODO we may need to check more carefully
+                per_worker=int(1),  # TODO update this if we support LWS autoscaling
+                available_workers=replicas,  # TODO unfortunately it doesn't look like we can get this from the LWS CRD, so this is kind of a dummy value
+                unavailable_workers=0,
             ),
             resource_state=ModelEndpointResourceState(
                 cpus=common_params["cpus"],

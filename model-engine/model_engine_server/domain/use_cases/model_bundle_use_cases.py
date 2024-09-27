@@ -359,8 +359,6 @@ class CreateModelBundleV2UseCase:
     ) -> CreateModelBundleV2Response:
         """
         Runs the use case to create a Model Bundle.
-        Note (2024-09-05): to create a multinode Model Bundle there are various fields in metadata that must be stored.
-        This is because db migrations are quite hairy.
 
         Args:
             user: The user who is creating the Model Bundle.
