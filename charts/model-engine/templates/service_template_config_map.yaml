@@ -639,9 +639,11 @@ data:
                 requests:
                   cpu: 1
                   memory: 8Gi
+                  ephemeral-storage: 10Gi
                 limits:
                   cpu: 4
                   memory: 32Gi
+                  ephemeral-storage: 30Gi
               {{- if $require_aws_config }}
               volumeMounts:
                 - name: config-volume
