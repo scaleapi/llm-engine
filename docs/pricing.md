@@ -1,6 +1,6 @@
 # Pricing
 
-LLM Engine is an open-source project and free [self-hosting](../guides/self_hosting) will always be an option. As of October 31 2024, 
+LLM Engine is an open-source project and free [self-hosting](../guides/self_hosting) will always be an option. As of October 31st 2024, 
 the free demo service is sunsetted.
 
 ## Self-Hosted Models

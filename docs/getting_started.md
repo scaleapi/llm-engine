@@ -1,8 +1,8 @@
 # Getting Started
 
-Note: As of October 31st 2024, LLM Engine's public demo service is sunsetted. We have thus removed the documentation 
+**Note: As of October 31st 2024, LLM Engine's public demo service is sunsetted. We have thus removed the documentation 
 pieces relating to calling the demo service, procuring a Spellbook API key, etc. Please view our Self Hosting Guide instead. 
-We will however leave behind the Example Code snippets for posterity, and for reference for self-hosted and Scale internal users.
+We will however leave behind the Example Code snippets for posterity, and as a reference for self-hosted and Scale internal users.**
 
 To start, install LLM Engine via pip:
 
