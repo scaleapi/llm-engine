@@ -237,12 +237,12 @@ def get_leader_container_from_lws_template(lws_template: Dict[str, Any]):
         "containers"
     ]
     for container in containers:
-        if container["name"] == "lws_leader":
+        if container["name"] == "lws-leader":
             leader_container = container
             break
     else:
         raise ValueError(
-            "leader container (container['name'] == 'lws_leader') not found in lws template when adding datadog env to leader container."
+            "leader container (container['name'] == 'lws-leader') not found in lws template when adding datadog env to leader container."
         )
     return leader_container
 
@@ -252,12 +252,12 @@ def get_worker_container_from_lws_template(lws_template: Dict[str, Any]):
         "containers"
     ]
     for container in containers:
-        if container["name"] == "lws_worker":
+        if container["name"] == "lws-worker":
             worker_container = container
             break
     else:
         raise ValueError(
-            "worker container (container['name'] == 'lws_worker') not found in lws template when adding datadog env to worker container."
+            "worker container (container['name'] == 'lws-worker') not found in lws template when adding datadog env to worker container."
         )
     return worker_container
 
@@ -573,9 +573,9 @@ class K8SEndpointResourceDelegate:
             "containers"
         ]
         name_to_container = {container["name"]: container for container in leader_containers}
-        if "lws_leader" not in name_to_container:
+        if "lws-leader" not in name_to_container:
             raise ValueError("No main leader container detected")
-        return name_to_container["lws_leader"]
+        return name_to_container["lws-leader"]
 
     @staticmethod
     def _get_launch_container_from_lws(lws_config: Any):

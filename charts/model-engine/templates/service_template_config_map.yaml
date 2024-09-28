@@ -667,7 +667,7 @@ data:
                     ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
                 {{ $forwarder_volume_mounts | nindent 16 }}
               {{- end }}
-              - name: lws_leader
+              - name: lws-leader
                 image: ${IMAGE}
                 imagePullPolicy: IfNotPresent
                 command: ${COMMAND}
@@ -781,7 +781,7 @@ data:
             {{- end }}
             priorityClassName: ${PRIORITY}
             containers:
-              - name: lws_worker
+              - name: lws-worker
                 image: ${IMAGE}
                 imagePullPolicy: IfNotPresent
                 command: ${WORKER_COMMAND}

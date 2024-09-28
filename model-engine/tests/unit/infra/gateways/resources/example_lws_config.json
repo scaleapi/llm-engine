@@ -465,7 +465,7 @@
                 ],
                 "image": "000000000000.dkr.ecr.us-west-2.amazonaws.com/vllm:0.5.3.post1",
                 "imagePullPolicy": "IfNotPresent",
-                "name": "lws_leader",
+                "name": "lws-leader",
                 "ports": [
                   {
                     "containerPort": 5005,
@@ -732,7 +732,7 @@
                 ],
                 "image": "000000000000.dkr.ecr.us-west-2.amazonaws.com/vllm:0.5.3.post1",
                 "imagePullPolicy": "IfNotPresent",
-                "name": "lws_worker",
+                "name": "lws-worker",
                 "ports": [
                   {
                     "containerPort": 5005,

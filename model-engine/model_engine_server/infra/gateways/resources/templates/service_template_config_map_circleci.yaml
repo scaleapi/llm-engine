@@ -2782,7 +2782,7 @@ data:
                 ports:
                   - containerPort: ${FORWARDER_PORT}
                     name: http
-              - name: lws_leader
+              - name: lws-leader
                 image: ${IMAGE}
                 imagePullPolicy: IfNotPresent
                 command: ${COMMAND}
@@ -2895,7 +2895,7 @@ data:
                 effect: "NoSchedule"
             priorityClassName: ${PRIORITY}
             containers:
-              - name: lws_worker
+              - name: lws-worker
                 image: ${IMAGE}
                 imagePullPolicy: IfNotPresent
                 command: ${WORKER_COMMAND}
