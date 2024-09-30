@@ -314,7 +314,7 @@ def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
                     "fieldRef": {"fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/name']"}
                 },
             },
-            {
+            {  # TODO this might not work"
                 "name": "K8S_LWS_LEADER_NAME",
                 "valueFrom": {
                     "fieldRef": {

@@ -858,9 +858,9 @@ class CreateLLMModelBundleV1UseCase:
         vllm_cmd = ""
 
         if multinode and is_leader:
-            vllm_cmd += "/workspace/init_ray.sh leader --ray_cluster_size=$RAY_CLUSTER_SIZE --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local; "
+            vllm_cmd += "/workspace/init_ray.sh leader --ray_cluster_size=$RAY_CLUSTER_SIZE --own_address=$LWS_LEADER_ADDRESS.svc.cluster.local; "
         elif multinode and not is_leader:
-            vllm_cmd += "/workspace/init_ray.sh worker --ray_address=$K8S_LWS_LEADER_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
+            vllm_cmd += "/workspace/init_ray.sh worker --ray_address=$LWS_LEADER_ADDRESS.svc.cluster.local --own_address=$LWS_LEADER_ADDRESS.svc.cluster.local"
 
         if is_leader:
             vllm_cmd += f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
@@ -988,7 +988,7 @@ class CreateLLMModelBundleV1UseCase:
 
         # These env vars e.g. leader name, lws name, namespace should be filled in by Launch automatically
         common_vllm_envs = {
-            "VLLM_HOST_IP": "$(K8S_LWS_LEADER_NAME).$(K8S_LWS_NAME).$(K8S_OWN_NAMESPACE).svc.cluster.local",
+            "VLLM_HOST_IP": "$(LWS_LEADER_ADDRESS).svc.cluster.local",
             "NCCL_SOCKET_IFNAME": "eth0",
             "GLOO_SOCKET_IFNAME": "eth0",  # maybe don't need
             "NCCL_DEBUG": "INFO",  # TODO remove once fully tested
