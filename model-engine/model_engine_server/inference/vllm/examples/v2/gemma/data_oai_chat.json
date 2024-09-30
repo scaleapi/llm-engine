@@ -1,0 +1,7 @@
+[
+    {"messages": [
+        {"role": "user", "content": "What is a good place for travel in the US?"}, 
+        {"role": "assistant", "content": "California."}, 
+        {"role": "user", "content": "What can I do in California?"}], 
+    "logprobs": true}
+]

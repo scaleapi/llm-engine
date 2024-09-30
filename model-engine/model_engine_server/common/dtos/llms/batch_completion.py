@@ -11,6 +11,7 @@ from model_engine_server.common.dtos.llms.completion import (
     CompletionV2Request,
     CompletionV2Response,
 )
+from model_engine_server.common.dtos.llms.vllm import VLLMModelConfig
 from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Field
 from typing_extensions import TypeAlias
 
@@ -40,7 +41,7 @@ class ToolConfig(BaseModel):
     """
 
 
-class BatchCompletionsModelConfig(BaseModel):
+class BatchCompletionsModelConfig(VLLMModelConfig):
     model: str = Field(
         description="ID of the model to use.",
         examples=["mixtral-8x7b-instruct"],
@@ -62,7 +63,7 @@ System may decide to use a different number than the given value.
     max_context_length: Optional[int] = Field(
         default=None,
         ge=1,
-        description="Maximum context length to use for the model. Defaults to the max allowed by the model",
+        description="Maximum context length to use for the model. Defaults to the max allowed by the model. Deprecated in favor of max_model_len.",
     )
 
     seed: Optional[int] = Field(default=None, description="Random seed for the model.")

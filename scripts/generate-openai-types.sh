@@ -17,6 +17,11 @@ datamodel-codegen \
     --strict-nullable \
     --use-annotated
 
+# replace pydantic import w/ our custom module to replace the AnyUrl types
+#   Pydantic AnyUrl is super problematic for various reasons
+sed -i 's/^from pydantic import /from model_engine_server.common.pydantic_types import /' ${DEST_DIR}/openai.py
+
+
 CLIENT_DIR=${BASE_DIR}/clients/python/llmengine/data_types/gen
 
 # Generate OpenAPI types for client
