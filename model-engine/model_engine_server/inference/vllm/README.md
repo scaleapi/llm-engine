@@ -25,6 +25,7 @@ docker run \
     --shm-size=16gb \
     --gpus '"device=0"' \
     -v $MODEL_PATH:/workspace/model_files:ro \
+    -v ${REPO_PATH}/llm-engine/model-engine/model_engine_server/inference/vllm/vllm_server.py:/workspace/vllm_server.py \
     -p 5005:5005 \
     --name vllm \
     ${IMAGE} \
