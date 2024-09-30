@@ -28,7 +28,7 @@ fi
 ACCOUNT=$1
 IMAGE_TAG=$2
 BUILD_TARGET=$3
-VLLM_VERSION=${VLLM_VERSION:-"0.5.3.post1"}
+VLLM_VERSION=${VLLM_VERSION:-"0.6.2"}
 
 # if build target = vllm use vllm otherwise use vllm_batch
 if [ "$BUILD_TARGET" == "vllm" ]; then

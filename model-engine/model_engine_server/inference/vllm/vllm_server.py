@@ -3,6 +3,7 @@ import code
 import json
 import os
 import signal
+import socket
 import subprocess
 import traceback
 from logging import Logger
@@ -11,9 +12,9 @@ from typing import AsyncGenerator, Dict, List, Optional
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from vllm.engine.async_llm_engine import AsyncEngineDeadError
-from vllm.engine.protocol import AsyncEngineClient
+from vllm.engine.protocol import EngineClient
 from vllm.entrypoints.launcher import serve_http
-from vllm.entrypoints.openai.api_server import build_async_engine_client, init_app
+from vllm.entrypoints.openai.api_server import build_app, build_async_engine_client, init_app_state
 from vllm.entrypoints.openai.cli_args import make_arg_parser
 from vllm.entrypoints.openai.protocol import CompletionRequest as OpenAICompletionRequest
 from vllm.model_executor.guided_decoding import get_guided_decoding_logits_processor
@@ -25,7 +26,7 @@ from vllm.version import __version__ as VLLM_VERSION
 
 logger = Logger("vllm_server")
 
-async_engine_client: AsyncEngineClient
+engine_client: EngineClient
 
 TIMEOUT_KEEP_ALIVE = 5  # seconds.
 TIMEOUT_TO_PREVENT_DEADLOCK = 1  # seconds
@@ -45,7 +46,7 @@ async def generate(request: Request) -> Response:
     """
     # check health before accepting request and fail fast if engine isn't healthy
     try:
-        await async_engine_client.check_health()
+        await engine_client.check_health()
 
         request_dict = await request.json()
         prompt = request_dict.pop("prompt")
@@ -75,12 +76,12 @@ async def generate(request: Request) -> Response:
             )
 
         guided_decoding_backend = (
-            await async_engine_client.get_decoding_config()
+            await engine_client.get_decoding_config()
         ).guided_decoding_backend
         guided_decode_logit_processor = await get_guided_decoding_logits_processor(
             guided_decoding_backend,
             partial_openai_request,
-            await async_engine_client.get_tokenizer(lora_request=None),
+            await engine_client.get_tokenizer(lora_request=None),
         )
         if guided_decode_logit_processor is not None:
             if sampling_params.logits_processors is None:
@@ -89,10 +90,10 @@ async def generate(request: Request) -> Response:
 
         request_id = random_uuid()
 
-        results_generator = async_engine_client.generate(prompt, sampling_params, request_id)
+        results_generator = engine_client.generate(prompt, sampling_params, request_id)
 
         async def abort_request() -> None:
-            await async_engine_client.abort(request_id)
+            await engine_client.abort(request_id)
 
         if stream:
             # Streaming case
@@ -127,7 +128,7 @@ async def generate(request: Request) -> Response:
             last_output_text = request_output.outputs[-1].text
             if await request.is_disconnected():
                 # Abort the request if the client disconnects.
-                await async_engine_client.abort(request_id)
+                await engine_client.abort(request_id)
                 return Response(status_code=499)
             final_output = request_output
 
@@ -223,14 +224,27 @@ async def run_server(args, **uvicorn_kwargs) -> None:
     logger.info("vLLM API server version %s", VLLM_VERSION)
     logger.info("args: %s", args)
 
-    global async_engine_client
-    async with build_async_engine_client(args) as async_engine_client:
-        app = await init_app(async_engine_client, args)
+    temp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # nosemgrep
+    temp_socket.bind(("", args.port))
+
+    def signal_handler(*_) -> None:
+        # Interrupt server on sigterm while initializing
+        raise KeyboardInterrupt("terminated")
+
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    global engine_client
+    async with build_async_engine_client(args) as engine_client:
+        app = build_app(args)
+
+        model_config = await engine_client.get_model_config()
+        init_app_state(engine_client, model_config, app.state, args)
+
+        temp_socket.close()
         app.include_router(router)
 
         shutdown_task = await serve_http(
             app,
-            engine=async_engine_client,
             host=args.host,
             port=args.port,
             log_level=args.uvicorn_log_level,

@@ -1,0 +1,18 @@
+{
+    "input_data_path": "./examples/v2/llama-3.2-vision/data_oai_chat.json",
+    "output_data_path": "./examples/v2/llama-3.2-vision/output_oi_chat.json",
+    "model_config": {
+        "model": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+        "checkpoint_path": "my_path",
+        "num_shards": 1,
+        "max_model_len": 4096,
+        "max_num_seqs": 16,
+        "enforce_eager": true,
+        "response_role": "assistant",
+        "labels": {
+            "team": "my_team"
+        }
+    },
+    "attention_backend": "FLASHINFER",
+    "data_parallelism": 1
+}
