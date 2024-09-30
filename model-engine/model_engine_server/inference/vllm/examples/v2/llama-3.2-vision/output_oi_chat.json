@@ -1,0 +1,1 @@
+[{"object": "error", "message": "'pydantic_core._pydantic_core.Url' object has no attribute 'startswith'", "type": "BadRequestError", "param": null, "code": 400}]

@@ -1,12 +1,36 @@
 from typing import Any, Dict, List, Optional
 
-from model_engine_server.common.pydantic_types import Field
+from model_engine_server.common.pydantic_types import BaseModel, Field
 from typing_extensions import Annotated
 
 # This was last synced w/ vLLM v0.5.5 on 2024-09-03
 
 
-class VLLMSamplingParams:
+class VLLMModelConfig(BaseModel):
+    """Model configuration for VLLM"""
+
+    max_model_len: Optional[int] = Field(
+        None,
+        description="""Model context length, If unspecified, will be automatically derived from the model config""",
+    )
+
+    max_num_seqs: Optional[int] = Field(
+        None,
+        description="""Maximum number of sequences per iteration""",
+    )
+
+    enforce_eager: Optional[bool] = Field(
+        None,
+        description="""Always use eager-mode PyTorch. If False, will use eager mode and CUDA graph in hybrid for maximal perforamnce and flexibility""",
+    )
+
+    gpu_memory_utilization: Optional[float] = Field(
+        None,
+        description="Maximum GPU memory utilization for the batch inference. Default to 90%.",
+    )
+
+
+class VLLMSamplingParams(BaseModel):
     best_of: Optional[int] = Field(
         None,
         description="""Number of output sequences that are generated from the prompt.
