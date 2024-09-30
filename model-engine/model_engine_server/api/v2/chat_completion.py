@@ -11,10 +11,10 @@ from model_engine_server.api.dependencies import (
 )
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.llms import (
-    ChatCompletionV2ErrorChunk,
     ChatCompletionV2Request,
     ChatCompletionV2Response,
     ChatCompletionV2ResponseItem,
+    ChatCompletionV2StreamErrorChunk,
     StreamError,
     StreamErrorContent,
     TokenUsage,
@@ -65,7 +65,7 @@ def handle_streaming_exception(
     }
     logger.error("Exception: %s", structured_log)
     return {
-        "data": ChatCompletionV2ErrorChunk(
+        "data": ChatCompletionV2StreamErrorChunk(
             request_id=str(request_id),
             error=StreamError(
                 status_code=code,
