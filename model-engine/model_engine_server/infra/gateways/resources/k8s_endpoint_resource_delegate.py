@@ -301,10 +301,6 @@ def add_datadog_env_to_container(
 
 def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
     container_envs = []
-    for env in container["env"]:
-        if env["name"] not in LWS_DEFAULT_ENV_VAR:
-            container_envs.append(env)
-
     container_envs.extend(
         [
             {"name": "K8S_OWN_POD_NAME", "valueFrom": {"fieldRef": {"fieldPath": "metadata.name"}}},
@@ -336,6 +332,10 @@ def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
             },
         ]
     )
+    
+    for env in container["env"]:
+        if env["name"] not in LWS_DEFAULT_ENV_VAR:
+            container_envs.append(env)
     container["env"] = container_envs
 
 
