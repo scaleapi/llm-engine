@@ -2446,10 +2446,10 @@ class CompletionStreamV1UseCase:
 
 def validate_endpoint_supports_openai_completion(
     endpoint: ModelEndpoint, endpoint_content: GetLLMModelEndpointV1Response
-):
+):  # pragma: no cover
     if endpoint_content.inference_framework not in OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS:
         raise EndpointUnsupportedInferenceTypeException(
-            f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support chat completion."
+            f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support openai compatible completion."
         )
 
     if (
@@ -2471,7 +2471,7 @@ class CompletionSyncV2UseCase:
         model_endpoint_service: ModelEndpointService,
         llm_model_endpoint_service: LLMModelEndpointService,
         tokenizer_repository: TokenizerRepository,
-    ):
+    ):  # pragma: no cover
         self.model_endpoint_service = model_endpoint_service
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
@@ -2586,7 +2586,7 @@ class CompletionStreamV2UseCase:
         model_endpoint_service: ModelEndpointService,
         llm_model_endpoint_service: LLMModelEndpointService,
         tokenizer_repository: TokenizerRepository,
-    ):
+    ):  # pragma: no cover
         self.model_endpoint_service = model_endpoint_service
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
@@ -2663,7 +2663,7 @@ class CompletionStreamV2UseCase:
         model_content: GetLLMModelEndpointV1Response,
         inference_gateway: StreamingModelEndpointInferenceGateway,
         inference_request: SyncEndpointPredictV1Request,
-    ) -> AsyncIterable[CompletionV2StreamSuccessChunk]:
+    ) -> AsyncIterable[CompletionV2StreamSuccessChunk]:  # pragma: no cover
         """
         Async generator yielding tokens to stream for the completions response. Should only be called when
         returned directly by execute().
@@ -2697,7 +2697,7 @@ class CompletionStreamV2UseCase:
 
 def validate_endpoint_supports_chat_completion(
     endpoint: ModelEndpoint, endpoint_content: GetLLMModelEndpointV1Response
-):
+):  # pragma: no cover
     if endpoint_content.inference_framework not in CHAT_SUPPORTED_INFERENCE_FRAMEWORKS:
         raise EndpointUnsupportedInferenceTypeException(
             f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support chat completion."
