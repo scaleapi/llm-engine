@@ -491,6 +491,7 @@ data:
           metadata:
             labels:
               app: ${RESOURCE_NAME}
+              role: leader
               {{- $service_template_labels | nindent 14 }}
               sidecar.istio.io/inject: "false"  # Never inject istio, it screws up networking
               version: v1
@@ -746,6 +747,7 @@ data:
           metadata:
             labels:
               app: ${RESOURCE_NAME}
+              role: worker
               {{- $service_template_labels | nindent 14 }}
               sidecar.istio.io/inject: "false"  # Never inject istio for LWS, it screws up networking
               version: v1
