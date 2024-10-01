@@ -42,20 +42,20 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
 )
 
 
-def _get_sync_endpoint_url(deployment_name: str, destination_path: str = "/predict") -> str:
+def _get_sync_endpoint_url(service_name: str, destination_path: str = "/predict") -> str:
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
         # The IP address is obtained from `minikube ip`.
         protocol: str = "http"
-        hostname: str = f"192.168.49.2:{get_node_port(deployment_name)}"
+        hostname: str = f"192.168.49.2:{get_node_port(service_name)}"
     elif LOCAL:
         # local development: the svc.cluster.local address is only available w/in the k8s cluster
         protocol = "https"
-        hostname = f"{deployment_name}.{infra_config().dns_host_domain}"
+        hostname = f"{service_name}.{infra_config().dns_host_domain}"
     else:
         protocol = "http"
         # no need to hit external DNS resolution if we're w/in the k8s cluster
-        hostname = f"{deployment_name}.{hmi_config.endpoint_namespace}.svc.cluster.local"
+        hostname = f"{service_name}.{hmi_config.endpoint_namespace}.svc.cluster.local"
     return f"{protocol}://{hostname}{destination_path}"
 
 

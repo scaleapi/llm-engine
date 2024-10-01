@@ -71,6 +71,7 @@ class CreateSyncInferenceTaskV1UseCase:
         await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
             endpoint_id=model_endpoint_id
         )
+        # TODO handle lws
         return await inference_gateway.predict(
             topic=model_endpoint.record.destination, predict_request=request
         )

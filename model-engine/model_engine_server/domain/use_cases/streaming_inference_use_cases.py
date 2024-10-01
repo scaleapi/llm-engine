@@ -67,6 +67,7 @@ class CreateStreamingInferenceTaskV1UseCase:
         await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
             endpoint_id=model_endpoint_id
         )
+        # TODO handle lws
         return inference_gateway.streaming_predict(
             topic=model_endpoint.record.destination, predict_request=request
         )

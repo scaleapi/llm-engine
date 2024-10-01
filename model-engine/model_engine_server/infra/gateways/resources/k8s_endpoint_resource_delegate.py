@@ -332,7 +332,7 @@ def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
             },
         ]
     )
-    
+
     for env in container["env"]:
         if env["name"] not in LWS_DEFAULT_ENV_VAR:
             container_envs.append(env)
@@ -345,10 +345,13 @@ class K8SEndpointResourceDelegate:
         request: CreateOrUpdateResourcesRequest,
         sqs_queue_name: Optional[str] = None,
         sqs_queue_url: Optional[str] = None,
-    ) -> None:
+    ) -> str:
+        """
+        Returns a "destination", i.e. the name of the service/sqs queue to send tasks to the endpoint
+        """
         await maybe_load_kube_config()
         try:
-            await self._create_or_update_resources(
+            return await self._create_or_update_resources(
                 request=request,
                 sqs_queue_name=sqs_queue_name,
                 sqs_queue_url=sqs_queue_url,
@@ -1447,14 +1450,18 @@ class K8SEndpointResourceDelegate:
         request: CreateOrUpdateResourcesRequest,
         sqs_queue_name: Optional[str] = None,
         sqs_queue_url: Optional[str] = None,
-    ) -> None:
+    ) -> str:
+        """
+        Returns a "destination", which is how to address the endpoint, either through
+        sqs or through a k8s service.
+        """
         sqs_queue_name_str = sqs_queue_name or ""
         sqs_queue_url_str = sqs_queue_url or ""
         build_endpoint_request = request.build_endpoint_request
         model_endpoint_record = build_endpoint_request.model_endpoint_record
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(
             build_endpoint_request.model_endpoint_record.id
-        )
+        )  # TODO check if this equals k8s_service_name
 
         if request.build_endpoint_request.nodes_per_worker > 1:
             lws_resource_name = self._get_lws_resource_name(request)
@@ -1476,6 +1483,7 @@ class K8SEndpointResourceDelegate:
                 lws=lws_template,
                 name=k8s_resource_group_name,
             )
+            k8s_service_name = f"{k8s_resource_group_name}-leader"
         else:
             deployment_resource_name = self._get_deployment_resource_name(request)
             deployment_arguments = get_endpoint_resource_arguments_from_request(
@@ -1499,6 +1507,7 @@ class K8SEndpointResourceDelegate:
                 deployment=deployment_template,
                 name=k8s_resource_group_name,
             )
+            k8s_service_name = k8s_resource_group_name
 
         user_config_arguments = get_endpoint_resource_arguments_from_request(
             k8s_resource_group_name=k8s_resource_group_name,
@@ -1623,7 +1632,7 @@ class K8SEndpointResourceDelegate:
             service_template = load_k8s_yaml("service.yaml", service_arguments)
             await self._create_service(
                 service=service_template,
-                name=k8s_resource_group_name,
+                name=k8s_service_name,
             )
 
             # TODO wsong: add flag to use istio and use these arguments
@@ -1657,6 +1666,29 @@ class K8SEndpointResourceDelegate:
                     destination_rule=destination_rule_template,
                     name=k8s_resource_group_name,
                 )
+        elif (
+            model_endpoint_record.endpoint_type
+            in {
+                ModelEndpointType.SYNC,
+                ModelEndpointType.STREAMING,
+            }
+            and request.build_endpoint_request.nodes_per_worker > 1
+        ):
+            # Only create the service
+            service_arguments = get_endpoint_resource_arguments_from_request(
+                k8s_resource_group_name=k8s_resource_group_name,
+                request=request,
+                sqs_queue_name=sqs_queue_name_str,
+                sqs_queue_url=sqs_queue_url_str,
+                endpoint_resource_name="service",
+            )
+            service_template = load_k8s_yaml("service.yaml", service_arguments)
+            await self._create_service(
+                service=service_template,
+                name=k8s_service_name,
+            )
+
+        return k8s_service_name
 
     @staticmethod
     def _get_vertical_autoscaling_params(
@@ -2140,4 +2172,4 @@ class K8SEndpointResourceDelegate:
             and (hpa_delete_succeeded or keda_scaled_object_succeeded)
             and destination_rule_delete_succeeded
             and virtual_service_delete_succeeded
-        ) or (lws_delete_succeeded and config_map_delete_succeeded)
+        ) or (lws_delete_succeeded and config_map_delete_succeeded and service_delete_succeeded)

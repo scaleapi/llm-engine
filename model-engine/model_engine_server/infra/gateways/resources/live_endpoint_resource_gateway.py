@@ -61,7 +61,8 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
             queue_url: Optional[str] = q.queue_url
             destination: str = q.queue_name
         else:
-            destination = f"launch-endpoint-id-{endpoint_record.id.replace('_', '-')}"
+            # TODO actually just handle the lws thing here
+            # destination = f"launch-endpoint-id-{endpoint_record.id.replace('_', '-')}"
             queue_name = None
             queue_url = None
 
@@ -70,7 +71,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
                     endpoint_record.id
                 )
 
-        await self.k8s_delegate.create_or_update_resources(
+        destination = await self.k8s_delegate.create_or_update_resources(
             request=request,
             sqs_queue_name=queue_name,
             sqs_queue_url=queue_url,
