@@ -73,7 +73,7 @@ def load_streaming_forwarder(destination_path: Optional[str] = None):
     return get_streaming_forwarder_loader(destination_path).load(None, None)
 
 
-def predict(
+async def predict(
     request: EndpointPredictV1Request,
     background_tasks: BackgroundTasks,
     forwarder=Depends(load_forwarder),
@@ -81,10 +81,11 @@ def predict(
 ):
     with limiter:
         try:
-            response = forwarder(request.model_dump())
-            background_tasks.add_task(
-                forwarder.post_inference_hooks_handler.handle, request, response
-            )
+            response = await forwarder.forward(request.model_dump())
+            if forwarder.post_inference_hooks_handler:
+                background_tasks.add_task(
+                    forwarder.post_inference_hooks_handler.handle, request, response
+                )
             return response
         except Exception:
             logger.error(f"Failed to decode payload from: {request}")
@@ -181,6 +182,15 @@ async def init_app():
         all_routes = set(list(sync_forwarders.keys()) + list(stream_forwarders.keys()))
 
         for route in all_routes:
+
+            def get_sync_forwarder(route=route):
+                print("route", route)
+                return sync_forwarders.get(route)
+
+            def get_stream_forwarder(route=route):
+                print("route", route)
+                return stream_forwarders.get(route)
+
             # This route is a catch-all for any requests that don't match the /predict or /stream routes
             # It will treat the request as a streaming request if the "stream" body parameter is set to true
             # NOTE: it is important for this to be defined AFTER the /predict and /stream endpoints
@@ -188,8 +198,8 @@ async def init_app():
             async def predict_or_stream(
                 request: EndpointPredictV1Request,
                 background_tasks: BackgroundTasks,
-                sync_forwarder=Depends(lambda: sync_forwarders.get(route)),
-                stream_forwarder=Depends(lambda: stream_forwarders.get(route)),
+                sync_forwarder=Depends(get_sync_forwarder),
+                stream_forwarder=Depends(get_stream_forwarder),
                 limiter=Depends(get_concurrency_limiter),
             ):
                 if not request.args:
@@ -197,7 +207,7 @@ async def init_app():
                 if request.args.root.get("stream", False) and stream_forwarder:
                     return await stream(request, stream_forwarder, limiter)
                 elif request.args.root.get("stream") is not True and sync_forwarder:
-                    return predict(request, background_tasks, sync_forwarder, limiter)
+                    return await predict(request, background_tasks, sync_forwarder, limiter)
                 else:
                     raise Exception("No forwarder configured for this route")
 

@@ -3,8 +3,8 @@ This file is for testing purposes only. It serves as simple server to mock a dep
 """
 
 import argparse
+import asyncio
 import subprocess
-import time
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -13,17 +13,20 @@ from sse_starlette.sse import EventSourceResponse
 app = FastAPI()
 
 
+@app.get("/health")
 @app.get("/healthz")
 @app.get("/readyz")
 def healthcheck():
     return "OK"
 
 
+@app.post("/v1/chat/completions")
 @app.post("/predict")
 async def predict(request: Request):
     dictionary = await request.json()
+    print("Received request", dictionary, flush=True)
     if "delay" in dictionary:
-        time.sleep(dictionary["delay"])
+        await asyncio.sleep(dictionary["delay"])
     return dictionary
 
 
