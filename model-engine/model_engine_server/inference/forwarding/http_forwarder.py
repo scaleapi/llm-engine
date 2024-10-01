@@ -106,7 +106,7 @@ async def stream(
         else:
             logger.debug(f"Received request: {payload}")
 
-        responses = forwarder(payload)
+        responses = await forwarder.forward(payload)
 
         async def event_generator():
             for response in responses:
@@ -184,11 +184,9 @@ async def init_app():
         for route in all_routes:
 
             def get_sync_forwarder(route=route):
-                print("route", route)
                 return sync_forwarders.get(route)
 
             def get_stream_forwarder(route=route):
-                print("route", route)
                 return stream_forwarders.get(route)
 
             # This route is a catch-all for any requests that don't match the /predict or /stream routes

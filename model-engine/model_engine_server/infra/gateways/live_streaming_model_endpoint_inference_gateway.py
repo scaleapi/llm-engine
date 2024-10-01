@@ -90,7 +90,6 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                     headers={"Content-Type": "application/json"},
                 )
                 status = aio_resp.status
-                print(status)
                 if status == 200:
                     async with EventSource(response=aio_resp) as event_source:
                         async for event in event_source:
