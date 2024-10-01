@@ -12,7 +12,7 @@ import os
 import re
 from dataclasses import asdict
 from functools import lru_cache
-from typing import Any, AsyncIterable, Dict, List, Optional, Union
+from typing import Any, AsyncGenerator, AsyncIterable, Dict, List, Optional, Union
 
 import yaml
 from model_engine_server.common.config import hmi_config
@@ -2594,7 +2594,7 @@ class CompletionStreamV2UseCase:
 
     async def execute(
         self, model_endpoint_name: str, request: CompletionV2Request, user: User
-    ) -> AsyncIterable[CompletionV2StreamSuccessChunk]:  # pragma: no cover
+    ) -> AsyncGenerator[CompletionV2StreamSuccessChunk, None]:  # pragma: no cover
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
@@ -2663,7 +2663,7 @@ class CompletionStreamV2UseCase:
         model_content: GetLLMModelEndpointV1Response,
         inference_gateway: StreamingModelEndpointInferenceGateway,
         inference_request: SyncEndpointPredictV1Request,
-    ) -> AsyncIterable[CompletionV2StreamSuccessChunk]:  # pragma: no cover
+    ) -> AsyncGenerator[CompletionV2StreamSuccessChunk, None]:  # pragma: no cover
         """
         Async generator yielding tokens to stream for the completions response. Should only be called when
         returned directly by execute().
@@ -2844,7 +2844,7 @@ class ChatCompletionStreamV2UseCase:
 
     async def execute(
         self, model_endpoint_name: str, request: ChatCompletionV2Request, user: User
-    ) -> AsyncIterable[ChatCompletionV2StreamSuccessChunk]:  # pragma: no cover
+    ) -> AsyncGenerator[ChatCompletionV2StreamSuccessChunk, None]:  # pragma: no cover
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
@@ -2913,7 +2913,7 @@ class ChatCompletionStreamV2UseCase:
         model_content: GetLLMModelEndpointV1Response,
         inference_gateway: StreamingModelEndpointInferenceGateway,
         inference_request: SyncEndpointPredictV1Request,
-    ) -> AsyncIterable[ChatCompletionV2StreamSuccessChunk]:
+    ) -> AsyncGenerator[ChatCompletionV2StreamSuccessChunk, None]:
         """
         Async generator yielding tokens to stream for the completions response. Should only be called when
         returned directly by execute().

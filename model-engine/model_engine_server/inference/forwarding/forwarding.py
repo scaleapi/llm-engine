@@ -4,7 +4,7 @@ import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, AsyncGenerator, Iterable, List, Optional, Sequence, Tuple
 
 import aiohttp
 import orjson
@@ -259,7 +259,7 @@ class LoadForwarder:
     wrap_response: bool = True
     forward_http_status: bool = False
 
-    def load(self, resources: Path, cache: Any) -> Forwarder:
+    def load(self, resources: Optional[Path], cache: Any) -> Forwarder:
         if self.use_grpc:
             raise NotImplementedError(
                 "User-defined service **MUST** use HTTP at the moment. "
@@ -389,13 +389,14 @@ class StreamingForwarder(ModelEngineSerializationMixin):
     serialize_results_as_string: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None  # unused for now
 
-    async def forward(self, json_payload: Any) -> Iterable[Any]:
+    async def forward(self, json_payload: Any) -> AsyncGenerator[Any, None]:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
         try:
+            response: aiohttp.ClientResponse
             async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
                 response = await aioclient.post(
                     self.predict_endpoint,
@@ -404,19 +405,13 @@ class StreamingForwarder(ModelEngineSerializationMixin):
                 )
 
                 if response.status != 200:
-                    print(response.json())
-                    raise HTTPException(status_code=response.status, detail=response.json())
+                    raise HTTPException(status_code=response.status, detail=await response.json())
 
-                else:
-
-                    async def event_stream():
-                        async with EventSource(response=response) as event_source:
-                            async for event in event_source:
-                                yield self.get_response_payload_stream(
-                                    using_serialize_results_as_string, event.data
-                                )
-
-                    return await event_stream()
+                async with EventSource(response=response) as event_source:
+                    async for event in event_source:
+                        yield self.get_response_payload_stream(
+                            using_serialize_results_as_string, event.data
+                        )
 
         except Exception:
             logger.exception(
@@ -442,7 +437,6 @@ class StreamingForwarder(ModelEngineSerializationMixin):
             )
 
             if response.status_code != 200:
-                print(response.json())
                 raise HTTPException(status_code=response.status_code, detail=response.json())
 
         except Exception:
@@ -484,7 +478,7 @@ class LoadStreamingForwarder:
     model_engine_unwrap: bool = True
     serialize_results_as_string: bool = False
 
-    def load(self, resources: Path, cache: Any) -> StreamingForwarder:
+    def load(self, resources: Optional[Path], cache: Any) -> StreamingForwarder:
         if self.use_grpc:
             raise NotImplementedError(
                 "User-defined service **MUST** use HTTP at the moment. "

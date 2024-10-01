@@ -34,7 +34,7 @@ def get_config():
     )
 
 
-def get_forwarder_loader(destination_path: Optional[str] = None):
+def get_forwarder_loader(destination_path: Optional[str] = None) -> LoadForwarder:
     config = get_config()["sync"]
     if "extra_routes" in config:
         del config["extra_routes"]
@@ -44,7 +44,9 @@ def get_forwarder_loader(destination_path: Optional[str] = None):
     return forwarder_loader
 
 
-def get_streaming_forwarder_loader(destination_path: Optional[str] = None):
+def get_streaming_forwarder_loader(
+    destination_path: Optional[str] = None,
+) -> LoadStreamingForwarder:
     config = get_config()["stream"]
     if "extra_routes" in config:
         del config["extra_routes"]
@@ -55,7 +57,7 @@ def get_streaming_forwarder_loader(destination_path: Optional[str] = None):
 
 
 @lru_cache()
-def get_concurrency_limiter():
+def get_concurrency_limiter() -> MultiprocessingConcurrencyLimiter:
     config = get_config()
     concurrency = int(config.get("max_concurrency", 100))
     return MultiprocessingConcurrencyLimiter(
@@ -64,20 +66,20 @@ def get_concurrency_limiter():
 
 
 @lru_cache()
-def load_forwarder(destination_path: Optional[str] = None):
+def load_forwarder(destination_path: Optional[str] = None) -> Forwarder:
     return get_forwarder_loader(destination_path).load(None, None)
 
 
 @lru_cache()
-def load_streaming_forwarder(destination_path: Optional[str] = None):
+def load_streaming_forwarder(destination_path: Optional[str] = None) -> StreamingForwarder:
     return get_streaming_forwarder_loader(destination_path).load(None, None)
 
 
 async def predict(
     request: EndpointPredictV1Request,
     background_tasks: BackgroundTasks,
-    forwarder=Depends(load_forwarder),
-    limiter=Depends(get_concurrency_limiter),
+    forwarder: Forwarder = Depends(load_forwarder),
+    limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
 ):
     with limiter:
         try:
@@ -94,8 +96,8 @@ async def predict(
 
 async def stream(
     request: EndpointPredictV1Request,
-    forwarder=Depends(load_streaming_forwarder),
-    limiter=Depends(get_concurrency_limiter),
+    forwarder: StreamingForwarder = Depends(load_streaming_forwarder),
+    limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
 ):
     with limiter:
         try:
@@ -106,10 +108,16 @@ async def stream(
         else:
             logger.debug(f"Received request: {payload}")
 
-        responses = await forwarder.forward(payload)
+        responses = forwarder.forward(payload)
+        # We fetch the first response to check if upstream request was successful
+        # If it was not, this will raise the corresponding HTTPException
+        # If it was, we will proceed to the event generator
+        initial_response = await responses.__anext__()
 
         async def event_generator():
-            for response in responses:
+            yield {"data": orjson.dumps(initial_response).decode("utf-8")}
+
+            async for response in responses:
                 yield {"data": orjson.dumps(response).decode("utf-8")}
 
         return EventSourceResponse(event_generator())
@@ -196,8 +204,8 @@ async def init_app():
             async def predict_or_stream(
                 request: EndpointPredictV1Request,
                 background_tasks: BackgroundTasks,
-                sync_forwarder=Depends(get_sync_forwarder),
-                stream_forwarder=Depends(get_stream_forwarder),
+                sync_forwarder: Forwarder = Depends(get_sync_forwarder),
+                stream_forwarder: StreamingForwarder = Depends(get_stream_forwarder),
                 limiter=Depends(get_concurrency_limiter),
             ):
                 if not request.args:

@@ -18,6 +18,7 @@ from model_engine_server.common.dtos.llms import (
     StreamErrorContent,
     TokenUsage,
 )
+from model_engine_server.common.dtos.llms.completion import CompletionV2StreamSuccessChunk
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import (
     LoggerTagKey,
@@ -91,76 +92,83 @@ async def handle_stream_request(
         tokenizer_repository=external_interfaces.tokenizer_repository,
     )
 
-    try:
-        response = await use_case.execute(
-            user=auth, model_endpoint_name=model_endpoint_name, request=request
-        )
-    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=str(exc),
-        ) from exc
-    except (
-        EndpointUnsupportedInferenceTypeException,
-        EndpointUnsupportedRequestException,
-    ) as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=str(exc),
-        ) from exc
-    except ObjectHasInvalidValueException as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail="Internal error occurred. Our team has been notified.",
-        ) from exc
-
-    async def event_generator():
+    with timer() as use_case_timer:
         try:
-            ttft = None
-            message = None
-            with timer() as use_case_timer:  # todo, this should be move to start of method
+            response = await use_case.execute(
+                user=auth, model_endpoint_name=model_endpoint_name, request=request
+            )
+
+            # We fetch the first response to check if upstream request was successful
+            # If it was not, this will raise the corresponding HTTPException
+            # If it was, we will proceed to the event generator
+            first_message: CompletionV2StreamSuccessChunk = await response.__anext__()
+        except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+            raise HTTPException(
+                status_code=404,
+                detail=str(exc),
+            ) from exc
+        except (
+            EndpointUnsupportedInferenceTypeException,
+            EndpointUnsupportedRequestException,
+        ) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=str(exc),
+            ) from exc
+        except ObjectHasInvalidValueException as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="Internal error occurred. Our team has been notified.",
+            ) from exc
+
+        async def event_generator(timer: timer = use_case_timer):
+            try:
+                ttft = None
+                message = None
+                yield {"data": first_message.model_dump_json(exclude_none=True)}
                 async for message in response:
                     if ttft is None:
-                        ttft = use_case_timer.lap()
+                        ttft = timer.lap()
                     # if ttft is None and message.startswith("data"):
-                    #     ttft = use_case_timer.lap()
-                    print("message", message.model_dump_json(exclude_none=True))
+                    #     ttft = timer.lap()
                     yield {"data": message.model_dump_json(exclude_none=True)}
 
-            if message:
-                background_tasks.add_task(
-                    external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
-                    TokenUsage(
-                        num_prompt_tokens=(message.usage.prompt_tokens if message.usage else None),
-                        num_completion_tokens=(
-                            message.usage.completion_tokens if message.usage else None
+                if message:
+                    background_tasks.add_task(
+                        external_interfaces.monitoring_metrics_gateway.emit_token_count_metrics,
+                        TokenUsage(
+                            num_prompt_tokens=(
+                                message.usage.prompt_tokens if message.usage else None
+                            ),
+                            num_completion_tokens=(
+                                message.usage.completion_tokens if message.usage else None
+                            ),
+                            total_duration=timer.duration,
                         ),
-                        total_duration=use_case_timer.duration,
-                    ),
-                    metric_metadata,
+                        metric_metadata,
+                    )
+
+            # The following two exceptions are only raised after streaming begins, so we wrap the exception within a Response object
+            except InvalidRequestException as exc:
+                yield handle_streaming_exception(exc, 400, str(exc))
+            except UpstreamServiceError as exc:
+                request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
+                logger.exception(
+                    f"Upstream service error for request {request_id}. Error detail: {str(exc.content)}"
+                )
+                yield handle_streaming_exception(
+                    exc,
+                    500,
+                    f"Upstream service error for request_id {request_id}",
+                )
+            except Exception as exc:
+                yield handle_streaming_exception(
+                    exc, 500, "Internal error occurred. Our team has been notified."
                 )
 
-        # The following two exceptions are only raised after streaming begins, so we wrap the exception within a Response object
-        except InvalidRequestException as exc:
-            yield handle_streaming_exception(exc, 400, str(exc))
-        except UpstreamServiceError as exc:
-            request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
-            logger.exception(
-                f"Upstream service error for request {request_id}. Error detail: {str(exc.content)}"
-            )
-            yield handle_streaming_exception(
-                exc,
-                500,
-                f"Upstream service error for request_id {request_id}",
-            )
-        except Exception as exc:
-            yield handle_streaming_exception(
-                exc, 500, "Internal error occurred. Our team has been notified."
-            )
-
-    return EventSourceResponse(event_generator())
+        return EventSourceResponse(event_generator())
 
 
 async def handle_sync_request(
