@@ -4,6 +4,7 @@ import aiohttp
 import orjson
 import requests
 import sseclient
+from model_engine_server.common.aiohttp_sse_client import EventSource
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.tasks import (
     SyncEndpointPredictV1Request,
@@ -22,7 +23,6 @@ from model_engine_server.domain.exceptions import (
 from model_engine_server.domain.gateways.streaming_model_endpoint_inference_gateway import (
     StreamingModelEndpointInferenceGateway,
 )
-from model_engine_server.infra.gateways.aiohttp_sse_client import EventSource
 from model_engine_server.infra.gateways.k8s_resource_parser import get_node_port
 from orjson import JSONDecodeError
 from tenacity import (

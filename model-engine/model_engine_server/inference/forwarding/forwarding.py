@@ -13,6 +13,7 @@ import sseclient
 import yaml
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
+from model_engine_server.common.aiohttp_sse_client import EventSource
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.inference.common import get_endpoint_config
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
@@ -22,7 +23,6 @@ from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gat
     FirehoseStreamingStorageGateway,
 )
 from model_engine_server.inference.post_inference_hooks import PostInferenceHooksHandler
-from model_engine_server.infra.gateways.aiohttp_sse_client import EventSource
 
 __all__: Sequence[str] = (
     "Forwarder",
