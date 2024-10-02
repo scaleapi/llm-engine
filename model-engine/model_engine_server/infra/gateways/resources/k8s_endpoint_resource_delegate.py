@@ -1255,17 +1255,19 @@ class K8SEndpointResourceDelegate:
                 logger.exception(f"Deletion of Service {k8s_resource_group_name} failed")
                 return False
         return True
-    
+
     @staticmethod
     async def _delete_lws_service(endpoint_id: str, deployment_name: str):
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
-        lws_service_name = K8SEndpointResourceDelegate._get_lws_service_resource_name(k8s_resource_group_name)
+        lws_service_name = K8SEndpointResourceDelegate._get_lws_service_resource_name(
+            k8s_resource_group_name
+        )
         core_client = get_kubernetes_core_client()
         try:
             await core_client.delete_namespaced_service(
                 name=lws_service_name, namespace=hmi_config.endpoint_namespace
             )
-        except ApiException as e:
+        except ApiException:
             logger.exception(f"Deletion of Service {lws_service_name} failed")
             return False
         return True
@@ -1458,7 +1460,7 @@ class K8SEndpointResourceDelegate:
 
         lws_resource_name = f"leader-worker-set-{mode}-{device}"
         return lws_resource_name
-    
+
     @staticmethod
     def _get_lws_service_resource_name(k8s_resource_group_name: str):
         return f"{k8s_resource_group_name}-leader"
@@ -1501,7 +1503,7 @@ class K8SEndpointResourceDelegate:
                 lws=lws_template,
                 name=k8s_resource_group_name,
             )
-            k8s_service_name = self._get_lws_service_resource_name(k8s_resource_group_name) 
+            k8s_service_name = self._get_lws_service_resource_name(k8s_resource_group_name)
         else:
             deployment_resource_name = self._get_deployment_resource_name(request)
             deployment_arguments = get_endpoint_resource_arguments_from_request(
@@ -2176,7 +2178,7 @@ class K8SEndpointResourceDelegate:
             endpoint_id=endpoint_id, deployment_name=deployment_name
         )
         lws_service_delete_succeeded = await self._delete_lws_service(
-            endpoint_id=endpoint_id, deployment_name=deployment_name 
+            endpoint_id=endpoint_id, deployment_name=deployment_name
         )
         # we should have created exactly one of an HPA or a keda scaled object
         hpa_delete_succeeded = await self._delete_hpa(
