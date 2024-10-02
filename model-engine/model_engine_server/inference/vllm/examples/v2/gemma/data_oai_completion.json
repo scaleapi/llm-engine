@@ -1,0 +1,16 @@
+[
+    {
+        "prompt": "What is a good place for travel in the US?",
+        "logprobs": true,
+        "echo": true,
+        "max_tokens": 7,
+        "temperature": 1
+    },
+    {
+        "prompt": "What is a good place for travel in the EU?",
+        "logprobs": true,
+        "echo": true,
+        "max_tokens": 7,
+        "temperature": 1
+    }
+]

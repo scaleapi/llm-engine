@@ -1,6 +1,6 @@
 {
-    "input_data_path": "./examples/v2/sample_data_chat_gemma.json",
-    "output_data_path": "./examples/v2/sample_output.json",
+    "input_data_path": "./examples/v2/gemma/data_oai_chat.json",
+    "output_data_path": "./examples/v2/gemma/output_oi_chat.json",
     "model_config": {
         "model": "gemma-2-2b-it",
         "checkpoint_path": "my_path",
