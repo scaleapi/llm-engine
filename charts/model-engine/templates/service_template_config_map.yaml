@@ -871,6 +871,25 @@ data:
           protocol: TCP
           name: http
           ${NODE_PORT_DICT}
+  lws-service.yaml: |-
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${SERVICE_NAME_OVERRIDE}
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    spec:
+      type: ${SERVICE_TYPE}
+      selector:
+        app: ${RESOURCE_NAME}
+        role: leader
+      ports:
+        - port: 80
+          targetPort: ${SERVICE_TARGET_PORT}
+          protocol: TCP
+          name: http
+          ${NODE_PORT_DICT}
   {{- if .Values.virtualservice.enabled }}
   virtual-service.yaml: |-
     apiVersion: networking.istio.io/v1alpha3

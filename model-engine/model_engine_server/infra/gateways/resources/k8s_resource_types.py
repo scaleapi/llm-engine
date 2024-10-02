@@ -349,6 +349,13 @@ class ServiceArguments(_BaseEndpointArguments):
     NODE_PORT_DICT: DictStrInt
 
 
+class LwsServiceArguments(ServiceArguments):
+    """Keyword-arguments for substituting into service templates for LWS.
+    Need this to override the service name for LWS."""
+
+    SERVICE_NAME_OVERRIDE: str
+
+
 class DestinationRuleArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into destination-rule templates."""
 
@@ -498,6 +505,7 @@ def get_endpoint_resource_arguments_from_request(
     sqs_queue_url: str,
     endpoint_resource_name: str,
     api_version: str = "",
+    service_name_override: Optional[str] = None,
 ) -> EndpointResourceArguments:
     """Get the arguments for the endpoint resource templates from the request.
 
@@ -516,6 +524,8 @@ def get_endpoint_resource_arguments_from_request(
     storage = build_endpoint_request.storage
     sqs_profile = f"eks-{infra_config().profile_ml_worker}"  # TODO: Make this configurable
     s3_bucket = infra_config().s3_bucket
+
+    service_name_override = service_name_override or k8s_resource_group_name
 
     storage_dict = DictStrStr("")
     if storage is not None:
@@ -1278,6 +1288,33 @@ def get_endpoint_resource_arguments_from_request(
             NODE_PORT_DICT=node_port_dict,
             SERVICE_TYPE=service_type,
             SERVICE_TARGET_PORT=FORWARDER_PORT,
+        )
+    elif endpoint_resource_name == "lws-service":
+        # Use ClusterIP by default for sync endpoint.
+        # In Circle CI, we use a NodePort to expose the service to CI.
+        service_type = "ClusterIP" if not CIRCLECI else "NodePort"
+        if service_type == "NodePort":
+            node_port = get_node_port(k8s_resource_group_name)
+            node_port_dict = DictStrInt(f"nodePort: {node_port}")
+        else:
+            node_port_dict = DictStrInt("")
+        return LwsServiceArguments(
+            # Base resource arguments
+            RESOURCE_NAME=k8s_resource_group_name,
+            NAMESPACE=hmi_config.endpoint_namespace,
+            ENDPOINT_ID=model_endpoint_record.id,
+            ENDPOINT_NAME=model_endpoint_record.name,
+            TEAM=team,
+            PRODUCT=product,
+            CREATED_BY=created_by,
+            OWNER=owner,
+            GIT_TAG=GIT_TAG,
+            # Service arguments
+            NODE_PORT_DICT=node_port_dict,
+            SERVICE_TYPE=service_type,
+            SERVICE_TARGET_PORT=FORWARDER_PORT,
+            # LWS Service args
+            SERVICE_NAME_OVERRIDE=service_name_override,
         )
     elif endpoint_resource_name == "virtual-service":
         return VirtualServiceArguments(

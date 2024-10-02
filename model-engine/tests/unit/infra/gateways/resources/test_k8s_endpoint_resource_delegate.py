@@ -289,7 +289,7 @@ def _verify_custom_object_plurals(call_args_list, expected_plurals: List[str]) -
 
 
 @pytest.mark.asyncio
-async def test_create_async_endpoint_has_correct_labels(
+async def test_create_async_endpoint_has_correct_labels_and_dest(
     k8s_endpoint_resource_delegate,
     mock_apps_client,
     mock_core_client,
@@ -302,9 +302,10 @@ async def test_create_async_endpoint_has_correct_labels(
     for request in [
         create_resources_request_async_runnable_image,
     ]:
-        await k8s_endpoint_resource_delegate.create_or_update_resources(
+        dest = await k8s_endpoint_resource_delegate.create_or_update_resources(
             request, sqs_queue_name="my_queue", sqs_queue_url="https://my_queue"
         )
+        assert dest == "my_queue"
 
         # Verify deployment labels
         create_deployment_call_args = mock_apps_client.create_namespaced_deployment.call_args
@@ -358,7 +359,7 @@ async def test_create_async_endpoint_has_correct_labels(
 
 
 @pytest.mark.asyncio
-async def test_create_streaming_endpoint_has_correct_labels(
+async def test_create_streaming_endpoint_has_correct_labels_and_dest(
     k8s_endpoint_resource_delegate,
     mock_apps_client,
     mock_core_client,
@@ -369,11 +370,15 @@ async def test_create_streaming_endpoint_has_correct_labels(
     create_resources_request_streaming_runnable_image: CreateOrUpdateResourcesRequest,
 ):
     request = create_resources_request_streaming_runnable_image
-    await k8s_endpoint_resource_delegate.create_or_update_resources(
+    dest = await k8s_endpoint_resource_delegate.create_or_update_resources(
         request,
         sqs_queue_name="my_queue",
         sqs_queue_url="https://my_queue",
     )
+    service_name = mock_core_client.create_namespaced_service.call_args.kwargs["body"]["metadata"][
+        "name"
+    ]
+    assert dest == service_name
 
     # Verify deployment labels
     create_deployment_call_args = mock_apps_client.create_namespaced_deployment.call_args
@@ -431,7 +436,7 @@ async def test_create_streaming_endpoint_has_correct_labels(
 
 
 @pytest.mark.asyncio
-async def test_create_sync_endpoint_has_correct_labels(
+async def test_create_sync_endpoint_has_correct_labels_and_dest(
     k8s_endpoint_resource_delegate,
     mock_apps_client,
     mock_core_client,
@@ -444,11 +449,15 @@ async def test_create_sync_endpoint_has_correct_labels(
     for request in [
         create_resources_request_sync_runnable_image,
     ]:
-        await k8s_endpoint_resource_delegate.create_or_update_resources(
+        dest = await k8s_endpoint_resource_delegate.create_or_update_resources(
             request,
             sqs_queue_name="my_queue",
             sqs_queue_url="https://my_queue,",
         )
+        service_name = mock_core_client.create_namespaced_service.call_args.kwargs["body"][
+            "metadata"
+        ]["name"]
+        assert dest == service_name
 
         # Verify deployment labels
         create_deployment_call_args = mock_apps_client.create_namespaced_deployment.call_args
@@ -532,7 +541,7 @@ async def test_create_sync_endpoint_has_correct_k8s_service_type(
 
 
 @pytest.mark.asyncio
-async def test_create_multinode_endpoint_creates_lws(
+async def test_create_multinode_endpoint_creates_lws_and_correct_dest(
     k8s_endpoint_resource_delegate,
     mock_apps_client,
     mock_core_client,
@@ -554,11 +563,15 @@ async def test_create_multinode_endpoint_creates_lws(
     )
 
     create_resources_request_streaming_runnable_image.build_endpoint_request.nodes_per_worker = 2
-    await k8s_endpoint_resource_delegate.create_or_update_resources(
+    dest = await k8s_endpoint_resource_delegate.create_or_update_resources(
         create_resources_request_streaming_runnable_image,
         sqs_queue_name="my_queue",
         sqs_queue_url="https://my_queue",
     )
+    service_name = mock_core_client.create_namespaced_service.call_args.kwargs["body"]["metadata"][
+        "name"
+    ]
+    assert dest == service_name
     # Verify call to custom objects client with LWS is made
     create_custom_objects_call_args = (
         mock_custom_objects_client.create_namespaced_custom_object.call_args

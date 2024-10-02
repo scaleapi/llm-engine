@@ -1680,10 +1680,10 @@ class K8SEndpointResourceDelegate:
                 request=request,
                 sqs_queue_name=sqs_queue_name_str,
                 sqs_queue_url=sqs_queue_url_str,
-                endpoint_resource_name="service",
+                endpoint_resource_name="service",  # TODO lws-service
             )
             # TODO this doesn't quite work actually, we need lws_service with a different setup
-            service_template = load_k8s_yaml("service.yaml", service_arguments)
+            service_template = load_k8s_yaml("lws-service.yaml", service_arguments)
             await self._create_service(
                 service=service_template,
                 name=k8s_service_name,
