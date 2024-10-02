@@ -1680,6 +1680,7 @@ class K8SEndpointResourceDelegate:
                 request=request,
                 sqs_queue_name=sqs_queue_name_str,
                 sqs_queue_url=sqs_queue_url_str,
+                service_name_override=k8s_service_name,
                 endpoint_resource_name="lws-service",
             )
             # TODO this doesn't quite work actually, we need lws_service with a different setup
