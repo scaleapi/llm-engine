@@ -1682,13 +1682,21 @@ class K8SEndpointResourceDelegate:
                 sqs_queue_url=sqs_queue_url_str,
                 endpoint_resource_name="service",
             )
+            # TODO this doesn't quite work actually, we need lws_service with a different setup
             service_template = load_k8s_yaml("service.yaml", service_arguments)
             await self._create_service(
                 service=service_template,
                 name=k8s_service_name,
             )
-
-        return k8s_service_name
+        if model_endpoint_record.endpoint_type in {
+            ModelEndpointType.SYNC,
+            ModelEndpointType.STREAMING,
+        }:
+            return k8s_service_name
+        elif model_endpoint_record.endpoint_type == ModelEndpointType.ASYNC:
+            return sqs_queue_name_str
+        else:
+            raise ValueError(f"Unsupported endpoint type {model_endpoint_record.endpoint_type}")
 
     @staticmethod
     def _get_vertical_autoscaling_params(
