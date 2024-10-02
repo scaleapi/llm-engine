@@ -498,6 +498,7 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path: Optional[str],
         chat_template_override: Optional[str],
         multinode: bool,
+        # TODO multinode_size instead of multinode
     ) -> ModelBundle:
         if source == LLMSource.HUGGING_FACE:
             self.check_docker_image_exists_for_image_tag(
@@ -864,6 +865,7 @@ class CreateLLMModelBundleV1UseCase:
 
         if is_leader:
             vllm_cmd += f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
+            # TODO pipeline parallel also
 
             chat_template_cmd = None
             if chat_template_override:
@@ -1253,6 +1255,7 @@ class CreateLLMModelEndpointV1UseCase:
             checkpoint_path=request.checkpoint_path,
             chat_template_override=request.chat_template_override,
             multinode=(request.nodes_per_worker > 1),
+            # TODO multinode size
         )
         validate_resource_requests(
             bundle=bundle,
@@ -1512,6 +1515,7 @@ class UpdateLLMModelEndpointV1UseCase:
                 checkpoint_path=checkpoint_path,
                 chat_template_override=chat_template_override,
                 multinode=(model_endpoint.infra_state.resource_state.nodes_per_worker > 1),
+                # TODO multinode size
             )
 
             metadata = endpoint_record.metadata or {}
