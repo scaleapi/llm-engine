@@ -7,8 +7,8 @@ metadata:
   name: model-engine-service-template-config
   labels:
     team: infra
-    app.kubernetes.io/version: 3286f1a6c567a6fbc2c35da6f9a3b992cb490297
-    tags.datadoghq.com/version: 3286f1a6c567a6fbc2c35da6f9a3b992cb490297
+    app.kubernetes.io/version: 0b73f6103238d913f82709ad06f558cc5eca611d
+    tags.datadoghq.com/version: 0b73f6103238d913f82709ad06f558cc5eca611d
     tags.datadoghq.com/env: circleci
     env: circleci
     product: model-engine
@@ -2649,6 +2649,7 @@ data:
           metadata:
             labels:
               app: ${RESOURCE_NAME}
+              role: leader
               user_id: ${OWNER}
               team: ${TEAM}
               product: ${PRODUCT}
@@ -2845,6 +2846,7 @@ data:
           metadata:
             labels:
               app: ${RESOURCE_NAME}
+              role: worker
               user_id: ${OWNER}
               team: ${TEAM}
               product: ${PRODUCT}
@@ -2971,6 +2973,37 @@ data:
       type: ${SERVICE_TYPE}
       selector:
         app: ${RESOURCE_NAME}
+      ports:
+        - port: 80
+          targetPort: ${SERVICE_TARGET_PORT}
+          protocol: TCP
+          name: http
+          ${NODE_PORT_DICT}
+  lws-service.yaml: |-
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${SERVICE_NAME_OVERRIDE}
+      namespace: ${NAMESPACE}
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        env: circleci
+        managed-by: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/version: ${GIT_TAG}
+        tags.datadoghq.com/service: ${ENDPOINT_NAME}
+        endpoint_id: ${ENDPOINT_ID}
+        endpoint_name: ${ENDPOINT_NAME}
+    spec:
+      type: ${SERVICE_TYPE}
+      selector:
+        app: ${RESOURCE_NAME}
+        role: leader
       ports:
         - port: 80
           targetPort: ${SERVICE_TARGET_PORT}
