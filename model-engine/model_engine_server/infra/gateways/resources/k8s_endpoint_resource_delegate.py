@@ -1225,8 +1225,8 @@ class K8SEndpointResourceDelegate:
 
     @staticmethod
     async def _delete_service(endpoint_id: str, deployment_name: str) -> bool:
-        core_client = get_kubernetes_core_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        core_client = get_kubernetes_core_client()
         try:
             await core_client.delete_namespaced_service(
                 name=k8s_resource_group_name, namespace=hmi_config.endpoint_namespace
@@ -1254,6 +1254,20 @@ class K8SEndpointResourceDelegate:
             else:
                 logger.exception(f"Deletion of Service {k8s_resource_group_name} failed")
                 return False
+        return True
+    
+    @staticmethod
+    async def _delete_lws_service(endpoint_id: str, deployment_name: str):
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        lws_service_name = K8SEndpointResourceDelegate._get_lws_service_resource_name(k8s_resource_group_name)
+        core_client = get_kubernetes_core_client()
+        try:
+            await core_client.delete_namespaced_service(
+                name=lws_service_name, namespace=hmi_config.endpoint_namespace
+            )
+        except ApiException as e:
+            logger.exception(f"Deletion of Service {lws_service_name} failed")
+            return False
         return True
 
     @staticmethod
@@ -1444,6 +1458,10 @@ class K8SEndpointResourceDelegate:
 
         lws_resource_name = f"leader-worker-set-{mode}-{device}"
         return lws_resource_name
+    
+    @staticmethod
+    def _get_lws_service_resource_name(k8s_resource_group_name: str):
+        return f"{k8s_resource_group_name}-leader"
 
     async def _create_or_update_resources(  # TODO think this is correct, need to e2e test
         self,
@@ -1483,7 +1501,7 @@ class K8SEndpointResourceDelegate:
                 lws=lws_template,
                 name=k8s_resource_group_name,
             )
-            k8s_service_name = f"{k8s_resource_group_name}-leader"
+            k8s_service_name = self._get_lws_service_resource_name(k8s_resource_group_name) 
         else:
             deployment_resource_name = self._get_deployment_resource_name(request)
             deployment_arguments = get_endpoint_resource_arguments_from_request(
@@ -2157,6 +2175,9 @@ class K8SEndpointResourceDelegate:
         service_delete_succeeded = await self._delete_service(
             endpoint_id=endpoint_id, deployment_name=deployment_name
         )
+        lws_service_delete_succeeded = await self._delete_lws_service(
+            endpoint_id=endpoint_id, deployment_name=deployment_name 
+        )
         # we should have created exactly one of an HPA or a keda scaled object
         hpa_delete_succeeded = await self._delete_hpa(
             endpoint_id=endpoint_id, deployment_name=deployment_name
@@ -2181,4 +2202,4 @@ class K8SEndpointResourceDelegate:
             and (hpa_delete_succeeded or keda_scaled_object_succeeded)
             and destination_rule_delete_succeeded
             and virtual_service_delete_succeeded
-        ) or (lws_delete_succeeded and config_map_delete_succeeded and service_delete_succeeded)
+        ) or (lws_delete_succeeded and config_map_delete_succeeded and lws_service_delete_succeeded)
