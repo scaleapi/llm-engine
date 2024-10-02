@@ -497,9 +497,10 @@ class CreateLLMModelBundleV1UseCase:
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
         chat_template_override: Optional[str],
-        multinode: bool,
+        nodes_per_worker: int,
         # TODO multinode_size instead of multinode
     ) -> ModelBundle:
+        multinode = nodes_per_worker > 1
         if source == LLMSource.HUGGING_FACE:
             self.check_docker_image_exists_for_image_tag(
                 framework_image_tag, INFERENCE_FRAMEWORK_REPOSITORY[framework]
@@ -511,6 +512,7 @@ class CreateLLMModelBundleV1UseCase:
                     framework_image_tag,
                     endpoint_name,
                     num_shards,
+                    nodes_per_worker,
                     quantize,
                     checkpoint_path,
                     chat_template_override,
@@ -836,6 +838,7 @@ class CreateLLMModelBundleV1UseCase:
         chat_template_override: Optional[str],
         multinode: bool,
         is_leader: bool,
+        nodes_per_worker: int = 1,  # only used if multinode
     ):
         """
         VLLM start command for the single worker, or the leader in a LeaderWorkerSet.
@@ -865,6 +868,9 @@ class CreateLLMModelBundleV1UseCase:
 
         if is_leader:
             vllm_cmd += f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
+
+            if multinode:
+                vllm_cmd += f" --pipeline-parallel-size {nodes_per_worker}"
             # TODO pipeline parallel also
 
             chat_template_cmd = None
@@ -923,6 +929,7 @@ class CreateLLMModelBundleV1UseCase:
             chat_template_override,
             multinode=False,
             is_leader=True,
+            nodes_per_worker=1,
         )
 
         create_model_bundle_v2_request = CreateModelBundleV2Request(
@@ -963,6 +970,7 @@ class CreateLLMModelBundleV1UseCase:
         framework_image_tag: str,
         endpoint_unique_name: str,
         num_shards: int,
+        nodes_per_worker: int,
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
         chat_template_override: Optional[str],
@@ -976,6 +984,7 @@ class CreateLLMModelBundleV1UseCase:
             chat_template_override,
             multinode=True,
             is_leader=True,
+            nodes_per_worker=nodes_per_worker,
         )
         worker_command = self._create_vllm_bundle_command(
             model_name,
@@ -986,6 +995,7 @@ class CreateLLMModelBundleV1UseCase:
             chat_template_override,
             multinode=True,
             is_leader=False,
+            nodes_per_worker=nodes_per_worker,
         )
 
         # These env vars e.g. leader name, lws name, namespace should be filled in by Launch automatically
@@ -1254,8 +1264,7 @@ class CreateLLMModelEndpointV1UseCase:
             quantize=request.quantize,
             checkpoint_path=request.checkpoint_path,
             chat_template_override=request.chat_template_override,
-            multinode=(request.nodes_per_worker > 1),
-            # TODO multinode size
+            nodes_per_worker=request.nodes_per_worker,
         )
         validate_resource_requests(
             bundle=bundle,
@@ -1514,8 +1523,7 @@ class UpdateLLMModelEndpointV1UseCase:
                 quantize=quantize,
                 checkpoint_path=checkpoint_path,
                 chat_template_override=chat_template_override,
-                multinode=(model_endpoint.infra_state.resource_state.nodes_per_worker > 1),
-                # TODO multinode size
+                nodes_per_worker=model_endpoint.infra_state.resource_state.nodes_per_worker,
             )
 
             metadata = endpoint_record.metadata or {}
