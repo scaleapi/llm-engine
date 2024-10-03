@@ -1008,6 +1008,43 @@ class K8SEndpointResourceDelegate:
                 raise
 
     @staticmethod
+    async def _create_lws_service_entry(lws_service_entry: Dict[str, Any], name: str) -> None:
+        custom_objects_api = get_kubernetes_custom_objects_client()
+        try:
+            await custom_objects_api.create_namespaced_custom_object(
+                group="networking.istio.io",
+                version="v1beta1",
+                namespace=hmi_config.endpoint_namespace,
+                plural="serviceentries",
+                body=lws_service_entry,
+            )
+        except ApiException as exc:
+            if exc.status == 409:
+                logger.info(f"ServiceEntry {name} already exists, replacing")
+                # The async k8s client has a bug with patching custom objects, so we manually
+                # merge the new ServiceEntry with the old one and then replace the old one with the merged
+                # one.
+                existing_service_entry = await custom_objects_api.get_namespaced_custom_object(
+                    group="networking.istio.io",
+                    version="v1beta1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="serviceentries",
+                    name=name,
+                )
+                new_service_entry = deep_update(existing_service_entry, lws_service_entry)
+                await custom_objects_api.replace_namespaced_custom_object(
+                    group="networking.istio.io",
+                    version="v1beta1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="serviceentries",
+                    name=name,
+                    body=new_service_entry,
+                )
+            else:
+                logger.exception("Got an exception when trying to apply the ServiceEntry")
+                raise
+
+    @staticmethod
     async def _create_service(service, name: str) -> None:
         """
         Lower-level function to create/patch a k8s Service
@@ -1313,6 +1350,28 @@ class K8SEndpointResourceDelegate:
                 )
             else:
                 logger.exception(f"Deletion of VirtualService {k8s_resource_group_name} failed")
+                return False
+        return True
+
+    @staticmethod
+    async def _delete_lws_service_entry(endpoint_id: str) -> bool:
+        custom_objects_client = get_kubernetes_custom_objects_client()
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        try:
+            await custom_objects_client.delete_namespaced_custom_object(
+                group="networking.istio.io",
+                version="v1beta1",
+                namespace=hmi_config.endpoint_namespace,
+                plural="serviceentries",
+                name=k8s_resource_group_name,
+            )
+        except ApiException as e:
+            if e.status == 404:
+                logger.warning(
+                    f"Trying to delete nonexistent ServiceEntry {k8s_resource_group_name}"
+                )
+            else:
+                logger.exception(f"Deletion of ServiceEntry {k8s_resource_group_name} failed")
                 return False
         return True
 
@@ -1709,6 +1768,23 @@ class K8SEndpointResourceDelegate:
                 service=service_template,
                 name=k8s_service_name,
             )
+
+            if hmi_config.istio_enabled:
+                lws_service_entry_arguments = get_endpoint_resource_arguments_from_request(
+                    k8s_resource_group_name=k8s_resource_group_name,
+                    request=request,
+                    sqs_queue_name=sqs_queue_name_str,
+                    sqs_queue_url=sqs_queue_url_str,
+                    endpoint_resource_name="lws-service-entry",
+                    service_name_override=k8s_service_name,
+                )
+                lws_service_entry_template = load_k8s_yaml(
+                    "lws-service-entry.yaml", lws_service_entry_arguments
+                )
+                await self._create_lws_service_entry(
+                    lws_service_entry=lws_service_entry_template,
+                    name=k8s_resource_group_name,
+                )
         if model_endpoint_record.endpoint_type in {
             ModelEndpointType.SYNC,
             ModelEndpointType.STREAMING,
@@ -2189,6 +2265,7 @@ class K8SEndpointResourceDelegate:
         )
         await self._delete_vpa(endpoint_id=endpoint_id)
         await self._delete_pdb(endpoint_id=endpoint_id)
+        await self._delete_lws_service_entry(endpoint_id=endpoint_id)
 
         destination_rule_delete_succeeded = await self._delete_destination_rule(
             endpoint_id=endpoint_id

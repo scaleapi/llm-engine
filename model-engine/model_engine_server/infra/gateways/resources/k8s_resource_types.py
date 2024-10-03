@@ -379,6 +379,12 @@ class VirtualServiceArguments(_BaseEndpointArguments):
     DNS_HOST_DOMAIN: str
 
 
+class LwsServiceEntryArguments(_BaseEndpointArguments):
+    """Keyword-arguments for substituting into istio service-entry templates to support LWS."""
+
+    SERVICE_NAME_OVERRIDE: str
+
+
 class BatchJobOrchestrationJobArguments(_JobArguments):
     """Keyword-arguments for substituting into batch-job-orchestration-job templates."""
 
@@ -1342,6 +1348,21 @@ def get_endpoint_resource_arguments_from_request(
             CREATED_BY=created_by,
             OWNER=owner,
             GIT_TAG=GIT_TAG,
+        )
+    elif endpoint_resource_name == "lws-service-entry":
+        return LwsServiceEntryArguments(
+            # Base resource arguments
+            RESOURCE_NAME=k8s_resource_group_name,
+            NAMESPACE=hmi_config.endpoint_namespace,
+            ENDPOINT_ID=model_endpoint_record.id,
+            ENDPOINT_NAME=model_endpoint_record.name,
+            TEAM=team,
+            PRODUCT=product,
+            CREATED_BY=created_by,
+            OWNER=owner,
+            GIT_TAG=GIT_TAG,
+            # LWS Service Entry args
+            SERVICE_NAME_OVERRIDE=service_name_override,
         )
     elif endpoint_resource_name == "vertical-pod-autoscaler":
         return VerticalPodAutoscalerArguments(
