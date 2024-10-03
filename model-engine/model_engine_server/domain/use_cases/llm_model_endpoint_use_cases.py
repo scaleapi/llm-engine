@@ -1951,7 +1951,8 @@ class CompletionSyncV1UseCase:
         manually_resolve_dns = (
             model_endpoint.infra_state is not None
             and model_endpoint.infra_state.resource_state.nodes_per_worker > 1
-        )  # TODO and istio enabled
+            and hmi_config.istio_enabled
+        )
         validated_request = validate_and_update_completion_params(
             endpoint_content.inference_framework, request
         )
@@ -2314,7 +2315,8 @@ class CompletionStreamV1UseCase:
         manually_resolve_dns = (
             model_endpoint.infra_state is not None
             and model_endpoint.infra_state.resource_state.nodes_per_worker > 1
-        )  # TODO and istio enabled
+            and hmi_config.istio_enabled
+        )
 
         args: Any = None
         num_prompt_tokens = None
@@ -2707,7 +2709,8 @@ class ChatCompletionSyncV2UseCase:
         manually_resolve_dns = (
             model_endpoint.infra_state is not None
             and model_endpoint.infra_state.resource_state.nodes_per_worker > 1
-        )  # TODO and istio enabled
+            and hmi_config.istio_enabled
+        )
 
         validate_endpoint_supports_chat_completion(model_endpoint, endpoint_content)
 
@@ -2812,7 +2815,8 @@ class ChatCompletionStreamV2UseCase:
         manually_resolve_dns = (
             model_endpoint.infra_state is not None
             and model_endpoint.infra_state.resource_state.nodes_per_worker > 1
-        )  # TODO and istio enabled
+            and hmi_config.istio_enabled
+        )
         validate_endpoint_supports_chat_completion(model_endpoint, model_content)
 
         # if inference framework is VLLM, we need to set the model to use the weights folder
