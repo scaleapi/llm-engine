@@ -42,7 +42,10 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
 )
 
 
-def _get_sync_endpoint_url(service_name: str, destination_path: str = "/predict") -> str:
+def _get_sync_endpoint_url(
+    service_name: str, destination_path: str = "/predict", manually_resolve_dns: bool = False
+) -> str:
+    # TODO implement hack where we manually resolve DNS
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
         # The IP address is obtained from `minikube ip`.
@@ -163,10 +166,15 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         return {}
 
     async def predict(
-        self, topic: str, predict_request: SyncEndpointPredictV1Request
+        self,
+        topic: str,
+        predict_request: SyncEndpointPredictV1Request,
+        manually_resolve_dns: bool = False,
     ) -> SyncEndpointPredictV1Response:
         deployment_url = _get_sync_endpoint_url(
-            topic, destination_path=predict_request.destination_path or "/predict"
+            topic,
+            destination_path=predict_request.destination_path or "/predict",
+            manually_resolve_dns=manually_resolve_dns,
         )
 
         try:

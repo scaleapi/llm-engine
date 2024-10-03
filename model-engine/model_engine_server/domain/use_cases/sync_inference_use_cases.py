@@ -72,6 +72,12 @@ class CreateSyncInferenceTaskV1UseCase:
             endpoint_id=model_endpoint_id
         )
         # TODO handle lws
+        manually_resolve_dns = (
+            model_endpoint.infra_state is not None
+            and model_endpoint.infra_state.resource_state.nodes_per_worker > 1
+        )  # TODO and istio enabled, also type checking
         return await inference_gateway.predict(
-            topic=model_endpoint.record.destination, predict_request=request
+            topic=model_endpoint.record.destination,
+            predict_request=request,
+            manually_resolve_dns=manually_resolve_dns,
         )

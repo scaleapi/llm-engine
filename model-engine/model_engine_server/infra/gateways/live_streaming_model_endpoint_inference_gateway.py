@@ -45,7 +45,10 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
 )
 
 
-def _get_streaming_endpoint_url(service_name: str, path: str = "/stream") -> str:
+def _get_streaming_endpoint_url(
+    service_name: str, path: str = "/stream", manually_resolve_dns: bool = False
+) -> str:
+    # TODO implement hack where we manually resolve DNS
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
         # The IP address is obtained from `minikube ip`.
@@ -190,10 +193,15 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         raise Exception("Should never reach this line")
 
     async def streaming_predict(
-        self, topic: str, predict_request: SyncEndpointPredictV1Request
+        self,
+        topic: str,
+        predict_request: SyncEndpointPredictV1Request,
+        manually_resolve_dns: bool = False,
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
         deployment_url = _get_streaming_endpoint_url(
-            topic, path=predict_request.destination_path or "/stream"
+            topic,
+            path=predict_request.destination_path or "/stream",
+            manually_resolve_dns=manually_resolve_dns,
         )
 
         try:

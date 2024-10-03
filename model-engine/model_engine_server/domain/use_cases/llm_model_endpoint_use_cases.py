@@ -1947,6 +1947,11 @@ class CompletionSyncV1UseCase:
             endpoint_id=model_endpoint.record.id
         )
         endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+
+        manually_resolve_dns = (
+            model_endpoint.infra_state is not None
+            and model_endpoint.infra_state.resource_state.nodes_per_worker > 1
+        )  # TODO and istio enabled
         validated_request = validate_and_update_completion_params(
             endpoint_content.inference_framework, request
         )
@@ -1979,6 +1984,7 @@ class CompletionSyncV1UseCase:
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
+                manually_resolve_dns=manually_resolve_dns,
             )
 
             if predict_result.status == TaskStatus.SUCCESS and predict_result.result is not None:
@@ -2028,6 +2034,7 @@ class CompletionSyncV1UseCase:
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
+                manually_resolve_dns=manually_resolve_dns,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2087,6 +2094,7 @@ class CompletionSyncV1UseCase:
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
+                manually_resolve_dns=manually_resolve_dns,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2137,6 +2145,7 @@ class CompletionSyncV1UseCase:
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
+                manually_resolve_dns=manually_resolve_dns,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2180,6 +2189,7 @@ class CompletionSyncV1UseCase:
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
+                manually_resolve_dns=manually_resolve_dns,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2300,6 +2310,11 @@ class CompletionStreamV1UseCase:
                 f"request has type {validated_request.__class__.__name__}, expected type CompletionStreamV1Request"
             )
         request = validated_request
+
+        manually_resolve_dns = (
+            model_endpoint.infra_state is not None
+            and model_endpoint.infra_state.resource_state.nodes_per_worker > 1
+        )  # TODO and istio enabled
 
         args: Any = None
         num_prompt_tokens = None
@@ -2432,6 +2447,7 @@ class CompletionStreamV1UseCase:
             inference_gateway=inference_gateway,
             inference_request=inference_request,
             num_prompt_tokens=num_prompt_tokens,
+            manually_resolve_dns=manually_resolve_dns,
         )
 
     async def _response_chunk_generator(
@@ -2443,13 +2459,16 @@ class CompletionStreamV1UseCase:
         inference_gateway: StreamingModelEndpointInferenceGateway,
         inference_request: SyncEndpointPredictV1Request,
         num_prompt_tokens: Optional[int],
+        manually_resolve_dns: bool,
     ) -> AsyncIterable[CompletionStreamV1Response]:
         """
         Async generator yielding tokens to stream for the completions response. Should only be called when
         returned directly by execute().
         """
         predict_result = inference_gateway.streaming_predict(
-            topic=model_endpoint.record.destination, predict_request=inference_request
+            topic=model_endpoint.record.destination,
+            predict_request=inference_request,
+            manually_resolve_dns=manually_resolve_dns,
         )
 
         num_completion_tokens = 0
@@ -2685,6 +2704,11 @@ class ChatCompletionSyncV2UseCase:
         )
         endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
+        manually_resolve_dns = (
+            model_endpoint.infra_state is not None
+            and model_endpoint.infra_state.resource_state.nodes_per_worker > 1
+        )  # TODO and istio enabled
+
         validate_endpoint_supports_chat_completion(model_endpoint, endpoint_content)
 
         # if inference framework is VLLM, we need to set the model to use the weights folder
@@ -2701,6 +2725,7 @@ class ChatCompletionSyncV2UseCase:
             predict_result = await inference_gateway.predict(
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
+                manually_resolve_dns=manually_resolve_dns,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2783,6 +2808,11 @@ class ChatCompletionStreamV2UseCase:
         )
 
         model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+
+        manually_resolve_dns = (
+            model_endpoint.infra_state is not None
+            and model_endpoint.infra_state.resource_state.nodes_per_worker > 1
+        )  # TODO and istio enabled
         validate_endpoint_supports_chat_completion(model_endpoint, model_content)
 
         # if inference framework is VLLM, we need to set the model to use the weights folder
@@ -2802,6 +2832,7 @@ class ChatCompletionStreamV2UseCase:
             model_content=model_content,
             inference_gateway=inference_gateway,
             inference_request=inference_request,
+            manually_resolve_dns=manually_resolve_dns,
         )
 
     async def _response_chunk_generator(
@@ -2811,6 +2842,7 @@ class ChatCompletionStreamV2UseCase:
         model_content: GetLLMModelEndpointV1Response,
         inference_gateway: StreamingModelEndpointInferenceGateway,
         inference_request: SyncEndpointPredictV1Request,
+        manually_resolve_dns: bool,
     ) -> AsyncIterable[ChatCompletionV2SuccessChunk]:
         """
         Async generator yielding tokens to stream for the completions response. Should only be called when
@@ -2820,6 +2852,7 @@ class ChatCompletionStreamV2UseCase:
             predict_result = inference_gateway.streaming_predict(
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
+                manually_resolve_dns=manually_resolve_dns,
             )
         except UpstreamServiceError as exc:
             # Expect upstream inference service to handle bulk of input validation
