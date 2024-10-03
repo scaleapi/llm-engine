@@ -926,6 +926,23 @@ data:
         loadBalancer:
           simple: LEAST_REQUEST
   {{- end }}
+  lws-service-entry.yaml: |-
+    apiVersion: networking.istio.io/v1beta1
+    kind: ServiceEntry
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    spec:
+      hosts:
+      - "${SERVICE_NAME_OVERRIDE}.${NAMESPACE}.svc.cluster.local"
+      location: MESH_EXTERNAL
+      ports:
+      - number: 80
+        name: http
+        protocol: HTTP
+      resolution: NONE
   vertical-pod-autoscaler.yaml: |-
     apiVersion: "autoscaling.k8s.io/v1"
     kind: VerticalPodAutoscaler
