@@ -1,10 +1,12 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypeAlias
 
+from model_engine_server.common.dtos.llms.vllm import VLLMCompletionAdditionalParams
 from model_engine_server.common.pydantic_types import BaseModel, Field
 from model_engine_server.common.types.gen.openai import (
     CreateCompletionRequest,
     CreateCompletionResponse,
 )
+from sse_starlette import EventSourceResponse
 from typing_extensions import Annotated
 
 # Fields that are a part of OpenAI spec but are not supported by model engine
@@ -288,7 +290,7 @@ class TokenUsage(BaseModel):
         return (self.total_duration - self.time_to_first_token) / (self.num_completion_tokens - 1)
 
 
-class CompletionV2Request(CreateCompletionRequest):
+class CompletionV2Request(CreateCompletionRequest, VLLMCompletionAdditionalParams):
     model: Annotated[
         str,
         Field(
@@ -320,5 +322,21 @@ class CompletionV2Request(CreateCompletionRequest):
     ]
 
 
-class CompletionV2Response(CreateCompletionResponse):
-    pass
+CompletionV2SyncResponse: TypeAlias = CreateCompletionResponse
+CompletionV2StreamSuccessChunk: TypeAlias = CreateCompletionResponse
+
+
+class CompletionV2StreamErrorChunk(BaseModel):
+    error: StreamError
+
+
+CompletionV2StreamChunk: TypeAlias = CompletionV2StreamSuccessChunk | CompletionV2StreamErrorChunk
+CompletionV2StreamResponse: TypeAlias = (
+    EventSourceResponse  # EventSourceResponse[CompletionV2StreamChunk]
+)
+
+CompletionV2Response: TypeAlias = CompletionV2SyncResponse | CompletionV2StreamResponse
+
+# This is a version of CompletionV2Response that is used by pydantic to determine the response model
+# Since EventSourceResponse isn't a pydantic model, we need to use a Union of the two response types
+CompletionV2ResponseItem: TypeAlias = CompletionV2SyncResponse | CompletionV2StreamChunk

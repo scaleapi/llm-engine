@@ -34,7 +34,7 @@ def get_config():
     )
 
 
-def get_forwarder_loader(destination_path: Optional[str] = None):
+def get_forwarder_loader(destination_path: Optional[str] = None) -> LoadForwarder:
     config = get_config()["sync"]
     if "extra_routes" in config:
         del config["extra_routes"]
@@ -44,7 +44,9 @@ def get_forwarder_loader(destination_path: Optional[str] = None):
     return forwarder_loader
 
 
-def get_streaming_forwarder_loader(destination_path: Optional[str] = None):
+def get_streaming_forwarder_loader(
+    destination_path: Optional[str] = None,
+) -> LoadStreamingForwarder:
     config = get_config()["stream"]
     if "extra_routes" in config:
         del config["extra_routes"]
@@ -55,7 +57,7 @@ def get_streaming_forwarder_loader(destination_path: Optional[str] = None):
 
 
 @lru_cache()
-def get_concurrency_limiter():
+def get_concurrency_limiter() -> MultiprocessingConcurrencyLimiter:
     config = get_config()
     concurrency = int(config.get("max_concurrency", 100))
     return MultiprocessingConcurrencyLimiter(
@@ -64,27 +66,28 @@ def get_concurrency_limiter():
 
 
 @lru_cache()
-def load_forwarder(destination_path: Optional[str] = None):
+def load_forwarder(destination_path: Optional[str] = None) -> Forwarder:
     return get_forwarder_loader(destination_path).load(None, None)
 
 
 @lru_cache()
-def load_streaming_forwarder(destination_path: Optional[str] = None):
+def load_streaming_forwarder(destination_path: Optional[str] = None) -> StreamingForwarder:
     return get_streaming_forwarder_loader(destination_path).load(None, None)
 
 
-def predict(
+async def predict(
     request: EndpointPredictV1Request,
     background_tasks: BackgroundTasks,
-    forwarder=Depends(load_forwarder),
-    limiter=Depends(get_concurrency_limiter),
+    forwarder: Forwarder = Depends(load_forwarder),
+    limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
 ):
     with limiter:
         try:
-            response = forwarder(request.model_dump())
-            background_tasks.add_task(
-                forwarder.post_inference_hooks_handler.handle, request, response
-            )
+            response = await forwarder.forward(request.model_dump())
+            if forwarder.post_inference_hooks_handler:
+                background_tasks.add_task(
+                    forwarder.post_inference_hooks_handler.handle, request, response
+                )
             return response
         except Exception:
             logger.error(f"Failed to decode payload from: {request}")
@@ -93,8 +96,8 @@ def predict(
 
 async def stream(
     request: EndpointPredictV1Request,
-    forwarder=Depends(load_streaming_forwarder),
-    limiter=Depends(get_concurrency_limiter),
+    forwarder: StreamingForwarder = Depends(load_streaming_forwarder),
+    limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
 ):
     with limiter:
         try:
@@ -105,10 +108,16 @@ async def stream(
         else:
             logger.debug(f"Received request: {payload}")
 
-        responses = forwarder(payload)
+        responses = forwarder.forward(payload)
+        # We fetch the first response to check if upstream request was successful
+        # If it was not, this will raise the corresponding HTTPException
+        # If it was, we will proceed to the event generator
+        initial_response = await responses.__anext__()
 
         async def event_generator():
-            for response in responses:
+            yield {"data": orjson.dumps(initial_response).decode("utf-8")}
+
+            async for response in responses:
                 yield {"data": orjson.dumps(response).decode("utf-8")}
 
         return EventSourceResponse(event_generator())
@@ -181,6 +190,13 @@ async def init_app():
         all_routes = set(list(sync_forwarders.keys()) + list(stream_forwarders.keys()))
 
         for route in all_routes:
+
+            def get_sync_forwarder(route=route):
+                return sync_forwarders.get(route)
+
+            def get_stream_forwarder(route=route):
+                return stream_forwarders.get(route)
+
             # This route is a catch-all for any requests that don't match the /predict or /stream routes
             # It will treat the request as a streaming request if the "stream" body parameter is set to true
             # NOTE: it is important for this to be defined AFTER the /predict and /stream endpoints
@@ -188,8 +204,8 @@ async def init_app():
             async def predict_or_stream(
                 request: EndpointPredictV1Request,
                 background_tasks: BackgroundTasks,
-                sync_forwarder=Depends(lambda: sync_forwarders.get(route)),
-                stream_forwarder=Depends(lambda: stream_forwarders.get(route)),
+                sync_forwarder: Forwarder = Depends(get_sync_forwarder),
+                stream_forwarder: StreamingForwarder = Depends(get_stream_forwarder),
                 limiter=Depends(get_concurrency_limiter),
             ):
                 if not request.args:
@@ -197,7 +213,7 @@ async def init_app():
                 if request.args.root.get("stream", False) and stream_forwarder:
                     return await stream(request, stream_forwarder, limiter)
                 elif request.args.root.get("stream") is not True and sync_forwarder:
-                    return predict(request, background_tasks, sync_forwarder, limiter)
+                    return await predict(request, background_tasks, sync_forwarder, limiter)
                 else:
                     raise Exception("No forwarder configured for this route")
 

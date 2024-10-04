@@ -12,14 +12,14 @@ import os
 import re
 from dataclasses import asdict
 from functools import lru_cache
-from typing import Any, AsyncIterable, Dict, List, Optional, Union
+from typing import Any, AsyncGenerator, AsyncIterable, Dict, List, Optional, Union
 
 import yaml
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import (
     ChatCompletionV2Request,
-    ChatCompletionV2SuccessChunk,
+    ChatCompletionV2StreamSuccessChunk,
     ChatCompletionV2SyncResponse,
     CompletionOutput,
     CompletionStreamOutput,
@@ -49,6 +49,11 @@ from model_engine_server.common.dtos.llms.batch_completion import (
     UpdateBatchCompletionsV2Request,
     UpdateBatchCompletionsV2Response,
     VLLMEngineAdditionalArgs,
+)
+from model_engine_server.common.dtos.llms.completion import (
+    CompletionV2Request,
+    CompletionV2StreamSuccessChunk,
+    CompletionV2SyncResponse,
 )
 from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Request
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
@@ -133,6 +138,9 @@ OPENAI_CHAT_COMPLETION_PATH = "/v1/chat/completions"
 CHAT_TEMPLATE_MAX_LENGTH = 10_000
 CHAT_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM]
 
+OPENAI_COMPLETION_PATH = "/v1/completions"
+OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM]
+
 LLM_METADATA_KEY = "_llm"
 RESERVED_METADATA_KEYS = [LLM_METADATA_KEY, CONVERTED_FROM_ARTIFACT_LIKE_KEY]
 VLLM_MODEL_WEIGHTS_FOLDER = "model_files"
@@ -210,6 +218,8 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "llama-3-1-70b-instruct",
             "llama-3-1-405b",
             "llama-3-1-405b-instruct",
+            "llama-3-2-11b-vision-instruct",
+            "llama-3-2-90b-vision-instruct",
             "falcon-7b",
             "falcon-7b-instruct",
             "falcon-40b",
@@ -887,7 +897,10 @@ class CreateLLMModelBundleV1UseCase:
                         healthcheck_route="/health",
                         predict_route="/predict",
                         streaming_predict_route="/stream",
-                        extra_routes=[OPENAI_CHAT_COMPLETION_PATH],
+                        extra_routes=[
+                            OPENAI_CHAT_COMPLETION_PATH,
+                            OPENAI_COMPLETION_PATH,
+                        ],
                         env={},
                     ),
                     metadata={},
@@ -2436,9 +2449,260 @@ class CompletionStreamV1UseCase:
                 # raising an exception if it is not one of the frameworks handled above.
 
 
+def validate_endpoint_supports_openai_completion(
+    endpoint: ModelEndpoint, endpoint_content: GetLLMModelEndpointV1Response
+):  # pragma: no cover
+    if endpoint_content.inference_framework not in OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS:
+        raise EndpointUnsupportedInferenceTypeException(
+            f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support openai compatible completion."
+        )
+
+    if (
+        not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike)
+        or OPENAI_COMPLETION_PATH not in endpoint.record.current_model_bundle.flavor.extra_routes
+    ):
+        raise EndpointUnsupportedRequestException(
+            "Endpoint does not support v2 openai compatible completion"
+        )
+
+
+class CompletionSyncV2UseCase:
+    """
+    Use case for running a v2 openai compatible completion on an LLM endpoint.
+    """
+
+    def __init__(
+        self,
+        model_endpoint_service: ModelEndpointService,
+        llm_model_endpoint_service: LLMModelEndpointService,
+        tokenizer_repository: TokenizerRepository,
+    ):  # pragma: no cover
+        self.model_endpoint_service = model_endpoint_service
+        self.llm_model_endpoint_service = llm_model_endpoint_service
+        self.authz_module = LiveAuthorizationModule()
+        self.tokenizer_repository = tokenizer_repository
+
+    async def execute(
+        self, user: User, model_endpoint_name: str, request: CompletionV2Request
+    ) -> CompletionV2SyncResponse:  # pragma: no cover
+        """
+        Runs the use case to create a sync inference task.
+
+        Args:
+            user: The user who is creating the sync inference task.
+            model_endpoint_name: The name of the model endpoint for the task.
+            request: The body of the request to forward to the endpoint.
+
+        Returns:
+            A response object that contains the status and result of the task.
+
+        Raises:
+            ObjectNotFoundException: If a model endpoint with the given name could not be found.
+            ObjectNotAuthorizedException: If the owner does not own the model endpoint.
+        """
+
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
+        add_trace_request_id(request_id)
+
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.team_id, name=model_endpoint_name, order_by=None
+        )
+
+        if len(model_endpoints) == 0:
+            raise ObjectNotFoundException
+
+        if len(model_endpoints) > 1:
+            raise ObjectHasInvalidValueException(
+                f"Expected 1 LLM model endpoint for model name {model_endpoint_name}, got {len(model_endpoints)}"
+            )
+
+        model_endpoint = model_endpoints[0]
+
+        if not self.authz_module.check_access_read_owned_entity(
+            user, model_endpoint.record
+        ) and not self.authz_module.check_endpoint_public_inference_for_user(
+            user, model_endpoint.record
+        ):
+            raise ObjectNotAuthorizedException
+
+        if (
+            model_endpoint.record.endpoint_type is not ModelEndpointType.SYNC
+            and model_endpoint.record.endpoint_type is not ModelEndpointType.STREAMING
+        ):
+            raise EndpointUnsupportedInferenceTypeException(
+                f"Endpoint {model_endpoint_name} does not serve sync requests."
+            )
+
+        inference_gateway = self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
+        autoscaling_metrics_gateway = (
+            self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
+        )
+        await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
+            endpoint_id=model_endpoint.record.id
+        )
+        endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+
+        validate_endpoint_supports_openai_completion(model_endpoint, endpoint_content)
+
+        # if inference framework is VLLM, we need to set the model to use the weights folder
+        if endpoint_content.inference_framework == LLMInferenceFramework.VLLM:
+            request.model = VLLM_MODEL_WEIGHTS_FOLDER
+
+        inference_request = SyncEndpointPredictV1Request(
+            args=request.model_dump(exclude_none=True),
+            destination_path=OPENAI_COMPLETION_PATH,
+            num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+            timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
+        )
+        try:
+            predict_result = await inference_gateway.predict(
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
+            )
+
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
+                raise UpstreamServiceError(
+                    status_code=500,
+                    content=(
+                        predict_result.traceback.encode("utf-8")
+                        if predict_result.traceback is not None
+                        else b""
+                    ),
+                )
+
+            output = json.loads(predict_result.result["result"])
+            # reset model name to correct value
+            output["model"] = model_endpoint.record.name
+            return CompletionV2SyncResponse.model_validate(output)
+        except UpstreamServiceError as exc:
+            # Expect upstream inference service to handle bulk of input validation
+            if 400 <= exc.status_code < 500:
+                raise InvalidRequestException(exc.content)
+            raise exc
+
+
+class CompletionStreamV2UseCase:
+    """
+    Use case for running a v2 openai compatible completion on an LLM endpoint.
+    """
+
+    def __init__(
+        self,
+        model_endpoint_service: ModelEndpointService,
+        llm_model_endpoint_service: LLMModelEndpointService,
+        tokenizer_repository: TokenizerRepository,
+    ):  # pragma: no cover
+        self.model_endpoint_service = model_endpoint_service
+        self.llm_model_endpoint_service = llm_model_endpoint_service
+        self.authz_module = LiveAuthorizationModule()
+        self.tokenizer_repository = tokenizer_repository
+
+    async def execute(
+        self, model_endpoint_name: str, request: CompletionV2Request, user: User
+    ) -> AsyncGenerator[CompletionV2StreamSuccessChunk, None]:  # pragma: no cover
+        request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
+        add_trace_request_id(request_id)
+
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.team_id, name=model_endpoint_name, order_by=None
+        )
+
+        if len(model_endpoints) == 0:
+            raise ObjectNotFoundException(f"Model endpoint {model_endpoint_name} not found.")
+
+        if len(model_endpoints) > 1:
+            raise ObjectHasInvalidValueException(
+                f"Expected 1 LLM model endpoint for model name {model_endpoint_name}, got {len(model_endpoints)}"
+            )
+
+        model_endpoint = model_endpoints[0]
+
+        if not self.authz_module.check_access_read_owned_entity(
+            user, model_endpoint.record
+        ) and not self.authz_module.check_endpoint_public_inference_for_user(
+            user, model_endpoint.record
+        ):
+            raise ObjectNotAuthorizedException
+
+        if model_endpoint.record.endpoint_type != ModelEndpointType.STREAMING:
+            raise EndpointUnsupportedInferenceTypeException(
+                f"Endpoint {model_endpoint_name} is not a streaming endpoint."
+            )
+
+        inference_gateway = (
+            self.model_endpoint_service.get_streaming_model_endpoint_inference_gateway()
+        )
+        autoscaling_metrics_gateway = (
+            self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
+        )
+        await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
+            endpoint_id=model_endpoint.record.id
+        )
+
+        model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+        validate_endpoint_supports_openai_completion(model_endpoint, model_content)
+
+        # if inference framework is VLLM, we need to set the model to use the weights folder
+        if model_content.inference_framework == LLMInferenceFramework.VLLM:
+            request.model = VLLM_MODEL_WEIGHTS_FOLDER
+
+        inference_request = SyncEndpointPredictV1Request(
+            args=request.model_dump(exclude_none=True),
+            destination_path=OPENAI_COMPLETION_PATH,
+            num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
+            timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
+        )
+
+        return self._response_chunk_generator(
+            request_id=request_id,
+            model_endpoint=model_endpoint,
+            model_content=model_content,
+            inference_gateway=inference_gateway,
+            inference_request=inference_request,
+        )
+
+    async def _response_chunk_generator(
+        self,
+        request_id: Optional[str],
+        model_endpoint: ModelEndpoint,
+        model_content: GetLLMModelEndpointV1Response,
+        inference_gateway: StreamingModelEndpointInferenceGateway,
+        inference_request: SyncEndpointPredictV1Request,
+    ) -> AsyncGenerator[CompletionV2StreamSuccessChunk, None]:  # pragma: no cover
+        """
+        Async generator yielding tokens to stream for the completions response. Should only be called when
+        returned directly by execute().
+        """
+        try:
+            predict_result = inference_gateway.streaming_predict(
+                topic=model_endpoint.record.destination,
+                predict_request=inference_request,
+            )
+        except UpstreamServiceError as exc:
+            # Expect upstream inference service to handle bulk of input validation
+            if 400 <= exc.status_code < 500:
+                raise InvalidRequestException(str(exc))
+
+            raise exc
+
+        async for res in predict_result:
+            if not res.status == TaskStatus.SUCCESS or res.result is None:
+                raise UpstreamServiceError(
+                    status_code=500,
+                    content=(res.traceback.encode("utf-8") if res.traceback is not None else b""),
+                )
+            else:
+                result = res.result["result"]
+                # Reset model name to correct value
+                if "DONE" in result:
+                    continue
+                result["model"] = model_endpoint.record.name
+                yield CompletionV2StreamSuccessChunk.model_validate(result)
+
+
 def validate_endpoint_supports_chat_completion(
     endpoint: ModelEndpoint, endpoint_content: GetLLMModelEndpointV1Response
-):
+):  # pragma: no cover
     if endpoint_content.inference_framework not in CHAT_SUPPORTED_INFERENCE_FRAMEWORKS:
         raise EndpointUnsupportedInferenceTypeException(
             f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support chat completion."
@@ -2585,7 +2849,7 @@ class ChatCompletionStreamV2UseCase:
 
     async def execute(
         self, model_endpoint_name: str, request: ChatCompletionV2Request, user: User
-    ) -> AsyncIterable[ChatCompletionV2SuccessChunk]:  # pragma: no cover
+    ) -> AsyncGenerator[ChatCompletionV2StreamSuccessChunk, None]:  # pragma: no cover
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
@@ -2654,7 +2918,7 @@ class ChatCompletionStreamV2UseCase:
         model_content: GetLLMModelEndpointV1Response,
         inference_gateway: StreamingModelEndpointInferenceGateway,
         inference_request: SyncEndpointPredictV1Request,
-    ) -> AsyncIterable[ChatCompletionV2SuccessChunk]:
+    ) -> AsyncGenerator[ChatCompletionV2StreamSuccessChunk, None]:
         """
         Async generator yielding tokens to stream for the completions response. Should only be called when
         returned directly by execute().
@@ -2683,7 +2947,7 @@ class ChatCompletionStreamV2UseCase:
                 if "DONE" in result:
                     continue
                 result["model"] = model_endpoint.record.name
-                yield ChatCompletionV2SuccessChunk.model_validate(result)
+                yield ChatCompletionV2StreamSuccessChunk.model_validate(result)
 
 
 class ModelDownloadV1UseCase:

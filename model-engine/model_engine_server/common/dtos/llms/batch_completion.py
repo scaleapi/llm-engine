@@ -1,6 +1,5 @@
-# Make sure to keep this in sync with inference/batch_inference/dto.py.
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from model_engine_server.common.dtos.llms.chat_completion import (
     ChatCompletionV2Request,
@@ -9,7 +8,7 @@ from model_engine_server.common.dtos.llms.chat_completion import (
 from model_engine_server.common.dtos.llms.completion import (
     CompletionOutput,
     CompletionV2Request,
-    CompletionV2Response,
+    CompletionV2SyncResponse,
 )
 from model_engine_server.common.dtos.llms.vllm import VLLMModelConfig
 from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Field
@@ -197,15 +196,16 @@ class FilteredChatCompletionV2Request(ChatCompletionV2Request):
 
 
 # V2 DTOs for batch completions
-CompletionRequest: TypeAlias = Union[FilteredCompletionV2Request, FilteredChatCompletionV2Request]
-CompletionResponse: TypeAlias = Union[CompletionV2Response, ChatCompletionV2SyncResponse]
-CreateBatchCompletionsV2RequestContent: TypeAlias = Union[
-    List[FilteredCompletionV2Request], List[FilteredChatCompletionV2Request]
-]
+CompletionRequest: TypeAlias = FilteredCompletionV2Request | FilteredChatCompletionV2Request
+CompletionResponse: TypeAlias = CompletionV2SyncResponse | ChatCompletionV2SyncResponse
+CreateBatchCompletionsV2RequestContent: TypeAlias = (
+    List[FilteredCompletionV2Request] | List[FilteredChatCompletionV2Request]
+)
+
 CreateBatchCompletionsV2ModelConfig: TypeAlias = BatchCompletionsModelConfig
-BatchCompletionContent = Union[
-    CreateBatchCompletionsV1RequestContent, CreateBatchCompletionsV2RequestContent
-]
+BatchCompletionContent = (
+    CreateBatchCompletionsV1RequestContent | CreateBatchCompletionsV2RequestContent
+)
 
 
 class CreateBatchCompletionsV2Request(BatchCompletionsRequestBase):

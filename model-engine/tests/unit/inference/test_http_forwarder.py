@@ -6,7 +6,8 @@ from unittest import mock
 
 import pytest
 import requests_mock
-from fastapi import BackgroundTasks
+from aioresponses import aioresponses
+from fastapi import BackgroundTasks, FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
@@ -310,15 +311,15 @@ def mocked_get_endpoint_config():
     "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
     mocked_get_endpoint_config,
 )
-async def mocked_app():
+async def mocked_app() -> FastAPI:
     with requests_mock.Mocker() as req_mock:
         healthcheck_endpoint = get_healthcheck_endpoint(mocked_get_config_with_extra_paths())
-        print(healthcheck_endpoint)
         req_mock.get(
             healthcheck_endpoint,
             json={"status": "ok"},
         )
-        return await init_app()
+        app = await init_app()
+        return app
 
 
 def wrap_request(request):
@@ -356,14 +357,19 @@ async def test_mocked_app_success(mocked_app):
     expected_result = wrap_result(
         json.dumps(raw_result) if config_sync["serialize_results_as_string"] else raw_result
     )
-    with TestClient(mocked_app) as client, requests_mock.Mocker() as req_mock:
-        req_mock.get(healthcheck_endpoint, json={"status": "ok"})
-        req_mock.post(predict_endpoint, json=raw_result)
+    with TestClient(
+        mocked_app
+    ) as client, aioresponses() as aio_mock, requests_mock.Mocker() as req_mock:
+        req_mock.get(
+            healthcheck_endpoint,
+            json={"status": "ok"},
+        )
+        aio_mock.post(predict_endpoint, status=200, payload=raw_result)
         response = client.post("/predict", json=payload)
         assert response.status_code == 200
         assert response.json() == expected_result
 
-        req_mock.post(chat_endpoint, json=raw_result)
+        aio_mock.post(chat_endpoint, status=200, payload=raw_result)
         response = client.post("/v1/chat/completions", json=payload)
         assert response.status_code == 200
         assert response.json() == expected_result

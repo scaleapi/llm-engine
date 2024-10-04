@@ -119,7 +119,8 @@ def create_celery_service(
                 )
             request_params = args[0]
             request_params_pydantic = EndpointPredictV1Request.parse_obj(request_params)
-            forwarder.post_inference_hooks_handler.handle(request_params_pydantic, retval, task_id)  # type: ignore
+            if forwarder.post_inference_hooks_handler:
+                forwarder.post_inference_hooks_handler.handle(request_params_pydantic, retval, task_id)  # type: ignore
 
     # See documentation for options:
     # https://docs.celeryproject.org/en/stable/userguide/tasks.html#list-of-options
