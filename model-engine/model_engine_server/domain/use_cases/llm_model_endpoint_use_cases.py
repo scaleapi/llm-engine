@@ -498,7 +498,6 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path: Optional[str],
         chat_template_override: Optional[str],
         nodes_per_worker: int,
-        # TODO multinode_size instead of multinode
     ) -> ModelBundle:
         multinode = nodes_per_worker > 1
         if source == LLMSource.HUGGING_FACE:

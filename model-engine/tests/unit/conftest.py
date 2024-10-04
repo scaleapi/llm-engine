@@ -1518,7 +1518,7 @@ class FakeStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         ]
 
     async def streaming_predict(
-        self, topic: str, predict_request: EndpointPredictV1Request
+        self, topic: str, predict_request: EndpointPredictV1Request, manually_resolve_dns: bool = False
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
         """
         Runs a prediction request and returns a response.
@@ -1539,7 +1539,7 @@ class FakeSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
             self.response = fake_sync_inference_content
 
     async def predict(
-        self, topic: str, predict_request: EndpointPredictV1Request
+        self, topic: str, predict_request: EndpointPredictV1Request, manually_resolve_dns: bool = False
     ) -> SyncEndpointPredictV1Response:
         """
         Runs a prediction request and returns a response.

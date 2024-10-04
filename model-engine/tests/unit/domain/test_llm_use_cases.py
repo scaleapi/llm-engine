@@ -297,7 +297,7 @@ async def test_create_model_bundle_fails_if_no_checkpoint(
             quantize=request.quantize,
             checkpoint_path=checkpoint_path,
             chat_template_override=request.chat_template_override,
-            multinode=False,
+            nodes_per_worker=1,
         )
 
 
