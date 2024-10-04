@@ -21,6 +21,7 @@ from model_engine_server.domain.exceptions import (
 from model_engine_server.domain.gateways.sync_model_endpoint_inference_gateway import (
     SyncModelEndpointInferenceGateway,
 )
+from model_engine_server.infra.gateways.dns_resolver import resolve_dns
 from model_engine_server.infra.gateways.k8s_resource_parser import get_node_port
 from tenacity import (
     AsyncRetrying,
@@ -55,6 +56,9 @@ def _get_sync_endpoint_url(
         # local development: the svc.cluster.local address is only available w/in the k8s cluster
         protocol = "https"
         hostname = f"{service_name}.{infra_config().dns_host_domain}"
+    elif manually_resolve_dns:
+        protocol = "http"
+        hostname = resolve_dns(service_name, port=protocol)
     else:
         protocol = "http"
         # no need to hit external DNS resolution if we're w/in the k8s cluster
