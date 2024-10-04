@@ -212,7 +212,6 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 timeout_seconds=timeout_seconds,
                 num_retries=num_retries,
             )
-            print(response)
             async for item in response:
                 yield SyncEndpointPredictV1Response(status=TaskStatus.SUCCESS, result=item)
         except UpstreamServiceError as exc:
