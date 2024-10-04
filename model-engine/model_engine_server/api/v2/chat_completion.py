@@ -135,7 +135,6 @@ async def handle_stream_request(
                         ttft = timer.lap()
                     # if ttft is None and message.startswith("data"):
                     #     ttft = timer.lap()
-                    print("message", message.model_dump_json(exclude_none=True))
                     yield {"data": message.model_dump_json(exclude_none=True)}
 
                 if message:
