@@ -880,7 +880,6 @@ class CreateLLMModelBundleV1UseCase:
 
             if multinode:
                 vllm_cmd += f" --pipeline-parallel-size {nodes_per_worker}"
-            # TODO pipeline parallel also
 
             chat_template_cmd = None
             if chat_template_override:
@@ -1012,11 +1011,11 @@ class CreateLLMModelBundleV1UseCase:
 
         # These env vars e.g. leader name, lws name, namespace should be filled in by Launch automatically
         common_vllm_envs = {
-            "VLLM_HOST_IP": "$(K8S_OWN_POD_NAME).$(K8S_LWS_NAME).$(K8S_OWN_NAMESPACE).svc.cluster.local",  # TODO this should be different for each node, try $(K8S_OWN_POD_NAME).$(K8S_OWN_NAMESPACE)
+            "VLLM_HOST_IP": "$(K8S_OWN_POD_NAME).$(K8S_LWS_NAME).$(K8S_OWN_NAMESPACE).svc.cluster.local",  # this needs to match what's given as --own-address in the vllm start command
             "NCCL_SOCKET_IFNAME": "eth0",
             "GLOO_SOCKET_IFNAME": "eth0",  # maybe don't need
-            "NCCL_DEBUG": "INFO",  # TODO remove once fully tested
-            "VLLM_LOGGING_LEVEL": "INFO",  # TODO remove once fully tested
+            "NCCL_DEBUG": "INFO",  # TODO remove once fully tested, will keep around for now
+            "VLLM_LOGGING_LEVEL": "INFO",  # TODO remove once fully tested, will keep around for now
             "RAY_CLUSTER_SIZE": "$(K8S_LWS_CLUSTER_SIZE)",
         }
 

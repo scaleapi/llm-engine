@@ -314,7 +314,7 @@ def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
                     "fieldRef": {"fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/name']"}
                 },
             },
-            {  # TODO this might not work"
+            {  # This may not do anything actually, prefer to use LWS_LEADER_ADDRESS instead
                 "name": "K8S_LWS_LEADER_NAME",
                 "valueFrom": {
                     "fieldRef": {
@@ -525,7 +525,7 @@ class K8SEndpointResourceDelegate:
                 "labels"
             ]
         except KeyError:
-            labels = None  # TODO do we need to parse this into an object? Hope not!
+            labels = None
 
         common_build_endpoint_request: CommonEndpointParams = dict(
             cpus=cpus,
@@ -1178,7 +1178,6 @@ class K8SEndpointResourceDelegate:
             endpoint_config=endpoint_config,
         )
 
-    # TODO test
     @staticmethod
     async def _delete_lws(endpoint_id: str) -> bool:
         custom_objects_client = get_kubernetes_custom_objects_client()
@@ -1524,7 +1523,7 @@ class K8SEndpointResourceDelegate:
     def _get_lws_service_resource_name(k8s_resource_group_name: str):
         return f"{k8s_resource_group_name}-leader"
 
-    async def _create_or_update_resources(  # TODO think this is correct, need to e2e test
+    async def _create_or_update_resources(
         self,
         request: CreateOrUpdateResourcesRequest,
         sqs_queue_name: Optional[str] = None,
@@ -1540,7 +1539,7 @@ class K8SEndpointResourceDelegate:
         model_endpoint_record = build_endpoint_request.model_endpoint_record
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(
             build_endpoint_request.model_endpoint_record.id
-        )  # TODO check if this equals k8s_service_name
+        )
 
         if request.build_endpoint_request.nodes_per_worker > 1:
             lws_resource_name = self._get_lws_resource_name(request)
@@ -1762,7 +1761,6 @@ class K8SEndpointResourceDelegate:
                 service_name_override=k8s_service_name,
                 endpoint_resource_name="lws-service",
             )
-            # TODO this doesn't quite work actually, we need lws_service with a different setup
             service_template = load_k8s_yaml("lws-service.yaml", service_arguments)
             await self._create_service(
                 service=service_template,
@@ -2018,7 +2016,7 @@ class K8SEndpointResourceDelegate:
         # Assume leader + worker share the same user-set env vars
         common_params = self._get_common_endpoint_params_for_lws_type(lws_config)
 
-        replicas = lws_config["spec"]["replicas"]  # TODO
+        replicas = lws_config["spec"]["replicas"]
         prewarm = False  # not provided here
         high_priority = (
             lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
@@ -2038,7 +2036,7 @@ class K8SEndpointResourceDelegate:
             high_priority=high_priority,
             deployment_state=ModelEndpointDeploymentState(
                 min_workers=replicas,
-                max_workers=replicas,
+                max_workers=replicas,  # We don't have any notion of autoscaling for LWS
                 per_worker=int(1),  # TODO update this if we support LWS autoscaling
                 available_workers=replicas,  # TODO unfortunately it doesn't look like we can get this from the LWS CRD, so this is kind of a dummy value
                 unavailable_workers=0,
@@ -2061,7 +2059,7 @@ class K8SEndpointResourceDelegate:
 
         return infra_state
 
-    async def _get_all_resources(  # TODO multinode
+    async def _get_all_resources(
         self,
     ) -> Dict[str, Tuple[bool, ModelEndpointInfraState]]:
         apps_client = get_kubernetes_apps_client()
@@ -2105,7 +2103,6 @@ class K8SEndpointResourceDelegate:
                 raise
 
         try:
-            # TODO test?
             leader_worker_sets = (
                 await custom_objects_client.list_namespaced_custom_object(
                     group="leaderworkerset.x-k8s.io",
@@ -2227,7 +2224,7 @@ class K8SEndpointResourceDelegate:
 
     async def _delete_resources_async(self, endpoint_id: str, deployment_name: str) -> bool:
 
-        # TODO multinode (but not really)
+        # TODO multinode if we ever decide to support that
         lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
         deployment_delete_succeeded = await self._delete_deployment(
             endpoint_id=endpoint_id, deployment_name=deployment_name
@@ -2240,7 +2237,6 @@ class K8SEndpointResourceDelegate:
         return (deployment_delete_succeeded or lws_delete_succeeded) and config_map_delete_succeeded
 
     async def _delete_resources_sync(self, endpoint_id: str, deployment_name: str) -> bool:
-        # TODO multinode
         lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
 
         deployment_delete_succeeded = await self._delete_deployment(

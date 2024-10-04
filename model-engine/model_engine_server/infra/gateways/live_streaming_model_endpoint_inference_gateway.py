@@ -49,7 +49,6 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
 def _get_streaming_endpoint_url(
     service_name: str, path: str = "/stream", manually_resolve_dns: bool = False
 ) -> str:
-    # TODO implement hack where we manually resolve DNS
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
         # The IP address is obtained from `minikube ip`.
