@@ -58,7 +58,9 @@ def _get_sync_endpoint_url(
         hostname = f"{service_name}.{infra_config().dns_host_domain}"
     elif manually_resolve_dns:
         protocol = "http"
-        hostname = resolve_dns(service_name, port=protocol)
+        hostname = resolve_dns(
+            f"{service_name}.{hmi_config.endpoint_namespace}.svc.cluster.local", port=protocol
+        )
     else:
         protocol = "http"
         # no need to hit external DNS resolution if we're w/in the k8s cluster
