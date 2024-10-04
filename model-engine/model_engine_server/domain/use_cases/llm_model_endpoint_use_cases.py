@@ -1000,7 +1000,7 @@ class CreateLLMModelBundleV1UseCase:
 
         # These env vars e.g. leader name, lws name, namespace should be filled in by Launch automatically
         common_vllm_envs = {
-            "VLLM_HOST_IP": "$(K8S_OWN_POD_NAME).$(K8S_OWN_NAMESPACE).svc.cluster.local",  # TODO this should be different for each node, try $(K8S_OWN_POD_NAME).$(K8S_OWN_NAMESPACE)
+            "VLLM_HOST_IP": "$(K8S_OWN_POD_NAME).$(K8S_LWS_NAME).$(K8S_OWN_NAMESPACE).svc.cluster.local",  # TODO this should be different for each node, try $(K8S_OWN_POD_NAME).$(K8S_OWN_NAMESPACE)
             "NCCL_SOCKET_IFNAME": "eth0",
             "GLOO_SOCKET_IFNAME": "eth0",  # maybe don't need
             "NCCL_DEBUG": "INFO",  # TODO remove once fully tested
