@@ -164,7 +164,9 @@ class Forwarder(ModelEngineSerializationMixin):
                     json=json_payload,
                     headers={"Content-Type": "application/json"},
                 )
-                response = await response_raw.json()
+                response = await response_raw.json(
+                    content_type=None
+                )  # [Bug] upstream service doesn't always have the content type header set which causes aiohttp to error
 
         except Exception:
             logger.exception(
@@ -405,7 +407,9 @@ class StreamingForwarder(ModelEngineSerializationMixin):
                 )
 
                 if response.status != 200:
-                    raise HTTPException(status_code=response.status, detail=await response.json())
+                    raise HTTPException(
+                        status_code=response.status, detail=await response.json(content_type=None)
+                    )  # [Bug] upstream service doesn't always have the content type header set which causes aiohttp to error
 
                 async with EventSource(response=response) as event_source:
                     async for event in event_source:
