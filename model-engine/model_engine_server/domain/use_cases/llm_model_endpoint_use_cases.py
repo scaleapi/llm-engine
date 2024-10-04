@@ -869,8 +869,8 @@ class CreateLLMModelBundleV1UseCase:
         if is_leader:
             vllm_cmd += f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
 
-            if multinode:
-                vllm_cmd += f" --pipeline-parallel-size {nodes_per_worker}"
+            # if multinode:
+            #     vllm_cmd += f" --pipeline-parallel-size {nodes_per_worker}"
             # TODO pipeline parallel also
 
             chat_template_cmd = None
