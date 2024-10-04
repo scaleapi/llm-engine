@@ -165,7 +165,7 @@ def update_model_endpoint_request(
 
 
 @pytest.fixture
-def create_docker_image_batch_job_bundle_request() -> (CreateDockerImageBatchJobBundleV1Request):
+def create_docker_image_batch_job_bundle_request() -> CreateDockerImageBatchJobBundleV1Request:
     return CreateDockerImageBatchJobBundleV1Request(
         name="name",
         image_repository="repo",
@@ -344,7 +344,7 @@ def create_llm_model_endpoint_request_llama_3_70b() -> CreateLLMModelEndpointV1R
 
 
 @pytest.fixture
-def create_llm_model_endpoint_request_llama_3_70b_chat() -> (CreateLLMModelEndpointV1Request):
+def create_llm_model_endpoint_request_llama_3_70b_chat() -> CreateLLMModelEndpointV1Request:
     return CreateLLMModelEndpointV1Request(
         name="test_llm_endpoint_name_llama_3_70b_chat",
         model_name="llama-3-70b",
@@ -461,7 +461,7 @@ def create_llm_model_endpoint_text_generation_inference_request_async() -> (
 
 
 @pytest.fixture
-def create_llm_model_endpoint_trt_llm_request_streaming() -> (CreateLLMModelEndpointV1Request):
+def create_llm_model_endpoint_trt_llm_request_streaming() -> CreateLLMModelEndpointV1Request:
     return CreateLLMModelEndpointV1Request(
         name="test_llm_endpoint_name_trt_llm_streaming",
         model_name="llama-2-7b",
@@ -489,7 +489,7 @@ def create_llm_model_endpoint_trt_llm_request_streaming() -> (CreateLLMModelEndp
 
 
 @pytest.fixture
-def create_llm_model_endpoint_trt_llm_request_async() -> (CreateLLMModelEndpointV1Request):
+def create_llm_model_endpoint_trt_llm_request_async() -> CreateLLMModelEndpointV1Request:
     return CreateLLMModelEndpointV1Request(
         name="test_llm_endpoint_name_tgi_async",
         model_name="llama-2-7b",
@@ -518,7 +518,7 @@ def create_llm_model_endpoint_trt_llm_request_async() -> (CreateLLMModelEndpoint
 
 
 @pytest.fixture
-def create_llm_model_endpoint_request_invalid_model_name() -> (CreateLLMModelEndpointV1Request):
+def create_llm_model_endpoint_request_invalid_model_name() -> CreateLLMModelEndpointV1Request:
     return CreateLLMModelEndpointV1Request(
         name="test_llm_endpoint_name_1",
         model_name="nonexist",
@@ -545,7 +545,7 @@ def create_llm_model_endpoint_request_invalid_model_name() -> (CreateLLMModelEnd
 
 
 @pytest.fixture
-def create_llm_model_endpoint_request_invalid_quantization() -> (CreateLLMModelEndpointV1Request):
+def create_llm_model_endpoint_request_invalid_quantization() -> CreateLLMModelEndpointV1Request:
     return CreateLLMModelEndpointV1Request(
         name="test_llm_endpoint_name_1",
         model_name="nonexist",

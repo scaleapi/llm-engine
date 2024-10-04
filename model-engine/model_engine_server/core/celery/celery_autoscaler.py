@@ -68,7 +68,7 @@ class CeleryAutoscalerParams:
 
 
 def _hash_any_to_int(data: Any):
-    return int(hashlib.md5(str(data).encode()).hexdigest(), 16)
+    return int(hashlib.md5(str(data).encode()).hexdigest(), 16)  # nosemgrep
 
 
 async def list_deployments(core_api, apps_api) -> Dict[Tuple[str, str], CeleryAutoscalerParams]:
@@ -593,9 +593,7 @@ async def main():
     broker_type = (
         "redis"
         if isinstance(broker, RedisBroker)
-        else "sqs"
-        if isinstance(broker, SQSBroker)
-        else "servicebus"
+        else "sqs" if isinstance(broker, SQSBroker) else "servicebus"
     )
 
     if broker_type == "redis":

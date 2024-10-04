@@ -11,15 +11,14 @@ from model_engine_server.api.dependencies import (
 )
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.llms import (
-    ChatCompletionV2Request,
-    ChatCompletionV2Response,
-    ChatCompletionV2ResponseItem,
-    ChatCompletionV2StreamErrorChunk,
+    CompletionV2Request,
+    CompletionV2Response,
+    CompletionV2StreamErrorChunk,
     StreamError,
     StreamErrorContent,
     TokenUsage,
 )
-from model_engine_server.common.dtos.llms.chat_completion import ChatCompletionV2StreamSuccessChunk
+from model_engine_server.common.dtos.llms.completion import CompletionV2StreamSuccessChunk
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import (
     LoggerTagKey,
@@ -39,8 +38,8 @@ from model_engine_server.domain.exceptions import (
 )
 from model_engine_server.domain.gateways.monitoring_metrics_gateway import MetricMetadata
 from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
-    ChatCompletionStreamV2UseCase,
-    ChatCompletionSyncV2UseCase,
+    CompletionStreamV2UseCase,
+    CompletionSyncV2UseCase,
 )
 from sse_starlette import EventSourceResponse
 
@@ -48,7 +47,7 @@ from .common import get_metric_metadata, record_route_call
 
 logger = make_logger(logger_name())
 
-chat_router_v2 = APIRouter(dependencies=[Depends(record_route_call)])
+completion_router_v2 = APIRouter(dependencies=[Depends(record_route_call)])
 
 
 def handle_streaming_exception(
@@ -66,7 +65,7 @@ def handle_streaming_exception(
     }
     logger.error("Exception: %s", structured_log)
     return {
-        "data": ChatCompletionV2StreamErrorChunk(
+        "data": CompletionV2StreamErrorChunk(
             request_id=str(request_id),
             error=StreamError(
                 status_code=code,
@@ -82,12 +81,12 @@ def handle_streaming_exception(
 async def handle_stream_request(
     external_interfaces: ExternalInterfaces,
     background_tasks: BackgroundTasks,
-    request: ChatCompletionV2Request,
+    request: CompletionV2Request,
     auth: User,
     model_endpoint_name: str,
     metric_metadata: MetricMetadata,
 ):  # pragma: no cover
-    use_case = ChatCompletionStreamV2UseCase(
+    use_case = CompletionStreamV2UseCase(
         model_endpoint_service=external_interfaces.model_endpoint_service,
         llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
         tokenizer_repository=external_interfaces.tokenizer_repository,
@@ -102,7 +101,7 @@ async def handle_stream_request(
             # We fetch the first response to check if upstream request was successful
             # If it was not, this will raise the corresponding HTTPException
             # If it was, we will proceed to the event generator
-            first_message: ChatCompletionV2StreamSuccessChunk = await response.__anext__()
+            first_message: CompletionV2StreamSuccessChunk = await response.__anext__()
         except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
             raise HTTPException(
                 status_code=404,
@@ -129,13 +128,11 @@ async def handle_stream_request(
                 ttft = None
                 message = None
                 yield {"data": first_message.model_dump_json(exclude_none=True)}
-
                 async for message in response:
                     if ttft is None:
                         ttft = timer.lap()
                     # if ttft is None and message.startswith("data"):
                     #     ttft = timer.lap()
-                    print("message", message.model_dump_json(exclude_none=True))
                     yield {"data": message.model_dump_json(exclude_none=True)}
 
                 if message:
@@ -171,19 +168,19 @@ async def handle_stream_request(
                     exc, 500, "Internal error occurred. Our team has been notified."
                 )
 
-        return EventSourceResponse(event_generator(timer=use_case_timer))
+        return EventSourceResponse(event_generator())
 
 
 async def handle_sync_request(
     external_interfaces: ExternalInterfaces,
-    request: ChatCompletionV2Request,
+    request: CompletionV2Request,
     background_tasks: BackgroundTasks,
     auth: User,
     model_endpoint_name: str,
     metric_metadata: MetricMetadata,
 ):
     try:
-        use_case = ChatCompletionSyncV2UseCase(
+        use_case = CompletionSyncV2UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,
             llm_model_endpoint_service=external_interfaces.llm_model_endpoint_service,
             tokenizer_repository=external_interfaces.tokenizer_repository,
@@ -249,22 +246,22 @@ def to_error_details(exc: Exception) -> Any:
         return exc.args
 
 
-@chat_router_v2.post("/chat/completions", response_model=ChatCompletionV2ResponseItem)
-async def chat_completion(
-    request: ChatCompletionV2Request,
+@completion_router_v2.post("/completions", response_model=CompletionV2Response)
+async def completion(
+    request: CompletionV2Request,
     background_tasks: BackgroundTasks,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
     metric_metadata: MetricMetadata = Depends(get_metric_metadata),
-) -> ChatCompletionV2Response:  # pragma: no cover
+) -> CompletionV2Response:  # pragma: no cover
     model_endpoint_name = request.model
     if hmi_config.sensitive_log_mode:
         logger.info(
-            f"POST /v2/chat/completion ({('stream' if request.stream else 'sync')}) to endpoint {model_endpoint_name} for {auth}"
+            f"POST /v2/completion ({('stream' if request.stream else 'sync')}) to endpoint {model_endpoint_name} for {auth}"
         )
     else:
         logger.info(
-            f"POST /v2/chat/completion ({('stream' if request.stream else 'sync')}) with {request} to endpoint {model_endpoint_name} for {auth}"
+            f"POST /v2/completion ({('stream' if request.stream else 'sync')}) with {request} to endpoint {model_endpoint_name} for {auth}"
         )
 
     if request.stream:

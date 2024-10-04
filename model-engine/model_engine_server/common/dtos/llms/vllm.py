@@ -1,12 +1,41 @@
 from typing import Any, Dict, List, Optional
 
-from model_engine_server.common.pydantic_types import Field
+from model_engine_server.common.pydantic_types import BaseModel, Field
+from model_engine_server.common.types.gen.openai import (
+    ResponseFormatJsonObject,
+    ResponseFormatJsonSchema,
+    ResponseFormatText,
+)
 from typing_extensions import Annotated
 
 # This was last synced w/ vLLM v0.5.5 on 2024-09-03
 
 
-class VLLMSamplingParams:
+class VLLMModelConfig(BaseModel):
+    """Model configuration for VLLM"""
+
+    max_model_len: Optional[int] = Field(
+        None,
+        description="""Model context length, If unspecified, will be automatically derived from the model config""",
+    )
+
+    max_num_seqs: Optional[int] = Field(
+        None,
+        description="""Maximum number of sequences per iteration""",
+    )
+
+    enforce_eager: Optional[bool] = Field(
+        None,
+        description="""Always use eager-mode PyTorch. If False, will use eager mode and CUDA graph in hybrid for maximal perforamnce and flexibility""",
+    )
+
+    gpu_memory_utilization: Optional[float] = Field(
+        None,
+        description="Maximum GPU memory utilization for the batch inference. Default to 90%.",
+    )
+
+
+class VLLMSamplingParams(BaseModel):
     best_of: Optional[int] = Field(
         None,
         description="""Number of output sequences that are generated from the prompt.
@@ -106,6 +135,62 @@ class VLLMChatCompletionAdditionalParams(VLLMSamplingParams):
         description=(
             "Additional kwargs to pass to the template renderer. "
             "Will be accessible by the chat template."
+        ),
+    )
+
+    guided_json: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="JSON schema for guided decoding. Only supported in vllm.",
+    )
+
+    guided_regex: Optional[str] = Field(
+        default=None,
+        description="Regex for guided decoding. Only supported in vllm.",
+    )
+    guided_choice: Optional[List[str]] = Field(
+        default=None,
+        description="Choices for guided decoding. Only supported in vllm.",
+    )
+
+    guided_grammar: Optional[str] = Field(
+        default=None,
+        description="Context-free grammar for guided decoding. Only supported in vllm.",
+    )
+
+    guided_decoding_backend: Optional[str] = Field(
+        default=None,
+        description=(
+            "If specified, will override the default guided decoding backend "
+            "of the server for this specific request. If set, must be either "
+            "'outlines' / 'lm-format-enforcer'"
+        ),
+    )
+
+    guided_whitespace_pattern: Optional[str] = Field(
+        default=None,
+        description=(
+            "If specified, will override the default whitespace pattern "
+            "for guided json decoding."
+        ),
+    )
+
+
+class VLLMCompletionAdditionalParams(VLLMSamplingParams):
+    add_special_tokens: Optional[bool] = Field(
+        default=None,
+        description=(
+            "If true (the default), special tokens (e.g. BOS) will be added to " "the prompt."
+        ),
+    )
+
+    response_format: Optional[
+        ResponseFormatText | ResponseFormatJsonObject | ResponseFormatJsonSchema
+    ] = Field(
+        default=None,
+        description=(
+            "Similar to chat completion, this parameter specifies the format of "
+            "output. Only {'type': 'json_object'} or {'type': 'text' } is "
+            "supported."
         ),
     )
 

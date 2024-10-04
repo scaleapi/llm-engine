@@ -4,13 +4,16 @@ import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, AsyncGenerator, Iterable, List, Optional, Sequence, Tuple
 
+import aiohttp
+import orjson
 import requests
 import sseclient
 import yaml
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
+from model_engine_server.common.aiohttp_sse_client import EventSource
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.inference.common import get_endpoint_config
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
@@ -122,6 +125,10 @@ def parse_to_object_or_string(value: str) -> object:
         return value
 
 
+def _serialize_json(data) -> str:
+    return orjson.dumps(data).decode()
+
+
 @dataclass
 class Forwarder(ModelEngineSerializationMixin):
     """Forwards inference requests to another service via HTTP POST.
@@ -142,7 +149,49 @@ class Forwarder(ModelEngineSerializationMixin):
     serialize_results_as_string: bool
     wrap_response: bool
     forward_http_status: bool
-    post_inference_hooks_handler: PostInferenceHooksHandler
+    post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None
+
+    async def forward(self, json_payload: Any) -> Any:
+        json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
+        json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
+
+        logger.info(f"Accepted request, forwarding {json_payload_repr=}")
+
+        try:
+            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
+                response_raw = await aioclient.post(
+                    self.predict_endpoint,
+                    json=json_payload,
+                    headers={"Content-Type": "application/json"},
+                )
+                response = await response_raw.json()
+
+        except Exception:
+            logger.exception(
+                f"Failed to get response for request ({json_payload_repr}) "
+                "from user-defined inference service."
+            )
+            raise
+        if isinstance(response, dict):
+            logger.info(
+                f"Got response from user-defined service: {response.keys()=}, {response_raw.status=}"
+            )
+        elif isinstance(response, list):
+            logger.info(
+                f"Got response from user-defined service: {len(response)=}, {response_raw.status=}"
+            )
+        else:
+            logger.info(
+                f"Got response from user-defined service: {response=}, {response_raw.status=}"
+            )
+
+        if self.wrap_response:
+            response = self.get_response_payload(using_serialize_results_as_string, response)
+
+        if self.forward_http_status:
+            return JSONResponse(content=response, status_code=response_raw.status)
+        else:
+            return response
 
     def __call__(self, json_payload: Any) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
@@ -210,7 +259,7 @@ class LoadForwarder:
     wrap_response: bool = True
     forward_http_status: bool = False
 
-    def load(self, resources: Path, cache: Any) -> Forwarder:
+    def load(self, resources: Optional[Path], cache: Any) -> Forwarder:
         if self.use_grpc:
             raise NotImplementedError(
                 "User-defined service **MUST** use HTTP at the moment. "
@@ -288,23 +337,26 @@ class LoadForwarder:
         else:
             serialize_results_as_string = self.serialize_results_as_string
 
-        endpoint_config = get_endpoint_config()
-        handler = PostInferenceHooksHandler(
-            endpoint_name=endpoint_config.endpoint_name,
-            bundle_name=endpoint_config.bundle_name,
-            post_inference_hooks=endpoint_config.post_inference_hooks,
-            user_id=endpoint_config.user_id,
-            billing_queue=endpoint_config.billing_queue,
-            billing_tags=endpoint_config.billing_tags,
-            default_callback_url=endpoint_config.default_callback_url,
-            default_callback_auth=endpoint_config.default_callback_auth,
-            monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
-            endpoint_id=endpoint_config.endpoint_id,
-            endpoint_type=endpoint_config.endpoint_type,
-            bundle_id=endpoint_config.bundle_id,
-            labels=endpoint_config.labels,
-            streaming_storage_gateway=FirehoseStreamingStorageGateway(),
-        )
+        try:
+            endpoint_config = get_endpoint_config()
+            handler = PostInferenceHooksHandler(
+                endpoint_name=endpoint_config.endpoint_name,
+                bundle_name=endpoint_config.bundle_name,
+                post_inference_hooks=endpoint_config.post_inference_hooks,
+                user_id=endpoint_config.user_id,
+                billing_queue=endpoint_config.billing_queue,
+                billing_tags=endpoint_config.billing_tags,
+                default_callback_url=endpoint_config.default_callback_url,
+                default_callback_auth=endpoint_config.default_callback_auth,
+                monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
+                endpoint_id=endpoint_config.endpoint_id,
+                endpoint_type=endpoint_config.endpoint_type,
+                bundle_id=endpoint_config.bundle_id,
+                labels=endpoint_config.labels,
+                streaming_storage_gateway=FirehoseStreamingStorageGateway(),
+            )
+        except Exception:
+            handler = None
 
         return Forwarder(
             predict_endpoint=pred,
@@ -335,7 +387,38 @@ class StreamingForwarder(ModelEngineSerializationMixin):
     predict_endpoint: str
     model_engine_unwrap: bool
     serialize_results_as_string: bool
-    post_inference_hooks_handler: PostInferenceHooksHandler  # unused for now
+    post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None  # unused for now
+
+    async def forward(self, json_payload: Any) -> AsyncGenerator[Any, None]:  # pragma: no cover
+        json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
+        json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
+
+        logger.info(f"Accepted request, forwarding {json_payload_repr=}")
+
+        try:
+            response: aiohttp.ClientResponse
+            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
+                response = await aioclient.post(
+                    self.predict_endpoint,
+                    json=json_payload,
+                    headers={"Content-Type": "application/json"},
+                )
+
+                if response.status != 200:
+                    raise HTTPException(status_code=response.status, detail=await response.json())
+
+                async with EventSource(response=response) as event_source:
+                    async for event in event_source:
+                        yield self.get_response_payload_stream(
+                            using_serialize_results_as_string, event.data
+                        )
+
+        except Exception:
+            logger.exception(
+                f"Failed to get response for request ({json_payload_repr}) "
+                "from user-defined inference service."
+            )
+            raise
 
     def __call__(self, json_payload: Any) -> Iterable[Any]:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
@@ -354,7 +437,6 @@ class StreamingForwarder(ModelEngineSerializationMixin):
             )
 
             if response.status_code != 200:
-                print(response.json())
                 raise HTTPException(status_code=response.status_code, detail=response.json())
 
         except Exception:
@@ -396,7 +478,7 @@ class LoadStreamingForwarder:
     model_engine_unwrap: bool = True
     serialize_results_as_string: bool = False
 
-    def load(self, resources: Path, cache: Any) -> StreamingForwarder:
+    def load(self, resources: Optional[Path], cache: Any) -> StreamingForwarder:
         if self.use_grpc:
             raise NotImplementedError(
                 "User-defined service **MUST** use HTTP at the moment. "
@@ -474,23 +556,26 @@ class LoadStreamingForwarder:
         else:
             serialize_results_as_string = self.serialize_results_as_string
 
-        endpoint_config = get_endpoint_config()
-        handler = PostInferenceHooksHandler(
-            endpoint_name=endpoint_config.endpoint_name,
-            bundle_name=endpoint_config.bundle_name,
-            post_inference_hooks=endpoint_config.post_inference_hooks,
-            user_id=endpoint_config.user_id,
-            billing_queue=endpoint_config.billing_queue,
-            billing_tags=endpoint_config.billing_tags,
-            default_callback_url=endpoint_config.default_callback_url,
-            default_callback_auth=endpoint_config.default_callback_auth,
-            monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
-            endpoint_id=endpoint_config.endpoint_id,
-            endpoint_type=endpoint_config.endpoint_type,
-            bundle_id=endpoint_config.bundle_id,
-            labels=endpoint_config.labels,
-            streaming_storage_gateway=FirehoseStreamingStorageGateway(),
-        )
+        try:
+            endpoint_config = get_endpoint_config()
+            handler = PostInferenceHooksHandler(
+                endpoint_name=endpoint_config.endpoint_name,
+                bundle_name=endpoint_config.bundle_name,
+                post_inference_hooks=endpoint_config.post_inference_hooks,
+                user_id=endpoint_config.user_id,
+                billing_queue=endpoint_config.billing_queue,
+                billing_tags=endpoint_config.billing_tags,
+                default_callback_url=endpoint_config.default_callback_url,
+                default_callback_auth=endpoint_config.default_callback_auth,
+                monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
+                endpoint_id=endpoint_config.endpoint_id,
+                endpoint_type=endpoint_config.endpoint_type,
+                bundle_id=endpoint_config.bundle_id,
+                labels=endpoint_config.labels,
+                streaming_storage_gateway=FirehoseStreamingStorageGateway(),
+            )
+        except Exception:
+            handler = None
 
         return StreamingForwarder(
             predict_endpoint=pred,

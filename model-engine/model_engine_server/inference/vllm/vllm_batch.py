@@ -25,6 +25,7 @@ from model_engine_server.common.dtos.llms import (
     CreateBatchCompletionsEngineRequest,
     CreateBatchCompletionsV1RequestContent,
     TokenOutput,
+    VLLMModelConfig,
 )
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
     DatadogInferenceMonitoringMetricsGateway,
@@ -40,10 +41,11 @@ from starlette.datastructures import Headers
 from tqdm import tqdm
 from typing_extensions import TypeAlias, assert_never
 from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
-from vllm.engine.protocol import AsyncEngineClient
+from vllm.engine.protocol import EngineClient
 from vllm.entrypoints.openai.protocol import ChatCompletionRequest, CompletionRequest, ErrorResponse
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
+from vllm.entrypoints.openai.serving_engine import BaseModelPath
 from vllm.utils import merge_async_iterators
 
 CONFIG_FILE = os.getenv("CONFIG_FILE")
@@ -117,7 +119,7 @@ async def download_model(checkpoint_path: str, target_dir: str) -> None:
 
 
 async def generate_v1_completions(
-    engine: AsyncEngineClient,
+    engine: EngineClient,
     content: CreateBatchCompletionsV1RequestContent,
 ) -> List[Optional[CompletionV1Output]]:
     prompts = content.prompts
@@ -181,7 +183,7 @@ async def generate_v1_completions(
 
 
 async def generate_v2_completions(
-    engine: AsyncEngineClient,
+    engine: EngineClient,
     requests: Union[List[CompletionRequest], List[ChatCompletionRequest]],
 ) -> List[Union[CompletionResponse, ErrorResponse, None]]:
     bar = tqdm(total=len(requests), desc="Processed requests")
@@ -214,7 +216,7 @@ async def generate_v2_completions(
 
 
 async def generate_completions(
-    engine: AsyncEngineClient, request: _BatchCompletionContent
+    engine: EngineClient, request: _BatchCompletionContent
 ) -> Union[List[Optional[CompletionV1Output]], List[Optional[CompletionResponse]]]:
     if isinstance(request, CreateBatchCompletionsV1RequestContent):
         return await generate_v1_completions(engine, request)
@@ -227,12 +229,18 @@ async def generate_completions(
 async def init_engine(
     model: str,
     request: CreateBatchCompletionsEngineRequest,
-) -> AsyncEngineClient:
+) -> EngineClient:
     global openai_serving_chat
     global openai_serving_completion
 
     if request.attention_backend is not None:
         os.environ["ATTENTION_BACKEND"] = request.attention_backend
+
+    parsed_configs = VLLMModelConfig.model_validate_json(request.model_cfg.model_dump_json())
+    if not parsed_configs.max_model_len:
+        parsed_configs.max_model_len = request.model_cfg.max_context_length
+
+    print("VLLM additional configs:", parsed_configs.model_dump())
 
     engine_args = AsyncEngineArgs(
         model=model,
@@ -240,17 +248,17 @@ async def init_engine(
         seed=request.model_cfg.seed or 0,
         disable_log_requests=True,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
-        max_model_len=request.model_cfg.max_context_length,
+        **parsed_configs.model_dump(exclude_none=True),
     )
 
-    async_engine_client = AsyncLLMEngine.from_engine_args(engine_args)
-    model_config = await async_engine_client.get_model_config()
-    served_model_names = [model]
+    engine_client = AsyncLLMEngine.from_engine_args(engine_args)
+    model_config = await engine_client.get_model_config()
+    base_model_paths = [BaseModelPath(name=model, model_path=model)]
 
     openai_serving_chat = OpenAIServingChat(
-        async_engine_client,
+        engine_client,
         model_config,
-        served_model_names,
+        base_model_paths,
         response_role=request.model_cfg.response_role or "assistant",
         lora_modules=None,
         prompt_adapters=None,
@@ -259,15 +267,15 @@ async def init_engine(
     )
 
     openai_serving_completion = OpenAIServingCompletion(
-        async_engine_client,
+        engine_client,
         model_config,
-        served_model_names,
+        base_model_paths,
         lora_modules=None,
         prompt_adapters=None,
         request_logger=None,
     )
 
-    return async_engine_client
+    return engine_client
 
 
 def overwrite_request(request: Dict[str, Any], model: str) -> Dict[str, Any]:
@@ -291,7 +299,10 @@ def load_batch_content(
         return TypeAdapter(
             Union[List[CompletionRequest], List[ChatCompletionRequest]]
         ).validate_python(
-            [overwrite_request(req.model_dump(exclude_none=True), model) for req in content]
+            [
+                overwrite_request(req.model_dump(exclude_none=True, mode="json"), model)
+                for req in content
+            ]
         )
 
     return content

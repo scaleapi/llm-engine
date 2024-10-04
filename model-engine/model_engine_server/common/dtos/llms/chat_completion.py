@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional
 
 from model_engine_server.common.dtos.llms.completion import StreamError
 from model_engine_server.common.dtos.llms.vllm import VLLMChatCompletionAdditionalParams
@@ -9,7 +9,7 @@ from model_engine_server.common.types.gen.openai import (
     CreateChatCompletionStreamResponse,
 )
 from sse_starlette import EventSourceResponse
-from typing_extensions import Annotated
+from typing_extensions import Annotated, TypeAlias
 
 # Fields that are a part of OpenAI spec but are not supported by model engine
 UNSUPPORTED_FIELDS = ["service_tier"]
@@ -33,21 +33,23 @@ class ChatCompletionV2Request(CreateChatCompletionRequest, VLLMChatCompletionAdd
     ]
 
 
-ChatCompletionV2SyncResponse = CreateChatCompletionResponse
-ChatCompletionV2SuccessChunk = CreateChatCompletionStreamResponse
+ChatCompletionV2SyncResponse: TypeAlias = CreateChatCompletionResponse
+ChatCompletionV2StreamSuccessChunk: TypeAlias = CreateChatCompletionStreamResponse
 
 
-class ChatCompletionV2ErrorChunk(BaseModel):
+class ChatCompletionV2StreamErrorChunk(BaseModel):
     error: StreamError
 
 
-ChatCompletionV2Chunk = Union[ChatCompletionV2SuccessChunk, ChatCompletionV2ErrorChunk]
-ChatCompletionV2StreamResponse = (
-    EventSourceResponse  # EventSourceResponse[ChatCompletionV2Chunk | ChatCompletionV2ErrorChunk]
+ChatCompletionV2Chunk: TypeAlias = (
+    ChatCompletionV2StreamSuccessChunk | ChatCompletionV2StreamErrorChunk
+)
+ChatCompletionV2StreamResponse: TypeAlias = (
+    EventSourceResponse  # EventSourceResponse[ChatCompletionV2Chunk]
 )
 
-ChatCompletionV2Response = Union[ChatCompletionV2SyncResponse, ChatCompletionV2StreamResponse]
+ChatCompletionV2Response: TypeAlias = ChatCompletionV2SyncResponse | ChatCompletionV2StreamResponse
 
 # This is a version of ChatCompletionV2Response that is used by pydantic to determine the response model
-# Since EventSourceResponse isn't a pydanitc model, we need to use a Union of the two response types
-ChatCompletionV2ResponseItem = Union[ChatCompletionV2SyncResponse, ChatCompletionV2Chunk]
+# Since EventSourceResponse isn't a pydantic model, we need to use a Union of the two response types
+ChatCompletionV2ResponseItem: TypeAlias = ChatCompletionV2SyncResponse | ChatCompletionV2Chunk

@@ -1,6 +1,7 @@
 """
 Contains various input and output types relating to Triggers for the server.
 """
+
 import datetime
 from typing import Any, Dict, List, Optional
 

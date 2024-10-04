@@ -4,6 +4,7 @@ import aiohttp
 import orjson
 import requests
 import sseclient
+from model_engine_server.common.aiohttp_sse_client import EventSource
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.tasks import (
     SyncEndpointPredictV1Request,
@@ -22,7 +23,6 @@ from model_engine_server.domain.exceptions import (
 from model_engine_server.domain.gateways.streaming_model_endpoint_inference_gateway import (
     StreamingModelEndpointInferenceGateway,
 )
-from model_engine_server.infra.gateways.aiohttp_sse_client import EventSource
 from model_engine_server.infra.gateways.dns_resolver import resolve_dns
 from model_engine_server.infra.gateways.k8s_resource_parser import get_node_port
 from orjson import JSONDecodeError
@@ -99,7 +99,6 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                     headers={"Content-Type": "application/json"},
                 )
                 status = aio_resp.status
-                print(status)
                 if status == 200:
                     async with EventSource(response=aio_resp) as event_source:
                         async for event in event_source:
@@ -177,13 +176,13 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                         yield orjson.loads(item)
                     return
         except RetryError as e:
-            if type(e.last_attempt.exception()) == TooManyRequestsException:
+            if isinstance(e.last_attempt.exception(), TooManyRequestsException):
                 logger.warning("Hit max # of retries, returning 429 to client")
                 raise UpstreamServiceError(status_code=429, content=b"Too many concurrent requests")
-            elif type(e.last_attempt.exception()) == NoHealthyUpstreamException:
+            elif isinstance(e.last_attempt.exception(), NoHealthyUpstreamException):
                 logger.warning("Pods didn't spin up in time, returning 503 to client")
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
-            elif type(e.last_attempt.exception()) == aiohttp.ClientConnectorError:
+            elif isinstance(e.last_attempt.exception(), aiohttp.ClientConnectorError):
                 logger.warning("ClientConnectorError, returning 503 to client")
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
             else:

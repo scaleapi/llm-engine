@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG VLLM_VERSION=0.6.1.post2
+ARG VLLM_VERSION=0.6.2
 ARG VLLM_BASE_IMAGE=vllm/vllm-openai:v${VLLM_VERSION}
 FROM ${VLLM_BASE_IMAGE} AS base
 

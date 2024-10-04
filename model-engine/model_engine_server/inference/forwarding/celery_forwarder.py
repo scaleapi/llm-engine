@@ -70,9 +70,11 @@ def create_celery_service(
         aws_role=infra_config().profile_ml_inference_worker,
         task_visibility=task_visibility,
         broker_type=broker_type,
-        broker_transport_options={"predefined_queues": {queue_name: {"url": sqs_url}}}
-        if broker_type == str(BrokerType.SQS.value)
-        else None,
+        broker_transport_options=(
+            {"predefined_queues": {queue_name: {"url": sqs_url}}}
+            if broker_type == str(BrokerType.SQS.value)
+            else None
+        ),
         backend_protocol=backend_protocol,
     )
 
@@ -117,7 +119,8 @@ def create_celery_service(
                 )
             request_params = args[0]
             request_params_pydantic = EndpointPredictV1Request.parse_obj(request_params)
-            forwarder.post_inference_hooks_handler.handle(request_params_pydantic, retval, task_id)  # type: ignore
+            if forwarder.post_inference_hooks_handler:
+                forwarder.post_inference_hooks_handler.handle(request_params_pydantic, retval, task_id)  # type: ignore
 
     # See documentation for options:
     # https://docs.celeryproject.org/en/stable/userguide/tasks.html#list-of-options

@@ -26,9 +26,9 @@ class ModelEndpointCacheWriteService:
         self.image_cache_service = image_cache_service
 
     async def execute(self, ttl_seconds: float):
-        endpoint_infra_states: Dict[
-            str, Tuple[bool, ModelEndpointInfraState]
-        ] = await self.resource_gateway.get_all_resources()
+        endpoint_infra_states: Dict[str, Tuple[bool, ModelEndpointInfraState]] = (
+            await self.resource_gateway.get_all_resources()
+        )
 
         for key, (is_key_an_endpoint_id, state) in endpoint_infra_states.items():
             if is_key_an_endpoint_id:
