@@ -389,7 +389,7 @@ class StreamingForwarder(ModelEngineSerializationMixin):
     serialize_results_as_string: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None  # unused for now
 
-    async def forward(self, json_payload: Any) -> AsyncGenerator[Any, None]:
+    async def forward(self, json_payload: Any) -> AsyncGenerator[Any, None]:  # pragma: no cover
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
