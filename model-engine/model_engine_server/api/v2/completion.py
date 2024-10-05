@@ -13,6 +13,7 @@ from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.llms import (
     CompletionV2Request,
     CompletionV2Response,
+    CompletionV2ResponseItem,
     CompletionV2StreamErrorChunk,
     StreamError,
     StreamErrorContent,
@@ -246,7 +247,7 @@ def to_error_details(exc: Exception) -> Any:
         return exc.args
 
 
-@completion_router_v2.post("/completions", response_model=CompletionV2Response)
+@completion_router_v2.post("/completions", response_model=CompletionV2ResponseItem)
 async def completion(
     request: CompletionV2Request,
     background_tasks: BackgroundTasks,
