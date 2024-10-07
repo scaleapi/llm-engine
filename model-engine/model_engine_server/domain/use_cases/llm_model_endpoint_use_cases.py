@@ -846,7 +846,7 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path: Optional[str],
         chat_template_override: Optional[str],
         multinode: bool,
-        is_leader: bool,
+        is_worker: bool,
         nodes_per_worker: int = 1,  # only used if multinode
     ):
         """
@@ -868,14 +868,16 @@ class CreateLLMModelBundleV1UseCase:
             final_weights_folder,
         )
 
-        vllm_cmd = ""
+        if multinode and not is_worker:
+            ray_cmd = "/workspace/init_ray.sh leader --ray_cluster_size=$RAY_CLUSTER_SIZE --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
+            subcommands.append(ray_cmd)
+        elif multinode and is_worker:
+            ray_cmd = "/workspace/init_ray.sh worker --ray_address=$LWS_LEADER_ADDRESS.svc.cluster.local --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
+            subcommands.append(ray_cmd)
 
-        if multinode and is_leader:
-            vllm_cmd += "/workspace/init_ray.sh leader --ray_cluster_size=$RAY_CLUSTER_SIZE --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local; "
-        elif multinode and not is_leader:
-            vllm_cmd += "/workspace/init_ray.sh worker --ray_address=$LWS_LEADER_ADDRESS.svc.cluster.local --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
+        if not is_worker:
+            vllm_cmd = ""
 
-        if is_leader:
             vllm_cmd += f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
 
             if multinode:
@@ -908,7 +910,8 @@ class CreateLLMModelBundleV1UseCase:
             if additional_args.attention_backend:
                 vllm_cmd += " --attention-backend FLASHINFER"
 
-        subcommands.append(vllm_cmd)
+            subcommands.append(vllm_cmd)
+
         command = [
             "/bin/bash",
             "-c",
@@ -936,7 +939,7 @@ class CreateLLMModelBundleV1UseCase:
             checkpoint_path,
             chat_template_override,
             multinode=False,
-            is_leader=True,
+            is_worker=False,
             nodes_per_worker=1,
         )
 
@@ -994,7 +997,7 @@ class CreateLLMModelBundleV1UseCase:
             checkpoint_path,
             chat_template_override,
             multinode=True,
-            is_leader=True,
+            is_worker=False,
             nodes_per_worker=nodes_per_worker,
         )
         worker_command = self._create_vllm_bundle_command(
@@ -1005,7 +1008,7 @@ class CreateLLMModelBundleV1UseCase:
             checkpoint_path,
             chat_template_override,
             multinode=True,
-            is_leader=False,
+            is_worker=True,
             nodes_per_worker=nodes_per_worker,
         )
 
