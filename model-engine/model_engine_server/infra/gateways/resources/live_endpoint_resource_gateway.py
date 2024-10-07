@@ -59,9 +59,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
             q = await self.create_queue(endpoint_record, request.build_endpoint_request.labels)
             queue_name: Optional[str] = q.queue_name
             queue_url: Optional[str] = q.queue_url
-            # destination: str = q.queue_name
         else:
-            # destination = f"launch-endpoint-id-{endpoint_record.id.replace('_', '-')}"
             queue_name = None
             queue_url = None
 
