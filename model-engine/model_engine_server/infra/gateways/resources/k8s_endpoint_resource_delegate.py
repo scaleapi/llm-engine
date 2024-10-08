@@ -1535,8 +1535,9 @@ class K8SEndpointResourceDelegate:
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(
             build_endpoint_request.model_endpoint_record.id
         )
+        is_multinode = build_endpoint_request.nodes_per_worker > 1
 
-        if request.build_endpoint_request.nodes_per_worker > 1:
+        if is_multinode:
             lws_resource_name = self._get_lws_resource_name(request)
             lws_arguments = get_endpoint_resource_arguments_from_request(
                 k8s_resource_group_name=k8s_resource_group_name,
@@ -1622,7 +1623,7 @@ class K8SEndpointResourceDelegate:
                 name=k8s_resource_group_name,
             )
 
-        if request.build_endpoint_request.nodes_per_worker == 1:
+        if not is_multinode:
             # Only create PDB if we're not using LWS
             pdb_config_arguments = get_endpoint_resource_arguments_from_request(
                 k8s_resource_group_name=k8s_resource_group_name,
@@ -1643,7 +1644,7 @@ class K8SEndpointResourceDelegate:
                 ModelEndpointType.SYNC,
                 ModelEndpointType.STREAMING,
             }
-            and request.build_endpoint_request.nodes_per_worker == 1
+            and not is_multinode
         ):
             # Don't need HPA, keda, istio resources for LWS or async endpoints
             cluster_version = get_kubernetes_cluster_version()
@@ -1745,7 +1746,7 @@ class K8SEndpointResourceDelegate:
                 ModelEndpointType.SYNC,
                 ModelEndpointType.STREAMING,
             }
-            and request.build_endpoint_request.nodes_per_worker > 1
+            and is_multinode
         ):
             # Only create the service
             service_arguments = get_endpoint_resource_arguments_from_request(
