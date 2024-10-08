@@ -1012,7 +1012,7 @@ class CreateLLMModelBundleV1UseCase:
             nodes_per_worker=nodes_per_worker,
         )
 
-        # These env vars e.g. K8S_OWN_POD_NAME, K8S_OWN_POD_NAME, K8S_OWN_NAMESPACE, K8S_LWS_CLUSTER_SIZE should be filled in automatically for all LWS pods through
+        # These env vars e.g. K8S_OWN_POD_NAME, K8S_OWN_POD_NAME, K8S_OWN_NAMESPACE, K8S_LWS_CLUSTER_SIZE will be filled in automatically for all LWS pods through
         # Launch's k8s_endpoint_resource_delegate
         common_vllm_envs = {
             "VLLM_HOST_IP": "$(K8S_OWN_POD_NAME).$(K8S_LWS_NAME).$(K8S_OWN_NAMESPACE).svc.cluster.local",  # this needs to match what's given as --own-address in the vllm start command
