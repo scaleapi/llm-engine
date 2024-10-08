@@ -37,6 +37,12 @@ class ModelEndpointStatus(str, Enum):
 class ModelEndpointResourceState(BaseModel):
     """
     This is the entity-layer class for the resource settings per worker of a Model Endpoint.
+    Note: in the multinode case, there are multiple "nodes" per "worker".
+    "Nodes" is analogous to a single k8s pod that may take up all the GPUs on a single machine.
+    "Workers" is the smallest unit that a request can be made to, and consists of one leader "node" and
+    multiple follower "nodes" (named "worker" in the k8s LeaderWorkerSet definition).
+    cpus/gpus/memory/storage are per-node, thus the total consumption by a "worker"
+    is cpus/gpus/etc. multiplied by nodes_per_worker.
     """
 
     cpus: CpuSpecificationType  # TODO(phil): try to use decimal.Decimal
