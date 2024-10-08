@@ -1004,6 +1004,9 @@ class K8SEndpointResourceDelegate:
 
     @staticmethod
     async def _create_lws_service_entry(lws_service_entry: Dict[str, Any], name: str) -> None:
+        # Note: this istio ServiceEntry is specific to the LWS case,
+        # as it is used to enable the "hack" where we manually resolve
+        # the IP of a K8s service and route to the IP directly.
         custom_objects_api = get_kubernetes_custom_objects_client()
         try:
             await custom_objects_api.create_namespaced_custom_object(
@@ -2224,7 +2227,7 @@ class K8SEndpointResourceDelegate:
 
     async def _delete_resources_async(self, endpoint_id: str, deployment_name: str) -> bool:
 
-        # TODO multinode if we ever decide to support that
+        # TODO check that this implementation actually works for multinode if/when we decide to support that
         lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
         deployment_delete_succeeded = await self._delete_deployment(
             endpoint_id=endpoint_id, deployment_name=deployment_name
