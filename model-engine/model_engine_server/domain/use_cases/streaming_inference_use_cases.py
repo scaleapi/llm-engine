@@ -68,7 +68,10 @@ class CreateStreamingInferenceTaskV1UseCase:
         await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
             endpoint_id=model_endpoint_id
         )
-        # Hack: manually resolve dns if istio is present
+        # Hack: manually resolve dns if istio is present. Since we do not inject istio for multinode,
+        # empirically we find that without manual dns resolution, requests to the k8s service DNS name fail,
+        # likely because the requests are getting changed by Istio. A fix is to resolve the service DNS name
+        # (e.g. model-endpoint-foo.namespace.svc.cluster.local) to the actual IP address of the service
         manually_resolve_dns = (
             model_endpoint.infra_state is not None
             and model_endpoint.infra_state.resource_state.nodes_per_worker > 1

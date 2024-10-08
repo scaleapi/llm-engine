@@ -514,23 +514,12 @@ class CreateLLMModelBundleV1UseCase:
             self.check_docker_image_exists_for_image_tag(
                 framework_image_tag, INFERENCE_FRAMEWORK_REPOSITORY[framework]
             )
-            if multinode and framework == LLMInferenceFramework.VLLM:
-                bundle_id = await self.create_vllm_multinode_bundle(
-                    user,
-                    model_name,
-                    framework_image_tag,
-                    endpoint_name,
-                    num_shards,
-                    nodes_per_worker,
-                    quantize,
-                    checkpoint_path,
-                    chat_template_override,
-                )
-            elif multinode:
+            if multinode and framework != LLMInferenceFramework.VLLM:
                 raise ObjectHasInvalidValueException(
                     f"Multinode is not supported for framework {framework}."
                 )
-            elif framework == LLMInferenceFramework.DEEPSPEED:
+
+            if framework == LLMInferenceFramework.DEEPSPEED:
                 bundle_id = await self.create_deepspeed_bundle(
                     user,
                     model_name,
@@ -549,16 +538,29 @@ class CreateLLMModelBundleV1UseCase:
                     checkpoint_path,
                 )
             elif framework == LLMInferenceFramework.VLLM:
-                bundle_id = await self.create_vllm_bundle(
-                    user,
-                    model_name,
-                    framework_image_tag,
-                    endpoint_name,
-                    num_shards,
-                    quantize,
-                    checkpoint_path,
-                    chat_template_override,
-                )
+                if multinode:
+                    bundle_id = await self.create_vllm_multinode_bundle(
+                        user,
+                        model_name,
+                        framework_image_tag,
+                        endpoint_name,
+                        num_shards,
+                        nodes_per_worker,
+                        quantize,
+                        checkpoint_path,
+                        chat_template_override,
+                    )
+                else:
+                    bundle_id = await self.create_vllm_bundle(
+                        user,
+                        model_name,
+                        framework_image_tag,
+                        endpoint_name,
+                        num_shards,
+                        quantize,
+                        checkpoint_path,
+                        chat_template_override,
+                    )
             elif framework == LLMInferenceFramework.LIGHTLLM:
                 bundle_id = await self.create_lightllm_bundle(
                     user,
