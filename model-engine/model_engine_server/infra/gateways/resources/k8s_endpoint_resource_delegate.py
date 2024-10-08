@@ -1547,6 +1547,7 @@ class K8SEndpointResourceDelegate:
         )
         is_multinode = build_endpoint_request.nodes_per_worker > 1
 
+        # Create LWS/Deployment
         if is_multinode:
             lws_resource_name = self._get_lws_resource_name(request)
             lws_arguments = get_endpoint_resource_arguments_from_request(
@@ -1593,6 +1594,7 @@ class K8SEndpointResourceDelegate:
             )
             k8s_service_name = k8s_resource_group_name
 
+        # Create ConfigMaps
         user_config_arguments = get_endpoint_resource_arguments_from_request(
             k8s_resource_group_name=k8s_resource_group_name,
             request=request,
@@ -1619,6 +1621,7 @@ class K8SEndpointResourceDelegate:
             name=f"{k8s_resource_group_name}-endpoint-config",
         )
 
+        # Create VPA
         if request.build_endpoint_request.optimize_costs:
             vpa_arguments = get_endpoint_resource_arguments_from_request(
                 k8s_resource_group_name=k8s_resource_group_name,
@@ -1633,6 +1636,7 @@ class K8SEndpointResourceDelegate:
                 name=k8s_resource_group_name,
             )
 
+        # Create PDB
         if not is_multinode:
             # Only create PDB if we're not using LWS
             pdb_config_arguments = get_endpoint_resource_arguments_from_request(
@@ -1648,6 +1652,8 @@ class K8SEndpointResourceDelegate:
                 name=k8s_resource_group_name,
             )
 
+        # Create HPA/Keda Scaled Object, Service, VirtualService, DestinationRule, ServiceEntry
+        # as needed
         if (
             model_endpoint_record.endpoint_type
             in {
@@ -1758,7 +1764,7 @@ class K8SEndpointResourceDelegate:
             }
             and is_multinode
         ):
-            # Only create the service
+            # Only create the service (and serviceEntry if istio is enabled)
             service_arguments = get_endpoint_resource_arguments_from_request(
                 k8s_resource_group_name=k8s_resource_group_name,
                 request=request,
@@ -1801,6 +1807,7 @@ class K8SEndpointResourceDelegate:
         elif model_endpoint_record.endpoint_type == ModelEndpointType.ASYNC:
             return sqs_queue_name_str
         else:
+            # We should never get here
             raise ValueError(f"Unsupported endpoint type {model_endpoint_record.endpoint_type}")
 
     @staticmethod
