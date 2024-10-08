@@ -86,6 +86,10 @@ class ModelEndpointDeploymentState(BaseModel):
 class ModelEndpointResourceState(BaseModel):
     """
     This is the entity-layer class for the resource settings per worker of a Model Endpoint.
+    Note: the values for cpus/gpus/memory/storage are per node, i.e. a single "worker" may consist of
+    multiple underlying "nodes" (corresponding to kubernetes pods), and the values for cpus/gpus/memory/storage
+    are the resources allocated for a single node. Thus, the total resource allocation
+    for the entire worker is multiplied by the value of `nodes_per_worker`.
     """
 
     cpus: CpuSpecificationType  # TODO(phil): try to use decimal.Decimal

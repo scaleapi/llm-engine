@@ -120,6 +120,9 @@ class Model(APIEngine):
                 Any compute resource requests (i.e. cpus, memory, storage) apply to each individual node, thus the total resources
                 allocated are multiplied by this number. This is useful for models that require more memory than a single node can provide.
                 Note: autoscaling is not supported for multinode serving.
+                Further note: if your model can fit on GPUs on only one machine, e.g. you have access to an 8xA100 machine and your model fits
+                on 8 A100s, it is recommended to set `nodes_per_worker` to 1 and the rest of the resources accordingly.
+                `nodes_per_worker > 1` should only be set if you require more resources than a single machine can provide.
 
             min_workers (`int`):
                 The minimum number of workers. Must be greater than or equal to 0. This
@@ -524,20 +527,20 @@ class Model(APIEngine):
                 For model weights, safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be longer).
 
             cpus (`Optional[int]`):
-                Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
+                Number of cpus each node in the worker should get, e.g. 1, 2, etc. This must be greater
                 than or equal to 1. Recommendation is set it to 8 * GPU count.
 
             memory (`Optional[str]`):
-                Amount of memory each worker should get, e.g. "4Gi", "512Mi", etc. This must
+                Amount of memory each node in the worker should get, e.g. "4Gi", "512Mi", etc. This must
                 be a positive amount of memory. Recommendation is set it to 24Gi * GPU count.
 
             storage (`Optional[str]`):
-                Amount of local ephemeral storage each worker should get, e.g. "4Gi",
+                Amount of local ephemeral storage each node in the worker should get, e.g. "4Gi",
                 "512Mi", etc. This must be a positive amount of storage.
                 Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B models.
 
             gpus (`Optional[int]`):
-                Number of gpus each worker should get, e.g. 0, 1, etc.
+                Number of gpus each node in the worker should get, e.g. 0, 1, etc.
 
             min_workers (`Optional[int]`):
                 The minimum number of workers. Must be greater than or equal to 0. This
