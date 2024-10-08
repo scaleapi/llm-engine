@@ -1652,7 +1652,7 @@ class K8SEndpointResourceDelegate:
                 name=k8s_resource_group_name,
             )
 
-        # Create HPA/Keda Scaled Object, Service, VirtualService, DestinationRule, ServiceEntry
+        # Create HPA/Keda Scaled Object, Service (one of two types), VirtualService, DestinationRule, ServiceEntry
         # as needed
         if (
             model_endpoint_record.endpoint_type
