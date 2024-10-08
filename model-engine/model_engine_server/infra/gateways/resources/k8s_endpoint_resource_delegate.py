@@ -1979,10 +1979,6 @@ class K8SEndpointResourceDelegate:
             deployment_config.spec.template.spec.priority_class_name == LAUNCH_HIGH_PRIORITY_CLASS
         )
 
-        config_maps = await self._get_config_maps(
-            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
-        )
-
         infra_state = ModelEndpointInfraState(
             deployment_name=k8s_resource_group_name,
             aws_role=common_params["aws_role"],
@@ -2025,10 +2021,6 @@ class K8SEndpointResourceDelegate:
         config_maps: List,
     ) -> ModelEndpointInfraState:
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
-
-        config_maps = await self._get_config_maps(
-            endpoint_id=endpoint_id, deployment_name=k8s_resource_group_name
-        )
 
         # Assume leader + worker share the same user-set env vars
         common_params = self._get_common_endpoint_params_for_lws_type(lws_config)
