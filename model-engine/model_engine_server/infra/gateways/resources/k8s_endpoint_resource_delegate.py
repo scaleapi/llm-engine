@@ -411,7 +411,7 @@ class K8SEndpointResourceDelegate:
         return None
 
     @staticmethod
-    def _get_env_value_from_envlist_for_lws(
+    def _get_env_value_from_envlist_for_custom_object(
         envlist: Optional[List[Dict]], name: str
     ):  # pragma: no cover
         # Custom objects client returns nested Dicts, not objects.
@@ -498,9 +498,13 @@ class K8SEndpointResourceDelegate:
 
         envlist = launch_container["env"]
         # There really isn't a bundle_url for LWS since those use RunnableImages
-        bundle_url = self._get_env_value_from_envlist_for_lws(envlist, "BUNDLE_URL") or image
-        aws_role = self._get_env_value_from_envlist_for_lws(envlist, "AWS_PROFILE")
-        results_s3_bucket = self._get_env_value_from_envlist_for_lws(envlist, "RESULTS_S3_BUCKET")
+        bundle_url = (
+            self._get_env_value_from_envlist_for_custom_object(envlist, "BUNDLE_URL") or image
+        )
+        aws_role = self._get_env_value_from_envlist_for_custom_object(envlist, "AWS_PROFILE")
+        results_s3_bucket = self._get_env_value_from_envlist_for_custom_object(
+            envlist, "RESULTS_S3_BUCKET"
+        )
 
         # Temporary fix: new LIRA endpoints created should have these env vars
         # but old ones don't, so we can fetch them from the config.
@@ -1768,6 +1772,10 @@ class K8SEndpointResourceDelegate:
             )
 
             if hmi_config.istio_enabled:
+                # If Istio is enabled, we also create a ServiceEntry. This is in service of the hack
+                # where we manually resolve the IP address of the K8s service created above.
+                # We empirically need to create this in order for the request to the service's IP address
+                # to go through. See live_{sync,streaming}_model_endpoint_inference_gateway.py for more details.
                 lws_service_entry_arguments = get_endpoint_resource_arguments_from_request(
                     k8s_resource_group_name=k8s_resource_group_name,
                     request=request,

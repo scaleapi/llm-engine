@@ -1025,9 +1025,6 @@ class CreateLLMModelBundleV1UseCase:
             "RAY_CLUSTER_SIZE": "$(K8S_LWS_CLUSTER_SIZE)",
         }
 
-        leader_env = common_vllm_envs.copy()
-        worker_env = common_vllm_envs.copy()
-
         create_model_bundle_v2_request = CreateModelBundleV2Request(
             name=endpoint_unique_name,
             schema_location="TBA",
@@ -1043,9 +1040,9 @@ class CreateLLMModelBundleV1UseCase:
                 predict_route="/predict",
                 streaming_predict_route="/stream",
                 extra_routes=[OPENAI_CHAT_COMPLETION_PATH, OPENAI_COMPLETION_PATH],
-                env=leader_env,
+                env=common_vllm_envs,
                 worker_command=worker_command,
-                worker_env=worker_env,
+                worker_env=common_vllm_envs,
             ),
             metadata={},
         )
