@@ -68,6 +68,11 @@ LWS_DEFAULT_ENV_VAR = {
     "K8S_LWS_CLUSTER_SIZE",
 }
 
+# These two should match the values present in `service_template_config_map.yaml`
+# for the container names in the LWS template.
+LWS_LEADER_CONTAINER_NAME = "lws-leader"
+LWS_WORKER_CONTAINER_NAME = "lws-worker"
+
 _lazy_load_kubernetes_clients = True
 _kubernetes_apps_api = None
 _kubernetes_core_api = None
@@ -236,12 +241,12 @@ def get_leader_container_from_lws_template(lws_template: Dict[str, Any]):
         "containers"
     ]
     for container in containers:
-        if container["name"] == "lws-leader":
+        if container["name"] == LWS_LEADER_CONTAINER_NAME:
             leader_container = container
             break
     else:
         raise ValueError(
-            "leader container (container['name'] == 'lws-leader') not found in lws template when adding datadog env to leader container."
+            f"leader container (container['name'] == '{LWS_LEADER_CONTAINER_NAME}') not found in lws template when adding datadog env to leader container."
         )
     return leader_container
 
@@ -251,12 +256,12 @@ def get_worker_container_from_lws_template(lws_template: Dict[str, Any]):
         "containers"
     ]
     for container in containers:
-        if container["name"] == "lws-worker":
+        if container["name"] == LWS_WORKER_CONTAINER_NAME:
             worker_container = container
             break
     else:
         raise ValueError(
-            "worker container (container['name'] == 'lws-worker') not found in lws template when adding datadog env to worker container."
+            f"worker container (container['name'] == '{LWS_WORKER_CONTAINER_NAME}') not found in lws template when adding datadog env to worker container."
         )
     return worker_container
 
@@ -497,8 +502,8 @@ class K8SEndpointResourceDelegate:
             envlist, "RESULTS_S3_BUCKET"
         )
 
-        # Temporary fix: new LIRA endpoints created should have these env vars
-        # but old ones don't, so we can fetch them from the config.
+        # AWS_PROFILE and RESULTS_S3_BUCKET should always be set, but if not present
+        # we can fetch them from the config.
         if aws_role is None:
             aws_role = infra_config().profile_ml_inference_worker
         if results_s3_bucket is None:
@@ -571,9 +576,9 @@ class K8SEndpointResourceDelegate:
             "containers"
         ]
         name_to_container = {container["name"]: container for container in leader_containers}
-        if "lws-leader" not in name_to_container:
+        if LWS_LEADER_CONTAINER_NAME not in name_to_container:
             raise ValueError("No main leader container detected")
-        return name_to_container["lws-leader"]
+        return name_to_container[LWS_LEADER_CONTAINER_NAME]
 
     @staticmethod
     def _get_launch_container_from_lws(lws_config: Any):
