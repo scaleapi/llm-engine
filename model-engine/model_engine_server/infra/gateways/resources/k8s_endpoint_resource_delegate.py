@@ -1510,7 +1510,9 @@ class K8SEndpointResourceDelegate:
             flavor_class = "runnable-image"
         if flavor_class == "triton-enhanced-runnable-image":
             raise ValueError("LWS is not supported for Triton Enhanced Runnable Image")
-        # TODO we should really check this error earlier
+        # flavor not being triton-enhanced should already be checked in the endpoint create on the gateway
+        # but check again just in case
+        # Gateway should also guard against cloudpickle or zip being passed in here
 
         mode = model_endpoint_record.endpoint_type.value
         device = "gpu" if build_endpoint_request.gpus > 0 else "cpu"
