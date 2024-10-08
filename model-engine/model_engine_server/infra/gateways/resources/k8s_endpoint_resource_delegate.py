@@ -65,7 +65,6 @@ LWS_DEFAULT_ENV_VAR = {
     "K8S_OWN_POD_NAME",
     "K8S_OWN_NAMESPACE",
     "K8S_LWS_NAME",
-    "K8S_LWS_LEADER_NAME",
     "K8S_LWS_CLUSTER_SIZE",
 }
 
@@ -312,14 +311,6 @@ def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
                 "name": "K8S_LWS_NAME",
                 "valueFrom": {
                     "fieldRef": {"fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/name']"}
-                },
-            },
-            {  # This may not do anything actually, prefer to use LWS_LEADER_ADDRESS instead
-                "name": "K8S_LWS_LEADER_NAME",
-                "valueFrom": {
-                    "fieldRef": {
-                        "fieldPath": "metadata.annotations['leaderworkerset.sigs.k8s.io/leader-name']"
-                    }
                 },
             },
             {

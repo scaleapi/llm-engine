@@ -423,14 +423,6 @@
                     }
                   },
                   {
-                    "name": "K8S_LWS_LEADER_NAME",
-                    "valueFrom": {
-                      "fieldRef": {
-                        "fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/leader-name']"
-                      }
-                    }
-                  },
-                  {
                     "name": "K8S_LWS_CLUSTER_SIZE",
                     "valueFrom": {
                       "fieldRef": {
@@ -686,14 +678,6 @@
                     "valueFrom": {
                       "fieldRef": {
                         "fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/name']"
-                      }
-                    }
-                  },
-                  {
-                    "name": "K8S_LWS_LEADER_NAME",
-                    "valueFrom": {
-                      "fieldRef": {
-                        "fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/leader-name']"
                       }
                     }
                   },
