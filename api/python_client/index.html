@@ -2867,20 +2867,21 @@ models built into LLM Engine, and fine-tuned models that you create through the
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    memory: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    storage: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    gpus: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    min_workers: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">0</span>,
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    max_workers: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    per_worker: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">2</span>,
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    endpoint_type: ModelEndpointType <span style="color: #666666">=</span> ModelEndpointType<span style="color: #666666">.</span>STREAMING,
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    gpu_type: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    high_priority: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    post_inference_hooks: Optional[
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        List[PostInferenceHooks]
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    ] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    default_callback_url: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    public_inference: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">True</span>,
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    labels: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    request_headers: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>) <span style="color: #666666">-&gt;</span> CreateLLMEndpointResponse
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    nodes_per_worker: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    min_workers: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">0</span>,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    max_workers: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    per_worker: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">2</span>,
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    endpoint_type: ModelEndpointType <span style="color: #666666">=</span> ModelEndpointType<span style="color: #666666">.</span>STREAMING,
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    gpu_type: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    high_priority: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    post_inference_hooks: Optional[
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>        List[PostInferenceHooks]
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    ] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    default_callback_url: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    public_inference: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">True</span>,
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    labels: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    request_headers: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>) <span style="color: #666666">-&gt;</span> CreateLLMEndpointResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -3024,7 +3025,7 @@ For model weights, safetensors are preferred but PyTorch checkpoints are also ac
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
+              <p>Number of cpus each node in the worker should get, e.g. 1, 2, etc. This must be greater
 than or equal to 1. Recommendation is set it to 8 * GPU count. Can be inferred from the model size.</p>
             </div>
           </td>
@@ -3039,7 +3040,7 @@ than or equal to 1. Recommendation is set it to 8 * GPU count. Can be inferred f
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Amount of memory each worker should get, e.g. "4Gi", "512Mi", etc. This must
+              <p>Amount of memory each node in the worker should get, e.g. "4Gi", "512Mi", etc. This must
 be a positive amount of memory. Recommendation is set it to 24Gi * GPU count.
 Can be inferred from the model size.</p>
             </div>
@@ -3055,7 +3056,7 @@ Can be inferred from the model size.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Amount of local ephemeral storage each worker should get, e.g. "4Gi",
+              <p>Amount of local ephemeral storage each node in the worker should get, e.g. "4Gi",
 "512Mi", etc. This must be a positive amount of storage.
 Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B models.
 Can be inferred from the model size.</p>
@@ -3072,11 +3073,35 @@ Can be inferred from the model size.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Number of gpus each worker should get, e.g. 0, 1, etc. Can be inferred from the model size.</p>
+              <p>Number of gpus each node in the worker should get, e.g. 0, 1, etc. Can be inferred from the model size.</p>
             </div>
           </td>
           <td>
                 <code>None</code>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code>nodes_per_worker</code></td>
+          <td>
+                <code>`int`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Number of nodes per worker. Used to request multinode serving. This must be greater than or equal to 1.
+Controls how many nodes to dedicate to one instance of the model.
+Specifically, if <code>nodes_per_worker</code> is set to greater than 1, the model will be sharded across
+<code>nodes_per_worker</code> nodes (e.g. kubernetes pods). One of these nodes will be a "leader" node and receive requests.
+LLM Engine will set up the inter-node communication.
+Any compute resource requests (i.e. cpus, memory, storage) apply to each individual node, thus the total resources
+allocated are multiplied by this number. This is useful for models that require more memory than a single node can provide.
+Note: autoscaling is not supported for multinode serving.
+Further note: if your model can fit on GPUs on only one machine, e.g. you have access to an 8xA100 machine and your model fits
+on 8 A100s, it is recommended to set <code>nodes_per_worker</code> to 1 and the rest of the resources accordingly.
+<code>nodes_per_worker &gt; 1</code> should only be set if you require more resources than a single machine can provide.</p>
+            </div>
+          </td>
+          <td>
+                <code>1</code>
           </td>
         </tr>
         <tr class="doc-section-item">
@@ -3763,7 +3788,7 @@ For model weights, safetensors are preferred but PyTorch checkpoints are also ac
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
+              <p>Number of cpus each node in the worker should get, e.g. 1, 2, etc. This must be greater
 than or equal to 1. Recommendation is set it to 8 * GPU count.</p>
             </div>
           </td>
@@ -3778,7 +3803,7 @@ than or equal to 1. Recommendation is set it to 8 * GPU count.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Amount of memory each worker should get, e.g. "4Gi", "512Mi", etc. This must
+              <p>Amount of memory each node in the worker should get, e.g. "4Gi", "512Mi", etc. This must
 be a positive amount of memory. Recommendation is set it to 24Gi * GPU count.</p>
             </div>
           </td>
@@ -3793,7 +3818,7 @@ be a positive amount of memory. Recommendation is set it to 24Gi * GPU count.</p
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Amount of local ephemeral storage each worker should get, e.g. "4Gi",
+              <p>Amount of local ephemeral storage each node in the worker should get, e.g. "4Gi",
 "512Mi", etc. This must be a positive amount of storage.
 Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B models.</p>
             </div>
@@ -3809,7 +3834,7 @@ Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B mod
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Number of gpus each worker should get, e.g. 0, 1, etc.</p>
+              <p>Number of gpus each node in the worker should get, e.g. 0, 1, etc.</p>
             </div>
           </td>
           <td>
