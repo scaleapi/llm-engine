@@ -183,6 +183,10 @@ class CreateLLMEndpointRequest(BaseModel):
     """
     Whether the endpoint can be used for inference for all users. LLM endpoints are public by default.
     """
+    chat_template_override: Optional[str] = Field(
+        default=None,
+        description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
+    )
 
 
 class CreateLLMEndpointResponse(BaseModel):
@@ -243,6 +247,11 @@ class GetLLMEndpointResponse(BaseModel):
     )
     """(For self-hosted users) Model endpoint details."""
 
+    chat_template_override: Optional[str] = Field(
+        default=None,
+        description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
+    )
+
 
 class ListLLMEndpointsResponse(BaseModel):
     """
@@ -297,6 +306,18 @@ class UpdateLLMEndpointRequest(BaseModel):
     default_callback_url: Optional[HttpUrl]
     default_callback_auth: Optional[CallbackAuth]
     public_inference: Optional[bool]
+    chat_template_override: Optional[str] = Field(
+        default=None,
+        description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
+    )
+
+    force_bundle_recreation: Optional[bool] = False
+    """
+    Whether to force recreate the underlying bundle.
+
+    If True, the underlying bundle will be recreated. This is useful if there are underlying implementation changes with how bundles are created
+    that we would like to pick up for existing endpoints
+    """
 
 
 class UpdateLLMEndpointResponse(BaseModel):
