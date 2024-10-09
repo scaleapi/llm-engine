@@ -47,6 +47,7 @@ class Model(APIEngine):
         memory: Optional[str] = None,
         storage: Optional[str] = None,
         gpus: Optional[int] = None,
+        nodes_per_worker: int = 1,
         min_workers: int = 0,
         max_workers: int = 1,
         per_worker: int = 2,
@@ -93,22 +94,35 @@ class Model(APIEngine):
                 For model weights, safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be longer).
 
             cpus (`Optional[int]`):
-                Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
+                Number of cpus each node in the worker should get, e.g. 1, 2, etc. This must be greater
                 than or equal to 1. Recommendation is set it to 8 * GPU count. Can be inferred from the model size.
 
             memory (`Optional[str]`):
-                Amount of memory each worker should get, e.g. "4Gi", "512Mi", etc. This must
+                Amount of memory each node in the worker should get, e.g. "4Gi", "512Mi", etc. This must
                 be a positive amount of memory. Recommendation is set it to 24Gi * GPU count.
                 Can be inferred from the model size.
 
             storage (`Optional[str]`):
-                Amount of local ephemeral storage each worker should get, e.g. "4Gi",
+                Amount of local ephemeral storage each node in the worker should get, e.g. "4Gi",
                 "512Mi", etc. This must be a positive amount of storage.
                 Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B models.
                 Can be inferred from the model size.
 
             gpus (`Optional[int]`):
-                Number of gpus each worker should get, e.g. 0, 1, etc. Can be inferred from the model size.
+                Number of gpus each node in the worker should get, e.g. 0, 1, etc. Can be inferred from the model size.
+
+            nodes_per_worker (`int`):
+                Number of nodes per worker. Used to request multinode serving. This must be greater than or equal to 1.
+                Controls how many nodes to dedicate to one instance of the model.
+                Specifically, if `nodes_per_worker` is set to greater than 1, the model will be sharded across
+                `nodes_per_worker` nodes (e.g. kubernetes pods). One of these nodes will be a "leader" node and receive requests.
+                LLM Engine will set up the inter-node communication.
+                Any compute resource requests (i.e. cpus, memory, storage) apply to each individual node, thus the total resources
+                allocated are multiplied by this number. This is useful for models that require more memory than a single node can provide.
+                Note: autoscaling is not supported for multinode serving.
+                Further note: if your model can fit on GPUs on only one machine, e.g. you have access to an 8xA100 machine and your model fits
+                on 8 A100s, it is recommended to set `nodes_per_worker` to 1 and the rest of the resources accordingly.
+                `nodes_per_worker > 1` should only be set if you require more resources than a single machine can provide.
 
             min_workers (`int`):
                 The minimum number of workers. Must be greater than or equal to 0. This
@@ -297,6 +311,7 @@ class Model(APIEngine):
             endpoint_type=ModelEndpointType(endpoint_type),
             gpus=gpus,
             gpu_type=GpuType(gpu_type) if gpu_type is not None else None,
+            nodes_per_worker=nodes_per_worker,
             labels=labels or {},
             max_workers=max_workers,
             memory=memory,
@@ -482,6 +497,7 @@ class Model(APIEngine):
         labels: Optional[Dict[str, str]] = None,
         request_headers: Optional[Dict[str, str]] = None,
     ) -> UpdateLLMEndpointResponse:
+        # Can't adjust nodes_per_worker
         """
         Update an LLM model. Note: This API is only available for self-hosted users.
 
@@ -511,20 +527,20 @@ class Model(APIEngine):
                 For model weights, safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be longer).
 
             cpus (`Optional[int]`):
-                Number of cpus each worker should get, e.g. 1, 2, etc. This must be greater
+                Number of cpus each node in the worker should get, e.g. 1, 2, etc. This must be greater
                 than or equal to 1. Recommendation is set it to 8 * GPU count.
 
             memory (`Optional[str]`):
-                Amount of memory each worker should get, e.g. "4Gi", "512Mi", etc. This must
+                Amount of memory each node in the worker should get, e.g. "4Gi", "512Mi", etc. This must
                 be a positive amount of memory. Recommendation is set it to 24Gi * GPU count.
 
             storage (`Optional[str]`):
-                Amount of local ephemeral storage each worker should get, e.g. "4Gi",
+                Amount of local ephemeral storage each node in the worker should get, e.g. "4Gi",
                 "512Mi", etc. This must be a positive amount of storage.
                 Recommendataion is 40Gi for 7B models, 80Gi for 13B models and 200Gi for 70B models.
 
             gpus (`Optional[int]`):
-                Number of gpus each worker should get, e.g. 0, 1, etc.
+                Number of gpus each node in the worker should get, e.g. 0, 1, etc.
 
             min_workers (`Optional[int]`):
                 The minimum number of workers. Must be greater than or equal to 0. This

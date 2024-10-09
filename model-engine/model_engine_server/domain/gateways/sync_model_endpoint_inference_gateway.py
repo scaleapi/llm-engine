@@ -16,7 +16,7 @@ class SyncModelEndpointInferenceGateway(ABC):
 
     @abstractmethod
     async def predict(
-        self, topic: str, predict_request: SyncEndpointPredictV1Request
+        self, topic: str, predict_request: SyncEndpointPredictV1Request, manually_resolve_dns: bool
     ) -> SyncEndpointPredictV1Response:
         """
         Runs a prediction request and returns a response.

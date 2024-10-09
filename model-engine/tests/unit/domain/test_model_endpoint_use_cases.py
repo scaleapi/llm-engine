@@ -619,17 +619,75 @@ async def test_create_model_endpoint_use_case_sets_high_priority(
 
 
 @pytest.mark.asyncio
+async def test_create_multinode_endpoint_with_nonmultinode_bundle_fails(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    create_model_endpoint_request_streaming: CreateModelEndpointV1Request,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = CreateModelEndpointV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_bundle_1.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+
+    create_model_endpoint_request_streaming.nodes_per_worker = 2
+    create_model_endpoint_request_streaming.model_bundle_id = model_bundle_1.id
+    with pytest.raises(ObjectHasInvalidValueException):
+        await use_case.execute(user=user, request=create_model_endpoint_request_streaming)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("nodes_per_worker", [1, 2])
+async def test_create_multinode_or_nonmultinode_endpoint_with_multinode_bundle_succeeds(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_5: ModelBundle,
+    create_model_endpoint_request_streaming: CreateModelEndpointV1Request,
+    nodes_per_worker: int,
+):
+    # mb5 is a streaming runnable image bundle
+    model_bundle_5.flavor.worker_env = {"fake_env": "fake_value"}
+    model_bundle_5.flavor.worker_command = ["fake_command"]
+    fake_model_bundle_repository.add_model_bundle(model_bundle_5)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = CreateModelEndpointV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_bundle_5.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+
+    create_model_endpoint_request_streaming.nodes_per_worker = nodes_per_worker
+    create_model_endpoint_request_streaming.model_bundle_id = model_bundle_5.id
+    response = await use_case.execute(user=user, request=create_model_endpoint_request_streaming)
+    assert response.endpoint_creation_task_id
+    assert isinstance(response, CreateModelEndpointV1Response)
+
+
+@pytest.mark.asyncio
 async def test_get_model_endpoint_use_case_success(
     test_api_key: str,
     fake_model_endpoint_service,
     model_endpoint_1: ModelEndpoint,
+    model_endpoint_2: ModelEndpoint,
 ):
+    # Tests single node + multinode
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    model_endpoint_2.infra_state.resource_state.nodes_per_worker = 2
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_2)
     use_case = GetModelEndpointByIdV1UseCase(model_endpoint_service=fake_model_endpoint_service)
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     response = await use_case.execute(user=user, model_endpoint_id=model_endpoint_1.record.id)
 
     assert isinstance(response, GetModelEndpointV1Response)
+
+    response_2 = await use_case.execute(user=user, model_endpoint_id=model_endpoint_2.record.id)
+    assert isinstance(response_2, GetModelEndpointV1Response)
+    assert response_2.resource_state.nodes_per_worker == 2
 
 
 @pytest.mark.asyncio

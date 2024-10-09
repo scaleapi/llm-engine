@@ -65,7 +65,7 @@ def validate_resource_requests(
     gpus: Optional[int],
     gpu_type: Optional[GpuType],
 ) -> None:
-    """Validates whether cpu/memory requests are reasonable"""
+    """Validates whether cpu/memory requests are reasonable. Shouldn't need to validate any nodes_per_worker in the multinode case"""
 
     if (gpus is None or gpus == 0) and gpu_type is not None:
         raise EndpointResourceInvalidRequestException(

@@ -225,6 +225,32 @@ def test_create_model_endpoint_endpoint_already_exists_returns_400(
     assert response_1.status_code == 400
 
 
+def test_create_model_endpoint_multinode_from_nonmultinode_bundle_returns_400(
+    model_bundle_1_v1: Tuple[ModelBundle, Any],
+    create_model_endpoint_request_sync: Dict[str, Any],
+    test_api_key: str,
+    get_test_client_wrapper,
+):
+    client = get_test_client_wrapper(
+        fake_docker_repository_image_always_exists=True,
+        fake_model_bundle_repository_contents={
+            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
+        },
+        fake_model_endpoint_record_repository_contents={},
+        fake_model_endpoint_infra_gateway_contents={},
+        fake_batch_job_record_repository_contents={},
+        fake_batch_job_progress_gateway_contents={},
+        fake_docker_image_batch_job_bundle_repository_contents={},
+    )
+    create_model_endpoint_request_sync["nodes_per_worker"] = 2
+    response_1 = client.post(
+        "/v1/model-endpoints",
+        auth=(test_api_key, ""),
+        json=create_model_endpoint_request_sync,
+    )
+    assert response_1.status_code == 400
+
+
 def test_list_model_endpoints(
     model_bundle_1_v1: Tuple[ModelBundle, Any],
     model_endpoint_1: Tuple[ModelEndpoint, Any],

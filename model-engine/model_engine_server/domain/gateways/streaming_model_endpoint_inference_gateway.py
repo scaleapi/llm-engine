@@ -17,7 +17,7 @@ class StreamingModelEndpointInferenceGateway(ABC):
 
     @abstractmethod
     def streaming_predict(
-        self, topic: str, predict_request: SyncEndpointPredictV1Request
+        self, topic: str, predict_request: SyncEndpointPredictV1Request, manually_resolve_dns: bool
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
         """
         Runs a prediction request and returns a streaming response.

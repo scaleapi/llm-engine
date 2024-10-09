@@ -1,3 +1,5 @@
+import json
+import os
 from typing import Any, Dict, List
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -7,6 +9,7 @@ from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from model_engine_server.common.env_vars import GIT_TAG
 from model_engine_server.domain.entities import (
+    ModelBundle,
     ModelEndpointConfig,
     ModelEndpointType,
     ModelEndpointUserConfigState,
@@ -15,7 +18,7 @@ from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     DATADOG_ENV_VAR,
     K8SEndpointResourceDelegate,
-    add_datadog_env_to_main_container,
+    add_datadog_env_to_container,
     get_main_container_from_deployment_template,
     load_k8s_yaml,
 )
@@ -27,6 +30,10 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
 from tests.unit.infra.gateways.k8s_fake_objects import FakeK8sDeploymentContainer, FakeK8sEnvVar
 
 MODULE_PATH = "model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate"
+
+EXAMPLE_LWS_CONFIG_PATH = os.path.abspath(os.path.join(__file__, "..", "example_lws_config.json"))
+with open(EXAMPLE_LWS_CONFIG_PATH, "r") as f:
+    EXAMPLE_LWS_CONFIG = json.load(f)
 
 
 @pytest.fixture
@@ -165,7 +172,8 @@ def test_resource_arguments_type_and_add_datadog_env_to_main_container(resource_
 
     deployment_template = load_k8s_yaml(f"{resource_arguments_type_name}.yaml", resource_arguments)
     if "runnable-image" in resource_arguments_type_name:
-        add_datadog_env_to_main_container(deployment_template)
+        user_container = get_main_container_from_deployment_template(deployment_template)
+        add_datadog_env_to_container(deployment_template, user_container)
 
         user_container = get_main_container_from_deployment_template(deployment_template)
 
@@ -281,7 +289,7 @@ def _verify_custom_object_plurals(call_args_list, expected_plurals: List[str]) -
 
 
 @pytest.mark.asyncio
-async def test_create_async_endpoint_has_correct_labels(
+async def test_create_async_endpoint_has_correct_labels_and_dest(
     k8s_endpoint_resource_delegate,
     mock_apps_client,
     mock_core_client,
@@ -294,9 +302,10 @@ async def test_create_async_endpoint_has_correct_labels(
     for request in [
         create_resources_request_async_runnable_image,
     ]:
-        await k8s_endpoint_resource_delegate.create_or_update_resources(
+        dest = await k8s_endpoint_resource_delegate.create_or_update_resources(
             request, sqs_queue_name="my_queue", sqs_queue_url="https://my_queue"
         )
+        assert dest == "my_queue"
 
         # Verify deployment labels
         create_deployment_call_args = mock_apps_client.create_namespaced_deployment.call_args
@@ -350,7 +359,7 @@ async def test_create_async_endpoint_has_correct_labels(
 
 
 @pytest.mark.asyncio
-async def test_create_streaming_endpoint_has_correct_labels(
+async def test_create_streaming_endpoint_has_correct_labels_and_dest(
     k8s_endpoint_resource_delegate,
     mock_apps_client,
     mock_core_client,
@@ -361,11 +370,15 @@ async def test_create_streaming_endpoint_has_correct_labels(
     create_resources_request_streaming_runnable_image: CreateOrUpdateResourcesRequest,
 ):
     request = create_resources_request_streaming_runnable_image
-    await k8s_endpoint_resource_delegate.create_or_update_resources(
+    dest = await k8s_endpoint_resource_delegate.create_or_update_resources(
         request,
         sqs_queue_name="my_queue",
         sqs_queue_url="https://my_queue",
     )
+    service_name = mock_core_client.create_namespaced_service.call_args.kwargs["body"]["metadata"][
+        "name"
+    ]
+    assert dest == service_name
 
     # Verify deployment labels
     create_deployment_call_args = mock_apps_client.create_namespaced_deployment.call_args
@@ -423,7 +436,7 @@ async def test_create_streaming_endpoint_has_correct_labels(
 
 
 @pytest.mark.asyncio
-async def test_create_sync_endpoint_has_correct_labels(
+async def test_create_sync_endpoint_has_correct_labels_and_dest(
     k8s_endpoint_resource_delegate,
     mock_apps_client,
     mock_core_client,
@@ -436,11 +449,15 @@ async def test_create_sync_endpoint_has_correct_labels(
     for request in [
         create_resources_request_sync_runnable_image,
     ]:
-        await k8s_endpoint_resource_delegate.create_or_update_resources(
+        dest = await k8s_endpoint_resource_delegate.create_or_update_resources(
             request,
             sqs_queue_name="my_queue",
             sqs_queue_url="https://my_queue,",
         )
+        service_name = mock_core_client.create_namespaced_service.call_args.kwargs["body"][
+            "metadata"
+        ]["name"]
+        assert dest == service_name
 
         # Verify deployment labels
         create_deployment_call_args = mock_apps_client.create_namespaced_deployment.call_args
@@ -524,6 +541,48 @@ async def test_create_sync_endpoint_has_correct_k8s_service_type(
 
 
 @pytest.mark.asyncio
+async def test_create_multinode_endpoint_creates_lws_and_correct_dest(
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+    mock_get_kubernetes_cluster_version,
+    create_resources_request_streaming_runnable_image: CreateOrUpdateResourcesRequest,
+    model_bundle_5: ModelBundle,
+):
+    # Patch model bundle so that it supports multinode
+    model_bundle_5.flavor.worker_env = {"fake_env": "fake_value"}
+    model_bundle_5.flavor.worker_command = ["fake_command"]
+    create_resources_request_streaming_runnable_image.build_endpoint_request.model_endpoint_record.current_model_bundle = (
+        model_bundle_5
+    )
+    create_resources_request_streaming_runnable_image.build_endpoint_request.model_endpoint_record.endpoint_type = (
+        ModelEndpointType.STREAMING
+    )
+
+    create_resources_request_streaming_runnable_image.build_endpoint_request.nodes_per_worker = 2
+    dest = await k8s_endpoint_resource_delegate.create_or_update_resources(
+        create_resources_request_streaming_runnable_image,
+        sqs_queue_name="my_queue",
+        sqs_queue_url="https://my_queue",
+    )
+    service_name = mock_core_client.create_namespaced_service.call_args.kwargs["body"]["metadata"][
+        "name"
+    ]
+    assert dest == service_name
+    # Verify call to custom objects client with LWS is made
+    create_custom_objects_call_args_list = (
+        mock_custom_objects_client.create_namespaced_custom_object.call_args_list
+    )
+    assert any(
+        call_args.kwargs["group"] == "leaderworkerset.x-k8s.io"
+        for call_args in create_custom_objects_call_args_list
+    )
+
+
+@pytest.mark.asyncio
 async def test_create_endpoint_raises_k8s_endpoint_resource_delegate(
     k8s_endpoint_resource_delegate,
     create_resources_request_sync_pytorch: CreateOrUpdateResourcesRequest,
@@ -563,6 +622,8 @@ async def test_get_resources_async_success(
     mock_policy_client,
     mock_custom_objects_client,
 ):
+    # Pretend that LWS get gives an ApiException since it doesn't exist
+    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(side_effect=ApiException)
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_common_endpoint_params",
         Mock(
@@ -623,6 +684,8 @@ async def test_get_resources_sync_success(
     mock_policy_client,
     mock_custom_objects_client,
 ):
+    # Pretend that LWS get and keda get give an ApiException
+    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(side_effect=ApiException)
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_common_endpoint_params",
         Mock(
@@ -669,6 +732,40 @@ async def test_get_resources_sync_success(
 
 
 @pytest.mark.asyncio
+async def test_get_resources_multinode_success(
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+):
+    k8s_endpoint_resource_delegate.__setattr__(
+        "_translate_k8s_config_maps_to_user_config_data",
+        Mock(
+            return_value=ModelEndpointUserConfigState(
+                app_config=None,
+                endpoint_config=ModelEndpointConfig(
+                    endpoint_name="test_endpoint",
+                    bundle_name="test_bundle",
+                    post_inference_hooks=["callback"],
+                ),
+            )
+        ),
+    )
+
+    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(
+        return_value=EXAMPLE_LWS_CONFIG
+    )
+
+    infra_state = await k8s_endpoint_resource_delegate.get_resources(
+        endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.STREAMING
+    )
+    assert infra_state
+    assert infra_state.resource_state.nodes_per_worker == 2
+
+
+@pytest.mark.asyncio
 async def test_delete_resources_invalid_endpoint_type_returns_false(
     k8s_endpoint_resource_delegate,
 ):
@@ -706,6 +803,32 @@ async def test_delete_resources_sync_success(
         endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.SYNC
     )
     assert deleted
+
+
+@pytest.mark.asyncio
+async def test_delete_resources_multinode_success(
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+):
+    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(
+        return_value=EXAMPLE_LWS_CONFIG
+    )
+    mock_custom_objects_client.delete_namespaced_custom_object = AsyncMock()
+    deleted = await k8s_endpoint_resource_delegate.delete_resources(
+        endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.STREAMING
+    )
+    assert deleted
+    delete_called_for_lws = False
+    for call_args in mock_custom_objects_client.delete_namespaced_custom_object.call_args_list:
+        # 'group' is kwargs in delete_namespaced_custom_object
+        if call_args[1]["group"] == "leaderworkerset.x-k8s.io":
+            delete_called_for_lws = True
+            break
+    assert delete_called_for_lws
 
 
 @pytest.mark.asyncio

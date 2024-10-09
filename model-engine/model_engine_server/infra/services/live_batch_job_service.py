@@ -104,6 +104,7 @@ class LiveBatchJobService(BatchJobService):
             memory=memory,  # type: ignore
             gpu_type=gpu_type,  # type: ignore
             storage=storage,
+            nodes_per_worker=1,  # TODO batch jobs currently doesn't support multinode, since async multinode isn't supported yet
             optimize_costs=False,
             min_workers=0,
             max_workers=max_workers,  # type: ignore

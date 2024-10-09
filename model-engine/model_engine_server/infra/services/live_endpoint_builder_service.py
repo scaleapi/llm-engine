@@ -302,6 +302,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         memory=build_endpoint_request.memory,
                         gpu_type=build_endpoint_request.gpu_type,
                         storage=build_endpoint_request.storage,
+                        nodes_per_worker=build_endpoint_request.nodes_per_worker,
                         optimize_costs=build_endpoint_request.optimize_costs,
                     ),
                     user_config_state=ModelEndpointUserConfigState(
@@ -793,6 +794,13 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 raise ValueError(
                     f"Runnable image endpoints cannot set the following env vars: {restriced_env_vars}"
                 )
+        if (
+            not isinstance(model_bundle.flavor, RunnableImageLike)
+            and build_endpoint_request.nodes_per_worker > 1
+        ):
+            raise ValueError(
+                "Multi-node deployment is only supported for RunnableImageLike model bundles."
+            )
 
     @staticmethod
     def _get_restricted_env_vars(env_vars: Dict[str, str]) -> Set[str]:

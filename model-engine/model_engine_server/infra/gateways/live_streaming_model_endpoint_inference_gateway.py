@@ -23,6 +23,7 @@ from model_engine_server.domain.exceptions import (
 from model_engine_server.domain.gateways.streaming_model_endpoint_inference_gateway import (
     StreamingModelEndpointInferenceGateway,
 )
+from model_engine_server.infra.gateways.dns_resolver import resolve_dns
 from model_engine_server.infra.gateways.k8s_resource_parser import get_node_port
 from orjson import JSONDecodeError
 from tenacity import (
@@ -45,20 +46,27 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
 )
 
 
-def _get_streaming_endpoint_url(deployment_name: str, path: str = "/stream") -> str:
+def _get_streaming_endpoint_url(
+    service_name: str, path: str = "/stream", manually_resolve_dns: bool = False
+) -> str:
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
         # The IP address is obtained from `minikube ip`.
         protocol: str = "http"
-        hostname: str = f"192.168.49.2:{get_node_port(deployment_name)}"
+        hostname: str = f"192.168.49.2:{get_node_port(service_name)}"
     elif LOCAL:
         # local development: the svc.cluster.local address is only available w/in the k8s cluster
         protocol = "https"
-        hostname = f"{deployment_name}.{infra_config().dns_host_domain}"
+        hostname = f"{service_name}.{infra_config().dns_host_domain}"
+    elif manually_resolve_dns:
+        protocol = "http"
+        hostname = resolve_dns(
+            f"{service_name}.{hmi_config.endpoint_namespace}.svc.cluster.local", port=protocol
+        )
     else:
         protocol = "http"
         # no need to hit external DNS resolution if we're w/in the k8s cluster
-        hostname = f"{deployment_name}.{hmi_config.endpoint_namespace}.svc.cluster.local"
+        hostname = f"{service_name}.{hmi_config.endpoint_namespace}.svc.cluster.local"
     return f"{protocol}://{hostname}{path}"
 
 
@@ -189,10 +197,15 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         raise Exception("Should never reach this line")
 
     async def streaming_predict(
-        self, topic: str, predict_request: SyncEndpointPredictV1Request
+        self,
+        topic: str,
+        predict_request: SyncEndpointPredictV1Request,
+        manually_resolve_dns: bool = False,
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
         deployment_url = _get_streaming_endpoint_url(
-            topic, path=predict_request.destination_path or "/stream"
+            topic,
+            path=predict_request.destination_path or "/stream",
+            manually_resolve_dns=manually_resolve_dns,
         )
 
         try:

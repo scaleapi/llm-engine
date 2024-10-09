@@ -76,6 +76,7 @@ class ModelEndpointService(ABC):
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
         storage: StorageSpecificationType,
+        nodes_per_worker: int,
         optimize_costs: bool,
         min_workers: int,
         max_workers: int,
