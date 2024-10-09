@@ -62,6 +62,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
         storage: StorageSpecificationType,
+        nodes_per_worker: int,
         optimize_costs: bool,
         aws_role: str,
         results_s3_bucket: str,
@@ -88,6 +89,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             memory=memory,
             gpu_type=gpu_type,
             storage=storage,
+            nodes_per_worker=nodes_per_worker,
             optimize_costs=optimize_costs,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,
@@ -151,6 +153,8 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             gpu_type = infra_state.resource_state.gpu_type
         if storage is None:
             storage = infra_state.resource_state.storage
+        # Don't allow changing nodes_per_worker
+        nodes_per_worker = infra_state.resource_state.nodes_per_worker
         if optimize_costs is None:
             optimize_costs = infra_state.resource_state.optimize_costs or False
         if child_fn_info is None:
@@ -199,6 +203,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             memory=memory,
             gpu_type=gpu_type,
             storage=storage,
+            nodes_per_worker=nodes_per_worker,
             optimize_costs=optimize_costs,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,

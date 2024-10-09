@@ -27,8 +27,10 @@ from model_engine_server.domain.authorization.live_authorization_module import (
     LiveAuthorizationModule,
 )
 from model_engine_server.domain.entities import (
+    ModelBundle,
     ModelEndpoint,
     ModelEndpointType,
+    RunnableImageFlavor,
     StreamingEnhancedRunnableImageFlavor,
 )
 from model_engine_server.domain.exceptions import (
@@ -215,6 +217,47 @@ def validate_post_inference_hooks(user: User, post_inference_hooks: Optional[Lis
             )
 
 
+def validate_bundle_multinode_compatibility(bundle: ModelBundle, nodes_per_worker: int):
+    """
+    Only some bundles can be multinode compatible.
+    """
+    if nodes_per_worker == 1:
+        return
+    # can type ignore, bundle.flavor is a RunnableImageFlavor/StreamingEnhancedRunnableImageFlavor thus it has worker_command and worker_env
+    if (
+        type(bundle.flavor) in {RunnableImageFlavor, StreamingEnhancedRunnableImageFlavor}
+        and bundle.flavor.worker_command is not None  # type: ignore
+        and bundle.flavor.worker_env is not None  # type: ignore
+    ):
+        return
+    raise ObjectHasInvalidValueException(
+        f"Bundle {bundle.name} is not multinode compatible. It must be a RunnableImage and have worker_command and worker_args set."
+    )
+
+
+def validate_endpoint_resource_multinode_compatibility(
+    gpu_type: Optional[str],
+    gpus: Optional[int],
+    endpoint_type: ModelEndpointType,
+    nodes_per_worker: int,
+):
+    """
+    Only gpu streaming endpoints can be multinode compatible.
+    """
+    if nodes_per_worker == 1:
+        return
+    if (
+        endpoint_type == ModelEndpointType.STREAMING
+        and gpu_type is not None
+        and gpus is not None
+        and gpus > 0
+    ):
+        return
+    raise ObjectHasInvalidValueException(
+        "Endpoint is not multinode compatible. Only streaming GPU endpoints can be multinode compatible."
+    )
+
+
 class CreateModelEndpointV1UseCase:
     def __init__(
         self,
@@ -241,8 +284,13 @@ class CreateModelEndpointV1UseCase:
         bundle = await self.model_bundle_repository.get_model_bundle(
             model_bundle_id=request.model_bundle_id
         )
+
         if bundle is None:
             raise ObjectNotFoundException
+        validate_bundle_multinode_compatibility(bundle, request.nodes_per_worker)
+        validate_endpoint_resource_multinode_compatibility(
+            request.gpu_type, request.gpus, request.endpoint_type, request.nodes_per_worker
+        )
         if not self.authz_module.check_access_read_owned_entity(user, bundle):
             raise ObjectNotAuthorizedException
         if not isinstance(bundle.flavor, StreamingEnhancedRunnableImageFlavor) and (
@@ -300,6 +348,7 @@ class CreateModelEndpointV1UseCase:
             memory=request.memory,
             gpu_type=request.gpu_type,
             storage=request.storage,
+            nodes_per_worker=request.nodes_per_worker,
             optimize_costs=bool(request.optimize_costs),
             min_workers=request.min_workers,
             max_workers=request.max_workers,

@@ -43,6 +43,7 @@ def test_create_model_endpoint_infra(
             memory=endpoint.infra_state.resource_state.memory,
             gpu_type=endpoint.infra_state.resource_state.gpu_type,
             storage=endpoint.infra_state.resource_state.storage,
+            nodes_per_worker=endpoint.infra_state.resource_state.nodes_per_worker,
             optimize_costs=bool(endpoint.infra_state.resource_state.optimize_costs),
             aws_role=endpoint.infra_state.aws_role,
             results_s3_bucket=endpoint.infra_state.results_s3_bucket,
@@ -130,6 +131,37 @@ async def test_update_model_endpoint_infra(
         .get("billing_tags")
         .get("idempotencyKeyPrefix")
         == "new_value_1"
+    )
+
+
+@pytest.mark.asyncio
+async def test_update_multinode_endpoint_keeps_nodes_per_worker(
+    model_endpoint_infra_gateway: LiveModelEndpointInfraGateway,
+    model_endpoint_1: ModelEndpoint,
+    fake_task_queue_gateway,
+):
+    model_endpoint_1.infra_state.resource_state.nodes_per_worker = 2
+    resource_gateway: Any = model_endpoint_infra_gateway.resource_gateway
+    existing_infra_state = model_endpoint_1.infra_state
+    assert existing_infra_state is not None
+    live_model_endpoint_infra_gateway.generate_deployment_name = Mock(
+        return_value=existing_infra_state.deployment_name
+    )
+    resource_gateway.add_resource(model_endpoint_1.record.id, existing_infra_state)
+
+    creation_task_id_1 = await model_endpoint_infra_gateway.update_model_endpoint_infra(
+        model_endpoint_record=model_endpoint_1.record,
+        max_workers=2,
+        cpus=2,
+        memory=2,
+        storage=2,
+    )
+    assert creation_task_id_1
+    assert (
+        fake_task_queue_gateway.get_task_args(creation_task_id_1)["kwargs"][
+            "build_endpoint_request_json"
+        ].get("nodes_per_worker")
+        == 2
     )
 
 

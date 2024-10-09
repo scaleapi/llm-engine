@@ -211,6 +211,12 @@ class _TritonArguments(TypedDict):
     TRITON_COMMIT_TAG: str
 
 
+class _LeaderWorkerSetArguments(TypedDict):
+    LWS_SIZE: int
+    WORKER_COMMAND: List[str]
+    WORKER_ENV: List[Dict[str, Any]]
+
+
 class DeploymentRunnableImageSyncCpuArguments(
     _RunnableImageDeploymentArguments, _SyncRunnableImageDeploymentArguments
 ):
@@ -289,6 +295,15 @@ class DeploymentTritonEnhancedRunnableImageAsyncGpuArguments(
     """
 
 
+class LeaderWorkerSetRunnableImageStreamingGpuArguments(
+    _RunnableImageDeploymentArguments,
+    _StreamingDeploymentArguments,
+    _GpuArguments,
+    _LeaderWorkerSetArguments,
+):
+    """Keyword-arguments for substituting into GPU streaming LeaderWorkerSet templates for runnable images."""
+
+
 class HorizontalPodAutoscalerArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into horizontal pod autoscaler templates."""
 
@@ -334,6 +349,13 @@ class ServiceArguments(_BaseEndpointArguments):
     NODE_PORT_DICT: DictStrInt
 
 
+class LwsServiceArguments(ServiceArguments):
+    """Keyword-arguments for substituting into service templates for LWS.
+    Need this to override the service name for LWS."""
+
+    SERVICE_NAME_OVERRIDE: str
+
+
 class DestinationRuleArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into destination-rule templates."""
 
@@ -355,6 +377,12 @@ class VirtualServiceArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into virtual-service templates."""
 
     DNS_HOST_DOMAIN: str
+
+
+class LwsServiceEntryArguments(_BaseEndpointArguments):
+    """Keyword-arguments for substituting into istio service-entry templates to support LWS."""
+
+    SERVICE_NAME_OVERRIDE: str
 
 
 class BatchJobOrchestrationJobArguments(_JobArguments):
@@ -483,6 +511,7 @@ def get_endpoint_resource_arguments_from_request(
     sqs_queue_url: str,
     endpoint_resource_name: str,
     api_version: str = "",
+    service_name_override: Optional[str] = None,
 ) -> EndpointResourceArguments:
     """Get the arguments for the endpoint resource templates from the request.
 
@@ -501,6 +530,8 @@ def get_endpoint_resource_arguments_from_request(
     storage = build_endpoint_request.storage
     sqs_profile = f"eks-{infra_config().profile_ml_worker}"  # TODO: Make this configurable
     s3_bucket = infra_config().s3_bucket
+
+    service_name_override = service_name_override or k8s_resource_group_name
 
     storage_dict = DictStrStr("")
     if storage is not None:
@@ -542,6 +573,17 @@ def get_endpoint_resource_arguments_from_request(
     abs_account_name = os.getenv("ABS_ACCOUNT_NAME")
     if abs_account_name is not None:
         main_env.append({"name": "ABS_ACCOUNT_NAME", "value": abs_account_name})
+
+    # LeaderWorkerSet exclusive
+    worker_env = None
+    if isinstance(flavor, RunnableImageLike) and flavor.worker_env is not None:
+        worker_env = [{"name": key, "value": value} for key, value in flavor.worker_env.items()]
+        worker_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
+        worker_env.append({"name": "AWS_CONFIG_FILE", "value": "/opt/.aws/config"})
+
+    worker_command = None
+    if isinstance(flavor, RunnableImageLike) and flavor.worker_command is not None:
+        worker_command = flavor.worker_command
 
     infra_service_config_volume_mount_path = "/infra-config"
     forwarder_config_file_name = "service--forwarder.yaml"
@@ -1088,6 +1130,61 @@ def get_endpoint_resource_arguments_from_request(
             TRITON_COMMAND=triton_command,
             TRITON_COMMIT_TAG=flavor.triton_commit_tag,
         )
+    elif endpoint_resource_name == "leader-worker-set-streaming-gpu":
+        assert isinstance(flavor, StreamingEnhancedRunnableImageFlavor)
+        assert build_endpoint_request.gpu_type is not None
+        assert worker_command is not None
+        assert worker_env is not None
+        return LeaderWorkerSetRunnableImageStreamingGpuArguments(
+            # Base resource arguments
+            RESOURCE_NAME=k8s_resource_group_name,
+            NAMESPACE=hmi_config.endpoint_namespace,
+            ENDPOINT_ID=model_endpoint_record.id,
+            ENDPOINT_NAME=model_endpoint_record.name,
+            TEAM=team,
+            PRODUCT=product,
+            CREATED_BY=created_by,
+            OWNER=owner,
+            GIT_TAG=GIT_TAG,
+            # Base deployment arguments
+            CHANGE_CAUSE_MESSAGE=change_cause_message,
+            AWS_ROLE=build_endpoint_request.aws_role,
+            PRIORITY=priority,
+            IMAGE=request.image,
+            IMAGE_HASH=image_hash,
+            DD_TRACE_ENABLED=str(dd_trace_enabled),
+            CPUS=str(build_endpoint_request.cpus),
+            MEMORY=str(build_endpoint_request.memory),
+            STORAGE_DICT=storage_dict,
+            PER_WORKER=build_endpoint_request.per_worker,
+            MIN_WORKERS=build_endpoint_request.min_workers,
+            MAX_WORKERS=build_endpoint_request.max_workers,
+            RESULTS_S3_BUCKET=s3_bucket,
+            # Runnable Image Arguments
+            MAIN_ENV=main_env,
+            COMMAND=flavor.streaming_command,
+            PREDICT_ROUTE=flavor.predict_route,
+            STREAMING_PREDICT_ROUTE=flavor.streaming_predict_route,
+            HEALTHCHECK_ROUTE=flavor.healthcheck_route,
+            READINESS_INITIAL_DELAY=flavor.readiness_initial_delay_seconds,
+            INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH=infra_service_config_volume_mount_path,
+            FORWARDER_CONFIG_FILE_NAME=forwarder_config_file_name,
+            FORWARDER_CPUS_LIMIT=FORWARDER_CPU_USAGE,
+            FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
+            FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
+            USER_CONTAINER_PORT=USER_CONTAINER_PORT,
+            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
+            # Streaming Arguments
+            FORWARDER_PORT=FORWARDER_PORT,
+            FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
+            # GPU Arguments
+            GPU_TYPE=build_endpoint_request.gpu_type.value,
+            GPUS=build_endpoint_request.gpus,
+            # Leader Worker Set Arguments
+            LWS_SIZE=build_endpoint_request.nodes_per_worker,
+            WORKER_COMMAND=worker_command,
+            WORKER_ENV=worker_env,
+        )
     elif endpoint_resource_name == "user-config":
         app_config_serialized = python_json_to_b64(model_bundle.app_config)
         return UserConfigArguments(
@@ -1198,6 +1295,33 @@ def get_endpoint_resource_arguments_from_request(
             SERVICE_TYPE=service_type,
             SERVICE_TARGET_PORT=FORWARDER_PORT,
         )
+    elif endpoint_resource_name == "lws-service":
+        # Use ClusterIP by default for sync endpoint.
+        # In Circle CI, we use a NodePort to expose the service to CI.
+        service_type = "ClusterIP" if not CIRCLECI else "NodePort"
+        if service_type == "NodePort":
+            node_port = get_node_port(k8s_resource_group_name)
+            node_port_dict = DictStrInt(f"nodePort: {node_port}")
+        else:
+            node_port_dict = DictStrInt("")
+        return LwsServiceArguments(
+            # Base resource arguments
+            RESOURCE_NAME=k8s_resource_group_name,
+            NAMESPACE=hmi_config.endpoint_namespace,
+            ENDPOINT_ID=model_endpoint_record.id,
+            ENDPOINT_NAME=model_endpoint_record.name,
+            TEAM=team,
+            PRODUCT=product,
+            CREATED_BY=created_by,
+            OWNER=owner,
+            GIT_TAG=GIT_TAG,
+            # Service arguments
+            NODE_PORT_DICT=node_port_dict,
+            SERVICE_TYPE=service_type,
+            SERVICE_TARGET_PORT=FORWARDER_PORT,
+            # LWS Service args
+            SERVICE_NAME_OVERRIDE=service_name_override,
+        )
     elif endpoint_resource_name == "virtual-service":
         return VirtualServiceArguments(
             # Base resource arguments
@@ -1224,6 +1348,21 @@ def get_endpoint_resource_arguments_from_request(
             CREATED_BY=created_by,
             OWNER=owner,
             GIT_TAG=GIT_TAG,
+        )
+    elif endpoint_resource_name == "lws-service-entry":
+        return LwsServiceEntryArguments(
+            # Base resource arguments
+            RESOURCE_NAME=k8s_resource_group_name,
+            NAMESPACE=hmi_config.endpoint_namespace,
+            ENDPOINT_ID=model_endpoint_record.id,
+            ENDPOINT_NAME=model_endpoint_record.name,
+            TEAM=team,
+            PRODUCT=product,
+            CREATED_BY=created_by,
+            OWNER=owner,
+            GIT_TAG=GIT_TAG,
+            # LWS Service Entry args
+            SERVICE_NAME_OVERRIDE=service_name_override,
         )
     elif endpoint_resource_name == "vertical-pod-autoscaler":
         return VerticalPodAutoscalerArguments(

@@ -30,6 +30,7 @@ class ModelEndpointInfraGateway(ABC):
         memory: StorageSpecificationType,
         gpu_type: Optional[GpuType],
         storage: StorageSpecificationType,
+        nodes_per_worker: int,
         optimize_costs: bool,
         aws_role: str,
         results_s3_bucket: str,

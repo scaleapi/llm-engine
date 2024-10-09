@@ -58,6 +58,7 @@ class CreateModelEndpointV1Request(BaseModel):
     memory: StorageSpecificationType
     gpu_type: Optional[GpuType] = None
     storage: StorageSpecificationType
+    nodes_per_worker: int = Field(gt=0, default=1)
     optimize_costs: Optional[bool] = None
     min_workers: int = Field(..., ge=0)
     max_workers: int = Field(..., ge=0)

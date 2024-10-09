@@ -22,6 +22,7 @@ class BuildEndpointRequest(BaseModel):
     memory: StorageSpecificationType
     gpu_type: Optional[GpuType] = None
     storage: Optional[StorageSpecificationType] = None
+    nodes_per_worker: int = 1  # Multinode support. >1 = multinode.
     optimize_costs: bool
     aws_role: str
     results_s3_bucket: str
