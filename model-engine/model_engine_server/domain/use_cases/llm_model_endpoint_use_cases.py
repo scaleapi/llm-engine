@@ -256,6 +256,8 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "phi-3-small-128k-instruct",
             "phi-3-medium-4-instruct",
             "phi-3-medium-128k-instruct",
+            "deepseek-v2",
+            "deepseek-v2-chat",
             "deepseek-coder-v2",
             "deepseek-coder-v2-instruct",
             "deepseek-coder-v2-lite",
