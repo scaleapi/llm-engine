@@ -3521,11 +3521,11 @@ class CreateBatchCompletionsV2UseCase:
             )
         else:
             if (
-                request.cpus is None
-                or request.gpus is None
-                or request.memory is None
-                or request.storage is None
-                or request.gpu_type is None
+                request.cpus is not None
+                or request.gpus is not None
+                or request.memory is not None
+                or request.storage is not None
+                or request.gpu_type is not None
             ):
                 logger.warning(
                     "All hardware spec fields (cpus, gpus, memory, storage, gpu_type) must be provided if any hardware spec field is provided. Will attempt to infer hardware spec from checkpoint."
