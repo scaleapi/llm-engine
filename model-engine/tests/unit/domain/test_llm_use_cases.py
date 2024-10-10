@@ -68,6 +68,13 @@ from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateMo
 from ..conftest import mocked__get_recommended_hardware_config_map
 
 
+def mocked__get_latest_batch_v2_tag():
+    async def async_mock(*args, **kwargs):  # noqa
+        return "fake_docker_repository_latest_image_tag"
+
+    return mock.AsyncMock(side_effect=async_mock)
+
+
 def mocked__get_latest_batch_tag():
     async def async_mock(*args, **kwargs):  # noqa
         return "fake_docker_repository_latest_image_tag"
@@ -2827,8 +2834,8 @@ async def test_create_batch_completions_v1(
     mocked__get_recommended_hardware_config_map(),
 )
 @mock.patch(
-    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_batch_tag",
-    mocked__get_latest_batch_tag(),
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_batch_v2_tag",
+    mocked__get_latest_batch_v2_tag(),
 )
 async def test_create_batch_completions_v2(
     fake_llm_batch_completions_service,
@@ -2869,7 +2876,7 @@ async def test_create_batch_completions_v2(
         user=user,
         job_request=expected_engine_request,
         image_repo="llm-engine/batch-infer-vllm",
-        image_tag="0.6.2-rc1",
+        image_tag="fake_docker_repository_latest_image_tag",
         resource_requests=expected_hardware,
         labels=create_batch_completions_v2_request.labels,
         max_runtime_sec=create_batch_completions_v2_request.max_runtime_sec,
@@ -2900,7 +2907,7 @@ async def test_create_batch_completions_v2(
         user=user,
         job_request=expected_engine_request,
         image_repo="llm-engine/batch-infer-vllm",
-        image_tag="0.6.2-rc1",
+        image_tag="fake_docker_repository_latest_image_tag",
         resource_requests=expected_hardware,
         labels=create_batch_completions_v2_request.labels,
         max_runtime_sec=create_batch_completions_v2_request.max_runtime_sec,
