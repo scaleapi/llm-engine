@@ -3,6 +3,7 @@ from typing import Any, List, Tuple
 from unittest import mock
 
 import pytest
+from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
     CompletionStreamV1Request,
@@ -14,6 +15,10 @@ from model_engine_server.common.dtos.llms import (
     ModelDownloadRequest,
     TokenOutput,
     UpdateLLMModelEndpointV1Request,
+)
+from model_engine_server.common.dtos.llms.batch_completion import (
+    CreateBatchCompletionsEngineRequest,
+    CreateBatchCompletionsV2Request,
 )
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Response, TaskStatus
 from model_engine_server.core.auth.authentication_repository import User
@@ -43,6 +48,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateBatchCompletionsUseCase,
+    CreateBatchCompletionsV2UseCase,
     CreateLLMModelBundleV1UseCase,
     CreateLLMModelEndpointV1UseCase,
     DeleteLLMEndpointByNameUseCase,
@@ -60,6 +66,13 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
 from ..conftest import mocked__get_recommended_hardware_config_map
+
+
+def mocked__get_latest_batch_v2_tag():
+    async def async_mock(*args, **kwargs):  # noqa
+        return "fake_docker_repository_latest_image_tag"
+
+    return mock.AsyncMock(side_effect=async_mock)
 
 
 def mocked__get_latest_batch_tag():
@@ -2813,6 +2826,93 @@ async def test_create_batch_completions_v1(
         "-c",
         "ddtrace-run python vllm_batch.py",
     ]
+
+
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
+    mocked__get_recommended_hardware_config_map(),
+)
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_batch_v2_tag",
+    mocked__get_latest_batch_v2_tag(),
+)
+async def test_create_batch_completions_v2(
+    fake_llm_batch_completions_service,
+    fake_llm_artifact_gateway,
+    test_api_key: str,
+    create_batch_completions_v2_request: CreateBatchCompletionsV2Request,
+    create_batch_completions_v2_request_with_hardware: CreateBatchCompletionsV2Request,
+):
+    fake_llm_batch_completions_service.create_batch_job = mock.AsyncMock()
+    use_case = CreateBatchCompletionsV2UseCase(
+        llm_batch_completions_service=fake_llm_batch_completions_service,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    await use_case.execute(create_batch_completions_v2_request, user)
+
+    expected_engine_request = CreateBatchCompletionsEngineRequest(
+        model_cfg=create_batch_completions_v2_request.model_cfg,
+        max_runtime_sec=create_batch_completions_v2_request.max_runtime_sec,
+        data_parallelism=create_batch_completions_v2_request.data_parallelism,
+        labels=create_batch_completions_v2_request.labels,
+        content=create_batch_completions_v2_request.content,
+        output_data_path=create_batch_completions_v2_request.output_data_path,
+    )
+
+    expected_hardware = CreateDockerImageBatchJobResourceRequests(
+        cpus=10,
+        memory="40Gi",
+        gpus=1,
+        gpu_type=GpuType.NVIDIA_HOPPER_H100_3G_40GB,
+        storage="80Gi",
+        nodes_per_worker=1,
+    )
+
+    # assert fake_llm_batch_completions_service was called with the correct arguments
+    fake_llm_batch_completions_service.create_batch_job.assert_called_with(
+        user=user,
+        job_request=expected_engine_request,
+        image_repo="llm-engine/batch-infer-vllm",
+        image_tag="fake_docker_repository_latest_image_tag",
+        resource_requests=expected_hardware,
+        labels=create_batch_completions_v2_request.labels,
+        max_runtime_sec=create_batch_completions_v2_request.max_runtime_sec,
+        num_workers=create_batch_completions_v2_request.data_parallelism,
+    )
+
+    await use_case.execute(create_batch_completions_v2_request_with_hardware, user)
+
+    expected_engine_request = CreateBatchCompletionsEngineRequest(
+        model_cfg=create_batch_completions_v2_request_with_hardware.model_cfg,
+        max_runtime_sec=create_batch_completions_v2_request_with_hardware.max_runtime_sec,
+        data_parallelism=create_batch_completions_v2_request_with_hardware.data_parallelism,
+        labels=create_batch_completions_v2_request_with_hardware.labels,
+        content=create_batch_completions_v2_request_with_hardware.content,
+        output_data_path=create_batch_completions_v2_request_with_hardware.output_data_path,
+    )
+
+    expected_hardware = CreateDockerImageBatchJobResourceRequests(
+        cpus=create_batch_completions_v2_request_with_hardware.cpus,
+        gpus=create_batch_completions_v2_request_with_hardware.gpus,
+        memory=create_batch_completions_v2_request_with_hardware.memory,
+        storage=create_batch_completions_v2_request_with_hardware.storage,
+        gpu_type=create_batch_completions_v2_request_with_hardware.gpu_type,
+        nodes_per_worker=create_batch_completions_v2_request_with_hardware.nodes_per_worker,
+    )
+    # assert fake_llm_batch_completions_service was called with the correct arguments
+    fake_llm_batch_completions_service.create_batch_job.assert_called_with(
+        user=user,
+        job_request=expected_engine_request,
+        image_repo="llm-engine/batch-infer-vllm",
+        image_tag="fake_docker_repository_latest_image_tag",
+        resource_requests=expected_hardware,
+        labels=create_batch_completions_v2_request.labels,
+        max_runtime_sec=create_batch_completions_v2_request.max_runtime_sec,
+        num_workers=create_batch_completions_v2_request.data_parallelism,
+    )
 
 
 def test_merge_metadata():

@@ -34,6 +34,25 @@ class VLLMModelConfig(BaseModel):
         description="Maximum GPU memory utilization for the batch inference. Default to 90%.",
     )
 
+    trust_remote_code: Optional[bool] = Field(
+        default=False,
+        description="Whether to trust remote code from Hugging face hub. This is only applicable to models whose code is not supported natively by the transformers library (e.g. deepseek). Default to False.",
+    )
+
+
+class VLLMEngineAdditionalArgs(BaseModel):
+    """Additional arguments to configure for vLLM that are not direct inputs to the vLLM engine"""
+
+    max_gpu_memory_utilization: Optional[float] = Field(
+        None,
+        description="Maximum GPU memory utilization for the batch inference. Default to 90%. Deprecated in favor of specifying this in VLLMModelConfig",
+    )
+
+    attention_backend: Optional[str] = Field(
+        default=None,
+        description="Attention backend to use for vLLM. Default to None.",
+    )
+
 
 class VLLMSamplingParams(BaseModel):
     best_of: Optional[int] = Field(
