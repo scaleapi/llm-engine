@@ -152,6 +152,9 @@ from model_engine_server.infra.repositories.db_model_bundle_repository import (
     translate_model_bundle_orm_to_model_bundle,
 )
 from model_engine_server.infra.services import LiveBatchJobService, LiveModelEndpointService
+from model_engine_server.infra.services.fake_llm_batch_completions_service import (
+    FakeLLMBatchCompletionsService,
+)
 from model_engine_server.infra.services.image_cache_service import ImageCacheService
 from model_engine_server.infra.services.live_llm_batch_completions_service import (
     LiveLLMBatchCompletionsService,
@@ -2096,6 +2099,12 @@ def fake_batch_job_orchestration_gateway() -> FakeBatchJobOrchestrationGateway:
 def fake_docker_image_batch_job_gateway() -> FakeDockerImageBatchJobGateway:
     gateway = FakeDockerImageBatchJobGateway()
     return gateway
+
+
+@pytest.fixture
+def fake_llm_batch_completions_service() -> FakeLLMBatchCompletionsService:
+    service = FakeLLMBatchCompletionsService()
+    return service
 
 
 @pytest.fixture

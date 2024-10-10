@@ -12,6 +12,11 @@ from model_engine_server.common.dtos.llms import (
     CreateLLMModelEndpointV1Request,
     UpdateLLMModelEndpointV1Request,
 )
+from model_engine_server.common.dtos.llms.batch_completion import (
+    CreateBatchCompletionsV2ModelConfig,
+    CreateBatchCompletionsV2Request,
+    FilteredCompletionV2Request,
+)
 from model_engine_server.common.dtos.model_bundles import (
     CreateModelBundleV1Request,
     CreateModelBundleV2Request,
@@ -608,4 +613,51 @@ def create_batch_completions_v1_request() -> CreateBatchCompletionsV1Request:
             num_shards=1,
         ),
         data_parallelism=1,
+    )
+
+
+@pytest.fixture
+def create_batch_completions_v2_request() -> CreateBatchCompletionsV2Request:
+    return CreateBatchCompletionsV2Request(
+        output_data_path="test_output_data_path",
+        content=[
+            FilteredCompletionV2Request(
+                prompt="What is machine learning?",
+                max_tokens=10,
+                temperature=0.5,
+            )
+        ],
+        model_config=CreateBatchCompletionsV2ModelConfig(
+            model="mpt-7b",
+            checkpoint_path="s3://test_checkpoint_path",
+            labels={},
+            num_shards=1,
+        ),
+        data_parallelism=1,
+    )
+
+
+@pytest.fixture
+def create_batch_completions_v2_request_with_hardware() -> CreateBatchCompletionsV2Request:
+    return CreateBatchCompletionsV2Request(
+        output_data_path="test_output_data_path",
+        content=[
+            FilteredCompletionV2Request(
+                prompt="What is machine learning?",
+                max_tokens=10,
+                temperature=0.5,
+            )
+        ],
+        model_config=CreateBatchCompletionsV2ModelConfig(
+            model="mpt-7b",
+            checkpoint_path="s3://test_checkpoint_path",
+            labels={},
+            num_shards=1,
+        ),
+        data_parallelism=1,
+        cpus=1,
+        gpus=1,
+        memory="8G",
+        gpu_type=GpuType.NVIDIA_HOPPER_H100,
+        storage="10G",
     )
