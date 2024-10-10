@@ -3353,6 +3353,7 @@ def infer_addition_engine_args_from_model_name(
     if model_name.startswith("gemma-2"):
         attention_backend = "FLASHINFER"
 
+    trust_remote_code = None
     # DeepSeek requires trust_remote_code
     if model_name.startswith("deepseek"):
         trust_remote_code = True
