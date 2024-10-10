@@ -15,6 +15,7 @@ data:
       memory: {{ .memory }}
       storage: {{ .storage }}
       gpu_type: {{ .gpu_type }}
+      nodes_per_worker: {{ .nodes_per_worker }}
 {{- end }}
   byModelName: |-
 {{- range $.Values.recommendedHardware.byModelName }}
@@ -24,5 +25,6 @@ data:
       memory: {{ .memory }}
       storage: {{ .storage }}
       gpu_type: {{ .gpu_type }}
+      nodes_per_worker: {{ .nodes_per_worker }}
 {{- end }}
 {{- end }}
