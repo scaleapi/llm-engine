@@ -55,6 +55,7 @@ from model_engine_server.common.dtos.llms.completion import (
     CompletionV2StreamSuccessChunk,
     CompletionV2SyncResponse,
 )
+from model_engine_server.common.dtos.llms.vllm import VLLMModelConfig
 from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Request
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
@@ -878,9 +879,7 @@ class CreateLLMModelBundleV1UseCase:
             subcommands.append(ray_cmd)
 
         if not is_worker:
-            vllm_cmd = ""
-
-            vllm_cmd += f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
+            vllm_cmd = f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
 
             if multinode:
                 vllm_cmd += f" --pipeline-parallel-size {nodes_per_worker}"
@@ -906,11 +905,16 @@ class CreateLLMModelBundleV1UseCase:
 
             additional_args = infer_addition_engine_args_from_model_name(model_name)
 
-            if additional_args.max_gpu_memory_utilization:
-                vllm_cmd += f" --gpu-memory-utilization {additional_args.max_gpu_memory_utilization} --enforce-eager"
+            for field in VLLMModelConfig.model_fields.keys():
+                config_value = getattr(additional_args, field, None)
+                if config_value is not None:
+                    vllm_cmd += f" --{field.replace('_', '-')} {config_value}"
 
-            if additional_args.attention_backend:
-                vllm_cmd += " --attention-backend FLASHINFER"
+                    if field == "gpu_memory_utilization":
+                        vllm_cmd += " --enforce-eager"
+
+            if additional_args.attention_backend is not None:
+                vllm_cmd += f" --attention-backend {additional_args.attention_backend}"
 
             subcommands.append(vllm_cmd)
 
@@ -3328,9 +3332,13 @@ async def _infer_hardware(
     )
 
 
+class VLLMAdditionalArgs(VLLMModelConfig, VLLMEngineAdditionalArgs):
+    pass
+
+
 def infer_addition_engine_args_from_model_name(
     model_name: str,
-) -> VLLMEngineAdditionalArgs:
+) -> VLLMAdditionalArgs:
     # Increase max gpu utilization for larger models
     model_param_count_b = get_model_param_count_b(model_name)
     if model_param_count_b >= 70:
@@ -3343,9 +3351,14 @@ def infer_addition_engine_args_from_model_name(
     if model_name.startswith("gemma-2"):
         attention_backend = "FLASHINFER"
 
-    return VLLMEngineAdditionalArgs(
-        max_gpu_memory_utilization=gpu_memory_utilization,
+    # DeepSeek requires trust_remote_code
+    if model_name.startswith("deepseek"):
+        trust_remote_code = True
+
+    return VLLMAdditionalArgs(
+        gpu_memory_utilization=gpu_memory_utilization,
         attention_backend=attention_backend,
+        trust_remote_code=trust_remote_code,
     )
 
 
@@ -3437,9 +3450,7 @@ class CreateBatchCompletionsUseCase:
             engine_request.model_cfg.model
         )
 
-        engine_request.max_gpu_memory_utilization = (
-            additional_engine_args.max_gpu_memory_utilization
-        )
+        engine_request.max_gpu_memory_utilization = additional_engine_args.gpu_memory_utilization
         engine_request.attention_backend = additional_engine_args.attention_backend
 
         batch_bundle = await self.create_batch_job_bundle(user, engine_request, hardware)
@@ -3520,9 +3531,13 @@ class CreateBatchCompletionsV2UseCase:
         additional_engine_args = infer_addition_engine_args_from_model_name(
             engine_request.model_cfg.model
         )
-        engine_request.max_gpu_memory_utilization = (
-            additional_engine_args.max_gpu_memory_utilization
-        )
+
+        # Overwrite model config fields with those determined by additional engine args
+        for field in VLLMModelConfig.model_fields.keys():
+            config_value = getattr(additional_engine_args, field, None)
+            if config_value is not None and hasattr(engine_request.model_cfg, field):
+                setattr(engine_request.model_cfg, field, config_value)
+
         engine_request.attention_backend = additional_engine_args.attention_backend
 
         return await self.llm_batch_completions_service.create_batch_job(

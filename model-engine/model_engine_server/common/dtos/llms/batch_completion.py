@@ -10,7 +10,7 @@ from model_engine_server.common.dtos.llms.completion import (
     CompletionV2Request,
     CompletionV2SyncResponse,
 )
-from model_engine_server.common.dtos.llms.vllm import VLLMModelConfig
+from model_engine_server.common.dtos.llms.vllm import VLLMEngineAdditionalArgs, VLLMModelConfig
 from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Field
 from typing_extensions import TypeAlias
 
@@ -295,19 +295,6 @@ class ListBatchCompletionV2Response(BaseModel):
 
 class GetBatchCompletionV2Response(BaseModel):
     job: BatchCompletionsJob
-
-
-class VLLMEngineAdditionalArgs(BaseModel):
-    max_gpu_memory_utilization: Optional[float] = Field(
-        default=0.9,
-        le=1.0,
-        description="Maximum GPU memory utilization for the batch inference. Default to 90%.",
-    )
-
-    attention_backend: Optional[str] = Field(
-        default=None,
-        description="Attention backend to use for vLLM. Default to None.",
-    )
 
 
 class CreateBatchCompletionsEngineRequest(BatchCompletionsRequestBase, VLLMEngineAdditionalArgs):
