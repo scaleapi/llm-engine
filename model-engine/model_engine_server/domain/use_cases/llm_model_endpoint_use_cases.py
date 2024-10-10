@@ -3501,13 +3501,40 @@ class CreateBatchCompletionsV2UseCase:
         request.model_cfg.checkpoint_path = get_checkpoint_path(
             request.model_cfg.model, request.model_cfg.checkpoint_path
         )
-        hardware = await _infer_hardware(
-            self.llm_artifact_gateway,
-            request.model_cfg.model,
-            request.model_cfg.checkpoint_path,
-            is_batch_job=True,
-            max_context_length=request.model_cfg.max_context_length,
-        )
+
+        if (
+            request.cpus is not None
+            and request.gpus is not None
+            and request.memory is not None
+            and request.storage is not None
+            and request.gpu_type is not None
+        ):
+            hardware = CreateDockerImageBatchJobResourceRequests(
+                cpus=request.cpus,
+                gpus=request.gpus,
+                memory=request.memory,
+                storage=request.storage,
+                gpu_type=request.gpu_type,
+            )
+        else:
+            if (
+                request.cpus is None
+                or request.gpus is None
+                or request.memory is None
+                or request.storage is None
+                or request.gpu_type is None
+            ):
+                logger.warning(
+                    "All hardware spec fields (cpus, gpus, memory, storage, gpu_type) must be provided if any hardware spec field is provided. Will attempt to infer hardware spec from checkpoint."
+                )
+
+            hardware = await _infer_hardware(
+                self.llm_artifact_gateway,
+                request.model_cfg.model,
+                request.model_cfg.checkpoint_path,
+                is_batch_job=True,
+                max_context_length=request.model_cfg.max_context_length,
+            )
 
         engine_request = CreateBatchCompletionsEngineRequest.from_api_v2(request)
         engine_request.model_cfg.num_shards = hardware.gpus
