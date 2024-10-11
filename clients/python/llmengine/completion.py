@@ -7,19 +7,16 @@ from llmengine.data_types import (
     CompletionStreamV1Request,
     CompletionSyncResponse,
     CompletionSyncV1Request,
+    CpuSpecificationType,
     CreateBatchCompletionsModelConfig,
     CreateBatchCompletionsV1Request,
     CreateBatchCompletionsV1RequestContent,
     CreateBatchCompletionsV1Response,
     CreateBatchCompletionsV2Request,
     CreateBatchCompletionsV2Response,
-    ToolConfig,
-)
-
-from clients.python.llmengine.data_types.rest import (
-    CpuSpecificationType,
     GpuType,
     StorageSpecificationType,
+    ToolConfig,
 )
 
 COMPLETION_TIMEOUT = 300
