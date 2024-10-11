@@ -3,15 +3,10 @@ from typing import Dict, List, Optional, Union
 
 from typing_extensions import TypeAlias
 
-from clients.python.llmengine.data_types.rest import (
-    CpuSpecificationType,
-    GpuType,
-    StorageSpecificationType,
-)
-
 from .chat_completion import ChatCompletionV2Request, ChatCompletionV2Response
 from .completion import CompletionOutput, CompletionV2Request, CompletionV2Response
 from .pydantic_types import BaseModel, Field
+from .rest import CpuSpecificationType, GpuType, StorageSpecificationType
 
 
 # Common DTOs for batch completions
