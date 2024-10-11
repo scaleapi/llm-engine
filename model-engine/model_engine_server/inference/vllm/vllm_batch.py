@@ -242,14 +242,17 @@ async def init_engine(
 
     print("VLLM additional configs:", parsed_configs.model_dump())
 
-    engine_args = AsyncEngineArgs(
+    engine_args_dict = parsed_configs.model_dump(exclude_none=True)
+    default_engine_args_dict = dict(
         model=model,
         tensor_parallel_size=request.model_cfg.num_shards,
         seed=request.model_cfg.seed or 0,
         disable_log_requests=True,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
-        **parsed_configs.model_dump(exclude_none=True),
     )
+    default_engine_args_dict.update(engine_args_dict)
+
+    engine_args = AsyncEngineArgs(**default_engine_args_dict)
 
     engine_client = AsyncLLMEngine.from_engine_args(engine_args)
     model_config = await engine_client.get_model_config()
