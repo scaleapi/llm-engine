@@ -6,6 +6,7 @@ from typing_extensions import TypeAlias
 from .chat_completion import ChatCompletionV2Request, ChatCompletionV2Response
 from .completion import CompletionOutput, CompletionV2Request, CompletionV2Response
 from .pydantic_types import BaseModel, Field
+from .rest import CpuSpecificationType, GpuType, StorageSpecificationType
 
 
 # Common DTOs for batch completions
@@ -103,6 +104,25 @@ class BatchCompletionsRequestBase(BaseModel):
         description="""
 Configuration for tool use.
 NOTE: this config is highly experimental and signature will change significantly in future iterations.""",
+    )
+
+    cpus: Optional[CpuSpecificationType] = Field(
+        default=None, description="CPUs to use for the batch inference."
+    )
+    gpus: Optional[int] = Field(
+        default=None, description="Number of GPUs to use for the batch inference."
+    )
+    memory: Optional[StorageSpecificationType] = Field(
+        default=None, description="Amount of memory to use for the batch inference."
+    )
+    gpu_type: Optional[GpuType] = Field(
+        default=None, description="GPU type to use for the batch inference."
+    )
+    storage: Optional[StorageSpecificationType] = Field(
+        default=None, description="Storage to use for the batch inference."
+    )
+    nodes_per_worker: Optional[int] = Field(
+        default=None, description="Number of nodes per worker for the batch inference."
     )
 
 
