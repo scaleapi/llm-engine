@@ -7,12 +7,15 @@ from llmengine.data_types import (
     CompletionStreamV1Request,
     CompletionSyncResponse,
     CompletionSyncV1Request,
+    CpuSpecificationType,
     CreateBatchCompletionsModelConfig,
     CreateBatchCompletionsV1Request,
     CreateBatchCompletionsV1RequestContent,
     CreateBatchCompletionsV1Response,
     CreateBatchCompletionsV2Request,
     CreateBatchCompletionsV2Response,
+    GpuType,
+    StorageSpecificationType,
     ToolConfig,
 )
 
@@ -486,6 +489,11 @@ class Completion(APIEngine):
         priority: Optional[str] = None,
         use_v2: bool = False,
         tool_config: Optional[ToolConfig] = None,
+        cpus: Optional[CpuSpecificationType] = None,
+        gpus: Optional[int] = None,
+        memory: Optional[StorageSpecificationType] = None,
+        gpu_type: Optional[GpuType] = None,
+        storage: Optional[StorageSpecificationType] = None,
         request_headers: Optional[Dict[str, str]] = None,
     ) -> Union[CreateBatchCompletionsV1Response, CreateBatchCompletionsV2Response]:
         """
@@ -636,6 +644,11 @@ class Completion(APIEngine):
                 max_runtime_sec=max_runtime_sec,
                 tool_config=tool_config,
                 priority=priority,
+                cpus=cpus,
+                gpus=gpus,
+                memory=memory,
+                gpu_type=gpu_type,
+                storage=storage,
             ).dict()
             response = cls.post_sync(
                 resource_name="v2/batch-completions",
