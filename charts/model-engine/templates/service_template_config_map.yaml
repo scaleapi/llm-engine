@@ -472,6 +472,7 @@ data:
           unsafeSsl: "false"
           databaseIndex: "${REDIS_DB_INDEX}"
       {{- end }}
+      # TODO
   {{- range $device := tuple "gpu" }}
   {{- range $mode := tuple "streaming"}}
   leader-worker-set-{{ $mode }}-{{ $device }}.yaml: |-
