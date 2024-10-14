@@ -756,11 +756,8 @@ class CreateLLMModelBundleV1UseCase:
                 ]
             )
         else:
-            file_selection_str = (
-                '--include-pattern "*.model;*.json;*.safetensors" --exclude-pattern "optimizer*"'
-            )
-            if trust_remote_code:
-                file_selection_str += " --include-pattern '*.py'"
+            additional_pattern = ";*.py" if trust_remote_code else ""
+            file_selection_str = f'--include-pattern "*.model;*.json;*.safetensors{additional_pattern}" --exclude-pattern "optimizer*"'
             subcommands.append(
                 f"azcopy copy --recursive {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
             )
