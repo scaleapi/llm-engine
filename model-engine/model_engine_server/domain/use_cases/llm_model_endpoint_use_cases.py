@@ -682,7 +682,11 @@ class CreateLLMModelBundleV1UseCase:
             )
         elif checkpoint_path.startswith("azure://") or "blob.core.windows.net" in checkpoint_path:
             return self.load_model_weights_sub_commands_abs(
-                framework, framework_image_tag, checkpoint_path, final_weights_folder
+                framework,
+                framework_image_tag,
+                checkpoint_path,
+                final_weights_folder,
+                trust_remote_code,
             )
         else:
             raise ObjectHasInvalidValueException(
@@ -725,7 +729,12 @@ class CreateLLMModelBundleV1UseCase:
         return subcommands
 
     def load_model_weights_sub_commands_abs(
-        self, framework, framework_image_tag, checkpoint_path, final_weights_folder
+        self,
+        framework,
+        framework_image_tag,
+        checkpoint_path,
+        final_weights_folder,
+        trust_remote_code: bool,
     ):
         subcommands = []
 
@@ -750,6 +759,8 @@ class CreateLLMModelBundleV1UseCase:
             file_selection_str = (
                 '--include-pattern "*.model;*.json;*.safetensors" --exclude-pattern "optimizer*"'
             )
+            if trust_remote_code:
+                file_selection_str += " --include-pattern '*.py'"
             subcommands.append(
                 f"azcopy copy --recursive {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
             )
