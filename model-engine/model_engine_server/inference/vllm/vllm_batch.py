@@ -89,8 +89,9 @@ dummy_request = Request(
 )
 
 
-async def download_model(checkpoint_path: str, target_dir: str) -> None:
-    s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.bin' --include '*.safetensors' --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {target_dir}"
+async def download_model(checkpoint_path: str, target_dir: str, trust_remote_code: bool) -> None:
+    additional_include = "--include '*.py'" if trust_remote_code else ""
+    s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' {additional_include} --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {target_dir}"
     env = os.environ.copy()
     env["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
     # Need to override these env vars so s5cmd uses AWS_PROFILE
@@ -319,11 +320,11 @@ async def handle_batch_job(request: CreateBatchCompletionsEngineRequest) -> None
     metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
 
     model = get_model_name(request.model_cfg)
-
     if request.model_cfg.checkpoint_path:
         await download_model(
             checkpoint_path=request.model_cfg.checkpoint_path,
             target_dir=MODEL_WEIGHTS_FOLDER,
+            trust_remote_code=request.model_cfg.trust_remote_code or False,
         )
 
     content = load_batch_content(request)

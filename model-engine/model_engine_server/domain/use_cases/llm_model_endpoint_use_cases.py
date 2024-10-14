@@ -665,15 +665,28 @@ class CreateLLMModelBundleV1UseCase:
         ).model_bundle_id
 
     def load_model_weights_sub_commands(
-        self, framework, framework_image_tag, checkpoint_path, final_weights_folder
+        self,
+        framework,
+        framework_image_tag,
+        checkpoint_path,
+        final_weights_folder,
+        trust_remote_code: bool = False,
     ):
         if checkpoint_path.startswith("s3://"):
             return self.load_model_weights_sub_commands_s3(
-                framework, framework_image_tag, checkpoint_path, final_weights_folder
+                framework,
+                framework_image_tag,
+                checkpoint_path,
+                final_weights_folder,
+                trust_remote_code,
             )
         elif checkpoint_path.startswith("azure://") or "blob.core.windows.net" in checkpoint_path:
             return self.load_model_weights_sub_commands_abs(
-                framework, framework_image_tag, checkpoint_path, final_weights_folder
+                framework,
+                framework_image_tag,
+                checkpoint_path,
+                final_weights_folder,
+                trust_remote_code,
             )
         else:
             raise ObjectHasInvalidValueException(
@@ -681,7 +694,12 @@ class CreateLLMModelBundleV1UseCase:
             )
 
     def load_model_weights_sub_commands_s3(
-        self, framework, framework_image_tag, checkpoint_path, final_weights_folder
+        self,
+        framework,
+        framework_image_tag,
+        checkpoint_path,
+        final_weights_folder,
+        trust_remote_code: bool,
     ):
         subcommands = []
         s5cmd = "s5cmd"
@@ -700,14 +718,23 @@ class CreateLLMModelBundleV1UseCase:
         validate_checkpoint_files(checkpoint_files)
 
         # filter to configs ('*.model' and '*.json') and weights ('*.safetensors')
+        # For models that are not supported by transformers directly, we need to include '*.py' and '*.bin'
+        # to load the model. Only set this flag if "trust_remote_code" is set to True
         file_selection_str = '--include "*.model" --include "*.json" --include "*.safetensors" --exclude "optimizer*"'
+        if trust_remote_code:
+            file_selection_str += ' --include "*.py"'
         subcommands.append(
             f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
         )
         return subcommands
 
     def load_model_weights_sub_commands_abs(
-        self, framework, framework_image_tag, checkpoint_path, final_weights_folder
+        self,
+        framework,
+        framework_image_tag,
+        checkpoint_path,
+        final_weights_folder,
+        trust_remote_code: bool,
     ):
         subcommands = []
 
@@ -729,9 +756,8 @@ class CreateLLMModelBundleV1UseCase:
                 ]
             )
         else:
-            file_selection_str = (
-                '--include-pattern "*.model;*.json;*.safetensors" --exclude-pattern "optimizer*"'
-            )
+            additional_pattern = ";*.py" if trust_remote_code else ""
+            file_selection_str = f'--include-pattern "*.model;*.json;*.safetensors{additional_pattern}" --exclude-pattern "optimizer*"'
             subcommands.append(
                 f"azcopy copy --recursive {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
             )
@@ -861,6 +887,8 @@ class CreateLLMModelBundleV1UseCase:
         subcommands = []
 
         checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
+        additional_args = infer_addition_engine_args_from_model_name(model_name)
+
         # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
         if "mistral" in model_name:
             final_weights_folder = "mistral_files"
@@ -871,6 +899,7 @@ class CreateLLMModelBundleV1UseCase:
             framework_image_tag,
             checkpoint_path,
             final_weights_folder,
+            trust_remote_code=additional_args.trust_remote_code or False,
         )
 
         if multinode and not is_worker:
@@ -904,8 +933,6 @@ class CreateLLMModelBundleV1UseCase:
 
             if hmi_config.sensitive_log_mode:  # pragma: no cover
                 vllm_cmd += " --disable-log-requests"
-
-            additional_args = infer_addition_engine_args_from_model_name(model_name)
 
             for field in VLLMModelConfig.model_fields.keys():
                 config_value = getattr(additional_args, field, None)

@@ -524,6 +524,16 @@ def test_load_model_weights_sub_commands(
     ]
     assert expected_result == subcommands
 
+    trust_remote_code = True
+    subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
+        framework, framework_image_tag, checkpoint_path, final_weights_folder, trust_remote_code
+    )
+
+    expected_result = [
+        './s5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.json" --include "*.safetensors" --exclude "optimizer*" --include "*.py" s3://fake-checkpoint/* test_folder',
+    ]
+    assert expected_result == subcommands
+
     framework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
     framework_image_tag = "1.0.0"
     checkpoint_path = "s3://fake-checkpoint"
@@ -552,6 +562,18 @@ def test_load_model_weights_sub_commands(
         "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
         "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
         'azcopy copy --recursive --include-pattern "*.model;*.json;*.safetensors" --exclude-pattern "optimizer*" azure://fake-checkpoint/* test_folder',
+    ]
+    assert expected_result == subcommands
+
+    trust_remote_code = True
+    subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
+        framework, framework_image_tag, checkpoint_path, final_weights_folder, trust_remote_code
+    )
+
+    expected_result = [
+        "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
+        "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
+        'azcopy copy --recursive --include-pattern "*.model;*.json;*.safetensors;*.py" --exclude-pattern "optimizer*" azure://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 
