@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
-ARG VLLM_VERSION=0.6.2
-ARG VLLM_BASE_IMAGE=vllm/vllm-openai:v${VLLM_VERSION}
+ARG VLLM_VERSION=0.6.3
+ARG VLLM_BASE_REPO=vllm/vllm-openai
+ARG VLLM_BASE_IMAGE=${VLLM_BASE_REPO}:v${VLLM_VERSION}
 FROM ${VLLM_BASE_IMAGE} AS base
 
 RUN apt-get update \
