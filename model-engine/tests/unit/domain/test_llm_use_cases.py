@@ -524,6 +524,16 @@ def test_load_model_weights_sub_commands(
     ]
     assert expected_result == subcommands
 
+    trust_remote_code = True
+    subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
+        framework, framework_image_tag, checkpoint_path, final_weights_folder, trust_remote_code
+    )
+
+    expected_result = [
+        './s5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.json" --include "*.safetensors" --include "*.py" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
+    ]
+    assert expected_result == subcommands
+
     framework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
     framework_image_tag = "1.0.0"
     checkpoint_path = "s3://fake-checkpoint"
