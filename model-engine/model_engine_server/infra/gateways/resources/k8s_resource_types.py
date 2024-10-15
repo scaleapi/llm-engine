@@ -316,11 +316,12 @@ class HorizontalPodAutoscalerArguments(_BaseEndpointArguments):
 class KedaScaledObjectArguments(_BaseEndpointArguments):
     MIN_WORKERS: int
     MAX_WORKERS: int
-    # CONCURRENCY: float  # TODO add in when we scale from 1 -> N pods
+    CONCURRENCY: float
     REDIS_HOST_PORT: str
     REDIS_DB_INDEX: str
     SERVICEBUS_NAMESPACE: Optional[str]
     AUTHENTICATION_REF: str
+    PROMETHEUS_SERVER_ADDRESS: str
 
 
 class UserConfigArguments(_BaseEndpointArguments):
@@ -1250,6 +1251,9 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
         )
     elif endpoint_resource_name == "keda-scaled-object":
+        concurrency = get_target_concurrency_from_per_worker_value(
+            build_endpoint_request.per_worker
+        )
         return KedaScaledObjectArguments(
             # Base resource arguments
             RESOURCE_NAME=k8s_resource_group_name,
@@ -1264,11 +1268,13 @@ def get_endpoint_resource_arguments_from_request(
             # Scaled Object arguments
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
-            # CONCURRENCY=build_endpoint_request.concurrency,
+            CONCURRENCY=concurrency,
             REDIS_HOST_PORT=hmi_config.cache_redis_host_port,
             REDIS_DB_INDEX=str(hmi_config.cache_redis_db_index),
             SERVICEBUS_NAMESPACE=os.getenv("SERVICEBUS_NAMESPACE"),
             AUTHENTICATION_REF="azure-workload-identity",
+            PROMETHEUS_SERVER_ADDRESS=infra_config().prometheus_server_address
+            or "TODO",  # TODO is this gonna break if None?
         )
     elif endpoint_resource_name == "service":
         # Use ClusterIP by default for sync endpoint.
