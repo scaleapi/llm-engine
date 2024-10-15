@@ -898,12 +898,14 @@ class CreateLLMModelBundleV1UseCase:
         # merge additional_args with inferred_additional_args
         # We assume user provided additional args takes precedence over inferred args
         vllm_args = VLLMEndpointAdditionalArgs.model_validate(
-            dict(
-                **infer_addition_engine_args_from_model_name(model_name).model_dump(
-                    exclude_none=True
+            {
+                **(
+                    infer_addition_engine_args_from_model_name(model_name).model_dump(
+                        exclude_none=True
+                    )
                 ),
-                **additional_args.model_dump(exclude_none=True) if additional_args else {},
-            )
+                **(additional_args.model_dump(exclude_none=True) if additional_args else {}),
+            }
         )
 
         # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
