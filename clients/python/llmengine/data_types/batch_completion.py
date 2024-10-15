@@ -7,6 +7,7 @@ from .chat_completion import ChatCompletionV2Request, ChatCompletionV2Response
 from .completion import CompletionOutput, CompletionV2Request, CompletionV2Response
 from .pydantic_types import BaseModel, Field
 from .rest import CpuSpecificationType, GpuType, StorageSpecificationType
+from .vllm import VLLMModelConfig
 
 
 # Common DTOs for batch completions
@@ -34,7 +35,7 @@ class ToolConfig(BaseModel):
     """
 
 
-class BatchCompletionsModelConfig(BaseModel):
+class BatchCompletionsModelConfig(VLLMModelConfig):
     model: str = Field(
         description="ID of the model to use.",
         examples=["mixtral-8x7b-instruct"],

@@ -7,7 +7,10 @@ from typing_extensions import TypeAlias
 from .batch_completion import *  # noqa: F403
 from .chat_completion import *  # noqa: F403
 from .completion import *  # noqa: F403
+from .core import *  # noqa: F403
+from .model_endpoints import *  # noqa: F403
 from .rest import *  # noqa: F403
+from .vllm import *  # noqa: F403
 
 # Alias for backwards compatibility
 CreateBatchCompletionsRequestContent: TypeAlias = (
