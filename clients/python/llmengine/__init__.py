@@ -61,7 +61,7 @@ from llmengine.data_types import (
     ModelDownloadRequest,
     ModelDownloadResponse,
     UploadFileResponse,
-    VLLMAdditionalFields,
+    VLLMEndpointAdditionalArgs,
 )
 from llmengine.file import File
 from llmengine.fine_tuning import FineTune
@@ -80,7 +80,7 @@ __all__: Sequence[str] = (
     "CancelFineTuneResponse",
     "ChatCompletionV2Request",
     "ChatCompletionV2Response",
-    "VLLMAdditionalFields",
+    "VLLMEndpointAdditionalArgs",
     "Completion",
     "CompletionOutput",
     "CompletionStreamOutput",
