@@ -1,7 +1,11 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypeAlias
 
+from typing_extensions import Annotated
+
+from .core import StreamError
 from .gen.openai import CreateCompletionRequest, CreateCompletionResponse
 from .pydantic_types import BaseModel, Field
+from .vllm import VLLMCompletionAdditionalParams
 
 # Fields that are a part of OpenAI spec but are not supported by model engine
 UNSUPPORTED_FIELDS = ["service_tier"]
@@ -205,24 +209,6 @@ class CompletionStreamOutput(BaseModel):
     """Detailed token information."""
 
 
-class StreamErrorContent(BaseModel):
-    error: str
-    """Error message."""
-    timestamp: str
-    """Timestamp of the error."""
-
-
-class StreamError(BaseModel):
-    """
-    Error object for a stream prompt completion task.
-    """
-
-    status_code: int
-    """The HTTP status code of the error."""
-    content: StreamErrorContent
-    """The error content."""
-
-
 class CompletionStreamV1Response(BaseModel):
     """Error of the response (if any)."""
 
@@ -285,27 +271,46 @@ class TokenUsage(BaseModel):
         return (self.total_duration - self.time_to_first_token) / (self.num_completion_tokens - 1)
 
 
-class CompletionV2Request(CreateCompletionRequest):
-    model: str = Field(
-        description="ID of the model to use.",
-        examples=["mixtral-8x7b-instruct"],
-    )
+class CompletionV2Request(CreateCompletionRequest, VLLMCompletionAdditionalParams):
+    model: Annotated[
+        str,
+        Field(
+            description="ID of the model to use.",
+            examples=["mixtral-8x7b-instruct"],
+        ),
+    ]
 
-    stream: Optional[bool] = Field(
-        False,
-        description="If set, partial message deltas will be sent. Tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format) as they become available, with the stream terminated by a `data: [DONE]` message. [Example Python code](https://cookbook.openai.com/examples/how_to_stream_completions).\n",
-    )
+    stream: Annotated[
+        Optional[bool],
+        Field(
+            False,
+            description="If set, partial message deltas will be sent. Tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format) as they become available, with the stream terminated by a `data: [DONE]` message. [Example Python code](https://cookbook.openai.com/examples/how_to_stream_completions).\n",
+        ),
+    ]
 
-    top_k: Optional[int] = Field(
-        None,
-        ge=-1,
-        description="Controls the number of top tokens to consider. -1 means consider all tokens.",
-    )
+    top_k: Annotated[
+        Optional[int],
+        Field(
+            None,
+            ge=-1,
+            description="Controls the number of top tokens to consider. -1 means consider all tokens.",
+        ),
+    ]
 
-    include_stop_str_in_output: Optional[bool] = Field(
-        None, description="Whether to include the stop strings in output text."
-    )
+    include_stop_str_in_output: Annotated[
+        Optional[bool],
+        Field(None, description="Whether to include the stop strings in output text."),
+    ]
 
 
-class CompletionV2Response(CreateCompletionResponse):
-    pass
+CompletionV2SyncResponse: TypeAlias = CreateCompletionResponse
+CompletionV2StreamSuccessChunk: TypeAlias = CreateCompletionResponse
+
+
+class CompletionV2StreamErrorChunk(BaseModel):
+    error: StreamError
+
+
+CompletionV2StreamChunk: TypeAlias = CompletionV2StreamSuccessChunk | CompletionV2StreamErrorChunk
+
+CompletionV2Response: TypeAlias = CompletionV2SyncResponse

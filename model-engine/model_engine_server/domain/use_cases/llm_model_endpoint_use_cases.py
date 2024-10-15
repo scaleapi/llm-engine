@@ -48,14 +48,13 @@ from model_engine_server.common.dtos.llms.batch_completion import (
     GetBatchCompletionV2Response,
     UpdateBatchCompletionsV2Request,
     UpdateBatchCompletionsV2Response,
-    VLLMEngineAdditionalArgs,
 )
 from model_engine_server.common.dtos.llms.completion import (
     CompletionV2Request,
     CompletionV2StreamSuccessChunk,
     CompletionV2SyncResponse,
 )
-from model_engine_server.common.dtos.llms.vllm import VLLMModelConfig
+from model_engine_server.common.dtos.llms.vllm import VLLMEndpointAdditionalArgs, VLLMModelConfig
 from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Request
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
@@ -511,6 +510,7 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path: Optional[str],
         chat_template_override: Optional[str],
         nodes_per_worker: int,
+        additional_args: Optional[Dict[str, Any]] = None,
     ) -> ModelBundle:
         multinode = nodes_per_worker > 1
         if source == LLMSource.HUGGING_FACE:
@@ -541,6 +541,11 @@ class CreateLLMModelBundleV1UseCase:
                     checkpoint_path,
                 )
             elif framework == LLMInferenceFramework.VLLM:
+                additional_vllm_args = (
+                    VLLMEndpointAdditionalArgs.model_validate(additional_args)
+                    if additional_args
+                    else None
+                )
                 if multinode:
                     bundle_id = await self.create_vllm_multinode_bundle(
                         user,
@@ -552,6 +557,7 @@ class CreateLLMModelBundleV1UseCase:
                         quantize,
                         checkpoint_path,
                         chat_template_override,
+                        additional_args=additional_vllm_args,
                     )
                 else:
                     bundle_id = await self.create_vllm_bundle(
@@ -563,6 +569,7 @@ class CreateLLMModelBundleV1UseCase:
                         quantize,
                         checkpoint_path,
                         chat_template_override,
+                        additional_args=additional_vllm_args,
                     )
             elif framework == LLMInferenceFramework.LIGHTLLM:
                 bundle_id = await self.create_lightllm_bundle(
@@ -879,71 +886,84 @@ class CreateLLMModelBundleV1UseCase:
         multinode: bool,
         is_worker: bool,
         nodes_per_worker: int = 1,  # only used if multinode
+        additional_args: Optional[VLLMEndpointAdditionalArgs] = None,
     ):
         """
         VLLM start command for the single worker, or the leader in a LeaderWorkerSet.
         """
-        command = []
         subcommands = []
 
         checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
-        additional_args = infer_addition_engine_args_from_model_name(model_name)
+
+        # merge additional_args with inferred_additional_args
+        # We assume user provided additional args takes precedence over inferred args
+        vllm_args = VLLMEndpointAdditionalArgs.model_validate(
+            {
+                **(
+                    infer_addition_engine_args_from_model_name(model_name).model_dump(
+                        exclude_none=True
+                    )
+                ),
+                **(additional_args.model_dump(exclude_none=True) if additional_args else {}),
+            }
+        )
 
         # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
-        if "mistral" in model_name:
-            final_weights_folder = "mistral_files"
-        else:
-            final_weights_folder = "model_files"
+        final_weights_folder = "mistral_files" if "mistral" in model_name else "model_files"
         subcommands += self.load_model_weights_sub_commands(
             LLMInferenceFramework.VLLM,
             framework_image_tag,
             checkpoint_path,
             final_weights_folder,
-            trust_remote_code=additional_args.trust_remote_code or False,
+            trust_remote_code=vllm_args.trust_remote_code or False,
         )
 
-        if multinode and not is_worker:
-            ray_cmd = "/workspace/init_ray.sh leader --ray_cluster_size=$RAY_CLUSTER_SIZE --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
-            subcommands.append(ray_cmd)
-        elif multinode and is_worker:
-            ray_cmd = "/workspace/init_ray.sh worker --ray_address=$LWS_LEADER_ADDRESS.svc.cluster.local --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
+        if multinode:
+            if not is_worker:
+                ray_cmd = "/workspace/init_ray.sh leader --ray_cluster_size=$RAY_CLUSTER_SIZE --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
+            else:
+                ray_cmd = "/workspace/init_ray.sh worker --ray_address=$LWS_LEADER_ADDRESS.svc.cluster.local --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
             subcommands.append(ray_cmd)
 
         if not is_worker:
-            vllm_cmd = f"python -m vllm_server --model {final_weights_folder} --tensor-parallel-size {num_shards} --port 5005"
+            vllm_args.tensor_parallel_size = num_shards
+
+            if vllm_args.gpu_memory_utilization is not None:
+                vllm_args.enforce_eager = True
 
             if multinode:
-                vllm_cmd += f" --pipeline-parallel-size {nodes_per_worker}"
+                vllm_args.pipeline_parallel_size = nodes_per_worker
 
-            chat_template_cmd = None
             if chat_template_override:
-                # We encode the chat template as base64 to avoid issues with special characters
-                # and decode it via bash
-                chat_template_cmd = f'export CHAT_TEMPLATE=$(echo "{encode_template(chat_template_override)}" | base64 --decode)'
-                subcommands.append(chat_template_cmd)
-                vllm_cmd += ' --chat-template "$CHAT_TEMPLATE"'
+                vllm_args.chat_template = chat_template_override
 
-            if quantize:  # pragma: no cover
+            if quantize:
                 if quantize != Quantization.AWQ:
                     raise InvalidRequestException(
                         f"Quantization {quantize} is not supported by vLLM."
                     )
 
-                vllm_cmd += f" --quantization {quantize}"
+                vllm_args.quantization = quantize
 
-            if hmi_config.sensitive_log_mode:  # pragma: no cover
-                vllm_cmd += " --disable-log-requests"
+            if hmi_config.sensitive_log_mode:
+                vllm_args.disable_log_requests = True
 
-            for field in VLLMModelConfig.model_fields.keys():
-                config_value = getattr(additional_args, field, None)
+            vllm_cmd = f"python -m vllm_server --model {final_weights_folder} --port 5005"
+            for field in VLLMEndpointAdditionalArgs.model_fields.keys():
+                config_value = getattr(vllm_args, field, None)
                 if config_value is not None:
-                    vllm_cmd += f" --{field.replace('_', '-')} {config_value}"
+                    # Special handling for chat_template
+                    # Need to encode the chat template as base64 to avoid issues with special characters
+                    if field == "chat_template":
+                        chat_template_cmd = f'export CHAT_TEMPLATE=$(echo "{encode_template(config_value)}" | base64 --decode)'
+                        subcommands.append(chat_template_cmd)
+                        config_value = '"$CHAT_TEMPLATE"'
 
-                    if field == "gpu_memory_utilization":
-                        vllm_cmd += " --enforce-eager"
-
-            if additional_args.attention_backend is not None:
-                vllm_cmd += f" --attention-backend {additional_args.attention_backend}"
+                    # if type of config_value is True, then only need to add the key
+                    if isinstance(config_value, bool) and config_value:
+                        vllm_cmd += f" --{field.replace('_', '-')}"
+                    else:
+                        vllm_cmd += f" --{field.replace('_', '-')} {config_value}"
 
             subcommands.append(vllm_cmd)
 
@@ -965,6 +985,7 @@ class CreateLLMModelBundleV1UseCase:
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
         chat_template_override: Optional[str],
+        additional_args: Optional[VLLMEndpointAdditionalArgs] = None,
     ):
         command = self._create_vllm_bundle_command(
             model_name,
@@ -976,6 +997,7 @@ class CreateLLMModelBundleV1UseCase:
             multinode=False,
             is_worker=False,
             nodes_per_worker=1,
+            additional_args=additional_args,
         )
 
         create_model_bundle_v2_request = CreateModelBundleV2Request(
@@ -1023,6 +1045,7 @@ class CreateLLMModelBundleV1UseCase:
         quantize: Optional[Quantization],
         checkpoint_path: Optional[str],
         chat_template_override: Optional[str],
+        additional_args: Optional[VLLMEndpointAdditionalArgs] = None,
     ):
         leader_command = self._create_vllm_bundle_command(
             model_name,
@@ -1034,6 +1057,7 @@ class CreateLLMModelBundleV1UseCase:
             multinode=True,
             is_worker=False,
             nodes_per_worker=nodes_per_worker,
+            additional_args=additional_args,
         )
         worker_command = self._create_vllm_bundle_command(
             model_name,
@@ -1313,6 +1337,7 @@ class CreateLLMModelEndpointV1UseCase:
             checkpoint_path=request.checkpoint_path,
             chat_template_override=request.chat_template_override,
             nodes_per_worker=request.nodes_per_worker,
+            additional_args=request.model_dump(exclude_none=True),
         )
         validate_resource_requests(
             bundle=bundle,
@@ -1572,6 +1597,7 @@ class UpdateLLMModelEndpointV1UseCase:
                 checkpoint_path=checkpoint_path,
                 chat_template_override=chat_template_override,
                 nodes_per_worker=model_endpoint.infra_state.resource_state.nodes_per_worker,
+                additional_args=request.model_dump(exclude_none=True),
             )
 
             metadata = endpoint_record.metadata or {}
@@ -3363,13 +3389,9 @@ async def _infer_hardware(
     )
 
 
-class VLLMAdditionalArgs(VLLMModelConfig, VLLMEngineAdditionalArgs):
-    pass
-
-
 def infer_addition_engine_args_from_model_name(
     model_name: str,
-) -> VLLMAdditionalArgs:
+) -> VLLMEndpointAdditionalArgs:
     # Increase max gpu utilization for larger models
     model_param_count_b = get_model_param_count_b(model_name)
     if model_param_count_b >= 70:
@@ -3387,7 +3409,7 @@ def infer_addition_engine_args_from_model_name(
     if model_name.startswith("deepseek"):
         trust_remote_code = True
 
-    return VLLMAdditionalArgs(
+    return VLLMEndpointAdditionalArgs(
         gpu_memory_utilization=gpu_memory_utilization,
         attention_backend=attention_backend,
         trust_remote_code=trust_remote_code,

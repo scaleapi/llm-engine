@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.0.0beta42"
+__version__ = "0.0.0beta43"
 
 import os
 from typing import Sequence
@@ -61,7 +61,7 @@ from llmengine.data_types import (
     ModelDownloadRequest,
     ModelDownloadResponse,
     UploadFileResponse,
-    VLLMAdditionalFields,
+    VLLMEndpointAdditionalArgs,
 )
 from llmengine.file import File
 from llmengine.fine_tuning import FineTune
@@ -80,7 +80,7 @@ __all__: Sequence[str] = (
     "CancelFineTuneResponse",
     "ChatCompletionV2Request",
     "ChatCompletionV2Response",
-    "VLLMAdditionalFields",
+    "VLLMEndpointAdditionalArgs",
     "Completion",
     "CompletionOutput",
     "CompletionStreamOutput",
