@@ -7,8 +7,8 @@ metadata:
   name: model-engine-service-template-config
   labels:
     team: infra
-    app.kubernetes.io/version: 0848a5b3dc991a8164f70ac4cb6b5af2307807a5
-    tags.datadoghq.com/version: 0848a5b3dc991a8164f70ac4cb6b5af2307807a5
+    app.kubernetes.io/version: afe1df8a92039d3403e2f5ef266009231b02bf50
+    tags.datadoghq.com/version: afe1df8a92039d3403e2f5ef266009231b02bf50
     tags.datadoghq.com/env: circleci
     env: circleci
     product: model-engine
@@ -2622,7 +2622,7 @@ data:
           databaseIndex: "${REDIS_DB_INDEX}"
       - type: prometheus
         metadata:
-          threshold: ${CONCURRENCY}
+          threshold: "${CONCURRENCY}"
           metricName: request_concurrency_average
           query: sum(rate(istio_request_duration_milliseconds_sum{destination_workload="${RESOURCE_NAME}"}[2m])) / 1000
           serverAddress: ${PROMETHEUS_SERVER_ADDRESS}
