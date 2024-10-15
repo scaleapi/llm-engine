@@ -474,7 +474,7 @@ data:
       {{- end }}
       - type: prometheus
         metadata:
-          threshold: ${CONCURRENCY}
+          threshold: "${CONCURRENCY}"
           metricName: request_concurrency_average
           query: sum(rate(istio_request_duration_milliseconds_sum{destination_workload="${RESOURCE_NAME}"}[2m])) / 1000
           serverAddress: ${PROMETHEUS_SERVER_ADDRESS} 

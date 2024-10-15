@@ -1859,8 +1859,8 @@ class K8SEndpointResourceDelegate:
     ) -> HorizontalAutoscalingEndpointParams:
         spec = keda_config["spec"]
         concurrency = 1
-        for trigger in keda_config["triggers"]:
-            if trigger["metadata"]["metricName"] == "request_concurrency_average":
+        for trigger in spec["triggers"]:
+            if trigger["metadata"].get("metricName") == "request_concurrency_average":
                 concurrency = trigger["metadata"]["threshold"]
                 break
         return dict(
