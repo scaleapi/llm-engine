@@ -1274,7 +1274,7 @@ def get_endpoint_resource_arguments_from_request(
             SERVICEBUS_NAMESPACE=os.getenv("SERVICEBUS_NAMESPACE"),
             AUTHENTICATION_REF="azure-workload-identity",
             PROMETHEUS_SERVER_ADDRESS=infra_config().prometheus_server_address
-            or "TODO",  # TODO is this gonna break if None?
+            or "dummy-value",  # We should never get to "dummy-value", validation should have taken place to ensure prom_server_addr is not None.
         )
     elif endpoint_resource_name == "service":
         # Use ClusterIP by default for sync endpoint.

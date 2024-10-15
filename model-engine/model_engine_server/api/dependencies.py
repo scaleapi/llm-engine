@@ -268,7 +268,7 @@ def _get_external_interfaces(
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
-    model_endpoint_service = LiveModelEndpointService(  # TODO add in a "can scale from zero for sync/streaming" flag here
+    model_endpoint_service = LiveModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,
         model_endpoint_infra_gateway=model_endpoint_infra_gateway,
         model_endpoint_cache_repository=model_endpoint_cache_repo,
