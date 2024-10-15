@@ -1861,6 +1861,8 @@ class K8SEndpointResourceDelegate:
         concurrency = 1
         for trigger in spec["triggers"]:
             if trigger["metadata"].get("metricName") == "request_concurrency_average":
+                # Needs to match what is defined in the keda-scaled-obj section in
+                # service_template_config_map.yaml!
                 concurrency = trigger["metadata"]["threshold"]
                 break
         return dict(
