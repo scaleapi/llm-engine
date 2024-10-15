@@ -1858,10 +1858,15 @@ class K8SEndpointResourceDelegate:
         keda_config,
     ) -> HorizontalAutoscalingEndpointParams:
         spec = keda_config["spec"]
+        concurrency = 1
+        for trigger in keda_config["triggers"]:
+            if trigger["metadata"]["metricName"] == "request_concurrency_average":
+                concurrency = trigger["metadata"]["threshold"]
+                break
         return dict(
             max_workers=spec.get("maxReplicaCount"),
             min_workers=spec.get("minReplicaCount"),
-            per_worker=1,  # TODO dummy value, fill in when we autoscale from 0 to 1
+            per_worker=concurrency,
         )
 
     async def _get_resources(
