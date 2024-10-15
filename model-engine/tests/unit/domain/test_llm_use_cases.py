@@ -397,7 +397,6 @@ async def test_create_model_endpoint_w_chat_template(
         llm_artifact_gateway=fake_llm_artifact_gateway,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
-    print(create_llm_model_endpoint_request_llama_3_70b_chat)
     response = await use_case.execute(
         user=user,
         request=create_llm_model_endpoint_request_llama_3_70b_chat,
@@ -411,6 +410,7 @@ async def test_create_model_endpoint_w_chat_template(
             order_by=None,
         )
     )[0]
+
     assert endpoint.record.endpoint_type == ModelEndpointType.STREAMING
     assert endpoint.record.metadata == {
         "_llm": {
@@ -422,6 +422,68 @@ async def test_create_model_endpoint_w_chat_template(
             "quantize": create_llm_model_endpoint_request_llama_3_70b_chat.quantize,
             "checkpoint_path": create_llm_model_endpoint_request_llama_3_70b_chat.checkpoint_path,
             "chat_template_override": create_llm_model_endpoint_request_llama_3_70b_chat.chat_template_override,
+        }
+    }
+
+
+@pytest.mark.asyncio
+async def test_create_model_endpoint_w_vllm_args(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args: CreateLLMModelEndpointV1Request,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    use_case = CreateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    response = await use_case.execute(
+        user=user,
+        request=create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args,
+    )
+    assert response.endpoint_creation_task_id
+    assert isinstance(response, CreateLLMModelEndpointV1Response)
+    endpoint = (
+        await fake_model_endpoint_service.list_model_endpoints(
+            owner=None,
+            name=create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.name,
+            order_by=None,
+        )
+    )[0]
+
+    bundle_command = endpoint.record.current_model_bundle.flavor.command[2]
+    expected_vllm_args = ["max-model-len", "max-num-seqs", "chat-template"]
+    for arg in expected_vllm_args:
+        assert arg in bundle_command
+    assert endpoint.record.endpoint_type == ModelEndpointType.STREAMING
+    assert endpoint.record.metadata == {
+        "_llm": {
+            "model_name": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.model_name,
+            "source": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.source,
+            "inference_framework": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.inference_framework,
+            "inference_framework_image_tag": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.inference_framework_image_tag,
+            "num_shards": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.num_shards,
+            "quantize": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.quantize,
+            "checkpoint_path": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.checkpoint_path,
+            "chat_template_override": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.chat_template_override,
         }
     }
 

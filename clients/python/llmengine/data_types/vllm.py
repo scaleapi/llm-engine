@@ -1,12 +1,9 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
-from model_engine_server.common.pydantic_types import BaseModel, Field
-from model_engine_server.common.types.gen.openai import (
-    ResponseFormatJsonObject,
-    ResponseFormatJsonSchema,
-    ResponseFormatText,
-)
 from typing_extensions import Annotated
+
+from .gen.openai import ResponseFormatJsonObject, ResponseFormatJsonSchema, ResponseFormatText
+from .pydantic_types import BaseModel, Field
 
 # This was last synced w/ vLLM v0.5.5 on 2024-09-03
 
@@ -31,42 +28,12 @@ class VLLMModelConfig(BaseModel):
 
     gpu_memory_utilization: Optional[float] = Field(
         None,
-        description="Maximum GPU memory utilization use for the engine. Default to 90%.",
+        description="Maximum GPU memory utilization for the batch inference. Default to 90%.",
     )
 
     trust_remote_code: Optional[bool] = Field(
         default=False,
         description="Whether to trust remote code from Hugging face hub. This is only applicable to models whose code is not supported natively by the transformers library (e.g. deepseek). Default to False.",
-    )
-
-    pipeline_parallel_size: Optional[int] = Field(
-        None,
-        description="Number of pipeline stages. Default to None.",
-    )
-
-    tensor_parallel_size: Optional[int] = Field(
-        None,
-        description="Number of tensor parallel replicas. Default to None.",
-    )
-
-    quantization: Optional[str] = Field(
-        None,
-        description="Method used to quantize the weights. If "
-        "None, we first check the `quantization_config` "
-        "attribute in the model config file. If that is "
-        "None, we assume the model weights are not "
-        "quantized and use `dtype` to determine the data "
-        "type of the weights.",
-    )
-
-    disable_log_requests: Optional[bool] = Field(
-        None,
-        description="Disable logging requests. Default to None.",
-    )
-
-    chat_template: Optional[str] = Field(
-        None,
-        description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
     )
 
 
@@ -237,7 +204,7 @@ class VLLMCompletionAdditionalParams(VLLMSamplingParams):
     )
 
     response_format: Optional[
-        ResponseFormatText | ResponseFormatJsonObject | ResponseFormatJsonSchema
+        Union[ResponseFormatText, ResponseFormatJsonObject, ResponseFormatJsonSchema]
     ] = Field(
         default=None,
         description=(
