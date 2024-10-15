@@ -1680,6 +1680,7 @@ class FakeModelEndpointService(ModelEndpointService):
         ] = None,
         sync_model_endpoint_inference_gateway: Optional[SyncModelEndpointInferenceGateway] = None,
         inference_autoscaling_metrics_gateway: Optional[InferenceAutoscalingMetricsGateway] = None,
+        can_autoscale_sync_stream_endpoints_from_zero_flag: bool = True,
     ):
         if contents:
             self.db = contents
@@ -1716,6 +1717,10 @@ class FakeModelEndpointService(ModelEndpointService):
 
         self.model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
             filesystem_gateway=FakeFilesystemGateway()
+        )
+
+        self.can_autoscale_sync_stream_endpoints_from_zero_flag = (
+            can_autoscale_sync_stream_endpoints_from_zero_flag
         )
 
     def get_async_model_endpoint_inference_gateway(
@@ -1935,8 +1940,11 @@ class FakeModelEndpointService(ModelEndpointService):
             raise ObjectNotFoundException
         del self.db[model_endpoint_id]
 
+    def set_can_autoscale_sync_stream_endpoints_from_zero_flag(self, flag: bool):
+        self.can_autoscale_sync_stream_endpoints_from_zero_flag = flag
+
     def can_autoscale_sync_stream_endpoints_from_zero(self) -> bool:
-        return True
+        return self.can_autoscale_sync_stream_endpoints_from_zero_flag
 
 
 class FakeTokenizerRepository(TokenizerRepository):
