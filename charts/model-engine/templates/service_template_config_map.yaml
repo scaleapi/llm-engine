@@ -472,7 +472,12 @@ data:
           unsafeSsl: "false"
           databaseIndex: "${REDIS_DB_INDEX}"
       {{- end }}
-      # TODO
+      - type: prometheus
+        metadata:
+          threshold: ${CONCURRENCY}
+          metricName: request_concurrency_average
+          query: sum(rate(istio_request_duration_milliseconds_sum{destination_workload="${RESOURCE_NAME}"}[2m])) / 1000
+          serverAddress: ${PROMETHEUS_SERVER_ADDRESS} 
   {{- range $device := tuple "gpu" }}
   {{- range $mode := tuple "streaming"}}
   leader-worker-set-{{ $mode }}-{{ $device }}.yaml: |-
