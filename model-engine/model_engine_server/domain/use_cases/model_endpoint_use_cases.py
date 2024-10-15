@@ -104,16 +104,13 @@ def validate_deployment_resources(
     min_workers: Optional[int],
     max_workers: Optional[int],
     endpoint_type: ModelEndpointType,
+    sync_can_scale_from_zero: bool,
 ) -> None:
-    if endpoint_type in [ModelEndpointType.STREAMING, ModelEndpointType.SYNC]:
-        # Special case for sync endpoints, where we can have 0, 1 min/max workers.
-        # Otherwise, fall through to the general case.
-        if min_workers == 0 and max_workers == 1:
-            return
     # TODO: we should be also validating the update request against the existing state in k8s (e.g.
     #  so min_workers <= max_workers always) maybe this occurs already in update_model_endpoint.
-    # TODO read in infra config from somewhere (api layer?)
-    min_endpoint_size = 0 if endpoint_type == ModelEndpointType.ASYNC else 1
+    min_endpoint_size = (
+        0 if endpoint_type == ModelEndpointType.ASYNC or sync_can_scale_from_zero else 1
+    )
     if min_workers is not None and min_workers < min_endpoint_size:
         raise EndpointResourceInvalidRequestException(
             f"Requested min workers {min_workers} too low"
@@ -276,6 +273,7 @@ class CreateModelEndpointV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             endpoint_type=request.endpoint_type,
+            sync_can_scale_from_zero=self.model_endpoint_service.can_autoscale_sync_stream_endpoints_from_zero(),
         )
         if request.labels is None:
             raise EndpointLabelsException("Endpoint labels cannot be None!")
@@ -458,6 +456,7 @@ class UpdateModelEndpointByIdV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             endpoint_type=endpoint_record.endpoint_type,
+            sync_can_scale_from_zero=self.model_endpoint_service.can_autoscale_sync_stream_endpoints_from_zero(),
         )
 
         if request.metadata is not None and CONVERTED_FROM_ARTIFACT_LIKE_KEY in request.metadata:
