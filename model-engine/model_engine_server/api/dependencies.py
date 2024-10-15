@@ -268,7 +268,7 @@ def _get_external_interfaces(
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
-    model_endpoint_service = LiveModelEndpointService(
+    model_endpoint_service = LiveModelEndpointService(  # TODO add in a "can scale from zero for sync/streaming" flag here
         model_endpoint_record_repository=model_endpoint_record_repo,
         model_endpoint_infra_gateway=model_endpoint_infra_gateway,
         model_endpoint_cache_repository=model_endpoint_cache_repo,
@@ -277,6 +277,8 @@ def _get_external_interfaces(
         sync_model_endpoint_inference_gateway=sync_model_endpoint_inference_gateway,
         model_endpoints_schema_gateway=model_endpoints_schema_gateway,
         inference_autoscaling_metrics_gateway=inference_autoscaling_metrics_gateway,
+        can_autoscale_sync_stream_endpoints_from_zero_flag=infra_config().prometheus_server_address
+        is not None,
     )
     llm_model_endpoint_service = LiveLLMModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,

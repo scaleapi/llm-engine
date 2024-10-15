@@ -112,6 +112,7 @@ def validate_deployment_resources(
             return
     # TODO: we should be also validating the update request against the existing state in k8s (e.g.
     #  so min_workers <= max_workers always) maybe this occurs already in update_model_endpoint.
+    # TODO read in infra config from somewhere (api layer?)
     min_endpoint_size = 0 if endpoint_type == ModelEndpointType.ASYNC else 1
     if min_workers is not None and min_workers < min_endpoint_size:
         raise EndpointResourceInvalidRequestException(
