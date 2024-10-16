@@ -48,6 +48,7 @@ class _InfraConfig:
     identity_service_url: Optional[str] = None
     firehose_role_arn: Optional[str] = None
     firehose_stream_name: Optional[str] = None
+    prometheus_server_address: Optional[str] = None
 
 
 @dataclass

@@ -188,6 +188,9 @@ config:
       db_engine_echo: false
       db_engine_echo_pool: false
       db_engine_disconnect_strategy: "pessimistic"
+      # prometheus_server_address [optional, required if you want scale from zero for sync/streaming endpoints]
+      # is the address of the Prometheus server to query for endpoint metrics
+      prometheus_server_address: "http://prometheus-server.istio-system.svc.cluster.local:80"
     launch:
       # endpoint_namespace [required] is K8s namespace the endpoints will be created in
       endpoint_namespace: llm-engine

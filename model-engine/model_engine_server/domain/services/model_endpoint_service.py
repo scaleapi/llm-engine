@@ -256,3 +256,11 @@ class ModelEndpointService(ABC):
             ExistingEndpointOperationInProgressException: if the endpoint is currently being edited
                 (corresponds to an HTTP 409)
         """
+
+    @abstractmethod
+    def can_scale_http_endpoint_from_zero(self) -> bool:
+        """
+        Returns whether the service can autoscale sync/stream endpoints from zero.
+        For instance, if particular dependencies in the cluster are not installed, then this should
+        return False
+        """
