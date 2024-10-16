@@ -131,6 +131,7 @@ async def run_batch_job(
         sync_model_endpoint_inference_gateway=sync_model_endpoint_inference_gateway,
         model_endpoints_schema_gateway=model_endpoints_schema_gateway,
         inference_autoscaling_metrics_gateway=inference_autoscaling_metrics_gateway,
+        can_scale_http_endpoint_from_zero_flag=False,  # shouldn't matter since we only use this to create async endpoints
     )
     batch_job_record_repository = DbBatchJobRecordRepository(session=session, read_only=False)
     batch_job_progress_gateway = LiveBatchJobProgressGateway(filesystem_gateway=filesystem_gateway)

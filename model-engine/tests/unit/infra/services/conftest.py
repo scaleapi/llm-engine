@@ -40,6 +40,7 @@ def fake_live_model_endpoint_service(
         sync_model_endpoint_inference_gateway=fake_sync_model_endpoint_inference_gateway,
         inference_autoscaling_metrics_gateway=fake_inference_autoscaling_metrics_gateway,
         model_endpoints_schema_gateway=model_endpoints_schema_gateway,
+        can_scale_http_endpoint_from_zero_flag=True,  # reasonable default, gets overridden in individual tests if needed
     )
     return service
 

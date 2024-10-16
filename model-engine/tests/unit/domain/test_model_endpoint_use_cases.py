@@ -70,6 +70,7 @@ async def test_create_model_endpoint_use_case_success(
     assert isinstance(response_3, CreateModelEndpointV1Response)
 
     # test special case where sync/streaming endpoint that has 0-1 min-max workers works
+    fake_model_endpoint_service.set_can_scale_http_endpoint_from_zero_flag(True)
     request = create_model_endpoint_request_sync.copy()
     request.min_workers = 0
     request.max_workers = 1
@@ -83,6 +84,14 @@ async def test_create_model_endpoint_use_case_success(
     response_5 = await use_case.execute(user=user, request=request)
     assert response_5.endpoint_creation_task_id
     assert isinstance(response_5, CreateModelEndpointV1Response)
+
+    # test general case as well for 0-N
+    request = create_model_endpoint_request_sync.copy()
+    request.min_workers = 0
+    request.max_workers = 5
+    response_6 = await use_case.execute(user=user, request=request)
+    assert response_6.endpoint_creation_task_id
+    assert isinstance(response_6, CreateModelEndpointV1Response)
 
 
 @pytest.mark.asyncio
@@ -184,10 +193,12 @@ async def test_create_model_endpoint_use_case_raises_resource_request_exception(
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(user=user, request=request)
 
+    fake_model_endpoint_service.set_can_scale_http_endpoint_from_zero_flag(False)
     request = create_model_endpoint_request_sync.copy()
     request.min_workers = 0
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(user=user, request=request)
+    fake_model_endpoint_service.set_can_scale_http_endpoint_from_zero_flag(True)
 
     request = create_model_endpoint_request_async.copy()
     request.max_workers = 2**63
@@ -1028,6 +1039,7 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
         )
 
     # specific to sync endpoint
+    fake_model_endpoint_service.set_can_scale_http_endpoint_from_zero_flag(False)
     request = update_model_endpoint_request.copy()
     request.min_workers = 0
     with pytest.raises(EndpointResourceInvalidRequestException):
@@ -1036,6 +1048,7 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
             model_endpoint_id=model_endpoint_2.record.id,
             request=request,
         )
+    fake_model_endpoint_service.set_can_scale_http_endpoint_from_zero_flag(True)
 
     request = update_model_endpoint_request.copy()
     request.max_workers = 2**63

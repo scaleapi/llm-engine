@@ -7,8 +7,8 @@ metadata:
   name: model-engine-service-template-config
   labels:
     team: infra
-    app.kubernetes.io/version: 852d5899343633774f6a3543e4ed9e977a533e5a
-    tags.datadoghq.com/version: 852d5899343633774f6a3543e4ed9e977a533e5a
+    app.kubernetes.io/version: afe1df8a92039d3403e2f5ef266009231b02bf50
+    tags.datadoghq.com/version: afe1df8a92039d3403e2f5ef266009231b02bf50
     tags.datadoghq.com/env: circleci
     env: circleci
     product: model-engine
@@ -2620,6 +2620,12 @@ data:
           enableTLS: "false"
           unsafeSsl: "false"
           databaseIndex: "${REDIS_DB_INDEX}"
+      - type: prometheus
+        metadata:
+          threshold: "${CONCURRENCY}"
+          metricName: request_concurrency_average
+          query: sum(rate(istio_request_duration_milliseconds_sum{destination_workload="${RESOURCE_NAME}"}[2m])) / 1000
+          serverAddress: ${PROMETHEUS_SERVER_ADDRESS}
   leader-worker-set-streaming-gpu.yaml: |-
     apiVersion: leaderworkerset.x-k8s.io/v1
     kind: LeaderWorkerSet
@@ -3286,9 +3292,11 @@ data:
                 requests:
                   cpu: 1
                   memory: 8Gi
+                  ephemeral-storage: 10Gi
                 limits:
                   cpu: 4
                   memory: 32Gi
+                  ephemeral-storage: 30Gi
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config

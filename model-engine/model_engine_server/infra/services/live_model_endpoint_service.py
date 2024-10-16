@@ -55,6 +55,7 @@ class LiveModelEndpointService(ModelEndpointService):
         sync_model_endpoint_inference_gateway: SyncModelEndpointInferenceGateway,
         model_endpoints_schema_gateway: ModelEndpointsSchemaGateway,
         inference_autoscaling_metrics_gateway: InferenceAutoscalingMetricsGateway,
+        can_scale_http_endpoint_from_zero_flag: bool,
     ):
         self.model_endpoint_record_repository = model_endpoint_record_repository
         self.model_endpoint_infra_gateway = model_endpoint_infra_gateway
@@ -64,6 +65,7 @@ class LiveModelEndpointService(ModelEndpointService):
         self.sync_model_endpoint_inference_gateway = sync_model_endpoint_inference_gateway
         self.model_endpoints_schema_gateway = model_endpoints_schema_gateway
         self.inference_autoscaling_metrics_gateway = inference_autoscaling_metrics_gateway
+        self.can_scale_http_endpoint_from_zero_flag = can_scale_http_endpoint_from_zero_flag
 
     def get_async_model_endpoint_inference_gateway(
         self,
@@ -400,3 +402,6 @@ class LiveModelEndpointService(ModelEndpointService):
             )
 
         logger.info(f"Endpoint delete released lock for {created_by}, {name}")
+
+    def can_scale_http_endpoint_from_zero(self) -> bool:
+        return self.can_scale_http_endpoint_from_zero_flag

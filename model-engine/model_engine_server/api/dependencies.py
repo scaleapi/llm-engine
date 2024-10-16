@@ -277,6 +277,7 @@ def _get_external_interfaces(
         sync_model_endpoint_inference_gateway=sync_model_endpoint_inference_gateway,
         model_endpoints_schema_gateway=model_endpoints_schema_gateway,
         inference_autoscaling_metrics_gateway=inference_autoscaling_metrics_gateway,
+        can_scale_http_endpoint_from_zero_flag=infra_config().prometheus_server_address is not None,
     )
     llm_model_endpoint_service = LiveLLMModelEndpointService(
         model_endpoint_record_repository=model_endpoint_record_repo,
