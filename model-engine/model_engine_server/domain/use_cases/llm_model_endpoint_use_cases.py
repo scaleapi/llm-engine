@@ -1283,7 +1283,7 @@ class CreateLLMModelEndpointV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             endpoint_type=request.endpoint_type,
-            sync_can_scale_from_zero=self.model_endpoint_service.can_autoscale_sync_stream_endpoints_from_zero(),
+            http_can_scale_from_zero=self.model_endpoint_service.can_scale_http_endpoint_from_zero(),
         )
         if request.gpu_type == GpuType.NVIDIA_AMPERE_A100E:  # pragma: no cover
             raise ObjectHasInvalidValueException(
@@ -1632,7 +1632,7 @@ class UpdateLLMModelEndpointV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             endpoint_type=endpoint_record.endpoint_type,
-            sync_can_scale_from_zero=self.model_endpoint_service.can_autoscale_sync_stream_endpoints_from_zero(),
+            http_can_scale_from_zero=self.model_endpoint_service.can_scale_http_endpoint_from_zero(),
         )
 
         if request.metadata is not None:

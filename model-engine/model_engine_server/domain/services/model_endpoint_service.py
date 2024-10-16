@@ -258,7 +258,7 @@ class ModelEndpointService(ABC):
         """
 
     @abstractmethod
-    def can_autoscale_sync_stream_endpoints_from_zero(self) -> bool:
+    def can_scale_http_endpoint_from_zero(self) -> bool:
         """
         Returns whether the service can autoscale sync/stream endpoints from zero.
         For instance, if particular dependencies in the cluster are not installed, then this should

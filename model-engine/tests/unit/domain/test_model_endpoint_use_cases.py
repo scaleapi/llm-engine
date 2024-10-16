@@ -70,7 +70,7 @@ async def test_create_model_endpoint_use_case_success(
     assert isinstance(response_3, CreateModelEndpointV1Response)
 
     # test special case where sync/streaming endpoint that has 0-1 min-max workers works
-    fake_model_endpoint_service.set_can_autoscale_sync_stream_endpoints_from_zero_flag(True)
+    fake_model_endpoint_service.set_can_scale_http_endpoint_from_zero_flag(True)
     request = create_model_endpoint_request_sync.copy()
     request.min_workers = 0
     request.max_workers = 1
@@ -193,12 +193,12 @@ async def test_create_model_endpoint_use_case_raises_resource_request_exception(
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(user=user, request=request)
 
-    fake_model_endpoint_service.set_can_autoscale_sync_stream_endpoints_from_zero_flag(False)
+    fake_model_endpoint_service.set_can_scale_http_endpoint_from_zero_flag(False)
     request = create_model_endpoint_request_sync.copy()
     request.min_workers = 0
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(user=user, request=request)
-    fake_model_endpoint_service.set_can_autoscale_sync_stream_endpoints_from_zero_flag(True)
+    fake_model_endpoint_service.set_can_scale_http_endpoint_from_zero_flag(True)
 
     request = create_model_endpoint_request_async.copy()
     request.max_workers = 2**63
@@ -1039,7 +1039,7 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
         )
 
     # specific to sync endpoint
-    fake_model_endpoint_service.set_can_autoscale_sync_stream_endpoints_from_zero_flag(False)
+    fake_model_endpoint_service.set_can_scale_http_endpoint_from_zero_flag(False)
     request = update_model_endpoint_request.copy()
     request.min_workers = 0
     with pytest.raises(EndpointResourceInvalidRequestException):
@@ -1048,7 +1048,7 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
             model_endpoint_id=model_endpoint_2.record.id,
             request=request,
         )
-    fake_model_endpoint_service.set_can_autoscale_sync_stream_endpoints_from_zero_flag(True)
+    fake_model_endpoint_service.set_can_scale_http_endpoint_from_zero_flag(True)
 
     request = update_model_endpoint_request.copy()
     request.max_workers = 2**63

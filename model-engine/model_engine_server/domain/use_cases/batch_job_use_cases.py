@@ -68,7 +68,7 @@ class CreateBatchJobV1UseCase:
             min_workers=0,
             max_workers=request.resource_requests.max_workers,
             endpoint_type=ModelEndpointType.ASYNC,
-            sync_can_scale_from_zero=self.model_endpoint_service.can_autoscale_sync_stream_endpoints_from_zero(),
+            http_can_scale_from_zero=self.model_endpoint_service.can_scale_http_endpoint_from_zero(),
         )
 
         bundle = await self.model_bundle_repository.get_model_bundle(
