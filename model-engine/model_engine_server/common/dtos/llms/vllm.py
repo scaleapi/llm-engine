@@ -69,6 +69,16 @@ class VLLMModelConfig(BaseModel):
         description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
     )
 
+    tool_call_parser: Optional[str] = Field(
+        None,
+        description="Tool call parser",
+    )
+
+    enable_auto_tool_choice: Optional[bool] = Field(
+        None,
+        description="Enable auto tool choice",
+    )
+
 
 class VLLMEngineAdditionalArgs(BaseModel):
     """Additional arguments to configure for vLLM that are not direct inputs to the vLLM engine"""
