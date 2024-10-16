@@ -143,7 +143,6 @@ OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM]
 
 LLM_METADATA_KEY = "_llm"
 RESERVED_METADATA_KEYS = [LLM_METADATA_KEY, CONVERTED_FROM_ARTIFACT_LIKE_KEY]
-VLLM_MODEL_WEIGHTS_FOLDER = "model_files"
 
 INFERENCE_FRAMEWORK_REPOSITORY: Dict[LLMInferenceFramework, str] = {
     LLMInferenceFramework.DEEPSPEED: "instant-llm",
@@ -2791,10 +2790,6 @@ class CompletionSyncV2UseCase:
 
         validate_endpoint_supports_openai_completion(model_endpoint, endpoint_content)
 
-        # if inference framework is VLLM, we need to set the model to use the weights folder
-        if endpoint_content.inference_framework == LLMInferenceFramework.VLLM:
-            request.model = VLLM_MODEL_WEIGHTS_FOLDER
-
         inference_request = SyncEndpointPredictV1Request(
             args=request.model_dump(exclude_none=True),
             destination_path=OPENAI_COMPLETION_PATH,
@@ -2896,10 +2891,6 @@ class CompletionStreamV2UseCase:
         )
 
         validate_endpoint_supports_openai_completion(model_endpoint, model_content)
-
-        # if inference framework is VLLM, we need to set the model to use the weights folder
-        if model_content.inference_framework == LLMInferenceFramework.VLLM:
-            request.model = VLLM_MODEL_WEIGHTS_FOLDER
 
         inference_request = SyncEndpointPredictV1Request(
             args=request.model_dump(exclude_none=True),
@@ -3058,10 +3049,6 @@ class ChatCompletionSyncV2UseCase:
 
         validate_endpoint_supports_chat_completion(model_endpoint, endpoint_content)
 
-        # if inference framework is VLLM, we need to set the model to use the weights folder
-        if endpoint_content.inference_framework == LLMInferenceFramework.VLLM:
-            request.model = VLLM_MODEL_WEIGHTS_FOLDER
-
         inference_request = SyncEndpointPredictV1Request(
             args=request.model_dump(exclude_none=True),
             destination_path=OPENAI_CHAT_COMPLETION_PATH,
@@ -3162,10 +3149,6 @@ class ChatCompletionStreamV2UseCase:
             and hmi_config.istio_enabled
         )
         validate_endpoint_supports_chat_completion(model_endpoint, model_content)
-
-        # if inference framework is VLLM, we need to set the model to use the weights folder
-        if model_content.inference_framework == LLMInferenceFramework.VLLM:
-            request.model = VLLM_MODEL_WEIGHTS_FOLDER
 
         inference_request = SyncEndpointPredictV1Request(
             args=request.model_dump(exclude_none=True),
