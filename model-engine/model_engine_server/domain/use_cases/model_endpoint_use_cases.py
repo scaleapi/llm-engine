@@ -104,12 +104,12 @@ def validate_deployment_resources(
     min_workers: Optional[int],
     max_workers: Optional[int],
     endpoint_type: ModelEndpointType,
-    http_can_scale_from_zero: bool,
+    can_scale_http_endpoint_from_zero: bool,
 ) -> None:
     # TODO: we should be also validating the update request against the existing state in k8s (e.g.
     #  so min_workers <= max_workers always) maybe this occurs already in update_model_endpoint.
     min_endpoint_size = (
-        0 if endpoint_type == ModelEndpointType.ASYNC or http_can_scale_from_zero else 1
+        0 if endpoint_type == ModelEndpointType.ASYNC or can_scale_http_endpoint_from_zero else 1
     )
     if min_workers is not None and min_workers < min_endpoint_size:
         raise EndpointResourceInvalidRequestException(
@@ -273,7 +273,7 @@ class CreateModelEndpointV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             endpoint_type=request.endpoint_type,
-            http_can_scale_from_zero=self.model_endpoint_service.can_scale_http_endpoint_from_zero(),
+            can_scale_http_endpoint_from_zero=self.model_endpoint_service.can_scale_http_endpoint_from_zero(),
         )
         if request.labels is None:
             raise EndpointLabelsException("Endpoint labels cannot be None!")
@@ -456,7 +456,7 @@ class UpdateModelEndpointByIdV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             endpoint_type=endpoint_record.endpoint_type,
-            http_can_scale_from_zero=self.model_endpoint_service.can_scale_http_endpoint_from_zero(),
+            can_scale_http_endpoint_from_zero=self.model_endpoint_service.can_scale_http_endpoint_from_zero(),
         )
 
         if request.metadata is not None and CONVERTED_FROM_ARTIFACT_LIKE_KEY in request.metadata:
