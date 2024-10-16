@@ -960,8 +960,9 @@ class CreateLLMModelBundleV1UseCase:
                         config_value = '"$CHAT_TEMPLATE"'
 
                     # if type of config_value is True, then only need to add the key
-                    if isinstance(config_value, bool) and config_value:
-                        vllm_cmd += f" --{field.replace('_', '-')}"
+                    if isinstance(config_value, bool):
+                        if config_value:
+                            vllm_cmd += f" --{field.replace('_', '-')}"
                     else:
                         vllm_cmd += f" --{field.replace('_', '-')} {config_value}"
 
