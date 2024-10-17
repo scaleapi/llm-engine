@@ -1,7 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
 
-from typing_extensions import Annotated
-
 from .gen.openai import ResponseFormatJsonObject, ResponseFormatJsonSchema, ResponseFormatText
 from .pydantic_types import BaseModel, Field
 
@@ -64,14 +62,11 @@ class VLLMSamplingParams(BaseModel):
             the beam width when `use_beam_search` is True. By default, `best_of`
             is set to `n`.""",
     )
-    top_k: Annotated[
-        Optional[int],
-        Field(
-            None,
-            ge=-1,
-            description="Controls the number of top tokens to consider. -1 means consider all tokens.",
-        ),
-    ]
+    top_k: Optional[int] = Field(
+        None,
+        ge=-1,
+        description="Controls the number of top tokens to consider. -1 means consider all tokens.",
+    )
     min_p: Optional[float] = Field(
         None,
         description="""Float that represents the minimum probability for a token to be
@@ -110,14 +105,11 @@ class VLLMSamplingParams(BaseModel):
             generated. The returned output will contain the stop tokens unless
             the stop tokens are special tokens.""",
     )
-    include_stop_str_in_output: Annotated[
-        Optional[bool],
-        Field(
-            None,
-            description="""Whether to include the stop strings in
+    include_stop_str_in_output: Optional[bool] = Field(
+        None,
+        description="""Whether to include the stop strings in
             output text. Defaults to False.""",
-        ),
-    ]
+    )
     ignore_eos: Optional[bool] = Field(
         None,
         description="""Whether to ignore the EOS token and continue generating
