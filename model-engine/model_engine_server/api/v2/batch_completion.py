@@ -14,7 +14,12 @@ from model_engine_server.common.dtos.llms.batch_completion import (
     UpdateBatchCompletionsV2Response,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.core.loggers import (
+    LoggerTagKey,
+    LoggerTagManager,
+    logger_name,
+    make_logger,
+)
 from model_engine_server.domain.exceptions import (
     ObjectHasInvalidValueException,
     ObjectNotAuthorizedException,
@@ -44,6 +49,7 @@ async def batch_completions(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
 ) -> CreateBatchCompletionsV2Response:
+    request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
     logger.info(f"POST /v2/batch-completions {request} for {auth}")
     try:
         use_case = CreateBatchCompletionsV2UseCase(
@@ -64,7 +70,7 @@ async def batch_completions(
         logger.exception(f"Error processing request {request} for {auth}")
         raise HTTPException(
             status_code=500,
-            detail="Internal server error",
+            detail=f"Internal server error. request_id: {request_id}",
         ) from exc
 
 
@@ -131,6 +137,7 @@ async def cancel_batch_completion(
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> CancelBatchCompletionsV2Response:
+    request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
     logger.info(f"POST /v2/batch-completions/{batch_completion_id}/actions/cancel for {auth}")
     try:
         use_case = CancelBatchCompletionV2UseCase(
@@ -149,5 +156,5 @@ async def cancel_batch_completion(
         )
         raise HTTPException(
             status_code=500,
-            detail="Internal server error",
+            detail=f"Internal server error. request_id: {request_id}",
         ) from exc
