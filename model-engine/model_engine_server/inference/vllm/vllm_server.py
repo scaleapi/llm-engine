@@ -9,15 +9,16 @@ import traceback
 from logging import Logger
 from typing import AsyncGenerator, Dict, List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Request
 from fastapi.responses import Response, StreamingResponse
-from vllm.engine.async_llm_engine import AsyncEngineDeadError
+from vllm.engine.async_llm_engine import (
+    AsyncEngineDeadError,
+    build_guided_decoding_logits_processor_async,
+)
 from vllm.engine.protocol import EngineClient
 from vllm.entrypoints.launcher import serve_http
 from vllm.entrypoints.openai.api_server import build_app, build_async_engine_client, init_app_state
 from vllm.entrypoints.openai.cli_args import make_arg_parser
-from vllm.entrypoints.openai.protocol import CompletionRequest as OpenAICompletionRequest
-from vllm.model_executor.guided_decoding import get_guided_decoding_logits_processor
 from vllm.outputs import CompletionOutput
 from vllm.sampling_params import SamplingParams
 from vllm.sequence import Logprob
@@ -51,42 +52,16 @@ async def generate(request: Request) -> Response:
         request_dict = await request.json()
         prompt = request_dict.pop("prompt")
         stream = request_dict.pop("stream", False)
-        guided_json = request_dict.pop("guided_json", None)
-        guided_regex = request_dict.pop("guided_regex", None)
-        guided_choice = request_dict.pop("guided_choice", None)
-        guided_grammar = request_dict.pop("guided_grammar", None)
-        sampling_params = SamplingParams(**request_dict)
-
-        # Dummy request to get guided decode logit processor
-        try:
-            partial_openai_request = OpenAICompletionRequest.model_validate(
-                {
-                    "model": "",
-                    "prompt": "",
-                    "guided_json": guided_json,
-                    "guided_regex": guided_regex,
-                    "guided_choice": guided_choice,
-                    "guided_grammar": guided_grammar,
-                }
-            )
-        except Exception:
-            raise HTTPException(
-                status_code=400,
-                detail="Bad request: failed to parse guided decoding parameters.",
-            )
 
         guided_decoding_backend = (
             await engine_client.get_decoding_config()
         ).guided_decoding_backend
-        guided_decode_logit_processor = await get_guided_decoding_logits_processor(
-            guided_decoding_backend,
-            partial_openai_request,
-            await engine_client.get_tokenizer(lora_request=None),
+
+        sampling_params = await build_guided_decoding_logits_processor_async(
+            sampling_params=SamplingParams(**request_dict),
+            tokenizer=await engine_client.get_tokenizer(lora_request=None),
+            default_guided_backend=guided_decoding_backend,
         )
-        if guided_decode_logit_processor is not None:
-            if sampling_params.logits_processors is None:
-                sampling_params.logits_processors = []
-            sampling_params.logits_processors.append(guided_decode_logit_processor)
 
         request_id = random_uuid()
 
