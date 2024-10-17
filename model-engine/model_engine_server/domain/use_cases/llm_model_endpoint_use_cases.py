@@ -217,6 +217,8 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "llama-3-1-70b-instruct",
             "llama-3-1-405b",
             "llama-3-1-405b-instruct",
+            "llama-3-2-1b-instruct",
+            "llama-3-2-3b-instruct",
             "llama-3-2-11b-vision-instruct",
             "llama-3-2-90b-vision-instruct",
             "falcon-7b",
