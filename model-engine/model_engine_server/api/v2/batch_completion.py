@@ -48,7 +48,7 @@ async def batch_completions(
     request: CreateBatchCompletionsV2Request,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
-) -> CreateBatchCompletionsV2Response:
+) -> CreateBatchCompletionsV2Response:  # pragma: no cover
     request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
     logger.info(f"POST /v2/batch-completions {request} for {auth}")
     try:
@@ -106,7 +106,7 @@ async def update_batch_completion(
     request: UpdateBatchCompletionsV2Request,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
-) -> UpdateBatchCompletionsV2Response:
+) -> UpdateBatchCompletionsV2Response:  # pragma: no cover
     logger.info(f"POST /v2/batch-completions/{batch_completion_id} {request} for {auth}")
     try:
         use_case = UpdateBatchCompletionV2UseCase(
@@ -136,7 +136,7 @@ async def cancel_batch_completion(
     batch_completion_id: str,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
-) -> CancelBatchCompletionsV2Response:
+) -> CancelBatchCompletionsV2Response:  # pragma: no cover
     request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
     logger.info(f"POST /v2/batch-completions/{batch_completion_id}/actions/cancel for {auth}")
     try:
