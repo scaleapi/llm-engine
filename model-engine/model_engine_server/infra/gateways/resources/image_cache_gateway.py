@@ -5,7 +5,9 @@ from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.common.config import hmi_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
-    get_kubernetes_apps_client,
+    get_kubernetes_apps_client,  # If this ever changes, update test_image_cache_gateway.py accordingly, otherwise you will likely mangle production daemonsets.
+)
+from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     k8s_yaml_exists,
     load_k8s_yaml,
 )
