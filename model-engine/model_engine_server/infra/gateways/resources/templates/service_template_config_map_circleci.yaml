@@ -7,8 +7,8 @@ metadata:
   name: model-engine-service-template-config
   labels:
     team: infra
-    app.kubernetes.io/version: 4e19a30d867a5ba8c78f9973a8bd0fce1171b0ee
-    tags.datadoghq.com/version: 4e19a30d867a5ba8c78f9973a8bd0fce1171b0ee
+    app.kubernetes.io/version: 88f8003b2b52c772e8f34d264b3dfb95da1c1e9b
+    tags.datadoghq.com/version: 88f8003b2b52c772e8f34d264b3dfb95da1c1e9b
     tags.datadoghq.com/env: circleci
     env: circleci
     product: model-engine
