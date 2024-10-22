@@ -9,6 +9,7 @@ from model_engine_server.infra.gateways.resources.image_cache_gateway import (
 
 MODULE_PATH = "model_engine_server.infra.gateways.resources.image_cache_gateway"
 
+
 @pytest.fixture
 def mock_apps_client():
     mock_client = AsyncMock()
@@ -55,9 +56,11 @@ async def test_create_or_update_image_cache(
         _, kwargs = call_args
         compute_type = kwargs["body"]["metadata"]["name"].split("-")[-1]
         actual_images[compute_type] = set(
-            container["image"] for container in kwargs["body"]["spec"]["template"]["spec"]["containers"]
+            container["image"]
+            for container in kwargs["body"]["spec"]["template"]["spec"]["containers"]
         )
 
     for k in expected_images.keys():
-        assert expected_images[k].issubset(actual_images[k]), f"Missing {expected_images[k].difference(actual_images[k])}"
-
+        assert expected_images[k].issubset(
+            actual_images[k]
+        ), f"Missing {expected_images[k].difference(actual_images[k])}"
