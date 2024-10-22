@@ -25,8 +25,8 @@ class CachedImages(TypedDict):
     a100: List[str]
     t4: List[str]
     h100: List[str]
-    h100_mig_3g_40gb: List[str]
-    h100_mig_1g_20gb: List[str]
+    h100_3g40gb: List[str]
+    h100_1g20gb: List[str]
 
 
 class ImageCacheGateway:
