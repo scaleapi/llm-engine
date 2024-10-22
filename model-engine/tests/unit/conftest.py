@@ -945,7 +945,9 @@ class FakeTriggerRepository(TriggerRepository):  # pragma: no cover
 
 class FakeImageCacheGateway(ImageCacheGateway):
     def __init__(self):
-        self.cached_images = CachedImages(cpu=[], a10=[], a100=[], t4=[])
+        self.cached_images = CachedImages(
+            cpu=[], a10=[], a100=[], t4=[], h100=[], h100_mig_1g_20gb=[], h100_mig_3g_40gb=[]
+        )
 
     async def create_or_update_image_cache(self, cached_images: CachedImages) -> None:
         self.cached_images = cached_images

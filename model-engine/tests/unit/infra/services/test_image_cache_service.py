@@ -68,7 +68,7 @@ async def test_caching_finetune_llm_images(
     )
     forwarder_image = DockerImage(f"{infra_config().docker_repo_prefix}/model-engine", GIT_TAG)
 
-    for key in ["a10", "a100"]:
+    for key in ["a10", "a100", "h100", "h100_mig_3g_40gb", "h100_mig_1g_20gb"]:
         for llm_image in [
             istio_image,
             tgi_image_110,
