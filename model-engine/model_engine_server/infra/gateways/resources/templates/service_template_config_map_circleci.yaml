@@ -7,8 +7,8 @@ metadata:
   name: model-engine-service-template-config
   labels:
     team: infra
-    app.kubernetes.io/version: afe1df8a92039d3403e2f5ef266009231b02bf50
-    tags.datadoghq.com/version: afe1df8a92039d3403e2f5ef266009231b02bf50
+    app.kubernetes.io/version: 88f8003b2b52c772e8f34d264b3dfb95da1c1e9b
+    tags.datadoghq.com/version: 88f8003b2b52c772e8f34d264b3dfb95da1c1e9b
     tags.datadoghq.com/env: circleci
     env: circleci
     product: model-engine
@@ -3785,6 +3785,47 @@ data:
         spec:
           nodeSelector:
             k8s.amazonaws.com/accelerator: nvidia-tesla-t4
+          tolerations:
+            - effect: NoSchedule
+              key: nvidia.com/gpu
+              operator: Exists
+          containers:
+            - image: public.ecr.aws/docker/library/busybox:latest
+              imagePullPolicy: IfNotPresent
+              name: busybox
+              command: ["/bin/sh", "-ec", "while : ; do sleep 30 ; done"]
+          terminationGracePeriodSeconds: 0
+  image-cache-h100.yaml: |-
+    apiVersion: apps/v1
+    kind: DaemonSet
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        team: infra
+        product: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/service: ${RESOURCE_NAME}
+    spec:
+      selector:
+        matchLabels:
+          app: ${RESOURCE_NAME}
+          version: v1
+      updateStrategy:
+        type: RollingUpdate
+      template:
+        metadata:
+          labels:
+            app: ${RESOURCE_NAME}
+            team: infra
+            product: model-engine
+            use_scale_launch_endpoint_network_policy: "true"
+            tags.datadoghq.com/service: ${RESOURCE_NAME}
+            version: v1
+            sidecar.istio.io/inject: "false"
+        spec:
+          nodeSelector:
+            k8s.amazonaws.com/accelerator: nvidia-hopper-h100
           tolerations:
             - effect: NoSchedule
               key: nvidia.com/gpu

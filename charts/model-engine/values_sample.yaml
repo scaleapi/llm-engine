@@ -299,16 +299,16 @@ imageCache:
         - key: "nvidia.com/gpu"
           operator: "Exists"
           effect: "NoSchedule"
-    - name: h100-mig-1g-20gb
+    - name: h100-1g20gb
       nodeSelector:
-        k8s.amazonaws.com/accelerator: nvidia-hopper-h100-mig-1g-20gb
+        k8s.amazonaws.com/accelerator: nvidia-hopper-h100-1g20gb
       tolerations:
         - key: "nvidia.com/gpu"
           operator: "Exists"
           effect: "NoSchedule"
-    - name: h100-mig-3g-40gb
+    - name: h100-3g40gb
       nodeSelector:
-        k8s.amazonaws.com/accelerator: nvidia-hopper-h100-mig-3g-40gb
+        k8s.amazonaws.com/accelerator: nvidia-hopper-h100-3g40gb
       tolerations:
         - key: "nvidia.com/gpu"
           operator: "Exists"

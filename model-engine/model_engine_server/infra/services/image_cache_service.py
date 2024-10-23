@@ -109,7 +109,7 @@ class ImageCacheService:
                 )
                 continue
             image = f"{llm_image.repo}:{llm_image.tag}"
-            for key in ["a10", "a100"]:
+            for key in ["a10", "a100", "h100", "h100_3g40gb", "h100_1g20gb"]:
                 images_to_cache_priority[key][image] = llm_image_cache_priority
 
     async def execute(self, endpoint_infra_states: Dict[str, Tuple[bool, ModelEndpointInfraState]]):
@@ -118,6 +118,9 @@ class ImageCacheService:
             "a10": {},
             "a100": {},
             "t4": {},
+            "h100": {},
+            "h100_3g40gb": {},
+            "h100_1g20gb": {},
         }
 
         self._cache_finetune_llm_images(images_to_cache_priority)
@@ -167,6 +170,9 @@ class ImageCacheService:
                     (GpuType.NVIDIA_AMPERE_A10, "a10"),
                     (GpuType.NVIDIA_AMPERE_A100, "a100"),
                     (GpuType.NVIDIA_TESLA_T4, "t4"),
+                    (GpuType.NVIDIA_HOPPER_H100, "h100"),
+                    (GpuType.NVIDIA_HOPPER_H100_3G_40GB, "h100_3g40gb"),
+                    (GpuType.NVIDIA_HOPPER_H100_1G_20GB, "h100_1g20gb"),
                 ]:
                     if state.resource_state.gpu_type == gpu_type and (
                         (
@@ -179,7 +185,9 @@ class ImageCacheService:
                         and self.docker_repository.image_exists(image_tag, repository_name)
                     ):
                         images_to_cache_priority[key][state.image] = cache_priority
-        images_to_cache = CachedImages(cpu=[], a10=[], a100=[], t4=[])
+        images_to_cache = CachedImages(
+            cpu=[], a10=[], a100=[], t4=[], h100=[], h100_1g20gb=[], h100_3g40gb=[]
+        )
         for key, val in images_to_cache_priority.items():
             images_to_cache[key] = sorted(  # type: ignore
                 val.keys(), key=lambda image: val[image], reverse=True
