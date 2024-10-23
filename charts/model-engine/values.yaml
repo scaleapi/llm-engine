@@ -5,7 +5,7 @@ redis:
   auth:
 db:
   runDbInitScript: false
-balloonNodeSelector:
-  node-lifecycle: normal
-nodeSelector:
-  node-lifecycle: normal
+# balloonNodeSelector:
+#   node-lifecycle: normal
+# nodeSelector:
+#   node-lifecycle: normal

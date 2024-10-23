@@ -20,6 +20,9 @@ data:
     [profile {{ $profileName }}]
     role_arn = {{ index $annotations "eks.amazonaws.com/role-arn" }}
     web_identity_token_file = /var/run/secrets/eks.amazonaws.com/serviceaccount/token
+    [profile {{ $.Values.serviceAccount.sqsProfileName }}]
+    role_arn = {{ index $annotations "eks.amazonaws.com/role-arn" }}
+    web_identity_token_file = /var/run/secrets/eks.amazonaws.com/serviceaccount/token
 ---
 {{- end }}
 {{- end }}

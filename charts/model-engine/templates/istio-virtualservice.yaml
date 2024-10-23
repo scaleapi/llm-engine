@@ -12,13 +12,9 @@ metadata:
   {{- end }}
 spec:
   hosts:
-  {{- range .Values.virtualservice.hostDomains }}
-    - "{{ $fullName }}.{{ . }}"
-  {{- end }}
+    - model-engine.{{ $.Values.global.networking.internalDomain }}
   gateways:
-  {{- range .Values.virtualservice.gateways }}
-    - {{ . | quote }}
-  {{- end }}
+    - {{ $.Values.global.networking.internalGateway }}
   http:
     - route:
         - destination:
