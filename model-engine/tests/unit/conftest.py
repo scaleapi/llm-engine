@@ -4713,7 +4713,7 @@ def mocked__get_recommended_hardware_config_map():
       cpus: 160
       gpus: 8
       memory: 800Gi
-      storage: 640Gi
+      storage: 900Gi
       gpu_type: nvidia-hopper-h100
       nodes_per_worker: 2
                 """,

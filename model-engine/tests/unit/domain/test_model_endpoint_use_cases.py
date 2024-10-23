@@ -93,6 +93,14 @@ async def test_create_model_endpoint_use_case_success(
     assert response_6.endpoint_creation_task_id
     assert isinstance(response_6, CreateModelEndpointV1Response)
 
+    # test you can ask for more storage on H100s
+    request = create_model_endpoint_request_sync.copy()
+    request.storage = "950Gi"
+    request.gpu_type = "nvidia-hopper-h100"
+    response_7 = await use_case.execute(user=user, request=request)
+    assert response_7.endpoint_creation_task_id
+    assert isinstance(response_7, CreateModelEndpointV1Response)
+
 
 @pytest.mark.asyncio
 async def test_create_model_endpoint_use_case_raises_invalid_value_exception(
