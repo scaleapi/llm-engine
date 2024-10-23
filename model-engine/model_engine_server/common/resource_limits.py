@@ -34,7 +34,7 @@ A10_INSTANCE_LIMITS = dict(
 )  # Should we allow multi-gpu instances? This allows the largest single-gpu g5dn instance.
 # p4d.24xlarge, p4de.24xlarge
 A100_INSTANCE_LIMITS = dict(cpus=95, memory="1000Gi")
-H100_INSTANCE_LIMITS = dict(cpus=191, memory="2000Gi")
+H100_INSTANCE_LIMITS = dict(cpus=191, memory="2000Gi", storage="1000Gi")
 H100_1G_20GB_INSTANCE_LIMITS = dict(cpus=47, memory="500Gi")
 H100_3G_40GB_INSTANCE_LIMITS = dict(cpus=95, memory="1000Gi")
 STORAGE_LIMIT = "640Gi"  # TODO: figure out an actual limit.
@@ -150,7 +150,9 @@ def validate_resource_requests(
         if storage <= 0:
             raise EndpointResourceInvalidRequestException("Requested storage must be positive")
 
-        available_storage_for_user = parse_mem_request(STORAGE_LIMIT)
+        available_storage_for_user = parse_mem_request(
+            resource_limits.get("storage", STORAGE_LIMIT)  # type: ignore
+        )
 
         if isinstance(bundle, ModelBundle):
             storage += parse_mem_request(FORWARDER_STORAGE_USAGE)
@@ -165,7 +167,7 @@ def validate_resource_requests(
                 else:
                     storage += parse_mem_request(bundle.flavor.triton_storage)
 
-        if storage > parse_mem_request(STORAGE_LIMIT):
+        if storage > available_storage_for_user:
             raise EndpointResourceInvalidRequestException(
                 f"Requested {storage=} too high. The maximum for {gpu_type=} is {format_bytes(available_storage_for_user)}"
             )
