@@ -95,12 +95,15 @@ data:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- if eq $device "gpu" }}
-          {{- if empty $node_selector }}
-          nodeSelector:
-          {{- end }}
-            k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+          # {{- if empty $node_selector }}
+          # nodeSelector:
+          # {{- end }}
+          #   k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
             - key: "nvidia.com/gpu"
+              operator: "Exists"
+              effect: "NoSchedule"
+            - key: "gpu_a100_multi"
               operator: "Exists"
               effect: "NoSchedule"
           {{- end }}
@@ -522,6 +525,7 @@ data:
         loadBalancer:
           simple: LEAST_REQUEST
   {{- end }}
+  {{- if and (.Capabilities.APIVersions.Has "autoscaling.k8s.io/v1") (.Values.autoscaling.vertical.enabled) }}
   vertical-pod-autoscaler.yaml: |-
     apiVersion: "autoscaling.k8s.io/v1"
     kind: VerticalPodAutoscaler
@@ -548,6 +552,7 @@ data:
               cpu: ${CPUS}
               memory: ${MEMORY}
             controlledResources: ["cpu", "memory"]
+  {{- end }}
   pod-disruption-budget.yaml: |-
     apiVersion: policy/v1
     kind: PodDisruptionBudget
@@ -675,12 +680,15 @@ data:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- if eq $device "gpu" }}
-          {{- if empty $node_selector }}
-          nodeSelector:
-          {{- end }}
-            k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+          # {{- if empty $node_selector }}
+          # nodeSelector:
+          # {{- end }}
+          #   k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
             - key: "nvidia.com/gpu"
+              operator: "Exists"
+              effect: "NoSchedule"
+            - key: "gpu_a100_multi"
               operator: "Exists"
               effect: "NoSchedule"
           {{- end }}

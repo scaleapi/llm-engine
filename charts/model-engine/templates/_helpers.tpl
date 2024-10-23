@@ -345,6 +345,13 @@ env:
   - name: REDIS_AUTH_TOKEN
     value: {{ .Values.redis.auth }}
   {{- end }}
+  {{- if .Values.redis.authSecret }}
+  - name: REDIS_AUTH_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.redis.authSecret }}
+        key: auth_token
+  {{- end }}
   {{- if .Values.azure}}
   - name: AZURE_IDENTITY_NAME
     value: {{ .Values.azure.identity_name }}
