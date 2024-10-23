@@ -153,6 +153,7 @@ def validate_resource_requests(
         available_storage_for_user = parse_mem_request(
             resource_limits.get("storage", STORAGE_LIMIT)  # type: ignore
         )
+        total_available_storage = available_storage_for_user
 
         if isinstance(bundle, ModelBundle):
             storage += parse_mem_request(FORWARDER_STORAGE_USAGE)
@@ -167,7 +168,7 @@ def validate_resource_requests(
                 else:
                     storage += parse_mem_request(bundle.flavor.triton_storage)
 
-        if storage > available_storage_for_user:
+        if storage > total_available_storage:
             raise EndpointResourceInvalidRequestException(
                 f"Requested {storage=} too high. The maximum for {gpu_type=} is {format_bytes(available_storage_for_user)}"
             )
