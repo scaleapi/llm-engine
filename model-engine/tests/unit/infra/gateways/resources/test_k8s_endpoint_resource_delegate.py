@@ -20,6 +20,7 @@ from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate
     K8SEndpointResourceDelegate,
     add_datadog_env_to_container,
     get_main_container_from_deployment_template,
+    k8s_yaml_exists,
     load_k8s_yaml,
 )
 from model_engine_server.infra.gateways.resources.k8s_resource_types import (
@@ -133,6 +134,15 @@ def k8s_endpoint_resource_delegate(
         "_get_common_endpoint_params", AsyncMock(return_value=common_endpoint_params)
     )
     return gateway
+
+
+def test_k8s_yaml_exists():
+    # This is tied to
+    # llm-engine/model-engine/model_engine_server/infra/gateways/resources/templates/service_template_config_map_circleci.yaml
+    assert k8s_yaml_exists("image-cache-h100.yaml"), "image-cache-h100.yaml should exist"
+    assert not k8s_yaml_exists(
+        "image-cache-abc9001.yaml"
+    ), "image-cache-abc9001.yaml should not exist"
 
 
 @pytest.mark.parametrize("resource_arguments_type", ResourceArguments.__args__)

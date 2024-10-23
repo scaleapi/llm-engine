@@ -205,6 +205,15 @@ async def maybe_load_kube_config():
     _kube_config_loaded = True
 
 
+def k8s_yaml_exists(key: str) -> bool:
+    if LAUNCH_SERVICE_TEMPLATE_FOLDER is not None:
+        return os.path.exists(os.path.join(LAUNCH_SERVICE_TEMPLATE_FOLDER, key))
+    else:
+        with open(LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH, "r") as f:
+            config_map_str = yaml.safe_load(f.read())
+        return key in config_map_str["data"]
+
+
 def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str, Any]:
     if LAUNCH_SERVICE_TEMPLATE_FOLDER is not None:
         with open(os.path.join(LAUNCH_SERVICE_TEMPLATE_FOLDER, key), "r") as f:

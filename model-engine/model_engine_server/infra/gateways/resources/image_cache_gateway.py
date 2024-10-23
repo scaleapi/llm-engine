@@ -5,7 +5,10 @@ from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.common.config import hmi_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
-    get_kubernetes_apps_client,
+    get_kubernetes_apps_client,  # If you ever add more imports here, update test_image_cache_gateway accordingly, otherwise you will likely mangle live cluster resources
+)
+from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
+    k8s_yaml_exists,
     load_k8s_yaml,
 )
 from model_engine_server.infra.gateways.resources.k8s_resource_types import (
@@ -21,6 +24,9 @@ class CachedImages(TypedDict):
     a10: List[str]
     a100: List[str]
     t4: List[str]
+    h100: List[str]
+    h100_3g40gb: List[str]
+    h100_1g20gb: List[str]
 
 
 class ImageCacheGateway:
@@ -39,6 +45,7 @@ class ImageCacheGateway:
         for compute_type, images in cached_images.items():
             # Required for mypy TypedDict
             compute_type = cast(str, compute_type)
+            compute_type = compute_type.replace("_", "-")  # for k8s valid name
             images = cast(list, images)
 
             name = f"{base_name}-{compute_type}"
@@ -47,6 +54,9 @@ class ImageCacheGateway:
                 NAMESPACE=hmi_config.endpoint_namespace,
             )
             resource_key = f"image-cache-{compute_type}.yaml"
+            if not k8s_yaml_exists(resource_key):
+                logger.info(f"Didn't find yaml for {compute_type}, skipping")
+                continue
             image_cache = load_k8s_yaml(resource_key, substitution_kwargs)
 
             labels = image_cache["spec"]["template"]["metadata"]["labels"]

@@ -228,6 +228,13 @@ imageCache:
         - key: "nvidia.com/gpu"
           operator: "Exists"
           effect: "NoSchedule"
+    - name: h100
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-hopper-h100
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
 
 celeryBrokerType: redis
 
