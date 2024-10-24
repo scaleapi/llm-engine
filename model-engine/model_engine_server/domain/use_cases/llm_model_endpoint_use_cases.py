@@ -928,13 +928,13 @@ class CreateLLMModelBundleV1UseCase:
             subcommands.append(ray_cmd)
 
         if not is_worker:
-            vllm_args.tensor_parallel_size = num_shards
+            vllm_args.tensor_parallel_size = num_shards * nodes_per_worker
 
             if vllm_args.gpu_memory_utilization is not None:
                 vllm_args.enforce_eager = True
 
-            if multinode:
-                vllm_args.pipeline_parallel_size = nodes_per_worker
+            # if multinode:
+            #     vllm_args.pipeline_parallel_size = nodes_per_worker
 
             if chat_template_override:
                 vllm_args.chat_template = chat_template_override
