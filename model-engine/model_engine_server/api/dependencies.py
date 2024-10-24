@@ -6,7 +6,7 @@ from typing import Callable, Optional
 
 import aioredis
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.env_vars import CIRCLECI
@@ -131,7 +131,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 
 logger = make_logger(logger_name())
 
-AUTH = HTTPBasic(auto_error=False)
+basic_auth = HTTPBasic(auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
 
 @dataclass
@@ -433,35 +434,60 @@ async def get_auth_repository():
 
 
 async def verify_authentication(
-    credentials: HTTPBasicCredentials = Depends(AUTH),
+    credentials: Optional[HTTPBasicCredentials] = Depends(basic_auth),
+    tokens: Optional[str] = Depends(oauth2_scheme),
     auth_repo: AuthenticationRepository = Depends(get_auth_repository),
 ) -> User:
     """
     Verifies the authentication headers and returns a (user_id, team_id) auth tuple. Otherwise,
     raises a 401.
     """
-    username = credentials.username if credentials is not None else None
-    if username is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No authentication was passed in",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+    # Basic Authentication
+    if credentials is not None:
+        username = credentials.username if credentials is not None else None
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="No authentication was passed in",
+                headers={"WWW-Authenticate": "Basic"},
+            )
 
-    auth = await auth_repo.get_auth_from_username_async(username=username)
+        auth = await auth_repo.get_auth_from_username_async(username=username)
 
-    if not auth:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not authenticate user",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+        if not auth:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not authenticate user",
+                headers={"WWW-Authenticate": "Basic"},
+            )
 
-    # set logger context with identity data
-    LoggerTagManager.set(LoggerTagKey.USER_ID, auth.user_id)
-    LoggerTagManager.set(LoggerTagKey.TEAM_ID, auth.team_id)
+        # set logger context with identity data
+        LoggerTagManager.set(LoggerTagKey.USER_ID, auth.user_id)
+        LoggerTagManager.set(LoggerTagKey.TEAM_ID, auth.team_id)
 
-    return auth
+        return auth
+
+    # bearer token
+    if tokens is not None:
+        auth = await auth_repo.get_auth_from_username_async(username=tokens)
+        if not auth:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not authenticate user",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # set logger context with identity data
+        LoggerTagManager.set(LoggerTagKey.USER_ID, auth.user_id)
+        LoggerTagManager.set(LoggerTagKey.TEAM_ID, auth.team_id)
+
+        return auth
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="No authentication was passed in",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 _pool: Optional[aioredis.BlockingConnectionPool] = None
