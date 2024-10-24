@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from typing import Any, Dict, Iterator, Tuple
+from typing import Any, Dict, Iterator, Optional, Tuple
 
 import pytest
 import pytest_asyncio
@@ -10,9 +10,10 @@ from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from model_engine_server.api.app import app
 from model_engine_server.api.dependencies import (
-    AUTH,
+    basic_auth,
     get_external_interfaces,
     get_external_interfaces_read_only,
+    oauth2_scheme,
     verify_authentication,
 )
 from model_engine_server.core.auth.authentication_repository import AuthenticationRepository, User
@@ -65,15 +66,19 @@ def get_test_auth_repository() -> Iterator[AuthenticationRepository]:
 
 
 def fake_verify_authentication(
-    credentials: HTTPBasicCredentials = Depends(AUTH),
+    credentials: Optional[HTTPBasicCredentials] = Depends(basic_auth),
+    tokens: Optional[str] = Depends(oauth2_scheme),
     auth_repo: AuthenticationRepository = Depends(get_test_auth_repository),
 ) -> User:
     """
     Verifies the authentication headers and returns a (user_id, team_id) auth tuple. Otherwise,
     raises a 401.
     """
-    auth_username = credentials.username if credentials is not None else None
-    if not auth_username:
+    if credentials is not None:
+        auth_username = credentials.username
+    elif tokens is not None:
+        auth_username = tokens
+    else:
         raise HTTPException(status_code=401, detail="No authentication was passed in")
 
     auth = auth_repo.get_auth_from_username(username=auth_username)
