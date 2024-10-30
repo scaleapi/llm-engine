@@ -8,4 +8,17 @@ spec:
   podIdentity:
     provider: azure-workload
     identityId: {{ .Values.azure.client_id }}
+{{- else if .Values.redis.enableAuth }}
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-trigger-auth-redis-secret
+  namespace: {{ .Values.config.values.launch.endpoint_namespace }}
+spec:
+  awsSecretManager:
+    podIdentity:
+      provider: aws
+    secrets:
+      - parameter: password
+        name: {{ .Values.redis.kedaSecretName }}
 {{- end }}
