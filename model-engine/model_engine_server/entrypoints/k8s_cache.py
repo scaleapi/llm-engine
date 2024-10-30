@@ -62,6 +62,8 @@ from model_engine_server.infra.services.model_endpoint_cache_service import (
 logger = make_logger(logger_name())
 # This is the entrypoint to the k8s cacher
 
+# TODO also have this write the configmap to determine which set of model weights to put on node-level cache
+
 try:
     kube_config.load_incluster_config()
 except ConfigException:
