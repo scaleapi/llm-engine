@@ -7,10 +7,10 @@ from model_engine_server.db.base import get_engine_url
 from sqlalchemy import engine_from_config, pool
 
 env = os.environ.get("ENV")
-if env is None:
-    assert (
-        os.getenv("ML_INFRA_DATABASE_URL") is not None
-    ), "Expected ML_INFRA_DATABASE_URL to be set if ENV is not set."
+# if env is None:
+#     assert (
+#         os.getenv("ML_INFRA_DATABASE_URL") is not None
+#     ), "Expected ML_INFRA_DATABASE_URL to be set if ENV is not set."
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
