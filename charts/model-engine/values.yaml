@@ -3,6 +3,10 @@ spellbook:
   enabled: false
 redis:
   auth:
+  enableTLS: false
+  enableAuth: false
+  kedaSecretName: ""
+  unsafeSsl: false
 db:
   runDbInitScript: false
   runDbMigrationScript: false
