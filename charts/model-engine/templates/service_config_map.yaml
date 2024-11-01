@@ -64,11 +64,11 @@ data:
 
     sqs_queue_tag_template: |-
       {
-          "infra.scale.com/product": "{{ .Values.productTag }}",
-          "infra.scale.com/team": "${team}",
-          "infra.scale.com/contact": "{{ .Values.contactEmail }}",
-          "infra.scale.com/customer": "AllCustomers",
-          "infra.scale.com/financialOwner": "{{ .Values.contactEmail}}",
+          "{{ .Values.tagging.organization }}/product": "{{ .Values.tagging.productTag }}",
+          "{{ .Values.tagging.organization }}/team": "${team}",
+          "{{ .Values.tagging.organization }}/contact": "{{ .Values.tagging.contactEmail }}",
+          "{{ .Values.tagging.organization }}/customer": "AllCustomers",
+          "{{ .Values.tagging.organization }}/financialOwner": "{{ .Values.tagging.contactEmail }}",
           "Launch-Endpoint-Id": "${endpoint_id}",
           "Launch-Endpoint-Name": "${endpoint_name}",
           "Launch-Endpoint-Created-By": "${endpoint_created_by}"
@@ -101,8 +101,8 @@ data:
     env: {{ .Values.context | quote }}
     cloud_provider: "aws"
     env: "prod"
-    k8s_cluster_name: "usgw1-prod"
-    dns_host_domain: "model-engine.ml-serving.{{ $.Values.global.networking.internalDomain }}"
+    k8s_cluster_name: "{{ .Values.clusterName }}"
+    dns_host_domain: "model-engine.{{ $.Values.global.networking.internalDomain }}"
     default_region: "{{ .Values.aws.region }}"
     ml_account_id: "{{ .Values.aws.accountId }}"
     docker_repo_prefix: "{{ .Values.aws.accountId }}.dkr.ecr.{{ .Values.aws.region }}.amazonaws.com"

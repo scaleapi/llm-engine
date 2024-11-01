@@ -138,9 +138,9 @@ serviceTemplate:
       drop:
         - all
   mountInfraConfig: true
-  # createServiceAccount/serviceAccountName/serviceAccountAnnotations specify whether to create a serviceAccount for
+  # createInferenceServiceAccount/serviceAccountName/serviceAccountAnnotations specify whether to create a serviceAccount for
   # inference pods. Assumes the inference pods run in a separate namespace to the LLM Engine control plane.
-  createServiceAccount: true
+  createInferenceServiceAccount: true
   serviceAccountName: model-engine
   serviceAccountAnnotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::000000000000:role/llm-engine

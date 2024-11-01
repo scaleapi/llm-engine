@@ -341,15 +341,11 @@ env:
     value: "true"
   - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
     value: "/workspace/model-engine/model_engine_server/infra/gateways/resources/templates"
-  {{- if .Values.redis.auth}}
-  - name: REDIS_AUTH_TOKEN
-    value: {{ .Values.redis.auth }}
-  {{- end }}
-  {{- if .Values.redis.authSecret }}
+  {{- if .Values.secrets.kubernetesRedisSecretName }}
   - name: REDIS_AUTH_TOKEN
     valueFrom:
       secretKeyRef:
-        name: {{ .Values.redis.authSecret }}
+        name: {{ .Values.secrets.kubernetesRedisSecretName }}
         key: auth_token
   {{- end }}
   {{- if .Values.azure}}
