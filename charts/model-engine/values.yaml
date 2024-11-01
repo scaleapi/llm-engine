@@ -1,11 +1,313 @@
-dd_trace_enabled: true
+# If specified, will override the name of the deployed services
+# Otherwise, defaults to the Chart name, typically "model-engine"
+# serviceIdentifier:
+
+# The Kubernetes cluster name in which the Model Engine is deployed
+clusterName:
+
+secrets:
+  # Either of the below AWS secrets expect a key named "database_url" with a fully specified database URL including
+  # the username and password.
+
+  # Use the Cloud database secret name to pull from AWS Secrets Manager
+  # cloudDatabaseSecretName:
+  # Use the Kubernetes database secret name to pull from Kubernetes Secrets
+  kubernetesDatabaseSecretName:
+
+  # This secret must have a fully specified database URL including the password (auth token)
+  # It should be under "cache_url" key in the secret
+  # redisAwsSecretName:
+  # Kubernetes secret containing a key `auth_token` that contains the redis auth token for connection
+  # Will not be used if `redisAwsSecretName` is set. Used in conjunction with REDIS_HOST and REDIS_PORT env vars
+  kubernetesRedisSecretName:
+
+db:
+  # Runs an initial database schema migration on deployment if set to true
+  runDbInitScript: false
+
+replicaCount:
+  # The gateway service is the entrypoint for all requests to the Model Engine
+  gateway: 1
+  # The cacher service is responsible for caching kubernetes API requests
+  cacher: 1
+  # The builder service is responsible for creating new deployments and other kubernetes resources
+  builder: 1
+
+# Tag of the model engine image that will be used for the model engine deployments
+tag:
+# Sets the 'env' label on the pods and primarily used for metadata tagging
+context:
+# Specifies core services' image repositories
+image:
+  gatewayRepository: public.ecr.aws/b2z8n5q1/model-engine
+  builderRepository: public.ecr.aws/b2z8n5q1/model-engine
+  cacherRepository: public.ecr.aws/b2z8n5q1/model-engine
+  forwarderRepository: public.ecr.aws/b2z8n5q1/model-engine
+  pullPolicy: Always
+
+# Specifiers for the core model engine service deployments
+nodeSelector: { }
+tolerations: [ ]
+affinity: { }
+
+# Specifies the configuration on the Gateway service kube service
+service:
+  type: ClusterIP
+  port: 80
+
+# Creates istio virtual services for the Model Engine using the global domain nome and gateway specified below
+virtualService:
+  enabled: true
+
+global:
+  networking:
+    # Internal domain name attached to the internal Istio gateway.
+    # The model engine deployment will be exposed at:
+    #     model-engine.<internalDomain>
+    # Deployed services will be exposed at:
+    #     launch-endpoint-id-{endpoint_id}.model-engine.<internalDomain>
+    internalDomain:
+    # namespace/service for the Istio internal gateway deployment
+    internalGateway:
+
+# Tag of the vLLM images to use for LLM Engine deployments
+# These tags must exist in a 'vllm' repository in ECR, which will be found based on your
+# AWS account ID and region.
+vllm:
+  primaryTag: 0.5.4
+  batchTag: 0.5.4
+  batchV2Tag: 0.5.4
+
+# Specifies the number of replicas for each "balloon" service for each GPU type.
+# Used to warm up nodes prior to model deployment.
+balloons:
+  - acceleratorName: nvidia-ampere-a10
+    replicaCount: 0
+  - acceleratorName: nvidia-ampere-a100
+    replicaCount: 0
+  - acceleratorName: cpu
+    replicaCount: 0
+  - acceleratorName: nvidia-tesla-t4
+    replicaCount: 0
+  - acceleratorName: nvidia-hopper-h100
+    replicaCount: 0
+
+# Specific node labels that the "balloon" services should be scheduled on
+balloonNodeSelector: { }
+
+# Metadata to be tagged on the deployed pods in the SQS queue
+tagging:
+  organization:
+  contactEmail:
+  productTag:
+
+# Used to specify the https/http prefix for the model engine gateway URL for initialization jobs
+# that must connect to the model engine gateway
+hostDomain:
+  prefix: http://
+
+destinationrule:
+  enabled: true
+  annotations: { }
+
+autoscaling:
+  horizontal:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetConcurrency: 3
+  vertical:
+    enabled: false
+  prewarming:
+    enabled: false
+
+celery_autoscaler:
+  enabled: true
+  num_shards: 10
+
+# Specifies a minimum number of pods that must be available at all times during upgrades or scaling
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Default resources for the Model Engine deployments
+resources:
+  requests:
+    cpu: 2
+    ephemeral-storage: 256Mi
+
+# Service Account information for the Model Engine deployments
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn:
+  sqsProfileName:
+# The service account automatically gets created in the Release namespace
+# namespaces:
+
+aws:
+  # Used to mount a configmap into the containers in order to supply AWS profiles
+  configMap:
+    name: ml-worker-config
+    create: true
+    mountPath: /opt/.aws/config
+    namespaces:
+      - default
+  profileName: ml-worker
+  s3WriteProfileName: ml-worker
+  partition: *awsPartition
+  region: *awsRegion
+  accountId: *awsAccountId
+  # The Model Engine s3 bucket
+  s3Bucket:
+
+# Optional additional way of setting the Redis hostname aside from the REDIS_HOST env var
+redis:
+  hostname:
+
+# Experimental additional inference image
+triton:
+  image:
+    repository:
+    tag:
+
+serviceTemplate:
+  # createInferenceServiceAccount/serviceAccountName/serviceAccountAnnotations specify whether to create a serviceAccount for
+  # inference pods. Assumes the inference pods run in a separate namespace to the LLM Engine control plane.
+  createInferenceServiceAccount: true
+  securityContext:
+    capabilities:
+      drop:
+        - all
+  mountInfraConfig: false
+  serviceAccountName: model-engine
+  awsConfigMapName: ml-worker-config
+  serviceAccountAnnotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::000000000000:role/llm-engine
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-2"
+
+# Specifies the type of broker to use for the celery autoscaler
+# Can be either "sqs" or "servicebus"
+celeryBrokerType: sqs
+
+# For each GPU type, specify tolerations associated with any taints associated with different GPU type node classes.
+# This will only set the tolerations for the pods that exist to cache images on each node, however. They will NOT set
+# tolerations for the deployed ML models. Each of those are set in service_template_config_map.yaml in model-engine templates
+# to contain the standard "nvidia.com/gpu" toleration.
+imageCache:
+  devices:
+    - name: cpu
+      nodeSelector:
+        cpu-only: "true"
+    - name: a10
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-ampere-a10
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: a100
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-ampere-a100
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: t4
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-tesla-t4
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: h100
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-hopper-h100
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: h100-mig-1g-20gb
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-hopper-h100-mig-1g20gb
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - name: h100-mig-3g-40gb
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-hopper-h100-mig-3g40gb
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+
+# Requests will automatically receive these resource inputs if not otherwise specified, based on the GPU
+# type associated with the deployment request. Please ensure that your infrastructure configuration labels each
+# GPU node type with: "k8s.amazonaws.com/accelerator: ${GPU_TYPE}"
+recommendedHardware:
+  byGpuMemoryGb:
+    - gpu_memory_le: 20
+      cpus: 5
+      gpus: 1
+      memory: 20Gi
+      storage: 40Gi
+      gpu_type: nvidia-hopper-h100-1g20gb
+    - gpu_memory_le: 40
+      cpus: 10
+      gpus: 1
+      memory: 40Gi
+      storage: 80Gi
+      gpu_type: nvidia-hopper-h100-3g40gb
+    - gpu_memory_le: 80
+      cpus: 20
+      gpus: 1
+      memory: 80Gi
+      storage: 96Gi
+      gpu_type: nvidia-hopper-h100
+    - gpu_memory_le: 160
+      cpus: 40
+      gpus: 2
+      memory: 160Gi
+      storage: 160Gi
+      gpu_type: nvidia-hopper-h100
+    - gpu_memory_le: 320
+      cpus: 80
+      gpus: 4
+      memory: 320Gi
+      storage: 320Gi
+      gpu_type: nvidia-hopper-h100
+    - gpu_memory_le: 640
+      cpus: 160
+      gpus: 8
+      memory: 800Gi
+      storage: 640Gi
+      gpu_type: nvidia-hopper-h100
+  byModelName:
+    - name: llama-3-8b-instruct-262k
+      cpus: 40
+      gpus: 2
+      memory: 160Gi
+      storage: 160Gi
+      gpu_type: nvidia-hopper-h100
+    - name: deepseek-coder-v2
+      cpus: 160
+      gpus: 8
+      memory: 800Gi
+      storage: 640Gi
+      gpu_type: nvidia-hopper-h100
+    - name: deepseek-coder-v2-instruct
+      cpus: 160
+      gpus: 8
+      memory: 800Gi
+      storage: 640Gi
+      gpu_type: nvidia-hopper-h100
+
+# Enables Datadog and associated tracing
+datadog:
+  enabled: false
+dd_trace_enabled: false
+
+# Deprecated service for deployment of LLM's
 spellbook:
   enabled: false
-redis:
-  auth:
-db:
-  runDbInitScript: false
-# balloonNodeSelector:
-#   node-lifecycle: normal
-# nodeSelector:
-#   node-lifecycle: normal

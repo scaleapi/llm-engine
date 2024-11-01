@@ -95,15 +95,12 @@ data:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- if eq $device "gpu" }}
-          # {{- if empty $node_selector }}
-          # nodeSelector:
-          # {{- end }}
-          #   k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+          {{- if empty $node_selector }}
+          nodeSelector:
+          {{- end }}
+            k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
             - key: "nvidia.com/gpu"
-              operator: "Exists"
-              effect: "NoSchedule"
-            - key: "gpu_a100_multi"
               operator: "Exists"
               effect: "NoSchedule"
           {{- end }}
@@ -489,7 +486,7 @@ data:
           protocol: TCP
           name: http
           ${NODE_PORT_DICT}
-  {{- if .Values.virtualservice.enabled }}
+  {{- if .values.virtualService.enabled }}
   virtual-service.yaml: |-
     apiVersion: networking.istio.io/v1alpha3
     kind: VirtualService
@@ -680,15 +677,12 @@ data:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- if eq $device "gpu" }}
-          # {{- if empty $node_selector }}
-          # nodeSelector:
-          # {{- end }}
-          #   k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+          {{- if empty $node_selector }}
+          nodeSelector:
+          {{- end }}
+            k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
             - key: "nvidia.com/gpu"
-              operator: "Exists"
-              effect: "NoSchedule"
-            - key: "gpu_a100_multi"
               operator: "Exists"
               effect: "NoSchedule"
           {{- end }}

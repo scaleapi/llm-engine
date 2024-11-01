@@ -12,8 +12,8 @@ metadata:
 data:
   deepspeed: "latest"
   text_generation_inference: "latest"
-  vllm: "{{ .Values.vllmTag }}"
-  vllm_batch:  "{{ .Values.vllmTag }}"
-  vllm_batch_v2:  "{{ .Values.vllmTag }}"
+  vllm: "{{ .Values.vLLM.primaryTag }}"
+  vllm_batch:  "{{ .Values.vLLM.batchTag }}"
+  vllm_batch_v2:  "{{ .Values.vLLM.batchV2Tag }}"
   lightllm: "latest"
   tensorrt_llm: "latest"
