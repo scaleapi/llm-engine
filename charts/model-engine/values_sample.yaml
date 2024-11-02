@@ -75,6 +75,10 @@ replicaCount:
   # builder is the endpoint builder deployment
   builder: 1
 
+balloonConfig:
+  # If set to true, only high priority pods can preempt balloons. Otherwise, all pods can preempt balloons.
+  reserveHighPriority: true
+
 balloons:
   # A low priority pod deployment for A10 GPU nodes
   - acceleratorName: nvidia-ampere-a10
