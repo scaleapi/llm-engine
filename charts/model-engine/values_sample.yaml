@@ -91,6 +91,7 @@ balloons:
   # A low priority pod deployment for H100 GPU nodes
   - acceleratorName: nvidia-hopper-h100
     replicaCount: 0
+    gpuCount: 4
 
 # autoscaling is the autoscaling configuration for LLM Engine server deployments (e.g gateway, cache, and builder deployments)
 autoscaling:
