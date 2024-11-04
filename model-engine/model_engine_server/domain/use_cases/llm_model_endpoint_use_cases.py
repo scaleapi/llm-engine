@@ -3397,11 +3397,13 @@ def infer_addition_engine_args_from_model_name(
     model_name: str,
 ) -> VLLMEndpointAdditionalArgs:
     # Increase max gpu utilization for larger models
-    model_param_count_b = get_model_param_count_b(model_name)
-    if model_param_count_b >= 70:
-        gpu_memory_utilization = 0.95
-    else:
-        gpu_memory_utilization = 0.9
+    gpu_memory_utilization = 0.9
+    try:
+        model_param_count_b = get_model_param_count_b(model_name)
+        if model_param_count_b >= 70:
+            gpu_memory_utilization = 0.95
+    except ObjectHasInvalidValueException:
+        pass
 
     # Gemma 2 requires flashinfer attention backend
     attention_backend = None
