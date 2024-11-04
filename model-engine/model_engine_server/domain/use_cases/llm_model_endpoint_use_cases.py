@@ -3402,7 +3402,7 @@ def infer_addition_engine_args_from_model_name(
         model_param_count_b = get_model_param_count_b(model_name)
         if model_param_count_b >= 70:
             gpu_memory_utilization = 0.95
-    except ObjectHasInvalidValueException:
+    except ObjectHasInvalidValueException:  # pragma: no cover
         pass
 
     # Gemma 2 requires flashinfer attention backend
