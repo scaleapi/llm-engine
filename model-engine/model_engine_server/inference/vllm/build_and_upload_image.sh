@@ -43,7 +43,7 @@ aws ecr get-login-password --region us-west-2 | docker login --username AWS --pa
 DOCKER_BUILDKIT=1 docker build \
   --build-arg VLLM_VERSION=${VLLM_VERSION} \
   --build-arg VLLM_BASE_REPO=${VLLM_BASE_REPO} \
-  -f Dockerfile.vllm \
+  -f ${DOCKERFILE} \
   --target ${BUILD_TARGET} \
   -t $IMAGE ${PROJECT_DIR}
 docker push $IMAGE
