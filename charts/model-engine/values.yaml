@@ -10,6 +10,8 @@ redis:
 db:
   runDbInitScript: false
   runDbMigrationScript: false
+balloonConfig:
+  reserveHighPriority: true
 balloonNodeSelector:
   node-lifecycle: normal
 nodeSelector:
