@@ -381,9 +381,10 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
 
 
 def validate_model_name(model_name: str, inference_framework: LLMInferenceFramework) -> None:
+    # TODO: replace this logic to check if the model architecture is supported instead
     if model_name not in _SUPPORTED_MODELS_BY_FRAMEWORK[inference_framework]:
-        raise ObjectHasInvalidValueException(
-            f"Model name {model_name} is not supported for inference framework {inference_framework}."
+        logger.warning(
+            f"Model name {model_name} may not be supported by inference framework {inference_framework}."
         )
 
 
