@@ -4,8 +4,10 @@ kind: PriorityClass
 metadata:
   name: "{{ include "modelEngine.fullname" . }}-default-priority"
 value: 1
+{{- if .Values.balloonConfig.reserveHighPriority }}
 # This ensures that the default launch pods will never preempt any pods, which means
 # they cannot take advantage of the dummy nodes.
 preemptionPolicy: Never
+{{- end }}
 description: "Default Priority Class for Launch"
 {{- end }}

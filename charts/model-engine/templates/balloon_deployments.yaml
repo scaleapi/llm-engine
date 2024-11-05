@@ -41,7 +41,7 @@ spec:
           resources:
             limits:
               memory: 28Gi
-              nvidia.com/gpu: 1
+              nvidia.com/gpu: {{ .gpuCount | default 1 }}
               cpu: 4
           command:
             - /bin/bash
