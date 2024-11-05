@@ -381,9 +381,10 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
 
 
 def validate_model_name(model_name: str, inference_framework: LLMInferenceFramework) -> None:
+    # TODO: replace this logic to check if the model architecture is supported instead
     if model_name not in _SUPPORTED_MODELS_BY_FRAMEWORK[inference_framework]:
-        raise ObjectHasInvalidValueException(
-            f"Model name {model_name} is not supported for inference framework {inference_framework}."
+        logger.warning(
+            f"Model name {model_name} may not be supported by inference framework {inference_framework}."
         )
 
 
@@ -3396,11 +3397,13 @@ def infer_addition_engine_args_from_model_name(
     model_name: str,
 ) -> VLLMEndpointAdditionalArgs:
     # Increase max gpu utilization for larger models
-    model_param_count_b = get_model_param_count_b(model_name)
-    if model_param_count_b >= 70:
-        gpu_memory_utilization = 0.95
-    else:
-        gpu_memory_utilization = 0.9
+    gpu_memory_utilization = 0.9
+    try:
+        model_param_count_b = get_model_param_count_b(model_name)
+        if model_param_count_b >= 70:
+            gpu_memory_utilization = 0.95
+    except ObjectHasInvalidValueException:  # pragma: no cover
+        pass
 
     # Gemma 2 requires flashinfer attention backend
     attention_backend = None
