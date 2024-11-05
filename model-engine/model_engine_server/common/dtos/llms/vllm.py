@@ -79,6 +79,42 @@ class VLLMModelConfig(BaseModel):
         description="Enable auto tool choice",
     )
 
+    load_format: Optional[str] = Field(
+        None,
+        description="The format of the model weights to load.\n\n"
+        '* "auto" will try to load the weights in the safetensors format '
+        "and fall back to the pytorch bin format if safetensors format "
+        "is not available.\n"
+        '* "pt" will load the weights in the pytorch bin format.\n'
+        '* "safetensors" will load the weights in the safetensors format.\n'
+        '* "npcache" will load the weights in pytorch format and store '
+        "a numpy cache to speed up the loading.\n"
+        '* "dummy" will initialize the weights with random values, '
+        "which is mainly for profiling.\n"
+        '* "tensorizer" will load the weights using tensorizer from '
+        "CoreWeave. See the Tensorize vLLM Model script in the Examples "
+        "section for more information.\n"
+        '* "bitsandbytes" will load the weights using bitsandbytes '
+        "quantization.\n",
+    )
+
+    config_format: Optional[str] = Field(
+        None,
+        description="The config format which shall be loaded.  Defaults to 'auto' which defaults to 'hf'.",
+    )
+
+    tokenizer_mode: Optional[str] = Field(
+        None,
+        description="Tokenizer mode. 'auto' will use the fast tokenizer if"
+        "available, 'slow' will always use the slow tokenizer, and"
+        "'mistral' will always use the tokenizer from `mistral_common`.",
+    )
+
+    limit_mm_per_prompt: Optional[str] = Field(
+        None,
+        description="Maximum number of data instances per modality per prompt. Only applicable for multimodal models.",
+    )
+
 
 class VLLMEngineAdditionalArgs(BaseModel):
     """Additional arguments to configure for vLLM that are not direct inputs to the vLLM engine"""
