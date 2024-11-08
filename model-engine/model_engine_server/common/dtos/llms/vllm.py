@@ -115,6 +115,15 @@ class VLLMModelConfig(BaseModel):
         description="Maximum number of data instances per modality per prompt. Only applicable for multimodal models.",
     )
 
+    enable_prefix_caching: Optional[bool] = Field(
+        None,
+        description="Enables automatic prefix caching.",
+    )
+
+    max_num_batched_tokens: Optional[int] = Field(
+        None, description="Maximum number of batched tokens per iteration"
+    )
+
 
 class VLLMEngineAdditionalArgs(BaseModel):
     """Additional arguments to configure for vLLM that are not direct inputs to the vLLM engine"""
