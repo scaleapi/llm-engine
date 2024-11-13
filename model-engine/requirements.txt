@@ -39,8 +39,6 @@ attrs==23.1.0
     #   aiohttp
     #   cattrs
     #   ddtrace
-    #   jsonschema
-    #   referencing
 azure-common==1.1.28
     # via azure-keyvault-secrets
 azure-containerregistry==1.2.0
@@ -132,7 +130,6 @@ cryptography==42.0.5
     #   azure-storage-blob
     #   msal
     #   pyjwt
-    #   secretstorage
 dataclasses-json==0.5.9
     # via -r model-engine/requirements.in
 datadog==0.47.0
@@ -141,8 +138,10 @@ datadog-api-client==2.11.0
     # via -r model-engine/requirements.in
 ddsketch==2.0.4
     # via ddtrace
-ddtrace==1.8.3
+ddtrace==1.20.19
     # via -r model-engine/requirements.in
+deprecated==1.2.14
+    # via opentelemetry-api
 deprecation==2.1.0
     # via -r model-engine/requirements.in
 docker==5.0.3
@@ -212,6 +211,7 @@ idna==3.7
 importlib-metadata==6.8.0
     # via
     #   keyring
+    #   opentelemetry-api
     #   twine
 isodate==0.6.1
     # via
@@ -225,10 +225,6 @@ itsdangerous==2.1.2
     #   starlette
 jaraco-classes==3.3.0
     # via keyring
-jeepney==0.8.0
-    # via
-    #   keyring
-    #   secretstorage
 jinja2==3.0.3
     # via
     #   -r model-engine/requirements.in
@@ -240,10 +236,6 @@ jmespath==1.0.1
     #   botocore
 json-log-formatter==0.5.2
     # via -r model-engine/requirements.in
-jsonschema==4.19.0
-    # via ddtrace
-jsonschema-specifications==2023.7.1
-    # via jsonschema
 keyring==24.2.0
     # via twine
 kombu[sqs]==5.3.5
@@ -300,12 +292,13 @@ numpy==1.24.4
     # via transformers
 oauthlib==3.2.2
     # via requests-oauthlib
+opentelemetry-api==1.28.1
+    # via ddtrace
 orjson==3.9.15
     # via -r model-engine/requirements.in
 packaging==23.1
     # via
     #   build
-    #   ddtrace
     #   deprecation
     #   huggingface-hub
     #   marshmallow
@@ -386,10 +379,6 @@ readme-renderer==40.0
     # via twine
 redis==4.6.0
     # via celery
-referencing==0.30.2
-    # via
-    #   jsonschema
-    #   jsonschema-specifications
 regex==2023.10.3
     # via transformers
 requests==2.31.0
@@ -416,10 +405,6 @@ rfc3986==2.0.0
     # via twine
 rich==12.6.0
     # via -r model-engine/requirements.in
-rpds-py==0.10.0
-    # via
-    #   jsonschema
-    #   referencing
 rsa==4.9
     # via google-auth
 s3transfer==0.6.1
@@ -428,8 +413,6 @@ safetensors==0.4.2
     # via transformers
 scramp==1.4.4
     # via pg8000
-secretstorage==3.3.3
-    # via keyring
 sentencepiece==0.1.99
     # via -r model-engine/requirements.in
 sh==1.14.3
@@ -476,9 +459,7 @@ stringcase==1.2.0
 tblib==2.0.0
     # via celery
 tenacity==6.2.0
-    # via
-    #   -r model-engine/requirements.in
-    #   ddtrace
+    # via -r model-engine/requirements.in
 testing-common-database==2.0.3
     # via testing-postgresql
 testing-postgresql==1.3.0
@@ -559,6 +540,8 @@ websocket-client==1.6.1
     #   kubernetes
 werkzeug==2.3.6
     # via quart
+wrapt==1.16.0
+    # via deprecated
 wsproto==1.2.0
     # via hypercorn
 xmltodict==0.13.0
