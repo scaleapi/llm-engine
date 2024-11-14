@@ -81,4 +81,5 @@ class CreateStreamingInferenceTaskV1UseCase:
             topic=model_endpoint.record.destination,
             predict_request=request,
             manually_resolve_dns=manually_resolve_dns,
+            readable_endpoint_name=model_endpoint.record.name,
         )

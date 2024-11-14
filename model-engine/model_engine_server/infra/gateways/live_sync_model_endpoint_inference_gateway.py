@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import aiohttp
 import orjson
@@ -121,6 +121,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         payload_json: Dict[str, Any],
         timeout_seconds: float,
         num_retries: int,
+        readable_endpoint_name: str,
     ) -> Dict[str, Any]:
         # Copied from document-endpoint
         # More details at https://tenacity.readthedocs.io/en/latest/#retrying-code-block
@@ -177,6 +178,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         topic: str,
         predict_request: SyncEndpointPredictV1Request,
         manually_resolve_dns: bool = False,
+        readable_endpoint_name: Optional[str] = None,
     ) -> SyncEndpointPredictV1Response:
         deployment_url = _get_sync_endpoint_url(
             topic,
@@ -200,6 +202,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 payload_json=predict_request.model_dump(exclude_none=True),
                 timeout_seconds=timeout_seconds,
                 num_retries=num_retries,
+                readable_endpoint_name=readable_endpoint_name or topic,
             )
         except UpstreamServiceError as exc:
             logger.error(f"Service error on sync task: {exc.content!r}")

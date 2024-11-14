@@ -70,7 +70,9 @@ async def test_make_request_with_retries_success(
         "model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        response = await gateway.make_request_with_retries("test_request_url", {}, 0.05, 2)
+        response = await gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        )
     assert response == {"test_key": "test_value"}
 
 
@@ -89,7 +91,9 @@ async def test_make_request_with_retries_failed_429(
         "model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        await gateway.make_request_with_retries("test_request_url", {}, 0.05, 2)
+        await gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        )
 
 
 @pytest.mark.asyncio
@@ -107,7 +111,9 @@ async def test_make_request_with_retries_failed_traceback(
         "model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        await gateway.make_request_with_retries("test_request_url", {}, 0.05, 2)
+        await gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        )
 
 
 @pytest.mark.asyncio
@@ -124,7 +130,9 @@ async def test_make_request_with_retries_failed_with_client_connector_error(
         "model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        await gateway.make_request_with_retries("test_request_url", {}, 0.05, 2)
+        await gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        )
 
 
 @pytest.mark.asyncio
@@ -143,7 +151,9 @@ async def test_predict_success(
         mock_client_session,
     ):
         response = await gateway.predict(
-            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            topic="test_topic",
+            predict_request=sync_endpoint_predict_request_1[0],
+            readable_endpoint_name="test_name",
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -170,7 +180,9 @@ async def test_predict_raises_traceback_json(
         mock_client_session,
     ):
         response = await gateway.predict(
-            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            topic="test_topic",
+            predict_request=sync_endpoint_predict_request_1[0],
+            readable_endpoint_name="test_name",
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -197,7 +209,9 @@ async def test_predict_raises_traceback_not_json(
         mock_client_session,
     ):
         response = await gateway.predict(
-            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            topic="test_topic",
+            predict_request=sync_endpoint_predict_request_1[0],
+            readable_endpoint_name="test_name",
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -226,7 +240,9 @@ async def test_predict_raises_traceback_wrapped(
         mock_client_session,
     ):
         response = await gateway.predict(
-            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            topic="test_topic",
+            predict_request=sync_endpoint_predict_request_1[0],
+            readable_endpoint_name="test_name",
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -253,7 +269,9 @@ async def test_predict_raises_traceback_wrapped_detail_array(
         mock_client_session,
     ):
         response = await gateway.predict(
-            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            topic="test_topic",
+            predict_request=sync_endpoint_predict_request_1[0],
+            readable_endpoint_name="test_name",
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -282,5 +300,7 @@ async def test_predict_upstream_raises_400(
         # assert that the exception is raised
         with pytest.raises(InvalidRequestException):
             await gateway.predict(
-                topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+                topic="test_topic",
+                predict_request=sync_endpoint_predict_request_1[0],
+                readable_endpoint_name="test_name",
             )

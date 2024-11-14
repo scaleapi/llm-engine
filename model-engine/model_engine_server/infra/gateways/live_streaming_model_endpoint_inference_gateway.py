@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterable, Dict
+from typing import Any, AsyncIterable, Dict, Optional
 
 import aiohttp
 import orjson
@@ -139,6 +139,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         payload_json: Dict[str, Any],
         timeout_seconds: float,
         num_retries: int,
+        readable_endpoint_name: str,
     ) -> AsyncIterable[Dict[str, Any]]:
         # Copied from document-endpoint
         # More details at https://tenacity.readthedocs.io/en/latest/#retrying-code-block
@@ -203,6 +204,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         topic: str,
         predict_request: SyncEndpointPredictV1Request,
         manually_resolve_dns: bool = False,
+        readable_endpoint_name: Optional[str] = None,
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
         deployment_url = _get_streaming_endpoint_url(
             topic,
@@ -226,6 +228,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 payload_json=predict_request.model_dump(exclude_none=True),
                 timeout_seconds=timeout_seconds,
                 num_retries=num_retries,
+                readable_endpoint_name=readable_endpoint_name or topic,
             )
             async for item in response:
                 yield SyncEndpointPredictV1Response(status=TaskStatus.SUCCESS, result=item)

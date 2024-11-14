@@ -86,7 +86,9 @@ async def test_make_request_with_retries_success(
         "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        response = gateway.make_request_with_retries("test_request_url", {}, 0.05, 2)
+        response = gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        )
         count = 0
         async for message in response:
             assert message == {"test": "content"}
@@ -109,7 +111,9 @@ async def test_make_request_with_retries_failed_429(
         "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        async for response in gateway.make_request_with_retries("test_request_url", {}, 0.05, 2):
+        async for response in gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        ):
             response
 
 
@@ -128,7 +132,9 @@ async def test_make_request_with_retries_failed_traceback(
         "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        async for response in gateway.make_request_with_retries("test_request_url", {}, 0.05, 2):
+        async for response in gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        ):
             response
 
 
@@ -146,7 +152,9 @@ async def test_make_request_with_retries_failed_with_client_connector_error(
         "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        async for response in gateway.make_request_with_retries("test_request_url", {}, 0.05, 2):
+        async for response in gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        ):
             response
 
 
@@ -166,7 +174,9 @@ async def test_streaming_predict_success(
         mock_client_session,
     ):
         response = gateway.streaming_predict(
-            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            topic="test_topic",
+            predict_request=sync_endpoint_predict_request_1[0],
+            readable_endpoint_name="test_name",
         )
         count = 0
         async for message in response:
@@ -197,7 +207,9 @@ async def test_predict_raises_traceback_json(
         mock_client_session,
     ):
         response = gateway.streaming_predict(
-            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            topic="test_topic",
+            predict_request=sync_endpoint_predict_request_1[0],
+            readable_endpoint_name="test_name",
         )
         count = 0
         async for message in response:
@@ -228,7 +240,9 @@ async def test_predict_raises_traceback_not_json(
         mock_client_session,
     ):
         response = gateway.streaming_predict(
-            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            topic="test_topic",
+            predict_request=sync_endpoint_predict_request_1[0],
+            readable_endpoint_name="test_name",
         )
         count = 0
         async for message in response:
@@ -260,7 +274,9 @@ async def test_predict_upstream_raises_400(
     ):
         with pytest.raises(InvalidRequestException):
             response = gateway.streaming_predict(
-                topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+                topic="test_topic",
+                predict_request=sync_endpoint_predict_request_1[0],
+                readable_endpoint_name="test_name",
             )
             async for message in response:
                 message
