@@ -28,4 +28,3 @@ def add_trace_model_name(model_name: Optional[str]):
     current_span = tracer.current_span()
     if current_span:
         current_span.set_tag("launch.model_name", model_name)
-        current_span.set_tag("_dd.p.launch_model_name", model_name)
