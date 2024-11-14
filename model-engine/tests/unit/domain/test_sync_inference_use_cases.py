@@ -16,15 +16,11 @@ from model_engine_server.domain.use_cases.sync_inference_use_cases import (
 @pytest.mark.asyncio
 async def test_create_sync_inference_task_use_case_success(
     fake_model_endpoint_service,
-    fake_monitoring_metrics_gateway,
     model_endpoint_2: ModelEndpoint,
     endpoint_predict_request_1: Tuple[EndpointPredictV1Request, Dict[str, Any]],
 ):
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_2)
-    use_case = CreateSyncInferenceTaskV1UseCase(
-        model_endpoint_service=fake_model_endpoint_service,
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
-    )
+    use_case = CreateSyncInferenceTaskV1UseCase(model_endpoint_service=fake_model_endpoint_service)
     user_id = model_endpoint_2.record.created_by
     user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
     response = await use_case.execute(
@@ -38,15 +34,11 @@ async def test_create_sync_inference_task_use_case_success(
 @pytest.mark.asyncio
 async def test_create_sync_inference_task_use_case_endpoint_not_found_raises(
     fake_model_endpoint_service,
-    fake_monitoring_metrics_gateway,
     model_endpoint_1: ModelEndpoint,
     endpoint_predict_request_1: Tuple[EndpointPredictV1Request, Dict[str, Any]],
 ):
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
-    use_case = CreateSyncInferenceTaskV1UseCase(
-        model_endpoint_service=fake_model_endpoint_service,
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
-    )
+    use_case = CreateSyncInferenceTaskV1UseCase(model_endpoint_service=fake_model_endpoint_service)
     user_id = model_endpoint_1.record.created_by
     user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
     with pytest.raises(ObjectNotFoundException):
@@ -60,15 +52,11 @@ async def test_create_sync_inference_task_use_case_endpoint_not_found_raises(
 @pytest.mark.asyncio
 async def test_create_sync_inference_task_use_case_endpoint_not_authorized_raises(
     fake_model_endpoint_service,
-    fake_monitoring_metrics_gateway,
     model_endpoint_1: ModelEndpoint,
     endpoint_predict_request_1: Tuple[EndpointPredictV1Request, Dict[str, Any]],
 ):
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
-    use_case = CreateSyncInferenceTaskV1UseCase(
-        model_endpoint_service=fake_model_endpoint_service,
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
-    )
+    use_case = CreateSyncInferenceTaskV1UseCase(model_endpoint_service=fake_model_endpoint_service)
     user = User(user_id="invalid_user_id", team_id="invalid_user_id", is_privileged_user=True)
     with pytest.raises(ObjectNotAuthorizedException):
         await use_case.execute(
@@ -81,15 +69,11 @@ async def test_create_sync_inference_task_use_case_endpoint_not_authorized_raise
 @pytest.mark.asyncio
 async def test_create_sync_inference_task_use_case_endpoint_public_endpoint_authorized(
     fake_model_endpoint_service,
-    fake_monitoring_metrics_gateway,
     model_endpoint_public_sync: ModelEndpoint,
     endpoint_predict_request_1: Tuple[EndpointPredictV1Request, Dict[str, Any]],
 ):
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_public_sync)
-    use_case = CreateSyncInferenceTaskV1UseCase(
-        model_endpoint_service=fake_model_endpoint_service,
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
-    )
+    use_case = CreateSyncInferenceTaskV1UseCase(model_endpoint_service=fake_model_endpoint_service)
     user = User(user_id="invalid_user_id", team_id="invalid_user_id", is_privileged_user=True)
     # Should not raise
     await use_case.execute(
