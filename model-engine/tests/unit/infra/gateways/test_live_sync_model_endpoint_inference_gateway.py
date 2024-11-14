@@ -10,6 +10,7 @@ from model_engine_server.common.dtos.tasks import (
     SyncEndpointPredictV1Response,
 )
 from model_engine_server.domain.exceptions import InvalidRequestException, UpstreamServiceError
+from model_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
 from model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway import (
     LiveSyncModelEndpointInferenceGateway,
 )
@@ -55,8 +56,12 @@ def _get_mock_client_session_with_client_connector_error():
 
 
 @pytest.mark.asyncio
-async def test_make_request_with_retries_success():
-    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+async def test_make_request_with_retries_success(
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
+):
+    gateway = LiveSyncModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     fake_response = FakeResponse(status=200)
     mock_client_session = _get_mock_client_session(fake_response)
@@ -70,8 +75,12 @@ async def test_make_request_with_retries_success():
 
 
 @pytest.mark.asyncio
-async def test_make_request_with_retries_failed_429():
-    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+async def test_make_request_with_retries_failed_429(
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
+):
+    gateway = LiveSyncModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     fake_response = FakeResponse(status=429)
     mock_client_session = _get_mock_client_session(fake_response)
@@ -84,8 +93,12 @@ async def test_make_request_with_retries_failed_429():
 
 
 @pytest.mark.asyncio
-async def test_make_request_with_retries_failed_traceback():
-    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+async def test_make_request_with_retries_failed_traceback(
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
+):
+    gateway = LiveSyncModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     fake_response = FakeResponse(status=500)
     mock_client_session = _get_mock_client_session(fake_response)
@@ -98,8 +111,12 @@ async def test_make_request_with_retries_failed_traceback():
 
 
 @pytest.mark.asyncio
-async def test_make_request_with_retries_failed_with_client_connector_error():
-    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+async def test_make_request_with_retries_failed_with_client_connector_error(
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
+):
+    gateway = LiveSyncModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     mock_client_session = _get_mock_client_session_with_client_connector_error()
 
@@ -112,9 +129,12 @@ async def test_make_request_with_retries_failed_with_client_connector_error():
 
 @pytest.mark.asyncio
 async def test_predict_success(
-    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]],
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
-    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+    gateway = LiveSyncModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     fake_response = FakeResponse(status=200, body={"test_key": "test_value"})
     mock_client_session = _get_mock_client_session(fake_response)
@@ -135,9 +155,12 @@ async def test_predict_success(
 
 @pytest.mark.asyncio
 async def test_predict_raises_traceback_json(
-    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]],
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
-    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+    gateway = LiveSyncModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     content = json.dumps({"detail": {"traceback": "test_traceback"}}).encode("utf-8")
     fake_response = FakeResponse(status=500, content=content)
@@ -159,9 +182,12 @@ async def test_predict_raises_traceback_json(
 
 @pytest.mark.asyncio
 async def test_predict_raises_traceback_not_json(
-    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]],
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
-    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+    gateway = LiveSyncModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     content = b"Test traceback content"
     fake_response = FakeResponse(status=500, content=content)
@@ -183,9 +209,12 @@ async def test_predict_raises_traceback_not_json(
 
 @pytest.mark.asyncio
 async def test_predict_raises_traceback_wrapped(
-    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]],
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
-    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+    gateway = LiveSyncModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     content = json.dumps(
         {"result": json.dumps({"detail": {"traceback": "test_traceback"}})}
@@ -209,9 +238,12 @@ async def test_predict_raises_traceback_wrapped(
 
 @pytest.mark.asyncio
 async def test_predict_raises_traceback_wrapped_detail_array(
-    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]],
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
-    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+    gateway = LiveSyncModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     content = json.dumps({"result": json.dumps({"detail": [{"error": "error"}]})}).encode("utf-8")
     fake_response = FakeResponse(status=500, content=content)
@@ -233,9 +265,12 @@ async def test_predict_raises_traceback_wrapped_detail_array(
 
 @pytest.mark.asyncio
 async def test_predict_upstream_raises_400(
-    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]],
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
-    gateway = LiveSyncModelEndpointInferenceGateway(use_asyncio=True)
+    gateway = LiveSyncModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     content = json.dumps({"result": json.dumps({"error": "error"})}).encode("utf-8")
     fake_response = FakeResponse(status=400, content=content)
