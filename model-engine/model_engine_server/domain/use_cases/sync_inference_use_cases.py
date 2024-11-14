@@ -12,7 +12,9 @@ from model_engine_server.domain.exceptions import (
     EndpointUnsupportedInferenceTypeException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
+    UpstreamServiceError,
 )
+from model_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
 from model_engine_server.domain.services.model_endpoint_service import ModelEndpointService
 
 
@@ -21,8 +23,13 @@ class CreateSyncInferenceTaskV1UseCase:
     Use case for creating a sync inference for an endpoint.
     """
 
-    def __init__(self, model_endpoint_service: ModelEndpointService):
+    def __init__(
+        self,
+        model_endpoint_service: ModelEndpointService,
+        monitoring_metrics_gateway: MonitoringMetricsGateway,
+    ):
         self.model_endpoint_service = model_endpoint_service
+        self.monitoring_metrics_gateway = monitoring_metrics_gateway
         self.authz_module = LiveAuthorizationModule()
 
     async def execute(
@@ -81,8 +88,15 @@ class CreateSyncInferenceTaskV1UseCase:
             and model_endpoint.infra_state.resource_state.nodes_per_worker > 1
             and hmi_config.istio_enabled
         )
-        return await inference_gateway.predict(
-            topic=model_endpoint.record.destination,
-            predict_request=request,
-            manually_resolve_dns=manually_resolve_dns,
-        )
+        try:
+            return await inference_gateway.predict(
+                topic=model_endpoint.record.destination,
+                predict_request=request,
+                manually_resolve_dns=manually_resolve_dns,
+            )
+        except UpstreamServiceError as exc:
+            if exc.status_code == 503:
+                self.monitoring_metrics_gateway.emit_sync_call_timeout_metrics(
+                    model_endpoint.record.name
+                )
+            raise exc

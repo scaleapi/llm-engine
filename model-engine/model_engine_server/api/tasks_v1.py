@@ -110,6 +110,7 @@ async def create_sync_inference_task(
     try:
         use_case = CreateSyncInferenceTaskV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,
+            monitoring_metrics_gateway=external_interfaces.monitoring_metrics_gateway,
         )
         return await use_case.execute(
             user=auth, model_endpoint_id=model_endpoint_id, request=request
@@ -149,6 +150,7 @@ async def create_streaming_inference_task(
     try:
         use_case = CreateStreamingInferenceTaskV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,
+            monitoring_metrics_gateway=external_interfaces.monitoring_metrics_gateway,
         )
         response = await use_case.execute(
             user=auth, model_endpoint_id=model_endpoint_id, request=request
