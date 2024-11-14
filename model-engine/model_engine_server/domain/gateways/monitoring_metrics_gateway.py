@@ -81,3 +81,12 @@ class MonitoringMetricsGateway(ABC):
         Token count metrics
         """
         pass
+
+    @abstractmethod
+    def emit_sync_call_timeout_metrics(self, endpoint_name: str):
+        """
+        Sync call timeout metrics, emitted when sync/streaming request
+        times out (likely due to scale-from-zero not being fast enough
+        or we're out of capacity)
+        """
+        pass

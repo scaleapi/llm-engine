@@ -85,3 +85,8 @@ class DatadogMonitoringMetricsGateway(MonitoringMetricsGateway):
         inter_token_latency = f"{self.prefix}.inter_token_latency"
         if token_usage.inter_token_latency is not None:
             statsd.distribution(inter_token_latency, token_usage.inter_token_latency, tags=tags)
+
+    def emit_sync_call_timeout_metrics(self, endpoint_name: str):
+        tags = self.tags
+        tags.extend([f"endpoint_name:{endpoint_name}"])
+        statsd.increment(f"{self.prefix}.timeout", tags=tags)
