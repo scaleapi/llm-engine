@@ -77,5 +77,5 @@ class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
         self.token_count += token_usage.num_total_tokens
         self.total_tokens_per_second = token_usage.total_tokens_per_second
 
-    def emit_sync_call_timeout_metrics(self, endpoint_name: str):
-        self.sync_call_timeout[endpoint_name] += 1
+    def emit_http_call_error_metrics(self, endpoint_name: str, error_code: int):
+        self.sync_call_timeout[(endpoint_name, error_code)] += 1
