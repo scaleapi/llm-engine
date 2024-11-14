@@ -109,11 +109,9 @@ async def run_batch_job(
         task_queue_gateway=inference_task_queue_gateway
     )
     streaming_model_endpoint_inference_gateway = LiveStreamingModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=monitoring_metrics_gateway,
         use_asyncio=(not CIRCLECI),
     )
     sync_model_endpoint_inference_gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=monitoring_metrics_gateway,
         use_asyncio=(not CIRCLECI),
     )
     filesystem_gateway = (

@@ -20,7 +20,6 @@ from model_engine_server.domain.exceptions import (
     TooManyRequestsException,
     UpstreamServiceError,
 )
-from model_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
 from model_engine_server.domain.gateways.streaming_model_endpoint_inference_gateway import (
     StreamingModelEndpointInferenceGateway,
 )
@@ -86,8 +85,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
     streaming_predict() wraps make_request_with_retries() and yields SyncEndpointPredictV1Response
     """
 
-    def __init__(self, monitoring_metrics_gateway: MonitoringMetricsGateway, use_asyncio: bool):
-        self.monitoring_metrics_gateway = monitoring_metrics_gateway
+    def __init__(self, use_asyncio: bool):
         self.use_asyncio = use_asyncio
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):

@@ -18,7 +18,6 @@ from model_engine_server.domain.exceptions import (
     TooManyRequestsException,
     UpstreamServiceError,
 )
-from model_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
 from model_engine_server.domain.gateways.sync_model_endpoint_inference_gateway import (
     SyncModelEndpointInferenceGateway,
 )
@@ -79,8 +78,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
     Concrete implementation for an SyncModelEndpointInferenceGateway.
     """
 
-    def __init__(self, monitoring_metrics_gateway: MonitoringMetricsGateway, use_asyncio: bool):
-        self.monitoring_metrics_gateway = monitoring_metrics_gateway
+    def __init__(self, use_asyncio: bool):
         self.use_asyncio = use_asyncio
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):

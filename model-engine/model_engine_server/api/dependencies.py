@@ -251,11 +251,9 @@ def _get_external_interfaces(
     )
     # In CircleCI, we cannot use asyncio because aiohttp cannot connect to the sync endpoints.
     sync_model_endpoint_inference_gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=monitoring_metrics_gateway,
         use_asyncio=(not CIRCLECI),
     )
     streaming_model_endpoint_inference_gateway = LiveStreamingModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=monitoring_metrics_gateway,
         use_asyncio=(not CIRCLECI),
     )
     filesystem_gateway = (
