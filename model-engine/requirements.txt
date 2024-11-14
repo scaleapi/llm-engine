@@ -132,6 +132,7 @@ cryptography==42.0.5
     #   azure-storage-blob
     #   msal
     #   pyjwt
+    #   secretstorage
 dataclasses-json==0.5.9
     # via -r model-engine/requirements.in
 datadog==0.47.0
@@ -224,6 +225,10 @@ itsdangerous==2.1.2
     #   starlette
 jaraco-classes==3.3.0
     # via keyring
+jeepney==0.8.0
+    # via
+    #   keyring
+    #   secretstorage
 jinja2==3.0.3
     # via
     #   -r model-engine/requirements.in
@@ -423,6 +428,8 @@ safetensors==0.4.2
     # via transformers
 scramp==1.4.4
     # via pg8000
+secretstorage==3.3.3
+    # via keyring
 sentencepiece==0.1.99
     # via -r model-engine/requirements.in
 sh==1.14.3
