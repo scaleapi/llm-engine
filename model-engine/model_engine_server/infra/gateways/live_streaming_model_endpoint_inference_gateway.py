@@ -180,15 +180,27 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         except RetryError as e:
             if isinstance(e.last_attempt.exception(), TooManyRequestsException):
                 logger.warning("Hit max # of retries, returning 429 to client")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(
+                    readable_endpoint_name, 429
+                )
                 raise UpstreamServiceError(status_code=429, content=b"Too many concurrent requests")
             elif isinstance(e.last_attempt.exception(), NoHealthyUpstreamException):
                 logger.warning("Pods didn't spin up in time, returning 503 to client")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(
+                    readable_endpoint_name, 503
+                )
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
             elif isinstance(e.last_attempt.exception(), aiohttp.ClientConnectorError):
                 logger.warning("ClientConnectorError, returning 503 to client")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(
+                    readable_endpoint_name, 503
+                )
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
             else:
                 logger.error("Unknown Exception Type")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(
+                    readable_endpoint_name, 500
+                )
                 raise UpstreamServiceError(status_code=500, content=b"Unknown error")
         except JSONDecodeError:
             logger.exception("JSONDecodeError")
