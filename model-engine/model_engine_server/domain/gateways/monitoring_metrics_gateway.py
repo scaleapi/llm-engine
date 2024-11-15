@@ -85,8 +85,8 @@ class MonitoringMetricsGateway(ABC):
     @abstractmethod
     def emit_http_call_error_metrics(self, endpoint_name: str, error_code: int):
         """
-        Sync call timeout metrics, emitted when sync/streaming request
-        times out (likely due to scale-from-zero not being fast enough
-        or we're out of capacity)
+        Sync call timeout/error metrics, emitted when sync/streaming request
+        times out or otherwise errors (likely due to scale-from-zero not being
+        fast enough, or we're out of capacity, or the upstream svc is unhealthy)
         """
         pass
