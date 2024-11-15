@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import aiohttp
 import orjson
@@ -18,6 +18,7 @@ from model_engine_server.domain.exceptions import (
     TooManyRequestsException,
     UpstreamServiceError,
 )
+from model_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
 from model_engine_server.domain.gateways.sync_model_endpoint_inference_gateway import (
     SyncModelEndpointInferenceGateway,
 )
@@ -78,7 +79,8 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
     Concrete implementation for an SyncModelEndpointInferenceGateway.
     """
 
-    def __init__(self, use_asyncio: bool):
+    def __init__(self, monitoring_metrics_gateway: MonitoringMetricsGateway, use_asyncio: bool):
+        self.monitoring_metrics_gateway = monitoring_metrics_gateway
         self.use_asyncio = use_asyncio
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
@@ -119,6 +121,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         payload_json: Dict[str, Any],
         timeout_seconds: float,
         num_retries: int,
+        endpoint_name: str,
     ) -> Dict[str, Any]:
         # Copied from document-endpoint
         # More details at https://tenacity.readthedocs.io/en/latest/#retrying-code-block
@@ -154,15 +157,19 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         except RetryError as e:
             if isinstance(e.last_attempt.exception(), TooManyRequestsException):
                 logger.warning("Hit max # of retries, returning 429 to client")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(endpoint_name, 429)
                 raise UpstreamServiceError(status_code=429, content=b"Too many concurrent requests")
             elif isinstance(e.last_attempt.exception(), NoHealthyUpstreamException):
                 logger.warning("Pods didn't spin up in time, returning 503 to client")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(endpoint_name, 503)
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
             elif isinstance(e.last_attempt.exception(), aiohttp.ClientConnectorError):
                 logger.warning("ClientConnectorError, returning 503 to client")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(endpoint_name, 503)
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
             else:
                 logger.error("Unknown Exception Type")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(endpoint_name, 500)
                 raise UpstreamServiceError(status_code=500, content=b"Unknown error")
 
         # Never reached because tenacity should throw a RetryError if we exit the for loop.
@@ -175,6 +182,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         topic: str,
         predict_request: SyncEndpointPredictV1Request,
         manually_resolve_dns: bool = False,
+        endpoint_name: Optional[str] = None,
     ) -> SyncEndpointPredictV1Response:
         deployment_url = _get_sync_endpoint_url(
             topic,
@@ -198,6 +206,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 payload_json=predict_request.model_dump(exclude_none=True),
                 timeout_seconds=timeout_seconds,
                 num_retries=num_retries,
+                endpoint_name=endpoint_name or topic,
             )
         except UpstreamServiceError as exc:
             logger.error(f"Service error on sync task: {exc.content!r}")

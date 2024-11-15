@@ -119,7 +119,7 @@ from model_engine_server.infra.repositories.live_tokenizer_repository import (
     get_models_s3_uri,
 )
 
-from ...common.datadog_utils import add_trace_request_id
+from ...common.datadog_utils import add_trace_model_name, add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
 from .model_bundle_use_cases import CreateModelBundleV2UseCase
 from .model_endpoint_use_cases import (
@@ -2001,6 +2001,8 @@ class CompletionSyncV1UseCase:
                 f"Expected 1 LLM model endpoint for model name {model_endpoint_name}, got {len(model_endpoints)}"
             )
 
+        add_trace_model_name(model_endpoint_name)
+
         model_endpoint = model_endpoints[0]
 
         if not self.authz_module.check_access_read_owned_entity(
@@ -2065,6 +2067,7 @@ class CompletionSyncV1UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status == TaskStatus.SUCCESS and predict_result.result is not None:
@@ -2115,6 +2118,7 @@ class CompletionSyncV1UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2175,6 +2179,7 @@ class CompletionSyncV1UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2226,6 +2231,7 @@ class CompletionSyncV1UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2270,6 +2276,7 @@ class CompletionSyncV1UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2356,6 +2363,8 @@ class CompletionStreamV1UseCase:
             raise ObjectHasInvalidValueException(
                 f"Expected 1 LLM model endpoint for model name {model_endpoint_name}, got {len(model_endpoints)}"
             )
+
+        add_trace_model_name(model_endpoint_name)
 
         model_endpoint = model_endpoints[0]
 
@@ -2550,6 +2559,7 @@ class CompletionStreamV1UseCase:
             topic=model_endpoint.record.destination,
             predict_request=inference_request,
             manually_resolve_dns=manually_resolve_dns,
+            endpoint_name=model_endpoint.record.name,
         )
 
         num_completion_tokens = 0
@@ -2760,6 +2770,8 @@ class CompletionSyncV2UseCase:
                 f"Expected 1 LLM model endpoint for model name {model_endpoint_name}, got {len(model_endpoints)}"
             )
 
+        add_trace_model_name(model_endpoint_name)
+
         model_endpoint = model_endpoints[0]
 
         if not self.authz_module.check_access_read_owned_entity(
@@ -2809,6 +2821,7 @@ class CompletionSyncV2UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2865,6 +2878,8 @@ class CompletionStreamV2UseCase:
             raise ObjectHasInvalidValueException(
                 f"Expected 1 LLM model endpoint for model name {model_endpoint_name}, got {len(model_endpoints)}"
             )
+
+        add_trace_model_name(model_endpoint_name)
 
         model_endpoint = model_endpoints[0]
 
@@ -2938,6 +2953,7 @@ class CompletionStreamV2UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
+                endpoint_name=model_endpoint.record.name,
             )
         except UpstreamServiceError as exc:
             # Expect upstream inference service to handle bulk of input validation
@@ -3027,6 +3043,8 @@ class ChatCompletionSyncV2UseCase:
                 f"Expected 1 LLM model endpoint for model name {model_endpoint_name}, got {len(model_endpoints)}"
             )
 
+        add_trace_model_name(model_endpoint_name)
+
         model_endpoint = model_endpoints[0]
 
         if not self.authz_module.check_access_read_owned_entity(
@@ -3076,6 +3094,7 @@ class ChatCompletionSyncV2UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -3132,6 +3151,8 @@ class ChatCompletionStreamV2UseCase:
             raise ObjectHasInvalidValueException(
                 f"Expected 1 LLM model endpoint for model name {model_endpoint_name}, got {len(model_endpoints)}"
             )
+
+        add_trace_model_name(model_endpoint_name)
 
         model_endpoint = model_endpoints[0]
 
@@ -3204,6 +3225,7 @@ class ChatCompletionStreamV2UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
+                endpoint_name=model_endpoint.record.name,
             )
         except UpstreamServiceError as exc:
             # Expect upstream inference service to handle bulk of input validation
