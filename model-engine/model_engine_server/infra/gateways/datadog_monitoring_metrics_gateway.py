@@ -89,4 +89,4 @@ class DatadogMonitoringMetricsGateway(MonitoringMetricsGateway):
     def emit_http_call_error_metrics(self, endpoint_name: str, error_code: int):
         tags = self.tags
         tags.extend([f"endpoint_name:{endpoint_name}", f"error_code:{error_code}"])
-        statsd.increment(f"{self.prefix}.timeout", tags=tags)
+        statsd.increment(f"{self.prefix}.upstream_sync_error", tags=tags)
