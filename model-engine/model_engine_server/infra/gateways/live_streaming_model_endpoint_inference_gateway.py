@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterable, Dict
+from typing import Any, AsyncIterable, Dict, Optional
 
 import aiohttp
 import orjson
@@ -20,6 +20,7 @@ from model_engine_server.domain.exceptions import (
     TooManyRequestsException,
     UpstreamServiceError,
 )
+from model_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
 from model_engine_server.domain.gateways.streaming_model_endpoint_inference_gateway import (
     StreamingModelEndpointInferenceGateway,
 )
@@ -85,7 +86,8 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
     streaming_predict() wraps make_request_with_retries() and yields SyncEndpointPredictV1Response
     """
 
-    def __init__(self, use_asyncio: bool):
+    def __init__(self, monitoring_metrics_gateway: MonitoringMetricsGateway, use_asyncio: bool):
+        self.monitoring_metrics_gateway = monitoring_metrics_gateway
         self.use_asyncio = use_asyncio
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
@@ -137,6 +139,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         payload_json: Dict[str, Any],
         timeout_seconds: float,
         num_retries: int,
+        endpoint_name: str,
     ) -> AsyncIterable[Dict[str, Any]]:
         # Copied from document-endpoint
         # More details at https://tenacity.readthedocs.io/en/latest/#retrying-code-block
@@ -177,15 +180,19 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         except RetryError as e:
             if isinstance(e.last_attempt.exception(), TooManyRequestsException):
                 logger.warning("Hit max # of retries, returning 429 to client")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(endpoint_name, 429)
                 raise UpstreamServiceError(status_code=429, content=b"Too many concurrent requests")
             elif isinstance(e.last_attempt.exception(), NoHealthyUpstreamException):
                 logger.warning("Pods didn't spin up in time, returning 503 to client")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(endpoint_name, 503)
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
             elif isinstance(e.last_attempt.exception(), aiohttp.ClientConnectorError):
                 logger.warning("ClientConnectorError, returning 503 to client")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(endpoint_name, 503)
                 raise UpstreamServiceError(status_code=503, content=b"No healthy upstream")
             else:
                 logger.error("Unknown Exception Type")
+                self.monitoring_metrics_gateway.emit_http_call_error_metrics(endpoint_name, 500)
                 raise UpstreamServiceError(status_code=500, content=b"Unknown error")
         except JSONDecodeError:
             logger.exception("JSONDecodeError")
@@ -201,6 +208,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         topic: str,
         predict_request: SyncEndpointPredictV1Request,
         manually_resolve_dns: bool = False,
+        endpoint_name: Optional[str] = None,
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
         deployment_url = _get_streaming_endpoint_url(
             topic,
@@ -224,6 +232,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 payload_json=predict_request.model_dump(exclude_none=True),
                 timeout_seconds=timeout_seconds,
                 num_retries=num_retries,
+                endpoint_name=endpoint_name or topic,
             )
             async for item in response:
                 yield SyncEndpointPredictV1Response(status=TaskStatus.SUCCESS, result=item)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import AsyncIterable
+from typing import AsyncIterable, Optional
 
 from model_engine_server.common.dtos.tasks import (
     SyncEndpointPredictV1Request,
@@ -17,7 +17,11 @@ class StreamingModelEndpointInferenceGateway(ABC):
 
     @abstractmethod
     def streaming_predict(
-        self, topic: str, predict_request: SyncEndpointPredictV1Request, manually_resolve_dns: bool
+        self,
+        topic: str,
+        predict_request: SyncEndpointPredictV1Request,
+        manually_resolve_dns: bool,
+        endpoint_name: Optional[str] = None,
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
         """
         Runs a prediction request and returns a streaming response.

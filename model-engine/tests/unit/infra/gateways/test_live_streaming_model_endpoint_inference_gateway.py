@@ -10,6 +10,7 @@ from model_engine_server.common.dtos.tasks import (
     SyncEndpointPredictV1Response,
 )
 from model_engine_server.domain.exceptions import InvalidRequestException, UpstreamServiceError
+from model_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
 from model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway import (
     LiveStreamingModelEndpointInferenceGateway,
 )
@@ -71,8 +72,12 @@ def _get_mock_client_session_with_client_connector_error():
 
 
 @pytest.mark.asyncio
-async def test_make_request_with_retries_success():
-    gateway = LiveStreamingModelEndpointInferenceGateway(use_asyncio=True)
+async def test_make_request_with_retries_success(
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
+):
+    gateway = LiveStreamingModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     fake_response = FakeResponse(status=200)
     mock_client_session = _get_mock_client_session(fake_response)
@@ -81,7 +86,9 @@ async def test_make_request_with_retries_success():
         "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        response = gateway.make_request_with_retries("test_request_url", {}, 0.05, 2)
+        response = gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        )
         count = 0
         async for message in response:
             assert message == {"test": "content"}
@@ -90,8 +97,12 @@ async def test_make_request_with_retries_success():
 
 
 @pytest.mark.asyncio
-async def test_make_request_with_retries_failed_429():
-    gateway = LiveStreamingModelEndpointInferenceGateway(use_asyncio=True)
+async def test_make_request_with_retries_failed_429(
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
+):
+    gateway = LiveStreamingModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     fake_response = FakeResponse(status=429)
     mock_client_session = _get_mock_client_session(fake_response)
@@ -100,13 +111,19 @@ async def test_make_request_with_retries_failed_429():
         "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        async for response in gateway.make_request_with_retries("test_request_url", {}, 0.05, 2):
+        async for response in gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        ):
             response
 
 
 @pytest.mark.asyncio
-async def test_make_request_with_retries_failed_traceback():
-    gateway = LiveStreamingModelEndpointInferenceGateway(use_asyncio=True)
+async def test_make_request_with_retries_failed_traceback(
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
+):
+    gateway = LiveStreamingModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     fake_response = FakeResponse(status=500)
     mock_client_session = _get_mock_client_session(fake_response)
@@ -115,13 +132,19 @@ async def test_make_request_with_retries_failed_traceback():
         "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        async for response in gateway.make_request_with_retries("test_request_url", {}, 0.05, 2):
+        async for response in gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        ):
             response
 
 
 @pytest.mark.asyncio
-async def test_make_request_with_retries_failed_with_client_connector_error():
-    gateway = LiveStreamingModelEndpointInferenceGateway(use_asyncio=True)
+async def test_make_request_with_retries_failed_with_client_connector_error(
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
+):
+    gateway = LiveStreamingModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     mock_client_session = _get_mock_client_session_with_client_connector_error()
 
@@ -129,15 +152,20 @@ async def test_make_request_with_retries_failed_with_client_connector_error():
         "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
         mock_client_session,
     ):
-        async for response in gateway.make_request_with_retries("test_request_url", {}, 0.05, 2):
+        async for response in gateway.make_request_with_retries(
+            "test_request_url", {}, 0.05, 2, "test_endpoint_name"
+        ):
             response
 
 
 @pytest.mark.asyncio
 async def test_streaming_predict_success(
-    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]],
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
-    gateway = LiveStreamingModelEndpointInferenceGateway(use_asyncio=True)
+    gateway = LiveStreamingModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     fake_response = FakeResponse(status=200)
     mock_client_session = _get_mock_client_session(fake_response)
@@ -146,7 +174,9 @@ async def test_streaming_predict_success(
         mock_client_session,
     ):
         response = gateway.streaming_predict(
-            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            topic="test_topic",
+            predict_request=sync_endpoint_predict_request_1[0],
+            endpoint_name="test_name",
         )
         count = 0
         async for message in response:
@@ -162,9 +192,12 @@ async def test_streaming_predict_success(
 
 @pytest.mark.asyncio
 async def test_predict_raises_traceback_json(
-    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]],
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
-    gateway = LiveStreamingModelEndpointInferenceGateway(use_asyncio=True)
+    gateway = LiveStreamingModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     content = json.dumps({"detail": {"traceback": "test_traceback"}}).encode("utf-8")
     fake_response = FakeResponse(status=500, message_content=content)
@@ -174,7 +207,9 @@ async def test_predict_raises_traceback_json(
         mock_client_session,
     ):
         response = gateway.streaming_predict(
-            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            topic="test_topic",
+            predict_request=sync_endpoint_predict_request_1[0],
+            endpoint_name="test_name",
         )
         count = 0
         async for message in response:
@@ -190,9 +225,12 @@ async def test_predict_raises_traceback_json(
 
 @pytest.mark.asyncio
 async def test_predict_raises_traceback_not_json(
-    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]],
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
-    gateway = LiveStreamingModelEndpointInferenceGateway(use_asyncio=True)
+    gateway = LiveStreamingModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
 
     content = b"Test traceback content"
     fake_response = FakeResponse(status=500, message_content=content)
@@ -202,7 +240,9 @@ async def test_predict_raises_traceback_not_json(
         mock_client_session,
     ):
         response = gateway.streaming_predict(
-            topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+            topic="test_topic",
+            predict_request=sync_endpoint_predict_request_1[0],
+            endpoint_name="test_name",
         )
         count = 0
         async for message in response:
@@ -218,9 +258,12 @@ async def test_predict_raises_traceback_not_json(
 
 @pytest.mark.asyncio
 async def test_predict_upstream_raises_400(
-    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+    sync_endpoint_predict_request_1: Tuple[SyncEndpointPredictV1Request, Dict[str, Any]],
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
-    gateway = LiveStreamingModelEndpointInferenceGateway(use_asyncio=True)
+    gateway = LiveStreamingModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
     content = json.dumps({"result": json.dumps({"error": "error"})}).encode("utf-8")
 
     fake_response = FakeResponse(status=400, message_content=content)
@@ -231,7 +274,9 @@ async def test_predict_upstream_raises_400(
     ):
         with pytest.raises(InvalidRequestException):
             response = gateway.streaming_predict(
-                topic="test_topic", predict_request=sync_endpoint_predict_request_1[0]
+                topic="test_topic",
+                predict_request=sync_endpoint_predict_request_1[0],
+                endpoint_name="test_name",
             )
             async for message in response:
                 message
