@@ -176,7 +176,7 @@ async def test_streaming_predict_success(
         response = gateway.streaming_predict(
             topic="test_topic",
             predict_request=sync_endpoint_predict_request_1[0],
-            readable_endpoint_name="test_name",
+            endpoint_name="test_name",
         )
         count = 0
         async for message in response:
@@ -209,7 +209,7 @@ async def test_predict_raises_traceback_json(
         response = gateway.streaming_predict(
             topic="test_topic",
             predict_request=sync_endpoint_predict_request_1[0],
-            readable_endpoint_name="test_name",
+            endpoint_name="test_name",
         )
         count = 0
         async for message in response:
@@ -242,7 +242,7 @@ async def test_predict_raises_traceback_not_json(
         response = gateway.streaming_predict(
             topic="test_topic",
             predict_request=sync_endpoint_predict_request_1[0],
-            readable_endpoint_name="test_name",
+            endpoint_name="test_name",
         )
         count = 0
         async for message in response:
@@ -276,7 +276,7 @@ async def test_predict_upstream_raises_400(
             response = gateway.streaming_predict(
                 topic="test_topic",
                 predict_request=sync_endpoint_predict_request_1[0],
-                readable_endpoint_name="test_name",
+                endpoint_name="test_name",
             )
             async for message in response:
                 message

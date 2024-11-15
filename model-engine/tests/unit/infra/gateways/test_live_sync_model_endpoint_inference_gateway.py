@@ -153,7 +153,7 @@ async def test_predict_success(
         response = await gateway.predict(
             topic="test_topic",
             predict_request=sync_endpoint_predict_request_1[0],
-            readable_endpoint_name="test_name",
+            endpoint_name="test_name",
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -182,7 +182,7 @@ async def test_predict_raises_traceback_json(
         response = await gateway.predict(
             topic="test_topic",
             predict_request=sync_endpoint_predict_request_1[0],
-            readable_endpoint_name="test_name",
+            endpoint_name="test_name",
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -211,7 +211,7 @@ async def test_predict_raises_traceback_not_json(
         response = await gateway.predict(
             topic="test_topic",
             predict_request=sync_endpoint_predict_request_1[0],
-            readable_endpoint_name="test_name",
+            endpoint_name="test_name",
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -242,7 +242,7 @@ async def test_predict_raises_traceback_wrapped(
         response = await gateway.predict(
             topic="test_topic",
             predict_request=sync_endpoint_predict_request_1[0],
-            readable_endpoint_name="test_name",
+            endpoint_name="test_name",
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -271,7 +271,7 @@ async def test_predict_raises_traceback_wrapped_detail_array(
         response = await gateway.predict(
             topic="test_topic",
             predict_request=sync_endpoint_predict_request_1[0],
-            readable_endpoint_name="test_name",
+            endpoint_name="test_name",
         )
         assert isinstance(response, SyncEndpointPredictV1Response)
         assert response.dict() == {
@@ -302,5 +302,5 @@ async def test_predict_upstream_raises_400(
             await gateway.predict(
                 topic="test_topic",
                 predict_request=sync_endpoint_predict_request_1[0],
-                readable_endpoint_name="test_name",
+                endpoint_name="test_name",
             )

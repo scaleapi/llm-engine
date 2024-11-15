@@ -21,7 +21,7 @@ class StreamingModelEndpointInferenceGateway(ABC):
         topic: str,
         predict_request: SyncEndpointPredictV1Request,
         manually_resolve_dns: bool,
-        readable_endpoint_name: Optional[str],
+        endpoint_name: Optional[str],
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
         """
         Runs a prediction request and returns a streaming response.

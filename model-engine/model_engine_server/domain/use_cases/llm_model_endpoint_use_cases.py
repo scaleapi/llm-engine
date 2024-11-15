@@ -2067,7 +2067,7 @@ class CompletionSyncV1UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
-                readable_endpoint_name=model_endpoint.record.name,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status == TaskStatus.SUCCESS and predict_result.result is not None:
@@ -2118,7 +2118,7 @@ class CompletionSyncV1UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
-                readable_endpoint_name=model_endpoint.record.name,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2179,7 +2179,7 @@ class CompletionSyncV1UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
-                readable_endpoint_name=model_endpoint.record.name,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2231,7 +2231,7 @@ class CompletionSyncV1UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
-                readable_endpoint_name=model_endpoint.record.name,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2276,7 +2276,7 @@ class CompletionSyncV1UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
-                readable_endpoint_name=model_endpoint.record.name,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2559,7 +2559,7 @@ class CompletionStreamV1UseCase:
             topic=model_endpoint.record.destination,
             predict_request=inference_request,
             manually_resolve_dns=manually_resolve_dns,
-            readable_endpoint_name=model_endpoint.record.name,
+            endpoint_name=model_endpoint.record.name,
         )
 
         num_completion_tokens = 0
@@ -2821,7 +2821,7 @@ class CompletionSyncV2UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
-                readable_endpoint_name=model_endpoint.record.name,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -2953,7 +2953,7 @@ class CompletionStreamV2UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
-                readable_endpoint_name=model_endpoint.record.name,
+                endpoint_name=model_endpoint.record.name,
             )
         except UpstreamServiceError as exc:
             # Expect upstream inference service to handle bulk of input validation
@@ -3094,7 +3094,7 @@ class ChatCompletionSyncV2UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
-                readable_endpoint_name=model_endpoint.record.name,
+                endpoint_name=model_endpoint.record.name,
             )
 
             if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
@@ -3225,7 +3225,7 @@ class ChatCompletionStreamV2UseCase:
                 topic=model_endpoint.record.destination,
                 predict_request=inference_request,
                 manually_resolve_dns=manually_resolve_dns,
-                readable_endpoint_name=model_endpoint.record.name,
+                endpoint_name=model_endpoint.record.name,
             )
         except UpstreamServiceError as exc:
             # Expect upstream inference service to handle bulk of input validation
