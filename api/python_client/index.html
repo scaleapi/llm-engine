@@ -2868,25 +2868,26 @@ models built into LLM Engine, and fine-tuned models that you create through the
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    num_shards: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    quantize: Optional[Quantization] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    checkpoint_path: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    cpus: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    memory: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    storage: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    gpus: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    nodes_per_worker: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    min_workers: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">0</span>,
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    max_workers: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    per_worker: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">2</span>,
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    endpoint_type: ModelEndpointType <span style="color: #666666">=</span> ModelEndpointType<span style="color: #666666">.</span>STREAMING,
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    gpu_type: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    high_priority: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    post_inference_hooks: Optional[
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>        List[PostInferenceHooks]
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    ] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    default_callback_url: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    public_inference: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">True</span>,
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    labels: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    request_headers: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>) <span style="color: #666666">-&gt;</span> CreateLLMEndpointResponse
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    max_model_len: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    cpus: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    memory: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    storage: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    gpus: Optional[<span style="color: #008000">int</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    nodes_per_worker: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    min_workers: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">0</span>,
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    max_workers: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">1</span>,
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    per_worker: <span style="color: #008000">int</span> <span style="color: #666666">=</span> <span style="color: #666666">2</span>,
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    endpoint_type: ModelEndpointType <span style="color: #666666">=</span> ModelEndpointType<span style="color: #666666">.</span>STREAMING,
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    gpu_type: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    high_priority: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    post_inference_hooks: Optional[
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>        List[PostInferenceHooks]
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    ] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    default_callback_url: Optional[<span style="color: #008000">str</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    public_inference: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">True</span>,
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    labels: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    request_headers: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>) <span style="color: #666666">-&gt;</span> CreateLLMEndpointResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -3017,6 +3018,20 @@ to multiple GPUs. Number of GPUs must be equal or larger than num_shards.</p>
               <p>Remote path to the checkpoint for the LLM. LLM engine must have permission to access the given path.
 Can be either a folder or a tar file. Folder is preferred since we don't need to untar and model loads faster.
 For model weights, safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be longer).</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code>max_model_len</code></td>
+          <td>
+                <code>`Optional[int]`</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Model context length. If unspecified, will be automatically derived from the model config.</p>
             </div>
           </td>
           <td>
