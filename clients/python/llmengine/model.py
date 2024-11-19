@@ -42,6 +42,7 @@ class Model(APIEngine):
         num_shards: int = 1,
         quantize: Optional[Quantization] = None,
         checkpoint_path: Optional[str] = None,
+        max_model_len: Optional[int] = None,
         # General endpoint fields
         cpus: Optional[int] = None,
         memory: Optional[str] = None,
@@ -92,6 +93,9 @@ class Model(APIEngine):
                 Remote path to the checkpoint for the LLM. LLM engine must have permission to access the given path.
                 Can be either a folder or a tar file. Folder is preferred since we don't need to untar and model loads faster.
                 For model weights, safetensors are preferred but PyTorch checkpoints are also accepted (model loading will be longer).
+
+            max_model_len (`Optional[int]`):
+                Model context length. If unspecified, will be automatically derived from the model config.
 
             cpus (`Optional[int]`):
                 Number of cpus each node in the worker should get, e.g. 1, 2, etc. This must be greater
@@ -307,6 +311,7 @@ class Model(APIEngine):
             num_shards=num_shards,
             quantize=quantize,
             checkpoint_path=checkpoint_path,
+            max_model_len=max_model_len,
             cpus=cpus,
             endpoint_type=ModelEndpointType(endpoint_type),
             gpus=gpus,
