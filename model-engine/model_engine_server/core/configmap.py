@@ -14,6 +14,9 @@ DEFAULT_NAMESPACE = "default"
 logger = make_logger(logger_name())
 
 
+# TODO use this to read/write the image cache
+
+
 async def read_config_map(
     config_map_name: str, namespace: str = hmi_config.gateway_namespace
 ) -> Dict[str, str]:
@@ -32,4 +35,28 @@ async def read_config_map(
         return config_map.data
     except ApiException as e:
         logger.exception(f"Error reading configmap {config_map_name}")
+        raise e
+
+
+async def write_config_map(
+    config_map_name: str, data: Dict[str, str], namespace: str = hmi_config.gateway_namespace
+):
+    # TODO test this
+    try:
+        kube_config.load_incluster_config()
+    except ConfigException:
+        logger.info("No incluster kubernetes config, falling back to local")
+        await kube_config.load_kube_config()
+
+    core_api = client.CoreV1Api()
+
+    body = {"data": data}
+
+    try:
+        # TODO this might need a create_namespaced_config_map first
+        await core_api.replace_namespaced_config_map(
+            name=config_map_name, namespace=namespace, body=body
+        )
+    except ApiException as e:
+        logger.exception(f"Error writing configmap {config_map_name}")
         raise e
