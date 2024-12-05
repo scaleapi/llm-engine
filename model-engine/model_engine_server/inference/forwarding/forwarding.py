@@ -173,6 +173,7 @@ class Forwarder(ModelEngineSerializationMixin):
                 f"Failed to get response for request ({json_payload_repr}) "
                 "from user-defined inference service."
             )
+            # TODO raise a special error if it's a connection error? not sure
             raise
         if isinstance(response, dict):
             logger.info(
