@@ -124,7 +124,9 @@ def create_celery_service(
 
     # See documentation for options:
     # https://docs.celeryproject.org/en/stable/userguide/tasks.html#list-of-options
-    @app.task(base=ErrorHandlingTask, name=LIRA_CELERY_TASK_NAME, track_started=True)
+    @app.task(
+        base=ErrorHandlingTask, name=LIRA_CELERY_TASK_NAME, track_started=True
+    )  # otherwise autoretry_for=(RetryableException)
     def exec_func(payload, arrival_timestamp, *ignored_args, **ignored_kwargs):
         if len(ignored_args) > 0:
             logger.warning(f"Ignoring {len(ignored_args)} positional arguments: {ignored_args=}")
@@ -137,6 +139,9 @@ def create_celery_service(
             if request_duration > timedelta(seconds=DEFAULT_TASK_VISIBILITY_SECONDS):
                 monitoring_metrics_gateway.emit_async_task_stuck_metric(queue_name)
             return result
+        # except RetryableException as exc:
+        #   or something like this
+        #   raise self.retry(exc as exc)
         except Exception:
             logger.exception("Celery service failed to respond to request.")
             raise
