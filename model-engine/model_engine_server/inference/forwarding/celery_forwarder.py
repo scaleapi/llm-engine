@@ -129,7 +129,7 @@ def create_celery_service(
         base=ErrorHandlingTask,
         name=LIRA_CELERY_TASK_NAME,
         track_started=True,
-        autoretry_for=(ConnectionError),
+        autoretry_for=(ConnectionError,),
     )  # otherwise autoretry_for=(RetryableException)
     def exec_func(payload, arrival_timestamp, *ignored_args, **ignored_kwargs):
         if len(ignored_args) > 0:
