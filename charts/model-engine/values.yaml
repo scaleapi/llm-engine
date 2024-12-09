@@ -16,3 +16,5 @@ balloonNodeSelector:
   node-lifecycle: normal
 nodeSelector:
   node-lifecycle: normal
+keda:
+  cooldownPeriod: 300
