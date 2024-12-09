@@ -444,7 +444,7 @@ data:
       scaleTargetRef:
         name: ${RESOURCE_NAME}
       pollingInterval:  5
-      cooldownPeriod:   300
+      cooldownPeriod:   {{ .Values.keda.cooldownPeriod }}
       minReplicaCount:  ${MIN_WORKERS}
       maxReplicaCount:  ${MAX_WORKERS}
       fallback:
