@@ -110,4 +110,5 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             task_status = TaskStatus(response_state)
             return GetAsyncTaskV1Response(task_id=task_id, status=task_status)
         except ValueError:
+            logger.info(f"Task {task_id} has an unknown state: {response_state}")
             return GetAsyncTaskV1Response(task_id=task_id, status=TaskStatus.UNDEFINED)
