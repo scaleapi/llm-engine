@@ -104,11 +104,11 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             )
         elif response_state == "RETRY":
             # Backwards compatibility, otherwise we'd need to add "RETRY" to the clients (TODO check)
-            response_state == "PENDING"
+            response_state = "PENDING"
 
         try:
             task_status = TaskStatus(response_state)
             return GetAsyncTaskV1Response(task_id=task_id, status=task_status)
         except ValueError:
-            logger.info(f"Task {task_id} has an unknown state: {response_state}")
+            logger.info(f"Task {task_id} has an unknown state: <{response_state}> ")
             return GetAsyncTaskV1Response(task_id=task_id, status=TaskStatus.UNDEFINED)
