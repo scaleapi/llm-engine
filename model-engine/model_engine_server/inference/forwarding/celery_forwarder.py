@@ -23,6 +23,7 @@ from model_engine_server.inference.forwarding.forwarding import (
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
     DatadogInferenceMonitoringMetricsGateway,
 )
+from requests import ConnectionError
 
 logger = make_logger(logger_name())
 
@@ -125,7 +126,10 @@ def create_celery_service(
     # See documentation for options:
     # https://docs.celeryproject.org/en/stable/userguide/tasks.html#list-of-options
     @app.task(
-        base=ErrorHandlingTask, name=LIRA_CELERY_TASK_NAME, track_started=True
+        base=ErrorHandlingTask,
+        name=LIRA_CELERY_TASK_NAME,
+        track_started=True,
+        autoretry_for=(ConnectionError),
     )  # otherwise autoretry_for=(RetryableException)
     def exec_func(payload, arrival_timestamp, *ignored_args, **ignored_kwargs):
         if len(ignored_args) > 0:
