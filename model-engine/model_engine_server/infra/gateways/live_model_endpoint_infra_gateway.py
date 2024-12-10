@@ -252,7 +252,11 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
     async def restart_model_endpoint_infra(
         self, model_endpoint_record: ModelEndpointRecord
     ) -> None:
-        deployment_name = generate_deployment_name(
-            model_endpoint_record.created_by, model_endpoint_record.name
+        infra_state = await self.get_model_endpoint_infra(
+            model_endpoint_record=model_endpoint_record
         )
-        return await self.resource_gateway.restart_deployment(deployment_name=deployment_name)
+        if infra_state is None:
+            raise EndpointResourceInfraException
+        return await self.resource_gateway.restart_deployment(
+            deployment_name=infra_state.deployment_name
+        )

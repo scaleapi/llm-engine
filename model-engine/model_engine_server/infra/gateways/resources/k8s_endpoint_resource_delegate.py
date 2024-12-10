@@ -1503,7 +1503,7 @@ class K8SEndpointResourceDelegate:
                 "template": {
                     "metadata": {
                         "annotations": {
-                            "model-engine.scale.com/restartedAt": datetime.datetime.now().isoformat()
+                            "kubectl.kubernetes.io/restartedAt": datetime.datetime.now().isoformat()
                         }
                     }
                 }
