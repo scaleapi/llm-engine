@@ -1,7 +1,12 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from .gen.openai import ResponseFormatJsonObject, ResponseFormatJsonSchema, ResponseFormatText
-from .pydantic_types import BaseModel, Field
+from model_engine_server.common.pydantic_types import BaseModel, Field
+from model_engine_server.common.types.gen.openai import (
+    ResponseFormatJsonObject,
+    ResponseFormatJsonSchema,
+    ResponseFormatText,
+)
+from typing_extensions import Annotated
 
 # This was last synced w/ vLLM v0.5.5 on 2024-09-03
 
@@ -26,12 +31,97 @@ class VLLMModelConfig(BaseModel):
 
     gpu_memory_utilization: Optional[float] = Field(
         None,
-        description="Maximum GPU memory utilization for the batch inference. Default to 90%.",
+        description="Maximum GPU memory utilization use for the engine. Default to 90%.",
     )
 
     trust_remote_code: Optional[bool] = Field(
         default=False,
         description="Whether to trust remote code from Hugging face hub. This is only applicable to models whose code is not supported natively by the transformers library (e.g. deepseek). Default to False.",
+    )
+
+    pipeline_parallel_size: Optional[int] = Field(
+        None,
+        description="Number of pipeline stages. Default to None.",
+    )
+
+    tensor_parallel_size: Optional[int] = Field(
+        None,
+        description="Number of tensor parallel replicas. Default to None.",
+    )
+
+    quantization: Optional[str] = Field(
+        None,
+        description="Method used to quantize the weights. If "
+        "None, we first check the `quantization_config` "
+        "attribute in the model config file. If that is "
+        "None, we assume the model weights are not "
+        "quantized and use `dtype` to determine the data "
+        "type of the weights.",
+    )
+
+    disable_log_requests: Optional[bool] = Field(
+        None,
+        description="Disable logging requests. Default to None.",
+    )
+
+    chat_template: Optional[str] = Field(
+        None,
+        description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
+    )
+
+    tool_call_parser: Optional[str] = Field(
+        None,
+        description="Tool call parser",
+    )
+
+    enable_auto_tool_choice: Optional[bool] = Field(
+        None,
+        description="Enable auto tool choice",
+    )
+
+    load_format: Optional[str] = Field(
+        None,
+        description="The format of the model weights to load.\n\n"
+        '* "auto" will try to load the weights in the safetensors format '
+        "and fall back to the pytorch bin format if safetensors format "
+        "is not available.\n"
+        '* "pt" will load the weights in the pytorch bin format.\n'
+        '* "safetensors" will load the weights in the safetensors format.\n'
+        '* "npcache" will load the weights in pytorch format and store '
+        "a numpy cache to speed up the loading.\n"
+        '* "dummy" will initialize the weights with random values, '
+        "which is mainly for profiling.\n"
+        '* "tensorizer" will load the weights using tensorizer from '
+        "CoreWeave. See the Tensorize vLLM Model script in the Examples "
+        "section for more information.\n"
+        '* "bitsandbytes" will load the weights using bitsandbytes '
+        "quantization.\n",
+    )
+
+    config_format: Optional[str] = Field(
+        None,
+        description="The config format which shall be loaded.  Defaults to 'auto' which defaults to 'hf'.",
+    )
+
+    tokenizer_mode: Optional[str] = Field(
+        None,
+        description="Tokenizer mode. 'auto' will use the fast tokenizer if"
+        "available, 'slow' will always use the slow tokenizer, and"
+        "'mistral' will always use the tokenizer from `mistral_common`.",
+    )
+
+    limit_mm_per_prompt: Optional[str] = Field(
+        None,
+        description="Maximum number of data instances per modality per prompt. Only applicable for multimodal models.",
+    )
+
+    enable_prefix_caching: Optional[bool] = Field(
+        None,
+        description="Enables automatic prefix caching.",
+    )
+
+    max_num_batched_tokens: Optional[int] = Field(
+        None, description="Maximum number of batched tokens per iteration"
     )
 
 
@@ -62,11 +152,14 @@ class VLLMSamplingParams(BaseModel):
             the beam width when `use_beam_search` is True. By default, `best_of`
             is set to `n`.""",
     )
-    top_k: Optional[int] = Field(
-        None,
-        ge=-1,
-        description="Controls the number of top tokens to consider. -1 means consider all tokens.",
-    )
+    top_k: Annotated[
+        Optional[int],
+        Field(
+            None,
+            ge=-1,
+            description="Controls the number of top tokens to consider. -1 means consider all tokens.",
+        ),
+    ]
     min_p: Optional[float] = Field(
         None,
         description="""Float that represents the minimum probability for a token to be
@@ -105,11 +198,14 @@ class VLLMSamplingParams(BaseModel):
             generated. The returned output will contain the stop tokens unless
             the stop tokens are special tokens.""",
     )
-    include_stop_str_in_output: Optional[bool] = Field(
-        None,
-        description="""Whether to include the stop strings in
+    include_stop_str_in_output: Annotated[
+        Optional[bool],
+        Field(
+            None,
+            description="""Whether to include the stop strings in
             output text. Defaults to False.""",
-    )
+        ),
+    ]
     ignore_eos: Optional[bool] = Field(
         None,
         description="""Whether to ignore the EOS token and continue generating
@@ -196,7 +292,7 @@ class VLLMCompletionAdditionalParams(VLLMSamplingParams):
     )
 
     response_format: Optional[
-        Union[ResponseFormatText, ResponseFormatJsonObject, ResponseFormatJsonSchema]
+        ResponseFormatText | ResponseFormatJsonObject | ResponseFormatJsonSchema
     ] = Field(
         default=None,
         description=(
