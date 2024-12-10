@@ -392,3 +392,38 @@ async def test_delete_model_endpoint_raises_not_found(
         await fake_live_model_endpoint_service.delete_model_endpoint(
             model_endpoint_id="invalid_model_endpoint_id",
         )
+
+
+@pytest.mark.asyncio
+async def test_restart_model_endpoint_raises_not_found(
+    fake_live_model_endpoint_service: LiveModelEndpointService,
+):
+    with pytest.raises(ObjectNotFoundException):
+        await fake_live_model_endpoint_service.restart_model_endpoint(
+            model_endpoint_id="invalid_model_endpoint_id",
+        )
+
+
+@pytest.mark.asyncio
+async def test_restart_model_endpoint_success(
+    fake_live_model_endpoint_service: LiveModelEndpointService,
+    model_endpoint_1: ModelEndpoint,
+):
+    # Create the model endpoint.
+    model_endpoint_record = await _create_model_endpoint_helper(
+        model_endpoint=model_endpoint_1, service=fake_live_model_endpoint_service
+    )
+
+    # Now promote the endpoint infra to ready.
+    model_endpoint_infra_gateway: Any = (
+        fake_live_model_endpoint_service.model_endpoint_infra_gateway
+    )
+    await model_endpoint_infra_gateway.promote_in_flight_infra(
+        owner=model_endpoint_record.created_by,
+        model_endpoint_name=model_endpoint_record.name,
+    )
+
+    # Restart the model endpoint should be successful.
+    await fake_live_model_endpoint_service.restart_model_endpoint(
+        model_endpoint_id=model_endpoint_record.id,
+    )

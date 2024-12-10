@@ -219,3 +219,21 @@ async def test_delete_model_endpoint_infra(
         model_endpoint_record=model_endpoint_1.record
     )
     assert successful
+
+
+@pytest.mark.asyncio
+async def test_restart_model_endpoint_infra(
+    model_endpoint_infra_gateway: LiveModelEndpointInfraGateway,
+    model_endpoint_1: ModelEndpoint,
+):
+    resource_gateway: Any = model_endpoint_infra_gateway.resource_gateway
+    existing_infra_state = model_endpoint_1.infra_state
+    assert existing_infra_state is not None
+    live_model_endpoint_infra_gateway.generate_deployment_name = Mock(
+        return_value=existing_infra_state.deployment_name
+    )
+    resource_gateway.add_resource(model_endpoint_1.record.id, existing_infra_state)
+    # Should not raise any exceptions
+    await model_endpoint_infra_gateway.restart_model_endpoint_infra(
+        model_endpoint_record=model_endpoint_1.record
+    )
