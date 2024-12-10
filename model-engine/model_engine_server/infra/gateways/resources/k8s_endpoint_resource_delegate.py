@@ -1,3 +1,4 @@
+import datetime
 import os
 from string import Template
 from typing import Any, Dict, List, Optional, Tuple
@@ -402,6 +403,10 @@ class K8SEndpointResourceDelegate:
                 endpoint_id=endpoint_id, deployment_name=deployment_name
             )
         return False
+
+    async def restart_deployment(self, deployment_name: str) -> None:
+        await maybe_load_kube_config()
+        await self._restart_deployment(deployment_name=deployment_name)
 
     # --- Private helper functions
     @staticmethod
@@ -1488,6 +1493,33 @@ class K8SEndpointResourceDelegate:
                 logger.exception(f"Deletion of ScaledObject {k8s_resource_group_name} failed")
                 return False
         return True
+
+    @staticmethod
+    async def _restart_deployment(deployment_name: str) -> None:
+        apps_client = get_kubernetes_apps_client()
+        # Patch the deployment with a timestamp label to restart it
+        patch = {
+            "spec": {
+                "template": {
+                    "metadata": {
+                        "annotations": {
+                            "model-engine.scale.com/restartedAt": datetime.datetime.now().isoformat()
+                        }
+                    }
+                }
+            }
+        }
+
+        try:
+            await apps_client.patch_namespaced_deployment(
+                name=deployment_name, namespace=hmi_config.endpoint_namespace, body=patch
+            )
+        except ApiException as e:
+            if e.status == 404:
+                logger.warning(f"Trying to restart nonexistent Deployment {deployment_name}")
+            else:
+                logger.exception(f"Failed to restart deployment {deployment_name}")
+                raise e
 
     # --- Private higher level fns that interact with k8s
 

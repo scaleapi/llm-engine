@@ -20,6 +20,7 @@ from model_engine_server.common.dtos.model_endpoints import (
     GetModelEndpointV1Response,
     ListModelEndpointsV1Response,
     ModelEndpointOrderBy,
+    RestartModelEndpointV1Response,
     UpdateModelEndpointV1Request,
     UpdateModelEndpointV1Response,
 )
@@ -42,6 +43,7 @@ from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
     DeleteModelEndpointByIdV1UseCase,
     GetModelEndpointByIdV1UseCase,
     ListModelEndpointsV1UseCase,
+    RestartModelEndpointV1UseCase,
     UpdateModelEndpointByIdV1UseCase,
 )
 
@@ -206,4 +208,28 @@ async def delete_model_endpoint(
         raise HTTPException(
             status_code=500,
             detail="deletion of endpoint failed, compute resources still exist.",
+        ) from exc
+
+
+@model_endpoint_router_v1.post(
+    "/model-endpoints/{model_endpoint_id}/restart", response_model=RestartModelEndpointV1Response
+)
+async def restart_model_endpoint(
+    model_endpoint_id: str,
+    auth: User = Depends(verify_authentication),
+    external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
+) -> RestartModelEndpointV1Response:
+    """
+    Restarts the Model endpoint.
+    """
+    logger.info(f"POST /model-endpoints/{model_endpoint_id}/restart for {auth}")
+    try:
+        use_case = RestartModelEndpointV1UseCase(
+            model_endpoint_service=external_interfaces.model_endpoint_service,
+        )
+        return await use_case.execute(user=auth, model_endpoint_id=model_endpoint_id)
+    except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model Endpoint {model_endpoint_id}  was not found.",
         ) from exc

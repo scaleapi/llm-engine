@@ -1239,6 +1239,12 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
             del self.in_flight_infra[deployment_name]
         return True
 
+    async def restart_model_endpoint_infra(
+        self, model_endpoint_record: ModelEndpointRecord
+    ) -> None:
+        # Always succeeds
+        pass
+
 
 class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
     def __init__(self):
@@ -1324,6 +1330,10 @@ class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
             return False
         del self.db[endpoint_id]
         return True
+
+    async def restart_deployment(self, deployment_name: str) -> None:
+        # Always succeeds
+        pass
 
 
 class FakeDockerImageBatchJobGateway(DockerImageBatchJobGateway):
@@ -1941,6 +1951,10 @@ class FakeModelEndpointService(ModelEndpointService):
         if model_endpoint_id not in self.db:
             raise ObjectNotFoundException
         del self.db[model_endpoint_id]
+
+    async def restart_model_endpoint(self, model_endpoint_id: str) -> None:
+        # Always succeeds
+        pass
 
     def set_can_scale_http_endpoint_from_zero_flag(self, flag: bool):
         self.can_scale_http_endpoint_from_zero_flag = flag

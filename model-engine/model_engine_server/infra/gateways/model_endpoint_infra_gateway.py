@@ -158,3 +158,11 @@ class ModelEndpointInfraGateway(ABC):
         Returns:
             Whether the model endpoint infrastructure was successfully deleted.
         """
+
+    @abstractmethod
+    async def restart_model_endpoint_infra(
+        self, model_endpoint_record: ModelEndpointRecord
+    ) -> None:
+        """
+        Restarts the model endpoint deployment.
+        """

@@ -892,3 +892,16 @@ async def test_create_pdb(
 
     with pytest.raises(ApiException):
         await k8s_endpoint_resource_delegate._create_pdb(pdb, name)
+
+
+@pytest.mark.asyncio
+async def test_restart_deployment(
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+):
+    await k8s_endpoint_resource_delegate.restart_deployment(deployment_name="test_deployment")
+    mock_apps_client.patch_namespaced_deployment.assert_called_once_with(
+        name="test_deployment",
+        namespace=hmi_config.endpoint_namespace,
+        body=Mock(),
+    )

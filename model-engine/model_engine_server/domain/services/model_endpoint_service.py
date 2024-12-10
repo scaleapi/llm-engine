@@ -264,3 +264,9 @@ class ModelEndpointService(ABC):
         For instance, if particular dependencies in the cluster are not installed, then this should
         return False
         """
+
+    @abstractmethod
+    async def restart_model_endpoint(self, model_endpoint_id: str) -> None:
+        """
+        Restarts the model endpoint deployment.
+        """

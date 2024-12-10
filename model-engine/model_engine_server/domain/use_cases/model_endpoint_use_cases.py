@@ -16,6 +16,7 @@ from model_engine_server.common.dtos.model_endpoints import (
     GetModelEndpointV1Response,
     ListModelEndpointsV1Response,
     ModelEndpointOrderBy,
+    RestartModelEndpointV1Response,
     UpdateModelEndpointV1Request,
     UpdateModelEndpointV1Response,
 )
@@ -575,6 +576,23 @@ class DeleteModelEndpointByIdV1UseCase:
             raise ObjectNotAuthorizedException
         await self.model_endpoint_service.delete_model_endpoint(model_endpoint_id)
         return DeleteModelEndpointV1Response(deleted=True)
+
+
+class RestartModelEndpointV1UseCase:
+    def __init__(self, model_endpoint_service: ModelEndpointService):
+        self.model_endpoint_service = model_endpoint_service
+        self.authz_module = LiveAuthorizationModule()
+
+    async def execute(self, user: User, model_endpoint_id: str) -> RestartModelEndpointV1Response:
+        model_endpoint_record = await self.model_endpoint_service.get_model_endpoint_record(
+            model_endpoint_id
+        )
+        if not model_endpoint_record:
+            raise ObjectNotFoundException
+        if not self.authz_module.check_access_write_owned_entity(user, model_endpoint_record):
+            raise ObjectNotAuthorizedException
+        await self.model_endpoint_service.restart_model_endpoint(model_endpoint_id)
+        return RestartModelEndpointV1Response(restarted=True)
 
 
 class ListModelEndpointHistoryByIdV1UseCase:
