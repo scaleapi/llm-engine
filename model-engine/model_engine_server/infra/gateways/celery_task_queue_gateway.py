@@ -103,7 +103,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                 traceback=res.traceback,
             )
         elif response_state == "RETRY":
-            # Backwards compatibility, otherwise we'd need to add "RETRY" to the clients (TODO check)
+            # Backwards compatibility, otherwise we'd need to add "RETRY" to the clients
             response_state = "PENDING"
 
         try:
