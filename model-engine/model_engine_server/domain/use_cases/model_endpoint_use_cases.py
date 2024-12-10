@@ -584,13 +584,16 @@ class RestartModelEndpointV1UseCase:
         self.authz_module = LiveAuthorizationModule()
 
     async def execute(self, user: User, model_endpoint_id: str) -> RestartModelEndpointV1Response:
-        model_endpoint_record = await self.model_endpoint_service.get_model_endpoint_record(
-            model_endpoint_id
-        )
-        if not model_endpoint_record:
+        model_endpoint = await self.model_endpoint_service.get_model_endpoint(model_endpoint_id)
+        if not model_endpoint:
             raise ObjectNotFoundException
-        if not self.authz_module.check_access_write_owned_entity(user, model_endpoint_record):
+        if not self.authz_module.check_access_write_owned_entity(user, model_endpoint.record):
             raise ObjectNotAuthorizedException
+        if (
+            model_endpoint.infra_state
+            and model_endpoint.infra_state.resource_state.nodes_per_worker > 1
+        ):
+            raise ObjectHasInvalidValueException("Cannot restart a multinode model endpoint")
         await self.model_endpoint_service.restart_model_endpoint(model_endpoint_id)
         return RestartModelEndpointV1Response(restarted=True)
 

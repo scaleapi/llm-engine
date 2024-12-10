@@ -33,7 +33,7 @@ from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
     DeleteModelEndpointByIdV1UseCase,
     GetModelEndpointByIdV1UseCase,
     ListModelEndpointsV1UseCase,
-    RestartModelEndpointByIdV1UseCase,
+    RestartModelEndpointV1UseCase,
     UpdateModelEndpointByIdV1UseCase,
 )
 from model_engine_server.infra.gateways.k8s_resource_parser import parse_mem_request
@@ -1583,10 +1583,54 @@ async def test_restart_model_endpoint_success(
     model_endpoint_1: ModelEndpoint,
 ):
     fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
-    use_case = RestartModelEndpointByIdV1UseCase(
+    use_case = RestartModelEndpointV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
     )
     user_id = model_endpoint_1.record.created_by
     user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
     # Shouldn't raise any exceptions
     await use_case.execute(user=user, model_endpoint_id=model_endpoint_1.record.id)
+
+
+@pytest.mark.asyncio
+async def test_restart_model_endpoint_raises_not_found(
+    fake_model_endpoint_service,
+    model_endpoint_1: ModelEndpoint,
+):
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    use_case = RestartModelEndpointV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_endpoint_1.record.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+    with pytest.raises(ObjectNotFoundException):
+        await use_case.execute(user=user, model_endpoint_id="invalid_id")
+
+
+@pytest.mark.asyncio
+async def test_restart_model_endpoint_raises_not_authorized(
+    fake_model_endpoint_service,
+    model_endpoint_1: ModelEndpoint,
+):
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    use_case = RestartModelEndpointV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user = User(user_id="invalid_user_id", team_id="invalid_user_id", is_privileged_user=True)
+    with pytest.raises(ObjectNotAuthorizedException):
+        await use_case.execute(user=user, model_endpoint_id=model_endpoint_1.record.id)
+
+
+@pytest.mark.asyncio
+async def test_restart_model_endpoint_raises_multinode_exception(
+    fake_model_endpoint_service,
+    model_endpoint_multinode: ModelEndpoint,
+):
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_multinode)
+    use_case = RestartModelEndpointV1UseCase(
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_endpoint_multinode.record.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+    with pytest.raises(ObjectHasInvalidValueException):
+        await use_case.execute(user=user, model_endpoint_id=model_endpoint_multinode.record.id)

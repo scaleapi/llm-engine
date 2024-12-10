@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Any, Dict, List
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import ANY, AsyncMock, Mock, patch
 
 import pytest
 from kubernetes_asyncio.client.rest import ApiException
@@ -903,5 +903,5 @@ async def test_restart_deployment(
     mock_apps_client.patch_namespaced_deployment.assert_called_once_with(
         name="test_deployment",
         namespace=hmi_config.endpoint_namespace,
-        body=Mock(),
+        body=ANY,
     )

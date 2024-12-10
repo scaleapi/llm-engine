@@ -410,19 +410,14 @@ class LiveModelEndpointService(ModelEndpointService):
         if record is None:
             raise ObjectNotFoundException
 
-        async with self.model_endpoint_record_repository.get_lock_context(record) as lock:
-            name = record.name
-            created_by = record.created_by
-            if not lock.lock_acquired():
-                logger.warning(f"Lock was not successfully acquired by endpoint '{name}'")
+        name = record.name
+        created_by = record.created_by
 
-            logger.info(f"Restarting endpoint {name} for user {created_by}")
+        logger.info(f"Restarting endpoint {name} for user {created_by}")
 
-            await self.model_endpoint_infra_gateway.restart_model_endpoint_infra(
-                model_endpoint_record=record
-            )
-
-        logger.info(f"Endpoint restart released lock for {created_by}, {name}")
+        await self.model_endpoint_infra_gateway.restart_model_endpoint_infra(
+            model_endpoint_record=record
+        )
 
     def can_scale_http_endpoint_from_zero(self) -> bool:
         return self.can_scale_http_endpoint_from_zero_flag
