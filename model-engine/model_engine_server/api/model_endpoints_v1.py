@@ -231,5 +231,10 @@ async def restart_model_endpoint(
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(
             status_code=404,
-            detail=f"Model Endpoint {model_endpoint_id}  was not found.",
+            detail=f"Model Endpoint {model_endpoint_id} was not found.",
+        ) from exc
+    except ObjectHasInvalidValueException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Restarting model endpoint {model_endpoint_id} is not supported",
         ) from exc

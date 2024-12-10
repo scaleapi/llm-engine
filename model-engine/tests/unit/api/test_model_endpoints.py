@@ -701,3 +701,62 @@ def test_delete_model_endpoint_by_id_unauthorized_returns_404(
         auth=(test_api_key_2, ""),
     )
     assert response.status_code == 404
+
+
+def test_delete_model_endpoint_by_id_success(
+    model_bundle_1_v1: Tuple[ModelBundle, Any],
+    model_endpoint_1: Tuple[ModelEndpoint, Any],
+    test_api_key: str,
+    get_test_client_wrapper,
+):
+    assert model_endpoint_1[0].infra_state is not None
+    client = get_test_client_wrapper(
+        fake_docker_repository_image_always_exists=True,
+        fake_model_bundle_repository_contents={
+            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
+        },
+        fake_model_endpoint_record_repository_contents={
+            model_endpoint_1[0].record.id: model_endpoint_1[0].record,
+        },
+        fake_model_endpoint_infra_gateway_contents={
+            model_endpoint_1[0].infra_state.deployment_name: model_endpoint_1[0].infra_state,
+        },
+        fake_batch_job_record_repository_contents={},
+        fake_batch_job_progress_gateway_contents={},
+        fake_docker_image_batch_job_bundle_repository_contents={},
+    )
+    response = client.post(
+        "/v1/model-endpoints/test_model_endpoint_id_1/restart",
+        auth=(test_api_key, ""),
+    )
+    assert response.status_code == 200
+    assert response.json() == {"restarted": True}
+
+
+def test_restart_model_endpoint_by_id_not_found_returns_404(
+    model_bundle_1_v1: Tuple[ModelBundle, Any],
+    model_endpoint_1: Tuple[ModelEndpoint, Any],
+    test_api_key: str,
+    get_test_client_wrapper,
+):
+    assert model_endpoint_1[0].infra_state is not None
+    client = get_test_client_wrapper(
+        fake_docker_repository_image_always_exists=True,
+        fake_model_bundle_repository_contents={
+            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
+        },
+        fake_model_endpoint_record_repository_contents={
+            model_endpoint_1[0].record.id: model_endpoint_1[0].record,
+        },
+        fake_model_endpoint_infra_gateway_contents={
+            model_endpoint_1[0].infra_state.deployment_name: model_endpoint_1[0].infra_state,
+        },
+        fake_batch_job_record_repository_contents={},
+        fake_batch_job_progress_gateway_contents={},
+        fake_docker_image_batch_job_bundle_repository_contents={},
+    )
+    response = client.post(
+        "/v1/model-endpoints/invalid_model_endpoint_id/restart",
+        auth=(test_api_key, ""),
+    )
+    assert response.status_code == 404
