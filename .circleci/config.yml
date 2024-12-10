@@ -267,6 +267,6 @@ commands:
           name: Unit Tests
           command: |
             pushd model-engine
-            GIT_TAG=$(git rev-parse HEAD) WORKSPACE=.. pytest --cov --cov-report=xml
+            GIT_TAG=$(git rev-parse HEAD) WORKSPACE=.. pytest --cov --cov-config .coveragerc --cov-report=xml
             diff-cover coverage.xml --compare-branch=origin/main --fail-under=80
             popd

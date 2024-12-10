@@ -173,6 +173,9 @@ class Forwarder(ModelEngineSerializationMixin):
                 f"Failed to get response for request ({json_payload_repr}) "
                 "from user-defined inference service."
             )
+            # If you change this to throw a different exception, make the requisite changes in celery_forwarder.py
+            # to have it catch the equivalent of a requests.ConnectionError that happens when
+            # the container is getting shut down
             raise
         if isinstance(response, dict):
             logger.info(

@@ -1,0 +1,2 @@
+[report]
+omit = model_engine_server/infra/gateways/celery_task_queue_gateway.py
