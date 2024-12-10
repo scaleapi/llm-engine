@@ -1239,6 +1239,12 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
             del self.in_flight_infra[deployment_name]
         return True
 
+    async def restart_model_endpoint_infra(
+        self, model_endpoint_record: ModelEndpointRecord
+    ) -> None:
+        # Always succeeds
+        pass
+
 
 class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
     def __init__(self):
@@ -1324,6 +1330,10 @@ class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
             return False
         del self.db[endpoint_id]
         return True
+
+    async def restart_deployment(self, deployment_name: str) -> None:
+        # Always succeeds
+        pass
 
 
 class FakeDockerImageBatchJobGateway(DockerImageBatchJobGateway):
@@ -1941,6 +1951,10 @@ class FakeModelEndpointService(ModelEndpointService):
         if model_endpoint_id not in self.db:
             raise ObjectNotFoundException
         del self.db[model_endpoint_id]
+
+    async def restart_model_endpoint(self, model_endpoint_id: str) -> None:
+        # Always succeeds
+        pass
 
     def set_can_scale_http_endpoint_from_zero_flag(self, flag: bool):
         self.can_scale_http_endpoint_from_zero_flag = flag
@@ -3144,6 +3158,71 @@ def model_endpoint_streaming(test_api_key: str, model_bundle_5: ModelBundle) -> 
                 ),
             ),
             image="000000000000.dkr.ecr.us-west-2.amazonaws.com/hello:there",
+        ),
+    )
+    return model_endpoint
+
+
+@pytest.fixture
+def model_endpoint_multinode(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEndpoint:
+    model_endpoint = ModelEndpoint(
+        record=ModelEndpointRecord(
+            id="test_model_endpoint_id_multinode",
+            name="test_model_endpoint_name_multinode",
+            created_by=test_api_key,
+            created_at=datetime(2022, 1, 3),
+            last_updated_at=datetime(2022, 1, 3),
+            metadata={},
+            creation_task_id="test_creation_task_id",
+            endpoint_type=ModelEndpointType.ASYNC,
+            destination="test_destination",
+            status=ModelEndpointStatus.READY,
+            current_model_bundle=model_bundle_1,
+            owner=test_api_key,
+        ),
+        infra_state=ModelEndpointInfraState(
+            deployment_name=f"{test_api_key}-test_model_endpoint_name_multinode",
+            aws_role="default",
+            results_s3_bucket="test_s3_bucket",
+            child_fn_info=None,
+            labels=dict(team="test_team", product="test_product"),
+            prewarm=True,
+            high_priority=False,
+            deployment_state=ModelEndpointDeploymentState(
+                min_workers=1,
+                max_workers=3,
+                per_worker=2,
+                available_workers=0,
+                unavailable_workers=2,
+            ),
+            resource_state=ModelEndpointResourceState(
+                cpus=1,
+                gpus=1,
+                memory="1G",
+                gpu_type=GpuType.NVIDIA_TESLA_T4,
+                storage="10G",
+                nodes_per_worker=2,
+                optimize_costs=True,
+            ),
+            user_config_state=ModelEndpointUserConfigState(
+                app_config=model_bundle_1.app_config,
+                endpoint_config=ModelEndpointConfig(
+                    bundle_name=model_bundle_1.name,
+                    endpoint_name="test_model_endpoint_name_multinode",
+                    post_inference_hooks=None,
+                    billing_tags={
+                        "idempotencyKeyPrefix": "value1",
+                        "product": "value2",
+                        "type": "hi",
+                        "subType": "hi",
+                        "tags": {"nested_tag_1": "nested_value_1"},
+                        "payee": "hi",
+                        "payor": "hi",
+                        "reference": {"referenceType": "hi", "referenceId": "hi"},
+                    },
+                ),
+            ),
+            image="000000000000.dkr.ecr.us-west-2.amazonaws.com/non-existent-repo:fake-tag",
         ),
     )
     return model_endpoint

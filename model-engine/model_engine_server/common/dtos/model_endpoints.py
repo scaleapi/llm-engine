@@ -134,6 +134,10 @@ class DeleteModelEndpointV1Response(BaseModel):
     deleted: bool
 
 
+class RestartModelEndpointV1Response(BaseModel):
+    restarted: bool
+
+
 class ModelEndpointOrderBy(str, Enum):
     """
     The canonical list of possible orderings of Model Bundles.
