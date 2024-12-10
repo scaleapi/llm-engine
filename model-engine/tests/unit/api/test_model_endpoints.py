@@ -703,7 +703,7 @@ def test_delete_model_endpoint_by_id_unauthorized_returns_404(
     assert response.status_code == 404
 
 
-def test_delete_model_endpoint_by_id_success(
+def test_restart_model_endpoint_by_id_success(
     model_bundle_1_v1: Tuple[ModelBundle, Any],
     model_endpoint_1: Tuple[ModelEndpoint, Any],
     test_api_key: str,
