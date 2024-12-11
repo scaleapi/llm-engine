@@ -122,3 +122,6 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
             await self.inference_autoscaling_metrics_gateway.delete_resources(endpoint_id)
 
         return k8s_result and sqs_result
+
+    async def restart_deployment(self, deployment_name: str) -> None:
+        await self.k8s_delegate.restart_deployment(deployment_name=deployment_name)

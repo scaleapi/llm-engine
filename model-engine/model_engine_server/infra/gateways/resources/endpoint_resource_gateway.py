@@ -95,3 +95,9 @@ class EndpointResourceGateway(ABC, Generic[Q]):
             k8s objects for this scenario.
             -ModelEndpointInfraState: The endpoint infra state.
         """
+
+    @abstractmethod
+    async def restart_deployment(self, deployment_name: str) -> None:
+        """
+        Restarts the given deployment.
+        """

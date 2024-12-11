@@ -403,5 +403,21 @@ class LiveModelEndpointService(ModelEndpointService):
 
         logger.info(f"Endpoint delete released lock for {created_by}, {name}")
 
+    async def restart_model_endpoint(self, model_endpoint_id: str) -> None:
+        record = await self.model_endpoint_record_repository.get_model_endpoint_record(
+            model_endpoint_id=model_endpoint_id
+        )
+        if record is None:
+            raise ObjectNotFoundException
+
+        name = record.name
+        created_by = record.created_by
+
+        logger.info(f"Restarting endpoint {name} for user {created_by}")
+
+        await self.model_endpoint_infra_gateway.restart_model_endpoint_infra(
+            model_endpoint_record=record
+        )
+
     def can_scale_http_endpoint_from_zero(self) -> bool:
         return self.can_scale_http_endpoint_from_zero_flag
