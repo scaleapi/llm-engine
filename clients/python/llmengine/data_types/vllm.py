@@ -109,11 +109,6 @@ class VLLMModelConfig(BaseModel):
         None, description="Maximum number of batched tokens per iteration"
     )
 
-    model: Optional[str] = Field(
-        None,
-        description="Name or path of the huggingface model to use. It is also used as the content for `model_name` tag in metrics output when `served_model_name` is not specified.",
-    )
-
     tokenizer: Optional[str] = Field(
         None,
         description="Name or path of the huggingface tokenizer to use.",
@@ -152,11 +147,6 @@ class VLLMModelConfig(BaseModel):
     quantization_param_path: Optional[str] = Field(
         None,
         description="Path to JSON file containing scaling factors. Used to load KV cache scaling factors into the model when KV cache type is FP8_E4M3 on ROCm (AMD GPU). In the future these will also be used to load activation and weight scaling factors when the model dtype is FP8_E4M3 on ROCm.",
-    )
-
-    max_context_len_to_capture: Optional[int] = Field(
-        None,
-        description="Maximum context len covered by CUDA graphs. When a sequence has context length larger than this, we fall back to eager mode (DEPRECATED. Use max_seq_len_to_capture instead).",
     )
 
     max_seq_len_to_capture: Optional[int] = Field(
