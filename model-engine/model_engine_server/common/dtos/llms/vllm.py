@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from model_engine_server.common.pydantic_types import BaseModel, Field
 from model_engine_server.common.types.gen.openai import (
@@ -6,9 +6,8 @@ from model_engine_server.common.types.gen.openai import (
     ResponseFormatJsonSchema,
     ResponseFormatText,
 )
-from typing_extensions import Annotated
 
-# This was last synced w/ vLLM v0.5.5 on 2024-09-03
+# This was last synced w/ vLLM v0.6.4.post1 on 2024-12-10
 
 
 class VLLMModelConfig(BaseModel):
@@ -27,11 +26,6 @@ class VLLMModelConfig(BaseModel):
     enforce_eager: Optional[bool] = Field(
         None,
         description="""Always use eager-mode PyTorch. If False, will use eager mode and CUDA graph in hybrid for maximal perforamnce and flexibility""",
-    )
-
-    gpu_memory_utilization: Optional[float] = Field(
-        None,
-        description="Maximum GPU memory utilization use for the engine. Default to 90%.",
     )
 
     trust_remote_code: Optional[bool] = Field(
@@ -115,13 +109,104 @@ class VLLMModelConfig(BaseModel):
         description="Maximum number of data instances per modality per prompt. Only applicable for multimodal models.",
     )
 
+    max_num_batched_tokens: Optional[int] = Field(
+        None, description="Maximum number of batched tokens per iteration"
+    )
+
+    tokenizer: Optional[str] = Field(
+        None,
+        description="Name or path of the huggingface tokenizer to use.",
+    )
+
+    dtype: Optional[str] = Field(
+        None,
+        description="Data type for model weights and activations. The 'auto' option will use FP16 precision for FP32 and FP16 models, and BF16 precision for BF16 models.",
+    )
+
+    seed: Optional[int] = Field(
+        None,
+        description="Random seed for reproducibility.",
+    )
+
+    revision: Optional[str] = Field(
+        None,
+        description="The specific model version to use. It can be a branch name, a tag name, or a commit id. If unspecified, will use the default version.",
+    )
+
+    code_revision: Optional[str] = Field(
+        None,
+        description="The specific revision to use for the model code on Hugging Face Hub. It can be a branch name, a tag name, or a commit id. If unspecified, will use the default version.",
+    )
+
+    rope_scaling: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Dictionary containing the scaling configuration for the RoPE embeddings. When using this flag, don't update `max_position_embeddings` to the expected new maximum.",
+    )
+
+    tokenizer_revision: Optional[str] = Field(
+        None,
+        description="The specific tokenizer version to use. It can be a branch name, a tag name, or a commit id. If unspecified, will use the default version.",
+    )
+
+    quantization_param_path: Optional[str] = Field(
+        None,
+        description="Path to JSON file containing scaling factors. Used to load KV cache scaling factors into the model when KV cache type is FP8_E4M3 on ROCm (AMD GPU). In the future these will also be used to load activation and weight scaling factors when the model dtype is FP8_E4M3 on ROCm.",
+    )
+
+    max_seq_len_to_capture: Optional[int] = Field(
+        None,
+        description="Maximum sequence len covered by CUDA graphs. When a sequence has context length larger than this, we fall back to eager mode. Additionally for encoder-decoder models, if the sequence length of the encoder input is larger than this, we fall back to the eager mode.",
+    )
+
+    disable_sliding_window: Optional[bool] = Field(
+        None,
+        description="Whether to disable sliding window. If True, we will disable the sliding window functionality of the model. If the model does not support sliding window, this argument is ignored.",
+    )
+
+    skip_tokenizer_init: Optional[bool] = Field(
+        None,
+        description="If true, skip initialization of tokenizer and detokenizer.",
+    )
+
+    served_model_name: Optional[str] = Field(
+        None,
+        description="The model name used in metrics tag `model_name`, matches the model name exposed via the APIs. If multiple model names provided, the first name will be used. If not specified, the model name will be the same as `model`.",
+    )
+
+    override_neuron_config: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Initialize non default neuron config or override default neuron config that are specific to Neuron devices, this argument will be used to configure the neuron config that can not be gathered from the vllm arguments.",
+    )
+
+    mm_processor_kwargs: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Arguments to be forwarded to the model's processor for multi-modal data, e.g., image processor.",
+    )
+
+    # cache configs
+    block_size: Optional[int] = Field(
+        None,
+        description="Size of a cache block in number of tokens.",
+    )
+    gpu_memory_utilization: Optional[float] = Field(
+        None,
+        description="Fraction of GPU memory to use for the vLLM execution.",
+    )
+    swap_space: Optional[float] = Field(
+        None,
+        description="Size of the CPU swap space per GPU (in GiB).",
+    )
+    cache_dtype: Optional[str] = Field(
+        None,
+        description="Data type for kv cache storage.",
+    )
+    num_gpu_blocks_override: Optional[int] = Field(
+        None,
+        description="Number of GPU blocks to use. This overrides the profiled num_gpu_blocks if specified. Does nothing if None.",
+    )
     enable_prefix_caching: Optional[bool] = Field(
         None,
         description="Enables automatic prefix caching.",
-    )
-
-    max_num_batched_tokens: Optional[int] = Field(
-        None, description="Maximum number of batched tokens per iteration"
     )
 
 
@@ -152,14 +237,11 @@ class VLLMSamplingParams(BaseModel):
             the beam width when `use_beam_search` is True. By default, `best_of`
             is set to `n`.""",
     )
-    top_k: Annotated[
-        Optional[int],
-        Field(
-            None,
-            ge=-1,
-            description="Controls the number of top tokens to consider. -1 means consider all tokens.",
-        ),
-    ]
+    top_k: Optional[int] = Field(
+        None,
+        ge=-1,
+        description="Controls the number of top tokens to consider. -1 means consider all tokens.",
+    )
     min_p: Optional[float] = Field(
         None,
         description="""Float that represents the minimum probability for a token to be
@@ -198,14 +280,11 @@ class VLLMSamplingParams(BaseModel):
             generated. The returned output will contain the stop tokens unless
             the stop tokens are special tokens.""",
     )
-    include_stop_str_in_output: Annotated[
-        Optional[bool],
-        Field(
-            None,
-            description="""Whether to include the stop strings in
+    include_stop_str_in_output: Optional[bool] = Field(
+        None,
+        description="""Whether to include the stop strings in
             output text. Defaults to False.""",
-        ),
-    ]
+    )
     ignore_eos: Optional[bool] = Field(
         None,
         description="""Whether to ignore the EOS token and continue generating
@@ -229,6 +308,51 @@ class VLLMSamplingParams(BaseModel):
 
 
 class VLLMChatCompletionAdditionalParams(VLLMSamplingParams):
+    echo: bool = Field(
+        default=False,
+        description=(
+            "If true, the new message will be prepended with the last message "
+            "if they belong to the same role."
+        ),
+    )
+    add_generation_prompt: bool = Field(
+        default=True,
+        description=(
+            "If true, the generation prompt will be added to the chat template. "
+            "This is a parameter used by chat template in tokenizer config of the "
+            "model."
+        ),
+    )
+    continue_final_message: bool = Field(
+        default=False,
+        description=(
+            "If this is set, the chat will be formatted so that the final "
+            "message in the chat is open-ended, without any EOS tokens. The "
+            "model will continue this message rather than starting a new one. "
+            'This allows you to "prefill" part of the model\'s response for it. '
+            "Cannot be used at the same time as `add_generation_prompt`."
+        ),
+    )
+    add_special_tokens: bool = Field(
+        default=False,
+        description=(
+            "If true, special tokens (e.g. BOS) will be added to the prompt "
+            "on top of what is added by the chat template. "
+            "For most models, the chat template takes care of adding the "
+            "special tokens so this should be set to false (as is the "
+            "default)."
+        ),
+    )
+    documents: Optional[List[Dict[str, str]]] = Field(
+        default=None,
+        description=(
+            "A list of dicts representing documents that will be accessible to "
+            "the model if it is performing RAG (retrieval-augmented generation)."
+            " If the template does not support RAG, this argument will have no "
+            "effect. We recommend that each document should be a dict containing "
+            '"title" and "text" keys.'
+        ),
+    )
     chat_template: Optional[str] = Field(
         default=None,
         description=(
@@ -273,12 +397,19 @@ class VLLMChatCompletionAdditionalParams(VLLMSamplingParams):
             "'outlines' / 'lm-format-enforcer'"
         ),
     )
-
     guided_whitespace_pattern: Optional[str] = Field(
         default=None,
         description=(
             "If specified, will override the default whitespace pattern "
             "for guided json decoding."
+        ),
+    )
+    priority: int = Field(
+        default=0,
+        description=(
+            "The priority of the request (lower means earlier handling; "
+            "default: 0). Any priority other than 0 will raise an error "
+            "if the served model does not use priority scheduling."
         ),
     )
 
@@ -292,7 +423,7 @@ class VLLMCompletionAdditionalParams(VLLMSamplingParams):
     )
 
     response_format: Optional[
-        ResponseFormatText | ResponseFormatJsonObject | ResponseFormatJsonSchema
+        Union[ResponseFormatText, ResponseFormatJsonObject, ResponseFormatJsonSchema]
     ] = Field(
         default=None,
         description=(
