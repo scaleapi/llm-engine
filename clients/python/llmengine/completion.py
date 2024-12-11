@@ -57,6 +57,7 @@ class Completion(APIEngine):
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
         request_headers: Optional[Dict[str, str]] = None,
+        **kwargs,
     ) -> Union[CompletionSyncResponse, AsyncIterable[CompletionStreamResponse]]:
         """
         Creates a completion for the provided prompt and parameters asynchronously (with `asyncio`).
@@ -232,6 +233,7 @@ class Completion(APIEngine):
                 guided_choice=guided_choice,
                 guided_grammar=guided_grammar,
                 timeout=timeout,
+                **kwargs,
             )
 
         else:
@@ -261,6 +263,7 @@ class Completion(APIEngine):
                 guided_regex=guided_regex,
                 guided_choice=guided_choice,
                 guided_grammar=guided_grammar,
+                **kwargs,
             )
 
     @classmethod
@@ -284,6 +287,7 @@ class Completion(APIEngine):
         timeout: int = COMPLETION_TIMEOUT,
         stream: bool = False,
         request_headers: Optional[Dict[str, str]] = None,
+        **kwargs,
     ) -> Union[CompletionSyncResponse, Iterator[CompletionStreamResponse]]:
         """
         Creates a completion for the provided prompt and parameters synchronously.
@@ -449,6 +453,7 @@ class Completion(APIEngine):
                 guided_regex=guided_regex,
                 guided_choice=guided_choice,
                 guided_grammar=guided_grammar,
+                **kwargs,
             )
 
         else:
@@ -467,6 +472,7 @@ class Completion(APIEngine):
                 guided_regex=guided_regex,
                 guided_choice=guided_choice,
                 guided_grammar=guided_grammar,
+                **kwargs,
             ).dict()
             response = cls.post_sync(
                 resource_name=f"v1/llm/completions-sync?model_endpoint_name={model}",
@@ -495,6 +501,7 @@ class Completion(APIEngine):
         gpu_type: Optional[GpuType] = None,
         storage: Optional[StorageSpecificationType] = None,
         request_headers: Optional[Dict[str, str]] = None,
+        **kwargs,
     ) -> Union[CreateBatchCompletionsV1Response, CreateBatchCompletionsV2Response]:
         """
         Creates a batch completion for the provided input data. The job runs offline and does not depend on an existing model endpoint.
@@ -649,6 +656,7 @@ class Completion(APIEngine):
                 memory=memory,
                 gpu_type=gpu_type,
                 storage=storage,
+                **kwargs,
             ).dict()
             response = cls.post_sync(
                 resource_name="v2/batch-completions",

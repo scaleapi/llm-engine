@@ -60,6 +60,7 @@ class Model(APIEngine):
         public_inference: Optional[bool] = True,
         labels: Optional[Dict[str, str]] = None,
         request_headers: Optional[Dict[str, str]] = None,
+        **extra_kwargs,
     ) -> CreateLLMEndpointResponse:
         """
         Create an LLM model. Note: This API is only available for self-hosted users.
@@ -329,6 +330,7 @@ class Model(APIEngine):
             default_callback_url=default_callback_url,  # type: ignore
             storage=storage,
             public_inference=public_inference,
+            **extra_kwargs,
         )
         response = cls.post_sync(
             resource_name="v1/llm/model-endpoints",
@@ -501,6 +503,7 @@ class Model(APIEngine):
         public_inference: Optional[bool] = None,
         labels: Optional[Dict[str, str]] = None,
         request_headers: Optional[Dict[str, str]] = None,
+        **extra_kwargs,
     ) -> UpdateLLMEndpointResponse:
         # Can't adjust nodes_per_worker
         """
@@ -645,6 +648,7 @@ class Model(APIEngine):
             default_callback_url=default_callback_url,  # type: ignore
             storage=storage,
             public_inference=public_inference,
+            **extra_kwargs,
         )
         response = cls.put(
             resource_name=f"v1/llm/model-endpoints/{name}",
