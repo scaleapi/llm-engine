@@ -1022,10 +1022,11 @@ For each of these modes, you can also choose whether to stream token responses o
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    request_headers: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>) <span style="color: #666666">-&gt;</span> Union[
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    CompletionSyncResponse,
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    Iterator[CompletionStreamResponse],
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>]
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span style="color: #666666">**</span>kwargs
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    Iterator[CompletionStreamResponse],
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1426,10 +1427,11 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    timeout: <span style="color: #008000">int</span> <span style="color: #666666">=</span> COMPLETION_TIMEOUT,
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    stream: <span style="color: #008000">bool</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">False</span>,
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    request_headers: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>) <span style="color: #666666">-&gt;</span> Union[
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    CompletionSyncResponse,
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    AsyncIterable[CompletionStreamResponse],
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>]
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span style="color: #666666">**</span>kwargs
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    CompletionSyncResponse,
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    AsyncIterable[CompletionStreamResponse],
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1835,10 +1837,11 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    gpu_type: Optional[GpuType] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    storage: Optional[StorageSpecificationType] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    request_headers: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>) <span style="color: #666666">-&gt;</span> Union[
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    CreateBatchCompletionsV1Response,
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    CreateBatchCompletionsV2Response,
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>]
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span style="color: #666666">**</span>kwargs
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>) <span style="color: #666666">-&gt;</span> Union[
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    CreateBatchCompletionsV1Response,
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    CreateBatchCompletionsV2Response,
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>]
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -2887,7 +2890,8 @@ models built into LLM Engine, and fine-tuned models that you create through the
 <a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    public_inference: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">True</span>,
 <a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    labels: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    request_headers: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>) <span style="color: #666666">-&gt;</span> CreateLLMEndpointResponse
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>    <span style="color: #666666">**</span>extra_kwargs
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>) <span style="color: #666666">-&gt;</span> CreateLLMEndpointResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -3680,7 +3684,8 @@ objects for all models. The most important field is the model <code>name</code>.
 <a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    public_inference: Optional[<span style="color: #008000">bool</span>] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    labels: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
 <a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    request_headers: Optional[Dict[<span style="color: #008000">str</span>, <span style="color: #008000">str</span>]] <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span>,
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>) <span style="color: #666666">-&gt;</span> UpdateLLMEndpointResponse
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    <span style="color: #666666">**</span>extra_kwargs
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>) <span style="color: #666666">-&gt;</span> UpdateLLMEndpointResponse
 </code></pre></div>
 
   <div class="doc doc-contents ">
