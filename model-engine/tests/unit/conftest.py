@@ -1152,8 +1152,9 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         if kwargs["per_worker"] is not None:
             model_endpoint_infra.deployment_state.per_worker = kwargs["per_worker"]
         if kwargs["concurrent_requests"] is not None:
-            pass  # TODO
-            # model_endpoint_infra.deployment_state.concurrent_requests = kwargs["concurrent_requests"]
+            model_endpoint_infra.deployment_state.concurrent_requests = kwargs[
+                "concurrent_requests"
+            ]
         if kwargs["cpus"] is not None:
             model_endpoint_infra.resource_state.cpus = kwargs["cpus"]
         if kwargs["gpus"] is not None:

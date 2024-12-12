@@ -147,8 +147,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         if per_worker is None:
             per_worker = infra_state.deployment_state.per_worker
         if concurrent_requests is None:
-            concurrent_requests = 1  # obviously change this
-            # concurrent_requests = infra_state.deployment_state.concurrent_requests
+            concurrent_requests = infra_state.deployment_state.concurrent_requests
         if cpus is None:
             cpus = infra_state.resource_state.cpus
         if gpus is None:
