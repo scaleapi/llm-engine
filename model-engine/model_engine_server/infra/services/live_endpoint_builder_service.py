@@ -295,6 +295,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         min_workers=build_endpoint_request.min_workers,
                         max_workers=build_endpoint_request.max_workers,
                         per_worker=build_endpoint_request.per_worker,
+                        concurrent_requests=build_endpoint_request.concurrent_requests,
                     ),
                     resource_state=ModelEndpointResourceState(
                         cpus=build_endpoint_request.cpus,

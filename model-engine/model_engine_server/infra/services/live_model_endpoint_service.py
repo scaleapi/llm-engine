@@ -337,7 +337,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 min_workers=min_workers,
                 max_workers=max_workers,
                 per_worker=per_worker,
-                concurrent_requests=concurrent_requests,  # TODO
+                concurrent_requests=concurrent_requests,
                 cpus=cpus,
                 gpus=gpus,
                 memory=memory,

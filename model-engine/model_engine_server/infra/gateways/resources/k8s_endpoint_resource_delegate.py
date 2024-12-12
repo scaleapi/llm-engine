@@ -2039,6 +2039,7 @@ class K8SEndpointResourceDelegate:
                 min_workers=horizontal_autoscaling_params["min_workers"],
                 max_workers=horizontal_autoscaling_params["max_workers"],
                 per_worker=int(horizontal_autoscaling_params["per_worker"]),
+                concurrent_requests=1,  # TODO fill in
                 available_workers=deployment_config.status.available_replicas or 0,
                 unavailable_workers=deployment_config.status.unavailable_replicas or 0,
             ),
@@ -2095,6 +2096,7 @@ class K8SEndpointResourceDelegate:
                 min_workers=replicas,
                 max_workers=replicas,  # We don't have any notion of autoscaling for LWS
                 per_worker=int(1),  # TODO update this if we support LWS autoscaling
+                concurrent_requests=1,  # TODO fill in
                 available_workers=replicas,  # TODO unfortunately it doesn't look like we can get this from the LWS CRD, so this is kind of a dummy value
                 unavailable_workers=0,
             ),
@@ -2234,6 +2236,7 @@ class K8SEndpointResourceDelegate:
                         min_workers=horizontal_autoscaling_params["min_workers"],
                         max_workers=horizontal_autoscaling_params["max_workers"],
                         per_worker=horizontal_autoscaling_params["per_worker"],
+                        concurrent_requests=1,  # TODO fill in
                         available_workers=deployment_config.status.available_replicas or 0,
                         unavailable_workers=deployment_config.status.unavailable_replicas or 0,
                     ),

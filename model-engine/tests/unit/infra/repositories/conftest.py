@@ -267,6 +267,7 @@ def entity_model_endpoint_infra_state() -> ModelEndpointInfraState:
             min_workers=1,
             max_workers=3,
             per_worker=2,
+            concurrent_requests=1,
             available_workers=1,
             unavailable_workers=1,
         ),

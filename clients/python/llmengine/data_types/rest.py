@@ -25,6 +25,7 @@ class ModelEndpointDeploymentState(BaseModel):
     min_workers: int = Field(..., ge=0)
     max_workers: int = Field(..., ge=0)
     per_worker: int = Field(..., gt=0)
+    concurrent_requests: int = Field(..., gt=0)
     available_workers: Optional[int] = Field(default=None, ge=0)
     unavailable_workers: Optional[int] = Field(default=None, ge=0)
 
