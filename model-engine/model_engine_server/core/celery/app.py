@@ -245,7 +245,6 @@ def celery_app(
     task_time_limit: Optional[float] = None,
     task_soft_time_limit: Optional[float] = None,
     task_remote_tracebacks: bool = True,
-    worker_concurrency: int = 1,
     worker_prefetch_multiplier: int = 1,
     result_serializer: str = "json",
     result_compression: Optional[str] = None,
@@ -339,11 +338,6 @@ def celery_app(
     Defaults to True.
     Read more here: https://docs.celeryproject.org/en/stable/userguide/configuration.html#task-remote-tracebacks
 
-    :param worker_concurrency: [optional] The number of concurrent worker processes/threads/green threads executing tasks.
-    If you’re doing mostly I/O you can have more processes, but if mostly CPU-bound, try to keep it close to the number of CPUs
-    on your machine.
-    If not set, the number of CPUs/cores on the host will be used.
-
     :param worker_prefetch_multiplier: [optional] the number of tasks (messages) a worker can reserve for itself.
     Reserving tasks means they will be popped from the Redis queue. Setting this to a higher number potentially
     increases a risk of tasks being lost in case of a worker's hard crash. The benefit is that by prefetching more
@@ -398,7 +392,6 @@ def celery_app(
         result_serializer in accept_content
     ), f'Serializer {result_serializer} must be in "accept_content" {accept_content}'
     assert worker_prefetch_multiplier >= 0, '"worker_prefetch_multiplier" must be non-negative.'
-    assert worker_concurrency > 0, '"worker_concurrency" must be positive.'
 
     if isinstance(task_visibility, int):
         task_visibility = TaskVisibility(task_visibility)
@@ -447,7 +440,6 @@ def celery_app(
         "task_soft_time_limit": task_soft_time_limit,
         "task_remote_tracebacks": task_remote_tracebacks,
         "worker_prefetch_multiplier": worker_prefetch_multiplier,
-        # "worker_concurrency": worker_concurrency,  # remove worker_concurrency for now, try some other method TODO clean up
         "result_serializer": result_serializer,
         "result_compression": result_compression,
         "accept_content": accept_content,
