@@ -171,7 +171,7 @@ def start_celery_service(
 ) -> None:
     worker = app.Worker(
         queues=[queue],
-        concurrency=concurrency,
+        concurrency=concurrency,  # or do I just use you to change concurrency and avoid the worker_concurrency setting
         loglevel="INFO",
         optimization="fair",
         # pool="solo" argument fixes the known issues of celery and some of the libraries.
