@@ -178,6 +178,8 @@ def start_celery_service(
         # pool="solo" argument fixes the known issues of celery and some of the libraries.
         # Particularly asyncio and torchvision transformers. This isn't relevant since celery-forwarder
         # is quite lightweight
+        # TODO: we should probably use eventlet or gevent for the pool, since
+        # the forwarder is nearly the most extreme example of IO bound.
     )
     worker.start()
 
