@@ -63,6 +63,7 @@ class CreateModelEndpointV1Request(BaseModel):
     min_workers: int = Field(..., ge=0)
     max_workers: int = Field(..., ge=0)
     per_worker: int = Field(..., gt=0)
+    concurrent_requests: Optional[int] = Field(default=None, gt=0)  # will default to per_worker
     labels: Dict[str, str]
     prewarm: Optional[bool] = None
     high_priority: Optional[bool] = None
@@ -89,6 +90,7 @@ class UpdateModelEndpointV1Request(BaseModel):
     min_workers: Optional[int] = Field(default=None, ge=0)
     max_workers: Optional[int] = Field(default=None, ge=0)
     per_worker: Optional[int] = Field(default=None, gt=0)
+    concurrent_requests: Optional[int] = Field(default=None, gt=0)
     labels: Optional[Dict[str, str]] = None
     prewarm: Optional[bool] = None
     high_priority: Optional[bool] = None
