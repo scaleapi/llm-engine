@@ -189,7 +189,12 @@ def entrypoint():
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--set", type=str, action="append")
     parser.add_argument("--task-visibility", type=str, required=True)
-    parser.add_argument("--num-workers", type=int, required=True)
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        required=True,
+        help="Defines number of concurrent requests to work on",
+    )
     parser.add_argument("--broker-type", type=str, default=None)
     parser.add_argument("--backend-protocol", type=str, default="s3")
     parser.add_argument("--queue", type=str, required=True)
