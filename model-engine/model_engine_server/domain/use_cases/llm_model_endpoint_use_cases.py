@@ -1394,6 +1394,7 @@ class CreateLLMModelEndpointV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             per_worker=request.per_worker,
+            concurrent_requests=200,  # TODO unused
             labels=request.labels,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,
@@ -1663,6 +1664,7 @@ class UpdateLLMModelEndpointV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             per_worker=request.per_worker,
+            concurrent_requests=None,  # TODO think we don't need to update
             labels=request.labels,
             prewarm=request.prewarm,
             high_priority=request.high_priority,

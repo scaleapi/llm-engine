@@ -353,6 +353,7 @@ class CreateModelEndpointV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             per_worker=request.per_worker,
+            concurrent_requests=1,  # TODO fill in
             labels=request.labels,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,
@@ -479,6 +480,7 @@ class UpdateModelEndpointByIdV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             per_worker=request.per_worker,
+            concurrent_requests=1,  # TODO
             labels=request.labels,
             prewarm=request.prewarm,
             high_priority=request.high_priority,

@@ -57,6 +57,7 @@ async def _create_model_endpoint_helper(
         min_workers=infra_state.deployment_state.min_workers,
         max_workers=infra_state.deployment_state.max_workers,
         per_worker=infra_state.deployment_state.per_worker,
+        concurrent_requests=1,  # TODO
         labels=infra_state.labels,
         aws_role=infra_state.aws_role,
         results_s3_bucket=infra_state.results_s3_bucket,
@@ -162,6 +163,7 @@ async def test_create_model_endpoint_raises_already_exists(
             min_workers=infra_state.deployment_state.min_workers,
             max_workers=infra_state.deployment_state.max_workers,
             per_worker=infra_state.deployment_state.per_worker,
+            concurrent_requests=1,  # TODO
             labels=infra_state.labels,
             aws_role=infra_state.aws_role,
             results_s3_bucket=infra_state.results_s3_bucket,

@@ -109,6 +109,7 @@ class LiveBatchJobService(BatchJobService):
             min_workers=0,
             max_workers=max_workers,  # type: ignore
             per_worker=per_worker,  # type: ignore
+            concurrent_requests=per_worker,  # TODO can we get another parameter somewhere
             labels=labels,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,

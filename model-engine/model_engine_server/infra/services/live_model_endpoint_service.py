@@ -153,6 +153,7 @@ class LiveModelEndpointService(ModelEndpointService):
         min_workers: int,
         max_workers: int,
         per_worker: int,
+        concurrent_requests: int,
         labels: Dict[str, str],
         aws_role: str,
         results_s3_bucket: str,
@@ -191,7 +192,7 @@ class LiveModelEndpointService(ModelEndpointService):
             min_workers=min_workers,
             max_workers=max_workers,
             per_worker=per_worker,
-            concurrent_requests=1,  # TODO
+            concurrent_requests=concurrent_requests,
             cpus=cpus,
             gpus=gpus,
             memory=memory,
@@ -281,6 +282,7 @@ class LiveModelEndpointService(ModelEndpointService):
         min_workers: Optional[int] = None,
         max_workers: Optional[int] = None,
         per_worker: Optional[int] = None,
+        concurrent_requests: Optional[int] = None,
         labels: Optional[Dict[str, str]] = None,
         prewarm: Optional[bool] = None,
         high_priority: Optional[bool] = None,
@@ -335,7 +337,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 min_workers=min_workers,
                 max_workers=max_workers,
                 per_worker=per_worker,
-                concurrent_requests=1,  # TODO
+                concurrent_requests=concurrent_requests,  # TODO
                 cpus=cpus,
                 gpus=gpus,
                 memory=memory,
