@@ -2063,7 +2063,7 @@ class K8SEndpointResourceDelegate:
                 min_workers=horizontal_autoscaling_params["min_workers"],
                 max_workers=horizontal_autoscaling_params["max_workers"],
                 per_worker=int(horizontal_autoscaling_params["per_worker"]),
-                concurrent_requests=1,  # TODO fill in
+                concurrent_requests=horizontal_autoscaling_params["concurrent_requests"],
                 available_workers=deployment_config.status.available_replicas or 0,
                 unavailable_workers=deployment_config.status.unavailable_replicas or 0,
             ),
@@ -2260,7 +2260,7 @@ class K8SEndpointResourceDelegate:
                         min_workers=horizontal_autoscaling_params["min_workers"],
                         max_workers=horizontal_autoscaling_params["max_workers"],
                         per_worker=horizontal_autoscaling_params["per_worker"],
-                        concurrent_requests=1,  # TODO fill in
+                        concurrent_requests=horizontal_autoscaling_params["concurrent_requests"],
                         available_workers=deployment_config.status.available_replicas or 0,
                         unavailable_workers=deployment_config.status.unavailable_replicas or 0,
                     ),
