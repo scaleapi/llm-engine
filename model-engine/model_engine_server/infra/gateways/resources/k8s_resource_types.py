@@ -444,6 +444,7 @@ class HorizontalAutoscalingEndpointParams(TypedDict):
     min_workers: int
     max_workers: int
     per_worker: int
+    concurrent_requests: int
 
 
 class VerticalAutoscalingEndpointParams(TypedDict):

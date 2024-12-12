@@ -246,6 +246,14 @@ def get_main_container_from_deployment_template(deployment_template: Dict[str, A
     return user_container
 
 
+def maybe_get_forwarder_container_from_deployment_config(deployment_config):
+    containers = deployment_config.spec.template.spec.containers
+    for container in containers:
+        if container.name in ["celery-forwarder", "http-forwarder"]:
+            return container
+    return None  # Don't expect to get here since everything should have a forwarder
+
+
 def get_leader_container_from_lws_template(lws_template: Dict[str, Any]):
     containers = lws_template["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
         "containers"
@@ -1874,10 +1882,24 @@ class K8SEndpointResourceDelegate:
         deployment_config,
     ) -> HorizontalAutoscalingEndpointParams:
         metadata_annotations = deployment_config.metadata.annotations
+        forwarder_container = maybe_get_forwarder_container_from_deployment_config(
+            deployment_config
+        )
+        if forwarder_container is None:
+            concurrent_requests = 1  # Default for async
+        else:
+            command = forwarder_container.command
+            # look for the thing that comes after --num-workers
+            num_workers_index = command.index("--num-workers")
+            if num_workers_index == -1:
+                concurrent_requests = 1
+            else:
+                concurrent_requests = int(command[num_workers_index + 1])
         return dict(
             min_workers=metadata_annotations["celery.scaleml.autoscaler/minWorkers"],
             max_workers=metadata_annotations["celery.scaleml.autoscaler/maxWorkers"],
             per_worker=metadata_annotations["celery.scaleml.autoscaler/perWorker"],
+            concurrent_requests=concurrent_requests,
         )
 
     @staticmethod
@@ -1892,6 +1914,7 @@ class K8SEndpointResourceDelegate:
             max_workers=spec.max_replicas,
             min_workers=spec.min_replicas,
             per_worker=per_worker,
+            concurrent_requests=200,  # TODO hardcoded
         )
 
     @staticmethod
@@ -1910,6 +1933,7 @@ class K8SEndpointResourceDelegate:
             max_workers=spec.get("maxReplicaCount"),
             min_workers=spec.get("minReplicaCount"),
             per_worker=concurrency,
+            concurrent_requests=200,  # TODO hardcoded
         )
 
     async def _get_resources(
@@ -2096,7 +2120,7 @@ class K8SEndpointResourceDelegate:
                 min_workers=replicas,
                 max_workers=replicas,  # We don't have any notion of autoscaling for LWS
                 per_worker=int(1),  # TODO update this if we support LWS autoscaling
-                concurrent_requests=1,  # TODO fill in
+                concurrent_requests=200,  # TODO hardcoded, this is http_forwarder's MAX_CONCURRENCY * NUM_WORKERS
                 available_workers=replicas,  # TODO unfortunately it doesn't look like we can get this from the LWS CRD, so this is kind of a dummy value
                 unavailable_workers=0,
             ),
