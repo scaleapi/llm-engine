@@ -176,7 +176,7 @@ def start_celery_service(
         optimization="fair",
         # pool="solo" argument fixes the known issues of celery and some of the libraries.
         # Particularly asyncio and torchvision transformers.
-        pool="solo",
+        pool="solo",  # TODO remove? so we can push concurrency through
     )
     worker.start()
 

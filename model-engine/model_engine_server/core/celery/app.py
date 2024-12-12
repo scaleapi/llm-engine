@@ -340,7 +340,6 @@ def celery_app(
     Read more here: https://docs.celeryproject.org/en/stable/userguide/configuration.html#task-remote-tracebacks
 
     :param worker_concurrency: [optional] The number of concurrent worker processes/threads/green threads executing tasks.
-
     If you’re doing mostly I/O you can have more processes, but if mostly CPU-bound, try to keep it close to the number of CPUs
     on your machine.
     If not set, the number of CPUs/cores on the host will be used.
