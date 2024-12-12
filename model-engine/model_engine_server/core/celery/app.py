@@ -447,7 +447,7 @@ def celery_app(
         "task_soft_time_limit": task_soft_time_limit,
         "task_remote_tracebacks": task_remote_tracebacks,
         "worker_prefetch_multiplier": worker_prefetch_multiplier,
-        "worker_concurrency": worker_concurrency,
+        # "worker_concurrency": worker_concurrency,  # remove worker_concurrency for now, try some other method TODO clean up
         "result_serializer": result_serializer,
         "result_compression": result_compression,
         "accept_content": accept_content,
