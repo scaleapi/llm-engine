@@ -114,6 +114,7 @@ class _BaseDeploymentArguments(_BaseEndpointArguments):
     PER_WORKER: int
     MIN_WORKERS: int
     MAX_WORKERS: int
+    CONCURRENT_REQUESTS: int
     RESULTS_S3_BUCKET: str
 
 
@@ -647,6 +648,7 @@ def get_endpoint_resource_arguments_from_request(
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+            CONCURRENT_REQUESTS=build_endpoint_request.concurrent_requests,
             RESULTS_S3_BUCKET=s3_bucket,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
@@ -696,6 +698,7 @@ def get_endpoint_resource_arguments_from_request(
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+            CONCURRENT_REQUESTS=build_endpoint_request.concurrent_requests,
             RESULTS_S3_BUCKET=s3_bucket,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
@@ -747,6 +750,7 @@ def get_endpoint_resource_arguments_from_request(
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+            CONCURRENT_REQUESTS=build_endpoint_request.concurrent_requests,
             RESULTS_S3_BUCKET=s3_bucket,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
@@ -793,6 +797,7 @@ def get_endpoint_resource_arguments_from_request(
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+            CONCURRENT_REQUESTS=build_endpoint_request.concurrent_requests,
             RESULTS_S3_BUCKET=s3_bucket,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
@@ -841,6 +846,7 @@ def get_endpoint_resource_arguments_from_request(
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+            CONCURRENT_REQUESTS=build_endpoint_request.concurrent_requests,
             RESULTS_S3_BUCKET=s3_bucket,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
@@ -886,6 +892,7 @@ def get_endpoint_resource_arguments_from_request(
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+            CONCURRENT_REQUESTS=build_endpoint_request.concurrent_requests,
             RESULTS_S3_BUCKET=s3_bucket,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
@@ -933,6 +940,7 @@ def get_endpoint_resource_arguments_from_request(
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+            CONCURRENT_REQUESTS=build_endpoint_request.concurrent_requests,
             RESULTS_S3_BUCKET=s3_bucket,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
@@ -990,6 +998,7 @@ def get_endpoint_resource_arguments_from_request(
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+            CONCURRENT_REQUESTS=build_endpoint_request.concurrent_requests,
             RESULTS_S3_BUCKET=s3_bucket,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
@@ -1049,6 +1058,7 @@ def get_endpoint_resource_arguments_from_request(
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+            CONCURRENT_REQUESTS=build_endpoint_request.concurrent_requests,
             RESULTS_S3_BUCKET=s3_bucket,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
@@ -1102,6 +1112,7 @@ def get_endpoint_resource_arguments_from_request(
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+            CONCURRENT_REQUESTS=build_endpoint_request.concurrent_requests,
             RESULTS_S3_BUCKET=s3_bucket,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
@@ -1160,6 +1171,7 @@ def get_endpoint_resource_arguments_from_request(
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
+            CONCURRENT_REQUESTS=build_endpoint_request.concurrent_requests,
             RESULTS_S3_BUCKET=s3_bucket,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
