@@ -174,10 +174,10 @@ def start_celery_service(
         concurrency=concurrency,  # or do I just use you to change concurrency and avoid the worker_concurrency setting
         loglevel="INFO",
         optimization="fair",
-        # Try removing pool=solo to see if we can send multiple concurrent
+        # Don't use pool="solo" so we can send multiple concurrent requests over
         # pool="solo" argument fixes the known issues of celery and some of the libraries.
-        # Particularly asyncio and torchvision transformers.
-        # pool="solo",  # TODO remove? so we can push concurrency through
+        # Particularly asyncio and torchvision transformers. This isn't relevant since celery-forwarder
+        # is quite lightweight
     )
     worker.start()
 
