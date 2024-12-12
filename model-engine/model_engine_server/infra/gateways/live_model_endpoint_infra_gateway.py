@@ -57,6 +57,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         min_workers: int,
         max_workers: int,
         per_worker: int,
+        concurrent_requests: int,
         cpus: CpuSpecificationType,
         gpus: int,
         memory: StorageSpecificationType,
@@ -84,7 +85,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             min_workers=min_workers,
             max_workers=max_workers,
             per_worker=per_worker,
-            concurrent_requests=1,  # TODO
+            concurrent_requests=concurrent_requests,
             cpus=cpus,
             gpus=gpus,
             memory=memory,
@@ -118,6 +119,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         min_workers: Optional[int] = None,
         max_workers: Optional[int] = None,
         per_worker: Optional[int] = None,
+        concurrent_requests: Optional[int] = None,  # TODO use
         cpus: Optional[CpuSpecificationType] = None,
         gpus: Optional[int] = None,
         memory: Optional[StorageSpecificationType] = None,

@@ -1078,6 +1078,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         min_workers: int,
         max_workers: int,
         per_worker: int,
+        concurrent_requests: int,
         cpus: CpuSpecificationType,
         gpus: int,
         memory: StorageSpecificationType,
@@ -1149,6 +1150,9 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
             model_endpoint_infra.deployment_state.max_workers = kwargs["max_workers"]
         if kwargs["per_worker"] is not None:
             model_endpoint_infra.deployment_state.per_worker = kwargs["per_worker"]
+        if kwargs["concurrent_requests"] is not None:
+            pass  # TODO
+            # model_endpoint_infra.deployment_state.concurrent_requests = kwargs["concurrent_requests"]
         if kwargs["cpus"] is not None:
             model_endpoint_infra.resource_state.cpus = kwargs["cpus"]
         if kwargs["gpus"] is not None:
@@ -1181,6 +1185,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         min_workers: Optional[int] = None,
         max_workers: Optional[int] = None,
         per_worker: Optional[int] = None,
+        concurrent_requests: Optional[int] = None,
         cpus: Optional[CpuSpecificationType] = None,
         gpus: Optional[int] = None,
         memory: Optional[StorageSpecificationType] = None,

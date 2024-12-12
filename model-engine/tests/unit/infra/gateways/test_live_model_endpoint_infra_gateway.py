@@ -38,6 +38,7 @@ def test_create_model_endpoint_infra(
             min_workers=endpoint.infra_state.deployment_state.min_workers,
             max_workers=endpoint.infra_state.deployment_state.max_workers,
             per_worker=endpoint.infra_state.deployment_state.per_worker,
+            concurrent_requests=1,  # TODO
             cpus=endpoint.infra_state.resource_state.cpus,
             gpus=endpoint.infra_state.resource_state.gpus,
             memory=endpoint.infra_state.resource_state.memory,
