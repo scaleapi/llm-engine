@@ -119,7 +119,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         min_workers: Optional[int] = None,
         max_workers: Optional[int] = None,
         per_worker: Optional[int] = None,
-        concurrent_requests: Optional[int] = None,  # TODO use
+        concurrent_requests: Optional[int] = None,
         cpus: Optional[CpuSpecificationType] = None,
         gpus: Optional[int] = None,
         memory: Optional[StorageSpecificationType] = None,
