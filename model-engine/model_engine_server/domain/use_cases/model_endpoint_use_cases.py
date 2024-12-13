@@ -136,7 +136,7 @@ def validate_concurrent_requests_per_worker(
         and concurrent_requests_per_worker > MAX_ASYNC_CONCURRENT_TASKS
     ):
         raise EndpointResourceInvalidRequestException(
-            f"Requested concurrent requests {concurrent_requests_per_worker} too high"
+            f"Requested concurrent requests per worker {concurrent_requests_per_worker} too high"
         )
 
 

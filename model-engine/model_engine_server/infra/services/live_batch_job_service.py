@@ -118,7 +118,7 @@ class LiveBatchJobService(BatchJobService):
             min_workers=0,
             max_workers=max_workers,  # type: ignore
             per_worker=per_worker,  # type: ignore
-            concurrent_requests_per_worker=concurrent_requests_per_worker,  # We keep this for backwards compatibility.
+            concurrent_requests_per_worker=concurrent_requests_per_worker,
             labels=labels,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,
