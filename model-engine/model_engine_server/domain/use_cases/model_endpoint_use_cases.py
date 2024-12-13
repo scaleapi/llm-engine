@@ -297,9 +297,7 @@ class CreateModelEndpointV1UseCase:
 
         concurrent_requests = request.concurrent_requests
         if concurrent_requests is None:
-            concurrent_requests = request.per_worker
-            if concurrent_requests > MAX_ASYNC_CONCURRENT_TASKS:
-                concurrent_requests = MAX_ASYNC_CONCURRENT_TASKS
+            concurrent_requests = min(request.per_worker, MAX_ASYNC_CONCURRENT_TASKS)
         validate_concurrent_requests(concurrent_requests, request.endpoint_type)
 
         if request.labels is None:
