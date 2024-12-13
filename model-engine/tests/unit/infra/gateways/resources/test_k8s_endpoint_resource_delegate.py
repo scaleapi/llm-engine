@@ -652,7 +652,11 @@ async def test_get_resources_async_success(
     )
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_async_autoscaling_params",
-        Mock(return_value=dict(min_workers=1, max_workers=3, per_worker=2, concurrent_requests=1)),
+        Mock(
+            return_value=dict(
+                min_workers=1, max_workers=3, per_worker=2, concurrent_requests_per_worker=1
+            )
+        ),
     )
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_main_container",
@@ -715,7 +719,9 @@ async def test_get_resources_sync_success(
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_sync_autoscaling_params",
         Mock(
-            return_value=dict(min_workers=1, max_workers=3, per_worker=2, concurrent_requests=200)
+            return_value=dict(
+                min_workers=1, max_workers=3, per_worker=2, concurrent_requests_per_worker=200
+            )
         ),
     )
     k8s_endpoint_resource_delegate.__setattr__(
@@ -929,5 +935,5 @@ async def test_get_async_autoscaling_params(k8s_endpoint_resource_delegate):
         min_workers=1,
         max_workers=2,
         per_worker=5,
-        concurrent_requests=24,
+        concurrent_requests_per_worker=24,
     )

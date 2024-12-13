@@ -124,7 +124,7 @@ data:
                 - --set
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${CONCURRENT_REQUESTS}"
+                - "${CONCURRENT_REQUESTS_PER_WORKER}"
                 - --broker-type
                 - redis
               env:
@@ -397,7 +397,7 @@ data:
                 - --set
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${CONCURRENT_REQUESTS}"
+                - "${CONCURRENT_REQUESTS_PER_WORKER}"
                 - --broker-type
                 - redis
               env:
@@ -1351,7 +1351,7 @@ data:
                 - --set
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${CONCURRENT_REQUESTS}"
+                - "${CONCURRENT_REQUESTS_PER_WORKER}"
                 - --broker-type
                 - redis
               env:
@@ -1632,7 +1632,7 @@ data:
                 - --set
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${CONCURRENT_REQUESTS}"
+                - "${CONCURRENT_REQUESTS_PER_WORKER}"
                 - --broker-type
                 - redis
               env:

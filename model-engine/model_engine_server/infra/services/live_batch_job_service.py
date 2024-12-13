@@ -27,7 +27,7 @@ DEFAULT_ENDPOINT_GPUS_BATCH_JOB = 1
 DEFAULT_ENDPOINT_GPU_TYPE_BATCH_JOB = GpuType.NVIDIA_TESLA_T4
 DEFAULT_ENDPOINT_MAX_WORKERS_BATCH_JOB = 50
 DEFAULT_ENDPOINT_PER_WORKER_BATCH_JOB = 40
-DEFAULT_ENDPOINT_CONCURRENT_REQUESTS_BATCH_JOB = 1  # For backwards compatibility
+DEFAULT_ENDPOINT_CONCURRENT_REQUESTS_PER_WORKER_BATCH_JOB = 1  # For backwards compatibility
 
 BATCH_TASK_IDENTIFIER = "batch-task"
 
@@ -92,10 +92,13 @@ class LiveBatchJobService(BatchJobService):
                 gpu_type = resource_requests.gpu_type
         max_workers = resource_requests.max_workers or DEFAULT_ENDPOINT_MAX_WORKERS_BATCH_JOB
         per_worker = resource_requests.per_worker or DEFAULT_ENDPOINT_PER_WORKER_BATCH_JOB
-        concurrent_requests = (
-            resource_requests.concurrent_requests or DEFAULT_ENDPOINT_CONCURRENT_REQUESTS_BATCH_JOB
+        concurrent_requests_per_worker = (
+            resource_requests.concurrent_requests_per_worker
+            or DEFAULT_ENDPOINT_CONCURRENT_REQUESTS_PER_WORKER_BATCH_JOB
         )
-        concurrent_requests = min(concurrent_requests, MAX_ASYNC_CONCURRENT_TASKS)
+        concurrent_requests_per_worker = min(
+            concurrent_requests_per_worker, MAX_ASYNC_CONCURRENT_TASKS
+        )
 
         model_endpoint_record = await self.model_endpoint_service.create_model_endpoint(
             name=resource_group_name,
@@ -115,7 +118,7 @@ class LiveBatchJobService(BatchJobService):
             min_workers=0,
             max_workers=max_workers,  # type: ignore
             per_worker=per_worker,  # type: ignore
-            concurrent_requests=concurrent_requests,  # We keep this for backwards compatibility.
+            concurrent_requests_per_worker=concurrent_requests_per_worker,  # We keep this for backwards compatibility.
             labels=labels,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,

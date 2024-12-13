@@ -1886,20 +1886,20 @@ class K8SEndpointResourceDelegate:
             deployment_config
         )
         if forwarder_container is None:
-            concurrent_requests = 1  # Default for async
+            concurrent_requests_per_worker = 1  # Default for async
         else:
             command = forwarder_container.command
             # look for the thing that comes after --num-workers
             num_workers_index = command.index("--num-workers")
             if num_workers_index == -1:
-                concurrent_requests = 1
+                concurrent_requests_per_worker = 1
             else:
-                concurrent_requests = int(command[num_workers_index + 1])
+                concurrent_requests_per_worker = int(command[num_workers_index + 1])
         return dict(
             min_workers=metadata_annotations["celery.scaleml.autoscaler/minWorkers"],
             max_workers=metadata_annotations["celery.scaleml.autoscaler/maxWorkers"],
             per_worker=metadata_annotations["celery.scaleml.autoscaler/perWorker"],
-            concurrent_requests=concurrent_requests,
+            concurrent_requests_per_worker=concurrent_requests_per_worker,
         )
 
     @staticmethod
@@ -1914,7 +1914,7 @@ class K8SEndpointResourceDelegate:
             max_workers=spec.max_replicas,
             min_workers=spec.min_replicas,
             per_worker=per_worker,
-            concurrent_requests=200,  # TODO hardcoded
+            concurrent_requests_per_worker=200,  # TODO hardcoded
         )
 
     @staticmethod
@@ -1933,7 +1933,7 @@ class K8SEndpointResourceDelegate:
             max_workers=spec.get("maxReplicaCount"),
             min_workers=spec.get("minReplicaCount"),
             per_worker=concurrency,
-            concurrent_requests=200,  # TODO hardcoded
+            concurrent_requests_per_worker=200,  # TODO hardcoded
         )
 
     async def _get_resources(
@@ -2063,7 +2063,9 @@ class K8SEndpointResourceDelegate:
                 min_workers=horizontal_autoscaling_params["min_workers"],
                 max_workers=horizontal_autoscaling_params["max_workers"],
                 per_worker=int(horizontal_autoscaling_params["per_worker"]),
-                concurrent_requests=horizontal_autoscaling_params["concurrent_requests"],
+                concurrent_requests_per_worker=horizontal_autoscaling_params[
+                    "concurrent_requests_per_worker"
+                ],
                 available_workers=deployment_config.status.available_replicas or 0,
                 unavailable_workers=deployment_config.status.unavailable_replicas or 0,
             ),
@@ -2120,7 +2122,7 @@ class K8SEndpointResourceDelegate:
                 min_workers=replicas,
                 max_workers=replicas,  # We don't have any notion of autoscaling for LWS
                 per_worker=int(1),  # TODO update this if we support LWS autoscaling
-                concurrent_requests=200,  # TODO hardcoded, this is http_forwarder's MAX_CONCURRENCY * NUM_WORKERS
+                concurrent_requests_per_worker=200,  # TODO hardcoded, this is http_forwarder's MAX_CONCURRENCY * NUM_WORKERS
                 available_workers=replicas,  # TODO unfortunately it doesn't look like we can get this from the LWS CRD, so this is kind of a dummy value
                 unavailable_workers=0,
             ),
@@ -2260,7 +2262,9 @@ class K8SEndpointResourceDelegate:
                         min_workers=horizontal_autoscaling_params["min_workers"],
                         max_workers=horizontal_autoscaling_params["max_workers"],
                         per_worker=horizontal_autoscaling_params["per_worker"],
-                        concurrent_requests=horizontal_autoscaling_params["concurrent_requests"],
+                        concurrent_requests_per_worker=horizontal_autoscaling_params[
+                            "concurrent_requests_per_worker"
+                        ],
                         available_workers=deployment_config.status.available_replicas or 0,
                         unavailable_workers=deployment_config.status.unavailable_replicas or 0,
                     ),
