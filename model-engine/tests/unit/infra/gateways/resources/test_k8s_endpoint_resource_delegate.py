@@ -908,31 +908,23 @@ async def test_restart_deployment(
         body=ANY,
     )
 
+
 @pytest.mark.asyncio
-async def test_get_async_autoscaling_params(
-    k8s_endpoint_resource_delegate
-):
+async def test_get_async_autoscaling_params(k8s_endpoint_resource_delegate):
     deployment_config = MagicMock()
     celery_forwarder = MagicMock()
     main_container = MagicMock()  # empty because it's not used
     celery_forwarder.name = "celery-forwarder"
-    celery_forwarder.command = [
-        "a",
-        "b",
-        "--num-workers",
-        "24",
-        "c",
-        "d"
-    ]
+    celery_forwarder.command = ["a", "b", "--num-workers", "24", "c", "d"]
     deployment_config.metadata.annotations = {
         "celery.scaleml.autoscaler/minWorkers": 1,
         "celery.scaleml.autoscaler/maxWorkers": 2,
-        "celery.scaleml.autoscaler/perWorker": 5
+        "celery.scaleml.autoscaler/perWorker": 5,
     }
-    deployment_config.spec.template.spec.containers = [
-        celery_forwarder, main_container
-    ]
-    autoscaling_params = K8SEndpointResourceDelegate._get_async_autoscaling_params(deployment_config)
+    deployment_config.spec.template.spec.containers = [celery_forwarder, main_container]
+    autoscaling_params = K8SEndpointResourceDelegate._get_async_autoscaling_params(
+        deployment_config
+    )
     assert autoscaling_params == dict(
         min_workers=1,
         max_workers=2,
