@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Any, Dict, List
-from unittest.mock import ANY, AsyncMock, Mock, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from kubernetes_asyncio.client.rest import ApiException
@@ -652,7 +652,11 @@ async def test_get_resources_async_success(
     )
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_async_autoscaling_params",
-        Mock(return_value=dict(min_workers=1, max_workers=3, per_worker=2)),
+        Mock(
+            return_value=dict(
+                min_workers=1, max_workers=3, per_worker=2, concurrent_requests_per_worker=1
+            )
+        ),
     )
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_main_container",
@@ -714,7 +718,11 @@ async def test_get_resources_sync_success(
     )
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_sync_autoscaling_params",
-        Mock(return_value=dict(min_workers=1, max_workers=3, per_worker=2)),
+        Mock(
+            return_value=dict(
+                min_workers=1, max_workers=3, per_worker=2, concurrent_requests_per_worker=200
+            )
+        ),
     )
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_main_container", Mock(return_value=FakeK8sDeploymentContainer(env=[]))
@@ -904,4 +912,28 @@ async def test_restart_deployment(
         name="test_deployment",
         namespace=hmi_config.endpoint_namespace,
         body=ANY,
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_async_autoscaling_params(k8s_endpoint_resource_delegate):
+    deployment_config = MagicMock()
+    celery_forwarder = MagicMock()
+    main_container = MagicMock()  # empty because it's not used
+    celery_forwarder.name = "celery-forwarder"
+    celery_forwarder.command = ["a", "b", "--num-workers", "24", "c", "d"]
+    deployment_config.metadata.annotations = {
+        "celery.scaleml.autoscaler/minWorkers": 1,
+        "celery.scaleml.autoscaler/maxWorkers": 2,
+        "celery.scaleml.autoscaler/perWorker": 5,
+    }
+    deployment_config.spec.template.spec.containers = [celery_forwarder, main_container]
+    autoscaling_params = K8SEndpointResourceDelegate._get_async_autoscaling_params(
+        deployment_config
+    )
+    assert autoscaling_params == dict(
+        min_workers=1,
+        max_workers=2,
+        per_worker=5,
+        concurrent_requests_per_worker=24,
     )

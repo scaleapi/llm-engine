@@ -13,6 +13,7 @@ from model_engine_server.common.resource_limits import (
     FORWARDER_CPU_USAGE,
     FORWARDER_MEMORY_USAGE,
     FORWARDER_STORAGE_USAGE,
+    MAX_ASYNC_CONCURRENT_TASKS,
     REQUESTS_BY_GPU_TYPE,
     STORAGE_LIMIT,
 )
@@ -144,6 +145,28 @@ async def test_create_model_endpoint_use_case_raises_per_worker_invalid_value_ex
     user_id = model_bundle_5.created_by
     user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
     with pytest.raises(ObjectHasInvalidValueException):
+        await use_case.execute(user=user, request=request)
+
+
+@pytest.mark.asyncio
+async def test_create_model_endpoint_use_case_raises_concurrent_requests_resource_request_exception(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_5: ModelBundle,
+    create_model_endpoint_request_async: CreateModelEndpointV1Request,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_5)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = CreateModelEndpointV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+
+    request = create_model_endpoint_request_async.copy()
+    request.concurrent_requests_per_worker = MAX_ASYNC_CONCURRENT_TASKS + 9000
+    user_id = model_bundle_5.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+    with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(user=user, request=request)
 
 
@@ -639,6 +662,53 @@ async def test_create_model_endpoint_use_case_sets_high_priority(
 
 
 @pytest.mark.asyncio
+async def test_create_model_endpoint_use_case_sets_concurrency_per_worker(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    create_model_endpoint_request_async: CreateModelEndpointV1Request,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = CreateModelEndpointV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_bundle_1.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+
+    request = create_model_endpoint_request_async.copy()
+    request.per_worker = 3
+    assert (
+        request.per_worker < MAX_ASYNC_CONCURRENT_TASKS
+    ), "Test is broken, please adjust per_worker down"
+    request.concurrent_requests_per_worker = None
+    await use_case.execute(user=user, request=request)
+    endpoints = await fake_model_endpoint_service.list_model_endpoints(
+        name=request.name, owner=model_bundle_1.created_by, order_by=None
+    )
+    assert len(endpoints) == 1, "The test itself is probably broken"
+    assert (
+        endpoints[0].infra_state.deployment_state.concurrent_requests_per_worker
+        == request.per_worker
+    )
+
+    request = create_model_endpoint_request_async.copy()
+    request.name = "this_is_a_temporary_name"
+    request.per_worker = MAX_ASYNC_CONCURRENT_TASKS + 50
+    request.concurrent_requests_per_worker = None
+    await use_case.execute(user=user, request=request)
+    endpoints = await fake_model_endpoint_service.list_model_endpoints(
+        name=request.name, owner=model_bundle_1.created_by, order_by=None
+    )
+    assert len(endpoints) == 1, "The test itself is probably broken"
+    assert (
+        endpoints[0].infra_state.deployment_state.concurrent_requests_per_worker
+        == MAX_ASYNC_CONCURRENT_TASKS
+    )
+
+
+@pytest.mark.asyncio
 async def test_create_multinode_endpoint_with_nonmultinode_bundle_fails(
     fake_model_bundle_repository,
     fake_model_endpoint_service,
@@ -1061,6 +1131,15 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
 
     request = update_model_endpoint_request.copy()
     request.max_workers = 2**63
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.concurrent_requests_per_worker = MAX_ASYNC_CONCURRENT_TASKS + 50
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(
             user=user,

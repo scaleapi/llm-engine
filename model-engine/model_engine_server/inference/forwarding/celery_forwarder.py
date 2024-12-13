@@ -174,9 +174,12 @@ def start_celery_service(
         concurrency=concurrency,
         loglevel="INFO",
         optimization="fair",
-        # pool="solo" argument fixes the known issues of celery and some of the libraries.
-        # Particularly asyncio and torchvision transformers.
-        pool="solo",
+        # Don't use pool="solo" so we can send multiple concurrent requests over
+        # Historically, pool="solo" argument fixes the known issues of celery and some of the libraries.
+        # Particularly asyncio and torchvision transformers. This isn't relevant since celery-forwarder
+        # is quite lightweight
+        # TODO: we should probably use eventlet or gevent for the pool, since
+        # the forwarder is nearly the most extreme example of IO bound.
     )
     worker.start()
 
@@ -186,7 +189,12 @@ def entrypoint():
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--set", type=str, action="append")
     parser.add_argument("--task-visibility", type=str, required=True)
-    parser.add_argument("--num-workers", type=int, required=True)
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        required=True,
+        help="Defines number of concurrent requests to work on",
+    )
     parser.add_argument("--broker-type", type=str, default=None)
     parser.add_argument("--backend-protocol", type=str, default="s3")
     parser.add_argument("--queue", type=str, required=True)

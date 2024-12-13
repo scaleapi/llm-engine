@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
 from model_engine_server.common.dtos.batch_jobs import CreateBatchJobResourceRequests
+from model_engine_server.common.resource_limits import MAX_ASYNC_CONCURRENT_TASKS
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     BatchJob,
@@ -26,6 +27,7 @@ DEFAULT_ENDPOINT_GPUS_BATCH_JOB = 1
 DEFAULT_ENDPOINT_GPU_TYPE_BATCH_JOB = GpuType.NVIDIA_TESLA_T4
 DEFAULT_ENDPOINT_MAX_WORKERS_BATCH_JOB = 50
 DEFAULT_ENDPOINT_PER_WORKER_BATCH_JOB = 40
+DEFAULT_ENDPOINT_CONCURRENT_REQUESTS_PER_WORKER_BATCH_JOB = 1  # For backwards compatibility
 
 BATCH_TASK_IDENTIFIER = "batch-task"
 
@@ -90,6 +92,13 @@ class LiveBatchJobService(BatchJobService):
                 gpu_type = resource_requests.gpu_type
         max_workers = resource_requests.max_workers or DEFAULT_ENDPOINT_MAX_WORKERS_BATCH_JOB
         per_worker = resource_requests.per_worker or DEFAULT_ENDPOINT_PER_WORKER_BATCH_JOB
+        concurrent_requests_per_worker = (
+            resource_requests.concurrent_requests_per_worker
+            or DEFAULT_ENDPOINT_CONCURRENT_REQUESTS_PER_WORKER_BATCH_JOB
+        )
+        concurrent_requests_per_worker = min(
+            concurrent_requests_per_worker, MAX_ASYNC_CONCURRENT_TASKS
+        )
 
         model_endpoint_record = await self.model_endpoint_service.create_model_endpoint(
             name=resource_group_name,
@@ -109,6 +118,7 @@ class LiveBatchJobService(BatchJobService):
             min_workers=0,
             max_workers=max_workers,  # type: ignore
             per_worker=per_worker,  # type: ignore
+            concurrent_requests_per_worker=concurrent_requests_per_worker,
             labels=labels,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,
