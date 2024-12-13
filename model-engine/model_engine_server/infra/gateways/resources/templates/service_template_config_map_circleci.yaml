@@ -7,12 +7,12 @@ metadata:
   name: model-engine-service-template-config
   labels:
     team: infra
-    app.kubernetes.io/version: 88f8003b2b52c772e8f34d264b3dfb95da1c1e9b
-    tags.datadoghq.com/version: 88f8003b2b52c772e8f34d264b3dfb95da1c1e9b
+    app.kubernetes.io/version: 2eed5f3c60f2b33784877a07b01cbbafee472272
+    tags.datadoghq.com/version: 2eed5f3c60f2b33784877a07b01cbbafee472272
     tags.datadoghq.com/env: circleci
     env: circleci
     product: model-engine
-    helm.sh/chart: model-engine-0.1.3
+    helm.sh/chart: model-engine-0.1.6
     app.kubernetes.io/managed-by: Helm
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
@@ -124,7 +124,7 @@ data:
                 - --set
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${CONCURRENT_REQUESTS}"
                 - --broker-type
                 - redis
               env:
@@ -397,7 +397,7 @@ data:
                 - --set
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${CONCURRENT_REQUESTS}"
                 - --broker-type
                 - redis
               env:
@@ -1351,7 +1351,7 @@ data:
                 - --set
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${CONCURRENT_REQUESTS}"
                 - --broker-type
                 - redis
               env:
@@ -1632,7 +1632,7 @@ data:
                 - --set
                 - "forwarder.async.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --num-workers
-                - "${PER_WORKER}"
+                - "${CONCURRENT_REQUESTS}"
                 - --broker-type
                 - redis
               env:
