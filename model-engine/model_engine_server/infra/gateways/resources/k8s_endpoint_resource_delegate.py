@@ -74,6 +74,13 @@ LWS_DEFAULT_ENV_VAR = {
 LWS_LEADER_CONTAINER_NAME = "lws-leader"
 LWS_WORKER_CONTAINER_NAME = "lws-worker"
 
+# As of Dec 2024 sync/streaming endpoints don't have a concurrent requests per worker
+# accessible from reading k8s. We will define this value as such.
+# In any case, this should match the existing http_forwarder's max concurrency
+# (MAX_CONCURRENCY * NUM_WORKERS)
+# TODO once sync/streaming endpoints have this accessible from reading k8s, get rid of this
+FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER = 200
+
 _lazy_load_kubernetes_clients = True
 _kubernetes_apps_api = None
 _kubernetes_core_api = None
@@ -1914,7 +1921,7 @@ class K8SEndpointResourceDelegate:
             max_workers=spec.max_replicas,
             min_workers=spec.min_replicas,
             per_worker=per_worker,
-            concurrent_requests_per_worker=200,  # TODO hardcoded
+            concurrent_requests_per_worker=FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER,
         )
 
     @staticmethod
@@ -1933,7 +1940,7 @@ class K8SEndpointResourceDelegate:
             max_workers=spec.get("maxReplicaCount"),
             min_workers=spec.get("minReplicaCount"),
             per_worker=concurrency,
-            concurrent_requests_per_worker=200,  # TODO hardcoded
+            concurrent_requests_per_worker=FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER,
         )
 
     async def _get_resources(
@@ -2122,7 +2129,7 @@ class K8SEndpointResourceDelegate:
                 min_workers=replicas,
                 max_workers=replicas,  # We don't have any notion of autoscaling for LWS
                 per_worker=int(1),  # TODO update this if we support LWS autoscaling
-                concurrent_requests_per_worker=200,  # TODO hardcoded, this is http_forwarder's MAX_CONCURRENCY * NUM_WORKERS
+                concurrent_requests_per_worker=FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER,
                 available_workers=replicas,  # TODO unfortunately it doesn't look like we can get this from the LWS CRD, so this is kind of a dummy value
                 unavailable_workers=0,
             ),

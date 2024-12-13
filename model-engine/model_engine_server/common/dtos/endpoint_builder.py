@@ -17,9 +17,7 @@ class BuildEndpointRequest(BaseModel):
     min_workers: int
     max_workers: int
     per_worker: int
-    concurrent_requests_per_worker: (
-        int  # TODO fill in, also TODO used for async but sync is possible
-    )
+    concurrent_requests_per_worker: int
     cpus: CpuSpecificationType
     gpus: int
     memory: StorageSpecificationType
