@@ -171,11 +171,11 @@ def start_celery_service(
 ) -> None:
     worker = app.Worker(
         queues=[queue],
-        concurrency=concurrency,  # or do I just use you to change concurrency and avoid the worker_concurrency setting
+        concurrency=concurrency,
         loglevel="INFO",
         optimization="fair",
         # Don't use pool="solo" so we can send multiple concurrent requests over
-        # pool="solo" argument fixes the known issues of celery and some of the libraries.
+        # Historically, pool="solo" argument fixes the known issues of celery and some of the libraries.
         # Particularly asyncio and torchvision transformers. This isn't relevant since celery-forwarder
         # is quite lightweight
         # TODO: we should probably use eventlet or gevent for the pool, since

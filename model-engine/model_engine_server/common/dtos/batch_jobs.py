@@ -25,6 +25,7 @@ class CreateBatchJobResourceRequests(BaseModel):
     storage: Optional[StorageSpecificationType] = None
     max_workers: Optional[int] = None
     per_worker: Optional[int] = None
+    concurrent_requests: Optional[int] = None
 
 
 class CreateBatchJobV1Request(BaseModel):
