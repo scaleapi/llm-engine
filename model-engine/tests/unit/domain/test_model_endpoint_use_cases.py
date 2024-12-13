@@ -147,6 +147,7 @@ async def test_create_model_endpoint_use_case_raises_per_worker_invalid_value_ex
     with pytest.raises(ObjectHasInvalidValueException):
         await use_case.execute(user=user, request=request)
 
+
 @pytest.mark.asyncio
 async def test_create_model_endpoint_use_case_raises_concurrent_requests_resource_request_exception(
     fake_model_bundle_repository,
@@ -678,14 +679,19 @@ async def test_create_model_endpoint_use_case_sets_concurrency_per_worker(
 
     request = create_model_endpoint_request_async.copy()
     request.per_worker = 3
-    assert request.per_worker < MAX_ASYNC_CONCURRENT_TASKS, "Test is broken, please adjust per_worker down"
+    assert (
+        request.per_worker < MAX_ASYNC_CONCURRENT_TASKS
+    ), "Test is broken, please adjust per_worker down"
     request.concurrent_requests_per_worker = None
     await use_case.execute(user=user, request=request)
     endpoints = await fake_model_endpoint_service.list_model_endpoints(
         name=request.name, owner=model_bundle_1.created_by, order_by=None
     )
     assert len(endpoints) == 1, "The test itself is probably broken"
-    assert endpoints[0].infra_state.deployment_state.concurrent_requests_per_worker == request.per_worker
+    assert (
+        endpoints[0].infra_state.deployment_state.concurrent_requests_per_worker
+        == request.per_worker
+    )
 
     request = create_model_endpoint_request_async.copy()
     request.name = "this_is_a_temporary_name"
@@ -696,7 +702,10 @@ async def test_create_model_endpoint_use_case_sets_concurrency_per_worker(
         name=request.name, owner=model_bundle_1.created_by, order_by=None
     )
     assert len(endpoints) == 1, "The test itself is probably broken"
-    assert endpoints[0].infra_state.deployment_state.concurrent_requests_per_worker == MAX_ASYNC_CONCURRENT_TASKS
+    assert (
+        endpoints[0].infra_state.deployment_state.concurrent_requests_per_worker
+        == MAX_ASYNC_CONCURRENT_TASKS
+    )
 
 
 @pytest.mark.asyncio
