@@ -699,8 +699,6 @@ async def test_create_model_endpoint_use_case_sets_concurrency_per_worker(
     assert endpoints[0].infra_state.deployment_state.concurrent_requests_per_worker == MAX_ASYNC_CONCURRENT_TASKS
 
 
-
-
 @pytest.mark.asyncio
 async def test_create_multinode_endpoint_with_nonmultinode_bundle_fails(
     fake_model_bundle_repository,
@@ -1124,6 +1122,15 @@ async def test_update_model_endpoint_use_case_raises_resource_request_exception(
 
     request = update_model_endpoint_request.copy()
     request.max_workers = 2**63
+    with pytest.raises(EndpointResourceInvalidRequestException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=request,
+        )
+
+    request = update_model_endpoint_request.copy()
+    request.concurrent_requests_per_worker = MAX_ASYNC_CONCURRENT_TASKS + 50
     with pytest.raises(EndpointResourceInvalidRequestException):
         await use_case.execute(
             user=user,
