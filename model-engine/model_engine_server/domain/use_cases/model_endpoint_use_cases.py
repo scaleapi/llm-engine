@@ -127,11 +127,12 @@ def validate_deployment_resources(
 
 
 def validate_concurrent_requests(
-    concurrent_requests: int,
+    concurrent_requests: Optional[int],
     endpoint_type: ModelEndpointType,
 ):
     if (
         endpoint_type == ModelEndpointType.ASYNC
+        and concurrent_requests is not None
         and concurrent_requests > MAX_ASYNC_CONCURRENT_TASKS
     ):
         raise EndpointResourceInvalidRequestException(
@@ -485,6 +486,8 @@ class UpdateModelEndpointByIdV1UseCase:
             endpoint_type=endpoint_record.endpoint_type,
             can_scale_http_endpoint_from_zero=self.model_endpoint_service.can_scale_http_endpoint_from_zero(),
         )
+
+        validate_concurrent_requests(request.concurrent_requests, endpoint_record.endpoint_type)
 
         if request.metadata is not None and CONVERTED_FROM_ARTIFACT_LIKE_KEY in request.metadata:
             raise ObjectHasInvalidValueException(
