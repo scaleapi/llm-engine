@@ -57,6 +57,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         min_workers: int,
         max_workers: int,
         per_worker: int,
+        concurrent_requests_per_worker: int,
         cpus: CpuSpecificationType,
         gpus: int,
         memory: StorageSpecificationType,
@@ -84,6 +85,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             min_workers=min_workers,
             max_workers=max_workers,
             per_worker=per_worker,
+            concurrent_requests_per_worker=concurrent_requests_per_worker,
             cpus=cpus,
             gpus=gpus,
             memory=memory,
@@ -117,6 +119,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         min_workers: Optional[int] = None,
         max_workers: Optional[int] = None,
         per_worker: Optional[int] = None,
+        concurrent_requests_per_worker: Optional[int] = None,
         cpus: Optional[CpuSpecificationType] = None,
         gpus: Optional[int] = None,
         memory: Optional[StorageSpecificationType] = None,
@@ -143,6 +146,10 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             max_workers = infra_state.deployment_state.max_workers
         if per_worker is None:
             per_worker = infra_state.deployment_state.per_worker
+        if concurrent_requests_per_worker is None:
+            concurrent_requests_per_worker = (
+                infra_state.deployment_state.concurrent_requests_per_worker
+            )
         if cpus is None:
             cpus = infra_state.resource_state.cpus
         if gpus is None:
@@ -198,6 +205,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             min_workers=min_workers,
             max_workers=max_workers,
             per_worker=per_worker,
+            concurrent_requests_per_worker=concurrent_requests_per_worker,
             cpus=cpus,
             gpus=gpus,
             memory=memory,

@@ -74,6 +74,13 @@ LWS_DEFAULT_ENV_VAR = {
 LWS_LEADER_CONTAINER_NAME = "lws-leader"
 LWS_WORKER_CONTAINER_NAME = "lws-worker"
 
+# As of Dec 2024 sync/streaming endpoints don't have a concurrent requests per worker
+# accessible from reading k8s. We will define this value as such.
+# In any case, this should match the existing http_forwarder's max concurrency
+# (MAX_CONCURRENCY * NUM_WORKERS)
+# TODO once sync/streaming endpoints have this accessible from reading k8s, get rid of this
+FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER = 200
+
 _lazy_load_kubernetes_clients = True
 _kubernetes_apps_api = None
 _kubernetes_core_api = None
@@ -244,6 +251,14 @@ def get_main_container_from_deployment_template(deployment_template: Dict[str, A
             "main container (container['name'] == 'main') not found in deployment template when adding datadog env to main container."
         )
     return user_container
+
+
+def maybe_get_forwarder_container_from_deployment_config(deployment_config):
+    containers = deployment_config.spec.template.spec.containers
+    for container in containers:
+        if container.name in ["celery-forwarder", "http-forwarder"]:
+            return container
+    return None  # Don't expect to get here since everything should have a forwarder
 
 
 def get_leader_container_from_lws_template(lws_template: Dict[str, Any]):
@@ -1874,10 +1889,24 @@ class K8SEndpointResourceDelegate:
         deployment_config,
     ) -> HorizontalAutoscalingEndpointParams:
         metadata_annotations = deployment_config.metadata.annotations
+        forwarder_container = maybe_get_forwarder_container_from_deployment_config(
+            deployment_config
+        )
+        if forwarder_container is None:
+            concurrent_requests_per_worker = 1  # Default for async
+        else:
+            command = forwarder_container.command
+            # look for the thing that comes after --num-workers
+            num_workers_index = command.index("--num-workers")
+            if num_workers_index == -1:
+                concurrent_requests_per_worker = 1
+            else:
+                concurrent_requests_per_worker = int(command[num_workers_index + 1])
         return dict(
             min_workers=metadata_annotations["celery.scaleml.autoscaler/minWorkers"],
             max_workers=metadata_annotations["celery.scaleml.autoscaler/maxWorkers"],
             per_worker=metadata_annotations["celery.scaleml.autoscaler/perWorker"],
+            concurrent_requests_per_worker=concurrent_requests_per_worker,
         )
 
     @staticmethod
@@ -1892,6 +1921,7 @@ class K8SEndpointResourceDelegate:
             max_workers=spec.max_replicas,
             min_workers=spec.min_replicas,
             per_worker=per_worker,
+            concurrent_requests_per_worker=FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER,
         )
 
     @staticmethod
@@ -1910,6 +1940,7 @@ class K8SEndpointResourceDelegate:
             max_workers=spec.get("maxReplicaCount"),
             min_workers=spec.get("minReplicaCount"),
             per_worker=concurrency,
+            concurrent_requests_per_worker=FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER,
         )
 
     async def _get_resources(
@@ -2039,6 +2070,9 @@ class K8SEndpointResourceDelegate:
                 min_workers=horizontal_autoscaling_params["min_workers"],
                 max_workers=horizontal_autoscaling_params["max_workers"],
                 per_worker=int(horizontal_autoscaling_params["per_worker"]),
+                concurrent_requests_per_worker=horizontal_autoscaling_params[
+                    "concurrent_requests_per_worker"
+                ],
                 available_workers=deployment_config.status.available_replicas or 0,
                 unavailable_workers=deployment_config.status.unavailable_replicas or 0,
             ),
@@ -2095,6 +2129,7 @@ class K8SEndpointResourceDelegate:
                 min_workers=replicas,
                 max_workers=replicas,  # We don't have any notion of autoscaling for LWS
                 per_worker=int(1),  # TODO update this if we support LWS autoscaling
+                concurrent_requests_per_worker=FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER,
                 available_workers=replicas,  # TODO unfortunately it doesn't look like we can get this from the LWS CRD, so this is kind of a dummy value
                 unavailable_workers=0,
             ),
@@ -2234,6 +2269,9 @@ class K8SEndpointResourceDelegate:
                         min_workers=horizontal_autoscaling_params["min_workers"],
                         max_workers=horizontal_autoscaling_params["max_workers"],
                         per_worker=horizontal_autoscaling_params["per_worker"],
+                        concurrent_requests_per_worker=horizontal_autoscaling_params[
+                            "concurrent_requests_per_worker"
+                        ],
                         available_workers=deployment_config.status.available_replicas or 0,
                         unavailable_workers=deployment_config.status.unavailable_replicas or 0,
                     ),

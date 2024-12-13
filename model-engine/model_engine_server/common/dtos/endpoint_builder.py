@@ -17,6 +17,7 @@ class BuildEndpointRequest(BaseModel):
     min_workers: int
     max_workers: int
     per_worker: int
+    concurrent_requests_per_worker: int
     cpus: CpuSpecificationType
     gpus: int
     memory: StorageSpecificationType

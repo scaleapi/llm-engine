@@ -23,6 +23,7 @@ MAX_ENDPOINT_SIZE = (
 )
 # Also note that this is the default max_workers value for batch tasks.
 # Separately, we need user compute limits
+MAX_ASYNC_CONCURRENT_TASKS = 20  # Empirically, with prefork workers, the celery forwarder can only handle 20 concurrency as of Dec 2024
 
 # Individual cpu/mem limits for instance types. Corresponds to m5*, g4dn, g5dn AWS instance types.
 CPU_INSTANCE_LIMITS = dict(cpus=7, memory="30Gi")

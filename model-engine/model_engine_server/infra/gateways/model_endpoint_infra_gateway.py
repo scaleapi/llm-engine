@@ -25,6 +25,7 @@ class ModelEndpointInfraGateway(ABC):
         min_workers: int,
         max_workers: int,
         per_worker: int,
+        concurrent_requests_per_worker: int,
         cpus: CpuSpecificationType,
         gpus: int,
         memory: StorageSpecificationType,
@@ -50,7 +51,8 @@ class ModelEndpointInfraGateway(ABC):
             model_endpoint_record: The associated record of a model endpoint.
             min_workers: The minimum number of workers for the model endpoint.
             max_workers: The maximum number of workers for the model endpoint.
-            per_worker: The maximum number of concurrent tasks per worker.
+            per_worker: Autoscaling parameter used to set the target number of enqueued items per worker.
+            concurrent_requests_per_worker: The max number of concurrent requests for the worker to work on.
             cpus: The amount of CPU to use per worker for the model endpoint.
             gpus: The amount of GPU to use per worker for the model endpoint.
             memory: The amount of memory to use per worker for the model endpoint.
@@ -83,6 +85,7 @@ class ModelEndpointInfraGateway(ABC):
         min_workers: Optional[int] = None,
         max_workers: Optional[int] = None,
         per_worker: Optional[int] = None,
+        concurrent_requests_per_worker: Optional[int] = None,
         cpus: Optional[CpuSpecificationType] = None,
         gpus: Optional[int] = None,
         memory: Optional[StorageSpecificationType] = None,
@@ -106,7 +109,8 @@ class ModelEndpointInfraGateway(ABC):
             model_endpoint_record: The associated record of a model endpoint.
             min_workers: The minimum number of workers for the model endpoint.
             max_workers: The maximum number of workers for the model endpoint.
-            per_worker: The maximum number of concurrent tasks per worker.
+            per_worker: Autoscaling parameter used to set the target number of enqueued items per worker.
+            concurrent_requests_per_worker: The max number of concurrent requests for the worker to work on.
             cpus: The amount of CPU to use per worker for the model endpoint.
             gpus: The amount of GPU to use per worker for the model endpoint.
             memory: The amount of memory to use per worker for the model endpoint.

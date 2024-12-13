@@ -20,7 +20,11 @@ from model_engine_server.common.dtos.model_endpoints import (
     UpdateModelEndpointV1Request,
     UpdateModelEndpointV1Response,
 )
-from model_engine_server.common.resource_limits import MAX_ENDPOINT_SIZE, validate_resource_requests
+from model_engine_server.common.resource_limits import (
+    MAX_ASYNC_CONCURRENT_TASKS,
+    MAX_ENDPOINT_SIZE,
+    validate_resource_requests,
+)
 from model_engine_server.common.settings import REQUIRED_ENDPOINT_LABELS, RESTRICTED_ENDPOINT_LABELS
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -119,6 +123,20 @@ def validate_deployment_resources(
     if max_workers is not None and max_workers > MAX_ENDPOINT_SIZE:
         raise EndpointResourceInvalidRequestException(
             f"Requested max workers {max_workers} too high"
+        )
+
+
+def validate_concurrent_requests_per_worker(
+    concurrent_requests_per_worker: Optional[int],
+    endpoint_type: ModelEndpointType,
+):
+    if (
+        endpoint_type == ModelEndpointType.ASYNC
+        and concurrent_requests_per_worker is not None
+        and concurrent_requests_per_worker > MAX_ASYNC_CONCURRENT_TASKS
+    ):
+        raise EndpointResourceInvalidRequestException(
+            f"Requested concurrent requests per worker {concurrent_requests_per_worker} too high"
         )
 
 
@@ -276,6 +294,14 @@ class CreateModelEndpointV1UseCase:
             endpoint_type=request.endpoint_type,
             can_scale_http_endpoint_from_zero=self.model_endpoint_service.can_scale_http_endpoint_from_zero(),
         )
+
+        concurrent_requests_per_worker = request.concurrent_requests_per_worker
+        if concurrent_requests_per_worker is None:
+            concurrent_requests_per_worker = min(request.per_worker, MAX_ASYNC_CONCURRENT_TASKS)
+        validate_concurrent_requests_per_worker(
+            concurrent_requests_per_worker, request.endpoint_type
+        )
+
         if request.labels is None:
             raise EndpointLabelsException("Endpoint labels cannot be None!")
         validate_labels(request.labels)
@@ -353,6 +379,7 @@ class CreateModelEndpointV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             per_worker=request.per_worker,
+            concurrent_requests_per_worker=concurrent_requests_per_worker,
             labels=request.labels,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,
@@ -460,6 +487,10 @@ class UpdateModelEndpointByIdV1UseCase:
             can_scale_http_endpoint_from_zero=self.model_endpoint_service.can_scale_http_endpoint_from_zero(),
         )
 
+        validate_concurrent_requests_per_worker(
+            request.concurrent_requests_per_worker, endpoint_record.endpoint_type
+        )
+
         if request.metadata is not None and CONVERTED_FROM_ARTIFACT_LIKE_KEY in request.metadata:
             raise ObjectHasInvalidValueException(
                 f"{CONVERTED_FROM_ARTIFACT_LIKE_KEY} is a reserved metadata key and cannot be used by user."
@@ -479,6 +510,7 @@ class UpdateModelEndpointByIdV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             per_worker=request.per_worker,
+            concurrent_requests_per_worker=request.concurrent_requests_per_worker,
             labels=request.labels,
             prewarm=request.prewarm,
             high_priority=request.high_priority,

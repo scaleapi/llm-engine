@@ -145,6 +145,10 @@ LLM_METADATA_KEY = "_llm"
 RESERVED_METADATA_KEYS = [LLM_METADATA_KEY, CONVERTED_FROM_ARTIFACT_LIKE_KEY]
 VLLM_MODEL_WEIGHTS_FOLDER = "model_files"
 
+LLM_MAX_CONCURRENCY_PER_WORKER = 250
+# TODO as of Dec 2024 sync concurrency settings aren't implemented through the API so this does nothing
+# In any case, the "true" value is 200 but we should probably set it higher
+
 INFERENCE_FRAMEWORK_REPOSITORY: Dict[LLMInferenceFramework, str] = {
     LLMInferenceFramework.DEEPSPEED: "instant-llm",
     LLMInferenceFramework.TEXT_GENERATION_INFERENCE: hmi_config.tgi_repository,
@@ -1394,6 +1398,7 @@ class CreateLLMModelEndpointV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             per_worker=request.per_worker,
+            concurrent_requests_per_worker=LLM_MAX_CONCURRENCY_PER_WORKER,
             labels=request.labels,
             aws_role=aws_role,
             results_s3_bucket=results_s3_bucket,
@@ -1663,6 +1668,7 @@ class UpdateLLMModelEndpointV1UseCase:
             min_workers=request.min_workers,
             max_workers=request.max_workers,
             per_worker=request.per_worker,
+            concurrent_requests_per_worker=None,  # Don't need to update this value presumably
             labels=request.labels,
             prewarm=request.prewarm,
             high_priority=request.high_priority,
