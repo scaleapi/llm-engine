@@ -268,6 +268,7 @@ _SUPPORTED_MODELS_BY_FRAMEWORK = {
             "deepseek-coder-v2-lite",
             "deepseek-coder-v2-lite-instruct",
             "qwen2-72b-instruct",
+            "command-r-plus-08-2024",
         ]
     ),
     LLMInferenceFramework.LIGHTLLM: set(
