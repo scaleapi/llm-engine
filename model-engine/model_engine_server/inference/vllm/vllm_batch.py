@@ -322,7 +322,9 @@ def get_model_name(model_config: BatchCompletionsModelConfig) -> str:
     return MODEL_WEIGHTS_FOLDER if model_config.checkpoint_path else model_config.model
 
 
-async def handle_batch_job(request: CreateBatchCompletionsEngineRequest, multinode: bool) -> None:
+async def handle_batch_job(
+    request: CreateBatchCompletionsEngineRequest, multinode: bool, multinode_timeout: int
+) -> None:
     metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
 
     model = get_model_name(request.model_cfg)
@@ -340,13 +342,16 @@ async def handle_batch_job(request: CreateBatchCompletionsEngineRequest, multino
         # Init the ray cluster
         leader_addr = os.environ.get("LEADER_ADDR")
         leader_port = os.environ.get("LEADER_PORT")
+        num_instances = os.environ.get("NUM_INSTANCES")
         assert (
-            leader_addr is not None and leader_port is not None
-        ), "Leader addr and port must be set"
+            leader_addr is not None and leader_port is not None and num_instances is not None
+        ), "Leader addr and port and num_instances must be set"
         init_ray(
             leader_addr=leader_addr,
             leader_port=int(leader_port),
             is_leader=job_completion_index == 0,
+            cluster_size=int(num_instances),
+            timeout=multinode_timeout,
         )
         pass
 
@@ -390,6 +395,12 @@ if __name__ == "__main__":
         default=False,
         help="Whether to run in multinode mode",
     )
+    parser.add_argument(
+        "--multinode-timeout",
+        type=int,
+        default=600,
+        help="Timeout for multinode mode",
+    )
     args = parser.parse_args()
 
     check_unknown_startup_memory_usage()
@@ -403,4 +414,4 @@ if __name__ == "__main__":
 
     request = CreateBatchCompletionsEngineRequest.model_validate_json(config_file_data)
 
-    asyncio.run(handle_batch_job(request, args.multinode))
+    asyncio.run(handle_batch_job(request, args.multinode, args.multinode_timeout))
