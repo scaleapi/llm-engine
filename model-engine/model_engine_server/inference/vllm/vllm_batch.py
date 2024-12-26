@@ -357,7 +357,13 @@ if __name__ == "__main__":
         default=None,
         help="Optional override for the config file data, as a json string",
     )
-
+    parser.add_argument(
+        "--multinode",
+        type=bool,
+        action="store_true",
+        default=False,
+        help="Whether to run in multinode mode",
+    )
     args = parser.parse_args()
 
     check_unknown_startup_memory_usage()
