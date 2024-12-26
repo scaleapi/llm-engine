@@ -38,6 +38,7 @@ from model_engine_server.inference.utils import (
     get_cpu_cores_in_container,
     random_uuid,
 )
+from model_engine_server.inference.vllm.init_ray_batch_inf_v2 import init_ray
 from pydantic import TypeAdapter
 from starlette.datastructures import Headers
 from tqdm import tqdm
@@ -249,6 +250,9 @@ async def init_engine(
     default_engine_args_dict = dict(
         model=model,
         tensor_parallel_size=request.model_cfg.num_shards,
+        pipeline_parallel_size=int(
+            os.environ.get("NUM_INSTANCES", 1)
+        ),  # TODO maybe do something other than TP=8, PP=number of nodes
         seed=request.model_cfg.seed or 0,
         disable_log_requests=True,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
@@ -318,7 +322,7 @@ def get_model_name(model_config: BatchCompletionsModelConfig) -> str:
     return MODEL_WEIGHTS_FOLDER if model_config.checkpoint_path else model_config.model
 
 
-async def handle_batch_job(request: CreateBatchCompletionsEngineRequest) -> None:
+async def handle_batch_job(request: CreateBatchCompletionsEngineRequest, multinode: bool) -> None:
     metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
 
     model = get_model_name(request.model_cfg)
@@ -328,6 +332,28 @@ async def handle_batch_job(request: CreateBatchCompletionsEngineRequest) -> None
             target_dir=MODEL_WEIGHTS_FOLDER,
             trust_remote_code=request.model_cfg.trust_remote_code or False,
         )
+
+    # TODO init the ray cluster here
+
+    if multinode:
+        job_completion_index = int(os.environ.get("JOB_COMPLETION_INDEX", 0))
+        # Init the ray cluster
+        leader_addr = os.environ.get("LEADER_ADDR")
+        leader_port = os.environ.get("LEADER_PORT")
+        assert (
+            leader_addr is not None and leader_port is not None
+        ), "Leader addr and port must be set"
+        init_ray(
+            leader_addr=leader_addr,
+            leader_port=int(leader_port),
+            is_leader=job_completion_index == 0,
+        )
+        pass
+
+        if job_completion_index > 0:
+            # Skip running the batch job on all but the first node
+            # TODO something like this
+            exit(0)
 
     content = load_batch_content(request)
     engine = await init_engine(
@@ -377,4 +403,4 @@ if __name__ == "__main__":
 
     request = CreateBatchCompletionsEngineRequest.model_validate_json(config_file_data)
 
-    asyncio.run(handle_batch_job(request))
+    asyncio.run(handle_batch_job(request, args.multinode))
