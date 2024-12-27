@@ -3638,6 +3638,10 @@ class CreateBatchCompletionsV2UseCase:
 
         if engine_request.max_runtime_sec is None or engine_request.max_runtime_sec < 1:
             raise ObjectHasInvalidValueException("max_runtime_sec must be a positive integer.")
+        if engine_request.data_parallelism is not None and engine_request.data_parallelism > 1:
+            raise ObjectHasInvalidValueException(
+                "Data parallelism is now disabled for batch completions."
+            )
 
         # Right now we only support VLLM for batch inference. Refactor this if we support more inference frameworks.
         image_repo = hmi_config.batch_inference_vllm_repository
