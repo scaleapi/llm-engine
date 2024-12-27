@@ -358,6 +358,10 @@ async def handle_batch_job(
         if job_completion_index > 0:
             # Skip running the batch job on all but the first node
             # TODO something like this
+            # Can't actually exit, need to wait for the leader to finish
+            while True:
+                await asyncio.sleep(60)
+                # just spin for now, TODO add a check for the leader to be done
             exit(0)
 
     content = load_batch_content(request)
