@@ -80,11 +80,9 @@ def init_ray(
     Args:
         leader_addr: DNS name of the master node (K8s service)
         leader_port: Port number of the master node
+        is_leader: If this is the leader node.
         cluster_size: Expected total number of nodes in the cluster
         node_ip_address: IP address of the current node. If None, will be automatically detected
-        resources: Custom resources for the node
-        max_retries: Maximum number of connection attempts
-        retry_interval: Time between retry attempts in seconds
         timeout: Maximum time to wait for cluster to reach expected size
     """
     # TODO figure out if this thing works for node_ip_address
@@ -92,14 +90,18 @@ def init_ray(
     node_ip_address = socket.gethostbyname(socket.gethostname())
 
     print(f"Waiting for head node DNS ({leader_addr}) to be resolvable...")
-    head_ip = wait_for_dns(leader_addr)
+    head_ip = wait_for_dns(leader_addr, timeout=timeout)
     if head_ip is None:
         raise RuntimeError(f"Timeout waiting for DNS resolution of {leader_addr}")
 
     ray_params = {
-        "address": f"ray://{leader_addr}:{leader_port}",
         "_node_ip_address": node_ip_address,
     }
+
+    if not is_leader:
+        ray_params["address"] = (
+            f"ray://{leader_addr}:{leader_port}"  # TODO can try head_ip if this doesn't work
+        )
 
     ray.init(**ray_params)
     print(
