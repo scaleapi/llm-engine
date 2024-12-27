@@ -1,20 +1,20 @@
 import socket
+import subprocess
 import time
-from typing import Optional
 
 import ray
 
 RETRY_INTERVAL_SEC = 5
 
 
-def wait_for_dns(hostname: str, timeout: int = 300, interval: int = 5) -> Optional[str]:
+def wait_for_dns(hostname: str, timeout: int = 300, interval: int = 5):
     """
     Wait for DNS resolution of the hostname.
     """
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
-            ip = socket.gethostbyname(hostname)
+            ip = socket.getaddrinfo(hostname, None)
             return ip
         except socket.gaierror:
             print(f"Waiting for DNS resolution of {hostname}...")
@@ -66,6 +66,51 @@ def wait_for_cluster_nodes(
     return False
 
 
+def start_leader(
+    ray_port: int,
+    node_ip_address: str,
+) -> bool:
+    # node ip address in this case is actually a DNS name for the pod
+    result = subprocess.run(
+        ["ray", "start", "--head", "--port", str(ray_port), "--node-ip-address", node_ip_address]
+    )
+    if result.returncode == 0:
+        print(f"Leader: Ray runtime started with port {ray_port}")
+        return True
+    print(f"Failed to start Ray leader node with port {ray_port}")
+    return False
+
+
+def start_worker(
+    ray_port: int,
+    node_ip_address: str,
+    leader_addr: str,
+    timeout: int,
+) -> bool:
+    # node ip address in this case is actually a DNS name for the pod
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        result = subprocess.run(
+            [
+                "ray",
+                "start",
+                "--address",
+                f"{leader_addr}:{ray_port}",
+                "--node-ip-address",
+                node_ip_address,
+            ],
+            capture_output=True,
+        )
+        if result.returncode == 0:
+            print(f"Worker: Ray runtime started with head address {leader_addr}:{ray_port}")
+            return True
+        print(result.returncode)
+        print("Waiting until the ray worker is active...")
+        time.sleep(5)
+    print(f"Ray worker starts timeout, head address: {leader_addr}:{ray_port}")
+    return False
+
+
 def init_ray(
     leader_addr: str,
     leader_port: int,
@@ -92,20 +137,26 @@ def init_ray(
     )  # dumb hack to get the equivalent of leader_addr
 
     print(f"Waiting for head node DNS ({leader_addr}) to be resolvable...")
-    head_ip = wait_for_dns(leader_addr, timeout=timeout)
-    if head_ip is None:
+    head_ip_info = wait_for_dns(leader_addr, timeout=timeout)
+    if head_ip_info is None:
         raise RuntimeError(f"Timeout waiting for DNS resolution of {leader_addr}")
 
-    ray_params = {
-        "_node_ip_address": node_ip_address,
-    }
+    # ray_params = {
+    #     "_node_ip_address": node_ip_address,
+    # }
 
-    if not is_leader:
-        ray_params["address"] = (
-            f"ray://{leader_addr}:{leader_port}"  # TODO can try head_ip if this doesn't work
-        )
+    # if not is_leader:
+    #     ray_params["address"] = (
+    #         f"ray://{leader_addr}:{leader_port}"
+    #     )
 
-    ray.init(**ray_params)
+    # ray.init(**ray_params)  # TODO replace with a subprocess call since we can't set port via ray.init
+    if is_leader:
+        if not start_leader(leader_port, node_ip_address):
+            raise RuntimeError("Failed to start Ray leader node")
+    else:
+        if not start_worker(leader_port, node_ip_address, leader_addr, timeout):
+            raise RuntimeError("Failed to start Ray worker node")
     print(
         f"Successfully initialized Ray {'head' if is_leader else 'worker'} node at {node_ip_address}"
     )

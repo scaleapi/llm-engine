@@ -346,7 +346,7 @@ async def handle_batch_job(
         assert (
             leader_addr is not None and leader_port is not None and num_instances is not None
         ), "Leader addr and port and num_instances must be set"
-        await asyncio.sleep(3600)  # Sleep so I can debug some stuff
+        # await asyncio.sleep(3600)  # Sleep so I can debug some stuff
         init_ray(
             leader_addr=leader_addr,
             leader_port=int(leader_port),
@@ -354,7 +354,6 @@ async def handle_batch_job(
             cluster_size=int(num_instances),
             timeout=multinode_timeout,
         )
-        pass
 
         if job_completion_index > 0:
             # Skip running the batch job on all but the first node
