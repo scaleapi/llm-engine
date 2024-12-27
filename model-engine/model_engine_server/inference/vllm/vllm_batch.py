@@ -390,7 +390,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--multinode",
-        type=bool,
         action="store_true",
         default=False,
         help="Whether to run in multinode mode",
