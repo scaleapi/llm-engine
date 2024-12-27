@@ -36,6 +36,8 @@ def wait_for_cluster_nodes(
     Returns:
         bool: True if cluster reached expected size, False if timeout occurred
     """
+    # Since we've subprocess.run for starting ray, need to connect in the cluster right here.
+    ray.init()
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
