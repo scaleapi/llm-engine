@@ -7,6 +7,15 @@ import ray
 RETRY_INTERVAL_SEC = 5
 
 
+def get_node_ip_address(leader_addr: str) -> str:
+    # Assumes we're on a K8s cluster where the leader address is
+    # <leader pod name>.<the rest of the FQDN>
+    # e.g. if we're using a JobSet
+    # Kinda of a dumb hack to get an externally addressable DNS name
+    node_ip_address = socket.gethostname() + "." + leader_addr.split(".", 1)[1]
+    return node_ip_address
+
+
 def wait_for_dns(hostname: str, timeout: int = 300, interval: int = 5):
     """
     Wait for DNS resolution of the hostname.
@@ -132,11 +141,7 @@ def init_ray(
         node_ip_address: IP address of the current node. If None, will be automatically detected
         timeout: Maximum time to wait for cluster to reach expected size
     """
-    # TODO figure out if this thing works for node_ip_address
-    # if node_ip_address is None:
-    node_ip_address = (
-        socket.gethostname() + "." + leader_addr.split(".", 1)[1]
-    )  # dumb hack to get the equivalent of leader_addr
+    node_ip_address = get_node_ip_address(leader_addr)
 
     print(f"Waiting for head node DNS ({leader_addr}) to be resolvable...")
     head_ip_info = wait_for_dns(leader_addr, timeout=timeout)

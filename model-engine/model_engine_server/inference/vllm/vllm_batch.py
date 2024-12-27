@@ -38,7 +38,7 @@ from model_engine_server.inference.utils import (
     get_cpu_cores_in_container,
     random_uuid,
 )
-from model_engine_server.inference.vllm.init_ray_batch_inf_v2 import init_ray
+from model_engine_server.inference.vllm.init_ray_batch_inf_v2 import get_node_ip_address, init_ray
 from pydantic import TypeAdapter
 from starlette.datastructures import Headers
 from tqdm import tqdm
@@ -347,6 +347,10 @@ async def handle_batch_job(
             leader_addr is not None and leader_port is not None and num_instances is not None
         ), "Leader addr and port and num_instances must be set"
         # await asyncio.sleep(3600)  # Sleep so I can debug some stuff
+
+        # Set this so VLLM starts up correctly with the Ray cluster we set up
+        os.environ["VLLM_HOST_IP"] = get_node_ip_address(leader_addr)
+
         init_ray(
             leader_addr=leader_addr,
             leader_port=int(leader_port),
