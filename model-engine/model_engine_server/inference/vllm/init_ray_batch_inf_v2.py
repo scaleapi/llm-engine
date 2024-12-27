@@ -87,7 +87,9 @@ def init_ray(
     """
     # TODO figure out if this thing works for node_ip_address
     # if node_ip_address is None:
-    node_ip_address = socket.gethostbyname(socket.gethostname())
+    node_ip_address = (
+        socket.gethostname() + "." + leader_addr.split(".", 1)[1]
+    )  # dumb hack to get the equivalent of leader_addr
 
     print(f"Waiting for head node DNS ({leader_addr}) to be resolvable...")
     head_ip = wait_for_dns(leader_addr, timeout=timeout)
