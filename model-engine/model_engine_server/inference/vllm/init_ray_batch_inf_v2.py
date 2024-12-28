@@ -87,7 +87,9 @@ async def wait_for_head_node_to_exit(
     while True:
         try:
             nodes = ray.nodes()
-            if len(nodes) < total_nodes:
+            if (
+                len(nodes) < total_nodes
+            ):  # TODO: Doesn't quite work if you go more than 2 nodes since this will detect failures if other nodes haven't joined yet
                 print("Detected a node has exited")
                 consecutive_failures += 1
             else:
