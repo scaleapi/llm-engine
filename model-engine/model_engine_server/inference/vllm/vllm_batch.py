@@ -351,6 +351,12 @@ async def handle_batch_job(
         # Set this so VLLM starts up correctly with the Ray cluster we set up
         os.environ["VLLM_HOST_IP"] = get_node_ip_address(leader_addr)
 
+        # Some debug stuff
+        os.environ["NCCL_SOCKET_IFNAME"] = "eth0"
+        os.environ["GLOO_SOCKET_IFNAME"] = "eth0"
+        os.environ["NCCL_DEBUG"] = "INFO"
+        os.environ["VLLM_LOGGING_LEVEL"] = "INFO"
+
         init_ray(
             leader_addr=leader_addr,
             leader_port=int(leader_port),
