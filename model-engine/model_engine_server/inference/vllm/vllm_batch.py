@@ -38,7 +38,11 @@ from model_engine_server.inference.utils import (
     get_cpu_cores_in_container,
     random_uuid,
 )
-from model_engine_server.inference.vllm.init_ray_batch_inf_v2 import get_node_ip_address, init_ray
+from model_engine_server.inference.vllm.init_ray_batch_inf_v2 import (
+    get_node_ip_address,
+    init_ray,
+    wait_for_head_node_to_exit,
+)
 from pydantic import TypeAdapter
 from starlette.datastructures import Headers
 from tqdm import tqdm
@@ -367,11 +371,7 @@ async def handle_batch_job(
 
         if job_completion_index > 0:
             # Skip running the batch job on all but the first node
-            # TODO something like this
-            # Can't actually exit, need to wait for the leader to finish
-            while True:
-                await asyncio.sleep(60)
-                # just spin for now, TODO add a check for the leader to be done
+            await wait_for_head_node_to_exit(int(num_instances))
             exit(0)
 
     content = load_batch_content(request)

@@ -1,3 +1,4 @@
+import asyncio
 import socket
 import subprocess
 import time
@@ -75,6 +76,29 @@ def wait_for_cluster_nodes(
 
     print(f"Timeout waiting for cluster to reach size {expected_nodes}")
     return False
+
+
+async def wait_for_head_node_to_exit(
+    total_nodes: int, check_interval: int = 10, allowed_failures: int = 6
+) -> None:
+    # Spins and waits for some other node to exit. Returns once some other node is no longer alive.
+    ray.init()
+    consecutive_failures = 0
+    while True:
+        try:
+            nodes = ray.nodes()
+            if len(nodes) < total_nodes:
+                print("Detected a node has exited")
+                consecutive_failures += 1
+            else:
+                print("All nodes seem to be alive")
+                consecutive_failures = 0
+        except Exception as e:
+            print(f"Error checking head node status: {e}")
+            consecutive_failures += 1
+        if consecutive_failures >= allowed_failures:
+            return
+        await asyncio.sleep(check_interval)
 
 
 def start_leader(
