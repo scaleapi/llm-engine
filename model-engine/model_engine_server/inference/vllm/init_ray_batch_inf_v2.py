@@ -144,18 +144,18 @@ def start_worker(
             # try:
             #     ray.init(address=f"ray://{leader_addr}:{ray_port}", _node_ip_address=node_ip_address)
 
-            #     print(
-            #         f"Worker: Ray runtime started with head address {leader_addr}:{ray_port}",
-            #         flush=True,
-            #     )
-            #     return True
-            # except Exception as e:
             print(
-                f"Failed to start Ray worker node with head address {leader_addr}:{ray_port}",
+                f"Worker: Ray runtime started with head address {leader_addr}:{ray_port}",
                 flush=True,
             )
-            print(result.returncode)
-            print("Waiting until the ray worker is active...", flush=True)
+            return True
+            # except Exception as e:
+        print(
+            f"Failed to start Ray worker node with head address {leader_addr}:{ray_port}",
+            flush=True,
+        )
+        print(result.returncode)
+        print("Waiting until the ray worker is active...", flush=True)
         time.sleep(5)
     print(f"Ray worker starts timeout, head address: {leader_addr}:{ray_port}", flush=True)
     return False
