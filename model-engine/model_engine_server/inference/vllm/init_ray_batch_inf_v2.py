@@ -113,9 +113,9 @@ def start_leader(
         ["ray", "start", "--head", "--port", str(ray_port), "--node-ip-address", node_ip_address]
     )
     if result.returncode == 0:
-        print(f"Leader: Ray runtime started with port {ray_port}")
+        print(f"Leader: Ray runtime started with port {ray_port}", flush=True)
         return True
-    print(f"Failed to start Ray leader node with port {ray_port}")
+    print(f"Failed to start Ray leader node with port {ray_port}", flush=True)
     return False
 
 
@@ -143,16 +143,20 @@ def start_worker(
         try:
             ray.init(address=f"ray://{leader_addr}:{ray_port}", _node_ip_address=node_ip_address)
 
-            print(f"Worker: Ray runtime started with head address {leader_addr}:{ray_port}")
+            print(
+                f"Worker: Ray runtime started with head address {leader_addr}:{ray_port}",
+                flush=True,
+            )
             return True
         except Exception as e:
             print(
-                f"Failed to start Ray worker node with head address {leader_addr}:{ray_port}: {e}"
+                f"Failed to start Ray worker node with head address {leader_addr}:{ray_port}: {e}",
+                flush=True,
             )
             # print(result.returncode)
-            print("Waiting until the ray worker is active...")
+            print("Waiting until the ray worker is active...", flush=True)
         time.sleep(5)
-    print(f"Ray worker starts timeout, head address: {leader_addr}:{ray_port}")
+    print(f"Ray worker starts timeout, head address: {leader_addr}:{ray_port}", flush=True)
     return False
 
 
@@ -177,7 +181,7 @@ def init_ray(
     """
     node_ip_address = get_node_ip_address(leader_addr)
 
-    print(f"Waiting for head node DNS ({leader_addr}) to be resolvable...")
+    print(f"Waiting for head node DNS ({leader_addr}) to be resolvable...", flush=True)
     head_ip_info = wait_for_dns(leader_addr, timeout=timeout)
     if head_ip_info is None:
         raise RuntimeError(f"Timeout waiting for DNS resolution of {leader_addr}")
@@ -199,7 +203,8 @@ def init_ray(
         if not start_worker(leader_port, node_ip_address, leader_addr, timeout):
             raise RuntimeError("Failed to start Ray worker node")
     print(
-        f"Successfully initialized Ray {'head' if is_leader else 'worker'} node at {node_ip_address}"
+        f"Successfully initialized Ray {'head' if is_leader else 'worker'} node at {node_ip_address}",
+        flush=True,
     )
 
     # After successful initialization, wait for cluster to reach expected size
