@@ -82,7 +82,7 @@ async def wait_for_head_node_to_exit(
     total_nodes: int, check_interval: int = 10, allowed_failures: int = 6
 ) -> None:
     # Spins and waits for some other node to exit. Returns once some other node is no longer alive.
-    ray.init()
+    #  ray.init()  # Already init'd in start_worker
     consecutive_failures = 0
     while True:
         try:
@@ -127,22 +127,29 @@ def start_worker(
     # node ip address in this case is actually a DNS name for the pod
     start_time = time.time()
     while time.time() - start_time < timeout:
-        result = subprocess.run(
-            [
-                "ray",
-                "start",
-                "--address",
-                f"{leader_addr}:{ray_port}",
-                "--node-ip-address",
-                node_ip_address,
-            ],
-            capture_output=True,
-        )
-        if result.returncode == 0:
+        # result = subprocess.run(
+        #     [
+        #         "ray",
+        #         "start",
+        #         "--address",
+        #         f"{leader_addr}:{ray_port}",
+        #         "--node-ip-address",
+        #         node_ip_address,
+        #     ],
+        #     capture_output=True,
+        # )  # This doesn't return?
+        # if result.returncode == 0:
+        try:
+            ray.init(address=f"ray://{leader_addr}:{ray_port}", _node_ip_address=node_ip_address)
+
             print(f"Worker: Ray runtime started with head address {leader_addr}:{ray_port}")
             return True
-        print(result.returncode)
-        print("Waiting until the ray worker is active...")
+        except Exception as e:
+            print(
+                f"Failed to start Ray worker node with head address {leader_addr}:{ray_port}: {e}"
+            )
+            # print(result.returncode)
+            print("Waiting until the ray worker is active...")
         time.sleep(5)
     print(f"Ray worker starts timeout, head address: {leader_addr}:{ray_port}")
     return False
