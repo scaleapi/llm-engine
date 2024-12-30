@@ -99,6 +99,13 @@ async def wait_for_head_node_to_exit(
         except Exception as e:
             print(f"Error checking head node status: {e}", flush=True)
             consecutive_failures += 1
+        except BaseException as e:
+            print(f"Error checking head node status: {e}", flush=True)
+            print(f"Caught BaseException, {type(e)}")
+            consecutive_failures += 1
+        except:  # noqa: E722
+            print("Caught unknown exception", flush=True)
+            consecutive_failures += 1
         if consecutive_failures >= allowed_failures:
             print("Exiting since we've detected enough failures", flush=True)
             return
