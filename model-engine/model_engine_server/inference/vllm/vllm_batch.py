@@ -333,11 +333,13 @@ async def handle_batch_job(
 
     model = get_model_name(request.model_cfg)
     if request.model_cfg.checkpoint_path:
-        await download_model(
-            checkpoint_path=request.model_cfg.checkpoint_path,
-            target_dir=MODEL_WEIGHTS_FOLDER,
-            trust_remote_code=request.model_cfg.trust_remote_code or False,
-        )
+        pass
+        # TODO change back
+        # await download_model(
+        #     checkpoint_path=request.model_cfg.checkpoint_path,
+        #     target_dir=MODEL_WEIGHTS_FOLDER,
+        #     trust_remote_code=request.model_cfg.trust_remote_code or False,
+        # )
 
     # TODO init the ray cluster here
 
