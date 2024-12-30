@@ -99,6 +99,7 @@ async def wait_for_head_node_to_exit(
             print(f"Error checking head node status: {e}")
             consecutive_failures += 1
         if consecutive_failures >= allowed_failures:
+            print("Exiting since we've detected enough failures")
             return
         await asyncio.sleep(check_interval)
 
