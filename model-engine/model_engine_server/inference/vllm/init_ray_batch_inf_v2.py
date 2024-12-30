@@ -55,10 +55,10 @@ def wait_for_cluster_nodes(
             alive_nodes = [node for node in nodes if node["Alive"]]
             current_size = len(alive_nodes)
 
-            print(f"Current cluster size: {current_size}/{expected_nodes} nodes")
+            print(f"Current cluster size: {current_size}/{expected_nodes} nodes", flush=True)
 
             if current_size >= expected_nodes:
-                print("Cluster reached expected size!")
+                print("Cluster reached expected size!", flush=True)
                 return True
 
             # Print status of nodes that aren't alive
@@ -66,15 +66,16 @@ def wait_for_cluster_nodes(
                 dead_nodes = [node for node in nodes if not node["Alive"]]
                 for node in dead_nodes:
                     print(
-                        f"Node {node['NodeID']} is not alive: {node.get('LastError', 'Unknown error')}"
+                        f"Node {node['NodeID']} is not alive: {node.get('LastError', 'Unknown error')}",
+                        flush=True,
                     )
 
         except Exception as e:
-            print(f"Error checking cluster size: {e}")
+            print(f"Error checking cluster size: {e}", flush=True)
 
         time.sleep(check_interval)
 
-    print(f"Timeout waiting for cluster to reach size {expected_nodes}")
+    print(f"Timeout waiting for cluster to reach size {expected_nodes}", flush=True)
     return False
 
 
@@ -82,7 +83,7 @@ async def wait_for_head_node_to_exit(
     total_nodes: int, check_interval: int = 10, allowed_failures: int = 6
 ) -> None:
     # Spins and waits for some other node to exit. Returns once some other node is no longer alive.
-    #  ray.init()  # Already init'd in start_worker
+    ray.init()  # (not) Already init'd in start_worker
     consecutive_failures = 0
     while True:
         try:
@@ -90,16 +91,16 @@ async def wait_for_head_node_to_exit(
             if (
                 len(nodes) < total_nodes
             ):  # TODO: Doesn't quite work if you go more than 2 nodes since this will detect failures if other nodes haven't joined yet
-                print("Detected a node has exited")
+                print("Detected a node has exited", flush=True)
                 consecutive_failures += 1
             else:
-                print("All nodes seem to be alive")
+                print("All nodes seem to be alive", flush=True)
                 consecutive_failures = 0
         except Exception as e:
-            print(f"Error checking head node status: {e}")
+            print(f"Error checking head node status: {e}", flush=True)
             consecutive_failures += 1
         if consecutive_failures >= allowed_failures:
-            print("Exiting since we've detected enough failures")
+            print("Exiting since we've detected enough failures", flush=True)
             return
         await asyncio.sleep(check_interval)
 
@@ -128,32 +129,32 @@ def start_worker(
     # node ip address in this case is actually a DNS name for the pod
     start_time = time.time()
     while time.time() - start_time < timeout:
-        # result = subprocess.run(
-        #     [
-        #         "ray",
-        #         "start",
-        #         "--address",
-        #         f"{leader_addr}:{ray_port}",
-        #         "--node-ip-address",
-        #         node_ip_address,
-        #     ],
-        #     capture_output=True,
-        # )  # This doesn't return?
-        # if result.returncode == 0:
-        try:
-            ray.init(address=f"ray://{leader_addr}:{ray_port}", _node_ip_address=node_ip_address)
+        result = subprocess.run(
+            [
+                "ray",
+                "start",
+                "--address",
+                f"{leader_addr}:{ray_port}",
+                "--node-ip-address",
+                node_ip_address,
+            ],
+            capture_output=True,
+        )  # This doesn't return?
+        if result.returncode == 0:
+            # try:
+            #     ray.init(address=f"ray://{leader_addr}:{ray_port}", _node_ip_address=node_ip_address)
 
+            #     print(
+            #         f"Worker: Ray runtime started with head address {leader_addr}:{ray_port}",
+            #         flush=True,
+            #     )
+            #     return True
+            # except Exception as e:
             print(
-                f"Worker: Ray runtime started with head address {leader_addr}:{ray_port}",
+                f"Failed to start Ray worker node with head address {leader_addr}:{ray_port}",
                 flush=True,
             )
-            return True
-        except Exception as e:
-            print(
-                f"Failed to start Ray worker node with head address {leader_addr}:{ray_port}: {e}",
-                flush=True,
-            )
-            # print(result.returncode)
+            print(result.returncode)
             print("Waiting until the ray worker is active...", flush=True)
         time.sleep(5)
     print(f"Ray worker starts timeout, head address: {leader_addr}:{ray_port}", flush=True)
