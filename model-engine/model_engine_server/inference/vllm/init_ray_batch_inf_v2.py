@@ -85,7 +85,9 @@ async def wait_for_head_node_to_exit() -> None:
     # Would need to catch the termination though and pretend it's intended
     # Spins and waits for some other node to exit. Returns once some other node is no longer alive.
     # This name needs to equal the name of the file!
-    worker_process = subprocess.Popen([sys.executable, "init_ray_batch_inf_v2.py"])
+    worker_process = subprocess.Popen(
+        [sys.executable, "init_ray_batch_inf_v2.py", "--mode", "wait_for_head_node_to_exit"]
+    )
     return_code = worker_process.wait()
     if return_code != 0:
         print("Worker terminated with code:", return_code)
