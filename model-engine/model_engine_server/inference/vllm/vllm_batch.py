@@ -339,25 +339,24 @@ async def handle_batch_job(
             trust_remote_code=request.model_cfg.trust_remote_code or False,
         )
 
-    # TODO init the ray cluster here
-
     if multinode:
         job_completion_index = int(os.environ.get("JOB_COMPLETION_INDEX", 0))
-        # Init the ray cluster
+        # Initialize the ray cluster
         leader_addr = os.environ.get("LEADER_ADDR")
         leader_port = os.environ.get("LEADER_PORT")
         num_instances = os.environ.get("NUM_INSTANCES")
         assert (
             leader_addr is not None and leader_port is not None and num_instances is not None
         ), "Leader addr and port and num_instances must be set"
-        # await asyncio.sleep(3600)  # Sleep so I can debug some stuff
 
         # Set this so VLLM starts up correctly with the Ray cluster we set up
         os.environ["VLLM_HOST_IP"] = get_node_ip_address(leader_addr)
 
-        # Some debug stuff
+        # Also necessary for VLLM
         os.environ["NCCL_SOCKET_IFNAME"] = "eth0"
         os.environ["GLOO_SOCKET_IFNAME"] = "eth0"
+
+        # Debug logging
         os.environ["NCCL_DEBUG"] = "INFO"
         os.environ["VLLM_LOGGING_LEVEL"] = "INFO"
 
@@ -370,7 +369,7 @@ async def handle_batch_job(
         )
 
         if job_completion_index > 0:
-            # Skip running the batch job on all but the first node
+            # Skip running the batch job code on all but the first node
             await wait_for_head_node_to_exit()
             exit(0)
 

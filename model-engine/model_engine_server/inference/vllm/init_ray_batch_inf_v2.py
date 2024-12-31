@@ -81,9 +81,7 @@ def wait_for_cluster_nodes(
 
 
 async def wait_for_head_node_to_exit() -> None:
-    # Could just replace this with a while True: nodes = ray.nodes() and once that call errors, we're done
-    # Would need to catch the termination though and pretend it's intended
-    # Spins and waits for some other node to exit. Returns once some other node is no longer alive.
+    # Waits until there is no longer a connection to the head Ray node, then exits
     # This name needs to equal the name of the file!
     worker_process = subprocess.Popen(
         [sys.executable, "init_ray_batch_inf_v2.py", "--mode", "wait_for_head_node_to_exit"]
