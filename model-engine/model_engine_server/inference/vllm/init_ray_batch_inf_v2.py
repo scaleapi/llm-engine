@@ -1,6 +1,7 @@
-import asyncio
+import argparse
 import socket
 import subprocess
+import sys
 import time
 
 import ray
@@ -79,37 +80,23 @@ def wait_for_cluster_nodes(
     return False
 
 
-async def wait_for_head_node_to_exit(
-    total_nodes: int, check_interval: int = 10, allowed_failures: int = 6
-) -> None:
+async def wait_for_head_node_to_exit() -> None:
+    # Could just replace this with a while True: nodes = ray.nodes() and once that call errors, we're done
+    # Would need to catch the termination though and pretend it's intended
     # Spins and waits for some other node to exit. Returns once some other node is no longer alive.
-    ray.init()  # (not) Already init'd in start_worker
-    consecutive_failures = 0
+    worker_process = subprocess.Popen([sys.executable, "worker_script.py"])
+    return_code = worker_process.wait()
+    if return_code != 0:
+        print("Worker terminated with code:", return_code)
+
+
+def wait_for_head_node_to_exit_process():
+    # This will run in the subprocess spawned
+    ray.init()
     while True:
-        try:
-            nodes = ray.nodes()
-            if (
-                len(nodes) < total_nodes
-            ):  # TODO: Doesn't quite work if you go more than 2 nodes since this will detect failures if other nodes haven't joined yet
-                print("Detected a node has exited", flush=True)
-                consecutive_failures += 1
-            else:
-                print("All nodes seem to be alive", flush=True)
-                consecutive_failures = 0
-        except Exception as e:
-            print(f"Error checking head node status: {e}", flush=True)
-            consecutive_failures += 1
-        except BaseException as e:
-            print(f"Error checking head node status: {e}", flush=True)
-            print(f"Caught BaseException, {type(e)}")
-            consecutive_failures += 1
-        except:  # noqa: E722
-            print("Caught unknown exception", flush=True)
-            consecutive_failures += 1
-        if consecutive_failures >= allowed_failures:
-            print("Exiting since we've detected enough failures", flush=True)
-            return
-        await asyncio.sleep(check_interval)
+        nodes = ray.nodes()
+        print(f"Able to get nodes list {len(nodes)}", flush=True)
+        time.sleep(RETRY_INTERVAL_SEC)
 
 
 def start_leader(
@@ -146,17 +133,13 @@ def start_worker(
                 node_ip_address,
             ],
             capture_output=True,
-        )  # This doesn't return?
+        )
         if result.returncode == 0:
-            # try:
-            #     ray.init(address=f"ray://{leader_addr}:{ray_port}", _node_ip_address=node_ip_address)
-
             print(
                 f"Worker: Ray runtime started with head address {leader_addr}:{ray_port}",
                 flush=True,
             )
             return True
-            # except Exception as e:
         print(
             f"Failed to start Ray worker node with head address {leader_addr}:{ray_port}",
             flush=True,
@@ -173,7 +156,6 @@ def init_ray(
     leader_port: int,
     is_leader: bool,
     cluster_size: int,
-    # node_ip_address: Optional[str] = None,
     timeout: int = 600,
 ) -> None:
     """
@@ -194,16 +176,6 @@ def init_ray(
     if head_ip_info is None:
         raise RuntimeError(f"Timeout waiting for DNS resolution of {leader_addr}")
 
-    # ray_params = {
-    #     "_node_ip_address": node_ip_address,
-    # }
-
-    # if not is_leader:
-    #     ray_params["address"] = (
-    #         f"ray://{leader_addr}:{leader_port}"
-    #     )
-
-    # ray.init(**ray_params)  # TODO replace with a subprocess call since we can't set port via ray.init
     if is_leader:
         if not start_leader(leader_port, node_ip_address):
             raise RuntimeError("Failed to start Ray leader node")
@@ -222,3 +194,20 @@ def init_ray(
         )
 
     return
+
+
+# The following allows the worker to spawn a subprocess to wait for the head node to exit
+# This is so that we can catch the error code and return it as a success code
+# so that the job gets marked as successful
+
+
+def main(mode: str):
+    if mode == "wait_for_head_node_to_exit":
+        wait_for_head_node_to_exit_process()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", choices=["wait_for_head_node_to_exit"], required=True)
+    args = parser.parse_args()
+    main(args.mode)

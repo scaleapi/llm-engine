@@ -371,7 +371,7 @@ async def handle_batch_job(
 
         if job_completion_index > 0:
             # Skip running the batch job on all but the first node
-            await wait_for_head_node_to_exit(int(num_instances))
+            await wait_for_head_node_to_exit()
             exit(0)
 
     content = load_batch_content(request)
