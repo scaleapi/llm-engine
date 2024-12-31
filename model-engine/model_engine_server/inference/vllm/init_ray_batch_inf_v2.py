@@ -83,6 +83,7 @@ def wait_for_cluster_nodes(
 async def wait_for_head_node_to_exit() -> None:
     # Waits until there is no longer a connection to the head Ray node, then exits
     # This name needs to equal the name of the file!
+    # Also, if this file gets moved to a different directory in the docker image, the path needs to be updated
     worker_process = subprocess.Popen(
         [sys.executable, "init_ray_batch_inf_v2.py", "--mode", "wait_for_head_node_to_exit"]
     )
