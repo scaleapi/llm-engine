@@ -46,6 +46,7 @@ RUN pip install -r requirements.txt
 COPY model-engine /workspace/model-engine
 RUN pip install -e /workspace/model-engine
 COPY model-engine/model_engine_server/inference/vllm/vllm_batch.py /workspace/vllm_batch.py
+COPY model-engine/model_engine_server/inference/vllm/init_ray_batch_inf_v2.py /workspace/init_ray_batch_inf_v2.py
 
 # Need to override entrypoint from parent image
 ENTRYPOINT ["/bin/env"]

@@ -39,7 +39,7 @@ class LLMBatchCompletionsService(ABC):
             labels: Labels to apply to the batch job.
             resource_requests: The resource requests for the batch job.
             max_runtime_sec: The timeout of the batch job in seconds.
-            num_workers: The number of workers to run in the job.
+            num_workers: The number of data-parallel workers to run in the job (if a single model needs multiple nodes, that's in resource_requests, not here).
 
         Returns:
             The ID of the batch job.
