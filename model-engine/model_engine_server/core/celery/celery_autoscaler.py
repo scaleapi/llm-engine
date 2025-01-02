@@ -65,6 +65,7 @@ class CeleryAutoscalerParams:
     per_worker: int = 1
     min_workers: int = 0
     max_workers: int = 1
+    cooldown_period_seconds: int = 600
 
 
 def _hash_any_to_int(data: Any):
@@ -153,9 +154,9 @@ class Instance:
         time_now = time.monotonic()
         self.history.append((workers_wanted, time_now))
 
-        # Take last 10 minutes
+        # Use cooldown_period_seconds
         times = [t for _, t in self.history]
-        evict = bisect(times, time_now - 600)
+        evict = bisect(times, time_now - self.params.cooldown_period_seconds)
         self.history = self.history[evict:]
 
         workers_wanted = max(self.history)[0]  # type: ignore
