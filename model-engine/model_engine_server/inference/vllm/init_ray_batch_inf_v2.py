@@ -37,7 +37,7 @@ def wait_for_cluster_nodes(
     expected_nodes: int, timeout: int = 600, check_interval: int = 10
 ) -> bool:
     """
-    Wait until the cluster reaches the expected size.
+    Wait until the cluster reaches the expected size. Runs in head node
 
     Args:
         expected_nodes: Expected number of nodes in the cluster
@@ -81,6 +81,7 @@ def wait_for_cluster_nodes(
 
 
 async def wait_for_head_node_to_exit() -> None:
+    # Runs in worker node
     # Waits until there is no longer a connection to the head Ray node, then exits
     # This name needs to equal the name of the file!
     # Also, if this file gets moved to a different directory in the docker image, the path needs to be updated
@@ -93,7 +94,10 @@ async def wait_for_head_node_to_exit() -> None:
 
 
 def wait_for_head_node_to_exit_process():
-    # This will run in the subprocess spawned
+    # Runs in worker node
+    # This will run in the subprocess spawned and will conveniently error out
+    # when the head node is no longer reachable
+    # The exit gets caught by the `wait_for_head_node_to_exit` function
     ray.init()
     while True:
         nodes = ray.nodes()
@@ -105,6 +109,7 @@ def start_leader(
     ray_port: int,
     node_ip_address: str,
 ) -> bool:
+    # Runs in head node
     # node ip address in this case is actually a DNS name for the pod
     result = subprocess.run(
         ["ray", "start", "--head", "--port", str(ray_port), "--node-ip-address", node_ip_address]
@@ -122,6 +127,7 @@ def start_worker(
     leader_addr: str,
     timeout: int,
 ) -> bool:
+    # Runs in worker
     # node ip address in this case is actually a DNS name for the pod
     start_time = time.time()
     while time.time() - start_time < timeout:
