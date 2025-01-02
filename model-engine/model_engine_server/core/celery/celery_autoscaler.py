@@ -154,7 +154,7 @@ class Instance:
         time_now = time.monotonic()
         self.history.append((workers_wanted, time_now))
 
-        # Use cooldown_period in seconds
+        # Use cooldown_period_seconds
         times = [t for _, t in self.history]
         evict = bisect(times, time_now - self.params.cooldown_period_seconds)
         self.history = self.history[evict:]
