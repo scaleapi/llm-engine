@@ -1,6 +1,5 @@
 # To get circleci to work
 from setuptools import find_packages, setup
-
 setup(
     name="model_engine_server",
     version="1.0.0",
@@ -16,5 +15,5 @@ setup(
             "autogen=model_engine_server.scripts.autogenerate_client_and_docs:entrypoint",
             "launch-admin=model_engine_server.cli.bin:entrypoint",
         ],
-    },
+    }
 )
