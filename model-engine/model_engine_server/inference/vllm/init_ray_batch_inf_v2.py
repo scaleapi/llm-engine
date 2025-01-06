@@ -80,6 +80,22 @@ def wait_for_cluster_nodes(
     return False
 
 
+# The functions wait_for_head_node_to_exit and wait_for_head_node_to_exit_process
+# are used to ensure that the worker node exits successfully when the head node is no longer reachable
+# wait_for_head_node_to_exit_process empirically returns a non-zero status code,
+# which is caught by the wait_for_head_node_to_exit function and eventually exits
+# with a zero status code.
+# We do this so that upstream job infrastructure can read a zero status code as a successful job completion.
+
+# The order of execution is as follows:
+# 1. wait_for_head_node_to_exit() is called from some script in the worker node
+# 2. wait_for_head_node_to_exit() spawns a subprocess that runs this file.
+# 3. This file calls wait_for_head_node_to_exit_process()
+# 4. wait_for_head_node_to_exit_process() runs in the subprocess and waits until the head node is no longer reachable, then exits with a non-zero status code
+# 5. wait_for_head_node_to_exit() catches the non-zero status code and returns
+# 6. The upstream script returns successfully
+
+
 async def wait_for_head_node_to_exit() -> None:
     # Runs in worker node
     # Waits until there is no longer a connection to the head Ray node, then exits
@@ -205,8 +221,6 @@ def init_ray(
 
 
 # The following allows the worker to spawn a subprocess to wait for the head node to exit
-# This is so that we can catch the error code and return it as a success code
-# so that the job gets marked as successful
 
 
 def main(mode: str):
