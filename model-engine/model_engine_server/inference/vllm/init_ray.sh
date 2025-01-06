@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # From https://github.com/kubernetes-sigs/lws/blob/main/docs/examples/vllm/build/ray_init.sh
+# Used for initializing Ray for the sync endpoints case
 subcommand=$1
 shift
 

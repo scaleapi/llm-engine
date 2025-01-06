@@ -1,3 +1,5 @@
+# Batch v2
+
 import argparse
 import asyncio
 import json
@@ -35,6 +37,11 @@ from model_engine_server.inference.utils import (
     check_unknown_startup_memory_usage,
     get_cpu_cores_in_container,
     random_uuid,
+)
+from model_engine_server.inference.vllm.init_ray_batch_inf_v2 import (
+    get_node_ip_address,
+    init_ray,
+    wait_for_head_node_to_exit,
 )
 from pydantic import TypeAdapter
 from starlette.datastructures import Headers
@@ -247,6 +254,9 @@ async def init_engine(
     default_engine_args_dict = dict(
         model=model,
         tensor_parallel_size=request.model_cfg.num_shards,
+        pipeline_parallel_size=int(
+            os.environ.get("NUM_INSTANCES", 1)
+        ),  # TODO maybe do something other than TP=8, PP=number of nodes
         seed=request.model_cfg.seed or 0,
         disable_log_requests=True,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
@@ -316,7 +326,9 @@ def get_model_name(model_config: BatchCompletionsModelConfig) -> str:
     return MODEL_WEIGHTS_FOLDER if model_config.checkpoint_path else model_config.model
 
 
-async def handle_batch_job(request: CreateBatchCompletionsEngineRequest) -> None:
+async def handle_batch_job(
+    request: CreateBatchCompletionsEngineRequest, multinode: bool, multinode_timeout: int
+) -> None:
     metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
 
     model = get_model_name(request.model_cfg)
@@ -326,6 +338,40 @@ async def handle_batch_job(request: CreateBatchCompletionsEngineRequest) -> None
             target_dir=MODEL_WEIGHTS_FOLDER,
             trust_remote_code=request.model_cfg.trust_remote_code or False,
         )
+
+    if multinode:
+        job_completion_index = int(os.environ.get("JOB_COMPLETION_INDEX", 0))
+        # Initialize the ray cluster
+        leader_addr = os.environ.get("LEADER_ADDR")
+        leader_port = os.environ.get("LEADER_PORT")
+        num_instances = os.environ.get("NUM_INSTANCES")
+        assert (
+            leader_addr is not None and leader_port is not None and num_instances is not None
+        ), "Leader addr and port and num_instances must be set"
+
+        # Set this so VLLM starts up correctly with the Ray cluster we set up
+        os.environ["VLLM_HOST_IP"] = get_node_ip_address(leader_addr)
+
+        # Also necessary for VLLM
+        os.environ["NCCL_SOCKET_IFNAME"] = "eth0"
+        os.environ["GLOO_SOCKET_IFNAME"] = "eth0"
+
+        # Debug logging
+        os.environ["NCCL_DEBUG"] = "INFO"
+        os.environ["VLLM_LOGGING_LEVEL"] = "INFO"
+
+        init_ray(
+            leader_addr=leader_addr,
+            leader_port=int(leader_port),
+            is_leader=job_completion_index == 0,
+            cluster_size=int(num_instances),
+            timeout=multinode_timeout,
+        )
+
+        if job_completion_index > 0:
+            # Skip running the batch job code on all but the first node
+            await wait_for_head_node_to_exit()
+            exit(0)
 
     content = load_batch_content(request)
     engine = await init_engine(
@@ -355,7 +401,18 @@ if __name__ == "__main__":
         default=None,
         help="Optional override for the config file data, as a json string",
     )
-
+    parser.add_argument(
+        "--multinode",
+        action="store_true",
+        default=False,
+        help="Whether to run in multinode mode",
+    )
+    parser.add_argument(
+        "--multinode-timeout",
+        type=int,
+        default=600,
+        help="Timeout for multinode mode",
+    )
     args = parser.parse_args()
 
     check_unknown_startup_memory_usage()
@@ -369,4 +426,4 @@ if __name__ == "__main__":
 
     request = CreateBatchCompletionsEngineRequest.model_validate_json(config_file_data)
 
-    asyncio.run(handle_batch_job(request))
+    asyncio.run(handle_batch_job(request, args.multinode, args.multinode_timeout))
