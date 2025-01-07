@@ -1897,8 +1897,9 @@ class K8SEndpointResourceDelegate:
         else:
             command = forwarder_container.command
             # look for the thing that comes after --num-workers
-            num_workers_index = command.index("--num-workers")
-            if num_workers_index == -1:
+            try:
+                num_workers_index = command.index("--num-workers")
+            except ValueError:
                 concurrent_requests_per_worker = 1
             else:
                 concurrent_requests_per_worker = int(command[num_workers_index + 1])

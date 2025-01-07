@@ -80,7 +80,7 @@ GIT_TAG: str = os.getenv("GIT_TAG")  # type: ignore
 ENV: str = os.getenv("DD_ENV")  # type: ignore
 WORKSPACE_PATH = os.getenv("WORKSPACE", ".")
 
-INITIAL_K8S_CACHE_TTL_SECONDS: int = 60
+INITIAL_K8S_CACHE_TTL_SECONDS: int = 180
 MAX_IMAGE_TAG_LEN = 128
 
 RESTRICTED_ENV_VARS_KEYS = {
