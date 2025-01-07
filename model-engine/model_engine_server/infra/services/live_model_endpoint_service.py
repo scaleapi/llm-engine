@@ -129,7 +129,7 @@ class LiveModelEndpointService(ModelEndpointService):
             )
             if state is not None:
                 await self.model_endpoint_cache_repository.write_endpoint_info(
-                    endpoint_id=record.id, endpoint_info=state, ttl_seconds=60
+                    endpoint_id=record.id, endpoint_info=state, ttl_seconds=180
                 )
         return state
 
