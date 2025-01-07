@@ -937,3 +937,15 @@ async def test_get_async_autoscaling_params(k8s_endpoint_resource_delegate):
         per_worker=5,
         concurrent_requests_per_worker=24,
     )
+
+    # test old format for backwards compatibility
+    celery_forwarder.command = ["a", "b", "c", "d"]
+    autoscaling_params = K8SEndpointResourceDelegate._get_async_autoscaling_params(
+        deployment_config
+    )
+    assert autoscaling_params == dict(
+        min_workers=1,
+        max_workers=2,
+        per_worker=5,
+        concurrent_requests_per_worker=1,
+    )
