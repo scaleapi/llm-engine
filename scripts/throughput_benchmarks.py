@@ -89,6 +89,9 @@ def send_request(url, request, user=None):
         # Event data
         if payload.startswith("data:"):
             payload_data = payload.lstrip("data:").rstrip("/n")
+            if payload_data.lstrip().rstrip() == "[DONE]":
+                # Ignore the done message from sglang
+                continue
             payload_json = json.loads(payload_data)
         num_completion_tokens += 1
 
@@ -296,7 +299,8 @@ def run_benchmark(
 ):
     # TODO add option to generate new prompts
     tokenizer = AutoTokenizer.from_pretrained(hf_model)
-    random.seed(1)
+    if not generate_distinct_prompts:
+        random.seed(1)
     prompt = generate_prompt(config.input_token_count, tokenizer)
     if generate_distinct_prompts:
         assert (
