@@ -45,6 +45,7 @@ from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
 )
 from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CHAT_TEMPLATE_MAX_LENGTH,
+    DEFAULT_BATCH_COMPLETIONS_NODES_PER_WORKER,
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateBatchCompletionsUseCase,
@@ -2949,7 +2950,40 @@ async def test_create_batch_completions_v2(
         memory=create_batch_completions_v2_request_with_hardware.memory,
         storage=create_batch_completions_v2_request_with_hardware.storage,
         gpu_type=create_batch_completions_v2_request_with_hardware.gpu_type,
-        nodes_per_worker=create_batch_completions_v2_request_with_hardware.nodes_per_worker,
+        nodes_per_worker=DEFAULT_BATCH_COMPLETIONS_NODES_PER_WORKER,
+    )
+    # assert fake_llm_batch_completions_service was called with the correct arguments
+    fake_llm_batch_completions_service.create_batch_job.assert_called_with(
+        user=user,
+        job_request=expected_engine_request,
+        image_repo="llm-engine/batch-infer-vllm",
+        image_tag="fake_docker_repository_latest_image_tag",
+        resource_requests=expected_hardware,
+        labels=create_batch_completions_v2_request.labels,
+        max_runtime_sec=create_batch_completions_v2_request.max_runtime_sec,
+        num_workers=create_batch_completions_v2_request.data_parallelism,
+    )
+
+    create_batch_completions_v2_request_with_hardware.nodes_per_worker = 2
+
+    await use_case.execute(create_batch_completions_v2_request_with_hardware, user)
+
+    expected_engine_request = CreateBatchCompletionsEngineRequest(
+        model_cfg=create_batch_completions_v2_request_with_hardware.model_cfg,
+        max_runtime_sec=create_batch_completions_v2_request_with_hardware.max_runtime_sec,
+        data_parallelism=create_batch_completions_v2_request_with_hardware.data_parallelism,
+        labels=create_batch_completions_v2_request_with_hardware.labels,
+        content=create_batch_completions_v2_request_with_hardware.content,
+        output_data_path=create_batch_completions_v2_request_with_hardware.output_data_path,
+    )
+
+    expected_hardware = CreateDockerImageBatchJobResourceRequests(
+        cpus=create_batch_completions_v2_request_with_hardware.cpus,
+        gpus=create_batch_completions_v2_request_with_hardware.gpus,
+        memory=create_batch_completions_v2_request_with_hardware.memory,
+        storage=create_batch_completions_v2_request_with_hardware.storage,
+        gpu_type=create_batch_completions_v2_request_with_hardware.gpu_type,
+        nodes_per_worker=2,
     )
     # assert fake_llm_batch_completions_service was called with the correct arguments
     fake_llm_batch_completions_service.create_batch_job.assert_called_with(
