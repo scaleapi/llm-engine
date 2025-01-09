@@ -297,7 +297,6 @@ def run_benchmark(
     prompts_list_override: Optional[List] = None,
     generate_distinct_prompts: bool = False,
 ):
-    # TODO add option to generate new prompts
     tokenizer = AutoTokenizer.from_pretrained(hf_model)
     if not generate_distinct_prompts:
         random.seed(1)
