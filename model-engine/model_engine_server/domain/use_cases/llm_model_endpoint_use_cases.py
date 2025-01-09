@@ -298,6 +298,8 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
 NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
+DEFAULT_BATCH_COMPLETIONS_NODES_PER_WORKER = 1
+
 SERVICE_NAME = "model-engine"
 SERVICE_IDENTIFIER = os.getenv("SERVICE_IDENTIFIER")
 if SERVICE_IDENTIFIER:
@@ -3603,6 +3605,8 @@ class CreateBatchCompletionsV2UseCase:
                 memory=request.memory,
                 storage=request.storage,
                 gpu_type=request.gpu_type,
+                nodes_per_worker=request.nodes_per_worker
+                or DEFAULT_BATCH_COMPLETIONS_NODES_PER_WORKER,
             )
         else:
             if (
