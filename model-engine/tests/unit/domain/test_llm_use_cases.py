@@ -45,6 +45,7 @@ from model_engine_server.domain.use_cases.llm_fine_tuning_use_cases import (
 )
 from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     CHAT_TEMPLATE_MAX_LENGTH,
+    DEFAULT_BATCH_COMPLETIONS_NODES_PER_WORKER,
     CompletionStreamV1UseCase,
     CompletionSyncV1UseCase,
     CreateBatchCompletionsUseCase,
@@ -2949,7 +2950,7 @@ async def test_create_batch_completions_v2(
         memory=create_batch_completions_v2_request_with_hardware.memory,
         storage=create_batch_completions_v2_request_with_hardware.storage,
         gpu_type=create_batch_completions_v2_request_with_hardware.gpu_type,
-        nodes_per_worker=create_batch_completions_v2_request_with_hardware.nodes_per_worker,
+        nodes_per_worker=DEFAULT_BATCH_COMPLETIONS_NODES_PER_WORKER,
     )
     # assert fake_llm_batch_completions_service was called with the correct arguments
     fake_llm_batch_completions_service.create_batch_job.assert_called_with(
