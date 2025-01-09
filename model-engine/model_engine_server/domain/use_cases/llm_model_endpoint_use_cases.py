@@ -3603,6 +3603,7 @@ class CreateBatchCompletionsV2UseCase:
                 memory=request.memory,
                 storage=request.storage,
                 gpu_type=request.gpu_type,
+                nodes_per_worker=request.nodes_per_worker or 1,
             )
         else:
             if (
