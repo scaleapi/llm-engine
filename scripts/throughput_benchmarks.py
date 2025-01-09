@@ -239,10 +239,8 @@ def send_requests(
     return results
 
 
-def generate_prompt(num, hf_model):
-    random.seed(1)
+def generate_prompt(num, tokenizer):
     text = lorem.words(num // 2)  # Roughly 2 tokens per lorem word
-    tokenizer = AutoTokenizer.from_pretrained(hf_model)
     return tokenizer.decode(tokenizer.encode(text)[: num - 2])
 
 
@@ -294,8 +292,19 @@ def run_benchmark(
     local_port: int,
     response_token_count_distribution: Optional[List] = None,
     prompts_list_override: Optional[List] = None,
+    generate_distinct_prompts: bool = False,
 ):
-    prompt = generate_prompt(config.input_token_count, hf_model)
+    # TODO add option to generate new prompts
+    tokenizer = AutoTokenizer.from_pretrained(hf_model)
+    random.seed(1)
+    prompt = generate_prompt(config.input_token_count, tokenizer)
+    if generate_distinct_prompts:
+        assert (
+            prompts_list_override is None
+        ), "Can't have both distinct generated prompts and override prompts"
+        prompts_list_override = [
+            generate_prompt(config.input_token_count, tokenizer) for _ in range(num_trials)
+        ]
 
     prompt_num_tokens = config.input_token_count
 
@@ -423,6 +432,7 @@ def run_benchmarks(
     local_port: int = 5005,
     response_token_count_distribution_file: Optional[str] = None,
     prompts_list_override_file: Optional[str] = None,
+    generate_distinct_prompts: bool = False,
 ):
     """Run benchmarks."""
     all_statistics = []
@@ -458,6 +468,7 @@ def run_benchmarks(
             local_port,
             response_token_count_distribution,
             prompts_list_override,
+            generate_distinct_prompts,
         )
         all_statistics.append(statistics)
     except Exception:
@@ -496,6 +507,7 @@ def run_benchmarks_concurrency_range(
     local_port: int = 5005,
     response_token_count_distribution_file: Optional[str] = None,
     prompts_list_override_file: Optional[str] = None,
+    generate_distinct_prompts: bool = False,
 ):
     for concurrency in range(concurrency_min, concurrency_max + 1, concurrency_step):
         run_benchmarks(
@@ -512,6 +524,7 @@ def run_benchmarks_concurrency_range(
             local_port,
             response_token_count_distribution_file,
             prompts_list_override_file,
+            generate_distinct_prompts,
         )
 
 
