@@ -47,6 +47,7 @@ class InferenceFramework(Enum):
     VLLM = "vllm"
     LIGHTLLM = "lightllm"
     TENSORRT_LLM = "tensorrt-llm"
+    SGLANG = "sglang"
 
     @classmethod
     def from_value(cls, value):
@@ -120,6 +121,8 @@ def pull_and_send_request_from_queue(
                 response = send_request(
                     f"http://localhost:{local_port}/v2/models/ensemble/generate_stream", request
                 )
+            elif framework == InferenceFramework.SGLANG:
+                response = send_request(f"http://localhost:{local_port}/generate", request)
             else:
                 raise NotImplementedError()
         else:
@@ -176,6 +179,15 @@ def generate_request(
             "parameters": {
                 "temperature": temperature,
                 "stream": True,
+            },
+        }
+    elif framework == InferenceFramework.SGLANG:
+        return {
+            "text": prompt,
+            "stream": True,
+            "sampling_params": {
+                "temperature": temperature,
+                "max_new_tokens": output_token_count,
             },
         }
     else:
