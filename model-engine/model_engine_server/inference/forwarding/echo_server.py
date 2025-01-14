@@ -27,12 +27,21 @@ async def predict(request: Request):
     print("Received request", dictionary, flush=True)
     if "delay" in dictionary:
         await asyncio.sleep(dictionary["delay"])
+    if "status_code" in dictionary:
+        return JSONResponse(content=dictionary, status_code=dictionary["status_code"])
     return dictionary
 
 
 @app.post("/predict500")
 async def predict500(request: Request):
-    response = JSONResponse(content=await request.json(), status_code=500)
+    dictionary = await request.json()
+    if "delay" in dictionary:
+        await asyncio.sleep(dictionary["delay"])
+    if "status_code" in dictionary:
+        status_code = dictionary["status_code"]
+    else:
+        status_code = 500
+    response = JSONResponse(content=dictionary, status_code=status_code)
     return response
 
 
