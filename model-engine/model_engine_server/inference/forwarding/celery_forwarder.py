@@ -141,6 +141,7 @@ def create_celery_service(
             logger.warning(f"Ignoring {len(ignored_kwargs)} keyword arguments: {ignored_kwargs=}")
         try:
             monitoring_metrics_gateway.emit_async_task_received_metric(queue_name)
+            # TODO catch exceptions and return the status code (and possibly fail the celery task? tbd)
             result = forwarder(payload)
             request_duration = datetime.now() - arrival_timestamp
             if request_duration > timedelta(seconds=DEFAULT_TASK_VISIBILITY_SECONDS):
