@@ -1028,18 +1028,17 @@ class FakeTaskQueueGateway(TaskQueueGateway):
 
     def get_task(self, task_id: str) -> GetAsyncTaskV1Response:
         result = None
+        status_code = None
         if task_id in self.queue:
             status = TaskStatus.PENDING
         elif task_id in self.completed:
             status = TaskStatus.SUCCESS
             result = self.completed[task_id]
+            status_code = 200
         else:
             status = TaskStatus.UNDEFINED
         return GetAsyncTaskV1Response(
-            task_id=task_id,
-            status=status,
-            result=result,
-            traceback=None,
+            task_id=task_id, status=status, result=result, traceback=None, status_code=status_code
         )
 
     def clear_queue(self, queue_name: str) -> bool:
@@ -1662,6 +1661,7 @@ class FakeAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
             status=TaskStatus.SUCCESS,
             result=None,
             traceback=None,
+            status_code=200,
         )
 
     def get_last_request(self):
