@@ -103,6 +103,8 @@ class ModelEngineSerializationMixin:
     @staticmethod
     def get_response_payload(using_serialize_results_as_string: bool, response: Any):
         # Model Engine expects a JSON object with a "result" key.
+
+        # TODO can add in status_code into here
         if using_serialize_results_as_string:
             response_as_string: str = json.dumps(response)
             return {"result": response_as_string}
