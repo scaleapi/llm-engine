@@ -133,6 +133,11 @@ async def create_sync_inference_task(
             status_code=408,
             detail="Request timed out.",
         ) from exc
+    except InvalidRequestException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid request: {str(exc)}",
+        ) from exc
 
 
 @inference_task_router_v1.post("/streaming-tasks")
@@ -178,4 +183,9 @@ async def create_streaming_inference_task(
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported inference type: {str(exc)}",
+        ) from exc
+    except InvalidRequestException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid request: {str(exc)}",
         ) from exc
