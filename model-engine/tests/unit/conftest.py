@@ -1536,6 +1536,7 @@ class FakeStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 status=TaskStatus.SUCCESS,
                 result=None,
                 traceback=None,
+                status_code=200,
             )
         ]
 
@@ -1560,6 +1561,7 @@ class FakeSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 status=TaskStatus.SUCCESS,
                 result=None,
                 traceback=None,
+                status_code=200,
             )
         else:
             self.response = fake_sync_inference_content

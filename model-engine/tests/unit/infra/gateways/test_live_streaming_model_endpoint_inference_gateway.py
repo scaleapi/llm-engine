@@ -218,6 +218,7 @@ async def test_predict_raises_traceback_json(
                 "status": "FAILURE",
                 "result": None,
                 "traceback": "test_traceback",
+                "status_code": 500,
             }
             count += 1
         assert count == 1
@@ -251,6 +252,7 @@ async def test_predict_raises_traceback_not_json(
                 "status": "FAILURE",
                 "result": None,
                 "traceback": "Test traceback content",
+                "status_code": 500,
             }
             count += 1
         assert count == 1

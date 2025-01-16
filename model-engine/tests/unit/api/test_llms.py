@@ -116,6 +116,7 @@ def test_completion_sync_success(
                 }"""
             },
             traceback=None,
+            status_code=200,
         ),
     )
     response_1 = client.post(
