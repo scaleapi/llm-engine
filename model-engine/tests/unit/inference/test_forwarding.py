@@ -283,6 +283,7 @@ def test_forwarders_override_serialize_results(post_inference_hooks_handler):
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
         forward_http_status=True,
+        forward_http_status_in_body=False,
     )
     json_response = fwd({"ignore": "me", KEY_SERIALIZE_RESULTS_AS_STRING: True})
     _check_serialized(json_response)
@@ -406,6 +407,7 @@ def test_forwarder_serialize_within_args(post_inference_hooks_handler):
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
         forward_http_status=True,
+        forward_http_status_in_body=False,
     )
     json_response = fwd(payload)
     _check_serialized(json_response)
