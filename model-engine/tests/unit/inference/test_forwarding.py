@@ -209,13 +209,16 @@ def _check(json_response) -> None:
     assert json_response == {"result": PAYLOAD}
 
 
-def _check_with_status_code_in_body(json_response, status_code: int) -> None:
+def _check_serialized_with_status_code_in_body(json_response, status_code: int) -> None:
     json_response = (
         json.loads(json_response.body.decode("utf-8"))
         if isinstance(json_response, JSONResponse)
         else json_response
     )
-    assert json_response == {"result": PAYLOAD, "status_code": status_code}
+    assert isinstance(json_response["result"], str)
+    assert len(json_response) == 1, f"expecting only 'result' key, but got {json_response=}"
+    assert json.loads(json_response["result"]) == PAYLOAD
+    assert json_response["status_code"] == status_code
 
 
 def _check_responses_not_wrapped(json_response) -> None:
@@ -360,7 +363,7 @@ def test_forwarder_return_status_code_in_body(post_inference_hooks_handler):
         forward_http_status_in_body=True,
     )
     response = fwd({"ignore": "me"})
-    _check_with_status_code_in_body(response, 500)
+    _check_serialized_with_status_code_in_body(response, 500)
 
 
 @mock.patch("requests.post", mocked_post)
