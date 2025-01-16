@@ -410,7 +410,8 @@ async def test_create_streaming_task_success(
             count = 0
             async for message in response.aiter_bytes():
                 assert (
-                    message == b'data: {"status":"SUCCESS","result":null,"traceback":null,"status_code":200}\r\n\r\n'
+                    message
+                    == b'data: {"status":"SUCCESS","result":null,"traceback":null,"status_code":200}\r\n\r\n'
                 )
                 count += 1
             assert count == 1
