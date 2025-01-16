@@ -95,12 +95,17 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             #    response_result if type(response_result) is dict else {"result": response_result}
             # )
             status_code = None
-            if type(res.result) is dict and "status_code" in res.result:
-                status_code = res.result["status_code"]
+            result = res.result
+            if type(result) is dict and "status_code" in result:
+                # Filter out status code from result if it was added by the forwarder
+                # This is admittedly kinda hacky and would technically introduce an edge case
+                # if we ever decide not to have async tasks wrap response.
+                status_code = result["status_code"]
+                del result["status_code"]
             return GetAsyncTaskV1Response(
                 task_id=task_id,
                 status=TaskStatus.SUCCESS,
-                result=res.result,
+                result=result,
                 status_code=status_code,
             )
 
