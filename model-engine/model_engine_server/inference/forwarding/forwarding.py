@@ -159,6 +159,8 @@ class Forwarder(ModelEngineSerializationMixin):
     model_engine_unwrap: bool
     serialize_results_as_string: bool
     wrap_response: bool
+    # See celery_task_queue_gateway.py for why we should keep wrap_response as True
+    # for async. tl;dr is we need to convey both the result as well as status code.
     forward_http_status: bool  # Forwards http status in JSONResponse
     # Forwards http status in the response body. Only used if wrap_response is True
     # We do this to avoid having to put this data in any sync response and only do it for async responses
@@ -210,7 +212,7 @@ class Forwarder(ModelEngineSerializationMixin):
                 self.forward_http_status_in_body,
                 response,
                 response_raw.status,
-            )  # forward_http_status_in_body
+            )
 
         if self.forward_http_status:
             return JSONResponse(content=response, status_code=response_raw.status)
