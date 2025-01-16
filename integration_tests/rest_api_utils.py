@@ -968,12 +968,19 @@ def ensure_nonzero_available_llm_workers(endpoint_name: str, user_id: str):
     assert simple_endpoint["spec"].get("deployment_state", {}).get("available_workers", 0)
 
 
-def ensure_inference_task_response_is_correct(response: Dict[str, Any], return_pickled: bool):
+def ensure_inference_task_response_is_correct(
+    response: Dict[str, Any], return_pickled: bool, expect_status_code_in_response: bool
+):
     print(response)
     assert response["status"] == "SUCCESS"
     assert response["traceback"] is None
     if return_pickled:
         assert response["result"]["result_url"].startswith("s3://")
+    elif expect_status_code_in_response:
+        # Limitation of async tasks is we need to stick the status code in the result
+        # and we don't yet manually filter it out
+        # Other option is to filter it out explicitly in the gateway
+        assert response["result"] == {"result": '{"y": 1}', "status_code": 200}
     else:
         assert response["result"] == {"result": '{"y": 1}'}
 
@@ -1025,7 +1032,7 @@ def ensure_all_async_tasks_success(task_ids: List[str], user_id: str, return_pic
         if response["status"] not in (TaskStatus.PENDING, TaskStatus.SUCCESS, TaskStatus.STARTED):
             print(response)
             raise ValueError("Task failed!")
-        ensure_inference_task_response_is_correct(response, return_pickled)
+        ensure_inference_task_response_is_correct(response, return_pickled, True)
 
 
 def delete_existing_endpoints(
