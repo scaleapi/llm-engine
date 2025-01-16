@@ -160,6 +160,7 @@ async def test_predict_success(
             "status": "SUCCESS",
             "result": {"test_key": "test_value"},
             "traceback": None,
+            "status_code": 200,
         }
 
 
@@ -189,6 +190,7 @@ async def test_predict_raises_traceback_json(
             "status": "FAILURE",
             "result": None,
             "traceback": "test_traceback",
+            "status_code": 500,
         }
 
 
@@ -218,6 +220,7 @@ async def test_predict_raises_traceback_not_json(
             "status": "FAILURE",
             "result": None,
             "traceback": "Test traceback content",
+            "status_code": 500,
         }
 
 
@@ -249,6 +252,7 @@ async def test_predict_raises_traceback_wrapped(
             "status": "FAILURE",
             "result": None,
             "traceback": "test_traceback",
+            "status_code": 500,
         }
 
 
@@ -278,6 +282,7 @@ async def test_predict_raises_traceback_wrapped_detail_array(
             "status": "FAILURE",
             "result": None,
             "traceback": """{"detail":[{"error":"error"}]}""",
+            "status_code": 500,
         }
 
 
