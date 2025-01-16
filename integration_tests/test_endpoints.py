@@ -217,7 +217,7 @@ def test_sync_streaming_model_endpoint(capsys):
                 )
             )
             for response in task_responses:
-                ensure_inference_task_response_is_correct(response, False, True)
+                ensure_inference_task_response_is_correct(response, False, False)
 
             print(
                 f"Sending streaming tasks to {create_endpoint_request['name']} for user {user} ..."
