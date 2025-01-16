@@ -209,6 +209,15 @@ def _check(json_response) -> None:
     assert json_response == {"result": PAYLOAD}
 
 
+def _check_with_status_code_in_body(json_response, status_code: int) -> None:
+    json_response = (
+        json.loads(json_response.body.decode("utf-8"))
+        if isinstance(json_response, JSONResponse)
+        else json_response
+    )
+    assert json_response == {"result": PAYLOAD, "status_code": status_code}
+
+
 def _check_responses_not_wrapped(json_response) -> None:
     json_response = (
         json.loads(json_response.body.decode("utf-8"))
@@ -336,6 +345,22 @@ def test_forwarder_dont_return_status_code(post_inference_hooks_handler):
     )
     json_response = fwd({"ignore": "me"})
     assert json_response == PAYLOAD
+
+
+@mock.patch("requests.post", mocked_post_500)
+@mock.patch("requests.get", mocked_get)
+def test_forwarder_return_status_code_in_body(post_inference_hooks_handler):
+    fwd = Forwarder(
+        "ignored",
+        model_engine_unwrap=True,
+        serialize_results_as_string=True,
+        post_inference_hooks_handler=post_inference_hooks_handler,
+        wrap_response=True,
+        forward_http_status=False,
+        forward_http_status_in_body=True,
+    )
+    response = fwd({"ignore": "me"})
+    _check_with_status_code_in_body(response, 500)
 
 
 @mock.patch("requests.post", mocked_post)
