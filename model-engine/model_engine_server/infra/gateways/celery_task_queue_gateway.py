@@ -94,8 +94,14 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             # result_dict = (
             #    response_result if type(response_result) is dict else {"result": response_result}
             # )
+            status_code = None
+            if type(res.result) is dict and "status_code" in res.result:
+                status_code = res.result["status_code"]
             return GetAsyncTaskV1Response(
-                task_id=task_id, status=TaskStatus.SUCCESS, result=res.result, status_code="TODO"
+                task_id=task_id,
+                status=TaskStatus.SUCCESS,
+                result=res.result,
+                status_code=status_code,
             )
 
         elif response_state == "FAILURE":
