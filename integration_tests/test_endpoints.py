@@ -169,7 +169,7 @@ def test_sync_model_endpoint(capsys):
                     )
                 )
                 for response in task_responses:
-                    ensure_inference_task_response_is_correct(response, return_pickled, False)
+                    ensure_inference_task_response_is_correct(response, return_pickled)
         finally:
             delete_model_endpoint(create_endpoint_request["name"], user)
 
@@ -217,7 +217,7 @@ def test_sync_streaming_model_endpoint(capsys):
                 )
             )
             for response in task_responses:
-                ensure_inference_task_response_is_correct(response, False, False)
+                ensure_inference_task_response_is_correct(response, False)
 
             print(
                 f"Sending streaming tasks to {create_endpoint_request['name']} for user {user} ..."
