@@ -291,4 +291,5 @@ def test_prediction_response_json_encoding():
         result=dict(some="custom", returned="value"),
         traceback="traceback",
         id="refid",
-    )  # TODO
+        status_code=200,
+    )
