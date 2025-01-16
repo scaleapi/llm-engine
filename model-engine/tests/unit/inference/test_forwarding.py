@@ -216,7 +216,9 @@ def _check_serialized_with_status_code_in_body(json_response, status_code: int) 
         else json_response
     )
     assert isinstance(json_response["result"], str)
-    assert len(json_response) == 1, f"expecting only 'result' key, but got {json_response=}"
+    assert (
+        len(json_response) == 2
+    ), f"expecting only 'result' and 'status_code' key, but got {json_response=}"
     assert json.loads(json_response["result"]) == PAYLOAD
     assert json_response["status_code"] == status_code
 
