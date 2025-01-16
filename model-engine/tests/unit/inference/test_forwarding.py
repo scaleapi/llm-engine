@@ -194,6 +194,7 @@ def test_forwarders(post_inference_hooks_handler):
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
         forward_http_status=True,
+        forward_http_status_in_body=False,
     )
     json_response = fwd({"ignore": "me"})
     _check(json_response)
@@ -243,6 +244,7 @@ def test_forwarders_serialize_results_as_string(post_inference_hooks_handler):
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
         forward_http_status=True,
+        forward_http_status_in_body=False,
     )
     json_response = fwd({"ignore": "me"})
     _check_serialized(json_response)
@@ -269,6 +271,7 @@ def test_forwarders_override_serialize_results(post_inference_hooks_handler):
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
         forward_http_status=True,
+        forward_http_status_in_body=False,
     )
     json_response = fwd({"ignore": "me", KEY_SERIALIZE_RESULTS_AS_STRING: False})
     _check(json_response)
@@ -295,6 +298,7 @@ def test_forwarder_does_not_wrap_response(post_inference_hooks_handler):
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=False,
         forward_http_status=True,
+        forward_http_status_in_body=False,
     )
     json_response = fwd({"ignore": "me"})
     _check_responses_not_wrapped(json_response)
@@ -310,6 +314,7 @@ def test_forwarder_return_status_code(post_inference_hooks_handler):
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=False,
         forward_http_status=True,
+        forward_http_status_in_body=False,
     )
     json_response = fwd({"ignore": "me"})
     _check_responses_not_wrapped(json_response)
@@ -326,6 +331,7 @@ def test_forwarder_dont_return_status_code(post_inference_hooks_handler):
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=False,
         forward_http_status=False,
+        forward_http_status_in_body=False,
     )
     json_response = fwd({"ignore": "me"})
     assert json_response == PAYLOAD
@@ -380,6 +386,7 @@ def test_forwarder_serialize_within_args(post_inference_hooks_handler):
         post_inference_hooks_handler=post_inference_hooks_handler,
         wrap_response=True,
         forward_http_status=True,
+        forward_http_status_in_body=False,
     )
     # expected: no `serialize_results_as_string` at top-level nor in 'args'
     json_response = fwd({"something": "to ignore", "args": {"my": "payload", "is": "here"}})
