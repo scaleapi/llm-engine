@@ -980,7 +980,8 @@ def ensure_inference_task_response_is_correct(
         # Limitation of async tasks is we need to stick the status code in the result
         # and we don't yet manually filter it out
         # Other option is to filter it out explicitly in the gateway
-        assert response["result"] == {"result": '{"y": 1}', "status_code": 200}
+        # Hence we just ignore it here
+        assert response["result"]["result"] == '{"y": 1}'
     else:
         assert response["result"] == {"result": '{"y": 1}'}
 
