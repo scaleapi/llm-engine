@@ -185,6 +185,7 @@ async def test_streaming_predict_success(
                 "status": "SUCCESS",
                 "result": {"test": "content"},
                 "traceback": None,
+                "status_code": 200,
             }
             count += 1
         assert count == 1
