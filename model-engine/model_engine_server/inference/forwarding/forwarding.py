@@ -4,7 +4,7 @@ import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, AsyncGenerator, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, AsyncGenerator, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import aiohttp
 import orjson
@@ -101,15 +101,24 @@ class ModelEngineSerializationMixin:
         return json_payload, using_serialize_results_as_string
 
     @staticmethod
-    def get_response_payload(using_serialize_results_as_string: bool, response: Any):
+    def get_response_payload(
+        using_serialize_results_as_string: bool,
+        forward_http_status_in_body: bool,
+        response: Any,
+        status_code: int,
+    ) -> Any:
         # Model Engine expects a JSON object with a "result" key.
 
-        # TODO can add in status_code into here
+        response_payload: Dict[str, Any] = {}
         if using_serialize_results_as_string:
             response_as_string: str = json.dumps(response)
-            return {"result": response_as_string}
+            response_payload["result"] = response_as_string
+        else:
+            response_payload["result"] = response
 
-        return {"result": response}
+        if forward_http_status_in_body:
+            response_payload["status_code"] = status_code
+        return response_payload
 
     @staticmethod
     def get_response_payload_stream(using_serialize_results_as_string: bool, response: str):
@@ -150,7 +159,10 @@ class Forwarder(ModelEngineSerializationMixin):
     model_engine_unwrap: bool
     serialize_results_as_string: bool
     wrap_response: bool
-    forward_http_status: bool
+    forward_http_status: bool  # Forwards http status in JSONResponse
+    # Forwards http status in the response body. Only used if wrap_response is True
+    # We do this to avoid having to put this data in any sync response and only do it for async responses
+    forward_http_status_in_body: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None
 
     async def forward(self, json_payload: Any) -> Any:
@@ -193,7 +205,12 @@ class Forwarder(ModelEngineSerializationMixin):
             )
 
         if self.wrap_response:
-            response = self.get_response_payload(using_serialize_results_as_string, response)
+            response = self.get_response_payload(
+                using_serialize_results_as_string,
+                self.forward_http_status_in_body,
+                response,
+                response_raw.status,
+            )  # forward_http_status_in_body
 
         if self.forward_http_status:
             return JSONResponse(content=response, status_code=response_raw.status)
@@ -235,7 +252,12 @@ class Forwarder(ModelEngineSerializationMixin):
             )
 
         if self.wrap_response:
-            response = self.get_response_payload(using_serialize_results_as_string, response)
+            response = self.get_response_payload(
+                using_serialize_results_as_string,
+                self.forward_http_status_in_body,
+                response,
+                response_raw.status_code,
+            )
 
         if self.forward_http_status:
             return JSONResponse(content=response, status_code=response_raw.status_code)
@@ -265,6 +287,7 @@ class LoadForwarder:
     serialize_results_as_string: bool = True
     wrap_response: bool = True
     forward_http_status: bool = False
+    forward_http_status_in_body: bool = False
 
     def load(self, resources: Optional[Path], cache: Any) -> Forwarder:
         if self.use_grpc:
@@ -372,6 +395,7 @@ class LoadForwarder:
             post_inference_hooks_handler=handler,
             wrap_response=self.wrap_response,
             forward_http_status=self.forward_http_status,
+            forward_http_status_in_body=self.forward_http_status_in_body,
         )
 
 
