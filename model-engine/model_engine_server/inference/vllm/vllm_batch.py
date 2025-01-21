@@ -49,6 +49,7 @@ from tqdm import tqdm
 from typing_extensions import TypeAlias, assert_never
 from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
 from vllm.engine.protocol import EngineClient
+from vllm.entrypoints.chat_utils import load_chat_template
 from vllm.entrypoints.openai.protocol import ChatCompletionRequest, CompletionRequest, ErrorResponse
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
@@ -267,6 +268,7 @@ async def init_engine(
 
     engine_client = AsyncLLMEngine.from_engine_args(engine_args)
     model_config = await engine_client.get_model_config()
+    resolved_chat_template = load_chat_template(parsed_configs.chat_template)
     base_model_paths = [BaseModelPath(name=model, model_path=model)]
 
     openai_serving_chat = OpenAIServingChat(
@@ -277,7 +279,8 @@ async def init_engine(
         lora_modules=None,
         prompt_adapters=None,
         request_logger=None,
-        chat_template=None,
+        chat_template=resolved_chat_template,
+        chat_template_content_format=None,
     )
 
     openai_serving_completion = OpenAIServingCompletion(
