@@ -36,7 +36,7 @@ def test_task_create_get_url(
 
     get_response_2 = fake_live_async_model_inference_gateway.get_task(task_id)
     assert get_response_2 == GetAsyncTaskV1Response(
-        task_id=task_id, status=TaskStatus.SUCCESS, result=42
+        task_id=task_id, status=TaskStatus.SUCCESS, result=42, status_code=200
     )
 
 
@@ -72,5 +72,5 @@ def test_task_create_get_args_callback(
 
     get_response_2 = fake_live_async_model_inference_gateway.get_task(task_id)
     assert get_response_2 == GetAsyncTaskV1Response(
-        task_id=task_id, status=TaskStatus.SUCCESS, result=42
+        task_id=task_id, status=TaskStatus.SUCCESS, result=42, status_code=200
     )

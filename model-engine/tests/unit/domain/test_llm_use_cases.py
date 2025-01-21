@@ -1025,6 +1025,7 @@ async def test_completion_sync_use_case_success(
                 )
             },
             traceback=None,
+            status_code=200,
         )
     )
     use_case = CompletionSyncV1UseCase(
@@ -1146,6 +1147,7 @@ async def test_completion_sync_text_generation_inference_use_case_success(
 """
         },
         traceback=None,
+        status_code=200,
     )
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
@@ -1197,6 +1199,7 @@ async def test_completion_sync_trt_llm_use_case_success_23_10(
             "result": '{"model_name": "ensemble", "model_version": "1", "sequence_end": false, "sequence_id": 0, "sequence_start": false, "text_output": "<s> What is machine learning? Machine learning is a branch", "token_ids": [1, 1724, 338, 4933, 6509, 29973, 6189, 6509, 338, 263, 5443]}'
         },
         traceback=None,
+        status_code=200,
     )
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
@@ -1242,6 +1245,7 @@ async def test_completion_sync_trt_llm_use_case_success_24_01(
             "result": f'{{"context_logits":0.0,"cum_log_probs":0.0,"generation_logits":0.0,"model_name":"ensemble","model_version":"1","output_log_probs":{output_log_probs},"sequence_end":false,"sequence_id":0,"sequence_start":false,"text_output":" Machine learning is a branch"}}'
         },
         traceback=None,
+        status_code=200,
     )
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,
@@ -1276,6 +1280,7 @@ async def test_completion_sync_use_case_predict_failed(
             status=TaskStatus.FAILURE,
             result=None,
             traceback="failed to predict",
+            status_code=500,
         )
     )
     use_case = CompletionSyncV1UseCase(
@@ -1307,6 +1312,7 @@ async def test_completion_sync_use_case_predict_failed_lightllm(
             status=TaskStatus.FAILURE,
             result=None,
             traceback="failed to predict",
+            status_code=500,
         )
     )
     use_case = CompletionSyncV1UseCase(
@@ -1339,6 +1345,7 @@ async def test_completion_sync_use_case_predict_failed_trt_llm(
             status=TaskStatus.FAILURE,
             result=None,
             traceback="failed to predict",
+            status_code=500,
         )
     )
     use_case = CompletionSyncV1UseCase(
@@ -1376,6 +1383,7 @@ async def test_completion_sync_use_case_predict_failed_with_errors(
 """
         },
         traceback="failed to predict",
+        status_code=500,
     )
     use_case = CompletionSyncV1UseCase(
         model_endpoint_service=fake_model_endpoint_service,

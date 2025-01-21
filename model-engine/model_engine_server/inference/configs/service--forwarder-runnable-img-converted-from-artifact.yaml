@@ -20,3 +20,4 @@ forwarder:
     model_engine_unwrap: false
     serialize_results_as_string: false
     wrap_response: false
+    forward_http_status_in_body: true

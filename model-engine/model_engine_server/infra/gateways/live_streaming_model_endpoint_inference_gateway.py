@@ -235,7 +235,9 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 endpoint_name=endpoint_name or topic,
             )
             async for item in response:
-                yield SyncEndpointPredictV1Response(status=TaskStatus.SUCCESS, result=item)
+                yield SyncEndpointPredictV1Response(
+                    status=TaskStatus.SUCCESS, result=item, status_code=200
+                )
         except UpstreamServiceError as exc:
             logger.error(f"Service error on streaming task: {exc.content!r}")
 
@@ -258,4 +260,5 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
             yield SyncEndpointPredictV1Response(
                 status=TaskStatus.FAILURE,
                 traceback=result_traceback,
+                status_code=exc.status_code,
             )

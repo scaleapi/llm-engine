@@ -280,6 +280,7 @@ def test_prediction_response_json_encoding():
         status=TaskStatus.SUCCESS,
         result=ResponseSchema.parse_obj({"some": "custom", "returned": "value"}),
         traceback="traceback",
+        status_code=200,
     )
     pred_response = BatchEndpointInferencePredictionResponse(
         response=pred_response_inner, reference_id="refid"
@@ -290,4 +291,5 @@ def test_prediction_response_json_encoding():
         result=dict(some="custom", returned="value"),
         traceback="traceback",
         id="refid",
+        status_code=200,
     )

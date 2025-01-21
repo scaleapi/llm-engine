@@ -116,7 +116,7 @@ async def create_sync_inference_task(
         )
     except UpstreamServiceError as exc:
         return SyncEndpointPredictV1Response(
-            status=TaskStatus.FAILURE, traceback=exc.content.decode()
+            status=TaskStatus.FAILURE, traceback=exc.content.decode(), status_code=exc.status_code
         )
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(
@@ -132,6 +132,11 @@ async def create_sync_inference_task(
         raise HTTPException(
             status_code=408,
             detail="Request timed out.",
+        ) from exc
+    except InvalidRequestException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid request: {str(exc)}",
         ) from exc
 
 
@@ -164,7 +169,9 @@ async def create_streaming_inference_task(
             iter(
                 (
                     SyncEndpointPredictV1Response(
-                        status=TaskStatus.FAILURE, traceback=exc.content.decode()
+                        status=TaskStatus.FAILURE,
+                        traceback=exc.content.decode(),
+                        status_code=exc.status_code,
                     ).json(),
                 )
             )
@@ -178,4 +185,9 @@ async def create_streaming_inference_task(
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported inference type: {str(exc)}",
+        ) from exc
+    except InvalidRequestException as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid request: {str(exc)}",
         ) from exc

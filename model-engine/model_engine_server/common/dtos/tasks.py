@@ -34,12 +34,14 @@ class GetAsyncTaskV1Response(BaseModel):
     status: TaskStatus
     result: Optional[ResponseSchema] = None
     traceback: Optional[str] = None
+    status_code: Optional[int] = None
 
 
 class SyncEndpointPredictV1Response(BaseModel):
     status: TaskStatus
     result: Optional[Any] = None
     traceback: Optional[str] = None
+    status_code: Optional[int] = None
 
 
 class EndpointPredictV1Request(BaseModel):

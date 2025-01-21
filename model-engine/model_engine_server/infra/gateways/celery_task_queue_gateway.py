@@ -68,6 +68,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
         kwargs: Optional[Dict[str, Any]] = None,
         expires: Optional[int] = None,
     ) -> CreateAsyncTaskV1Response:
+        # Used for both endpoint infra creation and async tasks
         celery_dest = self._get_celery_dest()
 
         try:
@@ -84,6 +85,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
         return CreateAsyncTaskV1Response(task_id=res.id)
 
     def get_task(self, task_id: str) -> GetAsyncTaskV1Response:
+        # Only used for async tasks
         celery_dest = self._get_celery_dest()
         res = celery_dest.AsyncResult(task_id)
         response_state = res.state
@@ -92,8 +94,19 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             # result_dict = (
             #    response_result if type(response_result) is dict else {"result": response_result}
             # )
+            status_code = None
+            result = res.result
+            if type(result) is dict and "status_code" in result:
+                # Filter out status code from result if it was added by the forwarder
+                # This is admittedly kinda hacky and would technically introduce an edge case
+                # if we ever decide not to have async tasks wrap response.
+                status_code = result["status_code"]
+                del result["status_code"]
             return GetAsyncTaskV1Response(
-                task_id=task_id, status=TaskStatus.SUCCESS, result=res.result
+                task_id=task_id,
+                status=TaskStatus.SUCCESS,
+                result=result,
+                status_code=status_code,
             )
 
         elif response_state == "FAILURE":
@@ -101,6 +114,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                 task_id=task_id,
                 status=TaskStatus.FAILURE,
                 traceback=res.traceback,
+                status_code=None,  # probably
             )
         elif response_state == "RETRY":
             # Backwards compatibility, otherwise we'd need to add "RETRY" to the clients

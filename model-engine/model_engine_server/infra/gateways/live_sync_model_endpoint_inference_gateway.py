@@ -238,12 +238,17 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 return SyncEndpointPredictV1Response(
                     status=TaskStatus.FAILURE,
                     traceback=result_traceback,
+                    status_code=exc.status_code,
                 )
 
             except Exception as e:
                 logger.error(f"Failed to parse error: {e}")
                 return SyncEndpointPredictV1Response(
-                    status=TaskStatus.FAILURE, traceback=exc.content.decode()
+                    status=TaskStatus.FAILURE,
+                    traceback=exc.content.decode(),
+                    status_code=exc.status_code,
                 )
 
-        return SyncEndpointPredictV1Response(status=TaskStatus.SUCCESS, result=response)
+        return SyncEndpointPredictV1Response(
+            status=TaskStatus.SUCCESS, result=response, status_code=200
+        )
