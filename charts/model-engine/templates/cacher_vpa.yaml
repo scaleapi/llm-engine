@@ -11,7 +11,7 @@ spec:
     kind: Deployment
     name: {{ include "modelEngine.cachername" . }}
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: {{ .Values.autoscaling.vertical.updateMode }}
   resourcePolicy:
     containerPolicies:
       - containerName: {{ include "modelEngine.cachername" . }}
