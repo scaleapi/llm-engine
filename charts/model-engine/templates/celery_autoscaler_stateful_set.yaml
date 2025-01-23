@@ -108,5 +108,9 @@ spec:
           name: {{ .Values.aws.configMap.name }}
         name: config-volume
       {{- end}}
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 20%
+    type: RollingUpdate
 {{- end }}
 {{- end }}
