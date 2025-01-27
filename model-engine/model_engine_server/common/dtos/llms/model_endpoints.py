@@ -29,8 +29,6 @@ from model_engine_server.domain.entities import (
 
 
 class LLMModelEndpointCommonArgs(BaseModel):
-    name: str
-
     # LLM specific fields
     model_name: str
     source: LLMSource = LLMSource.HUGGING_FACE
@@ -76,10 +74,6 @@ class LLMModelEndpointCommonArgs(BaseModel):
         default=None,
         description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
     )
-
-
-class WithCreateArgsMixin(BaseModel):
-    name: str
 
 
 class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
