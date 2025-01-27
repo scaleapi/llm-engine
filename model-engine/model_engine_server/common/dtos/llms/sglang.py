@@ -356,4 +356,8 @@ class SGLangModelConfig(BaseModel):
 
 
 class SGLangEndpointAdditionalArgs(SGLangModelConfig, BaseModel):
+    huggingface_repo: Optional[str] = Field(
+        default=None,
+        description="The Hugging Face repository ID.",
+    )
     pass

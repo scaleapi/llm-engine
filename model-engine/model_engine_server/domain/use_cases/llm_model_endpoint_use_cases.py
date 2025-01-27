@@ -798,23 +798,25 @@ class CreateLLMModelBundleV1UseCase:
         # merge additional_args with inferred_additional_args
         # We assume user provided additional args takes precedence over inferred args
         sglang_args = additional_args or SGLangEndpointAdditionalArgs()
+        if not sglang_args.huggingface_repo:
+            raise ValueError("huggingface_repo is required for SGLang")
 
-        # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
-        final_weights_folder = "model_files"
-        subcommands += self.load_model_weights_sub_commands(
-            LLMInferenceFramework.SGLANG,
-            framework_image_tag,
-            checkpoint_path,
-            final_weights_folder,
-            trust_remote_code=sglang_args.trust_remote_code or False,
-        )
+        # TODO(dmchoi): currently using official sglang image; doesn't have s5cmd
+        # final_weights_folder = "model_files"
+        # subcommands += self.load_model_weights_sub_commands(
+        #     LLMInferenceFramework.SGLANG,
+        #     framework_image_tag,
+        #     checkpoint_path,
+        #     final_weights_folder,
+        #     trust_remote_code=sglang_args.trust_remote_code or False,
+        # )
 
         sglang_args.tp_size = num_shards
 
         if chat_template_override:
             sglang_args.chat_template = chat_template_override
 
-        sglang_cmd = f"python3 -m sglang.launch_server --model-path {final_weights_folder} --served-model-name {model_name} --port 5005 --host 0.0.0.0"
+        sglang_cmd = f"python3 -m sglang.launch_server --model-path {sglang_args.huggingface_repo} --served-model-name {model_name} --port 5005 --host 0.0.0.0"
         for field in SGLangEndpointAdditionalArgs.model_fields.keys():
             config_value = getattr(sglang_args, field, None)
             if config_value is not None:
