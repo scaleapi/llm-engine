@@ -138,10 +138,10 @@ logger = make_logger(logger_name())
 
 OPENAI_CHAT_COMPLETION_PATH = "/v1/chat/completions"
 CHAT_TEMPLATE_MAX_LENGTH = 10_000
-CHAT_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM]
+CHAT_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM, LLMInferenceFramework.SGLANG]
 
 OPENAI_COMPLETION_PATH = "/v1/completions"
-OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM]
+OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM, LLMInferenceFramework.SGLANG]
 
 LLM_METADATA_KEY = "_llm"
 RESERVED_METADATA_KEYS = [LLM_METADATA_KEY, CONVERTED_FROM_ARTIFACT_LIKE_KEY]
@@ -157,135 +157,7 @@ INFERENCE_FRAMEWORK_REPOSITORY: Dict[LLMInferenceFramework, str] = {
     LLMInferenceFramework.VLLM: hmi_config.vllm_repository,
     LLMInferenceFramework.LIGHTLLM: hmi_config.lightllm_repository,
     LLMInferenceFramework.TENSORRT_LLM: hmi_config.tensorrt_llm_repository,
-}
-
-_SUPPORTED_MODELS_BY_FRAMEWORK = {
-    LLMInferenceFramework.DEEPSPEED: set(
-        [
-            "mpt-7b",
-            "mpt-7b-instruct",
-            "flan-t5-xxl",
-            "llama-7b",
-            "gpt-j-6b",
-            "gpt-j-6b-zh-en",
-            "gpt4all-j",
-            "dolly-v2-12b",
-            "stablelm-tuned-7b",
-            "vicuna-13b",
-        ]
-    ),
-    LLMInferenceFramework.TEXT_GENERATION_INFERENCE: set(
-        [
-            "mpt-7b",
-            "mpt-7b-instruct",
-            "flan-t5-xxl",
-            "llama-7b",
-            "llama-2-7b",
-            "llama-2-7b-chat",
-            "llama-2-13b",
-            "llama-2-13b-chat",
-            "llama-2-70b",
-            "llama-2-70b-chat",
-            "falcon-7b",
-            "falcon-7b-instruct",
-            "falcon-40b",
-            "falcon-40b-instruct",
-            "codellama-7b",
-            "codellama-7b-instruct",
-            "codellama-13b",
-            "codellama-13b-instruct",
-            "codellama-34b",
-            "codellama-34b-instruct",
-            "llm-jp-13b-instruct-full",
-            "llm-jp-13b-instruct-full-dolly",
-            "zephyr-7b-alpha",
-            "zephyr-7b-beta",
-        ]
-    ),
-    LLMInferenceFramework.VLLM: set(
-        [
-            "mpt-7b",
-            "mpt-7b-instruct",
-            "llama-7b",
-            "llama-2-7b",
-            "llama-2-7b-chat",
-            "llama-2-13b",
-            "llama-2-13b-chat",
-            "llama-2-70b",
-            "llama-2-70b-chat",
-            "llama-3-8b",
-            "llama-3-8b-instruct",
-            "llama-3-8b-instruct-262k",
-            "llama-3-70b",
-            "llama-3-70b-instruct",
-            "llama-3-1-8b",
-            "llama-3-1-8b-instruct",
-            "llama-3-1-70b",
-            "llama-3-1-70b-instruct",
-            "llama-3-1-405b",
-            "llama-3-1-405b-instruct",
-            "llama-3-2-1b-instruct",
-            "llama-3-2-3b-instruct",
-            "llama-3-2-11b-vision-instruct",
-            "llama-3-2-90b-vision-instruct",
-            "falcon-7b",
-            "falcon-7b-instruct",
-            "falcon-40b",
-            "falcon-40b-instruct",
-            "falcon-180b",
-            "falcon-180b-chat",
-            "codellama-7b",
-            "codellama-7b-instruct",
-            "codellama-13b",
-            "codellama-13b-instruct",
-            "codellama-34b",
-            "codellama-34b-instruct",
-            "codellama-70b",
-            "codellama-70b-instruct",
-            "mistral-7b",
-            "mistral-7b-instruct",
-            "mixtral-8x7b",
-            "mixtral-8x7b-instruct",
-            "mixtral-8x22b",
-            "mixtral-8x22b-instruct",
-            "mammoth-coder-llama-2-7b",
-            "mammoth-coder-llama-2-13b",
-            "mammoth-coder-llama-2-34b",
-            "zephyr-7b-alpha",
-            "zephyr-7b-beta",
-            "gemma-2b",
-            "gemma-2b-instruct",
-            "gemma-7b",
-            "gemma-7b-instruct",
-            "phi-3-mini-4k-instruct",
-            "phi-3-mini-128k-instruct",
-            "phi-3-small-8k-instruct",
-            "phi-3-small-128k-instruct",
-            "phi-3-medium-4-instruct",
-            "phi-3-medium-128k-instruct",
-            "deepseek-v2",
-            "deepseek-v2-chat",
-            "deepseek-coder-v2",
-            "deepseek-coder-v2-instruct",
-            "deepseek-coder-v2-lite",
-            "deepseek-coder-v2-lite-instruct",
-            "qwen2-72b-instruct",
-        ]
-    ),
-    LLMInferenceFramework.LIGHTLLM: set(
-        [
-            "llama-7b",
-            "llama-2-7b",
-            "llama-2-7b-chat",
-            "llama-2-13b",
-            "llama-2-13b-chat",
-            "llama-2-70b",
-            "llama-2-70b-chat",
-        ]
-    ),
-    LLMInferenceFramework.TENSORRT_LLM: set(
-        ["llama-2-7b", "mixtral-8x7b", "mixtral-8x7b-instruct"]
-    ),
+    LLMInferenceFramework.SGLANG: hmi_config.sglang_repository or "n/a",
 }
 
 _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
@@ -294,6 +166,7 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
     LLMInferenceFramework.VLLM: [Quantization.AWQ],
     LLMInferenceFramework.LIGHTLLM: [],
     LLMInferenceFramework.TENSORRT_LLM: [],
+    LLMInferenceFramework.SGLANG: [],
 }
 
 
@@ -388,12 +261,9 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
     return response
 
 
-def validate_model_name(model_name: str, inference_framework: LLMInferenceFramework) -> None:
+def validate_model_name(_model_name: str, _inference_framework: LLMInferenceFramework) -> None:
     # TODO: replace this logic to check if the model architecture is supported instead
-    if model_name not in _SUPPORTED_MODELS_BY_FRAMEWORK[inference_framework]:
-        logger.warning(
-            f"Model name {model_name} may not be supported by inference framework {inference_framework}."
-        )
+    pass
 
 
 def validate_num_shards(
@@ -944,7 +814,7 @@ class CreateLLMModelBundleV1UseCase:
         if chat_template_override:
             sglang_args.chat_template = chat_template_override
 
-        sglang_cmd = f"python3 -m sglang.launch_server --model {final_weights_folder} --port 5005 --host 0.0.0.0"
+        sglang_cmd = f"python3 -m sglang.launch_server --model {final_weights_folder} --served-model-name {model_name} --port 5005 --host 0.0.0.0"
         for field in SGLangEndpointAdditionalArgs.model_fields.keys():
             config_value = getattr(sglang_args, field, None)
             if config_value is not None:
