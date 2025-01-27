@@ -3,7 +3,7 @@ DTOs for LLM APIs.
 
 """
 
-from typing import Annotated, Any, Dict, List, Optional, TypeAlias, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, TypeAlias, Union
 
 from model_engine_server.common.dtos.core import HttpUrlStr
 from model_engine_server.common.dtos.llms.sglang import SGLangEndpointAdditionalArgs
@@ -89,34 +89,38 @@ class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
 class CreateVLLMModelEndpointRequest(
     VLLMEndpointAdditionalArgs, CreateLLMModelEndpointArgs, BaseModel
 ):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM
+    inference_framework: Literal[LLMInferenceFramework.VLLM] = LLMInferenceFramework.VLLM
     pass
 
 
 class CreateSGLangModelEndpointRequest(
     SGLangEndpointAdditionalArgs, CreateLLMModelEndpointArgs, BaseModel
 ):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.SGLANG
+    inference_framework: Literal[LLMInferenceFramework.SGLANG] = LLMInferenceFramework.SGLANG
     pass
 
 
 class CreateDeepSpeedModelEndpointRequest(CreateLLMModelEndpointArgs, BaseModel):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.DEEPSPEED
+    inference_framework: Literal[LLMInferenceFramework.DEEPSPEED] = LLMInferenceFramework.DEEPSPEED
     pass
 
 
 class CreateTextGenerationInferenceModelEndpointRequest(CreateLLMModelEndpointArgs, BaseModel):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+    inference_framework: Literal[LLMInferenceFramework.TEXT_GENERATION_INFERENCE] = (
+        LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+    )
     pass
 
 
 class CreateLightLLMModelEndpointRequest(CreateLLMModelEndpointArgs, BaseModel):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.LIGHTLLM
+    inference_framework: Literal[LLMInferenceFramework.LIGHTLLM] = LLMInferenceFramework.LIGHTLLM
     pass
 
 
 class CreateTensorRTLLMModelEndpointRequest(CreateLLMModelEndpointArgs, BaseModel):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TENSORRT_LLM
+    inference_framework: Literal[LLMInferenceFramework.TENSORRT_LLM] = (
+        LLMInferenceFramework.TENSORRT_LLM
+    )
     pass
 
 
@@ -176,29 +180,33 @@ class UpdateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
 class UpdateVLLMModelEndpointRequest(
     VLLMEndpointAdditionalArgs, UpdateLLMModelEndpointArgs, BaseModel
 ):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM
+    inference_framework: Literal[LLMInferenceFramework.VLLM] = LLMInferenceFramework.VLLM
 
 
 class UpdateSGLangModelEndpointRequest(
     SGLangEndpointAdditionalArgs, UpdateLLMModelEndpointArgs, BaseModel
 ):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.SGLANG
+    inference_framework: Literal[LLMInferenceFramework.SGLANG] = LLMInferenceFramework.SGLANG
 
 
 class UpdateDeepSpeedModelEndpointRequest(UpdateLLMModelEndpointArgs, BaseModel):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.DEEPSPEED
+    inference_framework: Literal[LLMInferenceFramework.DEEPSPEED] = LLMInferenceFramework.DEEPSPEED
 
 
 class UpdateTextGenerationInferenceModelEndpointRequest(UpdateLLMModelEndpointArgs, BaseModel):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+    inference_framework: Literal[LLMInferenceFramework.TEXT_GENERATION_INFERENCE] = (
+        LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+    )
 
 
 class UpdateLightLLMModelEndpointRequest(UpdateLLMModelEndpointArgs, BaseModel):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.LIGHTLLM
+    inference_framework: Literal[LLMInferenceFramework.LIGHTLLM] = LLMInferenceFramework.LIGHTLLM
 
 
 class UpdateTensorRTLLMModelEndpointRequest(UpdateLLMModelEndpointArgs, BaseModel):
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TENSORRT_LLM
+    inference_framework: Literal[LLMInferenceFramework.TENSORRT_LLM] = (
+        LLMInferenceFramework.TENSORRT_LLM
+    )
 
 
 UpdateLLMModelEndpointV1Request: TypeAlias = Annotated[
