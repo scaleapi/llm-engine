@@ -927,16 +927,7 @@ class CreateLLMModelBundleV1UseCase:
 
         # merge additional_args with inferred_additional_args
         # We assume user provided additional args takes precedence over inferred args
-        sglang_args = SGLangEndpointAdditionalArgs.model_validate(
-            {
-                **(
-                    infer_addition_engine_args_from_model_name(model_name).model_dump(
-                        exclude_none=True
-                    )
-                ),
-                **(additional_args.model_dump(exclude_none=True) if additional_args else {}),
-            }
-        )
+        sglang_args = additional_args or SGLangEndpointAdditionalArgs()
 
         # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
         final_weights_folder = "model_files"
