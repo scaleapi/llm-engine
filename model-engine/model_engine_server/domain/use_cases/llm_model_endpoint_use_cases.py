@@ -54,6 +54,7 @@ from model_engine_server.common.dtos.llms.completion import (
     CompletionV2StreamSuccessChunk,
     CompletionV2SyncResponse,
 )
+from model_engine_server.common.dtos.llms.sglang import SGLangEndpointAdditionalArgs
 from model_engine_server.common.dtos.llms.vllm import VLLMEndpointAdditionalArgs, VLLMModelConfig
 from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Request
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
@@ -118,6 +119,7 @@ from model_engine_server.infra.repositories.live_tokenizer_repository import (
     SUPPORTED_MODELS_INFO,
     get_models_s3_uri,
 )
+from typing_extensions import assert_never
 
 from ...common.datadog_utils import add_trace_model_name, add_trace_request_id
 from ..authorization.live_authorization_module import LiveAuthorizationModule
@@ -522,16 +524,19 @@ class CreateLLMModelBundleV1UseCase:
         additional_args: Optional[Dict[str, Any]] = None,
     ) -> ModelBundle:
         multinode = nodes_per_worker > 1
-        if source == LLMSource.HUGGING_FACE:
-            self.check_docker_image_exists_for_image_tag(
-                framework_image_tag, INFERENCE_FRAMEWORK_REPOSITORY[framework]
-            )
-            if multinode and framework != LLMInferenceFramework.VLLM:
-                raise ObjectHasInvalidValueException(
-                    f"Multinode is not supported for framework {framework}."
-                )
+        if source != LLMSource.HUGGING_FACE:
+            raise ObjectHasInvalidValueException(f"Source {source} is not supported.")
 
-            if framework == LLMInferenceFramework.DEEPSPEED:
+        self.check_docker_image_exists_for_image_tag(
+            framework_image_tag, INFERENCE_FRAMEWORK_REPOSITORY[framework]
+        )
+        if multinode and framework != LLMInferenceFramework.VLLM:
+            raise ObjectHasInvalidValueException(
+                f"Multinode is not supported for framework {framework}."
+            )
+
+        match framework:
+            case LLMInferenceFramework.DEEPSPEED:
                 bundle_id = await self.create_deepspeed_bundle(
                     user,
                     model_name,
@@ -539,7 +544,7 @@ class CreateLLMModelBundleV1UseCase:
                     endpoint_type,
                     endpoint_name,
                 )
-            elif framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
+            case LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
                 bundle_id = await self.create_text_generation_inference_bundle(
                     user,
                     model_name,
@@ -549,7 +554,24 @@ class CreateLLMModelBundleV1UseCase:
                     quantize,
                     checkpoint_path,
                 )
-            elif framework == LLMInferenceFramework.VLLM:
+            case LLMInferenceFramework.LIGHTLLM:
+                bundle_id = await self.create_lightllm_bundle(
+                    user,
+                    model_name,
+                    framework_image_tag,
+                    endpoint_name,
+                    num_shards,
+                    checkpoint_path,
+                )
+            case LLMInferenceFramework.TENSORRT_LLM:
+                bundle_id = await self.create_tensorrt_llm_bundle(
+                    user,
+                    framework_image_tag,
+                    endpoint_name,
+                    num_shards,
+                    checkpoint_path,
+                )
+            case LLMInferenceFramework.VLLM:
                 additional_vllm_args = (
                     VLLMEndpointAdditionalArgs.model_validate(additional_args)
                     if additional_args
@@ -580,29 +602,30 @@ class CreateLLMModelBundleV1UseCase:
                         chat_template_override,
                         additional_args=additional_vllm_args,
                     )
-            elif framework == LLMInferenceFramework.LIGHTLLM:
-                bundle_id = await self.create_lightllm_bundle(
+            case LLMInferenceFramework.SGLANG:
+                if not hmi_config.sglang_repository:
+                    raise ObjectHasInvalidValueException("SGLang repository is not set.")
+
+                additional_sglang_args = (
+                    SGLangEndpointAdditionalArgs.model_validate(additional_args)
+                    if additional_args
+                    else None
+                )
+                bundle_id = await self.create_sglang_bundle(
                     user,
                     model_name,
                     framework_image_tag,
                     endpoint_name,
                     num_shards,
                     checkpoint_path,
+                    chat_template_override,
+                    additional_args=additional_sglang_args,
                 )
-            elif framework == LLMInferenceFramework.TENSORRT_LLM:
-                bundle_id = await self.create_tensorrt_llm_bundle(
-                    user,
-                    framework_image_tag,
-                    endpoint_name,
-                    num_shards,
-                    checkpoint_path,
-                )
-            else:
+            case _:
+                assert_never(framework)
                 raise ObjectHasInvalidValueException(
                     f"Framework {framework} is not supported for source {source}."
                 )
-        else:
-            raise ObjectHasInvalidValueException(f"Source {source} is not supported.")
 
         model_bundle = await self.model_bundle_repository.get_model_bundle(bundle_id)
         if model_bundle is None:
@@ -883,6 +906,111 @@ class CreateLLMModelBundleV1UseCase:
                     do_auth_check=False,
                 )
             ).model_bundle_id
+
+    async def create_sglang_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        checkpoint_path: Optional[str],
+        chat_template_override: Optional[str],
+        additional_args: Optional[SGLangEndpointAdditionalArgs] = None,
+    ):
+        """
+        SGLang start command
+        """
+        subcommands = []
+
+        checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
+
+        # merge additional_args with inferred_additional_args
+        # We assume user provided additional args takes precedence over inferred args
+        sglang_args = SGLangEndpointAdditionalArgs.model_validate(
+            {
+                **(
+                    infer_addition_engine_args_from_model_name(model_name).model_dump(
+                        exclude_none=True
+                    )
+                ),
+                **(additional_args.model_dump(exclude_none=True) if additional_args else {}),
+            }
+        )
+
+        # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
+        final_weights_folder = "model_files"
+        subcommands += self.load_model_weights_sub_commands(
+            LLMInferenceFramework.SGLANG,
+            framework_image_tag,
+            checkpoint_path,
+            final_weights_folder,
+            trust_remote_code=sglang_args.trust_remote_code or False,
+        )
+
+        sglang_args.tp_size = num_shards
+
+        if chat_template_override:
+            sglang_args.chat_template = chat_template_override
+
+        sglang_cmd = f"python3 -m sglang.launch_server --model {final_weights_folder} --port 5005 --host 0.0.0.0"
+        for field in SGLangEndpointAdditionalArgs.model_fields.keys():
+            config_value = getattr(sglang_args, field, None)
+            if config_value is not None:
+                # Special handling for chat_template
+                # Need to encode the chat template as base64 to avoid issues with special characters
+                if field == "chat_template":
+                    chat_template_cmd = f'export CHAT_TEMPLATE=$(echo "{encode_template(config_value)}" | base64 --decode)'
+                    subcommands.append(chat_template_cmd)
+                    config_value = '"$CHAT_TEMPLATE"'
+
+                # if type of config_value is True, then only need to add the key
+                if isinstance(config_value, bool):
+                    if config_value:
+                        sglang_cmd += f" --{field.replace('_', '-')}"
+                else:
+                    sglang_cmd += f" --{field.replace('_', '-')} {config_value}"
+
+        subcommands.append(sglang_cmd)
+
+        command = [
+            "/bin/bash",
+            "-c",
+            ";".join(subcommands),
+        ]
+
+        create_model_bundle_v2_request = CreateModelBundleV2Request(
+            name=endpoint_unique_name,
+            schema_location="TBA",
+            flavor=StreamingEnhancedRunnableImageFlavor(
+                flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                repository=hmi_config.sglang_repository,
+                tag=framework_image_tag,
+                command=command,
+                streaming_command=command,
+                protocol="http",
+                readiness_initial_delay_seconds=10,
+                healthcheck_route="/health",
+                predict_route="/predict",
+                streaming_predict_route="/stream",
+                extra_routes=[
+                    OPENAI_CHAT_COMPLETION_PATH,
+                    OPENAI_COMPLETION_PATH,
+                ],
+                env={},
+            ),
+            metadata={},
+        )
+        return (
+            await self.create_model_bundle_use_case.execute(
+                user,
+                create_model_bundle_v2_request,
+                do_auth_check=False,
+                # Skip auth check because llm create endpoint is called as the user itself,
+                # but the user isn't directly making the action. It should come from the fine tune
+                # job.
+            )
+        ).model_bundle_id
 
     def _create_vllm_bundle_command(
         self,

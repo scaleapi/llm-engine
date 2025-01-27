@@ -3,9 +3,10 @@ DTOs for LLM APIs.
 
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional, TypeAlias, Union
 
 from model_engine_server.common.dtos.core import HttpUrlStr
+from model_engine_server.common.dtos.llms.sglang import SGLangEndpointAdditionalArgs
 from model_engine_server.common.dtos.llms.vllm import VLLMEndpointAdditionalArgs
 from model_engine_server.common.dtos.model_endpoints import (
     CpuSpecificationType,
@@ -27,7 +28,7 @@ from model_engine_server.domain.entities import (
 )
 
 
-class CreateLLMModelEndpointV1Request(VLLMEndpointAdditionalArgs, BaseModel):
+class LLMModelEndpointCommonArgs(BaseModel):
     name: str
 
     # LLM specific fields
@@ -77,6 +78,61 @@ class CreateLLMModelEndpointV1Request(VLLMEndpointAdditionalArgs, BaseModel):
     )
 
 
+class WithCreateArgsMixin(BaseModel):
+    name: str
+
+
+class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
+    name: str
+
+
+class CreateVLLMModelEndpointRequest(
+    VLLMEndpointAdditionalArgs, CreateLLMModelEndpointArgs, BaseModel
+):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM
+    pass
+
+
+class CreateSGLangModelEndpointRequest(
+    SGLangEndpointAdditionalArgs, CreateLLMModelEndpointArgs, BaseModel
+):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.SGLANG
+    pass
+
+
+class CreateDeepSpeedModelEndpointRequest(CreateLLMModelEndpointArgs, BaseModel):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.DEEPSPEED
+    pass
+
+
+class CreateTextGenerationInferenceModelEndpointRequest(CreateLLMModelEndpointArgs, BaseModel):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+    pass
+
+
+class CreateLightLLMModelEndpointRequest(CreateLLMModelEndpointArgs, BaseModel):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.LIGHTLLM
+    pass
+
+
+class CreateTensorRTLLMModelEndpointRequest(CreateLLMModelEndpointArgs, BaseModel):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TENSORRT_LLM
+    pass
+
+
+CreateLLMModelEndpointV1Request: TypeAlias = Annotated[
+    Union[
+        CreateVLLMModelEndpointRequest,
+        CreateSGLangModelEndpointRequest,
+        CreateDeepSpeedModelEndpointRequest,
+        CreateTextGenerationInferenceModelEndpointRequest,
+        CreateLightLLMModelEndpointRequest,
+        CreateTensorRTLLMModelEndpointRequest,
+    ],
+    Field(discriminator="inference_framework"),
+]
+
+
 class CreateLLMModelEndpointV1Response(BaseModel):
     endpoint_creation_task_id: str
 
@@ -107,50 +163,7 @@ class ListLLMModelEndpointsV1Response(BaseModel):
     model_endpoints: List[GetLLMModelEndpointV1Response]
 
 
-class UpdateLLMModelEndpointV1Request(VLLMEndpointAdditionalArgs, BaseModel):
-    # LLM specific fields
-    model_name: Optional[str] = None
-    source: Optional[LLMSource] = None
-    inference_framework_image_tag: Optional[str] = None
-    num_shards: Optional[int] = None
-    """
-    Number of shards to distribute the model onto GPUs.
-    """
-
-    quantize: Optional[Quantization] = None
-    """
-    Whether to quantize the model.
-    """
-
-    checkpoint_path: Optional[str] = None
-    """
-    Path to the checkpoint to load the model from.
-    """
-
-    # General endpoint fields
-    metadata: Optional[Dict[str, Any]] = None
-    post_inference_hooks: Optional[List[str]] = None
-    cpus: Optional[CpuSpecificationType] = None
-    gpus: Optional[int] = None
-    memory: Optional[StorageSpecificationType] = None
-    gpu_type: Optional[GpuType] = None
-    storage: Optional[StorageSpecificationType] = None
-    optimize_costs: Optional[bool] = None
-    min_workers: Optional[int] = None
-    max_workers: Optional[int] = None
-    per_worker: Optional[int] = None
-    labels: Optional[Dict[str, str]] = None
-    prewarm: Optional[bool] = None
-    high_priority: Optional[bool] = None
-    billing_tags: Optional[Dict[str, Any]] = None
-    default_callback_url: Optional[HttpUrlStr] = None
-    default_callback_auth: Optional[CallbackAuth] = None
-    public_inference: Optional[bool] = None
-    chat_template_override: Optional[str] = Field(
-        default=None,
-        description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
-    )
-
+class UpdateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
     force_bundle_recreation: Optional[bool] = False
     """
     Whether to force recreate the underlying bundle.
@@ -158,6 +171,47 @@ class UpdateLLMModelEndpointV1Request(VLLMEndpointAdditionalArgs, BaseModel):
     If True, the underlying bundle will be recreated. This is useful if there are underlying implementation changes with how bundles are created
     that we would like to pick up for existing endpoints
     """
+
+
+class UpdateVLLMModelEndpointRequest(
+    VLLMEndpointAdditionalArgs, UpdateLLMModelEndpointArgs, BaseModel
+):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM
+
+
+class UpdateSGLangModelEndpointRequest(
+    SGLangEndpointAdditionalArgs, UpdateLLMModelEndpointArgs, BaseModel
+):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.SGLANG
+
+
+class UpdateDeepSpeedModelEndpointRequest(UpdateLLMModelEndpointArgs, BaseModel):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.DEEPSPEED
+
+
+class UpdateTextGenerationInferenceModelEndpointRequest(UpdateLLMModelEndpointArgs, BaseModel):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+
+
+class UpdateLightLLMModelEndpointRequest(UpdateLLMModelEndpointArgs, BaseModel):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.LIGHTLLM
+
+
+class UpdateTensorRTLLMModelEndpointRequest(UpdateLLMModelEndpointArgs, BaseModel):
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.TENSORRT_LLM
+
+
+UpdateLLMModelEndpointV1Request: TypeAlias = Annotated[
+    Union[
+        UpdateVLLMModelEndpointRequest,
+        UpdateSGLangModelEndpointRequest,
+        UpdateDeepSpeedModelEndpointRequest,
+        UpdateTextGenerationInferenceModelEndpointRequest,
+        UpdateLightLLMModelEndpointRequest,
+        UpdateTensorRTLLMModelEndpointRequest,
+    ],
+    Field(discriminator="inference_framework"),
+]
 
 
 class UpdateLLMModelEndpointV1Response(BaseModel):
