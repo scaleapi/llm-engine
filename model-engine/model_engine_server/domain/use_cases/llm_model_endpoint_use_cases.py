@@ -814,7 +814,7 @@ class CreateLLMModelBundleV1UseCase:
         if chat_template_override:
             sglang_args.chat_template = chat_template_override
 
-        sglang_cmd = f"python3 -m sglang.launch_server --model {final_weights_folder} --served-model-name {model_name} --port 5005 --host 0.0.0.0"
+        sglang_cmd = f"python3 -m sglang.launch_server --model-path {final_weights_folder} --served-model-name {model_name} --port 5005 --host 0.0.0.0"
         for field in SGLangEndpointAdditionalArgs.model_fields.keys():
             config_value = getattr(sglang_args, field, None)
             if config_value is not None:
