@@ -29,16 +29,6 @@ from model_engine_server.domain.entities import (
 
 
 class LLMModelEndpointCommonArgs(BaseModel):
-    # LLM specific fields
-    model_name: str
-    source: LLMSource = LLMSource.HUGGING_FACE
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM
-    inference_framework_image_tag: str = "latest"
-    num_shards: int = 1
-    """
-    Number of shards to distribute the model onto GPUs.
-    """
-
     quantize: Optional[Quantization] = None
     """
     Whether to quantize the model.
@@ -50,9 +40,7 @@ class LLMModelEndpointCommonArgs(BaseModel):
     """
 
     # General endpoint fields
-    metadata: Dict[str, Any]  # TODO: JSON type
     post_inference_hooks: Optional[List[str]] = None
-    endpoint_type: ModelEndpointType = ModelEndpointType.SYNC
     cpus: Optional[CpuSpecificationType] = None
     gpus: Optional[int] = None
     memory: Optional[StorageSpecificationType] = None
@@ -78,6 +66,16 @@ class LLMModelEndpointCommonArgs(BaseModel):
 
 class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
     name: str
+    model_name: str
+    source: LLMSource = LLMSource.HUGGING_FACE
+    inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM
+    inference_framework_image_tag: str = "latest"
+    num_shards: int = 1
+    """
+    Number of shards to distribute the model onto GPUs.
+    """
+    metadata: Dict[str, Any]  # TODO: JSON type
+    endpoint_type: ModelEndpointType = ModelEndpointType.SYNC
 
 
 class CreateVLLMModelEndpointRequest(
@@ -162,6 +160,15 @@ class ListLLMModelEndpointsV1Response(BaseModel):
 
 
 class UpdateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
+    model_name: Optional[str] = None
+    source: Optional[LLMSource] = None
+    inference_framework: Optional[LLMInferenceFramework] = None
+    inference_framework_image_tag: Optional[str] = None
+    num_shards: Optional[int] = None
+    """
+    Number of shards to distribute the model onto GPUs.
+    """
+    metadata: Optional[Dict[str, Any]] = None
     force_bundle_recreation: Optional[bool] = False
     """
     Whether to force recreate the underlying bundle.
