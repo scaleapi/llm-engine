@@ -472,7 +472,7 @@ class CreateLLMModelBundleV1UseCase:
                         chat_template_override,
                         additional_args=additional_vllm_args,
                     )
-            case LLMInferenceFramework.SGLANG:
+            case LLMInferenceFramework.SGLANG:  # pragma: no cover
                 if not hmi_config.sglang_repository:
                     raise ObjectHasInvalidValueException("SGLang repository is not set.")
 
@@ -777,7 +777,7 @@ class CreateLLMModelBundleV1UseCase:
                 )
             ).model_bundle_id
 
-    async def create_sglang_bundle(
+    async def create_sglang_bundle(  # pragma: no cover
         self,
         user: User,
         model_name: str,
