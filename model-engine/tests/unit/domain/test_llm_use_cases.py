@@ -67,6 +67,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
 from ..conftest import mocked__get_recommended_hardware_config_map
+from .conftest import CreateLLMModelEndpointV1Request_gen
 
 
 def mocked__get_latest_batch_v2_tag():
@@ -2812,7 +2813,7 @@ async def test_infer_hardware(fake_llm_artifact_gateway):
     mocked__get_recommended_hardware_config_map(),
 )
 async def test_fill_hardware_info(fake_llm_artifact_gateway):
-    request = CreateLLMModelEndpointV1Request(
+    request = CreateLLMModelEndpointV1Request_gen(
         name="mixtral-8x7b",
         model_name="mixtral-8x7b",
         checkpoint_path="s3://checkpoint",
@@ -2830,7 +2831,7 @@ async def test_fill_hardware_info(fake_llm_artifact_gateway):
     assert request.gpu_type == GpuType.NVIDIA_HOPPER_H100
     assert request.nodes_per_worker == 1
 
-    request = CreateLLMModelEndpointV1Request(
+    request = CreateLLMModelEndpointV1Request_gen(
         name="mixtral-8x7b",
         model_name="mixtral-8x7b",
         checkpoint_path="s3://checkpoint",

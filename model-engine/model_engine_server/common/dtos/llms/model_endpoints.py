@@ -26,6 +26,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointStatus,
     Quantization,
 )
+from pydantic import Discriminator, Tag
 from typing_extensions import Annotated
 
 
@@ -49,10 +50,6 @@ class LLMModelEndpointCommonArgs(BaseModel):
     storage: Optional[StorageSpecificationType] = None
     nodes_per_worker: Optional[int] = None
     optimize_costs: Optional[bool] = None
-    min_workers: int
-    max_workers: int
-    per_worker: int
-    labels: Dict[str, str]
     prewarm: Optional[bool] = None
     high_priority: Optional[bool] = None
     billing_tags: Optional[Dict[str, Any]] = None
@@ -77,6 +74,10 @@ class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
     """
     metadata: Dict[str, Any]  # TODO: JSON type
     endpoint_type: ModelEndpointType = ModelEndpointType.SYNC
+    min_workers: int
+    max_workers: int
+    per_worker: int
+    labels: Dict[str, str]
 
 
 class CreateVLLMModelEndpointRequest(
@@ -117,16 +118,25 @@ class CreateTensorRTLLMModelEndpointRequest(CreateLLMModelEndpointArgs, BaseMode
     pass
 
 
+def get_inference_framework(v: Any) -> str:
+    if isinstance(v, dict):
+        return v.get("inference_framework", LLMInferenceFramework.VLLM)
+    return getattr(v, "inference_framework", LLMInferenceFramework.VLLM)
+
+
 CreateLLMModelEndpointV1Request: TypeAlias = Annotated[
     Union[
-        CreateVLLMModelEndpointRequest,
-        CreateSGLangModelEndpointRequest,
-        CreateDeepSpeedModelEndpointRequest,
-        CreateTextGenerationInferenceModelEndpointRequest,
-        CreateLightLLMModelEndpointRequest,
-        CreateTensorRTLLMModelEndpointRequest,
+        Annotated[CreateVLLMModelEndpointRequest, Tag(LLMInferenceFramework.VLLM)],
+        Annotated[CreateSGLangModelEndpointRequest, Tag(LLMInferenceFramework.SGLANG)],
+        Annotated[CreateDeepSpeedModelEndpointRequest, Tag(LLMInferenceFramework.DEEPSPEED)],
+        Annotated[
+            CreateTextGenerationInferenceModelEndpointRequest,
+            Tag(LLMInferenceFramework.TEXT_GENERATION_INFERENCE),
+        ],
+        Annotated[CreateLightLLMModelEndpointRequest, Tag(LLMInferenceFramework.LIGHTLLM)],
+        Annotated[CreateTensorRTLLMModelEndpointRequest, Tag(LLMInferenceFramework.TENSORRT_LLM)],
     ],
-    Field(discriminator="inference_framework"),
+    Discriminator(get_inference_framework),
 ]
 
 
@@ -177,6 +187,10 @@ class UpdateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
     If True, the underlying bundle will be recreated. This is useful if there are underlying implementation changes with how bundles are created
     that we would like to pick up for existing endpoints
     """
+    min_workers: Optional[int] = None
+    max_workers: Optional[int] = None
+    per_worker: Optional[int] = None
+    labels: Optional[Dict[str, str]] = None
 
 
 class UpdateVLLMModelEndpointRequest(
@@ -213,14 +227,15 @@ class UpdateTensorRTLLMModelEndpointRequest(UpdateLLMModelEndpointArgs, BaseMode
 
 UpdateLLMModelEndpointV1Request: TypeAlias = Annotated[
     Union[
-        UpdateVLLMModelEndpointRequest,
-        UpdateSGLangModelEndpointRequest,
-        UpdateDeepSpeedModelEndpointRequest,
-        UpdateTextGenerationInferenceModelEndpointRequest,
-        UpdateLightLLMModelEndpointRequest,
-        UpdateTensorRTLLMModelEndpointRequest,
+        Annotated[UpdateVLLMModelEndpointRequest, Tag(LLMInferenceFramework.VLLM)],
+        Annotated[UpdateSGLangModelEndpointRequest, Tag(LLMInferenceFramework.SGLANG)],
+        Annotated[UpdateDeepSpeedModelEndpointRequest, Tag(LLMInferenceFramework.DEEPSPEED)],
+        Annotated[
+            UpdateTextGenerationInferenceModelEndpointRequest,
+            Tag(LLMInferenceFramework.TEXT_GENERATION_INFERENCE),
+        ],
     ],
-    Field(discriminator="inference_framework"),
+    Discriminator(get_inference_framework),
 ]
 
 
