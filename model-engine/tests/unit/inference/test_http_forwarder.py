@@ -357,9 +357,11 @@ async def test_mocked_app_success(mocked_app):
     expected_result = wrap_result(
         json.dumps(raw_result) if config_sync["serialize_results_as_string"] else raw_result
     )
-    with TestClient(
-        mocked_app
-    ) as client, aioresponses() as aio_mock, requests_mock.Mocker() as req_mock:
+    with (
+        TestClient(mocked_app) as client,
+        aioresponses() as aio_mock,
+        requests_mock.Mocker() as req_mock,
+    ):
         req_mock.get(
             healthcheck_endpoint,
             json={"status": "ok"},
