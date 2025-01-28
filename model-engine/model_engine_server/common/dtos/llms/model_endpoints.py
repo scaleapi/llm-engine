@@ -3,7 +3,7 @@ DTOs for LLM APIs.
 
 """
 
-from typing import Annotated, Any, Dict, List, Literal, Optional, TypeAlias, Union
+from typing import Any, Dict, List, Literal, Optional, TypeAlias, Union
 
 from model_engine_server.common.dtos.core import HttpUrlStr
 from model_engine_server.common.dtos.llms.sglang import SGLangEndpointAdditionalArgs
@@ -26,6 +26,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointStatus,
     Quantization,
 )
+from typing_extensions import Annotated
 
 
 class LLMModelEndpointCommonArgs(BaseModel):
