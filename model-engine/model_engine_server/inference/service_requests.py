@@ -95,10 +95,10 @@ def _make_async_request(queue: str, args: List[Any], kwargs: Dict[str, Any]):
         args=[dict(cloudpickle=request_body), True],
         queue=queue,
     )
-    with (
-        allow_join_result()
-    ):  # TODO this can cause deadlocks. Is the a way to identify it on this level?
+    # fmt: off
+    with allow_join_result():  # fmt: skip TODO this can cause deadlocks. Is the a way to identify it on this level?
         response = res.get()  # TODO this doesn't allow parallel requests, which we should allow
+    # fmt: on
     # Empirically celery reraises the child exception
     return _read_response(response)
 
