@@ -147,20 +147,20 @@ jobs:
           name: Pre-load integration test images to minikube
           command: |
             docker build -f model-engine/model_engine_server/inference/pytorch_or_tf.base.Dockerfile \
-            --build-arg BASE_IMAGE=python:3.8-slim \
+            --build-arg BASE_IMAGE=python:3.10-slim \
             --build-arg REQUIREMENTS_FILE="$CIRCLE_SHA1-base-requirements.txt" \
-            -t temp:1.11.0-cuda11.3-cudnn8-runtime-$CIRCLE_SHA1 .
+            -t temp:1.13.0-cuda11.6-cudnn8-runtime-$CIRCLE_SHA1 .
 
             touch $CIRCLE_SHA1-requirements.txt
             echo -e "cloudpickle==2.1.0\npyyaml==6.0" > $CIRCLE_SHA1-requirements.txt
 
             DOCKER_BUILDKIT=1 docker build -f model-engine/model_engine_server/inference/pytorch_or_tf.user.Dockerfile \
-            --build-arg BASE_IMAGE=temp:1.11.0-cuda11.3-cudnn8-runtime-$CIRCLE_SHA1 \
+            --build-arg BASE_IMAGE=temp:1.13.0-cuda11.6-cudnn8-runtime-$CIRCLE_SHA1 \
             --build-arg REQUIREMENTS_FILE="$CIRCLE_SHA1-requirements.txt" \
-            -t $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.11.0-cuda11.3-cudnn8-runtime-$CIRCLE_SHA1-b8c25b .
+            -t $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.13.0-cuda11.6-cudnn8-runtime-$CIRCLE_SHA1-b8c25b .
             rm $CIRCLE_SHA1-requirements.txt
 
-            minikube --logtostderr -v 1 image load $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.11.0-cuda11.3-cudnn8-runtime-$CIRCLE_SHA1-b8c25b
+            minikube --logtostderr -v 1 image load $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/async-pytorch:1.13.0-cuda11.6-cudnn8-runtime-$CIRCLE_SHA1-b8c25b
       - run:
           name: Install helm chart
           command: |
