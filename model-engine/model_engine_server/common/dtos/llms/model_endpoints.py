@@ -65,19 +65,18 @@ class LLMModelEndpointCommonArgs(BaseModel):
 class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
     name: str
     model_name: str
-    source: LLMSource = LLMSource.HUGGING_FACE
-    inference_framework: LLMInferenceFramework = LLMInferenceFramework.VLLM
-    inference_framework_image_tag: str = "latest"
-    num_shards: int = 1
     """
     Number of shards to distribute the model onto GPUs.
     """
     metadata: Dict[str, Any]  # TODO: JSON type
-    endpoint_type: ModelEndpointType = ModelEndpointType.SYNC
     min_workers: int
     max_workers: int
     per_worker: int
     labels: Dict[str, str]
+    source: LLMSource = LLMSource.HUGGING_FACE
+    inference_framework_image_tag: str = "latest"
+    num_shards: int = 1
+    endpoint_type: ModelEndpointType = ModelEndpointType.SYNC
 
 
 class CreateVLLMModelEndpointRequest(

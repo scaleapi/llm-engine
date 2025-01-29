@@ -46,14 +46,14 @@ def CreateLLMModelEndpointV1Request_gen(**kwargs) -> CreateLLMModelEndpointV1Req
     """
     Helper function to generate a CreateLLMModelEndpointV1Request object with the given kwargs.
     """
-    return TypeAdapter(CreateLLMModelEndpointV1Request).validate_python({**kwargs})
+    return TypeAdapter(CreateLLMModelEndpointV1Request).validate_python(kwargs)
 
 
 def UpdateLLMModelEndpointV1Request_gen(**kwargs) -> UpdateLLMModelEndpointV1Request:
     """
     Helper function to generate a UpdateLLMModelEndpointV1Request object with the given kwargs.
     """
-    return TypeAdapter(UpdateLLMModelEndpointV1Request).validate_python({**kwargs})
+    return TypeAdapter(UpdateLLMModelEndpointV1Request).validate_python(kwargs)
 
 
 @pytest.fixture

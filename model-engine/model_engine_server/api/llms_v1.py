@@ -87,6 +87,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     UpdateLLMModelEndpointV1UseCase,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
+from pydantic import RootModel
 from sse_starlette.sse import EventSourceResponse
 
 
@@ -147,10 +148,11 @@ def handle_streaming_exception(
 
 @llm_router_v1.post("/model-endpoints", response_model=CreateLLMModelEndpointV1Response)
 async def create_model_endpoint(
-    request: CreateLLMModelEndpointV1Request,
+    wrapped_request: RootModel[CreateLLMModelEndpointV1Request],
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> CreateLLMModelEndpointV1Response:
+    request = wrapped_request.root
     """
     Creates an LLM endpoint for the current user.
     """
@@ -261,13 +263,14 @@ async def get_model_endpoint(
 )
 async def update_model_endpoint(
     model_endpoint_name: str,
-    request: UpdateLLMModelEndpointV1Request,
+    wrapped_request: RootModel[UpdateLLMModelEndpointV1Request],
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> UpdateLLMModelEndpointV1Response:
     """
     Updates an LLM endpoint for the current user.
     """
+    request = wrapped_request.root
     logger.info(f"PUT /llm/model-endpoints/{model_endpoint_name} with {request} for {auth}")
     try:
         create_model_bundle_use_case = CreateModelBundleV2UseCase(
