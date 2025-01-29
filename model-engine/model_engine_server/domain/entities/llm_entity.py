@@ -13,6 +13,7 @@ class LLMInferenceFramework(str, Enum):
     VLLM = "vllm"
     LIGHTLLM = "lightllm"
     TENSORRT_LLM = "tensorrt_llm"
+    SGLANG = "sglang"
 
 
 class Quantization(str, Enum):

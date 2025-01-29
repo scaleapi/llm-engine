@@ -107,9 +107,12 @@ async def test_make_request_with_retries_failed_429(
     fake_response = FakeResponse(status=429)
     mock_client_session = _get_mock_client_session(fake_response)
 
-    with pytest.raises(UpstreamServiceError), patch(
-        "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
-        mock_client_session,
+    with (
+        pytest.raises(UpstreamServiceError),
+        patch(
+            "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
+            mock_client_session,
+        ),
     ):
         async for response in gateway.make_request_with_retries(
             "test_request_url", {}, 0.05, 2, "test_endpoint_name"
@@ -128,9 +131,12 @@ async def test_make_request_with_retries_failed_traceback(
     fake_response = FakeResponse(status=500)
     mock_client_session = _get_mock_client_session(fake_response)
 
-    with pytest.raises(UpstreamServiceError), patch(
-        "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
-        mock_client_session,
+    with (
+        pytest.raises(UpstreamServiceError),
+        patch(
+            "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
+            mock_client_session,
+        ),
     ):
         async for response in gateway.make_request_with_retries(
             "test_request_url", {}, 0.05, 2, "test_endpoint_name"
@@ -148,9 +154,12 @@ async def test_make_request_with_retries_failed_with_client_connector_error(
 
     mock_client_session = _get_mock_client_session_with_client_connector_error()
 
-    with pytest.raises(UpstreamServiceError), patch(
-        "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
-        mock_client_session,
+    with (
+        pytest.raises(UpstreamServiceError),
+        patch(
+            "model_engine_server.infra.gateways.live_streaming_model_endpoint_inference_gateway.aiohttp.ClientSession",
+            mock_client_session,
+        ),
     ):
         async for response in gateway.make_request_with_retries(
             "test_request_url", {}, 0.05, 2, "test_endpoint_name"

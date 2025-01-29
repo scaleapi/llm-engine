@@ -67,12 +67,15 @@ mock_session_with_exception.client.return_value = mock_firehose_client_with_exce
 
 
 def test_firehose_streaming_storage_gateway_put_record(streaming_storage_gateway, fake_record):
-    with mock.patch(
-        "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.client",
-        mock_sts_client,
-    ), mock.patch(
-        "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.Session",
-        side_effect=[mock_sts_session, mock_firehose_session],
+    with (
+        mock.patch(
+            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.client",
+            mock_sts_client,
+        ),
+        mock.patch(
+            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.Session",
+            side_effect=[mock_sts_session, mock_firehose_session],
+        ),
     ):
         assert streaming_storage_gateway.put_record(stream_name, fake_record) is return_value
 
@@ -80,12 +83,15 @@ def test_firehose_streaming_storage_gateway_put_record(streaming_storage_gateway
 def test_firehose_streaming_storage_gateway_put_record_with_exception(
     streaming_storage_gateway, fake_record
 ):
-    with mock.patch(
-        "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.client",
-        mock_sts_client,
-    ), mock.patch(
-        "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.Session",
-        side_effect=[mock_sts_session, mock_session_with_exception],
+    with (
+        mock.patch(
+            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.client",
+            mock_sts_client,
+        ),
+        mock.patch(
+            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.Session",
+            side_effect=[mock_sts_session, mock_session_with_exception],
+        ),
     ):
         with pytest.raises(StreamPutException):
             streaming_storage_gateway.put_record(stream_name, fake_record)

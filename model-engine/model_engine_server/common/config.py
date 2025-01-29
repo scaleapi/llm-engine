@@ -76,6 +76,7 @@ class HostedModelInferenceServiceConfig:
     cache_redis_aws_secret_name: Optional[str] = (
         None  # Not an env var because the redis cache info is already here
     )
+    sglang_repository: Optional[str] = None
 
     @classmethod
     def from_json(cls, json):

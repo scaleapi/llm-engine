@@ -39,6 +39,21 @@ from model_engine_server.domain.entities import (
 from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
     CONVERTED_FROM_ARTIFACT_LIKE_KEY,
 )
+from pydantic import TypeAdapter
+
+
+def CreateLLMModelEndpointV1Request_gen(**kwargs) -> CreateLLMModelEndpointV1Request:
+    """
+    Helper function to generate a CreateLLMModelEndpointV1Request object with the given kwargs.
+    """
+    return TypeAdapter(CreateLLMModelEndpointV1Request).validate_python(kwargs)
+
+
+def UpdateLLMModelEndpointV1Request_gen(**kwargs) -> UpdateLLMModelEndpointV1Request:
+    """
+    Helper function to generate a UpdateLLMModelEndpointV1Request object with the given kwargs.
+    """
+    return TypeAdapter(UpdateLLMModelEndpointV1Request).validate_python(kwargs)
 
 
 @pytest.fixture
@@ -186,7 +201,7 @@ def create_docker_image_batch_job_bundle_request() -> CreateDockerImageBatchJobB
 
 @pytest.fixture
 def create_llm_model_endpoint_request_sync() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_sync",
         model_name="mpt-7b",
         source="hugging_face",
@@ -214,7 +229,7 @@ def create_llm_model_endpoint_request_sync() -> CreateLLMModelEndpointV1Request:
 
 @pytest.fixture
 def create_llm_model_endpoint_request_async() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_async",
         model_name="mpt-7b",
         source="hugging_face",
@@ -242,7 +257,7 @@ def create_llm_model_endpoint_request_async() -> CreateLLMModelEndpointV1Request
 
 @pytest.fixture
 def create_llm_model_endpoint_request_streaming() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_streaming",
         model_name="mpt-7b",
         source="hugging_face",
@@ -270,7 +285,7 @@ def create_llm_model_endpoint_request_streaming() -> CreateLLMModelEndpointV1Req
 
 @pytest.fixture
 def update_llm_model_endpoint_request() -> UpdateLLMModelEndpointV1Request:
-    return UpdateLLMModelEndpointV1Request(
+    return UpdateLLMModelEndpointV1Request_gen(
         inference_framework_image_tag="latest",
         checkpoint_path="s3://mpt-7b",
         memory="4G",
@@ -281,7 +296,7 @@ def update_llm_model_endpoint_request() -> UpdateLLMModelEndpointV1Request:
 
 @pytest.fixture
 def update_llm_model_endpoint_request_only_workers() -> UpdateLLMModelEndpointV1Request:
-    return UpdateLLMModelEndpointV1Request(
+    return UpdateLLMModelEndpointV1Request_gen(
         min_workers=5,
         max_workers=10,
     )
@@ -289,12 +304,12 @@ def update_llm_model_endpoint_request_only_workers() -> UpdateLLMModelEndpointV1
 
 @pytest.fixture
 def update_llm_model_endpoint_request_bad_metadata() -> UpdateLLMModelEndpointV1Request:
-    return UpdateLLMModelEndpointV1Request(metadata={CONVERTED_FROM_ARTIFACT_LIKE_KEY: {}})
+    return UpdateLLMModelEndpointV1Request_gen(metadata={CONVERTED_FROM_ARTIFACT_LIKE_KEY: {}})
 
 
 @pytest.fixture
 def create_llm_model_endpoint_request_llama_2() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_llama_2",
         model_name="llama-2-7b",
         source="hugging_face",
@@ -322,7 +337,7 @@ def create_llm_model_endpoint_request_llama_2() -> CreateLLMModelEndpointV1Reque
 
 @pytest.fixture
 def create_llm_model_endpoint_request_llama_3_70b() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_llama_3_70b",
         model_name="llama-3-70b",
         source="hugging_face",
@@ -350,7 +365,7 @@ def create_llm_model_endpoint_request_llama_3_70b() -> CreateLLMModelEndpointV1R
 
 @pytest.fixture
 def create_llm_model_endpoint_request_llama_3_70b_chat() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_llama_3_70b_chat",
         model_name="llama-3-70b",
         source="hugging_face",
@@ -381,7 +396,7 @@ def create_llm_model_endpoint_request_llama_3_70b_chat() -> CreateLLMModelEndpoi
 def create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args() -> (
     CreateLLMModelEndpointV1Request
 ):
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_llama_3_70b_chat",
         model_name="llama-3-70b",
         source="hugging_face",
@@ -412,7 +427,7 @@ def create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args() -> (
 
 @pytest.fixture
 def create_llm_model_endpoint_request_llama_3_1_405b_instruct() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_llama_3_1_405b_instruct",
         model_name="llama-3-1-405b-instruct",
         source="hugging_face",
@@ -442,7 +457,7 @@ def create_llm_model_endpoint_request_llama_3_1_405b_instruct() -> CreateLLMMode
 def create_llm_model_endpoint_text_generation_inference_request_streaming() -> (
     CreateLLMModelEndpointV1Request
 ):
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_tgi_streaming",
         model_name="mpt-7b",
         source="hugging_face",
@@ -472,7 +487,7 @@ def create_llm_model_endpoint_text_generation_inference_request_streaming() -> (
 def create_llm_model_endpoint_text_generation_inference_request_async() -> (
     CreateLLMModelEndpointV1Request
 ):
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_tgi_async",
         model_name="mpt-7b",
         source="hugging_face",
@@ -500,7 +515,7 @@ def create_llm_model_endpoint_text_generation_inference_request_async() -> (
 
 @pytest.fixture
 def create_llm_model_endpoint_trt_llm_request_streaming() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_trt_llm_streaming",
         model_name="llama-2-7b",
         source="hugging_face",
@@ -528,7 +543,7 @@ def create_llm_model_endpoint_trt_llm_request_streaming() -> CreateLLMModelEndpo
 
 @pytest.fixture
 def create_llm_model_endpoint_trt_llm_request_async() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_tgi_async",
         model_name="llama-2-7b",
         source="hugging_face",
@@ -557,7 +572,7 @@ def create_llm_model_endpoint_trt_llm_request_async() -> CreateLLMModelEndpointV
 
 @pytest.fixture
 def create_llm_model_endpoint_request_invalid_model_name() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_1",
         model_name="nonexist",
         source="hugging_face",
@@ -584,7 +599,7 @@ def create_llm_model_endpoint_request_invalid_model_name() -> CreateLLMModelEndp
 
 @pytest.fixture
 def create_llm_model_endpoint_request_invalid_quantization() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request(
+    return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_1",
         model_name="nonexist",
         source="hugging_face",

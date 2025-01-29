@@ -92,10 +92,12 @@ def load_predict_fn_or_cls():
             with tempfile.TemporaryDirectory() as tmpdir:
                 local_zip_path = os.path.join(tmpdir, "bundle.zip")
                 with timer(logger=logger, name="download_zip_bundle"):
-                    with open_wrapper(bundle_url, "rb") as remote_zip_f, open(
+                    # fmt: off
+                    with open_wrapper(bundle_url, "rb") as remote_zip_f, open( # fmt: skip
                         local_zip_path, "wb"
                     ) as local_zip_f:
                         local_zip_f.write(remote_zip_f.read())
+                    # fmt: on
 
                 with timer(logger=logger, name="unzip_bundle"):
                     shutil.unpack_archive(local_zip_path, base_path, "zip")
