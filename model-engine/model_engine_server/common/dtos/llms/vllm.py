@@ -308,23 +308,23 @@ class VLLMSamplingParams(BaseModel):
 
 
 class VLLMChatCompletionAdditionalParams(VLLMSamplingParams):
-    echo: bool = Field(
-        default=False,
+    echo: Optional[bool] = Field(
+        default=None,
         description=(
             "If true, the new message will be prepended with the last message "
             "if they belong to the same role."
         ),
     )
-    add_generation_prompt: bool = Field(
-        default=True,
+    add_generation_prompt: Optional[bool] = Field(
+        default=None,
         description=(
             "If true, the generation prompt will be added to the chat template. "
             "This is a parameter used by chat template in tokenizer config of the "
             "model."
         ),
     )
-    continue_final_message: bool = Field(
-        default=False,
+    continue_final_message: Optional[bool] = Field(
+        default=None,
         description=(
             "If this is set, the chat will be formatted so that the final "
             "message in the chat is open-ended, without any EOS tokens. The "
@@ -333,8 +333,8 @@ class VLLMChatCompletionAdditionalParams(VLLMSamplingParams):
             "Cannot be used at the same time as `add_generation_prompt`."
         ),
     )
-    add_special_tokens: bool = Field(
-        default=False,
+    add_special_tokens: Optional[bool] = Field(
+        default=None,
         description=(
             "If true, special tokens (e.g. BOS) will be added to the prompt "
             "on top of what is added by the chat template. "
@@ -404,8 +404,8 @@ class VLLMChatCompletionAdditionalParams(VLLMSamplingParams):
             "for guided json decoding."
         ),
     )
-    priority: int = Field(
-        default=0,
+    priority: Optional[int] = Field(
+        default=None,
         description=(
             "The priority of the request (lower means earlier handling; "
             "default: 0). Any priority other than 0 will raise an error "
