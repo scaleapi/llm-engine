@@ -62,6 +62,7 @@ async def run_batch_job(
     pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
     redis = aioredis.Redis(connection_pool=pool)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
+    gcppubsub_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.GCPPUBSUB)
     servicebus_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS)
 
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
@@ -94,6 +95,9 @@ async def run_batch_job(
     if infra_config().cloud_provider == "azure":
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
+    elif infra_config().cloud_provider == "gcp":
+        inference_task_queue_gateway = gcppubsub_task_queue_gateway
+        infra_task_queue_gateway = gcppubsub_task_queue_gateway
     else:
         inference_task_queue_gateway = sqs_task_queue_gateway
         infra_task_queue_gateway = sqs_task_queue_gateway
