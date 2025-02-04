@@ -1,9 +1,11 @@
 import argparse
 import shutil
 
-import model_engine_server.core.aws.storage_client as storage_client
 from model_engine_server.common.serialization_utils import b64_to_str
-from model_engine_server.core.aws.storage_client import s3_fileobj_exists
+from model_engine_server.core.aws import storage_client as aws_storage_client
+
+# Top-level imports for remote storage clients with aliases.
+from model_engine_server.core.gcp import storage_client as gcp_storage_client
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.utils.url import parse_attachment_url
 
@@ -20,11 +22,26 @@ def main(input_local: str, local_file: str, remote_file: str, file_contents_b64e
     else:
         logger.info("Copying file from remote")
         parsed_remote = parse_attachment_url(remote_file)
-        if not s3_fileobj_exists(bucket=parsed_remote.bucket, key=parsed_remote.key):
-            logger.warning("S3 file doesn't exist, aborting")
-            raise ValueError  # TODO propagate error to the gateway
-        # TODO if we need we can s5cmd this
-        with storage_client.open(remote_file, "rb") as fr, open(local_file, "wb") as fw2:
+        # Conditional logic to support GCS file URLs without breaking S3 behavior.
+        if remote_file.startswith("gs://"):
+            # Use the GCP storage client.
+            file_exists = gcp_storage_client.gcs_fileobj_exists(
+                bucket=parsed_remote.bucket, key=parsed_remote.key
+            )
+            storage_open = gcp_storage_client.open
+            file_label = "GCS"
+        else:
+            # Use the AWS storage client for backward compatibility.
+            file_exists = aws_storage_client.s3_fileobj_exists(
+                bucket=parsed_remote.bucket, key=parsed_remote.key
+            )
+            storage_open = aws_storage_client.open
+            file_label = "S3"
+        if not file_exists:
+            logger.warning(f"{file_label} file doesn't exist, aborting")
+            raise ValueError  # TODO: propagate error to the gateway
+        # Open the remote file (using the appropriate storage client) and copy its contents locally.
+        with storage_open(remote_file, "rb") as fr, open(local_file, "wb") as fw2:
             shutil.copyfileobj(fr, fw2)
 
 

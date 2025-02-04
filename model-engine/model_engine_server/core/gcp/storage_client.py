@@ -3,7 +3,6 @@ from typing import IO, Callable, Iterable, Optional, Sequence
 
 import smart_open
 from google.cloud import storage
-from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 
 logger = make_logger(logger_name())
@@ -14,15 +13,11 @@ __all__: Sequence[str] = (
     #   >>>  storage_client.open
     # Thus, it's not included in the wildcard imports.
     "sync_storage_client_keepalive",
-    "s3_fileobj_exists",
+    "gcs_fileobj_exists",
 )
 
 
 def sync_storage_client(**kwargs) -> storage.Client:
-    # Optionally inject a project id from configuration if available.
-    config = infra_config()
-    if hasattr(config, "gcp_project_id"):
-        kwargs.setdefault("project", config.gcp_project_id)
     return storage.Client(**kwargs)
 
 
@@ -33,7 +28,10 @@ def open(uri: str, mode: str = "rt", **kwargs) -> IO:  # pylint: disable=redefin
 
 
 def sync_storage_client_keepalive(
-    gcp_client: storage.Client, buckets: Iterable[str], interval: int, is_cancelled: Callable[[], bool]
+    gcp_client: storage.Client,
+    buckets: Iterable[str],
+    interval: int,
+    is_cancelled: Callable[[], bool],
 ) -> None:
     """Keeps connection pool warmed up for access on list of GCP buckets.
 
@@ -55,7 +53,7 @@ def sync_storage_client_keepalive(
         time.sleep(interval)
 
 
-def s3_fileobj_exists(bucket: str, key: str, client: Optional[storage.Client] = None) -> bool:
+def gcs_fileobj_exists(bucket: str, key: str, client: Optional[storage.Client] = None) -> bool:
     """
     Test if file exists in GCP storage.
     :param bucket: GCP bucket name
