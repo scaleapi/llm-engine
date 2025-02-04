@@ -42,9 +42,11 @@ def excluded_namespaces():
         return []
 
 
-ELASTICACHE_REDIS_BROKER = "redis-elasticache-message-broker-master"
+# TODO: what this the relationship between these brokers and the ones in model_endpoints.py?
+ELASTICACHE_REDIS_BROKER = "redis-elasticache-message-broker-master"  # TODO: This one is different, the others are represented in model_endpoints.py
 SQS_BROKER = "sqs-message-broker-master"
 SERVICEBUS_BROKER = "servicebus-message-broker-master"
+GCPPUBSUB_BROKER = "gcppubsub-Fmessage-broker-master"
 
 UPDATE_DEPLOYMENT_MAX_RETRIES = 10
 
@@ -306,6 +308,7 @@ def emit_metrics(
             f"env:{env}",
         ]
         statsd.gauge("celery.max_connections", metrics.broker_metrics.max_connections, tags=tags)
+    # TODO: how does this work in VPCs when we don't have datadog?
 
 
 def emit_health_metric(metric_name: str, env: str):
@@ -472,6 +475,11 @@ class SQSBroker(AutoscalerBroker):
         )  # connection_count and max_connections are redis-specific metrics
 
 
+class GCPPubSubBroker(AutoscalerBroker):
+    # XXX: finish this
+    pass
+
+
 class ASBBroker(AutoscalerBroker):
     @staticmethod
     def _get_asb_queue_size(queue_name: str):
@@ -588,6 +596,7 @@ async def main():
         ELASTICACHE_REDIS_BROKER: RedisBroker(use_elasticache=True),
         SQS_BROKER: SQSBroker(),
         SERVICEBUS_BROKER: ASBBroker(),
+        GCPPUBSUB_BROKER: GCPPubSubBroker(),
     }
 
     broker = BROKER_NAME_TO_CLASS[autoscaler_broker]

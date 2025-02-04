@@ -116,9 +116,7 @@ class TaskVisibility(IntEnum):
     @staticmethod
     def from_name(name: str) -> "TaskVisibility":
         # pylint: disable=no-member,protected-access
-        lookup = {
-            x.name: x.value for x in TaskVisibility._value2member_map_.values()
-        }  # type: ignore
+        lookup = {x.name: x.value for x in TaskVisibility._value2member_map_.values()}  # type: ignore
         return TaskVisibility(lookup[name.upper()])
 
 
@@ -252,7 +250,7 @@ def celery_app(
     s3_bucket: Optional[str] = os.environ.get("S3_BUCKET"),
     s3_base_path: str = "tmp/celery/",
     backend_protocol: str = "s3",
-    broker_type: str = "redis",
+    broker_type: str = "redis",  # TODO: should this be an enum
     aws_role: Optional[str] = None,
     broker_transport_options: Optional[Dict[str, Any]] = None,
     **extra_changes,
@@ -372,7 +370,7 @@ def celery_app(
     (1 day by default) and run `celery beat` periodically to clear expired results from Redis. Visit
     https://docs.celeryproject.org/en/stable/userguide/periodic-tasks.html to learn more about celery beat
 
-    :param broker_type: [defaults to "redis"] The broker type. We currently support "redis", "sqs", and "servicebus".
+    :param broker_type: [defaults to "redis"] The broker type. We currently support "redis", "sqs", "servicebus", and "gcppubsub".
 
     :param aws_role: [optional] AWS role to use.
 
@@ -508,6 +506,11 @@ def _get_broker_endpoint_and_transport_options(
         return (
             f"azureservicebus://DefaultAzureCredential@{os.getenv('SERVICEBUS_NAMESPACE')}.servicebus.windows.net",
             out_broker_transport_options,
+        )
+    if broker_type == "gcppubsub":
+        return (
+            "TODO",
+            out_broker_transport_options,  # XXX: implement this
         )
 
     raise ValueError(

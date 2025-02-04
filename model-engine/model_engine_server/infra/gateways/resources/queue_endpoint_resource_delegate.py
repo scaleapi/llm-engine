@@ -14,7 +14,7 @@ class QueueInfo(NamedTuple):
 
 class QueueEndpointResourceDelegate(ABC):
     """
-    Base class for an interactor with SQS or ASB. This is used by the LiveEndpointResourceGateway.
+    Base class for an interactor with SQS, ASB, or GCP pubsub. This is used by the LiveEndpointResourceGateway.
     """
 
     @abstractmethod
