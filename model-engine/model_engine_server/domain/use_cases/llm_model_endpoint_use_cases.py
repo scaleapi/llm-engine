@@ -377,6 +377,107 @@ class CreateLLMModelBundleV1UseCase:
                 tag=framework_image_tag,
             )
 
+    async def create_sglang_multinode_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        nodes_per_worker: int,
+        quantize: Optional[Quantization],
+        checkpoint_path: Optional[str],
+        chat_template_override: Optional[str],
+        additional_args: Optional[SGLangEndpointAdditionalArgs] = None,
+    ):
+        # leader_command = self._create_vllm_bundle_command(
+        #     model_name,
+        #     framework_image_tag,
+        #     num_shards,
+        #     quantize,
+        #     checkpoint_path,
+        #     chat_template_override,
+        #     multinode=True,
+        #     is_worker=False,
+        #     nodes_per_worker=nodes_per_worker,
+        #     additional_args=additional_args,
+        # )
+        leader_command = [
+        "python3",
+        "/root/sglang-startup-script.py",
+        "--model",
+        "deepseek-ai/DeepSeek-V3",
+        "--nnodes",
+        "2",
+        "--node-rank",
+        "0"
+        ]
+        # worker_command = self._create_vllm_bundle_command(
+        #     model_name,
+        #     framework_image_tag,
+        #     num_shards,
+        #     quantize,
+        #     checkpoint_path,
+        #     chat_template_override,
+        #     multinode=True,
+        #     is_worker=True,
+        #     nodes_per_worker=nodes_per_worker,
+        # )
+        worker_command = [
+        "python3",
+        "/root/sglang-startup-script.py",
+        "--model",
+        "deepseek-ai/DeepSeek-V3",
+        "--nnodes",
+        "2",
+        "--node-rank",
+        "1"
+        ]
+
+        # These env vars e.g. K8S_OWN_POD_NAME, K8S_OWN_POD_NAME, K8S_OWN_NAMESPACE, K8S_LWS_CLUSTER_SIZE will be filled in automatically for all LWS pods through
+        # Launch's k8s_endpoint_resource_delegate
+        common_sglang_envs = {
+            # "VLLM_HOST_IP": "$(K8S_OWN_POD_NAME).$(K8S_LWS_NAME).$(K8S_OWN_NAMESPACE).svc.cluster.local",  # this needs to match what's given as --own-address in the vllm start command
+            "NCCL_SOCKET_IFNAME": "eth0",
+            "GLOO_SOCKET_IFNAME": "eth0",  # maybe don't need
+            # "NCCL_DEBUG": "INFO",  # TODO remove once fully tested, will keep around for now
+            # "VLLM_LOGGING_LEVEL": "INFO",  # TODO remove once fully tested, will keep around for now
+            # "RAY_CLUSTER_SIZE": "$(K8S_LWS_CLUSTER_SIZE)",
+        }
+
+        create_model_bundle_v2_request = CreateModelBundleV2Request(
+            name=endpoint_unique_name,
+            schema_location="TBA",
+            flavor=StreamingEnhancedRunnableImageFlavor(
+                flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                repository=hmi_config.sglang_repository,
+                tag=framework_image_tag,
+                command=leader_command,
+                streaming_command=leader_command,
+                protocol="http",
+                readiness_initial_delay_seconds=10,
+                healthcheck_route="/health",
+                predict_route="/predict",
+                streaming_predict_route="/stream",
+                extra_routes=[OPENAI_CHAT_COMPLETION_PATH, OPENAI_COMPLETION_PATH],
+                env=common_sglang_envs,
+                worker_command=worker_command,
+                worker_env=common_sglang_envs,
+            ),
+            metadata={},
+        )
+
+        return (
+            await self.create_model_bundle_use_case.execute(
+                user,
+                create_model_bundle_v2_request,
+                do_auth_check=False,
+                # Skip auth check because llm create endpoint is called as the user itself,
+                # but the user isn't directly making the action. It should come from the fine tune
+                # job.
+            )
+        ).model_bundle_id
+
     async def execute(
         self,
         user: User,
@@ -481,16 +582,30 @@ class CreateLLMModelBundleV1UseCase:
                     if additional_args
                     else None
                 )
-                bundle_id = await self.create_sglang_bundle(
-                    user,
-                    model_name,
-                    framework_image_tag,
-                    endpoint_name,
-                    num_shards,
-                    checkpoint_path,
-                    chat_template_override,
-                    additional_args=additional_sglang_args,
-                )
+                if multinode:
+                    bundle_id = await self.create_sglang_multinode_bundle(
+                        user,
+                        model_name,
+                        framework_image_tag,
+                        endpoint_name,
+                        num_shards,
+                        nodes_per_worker,
+                        quantize,
+                        checkpoint_path,
+                        chat_template_override,
+                        additional_args=additional_sglang_args,
+                    )
+                else:
+                    bundle_id = await self.create_sglang_bundle(
+                        user,
+                        model_name,
+                        framework_image_tag,
+                        endpoint_name,
+                        num_shards,
+                        checkpoint_path,
+                        chat_template_override,
+                        additional_args=additional_sglang_args,
+                    )
             case _:
                 assert_never(framework)
                 raise ObjectHasInvalidValueException(
