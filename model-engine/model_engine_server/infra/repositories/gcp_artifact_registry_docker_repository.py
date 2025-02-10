@@ -14,12 +14,15 @@ logger = make_logger(logger_name())
 
 class GCPArtifactRegistryDockerRepository(DockerRepository):
     def _get_client(self):
-        endpoint = f"https://{infra_config().docker_repo_prefix}"  # TODO: should this be HTTP since gcp uses GRPC
-        credential = ...  # TODO!
         client = artifactregistry.ArtifactRegistryClient(
-            client_options=ClientOptions(api_endpoint=endpoint), credentials=credential
-        )  # TODO: should we use async?
+            client_options=ClientOptions(api_endpoint=infra_config().docker_repo_prefix)
+            # NOTE: uses default auth credentials for GCP. Read `google.auth.default` function for more details
+        )
         return client
+
+    def _get_repository_prefix(self) -> str:
+        # GCP is verbose and so has a long prefix for the repository
+        return f"projects/{infra_config().gcp_project_id}/locations/{infra_config().default_region}/repository"
 
     def image_exists(
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
@@ -27,10 +30,10 @@ class GCPArtifactRegistryDockerRepository(DockerRepository):
         client = self._get_client()
 
         try:
-            # TODO: figure out the project_id and location
             client.get_docker_image(
                 artifactregistry.GetDockerImageRequest(
-                    name=f"projects/{infra_config().project_id}/locations/{infra_config().location}/repository/{repository_name}/dockerImages/{image_tag}"
+                    # This is the google cloud naming convention: https://cloud.google.com/artifact-registry/docs/docker/names
+                    name=f"{self._get_repository_prefix()}/{repository_name}/dockerImages/{image_tag}"
                 )
             )
         except NotFound:
@@ -38,9 +41,7 @@ class GCPArtifactRegistryDockerRepository(DockerRepository):
             return False
         return True
 
-    def get_image_url(
-        self, image_tag: str, repository_name: str
-    ) -> str:  # TODO: what should this look like for GCP? check ECR first
+    def get_image_url(self, image_tag: str, repository_name: str) -> str:
         return f"{infra_config().docker_repo_prefix}/{repository_name}:{image_tag}"
 
     def build_image(self, image_params: BuildImageRequest) -> BuildImageResponse:
@@ -49,7 +50,7 @@ class GCPArtifactRegistryDockerRepository(DockerRepository):
 
     def get_latest_image_tag(self, repository_name: str) -> str:
         client = self._get_client()
-        parent = f"projects/{infra_config().project_id}/locations/{infra_config().location}/repository/{repository_name}"  # TODO: figure out the project_id and location
+        parent = f"{self._get_repository_prefix()}/{repository_name}"
         try:
             images_pager = client.list_docker_images(
                 artifactregistry.ListDockerImagesRequest(

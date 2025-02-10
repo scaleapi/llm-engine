@@ -49,6 +49,8 @@ class _InfraConfig:
     firehose_role_arn: Optional[str] = None
     firehose_stream_name: Optional[str] = None
     prometheus_server_address: Optional[str] = None
+    # TODO: on gcp, the repo prefix is derived from the project_id and default_region. So it should be computed somehow.
+    gcp_project_id: Optional[str] = None
 
 
 @dataclass
