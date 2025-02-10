@@ -37,6 +37,10 @@ pip install -r requirements.txt && \
 
 Run `mypy . --install-types` to set up mypy.
 
+## Running this 
+
+After installing this package, you can view `setup.py` for the list of entrypoints (for instance, there's a command for how to run the api server)
+
 ## Testing
 
 Most of the business logic in Model Engine should contain unit tests, located in
