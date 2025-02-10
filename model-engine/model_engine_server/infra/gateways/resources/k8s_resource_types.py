@@ -576,6 +576,7 @@ def get_endpoint_resource_arguments_from_request(
     abs_account_name = os.getenv("ABS_ACCOUNT_NAME")
     if abs_account_name is not None:
         main_env.append({"name": "ABS_ACCOUNT_NAME", "value": abs_account_name})
+    # TODO: what should we add here
 
     # LeaderWorkerSet exclusive
     worker_env = None
