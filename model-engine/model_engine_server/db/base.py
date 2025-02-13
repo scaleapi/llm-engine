@@ -84,7 +84,6 @@ def get_engine_url(
             engine_url = f"postgresql://{user}:{password}@{db}?sslmode=require"
             expiry_in_sec = token.expires_on
         elif infra_config().cloud_provider == "gcp":
-            # TODO: configure this for gcp
             gcp_secret_manager_client = (
                 SecretManagerServiceClient()
             )  # uses application default credentials (see: https://cloud.google.com/secret-manager/docs/reference/libraries#client-libraries-usage-python)

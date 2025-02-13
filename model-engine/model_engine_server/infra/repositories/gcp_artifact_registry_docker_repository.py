@@ -52,7 +52,6 @@ class GCPArtifactRegistryDockerRepository(DockerRepository):
 
     def build_image(self, image_params: BuildImageRequest) -> BuildImageResponse:
         raise NotImplementedError("GCP image build not supported yet")
-        # TODO: does this need to be implemented?
 
     def get_latest_image_tag(self, repository_name: str) -> str:
         client = self._get_client()
