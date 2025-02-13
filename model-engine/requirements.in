@@ -5,6 +5,7 @@ aioredis~=2.0
 alembic==1.8.1
 asyncpg==0.27.0
 azure-containerregistry~=1.2.0
+protobuf~=4.21
 azure-identity~=1.15.0
 azure-keyvault-secrets~=4.7.0
 azure-servicebus~=7.11.4
@@ -33,7 +34,6 @@ kubeconfig~=1.1
 kubernetes-asyncio==25.11.0
 kubernetes~=25.3.0
 orjson==3.9.15
-protobuf~=3.20
 psycopg2-binary==2.9.3
 py-xid==0.3.0
 pycurl~=7.44  # For celery[sqs]
@@ -61,3 +61,4 @@ uvicorn==0.30.6
 uvloop==0.17.0
 yarl~=1.4
 google-cloud-artifact-registry~=1.14
+google-cloud-secret-manager~=2.22
