@@ -20,6 +20,8 @@ def start_gunicorn_server(port: int, num_workers: int, debug: bool) -> None:
         f"[::]:{port}",
         "--timeout",
         "60",
+        "--graceful-timeout",
+        "60",
         "--keep-alive",
         "2",
         "--worker-class",
