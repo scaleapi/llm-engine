@@ -349,7 +349,7 @@ def _get_external_interfaces(
     elif "pkg.dev" in infra_config().docker_repo_prefix:
         assert (
             infra_config().docker_repo_prefix
-            == f"{infra_config().default_region}-docker.pkg.dev/{infra_config().gcp_project_id}"
+            == f"{infra_config().default_region}-docker.pkg.dev/{infra_config().ml_account_id}"  # this stores the gcp project id (when cloud_provider is gcp)
         )
         docker_repository = GCPArtifactRegistryDockerRepository()
     else:

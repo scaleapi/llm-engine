@@ -89,7 +89,7 @@ def get_engine_url(
             )  # uses application default credentials (see: https://cloud.google.com/secret-manager/docs/reference/libraries#client-libraries-usage-python)
             secret_version = gcp_secret_manager_client.access_secret_version(
                 request={
-                    "name": f"projects/{infra_config().gcp_project_id}/secrets/{key_file}/versions/latest"
+                    "name": f"projects/{infra_config().ml_account_id}/secrets/{key_file}/versions/latest"
                 }
             )
             creds = json.loads(secret_version.payload.data.decode("utf-8"))

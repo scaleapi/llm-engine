@@ -22,7 +22,7 @@ class GCPArtifactRegistryDockerRepository(DockerRepository):
 
     def _get_repository_prefix(self) -> str:
         # GCP is verbose and so has a long prefix for the repository
-        return f"projects/{infra_config().gcp_project_id}/locations/{infra_config().default_region}/repositories"
+        return f"projects/{infra_config().ml_account_id}/locations/{infra_config().default_region}/repositories"
 
     def image_exists(
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
