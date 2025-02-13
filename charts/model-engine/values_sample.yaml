@@ -157,7 +157,7 @@ serviceTemplate:
 config:
   values:
     infra:
-      # cloud_provider [required]; either "aws" or "azure"
+      # cloud_provider [required]; either "aws" or "azure" or "gcp"
       cloud_provider: aws
       # k8s_cluster_name [required] is the name of the k8s cluster
       k8s_cluster_name: main_cluster

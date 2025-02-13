@@ -41,6 +41,7 @@ class _InfraConfig:
     ml_account_id: str
     docker_repo_prefix: str
     s3_bucket: str
+    gcs_bucket: Optional[str] = None
     redis_host: Optional[str] = None
     redis_aws_secret_name: Optional[str] = None
     profile_ml_worker: str = "default"
