@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import time
@@ -7,6 +8,7 @@ from typing import Iterator, Optional
 import sqlalchemy
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
+from google.cloud.secretmanager_v1 import SecretManagerServiceClient
 from model_engine_server.core.aws.secrets import get_key_file
 from model_engine_server.core.config import InfraConfig, infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -20,8 +22,12 @@ logger = make_logger(logger_name())
 
 
 def get_key_file_name(environment: str) -> str:
-    if infra_config().cloud_provider == "azure":
+    # azure and gcp don't support "/" in the key file secret name
+    # so we use dashes
+    if infra_config().cloud_provider == "azure" or infra_config().cloud_provider == "gcp":
         return f"{environment}-ml-infra-pg".replace("training", "prod").replace("-new", "")
+
+    # aws does support "/" in the key file secret name
     return f"{environment}/ml_infra_pg".replace("training", "prod").replace("-new", "")
 
 
@@ -55,16 +61,17 @@ def get_engine_url(
         key_file = os.environ.get("DB_SECRET_NAME")
         if env is None:
             env = infra_config().env
+            # TODO: what are the values of env?
         if key_file is None:
             key_file = get_key_file_name(env)  # type: ignore
         logger.debug(f"Using key file {key_file}")
 
         if infra_config().cloud_provider == "azure":
-            client = SecretClient(
+            az_secret_client = SecretClient(
                 vault_url=f"https://{os.environ.get('KEYVAULT_NAME')}.vault.azure.net",
                 credential=DefaultAzureCredential(),
             )
-            db = client.get_secret(key_file).value
+            db = az_secret_client.get_secret(key_file).value
             user = os.environ.get("AZURE_IDENTITY_NAME")
             token = DefaultAzureCredential().get_token(
                 "https://ossrdbms-aad.database.windows.net/.default"
@@ -76,6 +83,29 @@ def get_engine_url(
             # for recommendations on how to work with rotating auth credentials
             engine_url = f"postgresql://{user}:{password}@{db}?sslmode=require"
             expiry_in_sec = token.expires_on
+        elif infra_config().cloud_provider == "gcp":
+            # TODO: configure this for gcp
+            gcp_secret_manager_client = (
+                SecretManagerServiceClient()
+            )  # uses application default credentials (see: https://cloud.google.com/secret-manager/docs/reference/libraries#client-libraries-usage-python)
+            secret_version = gcp_secret_manager_client.access_secret_version(
+                request={
+                    "name": f"projects/{infra_config().gcp_project_id}/secrets/{key_file}/versions/latest"
+                }
+            )
+            creds = json.loads(secret_version.payload.data.decode("utf-8"))
+
+            user = creds.get("username")
+            password = creds.get("password")
+            host = creds.get("host")
+            port = str(creds.get("port"))
+            dbname = creds.get("dbname")
+
+            assert all([user, password, host, port, dbname])  # TODO: remove this
+
+            logger.info(f"Connecting to db {host}:{port}, name {dbname}")
+
+            engine_url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
         else:
             db_secret_aws_profile = os.environ.get("DB_SECRET_AWS_PROFILE")
             creds = get_key_file(key_file, db_secret_aws_profile)

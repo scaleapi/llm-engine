@@ -110,6 +110,7 @@ from model_engine_server.infra.repositories import (
     DbTriggerRepository,
     ECRDockerRepository,
     FakeDockerRepository,
+    GCPArtifactRegistryDockerRepository,
     LiveTokenizerRepository,
     LLMFineTuneRepository,
     RedisModelEndpointCacheRepository,
@@ -345,6 +346,12 @@ def _get_external_interfaces(
         docker_repository = FakeDockerRepository()
     elif infra_config().docker_repo_prefix.endswith("azurecr.io"):
         docker_repository = ACRDockerRepository()
+    elif "pkg.dev" in infra_config().docker_repo_prefix:
+        assert (
+            infra_config().docker_repo_prefix
+            == f"{infra_config().default_region}-docker.pkg.dev/{infra_config().gcp_project_id}"
+        )
+        docker_repository = GCPArtifactRegistryDockerRepository()
     else:
         docker_repository = ECRDockerRepository()
 
@@ -387,7 +394,8 @@ def get_default_external_interfaces() -> ExternalInterfaces:
 
 def get_default_external_interfaces_read_only() -> ExternalInterfaces:
     session = async_scoped_session(
-        get_session_read_only_async(), scopefunc=asyncio.current_task  # type: ignore
+        get_session_read_only_async(),
+        scopefunc=asyncio.current_task,  # type: ignore
     )
     return _get_external_interfaces(read_only=True, session=session)
 

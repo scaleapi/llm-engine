@@ -15,14 +15,14 @@ logger = make_logger(logger_name())
 class GCPArtifactRegistryDockerRepository(DockerRepository):
     def _get_client(self):
         client = artifactregistry.ArtifactRegistryClient(
-            client_options=ClientOptions(api_endpoint=infra_config().docker_repo_prefix)
+            client_options=ClientOptions()
             # NOTE: uses default auth credentials for GCP. Read `google.auth.default` function for more details
         )
         return client
 
     def _get_repository_prefix(self) -> str:
         # GCP is verbose and so has a long prefix for the repository
-        return f"projects/{infra_config().gcp_project_id}/locations/{infra_config().default_region}/repository"
+        return f"projects/{infra_config().gcp_project_id}/locations/{infra_config().default_region}/repositories"
 
     def image_exists(
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
@@ -30,6 +30,12 @@ class GCPArtifactRegistryDockerRepository(DockerRepository):
         client = self._get_client()
 
         try:
+            response = client.list_docker_images(
+                artifactregistry.ListDockerImagesRequest(
+                    parent=f"{self._get_repository_prefix()}/{repository_name}"
+                )
+            )
+            print("response", next(response.pages).docker_images)
             client.get_docker_image(
                 artifactregistry.GetDockerImageRequest(
                     # This is the google cloud naming convention: https://cloud.google.com/artifact-registry/docs/docker/names
