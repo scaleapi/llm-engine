@@ -3412,6 +3412,9 @@ def build_endpoint_request_async_runnable_image(
     return build_endpoint_request
 
 
+# XXX: add a test for GCP pubsub here
+
+
 @pytest.fixture
 def build_endpoint_request_streaming_runnable_image(
     test_api_key: str, model_bundle_5: ModelBundle

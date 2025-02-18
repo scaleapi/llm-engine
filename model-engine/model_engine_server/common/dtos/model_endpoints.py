@@ -34,6 +34,7 @@ class BrokerType(str, Enum):
     REDIS_24H = "redis_24h"
     SQS = "sqs"
     SERVICEBUS = "servicebus"
+    GCPPUBSUB = "gcppubsub"
 
 
 class BrokerName(str, Enum):
@@ -45,6 +46,7 @@ class BrokerName(str, Enum):
     REDIS = "redis-message-broker-master"
     SQS = "sqs-message-broker-master"
     SERVICEBUS = "servicebus-message-broker-master"
+    GCPPUBSUB = "gcppubsub-message-broker-master"
 
 
 class CreateModelEndpointV1Request(BaseModel):

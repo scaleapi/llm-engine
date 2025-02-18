@@ -89,6 +89,9 @@ from model_engine_server.infra.gateways.resources.endpoint_resource_gateway impo
 from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_delegate import (
     FakeQueueEndpointResourceDelegate,
 )
+from model_engine_server.infra.gateways.resources.gcppubsub_queue_endpoint_resource_delegate import (
+    GCPPubSubQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
 )
@@ -201,6 +204,7 @@ def _get_external_interfaces(
     redis_24h_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS_24H)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
     servicebus_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS)
+    gcppubsub_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.GCPPUBSUB)
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     model_endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
@@ -213,6 +217,8 @@ def _get_external_interfaces(
         queue_delegate = FakeQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "gcp":
+        queue_delegate = GCPPubSubQueueEndpointResourceDelegate()
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
@@ -226,6 +232,9 @@ def _get_external_interfaces(
     elif infra_config().cloud_provider == "azure":
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
+    elif infra_config().cloud_provider == "gcp":
+        inference_task_queue_gateway = gcppubsub_task_queue_gateway
+        infra_task_queue_gateway = gcppubsub_task_queue_gateway
     else:
         inference_task_queue_gateway = sqs_task_queue_gateway
         infra_task_queue_gateway = sqs_task_queue_gateway
