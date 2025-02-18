@@ -227,6 +227,10 @@ def _get_external_interfaces(
     elif infra_config().cloud_provider == "azure":
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
+    elif infra_config().cloud_provider == "gcp":
+        # we use redis for gcp (instead of using servicebus or the like)
+        inference_task_queue_gateway = redis_24h_task_queue_gateway
+        infra_task_queue_gateway = redis_task_queue_gateway
     else:
         inference_task_queue_gateway = sqs_task_queue_gateway
         infra_task_queue_gateway = sqs_task_queue_gateway
