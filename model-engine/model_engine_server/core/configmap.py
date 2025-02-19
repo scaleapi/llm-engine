@@ -33,6 +33,3 @@ async def read_config_map(
     except ApiException as e:
         logger.exception(f"Error reading configmap {config_map_name}")
         raise e
-
-
-# TODO: figure out what this does

@@ -100,8 +100,6 @@ def get_engine_url(
             port = str(creds.get("port"))
             dbname = creds.get("dbname")
 
-            assert all([user, password, host, port, dbname])  # TODO: remove this
-
             logger.info(f"Connecting to db {host}:{port}, name {dbname}")
 
             engine_url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"

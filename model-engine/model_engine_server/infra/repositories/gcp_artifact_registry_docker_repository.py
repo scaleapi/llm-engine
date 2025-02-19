@@ -30,12 +30,6 @@ class GCPArtifactRegistryDockerRepository(DockerRepository):
         client = self._get_client()
 
         try:
-            response = client.list_docker_images(
-                artifactregistry.ListDockerImagesRequest(
-                    parent=f"{self._get_repository_prefix()}/{repository_name}"
-                )
-            )
-            print("response", next(response.pages).docker_images)
             client.get_docker_image(
                 artifactregistry.GetDockerImageRequest(
                     # This is the google cloud naming convention: https://cloud.google.com/artifact-registry/docs/docker/names
@@ -43,7 +37,6 @@ class GCPArtifactRegistryDockerRepository(DockerRepository):
                 )
             )
         except NotFound:
-            # TODO: check this is covered
             return False
         return True
 

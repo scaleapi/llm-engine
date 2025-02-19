@@ -600,7 +600,7 @@ async def main():
     )
 
     if broker_type == "redis":
-        # TODO: change this backend_protocol to use the correct protocol
+        # TODO gcp: change this to use cloud storage
         # NOTE: the infra config is not available in the autoscaler (for some reason), so we have
         # to use the autoscaler_broker to determine the infra.
         backend_protocol = "redis" if "gcp" in autoscaler_broker else "s3"

@@ -600,6 +600,6 @@ def get_default_backend_protocol():
     if infra_config().cloud_provider == "azure":
         return "abs"
     elif infra_config().cloud_provider == "gcp":
-        return "redis"  # TODO: THIS IS TEMPORARY! replace with cloud storage
+        return "redis"  # TODO gcp: replace with cloud storage
     else:
         return "s3"

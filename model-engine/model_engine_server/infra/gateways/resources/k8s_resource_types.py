@@ -553,8 +553,11 @@ def get_endpoint_resource_arguments_from_request(
 
     image_hash = compute_image_hash(request.image)
 
-    # In Circle CI, we use Redis on localhost instead of SQS
-    if CIRCLECI or infra_config().cloud_provider == "gcp":
+    # In Circle CI/GCP, we use Redis on localhost instead of SQS
+    if CIRCLECI:
+        broker_name = BrokerName.REDIS.value
+        broker_type = BrokerType.REDIS.value
+    elif infra_config().cloud_provider == "gcp":
         broker_name = BrokerName.REDIS_GCP.value
         broker_type = BrokerType.REDIS.value
     elif infra_config().cloud_provider == "azure":
