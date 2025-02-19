@@ -65,6 +65,6 @@ class GCPArtifactRegistryDockerRepository(DockerRepository):
                 len(docker_image_page.docker_images) == 0
             ):  # This condition shouldn't happen since we're asking for 1 image per page
                 raise DockerRepositoryNotFoundException
-            return docker_image_page.docker_images[0].name
+            return docker_image_page.docker_images[0].tags[0]
         except NotFound:
             raise DockerRepositoryNotFoundException
