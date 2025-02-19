@@ -157,7 +157,7 @@ serviceTemplate:
 config:
   values:
     infra:
-      # cloud_provider [required]; either "aws" or "azure"
+      # cloud_provider [required]; either "aws", "azure", or "gcp"
       cloud_provider: aws
       # k8s_cluster_name [required] is the name of the k8s cluster
       k8s_cluster_name: main_cluster
@@ -165,9 +165,9 @@ config:
       dns_host_domain: llm-engine.domain.com
       # default_region [required] is the default AWS region for various resources (e.g ECR)
       default_region: us-east-1
-      # aws_account_id [required] is the AWS account ID for various resources (e.g ECR)
+      # ml_account_id [required] is the AWS account ID for various resources (e.g ECR) if cloud_provider is "aws", and the GCP project ID if cloud_provider is "gcp"
       ml_account_id: "000000000000"
-      # docker_repo_prefix [required] is the prefix for AWS ECR repositories
+      # docker_repo_prefix [required] is the prefix for AWS ECR repositories, GCP Artifact Registry repositories, or Azure Container Registry repositories
       docker_repo_prefix: "000000000000.dkr.ecr.us-east-1.amazonaws.com"
       # redis_host [required if redis_aws_secret_name not present] is the hostname of the redis cluster you wish to connect
       redis_host: llm-engine-prod-cache.use1.cache.amazonaws.com
