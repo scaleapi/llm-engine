@@ -43,6 +43,7 @@ class BrokerName(str, Enum):
     """
 
     REDIS = "redis-message-broker-master"
+    REDIS_GCP = "redis-gcp-memorystore-message-broker-master"
     SQS = "sqs-message-broker-master"
     SERVICEBUS = "servicebus-message-broker-master"
 

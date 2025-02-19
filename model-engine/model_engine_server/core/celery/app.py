@@ -116,9 +116,7 @@ class TaskVisibility(IntEnum):
     @staticmethod
     def from_name(name: str) -> "TaskVisibility":
         # pylint: disable=no-member,protected-access
-        lookup = {
-            x.name: x.value for x in TaskVisibility._value2member_map_.values()
-        }  # type: ignore
+        lookup = {x.name: x.value for x in TaskVisibility._value2member_map_.values()}  # type: ignore
         return TaskVisibility(lookup[name.upper()])
 
 
@@ -595,3 +593,13 @@ async def get_num_unclaimed_tasks_async(
     if redis_instance is None:
         await _redis_instance.close()  # type: ignore
     return num_unclaimed
+
+
+def get_default_backend_protocol():
+    logger.info("CLOUD PROVIDER: %s", infra_config().cloud_provider)
+    if infra_config().cloud_provider == "azure":
+        return "abs"
+    elif infra_config().cloud_provider == "gcp":
+        return "redis"  # TODO: THIS IS TEMPORARY! replace with cloud storage
+    else:
+        return "s3"
