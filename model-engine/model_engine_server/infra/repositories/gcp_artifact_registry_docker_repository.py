@@ -65,8 +65,6 @@ class GCPArtifactRegistryDockerRepository(DockerRepository):
                 len(docker_image_page.docker_images) == 0
             ):  # This condition shouldn't happen since we're asking for 1 image per page
                 raise DockerRepositoryNotFoundException
-            return docker_image_page.docker_images[
-                0
-            ].name  # TODO: is the return as expected? it's a big string, not just the tag
+            return docker_image_page.docker_images[0].name
         except NotFound:
             raise DockerRepositoryNotFoundException

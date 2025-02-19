@@ -61,7 +61,6 @@ def get_engine_url(
         key_file = os.environ.get("DB_SECRET_NAME")
         if env is None:
             env = infra_config().env
-            # TODO: what are the values of env?
         if key_file is None:
             key_file = get_key_file_name(env)  # type: ignore
         logger.debug(f"Using key file {key_file}")
