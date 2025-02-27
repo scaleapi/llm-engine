@@ -58,7 +58,7 @@ from vllm.utils import merge_async_iterators
 
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
-MODEL_WEIGHTS_FOLDER = os.getenv("MODEL_WEIGHTS_FOLDER", "./model_weights")
+MODEL_WEIGHTS_FOLDER = os.getenv("MODEL_WEIGHTS_FOLDER", "model_weights")
 
 SKIP_AWS_PROFILE_SET = os.getenv("SKIP_AWS_PROFILE_SET", "false").lower() == "true"
 if not SKIP_AWS_PROFILE_SET:
@@ -191,6 +191,26 @@ async def generate_v1_completions(
     return outputs
 
 
+# This is needed to handle the cases where it takes too long to process all of the requests before
+# the configured 'VLLM_ENGINE_ITERATION_TIMEOUT_S' 30s timeout.
+def determine_max_concurrent_requests(
+    requests: Union[List[CompletionRequest], List[ChatCompletionRequest]]
+) -> int:
+    # Guided decoding
+    # For example, with guided decoding, vLLM initializes a guided decoding logit processor per request, and
+    # anecdotally, we're seeing the engine able to handle around 7req/s (for outlines), so set to 30 * 7 ~= 200
+    if any(
+        request.to_sampling_params(
+            default_max_tokens=0, logits_processor_pattern=None
+        ).guided_decoding
+        for request in requests
+    ):
+        return 200
+
+    # Kinda arbitrary number
+    return 10000
+
+
 async def generate_v2_completions(
     engine: EngineClient,
     requests: Union[List[CompletionRequest], List[ChatCompletionRequest]],
@@ -203,15 +223,28 @@ async def generate_v2_completions(
             Union[ErrorResponse, AsyncGenerator[str, None], CompletionResponse],
         ]
     ] = []
+
+    max_concurrent_requests = determine_max_concurrent_requests(requests)
+    print(f"max_concurrent_requests: {max_concurrent_requests}")
+    semaphore = asyncio.Semaphore(max_concurrent_requests)
+
+    async def process_request(
+        request: Union[CompletionRequest, ChatCompletionRequest]
+    ) -> Coroutine[
+        Any,
+        Any,
+        Union[ErrorResponse, AsyncGenerator[str, None], CompletionResponse],
+    ]:
+        async with semaphore:
+            if isinstance(request, CompletionRequest):
+                return await openai_serving_completion.create_completion(request, dummy_request)
+            elif isinstance(request, ChatCompletionRequest):
+                return await openai_serving_chat.create_chat_completion(request)
+            else:
+                assert_never(request)
+
     for request in requests:
-        if isinstance(request, CompletionRequest):
-            results_generators.append(
-                openai_serving_completion.create_completion(request, dummy_request)
-            )
-        elif isinstance(request, ChatCompletionRequest):
-            results_generators.append(openai_serving_chat.create_chat_completion(request))
-        else:
-            assert_never(request)
+        results_generators.append(process_request(request))
 
     results_generator = await_coroutines(*results_generators)
     outputs: List[Optional[CompletionResponse]] = [None] * len(requests)
@@ -236,7 +269,8 @@ async def generate_completions(
 
 
 async def init_engine(
-    model: str,
+    model_id: str,
+    served_model_name: str,
     request: CreateBatchCompletionsEngineRequest,
 ) -> EngineClient:
     global openai_serving_chat
@@ -253,7 +287,7 @@ async def init_engine(
 
     engine_args_dict = parsed_configs.model_dump(exclude_none=True)
     default_engine_args_dict = dict(
-        model=model,
+        model=model_id,
         tensor_parallel_size=request.model_cfg.num_shards,
         pipeline_parallel_size=int(
             os.environ.get("NUM_INSTANCES", 1)
@@ -269,7 +303,7 @@ async def init_engine(
     engine_client = AsyncLLMEngine.from_engine_args(engine_args)
     model_config = await engine_client.get_model_config()
     resolved_chat_template = load_chat_template(parsed_configs.chat_template)
-    base_model_paths = [BaseModelPath(name=model, model_path=model)]
+    base_model_paths = [BaseModelPath(name=served_model_name, model_path=model_id)]
 
     openai_serving_chat = OpenAIServingChat(
         engine_client,
@@ -312,7 +346,7 @@ def load_batch_content(
 
     # Recast the content to vLLMs schema
     if isinstance(content, List) and len(content) > 0:
-        model = get_model_name(request.model_cfg)
+        model = request.model_cfg.model
         return TypeAdapter(
             Union[List[CompletionRequest], List[ChatCompletionRequest]]
         ).validate_python(
@@ -325,7 +359,7 @@ def load_batch_content(
     return content
 
 
-def get_model_name(model_config: BatchCompletionsModelConfig) -> str:
+def get_model_id(model_config: BatchCompletionsModelConfig) -> str:
     return MODEL_WEIGHTS_FOLDER if model_config.checkpoint_path else model_config.model
 
 
@@ -334,7 +368,9 @@ async def handle_batch_job(
 ) -> None:
     metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
 
-    model = get_model_name(request.model_cfg)
+    served_model_name = request.model_cfg.model
+    model_id = get_model_id(request.model_cfg)
+
     if request.model_cfg.checkpoint_path:
         await download_model(
             checkpoint_path=request.model_cfg.checkpoint_path,
@@ -378,7 +414,8 @@ async def handle_batch_job(
 
     content = load_batch_content(request)
     engine = await init_engine(
-        model,
+        model_id,
+        served_model_name,
         request=request,
     )
 
@@ -387,7 +424,7 @@ async def handle_batch_job(
         f.write(json.dumps([output.model_dump() if output else None for output in outputs]))
 
     metrics_gateway.emit_batch_completions_metric(
-        model,
+        served_model_name,
         use_tool=False,
         num_prompt_tokens=0,
         num_completion_tokens=0,
