@@ -26,6 +26,7 @@ if broker_type == BrokerType.SQS:
     celery_kwargs.update(
         dict(broker_transport_options={"predefined_queues": {queue_name: {"url": queue_url}}})
     )
+# TODO: is this unused or something? how come we don't have ABS here?
 
 async_inference_service = celery_app(**celery_kwargs)  # type: ignore
 

@@ -207,6 +207,7 @@ def entrypoint():
 
     if args.broker_type is None:
         args.broker_type = str(BrokerType.SQS.value if args.sqs_url else BrokerType.REDIS.value)
+        # TODO: how come this doesn't have azure (ASB)?
 
     forwarder_config = load_named_config(args.config, args.set)
     forwarder_loader = LoadForwarder(**forwarder_config["async"])

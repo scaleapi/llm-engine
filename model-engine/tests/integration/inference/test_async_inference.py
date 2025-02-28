@@ -181,3 +181,6 @@ def test_async_callbacks_botocore_exception(
             queue_name=queue,
             args=[1, 2],
         )
+
+
+# XXX: probably need to add a test for GCP pubsub here
