@@ -128,6 +128,9 @@ from model_engine_server.infra.services.live_llm_model_endpoint_service import (
     LiveLLMModelEndpointService,
 )
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
+from model_engine_server.infra.gateways.gcs_filesystem_gateway import GCSFilesystemGateway
+from model_engine_server.infra.gateways.gcs_llm_artifact_gateway import GCSLLMArtifactGateway
+from model_engine_server.infra.gateways.gcs_file_storage_gateway import GCSFileStorageGateway
 
 logger = make_logger(logger_name())
 
@@ -258,16 +261,20 @@ def _get_external_interfaces(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         use_asyncio=(not CIRCLECI),
     )
-    filesystem_gateway = (
-        ABSFilesystemGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3FilesystemGateway()
-    )
-    llm_artifact_gateway = (
-        ABSLLMArtifactGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3LLMArtifactGateway()
-    )
+    if infra_config().cloud_provider == "azure":
+        filesystem_gateway = ABSFilesystemGateway()
+    elif infra_config().cloud_provider == "gcp":
+        filesystem_gateway = GCSFilesystemGateway()
+    else:
+        filesystem_gateway = S3FilesystemGateway()
+    
+    if infra_config().cloud_provider == "azure":
+        llm_artifact_gateway = ABSLLMArtifactGateway()
+    elif infra_config().cloud_provider == "gcp":
+        llm_artifact_gateway = GCSLLMArtifactGateway()
+    else:
+        llm_artifact_gateway = S3LLMArtifactGateway()
+        
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
@@ -334,11 +341,12 @@ def _get_external_interfaces(
         docker_image_batch_job_gateway=docker_image_batch_job_gateway
     )
 
-    file_storage_gateway = (
-        ABSFileStorageGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3FileStorageGateway()
-    )
+    if infra_config().cloud_provider == "azure":
+        file_storage_gateway = ABSFileStorageGateway()
+    elif infra_config().cloud_provider == "gcp":
+        file_storage_gateway = GCSFileStorageGateway()
+    else:
+        file_storage_gateway = S3FileStorageGateway()
 
     docker_repository: DockerRepository
     if CIRCLECI:
