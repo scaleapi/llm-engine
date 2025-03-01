@@ -201,7 +201,7 @@ def determine_max_concurrent_requests(
     # anecdotally, we're seeing the engine able to handle around 7req/s (for outlines), so set to 30 * 7 ~= 200
     if any(
         request.to_sampling_params(
-            default_max_tokens=0, logits_processor_pattern=None
+            default_max_tokens=1, logits_processor_pattern=None
         ).guided_decoding
         for request in requests
     ):
