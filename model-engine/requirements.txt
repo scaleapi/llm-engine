@@ -167,6 +167,8 @@ frozenlist==1.3.3
     #   aiosignal
 fsspec==2023.10.0
     # via huggingface-hub
+gevent==24.11.1
+    # via -r model-engine/requirements.in
 gitdb==4.0.10
     # via gitpython
 gitdb2==2.0.6
@@ -175,8 +177,10 @@ gitpython==3.1.41
     # via -r model-engine/requirements.in
 google-auth==2.21.0
     # via kubernetes
-greenlet==2.0.2
-    # via sqlalchemy
+greenlet==3.1.1
+    # via
+    #   gevent
+    #   sqlalchemy
 gunicorn==20.1.0
     # via -r model-engine/requirements.in
 h11==0.14.0
@@ -569,6 +573,10 @@ yarl==1.9.2
     #   aiohttp
 zipp==3.16.0
     # via importlib-metadata
+zope-event==5.0
+    # via gevent
+zope-interface==7.2
+    # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
 setuptools==69.0.3
@@ -576,3 +584,5 @@ setuptools==69.0.3
     #   gunicorn
     #   kubernetes
     #   kubernetes-asyncio
+    #   zope-event
+    #   zope-interface

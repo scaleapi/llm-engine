@@ -24,7 +24,7 @@ from model_engine_server.inference.forwarding.forwarding import (
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
     DatadogInferenceMonitoringMetricsGateway,
 )
-from request import ConnectionError
+from requests import ConnectionError
 
 monkey.patch_all()
 
