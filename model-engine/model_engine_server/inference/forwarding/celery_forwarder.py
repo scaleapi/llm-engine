@@ -1,10 +1,13 @@
+from gevent import monkey
+
+monkey.patch_all()
+
 import argparse
 import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, TypedDict, Union
 
 from celery import Celery, Task, states
-from gevent import monkey
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
@@ -25,8 +28,6 @@ from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_m
     DatadogInferenceMonitoringMetricsGateway,
 )
 from requests import ConnectionError
-
-monkey.patch_all()
 
 logger = make_logger(logger_name())
 
@@ -147,7 +148,7 @@ def create_celery_service(
             # Don't fail the celery task even if there's a status code
             # (otherwise we can't really control what gets put in the result attribute)
             # in the task (https://docs.celeryq.dev/en/stable/reference/celery.result.html#celery.result.AsyncResult.status)
-            result = forwarder.forward(payload)
+            result = forwarder(payload)
             request_duration = datetime.now() - arrival_timestamp
             if request_duration > timedelta(seconds=DEFAULT_TASK_VISIBILITY_SECONDS):
                 monitoring_metrics_gateway.emit_async_task_stuck_metric(queue_name)

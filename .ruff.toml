@@ -3,3 +3,6 @@ line-length = 100
 
 ignore = ["E501"]
 exclude = ["gen", "alembic"]
+
+[lint.per-file-ignores]
+"model-engine/model_engine_server/inference/forwarding/celery_forwarder.py" = ["E402"]
