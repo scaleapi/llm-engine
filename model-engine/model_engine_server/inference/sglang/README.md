@@ -19,8 +19,20 @@ This script details what's necessary for each pod (leader and worker) to run to 
 `Dockerfile.sglang` details all of the necessary dependencies to spin up the multinode SGLang server. Current Launch endpoints (DeepSeek R1/V3) use a built/pushed docker image `sglang/multinode-latest-2`.
 
 ## Model Engine Code Changes
+The code changes will only be in `model-engine/model_engine_server/domain/use_cases/llm_model_endpoint_use_cases.py`.
 
-The only changes necessary are in the class `CreateLLMModelBundleV1UseCase` in `model-engine/model_engine_server/domain/use_cases/llm_model_endpoint_use_cases.py`. Add the following method:
+Update `CreateLLMModelEndpointV1UseCase` to accept SGLang multinode:
+```python
+if (
+        request.nodes_per_worker > 1
+        and not request.inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.SGLANG]
+    ):
+        raise ObjectHasInvalidValueException(
+            "Multinode endpoints are only supported for VLLM models."
+        )
+```
+
+In `CreateLLMModelBundleV1UseCase`, add the following method:
 
 ```python
     async def create_sglang_multinode_bundle(
@@ -40,22 +52,30 @@ The only changes necessary are in the class `CreateLLMModelBundleV1UseCase` in `
         "python3",
         "/root/sglang-startup-script.py",
         "--model",
-        "deepseek-ai/DeepSeek-V3",
+        "deepseek-ai/DeepSeek-R1",
         "--nnodes",
         "2",
         "--node-rank",
         "0"
+        "--worker-port",
+        "5005",
+        "--leader-port",
+        "5002"
         ]
     
         worker_command = [
         "python3",
         "/root/sglang-startup-script.py",
         "--model",
-        "deepseek-ai/DeepSeek-V3",
+        "deepseek-ai/DeepSeek-R1",
         "--nnodes",
         "2",
         "--node-rank",
-        "1"
+        "1",
+        "--worker-port",
+        "5005",
+        "--leader-port",
+        "5002"
         ]
 
         # NOTE: the most important env var SGLANG_HOST_IP is already established in the sglang startup script
@@ -98,9 +118,16 @@ The only changes necessary are in the class `CreateLLMModelBundleV1UseCase` in `
 ```
 
 
-In `async def execute()`, now call the sglang multinode bundle function under `case LLMInferenceFramework.SGLANG`:
+In `async def execute()`, now add SGLang as a multinode framework and call the sglang multinode bundle function under `case LLMInferenceFramework.SGLANG`:
 
 ```python
+if multinode and framework not in [LLMInferenceFramework.VLLM, LLMInferenceFramework.SGLANG]:
+    raise ObjectHasInvalidValueException(
+        f"Multinode is not supported for framework {framework}."
+    )
+
+...
+
 if multinode:
     bundle_id = await self.create_sglang_multinode_bundle(
         user,
@@ -115,8 +142,25 @@ if multinode:
         additional_args=additional_sglang_args,
     )
 ```
+## Create multinode SGLang endpoint
+1. Login to ECR:
+```bash
+aws ecr get-login-password --region us-west-2 | docker login \
+  --username AWS \
+  --password-stdin 692474966980.dkr.ecr.us-west-2.amazonaws.com
+```
+2. Push local `model-engine-internal` image for the forwarder:
 
-The endpoint was created by sending a `POST` request to the local Launch server with the following body:
+```bash
+docker push 692474966980.dkr.ecr.us-west-2.amazonaws.com/model-engine-internal:$(git rev-parse HEAD)-rcX
+```
+
+3. Spin up the local Launch server in `models/model-engine-internal` by running:
+```bash
+GIT_SHA="$(git rev-parse HEAD)-rcX" SETENV=prod LOCAL=true AWS_PROFILE=ml-serving-admin just up prod
+```
+
+4. Send a `POST` request to `http://localhost:5001/v1/llm/model-endpoints` with the following body:
 
 ```json
 {
@@ -142,7 +186,7 @@ The endpoint was created by sending a `POST` request to the local Launch server 
   "high_priority": true,
   "metadata": {
       "_llm": 
-        {"source": "hugging_face", "quantize": null, "model_name": "deepseek-v3", "num_shards": 8, "checkpoint_path": "s3://scale-ml/models/hf-synced-weights/deepseek-ai/DeepSeek-V3", "inference_framework": "sglang", "chat_template_override": null, "inference_framework_image_tag": "multinode-latest-2"}
+        {"source": "hugging_face", "quantize": null, "model_name": "deepseek-r1", "num_shards": 8, "checkpoint_path": "s3://scale-ml/models/hf-synced-weights/deepseek-ai/DeepSeek-R1", "inference_framework": "sglang", "chat_template_override": null, "inference_framework_image_tag": "multinode-latest-2"}
   }
 }
 ```
