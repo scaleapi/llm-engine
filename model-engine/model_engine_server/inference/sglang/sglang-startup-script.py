@@ -107,4 +107,3 @@ if __name__ == "__main__":
     parser.add_argument("--leader-port", type=int, default=5002)
     args = parser.parse_args()
     main(model=args.model, node_rank=args.node_rank, nnodes=args.nnodes, tp=args.tp, worker_port=args.worker_port, leader_port=args.leader_port)
-    
