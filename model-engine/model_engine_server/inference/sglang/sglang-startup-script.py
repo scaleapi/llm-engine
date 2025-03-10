@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
+import argparse
 import os
 import socket
 import subprocess
-import argparse
 import time
 
 
@@ -19,8 +19,10 @@ def wait_for_dns(dns_name: str, max_retries: int = 20, sleep_seconds: int = 3):
             print(f"[DNS-OK] Successfully resolved {dns_name} on attempt {attempt}.")
             return  # If successful, just return
         except socket.gaierror as e:
-            print(f"[DNS-FAIL] Attempt {attempt} to resolve {dns_name} failed: {e}. "
-                  f"Retrying in {sleep_seconds} seconds...")
+            print(
+                f"[DNS-FAIL] Attempt {attempt} to resolve {dns_name} failed: {e}. "
+                f"Retrying in {sleep_seconds} seconds..."
+            )
             time.sleep(sleep_seconds)
     # If we exhaust our attempts, raise an error
     raise RuntimeError(f"Could not resolve {dns_name} after {max_retries} attempts.")
@@ -34,10 +36,20 @@ def main(model: str, node_rank: int, nnodes: int, tp: int, worker_port: int, lea
     s5cmd_cmd = [
         "s5cmd",
         "--numworkers=512",
-        "cp", "--concurrency=10",
-        "--include", "*.model", "--include", "*.json", "--include", "*.safetensors",
-        "--include", "*.py", "--include", "tokenizer.model.v*",
-        "--exclude", "optimizer*",
+        "cp",
+        "--concurrency=10",
+        "--include",
+        "*.model",
+        "--include",
+        "*.json",
+        "--include",
+        "*.safetensors",
+        "--include",
+        "*.py",
+        "--include",
+        "tokenizer.model.v*",
+        "--exclude",
+        "optimizer*",
         f"s3://scale-ml/models/hf-synced-weights/{model}/*",
         model_path,
     ]
@@ -82,15 +94,23 @@ def main(model: str, node_rank: int, nnodes: int, tp: int, worker_port: int, lea
         "python3",
         "-m",
         "sglang.launch_server",
-        "--model-path", model_path,
-        "--tp", str(tp),
-        "--host", "::",
-        "--port", str(worker_port),
-        "--dist-init-addr", f"[{local_ip}]:{str(leader_port)}",
-        "--nnodes", str(nnodes),
-        "--node-rank", str(node_rank),
+        "--model-path",
+        model_path,
+        "--tp",
+        str(tp),
+        "--host",
+        "::",
+        "--port",
+        str(worker_port),
+        "--dist-init-addr",
+        f"[{local_ip}]:{str(leader_port)}",
+        "--nnodes",
+        str(nnodes),
+        "--node-rank",
+        str(node_rank),
         "--trust-remote-code",
-        "--log-level", "debug",
+        "--log-level",
+        "debug",
     ]
     print("Running SGLang server command...")
     subprocess.check_call(sglang_cmd)
@@ -106,4 +126,11 @@ if __name__ == "__main__":
     parser.add_argument("--worker-port", type=int, default=5005)
     parser.add_argument("--leader-port", type=int, default=5002)
     args = parser.parse_args()
-    main(model=args.model, node_rank=args.node_rank, nnodes=args.nnodes, tp=args.tp, worker_port=args.worker_port, leader_port=args.leader_port)
+    main(
+        model=args.model,
+        node_rank=args.node_rank,
+        nnodes=args.nnodes,
+        tp=args.tp,
+        worker_port=args.worker_port,
+        leader_port=args.leader_port,
+    )
