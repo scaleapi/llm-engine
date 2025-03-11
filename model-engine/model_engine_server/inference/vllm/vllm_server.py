@@ -61,6 +61,7 @@ async def generate(request: Request) -> Response:
             sampling_params=SamplingParams(**request_dict),
             tokenizer=await engine_client.get_tokenizer(lora_request=None),
             default_guided_backend=guided_decoding_backend,
+            model_config=await engine_client.get_model_config(),
         )
 
         request_id = random_uuid()
