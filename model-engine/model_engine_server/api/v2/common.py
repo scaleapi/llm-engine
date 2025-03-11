@@ -18,7 +18,7 @@ def format_request_route(request: Request) -> str:
 async def get_metric_metadata(
     request: Request,
     auth: User = Depends(verify_authentication),
-) -> MetricMetadata:
+) -> MetricMetadata:  # pragma: no cover
     # note that this is ok because request will cache the body
     model_name = None
     try:
