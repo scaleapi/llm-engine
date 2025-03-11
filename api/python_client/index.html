@@ -1200,6 +1200,7 @@ For each of these modes, you can also choose whether to stream token responses o
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -1639,6 +1640,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 </div>
 </div>
 </div>
+
 
     </div>
 
@@ -2083,6 +2085,7 @@ When streaming, tokens will be sent as data-only <a href="https://developer.mozi
 </div>
 </div>
 
+
     </div>
 
 </div>
@@ -2407,6 +2410,7 @@ from llmengine.data_types import CreateBatchCompletionsModelConfig, FilteredChat
 </div>
 </div>
 
+
     </div>
 
 </div>
@@ -2439,6 +2443,7 @@ from llmengine.data_types import CreateBatchCompletionsModelConfig, FilteredChat
 <p>Fine-tuning is a process where the LLM is further trained on a task-specific dataset, allowing the model to adjust its parameters to better align with the task at hand. Fine-tuning is a supervised training phase, where prompt/response pairs are provided to optimize the performance of the LLM. LLM Engine currently uses <a href="https://arxiv.org/abs/2106.09685">LoRA</a> for fine-tuning. Support for additional fine-tuning methods is upcoming.</p>
 <p>LLM Engine provides APIs to create fine-tunes on a base model with training &amp; validation datasets. APIs are also provided to list, cancel and retrieve fine-tuning jobs.</p>
 <p>Creating a fine-tune will end with the creation of a Model, which you can view using <code>Model.get(model_name)</code> or delete using <code>Model.delete(model_name)</code>.</p>
+
 
 
 
@@ -2701,6 +2706,7 @@ form of <code>file-&lt;random_string&gt;</code>, e.g. "file-7DLVeLdN2Ty4M2m".</p
 </div>
 </div>
 
+
     </div>
 
 </div>
@@ -2804,6 +2810,7 @@ object with the id and status (<code>PENDING</code>, <code>STARTED</code>,
 </div>
 </div>
 </div>
+
 
     </div>
 
@@ -2926,6 +2933,7 @@ evaluation of the eval loss. This API will return all events for the fine-tuning
 </div>
 </div>
 
+
     </div>
 
 </div>
@@ -3000,6 +3008,7 @@ all existing jobs.</p>
 </div>
 </div>
 </div>
+
 
     </div>
 
@@ -3099,6 +3108,7 @@ confirming if the cancellation was successful.</p>
 </div>
 </div>
 
+
     </div>
 
 </div>
@@ -3131,6 +3141,7 @@ confirming if the cancellation was successful.</p>
 models built into LLM Engine, and fine-tuned models that you create through the
 <a href="./#llmengine.fine_tuning.FineTune.create">FineTune.create()</a> API.</p>
 <p>See <a href="../../model_zoo">Model Zoo</a> for the list of publicly available base models.</p>
+
 
 
 
@@ -3755,6 +3766,7 @@ inference</p>
 </div>
 </div>
 
+
     </div>
 
 </div>
@@ -3867,6 +3879,7 @@ object.</p>
 </div>
 </div>
 </div>
+
 
     </div>
 
@@ -3982,6 +3995,7 @@ objects for all models. The most important field is the model <code>name</code>.
 </div>
 </div>
 </div>
+
 
     </div>
 
@@ -4427,6 +4441,7 @@ inference</p>
         <p>Returns:
     UpdateLLMEndpointResponse: creation task ID of the updated Model. Currently not used.</p>
 
+
     </div>
 
 </div>
@@ -4529,6 +4544,7 @@ Engine, an error will be thrown.</p>
 </div>
 </div>
 
+
     </div>
 
 </div>
@@ -4626,6 +4642,7 @@ the fine-tuned model. If called on a nonexistent model, an error will be thrown.
 </div>
 </div>
 
+
     </div>
 
 </div>
@@ -4656,6 +4673,7 @@ the fine-tuned model. If called on a nonexistent model, an error will be thrown.
 
         <p>File API. This API is used to upload private files to LLM engine so that fine-tunes can access them for training and validation data.</p>
 <p>Functions are provided to upload, get, list, and delete files, as well as to get the contents of a file.</p>
+
 
 
 
@@ -4768,6 +4786,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 </div>
 </div>
 
+
     </div>
 
 </div>
@@ -4867,6 +4886,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 </div>
 </div>
 
+
     </div>
 
 </div>
@@ -4962,6 +4982,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 </div>
 </div>
 
+
     </div>
 
 </div>
@@ -5035,6 +5056,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 </div>
 </div>
 </div>
+
 
     </div>
 
@@ -5129,6 +5151,7 @@ A maximum of 100,000 rows of data is currently supported.</p>
 </div>
 </div>
 </div>
+
 
     </div>
 
