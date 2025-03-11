@@ -18,13 +18,18 @@ def format_request_route(request: Request) -> str:
 async def get_metric_metadata(
     request: Request,
     auth: User = Depends(verify_authentication),
-) -> MetricMetadata:
+) -> MetricMetadata:  # pragma: no cover
     # note that this is ok because request will cache the body
-    body = await request.json()
-    model_name = body.get("model", None)
-    if not model_name:
-        # get model name from batch completion request
-        model_name = body.get("model_config", {}).get("model", None)
+    model_name = None
+    try:
+        body = await request.json()
+        model_name = body.get("model", None)
+        if not model_name:
+            # get model name from batch completion request
+            model_name = body.get("model_config", {}).get("model", None)
+    except Exception:
+        # request has no body
+        pass
 
     return MetricMetadata(user=auth, model_name=model_name)
 
