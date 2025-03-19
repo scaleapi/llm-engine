@@ -137,7 +137,7 @@ from .model_endpoint_use_cases import (
 logger = make_logger(logger_name())
 
 OPENAI_CHAT_COMPLETION_PATH = "/v1/chat/completions"
-CHAT_TEMPLATE_MAX_LENGTH = 10_000
+CHAT_TEMPLATE_MAX_LENGTH = 20_000
 CHAT_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM, LLMInferenceFramework.SGLANG]
 
 OPENAI_COMPLETION_PATH = "/v1/completions"
