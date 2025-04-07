@@ -28,7 +28,15 @@ def wait_for_dns(dns_name: str, max_retries: int = 20, sleep_seconds: int = 3):
     raise RuntimeError(f"Could not resolve {dns_name} after {max_retries} attempts.")
 
 
-def main(model: str, node_rank: int, nnodes: int, tp: int, worker_port: int, leader_port: int):
+def main(
+    model: str,
+    node_rank: int,
+    nnodes: int,
+    tp: int,
+    worker_port: int,
+    leader_port: int,
+    s3_path: str,
+):
     # 1) Download the DeepSeek model using s5cmd
     model_path = f"/data/model_files/{model}"
     os.makedirs(model_path, exist_ok=True)
@@ -50,7 +58,7 @@ def main(model: str, node_rank: int, nnodes: int, tp: int, worker_port: int, lea
         "tokenizer.model.v*",
         "--exclude",
         "optimizer*",
-        f"s3://scale-ml/models/hf-synced-weights/{model}/*",
+        f"s3://{s3_path}/{model}/*",
         model_path,
     ]
     print("Running s5cmd download command...")
@@ -125,6 +133,7 @@ if __name__ == "__main__":
     parser.add_argument("--tp", type=int, default=16)
     parser.add_argument("--worker-port", type=int, default=5005)
     parser.add_argument("--leader-port", type=int, default=5002)
+    parser.add_argument("--s3-path", type=str, default="scale-ml/models/hf-synced-weights")
     args = parser.parse_args()
     main(
         model=args.model,
@@ -133,4 +142,5 @@ if __name__ == "__main__":
         tp=args.tp,
         worker_port=args.worker_port,
         leader_port=args.leader_port,
+        s3_path=args.s3_path,
     )
