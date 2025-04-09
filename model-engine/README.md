@@ -42,6 +42,11 @@ Run `mypy . --install-types` to set up mypy.
 Most of the business logic in Model Engine should contain unit tests, located in
 [`tests/unit`](./tests/unit). To run the tests, run `pytest`.
 
+## Building Docker Images
+
+In order to build docker images, you must change directories into the llm-engine repository root and then run
+`docker build -f model-engine/Dockerfile .`
+
 ## Generating OpenAI types
 We've decided to make our V2 APIs OpenAI compatible. We generate the
 corresponding Pydantic models:
