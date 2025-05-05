@@ -105,6 +105,7 @@ async def download_model(checkpoint_path: str, target_dir: str, trust_remote_cod
     # Need to override these env vars so s5cmd uses AWS_PROFILE
     env["AWS_ROLE_ARN"] = ""
     env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
+    env["AWS_EC2_METADATA_DISABLED"] = "true" # Disable EC2 metadata for GKE (won't affect EKS)
     process = subprocess.Popen(
         s5cmd,
         shell=True,  # nosemgrep
