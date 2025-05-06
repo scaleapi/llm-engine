@@ -38,7 +38,7 @@ class _InfraConfig:
     k8s_cluster_name: str
     dns_host_domain: str
     default_region: str
-    ml_account_id: str
+    ml_account_id: str  # NOTE: this stores the aws account id if cloud_provider is aws, and the gcp project id if cloud_provider is gcpFgc
     docker_repo_prefix: str
     s3_bucket: str
     redis_host: Optional[str] = None

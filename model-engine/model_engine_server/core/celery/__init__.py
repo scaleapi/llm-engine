@@ -5,12 +5,14 @@ from .app import (
     TaskVisibility,
     celery_app,
     get_all_db_indexes,
+    get_default_backend_protocol,
     get_redis_host_port,
     inspect_app,
 )
 
 __all__: Sequence[str] = (
     "celery_app",
+    "get_default_backend_protocol",
     "get_all_db_indexes",
     "get_redis_host_port",
     "inspect_app",
