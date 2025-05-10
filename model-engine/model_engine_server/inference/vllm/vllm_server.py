@@ -11,6 +11,7 @@ from typing import AsyncGenerator, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Request
 from fastapi.responses import Response, StreamingResponse
+from vllm.config import VllmConfig
 from vllm.engine.async_llm_engine import (
     AsyncEngineDeadError,
     build_guided_decoding_logits_processor_async,
@@ -22,7 +23,7 @@ from vllm.entrypoints.openai.cli_args import make_arg_parser
 from vllm.outputs import CompletionOutput
 from vllm.sampling_params import SamplingParams
 from vllm.sequence import Logprob
-from vllm.utils import FlexibleArgumentParser, random_uuid
+from vllm.utils import FlexibleArgumentParser, is_valid_ipv6_address, random_uuid
 from vllm.version import __version__ as VLLM_VERSION
 
 logger = Logger("vllm_server")
@@ -195,12 +196,28 @@ def parse_args(parser: FlexibleArgumentParser):
     return parser.parse_args()
 
 
+def create_server_socket(addr: tuple[str, int]) -> socket.socket:
+    family = socket.AF_INET
+    if is_valid_ipv6_address(addr[0]):
+        family = socket.AF_INET6
+
+    sock = socket.socket(family=family, type=socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    sock.bind(addr)
+
+    return sock
+
+
 async def run_server(args, **uvicorn_kwargs) -> None:
     logger.info("vLLM API server version %s", VLLM_VERSION)
     logger.info("args: %s", args)
 
-    temp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # nosemgrep
-    temp_socket.bind(("", args.port))
+    # workaround to make sure that we bind the port before the engine is set up.
+    # This avoids race conditions with ray.
+    # see https://github.com/vllm-project/vllm/issues/8204
+    sock_addr = (args.host or "", args.port)
+    sock = create_server_socket(sock_addr)
 
     def signal_handler(*_) -> None:
         # Interrupt server on sigterm while initializing
@@ -208,21 +225,35 @@ async def run_server(args, **uvicorn_kwargs) -> None:
 
     signal.signal(signal.SIGTERM, signal_handler)
 
-    global engine_client
     async with build_async_engine_client(args) as engine_client:
         app = build_app(args)
 
-        model_config = await engine_client.get_model_config()
-        init_app_state(engine_client, model_config, app.state, args)
+        vllm_config = await engine_client.get_vllm_config()
+        await init_app_state(engine_client, vllm_config, app.state, args)
 
-        temp_socket.close()
-        app.include_router(router)
+        def _listen_addr(a: str) -> str:
+            if is_valid_ipv6_address(a):
+                return "[" + a + "]"
+            return a or "0.0.0.0"
+
+        is_ssl = args.ssl_keyfile and args.ssl_certfile
+        logger.info(
+            "Starting vLLM API server on http%s://%s:%d",
+            "s" if is_ssl else "",
+            _listen_addr(sock_addr[0]),
+            sock_addr[1],
+        )
 
         shutdown_task = await serve_http(
             app,
+            sock=sock,
+            enable_ssl_refresh=args.enable_ssl_refresh,
             host=args.host,
             port=args.port,
             log_level=args.uvicorn_log_level,
+            # NOTE: When the 'disable_uvicorn_access_log' value is True,
+            # no access log will be output.
+            access_log=not args.disable_uvicorn_access_log,
             timeout_keep_alive=TIMEOUT_KEEP_ALIVE,
             ssl_keyfile=args.ssl_keyfile,
             ssl_certfile=args.ssl_certfile,
@@ -232,7 +263,10 @@ async def run_server(args, **uvicorn_kwargs) -> None:
         )
 
     # NB: Await server shutdown only after the backend context is exited
-    await shutdown_task
+    try:
+        await shutdown_task
+    finally:
+        sock.close()
 
 
 if __name__ == "__main__":
