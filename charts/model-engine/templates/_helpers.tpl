@@ -300,7 +300,7 @@ env:
     {{- if .Values.serviceIdentifier }}
     value: {{ .Values.serviceIdentifier }}
     {{- end }}
-   - name: SERVICE_BUILDER_QUEUE
+  - name: SERVICE_BUILDER_QUEUE
     {{- if .Values.serviceBuilderQueue }}
     value: {{ .Values.serviceBuilderQueue }}
     {{- end }}
