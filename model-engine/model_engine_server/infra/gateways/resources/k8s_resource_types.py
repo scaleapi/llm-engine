@@ -510,8 +510,8 @@ def container_start_triton_cmd(
 def get_endpoint_resource_arguments_from_request(
     k8s_resource_group_name: str,
     request: CreateOrUpdateResourcesRequest,
-    sqs_queue_name: str,
-    sqs_queue_url: str,
+    sqs_queue_name: str,  # TODO: check how this is used
+    sqs_queue_url: str,  # TODO: check how this is used
     endpoint_resource_name: str,
     api_version: str = "",
     service_name_override: Optional[str] = None,
@@ -560,6 +560,9 @@ def get_endpoint_resource_arguments_from_request(
     elif infra_config().cloud_provider == "azure":
         broker_name = BrokerName.SERVICEBUS.value
         broker_type = BrokerType.SERVICEBUS.value
+    elif infra_config().cloud_provider == "gcp":  # TODO: cloud provider should be an enum, right?
+        broker_name = BrokerName.GCPPUBSUB.value
+        broker_type = BrokerType.GCPPUBSUB.value
     else:
         broker_name = BrokerName.SQS.value
         broker_type = BrokerType.SQS.value

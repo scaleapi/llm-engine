@@ -85,6 +85,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         )
 
         if endpoint_type == ModelEndpointType.ASYNC:
+            # TODO: this seems poorly named. this isn't just for SQS, right?
             sqs_attributes = await self.queue_delegate.get_queue_attributes(endpoint_id=endpoint_id)
             if (
                 "Attributes" in sqs_attributes

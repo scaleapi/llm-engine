@@ -14,7 +14,21 @@ from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 
 logger = make_logger(logger_name())
-backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
+
+
+def get_backend_protocol():
+    cloud_provider = infra_config().cloud_provider
+    if cloud_provider == "azure":
+        return "abs"
+    elif cloud_provider == "aws":
+        return "s3"
+    elif cloud_provider == "gcp":
+        return "gcppubsub"
+    else:
+        return "s3"  # TODO: I feel like we should raise an error here.
+
+
+backend_protocol = get_backend_protocol()
 
 celery_redis = celery_app(
     None,
@@ -36,19 +50,33 @@ celery_sqs = celery_app(
     backend_protocol=backend_protocol,
 )
 celery_servicebus = celery_app(
-    None, broker_type=str(BrokerType.SERVICEBUS.value), backend_protocol=backend_protocol
+    None,
+    broker_type=str(BrokerType.SERVICEBUS.value),
+    backend_protocol=backend_protocol,
+    # TODO: check how Azure uses s3
+)
+
+# XXX: check the next line
+celery_gcppubsub = celery_app(
+    None,
+    broker_type=str(BrokerType.GCPPUBSUB.value),
+    backend_protocol=backend_protocol,
 )
 
 
 class CeleryTaskQueueGateway(TaskQueueGateway):
     def __init__(self, broker_type: BrokerType):
         self.broker_type = broker_type
-        assert self.broker_type in [
-            BrokerType.SQS,
-            BrokerType.REDIS,
-            BrokerType.REDIS_24H,
-            BrokerType.SERVICEBUS,
-        ]
+        assert (
+            self.broker_type
+            in [  # TODO: why do have this assert? this is the same as the enum -- is it so we remember to implement it here?
+                BrokerType.SQS,
+                BrokerType.REDIS,
+                BrokerType.REDIS_24H,
+                BrokerType.SERVICEBUS,
+                BrokerType.GCPPUBSUB,
+            ]
+        )
 
     def _get_celery_dest(self):
         if self.broker_type == BrokerType.SQS:
@@ -57,6 +85,8 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             return celery_redis_24h
         elif self.broker_type == BrokerType.REDIS:
             return celery_redis
+        elif self.broker_type == BrokerType.GCPPUBSUB:
+            return celery_gcppubsub
         else:
             return celery_servicebus
 

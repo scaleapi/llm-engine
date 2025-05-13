@@ -28,6 +28,9 @@ from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_de
 from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_delegate import (
     FakeQueueEndpointResourceDelegate,
 )
+from model_engine_server.infra.gateways.resources.gcppubsub_queue_endpoint_resource_delegate import (
+    GCPPubSubQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     set_lazy_load_kubernetes_clients,
 )
@@ -65,6 +68,8 @@ def get_live_endpoint_builder_service(
         queue_delegate = FakeQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "gcp":
+        queue_delegate = GCPPubSubQueueEndpointResourceDelegate()
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)

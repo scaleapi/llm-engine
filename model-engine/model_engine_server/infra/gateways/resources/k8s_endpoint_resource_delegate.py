@@ -360,6 +360,7 @@ def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
     container["env"] = container_envs
 
 
+# TODO: figure out what this does
 class K8SEndpointResourceDelegate:
     async def create_or_update_resources(
         self,
