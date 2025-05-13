@@ -84,9 +84,11 @@ def get_sync_endpoint_elb_url(deployment_name: str) -> str:
     return f"http://{deployment_name}.{infra_config().dns_host_domain}/predict"
 
 
-def get_service_builder_queue(service_identifier=None):
+def get_service_builder_queue(service_identifier=None, service_builder_queue_name=None):
     return (
-        f"{SERVICE_BUILDER_QUEUE_PREFIX}-{service_identifier}-{SERVICE_BUILDER_QUEUE_SUFFIX}"
+        service_builder_queue_name
+        if service_builder_queue_name
+        else f"{SERVICE_BUILDER_QUEUE_PREFIX}-{service_identifier}-{SERVICE_BUILDER_QUEUE_SUFFIX}"
         if service_identifier
         else f"{SERVICE_BUILDER_QUEUE_PREFIX}-{SERVICE_BUILDER_QUEUE_SUFFIX}"
     )

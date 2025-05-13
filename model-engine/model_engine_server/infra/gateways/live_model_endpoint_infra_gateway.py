@@ -26,6 +26,7 @@ from model_engine_server.infra.gateways.resources.endpoint_resource_gateway impo
 
 BUILD_TASK_NAME = "model_engine_server.service_builder.tasks_v1.build_endpoint"
 SERVICE_IDENTIFIER = os.getenv("SERVICE_IDENTIFIER")
+SERVICE_BUILDER_QUEUE = os.getenv("SERVICE_BUILDER_QUEUE")
 
 
 def redact_restricted_labels(labels: Dict[str, str]) -> None:
@@ -106,7 +107,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         )
         response = self.task_queue_gateway.send_task(
             task_name=BUILD_TASK_NAME,
-            queue_name=get_service_builder_queue(SERVICE_IDENTIFIER),
+            queue_name=get_service_builder_queue(SERVICE_IDENTIFIER, SERVICE_BUILDER_QUEUE),
             # celery request is required to be JSON serializables
             kwargs=dict(build_endpoint_request_json=build_endpoint_request.dict()),
         )
@@ -226,7 +227,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         )
         response = self.task_queue_gateway.send_task(
             task_name=BUILD_TASK_NAME,
-            queue_name=get_service_builder_queue(SERVICE_IDENTIFIER),
+            queue_name=get_service_builder_queue(SERVICE_IDENTIFIER, SERVICE_BUILDER_QUEUE),
             kwargs=dict(build_endpoint_request_json=build_endpoint_request.dict()),
         )
         return response.task_id

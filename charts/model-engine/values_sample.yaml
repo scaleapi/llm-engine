@@ -398,3 +398,4 @@ recommendedHardware:
       storage: 640Gi
       gpu_type: nvidia-hopper-h100
       nodes_per_worker: 1
+#serviceBuilderQueue:
