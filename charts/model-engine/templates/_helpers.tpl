@@ -300,6 +300,10 @@ env:
     {{- if .Values.serviceIdentifier }}
     value: {{ .Values.serviceIdentifier }}
     {{- end }}
+  - name: SERVICE_BUILDER_QUEUE
+    {{- if .Values.serviceBuilderQueue }}
+    value: {{ .Values.serviceBuilderQueue }}
+    {{- end }}
   - name: GATEWAY_URL
     value: {{ include "modelEngine.gatewayurl" . }}
   {{- if .Values.aws }}

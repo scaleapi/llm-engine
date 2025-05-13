@@ -55,7 +55,9 @@ spec:
             - worker
             - --loglevel=INFO
             - --concurrency=2
-            {{- if .Values.serviceIdentifier }}
+            {{- if .Values.serviceBuilderQueue }}
+            - --queues={{ .Values.serviceBuilderQueue }}
+            {{- else if .Values.serviceIdentifier }}
             - --queues=model-engine-{{ .Values.serviceIdentifier }}-service-builder
             {{- else }}
             - --queues=model-engine-service-builder
