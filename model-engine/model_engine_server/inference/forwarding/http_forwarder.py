@@ -90,7 +90,7 @@ async def predict(
                 )
             return response
         except Exception:
-            logger.error(f"Failed to decode payload from: {request}")
+            logger.error(f"Failed to decode payload from:")
             raise
 
 
@@ -103,10 +103,10 @@ async def stream(
         try:
             payload = request.model_dump()
         except Exception:
-            logger.error(f"Failed to decode payload from: {request}")
+            logger.error(f"Failed to decode payload from:")
             raise
         else:
-            logger.debug(f"Received request: {payload}")
+            logger.debug(f"Received request: ")
 
         responses = forwarder.forward(payload)
         # We fetch the first response to check if upstream request was successful
