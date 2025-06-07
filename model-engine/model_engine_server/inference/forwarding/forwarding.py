@@ -430,7 +430,9 @@ class StreamingForwarder(ModelEngineSerializationMixin):
 
         try:
             response: aiohttp.ClientResponse
-            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
+            async with aiohttp.ClientSession(
+                json_serialize=_serialize_json, timeout=aiohttp.ClientTimeout(total=60 * 60)
+            ) as aioclient:
                 response = await aioclient.post(
                     self.predict_endpoint,
                     json=json_payload,
