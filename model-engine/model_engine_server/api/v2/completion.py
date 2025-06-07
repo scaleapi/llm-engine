@@ -262,7 +262,7 @@ async def completion(
         )
     else:
         logger.info(
-            f"POST /v2/completion ({('stream' if request.stream else 'sync')}) with to endpoint {model_endpoint_name} for {auth}"
+            f"POST /v2/completion ({('stream' if request.stream else 'sync')}) with request {request} to endpoint {model_endpoint_name} for {auth}"
         )
 
     if request.stream:

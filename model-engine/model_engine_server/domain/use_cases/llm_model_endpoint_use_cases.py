@@ -170,8 +170,8 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
 }
 
 
-NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
-DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
+NUM_DOWNSTREAM_REQUEST_RETRIES = 80 * 12  # has to be high enough so that the retries take the 5 minutes
+DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 60 * 60  # 5 minutes
 
 DEFAULT_BATCH_COMPLETIONS_NODES_PER_WORKER = 1
 
@@ -398,7 +398,7 @@ class CreateLLMModelBundleV1UseCase:
         "--nnodes",
         "2",
         "--node-rank",
-        "0"
+        "0",
         "--worker-port",
         "5005",
         "--leader-port",
