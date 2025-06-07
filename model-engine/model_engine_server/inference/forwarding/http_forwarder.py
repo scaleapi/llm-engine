@@ -93,9 +93,9 @@ async def predict(
             return response
         except Exception:
             if LOG_SENSITIVE_DATA:
-                logger.error(f"Failed to decode payload")
-            else:
                 logger.error(f"Failed to decode payload from: {request}")
+            else:
+                logger.error(f"Failed to decode payload")
             raise
 
 
@@ -109,15 +109,15 @@ async def stream(
             payload = request.model_dump()
         except Exception:
             if LOG_SENSITIVE_DATA:
-                logger.error(f"Failed to decode payload")
-            else:
                 logger.error(f"Failed to decode payload from: {request}")
+            else:
+                logger.error(f"Failed to decode payload")
             raise
         else:
             if LOG_SENSITIVE_DATA:
-                logger.debug(f"Received request")
-            else:
                 logger.debug(f"Received request: {request}")
+            else:
+                logger.debug(f"Received request")
 
         responses = forwarder.forward(payload)
         # We fetch the first response to check if upstream request was successful

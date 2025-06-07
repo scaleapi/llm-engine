@@ -174,7 +174,9 @@ class Forwarder(ModelEngineSerializationMixin):
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
         try:
-            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
+            async with aiohttp.ClientSession(
+                json_serialize=_serialize_json, timeout=aiohttp.ClientTimeout(total=60 * 60)
+            ) as aioclient:
                 response_raw = await aioclient.post(
                     self.predict_endpoint,
                     json=json_payload,
