@@ -22,6 +22,8 @@ from sse_starlette import EventSourceResponse
 
 logger = make_logger(logger_name())
 
+LOG_SENSITIVE_DATA = False
+
 
 def get_config():
     overrides = os.getenv("CONFIG_OVERRIDES")
@@ -90,7 +92,10 @@ async def predict(
                 )
             return response
         except Exception:
-            logger.error(f"Failed to decode payload from:")
+            if LOG_SENSITIVE_DATA:
+                logger.error(f"Failed to decode payload")
+            else:
+                logger.error(f"Failed to decode payload from: {request}")
             raise
 
 
@@ -103,10 +108,16 @@ async def stream(
         try:
             payload = request.model_dump()
         except Exception:
-            logger.error(f"Failed to decode payload from:")
+            if LOG_SENSITIVE_DATA:
+                logger.error(f"Failed to decode payload")
+            else:
+                logger.error(f"Failed to decode payload from: {request}")
             raise
         else:
-            logger.debug(f"Received request: ")
+            if LOG_SENSITIVE_DATA:
+                logger.debug(f"Received request")
+            else:
+                logger.debug(f"Received request: {request}")
 
         responses = forwarder.forward(payload)
         # We fetch the first response to check if upstream request was successful

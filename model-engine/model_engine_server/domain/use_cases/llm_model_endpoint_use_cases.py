@@ -376,7 +376,7 @@ class CreateLLMModelBundleV1UseCase:
                 repository=repository_name,
                 tag=framework_image_tag,
             )
-        
+
     async def create_sglang_multinode_bundle(
         self,
         user: User,
@@ -391,40 +391,40 @@ class CreateLLMModelBundleV1UseCase:
         additional_args: Optional[SGLangEndpointAdditionalArgs] = None,
     ):
         leader_command = [
-        "python3",
-        "/root/sglang-startup-script.py",
-        "--model",
-        "deepseek-ai/DeepSeek-R1-0528",
-        "--nnodes",
-        "2",
-        "--node-rank",
-        "0",
-        "--worker-port",
-        "5005",
-        "--leader-port",
-        "5002"
+            "python3",
+            "/root/sglang-startup-script.py",
+            "--model",
+            "deepseek-ai/DeepSeek-R1-0528",
+            "--nnodes",
+            "2",
+            "--node-rank",
+            "0",
+            "--worker-port",
+            "5005",
+            "--leader-port",
+            "5002",
         ]
-    
+
         worker_command = [
-        "python3",
-        "/root/sglang-startup-script.py",
-        "--model",
-        "deepseek-ai/DeepSeek-R1-0528",
-        "--nnodes",
-        "2",
-        "--node-rank",
-        "1",
-        "--worker-port",
-        "5005",
-        "--leader-port",
-        "5002"
+            "python3",
+            "/root/sglang-startup-script.py",
+            "--model",
+            "deepseek-ai/DeepSeek-R1-0528",
+            "--nnodes",
+            "2",
+            "--node-rank",
+            "1",
+            "--worker-port",
+            "5005",
+            "--leader-port",
+            "5002",
         ]
 
         # NOTE: the most important env var SGLANG_HOST_IP is already established in the sglang startup script
-        
-        common_sglang_envs = { # these are for debugging
+
+        common_sglang_envs = {  # these are for debugging
             "NCCL_SOCKET_IFNAME": "eth0",
-            "GLOO_SOCKET_IFNAME": "eth0",  
+            "GLOO_SOCKET_IFNAME": "eth0",
         }
 
         # This is same as VLLM multinode bundle
@@ -481,7 +481,10 @@ class CreateLLMModelBundleV1UseCase:
         self.check_docker_image_exists_for_image_tag(
             framework_image_tag, INFERENCE_FRAMEWORK_REPOSITORY[framework]
         )
-        if multinode and framework not in [LLMInferenceFramework.VLLM, LLMInferenceFramework.SGLANG]:
+        if multinode and framework not in [
+            LLMInferenceFramework.VLLM,
+            LLMInferenceFramework.SGLANG,
+        ]:
             raise ObjectHasInvalidValueException(
                 f"Multinode is not supported for framework {framework}."
             )
@@ -1416,10 +1419,10 @@ class CreateLLMModelEndpointV1UseCase:
                 request.inference_framework
             )
 
-        if (
-            request.nodes_per_worker > 1
-            and not request.inference_framework in [LLMInferenceFramework.VLLM, LLMInferenceFramework.SGLANG]
-        ):
+        if request.nodes_per_worker > 1 and not request.inference_framework in [
+            LLMInferenceFramework.VLLM,
+            LLMInferenceFramework.SGLANG,
+        ]:
             raise ObjectHasInvalidValueException(
                 "Multinode endpoints are only supported for VLLM models."
             )
