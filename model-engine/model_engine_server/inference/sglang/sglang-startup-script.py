@@ -119,6 +119,7 @@ def main(
         "--trust-remote-code",
         "--log-level",
         "debug",
+        "--enable-dp-attention",
     ]
     print("Running SGLang server command...")
     subprocess.check_call(sglang_cmd)
