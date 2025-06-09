@@ -120,6 +120,8 @@ def main(
         "--log-level",
         "debug",
         "--enable-dp-attention",
+        "--dp",
+        str(tp),
     ]
     print("Running SGLang server command...")
     subprocess.check_call(sglang_cmd)
