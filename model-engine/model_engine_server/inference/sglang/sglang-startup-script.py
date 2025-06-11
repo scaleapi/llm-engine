@@ -12,7 +12,7 @@ def wait_for_dns(dns_name: str, max_retries: int = 20, sleep_seconds: int = 3):
     sleeping sleep_seconds between attempts.
     Raises RuntimeError if resolution fails repeatedly.
     """
-    for attempt in range(1, max_retries + 1):
+    for attempt in range(1, max_retries + 2):
         try:
             # Use AF_UNSPEC to allow both IPv4 and IPv6
             socket.getaddrinfo(dns_name, None, socket.AF_UNSPEC)
@@ -107,7 +107,7 @@ def main(
         "--tp",
         str(tp),
         "--host",
-        "::",
+        "0.0.0.0",
         "--port",
         str(worker_port),
         "--dist-init-addr",

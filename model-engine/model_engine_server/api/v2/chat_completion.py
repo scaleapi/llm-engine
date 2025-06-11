@@ -263,7 +263,7 @@ async def chat_completion(
         )
     else:
         logger.info(
-            f"POST /v2/chat/completion ({('stream' if request.stream else 'sync')}) with {request} to endpoint {model_endpoint_name} for {auth}"
+            f"POST /v2/chat/completion ({('stream' if request.stream else 'sync')}) with request {request} to endpoint {model_endpoint_name} for {auth}"
         )
 
     if request.stream:

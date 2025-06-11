@@ -170,8 +170,8 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
 }
 
 
-NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
-DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
+NUM_DOWNSTREAM_REQUEST_RETRIES = 80 * 12  # has to be high enough so that the retries take the 5 minutes
+DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 60 * 60  # 5 minutes
 
 DEFAULT_BATCH_COMPLETIONS_NODES_PER_WORKER = 1
 
@@ -377,6 +377,87 @@ class CreateLLMModelBundleV1UseCase:
                 tag=framework_image_tag,
             )
 
+    async def create_sglang_multinode_bundle(
+        self,
+        user: User,
+        model_name: str,
+        framework_image_tag: str,
+        endpoint_unique_name: str,
+        num_shards: int,
+        nodes_per_worker: int,
+        quantize: Optional[Quantization],
+        checkpoint_path: Optional[str],
+        chat_template_override: Optional[str],
+        additional_args: Optional[SGLangEndpointAdditionalArgs] = None,
+    ):
+        leader_command = [
+            "python3",
+            "/root/sglang-startup-script.py",
+            "--model",
+            "deepseek-ai/DeepSeek-R1-0528",
+            "--nnodes",
+            "2",
+            "--node-rank",
+            "0",
+            "--worker-port",
+            "5005",
+            "--leader-port",
+            "5002",
+        ]
+
+        worker_command = [
+            "python3",
+            "/root/sglang-startup-script.py",
+            "--model",
+            "deepseek-ai/DeepSeek-R1-0528",
+            "--nnodes",
+            "2",
+            "--node-rank",
+            "1",
+            "--worker-port",
+            "5005",
+            "--leader-port",
+            "5002",
+        ]
+
+        # NOTE: the most important env var SGLANG_HOST_IP is already established in the sglang startup script
+
+        common_sglang_envs = {  # these are for debugging
+            "NCCL_SOCKET_IFNAME": "eth0",
+            "GLOO_SOCKET_IFNAME": "eth0",
+        }
+
+        # This is same as VLLM multinode bundle
+        create_model_bundle_v2_request = CreateModelBundleV2Request(
+            name=endpoint_unique_name,
+            schema_location="TBA",
+            flavor=StreamingEnhancedRunnableImageFlavor(
+                flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
+                repository=hmi_config.sglang_repository,
+                tag=framework_image_tag,
+                command=leader_command,
+                streaming_command=leader_command,
+                protocol="http",
+                readiness_initial_delay_seconds=10,
+                healthcheck_route="/health",
+                predict_route="/predict",
+                streaming_predict_route="/stream",
+                extra_routes=[OPENAI_CHAT_COMPLETION_PATH, OPENAI_COMPLETION_PATH],
+                env=common_sglang_envs,
+                worker_command=worker_command,
+                worker_env=common_sglang_envs,
+            ),
+            metadata={},
+        )
+
+        return (
+            await self.create_model_bundle_use_case.execute(
+                user,
+                create_model_bundle_v2_request,
+                do_auth_check=False,
+            )
+        ).model_bundle_id
+
     async def execute(
         self,
         user: User,
@@ -400,7 +481,10 @@ class CreateLLMModelBundleV1UseCase:
         self.check_docker_image_exists_for_image_tag(
             framework_image_tag, INFERENCE_FRAMEWORK_REPOSITORY[framework]
         )
-        if multinode and framework != LLMInferenceFramework.VLLM:
+        if multinode and framework not in [
+            LLMInferenceFramework.VLLM,
+            LLMInferenceFramework.SGLANG,
+        ]:
             raise ObjectHasInvalidValueException(
                 f"Multinode is not supported for framework {framework}."
             )
@@ -481,16 +565,30 @@ class CreateLLMModelBundleV1UseCase:
                     if additional_args
                     else None
                 )
-                bundle_id = await self.create_sglang_bundle(
-                    user,
-                    model_name,
-                    framework_image_tag,
-                    endpoint_name,
-                    num_shards,
-                    checkpoint_path,
-                    chat_template_override,
-                    additional_args=additional_sglang_args,
-                )
+                if multinode:
+                    bundle_id = await self.create_sglang_multinode_bundle(
+                        user,
+                        model_name,
+                        framework_image_tag,
+                        endpoint_name,
+                        num_shards,
+                        nodes_per_worker,
+                        quantize,
+                        checkpoint_path,
+                        chat_template_override,
+                        additional_args=additional_sglang_args,
+                    )
+                else:
+                    bundle_id = await self.create_sglang_bundle(
+                        user,
+                        model_name,
+                        framework_image_tag,
+                        endpoint_name,
+                        num_shards,
+                        checkpoint_path,
+                        chat_template_override,
+                        additional_args=additional_sglang_args,
+                    )
             case _:
                 assert_never(framework)
                 raise ObjectHasInvalidValueException(
@@ -1321,10 +1419,10 @@ class CreateLLMModelEndpointV1UseCase:
                 request.inference_framework
             )
 
-        if (
-            request.nodes_per_worker > 1
-            and not request.inference_framework == LLMInferenceFramework.VLLM
-        ):
+        if request.nodes_per_worker > 1 and not request.inference_framework in [
+            LLMInferenceFramework.VLLM,
+            LLMInferenceFramework.SGLANG,
+        ]:
             raise ObjectHasInvalidValueException(
                 "Multinode endpoints are only supported for VLLM models."
             )

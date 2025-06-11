@@ -1,4 +1,5 @@
-FROM 692474966980.dkr.ecr.us-west-2.amazonaws.com/sglang:v0.4.1.post7-cu124
+# FROM lmsysorg/sglang:v0.4.6.post5-cu124 -- this one didn't work
+FROM lmsysorg/sglang:v0.4.5.post3-cu121
 
 # These aren't all needed but good to have for debugging purposes
 RUN apt-get -yq update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -35,7 +36,7 @@ RUN apt-get -yq update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
   tk-dev \
   libffi-dev \
   liblzma-dev \
-  python-openssl \
+  python3-openssl \
   moreutils \
   libcurl4-openssl-dev \
   libssl-dev \
