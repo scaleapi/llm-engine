@@ -1,5 +1,6 @@
 import os
 import traceback
+from typing import Any
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -31,6 +32,7 @@ from model_engine_server.core.loggers import (
 )
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
+import contextvars
 
 logger = make_logger(logger_name())
 
@@ -43,12 +45,25 @@ concurrency_limiter = MultiprocessingConcurrencyLimiter(
 
 healthcheck_routes = ["/healthcheck", "/healthz", "/readyz"]
 
+# The type is actually `SGPTraceState`, but we use `Any` to avoid circular imports.
+ctx_var_sgp_trace_state: contextvars.ContextVar[Any] = contextvars.ContextVar(
+    "ctx_var_sgp_trace_state", default=None
+)
+
+SGP_TRACE_CONFIG_HEADER = "x-sgp-trace-config"
 
 class CustomMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:
             LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
             LoggerTagManager.set(LoggerTagKey.REQUEST_SIZE, request.headers.get("content-length"))
+            # Save sgp trace state if trace config header set
+            if SGP_TRACE_CONFIG_HEADER in request.headers:
+                # Import here to avoid import issues related to SQLAlchemy ORM class loading order
+                from model_engine_server.tracing.trace_context_utils import init_trace_state
+                init_trace_state(request.headers.get(SGP_TRACE_CONFIG_HEADER))
+
+
             # we intentionally exclude healthcheck routes from the concurrency limiter
             if request.url.path in healthcheck_routes:
                 return await call_next(request)

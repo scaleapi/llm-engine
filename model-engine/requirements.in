@@ -60,3 +60,5 @@ twine==3.7.1
 uvicorn==0.30.6
 uvloop==0.17.0
 yarl~=1.4
+scale-gp-beta>=0.1.0-alpha.24
+mergedeep>=1.3.4
