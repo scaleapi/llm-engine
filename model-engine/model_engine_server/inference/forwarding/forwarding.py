@@ -23,6 +23,8 @@ from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gat
     FirehoseStreamingStorageGateway,
 )
 from model_engine_server.inference.post_inference_hooks import PostInferenceHooksHandler
+from model_engine_server.tracing.schema import TraceConfig
+from model_engine_server.tracing.trace_context_utils import get_encoded_trace_config_as_headers
 
 __all__: Sequence[str] = (
     "Forwarder",
@@ -167,7 +169,7 @@ class Forwarder(ModelEngineSerializationMixin):
     forward_http_status_in_body: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None
 
-    async def forward(self, json_payload: Any) -> Any:
+    async def forward(self, json_payload: Any, encoded_sgp_trace_config: Optional[str] = None) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
@@ -178,7 +180,10 @@ class Forwarder(ModelEngineSerializationMixin):
                 response_raw = await aioclient.post(
                     self.predict_endpoint,
                     json=json_payload,
-                    headers={"Content-Type": "application/json"},
+                    headers={
+                        "Content-Type": "application/json"
+                        **(get_encoded_trace_config_as_headers(encoded_sgp_trace_config))
+                    },
                 )
                 response = await response_raw.json(
                     content_type=None
@@ -219,7 +224,7 @@ class Forwarder(ModelEngineSerializationMixin):
         else:
             return response
 
-    def __call__(self, json_payload: Any) -> Any:
+    def __call__(self, json_payload: Any, encoded_sgp_trace_config: Optional[str] = None) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
@@ -231,6 +236,7 @@ class Forwarder(ModelEngineSerializationMixin):
                 json=json_payload,
                 headers={
                     "Content-Type": "application/json",
+                    **(get_encoded_trace_config_as_headers(encoded_sgp_trace_config))
                 },
             )
             response = response_raw.json()

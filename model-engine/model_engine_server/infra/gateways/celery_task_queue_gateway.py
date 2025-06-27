@@ -12,6 +12,7 @@ from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
+from model_engine_server.tracing.trace_context_utils import get_encoded_trace_config, SGP_TRACE_CONFIG_KWARG
 
 logger = make_logger(logger_name())
 backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
@@ -70,6 +71,16 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
     ) -> CreateAsyncTaskV1Response:
         # Used for both endpoint infra creation and async tasks
         celery_dest = self._get_celery_dest()
+
+        # If SGP tracing is enabled, we need to add the trace config to the async task.
+        # Since LiveAsyncModelEndpointInferenceGateway.create_task() doesn't pass in any kwargs
+        # we can the trace config there.
+        encoded_trace_config = get_encoded_trace_config()
+        if encoded_trace_config:
+            if kwargs is None:
+                kwargs = {}
+            # Add the encoded trace config to the kwargs, so it can be used by the task.
+            kwargs[SGP_TRACE_CONFIG_KWARG] = encoded_trace_config
 
         try:
             res = celery_dest.send_task(

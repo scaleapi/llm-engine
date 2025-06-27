@@ -24,6 +24,8 @@ from model_engine_server.domain.gateways.sync_model_endpoint_inference_gateway i
 )
 from model_engine_server.infra.gateways.dns_resolver import resolve_dns
 from model_engine_server.infra.gateways.k8s_resource_parser import get_node_port
+from model_engine_server.tracing.trace_context_utils import get_trace_config_headers
+
 from tenacity import (
     AsyncRetrying,
     RetryError,
@@ -84,12 +86,16 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         self.use_asyncio = use_asyncio
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
+        headers = {
+            "Content-Type": "application/json",
+            **get_trace_config_headers()
+        }
         if self.use_asyncio:
             async with aiohttp.ClientSession(json_serialize=_serialize_json) as client:
                 aio_resp = await client.post(
                     request_url,
                     json=payload_json,
-                    headers={"Content-Type": "application/json"},
+                    headers=headers,
                 )
                 status = aio_resp.status
                 if status == 200:
@@ -99,7 +105,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
             resp = requests.post(
                 request_url,
                 json=payload_json,
-                headers={"Content-Type": "application/json"},
+                headers=headers
             )
             status = resp.status_code
             if status == 200:
