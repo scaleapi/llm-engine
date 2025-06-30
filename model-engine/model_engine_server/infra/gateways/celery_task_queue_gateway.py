@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Optional
 
 import botocore
@@ -13,6 +14,7 @@ from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 from model_engine_server.tracing.trace_context_utils import get_encoded_trace_config, SGP_TRACE_CONFIG_KWARG
+from model_engine_server.tracing.tracing_context_manager import span
 
 logger = make_logger(logger_name())
 backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
@@ -81,19 +83,26 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                 kwargs = {}
             # Add the encoded trace config to the kwargs, so it can be used by the task.
             kwargs[SGP_TRACE_CONFIG_KWARG] = encoded_trace_config
-
-        try:
-            res = celery_dest.send_task(
-                name=task_name,
-                args=args,
-                kwargs=kwargs,
-                queue=queue_name,
-            )
-        except botocore.exceptions.ClientError as e:
-            logger.exception(f"Error sending task to queue {queue_name}: {e}")
-            raise InvalidRequestException(f"Error sending celery task: {e}")
-        logger.info(f"Task {res.id} sent to queue {queue_name} from gateway")  # pragma: no cover
-        return CreateAsyncTaskV1Response(task_id=res.id)
+        with span("send_task_to_queue") as span_ctx:
+            try:
+                res = celery_dest.send_task(
+                    name=task_name,
+                    args=args,
+                    kwargs=kwargs,
+                    queue=queue_name,
+                )
+                if span_ctx is not None:
+                    span_ctx.input = {
+                        "queue_name": queue_name,
+                        "args": json.loads(json.dumps(args, indent=4, sort_keys=True, default=str)),
+                        "task_id": res.id,
+                        "task_name": task_name
+                    }
+            except botocore.exceptions.ClientError as e:
+                logger.exception(f"Error sending task to queue {queue_name}: {e}")
+                raise InvalidRequestException(f"Error sending celery task: {e}")
+            logger.info(f"Task {res.id} sent to queue {queue_name} from gateway")  # pragma: no cover
+            return CreateAsyncTaskV1Response(task_id=res.id)
 
     def get_task(self, task_id: str) -> GetAsyncTaskV1Response:
         # Only used for async tasks

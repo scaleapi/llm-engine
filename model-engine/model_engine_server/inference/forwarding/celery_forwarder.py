@@ -24,7 +24,6 @@ from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_m
     DatadogInferenceMonitoringMetricsGateway,
 )
 from requests import ConnectionError
-from model_engine_server.tracing.trace_context_utils import safe_decode_trace_config
 
 logger = make_logger(logger_name())
 
