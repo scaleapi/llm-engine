@@ -12,6 +12,7 @@ class TraceConfig(BaseModel):
     group_id: Optional[str] = Field(None, description="Identifier for the group of spans")
     trace_id: str = Field(..., description="Unique identifier for the trace")
     parent_span_id: Optional[str] = Field(None, description="Identifier of the parent span")
+    sgp_base_url: Optional[str] = Field(None, description="Base URL for SGP private API")
     default_metadata: Optional[dict[str, Any]] = Field(
         None, description="Additional metadata for the trace"
     )

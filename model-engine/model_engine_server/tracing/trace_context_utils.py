@@ -59,6 +59,7 @@ def get_encoded_trace_config(
     trace_config = TraceConfig(
         trace_id=Scope.get_current_trace().trace_id,
         group_id=Scope.get_current_trace().group_id,
+        sgp_base_url=caller_trace_config.sgp_base_url or TRACER_SGP_CLIENT_BASE_URL,
         # Note that metadata added to the parent span will NOT automatically be added to the trace config.
         default_metadata=merge_metadata(
             caller_trace_config.default_metadata if caller_trace_config else None,
@@ -128,7 +129,7 @@ def init_trace_queue_manager(
     tracer_client = SGPClient(
         api_key="ignored-by-endpoint",
         account_id=trace_config.account_id,
-        base_url=TRACER_SGP_CLIENT_BASE_URL,
+        base_url=trace_config.sgp_base_url or TRACER_SGP_CLIENT_BASE_URL,
         default_headers={"x-sgp-user-id": trace_config.user_id},
     )
     queue_manager = trace_queue_manager.TraceQueueManager(
