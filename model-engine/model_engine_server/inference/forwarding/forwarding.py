@@ -181,7 +181,7 @@ class Forwarder(ModelEngineSerializationMixin):
                     self.predict_endpoint,
                     json=json_payload,
                     headers={
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
                         **(get_encoded_trace_config_as_headers(encoded_sgp_trace_config))
                     },
                 )
