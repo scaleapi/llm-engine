@@ -20,15 +20,16 @@ def span(name: str)->Generator[Optional[Span], None, None]:
         exception_raised = None
         queue_manager = ctx_var_sgp_trace_queue_manager.get()
         parent_span_id = Scope.get_current_span().span_id if Scope.get_current_span() else ctx_var_sgp_trace_config.get().parent_span_id
+
         with create_span(name, parent_id=parent_span_id, queue_manager=queue_manager) as new_span:
             try:
                 yield new_span
             except Exception as e:
                 exception_raised = e
             finally:
-                if new_span is not None:
+                if new_span.end_time is None:
                     new_span.end_time = datetime.datetime.now(datetime.timezone.utc)
-                    if exception_raised:
-                        new_span.metadata["exception"] = str(exception_raised)
-                        new_span.status = SpanStatusLiterals.ERROR
-                    queue_manager.flush_queue()
+                if exception_raised:
+                    new_span.metadata["exception"] = str(exception_raised)
+                    new_span.status = SpanStatusLiterals.ERROR
+                queue_manager.flush_queue()

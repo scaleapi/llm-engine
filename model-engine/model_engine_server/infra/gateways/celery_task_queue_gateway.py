@@ -98,6 +98,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                         "task_id": res.id,
                         "task_name": task_name
                     }
+                    span_ctx.output = {'task_id': res.id}
             except botocore.exceptions.ClientError as e:
                 logger.exception(f"Error sending task to queue {queue_name}: {e}")
                 raise InvalidRequestException(f"Error sending celery task: {e}")
