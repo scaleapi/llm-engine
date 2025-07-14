@@ -134,7 +134,7 @@ def create_celery_service(
         track_started=True,
         autoretry_for=(ConnectionError,),
     )
-    def exec_func(payload, arrival_timestamp, *ignored_args, **ignored_kwargs):
+    def exec_func(payload, arrival_timestamp, *ignored_args, trace_config:Optional[str]=None, **ignored_kwargs):
         if len(ignored_args) > 0:
             logger.warning(f"Ignoring {len(ignored_args)} positional arguments: {ignored_args=}")
         if len(ignored_kwargs) > 0:
@@ -144,7 +144,7 @@ def create_celery_service(
             # Don't fail the celery task even if there's a status code
             # (otherwise we can't really control what gets put in the result attribute)
             # in the task (https://docs.celeryq.dev/en/stable/reference/celery.result.html#celery.result.AsyncResult.status)
-            result = forwarder(payload)
+            result = forwarder(payload, trace_config=trace_config)
             request_duration = datetime.now() - arrival_timestamp
             if request_duration > timedelta(seconds=DEFAULT_TASK_VISIBILITY_SECONDS):
                 monitoring_metrics_gateway.emit_async_task_stuck_metric(queue_name)

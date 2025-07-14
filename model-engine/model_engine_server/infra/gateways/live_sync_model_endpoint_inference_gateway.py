@@ -33,8 +33,10 @@ from tenacity import (
     stop_any,
     wait_exponential,
 )
+from model_engine_server.core.tracing import get_tracing_gateway
 
 logger = make_logger(logger_name())
+tracing_gateway = get_tracing_gateway()
 
 SYNC_ENDPOINT_RETRIES = 8  # Must be an integer >= 0
 SYNC_ENDPOINT_MAX_TIMEOUT_SECONDS = 10
@@ -84,12 +86,14 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         self.use_asyncio = use_asyncio
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
+        headers={"Content-Type": "application/json"}
+        headers.update(tracing_gateway.encode_trace_headers())
         if self.use_asyncio:
             async with aiohttp.ClientSession(json_serialize=_serialize_json) as client:
                 aio_resp = await client.post(
                     request_url,
                     json=payload_json,
-                    headers={"Content-Type": "application/json"},
+                    headers=headers,
                 )
                 status = aio_resp.status
                 if status == 200:
@@ -99,7 +103,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
             resp = requests.post(
                 request_url,
                 json=payload_json,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
             )
             status = resp.status_code
             if status == 200:

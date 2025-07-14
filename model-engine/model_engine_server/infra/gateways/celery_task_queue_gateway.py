@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Optional
 
 import botocore
@@ -12,6 +13,7 @@ from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
+from model_engine_server.core.tracing import get_tracing_gateway
 
 logger = make_logger(logger_name())
 backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
@@ -38,6 +40,8 @@ celery_sqs = celery_app(
 celery_servicebus = celery_app(
     None, broker_type=str(BrokerType.SERVICEBUS.value), backend_protocol=backend_protocol
 )
+tracing_gateway = get_tracing_gateway()
+
 
 
 class CeleryTaskQueueGateway(TaskQueueGateway):
@@ -70,14 +74,22 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
     ) -> CreateAsyncTaskV1Response:
         # Used for both endpoint infra creation and async tasks
         celery_dest = self._get_celery_dest()
-
+        kwargs.update(tracing_gateway.encode_trace_kwargs())
         try:
-            res = celery_dest.send_task(
-                name=task_name,
-                args=args,
-                kwargs=kwargs,
-                queue=queue_name,
-            )
+            with tracing_gateway.create_span("send_task_to_queue") as span:
+                res = celery_dest.send_task(
+                    name=task_name,
+                    args=args,
+                    kwargs=kwargs,
+                    queue=queue_name,
+                )
+                span.input = {
+                    "queue_name": queue_name,
+                    "args": json.loads(json.dumps(args, indent=4, sort_keys=True, default=str)),
+                    "task_id": res.id,
+                    "task_name": task_name
+                }
+                span.output = {'task_id': res.id}
         except botocore.exceptions.ClientError as e:
             logger.exception(f"Error sending task to queue {queue_name}: {e}")
             raise InvalidRequestException(f"Error sending celery task: {e}")

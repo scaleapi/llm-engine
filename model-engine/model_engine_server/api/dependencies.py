@@ -1,4 +1,5 @@
 import asyncio
+from functools import lru_cache
 import os
 import time
 from dataclasses import dataclass
@@ -15,6 +16,7 @@ from model_engine_server.core.auth.fake_authentication_repository import (
     FakeAuthenticationRepository,
 )
 from model_engine_server.core.config import infra_config
+from model_engine_server.core.tracing.fake_tracing_gateway import FakeTracingGateway
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
@@ -31,6 +33,7 @@ from model_engine_server.domain.gateways import (
     MonitoringMetricsGateway,
     TaskQueueGateway,
 )
+from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 from model_engine_server.domain.repositories import (
     DockerImageBatchJobBundleRepository,
     DockerRepository,
@@ -166,6 +169,7 @@ class ExternalInterfaces:
     monitoring_metrics_gateway: MonitoringMetricsGateway
     tokenizer_repository: TokenizerRepository
     streaming_storage_gateway: StreamingStorageGateway
+    tracing_gateway: TracingGateway
 
 
 def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
@@ -352,6 +356,8 @@ def _get_external_interfaces(
 
     streaming_storage_gateway = FirehoseStreamingStorageGateway()
 
+    tracing_gateway = FakeTracingGateway()
+
     external_interfaces = ExternalInterfaces(
         docker_repository=docker_repository,
         model_bundle_repository=model_bundle_repository,
@@ -376,6 +382,7 @@ def _get_external_interfaces(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         tokenizer_repository=tokenizer_repository,
         streaming_storage_gateway=streaming_storage_gateway,
+        tracing_gateway=tracing_gateway
     )
     return external_interfaces
 
@@ -392,6 +399,7 @@ def get_default_external_interfaces_read_only() -> ExternalInterfaces:
     return _get_external_interfaces(read_only=True, session=session)
 
 
+@lru_cache(maxsize=1)
 async def get_external_interfaces():
     try:
         from plugins.dependencies import get_external_interfaces as get_custom_external_interfaces
@@ -402,7 +410,7 @@ async def get_external_interfaces():
     finally:
         pass
 
-
+@lru_cache(maxsize=1)
 async def get_external_interfaces_read_only():
     try:
         from plugins.dependencies import (

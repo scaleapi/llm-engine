@@ -23,6 +23,7 @@ from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gat
     FirehoseStreamingStorageGateway,
 )
 from model_engine_server.inference.post_inference_hooks import PostInferenceHooksHandler
+from model_engine_server.core.tracing import get_tracing_gateway
 
 __all__: Sequence[str] = (
     "Forwarder",
@@ -32,6 +33,8 @@ __all__: Sequence[str] = (
 )
 
 logger = make_logger(logger_name())
+
+tracing_gateway = get_tracing_gateway()
 
 KEY_SERIALIZE_RESULTS_AS_STRING: str = "serialize_results_as_string"
 
@@ -167,7 +170,7 @@ class Forwarder(ModelEngineSerializationMixin):
     forward_http_status_in_body: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None
 
-    async def forward(self, json_payload: Any) -> Any:
+    async def forward(self, json_payload: Any, trace_config:Optional[str]=None) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
@@ -175,10 +178,13 @@ class Forwarder(ModelEngineSerializationMixin):
 
         try:
             async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
+                headers = {"Content-Type": "application/json"}
+                if trace_config and tracing_gateway:
+                    headers.update(tracing_gateway.encode_trace_headers())
                 response_raw = await aioclient.post(
                     self.predict_endpoint,
                     json=json_payload,
-                    headers={"Content-Type": "application/json"},
+                    headers=headers,
                 )
                 response = await response_raw.json(
                     content_type=None
@@ -219,19 +225,20 @@ class Forwarder(ModelEngineSerializationMixin):
         else:
             return response
 
-    def __call__(self, json_payload: Any) -> Any:
+    def __call__(self, json_payload: Any, trace_config:Optional[str]=None) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
         try:
+            headers = {"Content-Type": "application/json"}
+            if trace_config and tracing_gateway:
+                headers.update(tracing_gateway.encode_trace_headers())
             response_raw: Any = requests.post(
                 self.predict_endpoint,
                 json=json_payload,
-                headers={
-                    "Content-Type": "application/json",
-                },
+                headers=headers,
             )
             response = response_raw.json()
         except Exception:

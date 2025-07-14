@@ -29,6 +29,7 @@ from model_engine_server.core.loggers import (
     logger_name,
     make_logger,
 )
+from model_engine_server.core.tracing import get_tracing_gateway
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -43,12 +44,15 @@ concurrency_limiter = MultiprocessingConcurrencyLimiter(
 
 healthcheck_routes = ["/healthcheck", "/healthz", "/readyz"]
 
+tracing_gateway = get_tracing_gateway()
 
 class CustomMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:
             LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
             LoggerTagManager.set(LoggerTagKey.REQUEST_SIZE, request.headers.get("content-length"))
+            if tracing_gateway:
+                tracing_gateway.extract_tracing_headers(request)
             # we intentionally exclude healthcheck routes from the concurrency limiter
             if request.url.path in healthcheck_routes:
                 return await call_next(request)
