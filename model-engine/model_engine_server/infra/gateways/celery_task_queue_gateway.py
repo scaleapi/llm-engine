@@ -74,6 +74,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
     ) -> CreateAsyncTaskV1Response:
         # Used for both endpoint infra creation and async tasks
         celery_dest = self._get_celery_dest()
+        kwargs = kwargs or {}
         kwargs.update(tracing_gateway.encode_trace_kwargs())
         try:
             with tracing_gateway.create_span("send_task_to_queue") as span:

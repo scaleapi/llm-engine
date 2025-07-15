@@ -1,5 +1,4 @@
 import asyncio
-from functools import lru_cache
 import os
 import time
 from dataclasses import dataclass
@@ -399,7 +398,6 @@ def get_default_external_interfaces_read_only() -> ExternalInterfaces:
     return _get_external_interfaces(read_only=True, session=session)
 
 
-@lru_cache(maxsize=1)
 async def get_external_interfaces():
     try:
         from plugins.dependencies import get_external_interfaces as get_custom_external_interfaces
@@ -410,7 +408,6 @@ async def get_external_interfaces():
     finally:
         pass
 
-@lru_cache(maxsize=1)
 async def get_external_interfaces_read_only():
     try:
         from plugins.dependencies import (
