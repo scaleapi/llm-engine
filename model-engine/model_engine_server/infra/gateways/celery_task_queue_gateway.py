@@ -75,9 +75,9 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
         # Used for both endpoint infra creation and async tasks
         celery_dest = self._get_celery_dest()
         kwargs = kwargs or {}
-        kwargs.update(tracing_gateway.encode_trace_kwargs())
-        try:
-            with tracing_gateway.create_span("send_task_to_queue") as span:
+        with tracing_gateway.create_span("send_task_to_queue") as span:
+            kwargs.update(tracing_gateway.encode_trace_kwargs())
+            try:
                 res = celery_dest.send_task(
                     name=task_name,
                     args=args,
@@ -91,11 +91,11 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     "task_name": task_name
                 }
                 span.output = {'task_id': res.id}
-        except botocore.exceptions.ClientError as e:
-            logger.exception(f"Error sending task to queue {queue_name}: {e}")
-            raise InvalidRequestException(f"Error sending celery task: {e}")
-        logger.info(f"Task {res.id} sent to queue {queue_name} from gateway")  # pragma: no cover
-        return CreateAsyncTaskV1Response(task_id=res.id)
+            except botocore.exceptions.ClientError as e:
+                logger.exception(f"Error sending task to queue {queue_name}: {e}")
+                raise InvalidRequestException(f"Error sending celery task: {e}")
+            logger.info(f"Task {res.id} sent to queue {queue_name} from gateway")  # pragma: no cover
+            return CreateAsyncTaskV1Response(task_id=res.id)
 
     def get_task(self, task_id: str) -> GetAsyncTaskV1Response:
         # Only used for async tasks

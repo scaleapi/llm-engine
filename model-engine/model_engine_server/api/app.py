@@ -52,7 +52,7 @@ class CustomMiddleware(BaseHTTPMiddleware):
             LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
             LoggerTagManager.set(LoggerTagKey.REQUEST_SIZE, request.headers.get("content-length"))
             if tracing_gateway:
-                tracing_gateway.extract_tracing_headers(request)
+                tracing_gateway.extract_tracing_headers(request, service="model_engine_server")
             # we intentionally exclude healthcheck routes from the concurrency limiter
             if request.url.path in healthcheck_routes:
                 return await call_next(request)

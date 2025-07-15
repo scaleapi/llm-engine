@@ -24,9 +24,11 @@ from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_m
     DatadogInferenceMonitoringMetricsGateway,
 )
 from requests import ConnectionError
+from model_engine_server.core.tracing import get_tracing_gateway
 
 logger = make_logger(logger_name())
 
+tracing_gateway = get_tracing_gateway()
 
 class ErrorResponse(TypedDict):
     """The response payload for any inference request that encountered an error."""
@@ -144,11 +146,16 @@ def create_celery_service(
             # Don't fail the celery task even if there's a status code
             # (otherwise we can't really control what gets put in the result attribute)
             # in the task (https://docs.celeryq.dev/en/stable/reference/celery.result.html#celery.result.AsyncResult.status)
-            result = forwarder(payload, trace_config=trace_config)
-            request_duration = datetime.now() - arrival_timestamp
-            if request_duration > timedelta(seconds=DEFAULT_TASK_VISIBILITY_SECONDS):
-                monitoring_metrics_gateway.emit_async_task_stuck_metric(queue_name)
-            return result
+            if trace_config:
+                tracing_gateway.extract_tracing_headers(trace_config, service="celery_forwarder")
+            with tracing_gateway.create_span("celery_forwarder_exec_func") as span:
+                span.input = payload
+                result = forwarder(payload, trace_config=trace_config)
+                span.output = result
+                request_duration = datetime.now() - arrival_timestamp
+                if request_duration > timedelta(seconds=DEFAULT_TASK_VISIBILITY_SECONDS):
+                    monitoring_metrics_gateway.emit_async_task_stuck_metric(queue_name)
+                return result
         except Exception:
             logger.exception("Celery service failed to respond to request.")
             raise
