@@ -15,13 +15,15 @@ from model_engine_server.core.auth.fake_authentication_repository import (
     FakeAuthenticationRepository,
 )
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
     logger_name,
     make_logger,
 )
+from model_engine_server.core.tracing import get_tracing_gateway
+from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
+from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 from model_engine_server.db.base import get_session_async, get_session_read_only_async
 from model_engine_server.domain.gateways import (
     CronJobGateway,
@@ -32,7 +34,6 @@ from model_engine_server.domain.gateways import (
     MonitoringMetricsGateway,
     TaskQueueGateway,
 )
-from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 from model_engine_server.domain.repositories import (
     DockerImageBatchJobBundleRepository,
     DockerRepository,
@@ -129,7 +130,6 @@ from model_engine_server.infra.services.live_llm_batch_completions_service impor
 from model_engine_server.infra.services.live_llm_model_endpoint_service import (
     LiveLLMModelEndpointService,
 )
-from model_engine_server.core.tracing import get_tracing_gateway
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 
 logger = make_logger(logger_name())

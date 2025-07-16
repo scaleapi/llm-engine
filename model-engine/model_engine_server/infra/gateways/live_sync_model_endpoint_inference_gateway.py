@@ -11,8 +11,8 @@ from model_engine_server.common.dtos.tasks import (
 )
 from model_engine_server.common.env_vars import CIRCLECI, LOCAL
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 from model_engine_server.domain.exceptions import (
     InvalidRequestException,
     NoHealthyUpstreamException,

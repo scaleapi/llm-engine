@@ -14,6 +14,7 @@ from model_engine_server.core.celery import (
 )
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.core.tracing import get_tracing_gateway
 from model_engine_server.core.utils.format import format_stacktrace
 from model_engine_server.inference.forwarding.forwarding import (
     Forwarder,
@@ -24,7 +25,6 @@ from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_m
     DatadogInferenceMonitoringMetricsGateway,
 )
 from requests import ConnectionError
-from model_engine_server.core.tracing import get_tracing_gateway
 
 logger = make_logger(logger_name())
 

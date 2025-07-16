@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Generator, Optional, Union
+
 from model_engine_server.core.tracing.span import Span
 
 if TYPE_CHECKING:

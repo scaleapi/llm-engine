@@ -9,12 +9,12 @@ from model_engine_server.common.dtos.tasks import (
     SyncEndpointPredictV1Request,
     SyncEndpointPredictV1Response,
 )
+from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
 from model_engine_server.domain.exceptions import InvalidRequestException, UpstreamServiceError
 from model_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
 from model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway import (
     LiveSyncModelEndpointInferenceGateway,
 )
-from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
 
 
 @dataclass

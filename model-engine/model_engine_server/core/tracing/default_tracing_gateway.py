@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from typing import Any, Dict, Generator
+
 from model_engine_server.core.tracing.span import Span
 from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 

@@ -9,6 +9,7 @@ from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.config import infra_config
+from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
 from model_engine_server.db.base import get_session_async_null_pool
 from model_engine_server.domain.entities import BatchJobSerializationFormat
 from model_engine_server.domain.gateways import TaskQueueGateway
@@ -49,7 +50,6 @@ from model_engine_server.infra.services import (
     LiveBatchJobOrchestrationService,
     LiveModelEndpointService,
 )
-from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
 
 
 async def run_batch_job(
