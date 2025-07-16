@@ -11,6 +11,7 @@ from model_engine_server.common.dtos.tasks import (
 )
 from model_engine_server.common.env_vars import CIRCLECI, LOCAL
 from model_engine_server.core.config import infra_config
+from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
     InvalidRequestException,
@@ -33,10 +34,8 @@ from tenacity import (
     stop_any,
     wait_exponential,
 )
-from model_engine_server.core.tracing import get_tracing_gateway
 
 logger = make_logger(logger_name())
-tracing_gateway = get_tracing_gateway()
 
 SYNC_ENDPOINT_RETRIES = 8  # Must be an integer >= 0
 SYNC_ENDPOINT_MAX_TIMEOUT_SECONDS = 10
@@ -81,13 +80,18 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
     Concrete implementation for an SyncModelEndpointInferenceGateway.
     """
 
-    def __init__(self, monitoring_metrics_gateway: MonitoringMetricsGateway, use_asyncio: bool):
+    def __init__(
+            self,
+            monitoring_metrics_gateway: MonitoringMetricsGateway,
+            tracing_gateway: TracingGateway,
+            use_asyncio: bool):
         self.monitoring_metrics_gateway = monitoring_metrics_gateway
+        self.tracing_gateway = tracing_gateway
         self.use_asyncio = use_asyncio
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
         headers={"Content-Type": "application/json"}
-        headers.update(tracing_gateway.encode_trace_headers())
+        headers.update(self.tracing_gateway.encode_trace_headers())
         if self.use_asyncio:
             async with aiohttp.ClientSession(json_serialize=_serialize_json) as client:
                 aio_resp = await client.post(
@@ -157,7 +161,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 with attempt:
                     if attempt.retry_state.attempt_number > 1:  # pragma: no cover
                         logger.info(f"Retry number {attempt.retry_state.attempt_number}")
-                    with tracing_gateway.create_span("make_request_with_retries") as span:
+                    with self.tracing_gateway.create_span("make_request_with_retries") as span:
                         span.input = dict(request_url=request_url, payload_json=payload_json)
                         response = await self.make_single_request(request_url, payload_json)
                         span.output = response

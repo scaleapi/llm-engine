@@ -1,9 +1,12 @@
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, Dict, Generator
+from typing import Any, Dict, Generator
 from model_engine_server.core.tracing.span import Span
 from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 
-class FakeTracingGateway(TracingGateway):
+class LiveTracingGateway(TracingGateway):
+    """
+    A default tracing gateway that does not perform any tracing, essentially a no-op.
+    """
 
     def encode_trace_headers(self) -> Dict[str, Any]:
         return {}

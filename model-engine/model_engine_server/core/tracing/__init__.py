@@ -1,8 +1,10 @@
+from functools import lru_cache
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 
+@lru_cache(maxsize=1)
 def get_tracing_gateway() -> "TracingGateway":
     """
     Returns the configured tracing gateway.
@@ -14,5 +16,5 @@ def get_tracing_gateway() -> "TracingGateway":
         return get_custom_tracing_gateway()
     except ModuleNotFoundError:
         pass
-    from model_engine_server.core.tracing.fake_tracing_gateway import FakeTracingGateway
-    return FakeTracingGateway()
+    from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
+    return LiveTracingGateway()

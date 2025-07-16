@@ -49,7 +49,7 @@ from model_engine_server.infra.services import (
     LiveBatchJobOrchestrationService,
     LiveModelEndpointService,
 )
-
+from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
 
 async def run_batch_job(
     job_id: str,
@@ -112,8 +112,10 @@ async def run_batch_job(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         use_asyncio=(not CIRCLECI),
     )
+    tracing_gateway = LiveTracingGateway()
     sync_model_endpoint_inference_gateway = LiveSyncModelEndpointInferenceGateway(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
+        tracing_gateway=tracing_gateway,
         use_asyncio=(not CIRCLECI),
     )
     filesystem_gateway = (

@@ -14,7 +14,7 @@ from model_engine_server.domain.gateways.monitoring_metrics_gateway import Monit
 from model_engine_server.infra.gateways.live_sync_model_endpoint_inference_gateway import (
     LiveSyncModelEndpointInferenceGateway,
 )
-
+from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
 
 @dataclass
 class FakeResponse:
@@ -60,7 +60,7 @@ async def test_make_request_with_retries_success(
     fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, tracing_gateway=LiveTracingGateway(), use_asyncio=True
     )
 
     fake_response = FakeResponse(status=200)
@@ -81,7 +81,7 @@ async def test_make_request_with_retries_failed_429(
     fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, tracing_gateway=LiveTracingGateway(), use_asyncio=True
     )
 
     fake_response = FakeResponse(status=429)
@@ -104,7 +104,7 @@ async def test_make_request_with_retries_failed_traceback(
     fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, tracing_gateway=LiveTracingGateway(), use_asyncio=True
     )
 
     fake_response = FakeResponse(status=500)
@@ -127,7 +127,7 @@ async def test_make_request_with_retries_failed_with_client_connector_error(
     fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, tracing_gateway=LiveTracingGateway(), use_asyncio=True
     )
 
     mock_client_session = _get_mock_client_session_with_client_connector_error()
@@ -150,7 +150,7 @@ async def test_predict_success(
     fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, tracing_gateway=LiveTracingGateway(), use_asyncio=True
     )
 
     fake_response = FakeResponse(status=200, body={"test_key": "test_value"})
@@ -179,7 +179,7 @@ async def test_predict_raises_traceback_json(
     fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, tracing_gateway=LiveTracingGateway(), use_asyncio=True
     )
 
     content = json.dumps({"detail": {"traceback": "test_traceback"}}).encode("utf-8")
@@ -209,7 +209,7 @@ async def test_predict_raises_traceback_not_json(
     fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, tracing_gateway=LiveTracingGateway(), use_asyncio=True
     )
 
     content = b"Test traceback content"
@@ -239,7 +239,7 @@ async def test_predict_raises_traceback_wrapped(
     fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, tracing_gateway=LiveTracingGateway(), use_asyncio=True
     )
 
     content = json.dumps(
@@ -271,7 +271,7 @@ async def test_predict_raises_traceback_wrapped_detail_array(
     fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, tracing_gateway=LiveTracingGateway(), use_asyncio=True
     )
 
     content = json.dumps({"result": json.dumps({"detail": [{"error": "error"}]})}).encode("utf-8")
@@ -301,7 +301,7 @@ async def test_predict_upstream_raises_400(
     fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
 ):
     gateway = LiveSyncModelEndpointInferenceGateway(
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, tracing_gateway=LiveTracingGateway(), use_asyncio=True
     )
 
     content = json.dumps({"result": json.dumps({"error": "error"})}).encode("utf-8")
