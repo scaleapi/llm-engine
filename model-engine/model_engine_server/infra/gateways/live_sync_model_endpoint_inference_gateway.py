@@ -157,7 +157,11 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 with attempt:
                     if attempt.retry_state.attempt_number > 1:  # pragma: no cover
                         logger.info(f"Retry number {attempt.retry_state.attempt_number}")
-                    return await self.make_single_request(request_url, payload_json)
+                    with tracing_gateway.create_span("make_request_with_retries") as span:
+                        span.input = dict(request_url=request_url, payload_json=payload_json)
+                        response = await self.make_single_request(request_url, payload_json)
+                        span.output = response
+                        return response
         except RetryError as e:
             if isinstance(e.last_attempt.exception(), TooManyRequestsException):
                 logger.warning("Hit max # of retries, returning 429 to client")
@@ -252,7 +256,6 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                     traceback=exc.content.decode(),
                     status_code=exc.status_code,
                 )
-
         return SyncEndpointPredictV1Response(
             status=TaskStatus.SUCCESS, result=response, status_code=200
         )
