@@ -51,6 +51,7 @@ from model_engine_server.infra.services import (
 )
 from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
 
+
 async def run_batch_job(
     job_id: str,
     owner: str,

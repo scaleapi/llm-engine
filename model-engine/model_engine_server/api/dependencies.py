@@ -202,10 +202,18 @@ def _get_external_interfaces(
     sessions for the database and redis.
     """
     tracing_gateway = get_tracing_gateway()
-    redis_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS, tracing_gateway=tracing_gateway)
-    redis_24h_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS_24H, tracing_gateway=tracing_gateway)
-    sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS, tracing_gateway=tracing_gateway)
-    servicebus_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS, tracing_gateway=tracing_gateway)
+    redis_task_queue_gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.REDIS, tracing_gateway=tracing_gateway
+    )
+    redis_24h_task_queue_gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.REDIS_24H, tracing_gateway=tracing_gateway
+    )
+    sqs_task_queue_gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.SQS, tracing_gateway=tracing_gateway
+    )
+    servicebus_task_queue_gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.SERVICEBUS, tracing_gateway=tracing_gateway
+    )
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     model_endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
@@ -382,7 +390,7 @@ def _get_external_interfaces(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         tokenizer_repository=tokenizer_repository,
         streaming_storage_gateway=streaming_storage_gateway,
-        tracing_gateway=tracing_gateway
+        tracing_gateway=tracing_gateway,
     )
     return external_interfaces
 
@@ -408,6 +416,7 @@ async def get_external_interfaces():
         yield get_default_external_interfaces()
     finally:
         pass
+
 
 async def get_external_interfaces_read_only():
     try:

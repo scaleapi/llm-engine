@@ -46,6 +46,7 @@ healthcheck_routes = ["/healthcheck", "/healthz", "/readyz"]
 
 tracing_gateway = get_tracing_gateway()
 
+
 class CustomMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:

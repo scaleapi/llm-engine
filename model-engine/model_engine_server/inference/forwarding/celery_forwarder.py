@@ -30,6 +30,7 @@ logger = make_logger(logger_name())
 
 tracing_gateway = get_tracing_gateway()
 
+
 class ErrorResponse(TypedDict):
     """The response payload for any inference request that encountered an error."""
 
@@ -136,7 +137,13 @@ def create_celery_service(
         track_started=True,
         autoretry_for=(ConnectionError,),
     )
-    def exec_func(payload, arrival_timestamp, *ignored_args, trace_config:Optional[str]=None, **ignored_kwargs):
+    def exec_func(
+        payload,
+        arrival_timestamp,
+        *ignored_args,
+        trace_config: Optional[str] = None,
+        **ignored_kwargs,
+    ):
         if len(ignored_args) > 0:
             logger.warning(f"Ignoring {len(ignored_args)} positional arguments: {ignored_args=}")
         if len(ignored_kwargs) > 0:

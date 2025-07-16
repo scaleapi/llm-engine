@@ -3,6 +3,7 @@ from typing import Any, Dict, Generator
 from model_engine_server.core.tracing.span import Span
 from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 
+
 class LiveTracingGateway(TracingGateway):
     """
     A default tracing gateway that does not perform any tracing, essentially a no-op.

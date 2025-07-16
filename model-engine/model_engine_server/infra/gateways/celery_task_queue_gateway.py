@@ -42,13 +42,8 @@ celery_servicebus = celery_app(
 )
 
 
-
 class CeleryTaskQueueGateway(TaskQueueGateway):
-    def __init__(
-            self,
-            broker_type: BrokerType,
-            tracing_gateway: TracingGateway
-        ):
+    def __init__(self, broker_type: BrokerType, tracing_gateway: TracingGateway):
         self.broker_type = broker_type
         assert self.broker_type in [
             BrokerType.SQS,
@@ -92,13 +87,15 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     "queue_name": queue_name,
                     "args": json.loads(json.dumps(args, indent=4, sort_keys=True, default=str)),
                     "task_id": res.id,
-                    "task_name": task_name
+                    "task_name": task_name,
                 }
-                span.output = {'task_id': res.id}
+                span.output = {"task_id": res.id}
             except botocore.exceptions.ClientError as e:
                 logger.exception(f"Error sending task to queue {queue_name}: {e}")
                 raise InvalidRequestException(f"Error sending celery task: {e}")
-            logger.info(f"Task {res.id} sent to queue {queue_name} from gateway")  # pragma: no cover
+            logger.info(
+                f"Task {res.id} sent to queue {queue_name} from gateway"
+            )  # pragma: no cover
             return CreateAsyncTaskV1Response(task_id=res.id)
 
     def get_task(self, task_id: str) -> GetAsyncTaskV1Response:

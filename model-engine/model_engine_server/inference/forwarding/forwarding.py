@@ -170,7 +170,7 @@ class Forwarder(ModelEngineSerializationMixin):
     forward_http_status_in_body: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None
 
-    async def forward(self, json_payload: Any, trace_config:Optional[str]=None) -> Any:
+    async def forward(self, json_payload: Any, trace_config: Optional[str] = None) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
@@ -225,7 +225,7 @@ class Forwarder(ModelEngineSerializationMixin):
         else:
             return response
 
-    def __call__(self, json_payload: Any, trace_config:Optional[str]=None) -> Any:
+    def __call__(self, json_payload: Any, trace_config: Optional[str] = None) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 

@@ -81,16 +81,17 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
     """
 
     def __init__(
-            self,
-            monitoring_metrics_gateway: MonitoringMetricsGateway,
-            tracing_gateway: TracingGateway,
-            use_asyncio: bool):
+        self,
+        monitoring_metrics_gateway: MonitoringMetricsGateway,
+        tracing_gateway: TracingGateway,
+        use_asyncio: bool,
+    ):
         self.monitoring_metrics_gateway = monitoring_metrics_gateway
         self.tracing_gateway = tracing_gateway
         self.use_asyncio = use_asyncio
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
-        headers={"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json"}
         headers.update(self.tracing_gateway.encode_trace_headers())
         if self.use_asyncio:
             async with aiohttp.ClientSession(json_serialize=_serialize_json) as client:

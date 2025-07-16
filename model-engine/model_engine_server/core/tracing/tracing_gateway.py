@@ -5,9 +5,12 @@ from model_engine_server.core.tracing.span import Span
 if TYPE_CHECKING:
     from fastapi import Request
 
+
 class TracingGateway(ABC):
 
-    def extract_tracing_headers(self, request: Union["Request", str], service:Optional[str]=None) -> None:
+    def extract_tracing_headers(
+        self, request: Union["Request", str], service: Optional[str] = None
+    ) -> None:
         """
         Extracts tracing headers from the request and sets them in the current context when present.
         Accepts either a FastAPI Request object or the string value of the tracing configuration HTTP header.
