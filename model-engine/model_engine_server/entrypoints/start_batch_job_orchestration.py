@@ -9,7 +9,7 @@ from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.config import infra_config
-from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
+from model_engine_server.core.tracing import get_tracing_gateway
 from model_engine_server.db.base import get_session_async_null_pool
 from model_engine_server.domain.entities import BatchJobSerializationFormat
 from model_engine_server.domain.gateways import TaskQueueGateway
@@ -59,11 +59,16 @@ async def run_batch_job(
     serialization_format: BatchJobSerializationFormat,
     timeout_seconds: float,
 ):
+    tracing_gateway = get_tracing_gateway()
     session = get_session_async_null_pool()
     pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
     redis = aioredis.Redis(connection_pool=pool)
-    sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
-    servicebus_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS)
+    sqs_task_queue_gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.SQS, tracing_gateway=tracing_gateway
+    )
+    servicebus_task_queue_gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.SERVICEBUS, tracing_gateway=tracing_gateway
+    )
 
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     model_endpoint_record_repo = DbModelEndpointRecordRepository(
@@ -113,7 +118,6 @@ async def run_batch_job(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         use_asyncio=(not CIRCLECI),
     )
-    tracing_gateway = LiveTracingGateway()
     sync_model_endpoint_inference_gateway = LiveSyncModelEndpointInferenceGateway(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         tracing_gateway=tracing_gateway,

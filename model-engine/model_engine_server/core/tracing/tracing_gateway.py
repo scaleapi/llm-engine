@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Generator, Optional, Union
+from contextlib import AbstractContextManager
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from model_engine_server.core.tracing.span import Span
 
@@ -27,5 +28,5 @@ class TracingGateway(ABC):
         pass
 
     @abstractmethod
-    def create_span(self, name: str) -> Generator[Span, None, None]:
+    def create_span(self, name: str) -> AbstractContextManager[Span]:
         pass
