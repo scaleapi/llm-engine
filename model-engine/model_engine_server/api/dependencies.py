@@ -22,7 +22,6 @@ from model_engine_server.core.loggers import (
     make_logger,
 )
 from model_engine_server.core.tracing import get_tracing_gateway
-from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
 from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 from model_engine_server.db.base import get_session_async, get_session_read_only_async
 from model_engine_server.domain.gateways import (
