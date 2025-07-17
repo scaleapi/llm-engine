@@ -163,7 +163,7 @@ from model_engine_server.infra.services.live_llm_model_endpoint_service import (
     LiveLLMModelEndpointService,
 )
 from transformers import AutoTokenizer
-
+from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
 
 def _translate_fake_model_endpoint_orm_to_model_endpoint_record(
     model_endpoint_orm: OrmModelEndpoint, current_model_bundle: ModelBundle
@@ -2386,6 +2386,7 @@ def get_repositories_generator_wrapper():
                 monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
                 tokenizer_repository=fake_tokenizer_repository,
                 streaming_storage_gateway=fake_streaming_storage_gateway,
+                tracing_gateway=LiveTracingGateway()
             )
             try:
                 yield repositories
