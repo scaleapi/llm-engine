@@ -58,7 +58,7 @@ def create_celery_service(
     task_visibility: TaskVisibility,
     broker_type: str,
     backend_protocol: str,
-    queue_name: Optional[str] = None,
+    queue_name: str,
     sqs_url: Optional[str] = None,
 ) -> Celery:
     """
