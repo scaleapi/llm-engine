@@ -19,7 +19,7 @@ from model_engine_server.common.dtos.tasks import (
     TaskStatus,
 )
 from model_engine_server.common.env_vars import CIRCLECI
-from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
+from model_engine_server.core.tracing.live_tracing_gateway import LiveTracingGateway
 from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.infra.gateways import (
     CeleryTaskQueueGateway,

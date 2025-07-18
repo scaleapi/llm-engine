@@ -43,7 +43,7 @@ from model_engine_server.common.dtos.tasks import (
 )
 from model_engine_server.common.settings import generate_destination
 from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
-from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
+from model_engine_server.core.tracing.live_tracing_gateway import LiveTracingGateway
 from model_engine_server.db.endpoint_row_lock import get_lock_key
 from model_engine_server.db.models import BatchJob as OrmBatchJob
 from model_engine_server.db.models import Endpoint as OrmModelEndpoint

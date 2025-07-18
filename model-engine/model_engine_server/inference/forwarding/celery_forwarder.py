@@ -141,23 +141,28 @@ def create_celery_service(
         payload,
         arrival_timestamp,
         *ignored_args,
-        trace_config: Optional[str] = None,
-        **ignored_kwargs,
+        **kwargs,
     ):
+        trace_config = tracing_gateway.extract_tracing_headers(kwargs, service="celery_forwarder")
         if len(ignored_args) > 0:
             logger.warning(f"Ignoring {len(ignored_args)} positional arguments: {ignored_args=}")
-        if len(ignored_kwargs) > 0:
-            logger.warning(f"Ignoring {len(ignored_kwargs)} keyword arguments: {ignored_kwargs=}")
+        # If a trace config kwarg was present, we expect it to be the only kwarg.
+        # If it is not, we log a warning and ignore the rest.
+        expected_kwarg_count = 0 if trace_config is None else 1
+        if len(kwargs) > expected_kwarg_count:
+            logger.warning(f"Ignoring {len(kwargs)} keyword arguments: {kwargs=}")
         try:
             monitoring_metrics_gateway.emit_async_task_received_metric(queue_name)
             # Don't fail the celery task even if there's a status code
             # (otherwise we can't really control what gets put in the result attribute)
             # in the task (https://docs.celeryq.dev/en/stable/reference/celery.result.html#celery.result.AsyncResult.status)
-            if trace_config:
-                tracing_gateway.extract_tracing_headers(trace_config, service="celery_forwarder")
             with tracing_gateway.create_span("celery_forwarder_exec_func") as span:
                 span.input = payload
-                result = forwarder(payload, trace_config=trace_config)
+                current_trace_config = None
+                if trace_config is not None:
+                    # If tracing is enabled, we pass the serialized trace config to the forwarder
+                    current_trace_config = list((tracing_gateway.encode_trace_headers()).values())[0]
+                result = forwarder(payload, trace_config=current_trace_config)
                 span.output = result
                 request_duration = datetime.now() - arrival_timestamp
                 if request_duration > timedelta(seconds=DEFAULT_TASK_VISIBILITY_SECONDS):

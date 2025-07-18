@@ -11,13 +11,19 @@ if TYPE_CHECKING:
 class TracingGateway(ABC):
 
     def extract_tracing_headers(
-        self, request: Union["Request", str], service: Optional[str] = None
-    ) -> None:
+        self, request: Union["Request", str, dict], service: Optional[str] = None
+    ) -> Optional[str]:
         """
         Extracts tracing headers from the request and sets them in the current context when present.
-        Accepts either a FastAPI Request object or the string value of the tracing configuration HTTP header.
+        Accepts either
+        - a FastAPI Request object
+        - A kwargs dictionary containing the appropriate keyword argument with the encoded trace config.
+          the name of the keyword argument is defined in:
+          https://github.com/scaleapi/scaleapi/blob/c09aac749496478c1643c680dc8d49c62ede8a6c/packages/egp-api-backend/s2s_tracing/s2s_tracing/constants.py#L7
+        - the string value of the base64-encoded JSON tracing configuration (as sent in the HTTP header)
+        Returns the serialized trace config if it was found, otherwise None.
         """
-        pass
+        return None
 
     @abstractmethod
     def encode_trace_headers(self) -> Dict[str, Any]:

@@ -16,6 +16,6 @@ def get_tracing_gateway() -> "TracingGateway":
         return get_custom_tracing_gateway()
     except ModuleNotFoundError:
         pass
-    from model_engine_server.core.tracing.default_tracing_gateway import LiveTracingGateway
+    from model_engine_server.core.tracing.live_tracing_gateway import LiveTracingGateway
 
     return LiveTracingGateway()
