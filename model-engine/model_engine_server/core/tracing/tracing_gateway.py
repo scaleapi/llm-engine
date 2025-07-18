@@ -25,6 +25,15 @@ class TracingGateway(ABC):
         """
         return None
 
+    def encode_trace_config(self) -> Optional[str]:
+        """
+        Encodes the current trace configuration into a base64-encoded JSON string.
+        Returns None if no trace configuration is set.
+        """
+        headers = self.encode_trace_headers()
+        # return first header value if available, otherwise None
+        return None if len(headers) == 0 else list(headers.values())[0]
+
     @abstractmethod
     def encode_trace_headers(self) -> Dict[str, Any]:
         pass

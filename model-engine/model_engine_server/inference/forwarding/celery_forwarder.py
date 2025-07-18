@@ -158,11 +158,7 @@ def create_celery_service(
             # in the task (https://docs.celeryq.dev/en/stable/reference/celery.result.html#celery.result.AsyncResult.status)
             with tracing_gateway.create_span("celery_forwarder_exec_func") as span:
                 span.input = payload
-                current_trace_config = None
-                if trace_config is not None:
-                    # If tracing is enabled, we pass the serialized trace config to the forwarder
-                    current_trace_config = list((tracing_gateway.encode_trace_headers()).values())[0]
-                result = forwarder(payload, trace_config=current_trace_config)
+                result = forwarder(payload, trace_config=tracing_gateway.encode_trace_config())
                 span.output = result
                 request_duration = datetime.now() - arrival_timestamp
                 if request_duration > timedelta(seconds=DEFAULT_TASK_VISIBILITY_SECONDS):
