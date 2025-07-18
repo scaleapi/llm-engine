@@ -19,6 +19,7 @@ from model_engine_server.common.dtos.tasks import (
     TaskStatus,
 )
 from model_engine_server.common.env_vars import CIRCLECI
+from model_engine_server.core.tracing.live_tracing_gateway import LiveTracingGateway
 from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.infra.gateways import (
     CeleryTaskQueueGateway,
@@ -56,7 +57,9 @@ def test_submit_and_get_tasks(
     expected_result: Any,
 ):
     gateway = LiveAsyncModelEndpointInferenceGateway(
-        CeleryTaskQueueGateway(broker_type=BrokerType.REDIS_24H)
+        CeleryTaskQueueGateway(
+            broker_type=BrokerType.REDIS_24H, tracing_gateway=LiveTracingGateway()
+        )
     )
     task = gateway.create_task(
         topic=queue,
@@ -104,7 +107,9 @@ def test_async_callbacks(
     callback_auth: Optional[Tuple[str, str, str]],
 ):
     gateway = LiveAsyncModelEndpointInferenceGateway(
-        CeleryTaskQueueGateway(broker_type=BrokerType.REDIS_24H)
+        CeleryTaskQueueGateway(
+            broker_type=BrokerType.REDIS_24H, tracing_gateway=LiveTracingGateway()
+        )
     )
 
     task_args = {"y": 1}
@@ -165,7 +170,9 @@ def test_async_callbacks(
 def test_async_callbacks_botocore_exception(
     queue: str,
 ):
-    gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
+    gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.SQS, tracing_gateway=LiveTracingGateway()
+    )
 
     mock_dest = MagicMock()
     mock_dest.send_task = MagicMock(

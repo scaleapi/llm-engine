@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Optional
 
 import botocore
@@ -10,6 +11,7 @@ from model_engine_server.common.dtos.tasks import (
 from model_engine_server.core.celery import TaskVisibility, celery_app
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 
@@ -41,7 +43,7 @@ celery_servicebus = celery_app(
 
 
 class CeleryTaskQueueGateway(TaskQueueGateway):
-    def __init__(self, broker_type: BrokerType):
+    def __init__(self, broker_type: BrokerType, tracing_gateway: TracingGateway):
         self.broker_type = broker_type
         assert self.broker_type in [
             BrokerType.SQS,
@@ -49,6 +51,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             BrokerType.REDIS_24H,
             BrokerType.SERVICEBUS,
         ]
+        self.tracing_gateway = tracing_gateway
 
     def _get_celery_dest(self):
         if self.broker_type == BrokerType.SQS:
@@ -70,19 +73,30 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
     ) -> CreateAsyncTaskV1Response:
         # Used for both endpoint infra creation and async tasks
         celery_dest = self._get_celery_dest()
-
-        try:
-            res = celery_dest.send_task(
-                name=task_name,
-                args=args,
-                kwargs=kwargs,
-                queue=queue_name,
-            )
-        except botocore.exceptions.ClientError as e:
-            logger.exception(f"Error sending task to queue {queue_name}: {e}")
-            raise InvalidRequestException(f"Error sending celery task: {e}")
-        logger.info(f"Task {res.id} sent to queue {queue_name} from gateway")  # pragma: no cover
-        return CreateAsyncTaskV1Response(task_id=res.id)
+        kwargs = kwargs or {}
+        with self.tracing_gateway.create_span("send_task_to_queue") as span:
+            kwargs.update(self.tracing_gateway.encode_trace_kwargs())
+            try:
+                res = celery_dest.send_task(
+                    name=task_name,
+                    args=args,
+                    kwargs=kwargs,
+                    queue=queue_name,
+                )
+                span.input = {
+                    "queue_name": queue_name,
+                    "args": json.loads(json.dumps(args, indent=4, sort_keys=True, default=str)),
+                    "task_id": res.id,
+                    "task_name": task_name,
+                }
+                span.output = {"task_id": res.id}
+            except botocore.exceptions.ClientError as e:
+                logger.exception(f"Error sending task to queue {queue_name}: {e}")
+                raise InvalidRequestException(f"Error sending celery task: {e}")
+            logger.info(
+                f"Task {res.id} sent to queue {queue_name} from gateway"
+            )  # pragma: no cover
+            return CreateAsyncTaskV1Response(task_id=res.id)
 
     def get_task(self, task_id: str) -> GetAsyncTaskV1Response:
         # Only used for async tasks
@@ -96,7 +110,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             # )
             status_code = None
             result = res.result
-            if type(result) is dict and "status_code" in result:
+            if isinstance(result, dict) and "status_code" in result:
                 # Filter out status code from result if it was added by the forwarder
                 # This is admittedly kinda hacky and would technically introduce an edge case
                 # if we ever decide not to have async tasks wrap response.

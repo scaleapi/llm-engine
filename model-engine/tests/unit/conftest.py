@@ -43,6 +43,7 @@ from model_engine_server.common.dtos.tasks import (
 )
 from model_engine_server.common.settings import generate_destination
 from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
+from model_engine_server.core.tracing.live_tracing_gateway import LiveTracingGateway
 from model_engine_server.db.endpoint_row_lock import get_lock_key
 from model_engine_server.db.models import BatchJob as OrmBatchJob
 from model_engine_server.db.models import Endpoint as OrmModelEndpoint
@@ -2386,6 +2387,7 @@ def get_repositories_generator_wrapper():
                 monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
                 tokenizer_repository=fake_tokenizer_repository,
                 streaming_storage_gateway=fake_streaming_storage_gateway,
+                tracing_gateway=LiveTracingGateway(),
             )
             try:
                 yield repositories

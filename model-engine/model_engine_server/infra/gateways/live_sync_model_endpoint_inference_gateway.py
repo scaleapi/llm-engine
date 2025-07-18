@@ -12,6 +12,7 @@ from model_engine_server.common.dtos.tasks import (
 from model_engine_server.common.env_vars import CIRCLECI, LOCAL
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 from model_engine_server.domain.exceptions import (
     InvalidRequestException,
     NoHealthyUpstreamException,
@@ -79,17 +80,25 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
     Concrete implementation for an SyncModelEndpointInferenceGateway.
     """
 
-    def __init__(self, monitoring_metrics_gateway: MonitoringMetricsGateway, use_asyncio: bool):
+    def __init__(
+        self,
+        monitoring_metrics_gateway: MonitoringMetricsGateway,
+        tracing_gateway: TracingGateway,
+        use_asyncio: bool,
+    ):
         self.monitoring_metrics_gateway = monitoring_metrics_gateway
+        self.tracing_gateway = tracing_gateway
         self.use_asyncio = use_asyncio
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
+        headers = {"Content-Type": "application/json"}
+        headers.update(self.tracing_gateway.encode_trace_headers())
         if self.use_asyncio:
             async with aiohttp.ClientSession(json_serialize=_serialize_json) as client:
                 aio_resp = await client.post(
                     request_url,
                     json=payload_json,
-                    headers={"Content-Type": "application/json"},
+                    headers=headers,
                 )
                 status = aio_resp.status
                 if status == 200:
@@ -99,7 +108,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
             resp = requests.post(
                 request_url,
                 json=payload_json,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
             )
             status = resp.status_code
             if status == 200:
@@ -153,7 +162,11 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 with attempt:
                     if attempt.retry_state.attempt_number > 1:  # pragma: no cover
                         logger.info(f"Retry number {attempt.retry_state.attempt_number}")
-                    return await self.make_single_request(request_url, payload_json)
+                    with self.tracing_gateway.create_span("make_request_with_retries") as span:
+                        span.input = dict(request_url=request_url, payload_json=payload_json)
+                        response = await self.make_single_request(request_url, payload_json)
+                        span.output = response
+                        return response
         except RetryError as e:
             if isinstance(e.last_attempt.exception(), TooManyRequestsException):
                 logger.warning("Hit max # of retries, returning 429 to client")
@@ -248,7 +261,6 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                     traceback=exc.content.decode(),
                     status_code=exc.status_code,
                 )
-
         return SyncEndpointPredictV1Response(
             status=TaskStatus.SUCCESS, result=response, status_code=200
         )

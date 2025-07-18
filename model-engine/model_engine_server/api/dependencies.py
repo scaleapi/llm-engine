@@ -21,6 +21,8 @@ from model_engine_server.core.loggers import (
     logger_name,
     make_logger,
 )
+from model_engine_server.core.tracing import get_tracing_gateway
+from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 from model_engine_server.db.base import get_session_async, get_session_read_only_async
 from model_engine_server.domain.gateways import (
     CronJobGateway,
@@ -166,6 +168,7 @@ class ExternalInterfaces:
     monitoring_metrics_gateway: MonitoringMetricsGateway
     tokenizer_repository: TokenizerRepository
     streaming_storage_gateway: StreamingStorageGateway
+    tracing_gateway: TracingGateway
 
 
 def get_default_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
@@ -197,10 +200,19 @@ def _get_external_interfaces(
     Dependency that returns a ExternalInterfaces object. This allows repositories to share
     sessions for the database and redis.
     """
-    redis_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS)
-    redis_24h_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.REDIS_24H)
-    sqs_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SQS)
-    servicebus_task_queue_gateway = CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS)
+    tracing_gateway = get_tracing_gateway()
+    redis_task_queue_gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.REDIS, tracing_gateway=tracing_gateway
+    )
+    redis_24h_task_queue_gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.REDIS_24H, tracing_gateway=tracing_gateway
+    )
+    sqs_task_queue_gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.SQS, tracing_gateway=tracing_gateway
+    )
+    servicebus_task_queue_gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.SERVICEBUS, tracing_gateway=tracing_gateway
+    )
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     model_endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
@@ -252,6 +264,7 @@ def _get_external_interfaces(
     # In CircleCI, we cannot use asyncio because aiohttp cannot connect to the sync endpoints.
     sync_model_endpoint_inference_gateway = LiveSyncModelEndpointInferenceGateway(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
+        tracing_gateway=tracing_gateway,
         use_asyncio=(not CIRCLECI),
     )
     streaming_model_endpoint_inference_gateway = LiveStreamingModelEndpointInferenceGateway(
@@ -376,6 +389,7 @@ def _get_external_interfaces(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         tokenizer_repository=tokenizer_repository,
         streaming_storage_gateway=streaming_storage_gateway,
+        tracing_gateway=tracing_gateway,
     )
     return external_interfaces
 
