@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 @lru_cache(maxsize=1)
 def get_tracing_gateway() -> "TracingGateway":
     """
-    Returns the configured tracing gateway.
+    Returns the configured tracing gateway. Cached for performance.
     """
     try:
         from plugins.tracing import get_tracing_gateway as get_custom_tracing_gateway
