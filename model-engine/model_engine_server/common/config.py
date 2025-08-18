@@ -104,6 +104,19 @@ class HostedModelInferenceServiceConfig:
             creds = get_key_file(self.cache_redis_aws_secret_name)  # Use default role
             return creds["cache-url"]
 
+        # Check if we're in an onprem environment with direct Redis access
+        if os.environ.get('ONPREM_REDIS_HOST'):
+            # Onprem Redis configuration
+            redis_host = os.environ.get('ONPREM_REDIS_HOST')
+            redis_port = os.environ.get('ONPREM_REDIS_PORT', '6379')
+            redis_password = os.environ.get('ONPREM_REDIS_PASSWORD')
+            
+            if redis_password:
+                return f"redis://:{redis_password}@{redis_host}:{redis_port}/0"
+            else:
+                return f"redis://{redis_host}:{redis_port}/0"
+        
+        # Azure Redis configuration (existing logic)
         assert self.cache_redis_azure_host and infra_config().cloud_provider == "azure"
         username = os.getenv("AZURE_OBJECT_ID")
         token = DefaultAzureCredential().get_token("https://redis.azure.com/.default")

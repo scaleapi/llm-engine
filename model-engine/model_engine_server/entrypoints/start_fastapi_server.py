@@ -5,6 +5,7 @@ You can do this with `start-fastapi-server`.
 """
 
 import argparse
+import os
 import subprocess
 from typing import List
 
@@ -14,18 +15,25 @@ def start_gunicorn_server(port: int, num_workers: int, debug: bool) -> None:
     additional_args: List[str] = []
     if debug:
         additional_args.extend(["--reload", "--timeout", "0"])
+    
+    # Use environment variables for configuration with fallbacks
+    timeout = int(os.environ.get('WORKER_TIMEOUT', os.environ.get('GUNICORN_TIMEOUT', 60)))
+    graceful_timeout = int(os.environ.get('GUNICORN_GRACEFUL_TIMEOUT', timeout))
+    keep_alive = int(os.environ.get('GUNICORN_KEEP_ALIVE', 2))
+    worker_class = os.environ.get('GUNICORN_WORKER_CLASS', 'model_engine_server.api.worker.LaunchWorker')
+    
     command = [
         "gunicorn",
         "--bind",
         f"[::]:{port}",
         "--timeout",
-        "60",
+        str(timeout),
         "--graceful-timeout",
-        "60",
+        str(graceful_timeout),
         "--keep-alive",
-        "2",
+        str(keep_alive),
         "--worker-class",
-        "model_engine_server.api.worker.LaunchWorker",
+        worker_class,
         "--workers",
         f"{num_workers}",
         *additional_args,

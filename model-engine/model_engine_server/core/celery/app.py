@@ -530,18 +530,29 @@ def _get_backend_url_and_conf(
         # use db_num=1 for backend to differentiate from broker
         backend_url = get_redis_endpoint(1)
     elif backend_protocol == "s3":
-        backend_url = "s3://"
-        if aws_role is None:
-            aws_session = session(infra_config().profile_ml_worker)
+        # Check if AWS is disabled - if so, fall back to Redis backend
+        if os.environ.get('DISABLE_AWS') == 'true':
+            logger.warning("AWS disabled - falling back to Redis backend instead of S3")
+            backend_url = get_redis_endpoint(1)
         else:
-            aws_session = session(aws_role)
-        out_conf_changes.update(
-            {
-                "s3_boto3_session": aws_session,
-                "s3_bucket": s3_bucket,
-                "s3_base_path": s3_base_path,
-            }
-        )
+            backend_url = "s3://"
+            if aws_role is None:
+                aws_session = session(infra_config().profile_ml_worker)
+            else:
+                aws_session = session(aws_role)
+            
+            # If AWS is disabled, session will be None - fall back to Redis
+            if aws_session is None:
+                logger.warning("AWS session is None - falling back to Redis backend")
+                backend_url = get_redis_endpoint(1)
+            else:
+                out_conf_changes.update(
+                    {
+                        "s3_boto3_session": aws_session,
+                        "s3_bucket": s3_bucket,
+                        "s3_base_path": s3_base_path,
+                    }
+                )
     elif backend_protocol == "abs":
         backend_url = f"azureblockblob://{os.getenv('ABS_ACCOUNT_NAME')}"
     else:

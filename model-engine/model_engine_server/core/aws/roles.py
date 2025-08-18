@@ -114,12 +114,17 @@ def assume_role(role_arn: str, role_session_name: Optional[str] = None) -> AwsCr
     )
 
 
-def session(role: Optional[str], session_type: SessionT = Session) -> SessionT:
+def session(role: Optional[str], session_type: SessionT = Session) -> Optional[SessionT]:
     """Obtain an AWS session using an arbitrary caller-specified role.
 
     :param:`session_type` defines the type of session to return. Most users will use
     the default boto3 type. Some users required a special type (e.g aioboto3 session).
     """
+    # Check if AWS is disabled
+    if os.environ.get('DISABLE_AWS') == 'true':
+        logger.warning(f"AWS disabled - skipping role assumption (ignoring: {role})")
+        return None
+    
     # Do not assume roles in CIRCLECI
     if os.getenv("CIRCLECI"):
         logger.warning(f"In circleci, not assuming role (ignoring: {role})")

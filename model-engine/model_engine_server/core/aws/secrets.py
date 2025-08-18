@@ -1,6 +1,7 @@
 """AWS secrets module."""
 
 import json
+import os
 from functools import lru_cache
 from typing import Optional
 
@@ -14,6 +15,11 @@ logger = make_logger(logger_name())
 
 @lru_cache(maxsize=2)
 def get_key_file(secret_name: str, aws_profile: Optional[str] = None):
+    # Check if AWS Secrets Manager is disabled
+    if os.environ.get('DISABLE_AWS_SECRETS_MANAGER') == 'true':
+        logger.warning(f"AWS Secrets Manager disabled - cannot retrieve secret: {secret_name}")
+        return {}
+    
     if aws_profile is not None:
         session = boto3.Session(profile_name=aws_profile)
         secret_manager = session.client("secretsmanager", region_name=infra_config().default_region)
