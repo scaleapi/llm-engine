@@ -115,27 +115,18 @@ def assume_role(role_arn: str, role_session_name: Optional[str] = None) -> AwsCr
     )
 
 
-def session(role: Optional[str], session_type: SessionT = Session) -> Optional[SessionT]:
+def session(role: Optional[str], session_type: SessionT = Session) -> SessionT:
     """Obtain an AWS session using an arbitrary caller-specified role.
 
     :param:`session_type` defines the type of session to return. Most users will use
     the default boto3 type. Some users required a special type (e.g aioboto3 session).
     """
-    # Only create AWS sessions for AWS cloud provider
-    if infra_config().cloud_provider != "aws":
-        logger.warning(f"Not using AWS - cloud provider is {infra_config().cloud_provider} (ignoring: {role})")
-        return None
-    
-    try:
-        # Do not assume roles in CIRCLECI
-        if os.getenv("CIRCLECI"):
-            logger.warning(f"In circleci, not assuming role (ignoring: {role})")
-            role = None
-        sesh: SessionT = session_type(profile_name=role)
-        return sesh
-    except Exception as e:
-        logger.warning(f"Failed to create AWS session for role {role}: {e}")
-        return None
+    # Do not assume roles in CIRCLECI
+    if os.getenv("CIRCLECI"):
+        logger.warning(f"In circleci, not assuming role (ignoring: {role})")
+        role = None
+    sesh: SessionT = session_type(profile_name=role)
+    return sesh
 
 
 def _session_aws_okta(

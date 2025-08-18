@@ -540,10 +540,6 @@ def _get_backend_url_and_conf(
         else:
             aws_session = session(aws_role)
         
-        # If AWS session creation fails, throw an error
-        if aws_session is None:
-            raise ValueError("Failed to create AWS session for S3 backend")
-        
         out_conf_changes.update(
             {
                 "s3_boto3_session": aws_session,
