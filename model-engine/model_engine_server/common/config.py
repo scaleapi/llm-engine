@@ -105,11 +105,11 @@ class HostedModelInferenceServiceConfig:
             return creds["cache-url"]
 
         # Check if we're in an onprem environment with direct Redis access via config
-        if infra_config().onprem_redis_host:
+        if infra_config().cloud_provider == "onprem" and infra_config().redis_host:
             # Onprem Redis configuration
-            redis_host = infra_config().onprem_redis_host
-            redis_port = infra_config().onprem_redis_port
-            redis_password = infra_config().onprem_redis_password
+            redis_host = infra_config().redis_host
+            redis_port = infra_config().redis_port
+            redis_password = infra_config().redis_password
             
             if redis_password:
                 return f"redis://:{redis_password}@{redis_host}:{redis_port}/0"

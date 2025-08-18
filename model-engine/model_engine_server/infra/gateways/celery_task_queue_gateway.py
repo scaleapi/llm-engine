@@ -51,10 +51,9 @@ def _get_celery_redis_24h():
 def _get_celery_sqs():
     global celery_sqs
     if celery_sqs is None:
-        # Check if SQS broker is disabled or if we're forcing Redis via config
-        if infra_config().disable_sqs_broker or infra_config().force_celery_redis:
-            logger.warning("SQS broker disabled - using Redis instead")
-            return _get_celery_redis()
+        # Check if SQS broker is disabled via cloud provider
+        if infra_config().cloud_provider != "aws":
+            raise ValueError(f"SQS broker requires AWS cloud provider, but current provider is {infra_config().cloud_provider}")
         celery_sqs = celery_app(
             None,
             s3_bucket=infra_config().s3_bucket,
@@ -66,10 +65,9 @@ def _get_celery_sqs():
 def _get_celery_servicebus():
     global celery_servicebus
     if celery_servicebus is None:
-        # Check if ServiceBus broker is disabled or if we're forcing Redis via config
-        if infra_config().disable_servicebus_broker or infra_config().force_celery_redis:
-            logger.warning("ServiceBus broker disabled - using Redis instead")
-            return _get_celery_redis()
+        # Check if ServiceBus broker is disabled via cloud provider
+        if infra_config().cloud_provider != "azure":
+            raise ValueError(f"ServiceBus broker requires Azure cloud provider, but current provider is {infra_config().cloud_provider}")
         celery_servicebus = celery_app(
             None, broker_type=str(BrokerType.SERVICEBUS.value), backend_protocol=backend_protocol
         )

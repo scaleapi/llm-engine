@@ -6,6 +6,8 @@ default_region: "us-west-2"
 ml_account_id: "000000000000"
 docker_repo_prefix: "000000000000.dkr.ecr.us-west-2.amazonaws.com"
 redis_host: "redis-message-broker-master.default"
+redis_port: "6379"
+redis_password: null
 s3_bucket: "test-bucket"
 profile_ml_worker: "default"
 profile_ml_inference_worker: "default"
@@ -14,10 +16,6 @@ db_engine_max_overflow: 10
 db_engine_echo: false
 db_engine_echo_pool: false
 db_engine_disconnect_strategy: "pessimistic"
-# On-premises configuration
-onprem_redis_host: null
-onprem_redis_port: "6379"
-onprem_redis_password: null
 # AWS disable configuration
 disable_aws: false
 disable_aws_secrets_manager: false

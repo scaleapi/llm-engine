@@ -15,9 +15,9 @@ logger = make_logger(logger_name())
 
 @lru_cache(maxsize=2)
 def get_key_file(secret_name: str, aws_profile: Optional[str] = None):
-    # Check if AWS Secrets Manager is disabled via config
-    if infra_config().disable_aws_secrets_manager:
-        logger.warning(f"AWS Secrets Manager disabled - cannot retrieve secret: {secret_name}")
+    # Only use AWS Secrets Manager for AWS cloud provider
+    if infra_config().cloud_provider != "aws":
+        logger.warning(f"Not using AWS Secrets Manager - cloud provider is {infra_config().cloud_provider} (cannot retrieve secret: {secret_name})")
         return {}
     
     if aws_profile is not None:

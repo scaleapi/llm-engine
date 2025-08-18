@@ -530,29 +530,27 @@ def _get_backend_url_and_conf(
         # use db_num=1 for backend to differentiate from broker
         backend_url = get_redis_endpoint(1)
     elif backend_protocol == "s3":
-        # Check if AWS is disabled via config - if so, fall back to Redis backend
-        if infra_config().disable_aws:
-            logger.warning("AWS disabled - falling back to Redis backend instead of S3")
-            backend_url = get_redis_endpoint(1)
+        # Only use S3 backend for AWS cloud provider
+        if infra_config().cloud_provider != "aws":
+            raise ValueError(f"S3 backend requires AWS cloud provider, but current provider is {infra_config().cloud_provider}")
+        
+        backend_url = "s3://"
+        if aws_role is None:
+            aws_session = session(infra_config().profile_ml_worker)
         else:
-            backend_url = "s3://"
-            if aws_role is None:
-                aws_session = session(infra_config().profile_ml_worker)
-            else:
-                aws_session = session(aws_role)
-            
-            # If AWS is disabled, session will be None - fall back to Redis
-            if aws_session is None:
-                logger.warning("AWS session is None - falling back to Redis backend")
-                backend_url = get_redis_endpoint(1)
-            else:
-                out_conf_changes.update(
-                    {
-                        "s3_boto3_session": aws_session,
-                        "s3_bucket": s3_bucket,
-                        "s3_base_path": s3_base_path,
-                    }
-                )
+            aws_session = session(aws_role)
+        
+        # If AWS session creation fails, throw an error
+        if aws_session is None:
+            raise ValueError("Failed to create AWS session for S3 backend")
+        
+        out_conf_changes.update(
+            {
+                "s3_boto3_session": aws_session,
+                "s3_bucket": s3_bucket,
+                "s3_base_path": s3_base_path,
+            }
+        )
     elif backend_protocol == "abs":
         backend_url = f"azureblockblob://{os.getenv('ABS_ACCOUNT_NAME')}"
     else:

@@ -121,9 +121,9 @@ def session(role: Optional[str], session_type: SessionT = Session) -> Optional[S
     :param:`session_type` defines the type of session to return. Most users will use
     the default boto3 type. Some users required a special type (e.g aioboto3 session).
     """
-    # Check if AWS is disabled via config
-    if infra_config().disable_aws:
-        logger.warning(f"AWS disabled - skipping role assumption (ignoring: {role})")
+    # Only create AWS sessions for AWS cloud provider
+    if infra_config().cloud_provider != "aws":
+        logger.warning(f"Not using AWS - cloud provider is {infra_config().cloud_provider} (ignoring: {role})")
         return None
     
     # Do not assume roles in CIRCLECI
