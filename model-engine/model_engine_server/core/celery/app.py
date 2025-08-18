@@ -530,8 +530,8 @@ def _get_backend_url_and_conf(
         # use db_num=1 for backend to differentiate from broker
         backend_url = get_redis_endpoint(1)
     elif backend_protocol == "s3":
-        # Check if AWS is disabled - if so, fall back to Redis backend
-        if os.environ.get('DISABLE_AWS') == 'true':
+        # Check if AWS is disabled via config - if so, fall back to Redis backend
+        if infra_config().disable_aws:
             logger.warning("AWS disabled - falling back to Redis backend instead of S3")
             backend_url = get_redis_endpoint(1)
         else:

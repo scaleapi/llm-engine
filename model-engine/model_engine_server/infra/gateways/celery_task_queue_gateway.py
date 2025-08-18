@@ -51,8 +51,8 @@ def _get_celery_redis_24h():
 def _get_celery_sqs():
     global celery_sqs
     if celery_sqs is None:
-        # Check if SQS broker is disabled or if we're forcing Redis
-        if os.environ.get('DISABLE_SQS_BROKER') == 'true' or os.environ.get('FORCE_CELERY_REDIS') == 'true':
+        # Check if SQS broker is disabled or if we're forcing Redis via config
+        if infra_config().disable_sqs_broker or infra_config().force_celery_redis:
             logger.warning("SQS broker disabled - using Redis instead")
             return _get_celery_redis()
         celery_sqs = celery_app(
@@ -66,8 +66,8 @@ def _get_celery_sqs():
 def _get_celery_servicebus():
     global celery_servicebus
     if celery_servicebus is None:
-        # Check if ServiceBus broker is disabled or if we're forcing Redis
-        if os.environ.get('DISABLE_SERVICEBUS_BROKER') == 'true' or os.environ.get('FORCE_CELERY_REDIS') == 'true':
+        # Check if ServiceBus broker is disabled or if we're forcing Redis via config
+        if infra_config().disable_servicebus_broker or infra_config().force_celery_redis:
             logger.warning("ServiceBus broker disabled - using Redis instead")
             return _get_celery_redis()
         celery_servicebus = celery_app(

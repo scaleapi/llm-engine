@@ -15,8 +15,8 @@ logger = make_logger(logger_name())
 
 @lru_cache(maxsize=2)
 def get_key_file(secret_name: str, aws_profile: Optional[str] = None):
-    # Check if AWS Secrets Manager is disabled
-    if os.environ.get('DISABLE_AWS_SECRETS_MANAGER') == 'true':
+    # Check if AWS Secrets Manager is disabled via config
+    if infra_config().disable_aws_secrets_manager:
         logger.warning(f"AWS Secrets Manager disabled - cannot retrieve secret: {secret_name}")
         return {}
     
@@ -25,12 +25,5 @@ def get_key_file(secret_name: str, aws_profile: Optional[str] = None):
         secret_manager = session.client("secretsmanager", region_name=infra_config().default_region)
     else:
         secret_manager = boto3.client("secretsmanager", region_name=infra_config().default_region)
-    try:
-        secret_value = json.loads(
-            secret_manager.get_secret_value(SecretId=secret_name)["SecretString"]
-        )
-        return secret_value
-    except ClientError as e:
-        logger.error(e)
-        logger.error(f"Failed to retrieve secret: {secret_name}")
-        return {}
+    response = secret_manager.get_secret_value(SecretId=secret_name)
+    return json.loads(response["SecretString"])

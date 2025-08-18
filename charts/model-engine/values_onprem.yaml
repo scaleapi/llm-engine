@@ -1,0 +1,132 @@
+# values_onprem.yaml - On-premises deployment configuration
+# This file contains default settings for on-premises deployments without cloud dependencies
+
+# tag [required] is the LLM Engine docker image tag
+tag: latest
+context: onprem
+
+image:
+  gatewayRepository: your-registry/model-engine
+  builderRepository: your-registry/model-engine
+  cacherRepository: your-registry/model-engine
+  forwarderRepository: your-registry/model-engine
+  pullPolicy: Always
+
+secrets:
+  kubernetesDatabaseSecretName: llm-engine-postgres-credentials
+
+db:
+  runDbInitScript: false
+  runDbMigrationScript: false
+
+serviceAccount:
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-2"
+  namespaces: []
+
+imageBuilderServiceAccount:
+  create: true
+  annotations: {}
+  namespaces: []
+
+service:
+  type: ClusterIP
+  port: 80
+
+virtualservice:
+  enabled: true
+  annotations: {}
+  hostDomains:
+    - llm-engine.local
+  gateways:
+    - default/internal-gateway
+
+hostDomain:
+  prefix: http://
+
+destinationrule:
+  enabled: true
+  annotations: {}
+
+replicaCount:
+  gateway: 2
+  cacher: 1
+  builder: 1
+
+balloonConfig:
+  reserveHighPriority: true
+
+balloons:
+  - acceleratorName: nvidia-ampere-a10
+    replicaCount: 0
+  - acceleratorName: nvidia-ampere-a100
+    replicaCount: 0
+  - acceleratorName: cpu
+    replicaCount: 0
+  - acceleratorName: nvidia-tesla-t4
+    replicaCount: 0
+  - acceleratorName: nvidia-hopper-h100
+    replicaCount: 0
+    gpuCount: 4
+
+# On-premises specific configuration
+config:
+  values:
+    infra:
+      cloud_provider: onprem
+      k8s_cluster_name: onprem_cluster
+      dns_host_domain: localhost
+      default_region: local
+      ml_account_id: "000000000000"
+      docker_repo_prefix: "your-registry"
+      redis_host: "redis-service"
+      s3_bucket: "local-storage"
+      profile_ml_worker: "default"
+      profile_ml_inference_worker: "default"
+      # On-premises configuration
+      onprem_redis_host: "redis-service"
+      onprem_redis_port: "6379"
+      onprem_redis_password: null
+      # AWS disable configuration
+      disable_aws: true
+      disable_aws_secrets_manager: true
+      # Celery broker configuration
+      disable_sqs_broker: true
+      disable_servicebus_broker: true
+      force_celery_redis: true
+      # DB engine configs
+      db_engine_pool_size: 10
+      db_engine_max_overflow: 10
+      db_engine_echo: false
+      db_engine_echo_pool: false
+      db_engine_disconnect_strategy: "pessimistic"
+
+# Redis configuration for on-premises
+redis:
+  auth: null
+  enableTLS: false
+  enableAuth: false
+  kedaSecretName: ""
+  unsafeSsl: false
+
+# Gunicorn configuration for on-premises
+gunicorn:
+  workerTimeout: 120
+  gracefulTimeout: 120
+  keepAlive: 2
+  workerClass: "model_engine_server.api.worker.LaunchWorker"
+
+# Disable cloud-specific features
+dd_trace_enabled: false
+spellbook:
+  enabled: false
+
+keda:
+  cooldownPeriod: 300
+
+balloonNodeSelector:
+  node-lifecycle: normal
+
+nodeSelector:
+  node-lifecycle: normal

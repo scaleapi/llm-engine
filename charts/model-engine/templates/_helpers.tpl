@@ -369,6 +369,18 @@ env:
   - name: CIRCLECI
     value: "true"
   {{- end }}
+  {{- if .Values.gunicorn }}
+  - name: WORKER_TIMEOUT
+    value: {{ .Values.gunicorn.workerTimeout | quote }}
+  - name: GUNICORN_TIMEOUT
+    value: {{ .Values.gunicorn.gracefulTimeout | quote }}
+  - name: GUNICORN_GRACEFUL_TIMEOUT
+    value: {{ .Values.gunicorn.gracefulTimeout | quote }}
+  - name: GUNICORN_KEEP_ALIVE
+    value: {{ .Values.gunicorn.keepAlive | quote }}
+  - name: GUNICORN_WORKER_CLASS
+    value: {{ .Values.gunicorn.workerClass | quote }}
+  {{- end }}
 {{- end }}
 
 {{- define "modelEngine.serviceEnvGitTagFromHelmVar" }}

@@ -12,6 +12,7 @@ import boto3
 from boto3 import Session, client
 from botocore.client import BaseClient
 from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.core.config import infra_config
 
 logger = make_logger(logger_name())
 
@@ -120,8 +121,8 @@ def session(role: Optional[str], session_type: SessionT = Session) -> Optional[S
     :param:`session_type` defines the type of session to return. Most users will use
     the default boto3 type. Some users required a special type (e.g aioboto3 session).
     """
-    # Check if AWS is disabled
-    if os.environ.get('DISABLE_AWS') == 'true':
+    # Check if AWS is disabled via config
+    if infra_config().disable_aws:
         logger.warning(f"AWS disabled - skipping role assumption (ignoring: {role})")
         return None
     
