@@ -43,7 +43,7 @@ class _InfraConfig:
     s3_bucket: str
     redis_host: Optional[str] = None
     redis_port: Optional[str] = "6379"
-    redis_password: None
+    redis_password: Optional[str] = None
     redis_aws_secret_name: Optional[str] = None
     profile_ml_worker: str = "default"
     profile_ml_inference_worker: str = "default"
