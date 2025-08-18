@@ -51,13 +51,6 @@ class _InfraConfig:
     firehose_role_arn: Optional[str] = None
     firehose_stream_name: Optional[str] = None
     prometheus_server_address: Optional[str] = None
-    # AWS disable configuration
-    disable_aws: bool = False
-    disable_aws_secrets_manager: bool = False
-    # Celery broker configuration
-    disable_sqs_broker: bool = False
-    disable_servicebus_broker: bool = False
-    force_celery_redis: bool = False
 
 
 @dataclass

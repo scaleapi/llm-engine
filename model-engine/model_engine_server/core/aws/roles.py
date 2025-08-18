@@ -126,12 +126,16 @@ def session(role: Optional[str], session_type: SessionT = Session) -> Optional[S
         logger.warning(f"Not using AWS - cloud provider is {infra_config().cloud_provider} (ignoring: {role})")
         return None
     
-    # Do not assume roles in CIRCLECI
-    if os.getenv("CIRCLECI"):
-        logger.warning(f"In circleci, not assuming role (ignoring: {role})")
-        role = None
-    sesh: SessionT = session_type(profile_name=role)
-    return sesh
+    try:
+        # Do not assume roles in CIRCLECI
+        if os.getenv("CIRCLECI"):
+            logger.warning(f"In circleci, not assuming role (ignoring: {role})")
+            role = None
+        sesh: SessionT = session_type(profile_name=role)
+        return sesh
+    except Exception as e:
+        logger.warning(f"Failed to create AWS session for role {role}: {e}")
+        return None
 
 
 def _session_aws_okta(
