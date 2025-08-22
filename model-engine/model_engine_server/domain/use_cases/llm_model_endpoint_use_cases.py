@@ -3444,6 +3444,7 @@ def infer_addition_engine_args_from_model_name(
         gpu_memory_utilization=gpu_memory_utilization,
         attention_backend=attention_backend,
         trust_remote_code=trust_remote_code,
+        dtype="float16",
     )
 
 

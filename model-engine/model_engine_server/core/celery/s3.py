@@ -77,7 +77,13 @@ class S3Backend(KeyValueStoreBackend):
     def set(self, key, value):
         key = bytes_to_str(key)
         s3_object = self._get_s3_object(key)
-        s3_object.put(Body=value)
+        sha256_hash = hashlib.sha256(value).digest()
+        checksum_sha256 = base64.b64encode(sha256_hash).decode('utf-8')
+        s3_object.put(
+            Body=value,
+            ChecksumAlgorithm='SHA256',
+            ChecksumSHA256=checksum_sha256
+        )
 
     def delete(self, key):
         key = bytes_to_str(key)
