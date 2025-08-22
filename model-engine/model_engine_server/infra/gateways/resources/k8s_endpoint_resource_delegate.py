@@ -261,6 +261,24 @@ def maybe_get_forwarder_container_from_deployment_config(deployment_config):
     return None  # Don't expect to get here since everything should have a forwarder
 
 
+def get_concurrent_requests_per_worker_from_sync_deployment(deployment_config):
+    """Extract concurrent_requests_per_worker from sync/streaming endpoint HTTP forwarder."""
+    forwarder_container = maybe_get_forwarder_container_from_deployment_config(deployment_config)
+    if forwarder_container is None or forwarder_container.name != "http-forwarder":
+        return None
+    
+    command = forwarder_container.command
+    if command is None:
+        return None
+    
+    # Look for --max-concurrency argument in the command
+    try:
+        concurrency_index = command.index("--max-concurrency")
+        return int(command[concurrency_index + 1])
+    except (ValueError, IndexError):
+        return None
+
+
 def get_leader_container_from_lws_template(lws_template: Dict[str, Any]):
     containers = lws_template["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
         "containers"
@@ -1913,6 +1931,7 @@ class K8SEndpointResourceDelegate:
     @staticmethod
     def _get_sync_autoscaling_params(
         hpa_config: V2beta2HorizontalPodAutoscaler,
+        concurrent_requests_per_worker: Optional[int] = None,
     ) -> HorizontalAutoscalingEndpointParams:
         spec = hpa_config.spec
         per_worker = get_per_worker_value_from_target_concurrency(
@@ -1922,12 +1941,13 @@ class K8SEndpointResourceDelegate:
             max_workers=spec.max_replicas,
             min_workers=spec.min_replicas,
             per_worker=per_worker,
-            concurrent_requests_per_worker=FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER,
+            concurrent_requests_per_worker=concurrent_requests_per_worker or FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER,
         )
 
     @staticmethod
     def _get_sync_autoscaling_params_from_keda(
         keda_config,
+        concurrent_requests_per_worker: Optional[int] = None,
     ) -> HorizontalAutoscalingEndpointParams:
         spec = keda_config["spec"]
         concurrency = 1
@@ -1941,7 +1961,7 @@ class K8SEndpointResourceDelegate:
             max_workers=spec.get("maxReplicaCount"),
             min_workers=spec.get("minReplicaCount"),
             per_worker=concurrency,
-            concurrent_requests_per_worker=FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER,
+            concurrent_requests_per_worker=concurrent_requests_per_worker or FAKE_SYNC_CONCURRENT_REQUESTS_PER_WORKER,
         )
 
     async def _get_resources(
@@ -2021,11 +2041,18 @@ class K8SEndpointResourceDelegate:
                 )
             except ApiException:
                 keda_scaled_object_config = None
+            # Extract concurrent_requests_per_worker from the HTTP forwarder container
+            concurrent_requests_per_worker = get_concurrent_requests_per_worker_from_sync_deployment(
+                deployment_config
+            )
+            
             if hpa_config is not None:
-                horizontal_autoscaling_params = self._get_sync_autoscaling_params(hpa_config)
+                horizontal_autoscaling_params = self._get_sync_autoscaling_params(
+                    hpa_config, concurrent_requests_per_worker
+                )
             elif keda_scaled_object_config is not None:
                 horizontal_autoscaling_params = self._get_sync_autoscaling_params_from_keda(
-                    keda_scaled_object_config
+                    keda_scaled_object_config, concurrent_requests_per_worker
                 )
             else:
                 raise EndpointResourceInfraException(
@@ -2245,11 +2272,19 @@ class K8SEndpointResourceDelegate:
                     # TODO I think this is correct but only barely, it introduces a coupling between
                     #   an HPA (or keda SO) existing and an endpoint being a sync endpoint. The "more correct"
                     #   thing to do is to query the db to get the endpoints, but it doesn't belong here
-                    horizontal_autoscaling_params = self._get_sync_autoscaling_params(hpa_config)
+                    concurrent_requests_per_worker = get_concurrent_requests_per_worker_from_sync_deployment(
+                        deployment_config
+                    )
+                    horizontal_autoscaling_params = self._get_sync_autoscaling_params(
+                        hpa_config, concurrent_requests_per_worker
+                    )
                 elif keda_scaled_object_config:
                     # Also assume it's a sync endpoint
+                    concurrent_requests_per_worker = get_concurrent_requests_per_worker_from_sync_deployment(
+                        deployment_config
+                    )
                     horizontal_autoscaling_params = self._get_sync_autoscaling_params_from_keda(
-                        keda_scaled_object_config
+                        keda_scaled_object_config, concurrent_requests_per_worker
                     )
                 else:
                     horizontal_autoscaling_params = self._get_async_autoscaling_params(
