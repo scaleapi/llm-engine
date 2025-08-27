@@ -30,6 +30,9 @@ def make_sync_request_with_retries(
     # We should be creating a new requests Session each time, which should avoid sending requests to the same endpoint
     # This is admittedly a hack until we get proper least-outstanding-requests load balancing to our http endpoints
 
+    logger.info(f"🔍 DEBUG: make_sync_request_with_retries to URL: {request_url}")
+    logger.info(f"🔍 DEBUG: Payload keys: {list(payload_json.keys()) if isinstance(payload_json, dict) else type(payload_json)}")
+
     try:
         for attempt in Retrying(
             stop=stop_after_attempt(SYNC_ENDPOINT_RETRIES + 1),
@@ -39,14 +42,25 @@ def make_sync_request_with_retries(
             with attempt:
                 if attempt.retry_state.attempt_number > 1:  # pragma: no cover
                     logger.info(f"Retry number {attempt.retry_state.attempt_number}")
-                resp = requests.post(
-                    request_url,
-                    json=payload_json,
-                    headers={"Content-Type": "application/json"},
-                )
+
+                # DEBUG: Log before making request
+                logger.info(f"🔍 DEBUG: About to POST to {request_url} (attempt {attempt.retry_state.attempt_number})")
+
+                try:
+                    resp = requests.post(
+                        request_url,
+                        json=payload_json,
+                        headers={"Content-Type": "application/json"},
+                    )
+                    logger.info(f"🔍 DEBUG: Response status: {resp.status_code}")
+                except Exception as e:
+                    logger.error(f"🔍 DEBUG: Exception during requests.post: {type(e).__name__}: {e}")
+                    raise
+
                 if resp.status_code == 429:
                     raise HTTP429Exception("429 returned")
                 elif resp.status_code != 200:
+                    logger.warning(f"🔍 DEBUG: Non-200 response. Status: {resp.status_code}, Content: {resp.content}")
                     raise UpstreamHTTPSvcError(status_code=resp.status_code, content=resp.content)
                 return resp.json()
     except RetryError:

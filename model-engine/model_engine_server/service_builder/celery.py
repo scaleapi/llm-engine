@@ -9,7 +9,7 @@ if CIRCLECI:
 elif infra_config().cloud_provider == "azure":
     service_builder_broker_type = str(BrokerType.SERVICEBUS.value)
 else:
-    service_builder_broker_type = str(BrokerType.SQS.value)
+    service_builder_broker_type = str(BrokerType.REDIS.value)
 
 service_builder_service = celery_app(
     name="model_engine_server.service_builder",
