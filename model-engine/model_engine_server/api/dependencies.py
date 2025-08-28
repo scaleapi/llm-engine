@@ -239,8 +239,8 @@ def _get_external_interfaces(
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
     else:
-        inference_task_queue_gateway = sqs_task_queue_gateway
-        infra_task_queue_gateway = sqs_task_queue_gateway
+        inference_task_queue_gateway = redis_task_queue_gateway
+        infra_task_queue_gateway = redis_task_queue_gateway
     redis_client = aioredis.Redis(connection_pool=get_or_create_aioredis_pool())
     inference_autoscaling_metrics_gateway = (
         ASBInferenceAutoscalingMetricsGateway()

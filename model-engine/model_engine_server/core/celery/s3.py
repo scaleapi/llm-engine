@@ -2,6 +2,8 @@
 copied from https://github.com/celery/celery/blob/81df81acf8605ba3802810c7901be7d905c5200b/celery/backends/s3.py"""
 
 import threading
+import base64
+import hashlib
 
 import tenacity
 from celery.backends.base import KeyValueStoreBackend
@@ -77,10 +79,17 @@ class S3Backend(KeyValueStoreBackend):
     def set(self, key, value):
         key = bytes_to_str(key)
         s3_object = self._get_s3_object(key)
-        sha256_hash = hashlib.sha256(value).digest()
+        
+        # Ensure value is bytes for hashing
+        if isinstance(value, str):
+            value_bytes = value.encode('utf-8')
+        else:
+            value_bytes = value
+            
+        sha256_hash = hashlib.sha256(value_bytes).digest()
         checksum_sha256 = base64.b64encode(sha256_hash).decode('utf-8')
         s3_object.put(
-            Body=value,
+            Body=value,  # S3 can handle both str and bytes
             ChecksumAlgorithm='SHA256',
             ChecksumSHA256=checksum_sha256
         )
