@@ -580,21 +580,23 @@ def test_load_model_weights_sub_commands(
     final_weights_folder = "test_folder"
 
     subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
-        framework, framework_image_tag, checkpoint_path, final_weights_folder
+        framework, framework_image_tag, checkpoint_path, final_weights_folder, model_name="test-model"
     )
 
     expected_result = [
-        './s5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
+        'pip install awscli',
+        'aws s3 sync s3://fake-checkpoint test_folder',
     ]
     assert expected_result == subcommands
 
     trust_remote_code = True
     subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
-        framework, framework_image_tag, checkpoint_path, final_weights_folder, trust_remote_code
+        framework, framework_image_tag, checkpoint_path, final_weights_folder, trust_remote_code, "test-model"
     )
 
     expected_result = [
-        './s5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --exclude "optimizer*" --include "*.py" s3://fake-checkpoint/* test_folder',
+        'pip install awscli',
+        'aws s3 sync s3://fake-checkpoint test_folder',
     ]
     assert expected_result == subcommands
 
@@ -608,8 +610,8 @@ def test_load_model_weights_sub_commands(
     )
 
     expected_result = [
-        "s5cmd > /dev/null || conda install -c conda-forge -y s5cmd",
-        's5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
+        'pip install awscli',
+        'aws s3 sync s3://fake-checkpoint test_folder',
     ]
     assert expected_result == subcommands
 
@@ -631,7 +633,7 @@ def test_load_model_weights_sub_commands(
 
     trust_remote_code = True
     subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
-        framework, framework_image_tag, checkpoint_path, final_weights_folder, trust_remote_code
+        framework, framework_image_tag, checkpoint_path, final_weights_folder, trust_remote_code, "test-model"
     )
 
     expected_result = [

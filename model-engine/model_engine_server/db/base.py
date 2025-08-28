@@ -22,6 +22,9 @@ logger = make_logger(logger_name())
 def get_key_file_name(environment: str) -> str:
     if infra_config().cloud_provider == "azure":
         return f"{environment}-ml-infra-pg".replace("training", "prod").replace("-new", "")
+    elif infra_config().cloud_provider == "onprem":
+        # For on-premises, use a local database configuration
+        return f"local/{environment}/ml_infra_pg".replace("training", "prod").replace("-new", "")
     return f"{environment}/ml_infra_pg".replace("training", "prod").replace("-new", "")
 
 
@@ -76,6 +79,17 @@ def get_engine_url(
             # for recommendations on how to work with rotating auth credentials
             engine_url = f"postgresql://{user}:{password}@{db}?sslmode=require"
             expiry_in_sec = token.expires_on
+        elif infra_config().cloud_provider == "onprem":
+            # For on-premises environments, use local database configuration
+            # These should be set in environment variables for on-premises deployments
+            host = os.environ.get("DB_HOST", "localhost")
+            port = os.environ.get("DB_PORT", "5432")
+            dbname = os.environ.get("DB_NAME", "model_engine")
+            user = os.environ.get("DB_USER", "postgres")
+            password = os.environ.get("DB_PASSWORD", "")
+            
+            logger.info(f"Connecting to local db {host}:{port}, name {dbname}")
+            engine_url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
         else:
             db_secret_aws_profile = os.environ.get("DB_SECRET_AWS_PROFILE")
             creds = get_key_file(key_file, db_secret_aws_profile)

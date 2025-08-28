@@ -43,6 +43,7 @@ COPY model-engine/requirements.txt /workspace/model-engine/requirements.txt
 COPY model-engine/requirements_override.txt /workspace/model-engine/requirements_override.txt
 RUN pip install -r requirements-test.txt --no-cache-dir
 RUN pip install -r requirements.txt --no-cache-dir
+RUN pip install torch==2.2.2+cpu --index-url https://download.pytorch.org/whl/cpu --no-cache-dir
 RUN pip install -r requirements_override.txt --no-cache-dir
 COPY model-engine/setup.py /workspace/model-engine/setup.py
 COPY model-engine/model_engine_server /workspace/model-engine/model_engine_server

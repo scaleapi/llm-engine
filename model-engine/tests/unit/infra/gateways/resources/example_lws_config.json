@@ -367,7 +367,7 @@
                 "command": [
                   "/bin/bash",
                   "-c",
-                  "./s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*' s3://bucket/tag/userid000000/model_weights/* model_files;/workspace/init_ray.sh leader --ray_cluster_size=$RAY_CLUSTER_SIZE --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local;python -m vllm_server --model model_files --tensor-parallel-size 1 --port 5005 --disable-log-requests--enforce-eager"
+                  "pip install awscli && aws s3 sync s3://bucket/tag/userid000000/model_weights model_files --include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*';/workspace/init_ray.sh leader --ray_cluster_size=$RAY_CLUSTER_SIZE --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local;python -m vllm_server --model model_files --tensor-parallel-size 1 --port 5005 --disable-log-requests--enforce-eager"
                 ],
                 "env": [
                   {
@@ -626,7 +626,7 @@
                 "command": [
                   "/bin/bash",
                   "-c",
-                  "./s5cmd --numworkers 512 cp --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*' s3://bucket/key/userid000000/model_weights/* model_files;/workspace/init_ray.sh worker --ray_cluster_size=$RAY_CLUSTER_SIZE --ray_address=$K8S_LEADER_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
+                  "pip install awscli && aws s3 sync s3://bucket/key/userid000000/model_weights model_files --include '*.model' --include '*.json' --include '*.safetensors' --exclude 'optimizer*';/workspace/init_ray.sh worker --ray_cluster_size=$RAY_CLUSTER_SIZE --ray_address=$K8S_LEADER_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local --own_address=$K8S_OWN_POD_NAME.$K8S_LWS_NAME.$K8S_OWN_NAMESPACE.svc.cluster.local"
                 ],
                 "env": [
                   {

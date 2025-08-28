@@ -4,6 +4,7 @@ from typing import IO
 
 import boto3
 import smart_open
+from model_engine_server.core.config import infra_config
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
 
 
@@ -13,9 +14,27 @@ class S3FilesystemGateway(FilesystemGateway):
     """
 
     def get_s3_client(self, kwargs):
-        profile_name = kwargs.get("aws_profile", os.getenv("AWS_PROFILE"))
-        session = boto3.Session(profile_name=profile_name)
-        client = session.client("s3")
+        if infra_config().cloud_provider == "onprem":
+            # For onprem, use explicit credentials from environment variables
+            session = boto3.Session(
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                region_name=infra_config().default_region
+            )
+        else:
+            profile_name = kwargs.get("aws_profile", os.getenv("AWS_PROFILE"))
+            session = boto3.Session(profile_name=profile_name)
+        
+        # Support custom endpoints for S3-compatible storage (like Scality)
+        # Uses standard boto3 environment variables
+        endpoint_url = kwargs.get("endpoint_url") or os.getenv("AWS_ENDPOINT_URL")
+        
+        client_kwargs = {}
+        if endpoint_url:
+            client_kwargs["endpoint_url"] = endpoint_url
+            # For custom endpoints, boto3 automatically uses AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+        
+        client = session.client("s3", **client_kwargs)
         return client
 
     def open(self, uri: str, mode: str = "rt", **kwargs) -> IO:

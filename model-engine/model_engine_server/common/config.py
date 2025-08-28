@@ -77,6 +77,12 @@ class HostedModelInferenceServiceConfig:
         None  # Not an env var because the redis cache info is already here
     )
     sglang_repository: Optional[str] = None
+    # Image tags for onprem deployments
+    vllm_tag: Optional[str] = None
+    tgi_tag: Optional[str] = None
+    lightllm_tag: Optional[str] = None
+    tensorrt_llm_tag: Optional[str] = None
+    batch_inference_vllm_tag: Optional[str] = None
 
     @classmethod
     def from_json(cls, json):
@@ -90,6 +96,11 @@ class HostedModelInferenceServiceConfig:
 
     @property
     def cache_redis_url(self) -> str:
+        # First priority: Check for CACHE_REDIS_URL environment variable (injected by Helm)
+        cache_redis_url_env = os.getenv("CACHE_REDIS_URL")
+        if cache_redis_url_env:
+            return cache_redis_url_env
+            
         if self.cache_redis_aws_url:
             assert infra_config().cloud_provider == "aws", "cache_redis_aws_url is only for AWS"
             if self.cache_redis_aws_secret_name:

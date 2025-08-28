@@ -405,6 +405,28 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         else:
             infra_config_file = infra_config().env + ".yaml"
 
+        # Build base environment variables
+        base_env = {
+            "OMP_NUM_THREADS": "1",
+            "BASE_PATH": "/app",
+            "BUNDLE_URL": model_bundle.flavor.location,
+            "RESULTS_S3_BUCKET": infra_config().s3_bucket,
+            "CHILD_FN_INFO": json.dumps(
+                build_endpoint_request.child_fn_info
+                if build_endpoint_request.child_fn_info
+                else {}
+            ),
+            "PREWARM": bool_to_str(build_endpoint_request.prewarm) or "false",
+            "PORT": "5005",
+            "ML_INFRA_SERVICES_CONFIG_PATH": f"/app/model-engine/model_engine_server/core/configs/{infra_config_file}",
+        }
+        
+        # Add cloud-provider specific environment variables
+        if infra_config().cloud_provider != "onprem":
+            # AWS cloud deployments use AWS_PROFILE
+            base_env["AWS_PROFILE"] = build_endpoint_request.aws_role
+        # Note: For onprem, S3 credentials will be injected by k8s_resource_types.py
+
         new_flavor = RunnableImageFlavor(
             flavor=ModelBundleFlavorType.RUNNABLE_IMAGE,
             repository=image_repo,
@@ -418,21 +440,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 "-m",
                 "model_engine_server.inference.sync_inference.start_fastapi_server",
             ],
-            env={
-                "OMP_NUM_THREADS": "1",
-                "BASE_PATH": "/app",
-                "BUNDLE_URL": model_bundle.flavor.location,
-                "AWS_PROFILE": build_endpoint_request.aws_role,
-                "RESULTS_S3_BUCKET": infra_config().s3_bucket,
-                "CHILD_FN_INFO": json.dumps(
-                    build_endpoint_request.child_fn_info
-                    if build_endpoint_request.child_fn_info
-                    else {}
-                ),
-                "PREWARM": bool_to_str(build_endpoint_request.prewarm) or "false",
-                "PORT": "5005",
-                "ML_INFRA_SERVICES_CONFIG_PATH": f"/app/model-engine/model_engine_server/core/configs/{infra_config_file}",
-            },
+            env=base_env,
             protocol="http",
         )
 

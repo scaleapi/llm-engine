@@ -531,6 +531,7 @@ class CreateLLMModelBundleV1UseCase:
             framework_image_tag,
             checkpoint_path,
             final_weights_folder,
+            model_name=model_name,
         )
 
         subcommands.append(
@@ -580,6 +581,7 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path,
         final_weights_folder,
         trust_remote_code: bool = False,
+        model_name: str = "model",
     ):
         if checkpoint_path.startswith("s3://"):
             return self.load_model_weights_sub_commands_s3(
@@ -588,6 +590,7 @@ class CreateLLMModelBundleV1UseCase:
                 checkpoint_path,
                 final_weights_folder,
                 trust_remote_code,
+                model_name,
             )
         elif checkpoint_path.startswith("azure://") or "blob.core.windows.net" in checkpoint_path:
             return self.load_model_weights_sub_commands_abs(
@@ -596,6 +599,7 @@ class CreateLLMModelBundleV1UseCase:
                 checkpoint_path,
                 final_weights_folder,
                 trust_remote_code,
+                model_name,
             )
         else:
             raise ObjectHasInvalidValueException(
@@ -609,32 +613,34 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path,
         final_weights_folder,
         trust_remote_code: bool,
+        model_name: str = "model",
     ):
         subcommands = []
-        s5cmd = "s5cmd"
-
-        # This is a hack for now to skip installing s5cmd for text-generation-inference:0.9.3-launch_s3,
-        # which has s5cmd binary already baked in. Otherwise, install s5cmd if it's not already available
-        if (
-            framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
-            and framework_image_tag != "0.9.3-launch_s3"
-        ):
-            subcommands.append(f"{s5cmd} > /dev/null || conda install -c conda-forge -y {s5cmd}")
-        else:
-            s5cmd = "./s5cmd"
 
         checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
         validate_checkpoint_files(checkpoint_files)
 
-        # filter to configs ('*.model' and '*.json') and weights ('*.safetensors')
-        # For models that are not supported by transformers directly, we need to include '*.py' and '*.bin'
-        # to load the model. Only set this flag if "trust_remote_code" is set to True
-        file_selection_str = '--include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --exclude "optimizer*"'
-        if trust_remote_code:
-            file_selection_str += ' --include "*.py"'
-        subcommands.append(
-            f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-        )
+        # Support for third-party object storage (like Scality)
+        # Note: Using AWS_ENDPOINT_URL env var for AWS CLI compatibility
+        endpoint_url = os.getenv("AWS_ENDPOINT_URL")
+        
+        # Simple approach - download all files (no filtering)
+        
+        # Add environment variables for object storage credentials if using custom endpoint
+        env_vars = []
+        if endpoint_url:
+            # For custom endpoints (like Scality), use AWS CLI with environment variables
+            subcommands.extend([
+                "pip install --quiet awscli",
+                f"AWS_ACCESS_KEY_ID={os.getenv('AWS_ACCESS_KEY_ID', '')} AWS_SECRET_ACCESS_KEY={os.getenv('AWS_SECRET_ACCESS_KEY', '')} AWS_ENDPOINT_URL={endpoint_url} AWS_REGION={os.getenv('AWS_REGION', 'us-east-1')} AWS_EC2_METADATA_DISABLED=true aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --no-progress --max-concurrent-requests 10 --multipart-threshold 100MB --multipart-chunksize 50MB",
+                f"echo 'Waiting for AWS CLI to finalize files...' && sleep 30 && echo 'Files should be ready' && ls -la {final_weights_folder}/"
+            ])
+        else:
+            # Standard S3, install AWS CLI and sync files with optimization
+            subcommands.extend([
+                "pip install awscli", 
+                f"aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --no-progress --max-concurrent-requests 10 --multipart-threshold 100MB --multipart-chunksize 50MB"
+            ])
         return subcommands
 
     def load_model_weights_sub_commands_abs(
@@ -644,6 +650,7 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path,
         final_weights_folder,
         trust_remote_code: bool,
+        model_name: str = "model",
     ):
         subcommands = []
 
@@ -685,9 +692,32 @@ class CreateLLMModelBundleV1UseCase:
         and llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/postprocessing/config.pbtxt
         """
         if checkpoint_path.startswith("s3://"):
-            subcommands = [
-                f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
-            ]
+            # Support for third-party object storage (like Scality)
+            # Note: Using AWS_ENDPOINT_URL env var for AWS CLI compatibility
+            endpoint_url = os.getenv("AWS_ENDPOINT_URL")
+            
+            # Add environment variables for object storage credentials if using custom endpoint
+            env_vars = []
+            if endpoint_url:
+                env_vars.extend([
+                    f"AWS_ACCESS_KEY_ID={os.getenv('AWS_ACCESS_KEY_ID', '')}",
+                    f"AWS_SECRET_ACCESS_KEY={os.getenv('AWS_SECRET_ACCESS_KEY', '')}",
+                    f"AWS_ENDPOINT_URL={endpoint_url}",
+                    f"AWS_REGION={os.getenv('AWS_REGION', 'us-east-1')}",
+                    "AWS_EC2_METADATA_DISABLED=true"
+                ])
+                env_prefix = " ".join(env_vars) + " " if env_vars else ""
+                # Install AWS CLI and sync files (AWS CLI works with Scality)
+                subcommands = [
+                    "pip install awscli",
+                    f"{env_prefix}aws s3 sync {checkpoint_path}/ ./ --endpoint-url {endpoint_url}"
+                ]
+            else:
+                # Install AWS CLI and sync files
+                subcommands = [
+                    "pip install awscli",
+                    f"aws s3 sync {checkpoint_path}/ ./"
+                ]
         else:
             subcommands.extend(
                 [
@@ -805,7 +835,7 @@ class CreateLLMModelBundleV1UseCase:
         huggingface_repo = sglang_args.huggingface_repo
         sglang_args.huggingface_repo = None  # remove from additional_args
 
-        # TODO(dmchoi): currently using official sglang image; doesn't have s5cmd
+        # TODO(dmchoi): currently using official sglang image; uses AWS CLI for downloads
         # final_weights_folder = "model_files"
         # subcommands += self.load_model_weights_sub_commands(
         #     LLMInferenceFramework.SGLANG,
@@ -920,6 +950,7 @@ class CreateLLMModelBundleV1UseCase:
             checkpoint_path,
             final_weights_folder,
             trust_remote_code=vllm_args.trust_remote_code or False,
+            model_name=model_name,
         )
 
         if multinode:
@@ -952,7 +983,7 @@ class CreateLLMModelBundleV1UseCase:
             if hmi_config.sensitive_log_mode:
                 vllm_args.disable_log_requests = True
 
-            vllm_cmd = f"python -m vllm_server --model {final_weights_folder} --served-model-name {model_name} {final_weights_folder} --port 5005"
+            vllm_cmd = f"python -m vllm_server --model {final_weights_folder} --served-model-name {model_name} --port 5005"
             for field in VLLMEndpointAdditionalArgs.model_fields.keys():
                 config_value = getattr(vllm_args, field, None)
                 if config_value is not None:
@@ -1154,6 +1185,7 @@ class CreateLLMModelBundleV1UseCase:
             framework_image_tag,
             checkpoint_path,
             final_weights_folder,
+            model_name=model_name,
         )
 
         subcommands.append(

@@ -27,7 +27,17 @@ class S3FileLLMFineTuneEventsRepository(LLMFineTuneEventsRepository):
     def _get_s3_client(self, kwargs):
         profile_name = kwargs.get("aws_profile", os.getenv("S3_WRITE_AWS_PROFILE"))
         session = boto3.Session(profile_name=profile_name)
-        client = session.client("s3")
+        
+        # Support custom endpoints for S3-compatible storage (like Scality)
+        # Uses standard boto3 environment variables
+        endpoint_url = kwargs.get("endpoint_url") or os.getenv("AWS_ENDPOINT_URL")
+        
+        client_kwargs = {}
+        if endpoint_url:
+            client_kwargs["endpoint_url"] = endpoint_url
+            # For custom endpoints, boto3 automatically uses AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+        
+        client = session.client("s3", **client_kwargs)
         return client
 
     def _open(self, uri: str, mode: str = "rt", **kwargs) -> IO:

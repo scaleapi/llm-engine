@@ -51,6 +51,10 @@ def _get_celery_redis_24h():
 def _get_celery_sqs():
     global celery_sqs
     if celery_sqs is None:
+        # For on-premises environments, use Redis instead of SQS
+        if infra_config().cloud_provider == "onprem":
+            logger.info("Using Redis broker for on-premises environment instead of SQS")
+            return _get_celery_redis()
         # Check if SQS broker is disabled via cloud provider
         if infra_config().cloud_provider != "aws":
             raise ValueError(f"SQS broker requires AWS cloud provider, but current provider is {infra_config().cloud_provider}")
@@ -65,6 +69,10 @@ def _get_celery_sqs():
 def _get_celery_servicebus():
     global celery_servicebus
     if celery_servicebus is None:
+        # For on-premises environments, use Redis instead of ServiceBus
+        if infra_config().cloud_provider == "onprem":
+            logger.info("Using Redis broker for on-premises environment instead of ServiceBus")
+            return _get_celery_redis()
         # Check if ServiceBus broker is disabled via cloud provider
         if infra_config().cloud_provider != "azure":
             raise ValueError(f"ServiceBus broker requires Azure cloud provider, but current provider is {infra_config().cloud_provider}")

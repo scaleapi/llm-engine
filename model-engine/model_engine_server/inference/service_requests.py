@@ -42,7 +42,14 @@ s3_client = None
 def get_s3_client():
     global s3_client
     if s3_client is None:
-        s3_client = boto3.client("s3", region_name="us-west-2")
+        from model_engine_server.core.config import infra_config
+        
+        # Support custom endpoints for S3-compatible storage
+        endpoint_url = os.getenv("AWS_ENDPOINT_URL")
+        client_kwargs = {"region_name": infra_config().default_region}
+        if endpoint_url:
+            client_kwargs["endpoint_url"] = endpoint_url
+        s3_client = boto3.client("s3", **client_kwargs)
     return s3_client
 
 

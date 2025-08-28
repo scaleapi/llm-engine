@@ -16,6 +16,7 @@ from model_engine_server.infra.gateways.resources.image_cache_gateway import (
 from model_engine_server.infra.repositories.model_endpoint_record_repository import (
     ModelEndpointRecordRepository,
 )
+import os
 
 logger = make_logger(logger_name())
 
@@ -60,6 +61,11 @@ class ImageCacheService:
         """
         Cache images used by fine tune LLM endpoints to reduce cold start time.
         """
+        # Skip fine-tune image caching for on-premises environments
+        if infra_config().cloud_provider == "onprem":
+            logger.info("Skipping fine-tune image caching for on-premises environment")
+            return
+            
         # a cache priority to ensure llm endpoint images are always prioritized
         llm_image_cache_priority = CachePriority(
             is_high_priority=1,  # make it a high priority
@@ -80,7 +86,7 @@ class ImageCacheService:
             f"{infra_config().docker_repo_prefix}/{hmi_config.vllm_repository}", "0.3.2"
         )
         latest_tag = "fake_docker_repository_latest_image_tag"
-        if not CIRCLECI:
+        if not CIRCLECI and infra_config().cloud_provider != "onprem":
             try:  # pragma: no cover
                 latest_tag = self.docker_repository.get_latest_image_tag(
                     hmi_config.batch_inference_vllm_repository
