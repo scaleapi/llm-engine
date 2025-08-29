@@ -16,6 +16,7 @@ __all__: Sequence[str] = (
     "LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
     "LAUNCH_SERVICE_TEMPLATE_FOLDER",
     "LOCAL",
+    "PROD",
     "SKIP_AUTH",
     "WORKSPACE",
     "get_boolean_env_var",
@@ -41,6 +42,8 @@ def get_boolean_env_var(name: str) -> bool:
 
 
 CIRCLECI: bool = get_boolean_env_var("CIRCLECI")
+
+PROD: bool = get_boolean_env_var("PROD")
 
 LOCAL: bool = get_boolean_env_var("LOCAL")
 """Indicates that Launch is running in a local development environment. Also used for local testing.
