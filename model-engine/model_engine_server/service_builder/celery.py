@@ -1,5 +1,5 @@
 from model_engine_server.common.dtos.model_endpoints import BrokerType
-from model_engine_server.common.env_vars import CIRCLECI
+from model_engine_server.common.env_vars import CIRCLECI, PROD
 from model_engine_server.core.celery import celery_app
 from model_engine_server.core.config import infra_config
 
