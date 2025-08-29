@@ -631,15 +631,16 @@ class CreateLLMModelBundleV1UseCase:
         if endpoint_url:
             # For custom endpoints (like Scality), use AWS CLI with environment variables
             subcommands.extend([
-                "pip install --quiet awscli",
-                f"AWS_ACCESS_KEY_ID={os.getenv('AWS_ACCESS_KEY_ID', '')} AWS_SECRET_ACCESS_KEY={os.getenv('AWS_SECRET_ACCESS_KEY', '')} AWS_ENDPOINT_URL={endpoint_url} AWS_REGION={os.getenv('AWS_REGION', 'us-east-1')} AWS_EC2_METADATA_DISABLED=true aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --no-progress --max-concurrent-requests 10 --multipart-threshold 100MB --multipart-chunksize 50MB",
-                f"echo 'Waiting for AWS CLI to finalize files...' && sleep 30 && echo 'Files should be ready' && ls -la {final_weights_folder}/"
+                "pip install --quiet awscli --no-cache-dir",
+                f"AWS_ACCESS_KEY_ID={os.getenv('AWS_ACCESS_KEY_ID', '')} AWS_SECRET_ACCESS_KEY={os.getenv('AWS_SECRET_ACCESS_KEY', '')} AWS_ENDPOINT_URL={endpoint_url} AWS_REGION={os.getenv('AWS_REGION', 'us-east-1')} AWS_EC2_METADATA_DISABLED=true aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --no-progress",
+                f"echo 'Waiting for AWS CLI to finalize files...' ; sleep 30 ; echo 'Checking for model files...' ; while [ ! -f {final_weights_folder}/config.json ] || ! ls {final_weights_folder}/*.safetensors >/dev/null 2>&1 ; do echo 'Files not ready yet, waiting 30 more seconds...' ; sleep 30 ; done ; echo 'Model files are ready!' ; ls -la {final_weights_folder}/ ; echo 'VLLM can now start'"
             ])
         else:
-            # Standard S3, install AWS CLI and sync files with optimization
+            # Standard S3, install AWS CLI and sync files
             subcommands.extend([
-                "pip install awscli", 
-                f"aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --no-progress --max-concurrent-requests 10 --multipart-threshold 100MB --multipart-chunksize 50MB"
+                "pip install awscli --no-cache-dir", 
+                f"aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder}",
+                f"echo 'Waiting for AWS CLI to finalize files...' ; sleep 30 ; echo 'Checking for model files...' ; while [ ! -f {final_weights_folder}/config.json ] || ! ls {final_weights_folder}/*.safetensors >/dev/null 2>&1 ; do echo 'Files not ready yet, waiting 30 more seconds...' ; sleep 30 ; done ; echo 'Model files are ready!' ; ls -la {final_weights_folder}/ ; echo 'VLLM can now start'"
             ])
         return subcommands
 
@@ -1001,7 +1002,9 @@ class CreateLLMModelBundleV1UseCase:
                     else:
                         vllm_cmd += f" --{field.replace('_', '-')} {config_value}"
 
-            subcommands.append(vllm_cmd)
+            # Add fallback to keep container running for debugging if VLLM fails
+            vllm_cmd_with_fallback = f"{vllm_cmd} || (echo 'VLLM failed to start, keeping container alive for debugging...' ; sleep infinity)"
+            subcommands.append(vllm_cmd_with_fallback)
 
         command = [
             "/bin/bash",
@@ -1046,8 +1049,8 @@ class CreateLLMModelBundleV1UseCase:
                 command=command,
                 streaming_command=command,
                 protocol="http",
-                readiness_initial_delay_seconds=10,
-                healthcheck_route="/health",
+                readiness_initial_delay_seconds=1800,  # 30 minutes for large model downloads  
+                healthcheck_route="/health",  # Standard health check route
                 predict_route="/predict",
                 streaming_predict_route="/stream",
                 extra_routes=[

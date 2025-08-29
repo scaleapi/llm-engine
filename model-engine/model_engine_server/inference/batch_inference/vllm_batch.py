@@ -96,11 +96,11 @@ def download_model(checkpoint_path, final_weights_folder):
         print("Failed to install AWS CLI", flush=True)
         return
     
-    # Simple approach - download all files with multipart optimization
+    # Simple approach - download all files (basic AWS CLI v1 compatible)
     if endpoint_url:
-        aws_cmd = f"aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --endpoint-url {endpoint_url} --no-progress --max-concurrent-requests 10 --multipart-threshold 100MB --multipart-chunksize 50MB"
+        aws_cmd = f"aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --endpoint-url {endpoint_url} --no-progress"
     else:
-        aws_cmd = f"aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --no-progress --max-concurrent-requests 10 --multipart-threshold 100MB --multipart-chunksize 50MB"
+        aws_cmd = f"aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --no-progress"
     
     env = os.environ.copy()
     
@@ -163,8 +163,12 @@ def download_model(checkpoint_path, final_weights_folder):
                 time.sleep(retry_delay)
                 retry_delay *= 2  # Exponential backoff
             else:
-                print(f"All {max_retries} download attempts failed", flush=True)
-                raise RuntimeError(f"Failed to download model after {max_retries} attempts") 
+                print(f"All {max_retries} download attempts failed. Keeping container alive for debugging...", flush=True)
+                # Keep container running for debugging instead of raising error
+                import time
+                while True:
+                    print("Container is alive for debugging. Download failed but not exiting.", flush=True)
+                    time.sleep(300)  # Print message every 5 minutes 
 
 def file_exists(path):
     try:

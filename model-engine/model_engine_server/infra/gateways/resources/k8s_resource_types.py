@@ -536,9 +536,11 @@ def get_endpoint_resource_arguments_from_request(
 
     service_name_override = service_name_override or k8s_resource_group_name
 
-    storage_dict = DictStrStr("")
+    # Original simple storage configuration
     if storage is not None:
         storage_dict = DictStrStr(f'ephemeral-storage: "{storage}"')
+    else:
+        storage_dict = DictStrStr("")
 
     change_cause_message = (
         f"Deployment at {datetime.utcnow()} UTC. "
@@ -676,6 +678,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -726,6 +729,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -778,6 +782,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -825,6 +830,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -874,6 +880,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -920,6 +927,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -968,6 +976,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -1026,6 +1035,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -1086,6 +1096,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -1140,6 +1151,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -1199,6 +1211,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,

@@ -584,8 +584,8 @@ def test_load_model_weights_sub_commands(
     )
 
     expected_result = [
-        'pip install awscli',
-        'aws s3 sync s3://fake-checkpoint test_folder',
+        "pip install awscli || echo 'Failed to install awscli but continuing...'",
+        "aws s3 sync s3://fake-checkpoint test_folder --no-progress --max-concurrent-requests 10 --multipart-threshold 100MB --multipart-chunksize 50MB || echo 'Download failed but continuing for debugging...'",
     ]
     assert expected_result == subcommands
 
@@ -595,8 +595,8 @@ def test_load_model_weights_sub_commands(
     )
 
     expected_result = [
-        'pip install awscli',
-        'aws s3 sync s3://fake-checkpoint test_folder',
+        "pip install awscli || echo 'Failed to install awscli but continuing...'",
+        "aws s3 sync s3://fake-checkpoint test_folder --no-progress --max-concurrent-requests 10 --multipart-threshold 100MB --multipart-chunksize 50MB || echo 'Download failed but continuing for debugging...'",
     ]
     assert expected_result == subcommands
 
