@@ -214,7 +214,7 @@ async def run_server(args, **uvicorn_kwargs) -> None:
         app = build_app(args)
 
         model_config = await engine_client.get_model_config()
-        init_app_state(engine_client, model_config, app.state, args)
+        await init_app_state(engine_client, model_config, app.state, args)
 
         temp_socket.close()
         app.include_router(router)
