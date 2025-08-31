@@ -800,7 +800,7 @@ class CreateLLMModelBundleV1UseCase:
                                 "MODEL_NAME": model_name,
                             },
                             protocol="http",
-                            readiness_initial_delay_seconds=1800,
+                            readiness_initial_delay_seconds=120,
                         ),
                         metadata={},
                     ),
@@ -1049,7 +1049,7 @@ class CreateLLMModelBundleV1UseCase:
                 command=command,
                 streaming_command=command,
                 protocol="http",
-                readiness_initial_delay_seconds=1800,  # 30 minutes for large model downloads  
+                readiness_initial_delay_seconds=120,  # 30 minutes for large model downloads  
                 healthcheck_route="/health",  # Standard health check route
                 predict_route="/predict",
                 streaming_predict_route="/stream",
