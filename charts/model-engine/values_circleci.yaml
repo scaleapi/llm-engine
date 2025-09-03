@@ -1,6 +1,6 @@
 # This is a YAML-formatted file.
 
-fips_compliance: false
+celery_enable_sha256: false
 debug_mode: true
 
 #uncomment below if using a container image that requires nonroot (ex. chainguard)

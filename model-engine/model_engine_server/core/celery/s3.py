@@ -81,8 +81,8 @@ class S3Backend(KeyValueStoreBackend):
         key = bytes_to_str(key)
         s3_object = self._get_s3_object(key)
         
-        # Check if fips compliance mode is enabled via config
-        if infra_config().fips_compliance:
+        # Check if celery_enable_sha256 mode is enabled via config to use sha256 hash instead of md5
+        if infra_config().celery_enable_sha256:
             # Ensure value is bytes for hashing
             if isinstance(value, str):
                 value_bytes = value.encode('utf-8')
