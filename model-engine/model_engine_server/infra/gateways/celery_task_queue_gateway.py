@@ -16,6 +16,7 @@ from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.tracing.tracing_gateway import TracingGateway
 from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
+from model_engine_server.core.config import infra_config
 
 logger = make_logger(logger_name())
 backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
@@ -56,14 +57,17 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
         self.tracing_gateway = tracing_gateway
         
         # Log initialization
-        logger.info(
-            "Initializing CeleryTaskQueueGateway",
-            extra={
-                "broker_type": self.broker_type.value,
-                "backend_protocol": backend_protocol,
-                "infra_config_cloud_provider": infra_config().cloud_provider,
-            }
-        )
+        if not infra_config().debug_mode:
+            logger.info(f"Initializing CeleryTaskQueueGateway with broker: {self.broker_type.value}")
+        else:
+            logger.info(
+                "Initializing CeleryTaskQueueGateway",
+                extra={
+                    "broker_type": self.broker_type.value,
+                    "backend_protocol": backend_protocol,
+                    "infra_config_cloud_provider": infra_config().cloud_provider,
+                }
+            )
 
     def _get_celery_dest(self):
         if self.broker_type == BrokerType.SQS:
@@ -77,6 +81,8 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
 
     def _log_broker_details(self, celery_dest, queue_name: str):
         """Log detailed broker connection information for debugging"""
+        if not infra_config().debug_mode:
+            return
         try:
             broker_url = celery_dest.conf.broker_url
             backend_url = celery_dest.conf.result_backend
@@ -136,6 +142,8 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
 
     def _verify_task_enqueued(self, queue_name: str, task_id: str):
         """Verify the task actually made it to the queue"""
+        if not infra_config().debug_mode:
+            return
         if self.broker_type in [BrokerType.REDIS, BrokerType.REDIS_24H]:
             try:
                 redis_client = get_redis_instance(0)
@@ -189,39 +197,42 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
         send_start_time = time.time()
         
         # Log detailed send attempt
-        logger.info(
-            "Starting task send operation",
-            extra={
-                "task_name": task_name,
-                "queue_name": queue_name,
-                "broker_type": self.broker_type.value,
-                "args_provided": args is not None,
-                "kwargs_provided": kwargs is not None,
-                "args_count": len(args) if args else 0,
-                "kwargs_keys": list(kwargs.keys()) if kwargs else [],
-                "expires": expires,
-            }
-        )
+        if infra_config().debug_mode:
+            logger.info(
+                "Starting task send operation",
+                extra={
+                    "task_name": task_name,
+                    "queue_name": queue_name,
+                    "broker_type": self.broker_type.value,
+                    "args_provided": args is not None,
+                    "kwargs_provided": kwargs is not None,
+                    "args_count": len(args) if args else 0,
+                    "kwargs_keys": list(kwargs.keys()) if kwargs else [],
+                    "expires": expires,
+                }
+            )
         
         # Used for both endpoint infra creation and async tasks
         celery_dest = self._get_celery_dest()
         kwargs = kwargs or {}
         
         # Log broker details for debugging
-        self._log_broker_details(celery_dest, queue_name)
+        if infra_config().debug_mode:
+            self._log_broker_details(celery_dest, queue_name)
         
         with self.tracing_gateway.create_span("send_task_to_queue") as span:
             kwargs.update(self.tracing_gateway.encode_trace_kwargs())
             
             try:
-                logger.info(
-                    "Calling celery send_task",
-                    extra={
-                        "task_name": task_name,
-                        "queue_name": queue_name,
-                        "final_kwargs_keys": list(kwargs.keys()),
-                    }
-                )
+                if infra_config().debug_mode:
+                    logger.info(
+                        "Calling celery send_task",
+                        extra={
+                            "task_name": task_name,
+                            "queue_name": queue_name,
+                            "final_kwargs_keys": list(kwargs.keys()),
+                        }
+                    )
                 
                 res = celery_dest.send_task(
                     name=task_name,
@@ -229,8 +240,9 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     kwargs=kwargs,
                     queue=queue_name,
                 )
-                
-                send_duration = time.time() - send_start_time
+
+                if infra_config().debug_mode:
+                    send_duration = time.time() - send_start_time
                 
                 span.input = {
                     "queue_name": queue_name,
@@ -239,54 +251,68 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     "task_name": task_name,
                 }
                 span.output = {"task_id": res.id}
-                
-                logger.info(
-                    "Task sent successfully",
-                    extra={
-                        "task_id": res.id,
-                        "task_name": task_name,
-                        "queue_name": queue_name,
-                        "send_duration_seconds": send_duration,
-                        "broker_type": self.broker_type.value,
-                        "task_state": res.state,
-                    }
-                )
-                
-                # Verify the task actually made it to the queue
-                self._verify_task_enqueued(queue_name, res.id)
+                if infra_config().debug_mode:
+                    logger.info(
+                        "Task sent successfully",
+                        extra={
+                            "task_id": res.id,
+                            "task_name": task_name,
+                            "queue_name": queue_name,
+                            "send_duration_seconds": send_duration,
+                            "broker_type": self.broker_type.value,
+                            "task_state": res.state,
+                        }
+                    )
+                    # Verify the task actually made it to the queue
+                    self._verify_task_enqueued(queue_name, res.id)
                 
             except botocore.exceptions.ClientError as e:
                 send_duration = time.time() - send_start_time
-                logger.error(
-                    "ClientError sending task to queue",
-                    extra={
-                        "queue_name": queue_name,
-                        "task_name": task_name,
-                        "broker_type": self.broker_type.value,
-                        "error_code": getattr(e, 'response', {}).get('Error', {}).get('Code'),
-                        "error_message": str(e),
-                        "send_duration_seconds": send_duration,
-                    }
-                )
+                
+                if infra_config().debug_mode:
+                    # Debug mode - detailed error logging
+                    logger.error(
+                        "ClientError sending task to queue",
+                        extra={
+                            "queue_name": queue_name,
+                            "task_name": task_name,
+                            "broker_type": self.broker_type.value,
+                            "error_code": getattr(e, 'response', {}).get('Error', {}).get('Code'),
+                            "error_message": str(e),
+                            "send_duration_seconds": send_duration,
+                        }
+                    )
+                else:
+                    # Production mode - simple error with stack trace
+                    logger.exception(f"Error sending task to queue {queue_name}: {e}")
+                
                 raise InvalidRequestException(f"Error sending celery task: {e}")
+                
             except Exception as e:
                 send_duration = time.time() - send_start_time
-                logger.error(
-                    "Unexpected error sending task to queue",
-                    extra={
-                        "queue_name": queue_name,
-                        "task_name": task_name,
-                        "broker_type": self.broker_type.value,
-                        "error_type": type(e).__name__,
-                        "error_message": str(e),
-                        "send_duration_seconds": send_duration,
-                    }
-                )
+                
+                if infra_config().debug_mode:
+                    # Debug mode - detailed error logging
+                    logger.error(
+                        "Unexpected error sending task to queue",
+                        extra={
+                            "queue_name": queue_name,
+                            "task_name": task_name,
+                            "broker_type": self.broker_type.value,
+                            "error_type": type(e).__name__,
+                            "error_message": str(e),
+                            "send_duration_seconds": send_duration,
+                        }
+                    )
+                else:
+                    # Production mode - simple error with stack trace
+                    logger.exception(f"Error sending task to queue {queue_name}: {e}")
+                
                 raise
                 
             logger.info(
                 f"Task {res.id} sent to queue {queue_name} from gateway"
-            )  # Keep original log for compatibility
+            )
             
             return CreateAsyncTaskV1Response(task_id=res.id)
 

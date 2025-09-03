@@ -19,6 +19,12 @@ data:
     {{- end }}
   infra_service_config: |-
     env: {{ .Values.context | quote }}
+    {{- if .Values.federal }}
+    federal: {{ .Values.federal }}
+    {{- end }}
+    {{- if .Values.debug_mode }}
+    debug_mode: {{ .Values.debug_mode }}
+    {{- end }}
     {{- with .Values.config.values.infra }}
     {{- range $key, $value := . }}
     {{ $key }}: {{ $value | quote }}
@@ -48,6 +54,12 @@ data:
     {{- end }}
   infra_service_config: |-
     env: {{ .Values.context | quote }}
+    {{- if .Values.federal }}
+    federal: {{ .Values.federal }}
+    {{- end }}
+    {{- if .Values.debug_mode }}
+    debug_mode: {{ .Values.debug_mode }}
+    {{- end }}
     {{- with .Values.config.values.infra }}
     {{- range $key, $value := . }}
     {{ $key }}: {{ $value | quote }}

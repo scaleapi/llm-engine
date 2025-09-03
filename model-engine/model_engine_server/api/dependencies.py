@@ -9,7 +9,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
-from model_engine_server.common.env_vars import CIRCLECI, PROD
+from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.auth.authentication_repository import AuthenticationRepository, User
 from model_engine_server.core.auth.fake_authentication_repository import (
     FakeAuthenticationRepository,
@@ -238,7 +238,7 @@ def _get_external_interfaces(
     elif infra_config().cloud_provider == "azure":
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
-    elif PROD:
+    elif infra_config().redis_host:
         inference_task_queue_gateway = redis_task_queue_gateway
         infra_task_queue_gateway = redis_task_queue_gateway
     else:

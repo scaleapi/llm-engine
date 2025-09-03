@@ -1,6 +1,13 @@
 dd_trace_enabled: true
 spellbook:
   enabled: false
+
+# federal [optional] enables federal compliance mode (FIPS, enhanced security)
+federal: null
+
+# debug_mode [optional] enables detailed debug logging for infrastructure components  
+debug_mode: null # Enable debug mode for CircleCI testing
+
 redis:
   auth:
   enableTLS: false

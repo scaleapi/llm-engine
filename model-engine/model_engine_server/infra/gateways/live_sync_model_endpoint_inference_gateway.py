@@ -92,49 +92,64 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
         # DEBUG: Log request details
-        logger.info(f"🔍 DEBUG: Making request to endpoint URL: {request_url}")
-        logger.info(f"🔍 DEBUG: Payload keys: {list(payload_json.keys()) if isinstance(payload_json, dict) else type(payload_json)}")
-        logger.info(f"🔍 DEBUG: Payload size: {len(str(payload_json))} chars")
+        if not hmi_config.sensitive_log_mode:
+            logger.info(f"DEBUG: Making request to endpoint URL: {request_url}")
+            logger.info(f"DEBUG: Payload keys: {list(payload_json.keys()) if isinstance(payload_json, dict) else type(payload_json)}")
+            logger.info(f"DEBUG: Payload size: {len(str(payload_json))} chars")
 
         headers = {"Content-Type": "application/json"}
         headers.update(self.tracing_gateway.encode_trace_headers())
 
         if self.use_asyncio:
-            logger.info("🔍 DEBUG: Using asyncio/aiohttp for request")
+            if not hmi_config.sensitive_log_mode:
+                logger.info(" DEBUG: Using asyncio/aiohttp for request")
             try:
                 async with aiohttp.ClientSession(json_serialize=_serialize_json) as client:
-                    logger.info(f"🔍 DEBUG: About to POST to {request_url}")
+                    if not hmi_config.sensitive_log_mode:
+                        logger.info(f"DEBUG: About to POST to {request_url}")
                     aio_resp = await client.post(
                         request_url,
                         json=payload_json,
                         headers=headers,
                     )
                     status = aio_resp.status
-                    logger.info(f"🔍 DEBUG: Response status: {status}")
+                    if not hmi_config.sensitive_log_mode:
+                        logger.info(f"DEBUG: Response status: {status}")
                     if status == 200:
                         return await aio_resp.json()
                     content = await aio_resp.read()
-                    logger.warning(f"🔍 DEBUG: Non-200 response. Status: {status}, Content: {content}")
+                    if not hmi_config.sensitive_log_mode:
+                        logger.warning(f"DEBUG: Non-200 response. Status: {status}, Content: {content}")
             except Exception as e:
-                logger.error(f"🔍 DEBUG: Exception during aiohttp request: {type(e).__name__}: {e}")
+                if not hmi_config.sensitive_log_mode:
+                    logger.error(f"🔍 DEBUG: Exception during aiohttp request: {type(e).__name__}: {e}")
+                else:
+                    logger.exception(f"aiohttp request failed to {request_url}")
                 raise
         else:
-            logger.info("🔍 DEBUG: Using requests library for request")
+            if not hmi_config.sensitive_log_mode:
+                logger.info("DEBUG: Using requests library for request")
             try:
-                logger.info(f"🔍 DEBUG: About to POST to {request_url}")
+                if not hmi_config.sensitive_log_mode:
+                    logger.info(f"DEBUG: About to POST to {request_url}")
                 resp = requests.post(
                     request_url,
                     json=payload_json,
                     headers=headers,
                 )
                 status = resp.status_code
-                logger.info(f"🔍 DEBUG: Response status: {status}")
+                if not hmi_config.sensitive_log_mode:
+                    logger.info(f"DEBUG: Response status: {status}")
                 if status == 200:
                     return resp.json()
                 content = resp.content
-                logger.warning(f"🔍 DEBUG: Non-200 response. Status: {status}, Content: {content}")
+                if not hmi_config.sensitive_log_mode:
+                    logger.warning(f"DEBUG: Non-200 response. Status: {status}, Content: {content}")
             except Exception as e:
-                logger.error(f"🔍 DEBUG: Exception during requests call: {type(e).__name__}: {e}")
+                if not hmi_config.sensitive_log_mode:
+                    logger.error(f"DEBUG: Exception during requests call: {type(e).__name__}: {e}")
+                else:
+                    logger.exception(f"requests call failed to {request_url}")
                 raise
 
         # Need to have these exceptions raised outside the async context so that

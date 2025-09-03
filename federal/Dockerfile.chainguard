@@ -1,3 +1,4 @@
+# federal/Dockerfile.chainguard
 FROM cgr.dev/scale.com/python-fips:3.10.15-dev
 WORKDIR /workspace
 USER root
@@ -22,7 +23,7 @@ RUN chmod -R 777 /workspace
 
 RUN pip install awscli==1.34.28 --no-cache-dir
 
-COPY model-engine/sitecustomize.py /usr/lib/python3.10/site-packages/sitecustomize.py
+COPY federal/sitecustomize.py /usr/lib/python3.10/site-packages/sitecustomize.py
 
 WORKDIR /workspace/model-engine/
 COPY model-engine/requirements-test.txt /workspace/model-engine/requirements-test.txt

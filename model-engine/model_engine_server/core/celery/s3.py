@@ -9,6 +9,7 @@ import tenacity
 from celery.backends.base import KeyValueStoreBackend
 from celery.exceptions import ImproperlyConfigured
 from kombu.utils.encoding import bytes_to_str
+from model_engine_server.core.config import infra_config
 
 try:
     import botocore
@@ -80,19 +81,24 @@ class S3Backend(KeyValueStoreBackend):
         key = bytes_to_str(key)
         s3_object = self._get_s3_object(key)
         
-        # Ensure value is bytes for hashing
-        if isinstance(value, str):
-            value_bytes = value.encode('utf-8')
+        # Check if federal compliance mode is enabled via config
+        if infra_config().federal:
+            # Keep existing federal compliance implementation
+            # Ensure value is bytes for hashing
+            if isinstance(value, str):
+                value_bytes = value.encode('utf-8')
+            else:
+                value_bytes = value
+                
+            sha256_hash = hashlib.sha256(value_bytes).digest()
+            checksum_sha256 = base64.b64encode(sha256_hash).decode('utf-8')
+            s3_object.put(
+                Body=value,  # S3 can handle both str and bytes
+                ChecksumAlgorithm='SHA256',
+                ChecksumSHA256=checksum_sha256
+            )
         else:
-            value_bytes = value
-            
-        sha256_hash = hashlib.sha256(value_bytes).digest()
-        checksum_sha256 = base64.b64encode(sha256_hash).decode('utf-8')
-        s3_object.put(
-            Body=value,  # S3 can handle both str and bytes
-            ChecksumAlgorithm='SHA256',
-            ChecksumSHA256=checksum_sha256
-        )
+            s3_object.put(Body=value)
 
     def delete(self, key):
         key = bytes_to_str(key)

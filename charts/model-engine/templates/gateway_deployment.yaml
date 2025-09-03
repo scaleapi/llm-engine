@@ -37,10 +37,31 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.federal }}
+      securityContext:
+        runAsUser: 65532
+        runAsGroup: 65532
+        runAsNonRoot: true
+        fsGroup: 65532
+      {{- else if .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- end }}
       terminationGracePeriodSeconds: 60
       priorityClassName: model-engine-high-priority
       containers:
         - name: {{ include "modelEngine.fullname" . }}
+          {{- if .Values.federal }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+          {{- else if .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          {{- end }}
           image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
