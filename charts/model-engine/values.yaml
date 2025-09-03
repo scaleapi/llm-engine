@@ -2,11 +2,25 @@ dd_trace_enabled: true
 spellbook:
   enabled: false
 
-# federal [optional] enables federal compliance mode (FIPS, enhanced security)
-federal: null
+# fips_compliance  [optional] enables federal compliance mode (FIPS, enhanced security)
+fips_compliance : null
 
 # debug_mode [optional] enables detailed debug logging for infrastructure components  
 debug_mode: null # Enable debug mode for CircleCI testing
+
+#uncomment below if using a container image that requires nonroot (ex. chainguard)
+# podSecurityContext:
+#   runAsUser: 65532     
+#   runAsGroup: 65532    
+#   runAsNonRoot: true
+#   fsGroup: 65532  
+
+# containerSecurityContext:
+#   allowPrivilegeEscalation: false
+#   readOnlyRootFilesystem: false
+#   capabilities:
+#     drop:
+#       - ALL  
 
 redis:
   auth:

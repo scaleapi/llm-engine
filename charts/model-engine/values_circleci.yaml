@@ -1,7 +1,21 @@
 # This is a YAML-formatted file.
 
-federal: false
+fips_compliance: false
 debug_mode: true
+
+#uncomment below if using a container image that requires nonroot (ex. chainguard)
+# podSecurityContext:
+#   runAsUser: 65532     
+#   runAsGroup: 65532    
+#   runAsNonRoot: true
+#   fsGroup: 65532  
+
+# containerSecurityContext:
+#   allowPrivilegeEscalation: false
+#   readOnlyRootFilesystem: false
+#   capabilities:
+#     drop:
+#       - ALL  
 
 replicaCount:
   gateway: 1

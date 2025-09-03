@@ -1,10 +1,24 @@
 # This is a YAML-formatted file.
 
-# federal [optional] enables federal compliance mode (FIPS, enhanced security)
-federal: null
+# fips_compliance [optional] enables federal compliance mode (FIPS, enhanced security)
+fips_compliance: null
 
 # debug_mode [optional] enables detailed debug logging for infrastructure components  
 debug_mode: null # Enable debug mode for CircleCI testing
+
+#uncomment below if using a container image that requires nonroot (ex. chainguard)
+# podSecurityContext:
+#   runAsUser: 65532     
+#   runAsGroup: 65532    
+#   runAsNonRoot: true
+#   fsGroup: 65532  
+
+# containerSecurityContext:
+#   allowPrivilegeEscalation: false
+#   readOnlyRootFilesystem: false
+#   capabilities:
+#     drop:
+#       - ALL  
 
 # tag [required] is the LLM Engine docker image tag
 tag: 60ac144c55aad971cdd7f152f4f7816ce2fb7d2f

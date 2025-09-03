@@ -140,52 +140,6 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                 }
             )
 
-    def _verify_task_enqueued(self, queue_name: str, task_id: str):
-        """Verify the task actually made it to the queue"""
-        if not infra_config().debug_mode:
-            return
-        if self.broker_type in [BrokerType.REDIS, BrokerType.REDIS_24H]:
-            try:
-                redis_client = get_redis_instance(0)
-                queue_length_after = redis_client.llen(queue_name)
-                
-                # Check if our task ID appears in the queue
-                queue_contents = redis_client.lrange(queue_name, -5, -1)  # Last 5 items
-                task_found_in_queue = any(task_id.encode() in item for item in queue_contents)
-                
-                redis_client.close()
-                
-                logger.info(
-                    "Post-send queue verification",
-                    extra={
-                        "queue_name": queue_name,
-                        "task_id": task_id,
-                        "queue_length_after_send": queue_length_after,
-                        "task_found_in_queue": task_found_in_queue,
-                        "last_queue_items_count": len(queue_contents),
-                    }
-                )
-                
-                if not task_found_in_queue:
-                    logger.warning(
-                        "Task ID not found in queue after sending!",
-                        extra={
-                            "queue_name": queue_name,
-                            "task_id": task_id,
-                            "queue_length": queue_length_after,
-                        }
-                    )
-                    
-            except Exception as e:
-                logger.warning(
-                    "Failed to verify task enqueuing",
-                    extra={
-                        "queue_name": queue_name,
-                        "task_id": task_id,
-                        "error": str(e),
-                    }
-                )
-
     def send_task(
         self,
         task_name: str,

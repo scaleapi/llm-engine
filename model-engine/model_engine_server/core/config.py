@@ -49,7 +49,7 @@ class _InfraConfig:
     firehose_role_arn: Optional[str] = None
     firehose_stream_name: Optional[str] = None
     prometheus_server_address: Optional[str] = None
-    federal: Optional[bool] = None
+    fips_compliance: Optional[bool] = None
     debug_mode: Optional[bool] = None
 
 

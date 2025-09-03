@@ -29,28 +29,15 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.federal }}
+      {{- with .Values.podSecurityContext }}
       securityContext:
-        runAsUser: 65532
-        runAsGroup: 65532
-        runAsNonRoot: true
-        fsGroup: 65532
-      {{- else if .Values.podSecurityContext }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: {{ include "modelEngine.cachername" . }}
-          {{- if .Values.federal }}
+          {{- with .Values.containerSecurityContext }}
           securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
-            capabilities:
-              drop:
-                - ALL
-          {{- else if .Values.containerSecurityContext }}
-          securityContext:
-            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}

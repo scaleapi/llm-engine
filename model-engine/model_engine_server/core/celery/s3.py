@@ -81,9 +81,8 @@ class S3Backend(KeyValueStoreBackend):
         key = bytes_to_str(key)
         s3_object = self._get_s3_object(key)
         
-        # Check if federal compliance mode is enabled via config
-        if infra_config().federal:
-            # Keep existing federal compliance implementation
+        # Check if fips compliance mode is enabled via config
+        if infra_config().fips_compliance:
             # Ensure value is bytes for hashing
             if isinstance(value, str):
                 value_bytes = value.encode('utf-8')
@@ -93,7 +92,7 @@ class S3Backend(KeyValueStoreBackend):
             sha256_hash = hashlib.sha256(value_bytes).digest()
             checksum_sha256 = base64.b64encode(sha256_hash).decode('utf-8')
             s3_object.put(
-                Body=value,  # S3 can handle both str and bytes
+                Body=value,
                 ChecksumAlgorithm='SHA256',
                 ChecksumSHA256=checksum_sha256
             )
