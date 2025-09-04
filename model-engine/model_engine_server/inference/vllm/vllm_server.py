@@ -23,7 +23,7 @@ from vllm.entrypoints.openai.api_server import (
     init_app_state,
     load_log_config,
     maybe_register_tokenizer_info_endpoint,
-    run_server,
+    setup_server,
 )
 from vllm.entrypoints.openai.cli_args import make_arg_parser
 from vllm.entrypoints.openai.tool_parsers import ToolParserManager
@@ -201,6 +201,12 @@ def parse_args(parser: FlexibleArgumentParser):
     parser = make_arg_parser(parser)
     parser.add_argument("--attention-backend", type=str, help="The attention backend to use")
     return parser.parse_args()
+
+
+async def run_server(args, **uvicorn_kwargs) -> None:
+    """Run a single-worker API server."""
+    listen_address, sock = setup_server(args)
+    await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
 
 
 async def run_server_worker(
