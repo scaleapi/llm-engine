@@ -40,8 +40,11 @@ class _InfraConfig:
     default_region: str
     ml_account_id: str
     docker_repo_prefix: str
-    s3_bucket: str
+    s3_bucket: Optional[str] = None  # Optional for on-premises
+    aws_endpoint_url: Optional[str] = None  # Optional for on-premises S3
     redis_host: Optional[str] = None
+    redis_port: Optional[str] = "6379"
+    redis_password: Optional[str] = None
     redis_aws_secret_name: Optional[str] = None
     profile_ml_worker: str = "default"
     profile_ml_inference_worker: str = "default"
@@ -64,6 +67,16 @@ class DBEngineConfig:
 class InfraConfig(DBEngineConfig, _InfraConfig):
     @classmethod
     def from_json(cls, json):
+        # Handle missing AWS parameters for on-premises environments
+        if json.get("cloud_provider") == "onprem":
+            # Set default values for AWS-specific fields when they're missing
+            if "s3_bucket" not in json:
+                json["s3_bucket"] = None
+            if "ml_account_id" not in json:
+                json["ml_account_id"] = "000000000000"
+            if "default_region" not in json:
+                json["default_region"] = "local"
+        
         return cls(**{k: v for k, v in json.items() if k in inspect.signature(cls).parameters})
 
     @classmethod

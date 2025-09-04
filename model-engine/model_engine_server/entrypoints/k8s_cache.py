@@ -124,6 +124,8 @@ async def main(args: Any):
     docker_repo: DockerRepository
     if CIRCLECI:
         docker_repo = FakeDockerRepository()
+    elif infra_config().cloud_provider == "onprem":
+        docker_repo = FakeDockerRepository()
     elif infra_config().docker_repo_prefix.endswith("azurecr.io"):
         docker_repo = ACRDockerRepository()
     else:

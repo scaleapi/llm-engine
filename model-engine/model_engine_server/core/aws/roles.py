@@ -12,6 +12,7 @@ import boto3
 from boto3 import Session, client
 from botocore.client import BaseClient
 from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.core.config import infra_config
 
 logger = make_logger(logger_name())
 

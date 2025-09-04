@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any, Dict, List, Optional
 
 import botocore
@@ -18,28 +19,67 @@ from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGate
 logger = make_logger(logger_name())
 backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
 
-celery_redis = celery_app(
-    None,
-    s3_bucket=infra_config().s3_bucket,
-    broker_type=str(BrokerType.REDIS.value),
-    backend_protocol=backend_protocol,
-)
-celery_redis_24h = celery_app(
-    None,
-    s3_bucket=infra_config().s3_bucket,
-    broker_type=str(BrokerType.REDIS.value),
-    task_visibility=TaskVisibility.VISIBILITY_24H,
-    backend_protocol=backend_protocol,
-)
-celery_sqs = celery_app(
-    None,
-    s3_bucket=infra_config().s3_bucket,
-    broker_type=str(BrokerType.SQS.value),
-    backend_protocol=backend_protocol,
-)
-celery_servicebus = celery_app(
-    None, broker_type=str(BrokerType.SERVICEBUS.value), backend_protocol=backend_protocol
-)
+# Initialize celery apps lazily to avoid import-time AWS session creation
+celery_redis = None
+celery_redis_24h = None
+celery_sqs = None
+celery_servicebus = None
+
+def _get_celery_redis():
+    global celery_redis
+    if celery_redis is None:
+        celery_redis = celery_app(
+            None,
+            s3_bucket=infra_config().s3_bucket,
+            broker_type=str(BrokerType.REDIS.value),
+            backend_protocol=backend_protocol,
+        )
+    return celery_redis
+
+def _get_celery_redis_24h():
+    global celery_redis_24h
+    if celery_redis_24h is None:
+        celery_redis_24h = celery_app(
+            None,
+            s3_bucket=infra_config().s3_bucket,
+            broker_type=str(BrokerType.REDIS.value),
+            task_visibility=TaskVisibility.VISIBILITY_24H,
+            backend_protocol=backend_protocol,
+        )
+    return celery_redis_24h
+
+def _get_celery_sqs():
+    global celery_sqs
+    if celery_sqs is None:
+        # For on-premises environments, use Redis instead of SQS
+        if infra_config().cloud_provider == "onprem":
+            logger.info("Using Redis broker for on-premises environment instead of SQS")
+            return _get_celery_redis()
+        # Check if SQS broker is disabled via cloud provider
+        if infra_config().cloud_provider != "aws":
+            raise ValueError(f"SQS broker requires AWS cloud provider, but current provider is {infra_config().cloud_provider}")
+        celery_sqs = celery_app(
+            None,
+            s3_bucket=infra_config().s3_bucket,
+            broker_type=str(BrokerType.SQS.value),
+            backend_protocol=backend_protocol,
+        )
+    return celery_sqs
+
+def _get_celery_servicebus():
+    global celery_servicebus
+    if celery_servicebus is None:
+        # For on-premises environments, use Redis instead of ServiceBus
+        if infra_config().cloud_provider == "onprem":
+            logger.info("Using Redis broker for on-premises environment instead of ServiceBus")
+            return _get_celery_redis()
+        # Check if ServiceBus broker is disabled via cloud provider
+        if infra_config().cloud_provider != "azure":
+            raise ValueError(f"ServiceBus broker requires Azure cloud provider, but current provider is {infra_config().cloud_provider}")
+        celery_servicebus = celery_app(
+            None, broker_type=str(BrokerType.SERVICEBUS.value), backend_protocol=backend_protocol
+        )
+    return celery_servicebus
 
 
 class CeleryTaskQueueGateway(TaskQueueGateway):
@@ -55,13 +95,13 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
 
     def _get_celery_dest(self):
         if self.broker_type == BrokerType.SQS:
-            return celery_sqs
+            return _get_celery_sqs()
         elif self.broker_type == BrokerType.REDIS_24H:
-            return celery_redis_24h
+            return _get_celery_redis_24h()
         elif self.broker_type == BrokerType.REDIS:
-            return celery_redis
+            return _get_celery_redis()
         else:
-            return celery_servicebus
+            return _get_celery_servicebus()
 
     def send_task(
         self,

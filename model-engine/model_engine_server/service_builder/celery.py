@@ -8,6 +8,8 @@ if CIRCLECI:
     service_builder_broker_type = str(BrokerType.REDIS.value)
 elif infra_config().cloud_provider == "azure":
     service_builder_broker_type = str(BrokerType.SERVICEBUS.value)
+elif infra_config().cloud_provider == "onprem":
+    service_builder_broker_type = str(BrokerType.REDIS.value)
 else:
     service_builder_broker_type = str(BrokerType.SQS.value)
 
@@ -18,7 +20,7 @@ service_builder_service = celery_app(
     ],
     s3_bucket=infra_config().s3_bucket,
     broker_type=service_builder_broker_type,
-    backend_protocol="abs" if infra_config().cloud_provider == "azure" else "s3",
+    backend_protocol="abs" if infra_config().cloud_provider == "azure" else "redis" if infra_config().cloud_provider == "onprem" else "s3",
 )
 
 if __name__ == "__main__":

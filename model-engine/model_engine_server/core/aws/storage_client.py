@@ -1,6 +1,8 @@
+import os
 import time
 from typing import IO, Callable, Iterable, Optional, Sequence
 
+import boto3
 import smart_open
 from botocore.client import BaseClient
 from model_engine_server.core.aws.roles import session
@@ -20,7 +22,21 @@ __all__: Sequence[str] = (
 
 
 def sync_storage_client(**kwargs) -> BaseClient:
-    return session(infra_config().profile_ml_worker).client("s3", **kwargs)  # type: ignore
+    # Support custom endpoints for S3-compatible storage
+    endpoint_url = kwargs.get("endpoint_url") or os.getenv("AWS_ENDPOINT_URL")
+    if endpoint_url and "endpoint_url" not in kwargs:
+        kwargs["endpoint_url"] = endpoint_url
+    
+    if infra_config().cloud_provider == "onprem":
+        # For onprem, use explicit credentials from environment variables
+        boto3_session = boto3.Session(
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name=infra_config().default_region
+        )
+        return boto3_session.client("s3", **kwargs)
+    else:
+        return session(infra_config().profile_ml_worker).client("s3", **kwargs)  # type: ignore
 
 
 def open(uri: str, mode: str = "rt", **kwargs) -> IO:  # pylint: disable=redefined-builtin

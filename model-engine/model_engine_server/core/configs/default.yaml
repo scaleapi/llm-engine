@@ -6,6 +6,8 @@ default_region: "us-west-2"
 ml_account_id: "000000000000"
 docker_repo_prefix: "000000000000.dkr.ecr.us-west-2.amazonaws.com"
 redis_host: "redis-message-broker-master.default"
+redis_port: "6379"
+redis_password: null
 s3_bucket: "test-bucket"
 profile_ml_worker: "default"
 profile_ml_inference_worker: "default"

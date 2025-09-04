@@ -530,18 +530,26 @@ def _get_backend_url_and_conf(
         # use db_num=1 for backend to differentiate from broker
         backend_url = get_redis_endpoint(1)
     elif backend_protocol == "s3":
-        backend_url = "s3://"
-        if aws_role is None:
-            aws_session = session(infra_config().profile_ml_worker)
+        # For on-premises environments, use Redis backend instead of S3
+        if infra_config().cloud_provider == "onprem":
+            logger.info("Using Redis backend for on-premises environment instead of S3")
+            backend_url = get_redis_endpoint(1)
+        elif infra_config().cloud_provider != "aws":
+            raise ValueError(f"S3 backend requires AWS cloud provider, but current provider is {infra_config().cloud_provider}")
         else:
-            aws_session = session(aws_role)
-        out_conf_changes.update(
-            {
-                "s3_boto3_session": aws_session,
-                "s3_bucket": s3_bucket,
-                "s3_base_path": s3_base_path,
-            }
-        )
+            backend_url = "s3://"
+            if aws_role is None:
+                aws_session = session(infra_config().profile_ml_worker)
+            else:
+                aws_session = session(aws_role)
+            
+            out_conf_changes.update(
+                {
+                    "s3_boto3_session": aws_session,
+                    "s3_bucket": s3_bucket,
+                    "s3_base_path": s3_base_path,
+                }
+            )
     elif backend_protocol == "abs":
         backend_url = f"azureblockblob://{os.getenv('ABS_ACCOUNT_NAME')}"
     else:

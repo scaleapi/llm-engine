@@ -536,9 +536,11 @@ def get_endpoint_resource_arguments_from_request(
 
     service_name_override = service_name_override or k8s_resource_group_name
 
-    storage_dict = DictStrStr("")
+    # Original simple storage configuration
     if storage is not None:
         storage_dict = DictStrStr(f'ephemeral-storage: "{storage}"')
+    else:
+        storage_dict = DictStrStr("")
 
     change_cause_message = (
         f"Deployment at {datetime.utcnow()} UTC. "
@@ -560,6 +562,9 @@ def get_endpoint_resource_arguments_from_request(
     elif infra_config().cloud_provider == "azure":
         broker_name = BrokerName.SERVICEBUS.value
         broker_type = BrokerType.SERVICEBUS.value
+    elif infra_config().cloud_provider == "onprem":
+        broker_name = BrokerName.REDIS.value
+        broker_type = BrokerType.REDIS.value
     else:
         broker_name = BrokerName.SQS.value
         broker_type = BrokerType.SQS.value
@@ -570,9 +575,23 @@ def get_endpoint_resource_arguments_from_request(
     main_env = []
     if isinstance(flavor, RunnableImageLike) and flavor.env:
         main_env = [{"name": key, "value": value} for key, value in flavor.env.items()]
-    main_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
-    # NOTE: /opt/.aws/config is where service_template_config_map.yaml mounts the AWS config file, point to the mount for boto clients
-    main_env.append({"name": "AWS_CONFIG_FILE", "value": "/opt/.aws/config"})
+    
+    # Add environment variables based on cloud provider
+    if infra_config().cloud_provider == "onprem":
+        # On-prem S3 credentials from environment variables (injected by Helm secrets)
+        main_env.extend([
+            {"name": "AWS_ACCESS_KEY_ID", "valueFrom": {"secretKeyRef": {"name": "model-engine-object-storage-config", "key": "access-key"}}},
+            {"name": "AWS_SECRET_ACCESS_KEY", "valueFrom": {"secretKeyRef": {"name": "model-engine-object-storage-config", "key": "secret-key"}}},
+            {"name": "AWS_ENDPOINT_URL", "value": infra_config().aws_endpoint_url},
+            {"name": "AWS_REGION", "value": infra_config().default_region or "us-east-1"},
+            {"name": "AWS_S3_FORCE_PATH_STYLE", "value": "true"},
+        ])
+    else:
+        # AWS cloud deployments use AWS_PROFILE and AWS_CONFIG_FILE
+        main_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
+        # NOTE: /opt/.aws/config is where service_template_config_map.yaml mounts the AWS config file, point to the mount for boto clients
+        main_env.append({"name": "AWS_CONFIG_FILE", "value": "/opt/.aws/config"})
+    
     abs_account_name = os.getenv("ABS_ACCOUNT_NAME")
     if abs_account_name is not None:
         main_env.append({"name": "ABS_ACCOUNT_NAME", "value": abs_account_name})
@@ -581,8 +600,21 @@ def get_endpoint_resource_arguments_from_request(
     worker_env = None
     if isinstance(flavor, RunnableImageLike) and flavor.worker_env is not None:
         worker_env = [{"name": key, "value": value} for key, value in flavor.worker_env.items()]
-        worker_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
-        worker_env.append({"name": "AWS_CONFIG_FILE", "value": "/opt/.aws/config"})
+        
+        # Add worker environment variables based on cloud provider
+        if infra_config().cloud_provider == "onprem":
+            # On-prem S3 credentials for worker containers
+            worker_env.extend([
+                {"name": "AWS_ACCESS_KEY_ID", "valueFrom": {"secretKeyRef": {"name": "model-engine-object-storage-config", "key": "access-key"}}},
+                {"name": "AWS_SECRET_ACCESS_KEY", "valueFrom": {"secretKeyRef": {"name": "model-engine-object-storage-config", "key": "secret-key"}}},
+                {"name": "AWS_ENDPOINT_URL", "value": infra_config().aws_endpoint_url},
+                {"name": "AWS_REGION", "value": infra_config().default_region or "us-east-1"},
+                {"name": "AWS_S3_FORCE_PATH_STYLE", "value": "true"},
+            ])
+        else:
+            # AWS cloud deployments use AWS_PROFILE and AWS_CONFIG_FILE
+            worker_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
+            worker_env.append({"name": "AWS_CONFIG_FILE", "value": "/opt/.aws/config"})
 
     worker_command = None
     if isinstance(flavor, RunnableImageLike) and flavor.worker_command is not None:
@@ -646,6 +678,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -696,6 +729,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -748,6 +782,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -795,6 +830,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -844,6 +880,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -890,6 +927,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -938,6 +976,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -996,6 +1035,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -1056,6 +1096,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -1110,6 +1151,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
@@ -1169,6 +1211,7 @@ def get_endpoint_resource_arguments_from_request(
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
+
             PER_WORKER=build_endpoint_request.per_worker,
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,

@@ -8,6 +8,8 @@ DEFAULT_FILTER = {"tagStatus": "TAGGED"}
 
 
 def repository_exists(repository_name: str):
+    if infra_config().cloud_provider == "onprem":
+        return True  
     ecr = boto3.client("ecr", region_name=infra_config().default_region)
     try:
         response = ecr.describe_repositories(
@@ -37,6 +39,9 @@ def batch_image_exists(
     if filter is None:
         filter = DEFAULT_FILTER
 
+    if infra_config().cloud_provider == "onprem":
+        return True 
+    
     if aws_profile is None:
         client = boto3.client("ecr", region_name=region_name)
     else:
@@ -85,6 +90,8 @@ def image_exists(
 
 def ecr_exists_for_repo(repo_name: str, image_tag: Optional[str] = None):
     """Check if image exists in ECR"""
+    if infra_config().cloud_provider == "onprem":
+        return True  
     if image_tag is None:
         image_tag = tag()
     ecr = boto3.client("ecr", region_name=infra_config().default_region)
@@ -100,6 +107,31 @@ def ecr_exists_for_repo(repo_name: str, image_tag: Optional[str] = None):
 
 
 def get_latest_image_tag(repository_name: str):
+    if infra_config().cloud_provider == "onprem":
+        # For onprem, try to find explicitly configured tags first
+        from model_engine_server.common.config import hmi_config
+        
+        # Map repository names to config tag properties
+        # Note: This requires adding tag properties to HostedModelInferenceServiceConfig
+        tag_mapping = {
+            hmi_config.vllm_repository: getattr(hmi_config, 'vllm_tag', None),
+            hmi_config.tgi_repository: getattr(hmi_config, 'tgi_tag', None), 
+            hmi_config.lightllm_repository: getattr(hmi_config, 'lightllm_tag', None),
+            hmi_config.tensorrt_llm_repository: getattr(hmi_config, 'tensorrt_llm_tag', None),
+            hmi_config.batch_inference_vllm_repository: getattr(hmi_config, 'batch_inference_vllm_tag', None),
+        }
+        
+        # Check if we have an explicit tag for this repository
+        explicit_tag = tag_mapping.get(repository_name)
+        if explicit_tag:
+            return explicit_tag
+            
+        # If no explicit tag found, provide helpful error
+        raise NotImplementedError(
+            f"No explicit tag configured for repository '{repository_name}'. "
+            f"For on-premises deployments, please add '{repository_name.replace('/', '_')}_tag' "
+            f"to your values file configuration, or specify image tags explicitly in your deployment."
+        )
     ecr = boto3.client("ecr", region_name=infra_config().default_region)
     images = ecr.describe_images(
         registryId=infra_config().ml_account_id,

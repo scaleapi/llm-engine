@@ -185,19 +185,29 @@ def push(service_name: str, image_tag: Optional[str] = None) -> None:
     logger.info(f"push args: {local_args}")
     docker_client = docker.from_env()
 
-    ecr_client = boto3.client("ecr", region_name=infra_config().default_region)
-    token = ecr_client.get_authorization_token(registryIds=[infra_config().ml_account_id])
-    username, password = (
-        base64.b64decode(token["authorizationData"][0]["authorizationToken"]).decode().split(":")
-    )
+    if infra_config().cloud_provider == "onprem":
+        # For onprem, push without ECR authentication
+        output = docker_client.images.push(
+            repository=f"{infra_config().docker_repo_prefix}/{service_name}",
+            tag=_get_image_tag(image_tag),
+            stream=True,
+            decode=True,
+        )
+    else:
+        # For AWS, use ECR authentication
+        ecr_client = boto3.client("ecr", region_name=infra_config().default_region)
+        token = ecr_client.get_authorization_token(registryIds=[infra_config().ml_account_id])
+        username, password = (
+            base64.b64decode(token["authorizationData"][0]["authorizationToken"]).decode().split(":")
+        )
 
-    output = docker_client.images.push(
-        repository=f"{infra_config().docker_repo_prefix}/{service_name}",
-        tag=_get_image_tag(image_tag),
-        auth_config={"username": username, "password": password},
-        stream=True,
-        decode=True,
-    )
+        output = docker_client.images.push(
+            repository=f"{infra_config().docker_repo_prefix}/{service_name}",
+            tag=_get_image_tag(image_tag),
+            auth_config={"username": username, "password": password},
+            stream=True,
+            decode=True,
+        )
     for line in output:
         logger.info(line)
 

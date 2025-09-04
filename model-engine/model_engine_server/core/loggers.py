@@ -80,9 +80,24 @@ def make_standard_logger(name: str, log_level: int = logging.INFO) -> logging.Lo
         raise ValueError("Name must be a non-empty string.")
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
-    logging.basicConfig(
-        format=LOG_FORMAT,
-    )
+    
+    # Thread-safe logging configuration - only configure if not already configured
+    if not logger.handlers:
+        # Use a lock to prevent race conditions in multi-threaded environments
+        import threading
+        with threading.Lock():
+            if not logger.handlers:  # Double-check after acquiring lock
+                # Configure basic logging only if not already configured
+                if not logging.getLogger().handlers:
+                    logging.basicConfig(
+                        format=LOG_FORMAT,
+                    )
+                # Add handler to this specific logger if needed
+                if not logger.handlers:
+                    handler = logging.StreamHandler()
+                    handler.setFormatter(logging.Formatter(LOG_FORMAT))
+                    logger.addHandler(handler)
+    
     return logger
 
 

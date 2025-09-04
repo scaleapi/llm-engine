@@ -56,37 +56,119 @@ CPU_COUNT = get_cpu_cores_in_container()
 
 
 def get_s3_client():
-    session = boto3.Session(profile_name=os.getenv("S3_WRITE_AWS_PROFILE"))
-    return session.client("s3", region_name=AWS_REGION)
+    from model_engine_server.core.config import infra_config
+    
+    if infra_config().cloud_provider == "onprem":
+        # For onprem, use explicit credentials from environment variables
+        session = boto3.Session(
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name=infra_config().default_region
+        )
+    else:
+        session = boto3.Session(profile_name=os.getenv("S3_WRITE_AWS_PROFILE"))
+    
+    # Support custom endpoints for S3-compatible storage
+    endpoint_url = os.getenv("AWS_ENDPOINT_URL")
+    client_kwargs = {"region_name": infra_config().default_region}
+    if endpoint_url:
+        client_kwargs["endpoint_url"] = endpoint_url
+    
+    return session.client("s3", **client_kwargs)
 
 
 def download_model(checkpoint_path, final_weights_folder):
-    s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.bin' --include '*.safetensors' --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
-    env = os.environ.copy()
-    env["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
-    # Need to override these env vars so s5cmd uses AWS_PROFILE
-    env["AWS_ROLE_ARN"] = ""
-    env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
-    process = subprocess.Popen(
-        s5cmd,
-        shell=True,  # nosemgrep
+    # Support for third-party object storage (like Scality)
+    # AWS CLI works with Scality - so we install and use AWS CLI
+    endpoint_url = os.getenv("AWS_ENDPOINT_URL")
+    
+    # Install AWS CLI first (since it's not in the VLLM container by default)
+    print("Installing AWS CLI...", flush=True)
+    install_process = subprocess.Popen(
+        ["pip", "install", "awscli"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        env=env,
     )
-    for line in process.stdout:
-        print(line, flush=True)
+    install_process.wait()
+    
+    if install_process.returncode != 0:
+        print("Failed to install AWS CLI", flush=True)
+        return
+    
+    # Simple approach - download all files (basic AWS CLI v1 compatible)
+    if endpoint_url:
+        aws_cmd = f"aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --endpoint-url {endpoint_url} --no-progress"
+    else:
+        aws_cmd = f"aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --no-progress"
+    
+    env = os.environ.copy()
+    
+    # Configure credentials for object storage or AWS
+    if endpoint_url:
+        # Use object storage credentials when custom endpoint is specified
+        env["AWS_ACCESS_KEY_ID"] = os.getenv("AWS_ACCESS_KEY_ID", "")
+        env["AWS_SECRET_ACCESS_KEY"] = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+        env["AWS_ENDPOINT_URL"] = endpoint_url
+        env["AWS_REGION"] = os.getenv("AWS_REGION", "us-east-1")
+        # Disable AWS-specific features for third-party object storage
+        env["AWS_EC2_METADATA_DISABLED"] = "true"
+        env["AWS_ROLE_ARN"] = ""
+        env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
+    else:
+        # Use AWS profile for S3
+        env["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+        # Need to override these env vars so AWS CLI uses AWS_PROFILE
+        env["AWS_ROLE_ARN"] = ""
+        env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
+    
+    # Retry logic with exponential backoff
+    max_retries = 3
+    retry_delay = 10  # seconds
+    
+    for attempt in range(max_retries):
+        print(f"Running AWS CLI command (attempt {attempt + 1}/{max_retries}): {aws_cmd}", flush=True)
+        
+        process = subprocess.Popen(
+            aws_cmd,
+            shell=True,  # nosemgrep
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=env,
+        )
+        
+        for line in process.stdout:
+            print(line, flush=True)
 
-    process.wait()
+        process.wait()
 
-    if process.returncode != 0:
-        stderr_lines = []
-        for line in iter(process.stderr.readline, ""):
-            stderr_lines.append(line.strip())
+        if process.returncode == 0:
+            print("Model download completed successfully!", flush=True)
+            return
+        else:
+            # Handle errors
+            stderr_lines = []
+            for line in iter(process.stderr.readline, ""):
+                if line.strip():
+                    stderr_lines.append(line.strip())
 
-        print(f"Error downloading model weights: {stderr_lines}", flush=True)
-
+            print(f"Attempt {attempt + 1} failed with return code {process.returncode}", flush=True)
+            if stderr_lines:
+                print(f"Error output: {stderr_lines}", flush=True)
+            
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...", flush=True)
+                import time
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                print(f"All {max_retries} download attempts failed. Keeping container alive for debugging...", flush=True)
+                # Keep container running for debugging instead of raising error
+                import time
+                while True:
+                    print("Container is alive for debugging. Download failed but not exiting.", flush=True)
+                    time.sleep(300)  # Print message every 5 minutes 
 
 def file_exists(path):
     try:

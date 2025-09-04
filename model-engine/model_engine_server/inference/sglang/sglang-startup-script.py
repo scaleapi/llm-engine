@@ -37,32 +37,31 @@ def main(
     leader_port: int,
     s3_path: str,
 ):
-    # 1) Download the DeepSeek model using s5cmd
+    # 1) Download the model using AWS CLI (works with Scality)
     model_path = f"/data/model_files/{model}"
     os.makedirs(model_path, exist_ok=True)
 
-    s5cmd_cmd = [
-        "s5cmd",
-        "--numworkers=512",
-        "cp",
-        "--concurrency=10",
-        "--include",
-        "*.model",
-        "--include",
-        "*.json",
-        "--include",
-        "*.safetensors",
-        "--include",
-        "*.py",
-        "--include",
-        "tokenizer.model.v*",
-        "--exclude",
-        "optimizer*",
-        f"s3://{s3_path}/{model}/*",
-        model_path,
-    ]
-    print("Running s5cmd download command...")
-    subprocess.check_call(s5cmd_cmd)
+    # Install AWS CLI first (since it's not in the SGLang container by default)
+    print("Installing AWS CLI...")
+    install_cmd = ["pip", "install", "awscli"]
+    subprocess.check_call(install_cmd)
+    print("AWS CLI installation complete.")
+
+    # Build AWS CLI sync command with include/exclude filters
+    endpoint_url = os.getenv("AWS_ENDPOINT_URL")
+    # Simple approach - download all files (no filtering)
+    include_args = []
+    exclude_args = []
+    
+    # Simple approach - download all files (no filtering)
+    
+    aws_cmd = ["aws", "s3", "sync", f"s3://{s3_path}/{model}/", model_path]
+    if endpoint_url:
+        aws_cmd.extend(["--endpoint-url", endpoint_url])
+    aws_cmd.extend(["--no-progress", "--max-concurrent-requests", "10", "--multipart-threshold", "100MB", "--multipart-chunksize", "50MB"])
+    
+    print("Running AWS CLI download command...")
+    subprocess.check_call(aws_cmd)
     print("Download complete.")
 
     # 2) Wait for both the leader and current Pod DNS to resolve
