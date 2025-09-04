@@ -4,7 +4,7 @@ set -eo pipefail
 
 # Build and push vLLM docker image to AWS ECR.
 #
-# Usage: VLLM_VERSION=0.6.6.post1 ./build_and_upload_image.sh <AWS_ACCOUNT_ID> <IMAGE_TAG> vllm|vllm_batch|vllm_batch_v2
+# Usage: VLLM_VERSION=0.10.0 ./build_and_upload_image.sh <AWS_ACCOUNT_ID> <IMAGE_TAG> vllm|vllm_batch|vllm_batch_v2
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PROJECT_DIR=$SCRIPT_DIR/../../../..
@@ -29,7 +29,7 @@ fi
 ACCOUNT=$1
 IMAGE_TAG=$2
 BUILD_TARGET=$3
-VLLM_VERSION=${VLLM_VERSION:-"0.6.6.post1"}
+VLLM_VERSION=${VLLM_VERSION:-"0.10.0"}
 VLLM_BASE_REPO=${VLLM_BASE_REPO:-"vllm/vllm-openai"}
 
 # if build target = vllm use vllm otherwise use vllm_batch
