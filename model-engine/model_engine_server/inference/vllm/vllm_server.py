@@ -3,12 +3,12 @@ import code
 import json
 import os
 import signal
-import socket
 import subprocess
 import traceback
 from logging import Logger
 from typing import AsyncGenerator, Dict, List, Optional
 
+import vllm.envs as envs
 from fastapi import APIRouter, BackgroundTasks, Request
 from fastapi.responses import Response, StreamingResponse
 from vllm.engine.async_llm_engine import (
@@ -17,14 +17,20 @@ from vllm.engine.async_llm_engine import (
 )
 from vllm.engine.protocol import EngineClient
 from vllm.entrypoints.launcher import serve_http
-from vllm.entrypoints.openai.api_server import build_app, build_async_engine_client, create_server_socket, init_app_state, load_log_config, maybe_register_tokenizer_info_endpoint, run_server
+from vllm.entrypoints.openai.api_server import (
+    build_app,
+    build_async_engine_client,
+    init_app_state,
+    load_log_config,
+    maybe_register_tokenizer_info_endpoint,
+    run_server,
+)
 from vllm.entrypoints.openai.cli_args import make_arg_parser
 from vllm.entrypoints.openai.tool_parsers import ToolParserManager
 from vllm.outputs import CompletionOutput
 from vllm.sampling_params import SamplingParams
 from vllm.sequence import Logprob
-from vllm.utils import FlexibleArgumentParser, is_valid_ipv6_address, random_uuid, set_ulimit
-from vllm.version import __version__ as VLLM_VERSION
+from vllm.utils import FlexibleArgumentParser, random_uuid
 
 logger = Logger("vllm_server")
 
@@ -196,11 +202,10 @@ def parse_args(parser: FlexibleArgumentParser):
     parser.add_argument("--attention-backend", type=str, help="The attention backend to use")
     return parser.parse_args()
 
-async def run_server_worker(listen_address,
-                            sock,
-                            args,
-                            client_config=None,
-                            **uvicorn_kwargs) -> None:
+
+async def run_server_worker(
+    listen_address, sock, args, client_config=None, **uvicorn_kwargs
+) -> None:
     """Run a single API server worker."""
 
     if args.tool_parser_plugin and len(args.tool_parser_plugin) > 3:
@@ -211,7 +216,7 @@ async def run_server_worker(listen_address,
     # Load logging config for uvicorn if specified
     log_config = load_log_config(args.log_config_file)
     if log_config is not None:
-        uvicorn_kwargs['log_config'] = log_config
+        uvicorn_kwargs["log_config"] = log_config
 
     global engine_client
 
@@ -223,8 +228,7 @@ async def run_server_worker(listen_address,
         await init_app_state(engine_client, vllm_config, app.state, args)
         app.include_router(router)
 
-        logger.info("Starting vLLM API server %d on %s", server_index,
-                    listen_address)
+        logger.info("Starting vLLM API server %d on %s", server_index, listen_address)
         shutdown_task = await serve_http(
             app,
             sock=sock,
