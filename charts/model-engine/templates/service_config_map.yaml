@@ -19,11 +19,14 @@ data:
     {{- end }}
   infra_service_config: |-
     env: {{ .Values.context | quote }}
-    {{- if .Values.federal }}
-    federal: {{ .Values.federal }}
+    {{- if .Values.celery_enable_sha256 }}
+    celery_enable_sha256: {{ .Values.celery_enable_sha256 }}
     {{- end }}
     {{- if .Values.debug_mode }}
     debug_mode: {{ .Values.debug_mode }}
+    {{- end }}
+    {{- if .Values.celery_broker_type_redis }}
+    celery_broker_type_redis: {{ .Values.celery_broker_type_redis }}
     {{- end }}
     {{- with .Values.config.values.infra }}
     {{- range $key, $value := . }}
@@ -59,6 +62,9 @@ data:
     {{- end }}
     {{- if .Values.debug_mode }}
     debug_mode: {{ .Values.debug_mode }}
+    {{- end }}
+    {{- if .Values.celery_broker_type_redis }}
+    celery_broker_type_redis: {{ .Values.celery_broker_type_redis }}
     {{- end }}
     {{- with .Values.config.values.infra }}
     {{- range $key, $value := . }}

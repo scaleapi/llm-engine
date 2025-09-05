@@ -1,7 +1,8 @@
 # This is a YAML-formatted file.
 
-celery_enable_sha256: false
-debug_mode: true
+celery_enable_sha256: null
+celery_broker_type_redis: null
+debug_mode: null
 
 #uncomment below if using a container image that requires nonroot (ex. chainguard)
 # podSecurityContext:
