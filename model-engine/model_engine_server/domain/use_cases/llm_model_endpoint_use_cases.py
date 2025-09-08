@@ -621,24 +621,18 @@ class CreateLLMModelBundleV1UseCase:
         validate_checkpoint_files(checkpoint_files)
 
         # Support for third-party object storage (like Scality)
-        # Note: Using AWS_ENDPOINT_URL env var for AWS CLI compatibility
+        # Use AWS CLI as proven in working deployment
         endpoint_url = os.getenv("AWS_ENDPOINT_URL")
         
-        # Simple approach - download all files (no filtering)
-        
-        # Add environment variables for object storage credentials if using custom endpoint
-        env_vars = []
         if endpoint_url:
-            # For custom endpoints (like Scality), use AWS CLI with environment variables
+            # For custom endpoints (like Scality), use pre-installed AWS CLI v2
             subcommands.extend([
-                "pip install --quiet awscli --no-cache-dir",
                 f"AWS_ACCESS_KEY_ID={os.getenv('AWS_ACCESS_KEY_ID', '')} AWS_SECRET_ACCESS_KEY={os.getenv('AWS_SECRET_ACCESS_KEY', '')} AWS_ENDPOINT_URL={endpoint_url} AWS_REGION={os.getenv('AWS_REGION', 'us-east-1')} AWS_EC2_METADATA_DISABLED=true aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder} --no-progress",
                 f"echo 'Waiting for AWS CLI to finalize files...' ; sleep 30 ; echo 'Checking for model files...' ; while [ ! -f {final_weights_folder}/config.json ] || ! ls {final_weights_folder}/*.safetensors >/dev/null 2>&1 ; do echo 'Files not ready yet, waiting 30 more seconds...' ; sleep 30 ; done ; echo 'Model files are ready!' ; ls -la {final_weights_folder}/ ; echo 'VLLM can now start'"
             ])
         else:
-            # Standard S3, install AWS CLI and sync files
+            # Standard S3, use pre-installed AWS CLI v2
             subcommands.extend([
-                "pip install awscli --no-cache-dir", 
                 f"aws s3 sync {checkpoint_path.rstrip('/')} {final_weights_folder}",
                 f"echo 'Waiting for AWS CLI to finalize files...' ; sleep 30 ; echo 'Checking for model files...' ; while [ ! -f {final_weights_folder}/config.json ] || ! ls {final_weights_folder}/*.safetensors >/dev/null 2>&1 ; do echo 'Files not ready yet, waiting 30 more seconds...' ; sleep 30 ; done ; echo 'Model files are ready!' ; ls -la {final_weights_folder}/ ; echo 'VLLM can now start'"
             ])
@@ -694,31 +688,36 @@ class CreateLLMModelBundleV1UseCase:
         """
         if checkpoint_path.startswith("s3://"):
             # Support for third-party object storage (like Scality)
-            # Note: Using AWS_ENDPOINT_URL env var for AWS CLI compatibility
+            # Use azcopy instead of AWS CLI since container doesn't have pip
             endpoint_url = os.getenv("AWS_ENDPOINT_URL")
             
-            # Add environment variables for object storage credentials if using custom endpoint
-            env_vars = []
+            # Download and install azcopy (works in any Linux container)
+            subcommands.extend([
+                "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
+            ])
+            
             if endpoint_url:
-                env_vars.extend([
-                    f"AWS_ACCESS_KEY_ID={os.getenv('AWS_ACCESS_KEY_ID', '')}",
-                    f"AWS_SECRET_ACCESS_KEY={os.getenv('AWS_SECRET_ACCESS_KEY', '')}",
-                    f"AWS_ENDPOINT_URL={endpoint_url}",
-                    f"AWS_REGION={os.getenv('AWS_REGION', 'us-east-1')}",
-                    "AWS_EC2_METADATA_DISABLED=true"
+                # For custom endpoints (like Scality), use azcopy with S3-compatible mode
+                subcommands.extend([
+                    f"export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
+                    f"export AWS_ACCESS_KEY_ID={os.getenv('AWS_ACCESS_KEY_ID', '')}",
+                    f"export AWS_SECRET_ACCESS_KEY={os.getenv('AWS_SECRET_ACCESS_KEY', '')}",
+                    f"export AWS_ENDPOINT_URL={endpoint_url}",
+                    f"export AWS_REGION={os.getenv('AWS_REGION', 'us-east-1')}",
+                    f"export AWS_EC2_METADATA_DISABLED=true",
+                    # Use azcopy with S3-compatible endpoint
+                    f"azcopy copy --recursive --include-pattern '*.json;*.safetensors;*.model' --exclude-pattern 'optimizer*' '{checkpoint_path}/' ./"
                 ])
-                env_prefix = " ".join(env_vars) + " " if env_vars else ""
-                # Install AWS CLI and sync files (AWS CLI works with Scality)
-                subcommands = [
-                    "pip install awscli",
-                    f"{env_prefix}aws s3 sync {checkpoint_path}/ ./ --endpoint-url {endpoint_url}"
-                ]
             else:
-                # Install AWS CLI and sync files
-                subcommands = [
-                    "pip install awscli",
-                    f"aws s3 sync {checkpoint_path}/ ./"
-                ]
+                # Standard S3, use azcopy with AWS credentials
+                subcommands.extend([
+                    f"export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
+                    f"export AWS_ACCESS_KEY_ID={os.getenv('AWS_SECRET_ACCESS_KEY', '')}",
+                    f"export AWS_SECRET_ACCESS_KEY={os.getenv('AWS_SECRET_ACCESS_KEY', '')}",
+                    f"export AWS_REGION={os.getenv('AWS_REGION', 'us-east-1')}",
+                    # Use azcopy for standard S3
+                    f"azcopy copy --recursive --include-pattern '*.json;*.safetensors;*.model' --exclude-pattern 'optimizer*' '{checkpoint_path}/' ./"
+                ])
         else:
             subcommands.extend(
                 [
@@ -984,7 +983,8 @@ class CreateLLMModelBundleV1UseCase:
             if hmi_config.sensitive_log_mode:
                 vllm_args.disable_log_requests = True
 
-            vllm_cmd = f"python -m vllm_server --model {final_weights_folder} --served-model-name {model_name} --port 5005"
+            # TEMP FIX: Using vllm_adapter.py for SGP /predict endpoint compatibility until SGP is updated to use V2
+            vllm_cmd = f"python vllm_adapter.py --model {final_weights_folder} --served-model-name {model_name} --port 5005"
             for field in VLLMEndpointAdditionalArgs.model_fields.keys():
                 config_value = getattr(vllm_args, field, None)
                 if config_value is not None:

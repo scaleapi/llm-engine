@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG VLLM_VERSION=0.6.3
+ARG VLLM_VERSION=0.10.0
 ARG VLLM_BASE_REPO=vllm/vllm-openai
 ARG VLLM_BASE_IMAGE=${VLLM_BASE_REPO}:v${VLLM_VERSION}
 FROM ${VLLM_BASE_IMAGE} AS base
@@ -18,9 +18,21 @@ RUN tar -xvzf s5cmd_2.2.1_Linux-64bit.tar.gz
 # symlink python to python3
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
+# Install AWS CLI v2 for better performance with model downloads
+RUN apt-get update && apt-get install -y curl unzip \
+    && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+    && unzip awscliv2.zip \
+    && ./aws/install \
+    && rm -rf awscliv2.zip aws \
+    && apt-get remove -y unzip \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && aws --version
+
 FROM base AS vllm
 
 COPY model-engine/model_engine_server/inference/vllm/vllm_server.py /workspace/vllm_server.py
+COPY model-engine/model_engine_server/inference/vllm/vllm_adapter.py /workspace/vllm_adapter.py
 COPY model-engine/model_engine_server/inference/vllm/init_ray.sh /workspace/init_ray.sh
 
 # Need to override entrypoint from parent image
