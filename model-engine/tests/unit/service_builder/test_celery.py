@@ -129,9 +129,6 @@ class TestServiceBuilderCelery:
         mock_config_instance.s3_bucket = "my-test-bucket"
         mock_config.return_value = mock_config_instance
 
-        # Import the module to trigger the configuration logic
-        from model_engine_server.service_builder import celery as celery_module
-
         # Verify all configuration parameters
         mock_celery_app.assert_called_once_with(
             name="model_engine_server.service_builder",
