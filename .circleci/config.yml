@@ -37,10 +37,7 @@ jobs:
       - image: python:3.10-bookworm
         environment:
           ML_INFRA_DATABASE_URL: postgresql://postgres@localhost/circle_test
-          # Mocking dummy AWS credentials for mypy
-          AWS_ACCESS_KEY_ID: dummy
-          AWS_SECRET_ACCESS_KEY: dummy
-          AWS_DEFAULT_REGION: us-west-2
+          # Mocking dummy AWS profile for mypy
           AWS_PROFILE: default
       - image: circleci/postgres:12.9-postgis-ram
         environment:
