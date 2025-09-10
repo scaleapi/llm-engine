@@ -118,7 +118,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                     content = await aio_resp.read()
                     if infra_config().debug_mode:
                         logger.warning(
-                            f"DEBUG: Non-200 response. Status: {status}, Content: {content}"
+                            f"DEBUG: Non-200 response. Status: {status}, Content: {content.decode('utf-8', errors='replace')}"
                         )
             except Exception as e:
                 if infra_config().debug_mode:
