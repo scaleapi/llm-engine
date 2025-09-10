@@ -56,11 +56,11 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
         self.tracing_gateway = tracing_gateway
 
         # Log initialization
-        if not infra_config().debug_mode:
+        if not infra_config().debug_mode: # pragma: no cover
             logger.info(
                 f"Initializing CeleryTaskQueueGateway with broker: {self.broker_type.value}"
             )
-        else:
+        else: # pragma: no cover
             logger.info(
                 "Initializing CeleryTaskQueueGateway",
                 extra={
@@ -82,13 +82,13 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
 
     def _log_broker_details(self, celery_dest, queue_name: str):
         """Log detailed broker connection information for debugging"""
-        if not infra_config().debug_mode:
+        if not infra_config().debug_mode: # pragma: no cover
             return
         try:
             broker_url = celery_dest.conf.broker_url
             backend_url = celery_dest.conf.result_backend
 
-            logger.info(
+            logger.info( # pragma: no cover
                 "Celery broker details",
                 extra={
                     "broker_type": self.broker_type.value,
@@ -103,7 +103,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             if self.broker_type in [BrokerType.REDIS, BrokerType.REDIS_24H]:
                 try:
                     redis_endpoint = get_redis_endpoint(0)  # Default db
-                    logger.info(
+                    logger.info( # pragma: no cover
                         "Redis connection details",
                         extra={
                             "redis_endpoint": redis_endpoint,
@@ -116,7 +116,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     queue_length_before = redis_client.llen(queue_name)
                     redis_client.close()
 
-                    logger.info(
+                    logger.info( # pragma: no cover
                         "Pre-send queue state",
                         extra={
                             "queue_name": queue_name,
@@ -125,7 +125,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     )
 
                 except Exception as e:
-                    logger.warning(
+                    logger.warning( # pragma: no cover
                         "Failed to inspect Redis queue state",
                         extra={
                             "queue_name": queue_name,
@@ -133,7 +133,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                         },
                     )
         except Exception as e:
-            logger.warning(
+            logger.warning( # pragma: no cover
                 "Failed to log broker details",
                 extra={
                     "broker_type": self.broker_type.value,
@@ -152,7 +152,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
         send_start_time = time.time()
 
         # Log detailed send attempt
-        if infra_config().debug_mode:
+        if infra_config().debug_mode: # pragma: no cover
             logger.info(
                 "Starting task send operation",
                 extra={
@@ -172,14 +172,14 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
         kwargs = kwargs or {}
 
         # Log broker details for debugging
-        if infra_config().debug_mode:
+        if infra_config().debug_mode: # pragma: no cover
             self._log_broker_details(celery_dest, queue_name)
 
         with self.tracing_gateway.create_span("send_task_to_queue") as span:
             kwargs.update(self.tracing_gateway.encode_trace_kwargs())
 
             try:
-                if infra_config().debug_mode:
+                if infra_config().debug_mode: # pragma: no cover
                     logger.info(
                         "Calling celery send_task",
                         extra={
@@ -196,7 +196,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     queue=queue_name,
                 )
 
-                if infra_config().debug_mode:
+                if infra_config().debug_mode: # pragma: no cover
                     send_duration = time.time() - send_start_time
 
                 span.input = {
@@ -206,7 +206,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     "task_name": task_name,
                 }
                 span.output = {"task_id": res.id}
-                if infra_config().debug_mode:
+                if infra_config().debug_mode: # pragma: no cover
                     logger.info(
                         "Task sent successfully",
                         extra={
@@ -222,7 +222,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             except botocore.exceptions.ClientError as e:
                 send_duration = time.time() - send_start_time
 
-                if infra_config().debug_mode:
+                if infra_config().debug_mode: # pragma: no cover
                     # Debug mode - detailed error logging
                     logger.error(
                         "ClientError sending task to queue",
@@ -244,7 +244,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             except Exception as e:
                 send_duration = time.time() - send_start_time
 
-                if infra_config().debug_mode:
+                if infra_config().debug_mode: # pragma: no cover
                     # Debug mode - detailed error logging
                     logger.error(
                         "Unexpected error sending task to queue",

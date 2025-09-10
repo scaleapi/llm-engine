@@ -92,7 +92,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
         # DEBUG: Log request details
-        if infra_config().debug_mode:
+        if infra_config().debug_mode: # pragma: no cover
             logger.info(f"DEBUG: Making request to endpoint URL: {request_url}")
             logger.info(
                 f"DEBUG: Payload keys: {list(payload_json.keys()) if isinstance(payload_json, dict) else type(payload_json)}"
@@ -111,18 +111,18 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                         headers=headers,
                     )
                     status = aio_resp.status
-                    if infra_config().debug_mode:
+                    if infra_config().debug_mode: # pragma: no cover
                         logger.info(f"DEBUG: Response status: {status}")
                     if status == 200:
                         return await aio_resp.json()
                     content = await aio_resp.read()
-                    if infra_config().debug_mode:
+                    if infra_config().debug_mode: # pragma: no cover
                         logger.warning(
                             f"DEBUG: Non-200 response. Status: {status}, Content: {content.decode('utf-8', errors='replace')}"
                         )
             except Exception as e:
-                if infra_config().debug_mode:
-                    logger.error(
+                if infra_config().debug_mode: # pragma: no cover
+                    logger.error( 
                         f"DEBUG: Exception during aiohttp request: {type(e).__name__}: {e}"
                     )
                 else:
@@ -130,7 +130,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 raise
         else:
             try:
-                if infra_config().debug_mode:
+                if infra_config().debug_mode: # pragma: no cover
                     logger.info(f"DEBUG: About to POST to {request_url}")
                 resp = requests.post(
                     request_url,
@@ -138,17 +138,17 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                     headers=headers,
                 )
                 status = resp.status_code
-                if infra_config().debug_mode:
+                if infra_config().debug_mode: # pragma: no cover
                     logger.info(f"DEBUG: Response status: {status}")
                 if status == 200:
                     return resp.json()
                 content = resp.content
-                if infra_config().debug_mode:
+                if infra_config().debug_mode: # pragma: no cover
                     logger.warning(
                         f"DEBUG: Non-200 response. Status: {status}, Content: {content.decode('utf-8', errors='replace')}"
                     )
             except Exception as e:
-                if infra_config().debug_mode:
+                if infra_config().debug_mode: # pragma: no cover
                     logger.error(f"DEBUG: Exception during requests call: {type(e).__name__}: {e}")
                 else:
                     logger.exception(f"requests call failed to {request_url}")

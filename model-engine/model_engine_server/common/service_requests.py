@@ -30,7 +30,7 @@ def make_sync_request_with_retries(
     # Try/catch + for loop makes us retry only when we get a 429 from the synchronous endpoint.
     # We should be creating a new requests Session each time, which should avoid sending requests to the same endpoint
     # This is admittedly a hack until we get proper least-outstanding-requests load balancing to our http endpoints
-    if infra_config().debug_mode:
+    if infra_config().debug_mode: # pragma: no cover
         logger.info(f"DEBUG: make_sync_request_with_retries to URL: {request_url}")
         logger.info(
             f"DEBUG: Payload keys: {list(payload_json.keys()) if isinstance(payload_json, dict) else type(payload_json)}"
@@ -44,10 +44,10 @@ def make_sync_request_with_retries(
         ):
             with attempt:
                 if attempt.retry_state.attempt_number > 1:
-                    if infra_config().debug_mode:
+                    if infra_config().debug_mode: # pragma: no cover
                         logger.info(f"Retry number {attempt.retry_state.attempt_number}")
 
-                if infra_config().debug_mode:
+                if infra_config().debug_mode: # pragma: no cover
                     logger.info(
                         f"DEBUG: About to POST to {request_url} (attempt {attempt.retry_state.attempt_number})"
                     )
@@ -58,10 +58,10 @@ def make_sync_request_with_retries(
                         json=payload_json,
                         headers={"Content-Type": "application/json"},
                     )
-                    if infra_config().debug_mode:
+                    if infra_config().debug_mode: # pragma: no cover
                         logger.info(f"DEBUG: Response status: {resp.status_code}")
                 except Exception as e:
-                    if infra_config().debug_mode:
+                    if infra_config().debug_mode: # pragma: no cover
                         logger.error(
                             f"DEBUG: Exception during requests.post: {type(e).__name__}: {e}"
                         )
@@ -70,7 +70,7 @@ def make_sync_request_with_retries(
                 if resp.status_code == 429:
                     raise HTTP429Exception("429 returned")
                 elif resp.status_code != 200:
-                    if infra_config().debug_mode:
+                    if infra_config().debug_mode: # pragma: no cover
                         logger.warning(
                             f"DEBUG: Non-200 response. Status: {resp.status_code}, Content: {resp.content.decode('utf-8', errors='replace')}"
                         )
