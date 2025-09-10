@@ -49,12 +49,12 @@ jobs:
           name: Setup AWS Config for Testing
           command: |
             mkdir -p ~/.aws
-            cat > ~/.aws/credentials << EOF
+            cat > ~/.aws/credentials \<< EOF
             [default]
             aws_access_key_id = dummy
             aws_secret_access_key = dummy
             EOF
-            cat > ~/.aws/config << EOF
+            cat > ~/.aws/config \<< EOF
             [default]
             region = us-west-2
             output = json
