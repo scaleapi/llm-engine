@@ -32,7 +32,9 @@ def make_sync_request_with_retries(
     # This is admittedly a hack until we get proper least-outstanding-requests load balancing to our http endpoints
     if infra_config().debug_mode:
         logger.info(f"DEBUG: make_sync_request_with_retries to URL: {request_url}")
-        logger.info(f"DEBUG: Payload keys: {list(payload_json.keys()) if isinstance(payload_json, dict) else type(payload_json)}")
+        logger.info(
+            f"DEBUG: Payload keys: {list(payload_json.keys()) if isinstance(payload_json, dict) else type(payload_json)}"
+        )
 
     try:
         for attempt in Retrying(
@@ -46,7 +48,9 @@ def make_sync_request_with_retries(
                         logger.info(f"Retry number {attempt.retry_state.attempt_number}")
 
                 if infra_config().debug_mode:
-                    logger.info(f"DEBUG: About to POST to {request_url} (attempt {attempt.retry_state.attempt_number})")
+                    logger.info(
+                        f"DEBUG: About to POST to {request_url} (attempt {attempt.retry_state.attempt_number})"
+                    )
 
                 try:
                     resp = requests.post(
@@ -58,14 +62,18 @@ def make_sync_request_with_retries(
                         logger.info(f"DEBUG: Response status: {resp.status_code}")
                 except Exception as e:
                     if infra_config().debug_mode:
-                        logger.error(f"DEBUG: Exception during requests.post: {type(e).__name__}: {e}")
+                        logger.error(
+                            f"DEBUG: Exception during requests.post: {type(e).__name__}: {e}"
+                        )
                     raise
 
                 if resp.status_code == 429:
                     raise HTTP429Exception("429 returned")
                 elif resp.status_code != 200:
                     if infra_config().debug_mode:
-                        logger.warning(f"DEBUG: Non-200 response. Status: {resp.status_code}, Content: {resp.content}")
+                        logger.warning(
+                            f"DEBUG: Non-200 response. Status: {resp.status_code}, Content: {resp.content}"
+                        )
                     raise UpstreamHTTPSvcError(status_code=resp.status_code, content=resp.content)
                 return resp.json()
     except RetryError:

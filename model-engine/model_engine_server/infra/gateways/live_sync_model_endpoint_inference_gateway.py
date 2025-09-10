@@ -95,7 +95,9 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         # DEBUG: Log request details
         if infra_config.debug_mode:
             logger.info(f"DEBUG: Making request to endpoint URL: {request_url}")
-            logger.info(f"DEBUG: Payload keys: {list(payload_json.keys()) if isinstance(payload_json, dict) else type(payload_json)}")
+            logger.info(
+                f"DEBUG: Payload keys: {list(payload_json.keys()) if isinstance(payload_json, dict) else type(payload_json)}"
+            )
             logger.info(f"DEBUG: Payload size: {len(str(payload_json))} chars")
 
         headers = {"Content-Type": "application/json"}
@@ -116,10 +118,14 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                         return await aio_resp.json()
                     content = await aio_resp.read()
                     if infra_config.debug_mode:
-                        logger.warning(f"DEBUG: Non-200 response. Status: {status}, Content: {content}")
+                        logger.warning(
+                            f"DEBUG: Non-200 response. Status: {status}, Content: {content}"
+                        )
             except Exception as e:
                 if infra_config.debug_mode:
-                    logger.error(f"DEBUG: Exception during aiohttp request: {type(e).__name__}: {e}")
+                    logger.error(
+                        f"DEBUG: Exception during aiohttp request: {type(e).__name__}: {e}"
+                    )
                 else:
                     logger.exception(f"aiohttp request failed to {request_url}")
                 raise

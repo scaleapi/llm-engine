@@ -80,22 +80,18 @@ class S3Backend(KeyValueStoreBackend):
     def set(self, key, value):
         key = bytes_to_str(key)
         s3_object = self._get_s3_object(key)
-        
+
         # Check if celery_enable_sha256 mode is enabled via config to use sha256 hash instead of md5
         if infra_config().celery_enable_sha256:
             # Ensure value is bytes for hashing
             if isinstance(value, str):
-                value_bytes = value.encode('utf-8')
+                value_bytes = value.encode("utf-8")
             else:
                 value_bytes = value
-                
+
             sha256_hash = hashlib.sha256(value_bytes).digest()
-            checksum_sha256 = base64.b64encode(sha256_hash).decode('utf-8')
-            s3_object.put(
-                Body=value,
-                ChecksumAlgorithm='SHA256',
-                ChecksumSHA256=checksum_sha256
-            )
+            checksum_sha256 = base64.b64encode(sha256_hash).decode("utf-8")
+            s3_object.put(Body=value, ChecksumAlgorithm="SHA256", ChecksumSHA256=checksum_sha256)
         else:
             s3_object.put(Body=value)
 

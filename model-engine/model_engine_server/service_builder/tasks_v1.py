@@ -123,15 +123,17 @@ async def _build_endpoint(
         "Starting endpoint build process",
         extra={
             "endpoint_name": build_endpoint_request.model_endpoint_record.name,
-            "request_id": getattr(build_endpoint_request.model_endpoint_record, 'id', 'unknown'),
-            "user_id": getattr(build_endpoint_request.model_endpoint_record, 'created_by', 'unknown'),
-        }
+            "request_id": getattr(build_endpoint_request.model_endpoint_record, "id", "unknown"),
+            "user_id": getattr(
+                build_endpoint_request.model_endpoint_record, "created_by", "unknown"
+            ),
+        },
     )
-    
+
     session = None
     redis = None
     pool = None
-    
+
     try:
         # Database connection
         if infra_config().debug_mode:
@@ -139,7 +141,7 @@ async def _build_endpoint(
         session = get_session_async_null_pool()
         if infra_config().debug_mode:
             logger.info("Database session established successfully")
-        
+
         # Redis connection
         if infra_config().debug_mode:
             logger.info("Connecting to Redis", extra={"redis_url": hmi_config.cache_redis_url})
@@ -147,19 +149,19 @@ async def _build_endpoint(
         redis = aioredis.Redis(connection_pool=pool)
         if infra_config().debug_mode:
             logger.info("Redis connection established successfully")
-        
+
         # Service initialization
         if infra_config().debug_mode:
             logger.info("Initializing LiveEndpointBuilderService")
         service: LiveEndpointBuilderService = get_live_endpoint_builder_service(session, redis)
         if infra_config().debug_mode:
             logger.info("LiveEndpointBuilderService initialized successfully")
-        
+
         # Actual endpoint building
         if infra_config().debug_mode:
             logger.info("Starting endpoint build operation")
         response = await service.build_endpoint(build_endpoint_request)
-        
+
         build_time = time.time() - task_start_time
         if infra_config().debug_mode:
             logger.info(
@@ -167,12 +169,12 @@ async def _build_endpoint(
                 extra={
                     "endpoint_name": build_endpoint_request.model_endpoint_record.name,
                     "build_time_seconds": build_time,
-                    "response_status": getattr(response, 'status', 'unknown'),
-                }
+                    "response_status": getattr(response, "status", "unknown"),
+                },
             )
-        
+
         return response
-        
+
     except Exception as e:
         build_time = time.time() - task_start_time
         error_details = {
@@ -182,15 +184,12 @@ async def _build_endpoint(
             "build_time_seconds": build_time,
             "traceback": traceback.format_exc(),
         }
-        
-        logger.error(
-            "Endpoint build failed with exception",
-            extra=error_details
-        )
-        
+
+        logger.error("Endpoint build failed with exception", extra=error_details)
+
         # Re-raise the exception so Celery knows the task failed
         raise
-        
+
     finally:
         # Cleanup resources
         cleanup_start = time.time()
@@ -203,7 +202,7 @@ async def _build_endpoint(
                     logger.info("Redis connection closed")
         except Exception as e:
             logger.warning(f"Error closing Redis connection: {e}")
-            
+
         try:
             if pool:
                 if infra_config().debug_mode:
@@ -213,7 +212,7 @@ async def _build_endpoint(
                     logger.info("Redis pool disconnected")
         except Exception as e:
             logger.warning(f"Error disconnecting Redis pool: {e}")
-            
+
         if infra_config().debug_mode:
             cleanup_time = time.time() - cleanup_start
             logger.info(f"Resource cleanup completed in {cleanup_time:.2f} seconds")
@@ -234,7 +233,7 @@ def init_worker(*args, **kwargs):
 def build_endpoint(self, build_endpoint_request_json: Dict[str, Any]) -> Dict[str, str]:
     task_start_time = time.time()
     task_id = self.request.id
-    
+
     # Log task start with detailed context
     if infra_config().debug_mode:
         task_logger.info(
@@ -242,11 +241,13 @@ def build_endpoint(self, build_endpoint_request_json: Dict[str, Any]) -> Dict[st
             extra={
                 "task_id": task_id,
                 "task_name": "build_endpoint",
-                "request_data_keys": list(build_endpoint_request_json.keys()) if build_endpoint_request_json else [],
+                "request_data_keys": (
+                    list(build_endpoint_request_json.keys()) if build_endpoint_request_json else []
+                ),
                 "worker_hostname": self.request.hostname,
-            }
+            },
         )
-    
+
     try:
         # Parse request
         if infra_config().debug_mode:
@@ -260,17 +261,19 @@ def build_endpoint(self, build_endpoint_request_json: Dict[str, Any]) -> Dict[st
                 extra={
                     "task_id": task_id,
                     "endpoint_name": build_endpoint_request.model_endpoint_record.name,
-                    "endpoint_type": getattr(build_endpoint_request.model_endpoint_record, 'endpoint_type', 'unknown'),
-                }
+                    "endpoint_type": getattr(
+                        build_endpoint_request.model_endpoint_record, "endpoint_type", "unknown"
+                    ),
+                },
             )
-        
+
         # Execute the async build process
         if infra_config().debug_mode:
-            if infra_config().debug_mode:task_logger.info("Starting async endpoint build", extra={"task_id": task_id})
+            task_logger.info("Starting async endpoint build", extra={"task_id": task_id})
         result = asyncio.run(_build_endpoint(build_endpoint_request))
-        
+
         # Log successful completion
-        cleanup_time = time.time() - cleanup_start
+        if infra_config().debug_mode:
             task_duration = time.time() - task_start_time
             task_logger.info(
                 "Task completed successfully",
@@ -278,12 +281,12 @@ def build_endpoint(self, build_endpoint_request_json: Dict[str, Any]) -> Dict[st
                     "task_id": task_id,
                     "endpoint_name": build_endpoint_request.model_endpoint_record.name,
                     "task_duration_seconds": task_duration,
-                    "result_status": getattr(result, 'status', 'unknown'),
-                }
+                    "result_status": getattr(result, "status", "unknown"),
+                },
             )
-        
+
         return result.dict()
-        
+
     except Exception as e:
         task_duration = time.time() - task_start_time
         error_info = {
@@ -293,22 +296,23 @@ def build_endpoint(self, build_endpoint_request_json: Dict[str, Any]) -> Dict[st
             "task_duration_seconds": task_duration,
             "full_traceback": traceback.format_exc(),
         }
-        
+
         # Add request context if available
         try:
-            if 'build_endpoint_request' in locals():
+            if "build_endpoint_request" in locals():
                 error_info["endpoint_name"] = build_endpoint_request.model_endpoint_record.name
                 error_info["request_context"] = {
-                    "endpoint_type": getattr(build_endpoint_request.model_endpoint_record, 'endpoint_type', 'unknown'),
-                    "created_by": getattr(build_endpoint_request.model_endpoint_record, 'created_by', 'unknown'),
+                    "endpoint_type": getattr(
+                        build_endpoint_request.model_endpoint_record, "endpoint_type", "unknown"
+                    ),
+                    "created_by": getattr(
+                        build_endpoint_request.model_endpoint_record, "created_by", "unknown"
+                    ),
                 }
         except:
             pass
-            
-        task_logger.error(
-            "Task failed with exception",
-            extra=error_info
-        )
-        
+
+        task_logger.error("Task failed with exception", extra=error_info)
+
         # Re-raise to let Celery handle the failure
         raise
