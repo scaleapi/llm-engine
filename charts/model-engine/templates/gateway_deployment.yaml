@@ -37,10 +37,18 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       terminationGracePeriodSeconds: 60
       priorityClassName: model-engine-high-priority
       containers:
         - name: {{ include "modelEngine.fullname" . }}
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:

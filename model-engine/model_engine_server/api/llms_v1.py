@@ -1,5 +1,4 @@
-"""LLM Model Endpoint routes for the hosted model inference service.
-"""
+"""LLM Model Endpoint routes for the hosted model inference service."""
 
 import traceback
 from datetime import datetime
