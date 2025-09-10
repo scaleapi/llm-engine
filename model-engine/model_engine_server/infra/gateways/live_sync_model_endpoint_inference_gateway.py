@@ -144,7 +144,9 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                     return resp.json()
                 content = resp.content
                 if infra_config().debug_mode:
-                    logger.warning(f"DEBUG: Non-200 response. Status: {status}, Content: {content.decode('utf-8', errors='replace')}")
+                    logger.warning(
+                        f"DEBUG: Non-200 response. Status: {status}, Content: {content.decode('utf-8', errors='replace')}"
+                    )
             except Exception as e:
                 if infra_config().debug_mode:
                     logger.error(f"DEBUG: Exception during requests call: {type(e).__name__}: {e}")
