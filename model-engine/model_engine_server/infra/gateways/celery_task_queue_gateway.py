@@ -218,8 +218,6 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                             "task_state": res.state,
                         },
                     )
-                    # Verify the task actually made it to the queue
-                    self._verify_task_enqueued(queue_name, res.id)
 
             except botocore.exceptions.ClientError as e:
                 send_duration = time.time() - send_start_time

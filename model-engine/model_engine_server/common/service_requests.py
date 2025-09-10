@@ -72,7 +72,7 @@ def make_sync_request_with_retries(
                 elif resp.status_code != 200:
                     if infra_config().debug_mode:
                         logger.warning(
-                            f"DEBUG: Non-200 response. Status: {resp.status_code}, Content: {resp.content}"
+                            f"DEBUG: Non-200 response. Status: {resp.status_code}, Content: {resp.content.decode('utf-8', errors='replace')}"
                         )
                     raise UpstreamHTTPSvcError(status_code=resp.status_code, content=resp.content)
                 return resp.json()
