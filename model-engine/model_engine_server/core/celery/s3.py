@@ -2,9 +2,9 @@
 copied from https://github.com/celery/celery/blob/81df81acf8605ba3802810c7901be7d905c5200b/celery/backends/s3.py
 """
 
-import threading
 import base64
 import hashlib
+import threading
 
 import tenacity
 from celery.backends.base import KeyValueStoreBackend

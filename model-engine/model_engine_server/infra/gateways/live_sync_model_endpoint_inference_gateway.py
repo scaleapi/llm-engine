@@ -34,7 +34,6 @@ from tenacity import (
     stop_any,
     wait_exponential,
 )
-from model_engine_server.core.config import infra_config
 
 logger = make_logger(logger_name())
 

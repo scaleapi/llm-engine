@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 
 import requests
 from model_engine_server.common.errors import HTTP429Exception, UpstreamHTTPSvcError
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from tenacity import (
     RetryError,
@@ -12,7 +13,6 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
-from model_engine_server.core.config import infra_config
 
 logger = make_logger(logger_name())
 
