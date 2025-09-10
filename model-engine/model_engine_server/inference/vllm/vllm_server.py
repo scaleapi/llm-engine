@@ -11,10 +11,7 @@ from typing import AsyncGenerator, Dict, List, Optional
 import vllm.envs as envs
 from fastapi import APIRouter, BackgroundTasks, Request
 from fastapi.responses import Response, StreamingResponse
-from vllm.engine.async_llm_engine import (
-    AsyncEngineDeadError,
-    build_guided_decoding_logits_processor_async,
-)
+from vllm.engine.async_llm_engine import AsyncEngineDeadError
 from vllm.engine.protocol import EngineClient
 from vllm.entrypoints.launcher import serve_http
 from vllm.entrypoints.openai.api_server import (
@@ -60,16 +57,7 @@ async def generate(request: Request) -> Response:
         prompt = request_dict.pop("prompt")
         stream = request_dict.pop("stream", False)
 
-        guided_decoding_backend = (
-            await engine_client.get_decoding_config()
-        ).guided_decoding_backend
-
-        sampling_params = await build_guided_decoding_logits_processor_async(
-            sampling_params=SamplingParams(**request_dict),
-            tokenizer=await engine_client.get_tokenizer(lora_request=None),
-            default_guided_backend=guided_decoding_backend,
-            model_config=await engine_client.get_model_config(),
-        )
+        sampling_params = SamplingParams(**request_dict)
 
         request_id = random_uuid()
 
@@ -226,7 +214,7 @@ async def run_server_worker(
 
     global engine_client
 
-    async with build_async_engine_client(args, client_config) as engine_client:
+    async with build_async_engine_client(args, client_config=client_config) as engine_client:
         maybe_register_tokenizer_info_endpoint(args)
         app = build_app(args)
 
@@ -250,6 +238,8 @@ async def run_server_worker(
             ssl_certfile=args.ssl_certfile,
             ssl_ca_certs=args.ssl_ca_certs,
             ssl_cert_reqs=args.ssl_cert_reqs,
+            h11_max_incomplete_event_size=args.h11_max_incomplete_event_size,
+            h11_max_header_count=args.h11_max_header_count,
             **uvicorn_kwargs,
         )
 
