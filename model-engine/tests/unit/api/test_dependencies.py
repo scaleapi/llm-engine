@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from model_engine_server.api.dependencies import get_external_interfaces
+from model_engine_server.api.dependencies import _get_external_interfaces
 
 
 def test_redis_task_queue_selection_when_celery_broker_type_redis_enabled():
@@ -26,10 +26,13 @@ def test_redis_task_queue_selection_when_celery_broker_type_redis_enabled():
 
         # Create different mock instances for each gateway
         redis_gateway = MagicMock()
-        mock_gateway_class.side_effect = lambda broker_type=None, **kwargs: redis_gateway
+        mock_gateway_class.return_value = redis_gateway
 
-        # Call the function
-        external_interfaces = get_external_interfaces()
+        # Create a mock session
+        mock_session = MagicMock()
+
+        # Call the actual function that contains the logic
+        external_interfaces = _get_external_interfaces(read_only=False, session=mock_session)
 
         # Verify that the same redis gateway is used for both inference and infra
         assert external_interfaces.inference_task_queue_gateway == redis_gateway
@@ -58,10 +61,13 @@ def test_default_task_queue_selection_when_celery_broker_type_redis_disabled():
 
         # Create different mock instances for each gateway
         sqs_gateway = MagicMock()
-        mock_gateway_class.side_effect = lambda broker_type=None, **kwargs: sqs_gateway
+        mock_gateway_class.return_value = sqs_gateway
 
-        # Call the function
-        external_interfaces = get_external_interfaces()
+        # Create a mock session
+        mock_session = MagicMock()
+
+        # Call the actual function that contains the logic
+        external_interfaces = _get_external_interfaces(read_only=False, session=mock_session)
 
         # Verify that the same sqs gateway is used for both inference and infra
         assert external_interfaces.inference_task_queue_gateway == sqs_gateway
