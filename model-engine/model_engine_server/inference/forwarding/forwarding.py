@@ -13,6 +13,7 @@ import sseclient
 import yaml
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
+
 from model_engine_server.common.aiohttp_sse_client import EventSource
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.tracing import get_tracing_gateway
@@ -625,6 +626,92 @@ class LoadStreamingForwarder:
             serialize_results_as_string=serialize_results_as_string,
             post_inference_hooks_handler=handler,
         )
+
+
+@dataclass
+class MCPForwarder(ModelEngineSerializationMixin):
+    mcp_endpoint: str
+
+    async def forward(self, request: Any):
+        async with aiohttp.ClientSession() as aioclient:
+            headers: dict[str, str] = dict(request.headers)
+            excluded_headers: set[str] = {
+                "host",
+                "content-length",
+                "transfer-encoding",
+                "connection",
+            }
+            headers = {k: v for k, v in headers.items() if k.lower() not in excluded_headers}
+
+            url = request.url
+            target_url: str = f"{self.mcp_endpoint.rstrip('/')}{url.path}"
+
+            if url.query:
+                target_url = f"{target_url}?{url.query}"
+
+            response = await aioclient.request(
+                method=request.method,
+                url=target_url,
+                data=await request.body() if request.method in ["POST", "PUT", "PATCH"] else None,
+                headers=headers,
+            )
+            yield response
+
+
+@dataclass(frozen=True)
+class LoadMCPForwarder:
+    user_port: int = DEFAULT_PORT
+    user_hostname: str = "localhost"
+    mcp_route: str = "/mcp"
+    healthcheck_route: str = "/health"
+
+    def load(self, resources: Optional[Path], cache: Any) -> MCPForwarder:
+        if len(self.healthcheck_route) == 0:
+            raise ValueError("healthcheck route must be non-empty!")
+
+        if len(self.mcp_route) == 0:
+            raise ValueError("predict route must be non-empty!")
+
+        if not self.healthcheck_route.startswith("/"):
+            raise ValueError(f"healthcheck route must start with /: {self.healthcheck_route=}")
+
+        if not self.mcp_route.startswith("/"):
+            raise ValueError(f"predict route must start with /: {self.mcp_route=}")
+
+        if not (1 <= self.user_port <= 65535):
+            raise ValueError(f"Invalid port value: {self.user_port=}")
+
+        if len(self.user_hostname) == 0:
+            raise ValueError("hostname must be non-empty!")
+
+        if self.user_hostname != "localhost":
+            raise NotImplementedError(
+                "Currently only localhost-based user-code services are supported with forwarders! "
+                f"Cannot handle {self.user_hostname=}"
+            )
+
+        def endpoint(route: str) -> str:
+            return f"http://{self.user_hostname}:{self.user_port}{route}"
+
+        mcp_endpoint: str = endpoint("")
+        hc: str = endpoint(self.healthcheck_route)
+
+        logger.info(f"Forwarding to user-defined service at: {self.user_hostname}:{self.user_port}")
+        logger.info(f"MCP endpoint:  {mcp_endpoint}")
+        logger.info(f"Healthcheck endpoint: {hc}")
+
+        while True:
+            try:
+                if requests.get(hc).status_code == 200:
+                    break
+            except requests.exceptions.ConnectionError:
+                pass
+
+            logger.info(f"Waiting for user-defined service to be ready at {hc}...")
+            time.sleep(1)
+
+        logger.info(f"Creating MCPForwarder with mcp_endpoint: {mcp_endpoint}")
+        return MCPForwarder(mcp_endpoint=mcp_endpoint)
 
 
 def load_named_config(config_uri, config_overrides=None):

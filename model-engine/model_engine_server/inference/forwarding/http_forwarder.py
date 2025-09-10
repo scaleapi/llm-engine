@@ -7,18 +7,22 @@ from typing import Any, Dict, Optional
 
 import orjson
 import uvicorn
-from fastapi import BackgroundTasks, Depends, FastAPI
+from fastapi import BackgroundTasks, Depends, FastAPI, Request
+from fastapi.responses import StreamingResponse
+from sse_starlette import EventSourceResponse
+
 from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.inference.forwarding.forwarding import (
     Forwarder,
     LoadForwarder,
+    LoadMCPForwarder,
     LoadStreamingForwarder,
+    MCPForwarder,
     StreamingForwarder,
     load_named_config,
 )
-from sse_starlette import EventSourceResponse
 
 logger = make_logger(logger_name())
 
@@ -56,6 +60,18 @@ def get_streaming_forwarder_loader(
     return streaming_forwarder_loader
 
 
+def get_mcp_forwarder_loader(
+    destination_path: Optional[str] = None,
+) -> LoadMCPForwarder:
+    config = get_config()["mcp"]
+    if "extra_routes" in config:
+        del config["extra_routes"]
+    if destination_path:
+        config["mcp_route"] = destination_path
+    mcp_forwarder_loader = LoadMCPForwarder(**config)
+    return mcp_forwarder_loader
+
+
 @lru_cache()
 def get_concurrency_limiter() -> MultiprocessingConcurrencyLimiter:
     config = get_config()
@@ -73,6 +89,11 @@ def load_forwarder(destination_path: Optional[str] = None) -> Forwarder:
 @lru_cache()
 def load_streaming_forwarder(destination_path: Optional[str] = None) -> StreamingForwarder:
     return get_streaming_forwarder_loader(destination_path).load(None, None)
+
+
+@lru_cache()
+def load_mcp_forwarder(destination_path: Optional[str] = None) -> MCPForwarder:
+    return get_mcp_forwarder_loader(destination_path).load(None, None)
 
 
 async def predict(
@@ -121,6 +142,23 @@ async def stream(
                 yield {"data": orjson.dumps(response).decode("utf-8")}
 
         return EventSourceResponse(event_generator())
+
+
+async def mcp(
+    request: Request,
+    forwarder: MCPForwarder = Depends(load_mcp_forwarder),
+    limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
+):
+    with limiter:
+        responses = forwarder.forward(request)
+        initial_response = await responses.__anext__()
+
+        async def content_generator():
+            yield await initial_response.read()
+            async for response in responses:
+                yield await response.read()
+
+        return StreamingResponse(content_generator(), headers=initial_response.headers)
 
 
 async def serve_http(app: FastAPI, **uvicorn_kwargs: Any):  # pragma: no cover
@@ -228,6 +266,11 @@ async def init_app():
     app.add_api_route(path="/readyz", endpoint=healthcheck, methods=["GET"])
     app.add_api_route(path="/predict", endpoint=predict, methods=["POST"])
     app.add_api_route(path="/stream", endpoint=stream, methods=["POST"])
+    app.add_api_route(
+        path="/mcp",
+        endpoint=mcp,
+        methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+    )
 
     add_extra_routes(app)
     return app
