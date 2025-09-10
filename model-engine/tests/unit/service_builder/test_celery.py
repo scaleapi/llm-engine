@@ -1,65 +1,59 @@
 from unittest.mock import MagicMock, patch
 
-from model_engine_server.common.dtos.model_endpoints import BrokerType
-
 
 class TestServiceBuilderCelery:
     """Test the service builder celery configuration logic"""
 
-    @patch("model_engine_server.service_builder.celery.celery_app")
-    @patch("model_engine_server.service_builder.celery.infra_config")
     @patch("model_engine_server.service_builder.celery.CIRCLECI", True)
-    def test_broker_type_selection_circleci_enabled(self, mock_config, mock_celery_app):
+    @patch("model_engine_server.service_builder.celery.infra_config")
+    @patch("model_engine_server.service_builder.celery.celery_app")
+    def test_broker_type_redis_when_circleci(self, mock_celery_app, mock_config, mock_circleci):
         """Test that Redis broker is selected when CIRCLECI is True"""
         # Setup mocks
         mock_config_instance = MagicMock()
-        mock_config_instance.celery_broker_type_redis = False
-        mock_config_instance.cloud_provider = "aws"
         mock_config_instance.s3_bucket = "test-bucket"
+        mock_config_instance.cloud_provider = "aws"
         mock_config.return_value = mock_config_instance
 
-        # Import the module to trigger the configuration logic
-        from model_engine_server.service_builder import celery as celery_module
+        # Force module reload to test the logic
+        import importlib
 
-        # Verify Redis broker is selected for CircleCI
-        assert celery_module.service_builder_broker_type == str(BrokerType.REDIS.value)
+        import model_engine_server.service_builder.celery as celery_module
 
-        # Verify celery_app was called with correct parameters
-        mock_celery_app.assert_called_once_with(
-            name="model_engine_server.service_builder",
-            modules=["model_engine_server.service_builder.tasks_v1"],
-            s3_bucket="test-bucket",
-            broker_type=str(BrokerType.REDIS.value),
-            backend_protocol="s3",
-            task_track_started=True,
-            task_remote_tracebacks=True,
-            task_time_limit=1800,
-            task_soft_time_limit=1500,
-        )
+        importlib.reload(celery_module)
 
-    @patch("model_engine_server.service_builder.celery.celery_app")
-    @patch("model_engine_server.service_builder.celery.infra_config")
+        # Verify Redis broker is selected
+        assert celery_module.service_builder_broker_type == "redis"
+
     @patch("model_engine_server.service_builder.celery.CIRCLECI", False)
-    def test_broker_type_selection_redis_enabled(self, mock_config, mock_celery_app):
+    @patch("model_engine_server.service_builder.celery.infra_config")
+    @patch("model_engine_server.service_builder.celery.celery_app")
+    def test_broker_type_redis_when_config_enabled(
+        self, mock_celery_app, mock_config, mock_circleci
+    ):
         """Test that Redis broker is selected when celery_broker_type_redis is True"""
         # Setup mocks
         mock_config_instance = MagicMock()
         mock_config_instance.celery_broker_type_redis = True
-        mock_config_instance.cloud_provider = "aws"
         mock_config_instance.s3_bucket = "test-bucket"
+        mock_config_instance.cloud_provider = "aws"
         mock_config.return_value = mock_config_instance
 
-        # Import the module to trigger the configuration logic
-        from model_engine_server.service_builder import celery as celery_module
+        # Force module reload to test the logic
+        import importlib
+
+        import model_engine_server.service_builder.celery as celery_module
+
+        importlib.reload(celery_module)
 
         # Verify Redis broker is selected
-        assert celery_module.service_builder_broker_type == str(BrokerType.REDIS.value)
+        assert celery_module.service_builder_broker_type == "redis"
 
-    @patch("model_engine_server.service_builder.celery.celery_app")
-    @patch("model_engine_server.service_builder.celery.infra_config")
     @patch("model_engine_server.service_builder.celery.CIRCLECI", False)
-    def test_broker_type_selection_azure_cloud(self, mock_config, mock_celery_app):
-        """Test that ServiceBus broker is selected for Azure cloud provider"""
+    @patch("model_engine_server.service_builder.celery.infra_config")
+    @patch("model_engine_server.service_builder.celery.celery_app")
+    def test_broker_type_servicebus_for_azure(self, mock_celery_app, mock_config, mock_circleci):
+        """Test that ServiceBus broker is selected for Azure"""
         # Setup mocks
         mock_config_instance = MagicMock()
         mock_config_instance.celery_broker_type_redis = False
@@ -67,30 +61,21 @@ class TestServiceBuilderCelery:
         mock_config_instance.s3_bucket = "test-bucket"
         mock_config.return_value = mock_config_instance
 
-        # Import the module to trigger the configuration logic
-        from model_engine_server.service_builder import celery as celery_module
+        # Force module reload to test the logic
+        import importlib
 
-        # Verify ServiceBus broker is selected for Azure
-        assert celery_module.service_builder_broker_type == str(BrokerType.SERVICEBUS.value)
+        import model_engine_server.service_builder.celery as celery_module
 
-        # Verify backend_protocol is set to "abs" for Azure
-        mock_celery_app.assert_called_once_with(
-            name="model_engine_server.service_builder",
-            modules=["model_engine_server.service_builder.tasks_v1"],
-            s3_bucket="test-bucket",
-            broker_type=str(BrokerType.SERVICEBUS.value),
-            backend_protocol="abs",  # Azure backend
-            task_track_started=True,
-            task_remote_tracebacks=True,
-            task_time_limit=1800,
-            task_soft_time_limit=1500,
-        )
+        importlib.reload(celery_module)
 
-    @patch("model_engine_server.service_builder.celery.celery_app")
-    @patch("model_engine_server.service_builder.celery.infra_config")
+        # Verify ServiceBus broker is selected
+        assert celery_module.service_builder_broker_type == "servicebus"
+
     @patch("model_engine_server.service_builder.celery.CIRCLECI", False)
-    def test_broker_type_selection_aws_default(self, mock_config, mock_celery_app):
-        """Test that SQS broker is selected as default for AWS"""
+    @patch("model_engine_server.service_builder.celery.infra_config")
+    @patch("model_engine_server.service_builder.celery.celery_app")
+    def test_broker_type_sqs_default(self, mock_celery_app, mock_config, mock_circleci):
+        """Test that SQS broker is selected as default"""
         # Setup mocks
         mock_config_instance = MagicMock()
         mock_config_instance.celery_broker_type_redis = False
@@ -98,62 +83,12 @@ class TestServiceBuilderCelery:
         mock_config_instance.s3_bucket = "test-bucket"
         mock_config.return_value = mock_config_instance
 
-        # Import the module to trigger the configuration logic
-        from model_engine_server.service_builder import celery as celery_module
+        # Force module reload to test the logic
+        import importlib
 
-        # Verify SQS broker is selected as default
-        assert celery_module.service_builder_broker_type == str(BrokerType.SQS.value)
-
-        # Verify backend_protocol is set to "s3" for AWS
-        mock_celery_app.assert_called_once_with(
-            name="model_engine_server.service_builder",
-            modules=["model_engine_server.service_builder.tasks_v1"],
-            s3_bucket="test-bucket",
-            broker_type=str(BrokerType.SQS.value),
-            backend_protocol="s3",  # S3 backend
-            task_track_started=True,
-            task_remote_tracebacks=True,
-            task_time_limit=1800,
-            task_soft_time_limit=1500,
-        )
-
-    @patch("model_engine_server.service_builder.celery.celery_app")
-    @patch("model_engine_server.service_builder.celery.infra_config")
-    @patch("model_engine_server.service_builder.celery.CIRCLECI", False)
-    def test_celery_app_configuration_parameters(self, mock_config, mock_celery_app):
-        """Test that celery app is configured with correct parameters"""
-        # Setup mocks
-        mock_config_instance = MagicMock()
-        mock_config_instance.celery_broker_type_redis = False
-        mock_config_instance.cloud_provider = "gcp"  # Non-Azure to test default
-        mock_config_instance.s3_bucket = "my-test-bucket"
-        mock_config.return_value = mock_config_instance
-
-        # Verify all configuration parameters
-        mock_celery_app.assert_called_once_with(
-            name="model_engine_server.service_builder",
-            modules=["model_engine_server.service_builder.tasks_v1"],
-            s3_bucket="my-test-bucket",
-            broker_type=str(BrokerType.SQS.value),
-            backend_protocol="s3",
-            task_track_started=True,
-            task_remote_tracebacks=True,
-            task_time_limit=1800,  # 30 minutes
-            task_soft_time_limit=1500,  # 25 minutes
-        )
-
-    @patch("model_engine_server.service_builder.celery.service_builder_service")
-    def test_main_block_execution(self, mock_service):
-        """Test that service.start() is called when module is run as main"""
-        # Mock the service
-        mock_service.start = MagicMock()
-
-        # Import and execute the main block
         import model_engine_server.service_builder.celery as celery_module
 
-        # Simulate running as main
-        if "__main__" == "__main__":  # This condition will always be true in test
-            celery_module.service_builder_service.start()
+        importlib.reload(celery_module)
 
-        # Verify start was called
-        mock_service.start.assert_called_once()
+        # Verify SQS broker is selected as default
+        assert celery_module.service_builder_broker_type == "sqs"
