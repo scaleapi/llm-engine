@@ -309,7 +309,7 @@ def build_endpoint(self, build_endpoint_request_json: Dict[str, Any]) -> Dict[st
                         build_endpoint_request.model_endpoint_record, "created_by", "unknown"
                     ),
                 }
-        except:
+        except Exception:
             pass
 
         task_logger.error("Task failed with exception", extra=error_info)
