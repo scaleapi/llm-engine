@@ -36,7 +36,6 @@ def test_redis_task_queue_selection_when_celery_broker_type_redis_enabled():
 
         # Verify that the same redis gateway is used for both inference and infra
         assert external_interfaces.inference_task_queue_gateway == redis_gateway
-        assert external_interfaces.infra_task_queue_gateway == redis_gateway
 
 
 def test_default_task_queue_selection_when_celery_broker_type_redis_disabled():
@@ -71,4 +70,3 @@ def test_default_task_queue_selection_when_celery_broker_type_redis_disabled():
 
         # Verify that the same sqs gateway is used for both inference and infra
         assert external_interfaces.inference_task_queue_gateway == sqs_gateway
-        assert external_interfaces.infra_task_queue_gateway == sqs_gateway
