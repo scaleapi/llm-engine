@@ -3,27 +3,31 @@ import code
 import json
 import os
 import signal
-import socket
 import subprocess
 import traceback
 from logging import Logger
 from typing import AsyncGenerator, Dict, List, Optional
 
+import vllm.envs as envs
 from fastapi import APIRouter, BackgroundTasks, Request
 from fastapi.responses import Response, StreamingResponse
-from vllm.engine.async_llm_engine import (
-    AsyncEngineDeadError,
-    build_guided_decoding_logits_processor_async,
-)
+from vllm.engine.async_llm_engine import AsyncEngineDeadError
 from vllm.engine.protocol import EngineClient
 from vllm.entrypoints.launcher import serve_http
-from vllm.entrypoints.openai.api_server import build_app, build_async_engine_client, init_app_state
+from vllm.entrypoints.openai.api_server import (
+    build_app,
+    build_async_engine_client,
+    init_app_state,
+    load_log_config,
+    maybe_register_tokenizer_info_endpoint,
+    setup_server,
+)
 from vllm.entrypoints.openai.cli_args import make_arg_parser
+from vllm.entrypoints.openai.tool_parsers import ToolParserManager
 from vllm.outputs import CompletionOutput
 from vllm.sampling_params import SamplingParams
 from vllm.sequence import Logprob
 from vllm.utils import FlexibleArgumentParser, random_uuid
-from vllm.version import __version__ as VLLM_VERSION
 
 logger = Logger("vllm_server")
 
@@ -53,16 +57,7 @@ async def generate(request: Request) -> Response:
         prompt = request_dict.pop("prompt")
         stream = request_dict.pop("stream", False)
 
-        guided_decoding_backend = (
-            await engine_client.get_decoding_config()
-        ).guided_decoding_backend
-
-        sampling_params = await build_guided_decoding_logits_processor_async(
-            sampling_params=SamplingParams(**request_dict),
-            tokenizer=await engine_client.get_tokenizer(lora_request=None),
-            default_guided_backend=guided_decoding_backend,
-            model_config=await engine_client.get_model_config(),
-        )
+        sampling_params = SamplingParams(**request_dict)
 
         request_id = random_uuid()
 
@@ -197,43 +192,62 @@ def parse_args(parser: FlexibleArgumentParser):
 
 
 async def run_server(args, **uvicorn_kwargs) -> None:
-    logger.info("vLLM API server version %s", VLLM_VERSION)
-    logger.info("args: %s", args)
+    """Run a single-worker API server."""
+    listen_address, sock = setup_server(args)
+    await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
 
-    temp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # nosemgrep
-    temp_socket.bind(("", args.port))
 
-    def signal_handler(*_) -> None:
-        # Interrupt server on sigterm while initializing
-        raise KeyboardInterrupt("terminated")
+async def run_server_worker(
+    listen_address, sock, args, client_config=None, **uvicorn_kwargs
+) -> None:
+    """Run a single API server worker."""
 
-    signal.signal(signal.SIGTERM, signal_handler)
+    if args.tool_parser_plugin and len(args.tool_parser_plugin) > 3:
+        ToolParserManager.import_tool_parser(args.tool_parser_plugin)
+
+    server_index = client_config.get("client_index", 0) if client_config else 0
+
+    # Load logging config for uvicorn if specified
+    log_config = load_log_config(args.log_config_file)
+    if log_config is not None:
+        uvicorn_kwargs["log_config"] = log_config
 
     global engine_client
-    async with build_async_engine_client(args) as engine_client:
+
+    async with build_async_engine_client(args, client_config=client_config) as engine_client:
+        maybe_register_tokenizer_info_endpoint(args)
         app = build_app(args)
 
-        model_config = await engine_client.get_model_config()
-        init_app_state(engine_client, model_config, app.state, args)
-
-        temp_socket.close()
+        vllm_config = await engine_client.get_vllm_config()
+        await init_app_state(engine_client, vllm_config, app.state, args)
         app.include_router(router)
 
+        logger.info("Starting vLLM API server %d on %s", server_index, listen_address)
         shutdown_task = await serve_http(
             app,
+            sock=sock,
+            enable_ssl_refresh=args.enable_ssl_refresh,
             host=args.host,
             port=args.port,
             log_level=args.uvicorn_log_level,
-            timeout_keep_alive=TIMEOUT_KEEP_ALIVE,
+            # NOTE: When the 'disable_uvicorn_access_log' value is True,
+            # no access log will be output.
+            access_log=not args.disable_uvicorn_access_log,
+            timeout_keep_alive=envs.VLLM_HTTP_TIMEOUT_KEEP_ALIVE,
             ssl_keyfile=args.ssl_keyfile,
             ssl_certfile=args.ssl_certfile,
             ssl_ca_certs=args.ssl_ca_certs,
             ssl_cert_reqs=args.ssl_cert_reqs,
+            h11_max_incomplete_event_size=args.h11_max_incomplete_event_size,
+            h11_max_header_count=args.h11_max_header_count,
             **uvicorn_kwargs,
         )
 
     # NB: Await server shutdown only after the backend context is exited
-    await shutdown_task
+    try:
+        await shutdown_task
+    finally:
+        sock.close()
 
 
 if __name__ == "__main__":
