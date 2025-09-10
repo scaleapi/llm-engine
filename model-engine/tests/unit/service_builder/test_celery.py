@@ -1,20 +1,18 @@
 def test_module_imports():
     """Test that the celery module can be imported"""
-    import model_engine_server.service_builder.celery
+    from model_engine_server.service_builder.celery import (
+        service_builder_broker_type,
+        service_builder_service,
+    )
 
-    celery_module = model_engine_server.service_builder.celery
-
-    assert hasattr(celery_module, "service_builder_broker_type")
-    assert hasattr(celery_module, "service_builder_service")
-    assert celery_module.service_builder_broker_type in ["redis", "servicebus", "sqs"]
+    assert service_builder_broker_type in ["redis", "servicebus", "sqs"]
+    assert service_builder_service is not None
 
 
 def test_broker_type_is_string():
     """Test that broker type is set to a valid string"""
-    import model_engine_server.service_builder.celery
-
-    celery_module = model_engine_server.service_builder.celery
+    from model_engine_server.service_builder.celery import service_builder_broker_type
 
     valid_types = ["redis", "servicebus", "sqs"]
-    assert celery_module.service_builder_broker_type in valid_types
-    assert isinstance(celery_module.service_builder_broker_type, str)
+    assert service_builder_broker_type in valid_types
+    assert isinstance(service_builder_broker_type, str)
