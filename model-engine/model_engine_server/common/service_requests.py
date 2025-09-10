@@ -43,8 +43,8 @@ def make_sync_request_with_retries(
             wait=wait_exponential(multiplier=1, min=1, max=timeout_seconds),
         ):
             with attempt:
-                if attempt.retry_state.attempt_number > 1:
-                    if infra_config().debug_mode:  # pragma: no cover
+                if attempt.retry_state.attempt_number > 1:  # pragma: no cover
+                    if infra_config().debug_mode:
                         logger.info(f"Retry number {attempt.retry_state.attempt_number}")
 
                 if infra_config().debug_mode:  # pragma: no cover
