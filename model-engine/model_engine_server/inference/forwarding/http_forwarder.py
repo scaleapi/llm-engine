@@ -58,8 +58,15 @@ def get_streaming_forwarder_loader(
 
 @lru_cache()
 def get_concurrency_limiter() -> MultiprocessingConcurrencyLimiter:
-    config = get_config()
-    concurrency = int(config.get("max_concurrency", 100))
+    # Check if concurrency is set via command line (environment variable)
+    concurrency_from_env = os.environ.get("FORWARDER_MAX_CONCURRENCY")
+    if concurrency_from_env:
+        concurrency = int(concurrency_from_env)
+    else:
+        # Fall back to config file
+        config = get_config()
+        concurrency = int(config.get("max_concurrency", 100))
+    
     return MultiprocessingConcurrencyLimiter(
         concurrency=concurrency, fail_on_concurrency_limit=True
     )
@@ -241,12 +248,18 @@ def entrypoint():  # pragma: no cover
     parser.add_argument("--port", type=int, default=5000)
     parser.add_argument("--set", type=str, action="append")
     parser.add_argument("--graceful-timeout", type=int, default=600)
+    parser.add_argument("--max-concurrency", type=int, default=None, 
+                        help="Maximum concurrent requests per worker")
 
     args, extra_args = parser.parse_known_args()
 
     os.environ["CONFIG_FILE"] = args.config
     if args.set is not None:
         os.environ["CONFIG_OVERRIDES"] = ";".join(args.set)
+    
+    # Set concurrency in environment for get_concurrency_limiter to use
+    if args.max_concurrency is not None:
+        os.environ["FORWARDER_MAX_CONCURRENCY"] = str(args.max_concurrency)
 
     asyncio.run(
         run_server(
