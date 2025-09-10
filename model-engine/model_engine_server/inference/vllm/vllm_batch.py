@@ -195,7 +195,7 @@ async def generate_v1_completions(
 # This is needed to handle the cases where it takes too long to process all of the requests before
 # the configured 'VLLM_ENGINE_ITERATION_TIMEOUT_S' 30s timeout.
 def determine_max_concurrent_requests(
-    requests: Union[List[CompletionRequest], List[ChatCompletionRequest]]
+    requests: Union[List[CompletionRequest], List[ChatCompletionRequest]],
 ) -> int:
     # Guided decoding
     # For example, with guided decoding, vLLM initializes a guided decoding logit processor per request, and
@@ -230,7 +230,7 @@ async def generate_v2_completions(
     semaphore = asyncio.Semaphore(max_concurrent_requests)
 
     async def process_request(
-        request: Union[CompletionRequest, ChatCompletionRequest]
+        request: Union[CompletionRequest, ChatCompletionRequest],
     ) -> Coroutine[
         Any,
         Any,

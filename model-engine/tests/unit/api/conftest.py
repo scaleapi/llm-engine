@@ -596,7 +596,7 @@ def model_bundle_3_v1(test_api_key: str) -> Tuple[ModelBundle, Any]:
 
 @pytest.fixture
 def create_model_endpoint_request_async(
-    model_bundle_1_v1: Tuple[ModelBundle, Any]
+    model_bundle_1_v1: Tuple[ModelBundle, Any],
 ) -> Dict[str, Any]:
     return {
         "name": "test_model_endpoint_name_1",
@@ -626,7 +626,7 @@ def create_model_endpoint_request_async(
 
 @pytest.fixture
 def create_model_endpoint_request_sync(
-    model_bundle_1_v1: Tuple[ModelBundle, Any]
+    model_bundle_1_v1: Tuple[ModelBundle, Any],
 ) -> Dict[str, Any]:
     return {
         "name": "test_model_endpoint_name_2",
@@ -652,7 +652,7 @@ def create_model_endpoint_request_sync(
 
 @pytest.fixture
 def create_model_endpoint_request_streaming(
-    model_bundle_3_v1: Tuple[ModelBundle, Any]
+    model_bundle_3_v1: Tuple[ModelBundle, Any],
 ) -> Dict[str, Any]:
     return {
         "name": "test_model_endpoint_name_2",
@@ -678,7 +678,7 @@ def create_model_endpoint_request_streaming(
 
 @pytest.fixture
 def create_model_endpoint_request_streaming_invalid_bundle(
-    model_bundle_1_v1: Tuple[ModelBundle, Any]
+    model_bundle_1_v1: Tuple[ModelBundle, Any],
 ) -> Dict[str, Any]:
     return {
         "name": "test_model_endpoint_name_2",
@@ -704,7 +704,7 @@ def create_model_endpoint_request_streaming_invalid_bundle(
 
 @pytest.fixture
 def create_model_endpoint_request_sync_invalid_streaming_bundle(
-    model_bundle_3_v1: Tuple[ModelBundle, Any]
+    model_bundle_3_v1: Tuple[ModelBundle, Any],
 ) -> Dict[str, Any]:
     return {
         "name": "test_model_endpoint_name_2",

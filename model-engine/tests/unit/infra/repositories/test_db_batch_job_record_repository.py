@@ -258,7 +258,7 @@ async def test_unset_model_endpoint_id_batch_job_record_success(
 
 @pytest.mark.asyncio
 async def test_unset_model_endpoint_id_batch_job_record_returns_none(
-    dbsession: Callable[[], AsyncSession]
+    dbsession: Callable[[], AsyncSession],
 ):
     OrmBatchJob.select_by_id = AsyncMock(return_value=None)
 
