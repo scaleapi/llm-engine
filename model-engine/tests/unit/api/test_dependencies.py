@@ -1,5 +1,5 @@
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from model_engine_server.api.dependencies import get_external_interfaces
 
 
