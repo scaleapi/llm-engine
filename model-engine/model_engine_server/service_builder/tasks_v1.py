@@ -134,34 +134,42 @@ async def _build_endpoint(
     
     try:
         # Database connection
-        logger.info("Establishing database session")
+        if infra_config().debug_mode:
+            logger.info("Establishing database session")
         session = get_session_async_null_pool()
-        logger.info("Database session established successfully")
+        if infra_config().debug_mode:
+            logger.info("Database session established successfully")
         
         # Redis connection
-        logger.info("Connecting to Redis", extra={"redis_url": hmi_config.cache_redis_url})
+        if infra_config().debug_mode:
+            logger.info("Connecting to Redis", extra={"redis_url": hmi_config.cache_redis_url})
         pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
         redis = aioredis.Redis(connection_pool=pool)
-        logger.info("Redis connection established successfully")
+        if infra_config().debug_mode:
+            logger.info("Redis connection established successfully")
         
         # Service initialization
-        logger.info("Initializing LiveEndpointBuilderService")
+        if infra_config().debug_mode:
+            logger.info("Initializing LiveEndpointBuilderService")
         service: LiveEndpointBuilderService = get_live_endpoint_builder_service(session, redis)
-        logger.info("LiveEndpointBuilderService initialized successfully")
+        if infra_config().debug_mode:
+            logger.info("LiveEndpointBuilderService initialized successfully")
         
         # Actual endpoint building
-        logger.info("Starting endpoint build operation")
+        if infra_config().debug_mode:
+            logger.info("Starting endpoint build operation")
         response = await service.build_endpoint(build_endpoint_request)
         
         build_time = time.time() - task_start_time
-        logger.info(
-            "Endpoint build completed successfully",
-            extra={
-                "endpoint_name": build_endpoint_request.model_endpoint_record.name,
-                "build_time_seconds": build_time,
-                "response_status": getattr(response, 'status', 'unknown'),
-            }
-        )
+        if infra_config().debug_mode:
+            logger.info(
+                "Endpoint build completed successfully",
+                extra={
+                    "endpoint_name": build_endpoint_request.model_endpoint_record.name,
+                    "build_time_seconds": build_time,
+                    "response_status": getattr(response, 'status', 'unknown'),
+                }
+            )
         
         return response
         
@@ -188,31 +196,38 @@ async def _build_endpoint(
         cleanup_start = time.time()
         try:
             if redis:
-                logger.info("Closing Redis connection")
+                if infra_config().debug_mode:
+                    logger.info("Closing Redis connection")
                 await redis.close()
-                logger.info("Redis connection closed")
+                if infra_config().debug_mode:
+                    logger.info("Redis connection closed")
         except Exception as e:
             logger.warning(f"Error closing Redis connection: {e}")
             
         try:
             if pool:
-                logger.info("Disconnecting Redis pool")
+                if infra_config().debug_mode:
+                    logger.info("Disconnecting Redis pool")
                 await pool.disconnect()
-                logger.info("Redis pool disconnected")
+                if infra_config().debug_mode:
+                    logger.info("Redis pool disconnected")
         except Exception as e:
             logger.warning(f"Error disconnecting Redis pool: {e}")
             
-        cleanup_time = time.time() - cleanup_start
-        logger.info(f"Resource cleanup completed in {cleanup_time:.2f} seconds")
+        if infra_config().debug_mode:
+            cleanup_time = time.time() - cleanup_start
+            logger.info(f"Resource cleanup completed in {cleanup_time:.2f} seconds")
 
 
 @worker_process_init.connect
 def init_worker(*args, **kwargs):
-    logger.info("Initializing Celery worker process")
+    if infra_config().debug_mode:
+        logger.info("Initializing Celery worker process")
     # k8s health check
     with open(READYZ_FPATH, "w") as f:
         f.write("READY")
-    logger.info("Worker process initialized successfully")
+    if infra_config().debug_mode:
+        logger.info("Worker process initialized successfully")
 
 
 @service_builder_service.task(bind=True)
@@ -221,46 +236,51 @@ def build_endpoint(self, build_endpoint_request_json: Dict[str, Any]) -> Dict[st
     task_id = self.request.id
     
     # Log task start with detailed context
-    task_logger.info(
-        "Task started",
-        extra={
-            "task_id": task_id,
-            "task_name": "build_endpoint",
-            "request_data_keys": list(build_endpoint_request_json.keys()) if build_endpoint_request_json else [],
-            "worker_hostname": self.request.hostname,
-        }
-    )
+    if infra_config().debug_mode:
+        task_logger.info(
+            "Task started",
+            extra={
+                "task_id": task_id,
+                "task_name": "build_endpoint",
+                "request_data_keys": list(build_endpoint_request_json.keys()) if build_endpoint_request_json else [],
+                "worker_hostname": self.request.hostname,
+            }
+        )
     
     try:
         # Parse request
-        task_logger.info("Parsing build endpoint request", extra={"task_id": task_id})
+        if infra_config().debug_mode:
+            task_logger.info("Parsing build endpoint request", extra={"task_id": task_id})
         build_endpoint_request: BuildEndpointRequest = BuildEndpointRequest.parse_obj(
             build_endpoint_request_json
         )
-        task_logger.info(
-            "Request parsed successfully",
-            extra={
-                "task_id": task_id,
-                "endpoint_name": build_endpoint_request.model_endpoint_record.name,
-                "endpoint_type": getattr(build_endpoint_request.model_endpoint_record, 'endpoint_type', 'unknown'),
-            }
-        )
+        if infra_config().debug_mode:
+            task_logger.info(
+                "Request parsed successfully",
+                extra={
+                    "task_id": task_id,
+                    "endpoint_name": build_endpoint_request.model_endpoint_record.name,
+                    "endpoint_type": getattr(build_endpoint_request.model_endpoint_record, 'endpoint_type', 'unknown'),
+                }
+            )
         
         # Execute the async build process
-        task_logger.info("Starting async endpoint build", extra={"task_id": task_id})
+        if infra_config().debug_mode:
+            if infra_config().debug_mode:task_logger.info("Starting async endpoint build", extra={"task_id": task_id})
         result = asyncio.run(_build_endpoint(build_endpoint_request))
         
         # Log successful completion
-        task_duration = time.time() - task_start_time
-        task_logger.info(
-            "Task completed successfully",
-            extra={
-                "task_id": task_id,
-                "endpoint_name": build_endpoint_request.model_endpoint_record.name,
-                "task_duration_seconds": task_duration,
-                "result_status": getattr(result, 'status', 'unknown'),
-            }
-        )
+        cleanup_time = time.time() - cleanup_start
+            task_duration = time.time() - task_start_time
+            task_logger.info(
+                "Task completed successfully",
+                extra={
+                    "task_id": task_id,
+                    "endpoint_name": build_endpoint_request.model_endpoint_record.name,
+                    "task_duration_seconds": task_duration,
+                    "result_status": getattr(result, 'status', 'unknown'),
+                }
+            )
         
         return result.dict()
         
