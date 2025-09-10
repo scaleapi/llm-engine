@@ -12,6 +12,7 @@ from .db_trigger_repository import DbTriggerRepository
 from .ecr_docker_repository import ECRDockerRepository
 from .fake_docker_repository import FakeDockerRepository
 from .feature_flag_repository import FeatureFlagRepository
+from .gcp_artifact_registry_docker_repository import GCPArtifactRegistryDockerRepository
 from .live_tokenizer_repository import LiveTokenizerRepository
 from .llm_fine_tune_repository import LLMFineTuneRepository
 from .model_endpoint_cache_repository import ModelEndpointCacheRepository
@@ -42,4 +43,5 @@ __all__: Sequence[str] = [
     "RedisModelEndpointCacheRepository",
     "S3FileLLMFineTuneRepository",
     "S3FileLLMFineTuneEventsRepository",
+    "GCPArtifactRegistryDockerRepository",
 ]

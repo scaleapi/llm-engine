@@ -45,6 +45,7 @@ def excluded_namespaces():
 ELASTICACHE_REDIS_BROKER = "redis-elasticache-message-broker-master"
 SQS_BROKER = "sqs-message-broker-master"
 SERVICEBUS_BROKER = "servicebus-message-broker-master"
+GCP_REDIS_BROKER = "redis-gcp-memorystore-message-broker-master"
 
 UPDATE_DEPLOYMENT_MAX_RETRIES = 10
 
@@ -588,6 +589,7 @@ async def main():
         ELASTICACHE_REDIS_BROKER: RedisBroker(use_elasticache=True),
         SQS_BROKER: SQSBroker(),
         SERVICEBUS_BROKER: ASBBroker(),
+        GCP_REDIS_BROKER: RedisBroker(use_elasticache=False),
     }
 
     broker = BROKER_NAME_TO_CLASS[autoscaler_broker]
@@ -598,10 +600,18 @@ async def main():
     )
 
     if broker_type == "redis":
+        # TODO gcp: change this to use cloud storage
+        # NOTE: the infra config is not available in the autoscaler (for some reason), so we have
+        # to use the autoscaler_broker to determine the infra.
+        backend_protocol = "redis" if "gcp" in autoscaler_broker else "s3"
         inspect = {
             db_index: inspect_app(
                 app=celery_app(
-                    None, broker_type=broker_type, task_visibility=db_index, aws_role=aws_profile
+                    None,
+                    broker_type=broker_type,
+                    task_visibility=db_index,
+                    aws_role=aws_profile,
+                    backend_protocol=backend_protocol,
                 )
             )
             for db_index in get_all_db_indexes()

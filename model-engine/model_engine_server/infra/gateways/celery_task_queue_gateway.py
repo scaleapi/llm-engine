@@ -8,7 +8,7 @@ from model_engine_server.common.dtos.tasks import (
     GetAsyncTaskV1Response,
     TaskStatus,
 )
-from model_engine_server.core.celery import TaskVisibility, celery_app
+from model_engine_server.core.celery import TaskVisibility, celery_app, get_default_backend_protocol
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.tracing.tracing_gateway import TracingGateway
@@ -16,7 +16,8 @@ from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 
 logger = make_logger(logger_name())
-backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
+
+backend_protocol = get_default_backend_protocol()
 
 celery_redis = celery_app(
     None,

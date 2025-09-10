@@ -70,12 +70,14 @@ class HostedModelInferenceServiceConfig:
     user_inference_tensorflow_repository: str
     docker_image_layer_cache_repository: str
     sensitive_log_mode: bool
-    # Exactly one of the following three must be specified
+    # Exactly one of the following four must be specified
     cache_redis_aws_url: Optional[str] = None  # also using this to store sync autoscaling metrics
     cache_redis_azure_host: Optional[str] = None
     cache_redis_aws_secret_name: Optional[str] = (
         None  # Not an env var because the redis cache info is already here
     )
+    cache_redis_gcp_host: Optional[str] = None
+
     sglang_repository: Optional[str] = None
 
     @classmethod
@@ -103,6 +105,9 @@ class HostedModelInferenceServiceConfig:
             ), "cache_redis_aws_secret_name is only for AWS"
             creds = get_key_file(self.cache_redis_aws_secret_name)  # Use default role
             return creds["cache-url"]
+        elif self.cache_redis_gcp_host:
+            assert infra_config().cloud_provider == "gcp"
+            return f"rediss://{self.cache_redis_gcp_host}"
 
         assert self.cache_redis_azure_host and infra_config().cloud_provider == "azure"
         username = os.getenv("AZURE_OBJECT_ID")

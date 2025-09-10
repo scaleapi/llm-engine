@@ -553,9 +553,12 @@ def get_endpoint_resource_arguments_from_request(
 
     image_hash = compute_image_hash(request.image)
 
-    # In Circle CI, we use Redis on localhost instead of SQS
+    # In Circle CI/GCP, we use Redis on localhost instead of SQS
     if CIRCLECI:
         broker_name = BrokerName.REDIS.value
+        broker_type = BrokerType.REDIS.value
+    elif infra_config().cloud_provider == "gcp":
+        broker_name = BrokerName.REDIS_GCP.value
         broker_type = BrokerType.REDIS.value
     elif infra_config().cloud_provider == "azure":
         broker_name = BrokerName.SERVICEBUS.value
@@ -576,6 +579,7 @@ def get_endpoint_resource_arguments_from_request(
     abs_account_name = os.getenv("ABS_ACCOUNT_NAME")
     if abs_account_name is not None:
         main_env.append({"name": "ABS_ACCOUNT_NAME", "value": abs_account_name})
+    # TODO: what should we add here
 
     # LeaderWorkerSet exclusive
     worker_env = None
