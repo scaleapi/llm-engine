@@ -2,6 +2,7 @@ import json
 from dataclasses import dataclass
 from typing import Mapping
 from unittest import mock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import HTTPException
@@ -13,7 +14,9 @@ from model_engine_server.inference.forwarding.forwarding import (
     KEY_SERIALIZE_RESULTS_AS_STRING,
     Forwarder,
     LoadForwarder,
+    LoadPassthroughForwarder,
     LoadStreamingForwarder,
+    PassthroughForwarder,
     StreamingForwarder,
     load_named_config,
 )
@@ -93,6 +96,50 @@ def mocked_get_endpoint_config():
     )
 
 
+class MockRequest:
+    """Mock request object for testing PassthroughForwarder"""
+
+    def __init__(
+        self,
+        method="POST",
+        path="/mcp/test",
+        query="",
+        headers=None,
+        body_data=b'{"test": "data"}',
+    ):
+        self.method = method
+        self.headers = headers or {
+            "content-type": "application/json",
+            "authorization": "Bearer token",
+        }
+        self.url = MagicMock()
+        self.url.path = path
+        self.url.query = query
+        self._body_data = body_data
+
+    async def body(self):
+        return self._body_data
+
+
+class MockAiohttpResponse:
+    """Mock aiohttp response for testing PassthroughForwarder"""
+
+    def __init__(self, data=b'{"result": "success"}', headers=None):
+        self.headers = headers or {"content-type": "application/json"}
+        self._data = data
+
+    async def read(self):
+        return self._data
+
+
+def mocked_aiohttp_client_session():
+    """Mock aiohttp ClientSession for passthrough forwarder tests"""
+    mock_response = MockAiohttpResponse()
+    mock_client = AsyncMock()
+    mock_client.request = AsyncMock(return_value=mock_response)
+    return mock_client
+
+
 @pytest.fixture
 def post_inference_hooks_handler():
     handler = PostInferenceHooksHandler(
@@ -137,6 +184,12 @@ def mocked_config_content():
                 "model_engine_unwrap": True,
                 "serialize_results_as_string": False,
             },
+            "passthrough": {
+                "user_port": 5005,
+                "user_hostname": "localhost",
+                "healthcheck_route": "/health",
+                "passthrough_route": "/mcp",
+            },
             "max_concurrency": 42,
         }
     }
@@ -148,6 +201,8 @@ def mocked_config_overrides():
         "forwarder.stream.extra_routes=['/v1/chat/completions']",
         "forwarder.sync.healthcheck_route=/health",
         "forwarder.stream.healthcheck_route=/health",
+        "forwarder.passthrough.healthcheck_route=/health",
+        "forwarder.passthrough.extra_routes=[]",
     ]
 
 
@@ -178,6 +233,13 @@ def test_load_named_config():
             "model_engine_unwrap": True,
             "serialize_results_as_string": False,
             "extra_routes": ["/v1/chat/completions"],
+        },
+        "passthrough": {
+            "user_port": 5005,
+            "user_hostname": "localhost",
+            "healthcheck_route": "/health",
+            "passthrough_route": "/mcp",
+            "extra_routes": [],
         },
         "max_concurrency": 42,
     }
@@ -246,6 +308,20 @@ def _check_streaming_serialized(streaming_response) -> None:
     assert streaming_response_list[0] == {"result": json.dumps(PAYLOAD)}
     assert streaming_response_list[1] == {"result": json.dumps(PAYLOAD)}
     assert streaming_response_list[2] == {"result": PAYLOAD_END}
+
+
+async def _check_passthrough_response(passthrough_response_generator) -> None:
+    """Check a passthrough forwarder response generator"""
+    response_list = []
+    async for response in passthrough_response_generator:
+        response_list.append(response)
+
+    assert len(response_list) == 1
+    response = response_list[0]
+    assert isinstance(response, MockAiohttpResponse)
+    # Verify we can read the response data
+    data = await response.read()
+    assert data == b'{"result": "success"}'
 
 
 @mock.patch("requests.post", mocked_post)
@@ -488,3 +564,135 @@ def test_streaming_forwarder_loader():
     fwd = LoadStreamingForwarder(serialize_results_as_string=False).load(None, None)  # type: ignore
     response = fwd({"ignore": "me"})
     _check_streaming(response)
+
+
+# Passthrough forwarder tests
+@pytest.mark.asyncio
+async def test_passthrough_forwarder():
+    """Test basic PassthroughForwarder functionality"""
+    fwd = PassthroughForwarder(passthrough_endpoint="http://localhost:5005")
+    mock_request = MockRequest(method="POST", path="/mcp/test", query="param=value")
+
+    with mock.patch("aiohttp.ClientSession") as mock_session:
+        mock_client = mocked_aiohttp_client_session()
+        mock_session.return_value.__aenter__.return_value = mock_client
+
+        response_generator = fwd.forward(mock_request)
+        await _check_passthrough_response(response_generator)
+
+        # Verify the correct endpoint was called
+        mock_client.request.assert_called_once_with(
+            method="POST",
+            url="http://localhost:5005/mcp/test?param=value",
+            data=b'{"test": "data"}',
+            headers={
+                "content-type": "application/json",
+                "authorization": "Bearer token",
+            },
+        )
+
+
+@pytest.mark.asyncio
+async def test_passthrough_forwarder_get_request():
+    """Test PassthroughForwarder with GET request (no body)"""
+    fwd = PassthroughForwarder(passthrough_endpoint="http://localhost:5005")
+    mock_request = MockRequest(method="GET", path="/mcp/status", query="", body_data=b"")
+
+    with mock.patch("aiohttp.ClientSession") as mock_session:
+        mock_client = mocked_aiohttp_client_session()
+        mock_session.return_value.__aenter__.return_value = mock_client
+
+        response_generator = fwd.forward(mock_request)
+        await _check_passthrough_response(response_generator)
+
+        # Verify GET request has no data
+        mock_client.request.assert_called_once_with(
+            method="GET",
+            url="http://localhost:5005/mcp/status",
+            data=None,
+            headers={
+                "content-type": "application/json",
+                "authorization": "Bearer token",
+            },
+        )
+
+
+@pytest.mark.asyncio
+async def test_passthrough_forwarder_header_filtering():
+    """Test that PassthroughForwarder filters out excluded headers"""
+    fwd = PassthroughForwarder(passthrough_endpoint="http://localhost:5005")
+
+    # Include both allowed and excluded headers
+    headers_with_excluded = {
+        "content-type": "application/json",
+        "authorization": "Bearer token",
+        "host": "original-host",  # Should be excluded
+        "content-length": "123",  # Should be excluded
+        "transfer-encoding": "chunked",  # Should be excluded
+        "connection": "keep-alive",  # Should be excluded
+        "custom-header": "keep-me",  # Should be kept
+    }
+
+    mock_request = MockRequest(method="POST", path="/mcp/test", headers=headers_with_excluded)
+
+    with mock.patch("aiohttp.ClientSession") as mock_session:
+        mock_client = mocked_aiohttp_client_session()
+        mock_session.return_value.__aenter__.return_value = mock_client
+
+        response_generator = fwd.forward(mock_request)
+        await _check_passthrough_response(response_generator)
+
+        # Check that excluded headers were filtered out
+        call_args = mock_client.request.call_args
+        actual_headers = call_args.kwargs["headers"]
+
+        expected_headers = {
+            "content-type": "application/json",
+            "authorization": "Bearer token",
+            "custom-header": "keep-me",
+        }
+
+        assert actual_headers == expected_headers
+        assert "host" not in actual_headers
+        assert "content-length" not in actual_headers
+        assert "transfer-encoding" not in actual_headers
+        assert "connection" not in actual_headers
+
+
+@mock.patch("requests.get", mocked_get)
+def test_load_passthrough_forwarder():
+    """Test LoadPassthroughForwarder.load() method"""
+    loader = LoadPassthroughForwarder(
+        user_port=5005,
+        user_hostname="localhost",
+        passthrough_route="/mcp",
+        healthcheck_route="/health",
+    )
+
+    forwarder = loader.load(None, None)  # type: ignore
+
+    assert isinstance(forwarder, PassthroughForwarder)
+    assert forwarder.passthrough_endpoint == "http://localhost:5005"
+
+
+def test_load_passthrough_forwarder_validation():
+    """Test LoadPassthroughForwarder validation similar to streaming tests"""
+    # Test invalid port
+    with pytest.raises(ValueError, match="Invalid port value"):
+        LoadPassthroughForwarder(user_port=0).load(None, None)  # type: ignore
+
+    # Test empty hostname
+    with pytest.raises(ValueError, match="hostname must be non-empty"):
+        LoadPassthroughForwarder(user_hostname="").load(None, None)  # type: ignore
+
+    # Test non-localhost hostname
+    with pytest.raises(NotImplementedError, match="localhost-based user-code services"):
+        LoadPassthroughForwarder(user_hostname="remote-host").load(None, None)  # type: ignore
+
+    # Test empty healthcheck route
+    with pytest.raises(ValueError, match="healthcheck route must be non-empty"):
+        LoadPassthroughForwarder(healthcheck_route="").load(None, None)  # type: ignore
+
+    # Test empty passthrough route
+    with pytest.raises(ValueError, match="predict route must be non-empty"):
+        LoadPassthroughForwarder(passthrough_route="").load(None, None)  # type: ignore

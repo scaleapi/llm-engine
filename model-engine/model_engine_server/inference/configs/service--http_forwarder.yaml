@@ -19,10 +19,10 @@ forwarder:
     model_engine_unwrap: true
     serialize_results_as_string: false
     extra_routes: []
-  mcp:
+  passthrough:
     user_port: 5005
     user_hostname: "localhost"
     healthcheck_route: "/health"
-    mcp_route: "/mcp"
+    passthrough_route: "/mcp"
     extra_routes: []
   max_concurrency: 100

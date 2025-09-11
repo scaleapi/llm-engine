@@ -13,7 +13,6 @@ import sseclient
 import yaml
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-
 from model_engine_server.common.aiohttp_sse_client import EventSource
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.tracing import get_tracing_gateway
@@ -629,8 +628,8 @@ class LoadStreamingForwarder:
 
 
 @dataclass
-class MCPForwarder(ModelEngineSerializationMixin):
-    mcp_endpoint: str
+class PassthroughForwarder(ModelEngineSerializationMixin):
+    passthrough_endpoint: str
 
     async def forward(self, request: Any):
         async with aiohttp.ClientSession() as aioclient:
@@ -644,7 +643,7 @@ class MCPForwarder(ModelEngineSerializationMixin):
             headers = {k: v for k, v in headers.items() if k.lower() not in excluded_headers}
 
             url = request.url
-            target_url: str = f"{self.mcp_endpoint.rstrip('/')}{url.path}"
+            target_url: str = f"{self.passthrough_endpoint.rstrip('/')}{url.path}"
 
             if url.query:
                 target_url = f"{target_url}?{url.query}"
@@ -659,24 +658,24 @@ class MCPForwarder(ModelEngineSerializationMixin):
 
 
 @dataclass(frozen=True)
-class LoadMCPForwarder:
+class LoadPassthroughForwarder:
     user_port: int = DEFAULT_PORT
     user_hostname: str = "localhost"
-    mcp_route: str = "/mcp"
+    passthrough_route: str = "/mcp"
     healthcheck_route: str = "/health"
 
-    def load(self, resources: Optional[Path], cache: Any) -> MCPForwarder:
+    def load(self, resources: Optional[Path], cache: Any) -> PassthroughForwarder:
         if len(self.healthcheck_route) == 0:
             raise ValueError("healthcheck route must be non-empty!")
 
-        if len(self.mcp_route) == 0:
+        if len(self.passthrough_route) == 0:
             raise ValueError("predict route must be non-empty!")
 
         if not self.healthcheck_route.startswith("/"):
             raise ValueError(f"healthcheck route must start with /: {self.healthcheck_route=}")
 
-        if not self.mcp_route.startswith("/"):
-            raise ValueError(f"predict route must start with /: {self.mcp_route=}")
+        if not self.passthrough_route.startswith("/"):
+            raise ValueError(f"predict route must start with /: {self.passthrough_route=}")
 
         if not (1 <= self.user_port <= 65535):
             raise ValueError(f"Invalid port value: {self.user_port=}")
@@ -693,11 +692,11 @@ class LoadMCPForwarder:
         def endpoint(route: str) -> str:
             return f"http://{self.user_hostname}:{self.user_port}{route}"
 
-        mcp_endpoint: str = endpoint("")
+        passthrough_endpoint: str = endpoint("")
         hc: str = endpoint(self.healthcheck_route)
 
         logger.info(f"Forwarding to user-defined service at: {self.user_hostname}:{self.user_port}")
-        logger.info(f"MCP endpoint:  {mcp_endpoint}")
+        logger.info(f"Passthrough endpoint:  {passthrough_endpoint}")
         logger.info(f"Healthcheck endpoint: {hc}")
 
         while True:
@@ -710,8 +709,8 @@ class LoadMCPForwarder:
             logger.info(f"Waiting for user-defined service to be ready at {hc}...")
             time.sleep(1)
 
-        logger.info(f"Creating MCPForwarder with mcp_endpoint: {mcp_endpoint}")
-        return MCPForwarder(mcp_endpoint=mcp_endpoint)
+        logger.info(f"Creating PassthroughForwarder with endpoint: {passthrough_endpoint}")
+        return PassthroughForwarder(passthrough_endpoint=passthrough_endpoint)
 
 
 def load_named_config(config_uri, config_overrides=None):

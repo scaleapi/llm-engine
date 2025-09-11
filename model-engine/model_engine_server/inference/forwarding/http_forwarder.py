@@ -9,20 +9,19 @@ import orjson
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, Request
 from fastapi.responses import StreamingResponse
-from sse_starlette import EventSourceResponse
-
 from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.inference.forwarding.forwarding import (
     Forwarder,
     LoadForwarder,
-    LoadMCPForwarder,
+    LoadPassthroughForwarder,
     LoadStreamingForwarder,
-    MCPForwarder,
+    PassthroughForwarder,
     StreamingForwarder,
     load_named_config,
 )
+from sse_starlette import EventSourceResponse
 
 logger = make_logger(logger_name())
 
@@ -60,16 +59,16 @@ def get_streaming_forwarder_loader(
     return streaming_forwarder_loader
 
 
-def get_mcp_forwarder_loader(
+def get_passthrough_forwarder_loader(
     destination_path: Optional[str] = None,
-) -> LoadMCPForwarder:
-    config = get_config()["mcp"]
+) -> LoadPassthroughForwarder:
+    config = get_config()["passthrough"]
     if "extra_routes" in config:
         del config["extra_routes"]
     if destination_path:
-        config["mcp_route"] = destination_path
-    mcp_forwarder_loader = LoadMCPForwarder(**config)
-    return mcp_forwarder_loader
+        config["passthrough_route"] = destination_path
+    passthrough_forwarder_loader = LoadPassthroughForwarder(**config)
+    return passthrough_forwarder_loader
 
 
 @lru_cache()
@@ -92,8 +91,8 @@ def load_streaming_forwarder(destination_path: Optional[str] = None) -> Streamin
 
 
 @lru_cache()
-def load_mcp_forwarder(destination_path: Optional[str] = None) -> MCPForwarder:
-    return get_mcp_forwarder_loader(destination_path).load(None, None)
+def load_passthrough_forwarder(destination_path: Optional[str] = None) -> PassthroughForwarder:
+    return get_passthrough_forwarder_loader(destination_path).load(None, None)
 
 
 async def predict(
@@ -146,7 +145,7 @@ async def stream(
 
 async def mcp(
     request: Request,
-    forwarder: MCPForwarder = Depends(load_mcp_forwarder),
+    forwarder: PassthroughForwarder = Depends(load_passthrough_forwarder),
     limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
 ):
     with limiter:

@@ -17,6 +17,7 @@ from model_engine_server.inference.forwarding.http_forwarder import (
     MultiprocessingConcurrencyLimiter,
     get_concurrency_limiter,
     get_forwarder_loader,
+    get_passthrough_forwarder_loader,
     get_streaming_forwarder_loader,
     init_app,
     predict,
@@ -87,6 +88,13 @@ def mocked_get_config():
             "batch_route": None,
             "model_engine_unwrap": True,
             "serialize_results_as_string": False,
+        },
+        "passthrough": {
+            "user_port": 5005,
+            "user_hostname": "localhost",
+            "healthcheck_route": "/health",
+            "passthrough_route": "/mcp",
+            "extra_routes": [],
         },
         "max_concurrency": 42,
     }
@@ -165,6 +173,18 @@ def test_get_streaming_forwarder_loader():
 
     loader = get_streaming_forwarder_loader("/v1/chat/completions")
     assert loader.predict_route == "/v1/chat/completions"
+
+
+@mock.patch(
+    "model_engine_server.inference.forwarding.http_forwarder.get_config",
+    mocked_get_config,
+)
+def test_get_passthrough_forwarder_loader():
+    loader = get_passthrough_forwarder_loader()
+    assert loader.passthrough_route == "/mcp"
+
+    loader = get_passthrough_forwarder_loader("/sse")
+    assert loader.passthrough_route == "/sse"
 
 
 @mock.patch(
