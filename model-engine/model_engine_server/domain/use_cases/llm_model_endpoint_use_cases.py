@@ -820,7 +820,7 @@ class CreateLLMModelBundleV1UseCase:
         if chat_template_override:
             sglang_args.chat_template = chat_template_override
 
-        sglang_cmd = f"python3 -m sglang.launch_server --model-path {huggingface_repo} --served-model-name {model_name} --port 5005 --host '::'"
+        sglang_cmd = f"python3 -m sglang.launch_server --model-path {huggingface_repo} --served-model-name {model_name} --port 5005 --host 0.0.0.0"
         for field in SGLangEndpointAdditionalArgs.model_fields.keys():
             config_value = getattr(sglang_args, field, None)
             if config_value is not None:
@@ -952,7 +952,7 @@ class CreateLLMModelBundleV1UseCase:
             if hmi_config.sensitive_log_mode:
                 vllm_args.disable_log_requests = True
 
-            vllm_cmd = f"python -m vllm_server --model {final_weights_folder} --served-model-name {model_name} {final_weights_folder} --port 5005 --host '::'"
+            vllm_cmd = f"python -m vllm_server --model {final_weights_folder} --served-model-name {model_name} {final_weights_folder} --port 5005 --host 0.0.0.0"
             for field in VLLMEndpointAdditionalArgs.model_fields.keys():
                 config_value = getattr(vllm_args, field, None)
                 if config_value is not None:
