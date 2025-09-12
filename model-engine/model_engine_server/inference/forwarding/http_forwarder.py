@@ -9,6 +9,8 @@ import orjson
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, Request
 from fastapi.responses import StreamingResponse
+from sse_starlette import EventSourceResponse
+
 from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -21,7 +23,6 @@ from model_engine_server.inference.forwarding.forwarding import (
     StreamingForwarder,
     load_named_config,
 )
-from sse_starlette import EventSourceResponse
 
 logger = make_logger(logger_name())
 
@@ -43,6 +44,8 @@ def get_forwarder_loader(destination_path: Optional[str] = None) -> LoadForwarde
         del config["extra_routes"]
     if destination_path:
         config["predict_route"] = destination_path
+    if "forwarder_type" in config:
+        del config["forwarder_type"]
     forwarder_loader = LoadForwarder(**config)
     return forwarder_loader
 
@@ -55,18 +58,19 @@ def get_streaming_forwarder_loader(
         del config["extra_routes"]
     if destination_path:
         config["predict_route"] = destination_path
+    if "forwarder_type" in config:
+        del config["forwarder_type"]
     streaming_forwarder_loader = LoadStreamingForwarder(**config)
     return streaming_forwarder_loader
 
 
-def get_passthrough_forwarder_loader(
-    destination_path: Optional[str] = None,
-) -> LoadPassthroughForwarder:
-    config = get_config()["passthrough"]
-    if "extra_routes" in config:
-        del config["extra_routes"]
-    if destination_path:
-        config["passthrough_route"] = destination_path
+def get_stream_passthrough_forwarder_loader() -> LoadPassthroughForwarder:
+    config = get_config().get("passthrough", {})
+    stream_config = get_config().get("stream", {})
+
+    for key in config:
+        config[key] = stream_config[key]
+
     passthrough_forwarder_loader = LoadPassthroughForwarder(**config)
     return passthrough_forwarder_loader
 
@@ -91,8 +95,8 @@ def load_streaming_forwarder(destination_path: Optional[str] = None) -> Streamin
 
 
 @lru_cache()
-def load_passthrough_forwarder(destination_path: Optional[str] = None) -> PassthroughForwarder:
-    return get_passthrough_forwarder_loader(destination_path).load(None, None)
+def load_stream_passthrough_forwarder() -> PassthroughForwarder:
+    return get_stream_passthrough_forwarder_loader().load(None, None)
 
 
 async def predict(
@@ -143,9 +147,9 @@ async def stream(
         return EventSourceResponse(event_generator())
 
 
-async def mcp(
+async def passthrough(
     request: Request,
-    forwarder: PassthroughForwarder = Depends(load_passthrough_forwarder),
+    forwarder: PassthroughForwarder = Depends(get_stream_passthrough_forwarder_loader),
     limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
 ):
     with limiter:
@@ -214,7 +218,7 @@ async def init_app():
     def healthcheck():
         return "OK"
 
-    def add_extra_routes(app: FastAPI):
+    def add_extra_stream_or_predict_routes(app: FastAPI):
         """Read extra_routes from config and dynamically add routes to app"""
         config = get_config()
         sync_forwarders: Dict[str, Forwarder] = dict()
@@ -261,15 +265,42 @@ async def init_app():
                 methods=["POST"],
             )
 
+    def add_stream_passthrough_routes(app: FastAPI):
+        config = get_config()
+
+        passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
+        for route in config.get("stream", {}).get("extra_routes", []):
+            passthrough_forwarders[route] = load_stream_passthrough_forwarder()
+
+        for route in passthrough_forwarders:
+
+            def get_passthrough_forwarder(route=route):
+                return passthrough_forwarders.get(route)
+
+            async def passthrough_route(
+                request: Request,
+                passthrough_forwarder: PassthroughForwarder = Depends(get_passthrough_forwarder),
+                limiter=Depends(get_concurrency_limiter),
+            ):
+                return await passthrough(request, passthrough_forwarder, limiter)
+
+            app.add_api_route(
+                path=route,
+                endpoint=passthrough_route,
+                methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+            )
+
+    def add_extra_routes(app: FastAPI):
+        config = get_config()
+        if config.get("stream", {}).get("forwarder_type") == "passthrough":
+            add_stream_passthrough_routes(app)
+        else:
+            add_extra_stream_or_predict_routes(app)
+
     app.add_api_route(path="/healthz", endpoint=healthcheck, methods=["GET"])
     app.add_api_route(path="/readyz", endpoint=healthcheck, methods=["GET"])
     app.add_api_route(path="/predict", endpoint=predict, methods=["POST"])
     app.add_api_route(path="/stream", endpoint=stream, methods=["POST"])
-    app.add_api_route(
-        path="/mcp",
-        endpoint=mcp,
-        methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
-    )
 
     add_extra_routes(app)
     return app

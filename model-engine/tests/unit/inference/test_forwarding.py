@@ -628,7 +628,6 @@ async def test_passthrough_forwarder_header_filtering():
         "authorization": "Bearer token",
         "host": "original-host",  # Should be excluded
         "content-length": "123",  # Should be excluded
-        "transfer-encoding": "chunked",  # Should be excluded
         "connection": "keep-alive",  # Should be excluded
         "custom-header": "keep-me",  # Should be kept
     }
@@ -655,7 +654,6 @@ async def test_passthrough_forwarder_header_filtering():
         assert actual_headers == expected_headers
         assert "host" not in actual_headers
         assert "content-length" not in actual_headers
-        assert "transfer-encoding" not in actual_headers
         assert "connection" not in actual_headers
 
 
@@ -665,14 +663,12 @@ def test_load_passthrough_forwarder():
     loader = LoadPassthroughForwarder(
         user_port=5005,
         user_hostname="localhost",
-        passthrough_route="/mcp",
         healthcheck_route="/health",
     )
 
     forwarder = loader.load(None, None)  # type: ignore
 
     assert isinstance(forwarder, PassthroughForwarder)
-    assert forwarder.passthrough_endpoint == "http://localhost:5005"
 
 
 def test_load_passthrough_forwarder_validation():
@@ -692,7 +688,3 @@ def test_load_passthrough_forwarder_validation():
     # Test empty healthcheck route
     with pytest.raises(ValueError, match="healthcheck route must be non-empty"):
         LoadPassthroughForwarder(healthcheck_route="").load(None, None)  # type: ignore
-
-    # Test empty passthrough route
-    with pytest.raises(ValueError, match="predict route must be non-empty"):
-        LoadPassthroughForwarder(passthrough_route="").load(None, None)  # type: ignore

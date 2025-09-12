@@ -23,6 +23,5 @@ forwarder:
     user_port: 5005
     user_hostname: "localhost"
     healthcheck_route: "/health"
-    passthrough_route: "/mcp"
-    extra_routes: []
+
   max_concurrency: 100

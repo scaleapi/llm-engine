@@ -637,7 +637,6 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
             excluded_headers: set[str] = {
                 "host",
                 "content-length",
-                "transfer-encoding",
                 "connection",
             }
             headers = {k: v for k, v in headers.items() if k.lower() not in excluded_headers}
@@ -661,21 +660,14 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
 class LoadPassthroughForwarder:
     user_port: int = DEFAULT_PORT
     user_hostname: str = "localhost"
-    passthrough_route: str = "/mcp"
     healthcheck_route: str = "/health"
 
     def load(self, resources: Optional[Path], cache: Any) -> PassthroughForwarder:
         if len(self.healthcheck_route) == 0:
             raise ValueError("healthcheck route must be non-empty!")
 
-        if len(self.passthrough_route) == 0:
-            raise ValueError("predict route must be non-empty!")
-
         if not self.healthcheck_route.startswith("/"):
             raise ValueError(f"healthcheck route must start with /: {self.healthcheck_route=}")
-
-        if not self.passthrough_route.startswith("/"):
-            raise ValueError(f"predict route must start with /: {self.passthrough_route=}")
 
         if not (1 <= self.user_port <= 65535):
             raise ValueError(f"Invalid port value: {self.user_port=}")
