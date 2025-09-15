@@ -188,7 +188,6 @@ def mocked_config_content():
                 "user_port": 5005,
                 "user_hostname": "localhost",
                 "healthcheck_route": "/health",
-                "passthrough_route": "/mcp",
             },
             "max_concurrency": 42,
         }
@@ -202,7 +201,6 @@ def mocked_config_overrides():
         "forwarder.sync.healthcheck_route=/health",
         "forwarder.stream.healthcheck_route=/health",
         "forwarder.passthrough.healthcheck_route=/health",
-        "forwarder.passthrough.extra_routes=[]",
     ]
 
 
@@ -238,8 +236,6 @@ def test_load_named_config():
             "user_port": 5005,
             "user_hostname": "localhost",
             "healthcheck_route": "/health",
-            "passthrough_route": "/mcp",
-            "extra_routes": [],
         },
         "max_concurrency": 42,
     }

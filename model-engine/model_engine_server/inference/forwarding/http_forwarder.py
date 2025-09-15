@@ -9,8 +9,6 @@ import orjson
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, Request
 from fastapi.responses import StreamingResponse
-from sse_starlette import EventSourceResponse
-
 from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -23,6 +21,7 @@ from model_engine_server.inference.forwarding.forwarding import (
     StreamingForwarder,
     load_named_config,
 )
+from sse_starlette import EventSourceResponse
 
 logger = make_logger(logger_name())
 

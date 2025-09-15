@@ -184,6 +184,10 @@ data:
                 - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
                 - --set
                 - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - --set
+                - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
+                - --set
+                - "forwarder.stream.forwarder_type=${FORWARDER_TYPE}"
               {{- $sync_forwarder_template_env | nindent 14 }}
               readinessProbe:
                 httpGet:
@@ -616,6 +620,10 @@ data:
                   - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
                   - --set
                   - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                  - --set
+                  - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
+                  - --set
+                  - "forwarder.stream.forwarder_type=${FORWARDER_TYPE}"
                 {{- $sync_forwarder_template_env | nindent 16 }}
                 readinessProbe:
                   httpGet:
