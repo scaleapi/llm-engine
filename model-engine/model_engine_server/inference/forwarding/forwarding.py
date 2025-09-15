@@ -13,6 +13,7 @@ import sseclient
 import yaml
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
+
 from model_engine_server.common.aiohttp_sse_client import EventSource
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.tracing import get_tracing_gateway
@@ -631,7 +632,7 @@ class LoadStreamingForwarder:
 class PassthroughForwarder(ModelEngineSerializationMixin):
     passthrough_endpoint: str
 
-    async def forward(self, request: Any):
+    async def forward_stream(self, request: Any):
         async with aiohttp.ClientSession() as aioclient:
             headers: dict[str, str] = dict(request.headers)
             excluded_headers: set[str] = {
@@ -653,7 +654,40 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
                 data=await request.body() if request.method in ["POST", "PUT", "PATCH"] else None,
                 headers=headers,
             )
-            yield response
+            response_headers = response.headers
+            yield (response_headers, response.status)
+
+            if response.status != 200:
+                yield await response.read()
+
+            async for chunk in response.content.iter_chunks():
+                yield chunk[0]
+
+            yield await response.read()
+
+    async def forward_sync(self, request: Any):
+        async with aiohttp.ClientSession() as aioclient:
+            headers: dict[str, str] = dict(request.headers)
+            excluded_headers: set[str] = {
+                "host",
+                "content-length",
+                "connection",
+            }
+            headers = {k: v for k, v in headers.items() if k.lower() not in excluded_headers}
+
+            url = request.url
+            target_url: str = f"{self.passthrough_endpoint.rstrip('/')}{url.path}"
+
+            if url.query:
+                target_url = f"{target_url}?{url.query}"
+
+            response = await aioclient.request(
+                method=request.method,
+                url=target_url,
+                data=await request.body() if request.method in ["POST", "PUT", "PATCH"] else None,
+                headers=headers,
+            )
+            return response
 
 
 @dataclass(frozen=True)
