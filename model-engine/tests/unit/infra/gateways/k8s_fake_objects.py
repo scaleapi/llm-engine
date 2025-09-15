@@ -40,9 +40,9 @@ class FakeK8sV1JobSpec:
 
 @dataclass
 class FakeK8sV1Job:
-    metadata: FakeK8sV1ObjectMeta = FakeK8sV1ObjectMeta()
-    status: FakeK8sV1JobStatus = FakeK8sV1JobStatus()
-    spec: FakeK8sV1JobSpec = FakeK8sV1JobSpec()
+    metadata: FakeK8sV1ObjectMeta = field(default_factory=FakeK8sV1ObjectMeta)
+    status: FakeK8sV1JobStatus = field(default_factory=FakeK8sV1JobStatus)
+    spec: FakeK8sV1JobSpec = field(default_factory=FakeK8sV1JobSpec)
     # TODO: spec, api_version, kind
 
 
@@ -53,8 +53,8 @@ class FakeK8sV1JobList:
 
 @dataclass
 class FakeK8sV1Pod:
-    metadata: FakeK8sV1ObjectMeta = FakeK8sV1ObjectMeta()
-    status: FakeK8sV1PodStatus = FakeK8sV1PodStatus()
+    metadata: FakeK8sV1ObjectMeta = field(default_factory=FakeK8sV1ObjectMeta)
+    status: FakeK8sV1PodStatus = field(default_factory=FakeK8sV1PodStatus)
     # TODO: spec, api_version, kind
 
 

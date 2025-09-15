@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from unittest.mock import ANY, AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -174,6 +174,7 @@ def test_resource_arguments_type_and_add_datadog_env_to_main_container(resource_
         float: 1.1,
         int: 1,
         str: "foo",
+        Optional[str]: "foo",
     }
     resource_arguments = {
         key: type_to_default_value[type_]
@@ -788,7 +789,9 @@ async def test_delete_resources_invalid_endpoint_type_returns_false(
     k8s_endpoint_resource_delegate,
 ):
     deleted = await k8s_endpoint_resource_delegate.delete_resources(
-        endpoint_id="", deployment_name="", endpoint_type=None  # type: ignore
+        endpoint_id="",
+        deployment_name="",
+        endpoint_type=None,  # type: ignore
     )
     assert not deleted
 
