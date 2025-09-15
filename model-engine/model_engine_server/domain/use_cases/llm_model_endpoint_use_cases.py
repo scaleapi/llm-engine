@@ -952,7 +952,7 @@ class CreateLLMModelBundleV1UseCase:
             if hmi_config.sensitive_log_mode:
                 vllm_args.disable_log_requests = True
 
-            vllm_cmd = f"python -m vllm_server --model {final_weights_folder} --served-model-name {model_name} {final_weights_folder} --port 5005 --host '::'"
+            vllm_cmd = f'python -m vllm_server --model {final_weights_folder} --served-model-name {model_name} {final_weights_folder} --port 5005 --host "::"'
             for field in VLLMEndpointAdditionalArgs.model_fields.keys():
                 config_value = getattr(vllm_args, field, None)
                 if config_value is not None:
