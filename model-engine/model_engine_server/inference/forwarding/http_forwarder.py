@@ -218,7 +218,7 @@ async def init_app():
     def healthcheck():
         return "OK"
 
-    def add_extra_stream_or_predict_routes(app: FastAPI):
+    def add_extra_sync_or_stream_routes(app: FastAPI):
         """Read extra_routes from config and dynamically add routes to app"""
         config = get_config()
         sync_forwarders: Dict[str, Forwarder] = dict()
@@ -295,7 +295,7 @@ async def init_app():
         if config.get("stream", {}).get("forwarder_type") == "passthrough":
             add_stream_passthrough_routes(app)
         else:
-            add_extra_stream_or_predict_routes(app)
+            add_extra_sync_or_stream_routes(app)
 
     app.add_api_route(path="/healthz", endpoint=healthcheck, methods=["GET"])
     app.add_api_route(path="/readyz", endpoint=healthcheck, methods=["GET"])
