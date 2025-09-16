@@ -7,14 +7,17 @@ from typing import Any, Dict, Optional
 
 import orjson
 import uvicorn
-from fastapi import BackgroundTasks, Depends, FastAPI
+from fastapi import BackgroundTasks, Depends, FastAPI, Request
+from fastapi.responses import Response, StreamingResponse
 from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.inference.forwarding.forwarding import (
     Forwarder,
     LoadForwarder,
+    LoadPassthroughForwarder,
     LoadStreamingForwarder,
+    PassthroughForwarder,
     StreamingForwarder,
     load_named_config,
 )
@@ -40,6 +43,8 @@ def get_forwarder_loader(destination_path: Optional[str] = None) -> LoadForwarde
         del config["extra_routes"]
     if destination_path:
         config["predict_route"] = destination_path
+    if "forwarder_type" in config:
+        del config["forwarder_type"]
     forwarder_loader = LoadForwarder(**config)
     return forwarder_loader
 
@@ -52,8 +57,38 @@ def get_streaming_forwarder_loader(
         del config["extra_routes"]
     if destination_path:
         config["predict_route"] = destination_path
+    if "forwarder_type" in config:
+        del config["forwarder_type"]
     streaming_forwarder_loader = LoadStreamingForwarder(**config)
     return streaming_forwarder_loader
+
+
+def get_stream_passthrough_forwarder_loader(
+    destination_path: Optional[str] = None,
+) -> LoadPassthroughForwarder:
+    config = {}
+    stream_config = get_config().get("stream", {})
+    for key in ["user_port", "user_hostname", "healthcheck_route"]:
+        config[key] = stream_config[key]
+    if destination_path:
+        config["passthrough_route"] = destination_path
+
+    passthrough_forwarder_loader = LoadPassthroughForwarder(**config)
+    return passthrough_forwarder_loader
+
+
+def get_sync_passthrough_forwarder_loader(
+    destination_path: Optional[str] = None,
+) -> LoadPassthroughForwarder:
+    config = {}
+    sync_config = get_config().get("sync", {})
+    for key in ["user_port", "user_hostname", "healthcheck_route"]:
+        config[key] = sync_config[key]
+    if destination_path:
+        config["passthrough_route"] = destination_path
+
+    passthrough_forwarder_loader = LoadPassthroughForwarder(**config)
+    return passthrough_forwarder_loader
 
 
 @lru_cache()
@@ -73,6 +108,41 @@ def load_forwarder(destination_path: Optional[str] = None) -> Forwarder:
 @lru_cache()
 def load_streaming_forwarder(destination_path: Optional[str] = None) -> StreamingForwarder:
     return get_streaming_forwarder_loader(destination_path).load(None, None)
+
+
+@lru_cache()
+def load_stream_passthrough_forwarder(
+    destination_path: Optional[str] = None,
+) -> PassthroughForwarder:
+    return get_stream_passthrough_forwarder_loader(destination_path).load(None, None)
+
+
+@lru_cache()
+def load_sync_passthrough_forwarder(destination_path: Optional[str] = None) -> PassthroughForwarder:
+    return get_sync_passthrough_forwarder_loader(destination_path).load(None, None)
+
+
+HOP_BY_HOP_HEADERS: list[str] = [
+    "proxy-authenticate",
+    "proxy-authorization",
+    "content-length",
+    "content-encoding",
+]
+
+
+def sanitize_response_headers(headers: dict, force_cache_bust: bool = False) -> dict:
+    lower_headers = {k.lower(): v for k, v in headers.items()}
+    # Delete hop by hop headers that should not be forwarded
+    for header in HOP_BY_HOP_HEADERS:
+        if header in lower_headers:
+            del lower_headers[header]
+
+    if force_cache_bust:
+        # force clients to refetch resources
+        lower_headers["cache-control"] = "no-store"
+        if "etag" in lower_headers:
+            del lower_headers["etag"]
+    return lower_headers
 
 
 async def predict(
@@ -121,6 +191,35 @@ async def stream(
                 yield {"data": orjson.dumps(response).decode("utf-8")}
 
         return EventSourceResponse(event_generator())
+
+
+async def passthrough_stream(
+    request: Request,
+    forwarder: PassthroughForwarder = Depends(get_stream_passthrough_forwarder_loader),
+    limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
+):
+    with limiter:
+        response = forwarder.forward_stream(request)
+        headers, status = await anext(response)
+        headers = sanitize_response_headers(headers)
+
+        async def content_generator():
+            async for chunk in response:
+                yield chunk
+
+        return StreamingResponse(content_generator(), headers=headers, status_code=status)
+
+
+async def passthrough_sync(
+    request: Request,
+    forwarder: PassthroughForwarder = Depends(get_sync_passthrough_forwarder_loader),
+    limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
+):
+    with limiter:
+        response = await forwarder.forward_sync(request)
+        headers = sanitize_response_headers(response.headers)
+        content = await response.read()
+        return Response(content=content, status_code=response.status, headers=headers)
 
 
 async def serve_http(app: FastAPI, **uvicorn_kwargs: Any):  # pragma: no cover
@@ -177,7 +276,7 @@ async def init_app():
     def healthcheck():
         return "OK"
 
-    def add_extra_routes(app: FastAPI):
+    def add_extra_sync_or_stream_routes(app: FastAPI):
         """Read extra_routes from config and dynamically add routes to app"""
         config = get_config()
         sync_forwarders: Dict[str, Forwarder] = dict()
@@ -223,6 +322,65 @@ async def init_app():
                 endpoint=predict_or_stream,
                 methods=["POST"],
             )
+
+    def add_stream_passthrough_routes(app: FastAPI):
+        config = get_config()
+
+        passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
+        for route in config.get("stream", {}).get("extra_routes", []):
+            passthrough_forwarders[route] = load_stream_passthrough_forwarder(route)
+
+        for route in passthrough_forwarders:
+
+            def get_passthrough_forwarder(route=route):
+                return passthrough_forwarders.get(route)
+
+            async def passthrough_route(
+                request: Request,
+                passthrough_forwarder: PassthroughForwarder = Depends(get_passthrough_forwarder),
+                limiter=Depends(get_concurrency_limiter),
+            ):
+                return await passthrough_stream(request, passthrough_forwarder, limiter)
+
+            app.add_api_route(
+                path=route,
+                endpoint=passthrough_route,
+                methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+            )
+
+    def add_sync_passthrough_routes(app: FastAPI):
+        config = get_config()
+
+        passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
+        for route in config.get("sync", {}).get("extra_routes", []):
+            passthrough_forwarders[route] = load_sync_passthrough_forwarder(route)
+
+        for route in passthrough_forwarders:
+
+            def get_passthrough_forwarder(route=route):
+                return passthrough_forwarders.get(route)
+
+            async def passthrough_route(
+                request: Request,
+                passthrough_forwarder: PassthroughForwarder = Depends(get_passthrough_forwarder),
+                limiter=Depends(get_concurrency_limiter),
+            ):
+                return await passthrough_sync(request, passthrough_forwarder, limiter)
+
+            app.add_api_route(
+                path=route,
+                endpoint=passthrough_route,
+                methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+            )
+
+    def add_extra_routes(app: FastAPI):
+        config = get_config()
+        if config.get("stream", {}).get("forwarder_type") == "passthrough":
+            add_stream_passthrough_routes(app)
+        elif config.get("sync", {}).get("forwarder_type") == "passthrough":
+            add_sync_passthrough_routes(app)
+        else:
+            add_extra_sync_or_stream_routes(app)
 
     app.add_api_route(path="/healthz", endpoint=healthcheck, methods=["GET"])
     app.add_api_route(path="/readyz", endpoint=healthcheck, methods=["GET"])

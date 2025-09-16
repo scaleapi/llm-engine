@@ -17,7 +17,9 @@ from model_engine_server.inference.forwarding.http_forwarder import (
     MultiprocessingConcurrencyLimiter,
     get_concurrency_limiter,
     get_forwarder_loader,
+    get_stream_passthrough_forwarder_loader,
     get_streaming_forwarder_loader,
+    get_sync_passthrough_forwarder_loader,
     init_app,
     predict,
 )
@@ -265,6 +267,64 @@ def mocked_get_config_with_extra_paths():
     }
 
 
+def mocked_get_config_stream_passthrough():
+    return {
+        "sync": {
+            "user_port": 5005,
+            "user_hostname": "localhost",
+            "use_grpc": False,
+            "predict_route": "/predict",
+            "healthcheck_route": "/readyz",
+            "batch_route": None,
+            "model_engine_unwrap": True,
+            "serialize_results_as_string": True,
+            "forward_http_status": True,
+            "extra_routes": ["/v1/chat/completions"],
+        },
+        "stream": {
+            "user_port": 5005,
+            "user_hostname": "localhost",
+            "predict_route": "/stream",
+            "healthcheck_route": "/readyz",
+            "batch_route": None,
+            "model_engine_unwrap": True,
+            "serialize_results_as_string": False,
+            "extra_routes": ["/v1/chat/completions"],
+            "forwarder_type": "passthrough",
+        },
+        "max_concurrency": 42,
+    }
+
+
+def mocked_get_config_sync_passthrough():
+    return {
+        "sync": {
+            "user_port": 5005,
+            "user_hostname": "localhost",
+            "use_grpc": False,
+            "predict_route": "/predict",
+            "healthcheck_route": "/readyz",
+            "batch_route": None,
+            "model_engine_unwrap": True,
+            "serialize_results_as_string": True,
+            "forward_http_status": True,
+            "extra_routes": ["/v1/chat/completions"],
+            "forwarder_type": "passthrough",
+        },
+        "stream": {
+            "user_port": 5005,
+            "user_hostname": "localhost",
+            "predict_route": "/stream",
+            "healthcheck_route": "/readyz",
+            "batch_route": None,
+            "model_engine_unwrap": True,
+            "serialize_results_as_string": False,
+            "extra_routes": ["/v1/chat/completions"],
+        },
+        "max_concurrency": 42,
+    }
+
+
 def get_predict_endpoint(config):
     cfg_sync = config["sync"]
     predict_endpoint = (
@@ -314,6 +374,46 @@ def mocked_get_endpoint_config():
 async def mocked_app() -> FastAPI:
     with requests_mock.Mocker() as req_mock:
         healthcheck_endpoint = get_healthcheck_endpoint(mocked_get_config_with_extra_paths())
+        req_mock.get(
+            healthcheck_endpoint,
+            json={"status": "ok"},
+        )
+        app = await init_app()
+        return app
+
+
+@pytest.fixture()
+@mock.patch(
+    "model_engine_server.inference.forwarding.http_forwarder.get_config",
+    mocked_get_config_stream_passthrough,
+)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+async def mocked_stream_passthrough_app() -> FastAPI:
+    with requests_mock.Mocker() as req_mock:
+        healthcheck_endpoint = get_healthcheck_endpoint(mocked_get_config_stream_passthrough())
+        req_mock.get(
+            healthcheck_endpoint,
+            json={"status": "ok"},
+        )
+        app = await init_app()
+        return app
+
+
+@pytest.fixture()
+@mock.patch(
+    "model_engine_server.inference.forwarding.http_forwarder.get_config",
+    mocked_get_config_sync_passthrough,
+)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+async def mocked_sync_passthrough_app() -> FastAPI:
+    with requests_mock.Mocker() as req_mock:
+        healthcheck_endpoint = get_healthcheck_endpoint(mocked_get_config_sync_passthrough())
         req_mock.get(
             healthcheck_endpoint,
             json={"status": "ok"},
@@ -377,3 +477,338 @@ async def test_mocked_app_success(mocked_app):
         assert response.json() == expected_result
 
         # TODO: add tests for streaming; it's not as trivial as I'd hoped
+
+
+# Tests for passthrough routes
+
+
+@pytest.mark.anyio
+@mock.patch(
+    "model_engine_server.inference.forwarding.http_forwarder.get_config",
+    mocked_get_config_stream_passthrough,
+)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+async def test_stream_passthrough_routes_post(mocked_stream_passthrough_app):
+    """Test stream passthrough route with POST method"""
+    config = mocked_get_config_stream_passthrough()
+    healthcheck_endpoint = get_healthcheck_endpoint(config)
+    chat_endpoint = get_chat_endpoint(config)
+
+    raw_payload = {"prompt": "Hello", "stream": True}
+    raw_result = b'{"message": "Hello World"}\n'
+
+    with (
+        TestClient(mocked_stream_passthrough_app) as client,
+        aioresponses() as aio_mock,
+        requests_mock.Mocker() as req_mock,
+    ):
+        req_mock.get(healthcheck_endpoint, json={"status": "ok"})
+
+        # Mock the passthrough endpoint
+        aio_mock.post(
+            chat_endpoint, status=200, body=raw_result, headers={"content-type": "application/json"}
+        )
+
+        response = client.post(
+            "/v1/chat/completions",
+            json=raw_payload,
+            headers={"Authorization": "Bearer test-token", "User-Agent": "test-client"},
+        )
+        assert response.status_code == 200
+
+
+@pytest.mark.anyio
+@mock.patch(
+    "model_engine_server.inference.forwarding.http_forwarder.get_config",
+    mocked_get_config_stream_passthrough,
+)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+async def test_stream_passthrough_routes_get(mocked_stream_passthrough_app):
+    """Test stream passthrough route with GET method"""
+    config = mocked_get_config_stream_passthrough()
+    healthcheck_endpoint = get_healthcheck_endpoint(config)
+    chat_endpoint = get_chat_endpoint(config)
+
+    raw_result = b'{"models": ["model1", "model2"]}\n'
+
+    with (
+        TestClient(mocked_stream_passthrough_app) as client,
+        aioresponses() as aio_mock,
+        requests_mock.Mocker() as req_mock,
+    ):
+        req_mock.get(healthcheck_endpoint, json={"status": "ok"})
+
+        # Mock the passthrough endpoint
+        aio_mock.get(
+            f"{chat_endpoint}?param=value",
+            status=200,
+            body=raw_result,
+            headers={"content-type": "application/json"},
+        )
+
+        response = client.get(
+            "/v1/chat/completions?param=value", headers={"Authorization": "Bearer test-token"}
+        )
+        assert response.status_code == 200
+
+
+@pytest.mark.anyio
+@mock.patch(
+    "model_engine_server.inference.forwarding.http_forwarder.get_config",
+    mocked_get_config_sync_passthrough,
+)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+async def test_sync_passthrough_routes_post(mocked_sync_passthrough_app):
+    """Test sync passthrough route with POST method"""
+    config = mocked_get_config_sync_passthrough()
+    healthcheck_endpoint = get_healthcheck_endpoint(config)
+    chat_endpoint = get_chat_endpoint(config)
+
+    raw_payload = {"prompt": "Hello", "stream": False}
+    raw_result = {"message": "Hello World"}
+
+    with (
+        TestClient(mocked_sync_passthrough_app) as client,
+        aioresponses() as aio_mock,
+        requests_mock.Mocker() as req_mock,
+    ):
+        req_mock.get(healthcheck_endpoint, json={"status": "ok"})
+
+        # Mock the passthrough endpoint
+        aio_mock.post(
+            chat_endpoint,
+            status=200,
+            payload=raw_result,
+            headers={"content-type": "application/json"},
+        )
+
+        response = client.post(
+            "/v1/chat/completions",
+            json=raw_payload,
+            headers={"Authorization": "Bearer test-token", "User-Agent": "test-client"},
+        )
+        assert response.status_code == 200
+
+
+@pytest.mark.anyio
+@mock.patch(
+    "model_engine_server.inference.forwarding.http_forwarder.get_config",
+    mocked_get_config_sync_passthrough,
+)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+async def test_sync_passthrough_routes_put(mocked_sync_passthrough_app):
+    """Test sync passthrough route with PUT method"""
+    config = mocked_get_config_sync_passthrough()
+    healthcheck_endpoint = get_healthcheck_endpoint(config)
+    chat_endpoint = get_chat_endpoint(config)
+
+    raw_payload = {"model": "updated-model", "params": {"temperature": 0.7}}
+    raw_result = {"status": "updated"}
+
+    with (
+        TestClient(mocked_sync_passthrough_app) as client,
+        aioresponses() as aio_mock,
+        requests_mock.Mocker() as req_mock,
+    ):
+        req_mock.get(healthcheck_endpoint, json={"status": "ok"})
+
+        # Mock the passthrough endpoint
+        aio_mock.put(
+            chat_endpoint,
+            status=200,
+            payload=raw_result,
+            headers={"content-type": "application/json"},
+        )
+
+        response = client.put(
+            "/v1/chat/completions", json=raw_payload, headers={"Authorization": "Bearer test-token"}
+        )
+        assert response.status_code == 200
+
+
+@pytest.mark.anyio
+@mock.patch(
+    "model_engine_server.inference.forwarding.http_forwarder.get_config",
+    mocked_get_config_sync_passthrough,
+)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+async def test_sync_passthrough_routes_delete(mocked_sync_passthrough_app):
+    """Test sync passthrough route with DELETE method"""
+    config = mocked_get_config_sync_passthrough()
+    healthcheck_endpoint = get_healthcheck_endpoint(config)
+    chat_endpoint = get_chat_endpoint(config)
+
+    raw_result = {"status": "deleted"}
+
+    with (
+        TestClient(mocked_sync_passthrough_app) as client,
+        aioresponses() as aio_mock,
+        requests_mock.Mocker() as req_mock,
+    ):
+        req_mock.get(healthcheck_endpoint, json={"status": "ok"})
+
+        # Mock the passthrough endpoint
+        aio_mock.delete(
+            chat_endpoint,
+            status=200,
+            payload=raw_result,
+            headers={"content-type": "application/json"},
+        )
+
+        response = client.delete(
+            "/v1/chat/completions", headers={"Authorization": "Bearer test-token"}
+        )
+        assert response.status_code == 200
+
+
+@pytest.mark.anyio
+@mock.patch(
+    "model_engine_server.inference.forwarding.http_forwarder.get_config",
+    mocked_get_config_sync_passthrough,
+)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+async def test_sync_passthrough_routes_patch(mocked_sync_passthrough_app):
+    """Test sync passthrough route with PATCH method"""
+    config = mocked_get_config_sync_passthrough()
+    healthcheck_endpoint = get_healthcheck_endpoint(config)
+    chat_endpoint = get_chat_endpoint(config)
+
+    raw_payload = {"temperature": 0.9}
+    raw_result = {"status": "patched"}
+
+    with (
+        TestClient(mocked_sync_passthrough_app) as client,
+        aioresponses() as aio_mock,
+        requests_mock.Mocker() as req_mock,
+    ):
+        req_mock.get(healthcheck_endpoint, json={"status": "ok"})
+
+        # Mock the passthrough endpoint
+        aio_mock.patch(
+            chat_endpoint,
+            status=200,
+            payload=raw_result,
+            headers={"content-type": "application/json"},
+        )
+
+        response = client.patch(
+            "/v1/chat/completions", json=raw_payload, headers={"Authorization": "Bearer test-token"}
+        )
+        assert response.status_code == 200
+
+
+@pytest.mark.anyio
+@mock.patch(
+    "model_engine_server.inference.forwarding.http_forwarder.get_config",
+    mocked_get_config_sync_passthrough,
+)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+async def test_sync_passthrough_routes_head(mocked_sync_passthrough_app):
+    """Test sync passthrough route with HEAD method"""
+    config = mocked_get_config_sync_passthrough()
+    healthcheck_endpoint = get_healthcheck_endpoint(config)
+    chat_endpoint = get_chat_endpoint(config)
+
+    with (
+        TestClient(mocked_sync_passthrough_app) as client,
+        aioresponses() as aio_mock,
+        requests_mock.Mocker() as req_mock,
+    ):
+        req_mock.get(healthcheck_endpoint, json={"status": "ok"})
+
+        # Mock the passthrough endpoint
+        aio_mock.head(
+            chat_endpoint,
+            status=200,
+            headers={"content-type": "application/json", "content-length": "100"},
+        )
+
+        response = client.head(
+            "/v1/chat/completions", headers={"Authorization": "Bearer test-token"}
+        )
+        assert response.status_code == 200
+
+
+@pytest.mark.anyio
+@mock.patch(
+    "model_engine_server.inference.forwarding.http_forwarder.get_config",
+    mocked_get_config_sync_passthrough,
+)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+async def test_sync_passthrough_routes_options(mocked_sync_passthrough_app):
+    """Test sync passthrough route with OPTIONS method"""
+    config = mocked_get_config_sync_passthrough()
+    healthcheck_endpoint = get_healthcheck_endpoint(config)
+    chat_endpoint = get_chat_endpoint(config)
+
+    with (
+        TestClient(mocked_sync_passthrough_app) as client,
+        aioresponses() as aio_mock,
+        requests_mock.Mocker() as req_mock,
+    ):
+        req_mock.get(healthcheck_endpoint, json={"status": "ok"})
+
+        # Mock the passthrough endpoint
+        aio_mock.options(
+            chat_endpoint,
+            status=200,
+            headers={
+                "allow": "GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS",
+                "access-control-allow-methods": "GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS",
+            },
+        )
+
+        response = client.options("/v1/chat/completions")
+        assert response.status_code == 200
+
+
+def test_get_stream_passthrough_forwarder_loader():
+    """Test getting stream passthrough forwarder loader"""
+    with mock.patch(
+        "model_engine_server.inference.forwarding.http_forwarder.get_config",
+        mocked_get_config_stream_passthrough,
+    ):
+        loader = get_stream_passthrough_forwarder_loader()
+        assert loader.user_port == 5005
+        assert loader.user_hostname == "localhost"
+
+        loader_with_path = get_stream_passthrough_forwarder_loader("/custom/route")
+        assert loader_with_path.passthrough_route == "/custom/route"
+
+
+def test_get_sync_passthrough_forwarder_loader():
+    """Test getting sync passthrough forwarder loader"""
+    with mock.patch(
+        "model_engine_server.inference.forwarding.http_forwarder.get_config",
+        mocked_get_config_sync_passthrough,
+    ):
+        loader = get_sync_passthrough_forwarder_loader()
+        assert loader.user_port == 5005
+        assert loader.user_hostname == "localhost"
+
+        loader_with_path = get_sync_passthrough_forwarder_loader("/custom/route")
+        assert loader_with_path.passthrough_route == "/custom/route"
