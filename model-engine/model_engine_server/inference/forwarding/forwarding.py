@@ -13,7 +13,6 @@ import sseclient
 import yaml
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-
 from model_engine_server.common.aiohttp_sse_client import EventSource
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.tracing import get_tracing_gateway
@@ -632,28 +631,32 @@ class LoadStreamingForwarder:
 class PassthroughForwarder(ModelEngineSerializationMixin):
     passthrough_endpoint: str
 
+    async def _make_request(
+        self, request: Any, aioclient: aiohttp.ClientSession
+    ) -> aiohttp.ClientResponse:
+        headers: dict[str, str] = dict(request.headers)
+        excluded_headers: set[str] = {
+            "host",
+            "content-length",
+            "connection",
+        }
+        headers = {k: v for k, v in headers.items() if k.lower() not in excluded_headers}
+        url = request.url
+        target_url: str = f"{self.passthrough_endpoint.rstrip('/')}"
+
+        if url.query:
+            target_url = f"{target_url}?{url.query}"
+
+        return await aioclient.request(
+            method=request.method,
+            url=target_url,
+            data=await request.body() if request.method in ["POST", "PUT", "PATCH"] else None,
+            headers=headers,
+        )
+
     async def forward_stream(self, request: Any):
         async with aiohttp.ClientSession() as aioclient:
-            headers: dict[str, str] = dict(request.headers)
-            excluded_headers: set[str] = {
-                "host",
-                "content-length",
-                "connection",
-            }
-            headers = {k: v for k, v in headers.items() if k.lower() not in excluded_headers}
-
-            url = request.url
-            target_url: str = f"{self.passthrough_endpoint.rstrip('/')}{url.path}"
-
-            if url.query:
-                target_url = f"{target_url}?{url.query}"
-
-            response = await aioclient.request(
-                method=request.method,
-                url=target_url,
-                data=await request.body() if request.method in ["POST", "PUT", "PATCH"] else None,
-                headers=headers,
-            )
+            response = await self._make_request(request, aioclient)
             response_headers = response.headers
             yield (response_headers, response.status)
 
@@ -667,26 +670,7 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
 
     async def forward_sync(self, request: Any):
         async with aiohttp.ClientSession() as aioclient:
-            headers: dict[str, str] = dict(request.headers)
-            excluded_headers: set[str] = {
-                "host",
-                "content-length",
-                "connection",
-            }
-            headers = {k: v for k, v in headers.items() if k.lower() not in excluded_headers}
-
-            url = request.url
-            target_url: str = f"{self.passthrough_endpoint.rstrip('/')}{url.path}"
-
-            if url.query:
-                target_url = f"{target_url}?{url.query}"
-
-            response = await aioclient.request(
-                method=request.method,
-                url=target_url,
-                data=await request.body() if request.method in ["POST", "PUT", "PATCH"] else None,
-                headers=headers,
-            )
+            response = await self._make_request(request, aioclient)
             return response
 
 
@@ -695,6 +679,7 @@ class LoadPassthroughForwarder:
     user_port: int = DEFAULT_PORT
     user_hostname: str = "localhost"
     healthcheck_route: str = "/health"
+    passthrough_route: str = ""
 
     def load(self, resources: Optional[Path], cache: Any) -> PassthroughForwarder:
         if len(self.healthcheck_route) == 0:
@@ -718,7 +703,7 @@ class LoadPassthroughForwarder:
         def endpoint(route: str) -> str:
             return f"http://{self.user_hostname}:{self.user_port}{route}"
 
-        passthrough_endpoint: str = endpoint("")
+        passthrough_endpoint: str = endpoint(self.passthrough_route)
         hc: str = endpoint(self.healthcheck_route)
 
         logger.info(f"Forwarding to user-defined service at: {self.user_hostname}:{self.user_port}")

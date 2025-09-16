@@ -19,9 +19,5 @@ forwarder:
     model_engine_unwrap: true
     serialize_results_as_string: false
     extra_routes: []
-  passthrough:
-    user_port: 5005
-    user_hostname: "localhost"
-    healthcheck_route: "/health"
 
   max_concurrency: 100

@@ -8,9 +8,7 @@ from typing import Any, Dict, Optional
 import orjson
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, Request
-from fastapi.responses import StreamingResponse
-from sse_starlette import EventSourceResponse
-
+from fastapi.responses import Response, StreamingResponse
 from model_engine_server.common.concurrency_limiter import MultiprocessingConcurrencyLimiter
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -23,6 +21,7 @@ from model_engine_server.inference.forwarding.forwarding import (
     StreamingForwarder,
     load_named_config,
 )
+from sse_starlette import EventSourceResponse
 
 logger = make_logger(logger_name())
 
@@ -64,21 +63,29 @@ def get_streaming_forwarder_loader(
     return streaming_forwarder_loader
 
 
-def get_stream_passthrough_forwarder_loader() -> LoadPassthroughForwarder:
+def get_stream_passthrough_forwarder_loader(
+    destination_path: Optional[str] = None,
+) -> LoadPassthroughForwarder:
     config = {}
     stream_config = get_config().get("stream", {})
     for key in ["user_port", "user_hostname", "healthcheck_route"]:
         config[key] = stream_config[key]
+    if destination_path:
+        config["passthrough_route"] = destination_path
 
     passthrough_forwarder_loader = LoadPassthroughForwarder(**config)
     return passthrough_forwarder_loader
 
 
-def get_sync_passthrough_forwarder_loader() -> LoadPassthroughForwarder:
+def get_sync_passthrough_forwarder_loader(
+    destination_path: Optional[str] = None,
+) -> LoadPassthroughForwarder:
     config = {}
     stream_config = get_config().get("sync", {})
     for key in ["user_port", "user_hostname", "healthcheck_route"]:
         config[key] = stream_config[key]
+    if destination_path:
+        config["passthrough_route"] = destination_path
 
     passthrough_forwarder_loader = LoadPassthroughForwarder(**config)
     return passthrough_forwarder_loader
@@ -104,13 +111,15 @@ def load_streaming_forwarder(destination_path: Optional[str] = None) -> Streamin
 
 
 @lru_cache()
-def load_stream_passthrough_forwarder() -> PassthroughForwarder:
-    return get_stream_passthrough_forwarder_loader().load(None, None)
+def load_stream_passthrough_forwarder(
+    destination_path: Optional[str] = None,
+) -> PassthroughForwarder:
+    return get_stream_passthrough_forwarder_loader(destination_path).load(None, None)
 
 
 @lru_cache()
-def load_sync_passthrough_forwarder() -> PassthroughForwarder:
-    return get_sync_passthrough_forwarder_loader().load(None, None)
+def load_sync_passthrough_forwarder(destination_path: Optional[str] = None) -> PassthroughForwarder:
+    return get_sync_passthrough_forwarder_loader(destination_path).load(None, None)
 
 
 async def predict(
@@ -183,8 +192,9 @@ async def passthrough_sync(
     limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
 ):
     with limiter:
-        response = forwarder.forward_sync(request)
-        return response
+        response = await forwarder.forward_sync(request)
+        content = await response.read()
+        return Response(content=content, status_code=response.status, headers=response.headers)
 
 
 async def serve_http(app: FastAPI, **uvicorn_kwargs: Any):  # pragma: no cover
@@ -293,7 +303,7 @@ async def init_app():
 
         passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
         for route in config.get("stream", {}).get("extra_routes", []):
-            passthrough_forwarders[route] = load_stream_passthrough_forwarder()
+            passthrough_forwarders[route] = load_stream_passthrough_forwarder(route)
 
         for route in passthrough_forwarders:
 
@@ -318,7 +328,7 @@ async def init_app():
 
         passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
         for route in config.get("sync", {}).get("extra_routes", []):
-            passthrough_forwarders[route] = load_sync_passthrough_forwarder()
+            passthrough_forwarders[route] = load_sync_passthrough_forwarder(route)
 
         for route in passthrough_forwarders:
 

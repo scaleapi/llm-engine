@@ -1,5 +1,5 @@
 # Same as Black.
 line-length = 100
-
-ignore = ["E501"]
+target-version = "py310"
+lint.ignore = ["E501"]
 exclude = ["gen", "alembic"]

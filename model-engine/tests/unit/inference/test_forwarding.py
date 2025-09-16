@@ -121,12 +121,26 @@ class MockRequest:
         return self._body_data
 
 
+class MockContent:
+    """Mock content object for aiohttp response"""
+
+    def __init__(self, chunks=None):
+        self.chunks = chunks or [b"chunk1", b"chunk2"]
+
+    async def iter_chunks(self):
+        """Mock async iterator for chunks"""
+        for chunk in self.chunks:
+            yield (chunk,)  # aiohttp yields tuples of (chunk, is_last)
+
+
 class MockAiohttpResponse:
     """Mock aiohttp response for testing PassthroughForwarder"""
 
-    def __init__(self, data=b'{"result": "success"}', headers=None):
+    def __init__(self, data=b'{"result": "success"}', headers=None, status=200, chunks=None):
         self.headers = headers or {"content-type": "application/json"}
+        self.status = status
         self._data = data
+        self.content = MockContent(chunks)
 
     async def read(self):
         return self._data
@@ -184,11 +198,6 @@ def mocked_config_content():
                 "model_engine_unwrap": True,
                 "serialize_results_as_string": False,
             },
-            "passthrough": {
-                "user_port": 5005,
-                "user_hostname": "localhost",
-                "healthcheck_route": "/health",
-            },
             "max_concurrency": 42,
         }
     }
@@ -200,7 +209,6 @@ def mocked_config_overrides():
         "forwarder.stream.extra_routes=['/v1/chat/completions']",
         "forwarder.sync.healthcheck_route=/health",
         "forwarder.stream.healthcheck_route=/health",
-        "forwarder.passthrough.healthcheck_route=/health",
     ]
 
 
@@ -231,11 +239,6 @@ def test_load_named_config():
             "model_engine_unwrap": True,
             "serialize_results_as_string": False,
             "extra_routes": ["/v1/chat/completions"],
-        },
-        "passthrough": {
-            "user_port": 5005,
-            "user_hostname": "localhost",
-            "healthcheck_route": "/health",
         },
         "max_concurrency": 42,
     }
@@ -312,12 +315,29 @@ async def _check_passthrough_response(passthrough_response_generator) -> None:
     async for response in passthrough_response_generator:
         response_list.append(response)
 
-    assert len(response_list) == 1
-    response = response_list[0]
-    assert isinstance(response, MockAiohttpResponse)
-    # Verify we can read the response data
-    data = await response.read()
-    assert data == b'{"result": "success"}'
+    # The refactored forward_stream yields:
+    # 1. (headers, status) tuple
+    # 2. chunks from content.iter_chunks()
+    # 3. final read() result
+    assert len(response_list) >= 3  # At least headers tuple + chunks + final read
+
+    # First item should be (headers, status) tuple
+    headers_and_status = response_list[0]
+    assert isinstance(headers_and_status, tuple)
+    assert len(headers_and_status) == 2
+    headers, status = headers_and_status
+    assert isinstance(headers, dict)
+    assert status == 200
+
+    # Last item should be the final read result
+    final_data = response_list[-1]
+    assert final_data == b'{"result": "success"}'
+
+    # Middle items should be chunk data
+    chunks = response_list[1:-1]
+    assert len(chunks) == 2  # Our mock has 2 chunks
+    assert chunks[0] == b"chunk1"
+    assert chunks[1] == b"chunk2"
 
 
 @mock.patch("requests.post", mocked_post)
@@ -566,14 +586,14 @@ def test_streaming_forwarder_loader():
 @pytest.mark.asyncio
 async def test_passthrough_forwarder():
     """Test basic PassthroughForwarder functionality"""
-    fwd = PassthroughForwarder(passthrough_endpoint="http://localhost:5005")
+    fwd = PassthroughForwarder(passthrough_endpoint="http://localhost:5005/mcp/test")
     mock_request = MockRequest(method="POST", path="/mcp/test", query="param=value")
 
     with mock.patch("aiohttp.ClientSession") as mock_session:
         mock_client = mocked_aiohttp_client_session()
         mock_session.return_value.__aenter__.return_value = mock_client
 
-        response_generator = fwd.forward(mock_request)
+        response_generator = fwd.forward_stream(mock_request)
         await _check_passthrough_response(response_generator)
 
         # Verify the correct endpoint was called
@@ -591,14 +611,14 @@ async def test_passthrough_forwarder():
 @pytest.mark.asyncio
 async def test_passthrough_forwarder_get_request():
     """Test PassthroughForwarder with GET request (no body)"""
-    fwd = PassthroughForwarder(passthrough_endpoint="http://localhost:5005")
+    fwd = PassthroughForwarder(passthrough_endpoint="http://localhost:5005/mcp/status")
     mock_request = MockRequest(method="GET", path="/mcp/status", query="", body_data=b"")
 
     with mock.patch("aiohttp.ClientSession") as mock_session:
         mock_client = mocked_aiohttp_client_session()
         mock_session.return_value.__aenter__.return_value = mock_client
 
-        response_generator = fwd.forward(mock_request)
+        response_generator = fwd.forward_stream(mock_request)
         await _check_passthrough_response(response_generator)
 
         # Verify GET request has no data
@@ -634,7 +654,7 @@ async def test_passthrough_forwarder_header_filtering():
         mock_client = mocked_aiohttp_client_session()
         mock_session.return_value.__aenter__.return_value = mock_client
 
-        response_generator = fwd.forward(mock_request)
+        response_generator = fwd.forward_stream(mock_request)
         await _check_passthrough_response(response_generator)
 
         # Check that excluded headers were filtered out
