@@ -177,13 +177,13 @@ async def passthrough_stream(
 ):
     with limiter:
         response = forwarder.forward_stream(request)
-        headers, _ = await anext(response)
+        headers, status = await anext(response)
 
         async def content_generator():
             async for chunk in response:
                 yield chunk
 
-        return StreamingResponse(content_generator(), headers=headers)
+        return StreamingResponse(content_generator(), headers=headers, status_code=status)
 
 
 async def passthrough_sync(
