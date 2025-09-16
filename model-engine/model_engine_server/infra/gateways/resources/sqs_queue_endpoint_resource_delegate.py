@@ -55,7 +55,10 @@ class SQSQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
+        queue_message_timeout_duration: Optional[int] = 60,
     ) -> QueueInfo:
+        timeout_duration = queue_message_timeout_duration
+        
         async with _create_async_sqs_client(sqs_profile=self.sqs_profile) as sqs_client:
             queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
 
@@ -73,9 +76,7 @@ class SQSQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
                 create_response = await sqs_client.create_queue(
                     QueueName=queue_name,
                     Attributes=dict(
-                        VisibilityTimeout="43200",
-                        # To match current hardcoded Celery timeout of 24hr
-                        # However, the max SQS visibility is 12hrs.
+                        VisibilityTimeout=str(timeout_duration),
                         Policy=_get_queue_policy(queue_name=queue_name),
                     ),
                     tags=_get_queue_tags(
