@@ -81,9 +81,9 @@ def get_sync_passthrough_forwarder_loader(
     destination_path: Optional[str] = None,
 ) -> LoadPassthroughForwarder:
     config = {}
-    stream_config = get_config().get("sync", {})
+    sync_config = get_config().get("sync", {})
     for key in ["user_port", "user_hostname", "healthcheck_route"]:
-        config[key] = stream_config[key]
+        config[key] = sync_config[key]
     if destination_path:
         config["passthrough_route"] = destination_path
 
