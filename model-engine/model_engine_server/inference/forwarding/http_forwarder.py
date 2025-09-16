@@ -122,6 +122,29 @@ def load_sync_passthrough_forwarder(destination_path: Optional[str] = None) -> P
     return get_sync_passthrough_forwarder_loader(destination_path).load(None, None)
 
 
+HOP_BY_HOP_HEADERS: list[str] = [
+    "proxy-authenticate",
+    "proxy-authorization",
+    "content-length",
+    "content-encoding",
+]
+
+
+def sanitize_response_headers(headers: dict, force_cache_bust: bool = False) -> dict:
+    lower_headers = {k.lower(): v for k, v in headers.items()}
+    # Delete hop by hop headers that should not be forwarded
+    for header in HOP_BY_HOP_HEADERS:
+        if header in lower_headers:
+            del lower_headers[header]
+
+    if force_cache_bust:
+        # force clients to refetch resources
+        lower_headers["cache-control"] = "no-store"
+        if "etag" in lower_headers:
+            del lower_headers["etag"]
+    return lower_headers
+
+
 async def predict(
     request: EndpointPredictV1Request,
     background_tasks: BackgroundTasks,
@@ -178,6 +201,7 @@ async def passthrough_stream(
     with limiter:
         response = forwarder.forward_stream(request)
         headers, status = await anext(response)
+        headers = sanitize_response_headers(headers)
 
         async def content_generator():
             async for chunk in response:
@@ -193,8 +217,9 @@ async def passthrough_sync(
 ):
     with limiter:
         response = await forwarder.forward_sync(request)
+        headers = sanitize_response_headers(response.headers)
         content = await response.read()
-        return Response(content=content, status_code=response.status, headers=response.headers)
+        return Response(content=content, status_code=response.status, headers=headers)
 
 
 async def serve_http(app: FastAPI, **uvicorn_kwargs: Any):  # pragma: no cover
