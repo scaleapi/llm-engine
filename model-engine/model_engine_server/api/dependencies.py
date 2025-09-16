@@ -238,6 +238,9 @@ def _get_external_interfaces(
     elif infra_config().cloud_provider == "azure":
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
+    elif infra_config().celery_broker_type_redis:
+        inference_task_queue_gateway = redis_task_queue_gateway
+        infra_task_queue_gateway = redis_task_queue_gateway
     else:
         inference_task_queue_gateway = sqs_task_queue_gateway
         infra_task_queue_gateway = sqs_task_queue_gateway

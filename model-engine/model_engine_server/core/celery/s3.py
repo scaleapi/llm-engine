@@ -1,12 +1,16 @@
 """s3 result store backend.
-copied from https://github.com/celery/celery/blob/81df81acf8605ba3802810c7901be7d905c5200b/celery/backends/s3.py"""
+copied from https://github.com/celery/celery/blob/81df81acf8605ba3802810c7901be7d905c5200b/celery/backends/s3.py
+"""
 
+import base64
+import hashlib
 import threading
 
 import tenacity
 from celery.backends.base import KeyValueStoreBackend
 from celery.exceptions import ImproperlyConfigured
 from kombu.utils.encoding import bytes_to_str
+from model_engine_server.core.config import infra_config
 
 try:
     import botocore
@@ -77,7 +81,20 @@ class S3Backend(KeyValueStoreBackend):
     def set(self, key, value):
         key = bytes_to_str(key)
         s3_object = self._get_s3_object(key)
-        s3_object.put(Body=value)
+
+        # Check if celery_enable_sha256 mode is enabled via config to use sha256 hash instead of md5
+        if infra_config().celery_enable_sha256:
+            # Ensure value is bytes for hashing
+            if isinstance(value, str):
+                value_bytes = value.encode("utf-8")
+            else:
+                value_bytes = value
+
+            sha256_hash = hashlib.sha256(value_bytes).digest()
+            checksum_sha256 = base64.b64encode(sha256_hash).decode("utf-8")
+            s3_object.put(Body=value, ChecksumAlgorithm="SHA256", ChecksumSHA256=checksum_sha256)
+        else:
+            s3_object.put(Body=value)
 
     def delete(self, key):
         key = bytes_to_str(key)

@@ -1,9 +1,12 @@
 import asyncio
 import os
+import time
+import traceback
 from typing import Any, Dict
 
 import aioredis
 from celery.signals import worker_process_init
+from celery.utils.log import get_task_logger
 from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.constants import READYZ_FPATH
@@ -14,6 +17,7 @@ from model_engine_server.common.dtos.endpoint_builder import (
 from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.db.base import get_session_async_null_pool
 from model_engine_server.domain.repositories import DockerRepository
 from model_engine_server.infra.gateways import (
@@ -54,6 +58,11 @@ from model_engine_server.service_builder.celery import service_builder_service
 # Need to disable lazy loading of k8s clients because each event loop should contain its own k8s
 # client, which constructs the aiohttp.ClientSession in the event loop.
 set_lazy_load_kubernetes_clients(False)
+
+# Create logger for this module
+logger = make_logger(logger_name())
+# Get Celery task logger for task-specific logging
+task_logger = get_task_logger(__name__)
 
 
 def get_live_endpoint_builder_service(
@@ -109,28 +118,201 @@ def get_live_endpoint_builder_service(
 async def _build_endpoint(
     build_endpoint_request: BuildEndpointRequest,
 ) -> BuildEndpointResponse:
-    session = get_session_async_null_pool()
-    pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
-    redis = aioredis.Redis(connection_pool=pool)
-    service: LiveEndpointBuilderService = get_live_endpoint_builder_service(session, redis)
+    task_start_time = time.time()
+    logger.info(
+        "Starting endpoint build process",
+        extra={
+            "endpoint_name": build_endpoint_request.model_endpoint_record.name,
+            "request_id": getattr(build_endpoint_request.model_endpoint_record, "id", "unknown"),
+            "user_id": getattr(
+                build_endpoint_request.model_endpoint_record, "created_by", "unknown"
+            ),
+        },
+    )
 
-    response = await service.build_endpoint(build_endpoint_request)
-    await redis.close()
-    await pool.disconnect()
-    return response
+    session = None
+    redis = None
+    pool = None
+
+    try:
+        # Database connection
+        if infra_config().debug_mode:  # pragma: no cover
+            logger.info("Establishing database session")
+        session = get_session_async_null_pool()
+        if infra_config().debug_mode:  # pragma: no cover
+            logger.info("Database session established successfully")
+
+        # Redis connection
+        if infra_config().debug_mode:  # pragma: no cover
+            logger.info("Connecting to Redis", extra={"redis_url": hmi_config.cache_redis_url})
+        pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
+        redis = aioredis.Redis(connection_pool=pool)
+        if infra_config().debug_mode:  # pragma: no cover
+            logger.info("Redis connection established successfully")
+
+        # Service initialization
+        if infra_config().debug_mode:  # pragma: no cover
+            logger.info("Initializing LiveEndpointBuilderService")
+        service: LiveEndpointBuilderService = get_live_endpoint_builder_service(session, redis)
+        if infra_config().debug_mode:  # pragma: no cover
+            logger.info("LiveEndpointBuilderService initialized successfully")
+
+        # Actual endpoint building
+        if infra_config().debug_mode:  # pragma: no cover
+            logger.info("Starting endpoint build operation")
+        response = await service.build_endpoint(build_endpoint_request)
+
+        build_time = time.time() - task_start_time
+        if infra_config().debug_mode:  # pragma: no cover
+            logger.info(
+                "Endpoint build completed successfully",
+                extra={
+                    "endpoint_name": build_endpoint_request.model_endpoint_record.name,
+                    "build_time_seconds": build_time,
+                    "response_status": getattr(response, "status", "unknown"),
+                },
+            )
+
+        return response
+
+    except Exception as e:
+        build_time = time.time() - task_start_time
+        error_details = {
+            "endpoint_name": build_endpoint_request.model_endpoint_record.name,
+            "error_type": type(e).__name__,
+            "error_message": str(e),
+            "build_time_seconds": build_time,
+            "traceback": traceback.format_exc(),
+        }
+
+        logger.error("Endpoint build failed with exception", extra=error_details)
+
+        # Re-raise the exception so Celery knows the task failed
+        raise
+
+    finally:
+        # Cleanup resources
+        cleanup_start = time.time()
+        try:
+            if redis:
+                if infra_config().debug_mode:  # pragma: no cover
+                    logger.info("Closing Redis connection")
+                await redis.close()
+                if infra_config().debug_mode:  # pragma: no cover
+                    logger.info("Redis connection closed")
+        except Exception as e:
+            logger.warning(f"Error closing Redis connection: {e}")
+
+        try:
+            if pool:
+                if infra_config().debug_mode:  # pragma: no cover
+                    logger.info("Disconnecting Redis pool")
+                await pool.disconnect()
+                if infra_config().debug_mode:  # pragma: no cover
+                    logger.info("Redis pool disconnected")
+        except Exception as e:
+            logger.warning(f"Error disconnecting Redis pool: {e}")
+
+        if infra_config().debug_mode:  # pragma: no cover
+            cleanup_time = time.time() - cleanup_start
+            logger.info(f"Resource cleanup completed in {cleanup_time:.2f} seconds")
 
 
 @worker_process_init.connect
 def init_worker(*args, **kwargs):
+    if infra_config().debug_mode:  # pragma: no cover
+        logger.info("Initializing Celery worker process")
     # k8s health check
     with open(READYZ_FPATH, "w") as f:
         f.write("READY")
+    if infra_config().debug_mode:  # pragma: no cover
+        logger.info("Worker process initialized successfully")
 
 
-@service_builder_service.task
-def build_endpoint(build_endpoint_request_json: Dict[str, Any]) -> Dict[str, str]:
-    build_endpoint_request: BuildEndpointRequest = BuildEndpointRequest.parse_obj(
-        build_endpoint_request_json
-    )
-    result = asyncio.run(_build_endpoint(build_endpoint_request))
-    return result.dict()
+@service_builder_service.task(bind=True)
+def build_endpoint(self, build_endpoint_request_json: Dict[str, Any]) -> Dict[str, str]:
+    task_start_time = time.time()
+    task_id = self.request.id
+
+    # Log task start with detailed context
+    if infra_config().debug_mode:  # pragma: no cover
+        task_logger.info(
+            "Task started",
+            extra={
+                "task_id": task_id,
+                "task_name": "build_endpoint",
+                "request_data_keys": (
+                    list(build_endpoint_request_json.keys()) if build_endpoint_request_json else []
+                ),
+                "worker_hostname": self.request.hostname,
+            },
+        )
+
+    try:
+        # Parse request
+        if infra_config().debug_mode:  # pragma: no cover
+            task_logger.info("Parsing build endpoint request", extra={"task_id": task_id})
+        build_endpoint_request: BuildEndpointRequest = BuildEndpointRequest.parse_obj(
+            build_endpoint_request_json
+        )
+        if infra_config().debug_mode:  # pragma: no cover
+            task_logger.info(
+                "Request parsed successfully",
+                extra={
+                    "task_id": task_id,
+                    "endpoint_name": build_endpoint_request.model_endpoint_record.name,
+                    "endpoint_type": getattr(
+                        build_endpoint_request.model_endpoint_record, "endpoint_type", "unknown"
+                    ),
+                },
+            )
+
+        # Execute the async build process
+        if infra_config().debug_mode:  # pragma: no cover
+            task_logger.info("Starting async endpoint build", extra={"task_id": task_id})
+        result = asyncio.run(_build_endpoint(build_endpoint_request))
+
+        # Log successful completion
+        if infra_config().debug_mode:  # pragma: no cover
+            task_duration = time.time() - task_start_time
+            task_logger.info(
+                "Task completed successfully",
+                extra={
+                    "task_id": task_id,
+                    "endpoint_name": build_endpoint_request.model_endpoint_record.name,
+                    "task_duration_seconds": task_duration,
+                    "result_status": getattr(result, "status", "unknown"),
+                },
+            )
+
+        return result.dict()
+
+    except Exception as e:
+        task_duration = time.time() - task_start_time
+        error_info = {
+            "task_id": task_id,
+            "error_type": type(e).__name__,
+            "error_message": str(e),
+            "task_duration_seconds": task_duration,
+            "full_traceback": traceback.format_exc(),
+        }
+
+        # Add request context if available
+        try:
+            if "build_endpoint_request" in locals():
+                error_info["endpoint_name"] = build_endpoint_request.model_endpoint_record.name
+                error_info["request_context"] = {
+                    "endpoint_type": getattr(
+                        build_endpoint_request.model_endpoint_record, "endpoint_type", "unknown"
+                    ),
+                    "created_by": getattr(
+                        build_endpoint_request.model_endpoint_record, "created_by", "unknown"
+                    ),
+                }
+        except Exception:
+            pass
+
+        task_logger.error("Task failed with exception", extra=error_info)
+
+        # Re-raise to let Celery handle the failure
+        raise

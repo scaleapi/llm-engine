@@ -1,5 +1,5 @@
 """
-This file is for testing purposes only. It serves as simple server to mock a deployed model. 
+This file is for testing purposes only. It serves as simple server to mock a deployed model.
 """
 
 import argparse

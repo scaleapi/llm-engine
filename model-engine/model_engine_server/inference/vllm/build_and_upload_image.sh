@@ -29,7 +29,7 @@ fi
 ACCOUNT=$1
 IMAGE_TAG=$2
 BUILD_TARGET=$3
-VLLM_VERSION=${VLLM_VERSION:-"0.10.0"}
+VLLM_VERSION=${VLLM_VERSION:-"0.10.1.1"}
 VLLM_BASE_REPO=${VLLM_BASE_REPO:-"vllm/vllm-openai"}
 
 # if build target = vllm use vllm otherwise use vllm_batch
