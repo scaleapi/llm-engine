@@ -1,9 +1,10 @@
 import os
-from typing import Any, Dict
+from datetime import timedelta
+from typing import Any, Dict, Optional
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
-from azure.servicebus.management import ServiceBusAdministrationClient
+from azure.servicebus.management import ServiceBusAdministrationClient, QueueProperties
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
@@ -32,11 +33,21 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
+        queue_message_timeout_duration: Optional[int] = 60,
     ) -> QueueInfo:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
+        timeout_duration = queue_message_timeout_duration
+
+        # Validation: Azure Service Bus lock duration must be <= 5 minutes (300s)
+        if timeout_duration > 300:
+            raise ValueError(f"queue_message_timeout_duration ({timeout_duration}s) exceeds Azure Service Bus maximum of 300 seconds")
+        
         with _get_servicebus_administration_client() as client:
             try:
-                client.create_queue(queue_name=queue_name)
+                queue_properties = QueueProperties(
+                    lock_duration=timedelta(seconds=timeout_duration)
+                )
+                client.create_queue(queue_name=queue_name, queue_properties=queue_properties)
             except ResourceExistsError:
                 pass
 
