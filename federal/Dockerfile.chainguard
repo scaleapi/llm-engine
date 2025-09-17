@@ -3,7 +3,7 @@ FROM cgr.dev/scale.com/python-fips:3.10.15-dev
 WORKDIR /workspace
 USER root
 
-RUN apk add htop \
+RUN apk update && apk add htop \
             dumb-init \
             libssh \
             openssh-client \
