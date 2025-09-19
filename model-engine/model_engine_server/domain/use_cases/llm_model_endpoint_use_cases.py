@@ -629,7 +629,7 @@ class CreateLLMModelBundleV1UseCase:
         # filter to configs ('*.model' and '*.json') and weights ('*.safetensors')
         # For models that are not supported by transformers directly, we need to include '*.py' and '*.bin'
         # to load the model. Only set this flag if "trust_remote_code" is set to True
-        file_selection_str = '--include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --exclude "optimizer*"'
+        file_selection_str = '--include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*"'
         if trust_remote_code:
             file_selection_str += ' --include "*.py"'
         subcommands.append(
