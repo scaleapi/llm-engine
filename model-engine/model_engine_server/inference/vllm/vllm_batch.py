@@ -303,7 +303,6 @@ async def init_engine(
     engine_client = AsyncLLMEngine.from_engine_args(engine_args)
     model_config = await engine_client.get_model_config()
     resolved_chat_template = load_chat_template(parsed_configs.chat_template)
-    parsed_configs
 
     base_model_paths = [BaseModelPath(name=served_model_name, model_path=model_id)]
 
