@@ -53,7 +53,7 @@ from vllm.entrypoints.chat_utils import load_chat_template
 from vllm.entrypoints.openai.protocol import ChatCompletionRequest, CompletionRequest, ErrorResponse
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
-from vllm.entrypoints.openai.serving_engine import BaseModelPath
+from vllm.entrypoints.openai.serving_models import BaseModelPath, OpenAIServingModels
 from vllm.utils import merge_async_iterators
 
 CONFIG_FILE = os.getenv("CONFIG_FILE")
@@ -202,7 +202,7 @@ def determine_max_concurrent_requests(
     # anecdotally, we're seeing the engine able to handle around 7req/s (for outlines), so set to 30 * 7 ~= 200
     if any(
         request.to_sampling_params(
-            default_max_tokens=1, logits_processor_pattern=None
+            max_tokens=1, logits_processor_pattern=None, default_sampling_params={}
         ).guided_decoding
         for request in requests
     ):
@@ -294,7 +294,6 @@ async def init_engine(
             os.environ.get("NUM_INSTANCES", 1)
         ),  # TODO maybe do something other than TP=8, PP=number of nodes
         seed=request.model_cfg.seed or 0,
-        disable_log_requests=True,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
     )
     default_engine_args_dict.update(engine_args_dict)
@@ -304,15 +303,21 @@ async def init_engine(
     engine_client = AsyncLLMEngine.from_engine_args(engine_args)
     model_config = await engine_client.get_model_config()
     resolved_chat_template = load_chat_template(parsed_configs.chat_template)
+
     base_model_paths = [BaseModelPath(name=served_model_name, model_path=model_id)]
+
+    openai_serving_models = OpenAIServingModels(
+        engine_client=engine_client,
+        model_config=model_config,
+        base_model_paths=base_model_paths,
+    )
+    await openai_serving_models.init_static_loras()
 
     openai_serving_chat = OpenAIServingChat(
         engine_client,
         model_config,
-        base_model_paths,
+        openai_serving_models,
         response_role=request.model_cfg.response_role or "assistant",
-        lora_modules=None,
-        prompt_adapters=None,
         request_logger=None,
         chat_template=resolved_chat_template,
         chat_template_content_format=None,
@@ -321,9 +326,7 @@ async def init_engine(
     openai_serving_completion = OpenAIServingCompletion(
         engine_client,
         model_config,
-        base_model_paths,
-        lora_modules=None,
-        prompt_adapters=None,
+        openai_serving_models,
         request_logger=None,
     )
 
