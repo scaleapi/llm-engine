@@ -1,6 +1,6 @@
 forwarder:
   sync:
-    user_port: 5005
+    user_port: e 5005
     user_hostname: "localhost"
     use_grpc: false
     predict_route: "/predict"
@@ -9,7 +9,7 @@ forwarder:
     model_engine_unwrap: true
     serialize_results_as_string: true
     forward_http_status: true
-    extra_routes: []
+    extra_routes: ["/v1/chat/completions", "/v1/completions"]
   stream:
     user_port: 5005
     user_hostname: "localhost"
@@ -18,5 +18,5 @@ forwarder:
     batch_route: null
     model_engine_unwrap: true
     serialize_results_as_string: false
-    extra_routes: []
+    extra_routes: ["/v1/chat/completions", "/v1/completions"]
   max_concurrency: 100
