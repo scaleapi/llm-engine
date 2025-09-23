@@ -3,6 +3,7 @@
 set -eo pipefail
 
 # Build and push vLLM docker image to AWS ECR.
+# Now uses vLLM's official OpenAI-compatible endpoints (/v1/completions) instead of custom legacy endpoints /predict and /stream.
 #
 # Usage: VLLM_VERSION=0.10.0 ./build_and_upload_image.sh <AWS_ACCOUNT_ID> <IMAGE_TAG> vllm|vllm_batch|vllm_batch_v2
 

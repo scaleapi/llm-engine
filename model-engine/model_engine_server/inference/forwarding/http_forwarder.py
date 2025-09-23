@@ -145,52 +145,49 @@ def sanitize_response_headers(headers: dict, force_cache_bust: bool = False) -> 
     return lower_headers
 
 
-async def predict(
+async def completions_endpoint(
     request: EndpointPredictV1Request,
     background_tasks: BackgroundTasks,
-    forwarder: Forwarder = Depends(load_forwarder),
+    sync_forwarder: Forwarder = Depends(load_forwarder),
+    stream_forwarder: StreamingForwarder = Depends(load_streaming_forwarder),
     limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
 ):
-    with limiter:
-        try:
-            response = await forwarder.forward(request.model_dump())
-            if forwarder.post_inference_hooks_handler:
-                background_tasks.add_task(
-                    forwarder.post_inference_hooks_handler.handle, request, response
-                )
-            return response
-        except Exception:
-            logger.error(f"Failed to decode payload from: {request}")
-            raise
-
-
-async def stream(
-    request: EndpointPredictV1Request,
-    forwarder: StreamingForwarder = Depends(load_streaming_forwarder),
-    limiter: MultiprocessingConcurrencyLimiter = Depends(get_concurrency_limiter),
-):
+    """OpenAI-compatible completions endpoint that handles both sync and streaming requests."""
     with limiter:
         try:
             payload = request.model_dump()
         except Exception:
             logger.error(f"Failed to decode payload from: {request}")
             raise
+
+        # Determine if this is a streaming request
+        is_stream = payload.get("args", {}).get("stream", False) if hasattr(payload.get("args", {}), 'get') else payload.get("stream", False)
+
+        if is_stream:
+            # Handle streaming request
+            logger.debug(f"Received streaming request: {payload}")
+
+            responses = stream_forwarder.forward(payload)
+            # We fetch the first response to check if upstream request was successful
+            # If it was not, this will raise the corresponding HTTPException
+            # If it was, we will proceed to the event generator
+            initial_response = await responses.__anext__()
+
+            async def event_generator():
+                yield {"data": orjson.dumps(initial_response).decode("utf-8")}
+
+                async for response in responses:
+                    yield {"data": orjson.dumps(response).decode("utf-8")}
+
+            return EventSourceResponse(event_generator())
         else:
-            logger.debug(f"Received request: {payload}")
-
-        responses = forwarder.forward(payload)
-        # We fetch the first response to check if upstream request was successful
-        # If it was not, this will raise the corresponding HTTPException
-        # If it was, we will proceed to the event generator
-        initial_response = await responses.__anext__()
-
-        async def event_generator():
-            yield {"data": orjson.dumps(initial_response).decode("utf-8")}
-
-            async for response in responses:
-                yield {"data": orjson.dumps(response).decode("utf-8")}
-
-        return EventSourceResponse(event_generator())
+            # Handle sync request
+            response = await sync_forwarder.forward(payload)
+            if sync_forwarder.post_inference_hooks_handler:
+                background_tasks.add_task(
+                    sync_forwarder.post_inference_hooks_handler.handle, request, response
+                )
+            return response
 
 
 async def passthrough_stream(
@@ -296,10 +293,8 @@ async def init_app():
             def get_stream_forwarder(route=route):
                 return stream_forwarders.get(route)
 
-            # This route is a catch-all for any requests that don't match the /predict or /stream routes
-            # It will treat the request as a streaming request if the "stream" body parameter is set to true
-            # NOTE: it is important for this to be defined AFTER the /predict and /stream endpoints
-            # because FastAPI will match the first route that matches the request path
+            # This route handles requests for extra routes defined in configuration
+            # It will treat the request as a streaming request if the "stream" parameter is set to true in request args
             async def predict_or_stream(
                 request: EndpointPredictV1Request,
                 background_tasks: BackgroundTasks,
@@ -307,12 +302,48 @@ async def init_app():
                 stream_forwarder: StreamingForwarder = Depends(get_stream_forwarder),
                 limiter=Depends(get_concurrency_limiter),
             ):
+                """Handles requests for extra routes, routing to sync or streaming based on args."""
                 if not request.args:
                     raise Exception("Request has no args")
-                if request.args.root.get("stream", False) and stream_forwarder:
-                    return await stream(request, stream_forwarder, limiter)
-                elif request.args.root.get("stream") is not True and sync_forwarder:
-                    return await predict(request, background_tasks, sync_forwarder, limiter)
+
+                is_stream = request.args.root.get("stream", False)
+
+                if is_stream and stream_forwarder:
+                    # Handle streaming request using consolidated logic
+                    with limiter:
+                        try:
+                            payload = request.model_dump()
+                        except Exception:
+                            logger.error(f"Failed to decode payload from: {request}")
+                            raise
+
+                        logger.debug(f"Received streaming request: {payload}")
+
+                        responses = stream_forwarder.forward(payload)
+                        initial_response = await responses.__anext__()
+
+                        async def event_generator():
+                            yield {"data": orjson.dumps(initial_response).decode("utf-8")}
+                            async for response in responses:
+                                yield {"data": orjson.dumps(response).decode("utf-8")}
+
+                        return EventSourceResponse(event_generator())
+
+                elif not is_stream and sync_forwarder:
+                    # Handle sync request using consolidated logic
+                    with limiter:
+                        try:
+                            payload = request.model_dump()
+                        except Exception:
+                            logger.error(f"Failed to decode payload from: {request}")
+                            raise
+
+                        response = await sync_forwarder.forward(payload)
+                        if sync_forwarder.post_inference_hooks_handler:
+                            background_tasks.add_task(
+                                sync_forwarder.post_inference_hooks_handler.handle, request, response
+                            )
+                        return response
                 else:
                     raise Exception("No forwarder configured for this route")
 
@@ -384,8 +415,8 @@ async def init_app():
 
     app.add_api_route(path="/healthz", endpoint=healthcheck, methods=["GET"])
     app.add_api_route(path="/readyz", endpoint=healthcheck, methods=["GET"])
-    app.add_api_route(path="/predict", endpoint=predict, methods=["POST"])
-    app.add_api_route(path="/stream", endpoint=stream, methods=["POST"])
+    # Legacy /predict and /stream endpoints removed - using /v1/completions
+    app.add_api_route(path="/v1/completions", endpoint=completions_endpoint, methods=["POST"])
 
     add_extra_routes(app)
     return app

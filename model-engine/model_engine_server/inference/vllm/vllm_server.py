@@ -1,17 +1,11 @@
 import asyncio
 import code
-import json
 import os
-import signal
 import subprocess
 import traceback
 from logging import Logger
-from typing import AsyncGenerator, Dict, List, Optional
 
 import vllm.envs as envs
-from fastapi import APIRouter, BackgroundTasks, Request
-from fastapi.responses import Response, StreamingResponse
-from vllm.engine.async_llm_engine import AsyncEngineDeadError
 from vllm.engine.protocol import EngineClient
 from vllm.entrypoints.launcher import serve_http
 from vllm.entrypoints.openai.api_server import (
@@ -24,10 +18,7 @@ from vllm.entrypoints.openai.api_server import (
 )
 from vllm.entrypoints.openai.cli_args import make_arg_parser
 from vllm.entrypoints.openai.tool_parsers import ToolParserManager
-from vllm.outputs import CompletionOutput
-from vllm.sampling_params import SamplingParams
-from vllm.sequence import Logprob
-from vllm.utils import FlexibleArgumentParser, random_uuid
+from vllm.utils import FlexibleArgumentParser
 
 logger = Logger("vllm_server")
 
@@ -36,88 +27,8 @@ engine_client: EngineClient
 TIMEOUT_KEEP_ALIVE = 5  # seconds.
 TIMEOUT_TO_PREVENT_DEADLOCK = 1  # seconds
 
-router = APIRouter()
-
-
-@router.post("/predict")
-@router.post("/stream")
-async def generate(request: Request) -> Response:
-    """Generate completion for the request.
-
-    The request should be a JSON object with the following fields:
-    - prompt: the prompt to use for the generation.
-    - stream: whether to stream the results or not.
-    - other fields: the sampling parameters (See `SamplingParams` for details).
-    """
-    # check health before accepting request and fail fast if engine isn't healthy
-    try:
-        await engine_client.check_health()
-
-        request_dict = await request.json()
-        prompt = request_dict.pop("prompt")
-        stream = request_dict.pop("stream", False)
-
-        sampling_params = SamplingParams(**request_dict)
-
-        request_id = random_uuid()
-
-        results_generator = engine_client.generate(prompt, sampling_params, request_id)
-
-        async def abort_request() -> None:
-            await engine_client.abort(request_id)
-
-        if stream:
-            # Streaming case
-            async def stream_results() -> AsyncGenerator[str, None]:
-                last_output_text = ""
-                async for request_output in results_generator:
-                    log_probs = format_logprobs(request_output)
-                    ret = {
-                        "text": request_output.outputs[-1].text[len(last_output_text) :],
-                        "count_prompt_tokens": len(request_output.prompt_token_ids),
-                        "count_output_tokens": len(request_output.outputs[0].token_ids),
-                        "log_probs": (
-                            log_probs[-1] if log_probs and sampling_params.logprobs else None
-                        ),
-                        "finished": request_output.finished,
-                    }
-                    last_output_text = request_output.outputs[-1].text
-                    yield f"data:{json.dumps(ret)}\n\n"
-
-            background_tasks = BackgroundTasks()
-            # Abort the request if the client disconnects.
-            background_tasks.add_task(abort_request)
-
-            return StreamingResponse(stream_results(), background=background_tasks)
-
-        # Non-streaming case
-        final_output = None
-        tokens = []
-        last_output_text = ""
-        async for request_output in results_generator:
-            tokens.append(request_output.outputs[-1].text[len(last_output_text) :])
-            last_output_text = request_output.outputs[-1].text
-            if await request.is_disconnected():
-                # Abort the request if the client disconnects.
-                await engine_client.abort(request_id)
-                return Response(status_code=499)
-            final_output = request_output
-
-        assert final_output is not None
-        prompt = final_output.prompt
-        ret = {
-            "text": final_output.outputs[0].text,
-            "count_prompt_tokens": len(final_output.prompt_token_ids),
-            "count_output_tokens": len(final_output.outputs[0].token_ids),
-            "log_probs": format_logprobs(final_output),
-            "tokens": tokens,
-        }
-        return Response(content=json.dumps(ret))
-
-    except AsyncEngineDeadError as e:
-        logger.error(f"The vllm engine is dead, exiting the pod: {e}")
-        os.kill(os.getpid(), signal.SIGINT)
-        raise e
+# Legacy endpoints /predit and /stream removed - using vLLM's native OpenAI-compatible endpoints instead
+# All requests now go through /v1/completions, /v1/chat/completions, etc.
 
 
 def get_gpu_free_memory():
@@ -171,20 +82,6 @@ def debug(sig, frame):
     i.interact(message)
 
 
-def format_logprobs(
-    request_output: CompletionOutput,
-) -> Optional[List[Dict[int, float]]]:
-    """Given a request output, format the logprobs if they exist."""
-    output_logprobs = request_output.outputs[0].logprobs
-    if output_logprobs is None:
-        return None
-
-    def extract_logprobs(logprobs: Dict[int, Logprob]) -> Dict[int, float]:
-        return {k: v.logprob for k, v in logprobs.items()}
-
-    return [extract_logprobs(logprobs) for logprobs in output_logprobs]
-
-
 def parse_args(parser: FlexibleArgumentParser):
     parser = make_arg_parser(parser)
     parser.add_argument("--attention-backend", type=str, help="The attention backend to use")
@@ -220,7 +117,6 @@ async def run_server_worker(
 
         vllm_config = await engine_client.get_vllm_config()
         await init_app_state(engine_client, vllm_config, app.state, args)
-        app.include_router(router)
 
         logger.info("Starting vLLM API server %d on %s", server_index, listen_address)
         shutdown_task = await serve_http(
