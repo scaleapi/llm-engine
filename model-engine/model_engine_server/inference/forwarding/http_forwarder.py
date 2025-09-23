@@ -282,20 +282,22 @@ async def init_app():
         sync_forwarders: Dict[str, Forwarder] = dict()
         stream_forwarders: Dict[str, StreamingForwarder] = dict()
 
-        # Handle legacy extra_routes configuration (backwards compatibility)
+        # Gather all sync routes from extra_routes and routes fields
         sync_routes_to_add = set()
-        stream_routes_to_add = set()
         sync_routes_to_add.update(config.get("sync", {}).get("extra_routes", []))
         sync_routes_to_add.update(config.get("sync", {}).get("routes", []))
 
         if config.get("sync", {}).get("predict_route", None) is None:
             sync_routes_to_add.add("/predict")
 
+        # Gather all stream routes from extra_routes and routes fields
+        stream_routes_to_add = set()
         stream_routes_to_add.update(config.get("stream", {}).get("extra_routes", []))
         stream_routes_to_add.update(config.get("stream", {}).get("routes", []))
         if config.get("stream", {}).get("predict_route", None) is None:
             stream_routes_to_add.add("/stream")
 
+        # Load forwarders for all routes
         for route in sync_routes_to_add:
             sync_forwarders[route] = load_forwarder(route)
         for route in stream_routes_to_add:
@@ -344,11 +346,12 @@ async def init_app():
 
         passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
 
-        # Handle legacy extra_routes configuration (backwards compatibility)
+        # Gather all routes from extra_routes and routes fields
         stream_passthrough_routes_to_add = set()
         stream_passthrough_routes_to_add.update(config.get("stream", {}).get("extra_routes", []))
         stream_passthrough_routes_to_add.update(config.get("stream", {}).get("routes", []))
 
+        # Load passthrough forwarders for all routes
         for route in stream_passthrough_routes_to_add:
             passthrough_forwarders[route] = load_stream_passthrough_forwarder(route)
 
