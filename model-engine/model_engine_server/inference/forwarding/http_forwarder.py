@@ -283,18 +283,23 @@ async def init_app():
         stream_forwarders: Dict[str, StreamingForwarder] = dict()
 
         # Handle legacy extra_routes configuration (backwards compatibility)
-        for route in config.get("sync", {}).get("extra_routes", []):
-            sync_forwarders[route] = load_forwarder(route)
-        for route in config.get("stream", {}).get("extra_routes", []):
-            stream_forwarders[route] = load_streaming_forwarder(route)
+        sync_routes_to_add = set()
+        stream_routes_to_add = set()
+        sync_routes_to_add.update(config.get("sync", {}).get("extra_routes", []))
+        sync_routes_to_add.update(config.get("sync", {}).get("routes", []))
 
-        # Handle new routes field configuration
-        for route in config.get("sync", {}).get("routes", []):
-            if route not in sync_forwarders:  # Avoid duplicates
-                sync_forwarders[route] = load_forwarder(route)
-        for route in config.get("stream", {}).get("routes", []):
-            if route not in stream_forwarders:  # Avoid duplicates
-                stream_forwarders[route] = load_streaming_forwarder(route)
+        if config.get("sync", {}).get("predict_route", None) is None:
+            sync_routes_to_add.add("/predict")
+
+        stream_routes_to_add.update(config.get("stream", {}).get("extra_routes", []))
+        stream_routes_to_add.update(config.get("stream", {}).get("routes", []))
+        if config.get("stream", {}).get("predict_route", None) is None:
+            stream_routes_to_add.add("/stream")
+
+        for route in sync_routes_to_add:
+            sync_forwarders[route] = load_forwarder(route)
+        for route in stream_routes_to_add:
+            stream_forwarders[route] = load_streaming_forwarder(route)
 
         # Add hardcoded routes to forwarders so they get handled consistently
         sync_forwarders["/predict"] = load_forwarder(None)
@@ -343,13 +348,12 @@ async def init_app():
         passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
 
         # Handle legacy extra_routes configuration (backwards compatibility)
-        for route in config.get("stream", {}).get("extra_routes", []):
-            passthrough_forwarders[route] = load_stream_passthrough_forwarder(route)
+        stream_passthrough_routes_to_add = set()
+        stream_passthrough_routes_to_add.update(config.get("stream", {}).get("extra_routes", []))
+        stream_passthrough_routes_to_add.update(config.get("stream", {}).get("routes", []))
 
-        # Handle new routes field configuration
-        for route in config.get("stream", {}).get("routes", []):
-            if route not in passthrough_forwarders:  # Avoid duplicates
-                passthrough_forwarders[route] = load_stream_passthrough_forwarder(route)
+        for route in stream_passthrough_routes_to_add:
+            passthrough_forwarders[route] = load_stream_passthrough_forwarder(route)
 
         for route in passthrough_forwarders:
 
@@ -375,13 +379,12 @@ async def init_app():
         passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
 
         # Handle legacy extra_routes configuration (backwards compatibility)
-        for route in config.get("sync", {}).get("extra_routes", []):
-            passthrough_forwarders[route] = load_sync_passthrough_forwarder(route)
+        sync_passthrough_routes_to_add = set()
+        sync_passthrough_routes_to_add.update(config.get("sync", {}).get("extra_routes", []))
+        sync_passthrough_routes_to_add.update(config.get("sync", {}).get("routes", []))
 
-        # Handle new routes field configuration
-        for route in config.get("sync", {}).get("routes", []):
-            if route not in passthrough_forwarders:  # Avoid duplicates
-                passthrough_forwarders[route] = load_sync_passthrough_forwarder(route)
+        for route in sync_passthrough_routes_to_add:
+            passthrough_forwarders[route] = load_sync_passthrough_forwarder(route)
 
         for route in passthrough_forwarders:
 
@@ -408,7 +411,7 @@ async def init_app():
         elif config.get("sync", {}).get("forwarder_type") == "passthrough":
             add_sync_passthrough_routes(app)
         else:
-            add_extra_sync_or_stream_routes(app)
+            add_sync_or_stream_routes(app)
 
     app.add_api_route(path="/healthz", endpoint=healthcheck, methods=["GET"])
     app.add_api_route(path="/readyz", endpoint=healthcheck, methods=["GET"])
