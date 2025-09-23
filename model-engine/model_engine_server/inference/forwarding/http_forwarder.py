@@ -277,14 +277,24 @@ async def init_app():
         return "OK"
 
     def add_extra_sync_or_stream_routes(app: FastAPI):
-        """Read extra_routes from config and dynamically add routes to app"""
+        """Read routes from config (both old extra_routes and new routes field) and dynamically add routes to app"""
         config = get_config()
         sync_forwarders: Dict[str, Forwarder] = dict()
         stream_forwarders: Dict[str, StreamingForwarder] = dict()
+
+        # Handle legacy extra_routes configuration (backwards compatibility)
         for route in config.get("sync", {}).get("extra_routes", []):
             sync_forwarders[route] = load_forwarder(route)
         for route in config.get("stream", {}).get("extra_routes", []):
             stream_forwarders[route] = load_streaming_forwarder(route)
+
+        # Handle new routes field configuration
+        for route in config.get("sync", {}).get("routes", []):
+            if route not in sync_forwarders:  # Avoid duplicates
+                sync_forwarders[route] = load_forwarder(route)
+        for route in config.get("stream", {}).get("routes", []):
+            if route not in stream_forwarders:  # Avoid duplicates
+                stream_forwarders[route] = load_streaming_forwarder(route)
 
         all_routes = set(list(sync_forwarders.keys()) + list(stream_forwarders.keys()))
 
@@ -327,8 +337,15 @@ async def init_app():
         config = get_config()
 
         passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
+
+        # Handle legacy extra_routes configuration (backwards compatibility)
         for route in config.get("stream", {}).get("extra_routes", []):
             passthrough_forwarders[route] = load_stream_passthrough_forwarder(route)
+
+        # Handle new routes field configuration
+        for route in config.get("stream", {}).get("routes", []):
+            if route not in passthrough_forwarders:  # Avoid duplicates
+                passthrough_forwarders[route] = load_stream_passthrough_forwarder(route)
 
         for route in passthrough_forwarders:
 
@@ -352,8 +369,15 @@ async def init_app():
         config = get_config()
 
         passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
+
+        # Handle legacy extra_routes configuration (backwards compatibility)
         for route in config.get("sync", {}).get("extra_routes", []):
             passthrough_forwarders[route] = load_sync_passthrough_forwarder(route)
+
+        # Handle new routes field configuration
+        for route in config.get("sync", {}).get("routes", []):
+            if route not in passthrough_forwarders:  # Avoid duplicates
+                passthrough_forwarders[route] = load_sync_passthrough_forwarder(route)
 
         for route in passthrough_forwarders:
 
