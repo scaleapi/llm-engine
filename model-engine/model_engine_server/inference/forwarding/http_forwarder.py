@@ -276,7 +276,7 @@ async def init_app():
     def healthcheck():
         return "OK"
 
-    def add_extra_sync_or_stream_routes(app: FastAPI):
+    def add_sync_or_stream_routes(app: FastAPI):
         """Read routes from config (both old extra_routes and new routes field) and dynamically add routes to app"""
         config = get_config()
         sync_forwarders: Dict[str, Forwarder] = dict()
@@ -295,6 +295,10 @@ async def init_app():
         for route in config.get("stream", {}).get("routes", []):
             if route not in stream_forwarders:  # Avoid duplicates
                 stream_forwarders[route] = load_streaming_forwarder(route)
+
+        # Add hardcoded routes to forwarders so they get handled consistently
+        sync_forwarders["/predict"] = load_forwarder(None)
+        stream_forwarders["/stream"] = load_streaming_forwarder(None)
 
         all_routes = set(list(sync_forwarders.keys()) + list(stream_forwarders.keys()))
 
@@ -408,8 +412,8 @@ async def init_app():
 
     app.add_api_route(path="/healthz", endpoint=healthcheck, methods=["GET"])
     app.add_api_route(path="/readyz", endpoint=healthcheck, methods=["GET"])
-    app.add_api_route(path="/predict", endpoint=predict, methods=["POST"])
-    app.add_api_route(path="/stream", endpoint=stream, methods=["POST"])
+    # app.add_api_route(path="/predict", endpoint=predict, methods=["POST"])
+    # app.add_api_route(path="/stream", endpoint=stream, methods=["POST"])
 
     add_extra_routes(app)
     return app
