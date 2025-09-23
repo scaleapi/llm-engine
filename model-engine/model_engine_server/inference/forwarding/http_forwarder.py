@@ -301,9 +301,6 @@ async def init_app():
         for route in stream_routes_to_add:
             stream_forwarders[route] = load_streaming_forwarder(route)
 
-        # Add hardcoded routes to forwarders so they get handled consistently
-        sync_forwarders["/predict"] = load_forwarder(None)
-        stream_forwarders["/stream"] = load_streaming_forwarder(None)
 
         all_routes = set(list(sync_forwarders.keys()) + list(stream_forwarders.keys()))
 
