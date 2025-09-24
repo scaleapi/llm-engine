@@ -291,18 +291,10 @@ async def init_app():
         sync_routes_to_add.update(config.get("sync", {}).get("extra_routes", []))
         sync_routes_to_add.update(config.get("sync", {}).get("routes", []))
 
-        # predict_route = config.get("sync", {}).get("predict_route", None)
-        # if predict_route:
-        #     sync_routes_to_add.add(predict_route)
-
         # Gather all stream routes from extra_routes and routes fields
         stream_routes_to_add = set()
         stream_routes_to_add.update(config.get("stream", {}).get("extra_routes", []))
         stream_routes_to_add.update(config.get("stream", {}).get("routes", []))
-
-        # stream_predict_route = config.get("stream", {}).get("predict_route", None)
-        # if stream_predict_route:
-        #     stream_routes_to_add.add(stream_predict_route)
 
         # Load forwarders for all routes
         for route in sync_routes_to_add:
