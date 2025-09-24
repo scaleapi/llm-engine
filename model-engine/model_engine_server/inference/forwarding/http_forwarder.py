@@ -307,7 +307,6 @@ async def init_app():
         for route in stream_routes_to_add:
             stream_forwarders[route] = load_streaming_forwarder(route)
 
-
         all_routes = set(list(sync_forwarders.keys()) + list(stream_forwarders.keys()))
 
         for route in all_routes:
