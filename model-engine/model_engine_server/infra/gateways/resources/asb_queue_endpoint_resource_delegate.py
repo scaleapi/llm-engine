@@ -33,10 +33,10 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
-        queue_message_timeout_duration: Optional[int] = 60,
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> QueueInfo:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
-        timeout_duration = queue_message_timeout_duration
+        timeout_duration = queue_message_timeout_duration or 60  # Default to 60 seconds
 
         # Validation: Azure Service Bus lock duration must be <= 5 minutes (300s)
         if timeout_duration > 300:

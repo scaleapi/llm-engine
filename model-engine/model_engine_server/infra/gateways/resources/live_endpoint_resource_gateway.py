@@ -38,7 +38,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         self,
         endpoint_record: ModelEndpointRecord,
         labels: Dict[str, str],
-        queue_message_timeout_duration: Optional[int] = 60,
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> QueueInfo:
         """Creates a new queue, returning its unique name and queue URL."""
         queue_name, queue_url = await self.queue_delegate.create_queue_if_not_exists(

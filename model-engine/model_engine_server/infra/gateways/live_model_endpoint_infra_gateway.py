@@ -76,7 +76,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
-        queue_message_timeout_duration: Optional[int] = 60,
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> str:
         deployment_name = generate_deployment_name(
             model_endpoint_record.created_by, model_endpoint_record.name

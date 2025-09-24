@@ -73,7 +73,7 @@ class CreateModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = Field(default=False)
-    queue_message_timeout_duration: Optional[int] = Field(default=60, ge=1)
+    queue_message_timeout_duration: Optional[int] = Field(default=None, ge=1)
 
 
 class CreateModelEndpointV1Response(BaseModel):
@@ -101,7 +101,7 @@ class UpdateModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = None
-    queue_message_timeout_duration: Optional[int] = Field(default=60, ge=1)
+    queue_message_timeout_duration: Optional[int] = Field(default=None, ge=1)
 
 
 class UpdateModelEndpointV1Response(BaseModel):

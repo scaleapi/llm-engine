@@ -35,7 +35,7 @@ class BuildEndpointRequest(BaseModel):
     high_priority: Optional[bool] = None
     default_callback_url: Optional[str] = None
     default_callback_auth: Optional[CallbackAuth] = None
-    queue_message_timeout_duration: Optional[int] = 60
+    queue_message_timeout_duration: Optional[int] = None
 
 
 class BuildEndpointStatus(str, Enum):

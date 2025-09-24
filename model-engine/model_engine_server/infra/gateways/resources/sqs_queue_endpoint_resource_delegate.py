@@ -55,9 +55,9 @@ class SQSQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
-        queue_message_timeout_duration: Optional[int] = 60,
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> QueueInfo:
-        timeout_duration = queue_message_timeout_duration
+        timeout_duration = queue_message_timeout_duration or 60  # Default to 60 seconds
         
         async with _create_async_sqs_client(sqs_profile=self.sqs_profile) as sqs_client:
             queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)

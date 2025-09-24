@@ -164,7 +164,7 @@ class LiveModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
-        queue_message_timeout_duration: Optional[int] = 60,
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> ModelEndpointRecord:
         existing_endpoints = (
             await self.model_endpoint_record_repository.list_model_endpoint_records(

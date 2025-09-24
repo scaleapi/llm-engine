@@ -15,7 +15,7 @@ class FakeQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
-        queue_message_timeout_duration: Optional[int] = 60,
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> QueueInfo:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
         queue_url = f"http://foobar.com/{queue_name}"
