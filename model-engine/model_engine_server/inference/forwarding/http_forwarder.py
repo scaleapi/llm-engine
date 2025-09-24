@@ -354,8 +354,6 @@ async def init_app():
         stream_passthrough_routes_to_add = set()
         stream_passthrough_routes_to_add.update(config.get("stream", {}).get("extra_routes", []))
         stream_passthrough_routes_to_add.update(config.get("stream", {}).get("routes", []))
-        if config.get("stream", {}).get("predict_route", None) != "/stream":
-            stream_passthrough_routes_to_add.add("/stream")
 
         # Load passthrough forwarders for all routes
         for route in stream_passthrough_routes_to_add:
@@ -388,8 +386,6 @@ async def init_app():
         sync_passthrough_routes_to_add = set()
         sync_passthrough_routes_to_add.update(config.get("sync", {}).get("extra_routes", []))
         sync_passthrough_routes_to_add.update(config.get("sync", {}).get("routes", []))
-        if config.get("sync", {}).get("predict_route", None) != "/predict":
-            sync_passthrough_routes_to_add.add("/predict")
 
         for route in sync_passthrough_routes_to_add:
             passthrough_forwarders[route] = load_sync_passthrough_forwarder(route)
