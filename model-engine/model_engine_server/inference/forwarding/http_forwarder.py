@@ -418,8 +418,6 @@ async def init_app():
 
     app.add_api_route(path="/healthz", endpoint=healthcheck, methods=["GET"])
     app.add_api_route(path="/readyz", endpoint=healthcheck, methods=["GET"])
-    # app.add_api_route(path="/predict", endpoint=predict, methods=["POST"])
-    # app.add_api_route(path="/stream", endpoint=stream, methods=["POST"])
 
     add_extra_routes(app)
     return app
