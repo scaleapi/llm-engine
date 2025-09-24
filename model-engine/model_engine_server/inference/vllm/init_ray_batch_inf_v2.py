@@ -229,7 +229,18 @@ def main(mode: str):
 
 
 if __name__ == "__main__":
+    import os
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["wait_for_head_node_to_exit"], required=True)
+    # export environment variable to disable ray logging
+    os.environ["NCCL_DEBUG"] = "INFO"
+    os.environ["NCCL_DEBUG_SUBSYS"] = "INIT,NET"
+    # os.environ["FI_PROVIDER"] = "efa"           # you’re requesting EFA devices
+    # os.environ["AWS_OFI_NCCL"] = "1"
+    os.environ["NCCL_IB_DISABLE"] = "0"
+    # os.environ["NCCL_SOCKET_IFNAME"] = "eth0,eth1"   # include the real NICs (EFA is commonly on eth1)
+    os.environ["NCCL_CROSS_NIC"] = "1"  # allow cross-NIC if ranks land on different NICs
+    os.environ["NCCL_NET_GDR_LEVEL"] = "0"
     args = parser.parse_args()
     main(args.mode)
