@@ -1,0 +1,27 @@
+bundle_config:
+  model_bundle_name: sleep-model-timeout-test
+  request_schema: Dict[str, Any]
+  response_schema: Dict[str, Any]
+  repository: sleep_model
+  tag: latest
+  command:
+    - python
+    - app.py
+  readiness_initial_delay_seconds: 30
+
+endpoint_config:
+  endpoint_name: sleep-model-timeout-test
+  model_bundle: sleep-model-timeout-test
+  cpus: 1
+  memory: 2Gi
+  storage: 10Gi
+  gpus: 0
+  min_workers: 1
+  max_workers: 1
+  per_worker: 1
+  endpoint_type: async
+  queue_message_timeout_duration: 90  # 90 seconds to handle 70s inference + buffer
+  labels:
+    team: test
+    product: sleep-model-timeout-test
+  update_if_exists: True

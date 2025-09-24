@@ -336,6 +336,58 @@ def mock_create_async_sqs_client_get_queue_attributes_queue_throws_exception():
 
 
 @pytest.mark.asyncio
+async def test_sqs_create_queue_with_custom_timeout_duration(
+    build_endpoint_request_async_custom: BuildEndpointRequest,
+    mock_create_async_sqs_client_create_queue,
+):
+    """Test SQS queue creation with custom timeout duration"""
+    delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
+    endpoint_record: ModelEndpointRecord = build_endpoint_request_async_custom.model_endpoint_record
+    
+    await delegate.create_queue_if_not_exists(
+        endpoint_id=endpoint_record.id,
+        endpoint_name=endpoint_record.name,
+        endpoint_created_by=endpoint_record.created_by,
+        endpoint_labels=build_endpoint_request_async_custom.labels,
+        queue_message_timeout_duration=180,  # 3 minutes
+    )
+    
+    # Verify that create_queue was called with the custom timeout
+    mock_client = mock_create_async_sqs_client_create_queue.__aenter__.return_value
+    mock_client.create_queue.assert_called_once()
+    args, kwargs = mock_client.create_queue.call_args
+    
+    # Check that VisibilityTimeout was set to our custom value
+    assert kwargs["Attributes"]["VisibilityTimeout"] == "180"
+
+
+@pytest.mark.asyncio
+async def test_sqs_create_queue_with_default_timeout_duration(
+    build_endpoint_request_async_custom: BuildEndpointRequest,
+    mock_create_async_sqs_client_create_queue,
+):
+    """Test SQS queue creation with default timeout duration"""
+    delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
+    endpoint_record: ModelEndpointRecord = build_endpoint_request_async_custom.model_endpoint_record
+    
+    await delegate.create_queue_if_not_exists(
+        endpoint_id=endpoint_record.id,
+        endpoint_name=endpoint_record.name,
+        endpoint_created_by=endpoint_record.created_by,
+        endpoint_labels=build_endpoint_request_async_custom.labels,
+        queue_message_timeout_duration=60,  # Default
+    )
+    
+    # Verify that create_queue was called with the default timeout
+    mock_client = mock_create_async_sqs_client_create_queue.__aenter__.return_value
+    mock_client.create_queue.assert_called_once()
+    args, kwargs = mock_client.create_queue.call_args
+    
+    # Check that VisibilityTimeout was set to default value
+    assert kwargs["Attributes"]["VisibilityTimeout"] == "60"
+
+
+@pytest.mark.asyncio
 async def test_sqs_create_or_update_resources_endpoint_exists(
     build_endpoint_request_async_custom: BuildEndpointRequest,
     mock_create_async_sqs_client_get_queue_url,
