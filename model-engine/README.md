@@ -42,41 +42,6 @@ Run `mypy . --install-types` to set up mypy.
 Most of the business logic in Model Engine should contain unit tests, located in
 [`tests/unit`](./tests/unit). To run the tests, run `pytest`.
 
-### Testing the http_forwarder
-
-First have some endpoint running on port 5005
-```sh
-(llm-engine-vllm) ➜  vllm git:(dmchoi/vllm_batch_upgrade) ✗ export IMAGE=692474966980.dkr.ecr.us-west-2.amazonaws.com/vllm:0.10.1.1-rc2
-(llm-engine-vllm) ➜  vllm git:(dmchoi/vllm_batch_upgrade) ✗ export MODEL=meta-llama/Meta-Llama-3.1-8B-Instruct && export MODEL_PATH=/data/model_files/$MODEL
-(llm-engine-vllm) ➜  vllm git:(dmchoi/vllm_batch_upgrade) ✗ export REPO_PATH=/mnt/home/dmchoi/repos/scale
-(llm-engine-vllm) ➜  vllm git:(dmchoi/vllm_batch_upgrade) ✗ docker kill vlll; docker rm vllm; docker run \
-    --runtime nvidia \
-    --shm-size=16gb \
-    --gpus '"device=0,1,2,3"' \
-    -v $MODEL_PATH:/workspace/model_files:ro \
-    -v ${REPO_PATH}/llm-engine/model-engine/model_engine_server/inference/vllm/vllm_server.py:/workspace/vllm_server.py \
-    -p 5005:5005 \
-    --name vllm \
-    ${IMAGE} \
-    python -m vllm_server --model model_files  --port 5005 --disable-log-requests --max-model-len 4096 --max-num-seqs 16 --enforce-eager
-```
-
-Then you can run the forwarder locally like this
-```sh
-GIT_TAG=test python model_engine_server/inference/forwarding/http_forwarder.py \
-    --config model_engine_server/inference/configs/service--http_forwarder.yaml \
-    --num-workers 1 \
-    --set "forwarder.sync.extra_routes=['/v1/chat/completions','/v1/completions']" \
-    --set "forwarder.stream.extra_routes=['/v1/chat/completions','/v1/completions']" \
-    --set "forwarder.sync.healthcheck_route=/health" \
-    --set "forwarder.stream.healthcheck_route=/health"
-```
-
-Then you can hit the forwarder like this
-```sh
- curl -X POST localhost:5000/v1/chat/completions  -H "Content-Type: application/json" -d "{\"args\": {\"model\":\"$MODEL\", \"messages\":[{\"role\": \"systemr\", \"content\": \"Hey, what's the temperature in Paris right now?\"}],\"max_tokens\":100,\"temperature\":0.2,\"guided_regex\":\"Sean.*\"}}"
-```
-
 ## Generating OpenAI types
 We've decided to make our V2 APIs OpenAI compatible. We generate the
 corresponding Pydantic models:

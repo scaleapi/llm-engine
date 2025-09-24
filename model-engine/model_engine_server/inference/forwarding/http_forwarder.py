@@ -41,8 +41,6 @@ def get_forwarder_loader(destination_path: Optional[str] = None) -> LoadForwarde
     config = get_config()["sync"]
     if "extra_routes" in config:
         del config["extra_routes"]
-    if "routes" in config:
-        del config["routes"]
     if destination_path:
         config["predict_route"] = destination_path
     if "forwarder_type" in config:
@@ -57,8 +55,6 @@ def get_streaming_forwarder_loader(
     config = get_config()["stream"]
     if "extra_routes" in config:
         del config["extra_routes"]
-    if "routes" in config:
-        del config["routes"]
     if destination_path:
         config["predict_route"] = destination_path
     if "forwarder_type" in config:
@@ -280,26 +276,14 @@ async def init_app():
     def healthcheck():
         return "OK"
 
-    def add_sync_or_stream_routes(app: FastAPI):
-        """Read routes from config (both old extra_routes and new routes field) and dynamically add routes to app"""
+    def add_extra_sync_or_stream_routes(app: FastAPI):
+        """Read extra_routes from config and dynamically add routes to app"""
         config = get_config()
         sync_forwarders: Dict[str, Forwarder] = dict()
         stream_forwarders: Dict[str, StreamingForwarder] = dict()
-
-        # Gather all sync routes from extra_routes and routes fields
-        sync_routes_to_add = set()
-        sync_routes_to_add.update(config.get("sync", {}).get("extra_routes", []))
-        sync_routes_to_add.update(config.get("sync", {}).get("routes", []))
-
-        # Gather all stream routes from extra_routes and routes fields
-        stream_routes_to_add = set()
-        stream_routes_to_add.update(config.get("stream", {}).get("extra_routes", []))
-        stream_routes_to_add.update(config.get("stream", {}).get("routes", []))
-
-        # Load forwarders for all routes
-        for route in sync_routes_to_add:
+        for route in config.get("sync", {}).get("extra_routes", []):
             sync_forwarders[route] = load_forwarder(route)
-        for route in stream_routes_to_add:
+        for route in config.get("stream", {}).get("extra_routes", []):
             stream_forwarders[route] = load_streaming_forwarder(route)
 
         all_routes = set(list(sync_forwarders.keys()) + list(stream_forwarders.keys()))
@@ -343,14 +327,7 @@ async def init_app():
         config = get_config()
 
         passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
-
-        # Gather all routes from extra_routes and routes fields
-        stream_passthrough_routes_to_add = set()
-        stream_passthrough_routes_to_add.update(config.get("stream", {}).get("extra_routes", []))
-        stream_passthrough_routes_to_add.update(config.get("stream", {}).get("routes", []))
-
-        # Load passthrough forwarders for all routes
-        for route in stream_passthrough_routes_to_add:
+        for route in config.get("stream", {}).get("extra_routes", []):
             passthrough_forwarders[route] = load_stream_passthrough_forwarder(route)
 
         for route in passthrough_forwarders:
@@ -375,13 +352,7 @@ async def init_app():
         config = get_config()
 
         passthrough_forwarders: Dict[str, PassthroughForwarder] = dict()
-
-        # Handle legacy extra_routes configuration (backwards compatibility)
-        sync_passthrough_routes_to_add = set()
-        sync_passthrough_routes_to_add.update(config.get("sync", {}).get("extra_routes", []))
-        sync_passthrough_routes_to_add.update(config.get("sync", {}).get("routes", []))
-
-        for route in sync_passthrough_routes_to_add:
+        for route in config.get("sync", {}).get("extra_routes", []):
             passthrough_forwarders[route] = load_sync_passthrough_forwarder(route)
 
         for route in passthrough_forwarders:
@@ -409,7 +380,7 @@ async def init_app():
         elif config.get("sync", {}).get("forwarder_type") == "passthrough":
             add_sync_passthrough_routes(app)
         else:
-            add_sync_or_stream_routes(app)
+            add_extra_sync_or_stream_routes(app)
 
     app.add_api_route(path="/healthz", endpoint=healthcheck, methods=["GET"])
     app.add_api_route(path="/readyz", endpoint=healthcheck, methods=["GET"])
