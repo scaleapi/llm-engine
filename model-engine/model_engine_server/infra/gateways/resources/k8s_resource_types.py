@@ -807,8 +807,8 @@ def get_endpoint_resource_arguments_from_request(
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.streaming_command,
-            PREDICT_ROUTE=flavor.predict_route,
-            STREAMING_PREDICT_ROUTE=flavor.streaming_predict_route,
+            # PREDICT_ROUTE=flavor.predict_route,
+            # STREAMING_PREDICT_ROUTE=flavor.streaming_predict_route,
             HEALTHCHECK_ROUTE=flavor.healthcheck_route,
             READINESS_INITIAL_DELAY=flavor.readiness_initial_delay_seconds,
             INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH=infra_service_config_volume_mount_path,
@@ -817,7 +817,9 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes,
+            FORWARDER_STREAMING_ROUTES=[flavor.streaming_predict_route] + flavor.routes,
+            # FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Streaming Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -913,7 +915,8 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes,
+            # FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
