@@ -19,7 +19,7 @@ depends_on = None
 def upgrade() -> None:
     op.add_column(
         'bundles',
-        sa.Column('routes', sa.ARRAY(sa.Text), nullable=True),
+        sa.Column('runnable_image_routes', sa.ARRAY(sa.Text), nullable=True),
         schema='hosted_model_inference',
     )
 
@@ -27,6 +27,6 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_column(
         'bundles',
-        'routes',
+        'runnable_image_routes',
         schema='hosted_model_inference',
     )
