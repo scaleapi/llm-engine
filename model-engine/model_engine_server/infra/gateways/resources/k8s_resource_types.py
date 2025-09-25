@@ -149,6 +149,7 @@ class _StreamingDeploymentArguments(TypedDict):
     FORWARDER_PORT: int
     STREAMING_PREDICT_ROUTE: str
     FORWARDER_WORKER_COUNT: int
+    FORWARDER_SYNC_ROUTES: List[str]
     FORWARDER_STREAMING_ROUTES: List[str]
 
 
@@ -1089,6 +1090,7 @@ def get_endpoint_resource_arguments_from_request(
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
             # Triton Deployment Arguments
             TRITON_MODEL_REPOSITORY=flavor.triton_model_repository,
             TRITON_CPUS=str(flavor.triton_num_cpu),
@@ -1143,6 +1145,7 @@ def get_endpoint_resource_arguments_from_request(
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
             # GPU Deployment Arguments
             GPU_TYPE=build_endpoint_request.gpu_type.value,
             GPUS=build_endpoint_request.gpus,
@@ -1203,6 +1206,10 @@ def get_endpoint_resource_arguments_from_request(
             # Streaming Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
+            FORWARDER_STREAMING_ROUTES=[flavor.streaming_predict_route]
+            + flavor.routes
+            + flavor.extra_routes,
             # GPU Arguments
             GPU_TYPE=build_endpoint_request.gpu_type.value,
             GPUS=build_endpoint_request.gpus,
