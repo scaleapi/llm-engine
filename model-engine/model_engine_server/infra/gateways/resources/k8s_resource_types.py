@@ -140,6 +140,7 @@ class _SyncRunnableImageDeploymentArguments(TypedDict):
 
     FORWARDER_PORT: int
     FORWARDER_WORKER_COUNT: int
+    FORWARDER_SYNC_ROUTES: List[str]
 
 
 class _StreamingDeploymentArguments(TypedDict):
@@ -164,7 +165,6 @@ class _RunnableImageDeploymentArguments(_BaseDeploymentArguments):
     FORWARDER_CPUS_LIMIT: float
     FORWARDER_MEMORY_LIMIT: str
     FORWARDER_STORAGE_LIMIT: str
-    FORWARDER_SYNC_ROUTES: List[str]
     FORWARDER_EXTRA_ROUTES: List[str]
     FORWARDER_TYPE: Optional[str]
     USER_CONTAINER_PORT: int
