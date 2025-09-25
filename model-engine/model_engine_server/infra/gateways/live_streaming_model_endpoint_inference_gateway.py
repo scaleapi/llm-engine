@@ -48,7 +48,7 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
 
 
 def _get_streaming_endpoint_url(
-    service_name: str, path: str = "/v1/completions", manually_resolve_dns: bool = False
+    service_name: str, path: str = "/stream", manually_resolve_dns: bool = False
 ) -> str:
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
@@ -212,7 +212,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
     ) -> AsyncIterable[SyncEndpointPredictV1Response]:
         deployment_url = _get_streaming_endpoint_url(
             topic,
-            path=predict_request.destination_path or "/v1/completions",
+            path=predict_request.destination_path or "/stream",
             manually_resolve_dns=manually_resolve_dns,
         )
 
@@ -228,15 +228,9 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 else predict_request.num_retries
             )
 
-            # Ensure streaming requests are properly marked
-            payload_json = predict_request.model_dump(exclude_none=True)
-            if "args" not in payload_json:
-                payload_json["args"] = {}
-            payload_json["args"]["stream"] = True  # Explicitly set stream=True for streaming requests
-
             response = self.make_request_with_retries(
                 request_url=deployment_url,
-                payload_json=payload_json,
+                payload_json=predict_request.model_dump(exclude_none=True),
                 timeout_seconds=timeout_seconds,
                 num_retries=num_retries,
                 endpoint_name=endpoint_name or topic,

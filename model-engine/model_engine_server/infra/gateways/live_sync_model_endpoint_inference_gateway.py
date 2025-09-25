@@ -46,7 +46,7 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
 
 
 def _get_sync_endpoint_url(
-    service_name: str, destination_path: str = "/v1/completions", manually_resolve_dns: bool = False
+    service_name: str, destination_path: str = "/predict", manually_resolve_dns: bool = False
 ) -> str:
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
@@ -238,7 +238,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
     ) -> SyncEndpointPredictV1Response:
         deployment_url = _get_sync_endpoint_url(
             topic,
-            destination_path=predict_request.destination_path or "/v1/completions",
+            destination_path=predict_request.destination_path or "/predict",
             manually_resolve_dns=manually_resolve_dns,
         )
 
@@ -254,15 +254,9 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 else predict_request.num_retries
             )
 
-            # Ensure sync requests are properly marked
-            payload_json = predict_request.model_dump(exclude_none=True)
-            if "args" not in payload_json:
-                payload_json["args"] = {}
-            payload_json["args"]["stream"] = False  # Explicitly set stream=False for sync requests
-
             response = await self.make_request_with_retries(
                 request_url=deployment_url,
-                payload_json=payload_json,
+                payload_json=predict_request.model_dump(exclude_none=True),
                 timeout_seconds=timeout_seconds,
                 num_retries=num_retries,
                 endpoint_name=endpoint_name or topic,
