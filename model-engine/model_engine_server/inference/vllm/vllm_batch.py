@@ -39,7 +39,7 @@ from model_engine_server.inference.utils import (
     random_uuid,
 )
 from model_engine_server.inference.vllm.init_ray_batch_inf_v2 import (
-    get_node_ip_address,
+    get_node_fqdn,
     init_ray,
     wait_for_head_node_to_exit,
 )
@@ -393,7 +393,7 @@ async def handle_batch_job(
         ), "Leader addr and port and num_instances must be set"
 
         # Set this so VLLM starts up correctly with the Ray cluster we set up
-        os.environ["VLLM_HOST_IP"] = get_node_ip_address(leader_addr)
+        os.environ["VLLM_HOST_IP"] = get_node_fqdn(leader_addr)
 
         # Also necessary for VLLM
         os.environ["NCCL_SOCKET_IFNAME"] = "eth0"
@@ -436,6 +436,14 @@ async def handle_batch_job(
     )
 
 
+def print_debug_info():
+    import ray
+    import vllm
+
+    print("ray:", ray.__version__)
+    print("vllm:", vllm.__version__)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -469,5 +477,7 @@ if __name__ == "__main__":
             config_file_data = f.read()
 
     request = CreateBatchCompletionsEngineRequest.model_validate_json(config_file_data)
+
+    print_debug_info()
 
     asyncio.run(handle_batch_job(request, args.multinode, args.multinode_timeout))

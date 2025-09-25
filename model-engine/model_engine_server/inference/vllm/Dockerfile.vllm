@@ -5,7 +5,7 @@ ARG VLLM_BASE_IMAGE=${VLLM_BASE_REPO}:v${VLLM_VERSION}
 FROM ${VLLM_BASE_IMAGE} AS base
 
 RUN apt-get update \
-    && apt-get install -y wget gdb psmisc dumb-init iproute2 netcat \
+    && apt-get install -y wget gdb psmisc dumb-init iproute2 netcat lsof \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* \
     apt-get clean
@@ -47,6 +47,10 @@ COPY model-engine /workspace/model-engine
 RUN pip install -e /workspace/model-engine
 COPY model-engine/model_engine_server/inference/vllm/vllm_batch.py /workspace/vllm_batch.py
 COPY model-engine/model_engine_server/inference/vllm/init_ray_batch_inf_v2.py /workspace/init_ray_batch_inf_v2.py
+
+# Some hacky stuff to override ray files
+COPY model-engine/model_engine_server/inference/vllm/ray_overrides/_version.py /usr/local/lib/python3.12/dist-packages/ray/_version.py
+COPY model-engine/model_engine_server/inference/vllm/ray_overrides/proxier.py /usr/local/lib/python3.12/dist-packages/ray/util/client/server/proxier.py
 
 # Need to override entrypoint from parent image
 ENTRYPOINT ["/bin/env"]

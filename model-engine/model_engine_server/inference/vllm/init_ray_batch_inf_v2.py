@@ -9,13 +9,13 @@ import ray
 RETRY_INTERVAL_SEC = 5
 
 
-def get_node_ip_address(leader_addr: str) -> str:
+def get_node_fqdn(leader_addr: str) -> str:
     # Assumes we're on a K8s cluster where the leader address is
     # <leader pod name>.<the rest of the FQDN>
     # e.g. if we're using a JobSet
     # Kinda of a dumb hack to get an externally addressable DNS name
-    node_ip_address = socket.gethostname() + "." + leader_addr.split(".", 1)[1]
-    return node_ip_address
+    node_fqdn = socket.gethostname() + "." + leader_addr.split(".", 1)[1]
+    return node_fqdn
 
 
 def wait_for_dns(hostname: str, timeout: int = 300, interval: int = 5):
@@ -137,6 +137,20 @@ def start_leader(
     return False
 
 
+def is_ipv6_address(ip_address: str) -> bool:
+    try:
+        socket.inet_pton(socket.AF_INET6, ip_address)
+        return True
+    except socket.error:
+        return False
+
+
+def format_ip_address(ip_address: str) -> str:
+    if is_ipv6_address(ip_address):
+        return f"[{ip_address}]"
+    return ip_address
+
+
 def start_worker(
     ray_port: int,
     node_ip_address: str,
@@ -147,17 +161,22 @@ def start_worker(
     # node ip address in this case is actually a DNS name for the pod
     start_time = time.time()
     while time.time() - start_time < timeout:
+        print(
+            f"Starting ray worker with head address [{leader_addr}]:{ray_port} and node ip address {node_ip_address}",
+            flush=True,
+        )
         result = subprocess.run(
             [
                 "ray",
                 "start",
                 "--address",
-                f"{leader_addr}:{ray_port}",
+                f"{format_ip_address(leader_addr)}:{ray_port}",
                 "--node-ip-address",
                 node_ip_address,
             ],
             capture_output=True,
         )
+        print(f"result: {result}", flush=True)
         if result.returncode == 0:
             print(
                 f"Worker: Ray runtime started with head address {leader_addr}:{ray_port}",
@@ -193,21 +212,48 @@ def init_ray(
         node_ip_address: IP address of the current node. If None, will be automatically detected
         timeout: Maximum time to wait for cluster to reach expected size
     """
-    node_ip_address = get_node_ip_address(leader_addr)
+    import os
+
+    # export environment variable to disable ray logging
+    os.environ["NCCL_DEBUG"] = "INFO"
+    os.environ["NCCL_DEBUG_SUBSYS"] = "INIT,NET"
+    # os.environ["FI_PROVIDER"] = "efa"           # you’re requesting EFA devices
+    # os.environ["AWS_OFI_NCCL"] = "1"
+    os.environ["NCCL_IB_DISABLE"] = "0"
+    # os.environ["NCCL_SOCKET_IFNAME"] = "eth0,eth1"   # include the real NICs (EFA is commonly on eth1)
+    os.environ["NCCL_CROSS_NIC"] = "1"  # allow cross-NIC if ranks land on different NICs
+    os.environ["NCCL_NET_GDR_LEVEL"] = "0"
+    # os.environ["GRPC_VERBOSITY"] = "debug"
+    # os.environ["GRPC_TRACE"] = "tcp,http,client_channel,round_robin,handshaker"
+    # os.environ["RAY_LOG_TO_STDERR"] = "1"
+
+    node_fqdn = get_node_fqdn(leader_addr)
 
     print(f"Waiting for head node DNS ({leader_addr}) to be resolvable...", flush=True)
     head_ip_info = wait_for_dns(leader_addr, timeout=timeout)
     if head_ip_info is None:
         raise RuntimeError(f"Timeout waiting for DNS resolution of {leader_addr}")
 
+    leader_ip_address = head_ip_info[0][4][0]
+
+    print(f"leader fqdn: {node_fqdn}, leader ip: {leader_ip_address}", flush=True)
+
     if is_leader:
-        if not start_leader(leader_port, node_ip_address):
+        if not start_leader(leader_port, leader_ip_address):
             raise RuntimeError("Failed to start Ray leader node")
     else:
-        if not start_worker(leader_port, node_ip_address, leader_addr, timeout):
+        print(f"Waiting for worker node DNS ({node_fqdn}) to be resolvable...", flush=True)
+        worker_ip_info = wait_for_dns(node_fqdn, timeout=timeout)
+        if worker_ip_info is None:
+            raise RuntimeError(f"Timeout waiting for DNS resolution of {node_fqdn}")
+
+        worker_ip_address = worker_ip_info[0][4][0]
+
+        print(f"worker fqdn: {node_fqdn}, worker ip: {worker_ip_address}", flush=True)
+        if not start_worker(leader_port, worker_ip_address, leader_ip_address, timeout):
             raise RuntimeError("Failed to start Ray worker node")
     print(
-        f"Successfully initialized Ray {'head' if is_leader else 'worker'} node at {node_ip_address}",
+        f"Successfully initialized Ray {'head' if is_leader else 'worker'} node at {leader_ip_address if is_leader else worker_ip_address}",
         flush=True,
     )
 
@@ -229,18 +275,8 @@ def main(mode: str):
 
 
 if __name__ == "__main__":
-    import os
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["wait_for_head_node_to_exit"], required=True)
-    # export environment variable to disable ray logging
-    os.environ["NCCL_DEBUG"] = "INFO"
-    os.environ["NCCL_DEBUG_SUBSYS"] = "INIT,NET"
-    # os.environ["FI_PROVIDER"] = "efa"           # you’re requesting EFA devices
-    # os.environ["AWS_OFI_NCCL"] = "1"
-    os.environ["NCCL_IB_DISABLE"] = "0"
-    # os.environ["NCCL_SOCKET_IFNAME"] = "eth0,eth1"   # include the real NICs (EFA is commonly on eth1)
-    os.environ["NCCL_CROSS_NIC"] = "1"  # allow cross-NIC if ranks land on different NICs
-    os.environ["NCCL_NET_GDR_LEVEL"] = "0"
+
     args = parser.parse_args()
     main(args.mode)
