@@ -769,7 +769,8 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
+            FORWARDER_STREAMING_ROUTES=[flavor.streaming_predict_route] + flavor.routes + flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Streaming Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -818,7 +819,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
             FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes,
-            FORWARDER_STREAMING_ROUTES=[flavor.streaming_predict_route] + flavor.routes,
+            FORWARDER_STREAMING_ROUTES=[flavor.streaming_predict_route] + flavor.routes + flavor.extra_routes,
             # FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Streaming Deployment Arguments
@@ -868,7 +869,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
+            FORWARDER_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -915,7 +916,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
             # FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Sync Deployment Arguments
