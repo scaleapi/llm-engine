@@ -5,20 +5,9 @@ import subprocess
 import traceback
 from logging import Logger
 
-import vllm.envs as envs
 from vllm.engine.protocol import EngineClient
-from vllm.entrypoints.launcher import serve_http
-from vllm.entrypoints.openai.api_server import (
-    build_app,
-    build_async_engine_client,
-    init_app_state,
-    load_log_config,
-    maybe_register_tokenizer_info_endpoint,
-    run_server,
-    setup_server,
-)
+from vllm.entrypoints.openai.api_server import run_server
 from vllm.entrypoints.openai.cli_args import make_arg_parser
-from vllm.entrypoints.openai.tool_parsers import ToolParserManager
 from vllm.utils import FlexibleArgumentParser
 
 logger = Logger("vllm_server")
