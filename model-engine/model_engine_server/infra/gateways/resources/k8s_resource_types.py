@@ -165,6 +165,7 @@ class _RunnableImageDeploymentArguments(_BaseDeploymentArguments):
     FORWARDER_MEMORY_LIMIT: str
     FORWARDER_STORAGE_LIMIT: str
     FORWARDER_SYNC_ROUTES: List[str]
+    FORWARDER_EXTRA_ROUTES: List[str]
     FORWARDER_TYPE: Optional[str]
     USER_CONTAINER_PORT: int
 
@@ -811,6 +812,8 @@ def get_endpoint_resource_arguments_from_request(
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.streaming_command,
+            PREDICT_ROUTE=flavor.predict_route,
+            STREAMING_PREDICT_ROUTE=flavor.streaming_predict_route,
             HEALTHCHECK_ROUTE=flavor.healthcheck_route,
             READINESS_INITIAL_DELAY=flavor.readiness_initial_delay_seconds,
             INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH=infra_service_config_volume_mount_path,
