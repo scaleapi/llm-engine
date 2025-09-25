@@ -19,7 +19,7 @@ alembic revision -m “initial”
 alembic stamp fa3267c80731
 ```
 
-# Steps to add a column to the db model
+# Steps to make generic database schema changes
 
 Steps can be found here: https://alembic.sqlalchemy.org/en/latest/tutorial.html#running-our-second-migration
 
