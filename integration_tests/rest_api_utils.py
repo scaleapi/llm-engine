@@ -370,7 +370,6 @@ def create_model_endpoint(
 ) -> Dict[str, Any]:
     create_model_endpoint_request = create_model_endpoint_request.copy()
     replace_model_bundle_name_with_id(create_model_endpoint_request, user_id, "v1")
-    print(f"DEBUG: Creating endpoint with request: {create_model_endpoint_request}")
     response = requests.post(
         f"{BASE_PATH}/v1/model-endpoints",
         json=create_model_endpoint_request,
@@ -378,11 +377,8 @@ def create_model_endpoint(
         auth=(user_id, ""),
         timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
     )
-    print(f"DEBUG: Endpoint creation response status: {response.status_code}")
     if not response.ok:
-        print(f"ERROR: Endpoint creation failed: {response.content}")
         raise ValueError(response.content)
-    print(f"SUCCESS: Endpoint created successfully")
     return response.json()
 
 
@@ -614,15 +610,7 @@ def get_model_endpoint(name: str, user_id: str) -> Dict[str, Any]:
     )
     if not response.ok:
         raise ValueError(response.content)
-
-    endpoints = response.json()["model_endpoints"]
-    print(f"DEBUG: Looking for endpoint name='{name}', found {len(endpoints)} endpoints:")
-    for ep in endpoints:
-        print(f"  - name='{ep['name']}', status='{ep['status']}'")
-
-    if not endpoints:
-        raise ValueError(f"No endpoint found with name '{name}'")
-    return endpoints[0]
+    return response.json()["model_endpoints"][0]
 
 
 @retry(stop=stop_after_attempt(6), wait=wait_fixed(1))
