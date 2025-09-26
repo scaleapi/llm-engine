@@ -858,7 +858,6 @@ class CreateLLMModelBundleV1UseCase:
                 protocol="http",
                 readiness_initial_delay_seconds=10,
                 healthcheck_route="/health",
-                # TODO: do i need to change these also?
                 predict_route="/predict",
                 streaming_predict_route="/stream",
                 extra_routes=[

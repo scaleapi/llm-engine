@@ -107,6 +107,10 @@ CREATE_MODEL_BUNDLE_REQUEST_RUNNABLE_IMAGE = {
         },
         "protocol": "http",
         "readiness_initial_delay_seconds": 20,
+        "healthcheck_route": "/health",
+        "predict_route": "/predict",
+        "streaming_predict_route": "/stream",
+        "routes": ["/predict", "/stream"],
     },
 }
 
