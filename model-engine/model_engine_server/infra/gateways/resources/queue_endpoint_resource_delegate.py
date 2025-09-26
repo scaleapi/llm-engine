@@ -24,6 +24,7 @@ class QueueEndpointResourceDelegate(ABC):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
+        queue_message_timeout_duration: Optional[int] = 60,
     ) -> QueueInfo:
         """
         Creates a queue associated with the given endpoint_id. Other fields are set as tags on the queue.

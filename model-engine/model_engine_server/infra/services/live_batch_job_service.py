@@ -127,6 +127,7 @@ class LiveBatchJobService(BatchJobService):
             owner=owner,
             default_callback_url=None,
             default_callback_auth=None,
+            queue_message_timeout_duration=60,
         )
 
         await self.batch_job_record_repository.update_batch_job_record(
