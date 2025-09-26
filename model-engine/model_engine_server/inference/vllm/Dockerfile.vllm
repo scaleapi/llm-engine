@@ -5,7 +5,7 @@ ARG VLLM_BASE_IMAGE=${VLLM_BASE_REPO}:v${VLLM_VERSION}
 FROM ${VLLM_BASE_IMAGE} AS base
 
 RUN apt-get update \
-    && apt-get install -y wget gdb psmisc dumb-init \
+    && apt-get install -y wget gdb psmisc dumb-init iproute2 netcat \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* \
     apt-get clean
