@@ -614,7 +614,15 @@ def get_model_endpoint(name: str, user_id: str) -> Dict[str, Any]:
     )
     if not response.ok:
         raise ValueError(response.content)
-    return response.json()["model_endpoints"][0]
+
+    endpoints = response.json()["model_endpoints"]
+    print(f"DEBUG: Looking for endpoint name='{name}', found {len(endpoints)} endpoints:")
+    for ep in endpoints:
+        print(f"  - name='{ep['name']}', status='{ep['status']}'")
+
+    if not endpoints:
+        raise ValueError(f"No endpoint found with name '{name}'")
+    return endpoints[0]
 
 
 @retry(stop=stop_after_attempt(6), wait=wait_fixed(1))
