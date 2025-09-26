@@ -132,7 +132,7 @@ def test_sync_model_endpoint(capsys):
 
             print(f"Creating {create_endpoint_request['name']} model endpoint...")
             create_model_endpoint(create_endpoint_request, user)
-            ensure_n_ready_endpoints_short(1, user) # TODO: changed to long in ci for now.
+            ensure_n_ready_endpoints_short(1, user)  # TODO: changed to long in ci for now.
 
             print(f"Updating {create_endpoint_request['name']} model endpoint...")
             update_model_endpoint(
