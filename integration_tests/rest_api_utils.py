@@ -369,6 +369,7 @@ def create_model_endpoint(
 ) -> Dict[str, Any]:
     create_model_endpoint_request = create_model_endpoint_request.copy()
     replace_model_bundle_name_with_id(create_model_endpoint_request, user_id, "v1")
+    print(f"DEBUG: Creating endpoint with request: {create_model_endpoint_request}")
     response = requests.post(
         f"{BASE_PATH}/v1/model-endpoints",
         json=create_model_endpoint_request,
@@ -376,8 +377,11 @@ def create_model_endpoint(
         auth=(user_id, ""),
         timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
     )
+    print(f"DEBUG: Endpoint creation response status: {response.status_code}")
     if not response.ok:
+        print(f"ERROR: Endpoint creation failed: {response.content}")
         raise ValueError(response.content)
+    print(f"SUCCESS: Endpoint created successfully")
     return response.json()
 
 

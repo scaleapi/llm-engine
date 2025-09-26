@@ -1016,7 +1016,7 @@ class CreateLLMModelBundleV1UseCase:
                 streaming_command=command,
                 protocol="http",
                 readiness_initial_delay_seconds=10,
-                healthcheck_route="/ping",
+                healthcheck_route="/health",
                 predict_route="/v1/completions",
                 streaming_predict_route="/v1/completions",
                 routes=[
@@ -1098,7 +1098,7 @@ class CreateLLMModelBundleV1UseCase:
                 streaming_command=leader_command,
                 protocol="http",
                 readiness_initial_delay_seconds=10,
-                healthcheck_route="/ping",
+                healthcheck_route="/health",
                 predict_route="/v1/completions",
                 streaming_predict_route="/v1/completions",
                 routes=[OPENAI_CHAT_COMPLETION_PATH, OPENAI_COMPLETION_PATH],
