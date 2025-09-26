@@ -858,6 +858,7 @@ class CreateLLMModelBundleV1UseCase:
                 protocol="http",
                 readiness_initial_delay_seconds=10,
                 healthcheck_route="/health",
+                # TODO: do i need to change these also?
                 predict_route="/predict",
                 streaming_predict_route="/stream",
                 extra_routes=[
@@ -1016,9 +1017,9 @@ class CreateLLMModelBundleV1UseCase:
                 streaming_command=command,
                 protocol="http",
                 readiness_initial_delay_seconds=10,
-                healthcheck_route="/health",
-                predict_route="/predict",
-                streaming_predict_route="/stream",
+                healthcheck_route="/ping",
+                predict_route="/v1/completions",
+                streaming_predict_route="/v1/completions",
                 routes=[
                     OPENAI_CHAT_COMPLETION_PATH,
                     OPENAI_COMPLETION_PATH,
@@ -1098,9 +1099,9 @@ class CreateLLMModelBundleV1UseCase:
                 streaming_command=leader_command,
                 protocol="http",
                 readiness_initial_delay_seconds=10,
-                healthcheck_route="/health",
-                predict_route="/predict",
-                streaming_predict_route="/stream",
+                healthcheck_route="/ping",
+                predict_route="/v1/completions",
+                streaming_predict_route="/v1/completions",
                 routes=[OPENAI_CHAT_COMPLETION_PATH, OPENAI_COMPLETION_PATH],
                 env=common_vllm_envs,
                 worker_command=worker_command,
