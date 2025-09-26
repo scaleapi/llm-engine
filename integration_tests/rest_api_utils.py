@@ -111,6 +111,7 @@ CREATE_MODEL_BUNDLE_REQUEST_RUNNABLE_IMAGE = {
         "predict_route": "/predict",
         "streaming_predict_route": "/stream",
         "routes": ["/predict", "/stream"],
+        "extra_routes": ["/predict", "/stream"],
     },
 }
 
