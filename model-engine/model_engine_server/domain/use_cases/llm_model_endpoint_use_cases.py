@@ -1019,7 +1019,7 @@ class CreateLLMModelBundleV1UseCase:
                 healthcheck_route="/health",
                 predict_route="/predict",
                 streaming_predict_route="/stream",
-                extra_routes=[
+                routes=[
                     OPENAI_CHAT_COMPLETION_PATH,
                     OPENAI_COMPLETION_PATH,
                 ],
@@ -1101,7 +1101,7 @@ class CreateLLMModelBundleV1UseCase:
                 healthcheck_route="/health",
                 predict_route="/predict",
                 streaming_predict_route="/stream",
-                extra_routes=[OPENAI_CHAT_COMPLETION_PATH, OPENAI_COMPLETION_PATH],
+                routes=[OPENAI_CHAT_COMPLETION_PATH, OPENAI_COMPLETION_PATH],
                 env=common_vllm_envs,
                 worker_command=worker_command,
                 worker_env=common_vllm_envs,

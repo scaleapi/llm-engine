@@ -227,6 +227,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 if predict_request.num_retries is None
                 else predict_request.num_retries
             )
+
             response = self.make_request_with_retries(
                 request_url=deployment_url,
                 payload_json=predict_request.model_dump(exclude_none=True),

@@ -1,33 +1,14 @@
 import asyncio
 import code
-import json
 import os
-import signal
 import subprocess
 import traceback
 from logging import Logger
-from typing import AsyncGenerator, Dict, List, Optional
 
-import vllm.envs as envs
-from fastapi import APIRouter, BackgroundTasks, Request
-from fastapi.responses import Response, StreamingResponse
-from vllm.engine.async_llm_engine import AsyncEngineDeadError
 from vllm.engine.protocol import EngineClient
-from vllm.entrypoints.launcher import serve_http
-from vllm.entrypoints.openai.api_server import (
-    build_app,
-    build_async_engine_client,
-    init_app_state,
-    load_log_config,
-    maybe_register_tokenizer_info_endpoint,
-    setup_server,
-)
+from vllm.entrypoints.openai.api_server import run_server
 from vllm.entrypoints.openai.cli_args import make_arg_parser
-from vllm.entrypoints.openai.tool_parsers import ToolParserManager
-from vllm.outputs import CompletionOutput
-from vllm.sampling_params import SamplingParams
-from vllm.sequence import Logprob
-from vllm.utils import FlexibleArgumentParser, random_uuid
+from vllm.utils import FlexibleArgumentParser
 
 logger = Logger("vllm_server")
 
@@ -36,88 +17,8 @@ engine_client: EngineClient
 TIMEOUT_KEEP_ALIVE = 5  # seconds.
 TIMEOUT_TO_PREVENT_DEADLOCK = 1  # seconds
 
-router = APIRouter()
-
-
-@router.post("/predict")
-@router.post("/stream")
-async def generate(request: Request) -> Response:
-    """Generate completion for the request.
-
-    The request should be a JSON object with the following fields:
-    - prompt: the prompt to use for the generation.
-    - stream: whether to stream the results or not.
-    - other fields: the sampling parameters (See `SamplingParams` for details).
-    """
-    # check health before accepting request and fail fast if engine isn't healthy
-    try:
-        await engine_client.check_health()
-
-        request_dict = await request.json()
-        prompt = request_dict.pop("prompt")
-        stream = request_dict.pop("stream", False)
-
-        sampling_params = SamplingParams(**request_dict)
-
-        request_id = random_uuid()
-
-        results_generator = engine_client.generate(prompt, sampling_params, request_id)
-
-        async def abort_request() -> None:
-            await engine_client.abort(request_id)
-
-        if stream:
-            # Streaming case
-            async def stream_results() -> AsyncGenerator[str, None]:
-                last_output_text = ""
-                async for request_output in results_generator:
-                    log_probs = format_logprobs(request_output)
-                    ret = {
-                        "text": request_output.outputs[-1].text[len(last_output_text) :],
-                        "count_prompt_tokens": len(request_output.prompt_token_ids),
-                        "count_output_tokens": len(request_output.outputs[0].token_ids),
-                        "log_probs": (
-                            log_probs[-1] if log_probs and sampling_params.logprobs else None
-                        ),
-                        "finished": request_output.finished,
-                    }
-                    last_output_text = request_output.outputs[-1].text
-                    yield f"data:{json.dumps(ret)}\n\n"
-
-            background_tasks = BackgroundTasks()
-            # Abort the request if the client disconnects.
-            background_tasks.add_task(abort_request)
-
-            return StreamingResponse(stream_results(), background=background_tasks)
-
-        # Non-streaming case
-        final_output = None
-        tokens = []
-        last_output_text = ""
-        async for request_output in results_generator:
-            tokens.append(request_output.outputs[-1].text[len(last_output_text) :])
-            last_output_text = request_output.outputs[-1].text
-            if await request.is_disconnected():
-                # Abort the request if the client disconnects.
-                await engine_client.abort(request_id)
-                return Response(status_code=499)
-            final_output = request_output
-
-        assert final_output is not None
-        prompt = final_output.prompt
-        ret = {
-            "text": final_output.outputs[0].text,
-            "count_prompt_tokens": len(final_output.prompt_token_ids),
-            "count_output_tokens": len(final_output.outputs[0].token_ids),
-            "log_probs": format_logprobs(final_output),
-            "tokens": tokens,
-        }
-        return Response(content=json.dumps(ret))
-
-    except AsyncEngineDeadError as e:
-        logger.error(f"The vllm engine is dead, exiting the pod: {e}")
-        os.kill(os.getpid(), signal.SIGINT)
-        raise e
+# Legacy endpoints /predit and /stream removed - using vLLM's native OpenAI-compatible endpoints instead
+# All requests now go through /v1/completions, /v1/chat/completions, etc.
 
 
 def get_gpu_free_memory():
@@ -171,83 +72,10 @@ def debug(sig, frame):
     i.interact(message)
 
 
-def format_logprobs(
-    request_output: CompletionOutput,
-) -> Optional[List[Dict[int, float]]]:
-    """Given a request output, format the logprobs if they exist."""
-    output_logprobs = request_output.outputs[0].logprobs
-    if output_logprobs is None:
-        return None
-
-    def extract_logprobs(logprobs: Dict[int, Logprob]) -> Dict[int, float]:
-        return {k: v.logprob for k, v in logprobs.items()}
-
-    return [extract_logprobs(logprobs) for logprobs in output_logprobs]
-
-
 def parse_args(parser: FlexibleArgumentParser):
     parser = make_arg_parser(parser)
     parser.add_argument("--attention-backend", type=str, help="The attention backend to use")
     return parser.parse_args()
-
-
-async def run_server(args, **uvicorn_kwargs) -> None:
-    """Run a single-worker API server."""
-    listen_address, sock = setup_server(args)
-    await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
-
-
-async def run_server_worker(
-    listen_address, sock, args, client_config=None, **uvicorn_kwargs
-) -> None:
-    """Run a single API server worker."""
-
-    if args.tool_parser_plugin and len(args.tool_parser_plugin) > 3:
-        ToolParserManager.import_tool_parser(args.tool_parser_plugin)
-
-    server_index = client_config.get("client_index", 0) if client_config else 0
-
-    # Load logging config for uvicorn if specified
-    log_config = load_log_config(args.log_config_file)
-    if log_config is not None:
-        uvicorn_kwargs["log_config"] = log_config
-
-    global engine_client
-
-    async with build_async_engine_client(args, client_config=client_config) as engine_client:
-        maybe_register_tokenizer_info_endpoint(args)
-        app = build_app(args)
-
-        vllm_config = await engine_client.get_vllm_config()
-        await init_app_state(engine_client, vllm_config, app.state, args)
-        app.include_router(router)
-
-        logger.info("Starting vLLM API server %d on %s", server_index, listen_address)
-        shutdown_task = await serve_http(
-            app,
-            sock=sock,
-            enable_ssl_refresh=args.enable_ssl_refresh,
-            host=args.host,
-            port=args.port,
-            log_level=args.uvicorn_log_level,
-            # NOTE: When the 'disable_uvicorn_access_log' value is True,
-            # no access log will be output.
-            access_log=not args.disable_uvicorn_access_log,
-            timeout_keep_alive=envs.VLLM_HTTP_TIMEOUT_KEEP_ALIVE,
-            ssl_keyfile=args.ssl_keyfile,
-            ssl_certfile=args.ssl_certfile,
-            ssl_ca_certs=args.ssl_ca_certs,
-            ssl_cert_reqs=args.ssl_cert_reqs,
-            h11_max_incomplete_event_size=args.h11_max_incomplete_event_size,
-            h11_max_header_count=args.h11_max_header_count,
-            **uvicorn_kwargs,
-        )
-
-    # NB: Await server shutdown only after the backend context is exited
-    try:
-        await shutdown_task
-    finally:
-        sock.close()
 
 
 if __name__ == "__main__":
@@ -257,4 +85,5 @@ if __name__ == "__main__":
     args = parse_args(parser)
     if args.attention_backend is not None:
         os.environ["VLLM_ATTENTION_BACKEND"] = args.attention_backend
+    # Using vllm's run_server
     asyncio.run(run_server(args))

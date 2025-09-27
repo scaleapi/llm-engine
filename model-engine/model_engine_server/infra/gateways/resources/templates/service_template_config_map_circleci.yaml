@@ -167,8 +167,8 @@ data:
                   cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: ${FORWARDER_MEMORY_LIMIT}
                   ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
-              
-              
+
+
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -440,8 +440,8 @@ data:
                   cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: ${FORWARDER_MEMORY_LIMIT}
                   ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
-              
-              
+
+
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -660,8 +660,8 @@ data:
                   cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: ${FORWARDER_MEMORY_LIMIT}
                   ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
-              
-              
+
+
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -929,8 +929,8 @@ data:
                   cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: ${FORWARDER_MEMORY_LIMIT}
                   ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
-              
-              
+
+
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -1104,17 +1104,13 @@ data:
                 - --num-workers
                 - "${FORWARDER_WORKER_COUNT}"
                 - --set
-                - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
-                - --set
-                - "forwarder.stream.predict_route=${STREAMING_PREDICT_ROUTE}"
-                - --set
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
-                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                 - --set
-                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - "forwarder.stream.routes=${FORWARDER_STREAMING_ROUTES}"
                 - --set
                 - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
                 - --set
@@ -1162,8 +1158,8 @@ data:
                   cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: ${FORWARDER_MEMORY_LIMIT}
                   ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
-              
-              
+
+
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -1398,8 +1394,8 @@ data:
                   cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: ${FORWARDER_MEMORY_LIMIT}
                   ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
-              
-              
+
+
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -1679,8 +1675,8 @@ data:
                   cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: ${FORWARDER_MEMORY_LIMIT}
                   ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
-              
-              
+
+
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -1907,8 +1903,8 @@ data:
                   cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: ${FORWARDER_MEMORY_LIMIT}
                   ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
-              
-              
+
+
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -2184,8 +2180,8 @@ data:
                   cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: ${FORWARDER_MEMORY_LIMIT}
                   ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
-              
-              
+
+
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -2367,17 +2363,13 @@ data:
                 - --num-workers
                 - "${FORWARDER_WORKER_COUNT}"
                 - --set
-                - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
-                - --set
-                - "forwarder.stream.predict_route=${STREAMING_PREDICT_ROUTE}"
-                - --set
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
-                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                 - --set
-                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
+                - "forwarder.stream.routes=${FORWARDER_STREAMING_ROUTES}"
                 - --set
                 - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
                 - --set
@@ -2425,8 +2417,8 @@ data:
                   cpu: ${FORWARDER_CPUS_LIMIT}
                   memory: ${FORWARDER_MEMORY_LIMIT}
                   ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
-              
-              
+
+
               volumeMounts:
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -2638,8 +2630,8 @@ data:
     apiVersion: leaderworkerset.x-k8s.io/v1
     kind: LeaderWorkerSet
     metadata:
-      name: ${RESOURCE_NAME} 
-      namespace: ${NAMESPACE} 
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
       labels:
         user_id: ${OWNER}
         team: ${TEAM}
@@ -2780,8 +2772,8 @@ data:
                     cpu: ${FORWARDER_CPUS_LIMIT}
                     memory: ${FORWARDER_MEMORY_LIMIT}
                     ephemeral-storage: ${FORWARDER_STORAGE_LIMIT}
-                
-                
+
+
                 volumeMounts:
                   - name: config-volume
                     mountPath: /opt/.aws/config

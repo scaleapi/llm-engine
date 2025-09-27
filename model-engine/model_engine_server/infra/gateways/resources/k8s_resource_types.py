@@ -140,6 +140,7 @@ class _SyncRunnableImageDeploymentArguments(TypedDict):
 
     FORWARDER_PORT: int
     FORWARDER_WORKER_COUNT: int
+    FORWARDER_SYNC_ROUTES: List[str]
 
 
 class _StreamingDeploymentArguments(TypedDict):
@@ -148,6 +149,8 @@ class _StreamingDeploymentArguments(TypedDict):
     FORWARDER_PORT: int
     STREAMING_PREDICT_ROUTE: str
     FORWARDER_WORKER_COUNT: int
+    FORWARDER_SYNC_ROUTES: List[str]
+    FORWARDER_STREAMING_ROUTES: List[str]
 
 
 class _RunnableImageDeploymentArguments(_BaseDeploymentArguments):
@@ -163,7 +166,6 @@ class _RunnableImageDeploymentArguments(_BaseDeploymentArguments):
     FORWARDER_CPUS_LIMIT: float
     FORWARDER_MEMORY_LIMIT: str
     FORWARDER_STORAGE_LIMIT: str
-    FORWARDER_EXTRA_ROUTES: List[str]
     FORWARDER_TYPE: Optional[str]
     USER_CONTAINER_PORT: int
 
@@ -664,7 +666,6 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
@@ -715,7 +716,6 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
@@ -769,7 +769,10 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
+            FORWARDER_STREAMING_ROUTES=[flavor.streaming_predict_route]
+            + flavor.routes
+            + flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Streaming Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -817,7 +820,10 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
+            FORWARDER_STREAMING_ROUTES=[flavor.streaming_predict_route]
+            + flavor.routes
+            + flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Streaming Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -866,7 +872,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -913,7 +919,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
@@ -962,7 +968,6 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
@@ -1021,7 +1026,6 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Async Deployment Arguments
             CELERY_S3_BUCKET=s3_bucket,
@@ -1082,11 +1086,11 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
             # Triton Deployment Arguments
             TRITON_MODEL_REPOSITORY=flavor.triton_model_repository,
             TRITON_CPUS=str(flavor.triton_num_cpu),
@@ -1137,11 +1141,11 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Sync Deployment Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
             # GPU Deployment Arguments
             GPU_TYPE=build_endpoint_request.gpu_type.value,
             GPUS=build_endpoint_request.gpus,
@@ -1198,11 +1202,14 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_MEMORY_LIMIT=FORWARDER_MEMORY_USAGE,
             FORWARDER_STORAGE_LIMIT=FORWARDER_STORAGE_USAGE,
             USER_CONTAINER_PORT=USER_CONTAINER_PORT,
-            FORWARDER_EXTRA_ROUTES=flavor.extra_routes,
             FORWARDER_TYPE=flavor.forwarder_type,
             # Streaming Arguments
             FORWARDER_PORT=FORWARDER_PORT,
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
+            FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
+            FORWARDER_STREAMING_ROUTES=[flavor.streaming_predict_route]
+            + flavor.routes
+            + flavor.extra_routes,
             # GPU Arguments
             GPU_TYPE=build_endpoint_request.gpu_type.value,
             GPUS=build_endpoint_request.gpus,
