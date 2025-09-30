@@ -4,7 +4,7 @@ We introduce alembic by
 1. dumping the current db schemas into 'initial.sql' via pg_dump
 
 ```
-pg_dump -h $HOST  -U postgres -O -s -d $DB_NAME -n hosted_model_inference -n model -f initial.sql 
+pg_dump -h $HOST  -U postgres -O -s -d $DB_NAME -n hosted_model_inference -n model -f initial.sql
 ```
 
 2. writing an initial revision that reads and applies intial.sql script
@@ -19,6 +19,9 @@ alembic revision -m “initial”
 alembic stamp fa3267c80731
 ```
 
+# Steps to make generic database schema changes
+
+Steps can be found here: https://alembic.sqlalchemy.org/en/latest/tutorial.html#running-our-second-migration
 
 # Test db migration from scratch
 

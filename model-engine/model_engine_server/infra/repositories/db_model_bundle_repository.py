@@ -146,6 +146,7 @@ def translate_model_bundle_orm_to_model_bundle(
             env=model_bundle_orm.runnable_image_env,
             protocol=model_bundle_orm.runnable_image_protocol,
             readiness_initial_delay_seconds=model_bundle_orm.runnable_image_readiness_initial_delay_seconds,
+            routes=model_bundle_orm.runnable_image_routes,
             extra_routes=model_bundle_orm.runnable_image_extra_routes,
             forwarder_type=model_bundle_orm.runnable_image_forwarder_type,
             worker_command=model_bundle_orm.runnable_image_worker_command,
@@ -218,6 +219,7 @@ def translate_kwargs_to_model_bundle_orm(
         runnable_image_readiness_initial_delay_seconds=flavor_dict.get(
             "readiness_initial_delay_seconds"
         ),
+        runnable_image_routes=flavor_dict.get("routes"),
         runnable_image_extra_routes=flavor_dict.get("extra_routes"),
         runnable_image_forwarder_type=flavor_dict.get("forwarder_type"),
         runnable_image_worker_command=flavor_dict.get("worker_command"),

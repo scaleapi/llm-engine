@@ -181,10 +181,6 @@ data:
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
-                - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
-                - --set
-                - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
-                - --set
                 - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
                 - --set
                 - "forwarder.stream.forwarder_type=${FORWARDER_TYPE}"
@@ -370,7 +366,7 @@ data:
                 name: {{ $service_template_aws_config_map_name }}
                 {{- else }}
                 name: {{ $aws_config_map_name }}
-                {{- end }}  
+                {{- end }}
             {{- end }}
             - name: user-config
               configMap:
@@ -487,15 +483,15 @@ data:
           threshold: "${CONCURRENCY}"
           metricName: request_concurrency_average
           query: sum(rate(istio_request_duration_milliseconds_sum{destination_workload="${RESOURCE_NAME}"}[2m])) / 1000
-          serverAddress: ${PROMETHEUS_SERVER_ADDRESS} 
+          serverAddress: ${PROMETHEUS_SERVER_ADDRESS}
   {{- range $device := tuple "gpu" }}
   {{- range $mode := tuple "streaming"}}
   leader-worker-set-{{ $mode }}-{{ $device }}.yaml: |-
     apiVersion: leaderworkerset.x-k8s.io/v1
     kind: LeaderWorkerSet
     metadata:
-      name: ${RESOURCE_NAME} 
-      namespace: ${NAMESPACE} 
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
       labels:
         {{- $service_template_labels | nindent 8 }}
     spec:
@@ -616,10 +612,6 @@ data:
                   - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                   - --set
                   - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
-                  - --set
-                  - "forwarder.sync.extra_routes=${FORWARDER_EXTRA_ROUTES}"
-                  - --set
-                  - "forwarder.stream.extra_routes=${FORWARDER_EXTRA_ROUTES}"
                   - --set
                   - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
                   - --set
@@ -748,7 +740,7 @@ data:
                   name: {{ $service_template_aws_config_map_name }}
                   {{- else }}
                   name: {{ $aws_config_map_name }}
-                  {{- end }}  
+                  {{- end }}
               {{- end }}
               - name: user-config
                 configMap:
@@ -856,7 +848,7 @@ data:
                   name: {{ $service_template_aws_config_map_name }}
                   {{- else }}
                   name: {{ $aws_config_map_name }}
-                  {{- end }}  
+                  {{- end }}
               {{- end }}
               - name: user-config
                 configMap:
