@@ -64,6 +64,22 @@ class CreateLLMEndpointRequest(VLLMEndpointAdditionalArgs, BaseModel):
         default=None,
         description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
     )
+    # Route configuration for multiple endpoints support
+    routes: Optional[List[str]] = Field(
+        default=None,
+        description="List of additional routes to forward to the user's service. "
+        "These routes will be added alongside the default /predict route. "
+        "Requires passthrough forwarder type."
+    )
+    extra_routes: Optional[List[str]] = Field(
+        default=None,
+        description="Legacy field for additional routes. Use 'routes' instead."
+    )
+    forwarder_type: Optional[str] = Field(
+        default=None,
+        description="Type of forwarder to use. Set to 'passthrough' to enable "
+        "multiple route forwarding to your FastAPI service."
+    )
 
 
 class CreateLLMEndpointResponse(BaseModel):

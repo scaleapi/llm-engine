@@ -392,6 +392,10 @@ class CreateLLMModelBundleV1UseCase:
         chat_template_override: Optional[str],
         nodes_per_worker: int,
         additional_args: Optional[Dict[str, Any]] = None,
+        # Route configuration for multiple endpoints support
+        routes: Optional[List[str]] = None,
+        extra_routes: Optional[List[str]] = None,
+        forwarder_type: Optional[str] = None,
     ) -> ModelBundle:
         multinode = nodes_per_worker > 1
         if source != LLMSource.HUGGING_FACE:
@@ -459,6 +463,9 @@ class CreateLLMModelBundleV1UseCase:
                         checkpoint_path,
                         chat_template_override,
                         additional_args=additional_vllm_args,
+                        routes=routes,
+                        extra_routes=extra_routes,
+                        forwarder_type=forwarder_type,
                     )
                 else:
                     bundle_id = await self.create_vllm_bundle(
@@ -471,6 +478,9 @@ class CreateLLMModelBundleV1UseCase:
                         checkpoint_path,
                         chat_template_override,
                         additional_args=additional_vllm_args,
+                        routes=routes,
+                        extra_routes=extra_routes,
+                        forwarder_type=forwarder_type,
                     )
             case LLMInferenceFramework.SGLANG:  # pragma: no cover
                 if not hmi_config.sglang_repository:
@@ -991,6 +1001,9 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path: Optional[str],
         chat_template_override: Optional[str],
         additional_args: Optional[VLLMEndpointAdditionalArgs] = None,
+        routes: Optional[List[str]] = None,
+        extra_routes: Optional[List[str]] = None,
+        forwarder_type: Optional[str] = None,
     ):
         command = self._create_vllm_bundle_command(
             model_name,
@@ -1004,6 +1017,20 @@ class CreateLLMModelBundleV1UseCase:
             nodes_per_worker=1,
             additional_args=additional_args,
         )
+
+        # Determine which routes to use - user-provided or defaults
+        final_routes = []
+        final_extra_routes = []
+        final_forwarder_type = forwarder_type
+
+        if routes is not None:
+            final_routes = routes
+        else:
+            # Default to OpenAI compatibility routes for VLLM
+            final_routes = [OPENAI_CHAT_COMPLETION_PATH, OPENAI_COMPLETION_PATH]
+
+        if extra_routes is not None:
+            final_extra_routes = extra_routes
 
         create_model_bundle_v2_request = CreateModelBundleV2Request(
             name=endpoint_unique_name,
@@ -1019,10 +1046,9 @@ class CreateLLMModelBundleV1UseCase:
                 healthcheck_route="/health",
                 predict_route="/predict",
                 streaming_predict_route="/stream",
-                routes=[
-                    OPENAI_CHAT_COMPLETION_PATH,
-                    OPENAI_COMPLETION_PATH,
-                ],
+                routes=final_routes,
+                extra_routes=final_extra_routes,
+                forwarder_type=final_forwarder_type,
                 env={},
             ),
             metadata={},
@@ -1051,6 +1077,9 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path: Optional[str],
         chat_template_override: Optional[str],
         additional_args: Optional[VLLMEndpointAdditionalArgs] = None,
+        routes: Optional[List[str]] = None,
+        extra_routes: Optional[List[str]] = None,
+        forwarder_type: Optional[str] = None,
     ):
         leader_command = self._create_vllm_bundle_command(
             model_name,
@@ -1087,6 +1116,20 @@ class CreateLLMModelBundleV1UseCase:
             "RAY_CLUSTER_SIZE": "$(K8S_LWS_CLUSTER_SIZE)",
         }
 
+        # Determine which routes to use - user-provided or defaults
+        final_routes = []
+        final_extra_routes = []
+        final_forwarder_type = forwarder_type
+
+        if routes is not None:
+            final_routes = routes
+        else:
+            # Default to OpenAI compatibility routes for VLLM
+            final_routes = [OPENAI_CHAT_COMPLETION_PATH, OPENAI_COMPLETION_PATH]
+
+        if extra_routes is not None:
+            final_extra_routes = extra_routes
+
         create_model_bundle_v2_request = CreateModelBundleV2Request(
             name=endpoint_unique_name,
             schema_location="TBA",
@@ -1101,7 +1144,9 @@ class CreateLLMModelBundleV1UseCase:
                 healthcheck_route="/health",
                 predict_route="/predict",
                 streaming_predict_route="/stream",
-                routes=[OPENAI_CHAT_COMPLETION_PATH, OPENAI_COMPLETION_PATH],
+                routes=final_routes,
+                extra_routes=final_extra_routes,
+                forwarder_type=final_forwarder_type,
                 env=common_vllm_envs,
                 worker_command=worker_command,
                 worker_env=common_vllm_envs,
@@ -1343,6 +1388,10 @@ class CreateLLMModelEndpointV1UseCase:
             chat_template_override=request.chat_template_override,
             nodes_per_worker=request.nodes_per_worker,
             additional_args=request.model_dump(exclude_none=True),
+            # Pass route configuration to bundle creation
+            routes=request.routes,
+            extra_routes=request.extra_routes,
+            forwarder_type=request.forwarder_type,
         )
         validate_resource_requests(
             bundle=bundle,
