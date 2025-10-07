@@ -44,12 +44,25 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         
         with _get_servicebus_administration_client() as client:
             try:
-                queue_properties = QueueProperties(
-                    lock_duration=timedelta(seconds=timeout_duration)
-                )
-                client.create_queue(queue_name=queue_name, queue_properties=queue_properties)
+                # First, try to create the queue with default properties
+                client.create_queue(queue_name=queue_name)
+                
+                # Then update the queue properties to set custom lock duration
+                queue_properties = client.get_queue(queue_name)
+                queue_properties.lock_duration = timedelta(seconds=timeout_duration)
+                client.update_queue(queue_properties)
+                
             except ResourceExistsError:
-                pass
+                # Queue already exists, update its properties if needed
+                try:
+                    queue_properties = client.get_queue(queue_name)
+                    # Only update if the lock duration is different
+                    if queue_properties.lock_duration != timedelta(seconds=timeout_duration):
+                        queue_properties.lock_duration = timedelta(seconds=timeout_duration)
+                        client.update_queue(queue_properties)
+                except Exception as e:
+                    # If we can't update properties, log but don't fail
+                    logger.warning(f"Could not update queue properties for {queue_name}: {e}")
 
             return QueueInfo(queue_name, None)
 
