@@ -18,9 +18,7 @@ from model_engine_server.infra.gateways.k8s_resource_parser import (
     parse_mem_request,
 )
 
-MAX_ENDPOINT_SIZE = (
-    50  # This may be a bit strict, but for now it feels reasonable, since 250 workers is too much
-)
+MAX_ENDPOINT_SIZE = 250  # Bumped max-size from 50 to 250 to support robotics
 # Also note that this is the default max_workers value for batch tasks.
 # Separately, we need user compute limits
 MAX_ASYNC_CONCURRENT_TASKS = 20  # Empirically, with prefork workers, the celery forwarder can only handle 20 concurrency as of Dec 2024
