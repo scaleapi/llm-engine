@@ -504,7 +504,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         return BuildImageRequest(
             repo=hmi_config.user_inference_base_repository,
             image_tag=resulting_image_tag[:MAX_IMAGE_TAG_LEN],
-            aws_profile=ECR_AWS_PROFILE,  # type: ignore
+            aws_profile=build_endpoint_request.aws_role,  # Use user-provided aws_role instead of hardcoded ECR_AWS_PROFILE
             base_path=WORKSPACE_PATH,
             dockerfile=f"{inference_folder}/{dockerfile}",
             base_image=base_image,
@@ -577,7 +577,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         return BuildImageRequest(
             repo=ecr_repo,
             image_tag=service_image_tag[:MAX_IMAGE_TAG_LEN],
-            aws_profile=ECR_AWS_PROFILE,
+            aws_profile=build_endpoint_request.aws_role,  # Use user-provided aws_role instead of hardcoded ECR_AWS_PROFILE
             base_path=WORKSPACE_PATH,
             dockerfile=f"{inference_folder}/{dockerfile}",
             base_image=base_image,
@@ -633,7 +633,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         return BuildImageRequest(
             repo=ecr_repo,
             image_tag=service_image_tag[:MAX_IMAGE_TAG_LEN],
-            aws_profile=ECR_AWS_PROFILE,
+            aws_profile=build_endpoint_request.aws_role,  # Use user-provided aws_role instead of hardcoded ECR_AWS_PROFILE
             base_path=WORKSPACE_PATH,
             dockerfile=f"{inference_folder}/{dockerfile}",
             base_image=base_image,
@@ -667,7 +667,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         if not self.docker_repository.image_exists(
             repository_name=image_params.repo,
             image_tag=image_params.image_tag,
-            aws_profile=ECR_AWS_PROFILE,
+            aws_profile=build_endpoint_request.aws_role,  # Use user-provided aws_role instead of hardcoded ECR_AWS_PROFILE
         ):
             self.monitoring_metrics_gateway.emit_image_build_cache_miss_metric(image_type)
             tags = [
@@ -713,7 +713,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 if not build_result_status and not self.docker_repository.image_exists(
                     repository_name=image_params.repo,
                     image_tag=image_params.image_tag,
-                    aws_profile=ECR_AWS_PROFILE,
+                    aws_profile=build_endpoint_request.aws_role,  # Use user-provided aws_role instead of hardcoded ECR_AWS_PROFILE
                 ):
                     log_error(
                         f"Image build failed for endpoint {model_endpoint_name}, user {user_id}"
