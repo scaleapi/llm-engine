@@ -40,6 +40,7 @@ from model_engine_server.inference.utils import (
 )
 from model_engine_server.inference.vllm.init_ray_batch_inf_v2 import (
     get_node_fqdn,
+    get_node_ip_address,
     init_ray,
     wait_for_head_node_to_exit,
 )
@@ -98,33 +99,39 @@ dummy_request = Request(
 
 
 async def download_model(checkpoint_path: str, target_dir: str, trust_remote_code: bool) -> None:
+    import threading
+    print(f"Downloading model from {checkpoint_path} to {target_dir}")
     additional_include = "--include '*.py'" if trust_remote_code else ""
-    s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' {additional_include} --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {target_dir}"
+    s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --include '*.txt' {additional_include} --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {target_dir}"
+    print(s5cmd)
     env = os.environ.copy()
-    env["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+    if not SKIP_AWS_PROFILE_SET:
+        env["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+    print(f"AWS_PROFILE: {env['AWS_PROFILE']}")
     # Need to override these env vars so s5cmd uses AWS_PROFILE
     env["AWS_ROLE_ARN"] = ""
     env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
     env["AWS_EC2_METADATA_DISABLED"] = "true"  # Disable EC2 metadata for GKE (won't affect EKS)
     process = subprocess.Popen(
         s5cmd,
-        shell=True,  # nosemgrep
+        shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        bufsize=1,
         env=env,
     )
-    if process.stdout:
-        for line in process.stdout:
-            print(line, flush=True)
-
-    process.wait()
-
-    if process.returncode != 0 and process.stderr:
-        stderr_lines = []
-        for line in iter(process.stderr.readline, ""):
-            stderr_lines.append(line.strip())
-
+    def pump(stream, prefix=""):
+        for line in iter(stream.readline, ""):
+            print(f"{prefix}{line}", end="", flush=True)
+        stream.close()
+    t1 = threading.Thread(target=pump, args=(process.stdout, ""))
+    t2 = threading.Thread(target=pump, args=(process.stderr, "[ERR] "))
+    t1.start(); t2.start()
+    rc = process.wait()
+    t1.join(); t2.join()
+    if rc != 0:
+        raise subprocess.CalledProcessError(rc, cmd)
         print(f"Error downloading model weights: {stderr_lines}", flush=True)
 
 
@@ -366,6 +373,11 @@ def load_batch_content(
 def get_model_id(model_config: BatchCompletionsModelConfig) -> str:
     return MODEL_WEIGHTS_FOLDER if model_config.checkpoint_path else model_config.model
 
+def init_vllm(hf_model_name: str):
+    result = subprocess.run(["vllm", "serve", hf_model_name, "--port", "8000", "--tensor-parallel-size", "8", "--pipeline-parallel-size", "2"])
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to start vLLM: {result.stderr}")
+    print(f"Started vLLM: {result.stdout}")
 
 async def handle_batch_job(
     request: CreateBatchCompletionsEngineRequest, multinode: bool, multinode_timeout: int
@@ -374,6 +386,7 @@ async def handle_batch_job(
 
     served_model_name = request.model_cfg.model
     model_id = get_model_id(request.model_cfg)
+    print(f"Model ID: {model_id}")
 
     if request.model_cfg.checkpoint_path:
         await download_model(
@@ -381,6 +394,7 @@ async def handle_batch_job(
             target_dir=MODEL_WEIGHTS_FOLDER,
             trust_remote_code=request.model_cfg.trust_remote_code or False,
         )
+        print(f"Downloaded model to {MODEL_WEIGHTS_FOLDER}")
 
     if multinode:
         job_completion_index = int(os.environ.get("JOB_COMPLETION_INDEX", 0))
@@ -393,7 +407,7 @@ async def handle_batch_job(
         ), "Leader addr and port and num_instances must be set"
 
         # Set this so VLLM starts up correctly with the Ray cluster we set up
-        os.environ["VLLM_HOST_IP"] = get_node_fqdn(leader_addr)
+        os.environ["VLLM_HOST_IP"] = get_node_ip_address(get_node_fqdn(leader_addr))
 
         # Also necessary for VLLM
         os.environ["NCCL_SOCKET_IFNAME"] = "eth0"
@@ -417,23 +431,28 @@ async def handle_batch_job(
             exit(0)
 
     content = load_batch_content(request)
-    engine = await init_engine(
-        model_id,
-        served_model_name,
-        request=request,
-    )
 
-    outputs = await generate_completions(engine, content)
-    with smart_open.open(request.output_data_path, "w") as f:
-        f.write(json.dumps([output.model_dump() if output else None for output in outputs]))
+    # init vllm
+    init_vllm(served_model_name)
+    # os.environ["VLLM_USE_V1"] = "1"
 
-    metrics_gateway.emit_batch_completions_metric(
-        served_model_name,
-        use_tool=False,
-        num_prompt_tokens=0,
-        num_completion_tokens=0,
-        is_finetuned=True,
-    )
+    # engine = await init_engine(
+    #     model_id,
+    #     served_model_name,
+    #     request=request,
+    # )
+
+    # outputs = await generate_completions(engine, content)
+    # with smart_open.open(request.output_data_path, "w") as f:
+    #     f.write(json.dumps([output.model_dump() if output else None for output in outputs]))
+
+    # metrics_gateway.emit_batch_completions_metric(
+    #     served_model_name,
+    #     use_tool=False,
+    #     num_prompt_tokens=0,
+    #     num_completion_tokens=0,
+    #     is_finetuned=True,
+    # )
 
 
 def print_debug_info():

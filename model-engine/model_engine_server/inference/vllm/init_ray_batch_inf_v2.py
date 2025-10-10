@@ -193,6 +193,11 @@ def start_worker(
     print(f"Ray worker starts timeout, head address: {leader_addr}:{ray_port}", flush=True)
     return False
 
+def get_node_ip_address(node_fqdn: str, timeout: int = 300) -> str:
+    node_ip_info = wait_for_dns(node_fqdn, timeout=timeout)
+    if node_ip_info is None:
+        raise RuntimeError(f"Timeout waiting for DNS resolution of {node_fqdn}")
+    return node_ip_info[0][4][0]
 
 def init_ray(
     leader_addr: str,
@@ -219,37 +224,29 @@ def init_ray(
     os.environ["NCCL_DEBUG_SUBSYS"] = "INIT,NET"
     # os.environ["FI_PROVIDER"] = "efa"           # you’re requesting EFA devices
     # os.environ["AWS_OFI_NCCL"] = "1"
-    os.environ["NCCL_IB_DISABLE"] = "0"
+    # os.environ["NCCL_IB_DISABLE"] = "0"
     # os.environ["NCCL_SOCKET_IFNAME"] = "eth0,eth1"   # include the real NICs (EFA is commonly on eth1)
-    os.environ["NCCL_CROSS_NIC"] = "1"  # allow cross-NIC if ranks land on different NICs
-    os.environ["NCCL_NET_GDR_LEVEL"] = "0"
+    # os.environ["NCCL_CROSS_NIC"] = "1"  # allow cross-NIC if ranks land on different NICs
+    # os.environ["NCCL_NET_GDR_LEVEL"] = "0"
     # os.environ["GRPC_VERBOSITY"] = "debug"
     # os.environ["GRPC_TRACE"] = "tcp,http,client_channel,round_robin,handshaker"
     # os.environ["RAY_LOG_TO_STDERR"] = "1"
 
+    # Get FQDN of the current node
     node_fqdn = get_node_fqdn(leader_addr)
+    print(f"node fqdn: {node_fqdn}", flush=True)
 
     print(f"Waiting for head node DNS ({leader_addr}) to be resolvable...", flush=True)
-    head_ip_info = wait_for_dns(leader_addr, timeout=timeout)
-    if head_ip_info is None:
-        raise RuntimeError(f"Timeout waiting for DNS resolution of {leader_addr}")
-
-    leader_ip_address = head_ip_info[0][4][0]
-
-    print(f"leader fqdn: {node_fqdn}, leader ip: {leader_ip_address}", flush=True)
+    leader_ip_address = get_node_ip_address(leader_addr, timeout=timeout)
+    print(f"leader ip: {leader_ip_address}", flush=True)
 
     if is_leader:
         if not start_leader(leader_port, leader_ip_address):
             raise RuntimeError("Failed to start Ray leader node")
     else:
         print(f"Waiting for worker node DNS ({node_fqdn}) to be resolvable...", flush=True)
-        worker_ip_info = wait_for_dns(node_fqdn, timeout=timeout)
-        if worker_ip_info is None:
-            raise RuntimeError(f"Timeout waiting for DNS resolution of {node_fqdn}")
-
-        worker_ip_address = worker_ip_info[0][4][0]
-
-        print(f"worker fqdn: {node_fqdn}, worker ip: {worker_ip_address}", flush=True)
+        worker_ip_address = get_node_ip_address(node_fqdn, timeout=timeout)
+        print(f"worker ip: {worker_ip_address}", flush=True)
         if not start_worker(leader_port, worker_ip_address, leader_ip_address, timeout):
             raise RuntimeError("Failed to start Ray worker node")
     print(
