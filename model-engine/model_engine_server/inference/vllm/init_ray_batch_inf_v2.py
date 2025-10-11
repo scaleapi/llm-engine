@@ -48,7 +48,7 @@ def wait_for_cluster_nodes(
         bool: True if cluster reached expected size, False if timeout occurred
     """
     # Since we've subprocess.run for starting ray, need to connect in the cluster right here.
-    ray.init()
+    ray.init(log_to_driver=False)
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
@@ -60,6 +60,7 @@ def wait_for_cluster_nodes(
 
             if current_size >= expected_nodes:
                 print("Cluster reached expected size!", flush=True)
+                print("ray.cluster_resources():", ray.cluster_resources())
                 return True
 
             # Print status of nodes that aren't alive
@@ -114,7 +115,7 @@ def wait_for_head_node_to_exit_process():
     # This will run in the subprocess spawned and will conveniently error out
     # when the head node is no longer reachable
     # The exit gets caught by the `wait_for_head_node_to_exit` function
-    ray.init()
+    ray.init(log_to_driver=False)
     while True:
         nodes = ray.nodes()
         print(f"Able to get nodes list {len(nodes)}", flush=True)
@@ -162,7 +163,7 @@ def start_worker(
     start_time = time.time()
     while time.time() - start_time < timeout:
         print(
-            f"Starting ray worker with head address [{leader_addr}]:{ray_port} and node ip address {node_ip_address}",
+            f"Starting ray worker with head address {format_ip_address(leader_addr)}:{ray_port} and node ip address {node_ip_address}",
             flush=True,
         )
         result = subprocess.run(
@@ -193,11 +194,13 @@ def start_worker(
     print(f"Ray worker starts timeout, head address: {leader_addr}:{ray_port}", flush=True)
     return False
 
+
 def get_node_ip_address(node_fqdn: str, timeout: int = 300) -> str:
     node_ip_info = wait_for_dns(node_fqdn, timeout=timeout)
     if node_ip_info is None:
         raise RuntimeError(f"Timeout waiting for DNS resolution of {node_fqdn}")
     return node_ip_info[0][4][0]
+
 
 def init_ray(
     leader_addr: str,
@@ -221,7 +224,7 @@ def init_ray(
 
     # export environment variable to disable ray logging
     os.environ["NCCL_DEBUG"] = "INFO"
-    os.environ["NCCL_DEBUG_SUBSYS"] = "INIT,NET"
+    # os.environ["NCCL_DEBUG_SUBSYS"] = "INIT,NET"
     # os.environ["FI_PROVIDER"] = "efa"           # you’re requesting EFA devices
     # os.environ["AWS_OFI_NCCL"] = "1"
     # os.environ["NCCL_IB_DISABLE"] = "0"
@@ -231,6 +234,14 @@ def init_ray(
     # os.environ["GRPC_VERBOSITY"] = "debug"
     # os.environ["GRPC_TRACE"] = "tcp,http,client_channel,round_robin,handshaker"
     # os.environ["RAY_LOG_TO_STDERR"] = "1"
+
+    # os.environ["DD_TRACE_ENABLED"] = "false"
+    # os.environ["DD_TRACE_GRPC_ENABLED"] = "false"
+    # os.environ["RAY_LOG_TO_STDERR"] = "1"
+    # os.environ["RAY_BACKEND_LOG_LEVEL"] = "debug"
+
+    # Disable datadog grpc trace
+    # os.environ["DD_TRACE_GRPC_ENABLED"] = "false"
 
     # Get FQDN of the current node
     node_fqdn = get_node_fqdn(leader_addr)

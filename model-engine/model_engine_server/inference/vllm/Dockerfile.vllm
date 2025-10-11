@@ -51,6 +51,11 @@ COPY model-engine/model_engine_server/inference/vllm/init_ray_batch_inf_v2.py /w
 # Some hacky stuff to override ray files
 COPY model-engine/model_engine_server/inference/vllm/ray_overrides/_version.py /usr/local/lib/python3.12/dist-packages/ray/_version.py
 COPY model-engine/model_engine_server/inference/vllm/ray_overrides/proxier.py /usr/local/lib/python3.12/dist-packages/ray/util/client/server/proxier.py
+COPY model-engine/model_engine_server/inference/vllm/ray_overrides/worker.py /usr/local/lib/python3.12/dist-packages/ray/_private/worker.py
+COPY model-engine/model_engine_server/inference/vllm/ray_overrides/state.py /usr/local/lib/python3.12/dist-packages/ray/_private/state.py
+COPY model-engine/model_engine_server/inference/vllm/ray_overrides/client_model_hook.py /usr/local/lib/python3.12/dist-packages/ray/_private/client_model_hook.py$
+
+COPY model-engine/model_engine_server/inference/vllm/vllm_overrides/ray_utils.py /usr/local/lib/python3.12/dist-packages/vllm/executor/ray_utils.py
 
 # Need to override entrypoint from parent image
 ENTRYPOINT ["/bin/env"]

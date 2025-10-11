@@ -45,17 +45,31 @@ from model_engine_server.inference.vllm.init_ray_batch_inf_v2 import (
     wait_for_head_node_to_exit,
 )
 from pydantic import TypeAdapter
-from starlette.datastructures import Headers
+from starlette.datastructures import Headers, State
 from tqdm import tqdm
 from typing_extensions import TypeAlias, assert_never
 from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
 from vllm.engine.protocol import EngineClient
 from vllm.entrypoints.chat_utils import load_chat_template
-from vllm.entrypoints.openai.protocol import ChatCompletionRequest, CompletionRequest, ErrorResponse
+from vllm.entrypoints.openai.api_server import (
+    build_async_engine_client,
+    build_async_engine_client_from_engine_args,
+    init_app_state,
+)
+from vllm.entrypoints.openai.cli_args import make_arg_parser
+from vllm.entrypoints.openai.protocol import (
+    ChatCompletionRequest,
+    CompletionRequest,
+    ErrorResponse,
+    ResponsesRequest,
+)
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
 from vllm.entrypoints.openai.serving_models import BaseModelPath, OpenAIServingModels
-from vllm.utils import merge_async_iterators
+from vllm.entrypoints.openai.serving_responses import OpenAIServingResponses
+from vllm.usage.usage_lib import UsageContext
+from vllm.utils import FlexibleArgumentParser, merge_async_iterators
+from vllm.v1.engine.async_llm import AsyncLLM
 
 CONFIG_FILE = os.getenv("CONFIG_FILE")
 AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
@@ -65,9 +79,12 @@ SKIP_AWS_PROFILE_SET = os.getenv("SKIP_AWS_PROFILE_SET", "false").lower() == "tr
 if not SKIP_AWS_PROFILE_SET:
     os.environ["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
 
+SKIP_MODEL_DOWNLOAD = os.getenv("SKIP_MODEL_DOWNLOAD", "false").lower() == "true"
+
 
 openai_serving_chat: OpenAIServingChat
 openai_serving_completion: OpenAIServingCompletion
+openai_serving_responses: OpenAIServingResponses
 
 CPU_COUNT = get_cpu_cores_in_container()
 
@@ -75,6 +92,7 @@ _BatchCompletionContent: TypeAlias = Union[
     CreateBatchCompletionsV1RequestContent,
     List[CompletionRequest],
     List[ChatCompletionRequest],
+    List[ResponsesRequest],
 ]
 
 
@@ -100,6 +118,7 @@ dummy_request = Request(
 
 async def download_model(checkpoint_path: str, target_dir: str, trust_remote_code: bool) -> None:
     import threading
+
     print(f"Downloading model from {checkpoint_path} to {target_dir}")
     additional_include = "--include '*.py'" if trust_remote_code else ""
     s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --include '*.txt' {additional_include} --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {target_dir}"
@@ -121,18 +140,22 @@ async def download_model(checkpoint_path: str, target_dir: str, trust_remote_cod
         bufsize=1,
         env=env,
     )
+
     def pump(stream, prefix=""):
         for line in iter(stream.readline, ""):
             print(f"{prefix}{line}", end="", flush=True)
         stream.close()
+
     t1 = threading.Thread(target=pump, args=(process.stdout, ""))
     t2 = threading.Thread(target=pump, args=(process.stderr, "[ERR] "))
-    t1.start(); t2.start()
+    t1.start()
+    t2.start()
     rc = process.wait()
-    t1.join(); t2.join()
+    t1.join()
+    t2.join()
     if rc != 0:
-        raise subprocess.CalledProcessError(rc, cmd)
-        print(f"Error downloading model weights: {stderr_lines}", flush=True)
+        raise subprocess.CalledProcessError(rc, s5cmd)
+        print(f"Error downloading model weights: {process.stderr.read()}", flush=True)
 
 
 async def generate_v1_completions(
@@ -202,7 +225,7 @@ async def generate_v1_completions(
 # This is needed to handle the cases where it takes too long to process all of the requests before
 # the configured 'VLLM_ENGINE_ITERATION_TIMEOUT_S' 30s timeout.
 def determine_max_concurrent_requests(
-    requests: Union[List[CompletionRequest], List[ChatCompletionRequest]],
+    requests: Union[List[CompletionRequest], List[ChatCompletionRequest], List[ResponsesRequest]],
 ) -> int:
     # Guided decoding
     # For example, with guided decoding, vLLM initializes a guided decoding logit processor per request, and
@@ -212,6 +235,7 @@ def determine_max_concurrent_requests(
             max_tokens=1, logits_processor_pattern=None, default_sampling_params={}
         ).guided_decoding
         for request in requests
+        if hasattr(request, 'to_sampling_params')
     ):
         return 200
 
@@ -221,7 +245,7 @@ def determine_max_concurrent_requests(
 
 async def generate_v2_completions(
     engine: EngineClient,
-    requests: Union[List[CompletionRequest], List[ChatCompletionRequest]],
+    requests: Union[List[CompletionRequest], List[ChatCompletionRequest], List[ResponsesRequest]],
 ) -> List[Union[CompletionResponse, ErrorResponse, None]]:
     bar = tqdm(total=len(requests), desc="Processed requests")
     results_generators: List[
@@ -237,7 +261,7 @@ async def generate_v2_completions(
     semaphore = asyncio.Semaphore(max_concurrent_requests)
 
     async def process_request(
-        request: Union[CompletionRequest, ChatCompletionRequest],
+        request: Union[CompletionRequest, ChatCompletionRequest, ResponsesRequest],
     ) -> Coroutine[
         Any,
         Any,
@@ -245,9 +269,11 @@ async def generate_v2_completions(
     ]:
         async with semaphore:
             if isinstance(request, CompletionRequest):
-                return await openai_serving_completion.create_completion(request, dummy_request)
+                return await openai_serving_completion.create_completion(request)
             elif isinstance(request, ChatCompletionRequest):
                 return await openai_serving_chat.create_chat_completion(request)
+            elif isinstance(request, ResponsesRequest):
+                return await openai_serving_responses.create_responses(request)
             else:
                 assert_never(request)
 
@@ -283,7 +309,9 @@ async def init_engine(
 ) -> EngineClient:
     global openai_serving_chat
     global openai_serving_completion
+    global openai_serving_responses
 
+    os.environ["VLLM_USE_V1"] = "1"
     if request.attention_backend is not None:
         os.environ["ATTENTION_BACKEND"] = request.attention_backend
 
@@ -291,11 +319,11 @@ async def init_engine(
     if not parsed_configs.max_model_len:
         parsed_configs.max_model_len = request.model_cfg.max_context_length
 
-    print("VLLM additional configs:", parsed_configs.model_dump())
+    print("VLLM additional configs:", parsed_configs.model_dump(), flush=True)
 
-    engine_args_dict = parsed_configs.model_dump(exclude_none=True)
     default_engine_args_dict = dict(
         model=model_id,
+        served_model_name=[served_model_name, model_id],
         tensor_parallel_size=request.model_cfg.num_shards,
         pipeline_parallel_size=int(
             os.environ.get("NUM_INSTANCES", 1)
@@ -303,39 +331,56 @@ async def init_engine(
         seed=request.model_cfg.seed or 0,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
     )
-    default_engine_args_dict.update(engine_args_dict)
+    engine_args_dict = {**default_engine_args_dict, **parsed_configs.model_dump(exclude_none=True)}
+    engine_args = AsyncEngineArgs(**engine_args_dict)
 
-    engine_args = AsyncEngineArgs(**default_engine_args_dict)
+    # init engine client
+    print("Initializing engine client", flush=True)
+    state = State()
+    vllm_config = engine_args.create_engine_config(usage_context=UsageContext.OPENAI_BATCH_RUNNER)
+    engine_client = AsyncLLM.from_vllm_config(
+        vllm_config=vllm_config,
+        usage_context=UsageContext.OPENAI_BATCH_RUNNER,
+        enable_log_requests=engine_args.enable_log_requests,
+        disable_log_stats=engine_args.disable_log_stats,
+        client_addresses=None,
+        client_count=1,
+        client_index=0)
+    await engine_client.reset_mm_cache()
 
-    engine_client = AsyncLLMEngine.from_engine_args(engine_args)
-    model_config = await engine_client.get_model_config()
-    resolved_chat_template = load_chat_template(parsed_configs.chat_template)
-
-    base_model_paths = [BaseModelPath(name=served_model_name, model_path=model_id)]
-
-    openai_serving_models = OpenAIServingModels(
-        engine_client=engine_client,
-        model_config=model_config,
-        base_model_paths=base_model_paths,
-    )
-    await openai_serving_models.init_static_loras()
-
-    openai_serving_chat = OpenAIServingChat(
-        engine_client,
-        model_config,
-        openai_serving_models,
+    print("Initialized engine client", flush=True)
+    # Scaffolding to set up openai helpers
+    default_app_state_args = dict(
+        enable_log_requests=False,
+        max_log_len=None,
+        disable_log_stats=False,
+        tool_server=None,
+        chat_template_content_format="auto",
+        return_tokens_as_token_ids=False,
+        enable_auto_tool_choice=False,
+        tool_call_parser=None,
+        structured_outputs_config=argparse.Namespace(reasoning_parser=None),
+        enable_prompt_tokens_details=False,
+        enable_force_include_usage=False,
+        enable_log_outputs=False,
+        log_error_stack=False,
+        trust_request_chat_template=False,
+        exclude_tools_when_tool_choice_none=False,
+        enable_server_load_tracking=False,
+        chat_template=parsed_configs.chat_template,
         response_role=request.model_cfg.response_role or "assistant",
-        request_logger=None,
-        chat_template=resolved_chat_template,
-        chat_template_content_format=None,
+        lora_modules=None,
     )
 
-    openai_serving_completion = OpenAIServingCompletion(
-        engine_client,
-        model_config,
-        openai_serving_models,
-        request_logger=None,
-    )
+    app_state_args = argparse.Namespace(**{
+        **default_app_state_args,
+        **engine_args_dict,
+    })
+
+    await init_app_state(engine_client, vllm_config, state, app_state_args)
+    openai_serving_chat = state.openai_serving_chat
+    openai_serving_completion = state.openai_serving_completion
+    openai_serving_responses = state.openai_serving_responses
 
     return engine_client
 
@@ -359,7 +404,7 @@ def load_batch_content(
     if isinstance(content, List) and len(content) > 0:
         model = request.model_cfg.model
         return TypeAdapter(
-            Union[List[CompletionRequest], List[ChatCompletionRequest]]
+            Union[List[CompletionRequest], List[ChatCompletionRequest], List[ResponsesRequest]]
         ).validate_python(
             [
                 overwrite_request(req.model_dump(exclude_none=True, mode="json"), model)
@@ -373,11 +418,60 @@ def load_batch_content(
 def get_model_id(model_config: BatchCompletionsModelConfig) -> str:
     return MODEL_WEIGHTS_FOLDER if model_config.checkpoint_path else model_config.model
 
-def init_vllm(hf_model_name: str):
-    result = subprocess.run(["vllm", "serve", hf_model_name, "--port", "8000", "--tensor-parallel-size", "8", "--pipeline-parallel-size", "2"])
+
+def init_vllm(model_id: str, served_model_name: str, request: CreateBatchCompletionsEngineRequest):
+
+    parsed_configs = VLLMModelConfig.model_validate_json(request.model_cfg.model_dump_json())
+    if not parsed_configs.max_model_len:
+        parsed_configs.max_model_len = request.model_cfg.max_context_length
+
+    print("VLLM additional configs:", parsed_configs.model_dump(), flush=True)
+
+    default_engine_args_dict = dict(
+        served_model_name=[served_model_name, model_id],
+        tensor_parallel_size=request.model_cfg.num_shards,
+        pipeline_parallel_size=int(
+            os.environ.get("NUM_INSTANCES", 1)
+        ),
+        seed=request.model_cfg.seed or 0,
+        gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
+    )
+    engine_args_dict = {**default_engine_args_dict, **parsed_configs.model_dump(exclude_none=True)}
+
+    # convert engine_args_dict to kebab-case --{key}, value pairs to pass into vllm serve subprocess
+    # make sure 
+    #  * boolean values are passed as --{key} if true, omit if false
+    #  * None values are not passed
+    #  * list values are passed as --{key}, value1, value2, ...
+    vllm_serve_args = []
+    for key, value in engine_args_dict.items():
+        if value is None:
+            continue
+        elif isinstance(value, bool):
+            if value is True:
+                vllm_serve_args.append(f"--{key.replace('_', '-')}")
+        elif isinstance(value, list):
+            vllm_serve_args.append(f"--{key.replace('_', '-')}")
+            for v in value:
+                vllm_serve_args.append(str(v))
+        else:
+            vllm_serve_args.append(f"--{key.replace('_', '-')}")
+            vllm_serve_args.append(str(value))
+
+    args = [
+        "vllm",
+        "serve",
+        model_id,
+        "--port",
+        "8000",
+        *vllm_serve_args,
+    ]
+    print(f"Starting vLLM: {' '.join(args)}", flush=True)
+    result = subprocess.run(args)
     if result.returncode != 0:
         raise RuntimeError(f"Failed to start vLLM: {result.stderr}")
-    print(f"Started vLLM: {result.stdout}")
+    print(f"Started vLLM: {result.stdout}", flush=True)
+
 
 async def handle_batch_job(
     request: CreateBatchCompletionsEngineRequest, multinode: bool, multinode_timeout: int
@@ -388,7 +482,7 @@ async def handle_batch_job(
     model_id = get_model_id(request.model_cfg)
     print(f"Model ID: {model_id}")
 
-    if request.model_cfg.checkpoint_path:
+    if request.model_cfg.checkpoint_path and not SKIP_MODEL_DOWNLOAD:
         await download_model(
             checkpoint_path=request.model_cfg.checkpoint_path,
             target_dir=MODEL_WEIGHTS_FOLDER,
@@ -433,8 +527,14 @@ async def handle_batch_job(
     content = load_batch_content(request)
 
     # init vllm
-    init_vllm(served_model_name)
-    # os.environ["VLLM_USE_V1"] = "1"
+    # init_vllm(served_model_name, request)
+    # import ray
+    # print("[ray] Checking available resources", ray.available_resources())
+    # print("[ray] Checking cluster resources", ray.cluster_resources())
+
+    subprocess.run([
+        "python", "vllm_batch.py", "--mode", "serve", "--config-file-data", request.model_dump_json()
+    ])
 
     # engine = await init_engine(
     #     model_id,
@@ -454,6 +554,24 @@ async def handle_batch_job(
     #     is_finetuned=True,
     # )
 
+    # engine.shutdown()
+
+
+async def handle_serve_job(request: CreateBatchCompletionsEngineRequest):
+    model_id = get_model_id(request.model_cfg)
+    served_model_name = request.model_cfg.model
+    content = load_batch_content(request)
+    engine = await init_engine(
+        model_id,
+        served_model_name,
+        request=request,
+    )
+
+    outputs = await generate_completions(engine, content)
+    with smart_open.open(request.output_data_path, "w") as f:
+        f.write(json.dumps([output.model_dump() if output else None for output in outputs]))
+
+    engine.shutdown()
 
 def print_debug_info():
     import ray
@@ -465,6 +583,9 @@ def print_debug_info():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--mode", choices=["main", "serve"], default="main"
+    )
     parser.add_argument(
         "--config-file-data",
         "--config_file_data",
@@ -499,4 +620,8 @@ if __name__ == "__main__":
 
     print_debug_info()
 
-    asyncio.run(handle_batch_job(request, args.multinode, args.multinode_timeout))
+    if args.mode == "serve":
+        asyncio.run(handle_serve_job(request))
+
+    else:
+        asyncio.run(handle_batch_job(request, args.multinode, args.multinode_timeout))
