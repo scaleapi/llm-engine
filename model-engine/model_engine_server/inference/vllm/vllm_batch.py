@@ -1,24 +1,11 @@
-# Batch v2
-
 import argparse
 import asyncio
 import json
 import os
 import subprocess
-from typing import (
-    Any,
-    AsyncGenerator,
-    AsyncIterator,
-    Coroutine,
-    Dict,
-    List,
-    MutableMapping,
-    Optional,
-    Union,
-)
+from typing import Any, AsyncGenerator, AsyncIterator, Coroutine, Dict, List, Optional, Union
 
 import smart_open
-from fastapi import Request
 from model_engine_server.common.dtos.llms import (
     BatchCompletionContent,
     BatchCompletionsModelConfig,
@@ -28,9 +15,6 @@ from model_engine_server.common.dtos.llms import (
     CreateBatchCompletionsV1RequestContent,
     TokenOutput,
     VLLMModelConfig,
-)
-from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
-    DatadogInferenceMonitoringMetricsGateway,
 )
 from model_engine_server.inference.utils import (
     await_coroutines,
@@ -45,18 +29,12 @@ from model_engine_server.inference.vllm.init_ray_batch_inf_v2 import (
     wait_for_head_node_to_exit,
 )
 from pydantic import TypeAdapter
-from starlette.datastructures import Headers, State
+from starlette.datastructures import State
 from tqdm import tqdm
 from typing_extensions import TypeAlias, assert_never
-from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
+from vllm import AsyncEngineArgs, RequestOutput, SamplingParams
 from vllm.engine.protocol import EngineClient
-from vllm.entrypoints.chat_utils import load_chat_template
-from vllm.entrypoints.openai.api_server import (
-    build_async_engine_client,
-    build_async_engine_client_from_engine_args,
-    init_app_state,
-)
-from vllm.entrypoints.openai.cli_args import make_arg_parser
+from vllm.entrypoints.openai.api_server import init_app_state
 from vllm.entrypoints.openai.protocol import (
     ChatCompletionRequest,
     CompletionRequest,
@@ -65,10 +43,9 @@ from vllm.entrypoints.openai.protocol import (
 )
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
-from vllm.entrypoints.openai.serving_models import BaseModelPath, OpenAIServingModels
 from vllm.entrypoints.openai.serving_responses import OpenAIServingResponses
 from vllm.usage.usage_lib import UsageContext
-from vllm.utils import FlexibleArgumentParser, merge_async_iterators
+from vllm.utils import merge_async_iterators
 from vllm.v1.engine.async_llm import AsyncLLM
 
 CONFIG_FILE = os.getenv("CONFIG_FILE")
@@ -96,44 +73,25 @@ _BatchCompletionContent: TypeAlias = Union[
 ]
 
 
-async def dummy_receive() -> MutableMapping[str, Any]:
-    return {"type": "continue"}
-
-
-# jank but create_completion expects a FastAPI Request object
-dummy_request = Request(
-    scope={
-        "type": "http",
-        "path": "/",
-        "headers": Headers().raw,
-        "http_version": "1.1",
-        "method": "GET",
-        "scheme": "https",
-        "client": ("127.0.0.1", 8080),
-    },
-    # receive fn that doesn't terminate
-    receive=dummy_receive,
-)
-
-
 async def download_model(checkpoint_path: str, target_dir: str, trust_remote_code: bool) -> None:
     import threading
 
-    print(f"Downloading model from {checkpoint_path} to {target_dir}")
+    print(f"Downloading model from {checkpoint_path} to {target_dir}", flush=True)
     additional_include = "--include '*.py'" if trust_remote_code else ""
     s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --include '*.txt' {additional_include} --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {target_dir}"
-    print(s5cmd)
+    print(s5cmd, flush=True)
     env = os.environ.copy()
     if not SKIP_AWS_PROFILE_SET:
         env["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
-    print(f"AWS_PROFILE: {env['AWS_PROFILE']}")
+    print(f"AWS_PROFILE: {env['AWS_PROFILE']}", flush=True)
     # Need to override these env vars so s5cmd uses AWS_PROFILE
     env["AWS_ROLE_ARN"] = ""
     env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""
     env["AWS_EC2_METADATA_DISABLED"] = "true"  # Disable EC2 metadata for GKE (won't affect EKS)
+
     process = subprocess.Popen(
         s5cmd,
-        shell=True,
+        shell=True,  # nosemgrep
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -319,8 +277,6 @@ async def init_engine(
     if not parsed_configs.max_model_len:
         parsed_configs.max_model_len = request.model_cfg.max_context_length
 
-    print("VLLM additional configs:", parsed_configs.model_dump(), flush=True)
-
     default_engine_args_dict = dict(
         model=model_id,
         served_model_name=[served_model_name, model_id],
@@ -332,10 +288,11 @@ async def init_engine(
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
     )
     engine_args_dict = {**default_engine_args_dict, **parsed_configs.model_dump(exclude_none=True)}
+    print("vLLM engine args:", engine_args_dict, flush=True)
+
     engine_args = AsyncEngineArgs(**engine_args_dict)
 
     # init engine client
-    print("Initializing engine client", flush=True)
     state = State()
     vllm_config = engine_args.create_engine_config(usage_context=UsageContext.OPENAI_BATCH_RUNNER)
     engine_client = AsyncLLM.from_vllm_config(
@@ -349,7 +306,6 @@ async def init_engine(
     )
     await engine_client.reset_mm_cache()
 
-    print("Initialized engine client", flush=True)
     # Scaffolding to set up openai helpers
     default_app_state_args = dict(
         enable_log_requests=False,
@@ -376,7 +332,7 @@ async def init_engine(
     app_state_args = argparse.Namespace(
         **{
             **default_app_state_args,
-            **engine_args_dict,
+            **engine_args_dict,  # type: ignore[arg-type]
         }
     )
 
@@ -423,12 +379,9 @@ def get_model_id(model_config: BatchCompletionsModelConfig) -> str:
 
 
 def init_vllm(model_id: str, served_model_name: str, request: CreateBatchCompletionsEngineRequest):
-
     parsed_configs = VLLMModelConfig.model_validate_json(request.model_cfg.model_dump_json())
     if not parsed_configs.max_model_len:
         parsed_configs.max_model_len = request.model_cfg.max_context_length
-
-    print("VLLM additional configs:", parsed_configs.model_dump(), flush=True)
 
     default_engine_args_dict = dict(
         served_model_name=[served_model_name, model_id],
@@ -470,26 +423,19 @@ def init_vllm(model_id: str, served_model_name: str, request: CreateBatchComplet
     print(f"Starting vLLM: {' '.join(args)}", flush=True)
     result = subprocess.run(args)
     if result.returncode != 0:
-        raise RuntimeError(f"Failed to start vLLM: {result.stderr}")
-    print(f"Started vLLM: {result.stdout}", flush=True)
+        raise RuntimeError(f"Failed to start vLLM: {str(result.stderr)}")
+    print(f"Started vLLM: {str(result.stdout)}", flush=True)
 
 
 async def handle_batch_job(
     request: CreateBatchCompletionsEngineRequest, multinode: bool, multinode_timeout: int
 ) -> None:
-    metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
-
-    served_model_name = request.model_cfg.model
-    model_id = get_model_id(request.model_cfg)
-    print(f"Model ID: {model_id}")
-
     if request.model_cfg.checkpoint_path and not SKIP_MODEL_DOWNLOAD:
         await download_model(
             checkpoint_path=request.model_cfg.checkpoint_path,
             target_dir=MODEL_WEIGHTS_FOLDER,
             trust_remote_code=request.model_cfg.trust_remote_code or False,
         )
-        print(f"Downloaded model to {MODEL_WEIGHTS_FOLDER}")
 
     if multinode:
         job_completion_index = int(os.environ.get("JOB_COMPLETION_INDEX", 0))
@@ -525,49 +471,32 @@ async def handle_batch_job(
             await wait_for_head_node_to_exit()
             exit(0)
 
-    content = load_batch_content(request)
+    init_batch_processing(request)
 
-    # init vllm
-    # init_vllm(served_model_name, request)
-    # import ray
-    # print("[ray] Checking available resources", ray.available_resources())
-    # print("[ray] Checking cluster resources", ray.cluster_resources())
 
-    subprocess.run(
+def init_batch_processing(request: CreateBatchCompletionsEngineRequest):
+    # Kick off offline processing in separate subprocess
+    # This is done since there are some weird process states that are causing LLM engine to hang on the main process
+    # nosemgrep
+    result = subprocess.run(
         [
             "python",
             "vllm_batch.py",
             "--mode",
-            "serve",
+            "batch_processing",
             "--config-file-data",
             request.model_dump_json(),
         ]
     )
-
-    # engine = await init_engine(
-    #     model_id,
-    #     served_model_name,
-    #     request=request,
-    # )
-
-    # outputs = await generate_completions(engine, content)
-    # with smart_open.open(request.output_data_path, "w") as f:
-    #     f.write(json.dumps([output.model_dump() if output else None for output in outputs]))
-
-    # metrics_gateway.emit_batch_completions_metric(
-    #     served_model_name,
-    #     use_tool=False,
-    #     num_prompt_tokens=0,
-    #     num_completion_tokens=0,
-    #     is_finetuned=True,
-    # )
-
-    # engine.shutdown()
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to start batch processing: {str(result.stderr)}")
+    print(f"Started batch processing: {str(result.stdout)}", flush=True)
 
 
-async def handle_serve_job(request: CreateBatchCompletionsEngineRequest):
+async def handle_batch_processing(request: CreateBatchCompletionsEngineRequest):
     model_id = get_model_id(request.model_cfg)
     served_model_name = request.model_cfg.model
+    print("Model: ", served_model_name, flush=True)
     content = load_batch_content(request)
     engine = await init_engine(
         model_id,
@@ -592,7 +521,7 @@ def print_debug_info():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["main", "serve"], default="main")
+    parser.add_argument("--mode", choices=["main", "batch_processing"], default="main")
     parser.add_argument(
         "--config-file-data",
         "--config_file_data",
@@ -627,8 +556,8 @@ if __name__ == "__main__":
 
     print_debug_info()
 
-    if args.mode == "serve":
-        asyncio.run(handle_serve_job(request))
+    if args.mode == "batch_processing":
+        asyncio.run(handle_batch_processing(request))
 
     else:
         asyncio.run(handle_batch_job(request, args.multinode, args.multinode_timeout))
