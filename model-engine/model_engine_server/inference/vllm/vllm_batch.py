@@ -235,7 +235,7 @@ def determine_max_concurrent_requests(
             max_tokens=1, logits_processor_pattern=None, default_sampling_params={}
         ).guided_decoding
         for request in requests
-        if hasattr(request, 'to_sampling_params')
+        if hasattr(request, "to_sampling_params")
     ):
         return 200
 
@@ -345,7 +345,8 @@ async def init_engine(
         disable_log_stats=engine_args.disable_log_stats,
         client_addresses=None,
         client_count=1,
-        client_index=0)
+        client_index=0,
+    )
     await engine_client.reset_mm_cache()
 
     print("Initialized engine client", flush=True)
@@ -372,10 +373,12 @@ async def init_engine(
         lora_modules=None,
     )
 
-    app_state_args = argparse.Namespace(**{
-        **default_app_state_args,
-        **engine_args_dict,
-    })
+    app_state_args = argparse.Namespace(
+        **{
+            **default_app_state_args,
+            **engine_args_dict,
+        }
+    )
 
     await init_app_state(engine_client, vllm_config, state, app_state_args)
     openai_serving_chat = state.openai_serving_chat
@@ -430,16 +433,14 @@ def init_vllm(model_id: str, served_model_name: str, request: CreateBatchComplet
     default_engine_args_dict = dict(
         served_model_name=[served_model_name, model_id],
         tensor_parallel_size=request.model_cfg.num_shards,
-        pipeline_parallel_size=int(
-            os.environ.get("NUM_INSTANCES", 1)
-        ),
+        pipeline_parallel_size=int(os.environ.get("NUM_INSTANCES", 1)),
         seed=request.model_cfg.seed or 0,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
     )
     engine_args_dict = {**default_engine_args_dict, **parsed_configs.model_dump(exclude_none=True)}
 
     # convert engine_args_dict to kebab-case --{key}, value pairs to pass into vllm serve subprocess
-    # make sure 
+    # make sure
     #  * boolean values are passed as --{key} if true, omit if false
     #  * None values are not passed
     #  * list values are passed as --{key}, value1, value2, ...
@@ -532,9 +533,16 @@ async def handle_batch_job(
     # print("[ray] Checking available resources", ray.available_resources())
     # print("[ray] Checking cluster resources", ray.cluster_resources())
 
-    subprocess.run([
-        "python", "vllm_batch.py", "--mode", "serve", "--config-file-data", request.model_dump_json()
-    ])
+    subprocess.run(
+        [
+            "python",
+            "vllm_batch.py",
+            "--mode",
+            "serve",
+            "--config-file-data",
+            request.model_dump_json(),
+        ]
+    )
 
     # engine = await init_engine(
     #     model_id,
@@ -573,6 +581,7 @@ async def handle_serve_job(request: CreateBatchCompletionsEngineRequest):
 
     engine.shutdown()
 
+
 def print_debug_info():
     import ray
     import vllm
@@ -583,9 +592,7 @@ def print_debug_info():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--mode", choices=["main", "serve"], default="main"
-    )
+    parser.add_argument("--mode", choices=["main", "serve"], default="main")
     parser.add_argument(
         "--config-file-data",
         "--config_file_data",
