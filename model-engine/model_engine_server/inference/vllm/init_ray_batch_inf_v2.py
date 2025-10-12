@@ -9,13 +9,13 @@ import ray
 RETRY_INTERVAL_SEC = 5
 
 
-def get_node_ip_address(leader_addr: str) -> str:
+def get_node_fqdn(leader_addr: str) -> str:
     # Assumes we're on a K8s cluster where the leader address is
     # <leader pod name>.<the rest of the FQDN>
     # e.g. if we're using a JobSet
     # Kinda of a dumb hack to get an externally addressable DNS name
-    node_ip_address = socket.gethostname() + "." + leader_addr.split(".", 1)[1]
-    return node_ip_address
+    node_fqdn = socket.gethostname() + "." + leader_addr.split(".", 1)[1]
+    return node_fqdn
 
 
 def wait_for_dns(hostname: str, timeout: int = 300, interval: int = 5):
@@ -48,7 +48,7 @@ def wait_for_cluster_nodes(
         bool: True if cluster reached expected size, False if timeout occurred
     """
     # Since we've subprocess.run for starting ray, need to connect in the cluster right here.
-    ray.init()
+    ray.init(log_to_driver=False)
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
@@ -114,7 +114,7 @@ def wait_for_head_node_to_exit_process():
     # This will run in the subprocess spawned and will conveniently error out
     # when the head node is no longer reachable
     # The exit gets caught by the `wait_for_head_node_to_exit` function
-    ray.init()
+    ray.init(log_to_driver=False)
     while True:
         nodes = ray.nodes()
         print(f"Able to get nodes list {len(nodes)}", flush=True)
@@ -137,6 +137,20 @@ def start_leader(
     return False
 
 
+def is_ipv6_address(ip_address: str) -> bool:
+    try:
+        socket.inet_pton(socket.AF_INET6, ip_address)
+        return True
+    except socket.error:
+        return False
+
+
+def format_ip_address(ip_address: str) -> str:
+    if is_ipv6_address(ip_address):
+        return f"[{ip_address}]"
+    return ip_address
+
+
 def start_worker(
     ray_port: int,
     node_ip_address: str,
@@ -147,17 +161,22 @@ def start_worker(
     # node ip address in this case is actually a DNS name for the pod
     start_time = time.time()
     while time.time() - start_time < timeout:
+        print(
+            f"Starting ray worker with head address {format_ip_address(leader_addr)}:{ray_port} and node ip address {node_ip_address}",
+            flush=True,
+        )
         result = subprocess.run(
             [
                 "ray",
                 "start",
                 "--address",
-                f"{leader_addr}:{ray_port}",
+                f"{format_ip_address(leader_addr)}:{ray_port}",
                 "--node-ip-address",
                 node_ip_address,
             ],
             capture_output=True,
         )
+        print(f"result: {result}", flush=True)
         if result.returncode == 0:
             print(
                 f"Worker: Ray runtime started with head address {leader_addr}:{ray_port}",
@@ -173,6 +192,13 @@ def start_worker(
         time.sleep(5)
     print(f"Ray worker starts timeout, head address: {leader_addr}:{ray_port}", flush=True)
     return False
+
+
+def get_node_ip_address(node_fqdn: str, timeout: int = 300) -> str:
+    node_ip_info = wait_for_dns(node_fqdn, timeout=timeout)
+    if node_ip_info is None:
+        raise RuntimeError(f"Timeout waiting for DNS resolution of {node_fqdn}")
+    return node_ip_info[0][4][0]
 
 
 def init_ray(
@@ -193,21 +219,30 @@ def init_ray(
         node_ip_address: IP address of the current node. If None, will be automatically detected
         timeout: Maximum time to wait for cluster to reach expected size
     """
-    node_ip_address = get_node_ip_address(leader_addr)
+    import os
+
+    # export environment variable to disable ray logging
+    os.environ["NCCL_DEBUG"] = "INFO"
+
+    # Get FQDN of the current node
+    node_fqdn = get_node_fqdn(leader_addr)
+    print(f"node fqdn: {node_fqdn}", flush=True)
 
     print(f"Waiting for head node DNS ({leader_addr}) to be resolvable...", flush=True)
-    head_ip_info = wait_for_dns(leader_addr, timeout=timeout)
-    if head_ip_info is None:
-        raise RuntimeError(f"Timeout waiting for DNS resolution of {leader_addr}")
+    leader_ip_address = get_node_ip_address(leader_addr, timeout=timeout)
+    print(f"leader ip: {leader_ip_address}", flush=True)
 
     if is_leader:
-        if not start_leader(leader_port, node_ip_address):
+        if not start_leader(leader_port, leader_ip_address):
             raise RuntimeError("Failed to start Ray leader node")
     else:
-        if not start_worker(leader_port, node_ip_address, leader_addr, timeout):
+        print(f"Waiting for worker node DNS ({node_fqdn}) to be resolvable...", flush=True)
+        worker_ip_address = get_node_ip_address(node_fqdn, timeout=timeout)
+        print(f"worker ip: {worker_ip_address}", flush=True)
+        if not start_worker(leader_port, worker_ip_address, leader_ip_address, timeout):
             raise RuntimeError("Failed to start Ray worker node")
     print(
-        f"Successfully initialized Ray {'head' if is_leader else 'worker'} node at {node_ip_address}",
+        f"Successfully initialized Ray {'head' if is_leader else 'worker'} node at {leader_ip_address if is_leader else worker_ip_address}",
         flush=True,
     )
 
@@ -231,5 +266,6 @@ def main(mode: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["wait_for_head_node_to_exit"], required=True)
+
     args = parser.parse_args()
     main(args.mode)
