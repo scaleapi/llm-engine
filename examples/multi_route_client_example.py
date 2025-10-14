@@ -7,11 +7,12 @@ a FastAPI server with multiple endpoints that can be accessed through their
 natural paths rather than being restricted to just /predict.
 """
 
-from llmengine import Model
-from llmengine.data_types.model_endpoints import CreateLLMEndpointRequest
-from llmengine.data_types.core import ModelEndpointType
-import requests
 import time
+
+import requests
+from llmengine import Model
+from llmengine.data_types.core import ModelEndpointType
+from llmengine.data_types.model_endpoints import CreateLLMEndpointRequest
 
 
 def create_multi_route_endpoint():

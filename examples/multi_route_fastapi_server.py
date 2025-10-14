@@ -9,10 +9,11 @@ The server implements several endpoints that would normally require the single /
 restriction, but now can be accessed through their natural paths.
 """
 
+from typing import Any, Dict, List, Optional
+
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Dict, List, Optional, Any
-import uvicorn
 
 # FastAPI server with multiple routes
 app = FastAPI(title="Multi-Route Example Server", version="1.0.0")
