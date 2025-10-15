@@ -37,14 +37,19 @@ class LiveLLMModelEndpointService(LLMModelEndpointService):
         )
 
         # Get model endpoints in parallel
-        endpoints: List[ModelEndpoint] = await asyncio.gather(
-            *[
-                self.model_endpoint_service._get_model_endpoint_infra_state(
-                    record=record, use_cache=True
+        endpoints: List[ModelEndpoint] = []
+        for start_idx in range(0, len(records), fetch_batch_size):
+            end_idx = min(start_idx + fetch_batch_size, len(records))
+            endpoints.extend(
+                await asyncio.gather(
+                    *[
+                        self.model_endpoint_service._get_model_endpoint_infra_state(
+                            record=record, use_cache=True
+                        )
+                        for record in records[start_idx:end_idx]
+                    ]
                 )
-                for record in records
-            ]
-        )
+            )
         return endpoints
 
     async def get_llm_model_endpoint(self, model_endpoint_name: str) -> Optional[ModelEndpoint]:
