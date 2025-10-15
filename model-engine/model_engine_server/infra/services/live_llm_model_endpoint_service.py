@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Optional
 
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
@@ -26,6 +27,7 @@ class LiveLLMModelEndpointService(LLMModelEndpointService):
         owner: Optional[str],
         name: Optional[str],
         order_by: Optional[ModelEndpointOrderBy],
+        fetch_batch_size: int = 10,
     ) -> List[ModelEndpoint]:
         # Will read from cache at first
         records = await self.model_endpoint_record_repository.list_llm_model_endpoint_records(
@@ -33,12 +35,16 @@ class LiveLLMModelEndpointService(LLMModelEndpointService):
             name=name,
             order_by=order_by,
         )
-        endpoints: List[ModelEndpoint] = []
-        for record in records:
-            infra_state = await self.model_endpoint_service._get_model_endpoint_infra_state(
-                record=record, use_cache=True
-            )
-            endpoints.append(ModelEndpoint(record=record, infra_state=infra_state))
+
+        # Get model endpoints in parallel
+        endpoints: List[ModelEndpoint] = await asyncio.gather(
+            *[
+                self.model_endpoint_service._get_model_endpoint_infra_state(
+                    record=record, use_cache=True
+                )
+                for record in records
+            ]
+        )
         return endpoints
 
     async def get_llm_model_endpoint(self, model_endpoint_name: str) -> Optional[ModelEndpoint]:
