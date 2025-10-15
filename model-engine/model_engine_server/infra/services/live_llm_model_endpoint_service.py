@@ -40,16 +40,22 @@ class LiveLLMModelEndpointService(LLMModelEndpointService):
         endpoints: List[ModelEndpoint] = []
         for start_idx in range(0, len(records), fetch_batch_size):
             end_idx = min(start_idx + fetch_batch_size, len(records))
-            endpoints.extend(
-                await asyncio.gather(
-                    *[
-                        self.model_endpoint_service._get_model_endpoint_infra_state(
-                            record=record, use_cache=True
-                        )
-                        for record in records[start_idx:end_idx]
-                    ]
-                )
+            record_slice = records[start_idx:end_idx]
+            infra_states = await asyncio.gather(
+                *[
+                    self.model_endpoint_service._get_model_endpoint_infra_state(
+                        record=record, use_cache=True
+                    )
+                    for record in record_slice
+                ]
             )
+            endpoints.extend(
+                [
+                    ModelEndpoint(record=record, infra_state=infra_state)
+                    for record, infra_state in zip(record_slice, infra_states)
+                ]
+            )
+
         return endpoints
 
     async def get_llm_model_endpoint(self, model_endpoint_name: str) -> Optional[ModelEndpoint]:
