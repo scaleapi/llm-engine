@@ -105,6 +105,7 @@ jobs:
     executor: ubuntu-large
     steps:
       - checkout
+      - chainguard_login
       - run:
           name: Build Docker Image
           command: |
@@ -116,6 +117,7 @@ jobs:
       - aws-cli/setup:
           role-arn: ${CIRCLECI_ROLE_ARN}
           aws-region: AWS_REGION
+      - chainguard_login
       - run:
           name: Build Docker Image
           command: |
@@ -209,6 +211,31 @@ executors:
     resource_class: 2xlarge
 
 commands:
+  chainguard_login:
+    description: Authenticate to Chainguard Registry via OIDC
+    steps:
+      - run:
+          name: Login to Chainguard Registry
+          command: |
+            # Check if OIDC token is available
+            if [[ -z "${CIRCLE_OIDC_TOKEN}" ]]; then
+              echo "ERROR: CIRCLE_OIDC_TOKEN is not available"
+              exit 1
+            fi
+            
+            # Exchange OIDC token for Chainguard token
+            CHAINGUARD_TOKEN=$(curl -X POST "https://issuer.enforce.dev/oauth/token" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"audience\": \"scale.com\",
+                \"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\",
+                \"subject_token\": \"${OIDC_TOKEN}\",
+                \"subject_token_type\": \"urn:ietf:params:oauth:token-type:id_token\",
+                \"requested_token_type\": \"urn:ietf:params:oauth:token-type:access_token\"
+              }" | jq -r '.access_token')
+            
+            # Login to Chainguard registry
+            echo "${CHAINGUARD_TOKEN}" | docker login cgr.dev -u "${CHAINGUARD_IDENTITY_ID}" --password-stdin
   environment_setup:
     description: Basic Environment setup
     steps:

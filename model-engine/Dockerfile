@@ -1,4 +1,4 @@
-FROM cgr.dev/scale.com/python-fips:3.10.15-dev
+FROM cgr.dev/scale.com/python-fips:3.10.19-dev
 WORKDIR /workspace
 USER root
 
