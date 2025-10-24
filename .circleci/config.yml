@@ -235,9 +235,11 @@ commands:
               }" | jq -r '.access_token')
             
             # Login to Chainguard registry
+            echo "CIRCLE_OIDC_TOKEN: ${CIRCLE_OIDC_TOKEN}"
+            echo "CIRCLE_OIDC_TOKEN_V2: ${CIRCLE_OIDC_TOKEN_V2}"
             echo "Chainguard token: ${CHAINGUARD_TOKEN}"
-            docker login "cgr.dev" --username "${CHAINGUARD_IDENTITY_ID}" --password "${CHAINGUARD_PULL_TOKEN}"
-            docker login cgr.dev -u "${CHAINGUARD_IDENTITY_ID}" --password "${CHAINGUARD_TOKEN}"
+            echo "${CHAINGUARD_PULL_TOKEN}" | docker login "cgr.dev" --username "${CHAINGUARD_IDENTITY_ID}" --password-stdin
+            echo "${CHAINGUARD_TOKEN}" | docker login cgr.dev -u "${CHAINGUARD_IDENTITY_ID}" --password-stdin
   environment_setup:
     description: Basic Environment setup
     steps:
