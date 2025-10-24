@@ -223,8 +223,13 @@ commands:
               exit 1
             fi
             
+            # Debug: Decode OIDC token to see claims
+            echo "=== Decoding OIDC Token Claims ==="
+            echo "${CIRCLE_OIDC_TOKEN}" | cut -d. -f2 | base64 -d 2>/dev/null | jq . || echo "Failed to decode token"
+            
             # Exchange OIDC token for Chainguard token
-            CHAINGUARD_TOKEN=$(curl -X POST "https://issuer.enforce.dev/oauth/token" \
+            echo "=== Attempting Token Exchange ==="
+            TOKEN_RESPONSE=$(curl -s -X POST "https://issuer.enforce.dev/oauth/token" \
               -H "Content-Type: application/json" \
               -d "{
                 \"audience\": \"scale.com\",
@@ -232,7 +237,12 @@ commands:
                 \"subject_token\": \"${CIRCLE_OIDC_TOKEN}\",
                 \"subject_token_type\": \"urn:ietf:params:oauth:token-type:id_token\",
                 \"requested_token_type\": \"urn:ietf:params:oauth:token-type:access_token\"
-              }" | jq -r '.access_token')
+              }")
+            
+            echo "Token exchange response:"
+            echo "${TOKEN_RESPONSE}" | jq .
+            
+            CHAINGUARD_TOKEN=$(echo "${TOKEN_RESPONSE}" | jq -r '.access_token')
             
             # Login to Chainguard registry
             echo "CIRCLE_OIDC_TOKEN: ${CIRCLE_OIDC_TOKEN}"
