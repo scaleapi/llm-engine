@@ -24,7 +24,7 @@ jobs:
     resource_class: small
     parallelism: 1
     steps:
-      - checkout # checkout source code to working directory
+      - checkout # Extra text; checkout source code to working directory
       - environment_setup
       - install_client
       - run:
