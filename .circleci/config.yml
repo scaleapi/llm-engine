@@ -215,38 +215,16 @@ commands:
     description: Authenticate to Chainguard Registry via OIDC
     steps:
       - run:
+          name: Install chainctl
+          command: |
+            curl -o chainctl "https://dl.enforce.dev/chainctl/latest/chainctl_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/aarch64/arm64/')"
+            sudo install -o $UID -g $(id -g) -m 0755 chainctl /usr/local/bin/
+      - run:
           name: Login to Chainguard Registry
           command: |
-            # Check if OIDC token is available
-            if [[ -z "${CIRCLE_OIDC_TOKEN}" ]]; then
-              echo "ERROR: CIRCLE_OIDC_TOKEN is not available"
-              exit 1
-            fi
-            
-            # Debug: Decode OIDC token to see claims
-            echo "=== Decoding OIDC Token Claims ==="
-            echo "${CIRCLE_OIDC_TOKEN}" | cut -d. -f2 | base64 -d 2>/dev/null | jq . || echo "Failed to decode token"
-            
-            # Exchange OIDC token for Chainguard token
-            echo "=== Attempting Token Exchange ==="
-            TOKEN_RESPONSE=$(curl -s -X POST "https://issuer.enforce.dev/oauth/token" \
-              -H "Content-Type: application/json" \
-              -d "{
-                \"audience\": \"cgr.dev\",
-                \"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\",
-                \"subject_token\": \"${CIRCLE_OIDC_TOKEN}\",
-                \"subject_token_type\": \"urn:ietf:params:oauth:token-type:id_token\",
-                \"requested_token_type\": \"urn:ietf:params:oauth:token-type:access_token\"
-              }")
-            
-            echo "Token exchange response:"
-            echo "${TOKEN_RESPONSE}" | jq .
-            
-            CHAINGUARD_TOKEN=$(echo "${TOKEN_RESPONSE}" | jq -r '.access_token')
-            
-            # Login to Chainguard registry
-            # echo "${CHAINGUARD_PULL_TOKEN}" | docker login "cgr.dev" --username "${CHAINGUARD_IDENTITY_ID}" --password-stdin
-            echo "${CHAINGUARD_TOKEN}" | docker login cgr.dev -u "${CHAINGUARD_IDENTITY_ID}" --password-stdin
+            chainctl auth login --identity-token "${CIRCLE_OIDC_TOKEN}" --identity "${CHAINGUARD_IDENTITY_ID}"
+            CHAINGUARD_TOKEN=$(chainctl auth token --audience cgr.dev)
+            echo "${CHAINGUARD_TOKEN}" | docker login cgr.dev -u "oauth2accesstoken" --password-stdin
   environment_setup:
     description: Basic Environment setup
     steps:
