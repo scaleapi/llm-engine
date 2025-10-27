@@ -232,7 +232,7 @@ commands:
             TOKEN_RESPONSE=$(curl -s -X POST "https://issuer.enforce.dev/oauth/token" \
               -H "Content-Type: application/json" \
               -d "{
-                \"audience\": \"scale.com\",
+                \"audience\": \"cgr.dev\",
                 \"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\",
                 \"subject_token\": \"${CIRCLE_OIDC_TOKEN}\",
                 \"subject_token_type\": \"urn:ietf:params:oauth:token-type:id_token\",
