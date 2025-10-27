@@ -222,7 +222,7 @@ commands:
       - run:
           name: Login to Chainguard Registry
           command: |
-            chainctl auth login --identity-token "${CIRCLE_OIDC_TOKEN}" --identity "${CHAINGUARD_IDENTITY_ID}"
+            chainctl auth login --identity-token "${CIRCLE_OIDC_TOKEN}" --identity "${CHAINGUARD_IDENTITY_ID}" --audience cgr.dev
             CHAINGUARD_TOKEN=$(chainctl auth token --audience cgr.dev)
             echo "${CHAINGUARD_TOKEN}" | docker login cgr.dev -u "oauth2accesstoken" --password-stdin
   environment_setup:
