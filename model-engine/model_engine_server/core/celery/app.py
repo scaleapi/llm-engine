@@ -544,7 +544,9 @@ def _get_backend_url_and_conf(
                 }
             )
         else:
-            logger.info("Non-AWS deployment, using environment variables for S3 backend credentials")
+            logger.info(
+                "Non-AWS deployment, using environment variables for S3 backend credentials"
+            )
             out_conf_changes.update(
                 {
                     "s3_bucket": s3_bucket,

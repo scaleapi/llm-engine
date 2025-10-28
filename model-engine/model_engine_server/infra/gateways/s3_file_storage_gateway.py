@@ -93,7 +93,7 @@ class S3FileStorageGateway(FileStorageGateway):
             for obj in objects.get("Contents", []):
                 key = obj["Key"]
                 if key.startswith(owner):
-                    file_id = key[len(owner):].lstrip("/")
+                    file_id = key[len(owner) :].lstrip("/")
                     if file_id:
                         file_metadata = await self.get_file(owner, file_id)
                         if file_metadata:
