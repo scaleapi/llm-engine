@@ -1,6 +1,6 @@
 # This is a YAML-formatted file.
 
-celery_enable_sha256: null
+celery_enable_sha256: true
 celery_broker_type_redis: null
 debug_mode: null
 
@@ -39,8 +39,6 @@ balloons:
 # commit from which the image was built.
 # tag:
 context: circleci
-
-celery_enable_sha256: true
 
 image:
   gatewayRepository: model-engine
