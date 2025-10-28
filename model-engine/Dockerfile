@@ -15,13 +15,13 @@ RUN apk update && apk add \
             vim \
             kubectl \
             gcc \
-            musl-dev \
-            python3-dev \
+            glibc-dev \
+            python-3.10-dev \
             libffi-dev \
             openssl-dev \
             build-base \
             postgresql-dev \
-            postgresql-libs
+            libpq-16
 
 RUN curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64
 RUN chmod +x /bin/aws-iam-authenticator
