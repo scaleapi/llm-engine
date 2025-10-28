@@ -32,8 +32,6 @@ RUN chmod -R 777 /workspace
 
 RUN pip install awscli==1.34.28 --no-cache-dir
 
-COPY model-engine/sitecustomize.py /usr/lib/python3.10/site-packages/sitecustomize.py
-
 WORKDIR /workspace/model-engine/
 COPY model-engine/requirements-test.txt /workspace/model-engine/requirements-test.txt
 COPY model-engine/requirements.txt /workspace/model-engine/requirements.txt
