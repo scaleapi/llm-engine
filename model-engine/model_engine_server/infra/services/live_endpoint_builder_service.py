@@ -251,8 +251,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     flavor = model_bundle.flavor
                     assert isinstance(flavor, RunnableImageLike)
                     image = self.docker_repository.get_image_url(
-                        image_tag=flavor.tag,
-                        repository_name=flavor.repository
+                        image_tag=flavor.tag, repository_name=flavor.repository
                     )
 
                 # Because this update is not the final update in the lock, the 'update_in_progress'

@@ -77,6 +77,7 @@ class ModelBundleEnvironmentParams(BaseModel):
             )
             if not field_values.get("ecr_repo"):
                 from model_engine_server.core.config import infra_config
+
                 if infra_config().cloud_provider != "onprem":
                     raise ValueError(
                         "Expected `ecr_repo` to be non-null for custom framework. "

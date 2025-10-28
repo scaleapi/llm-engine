@@ -23,9 +23,7 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         logger.debug(f"Listed {len(files)} files from {path}")
         return files
 
-    def download_files(
-        self, path: str, target_path: str, overwrite=False, **kwargs
-    ) -> List[str]:
+    def download_files(self, path: str, target_path: str, overwrite=False, **kwargs) -> List[str]:
         s3 = get_s3_resource(kwargs)
         parsed_remote = parse_attachment_url(path, clean_key=False)
         bucket = parsed_remote.bucket
