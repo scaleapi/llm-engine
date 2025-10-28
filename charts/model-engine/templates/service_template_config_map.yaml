@@ -1031,9 +1031,6 @@ data:
               configMap:
                 name: {{ $aws_config_map_name }}
             {{- end }}
-            - name: service-template-config
-              configMap:
-                name: {{ $launch_name }}-service-template-config
             {{- if $config_values }}
             - name: service-config-volume
               configMap:
@@ -1100,8 +1097,6 @@ data:
                   mountPath: /opt/.aws/config
                   subPath: config
                 {{- end }}
-                - name: service-template-config
-                  mountPath: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
                 {{- if $config_values }}
                 - name: service-config-volume
                   mountPath: /workspace/model-engine/service_configs
