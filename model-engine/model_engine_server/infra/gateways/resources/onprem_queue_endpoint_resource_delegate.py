@@ -26,7 +26,7 @@ class OnPremQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
             f"(Redis queues don't require explicit creation)"
         )
 
-        return QueueInfo(queue_name=queue_name, queue_url=None)
+        return QueueInfo(queue_name=queue_name, queue_url=queue_name)
 
     async def delete_queue(self, endpoint_id: str) -> None:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
@@ -37,7 +37,11 @@ class OnPremQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
     async def get_queue_attributes(self, endpoint_id: str) -> Dict[str, Any]:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
 
-        logger.debug(f"Getting attributes for queue {queue_name}")
+        logger.warning(
+            f"Getting queue attributes for {queue_name} - returning hardcoded values. "
+            f"On-prem Redis queues do not support real-time message counts. "
+            f"Do not rely on ApproximateNumberOfMessages for autoscaling decisions."
+        )
 
         return {
             "Attributes": {
