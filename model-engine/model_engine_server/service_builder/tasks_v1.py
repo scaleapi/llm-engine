@@ -52,6 +52,9 @@ from model_engine_server.infra.repositories import (
     RedisFeatureFlagRepository,
     RedisModelEndpointCacheRepository,
 )
+from model_engine_server.infra.repositories.onprem_docker_repository import (
+    OnPremDockerRepository,
+)
 from model_engine_server.infra.services import LiveEndpointBuilderService
 from model_engine_server.service_builder.celery import service_builder_service
 
@@ -83,8 +86,10 @@ def get_live_endpoint_builder_service(
     docker_repository: DockerRepository
     if CIRCLECI:
         docker_repository = FakeDockerRepository()
-    elif infra_config().docker_repo_prefix.endswith("azurecr.io"):
+    elif infra_config().cloud_provider == "azure":
         docker_repository = ACRDockerRepository()
+    elif infra_config().cloud_provider == "onprem":
+        docker_repository = OnPremDockerRepository()
     else:
         docker_repository = ECRDockerRepository()
     inference_autoscaling_metrics_gateway = (

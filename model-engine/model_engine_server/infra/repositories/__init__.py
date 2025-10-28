@@ -16,6 +16,7 @@ from .live_tokenizer_repository import LiveTokenizerRepository
 from .llm_fine_tune_repository import LLMFineTuneRepository
 from .model_endpoint_cache_repository import ModelEndpointCacheRepository
 from .model_endpoint_record_repository import ModelEndpointRecordRepository
+from .onprem_docker_repository import OnPremDockerRepository
 from .redis_feature_flag_repository import RedisFeatureFlagRepository
 from .redis_model_endpoint_cache_repository import RedisModelEndpointCacheRepository
 from .s3_file_llm_fine_tune_events_repository import S3FileLLMFineTuneEventsRepository
@@ -38,6 +39,7 @@ __all__: Sequence[str] = [
     "LLMFineTuneRepository",
     "ModelEndpointRecordRepository",
     "ModelEndpointCacheRepository",
+    "OnPremDockerRepository",
     "RedisFeatureFlagRepository",
     "RedisModelEndpointCacheRepository",
     "S3FileLLMFineTuneRepository",
