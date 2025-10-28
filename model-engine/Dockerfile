@@ -14,6 +14,7 @@ RUN apk update && apk add \
             libcurl-openssl4 \
             vim \
             kubectl \
+            jq \
             gcc \
             glibc-dev \
             python-3.10-dev \
@@ -42,14 +43,13 @@ RUN pip install -r requirements.txt --no-cache-dir
 RUN pip install -r requirements_override.txt --no-cache-dir
 COPY model-engine/setup.py /workspace/model-engine/setup.py
 COPY model-engine/model_engine_server /workspace/model-engine/model_engine_server
+#COPY model-engine/service_configs /workspace/model-engine/service_configs
 RUN pip install -e .
 
 COPY integration_tests /workspace/integration_tests
 
 WORKDIR /workspace
-ENV PYTHONPATH /workspace
-ENV WORKSPACE /workspace
-
-USER nonroot
+ENV PYTHONPATH=/workspace
+ENV WORKSPACE=/workspace
 
 EXPOSE 5000
