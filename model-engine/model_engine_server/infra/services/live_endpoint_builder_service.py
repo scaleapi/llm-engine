@@ -599,7 +599,10 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         bundle_id = model_bundle.id
         service_image_str = "-".join([base_image_params.image_tag, GIT_TAG, bundle_id])
         # nosemgrep
-        service_image_hash = hashlib.md5(str(service_image_str).encode("utf-8")).hexdigest()
+        # Use MD5 for image tag hashing (non-security purpose, required for Docker compatibility)
+        service_image_hash = hashlib.new(
+            "md5", str(service_image_str).encode("utf-8"), usedforsecurity=False
+        ).hexdigest()
         service_image_tag = f"inject-bundle-image-{service_image_hash}"
         ecr_repo = base_image_params.repo
 
@@ -812,7 +815,12 @@ class LiveEndpointBuilderService(EndpointBuilderService):
     def _get_requirements_hash(requirements: List[str]) -> str:
         """Identifying hash for endpoint's Python requirements."""
         # nosemgrep
-        return hashlib.md5("\n".join(sorted(requirements)).encode("utf-8")).hexdigest()[:6]
+        # Use MD5 for requirements hashing (non-security purpose)
+        return hashlib.new(
+            "md5",
+            "\n".join(sorted(requirements)).encode("utf-8"),
+            usedforsecurity=False,
+        ).hexdigest()[:6]
 
     @staticmethod
     def _get_image_tag(base_image_tag: str, git_tag: str, requirements_hash: str) -> str:

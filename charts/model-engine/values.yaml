@@ -3,7 +3,7 @@ spellbook:
   enabled: false
 
 # celery_enable_sha256 [optional] uses SHA256 hashes for federal compliance mode (FIPS, enhanced security)
-celery_enable_sha256: null
+celery_enable_sha256: true
 
 # debug_mode [optional] enables detailed debug logging for infrastructure components
 debug_mode: null
