@@ -62,7 +62,9 @@ def generate_destination(user_id: str, endpoint_name: str, endpoint_type: str) -
 
 def _generate_deployment_name_parts(user_id: str, endpoint_name: str) -> List[str]:
     # Use MD5 for deployment name hashing (non-security purpose) - FIPS compliant
-    user_endpoint_hash = hashlib.new('md5', (user_id + endpoint_name).encode("utf-8"), usedforsecurity=False).hexdigest()
+    user_endpoint_hash = hashlib.new(
+        "md5", (user_id + endpoint_name).encode("utf-8"), usedforsecurity=False
+    ).hexdigest()
     return [
         DEPLOYMENT_PREFIX,
         user_id[:24],

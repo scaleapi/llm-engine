@@ -70,7 +70,9 @@ class CeleryAutoscalerParams:
 
 def _hash_any_to_int(data: Any):
     # Use MD5 for hashing (non-security purpose) - FIPS compliant with usedforsecurity=False
-    return int(hashlib.new('md5', str(data).encode(), usedforsecurity=False).hexdigest(), 16)  # nosemgrep
+    return int(
+        hashlib.new("md5", str(data).encode(), usedforsecurity=False).hexdigest(), 16
+    )  # nosemgrep
 
 
 async def list_deployments(core_api, apps_api) -> Dict[Tuple[str, str], CeleryAutoscalerParams]:
