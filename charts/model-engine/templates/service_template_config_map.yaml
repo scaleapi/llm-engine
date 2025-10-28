@@ -1147,7 +1147,7 @@ data:
                 name: {{ $aws_config_map_name }}
             {{- end }}
             {{- if $config_values }}
-            - name: {{ .Chart.Name }}-service-config-volume
+            - name: model-engine-service-config-volume
               configMap:
                 name: {{ $launch_name }}-service-config
                 items:
@@ -1199,7 +1199,7 @@ data:
                   subPath: config
                 {{- end }}
                 {{- if $config_values }}
-                - name: {{ .Chart.Name }}-service-config-volume
+                - name: model-engine-service-config-volume
                   mountPath: /workspace/model-engine/service_configs
                 {{- end }}
                 - name: workdir
@@ -1237,7 +1237,7 @@ data:
                   subPath: config
                 {{- end }}
                 {{- if $config_values }}
-                - name: {{ .Chart.Name }}-service-config-volume
+                - name: model-engine-service-config-volume
                   mountPath: /workspace/model-engine/service_configs
                 {{- end }}
                 - name: workdir
