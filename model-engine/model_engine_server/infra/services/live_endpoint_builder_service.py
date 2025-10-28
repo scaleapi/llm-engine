@@ -250,12 +250,10 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 else:
                     flavor = model_bundle.flavor
                     assert isinstance(flavor, RunnableImageLike)
-                    repository = (
-                        f"{infra_config().docker_repo_prefix}/{flavor.repository}"
-                        if self.docker_repository.is_repo_name(flavor.repository)
-                        else flavor.repository
+                    image = self.docker_repository.get_image_url(
+                        image_tag=flavor.tag,
+                        repository_name=flavor.repository
                     )
-                    image = f"{repository}:{flavor.tag}"
 
                 # Because this update is not the final update in the lock, the 'update_in_progress'
                 # value isn't really necessary for correctness in not having races, but it's still

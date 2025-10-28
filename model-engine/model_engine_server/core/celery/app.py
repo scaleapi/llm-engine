@@ -531,17 +531,26 @@ def _get_backend_url_and_conf(
         backend_url = get_redis_endpoint(1)
     elif backend_protocol == "s3":
         backend_url = "s3://"
-        if aws_role is None:
-            aws_session = session(infra_config().profile_ml_worker)
+        if infra_config().cloud_provider == "aws":
+            if aws_role is None:
+                aws_session = session(infra_config().profile_ml_worker)
+            else:
+                aws_session = session(aws_role)
+            out_conf_changes.update(
+                {
+                    "s3_boto3_session": aws_session,
+                    "s3_bucket": s3_bucket,
+                    "s3_base_path": s3_base_path,
+                }
+            )
         else:
-            aws_session = session(aws_role)
-        out_conf_changes.update(
-            {
-                "s3_boto3_session": aws_session,
-                "s3_bucket": s3_bucket,
-                "s3_base_path": s3_base_path,
-            }
-        )
+            logger.info("Non-AWS deployment, using environment variables for S3 backend credentials")
+            out_conf_changes.update(
+                {
+                    "s3_bucket": s3_bucket,
+                    "s3_base_path": s3_base_path,
+                }
+            )
     elif backend_protocol == "abs":
         backend_url = f"azureblockblob://{os.getenv('ABS_ACCOUNT_NAME')}"
     else:

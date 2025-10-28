@@ -59,7 +59,17 @@ def get_engine_url(
             key_file = get_key_file_name(env)  # type: ignore
         logger.debug(f"Using key file {key_file}")
 
-        if infra_config().cloud_provider == "azure":
+        if infra_config().cloud_provider == "onprem":
+            user = os.environ.get("DB_USER", "postgres")
+            password = os.environ.get("DB_PASSWORD", "postgres")
+            host = os.environ.get("DB_HOST_RO") or os.environ.get("DB_HOST", "localhost")
+            port = os.environ.get("DB_PORT", "5432")
+            dbname = os.environ.get("DB_NAME", "llm_engine")
+            logger.info(f"Connecting to db {host}:{port}, name {dbname}")
+
+            engine_url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
+
+        elif infra_config().cloud_provider == "azure":
             client = SecretClient(
                 vault_url=f"https://{os.environ.get('KEYVAULT_NAME')}.vault.azure.net",
                 credential=DefaultAzureCredential(),
