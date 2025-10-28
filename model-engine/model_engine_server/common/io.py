@@ -34,9 +34,7 @@ def open_wrapper(uri: str, mode: str = "rt", **kwargs):
             client_kwargs["endpoint_url"] = s3_endpoint
 
         addressing_style = getattr(infra_config(), "s3_addressing_style", "path")
-        client_kwargs["config"] = boto3.session.Config(
-            s3={"addressing_style": addressing_style}
-        )
+        client_kwargs["config"] = boto3.session.Config(s3={"addressing_style": addressing_style})
 
         client = session.client("s3", **client_kwargs)
     else:
