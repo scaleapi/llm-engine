@@ -75,6 +75,13 @@ class ModelBundleEnvironmentParams(BaseModel):
                 "Expected `image_tag` to be non-null because the custom framework "
                 "type was selected."
             )
+            if not field_values.get("ecr_repo"):
+                from model_engine_server.core.config import infra_config
+                if infra_config().cloud_provider != "onprem":
+                    raise ValueError(
+                        "Expected `ecr_repo` to be non-null for custom framework. "
+                        "For on-prem deployments, ecr_repo can be omitted to use direct image references."
+                    )
         return field_values
 
     model_config = ConfigDict(from_attributes=True)
