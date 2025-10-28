@@ -2,7 +2,8 @@ FROM cgr.dev/scale.com/python-fips:3.10.19-dev
 WORKDIR /workspace
 USER root
 
-RUN apk update && apk add htop \
+RUN apk update && apk add \
+            htop \
             dumb-init \
             libssh \
             openssh-client \
@@ -12,7 +13,15 @@ RUN apk update && apk add htop \
             procps \
             libcurl-openssl4 \
             vim \
-            kubectl
+            kubectl \
+            gcc \
+            musl-dev \
+            python3-dev \
+            libffi-dev \
+            openssl-dev \
+            build-base \
+            postgresql-dev \
+            postgresql-libs
 
 RUN curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64
 RUN chmod +x /bin/aws-iam-authenticator
@@ -22,7 +31,7 @@ RUN chmod -R 777 /workspace
 
 RUN pip install awscli==1.34.28 --no-cache-dir
 
-COPY federal/sitecustomize.py /usr/lib/python3.10/site-packages/sitecustomize.py
+COPY model-engine/sitecustomize.py /usr/lib/python3.10/site-packages/sitecustomize.py
 
 WORKDIR /workspace/model-engine/
 COPY model-engine/requirements-test.txt /workspace/model-engine/requirements-test.txt
