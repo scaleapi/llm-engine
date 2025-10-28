@@ -184,10 +184,10 @@ jobs:
             cat model-engine/values_circleci.yaml | envsubst > model-engine/values_circleci_subst.yaml
             helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
       - run:
-          name: Change python version to 3.10.19
+          name: Change python version to 3.10.14
           command: |
-            pyenv install 3.10.19
-            pyenv global 3.10.19
+            pyenv install 3.10.14
+            pyenv global 3.10.14
       - run:
           name: Install integration test dependencies
           command: |
