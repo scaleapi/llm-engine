@@ -30,9 +30,7 @@ class OnPremQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
 
     async def delete_queue(self, endpoint_id: str) -> None:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
-        logger.debug(
-            f"Delete request for queue {queue_name} (no-op for Redis-based queues)"
-        )
+        logger.debug(f"Delete request for queue {queue_name} (no-op for Redis-based queues)")
 
     async def get_queue_attributes(self, endpoint_id: str) -> Dict[str, Any]:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
