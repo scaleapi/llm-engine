@@ -39,6 +39,10 @@ balloons:
 # commit from which the image was built.
 # tag:
 context: circleci
+
+# Enable SHA256 checksums for Celery S3 backend to avoid MD5 issues
+celery_enable_sha256: true
+
 image:
   gatewayRepository: model-engine
   builderRepository: model-engine
