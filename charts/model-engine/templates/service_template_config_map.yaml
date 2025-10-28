@@ -1031,13 +1031,22 @@ data:
               configMap:
                 name: {{ $aws_config_map_name }}
             {{- end }}
+            - name: service-template-config
+              configMap:
+                name: {{ $launch_name }}-service-template-config
             {{- if $config_values }}
-            - name: {{ .Chart.Name }}-service-config-volume
+            - name: service-config-volume
               configMap:
                 name: {{ $launch_name }}-service-config
                 items:
                   - key: launch_service_config
                     path: service_config.yaml
+            - name: infra-service-config-volume
+              configMap:
+                name: {{ $launch_name }}-service-config
+                items:
+                  - key: infra_service_config
+                    path: config.yaml
             {{- end }}
           containers:
             - name: main
@@ -1091,9 +1100,13 @@ data:
                   mountPath: /opt/.aws/config
                   subPath: config
                 {{- end }}
+                - name: service-template-config
+                  mountPath: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
                 {{- if $config_values }}
-                - name: {{ .Chart.Name }}-service-config-volume
+                - name: service-config-volume
                   mountPath: /workspace/model-engine/service_configs
+                - name: infra-service-config-volume
+                  mountPath: /workspace/model-engine/model_engine_server/core/configs
                 {{- end }}
   {{- range $device := tuple "cpu" "gpu" }}
   docker-image-batch-job-{{- $device }}.yaml: |-
@@ -1147,7 +1160,7 @@ data:
                 name: {{ $aws_config_map_name }}
             {{- end }}
             {{- if $config_values }}
-            - name: model-engine-service-config-volume
+            - name: service-config-volume
               configMap:
                 name: {{ $launch_name }}-service-config
                 items:
@@ -1199,7 +1212,7 @@ data:
                   subPath: config
                 {{- end }}
                 {{- if $config_values }}
-                - name: model-engine-service-config-volume
+                - name: service-config-volume
                   mountPath: /workspace/model-engine/service_configs
                 {{- end }}
                 - name: workdir
@@ -1237,7 +1250,7 @@ data:
                   subPath: config
                 {{- end }}
                 {{- if $config_values }}
-                - name: model-engine-service-config-volume
+                - name: service-config-volume
                   mountPath: /workspace/model-engine/service_configs
                 {{- end }}
                 - name: workdir
