@@ -22,7 +22,7 @@ class S3FileLLMFineTuneRepository(LLMFineTuneRepository):
 
     @staticmethod
     def _get_key(model_name: str, fine_tuning_method: str) -> str:
-        return f"{model_name}-{fine_tuning_method}"
+        return f"{model_name}-{fine_tuning_method}" # possible for collisions but we control these names
 
     async def get_job_template_for_model(
         self, model_name: str, fine_tuning_method: str

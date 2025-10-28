@@ -29,6 +29,12 @@ class S3FileLLMFineTuneEventsRepository(LLMFineTuneEventsRepository):
         return smart_open.open(uri, mode, transport_params=transport_params)
 
     def _get_model_cache_directory_name(self, model_name: str) -> str:
+        """How huggingface maps model names to directory names in their cache for model files.
+        We adopt this when storing model cache files in s3.
+        Args:
+            model_name (str): Name of the huggingface model
+        """
+
         name = "models--" + model_name.replace("/", "--")
         return name
 
