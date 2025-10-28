@@ -2,35 +2,41 @@ import os
 from typing import List, Optional
 
 from model_engine_server.core.config import infra_config
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.gateways.file_storage_gateway import (
     FileMetadata,
     FileStorageGateway,
 )
-from model_engine_server.infra.gateways import S3FilesystemGateway
+from model_engine_server.infra.gateways.s3_filesystem_gateway import S3FilesystemGateway
+from model_engine_server.infra.gateways.s3_utils import get_s3_client
+
+logger = make_logger(logger_name())
 
 
-def get_s3_key(owner: str, file_id: str):
+def get_s3_key(owner: str, file_id: str) -> str:
     return os.path.join(owner, file_id)
 
 
-def get_s3_url(owner: str, file_id: str):
+def get_s3_url(owner: str, file_id: str) -> str:
     return f"s3://{infra_config().s3_bucket}/{get_s3_key(owner, file_id)}"
 
 
 class S3FileStorageGateway(FileStorageGateway):
-    """
-    Concrete implementation of a file storage gateway backed by S3.
-    """
-
     def __init__(self):
         self.filesystem_gateway = S3FilesystemGateway()
 
     async def get_url_from_id(self, owner: str, file_id: str) -> Optional[str]:
-        return self.filesystem_gateway.generate_signed_url(get_s3_url(owner, file_id))
+        try:
+            url = self.filesystem_gateway.generate_signed_url(get_s3_url(owner, file_id))
+            logger.debug(f"Generated presigned URL for {owner}/{file_id}")
+            return url
+        except Exception as e:
+            logger.error(f"Failed to generate presigned URL for {owner}/{file_id}: {e}")
+            return None
 
     async def get_file(self, owner: str, file_id: str) -> Optional[FileMetadata]:
         try:
-            obj = self.filesystem_gateway.get_s3_client({}).head_object(
+            obj = get_s3_client({}).head_object(
                 Bucket=infra_config().s3_bucket,
                 Key=get_s3_key(owner, file_id),
             )
@@ -41,7 +47,8 @@ class S3FileStorageGateway(FileStorageGateway):
                 owner=owner,
                 updated_at=obj.get("LastModified"),
             )
-        except:  # noqa: E722
+        except Exception as e:
+            logger.debug(f"File not found or error retrieving {owner}/{file_id}: {e}")
             return None
 
     async def get_file_content(self, owner: str, file_id: str) -> Optional[str]:
@@ -49,8 +56,11 @@ class S3FileStorageGateway(FileStorageGateway):
             with self.filesystem_gateway.open(
                 get_s3_url(owner, file_id), aws_profile=infra_config().profile_ml_worker
             ) as f:
-                return f.read()
-        except:  # noqa: E722
+                content = f.read()
+            logger.debug(f"Retrieved content for {owner}/{file_id}")
+            return content
+        except Exception as e:
+            logger.error(f"Failed to read file {owner}/{file_id}: {e}")
             return None
 
     async def upload_file(self, owner: str, filename: str, content: bytes) -> str:
@@ -58,22 +68,37 @@ class S3FileStorageGateway(FileStorageGateway):
             get_s3_url(owner, filename), mode="w", aws_profile=infra_config().profile_ml_worker
         ) as f:
             f.write(content.decode("utf-8"))
+        logger.info(f"Uploaded file {owner}/{filename}")
         return filename
 
     async def delete_file(self, owner: str, file_id: str) -> bool:
         try:
-            self.filesystem_gateway.get_s3_client({}).delete_object(
+            get_s3_client({}).delete_object(
                 Bucket=infra_config().s3_bucket,
                 Key=get_s3_key(owner, file_id),
             )
+            logger.info(f"Deleted file {owner}/{file_id}")
             return True
-        except:  # noqa: E722
+        except Exception as e:
+            logger.error(f"Failed to delete file {owner}/{file_id}: {e}")
             return False
 
     async def list_files(self, owner: str) -> List[FileMetadata]:
-        objects = self.filesystem_gateway.get_s3_client({}).list_objects_v2(
-            Bucket=infra_config().s3_bucket,
-            Prefix=owner,
-        )
-        files = [await self.get_file(owner, obj["Name"]) for obj in objects]
-        return [f for f in files if f is not None]
+        try:
+            objects = get_s3_client({}).list_objects_v2(
+                Bucket=infra_config().s3_bucket,
+                Prefix=owner,
+            )
+            files = []
+            for obj in objects.get("Contents", []):
+                key = obj["Key"]
+                file_id = key[len(owner) :].lstrip("/")
+                if file_id:
+                    file_metadata = await self.get_file(owner, file_id)
+                    if file_metadata:
+                        files.append(file_metadata)
+            logger.debug(f"Listed {len(files)} files for owner {owner}")
+            return files
+        except Exception as e:
+            logger.error(f"Failed to list files for owner {owner}: {e}")
+            return []

@@ -71,8 +71,8 @@ class ModelBundleEnvironmentParams(BaseModel):
                 "type was selected."
             )
         else:  # field_values["framework_type"] == ModelBundleFramework.CUSTOM:
-            assert field_values["ecr_repo"] and field_values["image_tag"], (
-                "Expected `ecr_repo` and `image_tag` to be non-null because the custom framework "
+            assert field_values["image_tag"], (
+                "Expected `image_tag` to be non-null because the custom framework "
                 "type was selected."
             )
         return field_values

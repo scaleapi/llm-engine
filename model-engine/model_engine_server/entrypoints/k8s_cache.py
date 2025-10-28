@@ -42,6 +42,9 @@ from model_engine_server.infra.repositories import (
     ECRDockerRepository,
     FakeDockerRepository,
 )
+from model_engine_server.infra.repositories.onprem_docker_repository import (
+    OnPremDockerRepository,
+)
 from model_engine_server.infra.repositories.db_model_endpoint_record_repository import (
     DbModelEndpointRecordRepository,
 )
@@ -124,8 +127,10 @@ async def main(args: Any):
     docker_repo: DockerRepository
     if CIRCLECI:
         docker_repo = FakeDockerRepository()
-    elif infra_config().docker_repo_prefix.endswith("azurecr.io"):
+    elif infra_config().cloud_provider == "azure":
         docker_repo = ACRDockerRepository()
+    elif infra_config().cloud_provider == "onprem":
+        docker_repo = OnPremDockerRepository()
     else:
         docker_repo = ECRDockerRepository()
     while True:
