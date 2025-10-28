@@ -1,5 +1,6 @@
 FROM cgr.dev/scale.com/python-fips:3.10.19-dev
 WORKDIR /workspace
+USER root
 
 RUN apk update && apk add \
             htop \
@@ -47,5 +48,7 @@ COPY integration_tests /workspace/integration_tests
 WORKDIR /workspace
 ENV PYTHONPATH=/workspace
 ENV WORKSPACE=/workspace
+
+USER nonroot
 
 EXPOSE 5000
