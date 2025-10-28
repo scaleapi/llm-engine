@@ -43,7 +43,6 @@ RUN pip install -r requirements.txt --no-cache-dir
 RUN pip install -r requirements_override.txt --no-cache-dir
 COPY model-engine/setup.py /workspace/model-engine/setup.py
 COPY model-engine/model_engine_server /workspace/model-engine/model_engine_server
-COPY model-engine/service_configs /workspace/model-engine/service_configs
 RUN pip install -e .
 
 COPY integration_tests /workspace/integration_tests
