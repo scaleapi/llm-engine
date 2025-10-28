@@ -8,16 +8,12 @@ from model_engine_server.core.loggers import logger_name, make_logger
 logger = make_logger(logger_name())
 
 
-def is_onprem_mode() -> bool:
-    return os.getenv("DEPLOYMENT_MODE") == "onprem"
-
-
 def get_s3_client(kwargs: Optional[Dict[str, Any]] = None):
     kwargs = kwargs or {}
     session = boto3.Session()
     client_kwargs = {}
     
-    if is_onprem_mode():
+    if infra_config().cloud_provider == "onprem":
         logger.debug("Using on-prem/MinIO S3-compatible configuration")
         
         s3_endpoint = getattr(infra_config(), "s3_endpoint_url", None) or os.getenv(
@@ -45,7 +41,7 @@ def get_s3_resource(kwargs: Optional[Dict[str, Any]] = None):
     session = boto3.Session()
     resource_kwargs = {}
     
-    if is_onprem_mode():
+    if infra_config().cloud_provider == "onprem":
         logger.debug("Using on-prem/MinIO S3-compatible configuration")
         
         s3_endpoint = getattr(infra_config(), "s3_endpoint_url", None) or os.getenv(
