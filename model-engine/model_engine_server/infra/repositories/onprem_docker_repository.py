@@ -13,10 +13,17 @@ class OnPremDockerRepository(DockerRepository):
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
     ) -> bool:
         if not repository_name:
-            logger.debug(f"Direct image reference: {image_tag}, assuming exists")
+            logger.warning(
+                f"Direct image reference: {image_tag}, assuming exists. "
+                f"Image validation skipped for on-prem deployments."
+            )
             return True
 
-        logger.debug(f"Registry image: {repository_name}:{image_tag}, assuming exists")
+        logger.warning(
+            f"Registry image: {repository_name}:{image_tag}, assuming exists. "
+            f"Image validation skipped for on-prem deployments. "
+            f"Deployment will fail if image does not exist in registry."
+        )
         return True
 
     def get_image_url(self, image_tag: str, repository_name: str) -> str:

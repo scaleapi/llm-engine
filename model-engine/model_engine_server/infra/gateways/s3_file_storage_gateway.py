@@ -92,11 +92,12 @@ class S3FileStorageGateway(FileStorageGateway):
             files = []
             for obj in objects.get("Contents", []):
                 key = obj["Key"]
-                file_id = key[len(owner) :].lstrip("/")
-                if file_id:
-                    file_metadata = await self.get_file(owner, file_id)
-                    if file_metadata:
-                        files.append(file_metadata)
+                if key.startswith(owner):
+                    file_id = key[len(owner):].lstrip("/")
+                    if file_id:
+                        file_metadata = await self.get_file(owner, file_id)
+                        if file_metadata:
+                            files.append(file_metadata)
             logger.debug(f"Listed {len(files)} files for owner {owner}")
             return files
         except Exception as e:
