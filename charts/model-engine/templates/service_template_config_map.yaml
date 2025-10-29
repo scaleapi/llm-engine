@@ -1025,26 +1025,12 @@ data:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           serviceAccountName: {{ $launch_name }}
+          {{- if $require_aws_config }}
           volumes:
-            {{- if $require_aws_config }}
             - name: config-volume
               configMap:
                 name: {{ $aws_config_map_name }}
-            {{- end }}
-            {{- if $config_values }}
-            - name: service-config-volume
-              configMap:
-                name: {{ $launch_name }}-service-config
-                items:
-                  - key: launch_service_config
-                    path: service_config.yaml
-            - name: infra-service-config-volume
-              configMap:
-                name: {{ $launch_name }}-service-config
-                items:
-                  - key: infra_service_config
-                    path: config.yaml
-            {{- end }}
+          {{- end }}
           containers:
             - name: main
               image: {{ $gateway_repository }}:${GIT_TAG}
@@ -1091,18 +1077,12 @@ data:
                   cpu: 4
                   memory: 32Gi
                   ephemeral-storage: 30Gi
+              {{- if $require_aws_config }}
               volumeMounts:
-                {{- if $require_aws_config }}
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
-                {{- end }}
-                {{- if $config_values }}
-                - name: service-config-volume
-                  mountPath: /workspace/model-engine/service_configs
-                - name: infra-service-config-volume
-                  mountPath: /workspace/model-engine/model_engine_server/core/configs
-                {{- end }}
+              {{- end }}
   {{- range $device := tuple "cpu" "gpu" }}
   docker-image-batch-job-{{- $device }}.yaml: |-
     apiVersion: batch/v1
@@ -1154,14 +1134,6 @@ data:
               configMap:
                 name: {{ $aws_config_map_name }}
             {{- end }}
-            {{- if $config_values }}
-            - name: service-config-volume
-              configMap:
-                name: {{ $launch_name }}-service-config
-                items:
-                  - key: launch_service_config
-                    path: service_config.yaml
-            {{- end }}
             - name: workdir
               emptyDir: {}
             - name: dshm
@@ -1206,10 +1178,6 @@ data:
                   mountPath: /opt/.aws/config
                   subPath: config
                 {{- end }}
-                {{- if $config_values }}
-                - name: service-config-volume
-                  mountPath: /workspace/model-engine/service_configs
-                {{- end }}
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
                 - mountPath: /dev/shm
@@ -1243,10 +1211,6 @@ data:
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
-                {{- end }}
-                {{- if $config_values }}
-                - name: service-config-volume
-                  mountPath: /workspace/model-engine/service_configs
                 {{- end }}
                 - name: workdir
                   mountPath: ${MOUNT_PATH}

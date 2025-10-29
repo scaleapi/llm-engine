@@ -78,7 +78,7 @@ CREATE_MODEL_BUNDLE_REQUEST_RUNNABLE_IMAGE = {
     "flavor": {
         "flavor": "streaming_enhanced_runnable_image",
         "repository": "model-engine",
-        "tag": os.environ.get("GIT_TAG"),
+        "tag": "830c81ecba2a147022e504917c6ce18b00c2af44",
         "command": [
             "dumb-init",
             "--",
@@ -269,7 +269,7 @@ CREATE_BATCH_JOB_REQUEST: Dict[str, Any] = {
 CREATE_DOCKER_IMAGE_BATCH_JOB_BUNDLE_REQUEST: Dict[str, Any] = {
     "name": format_name("di_batch_job_bundle_1"),
     "image_repository": "model-engine",
-    "image_tag": os.environ.get("GIT_TAG"),
+    "image_tag": "830c81ecba2a147022e504917c6ce18b00c2af44",
     "command": ["jq", ".", "/launch_mount_location/file"],
     "env": {"ENV1": "VAL1"},
     "mount_location": "/launch_mount_location/file",
@@ -289,7 +289,7 @@ CREATE_DOCKER_IMAGE_BATCH_JOB_REQUEST: Dict[str, Any] = {
 CREATE_FINE_TUNE_DI_BATCH_JOB_BUNDLE_REQUEST: Dict[str, Any] = {
     "name": format_name("fine_tune_di_batch_job_bundle_1"),
     "image_repository": "model-engine",
-    "image_tag": os.environ.get("GIT_TAG"),
+    "image_tag": "830c81ecba2a147022e504917c6ce18b00c2af44",
     "command": ["cat", "/launch_mount_location/file"],
     "env": {"ENV1": "VAL1"},
     "mount_location": "/launch_mount_location/file",
