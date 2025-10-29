@@ -160,9 +160,6 @@ jobs:
           command: |
             # Load the base image for gateway/init containers
             minikube --logtostderr -v 1 image load model-engine:$CIRCLE_SHA1
-            # Tag and load with ECR prefix for batch job containers
-            docker tag model-engine:$CIRCLE_SHA1 $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/model-engine:$CIRCLE_SHA1
-            minikube --logtostderr -v 1 image load $CIRCLECI_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/model-engine:$CIRCLE_SHA1
       - run:
           name: Pre-load integration test images to minikube
           command: |
