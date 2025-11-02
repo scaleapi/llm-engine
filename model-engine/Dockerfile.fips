@@ -1,42 +1,37 @@
-# syntax = docker/dockerfile:experimental
-
-FROM python:3.10.15-slim as model-engine
+FROM cgr.dev/scale.com/python-fips:3.10.19-dev
 WORKDIR /workspace
+USER root
 
-RUN apt-get update && apt-get install -y \
-  apt-utils \
-  dumb-init \
-  git \
-  ssh \
-  htop \
-  iftop \
-  vim \
-  curl \
-  procps \
-  libcurl4-openssl-dev \
-  libssl-dev \
-  python3-dev \
-  gcc \
-  build-essential \
-  telnet \
-  && rm -rf /var/lib/apt/lists/*
+RUN apk update && apk add \
+            htop \
+            dumb-init \
+            libssh \
+            openssh-client \
+            iftop \
+            curl \
+            curl-dev \
+            procps \
+            libcurl-openssl4 \
+            vim \
+            kubectl \
+            jq \
+            gcc \
+            glibc-dev \
+            python-3.10-dev \
+            libffi-dev \
+            openssl-dev \
+            build-base \
+            postgresql-dev \
+            libpq-16
 
 RUN curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64
 RUN chmod +x /bin/aws-iam-authenticator
 
-# Install kubectl
-RUN curl -LO "https://dl.k8s.io/release/v1.23.13/bin/linux/amd64/kubectl" \
-  && chmod +x kubectl \
-  && mv kubectl /usr/local/bin/kubectl
-
-# Pin pip version
 RUN pip install pip==24.2
 RUN chmod -R 777 /workspace
 
-# Install AWS CLI
 RUN pip install awscli==1.34.28 --no-cache-dir
 
-## grab model_engine_server project (w/ requirements install layer caching)
 WORKDIR /workspace/model-engine/
 COPY model-engine/requirements-test.txt /workspace/model-engine/requirements-test.txt
 COPY model-engine/requirements.txt /workspace/model-engine/requirements.txt
@@ -51,7 +46,9 @@ RUN pip install -e .
 COPY integration_tests /workspace/integration_tests
 
 WORKDIR /workspace
-ENV PYTHONPATH /workspace
-ENV WORKSPACE /workspace
+ENV PYTHONPATH=/workspace
+ENV WORKSPACE=/workspace
+
+USER nonroot
 
 EXPOSE 5000
