@@ -132,6 +132,8 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
               {{- $sync_forwarder_template_env | nindent 14 }}
               readinessProbe:
                 httpGet:
@@ -184,6 +186,10 @@ data:
                 - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
                 - --set
                 - "forwarder.stream.forwarder_type=${FORWARDER_TYPE}"
+                - --set
+                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
+                - --set
+                - "forwarder.stream.routes=${FORWARDER_STREAMING_ROUTES}"
               {{- $sync_forwarder_template_env | nindent 14 }}
               readinessProbe:
                 httpGet:
@@ -564,6 +570,8 @@ data:
                   - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                   - --set
                   - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                  - --set
+                  - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                 {{- $sync_forwarder_template_env | nindent 16 }}
                 readinessProbe:
                   httpGet:
@@ -616,6 +624,10 @@ data:
                   - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
                   - --set
                   - "forwarder.stream.forwarder_type=${FORWARDER_TYPE}"
+                  - --set
+                  - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
+                  - --set
+                  - "forwarder.stream.routes=${FORWARDER_STREAMING_ROUTES}"
                 {{- $sync_forwarder_template_env | nindent 16 }}
                 readinessProbe:
                   httpGet:
