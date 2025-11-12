@@ -31,9 +31,9 @@ class OnPremDockerRepository(DockerRepository):
             logger.debug(f"Using direct image reference: {image_tag}")
             return image_tag
 
-        image_url = f"{infra_config().docker_repo_prefix}/{repository_name}:{image_tag}"
-        logger.debug(f"Constructed image URL: {image_url}")
-        return image_url
+        full_image_ref = f"{repository_name}:{image_tag}"
+        logger.debug(f"Using image reference: {full_image_ref}")
+        return full_image_ref
 
     def build_image(self, image_params: BuildImageRequest) -> BuildImageResponse:
         raise NotImplementedError(
