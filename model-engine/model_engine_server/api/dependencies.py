@@ -94,6 +94,9 @@ from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_d
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
 )
+from model_engine_server.infra.gateways.resources.onprem_queue_endpoint_resource_delegate import (
+    OnPremQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
     QueueEndpointResourceDelegate,
 )
@@ -114,6 +117,7 @@ from model_engine_server.infra.repositories import (
     FakeDockerRepository,
     LiveTokenizerRepository,
     LLMFineTuneRepository,
+    OnPremDockerRepository,
     RedisModelEndpointCacheRepository,
     S3FileLLMFineTuneEventsRepository,
     S3FileLLMFineTuneRepository,
@@ -225,6 +229,8 @@ def _get_external_interfaces(
         queue_delegate = FakeQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "onprem":
+        queue_delegate = OnPremQueueEndpointResourceDelegate()
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
@@ -238,6 +244,9 @@ def _get_external_interfaces(
     elif infra_config().cloud_provider == "azure":
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
+    elif infra_config().cloud_provider == "onprem":
+        inference_task_queue_gateway = redis_task_queue_gateway
+        infra_task_queue_gateway = redis_task_queue_gateway
     elif infra_config().celery_broker_type_redis:
         inference_task_queue_gateway = redis_task_queue_gateway
         infra_task_queue_gateway = redis_task_queue_gateway
@@ -274,16 +283,12 @@ def _get_external_interfaces(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         use_asyncio=(not CIRCLECI),
     )
-    filesystem_gateway = (
-        ABSFilesystemGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3FilesystemGateway()
-    )
-    llm_artifact_gateway = (
-        ABSLLMArtifactGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3LLMArtifactGateway()
-    )
+    if infra_config().cloud_provider == "azure":
+        filesystem_gateway = ABSFilesystemGateway()
+        llm_artifact_gateway = ABSLLMArtifactGateway()
+    else:
+        filesystem_gateway = S3FilesystemGateway()
+        llm_artifact_gateway = S3LLMArtifactGateway()
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
@@ -328,18 +333,11 @@ def _get_external_interfaces(
         hmi_config.cloud_file_llm_fine_tune_repository,
     )
     if infra_config().cloud_provider == "azure":
-        llm_fine_tune_repository = ABSFileLLMFineTuneRepository(
-            file_path=file_path,
-        )
+        llm_fine_tune_repository = ABSFileLLMFineTuneRepository(file_path=file_path)
+        llm_fine_tune_events_repository = ABSFileLLMFineTuneEventsRepository()
     else:
-        llm_fine_tune_repository = S3FileLLMFineTuneRepository(
-            file_path=file_path,
-        )
-    llm_fine_tune_events_repository = (
-        ABSFileLLMFineTuneEventsRepository()
-        if infra_config().cloud_provider == "azure"
-        else S3FileLLMFineTuneEventsRepository()
-    )
+        llm_fine_tune_repository = S3FileLLMFineTuneRepository(file_path=file_path)
+        llm_fine_tune_events_repository = S3FileLLMFineTuneEventsRepository()
     llm_fine_tuning_service = DockerImageBatchJobLLMFineTuningService(
         docker_image_batch_job_gateway=docker_image_batch_job_gateway,
         docker_image_batch_job_bundle_repo=docker_image_batch_job_bundle_repository,
@@ -350,17 +348,18 @@ def _get_external_interfaces(
         docker_image_batch_job_gateway=docker_image_batch_job_gateway
     )
 
-    file_storage_gateway = (
-        ABSFileStorageGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3FileStorageGateway()
-    )
+    if infra_config().cloud_provider == "azure":
+        file_storage_gateway = ABSFileStorageGateway()
+    else:
+        file_storage_gateway = S3FileStorageGateway()
 
     docker_repository: DockerRepository
     if CIRCLECI:
         docker_repository = FakeDockerRepository()
-    elif infra_config().docker_repo_prefix.endswith("azurecr.io"):
+    elif infra_config().cloud_provider == "azure":
         docker_repository = ACRDockerRepository()
+    elif infra_config().cloud_provider == "onprem":
+        docker_repository = OnPremDockerRepository()
     else:
         docker_repository = ECRDockerRepository()
 
