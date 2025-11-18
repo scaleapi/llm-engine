@@ -603,6 +603,24 @@ class DeleteModelEndpointByIdV1UseCase:
             model_endpoint_id=model_endpoint_id
         )
         if model_endpoint is None:
+            # Check for orphaned K8s resources
+            from model_engine_server.infra.services.live_model_endpoint_service import (
+                LiveModelEndpointService,
+            )
+
+            if isinstance(self.model_endpoint_service, LiveModelEndpointService):
+                owner = await self.model_endpoint_service._cleanup_orphaned_k8s_resources(
+                    model_endpoint_id
+                )
+                if owner is not None:
+                    # Verify authorization - user must match owner (created_by from K8s labels)
+                    # Note: For team-based auth, we'd need to look up team_id from user_id,
+                    # but for orphan cleanup, user_id match is sufficient
+                    if user.user_id != owner and not user.is_privileged_user:
+                        raise ObjectNotAuthorizedException
+                    # Resources were cleaned up successfully
+                    return DeleteModelEndpointV1Response(deleted=True)
+            # No orphaned resources found
             raise ObjectNotFoundException
         if not self.authz_module.check_access_write_owned_entity(user, model_endpoint):
             raise ObjectNotAuthorizedException

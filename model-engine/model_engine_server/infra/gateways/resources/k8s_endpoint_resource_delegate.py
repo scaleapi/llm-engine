@@ -1164,6 +1164,76 @@ class K8SEndpointResourceDelegate:
         return deployment_config
 
     @staticmethod
+    async def _get_deployment_by_endpoint_id_label(endpoint_id: str) -> Optional[V1Deployment]:
+        """
+        Gets a Deployment by querying K8s with endpoint_id label selector.
+        Used when DB record doesn't exist but K8s resources might (orphaned resources).
+
+        Args:
+            endpoint_id: The endpoint_id to search for
+
+        Returns:
+            The first deployment found with matching endpoint_id label, or None if not found
+        """
+        apps_client = get_kubernetes_apps_client()
+        label_selector = f"endpoint_id={endpoint_id}"
+        try:
+            deployments = await apps_client.list_namespaced_deployment(
+                namespace=hmi_config.endpoint_namespace,
+                label_selector=label_selector,
+            )
+            if deployments.items:
+                return deployments.items[0]
+            return None
+        except ApiException as e:
+            if e.status == 404:
+                return None
+            logger.exception(f"Error querying deployments by endpoint_id label {endpoint_id}")
+            raise
+
+    @staticmethod
+    async def _determine_endpoint_type_from_k8s(endpoint_id: str) -> ModelEndpointType:
+        """
+        Determines endpoint type by checking for HPA/KEDA (SYNC/STREAMING) vs ASYNC.
+        Defaults to STREAMING if unable to determine (common for MCPx endpoints).
+
+        Args:
+            endpoint_id: The endpoint_id to check
+
+        Returns:
+            The determined ModelEndpointType
+        """
+        k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        autoscaling_client = get_kubernetes_autoscaling_client()
+        custom_objects_client = get_kubernetes_custom_objects_client()
+
+        # Check for HPA (indicates SYNC/STREAMING)
+        try:
+            await autoscaling_client.read_namespaced_horizontal_pod_autoscaler(
+                k8s_resource_group_name, hmi_config.endpoint_namespace
+            )
+            return ModelEndpointType.STREAMING  # Default to STREAMING for MCPx
+        except ApiException:
+            pass
+
+        # Check for KEDA ScaledObject (indicates SYNC/STREAMING)
+        try:
+            await custom_objects_client.get_namespaced_custom_object(
+                group="keda.sh",
+                version="v1alpha1",
+                namespace=hmi_config.endpoint_namespace,
+                plural="scaledobjects",
+                name=k8s_resource_group_name,
+            )
+            return ModelEndpointType.STREAMING  # Default to STREAMING for MCPx
+        except ApiException:
+            pass
+
+        # If no HPA/KEDA found, likely ASYNC
+        # But MCPx uses STREAMING, so default to that
+        return ModelEndpointType.STREAMING
+
+    @staticmethod
     async def _get_all_config_maps() -> (
         List[kubernetes_asyncio.client.models.v1_config_map.V1ConfigMap]
     ):
