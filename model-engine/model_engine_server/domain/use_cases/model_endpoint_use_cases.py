@@ -313,6 +313,7 @@ class CreateModelEndpointV1UseCase:
             default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
+            queue_message_timeout_duration=request.queue_message_timeout_duration,
         )
         _handle_post_inference_hooks(
             created_by=user.user_id,

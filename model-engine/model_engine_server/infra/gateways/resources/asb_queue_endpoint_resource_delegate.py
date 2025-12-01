@@ -1,5 +1,6 @@
 import os
-from typing import Any, Dict
+from datetime import timedelta
+from typing import Any, Dict, Optional
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
@@ -32,13 +33,36 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> QueueInfo:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
+        timeout_duration = queue_message_timeout_duration or 60  # Default to 60 seconds
+
+        # Validation: Azure Service Bus lock duration must be <= 5 minutes (300s)
+        if timeout_duration > 300:
+            raise ValueError(f"queue_message_timeout_duration ({timeout_duration}s) exceeds Azure Service Bus maximum of 300 seconds")
+        
         with _get_servicebus_administration_client() as client:
             try:
+                # First, try to create the queue with default properties
                 client.create_queue(queue_name=queue_name)
+                
+                # Then update the queue properties to set custom lock duration
+                queue_properties = client.get_queue(queue_name)
+                queue_properties.lock_duration = timedelta(seconds=timeout_duration)
+                client.update_queue(queue_properties)
+                
             except ResourceExistsError:
-                pass
+                # Queue already exists, update its properties if needed
+                try:
+                    queue_properties = client.get_queue(queue_name)
+                    # Only update if the lock duration is different
+                    if queue_properties.lock_duration != timedelta(seconds=timeout_duration):
+                        queue_properties.lock_duration = timedelta(seconds=timeout_duration)
+                        client.update_queue(queue_properties)
+                except Exception as e:
+                    # If we can't update properties, log but don't fail
+                    logger.warning(f"Could not update queue properties for {queue_name}: {e}")
 
             return QueueInfo(queue_name, None)
 

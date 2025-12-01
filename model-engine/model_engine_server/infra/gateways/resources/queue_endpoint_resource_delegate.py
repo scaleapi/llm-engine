@@ -24,9 +24,15 @@ class QueueEndpointResourceDelegate(ABC):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> QueueInfo:
         """
         Creates a queue associated with the given endpoint_id. Other fields are set as tags on the queue.
+        
+        Args:
+            queue_message_timeout_duration: Optional timeout duration in seconds for queue messages.
+                For SQS, this sets the VisibilityTimeout.
+                For Azure Service Bus, this sets the lock_duration (max 300 seconds).
         """
 
     @abstractmethod

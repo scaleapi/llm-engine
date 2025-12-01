@@ -90,6 +90,7 @@ class ModelEndpointService(ABC):
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> ModelEndpointRecord:
         """
         Creates a model endpoint.

@@ -70,6 +70,7 @@ class CreateLLMModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = True  # LLM endpoints are public by default.
+    queue_message_timeout_duration: Optional[int] = Field(default=None, ge=1)
 
 
 class CreateLLMModelEndpointV1Response(BaseModel):
@@ -137,6 +138,7 @@ class UpdateLLMModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = None
+    queue_message_timeout_duration: Optional[int] = Field(default=None, ge=1)
 
 
 class UpdateLLMModelEndpointV1Response(BaseModel):
