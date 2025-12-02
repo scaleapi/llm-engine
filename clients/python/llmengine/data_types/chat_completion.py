@@ -5,6 +5,7 @@ from .gen.openai import (
     CreateChatCompletionRequest,
     CreateChatCompletionResponse,
     CreateChatCompletionStreamResponse,
+    ModelIdsShared,
 )
 from .pydantic_types import BaseModel, Field
 from .vllm import VLLMChatCompletionAdditionalParams
@@ -14,7 +15,7 @@ UNSUPPORTED_FIELDS = ["service_tier"]
 
 
 class ChatCompletionV2Request(CreateChatCompletionRequest, VLLMChatCompletionAdditionalParams):
-    model: str = Field(
+    model: ModelIdsShared = Field(
         description="ID of the model to use.",
         examples=["mixtral-8x7b-instruct"],
     )
