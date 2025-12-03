@@ -6,6 +6,11 @@ metadata:
   name: {{ include "modelEngine.fullname" . }}
   labels:
     {{- include "modelEngine.labels" . | nindent 4 }}
+  {{- if .Values.serviceIdentifier }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-1"
+  {{- end }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
