@@ -117,7 +117,7 @@ if os.path.exists(INTERNAL_DOCS_PATH):
         StaticFiles(directory=INTERNAL_DOCS_PATH, html=True),
         name="python-docs",
     )
-    app.mount(
+    app.mount(  # pragma: no cover
         "/static-docs",
         StaticFiles(directory=INTERNAL_DOCS_PATH),
         name="static-docs",
