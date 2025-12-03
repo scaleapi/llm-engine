@@ -125,7 +125,7 @@ if os.path.exists(INTERNAL_DOCS_PATH):
 
 
 @app.get("/api", include_in_schema=False)
-async def redoc_html():
+async def redoc_html():  # pragma: no cover
     return get_redoc_html(
         openapi_url=app.openapi_url,
         title=app.title + " - ReDoc",
