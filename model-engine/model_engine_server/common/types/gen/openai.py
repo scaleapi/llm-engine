@@ -16492,8 +16492,8 @@ class VectorStoreSearchRequest(BaseModel):
     ] = None
 
 
-class Filters2(RootModel[Union[ComparisonFilter, CompoundFilter]]):
-    root: Union[ComparisonFilter, CompoundFilter]
+class Filters2(BaseModel):
+    root: any
 
 
 class FileSearchTool(BaseModel):
