@@ -16315,36 +16315,8 @@ class TextResponseFormatConfiguration(
     ]
 
 
-class ToolChoiceParam(
-    RootModel[
-        Union[
-            ToolChoiceOptions,
-            ToolChoiceAllowed,
-            ToolChoiceTypes,
-            ToolChoiceFunction,
-            ToolChoiceMCP,
-            ToolChoiceCustom,
-            SpecificApplyPatchParam,
-            SpecificFunctionShellParam,
-        ]
-    ]
-):
-    root: Annotated[
-        Union[
-            ToolChoiceOptions,
-            ToolChoiceAllowed,
-            ToolChoiceTypes,
-            ToolChoiceFunction,
-            ToolChoiceMCP,
-            ToolChoiceCustom,
-            SpecificApplyPatchParam,
-            SpecificFunctionShellParam,
-        ],
-        Field(
-            description='How the model should select which tool (or tools) to use when generating\na response. See the `tools` parameter to see how to specify which tools\nthe model can call.\n',
-            discriminator='type',
-        ),
-    ]
+class ToolChoiceParam(BaseModel):
+    root: Any
 
 
 class TranscriptTextDoneEvent(BaseModel):
