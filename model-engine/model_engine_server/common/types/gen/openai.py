@@ -13772,25 +13772,6 @@ class ComparisonFilter(BaseModel):
     ]
 
 
-class Filters(BaseModel):
-    root: Any
-
-
-class CompoundFilter(BaseModel):
-    model_config = ConfigDict(
-        extra='forbid',
-    )
-    type: Annotated[
-        Literal['and', 'or'], Field(description='Type of operation: `and` or `or`.')
-    ]
-    filters: Annotated[
-        List[Filters],
-        Field(
-            description='Array of filters to combine. Items can be `ComparisonFilter` or `CompoundFilter`.'
-        ),
-    ]
-
-
 class ComputerToolCallOutput(BaseModel):
     type: Annotated[
         Literal['computer_call_output'],
@@ -16315,10 +16296,6 @@ class TextResponseFormatConfiguration(
     ]
 
 
-class ToolChoiceParam(BaseModel):
-    root: Any
-
-
 class TranscriptTextDoneEvent(BaseModel):
     type: Annotated[
         Literal['TranscriptTextDoneEvent'],
@@ -16455,10 +16432,6 @@ class VectorStoreSearchRequest(BaseModel):
             le=50,
         ),
     ] = 10
-    filters: Annotated[
-        Optional[Union[ComparisonFilter, CompoundFilter]],
-        Field(description='A filter to apply based on file attributes.'),
-    ] = None
     ranking_options: Annotated[
         Optional[RankingOptions], Field(description='Ranking options for search.')
     ] = None
@@ -20285,7 +20258,6 @@ class ResponseProperties(BaseModel):
     max_tool_calls: Optional[int] = None
     text: Optional[ResponseTextParam] = None
     tools: Optional[ToolsArray] = None
-    tool_choice: Optional[ToolChoiceParam] = None
     prompt: Optional[Prompt2] = None
     truncation: Optional[Literal['auto', 'disabled']] = None
 
@@ -21096,7 +21068,6 @@ class TokenCountsBody(BaseModel):
     ] = None
     instructions: Optional[str] = None
     conversation: Optional[ConversationParam] = None
-    tool_choice: Optional[ToolChoiceParam] = None
     parallel_tool_calls: Optional[bool] = None
 
 
