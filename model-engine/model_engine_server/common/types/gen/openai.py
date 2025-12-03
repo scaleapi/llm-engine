@@ -16437,10 +16437,6 @@ class VectorStoreSearchRequest(BaseModel):
     ] = None
 
 
-class Filters2(BaseModel):
-    root: any
-
-
 class FileSearchTool(BaseModel):
     type: Annotated[
         Literal['FileSearchTool'],
@@ -16458,7 +16454,6 @@ class FileSearchTool(BaseModel):
     ranking_options: Annotated[
         Optional[RankingOptions1], Field(description='Ranking options for search.')
     ] = None
-    filters: Optional[Filters2] = None
 
 
 class RunStepDetailsToolCall(
