@@ -13772,8 +13772,8 @@ class ComparisonFilter(BaseModel):
     ]
 
 
-class Filters(RootModel[Any]):
-    root: Annotated[Any, Field(discriminator='type')]
+class Filters(BaseModel):
+    root: Any
 
 
 class CompoundFilter(BaseModel):
