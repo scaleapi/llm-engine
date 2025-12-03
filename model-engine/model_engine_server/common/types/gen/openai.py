@@ -18953,7 +18953,7 @@ class CreateChatCompletionRequest(CreateModelResponseProperties):
         ),
     ]
     model: Annotated[
-        ModelIdsShared,
+        str,
         Field(
             description='Model ID used to generate the response, like `gpt-4o` or `o3`. OpenAI\noffers a wide range of models with different capabilities, performance\ncharacteristics, and price points. Refer to the [model guide](https://platform.openai.com/docs/models)\nto browse and compare available models.\n'
         ),
