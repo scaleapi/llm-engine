@@ -13772,8 +13772,8 @@ class ComparisonFilter(BaseModel):
     ]
 
 
-class Filters(RootModel[Union[ComparisonFilter, Any]]):
-    root: Annotated[Union[ComparisonFilter, Any], Field(discriminator='type')]
+class Filters(RootModel[Any]):
+    root: Annotated[Any, Field(discriminator='type')]
 
 
 class CompoundFilter(BaseModel):
