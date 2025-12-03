@@ -6,7 +6,13 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
-from model_engine_server.common.pydantic_types import AnyUrl, BaseModel, ConfigDict, Field, RootModel
+from model_engine_server.common.pydantic_types import (
+    AnyUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+)
 
 
 class AddUploadPartRequest(BaseModel):

@@ -8,11 +8,13 @@ from __future__ import annotations
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 import pydantic
-PYDANTIC_V2 = hasattr(pydantic, "VERSION") and pydantic.VERSION.startswith("2.")
-if PYDANTIC_V2:
+
+# isort: off
+if hasattr(pydantic, "VERSION") and pydantic.VERSION.startswith("2."):
     from pydantic.v1 import AnyUrl, BaseModel, Extra, Field  # noqa: F401
 else:
     from pydantic import AnyUrl, BaseModel, Extra, Field  # type: ignore # noqa: F401
+# isort: on
 
 
 class AddUploadPartRequest(BaseModel):
