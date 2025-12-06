@@ -19,7 +19,7 @@ import asyncio
 import json
 from datetime import datetime
 
-from monitoring_service import (
+from model_engine_server.monitoring_service import (
     Metric,
     MetricType,
     InMemoryMetricsCollector,

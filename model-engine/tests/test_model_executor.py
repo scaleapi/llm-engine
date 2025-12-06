@@ -17,7 +17,7 @@ import pytest
 import asyncio
 from datetime import datetime
 
-from model_executor import (
+from model_engine_server.model_executor import (
     ModelExecutor,
     MockModelExecutor,
     KubernetesModelExecutor,

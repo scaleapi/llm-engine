@@ -13,8 +13,8 @@ import pytest
 import asyncio
 from datetime import datetime
 
-from controller_with_monitoring import EngineControllerWithMonitoring
-from model_executor import MockModelExecutor, JobStatus
+from model_engine_server.controller_with_monitoring import EngineControllerWithMonitoring
+from model_engine_server.model_executor import MockModelExecutor, JobStatus
 
 
 class TestControllerIntegration:

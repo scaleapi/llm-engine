@@ -35,7 +35,7 @@ from dataclasses import dataclass
 from typing import Dict, Any, Optional
 from enum import Enum
 
-from model_executor import (
+from model_engine_server.model_executor import (
     ModelExecutor,
     MockModelExecutor,
     FineTuneRequest,
@@ -43,7 +43,7 @@ from model_executor import (
     JobStatus,
     JobResult
 )
-from monitoring_service import (
+from model_engine_server.monitoring_service import (
     MonitoringService,
     Metric,
     MetricType
