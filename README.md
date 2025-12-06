@@ -11,6 +11,17 @@ Scale's LLM Engine is the easiest way to customize and serve LLMs. In LLM Engine
 
 ---
 
+## 📚 Documentation & Deployment Guides
+
+**New in this fork**: Comprehensive deployment documentation for all scenarios:
+
+- **[Deployment Comparison](docs/DEPLOYMENT_COMPARISON.md)** - Decision tree and detailed comparison of Docker Compose, Minikube, and AWS EKS deployments
+- **[Local Deployment Guide](docs/LOCAL_DEPLOYMENT_GUIDE.md)** - Step-by-step instructions for running LLM Engine on your local machine
+- **[Expert Assessment](docs/EXPERT_ASSESSMENT.md)** - Production-grade analysis of deployment options, costs, and trade-offs
+- **[Docker Deployment Success](docs/DOCKER_DEPLOYMENT_SUCCESS.md)** - Validation results and testing guide for Docker Compose deployment
+
+---
+
 ## 🎯 Enhanced Features (Community Contributions by @Shreyasg13)
 
 This fork includes **production-ready enhancements** with comprehensive monitoring, batch job orchestration, and full test coverage:
