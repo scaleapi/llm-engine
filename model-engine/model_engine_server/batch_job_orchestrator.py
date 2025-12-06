@@ -244,7 +244,7 @@ class BatchJobOrchestrator:
         self,
         executor: ModelExecutor,
         max_concurrent_jobs: int = 10,
-        poll_interval: float = 5.0
+        poll_interval: float = 0.1
     ):
         self.executor = executor
         self.queue = JobQueue(max_concurrent_jobs)
@@ -365,6 +365,8 @@ class BatchJobOrchestrator:
                 if job:
                     # Execute job in background
                     asyncio.create_task(self._execute_job(job))
+                    # Short sleep to allow task to start
+                    await asyncio.sleep(0.01)
                 else:
                     # No jobs or at capacity, wait
                     await asyncio.sleep(self.poll_interval)
