@@ -95,6 +95,7 @@ from model_engine_server.domain.exceptions import (
     InvalidRequestException,
     LatestImageTagNotFoundException,
     ObjectHasInvalidValueException,
+    ObjectNoLongerAvailableException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
     UpstreamServiceError,
@@ -2777,6 +2778,14 @@ class CompletionSyncV2UseCase:
 
         model_endpoint = model_endpoints[0]
 
+        if (
+            model_endpoint.infra_state is not None
+            and model_endpoint.infra_state.deployment_state.max_workers == 0
+        ):
+            raise ObjectNoLongerAvailableException(
+                f"The endpoint {model_endpoint_name} is deprecated. max_workers is 0.",
+            )
+
         if not self.authz_module.check_access_read_owned_entity(
             user, model_endpoint.record
         ) and not self.authz_module.check_endpoint_public_inference_for_user(
@@ -2885,6 +2894,14 @@ class CompletionStreamV2UseCase:
         add_trace_model_name(model_endpoint_name)
 
         model_endpoint = model_endpoints[0]
+
+        if (
+            model_endpoint.infra_state is not None
+            and model_endpoint.infra_state.deployment_state.max_workers == 0
+        ):
+            raise ObjectNoLongerAvailableException(
+                f"The endpoint {model_endpoint_name} is deprecated. max_workers is 0.",
+            )
 
         if not self.authz_module.check_access_read_owned_entity(
             user, model_endpoint.record
@@ -3054,7 +3071,7 @@ class ChatCompletionSyncV2UseCase:
             model_endpoint.infra_state is not None
             and model_endpoint.infra_state.deployment_state.max_workers == 0
         ):
-            raise ObjectHasInvalidValueException(
+            raise ObjectNoLongerAvailableException(
                 f"The endpoint {model_endpoint_name} is deprecated. max_workers is 0.",
             )
 
@@ -3166,6 +3183,14 @@ class ChatCompletionStreamV2UseCase:
         add_trace_model_name(model_endpoint_name)
 
         model_endpoint = model_endpoints[0]
+
+        if (
+            model_endpoint.infra_state is not None
+            and model_endpoint.infra_state.deployment_state.max_workers == 0
+        ):
+            raise ObjectNoLongerAvailableException(
+                f"The endpoint {model_endpoint_name} is deprecated. max_workers is 0.",
+            )
 
         if not self.authz_module.check_access_read_owned_entity(
             user, model_endpoint.record
