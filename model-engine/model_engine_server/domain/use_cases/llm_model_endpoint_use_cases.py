@@ -3050,7 +3050,10 @@ class ChatCompletionSyncV2UseCase:
 
         model_endpoint = model_endpoints[0]
 
-        if model_endpoint.infra_state.deployment_state.max_workers == 0:
+        if (
+            model_endpoint.infra_state is not None
+            and model_endpoint.infra_state.deployment_state.max_workers == 0
+        ):
             raise ObjectHasInvalidValueException(
                 f"The endpoint {model_endpoint_name} is deprecated. max_workers is 0.",
             )
