@@ -125,10 +125,6 @@ def validate_deployment_resources(
             f"Requested max workers {max_workers} too high"
         )
 
-    if max_workers is not None and max_workers == 0:
-        raise EndpointResourceInvalidRequestException(
-            "Max workers is 0. The endpoint is deprecated."
-        )
 
 def validate_concurrent_requests_per_worker(
     concurrent_requests_per_worker: Optional[int],

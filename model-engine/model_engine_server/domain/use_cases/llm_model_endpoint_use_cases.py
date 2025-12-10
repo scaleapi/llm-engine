@@ -3050,6 +3050,11 @@ class ChatCompletionSyncV2UseCase:
 
         model_endpoint = model_endpoints[0]
 
+        if model_endpoint.infra_state.deployment_state.max_workers == 0:
+            raise ObjectHasInvalidValueException(
+                f"The endpoint {model_endpoint_name} is deprecated. max_workers is 0.",
+            )
+
         if not self.authz_module.check_access_read_owned_entity(
             user, model_endpoint.record
         ) and not self.authz_module.check_endpoint_public_inference_for_user(
