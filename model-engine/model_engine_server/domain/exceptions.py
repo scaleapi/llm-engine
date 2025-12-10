@@ -31,6 +31,12 @@ class ObjectHasInvalidValueException(DomainException, ValueError):
     """
 
 
+class ObjectNoLongerAvailableException(DomainException):
+    """
+    Thrown when a user tries to access an object that is no longer available.
+    """
+
+
 @dataclass
 class DockerImageNotFoundException(DomainException):
     """

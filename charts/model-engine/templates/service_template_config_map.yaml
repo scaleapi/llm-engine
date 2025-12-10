@@ -189,7 +189,7 @@ data:
                 - --set
                 - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                 - --set
-                - "forwarder.stream.routes=${FORWARDER_STREAMING_ROUTES}"
+                - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
               {{- $sync_forwarder_template_env | nindent 14 }}
               readinessProbe:
                 httpGet:
@@ -627,7 +627,7 @@ data:
                   - --set
                   - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                   - --set
-                  - "forwarder.stream.routes=${FORWARDER_STREAMING_ROUTES}"
+                  - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
                 {{- $sync_forwarder_template_env | nindent 16 }}
                 readinessProbe:
                   httpGet:
