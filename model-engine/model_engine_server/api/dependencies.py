@@ -283,6 +283,8 @@ def _get_external_interfaces(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         use_asyncio=(not CIRCLECI),
     )
+    filesystem_gateway: FilesystemGateway
+    llm_artifact_gateway: LLMArtifactGateway
     if infra_config().cloud_provider == "azure":
         filesystem_gateway = ABSFilesystemGateway()
         llm_artifact_gateway = ABSLLMArtifactGateway()
@@ -328,6 +330,7 @@ def _get_external_interfaces(
     cron_job_gateway = LiveCronJobGateway()
 
     llm_fine_tune_repository: LLMFineTuneRepository
+    llm_fine_tune_events_repository: LLMFineTuneEventsRepository
     file_path = os.getenv(
         "CLOUD_FILE_LLM_FINE_TUNE_REPOSITORY",
         hmi_config.cloud_file_llm_fine_tune_repository,
@@ -348,6 +351,7 @@ def _get_external_interfaces(
         docker_image_batch_job_gateway=docker_image_batch_job_gateway
     )
 
+    file_storage_gateway: FileStorageGateway
     if infra_config().cloud_provider == "azure":
         file_storage_gateway = ABSFileStorageGateway()
     else:
