@@ -1,7 +1,6 @@
 from typing import Optional
 
 from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
-from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.repositories import DockerRepository
 
