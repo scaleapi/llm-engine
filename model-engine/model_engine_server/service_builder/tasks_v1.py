@@ -52,9 +52,7 @@ from model_engine_server.infra.repositories import (
     RedisFeatureFlagRepository,
     RedisModelEndpointCacheRepository,
 )
-from model_engine_server.infra.repositories.onprem_docker_repository import (
-    OnPremDockerRepository,
-)
+from model_engine_server.infra.repositories.onprem_docker_repository import OnPremDockerRepository
 from model_engine_server.infra.services import LiveEndpointBuilderService
 from model_engine_server.service_builder.celery import service_builder_service
 

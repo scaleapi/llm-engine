@@ -42,9 +42,6 @@ from model_engine_server.infra.repositories import (
     ECRDockerRepository,
     FakeDockerRepository,
 )
-from model_engine_server.infra.repositories.onprem_docker_repository import (
-    OnPremDockerRepository,
-)
 from model_engine_server.infra.repositories.db_model_endpoint_record_repository import (
     DbModelEndpointRecordRepository,
 )
@@ -54,6 +51,7 @@ from model_engine_server.infra.repositories.model_endpoint_cache_repository impo
 from model_engine_server.infra.repositories.model_endpoint_record_repository import (
     ModelEndpointRecordRepository,
 )
+from model_engine_server.infra.repositories.onprem_docker_repository import OnPremDockerRepository
 from model_engine_server.infra.repositories.redis_model_endpoint_cache_repository import (
     RedisModelEndpointCacheRepository,
 )
