@@ -35,4 +35,3 @@ async def test_get_queue_attributes(onprem_queue_delegate):
     assert result["Attributes"]["ApproximateNumberOfMessages"] == "0"
     assert result["Attributes"]["QueueName"] == "launch-endpoint-id-test-endpoint-123"
     assert result["ResponseMetadata"]["HTTPStatusCode"] == 200
-

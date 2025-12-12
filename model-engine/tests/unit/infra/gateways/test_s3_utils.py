@@ -105,4 +105,3 @@ def test_get_s3_resource_onprem(mock_session, mock_infra_config_onprem):
     assert call_kwargs[0][0] == "s3"
     assert "endpoint_url" in call_kwargs[1]
     assert call_kwargs[1]["endpoint_url"] == "http://minio:9000"
-

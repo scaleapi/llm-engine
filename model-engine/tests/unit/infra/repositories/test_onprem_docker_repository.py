@@ -58,4 +58,3 @@ def test_get_latest_image_tag_raises_not_implemented(onprem_docker_repo):
     with pytest.raises(NotImplementedError) as exc_info:
         onprem_docker_repo.get_latest_image_tag("my-repo")
     assert "does not support querying latest image tags" in str(exc_info.value)
-
