@@ -75,7 +75,7 @@ def get_engine_url(
                 credential=DefaultAzureCredential(),
             )
             db = client.get_secret(key_file).value
-            user: str = os.environ.get("AZURE_IDENTITY_NAME", "")
+            user = os.environ.get("AZURE_IDENTITY_NAME", "")
             token = DefaultAzureCredential().get_token(
                 "https://ossrdbms-aad.database.windows.net/.default"
             )
