@@ -24,8 +24,8 @@ def get_s3_client(kwargs: Optional[Dict[str, Any]] = None):
             client_kwargs["endpoint_url"] = s3_endpoint
             logger.debug(f"Using S3 endpoint: {s3_endpoint}")
 
-        addressing_style = getattr(infra_config(), "s3_addressing_style", "path")
-        client_kwargs["config"] = Config(s3={"addressing_style": addressing_style})  # type: ignore[arg-type]
+        addressing_style: str = getattr(infra_config(), "s3_addressing_style", "path")
+        client_kwargs["config"] = Config(s3={"addressing_style": addressing_style})  # type: ignore
     else:
         logger.debug("Using AWS S3 configuration")
         aws_profile = kwargs.get("aws_profile")
@@ -50,8 +50,8 @@ def get_s3_resource(kwargs: Optional[Dict[str, Any]] = None):
             resource_kwargs["endpoint_url"] = s3_endpoint
             logger.debug(f"Using S3 endpoint: {s3_endpoint}")
 
-        addressing_style = getattr(infra_config(), "s3_addressing_style", "path")
-        resource_kwargs["config"] = Config(s3={"addressing_style": addressing_style})  # type: ignore[arg-type]
+        addressing_style: str = getattr(infra_config(), "s3_addressing_style", "path")
+        resource_kwargs["config"] = Config(s3={"addressing_style": addressing_style})  # type: ignore
     else:
         logger.debug("Using AWS S3 configuration")
         aws_profile = kwargs.get("aws_profile")
