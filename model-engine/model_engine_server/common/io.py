@@ -5,6 +5,7 @@ from typing import Any
 
 import boto3
 import smart_open
+from botocore.config import Config
 from model_engine_server.core.config import infra_config
 
 
@@ -34,9 +35,9 @@ def open_wrapper(uri: str, mode: str = "rt", **kwargs):
             client_kwargs["endpoint_url"] = s3_endpoint
 
         addressing_style = getattr(infra_config(), "s3_addressing_style", "path")
-        client_kwargs["config"] = boto3.session.Config(s3={"addressing_style": addressing_style})
+        client_kwargs["config"] = Config(s3={"addressing_style": addressing_style})  # type: ignore[arg-type]
 
-        client = session.client("s3", **client_kwargs)
+        client = session.client("s3", **client_kwargs)  # type: ignore[call-overload]
     else:
         profile_name = kwargs.get("aws_profile", os.getenv("AWS_PROFILE"))
         session = boto3.Session(profile_name=profile_name)
