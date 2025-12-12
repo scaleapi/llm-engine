@@ -34,8 +34,8 @@ def open_wrapper(uri: str, mode: str = "rt", **kwargs):
         if s3_endpoint:
             client_kwargs["endpoint_url"] = s3_endpoint
 
-        addressing_style = getattr(infra_config(), "s3_addressing_style", "path")
-        client_kwargs["config"] = Config(s3={"addressing_style": addressing_style})  # type: ignore[arg-type]
+        addressing_style: str = getattr(infra_config(), "s3_addressing_style", "path")
+        client_kwargs["config"] = Config(s3={"addressing_style": addressing_style})  # type: ignore
 
         client = session.client("s3", **client_kwargs)  # type: ignore[call-overload]
     else:
