@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict, Optional
 
 import boto3
+from botocore.config import Config
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 
@@ -24,14 +25,14 @@ def get_s3_client(kwargs: Optional[Dict[str, Any]] = None):
             logger.debug(f"Using S3 endpoint: {s3_endpoint}")
 
         addressing_style = getattr(infra_config(), "s3_addressing_style", "path")
-        client_kwargs["config"] = boto3.session.Config(s3={"addressing_style": addressing_style})
+        client_kwargs["config"] = Config(s3={"addressing_style": addressing_style})  # type: ignore[arg-type]
     else:
         logger.debug("Using AWS S3 configuration")
         aws_profile = kwargs.get("aws_profile")
         if aws_profile:
             session = boto3.Session(profile_name=aws_profile)
 
-    return session.client("s3", **client_kwargs)
+    return session.client("s3", **client_kwargs)  # type: ignore[call-overload]
 
 
 def get_s3_resource(kwargs: Optional[Dict[str, Any]] = None):
@@ -50,11 +51,11 @@ def get_s3_resource(kwargs: Optional[Dict[str, Any]] = None):
             logger.debug(f"Using S3 endpoint: {s3_endpoint}")
 
         addressing_style = getattr(infra_config(), "s3_addressing_style", "path")
-        resource_kwargs["config"] = boto3.session.Config(s3={"addressing_style": addressing_style})
+        resource_kwargs["config"] = Config(s3={"addressing_style": addressing_style})  # type: ignore[arg-type]
     else:
         logger.debug("Using AWS S3 configuration")
         aws_profile = kwargs.get("aws_profile")
         if aws_profile:
             session = boto3.Session(profile_name=aws_profile)
 
-    return session.resource("s3", **resource_kwargs)
+    return session.resource("s3", **resource_kwargs)  # type: ignore[call-overload]
