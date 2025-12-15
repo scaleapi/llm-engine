@@ -21,13 +21,20 @@ RUN apt-get update && apt-get install -y \
   telnet \
   && rm -rf /var/lib/apt/lists/*
 
-RUN curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64
-RUN chmod +x /bin/aws-iam-authenticator
+# Install aws-iam-authenticator (architecture-aware)
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ]; then \
+      curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_arm64; \
+    else \
+      curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64; \
+    fi && \
+    chmod +x /bin/aws-iam-authenticator
 
-# Install kubectl
-RUN curl -LO "https://dl.k8s.io/release/v1.23.13/bin/linux/amd64/kubectl" \
-  && chmod +x kubectl \
-  && mv kubectl /usr/local/bin/kubectl
+# Install kubectl (architecture-aware)
+RUN ARCH=$(dpkg --print-architecture) && \
+    curl -LO "https://dl.k8s.io/release/v1.23.13/bin/linux/${ARCH}/kubectl" && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin/kubectl
 
 # Pin pip version
 RUN pip install pip==24.2
