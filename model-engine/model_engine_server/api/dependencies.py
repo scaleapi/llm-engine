@@ -288,6 +288,9 @@ def _get_external_interfaces(
     if infra_config().cloud_provider == "azure":
         filesystem_gateway = ABSFilesystemGateway()
         llm_artifact_gateway = ABSLLMArtifactGateway()
+    elif infra_config().cloud_provider == "onprem":
+        filesystem_gateway = S3FilesystemGateway()  # Uses MinIO via s3_utils
+        llm_artifact_gateway = S3LLMArtifactGateway()  # Uses MinIO via s3_utils
     else:
         filesystem_gateway = S3FilesystemGateway()
         llm_artifact_gateway = S3LLMArtifactGateway()
@@ -338,6 +341,9 @@ def _get_external_interfaces(
     if infra_config().cloud_provider == "azure":
         llm_fine_tune_repository = ABSFileLLMFineTuneRepository(file_path=file_path)
         llm_fine_tune_events_repository = ABSFileLLMFineTuneEventsRepository()
+    elif infra_config().cloud_provider == "onprem":
+        llm_fine_tune_repository = S3FileLLMFineTuneRepository(file_path=file_path)  # Uses MinIO
+        llm_fine_tune_events_repository = S3FileLLMFineTuneEventsRepository()  # Uses MinIO
     else:
         llm_fine_tune_repository = S3FileLLMFineTuneRepository(file_path=file_path)
         llm_fine_tune_events_repository = S3FileLLMFineTuneEventsRepository()
@@ -354,6 +360,8 @@ def _get_external_interfaces(
     file_storage_gateway: FileStorageGateway
     if infra_config().cloud_provider == "azure":
         file_storage_gateway = ABSFileStorageGateway()
+    elif infra_config().cloud_provider == "onprem":
+        file_storage_gateway = S3FileStorageGateway()  # Uses MinIO via s3_utils
     else:
         file_storage_gateway = S3FileStorageGateway()
 
