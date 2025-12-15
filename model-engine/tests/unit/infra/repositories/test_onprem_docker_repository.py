@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 from model_engine_server.infra.repositories.onprem_docker_repository import OnPremDockerRepository
 
@@ -7,10 +9,19 @@ def onprem_docker_repo():
     return OnPremDockerRepository()
 
 
+@pytest.fixture
+def mock_infra_config():
+    with mock.patch(
+        "model_engine_server.infra.repositories.onprem_docker_repository.infra_config"
+    ) as mock_config:
+        mock_config.return_value.docker_repo_prefix = "registry.company.local"
+        yield mock_config
+
+
 def test_image_exists_with_repository(onprem_docker_repo):
     result = onprem_docker_repo.image_exists(
         image_tag="v1.0.0",
-        repository_name="my-registry/my-image",
+        repository_name="my-image",
     )
     assert result is True
 
@@ -26,18 +37,30 @@ def test_image_exists_without_repository(onprem_docker_repo):
 def test_image_exists_with_aws_profile(onprem_docker_repo):
     result = onprem_docker_repo.image_exists(
         image_tag="v1.0.0",
-        repository_name="my-registry/my-image",
+        repository_name="my-image",
         aws_profile="some-profile",
     )
     assert result is True
 
 
-def test_get_image_url_with_repository(onprem_docker_repo):
+def test_get_image_url_with_repository_and_prefix(onprem_docker_repo, mock_infra_config):
     result = onprem_docker_repo.get_image_url(
         image_tag="v1.0.0",
-        repository_name="my-registry/my-image",
+        repository_name="my-image",
     )
-    assert result == "my-registry/my-image:v1.0.0"
+    assert result == "registry.company.local/my-image:v1.0.0"
+
+
+def test_get_image_url_with_repository_no_prefix(onprem_docker_repo):
+    with mock.patch(
+        "model_engine_server.infra.repositories.onprem_docker_repository.infra_config"
+    ) as mock_config:
+        mock_config.return_value.docker_repo_prefix = ""
+        result = onprem_docker_repo.get_image_url(
+            image_tag="v1.0.0",
+            repository_name="my-image",
+        )
+        assert result == "my-image:v1.0.0"
 
 
 def test_get_image_url_without_repository(onprem_docker_repo):
