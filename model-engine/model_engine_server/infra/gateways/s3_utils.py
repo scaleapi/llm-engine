@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional, cast
 
 import boto3
 from botocore.config import Config
@@ -7,16 +7,22 @@ from model_engine_server.core.config import infra_config
 
 _s3_config_logged = False
 
+AddressingStyle = Literal["auto", "virtual", "path"]
+
 
 def _get_onprem_client_kwargs() -> Dict[str, Any]:
     global _s3_config_logged
     client_kwargs: Dict[str, Any] = {}
 
-    s3_endpoint = getattr(infra_config(), "s3_endpoint_url", None) or os.getenv("S3_ENDPOINT_URL")
+    s3_endpoint = getattr(infra_config(), "s3_endpoint_url", None) or os.getenv(
+        "S3_ENDPOINT_URL"
+    )
     if s3_endpoint:
         client_kwargs["endpoint_url"] = s3_endpoint
 
-    addressing_style: str = getattr(infra_config(), "s3_addressing_style", "path")
+    addressing_style = cast(
+        AddressingStyle, getattr(infra_config(), "s3_addressing_style", "path")
+    )
     client_kwargs["config"] = Config(s3={"addressing_style": addressing_style})
 
     if not _s3_config_logged and s3_endpoint:
