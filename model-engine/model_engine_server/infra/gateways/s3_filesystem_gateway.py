@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, IO, List
+from typing import Any, Dict, IO, List, Optional
 
 import smart_open
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
@@ -7,8 +7,8 @@ from model_engine_server.infra.gateways.s3_utils import get_s3_client
 
 
 class S3FilesystemGateway(FilesystemGateway):
-    def _get_client(self, kwargs: Dict[str, Any] = {}):
-        return get_s3_client(kwargs)
+    def _get_client(self, kwargs: Optional[Dict[str, Any]] = None) -> Any:
+        return get_s3_client(kwargs or {})
 
     def open(self, uri: str, mode: str = "rt", **kwargs) -> IO:
         client = self._get_client(kwargs)
