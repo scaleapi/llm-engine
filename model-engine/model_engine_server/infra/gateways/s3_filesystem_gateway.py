@@ -38,5 +38,8 @@ class S3FilesystemGateway(FilesystemGateway):
 
     def list_objects(self, bucket: str, prefix: str, **kwargs) -> List[Dict[str, Any]]:
         client = self._get_client(kwargs)
-        response = client.list_objects_v2(Bucket=bucket, Prefix=prefix)
-        return response.get("Contents", [])
+        paginator = client.get_paginator("list_objects_v2")
+        contents: List[Dict[str, Any]] = []
+        for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+            contents.extend(page.get("Contents", []))
+        return contents
