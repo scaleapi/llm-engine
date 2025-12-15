@@ -31,29 +31,27 @@ def _get_onprem_client_kwargs() -> Dict[str, Any]:
 
 def get_s3_client(kwargs: Optional[Dict[str, Any]] = None) -> Any:
     kwargs = kwargs or {}
-    session = boto3.Session()
     client_kwargs: Dict[str, Any] = {}
 
     if infra_config().cloud_provider == "onprem":
         client_kwargs = _get_onprem_client_kwargs()
+        session = boto3.Session()
     else:
-        aws_profile = kwargs.get("aws_profile")
-        if aws_profile:
-            session = boto3.Session(profile_name=aws_profile)
+        profile_name = kwargs.get("aws_profile", os.getenv("AWS_PROFILE"))
+        session = boto3.Session(profile_name=profile_name)
 
     return session.client("s3", **client_kwargs)
 
 
 def get_s3_resource(kwargs: Optional[Dict[str, Any]] = None) -> Any:
     kwargs = kwargs or {}
-    session = boto3.Session()
     resource_kwargs: Dict[str, Any] = {}
 
     if infra_config().cloud_provider == "onprem":
         resource_kwargs = _get_onprem_client_kwargs()
+        session = boto3.Session()
     else:
-        aws_profile = kwargs.get("aws_profile")
-        if aws_profile:
-            session = boto3.Session(profile_name=aws_profile)
+        profile_name = kwargs.get("aws_profile", os.getenv("AWS_PROFILE"))
+        session = boto3.Session(profile_name=profile_name)
 
     return session.resource("s3", **resource_kwargs)
