@@ -53,9 +53,7 @@ async def test_get_queue_attributes_no_redis(onprem_queue_delegate):
 
 
 @pytest.mark.asyncio
-async def test_get_queue_attributes_with_redis(
-    onprem_queue_delegate_with_redis, mock_redis_client
-):
+async def test_get_queue_attributes_with_redis(onprem_queue_delegate_with_redis, mock_redis_client):
     result = await onprem_queue_delegate_with_redis.get_queue_attributes(
         endpoint_id="test-endpoint-123"
     )
