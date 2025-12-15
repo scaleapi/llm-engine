@@ -48,10 +48,12 @@ def test_get_s3_client_aws_no_profile(mock_session, mock_infra_config_aws):
     mock_client = mock.Mock()
     mock_session.return_value.client.return_value = mock_client
 
-    result = get_s3_client()
+    with mock.patch.dict(os.environ, {"AWS_PROFILE": ""}, clear=False):
+        os.environ.pop("AWS_PROFILE", None)
+        result = get_s3_client()
 
     assert result == mock_client
-    mock_session.assert_called_with()
+    mock_session.assert_called_with(profile_name=None)
 
 
 @mock.patch("model_engine_server.infra.gateways.s3_utils.boto3.Session")
