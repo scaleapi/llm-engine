@@ -1,15 +1,12 @@
 import datetime
 from abc import ABC
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
 from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Field, model_validator
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
 from typing_extensions import Literal
-
-if TYPE_CHECKING:
-    from model_engine_server.core.config import InfraConfig
 
 
 def _is_onprem_deployment() -> bool:
