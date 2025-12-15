@@ -8,7 +8,6 @@ from model_engine_server.domain.gateways.file_storage_gateway import (
     FileStorageGateway,
 )
 from model_engine_server.infra.gateways.s3_filesystem_gateway import S3FilesystemGateway
-from model_engine_server.infra.gateways.s3_utils import get_s3_client
 
 logger = make_logger(logger_name())
 
@@ -36,9 +35,9 @@ class S3FileStorageGateway(FileStorageGateway):
 
     async def get_file(self, owner: str, file_id: str) -> Optional[FileMetadata]:
         try:
-            obj = get_s3_client({}).head_object(
-                Bucket=infra_config().s3_bucket,
-                Key=get_s3_key(owner, file_id),
+            obj = self.filesystem_gateway.head_object(
+                bucket=infra_config().s3_bucket,
+                key=get_s3_key(owner, file_id),
             )
             return FileMetadata(
                 id=file_id,
@@ -73,9 +72,9 @@ class S3FileStorageGateway(FileStorageGateway):
 
     async def delete_file(self, owner: str, file_id: str) -> bool:
         try:
-            get_s3_client({}).delete_object(
-                Bucket=infra_config().s3_bucket,
-                Key=get_s3_key(owner, file_id),
+            self.filesystem_gateway.delete_object(
+                bucket=infra_config().s3_bucket,
+                key=get_s3_key(owner, file_id),
             )
             logger.info(f"Deleted file {owner}/{file_id}")
             return True
@@ -85,12 +84,12 @@ class S3FileStorageGateway(FileStorageGateway):
 
     async def list_files(self, owner: str) -> List[FileMetadata]:
         try:
-            objects = get_s3_client({}).list_objects_v2(
-                Bucket=infra_config().s3_bucket,
-                Prefix=owner,
+            objects = self.filesystem_gateway.list_objects(
+                bucket=infra_config().s3_bucket,
+                prefix=owner,
             )
             files = []
-            for obj in objects.get("Contents", []):
+            for obj in objects:
                 key = obj["Key"]
                 if key.startswith(owner):
                     file_id = key[len(owner) :].lstrip("/")
