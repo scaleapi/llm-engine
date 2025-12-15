@@ -2,7 +2,15 @@ import os
 from unittest import mock
 
 import pytest
+from model_engine_server.infra.gateways import s3_utils
 from model_engine_server.infra.gateways.s3_utils import get_s3_client, get_s3_resource
+
+
+@pytest.fixture(autouse=True)
+def reset_s3_config_logged():
+    s3_utils._s3_config_logged = False
+    yield
+    s3_utils._s3_config_logged = False
 
 
 @pytest.fixture
