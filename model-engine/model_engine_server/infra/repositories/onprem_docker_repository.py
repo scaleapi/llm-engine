@@ -1,6 +1,7 @@
 from typing import Optional
 
 from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.repositories import DockerRepository
 
@@ -12,27 +13,26 @@ class OnPremDockerRepository(DockerRepository):
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
     ) -> bool:
         if not repository_name:
-            logger.warning(
+            logger.debug(
                 f"Direct image reference: {image_tag}, assuming exists. "
                 f"Image validation skipped for on-prem deployments."
             )
             return True
 
-        logger.warning(
+        logger.debug(
             f"Registry image: {repository_name}:{image_tag}, assuming exists. "
-            f"Image validation skipped for on-prem deployments. "
-            f"Deployment will fail if image does not exist in registry."
+            f"Image validation skipped for on-prem deployments."
         )
         return True
 
     def get_image_url(self, image_tag: str, repository_name: str) -> str:
         if not repository_name:
-            logger.debug(f"Using direct image reference: {image_tag}")
             return image_tag
 
-        full_image_ref = f"{repository_name}:{image_tag}"
-        logger.debug(f"Using image reference: {full_image_ref}")
-        return full_image_ref
+        prefix = infra_config().docker_repo_prefix
+        if prefix:
+            return f"{prefix}/{repository_name}:{image_tag}"
+        return f"{repository_name}:{image_tag}"
 
     def build_image(self, image_params: BuildImageRequest) -> BuildImageResponse:
         raise NotImplementedError(
