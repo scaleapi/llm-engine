@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, IO, List, Optional
+from typing import IO, Any, Dict, List, Optional
 
 import smart_open
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
