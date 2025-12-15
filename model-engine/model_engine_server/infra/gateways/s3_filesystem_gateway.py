@@ -1,5 +1,5 @@
 import re
-from typing import IO
+from typing import Any, Dict, IO, List
 
 import smart_open
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
@@ -7,13 +7,16 @@ from model_engine_server.infra.gateways.s3_utils import get_s3_client
 
 
 class S3FilesystemGateway(FilesystemGateway):
+    def _get_client(self, kwargs: Dict[str, Any] = {}):
+        return get_s3_client(kwargs)
+
     def open(self, uri: str, mode: str = "rt", **kwargs) -> IO:
-        client = get_s3_client(kwargs)
+        client = self._get_client(kwargs)
         transport_params = {"client": client}
         return smart_open.open(uri, mode, transport_params=transport_params)
 
     def generate_signed_url(self, uri: str, expiration: int = 3600, **kwargs) -> str:
-        client = get_s3_client(kwargs)
+        client = self._get_client(kwargs)
         match = re.search(r"^s3://([^/]+)/(.*?)$", uri)
         if not match:
             raise ValueError(f"Invalid S3 URI format: {uri}")
@@ -24,3 +27,16 @@ class S3FilesystemGateway(FilesystemGateway):
             Params={"Bucket": bucket, "Key": key, "ResponseContentType": "text/plain"},
             ExpiresIn=expiration,
         )
+
+    def head_object(self, bucket: str, key: str, **kwargs) -> Dict[str, Any]:
+        client = self._get_client(kwargs)
+        return client.head_object(Bucket=bucket, Key=key)
+
+    def delete_object(self, bucket: str, key: str, **kwargs) -> Dict[str, Any]:
+        client = self._get_client(kwargs)
+        return client.delete_object(Bucket=bucket, Key=key)
+
+    def list_objects(self, bucket: str, prefix: str, **kwargs) -> List[Dict[str, Any]]:
+        client = self._get_client(kwargs)
+        response = client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        return response.get("Contents", [])
