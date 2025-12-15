@@ -1,12 +1,21 @@
 import datetime
 from abc import ABC
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
 from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Field, model_validator
 from model_engine_server.domain.entities.owned_entity import OwnedEntity
 from typing_extensions import Literal
+
+if TYPE_CHECKING:
+    from model_engine_server.core.config import InfraConfig
+
+
+def _is_onprem_deployment() -> bool:
+    from model_engine_server.core.config import infra_config
+
+    return infra_config().cloud_provider == "onprem"
 
 
 class ModelBundlePackagingType(str, Enum):
@@ -75,14 +84,11 @@ class ModelBundleEnvironmentParams(BaseModel):
                 "Expected `image_tag` to be non-null because the custom framework "
                 "type was selected."
             )
-            if not field_values.get("ecr_repo"):
-                from model_engine_server.core.config import infra_config
-
-                if infra_config().cloud_provider != "onprem":
-                    raise ValueError(
-                        "Expected `ecr_repo` to be non-null for custom framework. "
-                        "For on-prem deployments, ecr_repo can be omitted to use direct image references."
-                    )
+            if not field_values.get("ecr_repo") and not _is_onprem_deployment():
+                raise ValueError(
+                    "Expected `ecr_repo` to be non-null for custom framework. "
+                    "For on-prem deployments, ecr_repo can be omitted to use direct image references."
+                )
         return field_values
 
     model_config = ConfigDict(from_attributes=True)
