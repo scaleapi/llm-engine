@@ -382,6 +382,7 @@ class VirtualServiceArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into virtual-service templates."""
 
     DNS_HOST_DOMAIN: str
+    MCP_TIMEOUT: str  # Timeout for MCP servers (e.g., "300s" for 5 minutes, "" for default)
 
 
 class LwsServiceEntryArguments(_BaseEndpointArguments):
@@ -1361,6 +1362,26 @@ def get_endpoint_resource_arguments_from_request(
             SERVICE_NAME_OVERRIDE=service_name_override,
         )
     elif endpoint_resource_name == "virtual-service":
+        # Detect MCP servers by checking if they use passthrough forwarder and have /mcp routes
+        # MCP servers need longer timeout (5 minutes) to handle long-running operations
+        is_mcp_server = False
+        if isinstance(flavor, RunnableImageLike):
+            # Check if forwarder type is passthrough (MCP servers use passthrough)
+            if flavor.forwarder_type == "passthrough":
+                # Check if any routes contain /mcp
+                all_routes = []
+                if flavor.predict_route:
+                    all_routes.append(flavor.predict_route)
+                if flavor.routes:
+                    all_routes.extend(flavor.routes)
+                if flavor.extra_routes:
+                    all_routes.extend(flavor.extra_routes)
+                # MCP servers have routes containing /mcp
+                is_mcp_server = any("/mcp" in route.lower() for route in all_routes)
+        
+        # Format timeout as YAML: "timeout: 300s" for MCP servers, empty string for others
+        mcp_timeout = "timeout: 300s" if is_mcp_server else ""
+        
         return VirtualServiceArguments(
             # Base resource arguments
             RESOURCE_NAME=k8s_resource_group_name,
@@ -1373,6 +1394,7 @@ def get_endpoint_resource_arguments_from_request(
             OWNER=owner,
             GIT_TAG=GIT_TAG,
             DNS_HOST_DOMAIN=infra_config().dns_host_domain,
+            MCP_TIMEOUT=mcp_timeout,
         )
     elif endpoint_resource_name == "destination-rule":
         return DestinationRuleArguments(
