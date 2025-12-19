@@ -1,0 +1,1 @@
+022465994601.dkr.ecr.us-west-2.amazonaws.com/egp-mirror-int/model-engine:6e35c71cf82622fe2ad6e745728a65a1ff6f3984

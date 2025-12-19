@@ -1,0 +1,60 @@
+    tags.datadoghq.com/env: production
+    tags.datadoghq.com/service: model-engine
+    tags.datadoghq.com/version: 6e35c71cf82622fe2ad6e745728a65a1ff6f3984
+    team: infra
+  name: model-engine
+  namespace: launch
+  resourceVersion: "230220698"
+  uid: 8b6561e8-447a-4379-b2e7-36fb01553100
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: model-engine
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        ad.datadoghq.com/main.logs: |
+          [{
+            "service": "model-engine",
+            "source": "python"
+          }]
+      creationTimestamp: null
+      labels:
+        app: model-engine
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/version: 6e35c71cf82622fe2ad6e745728a65a1ff6f3984
+        azure.workload.identity/use: "true"
+        helm.sh/chart: model-engine-0.1.13
+        product: model-engine
+        tags.datadoghq.com/env: production
+        tags.datadoghq.com/service: model-engine
+        tags.datadoghq.com/version: 6e35c71cf82622fe2ad6e745728a65a1ff6f3984
+        team: infra
+    spec:
+      containers:
+      - args:
+        - python
+        - -m
+        - model_engine_server.entrypoints.start_fastapi_server
+        command:
+        - dumb-init
+        - --
+        env:
+        - name: DD_TRACE_ENABLED
+          value: "true"
+        - name: DD_REMOTE_CONFIGURATION_ENABLED
+          value: "false"
+        - name: DD_ENV
+          value: production
+        - name: DD_AGENT_HOST
+          valueFrom:
+            fieldRef:
+              apiVersion: v1

@@ -1,0 +1,201 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    meta.helm.sh/release-name: launch-inference
+    meta.helm.sh/release-namespace: launch
+  creationTimestamp: "2025-03-10T20:54:36Z"
+  generation: 1
+  labels:
+    app: model-engine-endpoint-builder
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: 6e35c71cf82622fe2ad6e745728a65a1ff6f3984
+    azure.workload.identity/use: "true"
+    helm.sh/chart: model-engine-0.1.13
+    helm.toolkit.fluxcd.io/name: launch-inference
+    helm.toolkit.fluxcd.io/namespace: launch
+    product: model-engine
+    tags.datadoghq.com/env: production
+    tags.datadoghq.com/service: model-engine-endpoint-builder
+    tags.datadoghq.com/version: 6e35c71cf82622fe2ad6e745728a65a1ff6f3984
+    team: infra
+  name: model-engine-endpoint-builder
+  namespace: launch
+  resourceVersion: "283977885"
+  uid: 3948f7ac-3080-47ed-9c4c-2dd50b6f33e4
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: model-engine-endpoint-builder
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        ad.datadoghq.com/main.logs: |
+          [{
+            "service": "\"model-engine-endpoint-builder\"",
+            "source": "python"
+          }]
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+      creationTimestamp: null
+      labels:
+        app: model-engine-endpoint-builder
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/version: 6e35c71cf82622fe2ad6e745728a65a1ff6f3984
+        azure.workload.identity/use: "true"
+        helm.sh/chart: model-engine-0.1.13
+        product: model-engine
+        sidecar.istio.io/inject: "false"
+        tags.datadoghq.com/env: production
+        tags.datadoghq.com/service: model-engine-endpoint-builder
+        tags.datadoghq.com/version: 6e35c71cf82622fe2ad6e745728a65a1ff6f3984
+        team: infra
+    spec:
+      containers:
+      - args:
+        - celery
+        - --app=model_engine_server.service_builder
+        - worker
+        - --loglevel=INFO
+        - --concurrency=2
+        - --queues=model-engine-service-builder
+        command:
+        - dumb-init
+        - --
+        env:
+        - name: DD_TRACE_ENABLED
+          value: "true"
+        - name: DD_REMOTE_CONFIGURATION_ENABLED
+          value: "false"
+        - name: DD_ENV
+          value: production
+        - name: DD_AGENT_HOST
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        - name: SERVICE_IDENTIFIER
+        - name: GATEWAY_URL
+          value: http://model-engine.launch:80
+        - name: DB_SECRET_NAME
+          value: prod-ml-infra-pg
+        - name: DEPLOY_SERVICE_CONFIG_PATH
+          value: /workspace/model-engine/service_configs/service_config.yaml
+        - name: ML_INFRA_SERVICES_CONFIG_PATH
+          value: /workspace/model-engine/model_engine_server/core/configs/config.yaml
+        - name: CELERY_ELASTICACHE_ENABLED
+          value: "true"
+        - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
+          value: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
+        - name: AZURE_IDENTITY_NAME
+          value: sgpaz98031021-uai-model-engine
+        - name: AZURE_CLIENT_ID
+          value: 1ef7e168-08e1-4798-b29b-7f5f9bd048ea
+        - name: AZURE_OBJECT_ID
+          value: 84f54dea-e1dc-42a6-8428-a5ec93cd1699
+        - name: KEYVAULT_NAME
+          value: sgpaz98031021keyvault
+        - name: ABS_ACCOUNT_NAME
+          value: sgpaz98031021storage
+        - name: ABS_CONTAINER_NAME
+          value: sgpaz98031021models
+        - name: SERVICEBUS_NAMESPACE
+          value: sgpaz98031021llm-engine
+        - name: DD_VERSION
+          value: 6e35c71cf82622fe2ad6e745728a65a1ff6f3984
+        - name: GIT_TAG
+          value: 6e35c71cf82622fe2ad6e745728a65a1ff6f3984
+        - name: DD_SERVICE
+          value: model-engine-endpoint-builder
+        image: 022465994601.dkr.ecr.us-west-2.amazonaws.com/egp-mirror-int/model-engine:6e35c71cf82622fe2ad6e745728a65a1ff6f3984
+        imagePullPolicy: IfNotPresent
+        name: model-engine-endpoint-builder
+        ports:
+        - containerPort: 5000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - cat
+            - /tmp/readyz
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: "2"
+            ephemeral-storage: 256Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /dev/shm
+          name: dshm
+        - mountPath: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
+          name: service-template-config
+        - mountPath: /workspace/model-engine/service_configs
+          name: model-engine-service-config-volume
+        - mountPath: /workspace/model-engine/model_engine_server/core/configs
+          name: infra-service-config-volume
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: egp-ecr-regcred
+      nodeSelector:
+        node-lifecycle: normal
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: model-engine
+      serviceAccountName: model-engine
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir:
+          medium: Memory
+        name: dshm
+      - configMap:
+          defaultMode: 420
+          name: model-engine-service-template-config
+        name: service-template-config
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: launch_service_config
+            path: service_config.yaml
+          name: model-engine-service-config
+        name: model-engine-service-config-volume
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: infra_service_config
+            path: config.yaml
+          name: model-engine-service-config
+        name: infra-service-config-volume
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2025-03-10T20:54:36Z"
+    lastUpdateTime: "2025-03-10T20:59:46Z"
+    message: ReplicaSet "model-engine-endpoint-builder-79544dd49b" has successfully
+      progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2025-11-04T18:35:29Z"
+    lastUpdateTime: "2025-11-04T18:35:29Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 1
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

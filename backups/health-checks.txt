@@ -1,0 +1,21 @@
+        readinessProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /readyz
+            port: 5000
+            scheme: HTTP
+          periodSeconds: 2
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: "2"
+            ephemeral-storage: 256Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /dev/shm
+          name: dshm
+        - mountPath: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
+          name: service-template-config
+        - mountPath: /workspace/model-engine/service_configs

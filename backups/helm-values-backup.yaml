@@ -1,0 +1,149 @@
+USER-SUPPLIED VALUES:
+affinity: {}
+autoscaling:
+  horizontal:
+    enabled: true
+    maxReplicas: 10
+    minReplicas: 2
+    targetConcurrency: 50
+  prewarming:
+    enabled: false
+  vertical:
+    enabled: false
+azure:
+  abs_account_name: sgpaz98031021storage
+  abs_container_name: sgpaz98031021models
+  client_id: 1ef7e168-08e1-4798-b29b-7f5f9bd048ea
+  identity_name: sgpaz98031021-uai-model-engine
+  inference_client_id: ed30f185-30bf-44e8-9432-d76690ea4223
+  keyvault_name: sgpaz98031021keyvault
+  object_id: 84f54dea-e1dc-42a6-8428-a5ec93cd1699
+  servicebus_namespace: sgpaz98031021llm-engine
+celery_autoscaler:
+  enabled: true
+  num_shards: 3
+celeryBrokerType: servicebus
+config:
+  values:
+    infra:
+      cloud_provider: azure
+      default_region: default
+      dns_host_domain: llm-engine.domain.com
+      docker_repo_prefix: 022465994601.dkr.ecr.us-west-2.amazonaws.com
+      k8s_cluster_name: sgpaz98031021k8s
+      ml_account_id: ""
+      redis_host: sgpaz98031021rediscache.redis.cache.windows.net
+      s3_bucket: ""
+    launch:
+      batch_inference_vllm_repository: llm-engine/batch-infer-vllm
+      billing_queue_arn: unused
+      cache_redis_azure_host: sgpaz98031021rediscache.redis.cache.windows.net:6380
+      cloud_file_llm_fine_tune_repository: azure://sgpaz98031021models/hosted-model-inference/llm-ft-job-repository
+      dd_trace_enabled: false
+      docker_image_layer_cache_repository: scale-egp-98031021-kaniko-cache
+      endpoint_namespace: launch-inference
+      hf_user_fine_tuned_weights_prefix: https://sgpaz98031021storage.blob.core.windows.net/sgpaz98031021models/hosted-model-inference/fine_tuned_weights
+      istio_enabled: true
+      lightllm_repository: lightllm
+      model_primitive_host: unused
+      sensitive_log_mode: true
+      sqs_profile: ""
+      sqs_queue_policy_template: ""
+      sqs_queue_tag_template: ""
+      tensorrt_llm_repository: tensorrt-llm
+      tgi_repository: text-generation-inference
+      user_inference_base_repository: scale-egp-98031021-launch/inference
+      user_inference_pytorch_repository: scale-egp-98031021-launch/inference
+      user_inference_tensorflow_repository: unused
+      vllm_repository: vllm
+context: production
+datadog:
+  enabled: false
+db:
+  runDbInitScript: true
+destinationrule:
+  annotations: {}
+  enabled: true
+hostDomain:
+  prefix: http://
+image:
+  builderRepository: 022465994601.dkr.ecr.us-west-2.amazonaws.com/egp-mirror-int/model-engine
+  cacherRepository: 022465994601.dkr.ecr.us-west-2.amazonaws.com/egp-mirror-int/model-engine
+  forwarderRepository: 022465994601.dkr.ecr.us-west-2.amazonaws.com/egp-mirror-int/model-engine
+  gatewayRepository: 022465994601.dkr.ecr.us-west-2.amazonaws.com/egp-mirror-int/model-engine
+  pullPolicy: IfNotPresent
+imageCache:
+  devices:
+  - name: cpu
+    nodeSelector:
+      cpu-only: "true"
+  - name: a10
+    nodeSelector:
+      k8s.amazonaws.com/accelerator: nvidia-ampere-a10
+    tolerations:
+    - effect: NoSchedule
+      key: nvidia.com/gpu
+      operator: Exists
+  - name: a100
+    nodeSelector:
+      k8s.amazonaws.com/accelerator: nvidia-ampere-a100
+    tolerations:
+    - effect: NoSchedule
+      key: nvidia.com/gpu
+      operator: Exists
+  - name: t4
+    nodeSelector:
+      k8s.amazonaws.com/accelerator: nvidia-tesla-t4
+    tolerations:
+    - effect: NoSchedule
+      key: nvidia.com/gpu
+      operator: Exists
+imagePullSecrets:
+- name: egp-ecr-regcred
+populateFineTuningRepository: true
+replicaCount:
+  balloonA10: 0
+  balloonA100: 0
+  balloonCpu: 0
+  balloonT4: 0
+  builder: 1
+  cacher: 0
+  gateway: 2
+resources:
+  requests:
+    cpu: 2
+    ephemeral-storage: 256Mi
+restartKedaOperator: true
+secrets:
+  cloudDatabaseSecretName: prod-ml-infra-pg
+service:
+  port: 80
+  type: ClusterIP
+serviceAccount:
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-2"
+  namespaces:
+  - model-engine
+serviceTemplate:
+  createServiceAccount: true
+  mountInfraConfig: true
+  securityContext:
+    capabilities:
+      drop:
+      - all
+  serviceAccountAnnotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-2"
+  serviceAccountName: model-engine
+tag: 6e35c71cf82622fe2ad6e745728a65a1ff6f3984
+tolerations: []
+triton:
+  image:
+    repository: unused
+    tag: unused
+virtualservice:
+  annotations: {}
+  enabled: true
+  gateways: []
+  hostDomains: []
