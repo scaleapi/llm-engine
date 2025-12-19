@@ -410,66 +410,6 @@ class LiveModelEndpointService(ModelEndpointService):
 
         logger.info(f"Endpoint delete released lock for {created_by}, {name}")
 
-    async def _cleanup_orphaned_k8s_resources(self, endpoint_id: str) -> Optional[str]:
-        """
-        Cleans up orphaned K8s resources when DB record doesn't exist.
-        Returns the owner (created_by) from K8s labels if resources were found, None otherwise.
-
-        Args:
-            endpoint_id: The endpoint_id to check for orphaned resources
-
-        Returns:
-            The owner (created_by) from K8s labels if resources found, None otherwise
-        """
-        try:
-            deployment = await K8SEndpointResourceDelegate._get_deployment_by_endpoint_id_label(
-                endpoint_id
-            )
-            if deployment is None:
-                return None
-
-            # Extract owner and deployment name from K8s labels
-            labels = deployment.metadata.labels or {}
-            owner = labels.get("created_by") or labels.get("user_id")
-            deployment_name = deployment.metadata.name
-
-            if not owner:
-                logger.warning(
-                    f"Found orphaned K8s resources for endpoint_id {endpoint_id} but no owner label"
-                )
-                return None
-
-            # Determine endpoint type
-            endpoint_type = await K8SEndpointResourceDelegate._determine_endpoint_type_from_k8s(
-                endpoint_id
-            )
-
-            # Clean up resources
-            logger.info(
-                f"Cleaning up orphaned K8s resources for endpoint_id {endpoint_id}, "
-                f"deployment_name {deployment_name}, owner {owner}"
-            )
-            deleted = await self.model_endpoint_infra_gateway.delete_model_endpoint_infra_by_id(
-                endpoint_id=endpoint_id,
-                deployment_name=deployment_name,
-                endpoint_type=endpoint_type,
-            )
-            if deleted:
-                logger.info(
-                    f"Successfully cleaned up orphaned K8s resources for endpoint_id {endpoint_id}"
-                )
-            else:
-                logger.warning(
-                    f"Failed to clean up some orphaned K8s resources for endpoint_id {endpoint_id}"
-                )
-
-            return owner
-        except Exception as e:
-            logger.exception(
-                f"Error cleaning up orphaned K8s resources for endpoint_id {endpoint_id}: {e}"
-            )
-            return None
-
     async def restart_model_endpoint(self, model_endpoint_id: str) -> None:
         record = await self.model_endpoint_record_repository.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id

@@ -1164,34 +1164,6 @@ class K8SEndpointResourceDelegate:
         return deployment_config
 
     @staticmethod
-    async def _get_deployment_by_endpoint_id_label(endpoint_id: str) -> Optional[V1Deployment]:
-        """
-        Gets a Deployment by querying K8s with endpoint_id label selector.
-        Used when DB record doesn't exist but K8s resources might (orphaned resources).
-
-        Args:
-            endpoint_id: The endpoint_id to search for
-
-        Returns:
-            The first deployment found with matching endpoint_id label, or None if not found
-        """
-        apps_client = get_kubernetes_apps_client()
-        label_selector = f"endpoint_id={endpoint_id}"
-        try:
-            deployments = await apps_client.list_namespaced_deployment(
-                namespace=hmi_config.endpoint_namespace,
-                label_selector=label_selector,
-            )
-            if deployments.items:
-                return deployments.items[0]
-            return None
-        except ApiException as e:
-            if e.status == 404:
-                return None
-            logger.exception(f"Error querying deployments by endpoint_id label {endpoint_id}")
-            raise
-
-    @staticmethod
     async def _determine_endpoint_type_from_k8s(endpoint_id: str) -> ModelEndpointType:
         """
         Determines endpoint type by checking for HPA/KEDA (SYNC/STREAMING) vs ASYNC.
