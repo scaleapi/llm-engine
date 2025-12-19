@@ -258,27 +258,6 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             endpoint_type=endpoint_type,
         )
 
-    async def delete_model_endpoint_infra_by_id(
-        self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
-    ) -> bool:
-        """
-        Deletes model endpoint infrastructure when DB record doesn't exist (orphaned resources).
-        This method accepts minimal parameters extracted from K8s resources.
-
-        Args:
-            endpoint_id: The endpoint ID
-            deployment_name: The deployment name (from K8s resource)
-            endpoint_type: The endpoint type (SYNC, STREAMING, or ASYNC)
-
-        Returns:
-            True if resources were successfully deleted, False otherwise
-        """
-        return await self.resource_gateway.delete_resources(
-            endpoint_id=endpoint_id,
-            deployment_name=deployment_name,
-            endpoint_type=endpoint_type,
-        )
-
     async def restart_model_endpoint_infra(
         self, model_endpoint_record: ModelEndpointRecord
     ) -> None:
