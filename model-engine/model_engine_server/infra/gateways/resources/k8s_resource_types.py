@@ -1362,10 +1362,19 @@ def get_endpoint_resource_arguments_from_request(
             SERVICE_NAME_OVERRIDE=service_name_override,
         )
     elif endpoint_resource_name == "virtual-service":
-        # Set 5-minute timeout for passthrough forwarders (used by MCP servers)
-        # to fix 30-second default timeout issue
-        is_passthrough = isinstance(flavor, RunnableImageLike) and flavor.forwarder_type == "passthrough"
-        timeout = "timeout: 300s" if is_passthrough else ""
+        # Set 5-minute timeout for MCP servers to fix 30-second default timeout issue
+        # MCP servers use passthrough forwarder and have routes containing /mcp
+        is_mcp_server = False
+        if isinstance(flavor, RunnableImageLike) and flavor.forwarder_type == "passthrough":
+            all_routes = []
+            if flavor.predict_route:
+                all_routes.append(flavor.predict_route)
+            if flavor.routes:
+                all_routes.extend(flavor.routes)
+            if flavor.extra_routes:
+                all_routes.extend(flavor.extra_routes)
+            is_mcp_server = any("/mcp" in route.lower() for route in all_routes)
+        timeout = "timeout: 300s" if is_mcp_server else ""
         
         return VirtualServiceArguments(
             # Base resource arguments
