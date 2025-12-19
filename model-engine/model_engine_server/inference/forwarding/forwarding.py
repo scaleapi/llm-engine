@@ -630,23 +630,6 @@ class LoadStreamingForwarder:
 @dataclass
 class PassthroughForwarder(ModelEngineSerializationMixin):
     passthrough_endpoint: str
-    
-    # Default timeout: 5 minutes (matching aiohttp default)
-    # MCP servers need longer timeout: 10 minutes to handle long-running operations
-    DEFAULT_TIMEOUT_SECONDS = 5 * 60
-    MCP_TIMEOUT_SECONDS = 10 * 60
-    
-    def _is_mcp_server(self) -> bool:
-        """Detect if this is an MCP server by checking if endpoint contains /mcp"""
-        return "/mcp" in self.passthrough_endpoint.lower()
-    
-    def _get_timeout(self) -> aiohttp.ClientTimeout:
-        """Get appropriate timeout based on server type"""
-        timeout_seconds = (
-            self.MCP_TIMEOUT_SECONDS if self._is_mcp_server() 
-            else self.DEFAULT_TIMEOUT_SECONDS
-        )
-        return aiohttp.ClientTimeout(total=timeout_seconds)
 
     async def _make_request(
         self, request: Any, aioclient: aiohttp.ClientSession
@@ -673,8 +656,7 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
         )
 
     async def forward_stream(self, request: Any):
-        timeout = self._get_timeout()
-        async with aiohttp.ClientSession(timeout=timeout) as aioclient:
+        async with aiohttp.ClientSession() as aioclient:
             response = await self._make_request(request, aioclient)
             response_headers = response.headers
             yield (response_headers, response.status)
@@ -688,8 +670,7 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
             yield await response.read()
 
     async def forward_sync(self, request: Any):
-        timeout = self._get_timeout()
-        async with aiohttp.ClientSession(timeout=timeout) as aioclient:
+        async with aiohttp.ClientSession() as aioclient:
             response = await self._make_request(request, aioclient)
             return response
 
