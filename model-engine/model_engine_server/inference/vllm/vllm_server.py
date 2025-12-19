@@ -8,7 +8,7 @@ from logging import Logger
 from vllm.engine.protocol import EngineClient
 from vllm.entrypoints.openai.api_server import run_server
 from vllm.entrypoints.openai.cli_args import make_arg_parser
-from vllm.utils import FlexibleArgumentParser
+from vllm.utils.argparse_utils import FlexibleArgumentParser
 
 logger = Logger("vllm_server")
 

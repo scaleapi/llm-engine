@@ -33,6 +33,7 @@ from model_engine_server.domain.exceptions import (
     EndpointUnsupportedRequestException,
     InvalidRequestException,
     ObjectHasInvalidValueException,
+    ObjectNoLongerAvailableException,
     ObjectNotAuthorizedException,
     ObjectNotFoundException,
     UpstreamServiceError,
@@ -118,6 +119,8 @@ async def handle_stream_request(
             ) from exc
         except ObjectHasInvalidValueException as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except ObjectNoLongerAvailableException as exc:
+            raise HTTPException(status_code=410, detail=str(exc)) from exc
         except Exception as exc:
             raise HTTPException(
                 status_code=500,
@@ -237,6 +240,8 @@ async def handle_sync_request(
             status_code=400,
             detail=f"Unsupported inference type: {str(exc)}",
         ) from exc
+    except ObjectNoLongerAvailableException as exc:
+        raise HTTPException(status_code=410, detail=to_error_details(exc))
 
 
 def to_error_details(exc: Exception) -> Any:

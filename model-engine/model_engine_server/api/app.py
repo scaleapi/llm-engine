@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytz
 from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.openapi.docs import get_redoc_html
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from model_engine_server.api.batch_jobs_v1 import batch_job_router_v1
@@ -91,7 +92,7 @@ class CustomMiddleware(BaseHTTPMiddleware):
 app = FastAPI(
     title="launch",
     version="1.0.0",
-    redoc_url="/api",
+    redoc_url=None,
     middleware=[Middleware(CustomMiddleware)],
 )
 
@@ -115,6 +116,20 @@ if os.path.exists(INTERNAL_DOCS_PATH):
         "/python-docs",
         StaticFiles(directory=INTERNAL_DOCS_PATH, html=True),
         name="python-docs",
+    )
+    app.mount(  # pragma: no cover
+        "/static-docs",
+        StaticFiles(directory=INTERNAL_DOCS_PATH),
+        name="static-docs",
+    )
+
+
+@app.get("/api", include_in_schema=False)
+async def redoc_html():  # pragma: no cover
+    return get_redoc_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - ReDoc",
+        redoc_js_url="/static-docs/redoc.standalone.js",
     )
 
 

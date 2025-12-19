@@ -63,7 +63,7 @@ repos:
     hooks:
       - id: mypy
         name: mypy-server
-        entry: mypy --config-file model-engine/mypy.ini
+        entry: mypy --config-file model-engine/mypy.ini --install-types --non-interactive
         language: system
   - repo: local
     hooks:
