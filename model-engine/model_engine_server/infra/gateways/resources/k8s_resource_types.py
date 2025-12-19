@@ -382,7 +382,7 @@ class VirtualServiceArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into virtual-service templates."""
 
     DNS_HOST_DOMAIN: str
-    MCP_TIMEOUT: str  # Timeout for passthrough forwarders (e.g., "300s" for 5 minutes, "" defaults to 30 seconds)
+    MCP_TIMEOUT: str  # Timeout for passthrough forwarders (e.g., "300s" for 5 minutes). "" (Default) is 30 seconds
 
 
 class LwsServiceEntryArguments(_BaseEndpointArguments):
