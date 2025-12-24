@@ -9,6 +9,12 @@ from model_engine_server.domain.entities.owned_entity import OwnedEntity
 from typing_extensions import Literal
 
 
+def _is_onprem_deployment() -> bool:
+    from model_engine_server.core.config import infra_config
+
+    return infra_config().cloud_provider == "onprem"
+
+
 class ModelBundlePackagingType(str, Enum):
     """
     The canonical list of possible packaging types for Model Bundles.
@@ -71,10 +77,15 @@ class ModelBundleEnvironmentParams(BaseModel):
                 "type was selected."
             )
         else:  # field_values["framework_type"] == ModelBundleFramework.CUSTOM:
-            assert field_values["ecr_repo"] and field_values["image_tag"], (
-                "Expected `ecr_repo` and `image_tag` to be non-null because the custom framework "
+            assert field_values["image_tag"], (
+                "Expected `image_tag` to be non-null because the custom framework "
                 "type was selected."
             )
+            if not field_values.get("ecr_repo") and not _is_onprem_deployment():
+                raise ValueError(
+                    "Expected `ecr_repo` to be non-null for custom framework. "
+                    "For on-prem deployments, ecr_repo can be omitted to use direct image references."
+                )
         return field_values
 
     model_config = ConfigDict(from_attributes=True)
