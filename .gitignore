@@ -147,3 +147,4 @@ venv.bak/
 node_modules/
 site/
 
+.worktrees/
