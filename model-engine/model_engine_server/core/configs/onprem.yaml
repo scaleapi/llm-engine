@@ -1,0 +1,72 @@
+# On-premise deployment configuration
+# This configuration file provides defaults for on-prem deployments
+# Many values can be overridden via environment variables
+
+cloud_provider: "onprem"
+env: "production"  # Can be: production, staging, development, local
+k8s_cluster_name: "onprem-cluster"
+dns_host_domain: "ml.company.local"
+default_region: "us-east-1"  # Placeholder for compatibility with cloud-agnostic code
+
+# ====================
+# Object Storage (MinIO/S3-compatible)
+# ====================
+s3_bucket: "model-engine"
+# S3 endpoint URL - can be overridden by S3_ENDPOINT_URL env var
+# Examples: "https://minio.company.local", "http://minio-service:9000"
+s3_endpoint_url: ""  # Set via S3_ENDPOINT_URL env var if not specified here
+# MinIO requires path-style addressing (bucket in URL path, not subdomain)
+s3_addressing_style: "path"
+
+# ====================
+# Redis Configuration
+# ====================
+# Redis is used for:
+# - Celery task queue broker
+# - Model endpoint caching
+# - Inference autoscaling metrics
+redis_host: ""  # Set via REDIS_HOST env var (e.g., "redis.company.local" or "redis-service")
+redis_port: 6379
+# Whether to use Redis as Celery broker (true for on-prem)
+celery_broker_type_redis: true
+
+# ====================
+# Celery Configuration
+# ====================
+# Backend protocol: "redis" for on-prem (not "s3" or "abs")
+celery_backend_protocol: "redis"
+
+# ====================
+# Database Configuration
+# ====================
+# Database connection settings (credentials from environment variables)
+# DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+db_host: "postgres"  # Default hostname, can be overridden by DB_HOST env var
+db_port: 5432
+db_name: "llm_engine"
+db_engine_pool_size: 20
+db_engine_max_overflow: 10
+db_engine_echo: false
+db_engine_echo_pool: false
+db_engine_disconnect_strategy: "pessimistic"
+
+# ====================
+# Docker Registry Configuration
+# ====================
+# Docker registry prefix for container images
+# Examples: "registry.company.local", "harbor.company.local/ml-platform"
+# Leave empty if using full image paths directly
+docker_repo_prefix: "registry.company.local"
+
+# ====================
+# Monitoring & Observability
+# ====================
+# Prometheus server address for metrics (optional)
+# prometheus_server_address: "http://prometheus:9090"
+
+# ====================
+# Not applicable for on-prem (kept for compatibility)
+# ====================
+ml_account_id: "onprem"
+profile_ml_worker: "default"
+profile_ml_inference_worker: "default"

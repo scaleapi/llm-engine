@@ -17,8 +17,8 @@ def fake_files():
     return ["fake-prefix/fake1", "fake-prefix/fake2", "fake-prefix/fake3", "fake-prefix-ext/fake1"]
 
 
-def mock_boto3_session(fake_files: List[str]):
-    mock_session = mock.Mock()
+def mock_s3_resource(fake_files: List[str]):
+    mock_resource = mock.Mock()
     mock_bucket = mock.Mock()
     mock_objects = mock.Mock()
 
@@ -26,12 +26,12 @@ def mock_boto3_session(fake_files: List[str]):
         prefix = kwargs["Prefix"]
         return [mock.Mock(key=file) for file in fake_files if file.startswith(prefix)]
 
-    mock_session.return_value.resource.return_value.Bucket.return_value = mock_bucket
+    mock_resource.Bucket.return_value = mock_bucket
     mock_bucket.objects = mock_objects
     mock_objects.filter.side_effect = filter_files
 
     mock_bucket.download_file.return_value = None
-    return mock_session
+    return mock_resource
 
 
 @mock.patch(
@@ -47,8 +47,8 @@ def test_s3_llm_artifact_gateway_download_folder(llm_artifact_gateway, fake_file
         f"{target_dir}/{file.split('/')[-1]}" for file in fake_files if file.startswith(prefix)
     ]
     with mock.patch(
-        "model_engine_server.infra.gateways.s3_llm_artifact_gateway.boto3.Session",
-        mock_boto3_session(fake_files),
+        "model_engine_server.infra.gateways.s3_llm_artifact_gateway.get_s3_resource",
+        return_value=mock_s3_resource(fake_files),
     ):
         assert llm_artifact_gateway.download_files(uri_prefix, target_dir) == expected_files
 
@@ -63,8 +63,8 @@ def test_s3_llm_artifact_gateway_download_file(llm_artifact_gateway, fake_files)
     target = f"fake-target/{file}"
 
     with mock.patch(
-        "model_engine_server.infra.gateways.s3_llm_artifact_gateway.boto3.Session",
-        mock_boto3_session(fake_files),
+        "model_engine_server.infra.gateways.s3_llm_artifact_gateway.get_s3_resource",
+        return_value=mock_s3_resource(fake_files),
     ):
         assert llm_artifact_gateway.download_files(uri, target) == [target]
 
@@ -79,8 +79,8 @@ def test_s3_llm_artifact_gateway_get_model_weights(llm_artifact_gateway):
     fake_model_weights = [f"{weights_prefix}/{file}" for file in fake_files]
     expected_model_files = [f"{s3_prefix}/{file}" for file in fake_files]
     with mock.patch(
-        "model_engine_server.infra.gateways.s3_llm_artifact_gateway.boto3.Session",
-        mock_boto3_session(fake_model_weights),
+        "model_engine_server.infra.gateways.s3_llm_artifact_gateway.get_s3_resource",
+        return_value=mock_s3_resource(fake_model_weights),
     ):
         assert (
             llm_artifact_gateway.get_model_weights_urls(owner, model_name) == expected_model_files
