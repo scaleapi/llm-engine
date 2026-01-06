@@ -14,8 +14,15 @@ class S3FilesystemGateway(FilesystemGateway):
 
     def get_s3_client(self, kwargs):
         profile_name = kwargs.get("aws_profile", os.getenv("AWS_PROFILE"))
-        session = boto3.Session(profile_name=profile_name)
-        client = session.client("s3")
+        # For on-prem: if profile_name is empty/None, use default credential chain (env vars)
+        if profile_name:
+            session = boto3.Session(profile_name=profile_name)
+        else:
+            session = boto3.Session()
+        
+        # Support for MinIO/on-prem S3-compatible storage
+        endpoint_url = os.getenv("S3_ENDPOINT_URL")
+        client = session.client("s3", endpoint_url=endpoint_url)
         return client
 
     def open(self, uri: str, mode: str = "rt", **kwargs) -> IO:

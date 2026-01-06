@@ -16,6 +16,7 @@ from typing import Any, AsyncGenerator, AsyncIterable, Dict, List, Optional, Uni
 
 import yaml
 from model_engine_server.common.config import hmi_config
+from model_engine_server.core.config import infra_config
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import (
     ChatCompletionV2Request,
@@ -369,6 +370,10 @@ class CreateLLMModelBundleV1UseCase:
     def check_docker_image_exists_for_image_tag(
         self, framework_image_tag: str, repository_name: str
     ):
+        # Skip ECR validation for on-prem deployments - images are in local registry
+        if infra_config().cloud_provider == "onprem":
+            return
+        
         if not self.docker_repository.image_exists(
             image_tag=framework_image_tag,
             repository_name=repository_name,
@@ -633,8 +638,11 @@ class CreateLLMModelBundleV1UseCase:
         file_selection_str = '--include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*"'
         if trust_remote_code:
             file_selection_str += ' --include "*.py"'
+        
+        # Support for MinIO/on-prem S3-compatible storage via S3_ENDPOINT_URL env var
+        endpoint_flag = '$(if [ -n "$S3_ENDPOINT_URL" ]; then echo "--endpoint-url $S3_ENDPOINT_URL"; fi)'
         subcommands.append(
-            f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+            f"{s5cmd} {endpoint_flag} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
         )
         return subcommands
 
@@ -686,8 +694,10 @@ class CreateLLMModelBundleV1UseCase:
         and llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/postprocessing/config.pbtxt
         """
         if checkpoint_path.startswith("s3://"):
+            # Support for MinIO/on-prem S3-compatible storage via S3_ENDPOINT_URL env var
+            endpoint_flag = '$(if [ -n "$S3_ENDPOINT_URL" ]; then echo "--endpoint-url $S3_ENDPOINT_URL"; fi)'
             subcommands = [
-                f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
+                f"./s5cmd {endpoint_flag} --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
             ]
         else:
             subcommands.extend(
@@ -2715,10 +2725,14 @@ def validate_endpoint_supports_openai_completion(
             f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support openai compatible completion."
         )
 
-    if (
-        not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike)
-        or OPENAI_COMPLETION_PATH not in endpoint.record.current_model_bundle.flavor.extra_routes
-    ):
+    if not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike):
+        raise EndpointUnsupportedRequestException(
+            "Endpoint does not support v2 openai compatible completion"
+        )
+
+    flavor = endpoint.record.current_model_bundle.flavor
+    all_routes = flavor.extra_routes + flavor.routes
+    if OPENAI_COMPLETION_PATH not in all_routes:
         raise EndpointUnsupportedRequestException(
             "Endpoint does not support v2 openai compatible completion"
         )
@@ -3005,11 +3019,12 @@ def validate_endpoint_supports_chat_completion(
             f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support chat completion."
         )
 
-    if (
-        not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike)
-        or OPENAI_CHAT_COMPLETION_PATH
-        not in endpoint.record.current_model_bundle.flavor.extra_routes
-    ):
+    if not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike):
+        raise EndpointUnsupportedRequestException("Endpoint does not support chat completion")
+
+    flavor = endpoint.record.current_model_bundle.flavor
+    all_routes = flavor.extra_routes + flavor.routes
+    if OPENAI_CHAT_COMPLETION_PATH not in all_routes:
         raise EndpointUnsupportedRequestException("Endpoint does not support chat completion")
 
 
