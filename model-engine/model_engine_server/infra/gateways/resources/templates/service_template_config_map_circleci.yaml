@@ -1110,7 +1110,7 @@ data:
                 - --set
                 - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                 - --set
-                - "forwarder.stream.routes=${FORWARDER_STREAMING_ROUTES}"
+                - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
                 - --set
                 - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
                 - --set
@@ -2369,7 +2369,7 @@ data:
                 - --set
                 - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                 - --set
-                - "forwarder.stream.routes=${FORWARDER_STREAMING_ROUTES}"
+                - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
                 - --set
                 - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
                 - --set

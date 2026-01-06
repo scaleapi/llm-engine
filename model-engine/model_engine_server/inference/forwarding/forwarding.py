@@ -639,6 +639,7 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
             "host",
             "content-length",
             "connection",
+            "transfer-encoding",
         }
         headers = {k: v for k, v in headers.items() if k.lower() not in excluded_headers}
         url = request.url

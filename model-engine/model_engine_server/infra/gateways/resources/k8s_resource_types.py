@@ -150,7 +150,7 @@ class _StreamingDeploymentArguments(TypedDict):
     STREAMING_PREDICT_ROUTE: str
     FORWARDER_WORKER_COUNT: int
     FORWARDER_SYNC_ROUTES: List[str]
-    FORWARDER_STREAMING_ROUTES: List[str]
+    FORWARDER_STREAM_ROUTES: List[str]
 
 
 class _RunnableImageDeploymentArguments(_BaseDeploymentArguments):
@@ -774,7 +774,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             STREAMING_PREDICT_ROUTE=flavor.streaming_predict_route,
             FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
-            FORWARDER_STREAMING_ROUTES=[flavor.streaming_predict_route]
+            FORWARDER_STREAM_ROUTES=[flavor.streaming_predict_route]
             + flavor.routes
             + flavor.extra_routes,
         )
@@ -825,7 +825,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             STREAMING_PREDICT_ROUTE=flavor.streaming_predict_route,
             FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
-            FORWARDER_STREAMING_ROUTES=[flavor.streaming_predict_route]
+            FORWARDER_STREAM_ROUTES=[flavor.streaming_predict_route]
             + flavor.routes
             + flavor.extra_routes,
             # GPU Deployment Arguments
@@ -1207,7 +1207,7 @@ def get_endpoint_resource_arguments_from_request(
             FORWARDER_WORKER_COUNT=FORWARDER_WORKER_COUNT,
             STREAMING_PREDICT_ROUTE=flavor.streaming_predict_route,
             FORWARDER_SYNC_ROUTES=[flavor.predict_route] + flavor.routes + flavor.extra_routes,
-            FORWARDER_STREAMING_ROUTES=[flavor.streaming_predict_route]
+            FORWARDER_STREAM_ROUTES=[flavor.streaming_predict_route]
             + flavor.routes
             + flavor.extra_routes,
             # GPU Arguments
