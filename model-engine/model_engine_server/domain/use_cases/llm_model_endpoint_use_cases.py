@@ -3005,10 +3005,11 @@ def validate_endpoint_supports_chat_completion(
             f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support chat completion."
         )
 
-    if (
-        not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike)
-        or OPENAI_CHAT_COMPLETION_PATH
-        not in endpoint.record.current_model_bundle.flavor.extra_routes
+    if not isinstance(
+        endpoint.record.current_model_bundle.flavor, RunnableImageLike
+    ) or OPENAI_CHAT_COMPLETION_PATH not in (
+        endpoint.record.current_model_bundle.flavor.extra_routes
+        + endpoint.record.current_model_bundle.flavor.routes
     ):
         raise EndpointUnsupportedRequestException("Endpoint does not support chat completion")
 
