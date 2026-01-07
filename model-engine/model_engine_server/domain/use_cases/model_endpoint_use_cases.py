@@ -129,6 +129,7 @@ def validate_deployment_resources(
 def validate_concurrent_requests_per_worker(
     concurrent_requests_per_worker: Optional[int],
     endpoint_type: ModelEndpointType,
+    per_worker: Optional[int] = None,
 ):
     if (
         endpoint_type == ModelEndpointType.ASYNC
@@ -137,6 +138,18 @@ def validate_concurrent_requests_per_worker(
     ):
         raise EndpointResourceInvalidRequestException(
             f"Requested concurrent requests per worker {concurrent_requests_per_worker} too high"
+        )
+    
+    # Validation for sync/streaming endpoints to prevent autoscaling issues
+    if (
+        endpoint_type in {ModelEndpointType.SYNC, ModelEndpointType.STREAMING}
+        and concurrent_requests_per_worker is not None
+        and per_worker is not None
+        and per_worker >= concurrent_requests_per_worker / 2
+    ):
+        raise EndpointResourceInvalidRequestException(
+            f"For sync/streaming endpoints, per_worker ({per_worker}) must be less than "
+            f"concurrent_requests_per_worker/2 ({concurrent_requests_per_worker/2}) to prevent autoscaling issues"
         )
 
 
@@ -299,7 +312,7 @@ class CreateModelEndpointV1UseCase:
         if concurrent_requests_per_worker is None:
             concurrent_requests_per_worker = min(request.per_worker, MAX_ASYNC_CONCURRENT_TASKS)
         validate_concurrent_requests_per_worker(
-            concurrent_requests_per_worker, request.endpoint_type
+            concurrent_requests_per_worker, request.endpoint_type, request.per_worker
         )
 
         if request.labels is None:
@@ -488,7 +501,7 @@ class UpdateModelEndpointByIdV1UseCase:
         )
 
         validate_concurrent_requests_per_worker(
-            request.concurrent_requests_per_worker, endpoint_record.endpoint_type
+            request.concurrent_requests_per_worker, endpoint_record.endpoint_type, request.per_worker
         )
 
         if request.metadata is not None and CONVERTED_FROM_ARTIFACT_LIKE_KEY in request.metadata:
