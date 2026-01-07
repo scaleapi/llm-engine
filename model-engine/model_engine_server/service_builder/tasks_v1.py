@@ -71,7 +71,8 @@ def get_live_endpoint_builder_service(
     redis: aioredis.Redis,
 ):
     queue_delegate: QueueEndpointResourceDelegate
-    if CIRCLECI:
+    if CIRCLECI or infra_config().cloud_provider == "onprem":
+        # On-prem uses fake queue delegate (no SQS/ServiceBus)
         queue_delegate = FakeQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
@@ -82,7 +83,8 @@ def get_live_endpoint_builder_service(
     notification_gateway = FakeNotificationGateway()
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     docker_repository: DockerRepository
-    if CIRCLECI:
+    if CIRCLECI or infra_config().cloud_provider == "onprem":
+        # On-prem uses fake docker repository (no ECR/ACR validation)
         docker_repository = FakeDockerRepository()
     elif infra_config().cloud_provider == "azure":
         docker_repository = ACRDockerRepository()

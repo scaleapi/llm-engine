@@ -7,6 +7,10 @@ from model_engine_server.infra.gateways.s3_utils import get_s3_client
 
 
 class S3FilesystemGateway(FilesystemGateway):
+    """
+    Concrete implementation for interacting with a filesystem backed by S3.
+    """
+
     def _get_client(self, kwargs: Optional[Dict[str, Any]] = None) -> Any:
         return get_s3_client(kwargs or {})
 
