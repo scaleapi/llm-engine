@@ -78,11 +78,11 @@ async def download_model(checkpoint_path: str, target_dir: str, trust_remote_cod
 
     print(f"Downloading model from {checkpoint_path} to {target_dir}", flush=True)
     additional_include = "--include '*.py'" if trust_remote_code else ""
-    
+
     # Support for MinIO/on-prem S3-compatible storage
     s3_endpoint_url = os.getenv("S3_ENDPOINT_URL", "")
     endpoint_flag = f"--endpoint-url {s3_endpoint_url}" if s3_endpoint_url else ""
-    
+
     s5cmd = f"./s5cmd {endpoint_flag} --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --include '*.txt' {additional_include} --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {target_dir}"
     print(s5cmd, flush=True)
     env = os.environ.copy()

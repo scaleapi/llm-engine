@@ -96,7 +96,7 @@ class HostedModelInferenceServiceConfig:
         # On-prem Redis support - check explicit URL first, then fallback to env vars
         if self.cache_redis_onprem_url:
             return self.cache_redis_onprem_url
-        
+
         if cloud_provider == "onprem":
             if self.cache_redis_aws_url:
                 logger.info("On-prem deployment using cache_redis_aws_url")

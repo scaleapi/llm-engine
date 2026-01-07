@@ -579,7 +579,7 @@ def get_endpoint_resource_arguments_from_request(
     abs_account_name = os.getenv("ABS_ACCOUNT_NAME")
     if abs_account_name is not None:
         main_env.append({"name": "ABS_ACCOUNT_NAME", "value": abs_account_name})
-    
+
     # Support for MinIO/on-prem S3-compatible storage
     s3_endpoint_url = os.getenv("S3_ENDPOINT_URL")
     if s3_endpoint_url:
