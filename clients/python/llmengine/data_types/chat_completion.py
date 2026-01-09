@@ -14,7 +14,7 @@ UNSUPPORTED_FIELDS = ["service_tier"]
 
 
 class ChatCompletionV2Request(CreateChatCompletionRequest, VLLMChatCompletionAdditionalParams):
-    model: str = Field(
+    model: str = Field(  # type: ignore[assignment]  # ModelIdsShared is a RootModel wrapping str
         description="ID of the model to use.",
         examples=["mixtral-8x7b-instruct"],
     )
