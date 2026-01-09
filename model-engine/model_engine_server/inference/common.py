@@ -25,7 +25,9 @@ s3_client = None
 def get_s3_client():
     global s3_client
     if s3_client is None:
-        s3_client = boto3.client("s3", region_name="us-west-2")
+        # Support for MinIO/on-prem S3-compatible storage
+        endpoint_url = os.getenv("S3_ENDPOINT_URL")
+        s3_client = boto3.client("s3", region_name="us-west-2", endpoint_url=endpoint_url)
     return s3_client
 
 
