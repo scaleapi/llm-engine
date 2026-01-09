@@ -4,6 +4,7 @@ from pydantic import AnyHttpUrl as PyAnyHttpUrl
 from pydantic import AnyUrl as PyAnyUrl
 from pydantic import AnyWebsocketUrl as PyAnyWebsocketUrl
 from pydantic import BaseModel as PydanticBaseModel
+from pydantic import constr  # noqa: F401
 from pydantic import model_validator  # noqa: F401
 from pydantic import ConfigDict, Field  # noqa: F401
 from pydantic import FileUrl as PyFileUrl
@@ -12,7 +13,6 @@ from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler  # noqa: F401
 from pydantic import HttpUrl as PyHttpUrl
 from pydantic import RootModel, TypeAdapter, ValidationError  # noqa: F401
 from pydantic import WebsocketUrl as PyWebsocketUrl
-from pydantic import constr  # noqa: F401
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema, core_schema
 
