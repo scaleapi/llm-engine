@@ -21,6 +21,12 @@ datamodel-codegen \
 #   Pydantic AnyUrl is super problematic for various reasons
 sed -i 's/^from pydantic import /from model_engine_server.common.pydantic_types import /' ${DEST_DIR}/openai.py
 
+# Remove discriminator='type' from unions where multiple types have the same discriminator value
+#   The OpenAPI spec has InputMessage and OutputMessage both with type='message', which breaks
+#   Pydantic's discriminated union. Removing the discriminator makes Pydantic try each model
+#   in order until one validates.
+sed -i "s/discriminator='type',//" ${DEST_DIR}/openai.py
+
 
 CLIENT_DIR=${BASE_DIR}/clients/python/llmengine/data_types/gen
 

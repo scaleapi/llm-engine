@@ -26004,7 +26004,6 @@ components:
             The type of the message input. Always set to `message`.
           enum:
             - message
-          default: message
           x-stainless-const: true
         role:
           type: string
