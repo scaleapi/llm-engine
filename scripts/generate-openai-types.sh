@@ -26,6 +26,8 @@ sed -i 's/^from pydantic import /from model_engine_server.common.pydantic_types 
 #   Pydantic's discriminated union. Removing the discriminator makes Pydantic try each model
 #   in order until one validates.
 sed -i "s/discriminator='type',//" ${DEST_DIR}/openai.py
+sed -i "s/, discriminator='type'//" ${DEST_DIR}/openai.py
+sed -i "s/Field(discriminator='type')/Field()/" ${DEST_DIR}/openai.py
 
 
 CLIENT_DIR=${BASE_DIR}/clients/python/llmengine/data_types/gen

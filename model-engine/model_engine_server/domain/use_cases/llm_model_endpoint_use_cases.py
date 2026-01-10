@@ -177,11 +177,11 @@ DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 DEFAULT_BATCH_COMPLETIONS_NODES_PER_WORKER = 1
 
 SERVICE_NAME = "model-engine"
+LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = f"{SERVICE_NAME}-inference-framework-latest-config"
+RECOMMENDED_HARDWARE_CONFIG_MAP_NAME = f"{SERVICE_NAME}-recommended-hardware-config"
 SERVICE_IDENTIFIER = os.getenv("SERVICE_IDENTIFIER")
 if SERVICE_IDENTIFIER:
     SERVICE_NAME += f"-{SERVICE_IDENTIFIER}"
-LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = f"{SERVICE_NAME}-inference-framework-latest-config"
-RECOMMENDED_HARDWARE_CONFIG_MAP_NAME = f"{SERVICE_NAME}-recommended-hardware-config"
 
 
 def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
