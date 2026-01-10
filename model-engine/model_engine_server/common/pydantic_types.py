@@ -4,6 +4,7 @@ from pydantic import AnyHttpUrl as PyAnyHttpUrl
 from pydantic import AnyUrl as PyAnyUrl
 from pydantic import AnyWebsocketUrl as PyAnyWebsocketUrl
 from pydantic import BaseModel as PydanticBaseModel
+from pydantic import constr  # noqa: F401
 from pydantic import model_validator  # noqa: F401
 from pydantic import ConfigDict, Field  # noqa: F401
 from pydantic import FileUrl as PyFileUrl

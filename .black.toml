@@ -3,7 +3,7 @@
 line-length = 100
 target-version = ['py310']
 include = '\.pyi?$'
-exclude = '''
+force-exclude = '''
 (
   /(
       \.eggs         # exclude a few common directories in the
@@ -18,6 +18,7 @@ exclude = '''
     | dist
     | alembic
     | gen
+    | scripts
   )/
 )
 '''
