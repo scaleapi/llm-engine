@@ -2715,9 +2715,11 @@ def validate_endpoint_supports_openai_completion(
             f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support openai compatible completion."
         )
 
-    if (
-        not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike)
-        or OPENAI_COMPLETION_PATH not in endpoint.record.current_model_bundle.flavor.extra_routes
+    if not isinstance(
+        endpoint.record.current_model_bundle.flavor, RunnableImageLike
+    ) or OPENAI_COMPLETION_PATH not in (
+        endpoint.record.current_model_bundle.flavor.extra_routes
+        + endpoint.record.current_model_bundle.flavor.routes
     ):
         raise EndpointUnsupportedRequestException(
             "Endpoint does not support v2 openai compatible completion"
