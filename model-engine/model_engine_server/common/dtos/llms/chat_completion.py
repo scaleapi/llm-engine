@@ -16,7 +16,7 @@ UNSUPPORTED_FIELDS = ["service_tier"]
 
 
 class ChatCompletionV2Request(CreateChatCompletionRequest, VLLMChatCompletionAdditionalParams):
-    model: Annotated[
+    model: Annotated[  # type: ignore[assignment]
         str,
         Field(
             description="ID of the model to use.",
