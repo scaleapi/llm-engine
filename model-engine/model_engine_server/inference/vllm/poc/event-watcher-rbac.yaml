@@ -1,0 +1,28 @@
+# RBAC for K8s Event Watcher
+# Grants pod and event list/watch permissions to the event watcher
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: vllm-event-watcher
+  namespace: scale-deploy
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: vllm-event-watcher
+  namespace: scale-deploy
+subjects:
+  - kind: ServiceAccount
+    name: ml-worker
+    namespace: scale-deploy
+roleRef:
+  kind: Role
+  name: vllm-event-watcher
+  apiGroup: rbac.authorization.k8s.io

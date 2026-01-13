@@ -1,0 +1,337 @@
+{
+  "title": "vLLM Startup Metrics",
+  "description": "Startup phase timing breakdown for vLLM model endpoints",
+  "layout_type": "ordered",
+  "widgets": [
+    {
+      "definition": {
+        "title": "Avg Total Startup Time (s)",
+        "title_size": "16",
+        "title_align": "left",
+        "type": "query_value",
+        "requests": [
+          {
+            "q": "avg:vllm.startup.total_to_running.duration{*}",
+            "aggregator": "avg"
+          }
+        ],
+        "precision": 1
+      }
+    },
+    {
+      "definition": {
+        "title": "Avg Scheduling Time (s)",
+        "title_size": "16",
+        "title_align": "left",
+        "type": "query_value",
+        "requests": [
+          {
+            "q": "avg:vllm.startup.scheduling.duration{*}",
+            "aggregator": "avg"
+          }
+        ],
+        "precision": 1
+      }
+    },
+    {
+      "definition": {
+        "title": "Avg Image Pull Time (s)",
+        "title_size": "16",
+        "title_align": "left",
+        "type": "query_value",
+        "requests": [
+          {
+            "q": "avg:vllm.startup.image_pull.duration{*}",
+            "aggregator": "avg"
+          }
+        ],
+        "precision": 1
+      }
+    },
+    {
+      "definition": {
+        "title": "Avg Container Start Time (s)",
+        "title_size": "16",
+        "title_align": "left",
+        "type": "query_value",
+        "requests": [
+          {
+            "q": "avg:vllm.startup.container_start.duration{*}",
+            "aggregator": "avg"
+          }
+        ],
+        "precision": 1
+      }
+    },
+    {
+      "definition": {
+        "title": "Total Startup Time Over Time",
+        "title_size": "16",
+        "title_align": "left",
+        "show_legend": true,
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "avg:vllm.startup.total_to_running.duration{*}",
+            "display_type": "line",
+            "style": {
+              "palette": "dog_classic",
+              "line_type": "solid",
+              "line_width": "normal"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "title": "Startup Phase Breakdown",
+        "title_size": "16",
+        "title_align": "left",
+        "show_legend": true,
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "avg:vllm.startup.scheduling.duration{*}",
+            "display_type": "bars",
+            "style": {
+              "palette": "dog_classic"
+            },
+            "metadata": [
+              {
+                "expression": "avg:vllm.startup.scheduling.duration{*}",
+                "alias_name": "Scheduling"
+              }
+            ]
+          },
+          {
+            "q": "avg:vllm.startup.image_pull.duration{*}",
+            "display_type": "bars",
+            "style": {
+              "palette": "dog_classic"
+            },
+            "metadata": [
+              {
+                "expression": "avg:vllm.startup.image_pull.duration{*}",
+                "alias_name": "Image Pull"
+              }
+            ]
+          },
+          {
+            "q": "avg:vllm.startup.container_create.duration{*}",
+            "display_type": "bars",
+            "style": {
+              "palette": "dog_classic"
+            },
+            "metadata": [
+              {
+                "expression": "avg:vllm.startup.container_create.duration{*}",
+                "alias_name": "Container Create"
+              }
+            ]
+          },
+          {
+            "q": "avg:vllm.startup.container_start.duration{*}",
+            "display_type": "bars",
+            "style": {
+              "palette": "dog_classic"
+            },
+            "metadata": [
+              {
+                "expression": "avg:vllm.startup.container_start.duration{*}",
+                "alias_name": "Container Start"
+              }
+            ]
+          },
+          {
+            "q": "avg:vllm.startup.init_to_ready.duration{*}",
+            "display_type": "bars",
+            "style": {
+              "palette": "dog_classic"
+            },
+            "metadata": [
+              {
+                "expression": "avg:vllm.startup.init_to_ready.duration{*}",
+                "alias_name": "Init to Ready"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "title": "Startup Time by Endpoint (Top 20)",
+        "title_size": "16",
+        "title_align": "left",
+        "type": "toplist",
+        "requests": [
+          {
+            "q": "top(avg:vllm.startup.total_to_running.duration{*} by {endpoint_name}, 20, 'mean', 'desc')"
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "title": "Startup Time by Model (Top 20)",
+        "title_size": "16",
+        "title_align": "left",
+        "type": "toplist",
+        "requests": [
+          {
+            "q": "top(avg:vllm.startup.total_to_running.duration{*} by {model_name}, 20, 'mean', 'desc')"
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "title": "Scheduling Time (Avg / P95 / Max)",
+        "title_size": "16",
+        "title_align": "left",
+        "show_legend": true,
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "avg:vllm.startup.scheduling.duration{*}",
+            "display_type": "line",
+            "style": {
+              "palette": "warm",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "avg:vllm.startup.scheduling.duration{*}",
+                "alias_name": "Avg"
+              }
+            ]
+          },
+          {
+            "q": "max:vllm.startup.scheduling.duration{*}",
+            "display_type": "line",
+            "style": {
+              "palette": "warm",
+              "line_type": "dashed",
+              "line_width": "thin"
+            },
+            "metadata": [
+              {
+                "expression": "max:vllm.startup.scheduling.duration{*}",
+                "alias_name": "Max"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "title": "Image Pull Time (Avg / Max)",
+        "title_size": "16",
+        "title_align": "left",
+        "show_legend": true,
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "avg:vllm.startup.image_pull.duration{*}",
+            "display_type": "line",
+            "style": {
+              "palette": "cool",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "avg:vllm.startup.image_pull.duration{*}",
+                "alias_name": "Avg"
+              }
+            ]
+          },
+          {
+            "q": "max:vllm.startup.image_pull.duration{*}",
+            "display_type": "line",
+            "style": {
+              "palette": "cool",
+              "line_type": "dashed",
+              "line_width": "thin"
+            },
+            "metadata": [
+              {
+                "expression": "max:vllm.startup.image_pull.duration{*}",
+                "alias_name": "Max"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "title": "In-Container: Model Download Time",
+        "title_size": "16",
+        "title_align": "left",
+        "show_legend": true,
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "avg:vllm.startup.download.duration{*}",
+            "display_type": "bars",
+            "style": {
+              "palette": "green"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "title": "In-Container: Total Startup Time",
+        "title_size": "16",
+        "title_align": "left",
+        "show_legend": true,
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "avg:vllm.startup.total.duration{*}",
+            "display_type": "bars",
+            "style": {
+              "palette": "purple"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "title": "Pod Startup Count",
+        "title_size": "16",
+        "title_align": "left",
+        "show_legend": true,
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "sum:vllm.startup.total_to_running.duration{*}.count()",
+            "display_type": "bars",
+            "style": {
+              "palette": "grey"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "template_variables": [
+    {
+      "name": "endpoint_name",
+      "prefix": "endpoint_name",
+      "default": "*"
+    },
+    {
+      "name": "model_name",
+      "prefix": "model_name",
+      "default": "*"
+    }
+  ]
+}

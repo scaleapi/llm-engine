@@ -1,0 +1,192 @@
+# POC Deployment for vLLM with Startup Metrics
+# Deploys to scale-deploy namespace for testing
+# Matches llama-3-1-8b-instruct configuration
+#
+# Usage:
+#   kubectl apply -f deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-startup-metrics-poc
+  namespace: scale-deploy
+  labels:
+    app: vllm-startup-metrics-poc
+    team: ml-infra
+    purpose: startup-metrics-poc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-startup-metrics-poc
+  template:
+    metadata:
+      labels:
+        app: vllm-startup-metrics-poc
+        team: ml-infra
+      annotations:
+        ad.datadoghq.com/main.logs: '[{"service": "vllm-startup-metrics-poc", "source": "python"}]'
+    spec:
+      # Match llama-3-1-8b-instruct node selector exactly
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: nvidia-hopper-h100-3g40gb
+        node-lifecycle: normal
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+
+      # Service account (matches working endpoints)
+      serviceAccountName: ml-worker
+
+      # Match security context
+      securityContext:
+        fsGroup: 65534
+
+      containers:
+        - name: main
+          image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/vllm:startup-metrics-poc-waterfall
+
+          env:
+            # Model configuration
+            - name: MODEL_S3_PATH
+              value: "s3://scale-ml/models/hf-synced-weights/meta-llama/Meta-Llama-3.1-8B-Instruct"
+            - name: MODEL_LOCAL_PATH
+              value: "model_files"
+            - name: SERVED_MODEL_NAME
+              value: "llama-3-1-8b-instruct-poc"
+            - name: VLLM_PORT
+              value: "5005"
+            - name: VLLM_EXTRA_ARGS
+              value: "--enforce-eager --tensor-parallel-size 1 --disable-log-requests --gpu-memory-utilization 0.9"
+
+            # Startup metrics context
+            - name: ENDPOINT_NAME
+              value: "vllm-startup-metrics-poc"
+            - name: MODEL_NAME
+              value: "llama-3-1-8b-instruct"
+            - name: GPU_TYPE
+              value: "h100-3g40gb"
+            - name: NUM_GPUS
+              value: "1"
+
+            # Pod identification (for trace correlation)
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+
+            # AWS configuration (matches working endpoints exactly)
+            - name: AWS_PROFILE
+              value: "ml-worker"
+            - name: AWS_CONFIG_FILE
+              value: "/opt/.aws/config"
+            - name: AWS_STS_REGIONAL_ENDPOINTS
+              value: "regional"
+            - name: AWS_DEFAULT_REGION
+              value: "us-west-2"
+            - name: AWS_REGION
+              value: "us-west-2"
+
+            # Datadog tracing
+            - name: DD_TRACE_ENABLED
+              value: "true"
+            - name: DD_SERVICE
+              value: "vllm-startup-metrics-poc"
+            - name: DD_ENV
+              value: "prod"
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+
+            # OpenTelemetry -> Datadog Agent (OTLP receiver)
+            # Note: OTEL_EXPORTER_OTLP_ENDPOINT is constructed in entrypoint using DD_AGENT_HOST
+            - name: OTEL_SERVICE_NAME
+              value: "vllm-startup-metrics-poc"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "deployment.environment=prod,service.name=vllm-startup-metrics-poc"
+
+          ports:
+            - containerPort: 5005
+              name: http
+              protocol: TCP
+
+          # Match llama-3-1-8b-instruct resources exactly
+          resources:
+            requests:
+              cpu: "6"
+              memory: "40Gi"
+              ephemeral-storage: "80Gi"
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "6"
+              memory: "40Gi"
+              ephemeral-storage: "80Gi"
+              nvidia.com/gpu: "1"
+
+          # Readiness probe
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5005
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60
+
+          # Liveness probe
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5005
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          securityContext:
+            capabilities:
+              drop:
+                - all
+
+          volumeMounts:
+            - name: aws-config
+              mountPath: /opt/.aws/config
+              subPath: config
+            - name: dshm
+              mountPath: /dev/shm
+
+      volumes:
+        - name: aws-config
+          configMap:
+            name: ml-worker-config
+        - name: dshm
+          emptyDir:
+            medium: Memory
+---
+# Service to expose the endpoint
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-startup-metrics-poc
+  namespace: scale-deploy
+  labels:
+    app: vllm-startup-metrics-poc
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5005
+      targetPort: 5005
+      protocol: TCP
+      name: http
+  selector:
+    app: vllm-startup-metrics-poc

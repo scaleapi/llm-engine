@@ -1,0 +1,54 @@
+# K8s Event Watcher Deployment
+# Watches pod events and emits scheduling metrics
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-event-watcher
+  namespace: scale-deploy
+  labels:
+    app: vllm-event-watcher
+    team: ml-infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-event-watcher
+  template:
+    metadata:
+      labels:
+        app: vllm-event-watcher
+        team: ml-infra
+    spec:
+      serviceAccountName: ml-worker  # Needs pod list/watch permissions
+      containers:
+        - name: watcher
+          image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/vllm:event-watcher-v2
+          env:
+            - name: WATCH_NAMESPACE
+              value: "scale-deploy"
+            - name: LABEL_SELECTOR
+              value: ""  # Watch all pods, or set to "team=ml-infra"
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            # OTEL endpoint constructed from DD_AGENT_HOST
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Construct OTLP endpoint with IPv6 bracket handling
+              if echo "$DD_AGENT_HOST" | grep -q ":"; then
+                export OTEL_EXPORTER_OTLP_ENDPOINT="http://[${DD_AGENT_HOST}]:4317"
+              else
+                export OTEL_EXPORTER_OTLP_ENDPOINT="http://${DD_AGENT_HOST}:4317"
+              fi
+              echo "OTLP endpoint: $OTEL_EXPORTER_OTLP_ENDPOINT"
+              exec python /app/event_watcher.py
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
