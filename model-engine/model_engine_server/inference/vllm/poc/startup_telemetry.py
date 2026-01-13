@@ -21,6 +21,7 @@ from typing import Generator, Optional
 # OTel imports - gracefully handle missing dependencies
 try:
     from opentelemetry import metrics, trace
+    from opentelemetry.context import Context
     from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.sdk.metrics import MeterProvider
@@ -28,7 +29,7 @@ try:
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
-    from opentelemetry.trace import SpanKind, Status, StatusCode
+    from opentelemetry.trace import NonRecordingSpan, SpanContext, SpanKind, Status, StatusCode, TraceFlags
 
     OTEL_AVAILABLE = True
 except ImportError:
@@ -80,8 +81,18 @@ class StartupTelemetry:
         self._root_span = None
         self._root_span_context = None
 
-    def init(self, ctx: Optional[StartupContext] = None) -> None:
-        """Initialize OTel SDK for startup instrumentation."""
+    def init(
+        self, ctx: Optional[StartupContext] = None, container_start_time_ns: Optional[int] = None
+    ) -> None:
+        """Initialize OTel SDK for startup instrumentation.
+
+        Args:
+            ctx: Optional startup context with endpoint/model metadata
+            container_start_time_ns: Optional container start time in nanoseconds.
+                If provided, the root span will use this as its start time so it
+                properly encapsulates all child spans including s5cmd download.
+                If not provided, falls back to CONTAINER_START_TS env var or current time.
+        """
         if not OTEL_AVAILABLE:
             print("Skipping OTel init - dependencies not available")
             return
@@ -92,6 +103,17 @@ class StartupTelemetry:
             return
 
         self._context = ctx or StartupContext.from_env()
+
+        # Determine root span start time - use container start if available
+        if container_start_time_ns:
+            self._root_start_time_ns = container_start_time_ns
+        else:
+            # Try to get from environment (set by entrypoint.sh)
+            container_start_ts = os.environ.get("CONTAINER_START_TS")
+            if container_start_ts:
+                self._root_start_time_ns = int(float(container_start_ts) * 1_000_000_000)
+            else:
+                self._root_start_time_ns = self._start_time_ns
 
         resource = Resource.create(
             {
@@ -157,11 +179,15 @@ class StartupTelemetry:
         self._initialized = True
 
         # Create root span for trace correlation - all child spans will be linked to this
-        # This creates a single trace that contains all startup phases
+        # Use deterministic trace ID from pod_uid so K8s event watcher spans
+        # appear in the same trace
+        deterministic_ctx = self._create_deterministic_context()
+
         self._root_span = self._tracer.start_span(
-            "pod_startup",
+            "in_container_startup",
             kind=SpanKind.INTERNAL,
-            start_time=self._start_time_ns,
+            context=deterministic_ctx,  # Use deterministic trace ID
+            start_time=self._root_start_time_ns,  # Use container start time to encapsulate all phases
         )
         for k, v in self._get_common_attributes().items():
             self._root_span.set_attribute(k, v)
@@ -170,13 +196,58 @@ class StartupTelemetry:
         # Store context for child span creation
         self._root_span_context = trace.set_span_in_context(self._root_span)
 
-        print(f"OTel startup telemetry initialized, endpoint={endpoint}")
+        trace_id = self.derive_trace_id()
+        trace_id_hex = format(trace_id, "032x") if trace_id else "unknown"
+        print(f"OTel startup telemetry initialized, endpoint={endpoint}, trace_id={trace_id_hex}")
 
-    def derive_trace_id(self) -> Optional[str]:
-        """Derive deterministic trace ID from pod UID for correlation."""
+    def derive_trace_id(self) -> Optional[int]:
+        """Derive deterministic trace ID from pod UID for correlation.
+
+        Returns a 128-bit integer trace ID derived from pod UID.
+        Both the K8s event watcher and in-container telemetry use this
+        same algorithm to correlate spans into a single trace.
+        """
         if not self._context or self._context.pod_uid == "unknown":
             return None
-        return hashlib.sha256(self._context.pod_uid.encode()).hexdigest()[:32]
+        # Use first 32 hex chars (128 bits) of sha256 hash
+        hex_id = hashlib.sha256(self._context.pod_uid.encode()).hexdigest()[:32]
+        return int(hex_id, 16)
+
+    def derive_span_id(self, suffix: str = "") -> int:
+        """Derive deterministic span ID for a given span name.
+
+        Returns a 64-bit integer span ID.
+        """
+        if not self._context:
+            return 0
+        # Combine pod_uid with suffix to get unique span IDs
+        data = f"{self._context.pod_uid}:{suffix}"
+        hex_id = hashlib.sha256(data.encode()).hexdigest()[:16]
+        return int(hex_id, 16)
+
+    def _create_deterministic_context(self) -> Optional[Context]:
+        """Create a trace context with deterministic trace ID from pod_uid.
+
+        This allows the K8s event watcher and in-container telemetry to
+        emit spans that appear in the same trace.
+        """
+        trace_id = self.derive_trace_id()
+        if not trace_id:
+            return None
+
+        # Create a span context with deterministic trace ID
+        # Use a deterministic span ID for the root span
+        span_id = self.derive_span_id("root")
+        span_context = SpanContext(
+            trace_id=trace_id,
+            span_id=span_id,
+            is_remote=True,  # Treat as remote so new spans become children
+            trace_flags=TraceFlags(TraceFlags.SAMPLED),
+        )
+
+        # Create a non-recording span with this context to use as parent
+        parent_span = NonRecordingSpan(span_context)
+        return trace.set_span_in_context(parent_span)
 
     def _get_common_attributes(self) -> dict:
         """Get common attributes for spans and metrics."""
@@ -268,8 +339,12 @@ class StartupTelemetry:
 
         Also closes the root pod_startup span to finalize the trace.
         """
-        total_duration = time.perf_counter() - self._start_time
         end_time_ns = time_module.time_ns()
+        # Calculate total duration from container start (not Python start)
+        if hasattr(self, "_root_start_time_ns"):
+            total_duration = (end_time_ns - self._root_start_time_ns) / 1_000_000_000
+        else:
+            total_duration = time.perf_counter() - self._start_time
 
         if self._initialized:
             self.record_metric("total_duration", total_duration)
@@ -315,9 +390,11 @@ class StartupTelemetry:
 _telemetry = StartupTelemetry()
 
 
-def init_startup_telemetry(ctx: Optional[StartupContext] = None) -> StartupTelemetry:
+def init_startup_telemetry(
+    ctx: Optional[StartupContext] = None, container_start_time_ns: Optional[int] = None
+) -> StartupTelemetry:
     """Initialize the global startup telemetry instance."""
-    _telemetry.init(ctx)
+    _telemetry.init(ctx, container_start_time_ns)
     return _telemetry
 
 

@@ -9,8 +9,12 @@ Watches pod events and K8s events to capture granular startup phase timings:
 - Total: pod creation → container running
 
 Emits metrics via OTLP to Datadog for correlation with in-container startup metrics.
+
+Uses deterministic trace ID derived from pod_uid so spans appear in the same
+trace as in-container startup spans (which use the same algorithm).
 """
 
+import hashlib
 import os
 import threading
 import time
@@ -28,12 +32,52 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.trace import SpanKind, Status, StatusCode
+from opentelemetry.trace import NonRecordingSpan, SpanContext, SpanKind, Status, StatusCode, TraceFlags
 
 # Configuration
 NAMESPACE = os.environ.get("WATCH_NAMESPACE", "scale-deploy")
 LABEL_SELECTOR = os.environ.get("LABEL_SELECTOR", "")  # e.g., "team=ml-infra"
 OTLP_ENDPOINT = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "")
+
+
+def derive_trace_id(pod_uid: str) -> int:
+    """Derive deterministic 128-bit trace ID from pod UID.
+
+    Uses same algorithm as startup_telemetry.py for correlation.
+    """
+    hex_id = hashlib.sha256(pod_uid.encode()).hexdigest()[:32]
+    return int(hex_id, 16)
+
+
+def derive_span_id(pod_uid: str, suffix: str) -> int:
+    """Derive deterministic 64-bit span ID for a given span name.
+
+    Uses same algorithm as startup_telemetry.py for correlation.
+    """
+    data = f"{pod_uid}:{suffix}"
+    hex_id = hashlib.sha256(data.encode()).hexdigest()[:16]
+    return int(hex_id, 16)
+
+
+def create_deterministic_context(pod_uid: str) -> trace.Context:
+    """Create a trace context with deterministic trace ID from pod_uid.
+
+    This allows K8s event watcher spans to appear in the same trace
+    as in-container telemetry spans.
+    """
+    trace_id = derive_trace_id(pod_uid)
+    # Use "root" suffix to match the in-container root span
+    span_id = derive_span_id(pod_uid, "root")
+
+    span_context = SpanContext(
+        trace_id=trace_id,
+        span_id=span_id,
+        is_remote=True,  # Treat as remote so new spans become children
+        trace_flags=TraceFlags(TraceFlags.SAMPLED),
+    )
+
+    parent_span = NonRecordingSpan(span_context)
+    return trace.set_span_in_context(parent_span)
 
 
 class PodStartupTracker:
@@ -275,14 +319,19 @@ class PodStartupTracker:
 
         print(f"[METRIC] {pod_data['name']} {metric_name}={duration:.2f}s")
 
-        # Create span with actual timestamps
+        # Create span with actual timestamps, using deterministic trace context
         if self._tracer:
             start_ns = int(start_time.timestamp() * 1_000_000_000)
             end_ns = int(end_time.timestamp() * 1_000_000_000)
 
+            # Use deterministic context so this span appears in same trace
+            # as in-container startup spans
+            deterministic_ctx = create_deterministic_context(pod_uid)
+
             span = self._tracer.start_span(
-                f"pod_{metric_name}",
+                f"k8s_{metric_name}",
                 kind=SpanKind.INTERNAL,
+                context=deterministic_ctx,
                 start_time=start_ns,
             )
             span.set_attribute("pod_name", pod_data["name"])
@@ -292,6 +341,9 @@ class PodStartupTracker:
                 span.set_attribute(k, v)
             span.set_status(Status(StatusCode.OK))
             span.end(end_time=end_ns)
+
+            trace_id_hex = format(derive_trace_id(pod_uid), "032x")
+            print(f"[SPAN] {pod_data['name']} k8s_{metric_name} trace_id={trace_id_hex}")
 
     def cleanup_old_pods(self):
         """Remove old pod entries to prevent memory growth."""

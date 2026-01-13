@@ -150,7 +150,7 @@ async def run_instrumented_server(args):
     download_duration_str = os.environ.get("STARTUP_DOWNLOAD_DURATION_S")
     download_size_mb_str = os.environ.get("STARTUP_DOWNLOAD_SIZE_MB")
     download_start_ts = os.environ.get("DOWNLOAD_START_TS")
-    download_end_ts = os.environ.get("DOWNLOAD_END_TS")
+    download_end_ts = os.environ.get("DOWNLOAD_END_TS")  # Used for python_init span
 
     if download_duration_str:
         download_duration = float(download_duration_str)
@@ -176,13 +176,25 @@ async def run_instrumented_server(args):
             f"[STARTUP METRICS] Recorded download metrics: {download_duration:.2f}s, {download_size_mb}MB"
         )
 
-    # Record pre-vLLM init time (container start to now)
-    pre_vllm_duration = time.perf_counter() - CONTAINER_START_TIME
-    print(f"[STARTUP METRICS] Pre-vLLM init: {pre_vllm_duration:.2f}s")
-
-    # Mark when vLLM init starts
+    # Mark when vLLM init starts (before creating python_init span)
     VLLM_INIT_START_TIME = time.perf_counter()
     VLLM_INIT_START_TIME_NS = time.time_ns()
+
+    # Create python_init span to cover the gap between download end and vllm_init start
+    # This includes: Python interpreter startup, heavy imports (vLLM, torch), arg parsing
+    if download_end_ts:
+        download_end_ns = int(float(download_end_ts) * 1_000_000_000)
+        python_init_duration = (VLLM_INIT_START_TIME_NS - download_end_ns) / 1_000_000_000
+        telemetry.create_child_span(
+            "python_init",
+            start_time_ns=download_end_ns,
+            end_time_ns=VLLM_INIT_START_TIME_NS,
+            attributes={
+                "description": "Python startup, module imports, arg parsing",
+                "duration_seconds": python_init_duration,
+            },
+        )
+        print(f"[STARTUP METRICS] Python init (imports + setup): {python_init_duration:.2f}s")
 
     # Start health check thread to detect when server is ready
     port = getattr(args, "port", 8000)
