@@ -16,7 +16,8 @@ RUN mv /workspace/s5cmd /usr/local/bin/s5cmd || true
 
 WORKDIR /workspace
 
-# Copy the instrumented server and telemetry module
+# Copy the instrumented server and telemetry modules
+COPY trace_correlation.py /workspace/trace_correlation.py
 COPY startup_telemetry.py /workspace/startup_telemetry.py
 COPY vllm_server_instrumented.py /workspace/vllm_server_instrumented.py
 COPY entrypoint.sh /workspace/entrypoint.sh

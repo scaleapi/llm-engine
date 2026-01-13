@@ -22,7 +22,7 @@ spec:
       serviceAccountName: ml-worker  # Needs pod list/watch permissions
       containers:
         - name: watcher
-          image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/vllm:event-watcher-unified-trace
+          image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/vllm:event-watcher-shared-lib-v1
           env:
             - name: WATCH_NAMESPACE
               value: "scale-deploy"

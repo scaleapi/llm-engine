@@ -8,7 +8,6 @@ All startup spans are linked to a common parent "pod_startup" span so they appea
 in a single trace waterfall view in Datadog.
 """
 
-import hashlib
 import os
 
 # For explicit span timestamps
@@ -18,10 +17,17 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Generator, Optional
 
+# Shared trace correlation utilities
+from trace_correlation import (
+    OTEL_AVAILABLE,
+    create_deterministic_context,
+    derive_span_id,
+    derive_trace_id,
+)
+
 # OTel imports - gracefully handle missing dependencies
-try:
+if OTEL_AVAILABLE:
     from opentelemetry import metrics, trace
-    from opentelemetry.context import Context
     from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.sdk.metrics import MeterProvider
@@ -29,12 +35,7 @@ try:
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
-    from opentelemetry.trace import NonRecordingSpan, SpanContext, SpanKind, Status, StatusCode, TraceFlags
-
-    OTEL_AVAILABLE = True
-except ImportError:
-    OTEL_AVAILABLE = False
-    print("WARNING: OpenTelemetry not available, startup metrics disabled")
+    from opentelemetry.trace import SpanKind, Status, StatusCode
 
 
 @dataclass
@@ -181,7 +182,7 @@ class StartupTelemetry:
         # Create root span for trace correlation - all child spans will be linked to this
         # Use deterministic trace ID from pod_uid so K8s event watcher spans
         # appear in the same trace
-        deterministic_ctx = self._create_deterministic_context()
+        deterministic_ctx = self._get_deterministic_context()
 
         self._root_span = self._tracer.start_span(
             "in_container_startup",
@@ -196,58 +197,38 @@ class StartupTelemetry:
         # Store context for child span creation
         self._root_span_context = trace.set_span_in_context(self._root_span)
 
-        trace_id = self.derive_trace_id()
+        trace_id = self.get_trace_id()
         trace_id_hex = format(trace_id, "032x") if trace_id else "unknown"
         print(f"OTel startup telemetry initialized, endpoint={endpoint}, trace_id={trace_id_hex}")
 
-    def derive_trace_id(self) -> Optional[int]:
-        """Derive deterministic trace ID from pod UID for correlation.
+    def get_trace_id(self) -> Optional[int]:
+        """Get deterministic trace ID from pod UID for correlation.
 
         Returns a 128-bit integer trace ID derived from pod UID.
-        Both the K8s event watcher and in-container telemetry use this
-        same algorithm to correlate spans into a single trace.
+        Uses shared trace_correlation module for consistency with K8s event watcher.
         """
         if not self._context or self._context.pod_uid == "unknown":
             return None
-        # Use first 32 hex chars (128 bits) of sha256 hash
-        hex_id = hashlib.sha256(self._context.pod_uid.encode()).hexdigest()[:32]
-        return int(hex_id, 16)
+        return derive_trace_id(self._context.pod_uid)
 
-    def derive_span_id(self, suffix: str = "") -> int:
-        """Derive deterministic span ID for a given span name.
+    def get_span_id(self, suffix: str = "") -> int:
+        """Get deterministic span ID for a given span name.
 
         Returns a 64-bit integer span ID.
+        Uses shared trace_correlation module for consistency with K8s event watcher.
         """
         if not self._context:
             return 0
-        # Combine pod_uid with suffix to get unique span IDs
-        data = f"{self._context.pod_uid}:{suffix}"
-        hex_id = hashlib.sha256(data.encode()).hexdigest()[:16]
-        return int(hex_id, 16)
+        return derive_span_id(self._context.pod_uid, suffix)
 
-    def _create_deterministic_context(self) -> Optional[Context]:
-        """Create a trace context with deterministic trace ID from pod_uid.
+    def _get_deterministic_context(self):
+        """Get trace context with deterministic trace ID from pod_uid.
 
-        This allows the K8s event watcher and in-container telemetry to
-        emit spans that appear in the same trace.
+        Uses shared trace_correlation module for consistency with K8s event watcher.
         """
-        trace_id = self.derive_trace_id()
-        if not trace_id:
+        if not self._context or self._context.pod_uid == "unknown":
             return None
-
-        # Create a span context with deterministic trace ID
-        # Use a deterministic span ID for the root span
-        span_id = self.derive_span_id("root")
-        span_context = SpanContext(
-            trace_id=trace_id,
-            span_id=span_id,
-            is_remote=True,  # Treat as remote so new spans become children
-            trace_flags=TraceFlags(TraceFlags.SAMPLED),
-        )
-
-        # Create a non-recording span with this context to use as parent
-        parent_span = NonRecordingSpan(span_context)
-        return trace.set_span_in_context(parent_span)
+        return create_deterministic_context(self._context.pod_uid)
 
     def _get_common_attributes(self) -> dict:
         """Get common attributes for spans and metrics."""

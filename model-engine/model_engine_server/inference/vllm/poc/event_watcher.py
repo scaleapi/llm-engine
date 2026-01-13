@@ -14,13 +14,13 @@ Uses deterministic trace ID derived from pod_uid so spans appear in the same
 trace as in-container startup spans (which use the same algorithm).
 """
 
-import hashlib
-import os
 import threading
 import time
 from datetime import datetime, timezone
 from typing import Optional
 
+# Shared modules
+from config import WatcherConfig, get_telemetry_config, get_watcher_config
 from kubernetes import client, config, watch
 
 # OTel imports
@@ -32,58 +32,14 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.trace import NonRecordingSpan, SpanContext, SpanKind, Status, StatusCode, TraceFlags
-
-# Configuration
-NAMESPACE = os.environ.get("WATCH_NAMESPACE", "scale-deploy")
-LABEL_SELECTOR = os.environ.get("LABEL_SELECTOR", "")  # e.g., "team=ml-infra"
-OTLP_ENDPOINT = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "")
-
-
-def derive_trace_id(pod_uid: str) -> int:
-    """Derive deterministic 128-bit trace ID from pod UID.
-
-    Uses same algorithm as startup_telemetry.py for correlation.
-    """
-    hex_id = hashlib.sha256(pod_uid.encode()).hexdigest()[:32]
-    return int(hex_id, 16)
-
-
-def derive_span_id(pod_uid: str, suffix: str) -> int:
-    """Derive deterministic 64-bit span ID for a given span name.
-
-    Uses same algorithm as startup_telemetry.py for correlation.
-    """
-    data = f"{pod_uid}:{suffix}"
-    hex_id = hashlib.sha256(data.encode()).hexdigest()[:16]
-    return int(hex_id, 16)
-
-
-def create_deterministic_context(pod_uid: str) -> trace.Context:
-    """Create a trace context with deterministic trace ID from pod_uid.
-
-    This allows K8s event watcher spans to appear in the same trace
-    as in-container telemetry spans.
-    """
-    trace_id = derive_trace_id(pod_uid)
-    # Use "root" suffix to match the in-container root span
-    span_id = derive_span_id(pod_uid, "root")
-
-    span_context = SpanContext(
-        trace_id=trace_id,
-        span_id=span_id,
-        is_remote=True,  # Treat as remote so new spans become children
-        trace_flags=TraceFlags(TraceFlags.SAMPLED),
-    )
-
-    parent_span = NonRecordingSpan(span_context)
-    return trace.set_span_in_context(parent_span)
+from opentelemetry.trace import SpanKind, Status, StatusCode
+from trace_correlation import create_deterministic_context, format_trace_id
 
 
 class PodStartupTracker:
     """Tracks pod lifecycle events and emits granular startup metrics."""
 
-    def __init__(self):
+    def __init__(self, watcher_config: Optional[WatcherConfig] = None):
         # pod_uid -> {timestamps and metadata}
         self._pods: dict = {}
         self._lock = threading.Lock()
@@ -92,12 +48,17 @@ class PodStartupTracker:
         self._gauges: dict = {}
         self._histograms: dict = {}
         self._initialized = False
+        self._watcher_config = watcher_config or get_watcher_config()
 
     def init_telemetry(self):
         """Initialize OTel SDK."""
-        if not OTLP_ENDPOINT:
+        telemetry_config = get_telemetry_config()
+
+        if not telemetry_config.is_enabled:
             print("WARNING: OTEL_EXPORTER_OTLP_ENDPOINT not set, metrics disabled")
             return
+
+        endpoint = telemetry_config.otlp_endpoint
 
         resource = Resource.create(
             {
@@ -107,8 +68,8 @@ class PodStartupTracker:
 
         # Metrics
         reader = PeriodicExportingMetricReader(
-            OTLPMetricExporter(endpoint=OTLP_ENDPOINT),
-            export_interval_millis=10000,
+            OTLPMetricExporter(endpoint=endpoint),
+            export_interval_millis=telemetry_config.metric_export_interval_ms,
         )
         meter_provider = MeterProvider(resource=resource, metric_readers=[reader])
         metrics.set_meter_provider(meter_provider)
@@ -139,19 +100,28 @@ class PodStartupTracker:
 
         # Traces
         trace_provider = TracerProvider(resource=resource)
-        trace_provider.add_span_processor(
-            BatchSpanProcessor(OTLPSpanExporter(endpoint=OTLP_ENDPOINT))
-        )
+        trace_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
         trace.set_tracer_provider(trace_provider)
         self._tracer = trace.get_tracer("vllm-event-watcher")
 
         self._initialized = True
-        print(f"Event watcher telemetry initialized, endpoint={OTLP_ENDPOINT}")
+        print(f"Event watcher telemetry initialized, endpoint={endpoint}")
+
+    def should_watch_pod(self, pod_name: str, labels: Optional[dict] = None) -> bool:
+        """Check if a pod should be watched based on configuration."""
+        return self._watcher_config.should_watch_pod(pod_name, labels)
 
     def _get_or_create_pod(
         self, pod_uid: str, pod_name: str = "", labels: Optional[dict] = None
-    ) -> dict:
-        """Get or create pod tracking entry."""
+    ) -> Optional[dict]:
+        """Get or create pod tracking entry.
+
+        Returns None if pod should not be watched based on configuration.
+        """
+        # Check if we should watch this pod
+        if not self.should_watch_pod(pod_name, labels):
+            return None
+
         with self._lock:
             if pod_uid not in self._pods:
                 labels = labels or {}
@@ -171,6 +141,8 @@ class PodStartupTracker:
         labels = pod.metadata.labels or {}
 
         pod_data = self._get_or_create_pod(pod_uid, pod_name, labels)
+        if pod_data is None:
+            return  # Pod doesn't match filter criteria
         timestamps = pod_data["timestamps"]
 
         # Record creation time
@@ -234,6 +206,8 @@ class PodStartupTracker:
 
         # Only track events for pods we know about or new pods
         pod_data = self._get_or_create_pod(pod_uid, pod_name)
+        if pod_data is None:
+            return  # Pod doesn't match filter criteria
         timestamps = pod_data["timestamps"]
 
         # Map event reasons to timestamp keys
@@ -342,8 +316,9 @@ class PodStartupTracker:
             span.set_status(Status(StatusCode.OK))
             span.end(end_time=end_ns)
 
-            trace_id_hex = format(derive_trace_id(pod_uid), "032x")
-            print(f"[SPAN] {pod_data['name']} k8s_{metric_name} trace_id={trace_id_hex}")
+            print(
+                f"[SPAN] {pod_data['name']} k8s_{metric_name} trace_id={format_trace_id(pod_uid)}"
+            )
 
     def cleanup_old_pods(self):
         """Remove old pod entries to prevent memory growth."""
@@ -360,48 +335,93 @@ class PodStartupTracker:
                 print(f"[CLEANUP] Removed {len(to_remove)} old pod entries")
 
 
-def watch_pods(v1: client.CoreV1Api, tracker: PodStartupTracker):
-    """Watch pod events in a thread."""
+def watch_pods(v1: client.CoreV1Api, tracker: PodStartupTracker, watcher_config: WatcherConfig):
+    """Watch pod events in a thread.
+
+    Watches all pods in namespace and filters in Python via should_watch_pod().
+    This is intentional - label_selector filtering at API server level is inefficient
+    as it still processes all objects server-side.
+
+    Uses resource_version to resume watches efficiently and avoid re-listing all pods.
+    """
     w = watch.Watch()
+    resource_version = None
+
     while True:
         try:
-            print(f"[THREAD] Watching pods in namespace {NAMESPACE}...")
-            for event in w.stream(
-                v1.list_namespaced_pod,
-                namespace=NAMESPACE,
-                label_selector=LABEL_SELECTOR,
-                timeout_seconds=300,
-            ):
+            print(f"[THREAD] Watching pods in namespace {watcher_config.namespace}...")
+
+            # Watch all pods in namespace, filter in Python
+            # Note: We intentionally don't use label_selector here because K8s API server
+            # label filtering is inefficient (still processes all objects server-side)
+            watch_kwargs = {
+                "namespace": watcher_config.namespace,
+                "timeout_seconds": 300,
+            }
+            if resource_version:
+                watch_kwargs["resource_version"] = resource_version
+
+            for event in w.stream(v1.list_namespaced_pod, **watch_kwargs):
                 event_type = event["type"]
                 pod = event["object"]
+
+                # Update resource version for resume on reconnect
+                if pod.metadata.resource_version:
+                    resource_version = pod.metadata.resource_version
+
                 tracker.on_pod_event(event_type, pod)
 
             tracker.cleanup_old_pods()
 
         except client.exceptions.ApiException as e:
-            print(f"[THREAD] K8s API error (pods): {e.reason}")
+            if e.status == 410:  # Gone - resource version too old
+                print("[THREAD] Resource version expired, resetting watch")
+                resource_version = None
+            else:
+                print(f"[THREAD] K8s API error (pods): {e.reason}")
             time.sleep(5)
         except Exception as e:
             print(f"[THREAD] Error watching pods: {e}")
             time.sleep(5)
 
 
-def watch_events(v1: client.CoreV1Api, tracker: PodStartupTracker):
-    """Watch K8s events in a thread."""
+def watch_events(v1: client.CoreV1Api, tracker: PodStartupTracker, watcher_config: WatcherConfig):
+    """Watch K8s events in a thread.
+
+    Uses field_selector to only watch Pod events, reducing API server load.
+    Uses resource_version to resume watches efficiently.
+    """
     w = watch.Watch()
+    resource_version = None
+
     while True:
         try:
-            print(f"[THREAD] Watching events in namespace {NAMESPACE}...")
-            for event in w.stream(
-                v1.list_namespaced_event,
-                namespace=NAMESPACE,
-                timeout_seconds=300,
-            ):
+            print(f"[THREAD] Watching events in namespace {watcher_config.namespace}...")
+
+            # Build watch kwargs - filter to Pod events only
+            watch_kwargs = {
+                "namespace": watcher_config.namespace,
+                "timeout_seconds": 300,
+                "field_selector": "involvedObject.kind=Pod",
+            }
+            if resource_version:
+                watch_kwargs["resource_version"] = resource_version
+
+            for event in w.stream(v1.list_namespaced_event, **watch_kwargs):
                 k8s_event = event["object"]
+
+                # Update resource version for resume on reconnect
+                if k8s_event.metadata.resource_version:
+                    resource_version = k8s_event.metadata.resource_version
+
                 tracker.on_k8s_event(k8s_event)
 
         except client.exceptions.ApiException as e:
-            print(f"[THREAD] K8s API error (events): {e.reason}")
+            if e.status == 410:  # Gone - resource version too old
+                print("[THREAD] Resource version expired, resetting watch")
+                resource_version = None
+            else:
+                print(f"[THREAD] K8s API error (events): {e.reason}")
             time.sleep(5)
         except Exception as e:
             print(f"[THREAD] Error watching events: {e}")
@@ -410,10 +430,18 @@ def watch_events(v1: client.CoreV1Api, tracker: PodStartupTracker):
 
 def main():
     """Main entry point."""
+    # Load configuration from environment
+    watcher_config = get_watcher_config()
+    telemetry_config = get_telemetry_config()
+
     print("Starting K8s Event Watcher (Granular)")
-    print(f"  Namespace: {NAMESPACE}")
-    print(f"  Label selector: {LABEL_SELECTOR or '(all pods)'}")
-    print(f"  OTLP endpoint: {OTLP_ENDPOINT}")
+    print(f"  Namespace: {watcher_config.namespace}")
+    print(f"  OTLP endpoint: {telemetry_config.otlp_endpoint}")
+    print()
+    print("Python-side pod filtering (applied after receiving from API):")
+    print(f"  Pod name pattern: {watcher_config.pod_name_pattern or '(any)'}")
+    print(f"  Include labels: {watcher_config.include_labels or '(none)'}")
+    print(f"  Exclude labels: {watcher_config.exclude_labels or '(none)'}")
     print()
     print("Metrics emitted:")
     print("  - vllm.startup.scheduling.duration      (created → scheduled)")
@@ -432,15 +460,19 @@ def main():
         print("Using local K8s config")
 
     v1 = client.CoreV1Api()
-    tracker = PodStartupTracker()
+    tracker = PodStartupTracker(watcher_config)
     tracker.init_telemetry()
 
     # Start pod watcher thread
-    pod_thread = threading.Thread(target=watch_pods, args=(v1, tracker), daemon=True)
+    pod_thread = threading.Thread(
+        target=watch_pods, args=(v1, tracker, watcher_config), daemon=True
+    )
     pod_thread.start()
 
     # Start event watcher thread
-    event_thread = threading.Thread(target=watch_events, args=(v1, tracker), daemon=True)
+    event_thread = threading.Thread(
+        target=watch_events, args=(v1, tracker, watcher_config), daemon=True
+    )
     event_thread.start()
 
     # Keep main thread alive

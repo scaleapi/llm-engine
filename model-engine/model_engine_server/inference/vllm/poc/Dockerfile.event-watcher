@@ -10,6 +10,9 @@ RUN pip install --no-cache-dir \
     opentelemetry-sdk~=1.27.0 \
     opentelemetry-exporter-otlp~=1.27.0
 
+# Copy shared modules and main script
+COPY trace_correlation.py /app/trace_correlation.py
+COPY config.py /app/config.py
 COPY event_watcher.py /app/event_watcher.py
 
 CMD ["python", "/app/event_watcher.py"]
