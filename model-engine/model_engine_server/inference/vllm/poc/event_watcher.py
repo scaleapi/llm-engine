@@ -33,7 +33,12 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import SpanKind, Status, StatusCode
-from trace_correlation import create_deterministic_context, format_trace_id
+from trace_correlation import (
+    SPAN_K8S_TOTAL_TO_RUNNING,
+    DeterministicSpan,
+    create_k8s_parent_context,
+    format_trace_id,
+)
 
 
 class PodStartupTracker:
@@ -45,10 +50,19 @@ class PodStartupTracker:
         self._lock = threading.Lock()
         self._meter: Optional[metrics.Meter] = None
         self._tracer: Optional[trace.Tracer] = None
+        self._span_processor: Optional[BatchSpanProcessor] = None
+        self._resource: Optional[Resource] = None
         self._gauges: dict = {}
         self._histograms: dict = {}
         self._initialized = False
         self._watcher_config = watcher_config or get_watcher_config()
+        self._v1: Optional[client.CoreV1Api] = None
+        # Track startup time to avoid re-emitting metrics for old events on restart
+        self._startup_time = datetime.now(timezone.utc)
+
+    def set_k8s_client(self, v1: client.CoreV1Api):
+        """Set the K8s API client for fetching pod metadata."""
+        self._v1 = v1
 
     def init_telemetry(self):
         """Initialize OTel SDK."""
@@ -99,8 +113,10 @@ class PodStartupTracker:
             )
 
         # Traces
+        self._resource = resource
+        self._span_processor = BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint))
         trace_provider = TracerProvider(resource=resource)
-        trace_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
+        trace_provider.add_span_processor(self._span_processor)
         trace.set_tracer_provider(trace_provider)
         self._tracer = trace.get_tracer("vllm-event-watcher")
 
@@ -111,6 +127,17 @@ class PodStartupTracker:
         """Check if a pod should be watched based on configuration."""
         return self._watcher_config.should_watch_pod(pod_name, labels)
 
+    def _fetch_pod_labels(self, pod_name: str) -> Optional[dict]:
+        """Fetch pod labels from K8s API."""
+        if not self._v1:
+            return None
+        try:
+            pod = self._v1.read_namespaced_pod(pod_name, self._watcher_config.namespace)
+            return pod.metadata.labels or {}
+        except Exception as e:
+            print(f"[WARN] Failed to fetch labels for {pod_name}: {e}")
+            return None
+
     def _get_or_create_pod(
         self, pod_uid: str, pod_name: str = "", labels: Optional[dict] = None
     ) -> Optional[dict]:
@@ -118,6 +145,10 @@ class PodStartupTracker:
 
         Returns None if pod should not be watched based on configuration.
         """
+        # If no labels provided, try to fetch them from K8s API
+        if labels is None and pod_name:
+            labels = self._fetch_pod_labels(pod_name)
+
         # Check if we should watch this pod
         if not self.should_watch_pod(pod_name, labels):
             return None
@@ -132,6 +163,14 @@ class PodStartupTracker:
                     "timestamps": {},
                     "emitted": set(),  # Track which metrics we've already emitted
                 }
+            # Update labels if we now have them and they were missing before
+            elif labels and self._pods[pod_uid].get("endpoint_name") == "unknown":
+                self._pods[pod_uid]["endpoint_name"] = labels.get(
+                    "endpoint_name", labels.get("app", "unknown")
+                )
+                self._pods[pod_uid]["model_name"] = labels.get(
+                    "model_name", self._pods[pod_uid]["model_name"]
+                )
             return self._pods[pod_uid]
 
     def on_pod_event(self, event_type: str, pod: client.V1Pod):
@@ -149,6 +188,8 @@ class PodStartupTracker:
         if "created" not in timestamps and pod.metadata.creation_timestamp:
             timestamps["created"] = pod.metadata.creation_timestamp
             print(f"[POD] {pod_name} created at {timestamps['created']}")
+            # Try to emit scheduling metric - handles race where K8s Event arrives first
+            self._try_emit_metric(pod_uid, "scheduling", "created", "scheduled")
 
         # Check pod conditions for PodScheduled
         if pod.status and pod.status.conditions:
@@ -268,6 +309,15 @@ class PodStartupTracker:
             if not start_time or not end_time:
                 return
 
+            # Skip pods created before this watcher started to prevent duplicates on restart
+            # A previous watcher instance would have already emitted metrics for these pods
+            if start_time < self._startup_time:
+                print(
+                    f"[SKIP] {pod_data['name']} {metric_name} - pod created before watcher startup (ignoring historical pod)"
+                )
+                emitted.add(metric_name)  # Mark as emitted to avoid repeated logs
+                return
+
             # Calculate duration
             duration = (end_time - start_time).total_seconds()
 
@@ -285,40 +335,63 @@ class PodStartupTracker:
         attrs = {
             "endpoint_name": pod_data.get("endpoint_name", "unknown"),
             "model_name": pod_data.get("model_name", "unknown"),
+            "pod_name": pod_data.get("name", "unknown"),
         }
 
         # Record gauge and histogram
         self._gauges[metric_name].set(duration, attrs)
         self._histograms[metric_name].record(duration, attrs)
 
-        print(f"[METRIC] {pod_data['name']} {metric_name}={duration:.2f}s")
+        print(
+            f"[METRIC] {pod_data['name']} {metric_name}={duration:.2f}s endpoint_name={attrs['endpoint_name']}"
+        )
 
         # Create span with actual timestamps, using deterministic trace context
-        if self._tracer:
+        if self._tracer and self._span_processor:
             start_ns = int(start_time.timestamp() * 1_000_000_000)
             end_ns = int(end_time.timestamp() * 1_000_000_000)
 
-            # Use deterministic context so this span appears in same trace
-            # as in-container startup spans
-            deterministic_ctx = create_deterministic_context(pod_uid)
+            span_name = f"k8s_{metric_name}"
+            span_attrs = {
+                "pod_name": pod_data["name"],
+                "pod_uid": pod_uid,
+                f"{metric_name}_seconds": duration,
+                **attrs,
+            }
 
-            span = self._tracer.start_span(
-                f"k8s_{metric_name}",
-                kind=SpanKind.INTERNAL,
-                context=deterministic_ctx,
-                start_time=start_ns,
-            )
-            span.set_attribute("pod_name", pod_data["name"])
-            span.set_attribute("pod_uid", pod_uid)
-            span.set_attribute(f"{metric_name}_seconds", duration)
-            for k, v in attrs.items():
-                span.set_attribute(k, v)
-            span.set_status(Status(StatusCode.OK))
-            span.end(end_time=end_ns)
+            if metric_name == "total_to_running":
+                # Parent span - use DeterministicSpan with our deterministic span_id
+                # This ensures child spans can reference this span as their parent
+                span = DeterministicSpan(
+                    name=span_name,
+                    pod_uid=pod_uid,
+                    span_suffix=SPAN_K8S_TOTAL_TO_RUNNING,  # Our deterministic span_id
+                    parent_suffix="root",  # Parent is the root span
+                    start_time_ns=start_ns,
+                    end_time_ns=end_ns,
+                    attributes=span_attrs,
+                    resource=self._resource,
+                )
+                # Export directly via span processor
+                self._span_processor.on_end(span)
+            else:
+                # Child spans - use create_k8s_parent_context which references
+                # k8s_total_to_running's deterministic span_id as parent
+                parent_ctx = create_k8s_parent_context(pod_uid)
 
-            print(
-                f"[SPAN] {pod_data['name']} k8s_{metric_name} trace_id={format_trace_id(pod_uid)}"
-            )
+                span = self._tracer.start_span(
+                    span_name,
+                    kind=SpanKind.INTERNAL,
+                    context=parent_ctx,
+                    start_time=start_ns,
+                )
+
+                for k, v in span_attrs.items():
+                    span.set_attribute(k, v)
+                span.set_status(Status(StatusCode.OK))
+                span.end(end_time=end_ns)
+
+            print(f"[SPAN] {pod_data['name']} {span_name} trace_id={format_trace_id(pod_uid)}")
 
     def cleanup_old_pods(self):
         """Remove old pod entries to prevent memory growth."""
@@ -434,7 +507,10 @@ def main():
     watcher_config = get_watcher_config()
     telemetry_config = get_telemetry_config()
 
+    startup_time = datetime.now(timezone.utc)
     print("Starting K8s Event Watcher (Granular)")
+    print(f"  Startup time: {startup_time.isoformat()}")
+    print("  Historical events: will be skipped (prevents duplicates on restart)")
     print(f"  Namespace: {watcher_config.namespace}")
     print(f"  OTLP endpoint: {telemetry_config.otlp_endpoint}")
     print()
@@ -461,6 +537,7 @@ def main():
 
     v1 = client.CoreV1Api()
     tracker = PodStartupTracker(watcher_config)
+    tracker.set_k8s_client(v1)
     tracker.init_telemetry()
 
     # Start pod watcher thread

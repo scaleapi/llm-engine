@@ -154,6 +154,11 @@ class StartupTelemetry:
             description="vLLM initialization duration",
             unit="s",
         )
+        self._histograms["python_init_duration"] = self._meter.create_histogram(
+            "vllm.startup.python_init.duration_seconds",
+            description="Python startup, module imports, arg parsing",
+            unit="s",
+        )
         self._histograms["total_duration"] = self._meter.create_histogram(
             "vllm.startup.total.duration_seconds",
             description="Total startup duration from container start to server ready",
@@ -169,6 +174,11 @@ class StartupTelemetry:
         self._gauges["vllm_init_duration"] = self._meter.create_gauge(
             "vllm.startup.vllm_init.duration",
             description="vLLM initialization duration",
+            unit="s",
+        )
+        self._gauges["python_init_duration"] = self._meter.create_gauge(
+            "vllm.startup.python_init.duration",
+            description="Python startup, module imports, arg parsing",
             unit="s",
         )
         self._gauges["total_duration"] = self._meter.create_gauge(

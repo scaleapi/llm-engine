@@ -45,7 +45,7 @@ spec:
 
       containers:
         - name: main
-          image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/vllm:startup-metrics-poc-shared-lib-v1
+          image: 692474966980.dkr.ecr.us-west-2.amazonaws.com/vllm:startup-metrics-poc-20260113225558
 
           env:
             # Model configuration

@@ -194,6 +194,7 @@ async def run_instrumented_server(args):
                 "duration_seconds": python_init_duration,
             },
         )
+        telemetry.record_metric("python_init_duration", python_init_duration)
         print(f"[STARTUP METRICS] Python init (imports + setup): {python_init_duration:.2f}s")
 
     # Start health check thread to detect when server is ready
