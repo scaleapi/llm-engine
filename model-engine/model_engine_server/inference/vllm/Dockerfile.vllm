@@ -26,6 +26,13 @@ FROM base AS vllm
 COPY model-engine/model_engine_server/inference/vllm/vllm_server.py /workspace/vllm_server.py
 COPY model-engine/model_engine_server/inference/vllm/init_ray.sh /workspace/init_ray.sh
 
+# Startup metrics support (enabled via ENABLE_STARTUP_METRICS=true)
+COPY model-engine/model_engine_server/inference/vllm/vllm_startup_wrapper.py /workspace/vllm_startup_wrapper.py
+COPY model-engine/model_engine_server/inference/vllm/startup_telemetry.py /workspace/startup_telemetry.py
+COPY model-engine/model_engine_server/inference/vllm/trace_correlation.py /workspace/trace_correlation.py
+# OTel dependencies for startup metrics (lightweight, only used when enabled)
+RUN pip install --no-cache-dir opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp-proto-grpc
+
 # Need to override entrypoint from parent image
 ENTRYPOINT ["/bin/env"]
 
