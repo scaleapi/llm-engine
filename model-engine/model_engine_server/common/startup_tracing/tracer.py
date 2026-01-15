@@ -152,15 +152,20 @@ class StartupTracer:
             }
         )
 
+        # Determine if we need insecure mode (http:// vs https://)
+        use_insecure = endpoint.startswith("http://")
+
         # Traces
         provider = TracerProvider(resource=self._resource)
-        provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
+        provider.add_span_processor(
+            BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint, insecure=use_insecure))
+        )
         trace.set_tracer_provider(provider)
         self._tracer = trace.get_tracer(self._service_name)
 
         # Metrics
         reader = PeriodicExportingMetricReader(
-            OTLPMetricExporter(endpoint=endpoint),
+            OTLPMetricExporter(endpoint=endpoint, insecure=use_insecure),
             export_interval_millis=5000,
         )
         meter_provider = MeterProvider(resource=self._resource, metric_readers=[reader])
