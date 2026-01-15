@@ -21,6 +21,9 @@ import subprocess
 import sys
 import time
 
+# Capture container start time at module load (before any work)
+_CONTAINER_START_TIME_NS = time.time_ns()
+
 # Feature gate
 ENABLE_STARTUP_METRICS = os.environ.get("ENABLE_STARTUP_METRICS", "").lower() == "true"
 
@@ -41,12 +44,13 @@ def get_download_size_mb(directory: str) -> int:
 
 def run_download(download_cmd: str) -> dict:
     """Run download command and return timing info."""
-    print("[WRAPPER] Running download...")
+    print("[WRAPPER] Running download...", flush=True)
 
     start_time_ns = time.time_ns()
     start_perf = time.perf_counter()
 
-    subprocess.run(download_cmd, shell=True, check=True)
+    # shell=True required: download_cmd is a shell command from trusted env config (not user input)
+    subprocess.run(download_cmd, shell=True, check=True)  # nosemgrep: subprocess-shell-true
 
     end_time_ns = time.time_ns()
     duration = time.perf_counter() - start_perf
@@ -55,7 +59,7 @@ def run_download(download_cmd: str) -> dict:
     model_dir = "mistral_files" if os.path.exists("mistral_files") else "model_files"
     size_mb = get_download_size_mb(model_dir)
 
-    print(f"[WRAPPER] Download completed: {duration:.2f}s ({size_mb}MB)")
+    print(f"[WRAPPER] Download completed: {duration:.2f}s ({size_mb}MB)", flush=True)
 
     return {
         "start_time_ns": start_time_ns,
@@ -66,39 +70,23 @@ def run_download(download_cmd: str) -> dict:
 
 
 def emit_download_metrics(timing: dict):
-    """Emit download span and metric via OTel."""
-    from startup_telemetry import StartupContext, init_startup_telemetry
+    """Emit download span and metric via the startup metrics library."""
+    from startup_telemetry import VLLMStartupMetrics
 
-    ctx = StartupContext(
-        endpoint_name=os.environ.get("ENDPOINT_NAME", "unknown"),
-        model_name=os.environ.get("MODEL_NAME", "unknown"),
-        gpu_type=os.environ.get("GPU_TYPE", "unknown"),
-        num_gpus=int(os.environ.get("NUM_GPUS", "1")),
-        region=os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "us-west-2")),
-        pod_uid=os.environ.get("POD_UID", "unknown"),
-        pod_name=os.environ.get("POD_NAME", "unknown"),
-        node_name=os.environ.get("NODE_NAME", "unknown"),
-    )
+    metrics = VLLMStartupMetrics.init(container_start_time_ns=_CONTAINER_START_TIME_NS)
 
-    telemetry = init_startup_telemetry(ctx)
+    if metrics.enabled:
+        print(f"[WRAPPER] trace_id={metrics.trace_id}", flush=True)
 
-    # Emit download span
-    telemetry.create_child_span(
-        "s3_download",
+    metrics.record_download(
         start_time_ns=timing["start_time_ns"],
         end_time_ns=timing["end_time_ns"],
-        attributes={
-            "download_size_mb": timing["size_mb"],
-            "duration_seconds": timing["duration_s"],
-        },
+        size_mb=timing["size_mb"],
     )
 
-    # Emit download metric
-    telemetry.record_metric("download_duration", timing["duration_s"])
-
     # Flush before exec (important!)
-    telemetry.flush()
-    print("[WRAPPER] Download metrics emitted")
+    metrics.flush()
+    print("[WRAPPER] Download metrics emitted", flush=True)
 
 
 def main():
@@ -111,13 +99,17 @@ def main():
         if ENABLE_STARTUP_METRICS:
             emit_download_metrics(timing)
     else:
-        print("[WRAPPER] No DOWNLOAD_CMD, skipping download")
+        print("[WRAPPER] No DOWNLOAD_CMD, skipping download", flush=True)
+
+    # Pass container start time to server via env var
+    # This allows the server to set the correct root span start time
+    os.environ["CONTAINER_START_TS"] = str(_CONTAINER_START_TIME_NS / 1_000_000_000)
 
     # Exec into vllm_server
     server_args = sys.argv[1:]
     python_exe = sys.executable
 
-    print("[WRAPPER] Starting vllm_server...")
+    print("[WRAPPER] Starting vllm_server...", flush=True)
     os.execvp(python_exe, [python_exe, "-m", "vllm_server"] + server_args)
 
 

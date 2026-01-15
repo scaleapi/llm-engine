@@ -448,6 +448,12 @@ class CreateLLMModelBundleV1UseCase:
                     if additional_args
                     else None
                 )
+                # Extract enable_startup_metrics from the full request dict (not in VLLMEndpointAdditionalArgs)
+                enable_startup_metrics = (
+                    additional_args.get("enable_startup_metrics", False)
+                    if additional_args
+                    else False
+                )
                 if multinode:
                     bundle_id = await self.create_vllm_multinode_bundle(
                         user,
@@ -472,6 +478,7 @@ class CreateLLMModelBundleV1UseCase:
                         checkpoint_path,
                         chat_template_override,
                         additional_args=additional_vllm_args,
+                        enable_startup_metrics=enable_startup_metrics,
                     )
             case LLMInferenceFramework.SGLANG:  # pragma: no cover
                 if not hmi_config.sglang_repository:

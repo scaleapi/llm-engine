@@ -8,18 +8,18 @@ _PYTHON_START_TIME_NS = time.time_ns()
 # Startup metrics feature gate (check early to avoid unnecessary imports)
 ENABLE_STARTUP_METRICS = os.environ.get("ENABLE_STARTUP_METRICS", "").lower() == "true"
 
-# Now do heavy imports
-import asyncio
-import code
-import subprocess
-import threading
-import traceback
-from logging import Logger
+# Now do heavy imports (noqa: E402 - intentional late import for startup time measurement)
+import asyncio  # noqa: E402
+import code  # noqa: E402
+import subprocess  # noqa: E402
+import threading  # noqa: E402
+import traceback  # noqa: E402
+from logging import Logger  # noqa: E402
 
-from vllm.engine.protocol import EngineClient
-from vllm.entrypoints.openai.api_server import run_server
-from vllm.entrypoints.openai.cli_args import make_arg_parser
-from vllm.utils.argparse_utils import FlexibleArgumentParser
+from vllm.engine.protocol import EngineClient  # noqa: E402
+from vllm.entrypoints.openai.api_server import run_server  # noqa: E402
+from vllm.entrypoints.openai.cli_args import make_arg_parser  # noqa: E402
+from vllm.utils.argparse_utils import FlexibleArgumentParser  # noqa: E402
 
 logger = Logger("vllm_server")
 
@@ -27,13 +27,6 @@ engine_client: EngineClient
 
 TIMEOUT_KEEP_ALIVE = 5  # seconds.
 TIMEOUT_TO_PREVENT_DEADLOCK = 1  # seconds
-
-# Global to track vLLM init timing (only used when metrics enabled)
-_VLLM_INIT_START_TIME = None
-_VLLM_INIT_START_TIME_NS = None
-
-# Legacy endpoints /predit and /stream removed - using vLLM's native OpenAI-compatible endpoints instead
-# All requests now go through /v1/completions, /v1/chat/completions, etc.
 
 
 def get_gpu_free_memory():
@@ -107,10 +100,10 @@ def get_gpu_type():
         return "unknown"
 
 
-def _health_check_loop(telemetry, host: str = "localhost", port: int = 5005):
+def _health_check_loop(metrics, vllm_init_start_ns: int, host: str = "localhost", port: int = 5005):
     """
     Background thread that polls /health endpoint to detect when server is ready.
-    Once ready, records the startup complete metric and vllm_init span.
+    Once ready, records the vllm_init span and startup complete metric.
     """
     import urllib.error
     import urllib.request
@@ -123,26 +116,13 @@ def _health_check_loop(telemetry, host: str = "localhost", port: int = 5005):
         try:
             with urllib.request.urlopen(url, timeout=1) as response:
                 if response.status == 200:
-                    # Server is ready!
-                    ready_time = time.perf_counter()
-                    ready_time_ns = time.time_ns()
+                    # Server is ready - record vllm_init span
+                    end_time_ns = time.time_ns()
+                    metrics.record_vllm_init(vllm_init_start_ns, end_time_ns)
 
-                    # Record vllm_init span
-                    if _VLLM_INIT_START_TIME_NS:
-                        vllm_init_duration = ready_time - _VLLM_INIT_START_TIME
-                        telemetry.create_child_span(
-                            "vllm_init",
-                            start_time_ns=_VLLM_INIT_START_TIME_NS,
-                            end_time_ns=ready_time_ns,
-                            attributes={"vllm_init_duration_seconds": vllm_init_duration},
-                        )
-                        telemetry.record_metric("vllm_init_duration", vllm_init_duration)
-                        print(f"[STARTUP METRICS] vLLM init took {vllm_init_duration:.2f}s")
-
-                    # Record total startup (also closes root span)
-                    duration = telemetry.record_startup_complete()
-                    print(f"[STARTUP METRICS] Server ready after {duration:.2f}s total")
-                    telemetry.flush()
+                    # Record startup complete (emits in_container_startup span)
+                    total_duration = metrics.complete()
+                    print(f"[STARTUP METRICS] Server ready after {total_duration:.2f}s total")
                     return
         except (urllib.error.URLError, urllib.error.HTTPError, ConnectionRefusedError, OSError):
             pass
@@ -156,57 +136,39 @@ def _health_check_loop(telemetry, host: str = "localhost", port: int = 5005):
 async def _run_instrumented_server(args):
     """Run vLLM server with startup instrumentation.
 
-    Emits two spans:
-    - python_init: From module start (_PYTHON_START_TIME) to vllm_init start
+    Emits spans for:
+    - python_init: From module start to vllm_init start
     - vllm_init: From vllm_init start to server ready (health check passes)
 
     Download span is emitted by vllm_startup_wrapper.py before exec'ing into this.
     """
-    global _VLLM_INIT_START_TIME, _VLLM_INIT_START_TIME_NS
+    from startup_telemetry import VLLMStartupMetrics
 
-    # Import telemetry modules (only when metrics enabled)
-    from startup_telemetry import StartupContext, init_startup_telemetry
+    # Initialize metrics (reads CONTAINER_START_TS from env)
+    metrics = VLLMStartupMetrics.init()
 
-    # Initialize telemetry
-    ctx = StartupContext(
-        endpoint_name=os.environ.get("ENDPOINT_NAME", "unknown"),
-        model_name=os.environ.get("MODEL_NAME", getattr(args, "model", "unknown")),
-        gpu_type=os.environ.get("GPU_TYPE", get_gpu_type()),
-        num_gpus=int(os.environ.get("NUM_GPUS", "1")),
-        region=os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "us-west-2")),
-        pod_uid=os.environ.get("POD_UID", "unknown"),
-        pod_name=os.environ.get("POD_NAME", "unknown"),
-        node_name=os.environ.get("NODE_NAME", "unknown"),
-    )
+    if metrics.enabled:
+        print(f"[STARTUP METRICS] trace_id={metrics.trace_id}")
 
-    telemetry = init_startup_telemetry(ctx)
-
-    # Mark when vLLM init starts (after imports, before run_server)
-    _VLLM_INIT_START_TIME = time.perf_counter()
-    _VLLM_INIT_START_TIME_NS = time.time_ns()
-
-    # Emit python_init span (from module start to now)
-    python_init_duration = _VLLM_INIT_START_TIME - _PYTHON_START_TIME
-    telemetry.create_child_span(
-        "python_init",
-        start_time_ns=_PYTHON_START_TIME_NS,
-        end_time_ns=_VLLM_INIT_START_TIME_NS,
-        attributes={
-            "description": "Python startup, module imports, arg parsing",
-            "duration_seconds": python_init_duration,
-        },
-    )
-    telemetry.record_metric("python_init_duration", python_init_duration)
+    # Record Python init time (from module start to now)
+    python_init_duration = time.perf_counter() - _PYTHON_START_TIME
+    metrics.record_python_init(python_init_duration)
     print(f"[STARTUP METRICS] Python init: {python_init_duration:.2f}s")
 
+    # Mark vllm_init start time
+    vllm_init_start_ns = time.time_ns()
+
     # Start health check thread to detect when server is ready
+    # This will record vllm_init span and call metrics.complete() when /health returns 200
     port = getattr(args, "port", 5005)
     health_thread = threading.Thread(
-        target=_health_check_loop, args=(telemetry, "localhost", port), daemon=True
+        target=_health_check_loop,
+        args=(metrics, vllm_init_start_ns, "localhost", port),
+        daemon=True,
     )
     health_thread.start()
 
-    # Start vLLM server (blocking)
+    # Start vLLM server (blocking - runs until shutdown)
     await run_server(args)
 
 

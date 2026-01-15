@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG VLLM_VERSION=0.10.2
+ARG VLLM_VERSION=0.11.1
 ARG VLLM_BASE_REPO=vllm/vllm-openai
 ARG VLLM_BASE_IMAGE=${VLLM_BASE_REPO}:v${VLLM_VERSION}
 FROM ${VLLM_BASE_IMAGE} AS base
@@ -27,9 +27,11 @@ COPY model-engine/model_engine_server/inference/vllm/vllm_server.py /workspace/v
 COPY model-engine/model_engine_server/inference/vllm/init_ray.sh /workspace/init_ray.sh
 
 # Startup metrics support (enabled via ENABLE_STARTUP_METRICS=true)
+# Generic library for deterministic trace correlation
+COPY model-engine/model_engine_server/common/startup_tracing /workspace/startup_tracing
+# vLLM-specific startup instrumentation
 COPY model-engine/model_engine_server/inference/vllm/vllm_startup_wrapper.py /workspace/vllm_startup_wrapper.py
 COPY model-engine/model_engine_server/inference/vllm/startup_telemetry.py /workspace/startup_telemetry.py
-COPY model-engine/model_engine_server/inference/vllm/trace_correlation.py /workspace/trace_correlation.py
 # OTel dependencies for startup metrics (lightweight, only used when enabled)
 RUN pip install --no-cache-dir opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp-proto-grpc
 
