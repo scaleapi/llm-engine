@@ -328,6 +328,17 @@ def add_datadog_env_to_container(
     user_container["env"] = user_container_envs
 
 
+def add_pod_metadata_env_to_container(container: Dict[str, Any]) -> None:
+    """Add pod metadata env vars via downward API for startup metrics trace correlation."""
+    container["env"].extend(
+        [
+            {"name": "POD_UID", "valueFrom": {"fieldRef": {"fieldPath": "metadata.uid"}}},
+            {"name": "POD_NAME", "valueFrom": {"fieldRef": {"fieldPath": "metadata.name"}}},
+            {"name": "NODE_NAME", "valueFrom": {"fieldRef": {"fieldPath": "spec.nodeName"}}},
+        ]
+    )
+
+
 def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
     container_envs = []
     container_envs.extend(
@@ -1620,6 +1631,8 @@ class K8SEndpointResourceDelegate:
             add_lws_default_env_vars_to_container(worker_template)
             add_datadog_env_to_container(lws_template, leader_template)
             add_datadog_env_to_container(lws_template, worker_template)
+            add_pod_metadata_env_to_container(leader_template)
+            add_pod_metadata_env_to_container(worker_template)
             await self._create_lws(
                 lws=lws_template,
                 name=k8s_resource_group_name,
@@ -1643,6 +1656,7 @@ class K8SEndpointResourceDelegate:
             ):
                 user_container = get_main_container_from_deployment_template(deployment_template)
                 add_datadog_env_to_container(deployment_template, user_container)
+                add_pod_metadata_env_to_container(user_container)
             await self._create_deployment(
                 model_endpoint_record=request.build_endpoint_request.model_endpoint_record,
                 deployment=deployment_template,

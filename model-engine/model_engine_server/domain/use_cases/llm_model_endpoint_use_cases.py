@@ -448,6 +448,12 @@ class CreateLLMModelBundleV1UseCase:
                     if additional_args
                     else None
                 )
+                # Extract enable_startup_metrics from the full request dict (not in VLLMEndpointAdditionalArgs)
+                enable_startup_metrics = (
+                    additional_args.get("enable_startup_metrics", False)
+                    if additional_args
+                    else False
+                )
                 if multinode:
                     bundle_id = await self.create_vllm_multinode_bundle(
                         user,
@@ -472,6 +478,7 @@ class CreateLLMModelBundleV1UseCase:
                         checkpoint_path,
                         chat_template_override,
                         additional_args=additional_vllm_args,
+                        enable_startup_metrics=enable_startup_metrics,
                     )
             case LLMInferenceFramework.SGLANG:  # pragma: no cover
                 if not hmi_config.sglang_repository:
@@ -892,9 +899,15 @@ class CreateLLMModelBundleV1UseCase:
         is_worker: bool,
         nodes_per_worker: int = 1,  # only used if multinode
         additional_args: Optional[VLLMEndpointAdditionalArgs] = None,
+        enable_startup_metrics: bool = False,
     ):
         """
         VLLM start command for the single worker, or the leader in a LeaderWorkerSet.
+
+        Args:
+            enable_startup_metrics: If True, uses vllm_startup_wrapper which captures
+                download timing and emits startup metrics via OTel. Requires setting
+                ENABLE_STARTUP_METRICS=true and DOWNLOAD_CMD env vars in the bundle.
         """
         subcommands = []
 
@@ -915,13 +928,23 @@ class CreateLLMModelBundleV1UseCase:
 
         # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
         final_weights_folder = "mistral_files" if "mistral" in model_name else "model_files"
-        subcommands += self.load_model_weights_sub_commands(
+
+        # Get download commands
+        download_subcommands = self.load_model_weights_sub_commands(
             LLMInferenceFramework.VLLM,
             framework_image_tag,
             checkpoint_path,
             final_weights_folder,
             trust_remote_code=vllm_args.trust_remote_code or False,
         )
+
+        if enable_startup_metrics:
+            # With startup metrics, download is handled by wrapper via DOWNLOAD_CMD env var
+            # Store download command for env var (will be set in bundle creation)
+            self._last_download_cmd = ";".join(download_subcommands)
+        else:
+            # Without startup metrics, download runs as part of subcommands
+            subcommands += download_subcommands
 
         if multinode:
             if not is_worker:
@@ -953,7 +976,9 @@ class CreateLLMModelBundleV1UseCase:
             if hmi_config.sensitive_log_mode:
                 vllm_args.disable_log_requests = True
 
-            vllm_cmd = f'python -m vllm_server --model {final_weights_folder} --served-model-name {model_name} {final_weights_folder} --port 5005 --host "::"'
+            # Use wrapper if startup metrics enabled, otherwise use vllm_server directly
+            server_module = "vllm_startup_wrapper" if enable_startup_metrics else "vllm_server"
+            vllm_cmd = f'python -m {server_module} --model {final_weights_folder} --served-model-name {model_name} {final_weights_folder} --port 5005 --host "::"'
             for field in VLLMEndpointAdditionalArgs.model_fields.keys():
                 config_value = getattr(vllm_args, field, None)
                 if config_value is not None:
@@ -992,6 +1017,7 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_path: Optional[str],
         chat_template_override: Optional[str],
         additional_args: Optional[VLLMEndpointAdditionalArgs] = None,
+        enable_startup_metrics: bool = False,
     ):
         command = self._create_vllm_bundle_command(
             model_name,
@@ -1004,7 +1030,16 @@ class CreateLLMModelBundleV1UseCase:
             is_worker=False,
             nodes_per_worker=1,
             additional_args=additional_args,
+            enable_startup_metrics=enable_startup_metrics,
         )
+
+        # Build env vars
+        env = {}
+        if enable_startup_metrics:
+            env["ENABLE_STARTUP_METRICS"] = "true"
+            env["DOWNLOAD_CMD"] = self._last_download_cmd
+            env["ENDPOINT_NAME"] = endpoint_unique_name
+            env["MODEL_NAME"] = model_name
 
         create_model_bundle_v2_request = CreateModelBundleV2Request(
             name=endpoint_unique_name,
@@ -1024,7 +1059,7 @@ class CreateLLMModelBundleV1UseCase:
                     OPENAI_CHAT_COMPLETION_PATH,
                     OPENAI_COMPLETION_PATH,
                 ],
-                env={},
+                env=env,
             ),
             metadata={},
         )

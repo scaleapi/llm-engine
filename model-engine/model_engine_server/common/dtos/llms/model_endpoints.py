@@ -60,6 +60,10 @@ class LLMModelEndpointCommonArgs(BaseModel):
         default=None,
         description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
     )
+    enable_startup_metrics: Optional[bool] = Field(
+        default=False,
+        description="Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
+    )
 
 
 class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
