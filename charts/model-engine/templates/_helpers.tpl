@@ -164,18 +164,6 @@ env:
     valueFrom:
       fieldRef:
         fieldPath: status.hostIP
-  - name: POD_UID
-    valueFrom:
-      fieldRef:
-        fieldPath: metadata.uid
-  - name: POD_NAME
-    valueFrom:
-      fieldRef:
-        fieldPath: metadata.name
-  - name: NODE_NAME
-    valueFrom:
-      fieldRef:
-        fieldPath: spec.nodeName
   - name: OMP_NUM_THREADS
     value: "1"
   - name: BASE_PATH
