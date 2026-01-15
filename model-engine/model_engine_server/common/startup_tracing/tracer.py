@@ -126,10 +126,20 @@ class StartupTracer:
 
         endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
         if not endpoint:
-            print(
-                f"[{self._service_name}] Skipping OTel init - OTEL_EXPORTER_OTLP_ENDPOINT not set"
-            )
-            return False
+            # Fallback: construct from DD_AGENT_HOST (Datadog Agent's OTLP receiver)
+            dd_agent_host = os.environ.get("DD_AGENT_HOST")
+            if dd_agent_host:
+                # Handle IPv6 addresses (need brackets)
+                if ":" in dd_agent_host and not dd_agent_host.startswith("["):
+                    endpoint = f"http://[{dd_agent_host}]:4317"
+                else:
+                    endpoint = f"http://{dd_agent_host}:4317"
+                print(f"[{self._service_name}] Using DD_AGENT_HOST for OTLP endpoint: {endpoint}")
+            else:
+                print(
+                    f"[{self._service_name}] Skipping OTel init - OTEL_EXPORTER_OTLP_ENDPOINT not set"
+                )
+                return False
 
         self._resource = Resource.create(
             {
@@ -181,6 +191,7 @@ class StartupTracer:
             "num_gpus": self._context.num_gpus,
             "region": self._context.region,
             "node_name": self._context.node_name,
+            "pod_name": self._context.pod_name,
         }
 
     def create_span(
@@ -258,7 +269,7 @@ class StartupTracer:
             metric_attrs = {
                 k: v
                 for k, v in attrs.items()
-                if k in ("endpoint_name", "model_name", "gpu_type", "region")
+                if k in ("endpoint_name", "model_name", "gpu_type", "region", "pod_name")
             }
             self._histograms[name].record(value, metric_attrs)
 
