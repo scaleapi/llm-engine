@@ -92,7 +92,7 @@ class StartupTracer:
         self._tracer = None
         self._meter = None
         self._resource = None
-        self._histograms: Dict[str, Any] = {}
+        self._gauges: Dict[str, Any] = {}
         self._parent_context = None
 
         # Container start time for root span
@@ -249,13 +249,11 @@ class StartupTracer:
                 duration = time.perf_counter() - start
                 span.set_attribute("duration_seconds", duration)
 
-    def create_histogram(self, name: str, description: str = "", unit: str = "s") -> None:
-        """Create a histogram metric for later recording."""
+    def create_gauge(self, name: str, description: str = "", unit: str = "s") -> None:
+        """Create a gauge metric for later recording."""
         if not self._initialized or not self._meter:
             return
-        self._histograms[name] = self._meter.create_histogram(
-            name, description=description, unit=unit
-        )
+        self._gauges[name] = self._meter.create_gauge(name, description=description, unit=unit)
 
     def record_metric(
         self, name: str, value: float, extra_attrs: Optional[Dict[str, Any]] = None
@@ -264,11 +262,11 @@ class StartupTracer:
         if not self._initialized:
             return
 
-        # Auto-create histogram if needed
-        if name not in self._histograms and self._meter:
-            self._histograms[name] = self._meter.create_histogram(name)
+        # Auto-create gauge if needed
+        if name not in self._gauges and self._meter:
+            self._gauges[name] = self._meter.create_gauge(name)
 
-        if name in self._histograms:
+        if name in self._gauges:
             attrs = {**self._common_attributes(), **(extra_attrs or {})}
             # Filter to low-cardinality for metrics
             metric_attrs = {
@@ -276,7 +274,7 @@ class StartupTracer:
                 for k, v in attrs.items()
                 if k in ("endpoint_name", "model_name", "gpu_type", "region", "pod_name")
             }
-            self._histograms[name].record(value, metric_attrs)
+            self._gauges[name].set(value, metric_attrs)
 
     def complete(self) -> float:
         """Mark startup complete. Emits the in_container_startup root span.
