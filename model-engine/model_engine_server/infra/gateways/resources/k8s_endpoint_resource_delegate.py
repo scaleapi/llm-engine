@@ -232,9 +232,19 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
         template_str = config_map_str["data"][key]
 
     yaml_str = Template(template_str).substitute(**substitution_kwargs)
-    # Remove blank lines (whitespace-only) that result from empty template substitutions (e.g., MCP_TIMEOUT)
-    # Remove lines that are only whitespace (have indentation but no content)
-    yaml_str = "\n".join(line for line in yaml_str.split("\n") if line.strip())
+    # Remove blank lines that result from empty template substitutions (e.g., MCP_TIMEOUT)
+    # Specifically target lines with 10 spaces (indentation level of MCP_TIMEOUT) and no content
+    lines = yaml_str.split("\n")
+    filtered_lines = []
+    for i, line in enumerate(lines):
+        # Skip lines that are exactly 10 spaces (empty MCP_TIMEOUT substitution)
+        if line == "          ":
+            continue
+        # Also skip lines that are whitespace-only at that indentation level
+        if line.startswith("          ") and not line[10:].strip():
+            continue
+        filtered_lines.append(line)
+    yaml_str = "\n".join(filtered_lines)
     try:
         yaml_obj = yaml.safe_load(yaml_str)
     except:
