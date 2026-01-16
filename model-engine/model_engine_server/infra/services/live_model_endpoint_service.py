@@ -33,6 +33,9 @@ from model_engine_server.domain.gateways.inference_autoscaling_metrics_gateway i
 from model_engine_server.domain.services import ModelEndpointService
 from model_engine_server.domain.use_cases.model_endpoint_use_cases import MODEL_BUNDLE_CHANGED_KEY
 from model_engine_server.infra.gateways import ModelEndpointInfraGateway
+from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
+    K8SEndpointResourceDelegate,
+)
 from model_engine_server.infra.repositories import ModelEndpointCacheRepository
 from model_engine_server.infra.repositories.model_endpoint_record_repository import (
     ModelEndpointRecordRepository,
