@@ -1374,8 +1374,8 @@ def get_endpoint_resource_arguments_from_request(
             if flavor.extra_routes:
                 all_routes.extend(flavor.extra_routes)
             is_mcp_server = any("/mcp" in route.lower() for route in all_routes)
-        # Format timeout with proper indentation
-        # When not MCP server, use empty string - the blank line will be removed in load_k8s_yaml
+        # Format timeout with proper indentation (10 spaces to match YAML structure)
+        # When not MCP server, use empty string
         if is_mcp_server:
             timeout = "          timeout: 300s"
         else:
