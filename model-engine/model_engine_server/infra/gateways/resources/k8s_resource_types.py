@@ -1377,7 +1377,8 @@ def get_endpoint_resource_arguments_from_request(
             if flavor.extra_routes:
                 all_routes.extend(flavor.extra_routes)
             is_mcp_server = any("/mcp" in route.lower() for route in all_routes)
-        timeout = "          timeout: 300s\n" if is_mcp_server else ""
+        # When empty, use a YAML comment to avoid invalid blank line
+        timeout = "          timeout: 300s\n" if is_mcp_server else "          # timeout: default (30s)\n"
 
         return VirtualServiceArguments(
             # Base resource arguments
