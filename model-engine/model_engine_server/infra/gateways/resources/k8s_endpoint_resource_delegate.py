@@ -232,6 +232,8 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
         template_str = config_map_str["data"][key]
 
     yaml_str = Template(template_str).substitute(**substitution_kwargs)
+    # Remove blank lines that result from empty template substitutions (e.g., MCP_TIMEOUT)
+    yaml_str = "\n".join(line for line in yaml_str.split("\n") if line.strip() or not line)
     try:
         yaml_obj = yaml.safe_load(yaml_str)
     except:
