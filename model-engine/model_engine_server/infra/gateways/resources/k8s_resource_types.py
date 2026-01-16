@@ -1379,9 +1379,10 @@ def get_endpoint_resource_arguments_from_request(
             is_mcp_server = any("/mcp" in route.lower() for route in all_routes)
         # Format timeout with proper indentation
         # When not MCP server, use empty string - the blank line will be removed in load_k8s_yaml
-        timeout = (
-            "          timeout: 300s" if is_mcp_server else ""
-        )
+        if is_mcp_server:
+            timeout = "          timeout: 300s"
+        else:
+            timeout = ""
 
         return VirtualServiceArguments(
             # Base resource arguments
