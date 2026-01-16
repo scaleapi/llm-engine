@@ -233,14 +233,9 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
         template_str = config_map_str["data"][key]
 
     yaml_str = Template(template_str).substitute(**substitution_kwargs)
-    # Remove blank lines that result from empty template substitutions (e.g., MCP_TIMEOUT)
-    # Remove lines that contain only whitespace (empty substitutions create lines with just indentation)
-    lines = yaml_str.split("\n")
-    filtered_lines = [line for line in lines if line.strip() or line == ""]
-    yaml_str = "\n".join(filtered_lines)
     try:
         yaml_obj = yaml.safe_load(yaml_str)
-    except Exception as e:
+    except:
         logger.exception("Could not load yaml string: %s", yaml_str)
         raise
     return yaml_obj
