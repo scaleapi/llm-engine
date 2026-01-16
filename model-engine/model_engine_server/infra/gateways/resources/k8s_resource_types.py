@@ -1365,10 +1365,7 @@ def get_endpoint_resource_arguments_from_request(
         # Set 5-minute timeout for MCP servers to fix 30-second default timeout issue
         # MCP servers use passthrough forwarder and have routes containing /mcp
         is_mcp_server = False
-        if (
-            isinstance(flavor, RunnableImageLike)
-            and flavor.forwarder_type == "passthrough"
-        ):
+        if isinstance(flavor, RunnableImageLike) and flavor.forwarder_type == "passthrough":
             all_routes = []
             if flavor.predict_route:
                 all_routes.append(flavor.predict_route)
