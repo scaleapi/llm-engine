@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "startupWatcher.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "startupWatcher.labels" . | nindent 4 }}
+spec:
+  # Single replica - K8s events are namespace-scoped, multiple replicas
+  # would cause duplicate metrics. For HA, implement leader election.
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "startupWatcher.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        ad.datadoghq.com/watcher.logs: |
+          [{
+            "service": {{ include "startupWatcher.fullname" . | quote }},
+            "source": "python"
+          }]
+      labels:
+        {{- include "startupWatcher.selectorLabels" . | nindent 8 }}
+        {{- include "startupWatcher.labels" . | nindent 8 }}
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: {{ include "startupWatcher.serviceAccountName" . }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: watcher
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            # Namespace to watch
+            - name: WATCH_NAMESPACE
+              value: {{ .Values.watchNamespace | quote }}
+            # Pod filtering
+            {{- if .Values.podFilter.namePattern }}
+            - name: WATCH_POD_NAME_PATTERN
+              value: {{ .Values.podFilter.namePattern | quote }}
+            {{- end }}
+            {{- if .Values.podFilter.includeLabels }}
+            - name: WATCH_INCLUDE_LABELS
+              value: {{ .Values.podFilter.includeLabels | quote }}
+            {{- end }}
+            {{- if .Values.podFilter.excludeLabels }}
+            - name: WATCH_EXCLUDE_LABELS
+              value: {{ .Values.podFilter.excludeLabels | quote }}
+            {{- end }}
+            # Datadog agent host (for OTLP endpoint)
+            {{- if .Values.datadog.enabled }}
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_ENV
+              value: {{ .Values.context }}
+            - name: DD_SERVICE
+              value: {{ include "startupWatcher.fullname" . }}
+            - name: DD_VERSION
+              value: {{ .Values.image.tag | quote }}
+            {{- end }}
+          {{- if .Values.datadog.enabled }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Construct OTLP endpoint with IPv6 bracket handling
+              if echo "$DD_AGENT_HOST" | grep -q ":"; then
+                export OTEL_EXPORTER_OTLP_ENDPOINT="http://[${DD_AGENT_HOST}]:4317"
+              else
+                export OTEL_EXPORTER_OTLP_ENDPOINT="http://${DD_AGENT_HOST}:4317"
+              fi
+              echo "OTLP endpoint: $OTEL_EXPORTER_OTLP_ENDPOINT"
+              exec python /app/watcher.py
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL

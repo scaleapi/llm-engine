@@ -1,6 +1,6 @@
 # Make sure to update .pre-commit-config.yaml to match versions!
 black[jupyter]==24.8.0
-datamodel-code-generator>=0.25.8
+datamodel-code-generator>=0.47.0
 ruff==0.6.8
 ipython==8.12.0  # 8.12.0 is the last version to support Python 3.8
 isort==5.13.2

@@ -70,7 +70,8 @@ repos:
       - id: trufflehog
         name: TruffleHog
         description: Detect secrets in your data.
-        entry: bash -c 'docker run --rm -v "$(pwd)/..:/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir/llm-engine --since-commit HEAD --only-verified --fail'
+        # Get the main git dir (resolves worktrees to actual .git location) and mount parent
+        entry: bash -c 'GIT_DIR=$(git rev-parse --git-common-dir) && REPO_DIR=$(dirname "$GIT_DIR") && docker run --rm -v "$REPO_DIR:/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --since-commit HEAD --only-verified --fail'
         language: system
         stages: ["commit", "push"]
   - repo: https://github.com/returntocorp/semgrep

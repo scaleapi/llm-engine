@@ -19,6 +19,7 @@ from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate
     DATADOG_ENV_VAR,
     K8SEndpointResourceDelegate,
     add_datadog_env_to_container,
+    add_pod_metadata_env_to_container,
     get_main_container_from_deployment_template,
     k8s_yaml_exists,
     load_k8s_yaml,
@@ -952,3 +953,26 @@ async def test_get_async_autoscaling_params(k8s_endpoint_resource_delegate):
         per_worker=5,
         concurrent_requests_per_worker=1,
     )
+
+
+def test_add_pod_metadata_env_to_container():
+    """Test that pod metadata env vars are added correctly."""
+    container = {"env": [{"name": "EXISTING_VAR", "value": "existing_value"}]}
+
+    add_pod_metadata_env_to_container(container)
+
+    env_names = {env["name"] for env in container["env"]}
+    assert "EXISTING_VAR" in env_names
+    assert "POD_UID" in env_names
+    assert "POD_NAME" in env_names
+    assert "NODE_NAME" in env_names
+
+    # Verify the fieldRef values
+    pod_uid_env = next(e for e in container["env"] if e["name"] == "POD_UID")
+    assert pod_uid_env["valueFrom"]["fieldRef"]["fieldPath"] == "metadata.uid"
+
+    pod_name_env = next(e for e in container["env"] if e["name"] == "POD_NAME")
+    assert pod_name_env["valueFrom"]["fieldRef"]["fieldPath"] == "metadata.name"
+
+    node_name_env = next(e for e in container["env"] if e["name"] == "NODE_NAME")
+    assert node_name_env["valueFrom"]["fieldRef"]["fieldPath"] == "spec.nodeName"

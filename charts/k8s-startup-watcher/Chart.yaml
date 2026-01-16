@@ -1,0 +1,11 @@
+apiVersion: v2
+name: k8s-startup-watcher
+description: Kubernetes pod startup metrics collector for observability
+
+type: application
+
+# Chart version - increment on chart changes
+version: 0.1.0
+
+# Application version
+appVersion: "1.0.0"

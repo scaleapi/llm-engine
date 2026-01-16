@@ -17,9 +17,8 @@ datamodel-codegen \
     --strict-nullable \
     --use-annotated
 
-# replace pydantic import w/ our custom module to replace the AnyUrl types
-#   Pydantic AnyUrl is super problematic for various reasons
-sed -i 's/^from pydantic import /from model_engine_server.common.pydantic_types import /' ${DEST_DIR}/openai.py
+# Post-process server types
+python3 ${SCRIPT_DIR}/postprocess_openai_types.py server ${DEST_DIR}/openai.py
 
 
 CLIENT_DIR=${BASE_DIR}/clients/python/llmengine/data_types/gen
@@ -36,18 +35,5 @@ datamodel-codegen \
     --strict-nullable \
     --use-annotated
 
-# Ignore mypy for this file
-#   I tried updating mypy.ini to ignore this file, but it didn't work
-sed -i '1s/^/# mypy: ignore-errors\n/' ${CLIENT_DIR}/openai.py
-
-# Add conditional import for pydantic v1 and v2
-# replace line starting with 'from pydantic <import stuff>' with the following multiline python code
-# import pydantic
-# PYDANTIC_V2 = hasattr(pydantic, "VERSION") and pydantic.VERSION.startswith("2.")
-# 
-# if PYDANTIC_V2:
-#     from pydantic.v1 <import stuff>
-# 
-# else:
-#     from pydantic <import stuff>
-sed -i -E '/^from pydantic import /{s/^from pydantic import (.*)$/import pydantic\nPYDANTIC_V2 = hasattr(pydantic, "VERSION") and pydantic.VERSION.startswith("2.")\nif PYDANTIC_V2:\n    from pydantic.v1 import \1  # noqa: F401\nelse:\n    from pydantic import \1  # type: ignore # noqa: F401/}' ${CLIENT_DIR}/openai.py
+# Post-process client types
+python3 ${SCRIPT_DIR}/postprocess_openai_types.py client ${CLIENT_DIR}/openai.py

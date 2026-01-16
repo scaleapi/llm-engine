@@ -1,0 +1,48 @@
+# K8s Startup Watcher configuration
+
+# Image configuration
+image:
+  repository: 692474966980.dkr.ecr.us-west-2.amazonaws.com/k8s-startup-watcher
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Namespace to watch for pod events
+# This is the namespace where ML workloads run
+watchNamespace: scale-deploy
+
+# Pod filtering configuration (all optional)
+podFilter:
+  # Regex pattern to match pod names (empty = match all)
+  namePattern: ""
+  # Comma-separated list of required labels (e.g., "team=ml-infra,app=vllm")
+  includeLabels: ""
+  # Comma-separated list of labels to exclude
+  excludeLabels: ""
+
+# Resource limits
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "256Mi"
+
+# Datadog integration
+datadog:
+  enabled: true
+
+# Environment/context (prod, staging, etc.)
+context: prod
+
+# Node selector for watcher pod placement
+nodeSelector:
+  node-lifecycle: normal
+
+# Service account configuration
+serviceAccount:
+  # Annotations to add to the service account (e.g., for IAM roles)
+  annotations: {}
+
+# Additional labels to add to all resources
+extraLabels: {}

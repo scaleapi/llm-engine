@@ -1,0 +1,33 @@
+# Role in the watched namespace (where ML workloads run)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "startupWatcher.fullname" . }}
+  namespace: {{ .Values.watchNamespace }}
+  labels:
+    {{- include "startupWatcher.labels" . | nindent 4 }}
+rules:
+  # Watch pods to track lifecycle state changes
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  # Watch events to capture Pulling, Pulled, Created, Started events
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "startupWatcher.fullname" . }}
+  namespace: {{ .Values.watchNamespace }}
+  labels:
+    {{- include "startupWatcher.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "startupWatcher.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ include "startupWatcher.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
