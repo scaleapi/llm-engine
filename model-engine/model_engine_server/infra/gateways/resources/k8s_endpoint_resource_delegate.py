@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 from string import Template
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -233,10 +234,10 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
 
     yaml_str = Template(template_str).substitute(**substitution_kwargs)
     # Remove blank lines that result from empty MCP_TIMEOUT substitution
-    # Pattern: line with exactly 10 spaces (indentation) followed by newline
-    import re
-    # Remove lines that are exactly 10 spaces (empty MCP_TIMEOUT)
-    yaml_str = re.sub(r"^          $\n?", "", yaml_str, flags=re.MULTILINE)
+    # Remove lines that are exactly 10 spaces (empty MCP_TIMEOUT at that indentation level)
+    lines = yaml_str.split("\n")
+    filtered_lines = [line for line in lines if line != "          "]
+    yaml_str = "\n".join(filtered_lines)
     try:
         yaml_obj = yaml.safe_load(yaml_str)
     except:
