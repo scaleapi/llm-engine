@@ -77,6 +77,9 @@ data:
           annotations:
             ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
             kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+            {{- if ne $mode "async" }}
+            sidecar.istio.io/holdApplicationUntilProxyStarts: "true"
+            {{- end }}
         spec:
           affinity:
             {{- include "modelEngine.serviceTemplateAffinity" . | nindent 12 }}
