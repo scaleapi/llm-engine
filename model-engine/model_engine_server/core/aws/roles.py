@@ -119,12 +119,21 @@ def session(role: Optional[str], session_type: SessionT = Session) -> SessionT:
 
     :param:`session_type` defines the type of session to return. Most users will use
     the default boto3 type. Some users required a special type (e.g aioboto3 session).
+
+    For on-prem deployments without AWS profiles, pass role=None or role=""
+    to use default credentials from environment variables (AWS_ACCESS_KEY_ID, etc).
     """
     # Do not assume roles in CIRCLECI
     if os.getenv("CIRCLECI"):
         logger.warning(f"In circleci, not assuming role (ignoring: {role})")
         role = None
-    sesh: SessionT = session_type(profile_name=role)
+
+    # Use profile-based auth only if role is specified
+    # For on-prem with MinIO, role will be None or empty - use env var credentials
+    if role:
+        sesh: SessionT = session_type(profile_name=role)
+    else:
+        sesh: SessionT = session_type()  # Uses default credential chain (env vars)
     return sesh
 
 

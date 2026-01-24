@@ -225,7 +225,8 @@ def _get_external_interfaces(
     )
 
     queue_delegate: QueueEndpointResourceDelegate
-    if CIRCLECI:
+    if CIRCLECI or infra_config().cloud_provider == "onprem":
+        # On-prem uses fake queue delegate (no SQS/ServiceBus)
         queue_delegate = FakeQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
@@ -238,7 +239,8 @@ def _get_external_interfaces(
 
     inference_task_queue_gateway: TaskQueueGateway
     infra_task_queue_gateway: TaskQueueGateway
-    if CIRCLECI:
+    if CIRCLECI or infra_config().cloud_provider == "onprem":
+        # On-prem uses Redis-based task queues
         inference_task_queue_gateway = redis_24h_task_queue_gateway
         infra_task_queue_gateway = redis_task_queue_gateway
     elif infra_config().cloud_provider == "azure":
@@ -366,7 +368,8 @@ def _get_external_interfaces(
         file_storage_gateway = S3FileStorageGateway()
 
     docker_repository: DockerRepository
-    if CIRCLECI:
+    if CIRCLECI or infra_config().cloud_provider == "onprem":
+        # On-prem uses fake docker repository (no ECR/ACR validation)
         docker_repository = FakeDockerRepository()
     elif infra_config().cloud_provider == "azure":
         docker_repository = ACRDockerRepository()

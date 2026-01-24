@@ -12,6 +12,10 @@ logger = make_logger(logger_name())
 
 
 class S3LLMArtifactGateway(LLMArtifactGateway):
+    """
+    Concrete implementation for interacting with a filesystem backed by S3.
+    """
+
     def list_files(self, path: str, **kwargs) -> List[str]:
         s3 = get_s3_resource(kwargs)
         parsed_remote = parse_attachment_url(path, clean_key=False)

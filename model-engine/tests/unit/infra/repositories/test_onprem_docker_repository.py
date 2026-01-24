@@ -81,3 +81,13 @@ def test_get_latest_image_tag_raises_not_implemented(onprem_docker_repo):
     with pytest.raises(NotImplementedError) as exc_info:
         onprem_docker_repo.get_latest_image_tag("my-repo")
     assert "does not support querying latest image tags" in str(exc_info.value)
+
+
+def test_get_image_url_with_full_image_url(onprem_docker_repo, mock_infra_config):
+    """Test that full image URLs are not prefixed."""
+    result = onprem_docker_repo.get_image_url(
+        image_tag="v1.0.0",
+        repository_name="docker.io/library/nginx",
+    )
+    # Full image URLs (containing dots) should not be prefixed
+    assert result == "docker.io/library/nginx:v1.0.0"

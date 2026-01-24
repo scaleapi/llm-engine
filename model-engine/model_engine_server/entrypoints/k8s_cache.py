@@ -108,7 +108,8 @@ async def main(args: Any):
     )
 
     queue_delegate: QueueEndpointResourceDelegate
-    if CIRCLECI:
+    if CIRCLECI or infra_config().cloud_provider == "onprem":
+        # On-prem uses fake queue delegate (no SQS/ServiceBus)
         queue_delegate = FakeQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
@@ -123,7 +124,8 @@ async def main(args: Any):
     )
     image_cache_gateway = ImageCacheGateway()
     docker_repo: DockerRepository
-    if CIRCLECI:
+    if CIRCLECI or infra_config().cloud_provider == "onprem":
+        # On-prem uses fake docker repository (no ECR/ACR validation)
         docker_repo = FakeDockerRepository()
     elif infra_config().cloud_provider == "azure":
         docker_repo = ACRDockerRepository()

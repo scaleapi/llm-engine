@@ -29,9 +29,11 @@ class OnPremDockerRepository(DockerRepository):
         if not repository_name:
             return image_tag
 
-        prefix = infra_config().docker_repo_prefix
-        if prefix:
-            return f"{prefix}/{repository_name}:{image_tag}"
+        # Only prepend prefix for simple repo names, not full image URLs
+        if self.is_repo_name(repository_name):
+            prefix = infra_config().docker_repo_prefix
+            if prefix:
+                return f"{prefix}/{repository_name}:{image_tag}"
         return f"{repository_name}:{image_tag}"
 
     def build_image(self, image_params: BuildImageRequest) -> BuildImageResponse:

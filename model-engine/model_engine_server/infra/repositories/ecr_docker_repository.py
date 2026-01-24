@@ -23,7 +23,10 @@ class ECRDockerRepository(DockerRepository):
         )
 
     def get_image_url(self, image_tag: str, repository_name: str) -> str:
-        return f"{infra_config().docker_repo_prefix}/{repository_name}:{image_tag}"
+        # Only prepend prefix for simple repo names, not full image URLs
+        if self.is_repo_name(repository_name):
+            return f"{infra_config().docker_repo_prefix}/{repository_name}:{image_tag}"
+        return f"{repository_name}:{image_tag}"
 
     def build_image(self, image_params: BuildImageRequest) -> BuildImageResponse:
         logger.info(f"build_image args {locals()}")
