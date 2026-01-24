@@ -227,10 +227,10 @@ def _get_external_interfaces(
     queue_delegate: QueueEndpointResourceDelegate
     if CIRCLECI:
         queue_delegate = FakeQueueEndpointResourceDelegate()
-    elif infra_config().cloud_provider == "azure":
-        queue_delegate = ASBQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "onprem":
         queue_delegate = OnPremQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "azure":
+        queue_delegate = ASBQueueEndpointResourceDelegate()
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
@@ -238,15 +238,13 @@ def _get_external_interfaces(
 
     inference_task_queue_gateway: TaskQueueGateway
     infra_task_queue_gateway: TaskQueueGateway
-    if CIRCLECI:
+    if CIRCLECI or infra_config().cloud_provider == "onprem":
+        # On-prem uses Redis-based task queues
         inference_task_queue_gateway = redis_24h_task_queue_gateway
         infra_task_queue_gateway = redis_task_queue_gateway
     elif infra_config().cloud_provider == "azure":
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
-    elif infra_config().cloud_provider == "onprem":
-        inference_task_queue_gateway = redis_task_queue_gateway
-        infra_task_queue_gateway = redis_task_queue_gateway
     elif infra_config().celery_broker_type_redis:
         inference_task_queue_gateway = redis_task_queue_gateway
         infra_task_queue_gateway = redis_task_queue_gateway
@@ -288,10 +286,8 @@ def _get_external_interfaces(
     if infra_config().cloud_provider == "azure":
         filesystem_gateway = ABSFilesystemGateway()
         llm_artifact_gateway = ABSLLMArtifactGateway()
-    elif infra_config().cloud_provider == "onprem":
-        filesystem_gateway = S3FilesystemGateway()  # Uses MinIO via s3_utils
-        llm_artifact_gateway = S3LLMArtifactGateway()  # Uses MinIO via s3_utils
     else:
+        # AWS uses S3, on-prem uses MinIO (S3-compatible)
         filesystem_gateway = S3FilesystemGateway()
         llm_artifact_gateway = S3LLMArtifactGateway()
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
@@ -341,10 +337,8 @@ def _get_external_interfaces(
     if infra_config().cloud_provider == "azure":
         llm_fine_tune_repository = ABSFileLLMFineTuneRepository(file_path=file_path)
         llm_fine_tune_events_repository = ABSFileLLMFineTuneEventsRepository()
-    elif infra_config().cloud_provider == "onprem":
-        llm_fine_tune_repository = S3FileLLMFineTuneRepository(file_path=file_path)  # Uses MinIO
-        llm_fine_tune_events_repository = S3FileLLMFineTuneEventsRepository()  # Uses MinIO
     else:
+        # AWS uses S3, on-prem uses MinIO (S3-compatible)
         llm_fine_tune_repository = S3FileLLMFineTuneRepository(file_path=file_path)
         llm_fine_tune_events_repository = S3FileLLMFineTuneEventsRepository()
     llm_fine_tuning_service = DockerImageBatchJobLLMFineTuningService(
@@ -360,18 +354,17 @@ def _get_external_interfaces(
     file_storage_gateway: FileStorageGateway
     if infra_config().cloud_provider == "azure":
         file_storage_gateway = ABSFileStorageGateway()
-    elif infra_config().cloud_provider == "onprem":
-        file_storage_gateway = S3FileStorageGateway()  # Uses MinIO via s3_utils
     else:
+        # AWS uses S3, on-prem uses MinIO (S3-compatible)
         file_storage_gateway = S3FileStorageGateway()
 
     docker_repository: DockerRepository
     if CIRCLECI:
         docker_repository = FakeDockerRepository()
-    elif infra_config().cloud_provider == "azure":
-        docker_repository = ACRDockerRepository()
     elif infra_config().cloud_provider == "onprem":
         docker_repository = OnPremDockerRepository()
+    elif infra_config().cloud_provider == "azure":
+        docker_repository = ACRDockerRepository()
     else:
         docker_repository = ECRDockerRepository()
 

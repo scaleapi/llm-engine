@@ -12,16 +12,9 @@ class OnPremDockerRepository(DockerRepository):
     def image_exists(
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
     ) -> bool:
-        if not repository_name:
-            logger.debug(
-                f"Direct image reference: {image_tag}, assuming exists. "
-                f"Image validation skipped for on-prem deployments."
-            )
-            return True
-
+        image_ref = image_tag if not repository_name else f"{repository_name}:{image_tag}"
         logger.debug(
-            f"Registry image: {repository_name}:{image_tag}, assuming exists. "
-            f"Image validation skipped for on-prem deployments."
+            f"Image {image_ref} assuming exists. Image validation skipped for on-prem deployments."
         )
         return True
 
@@ -29,9 +22,11 @@ class OnPremDockerRepository(DockerRepository):
         if not repository_name:
             return image_tag
 
-        prefix = infra_config().docker_repo_prefix
-        if prefix:
-            return f"{prefix}/{repository_name}:{image_tag}"
+        # Only prepend prefix for simple repo names, not full image URLs
+        if self.is_repo_name(repository_name):
+            prefix = infra_config().docker_repo_prefix
+            if prefix:
+                return f"{prefix}/{repository_name}:{image_tag}"
         return f"{repository_name}:{image_tag}"
 
     def build_image(self, image_params: BuildImageRequest) -> BuildImageResponse:

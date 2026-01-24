@@ -70,12 +70,13 @@ class HostedModelInferenceServiceConfig:
     user_inference_tensorflow_repository: str
     docker_image_layer_cache_repository: str
     sensitive_log_mode: bool
-    # Exactly one of the following three must be specified
+    # Exactly one of the following must be specified for Redis cache
     cache_redis_aws_url: Optional[str] = None  # also using this to store sync autoscaling metrics
     cache_redis_azure_host: Optional[str] = None
     cache_redis_aws_secret_name: Optional[str] = (
         None  # Not an env var because the redis cache info is already here
     )
+    cache_redis_onprem_url: Optional[str] = None  # For on-prem Redis (e.g., redis://redis:6379/0)
     sglang_repository: Optional[str] = None
 
     @classmethod
@@ -90,8 +91,13 @@ class HostedModelInferenceServiceConfig:
 
     @property
     def cache_redis_url(self) -> str:
+        # On-prem Redis support (explicit URL, no cloud provider dependency)
+        if self.cache_redis_onprem_url:
+            return self.cache_redis_onprem_url
+
         cloud_provider = infra_config().cloud_provider
 
+        # On-prem: support REDIS_HOST env var fallback
         if cloud_provider == "onprem":
             if self.cache_redis_aws_url:
                 logger.info("On-prem deployment using cache_redis_aws_url")

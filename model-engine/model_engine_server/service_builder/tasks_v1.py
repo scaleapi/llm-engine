@@ -38,6 +38,9 @@ from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
 )
+from model_engine_server.infra.gateways.resources.onprem_queue_endpoint_resource_delegate import (
+    OnPremQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
     QueueEndpointResourceDelegate,
 )
@@ -49,10 +52,10 @@ from model_engine_server.infra.repositories import (
     DbModelEndpointRecordRepository,
     ECRDockerRepository,
     FakeDockerRepository,
+    OnPremDockerRepository,
     RedisFeatureFlagRepository,
     RedisModelEndpointCacheRepository,
 )
-from model_engine_server.infra.repositories.onprem_docker_repository import OnPremDockerRepository
 from model_engine_server.infra.services import LiveEndpointBuilderService
 from model_engine_server.service_builder.celery import service_builder_service
 
@@ -73,6 +76,8 @@ def get_live_endpoint_builder_service(
     queue_delegate: QueueEndpointResourceDelegate
     if CIRCLECI:
         queue_delegate = FakeQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "onprem":
+        queue_delegate = OnPremQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
     else:
@@ -84,10 +89,12 @@ def get_live_endpoint_builder_service(
     docker_repository: DockerRepository
     if CIRCLECI:
         docker_repository = FakeDockerRepository()
-    elif infra_config().cloud_provider == "azure":
-        docker_repository = ACRDockerRepository()
     elif infra_config().cloud_provider == "onprem":
         docker_repository = OnPremDockerRepository()
+    elif infra_config().cloud_provider == "azure" or infra_config().docker_repo_prefix.endswith(
+        "azurecr.io"
+    ):
+        docker_repository = ACRDockerRepository()
     else:
         docker_repository = ECRDockerRepository()
     inference_autoscaling_metrics_gateway = (

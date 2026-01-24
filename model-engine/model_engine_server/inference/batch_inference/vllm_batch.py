@@ -56,14 +56,28 @@ CPU_COUNT = get_cpu_cores_in_container()
 
 
 def get_s3_client():
-    session = boto3.Session(profile_name=os.getenv("S3_WRITE_AWS_PROFILE"))
-    return session.client("s3", region_name=AWS_REGION)
+    profile_name = os.getenv("S3_WRITE_AWS_PROFILE")
+    # For on-prem: if profile_name is empty/None, use default credential chain (env vars)
+    if profile_name:
+        session = boto3.Session(profile_name=profile_name)
+    else:
+        session = boto3.Session()
+
+    # Support for MinIO/on-prem S3-compatible storage
+    endpoint_url = os.getenv("S3_ENDPOINT_URL")
+    return session.client("s3", region_name=AWS_REGION, endpoint_url=endpoint_url)
 
 
 def download_model(checkpoint_path, final_weights_folder):
-    s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.bin' --include '*.safetensors' --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+    # Support for MinIO/on-prem S3-compatible storage
+    s3_endpoint_url = os.getenv("S3_ENDPOINT_URL", "")
+    endpoint_flag = f"--endpoint-url {s3_endpoint_url}" if s3_endpoint_url else ""
+
+    s5cmd = f"./s5cmd {endpoint_flag} --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.bin' --include '*.safetensors' --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
     env = os.environ.copy()
     env["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
+    if s3_endpoint_url:
+        print(f"S3_ENDPOINT_URL: {s3_endpoint_url}", flush=True)
     # Need to override these env vars so s5cmd uses AWS_PROFILE
     env["AWS_ROLE_ARN"] = ""
     env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""

@@ -31,6 +31,9 @@ from model_engine_server.infra.gateways.resources.image_cache_gateway import Ima
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
 )
+from model_engine_server.infra.gateways.resources.onprem_queue_endpoint_resource_delegate import (
+    OnPremQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
     QueueEndpointResourceDelegate,
 )
@@ -110,6 +113,8 @@ async def main(args: Any):
     queue_delegate: QueueEndpointResourceDelegate
     if CIRCLECI:
         queue_delegate = FakeQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "onprem":
+        queue_delegate = OnPremQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
     else:
@@ -125,10 +130,12 @@ async def main(args: Any):
     docker_repo: DockerRepository
     if CIRCLECI:
         docker_repo = FakeDockerRepository()
-    elif infra_config().cloud_provider == "azure":
-        docker_repo = ACRDockerRepository()
     elif infra_config().cloud_provider == "onprem":
         docker_repo = OnPremDockerRepository()
+    elif infra_config().cloud_provider == "azure" or infra_config().docker_repo_prefix.endswith(
+        "azurecr.io"
+    ):
+        docker_repo = ACRDockerRepository()
     else:
         docker_repo = ECRDockerRepository()
     while True:
