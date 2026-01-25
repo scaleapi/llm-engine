@@ -3084,9 +3084,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "url_citation",
             "title": "Type",
-            "description": "The type of the URL citation. Always `url_citation`."
+            "description": "The type of the URL citation. Always `url_citation`.",
+            "enum": [
+              "url_citation"
+            ]
           },
           "url_citation": {
             "$ref": "#/components/schemas/UrlCitation",
@@ -3476,9 +3478,7 @@
             "type": "string",
             "title": "Model",
             "description": "ID of the model to use.",
-            "examples": [
-              "mixtral-8x7b-instruct"
-            ]
+            "example": "mixtral-8x7b-instruct"
           },
           "checkpoint_path": {
             "title": "Checkpoint Path",
@@ -3571,8 +3571,10 @@
         "properties": {
           "kind": {
             "type": "string",
-            "const": "basic",
-            "title": "Kind"
+            "title": "Kind",
+            "enum": [
+              "basic"
+            ]
           },
           "username": {
             "type": "string",
@@ -3595,8 +3597,10 @@
         "properties": {
           "kind": {
             "type": "string",
-            "const": "mtls",
-            "title": "Kind"
+            "title": "Kind",
+            "enum": [
+              "mtls"
+            ]
           },
           "cert": {
             "type": "string",
@@ -3689,9 +3693,11 @@
           },
           "type": {
             "type": "string",
-            "const": "function",
             "title": "Type",
-            "description": "The type of the tool. Currently, only `function` is supported."
+            "description": "The type of the tool. Currently, only `function` is supported.",
+            "enum": [
+              "function"
+            ]
           },
           "function": {
             "$ref": "#/components/schemas/Function1",
@@ -3722,8 +3728,10 @@
             "title": "Type",
             "description": "The type of the tool. Currently, only `function` is supported.",
             "type": "string",
-            "const": "function",
-            "nullable": true
+            "nullable": true,
+            "enum": [
+              "function"
+            ]
           },
           "function": {
             "$ref": "#/components/schemas/Function2",
@@ -3756,9 +3764,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "function",
             "title": "Type",
-            "description": "The type of the tool. Currently, only `function` is supported."
+            "description": "The type of the tool. Currently, only `function` is supported.",
+            "enum": [
+              "function"
+            ]
           },
           "function": {
             "$ref": "#/components/schemas/Function3"
@@ -3794,9 +3804,11 @@
           },
           "role": {
             "type": "string",
-            "const": "assistant",
             "title": "Role",
-            "description": "The role of the messages author, in this case `assistant`."
+            "description": "The role of the messages author, in this case `assistant`.",
+            "enum": [
+              "assistant"
+            ]
           },
           "name": {
             "title": "Name",
@@ -3852,9 +3864,11 @@
           },
           "role": {
             "type": "string",
-            "const": "developer",
             "title": "Role",
-            "description": "The role of the messages author, in this case `developer`."
+            "description": "The role of the messages author, in this case `developer`.",
+            "enum": [
+              "developer"
+            ]
           },
           "name": {
             "title": "Name",
@@ -3874,9 +3888,11 @@
         "properties": {
           "role": {
             "type": "string",
-            "const": "function",
             "title": "Role",
-            "description": "The role of the messages author, in this case `function`."
+            "description": "The role of the messages author, in this case `function`.",
+            "enum": [
+              "function"
+            ]
           },
           "content": {
             "title": "Content",
@@ -3924,9 +3940,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "input_audio",
             "title": "Type",
-            "description": "The type of the content part. Always `input_audio`."
+            "description": "The type of the content part. Always `input_audio`.",
+            "enum": [
+              "input_audio"
+            ]
           },
           "input_audio": {
             "$ref": "#/components/schemas/InputAudio"
@@ -3943,9 +3961,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "file",
             "title": "Type",
-            "description": "The type of the content part. Always `file`."
+            "description": "The type of the content part. Always `file`.",
+            "enum": [
+              "file"
+            ]
           },
           "file": {
             "$ref": "#/components/schemas/File"
@@ -3962,9 +3982,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "image_url",
             "title": "Type",
-            "description": "The type of the content part."
+            "description": "The type of the content part.",
+            "enum": [
+              "image_url"
+            ]
           },
           "image_url": {
             "$ref": "#/components/schemas/ImageUrl"
@@ -3981,9 +4003,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "refusal",
             "title": "Type",
-            "description": "The type of the content part."
+            "description": "The type of the content part.",
+            "enum": [
+              "refusal"
+            ]
           },
           "refusal": {
             "type": "string",
@@ -4002,9 +4026,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "text",
             "title": "Type",
-            "description": "The type of the content part."
+            "description": "The type of the content part.",
+            "enum": [
+              "text"
+            ]
           },
           "text": {
             "type": "string",
@@ -4035,9 +4061,11 @@
           },
           "role": {
             "type": "string",
-            "const": "system",
             "title": "Role",
-            "description": "The role of the messages author, in this case `system`."
+            "description": "The role of the messages author, in this case `system`.",
+            "enum": [
+              "system"
+            ]
           },
           "name": {
             "title": "Name",
@@ -4061,9 +4089,11 @@
         "properties": {
           "role": {
             "type": "string",
-            "const": "tool",
             "title": "Role",
-            "description": "The role of the messages author, in this case `tool`."
+            "description": "The role of the messages author, in this case `tool`.",
+            "enum": [
+              "tool"
+            ]
           },
           "content": {
             "anyOf": [
@@ -4111,9 +4141,11 @@
           },
           "role": {
             "type": "string",
-            "const": "user",
             "title": "Role",
-            "description": "The role of the messages author, in this case `user`."
+            "description": "The role of the messages author, in this case `user`.",
+            "enum": [
+              "user"
+            ]
           },
           "name": {
             "title": "Name",
@@ -4175,9 +4207,11 @@
           },
           "role": {
             "type": "string",
-            "const": "assistant",
             "title": "Role",
-            "description": "The role of the author of this message."
+            "description": "The role of the author of this message.",
+            "enum": [
+              "assistant"
+            ]
           },
           "function_call": {
             "description": "Deprecated and replaced by `tool_calls`. The name and arguments of a function that should be called, as generated by the model.",
@@ -4295,9 +4329,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "function",
             "title": "Type",
-            "description": "The type of the tool. Currently, only `function` is supported."
+            "description": "The type of the tool. Currently, only `function` is supported.",
+            "enum": [
+              "function"
+            ]
           },
           "function": {
             "$ref": "#/components/schemas/FunctionObject"
@@ -4516,34 +4552,28 @@
             "title": "Temperature",
             "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\nWe generally recommend altering this or `top_p` but not both.\n",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "number",
             "maximum": 2.0,
             "minimum": 0.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "top_p": {
             "title": "Top P",
             "description": "An alternative to sampling with temperature, called nucleus sampling,\nwhere the model considers the results of the tokens with top_p probability\nmass. So 0.1 means only the tokens comprising the top 10% probability mass\nare considered.\n\nWe generally recommend altering this or `temperature` but not both.\n",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "number",
             "maximum": 1.0,
             "minimum": 0.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "user": {
             "title": "User",
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices#end-user-ids).\n",
-            "examples": [
-              "user-1234"
-            ],
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "example": "user-1234"
           },
           "service_tier": {
             "$ref": "#/components/schemas/ServiceTier",
@@ -4562,9 +4592,7 @@
             "type": "string",
             "title": "Model",
             "description": "ID of the model to use.",
-            "examples": [
-              "mixtral-8x7b-instruct"
-            ]
+            "example": "mixtral-8x7b-instruct"
           },
           "modalities": {
             "$ref": "#/components/schemas/ResponseModalities",
@@ -4677,13 +4705,11 @@
             "title": "N",
             "description": "How many chat completion choices to generate for each input message. Note that you will be charged based on the number of generated tokens across all of the choices. Keep `n` as `1` to minimize costs.",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "integer",
             "maximum": 128.0,
             "minimum": 1.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "prediction": {
             "description": "Configuration for a [Predicted Output](/docs/guides/predicted-outputs),\nwhich can greatly improve response times when large parts of the model\nresponse are known ahead of time. This is most common when you are\nregenerating a file with only minor changes to most of the content.\n",
@@ -4958,8 +4984,10 @@
           },
           "flavor": {
             "type": "string",
-            "const": "cloudpickle_artifact",
-            "title": "Flavor"
+            "title": "Flavor",
+            "enum": [
+              "cloudpickle_artifact"
+            ]
           },
           "load_predict_fn": {
             "type": "string",
@@ -5510,9 +5538,7 @@
             "type": "string",
             "title": "Model",
             "description": "ID of the model to use.",
-            "examples": [
-              "mixtral-8x7b-instruct"
-            ]
+            "example": "mixtral-8x7b-instruct"
           },
           "prompt": {
             "anyOf": [
@@ -5573,24 +5599,20 @@
             "title": "Max Tokens",
             "description": "The maximum number of [tokens](/tokenizer) that can be generated in the completion.\n\nThe token count of your prompt plus `max_tokens` cannot exceed the model's context length. [Example Python code](https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken) for counting tokens.\n",
             "default": 16,
-            "examples": [
-              16
-            ],
             "type": "integer",
             "minimum": 0.0,
-            "nullable": true
+            "nullable": true,
+            "example": 16
           },
           "n": {
             "title": "N",
             "description": "How many completions to generate for each prompt.\n\n**Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.\n",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "integer",
             "maximum": 128.0,
             "minimum": 1.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "presence_penalty": {
             "title": "Presence Penalty",
@@ -5625,44 +5647,36 @@
           "suffix": {
             "title": "Suffix",
             "description": "The suffix that comes after a completion of inserted text.\n\nThis parameter is only supported for `gpt-3.5-turbo-instruct`.\n",
-            "examples": [
-              "test."
-            ],
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "example": "test."
           },
           "temperature": {
             "title": "Temperature",
             "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "number",
             "maximum": 2.0,
             "minimum": 0.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "top_p": {
             "title": "Top P",
             "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "number",
             "maximum": 1.0,
             "minimum": 0.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "user": {
             "title": "User",
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices#end-user-ids).\n",
-            "examples": [
-              "user-1234"
-            ],
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "example": "user-1234"
           }
         },
         "type": "object",
@@ -5978,9 +5992,7 @@
             "type": "string",
             "title": "Model",
             "description": "ID of the model to use.",
-            "examples": [
-              "mixtral-8x7b-instruct"
-            ]
+            "example": "mixtral-8x7b-instruct"
           },
           "checkpoint_path": {
             "title": "Checkpoint Path",
@@ -6560,9 +6572,11 @@
           },
           "object": {
             "type": "string",
-            "const": "chat.completion",
             "title": "Object",
-            "description": "The object type, which is always `chat.completion`."
+            "description": "The object type, which is always `chat.completion`.",
+            "enum": [
+              "chat.completion"
+            ]
           },
           "usage": {
             "$ref": "#/components/schemas/CompletionUsage",
@@ -6616,9 +6630,11 @@
           },
           "object": {
             "type": "string",
-            "const": "chat.completion.chunk",
             "title": "Object",
-            "description": "The object type, which is always `chat.completion.chunk`."
+            "description": "The object type, which is always `chat.completion.chunk`.",
+            "enum": [
+              "chat.completion.chunk"
+            ]
           },
           "usage": {
             "description": "An optional field that will only be present when you set\n`stream_options: {\"include_usage\": true}` in your request. When present, it\ncontains a null value **except for the last chunk** which contains the\ntoken usage statistics for the entire request.\n\n**NOTE:** If the stream is interrupted or cancelled, you may not\nreceive the final usage chunk which contains the total token usage for\nthe request.\n",
@@ -6669,9 +6685,11 @@
           },
           "object": {
             "type": "string",
-            "const": "text_completion",
             "title": "Object",
-            "description": "The object type, which is always \"text_completion\""
+            "description": "The object type, which is always \"text_completion\"",
+            "enum": [
+              "text_completion"
+            ]
           },
           "usage": {
             "$ref": "#/components/schemas/CompletionUsage",
@@ -6867,9 +6885,11 @@
           },
           "inference_framework": {
             "type": "string",
-            "const": "deepspeed",
             "title": "Inference Framework",
-            "default": "deepspeed"
+            "default": "deepspeed",
+            "enum": [
+              "deepspeed"
+            ]
           }
         },
         "type": "object",
@@ -7331,9 +7351,11 @@
           },
           "inference_framework": {
             "type": "string",
-            "const": "lightllm",
             "title": "Inference Framework",
-            "default": "lightllm"
+            "default": "lightllm",
+            "enum": [
+              "lightllm"
+            ]
           }
         },
         "type": "object",
@@ -8377,9 +8399,11 @@
           },
           "inference_framework": {
             "type": "string",
-            "const": "sglang",
             "title": "Inference Framework",
-            "default": "sglang"
+            "default": "sglang",
+            "enum": [
+              "sglang"
+            ]
           }
         },
         "type": "object",
@@ -8573,9 +8597,11 @@
           },
           "inference_framework": {
             "type": "string",
-            "const": "tensorrt_llm",
             "title": "Inference Framework",
-            "default": "tensorrt_llm"
+            "default": "tensorrt_llm",
+            "enum": [
+              "tensorrt_llm"
+            ]
           }
         },
         "type": "object",
@@ -8769,9 +8795,11 @@
           },
           "inference_framework": {
             "type": "string",
-            "const": "text_generation_inference",
             "title": "Inference Framework",
-            "default": "text_generation_inference"
+            "default": "text_generation_inference",
+            "enum": [
+              "text_generation_inference"
+            ]
           }
         },
         "type": "object",
@@ -9247,9 +9275,11 @@
           },
           "inference_framework": {
             "type": "string",
-            "const": "vllm",
             "title": "Inference Framework",
-            "default": "vllm"
+            "default": "vllm",
+            "enum": [
+              "vllm"
+            ]
           }
         },
         "type": "object",
@@ -9268,8 +9298,10 @@
         "properties": {
           "framework_type": {
             "type": "string",
-            "const": "custom_base_image",
-            "title": "Framework Type"
+            "title": "Framework Type",
+            "enum": [
+              "custom_base_image"
+            ]
           },
           "image_repository": {
             "type": "string",
@@ -9739,34 +9771,28 @@
             "title": "Temperature",
             "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\nWe generally recommend altering this or `top_p` but not both.\n",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "number",
             "maximum": 2.0,
             "minimum": 0.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "top_p": {
             "title": "Top P",
             "description": "An alternative to sampling with temperature, called nucleus sampling,\nwhere the model considers the results of the tokens with top_p probability\nmass. So 0.1 means only the tokens comprising the top 10% probability mass\nare considered.\n\nWe generally recommend altering this or `temperature` but not both.\n",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "number",
             "maximum": 1.0,
             "minimum": 0.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "user": {
             "title": "User",
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices#end-user-ids).\n",
-            "examples": [
-              "user-1234"
-            ],
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "example": "user-1234"
           },
           "service_tier": {
             "$ref": "#/components/schemas/ServiceTier",
@@ -9896,13 +9922,11 @@
             "title": "N",
             "description": "How many chat completion choices to generate for each input message. Note that you will be charged based on the number of generated tokens across all of the choices. Keep `n` as `1` to minimize costs.",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "integer",
             "maximum": 128.0,
             "minimum": 1.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "prediction": {
             "description": "Configuration for a [Predicted Output](/docs/guides/predicted-outputs),\nwhich can greatly improve response times when large parts of the model\nresponse are known ahead of time. This is most common when you are\nregenerating a file with only minor changes to most of the content.\n",
@@ -10188,24 +10212,20 @@
             "title": "Max Tokens",
             "description": "The maximum number of [tokens](/tokenizer) that can be generated in the completion.\n\nThe token count of your prompt plus `max_tokens` cannot exceed the model's context length. [Example Python code](https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken) for counting tokens.\n",
             "default": 16,
-            "examples": [
-              16
-            ],
             "type": "integer",
             "minimum": 0.0,
-            "nullable": true
+            "nullable": true,
+            "example": 16
           },
           "n": {
             "title": "N",
             "description": "How many completions to generate for each prompt.\n\n**Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.\n",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "integer",
             "maximum": 128.0,
             "minimum": 1.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "presence_penalty": {
             "title": "Presence Penalty",
@@ -10239,44 +10259,36 @@
           "suffix": {
             "title": "Suffix",
             "description": "The suffix that comes after a completion of inserted text.\n\nThis parameter is only supported for `gpt-3.5-turbo-instruct`.\n",
-            "examples": [
-              "test."
-            ],
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "example": "test."
           },
           "temperature": {
             "title": "Temperature",
             "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "number",
             "maximum": 2.0,
             "minimum": 0.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "top_p": {
             "title": "Top P",
             "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n",
             "default": 1,
-            "examples": [
-              1
-            ],
             "type": "number",
             "maximum": 1.0,
             "minimum": 0.0,
-            "nullable": true
+            "nullable": true,
+            "example": 1
           },
           "user": {
             "title": "User",
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices#end-user-ids).\n",
-            "examples": [
-              "user-1234"
-            ],
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "example": "user-1234"
           }
         },
         "type": "object",
@@ -10864,9 +10876,7 @@
             "format": "uri",
             "title": "Url",
             "description": "Either a URL of the image or the base64 encoded image data.",
-            "examples": [
-              "http://www.example.com/"
-            ]
+            "example": "http://www.example.com/"
           },
           "detail": {
             "type": "string",
@@ -11613,9 +11623,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "content",
             "title": "Type",
-            "description": "The type of the predicted content you want to provide. This type is\ncurrently always `content`.\n"
+            "description": "The type of the predicted content you want to provide. This type is\ncurrently always `content`.\n",
+            "enum": [
+              "content"
+            ]
           },
           "content": {
             "anyOf": [
@@ -11640,7 +11652,6 @@
       "Prompt": {
         "title": "Prompt",
         "description": "The prompt(s) to generate completions for, encoded as a string, array of strings, array of tokens, or array of token arrays.\n\nNote that <|endoftext|> is the document separator that the model sees during training, so if a prompt is not specified the model will generate as if from the beginning of a new document.\n",
-        "default": "<|endoftext|>",
         "items": {
           "type": "integer"
         },
@@ -11651,7 +11662,6 @@
       "Prompt1": {
         "title": "Prompt1",
         "description": "The prompt(s) to generate completions for, encoded as a string, array of strings, array of tokens, or array of token arrays.\n\nNote that <|endoftext|> is the document separator that the model sees during training, so if a prompt is not specified the model will generate as if from the beginning of a new document.\n",
-        "default": "<|endoftext|>",
         "items": {
           "$ref": "#/components/schemas/Prompt1Item"
         },
@@ -11689,8 +11699,10 @@
         "properties": {
           "framework_type": {
             "type": "string",
-            "const": "pytorch",
-            "title": "Framework Type"
+            "title": "Framework Type",
+            "enum": [
+              "pytorch"
+            ]
           },
           "pytorch_image_tag": {
             "type": "string",
@@ -11732,9 +11744,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "json_object",
             "title": "Type",
-            "description": "The type of response format being defined. Always `json_object`."
+            "description": "The type of response format being defined. Always `json_object`.",
+            "enum": [
+              "json_object"
+            ]
           }
         },
         "type": "object",
@@ -11747,9 +11761,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "json_schema",
             "title": "Type",
-            "description": "The type of response format being defined. Always `json_schema`."
+            "description": "The type of response format being defined. Always `json_schema`.",
+            "enum": [
+              "json_schema"
+            ]
           },
           "json_schema": {
             "$ref": "#/components/schemas/JsonSchema",
@@ -11774,9 +11790,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "text",
             "title": "Type",
-            "description": "The type of response format being defined. Always `text`."
+            "description": "The type of response format being defined. Always `text`.",
+            "enum": [
+              "text"
+            ]
           }
         },
         "type": "object",
@@ -11851,8 +11869,10 @@
           },
           "protocol": {
             "type": "string",
-            "const": "http",
-            "title": "Protocol"
+            "title": "Protocol",
+            "enum": [
+              "http"
+            ]
           },
           "readiness_initial_delay_seconds": {
             "type": "integer",
@@ -11897,8 +11917,10 @@
           },
           "flavor": {
             "type": "string",
-            "const": "runnable_image",
-            "title": "Flavor"
+            "title": "Flavor",
+            "enum": [
+              "runnable_image"
+            ]
           }
         },
         "type": "object",
@@ -12022,8 +12044,10 @@
           },
           "protocol": {
             "type": "string",
-            "const": "http",
-            "title": "Protocol"
+            "title": "Protocol",
+            "enum": [
+              "http"
+            ]
           },
           "readiness_initial_delay_seconds": {
             "type": "integer",
@@ -12068,8 +12092,10 @@
           },
           "flavor": {
             "type": "string",
-            "const": "streaming_enhanced_runnable_image",
-            "title": "Flavor"
+            "title": "Flavor",
+            "enum": [
+              "streaming_enhanced_runnable_image"
+            ]
           },
           "streaming_command": {
             "items": {
@@ -12187,8 +12213,10 @@
         "properties": {
           "framework_type": {
             "type": "string",
-            "const": "tensorflow",
-            "title": "Framework Type"
+            "title": "Framework Type",
+            "enum": [
+              "tensorflow"
+            ]
           },
           "tensorflow_version": {
             "type": "string",
@@ -12321,8 +12349,10 @@
           },
           "protocol": {
             "type": "string",
-            "const": "http",
-            "title": "Protocol"
+            "title": "Protocol",
+            "enum": [
+              "http"
+            ]
           },
           "readiness_initial_delay_seconds": {
             "type": "integer",
@@ -12367,8 +12397,10 @@
           },
           "flavor": {
             "type": "string",
-            "const": "triton_enhanced_runnable_image",
-            "title": "Flavor"
+            "title": "Flavor",
+            "enum": [
+              "triton_enhanced_runnable_image"
+            ]
           },
           "triton_model_repository": {
             "type": "string",
@@ -12675,9 +12707,11 @@
           },
           "inference_framework": {
             "type": "string",
-            "const": "deepspeed",
             "title": "Inference Framework",
-            "default": "deepspeed"
+            "default": "deepspeed",
+            "enum": [
+              "deepspeed"
+            ]
           },
           "inference_framework_image_tag": {
             "title": "Inference Framework Image Tag",
@@ -13065,9 +13099,11 @@
           },
           "inference_framework": {
             "type": "string",
-            "const": "sglang",
             "title": "Inference Framework",
-            "default": "sglang"
+            "default": "sglang",
+            "enum": [
+              "sglang"
+            ]
           },
           "inference_framework_image_tag": {
             "title": "Inference Framework Image Tag",
@@ -13791,9 +13827,11 @@
           },
           "inference_framework": {
             "type": "string",
-            "const": "text_generation_inference",
             "title": "Inference Framework",
-            "default": "text_generation_inference"
+            "default": "text_generation_inference",
+            "enum": [
+              "text_generation_inference"
+            ]
           },
           "inference_framework_image_tag": {
             "title": "Inference Framework Image Tag",
@@ -14011,9 +14049,11 @@
           },
           "inference_framework": {
             "type": "string",
-            "const": "vllm",
             "title": "Inference Framework",
-            "default": "vllm"
+            "default": "vllm",
+            "enum": [
+              "vllm"
+            ]
           },
           "inference_framework_image_tag": {
             "title": "Inference Framework Image Tag",
@@ -14347,9 +14387,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "approximate",
             "title": "Type",
-            "description": "The type of location approximation. Always `approximate`.\n"
+            "description": "The type of location approximation. Always `approximate`.\n",
+            "enum": [
+              "approximate"
+            ]
           },
           "approximate": {
             "$ref": "#/components/schemas/WebSearchLocation"
@@ -14517,8 +14559,10 @@
           },
           "flavor": {
             "type": "string",
-            "const": "zip_artifact",
-            "title": "Flavor"
+            "title": "Flavor",
+            "enum": [
+              "zip_artifact"
+            ]
           },
           "load_predict_fn_module_path": {
             "type": "string",

@@ -179,7 +179,9 @@ def _convert_openapi_31_to_30(obj: dict | list) -> None:
 
     Transforms:
         - anyOf: [{...}, {"type": "null"}] -> {..., "nullable": true}
-        - Removes "const" when "enum" is present (3.1 feature not supported in 3.0)
+        - const -> enum: [value] (const is 3.1 only)
+        - examples -> example (examples is 3.1 only for schemas)
+        - Fixes default values that don't match expected types
     """
     if isinstance(obj, dict):
         # Handle anyOf with null type
@@ -211,9 +213,25 @@ def _convert_openapi_31_to_30(obj: dict | list) -> None:
                         _convert_openapi_31_to_30(item)
                     return
 
-        # Remove "const" when "enum" is present (const is 3.1 only)
-        if "const" in obj and "enum" in obj:
-            del obj["const"]
+        # Convert "const" to "enum" (const is 3.1 only)
+        if "const" in obj:
+            const_value = obj.pop("const")
+            if "enum" not in obj:
+                obj["enum"] = [const_value]
+
+        # Convert "examples" to "example" (examples array is 3.1 only for schemas)
+        if "examples" in obj and isinstance(obj["examples"], list):
+            examples = obj.pop("examples")
+            if examples and "example" not in obj:
+                obj["example"] = examples[0]
+
+        # Fix default values that don't match expected types
+        if "default" in obj and "type" in obj:
+            default_val = obj["default"]
+            expected_type = obj["type"]
+            # If type is array but default is not a list, remove the invalid default
+            if expected_type == "array" and not isinstance(default_val, list):
+                del obj["default"]
 
         for value in obj.values():
             _convert_openapi_31_to_30(value)
