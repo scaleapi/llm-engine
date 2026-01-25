@@ -109,6 +109,89 @@ app.include_router(trigger_router_v1)
 app.include_router(llm_router_v2)
 
 
+# Pattern-based schema renames for discriminated unions that generate ugly auto-names.
+# Uses (prefix, suffix) tuples to match auto-generated names regardless of union members.
+# This is robust to adding/removing members from the discriminated unions.
+OPENAPI_SCHEMA_RENAME_PATTERNS = [
+    # CreateLLMModelEndpointV1Request - matches any union starting with CreateVLLM...
+    (
+        "RootModel_Annotated_Union_Annotated_CreateVLLM",
+        "__Discriminator__",
+        "CreateLLMModelEndpointV1Request",
+    ),
+    # UpdateLLMModelEndpointV1Request - matches any union starting with UpdateVLLM...
+    (
+        "RootModel_Annotated_Union_Annotated_UpdateVLLM",
+        "__Discriminator__",
+        "UpdateLLMModelEndpointV1Request",
+    ),
+]
+
+
+def _rename_openapi_schemas(openapi_schema: dict) -> dict:
+    """
+    Post-process OpenAPI schema to rename auto-generated discriminated union names
+    to clean, user-friendly names.
+
+    Uses pattern matching (prefix + suffix) to be robust against changes to the
+    union members (e.g., adding a new inference framework).
+    """
+    if "components" not in openapi_schema or "schemas" not in openapi_schema["components"]:
+        return openapi_schema
+
+    schemas = openapi_schema["components"]["schemas"]
+
+    # Build mapping of old->new names based on pattern matches
+    renames = {}
+    for schema_name in list(schemas.keys()):
+        for prefix, suffix, new_name in OPENAPI_SCHEMA_RENAME_PATTERNS:
+            if schema_name.startswith(prefix) and schema_name.endswith(suffix):
+                renames[schema_name] = new_name
+                break
+
+    # Perform the renames
+    for old_name, new_name in renames.items():
+        if old_name in schemas:
+            schemas[new_name] = schemas.pop(old_name)
+
+    # Update all $ref references throughout the schema
+    def update_refs(obj):
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if key == "$ref" and isinstance(value, str):
+                    for old_name, new_name in renames.items():
+                        if old_name in value:
+                            obj[key] = value.replace(old_name, new_name)
+                            break
+                else:
+                    update_refs(value)
+        elif isinstance(obj, list):
+            for item in obj:
+                update_refs(item)
+
+    update_refs(openapi_schema)
+    return openapi_schema
+
+
+def custom_openapi():
+    """Custom OpenAPI schema generator that renames discriminated union schemas."""
+    if app.openapi_schema:
+        return app.openapi_schema
+    from fastapi.openapi.utils import get_openapi
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        routes=app.routes,
+    )
+    openapi_schema = _rename_openapi_schemas(openapi_schema)
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi  # type: ignore[method-assign]
+
+
 # TODO: Remove this once we have a better way to serve internal docs
 INTERNAL_DOCS_PATH = str(Path(__file__).parents[3] / "launch_internal/site")
 if os.path.exists(INTERNAL_DOCS_PATH):
