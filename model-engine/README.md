@@ -51,7 +51,7 @@ Unit tests are in [`tests/unit`](./tests/unit).
 
 ## OpenAPI Schema Generation
 
-Model Engine is the **source of truth** for the Launch API schema. We generate OpenAPI schemas that are consumed by client libraries ([launch-python-client](https://github.com/scaleapi/launch-python-client), model-engine-internal).
+Model Engine is the **source of truth** for the Launch API schema. We generate OpenAPI schemas that are consumed by client libraries (e.g., [launch-python-client](https://github.com/scaleapi/launch-python-client)).
 
 ### Why Two Schema Versions?
 
@@ -88,19 +88,19 @@ The `get_openapi_schema(openapi_30_compatible=True)` function converts:
 │ Model Engine│ ─────────────────▶│ openapi-3.0.json │
 │   (FastAPI) │                   └────────┬─────────┘
 └─────────────┘                            │
-                                           │ copy
-                    ┌──────────────────────┼──────────────────────┐
-                    ▼                      ▼                      ▼
-          ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-          │ launch-python-  │    │ model-engine-   │    │ other clients   │
-          │ client          │    │ internal        │    │                 │
-          └────────┬────────┘    └────────┬────────┘    └────────┬────────┘
-                   │                      │                      │
-                   ▼                      ▼                      ▼
-          ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-          │ OpenAPI Generator│    │ OpenAPI Generator│   │ OpenAPI Generator│
-          │ (python, 6.4.0) │    │ (python, 6.4.0) │    │ (any language)  │
-          └─────────────────┘    └─────────────────┘    └─────────────────┘
+                                           │ copy to client repos
+                              ┌────────────┴────────────┐
+                              ▼                         ▼
+                    ┌─────────────────┐       ┌─────────────────┐
+                    │ launch-python-  │       │ other clients   │
+                    │ client          │       │                 │
+                    └────────┬────────┘       └────────┬────────┘
+                             │                         │
+                             ▼                         ▼
+                    ┌─────────────────┐       ┌─────────────────┐
+                    │ OpenAPI Generator│       │ OpenAPI Generator│
+                    │ (python, 6.4.0) │       │ (any language)  │
+                    └─────────────────┘       └─────────────────┘
 ```
 
 ### Updating Client Libraries
