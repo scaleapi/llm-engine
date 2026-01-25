@@ -215,14 +215,15 @@ def test_convert_openapi_31_to_30_removes_const_with_enum():
     assert schema["LLMSource"]["type"] == "string"
 
 
-def test_convert_openapi_31_to_30_preserves_const_without_enum():
-    """Test that const is preserved when enum is not present."""
+def test_convert_openapi_31_to_30_converts_const_to_enum():
+    """Test that const is converted to enum when enum is not present."""
     schema = {"field": {"const": "fixed_value", "type": "string"}}
 
     _convert_openapi_31_to_30(schema)
 
-    # const without enum should be preserved (though unusual)
-    assert schema["field"]["const"] == "fixed_value"
+    # const should be converted to enum (const is 3.1 only)
+    assert "const" not in schema["field"]
+    assert schema["field"]["enum"] == ["fixed_value"]
 
 
 def test_convert_openapi_31_to_30_nested():
