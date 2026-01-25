@@ -241,6 +241,7 @@ def get_openapi_schema(openapi_30_compatible: bool = False) -> dict:
 
     if openapi_30_compatible:
         _convert_openapi_31_to_30(openapi_schema)
+        openapi_schema["openapi"] = "3.0.3"
 
     return openapi_schema
 
