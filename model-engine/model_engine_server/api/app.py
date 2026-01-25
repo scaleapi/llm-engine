@@ -112,7 +112,7 @@ app.include_router(llm_router_v2)
 # Pattern-based schema renames for discriminated unions that generate ugly auto-names.
 # Uses (prefix, suffix) tuples to match auto-generated names regardless of union members.
 # This is robust to adding/removing members from the discriminated unions.
-OPENAPI_SCHEMA_RENAME_PATTERNS = [
+OPENAPI_SCHEMA_RENAME_PATTERNS: list[tuple[str, str, str]] = [
     # CreateLLMModelEndpointV1Request - matches any union starting with CreateVLLM...
     (
         "RootModel_Annotated_Union_Annotated_CreateVLLM",
@@ -170,6 +170,97 @@ def _rename_openapi_schemas(openapi_schema: dict) -> dict:
                 update_refs(item)
 
     update_refs(openapi_schema)
+    return openapi_schema
+
+
+def _convert_openapi_31_to_30(obj: dict | list) -> None:
+    """
+    Recursively convert OpenAPI 3.1 patterns to OpenAPI 3.0 style for generator compatibility.
+
+    Transforms:
+        - anyOf: [{...}, {"type": "null"}] -> {..., "nullable": true}
+        - const -> enum: [value] (const is 3.1 only)
+        - examples -> example (examples is 3.1 only for schemas)
+        - Fixes default values that don't match expected types
+    """
+    if isinstance(obj, dict):
+        # Handle anyOf with null type
+        if "anyOf" in obj:
+            anyof = obj["anyOf"]
+            null_items = [
+                item for item in anyof if isinstance(item, dict) and item.get("type") == "null"
+            ]
+            non_null_items = [
+                item
+                for item in anyof
+                if not (isinstance(item, dict) and item.get("type") == "null")
+            ]
+
+            if null_items:  # Has at least one null type
+                if len(non_null_items) == 1:
+                    # Single non-null item - convert to that item with nullable
+                    new_obj = dict(non_null_items[0])
+                    new_obj["nullable"] = True
+                    del obj["anyOf"]
+                    obj.update(new_obj)
+                    _convert_openapi_31_to_30(obj)
+                    return
+                elif len(non_null_items) > 1:
+                    # Multiple non-null items - keep anyOf but remove null and add nullable
+                    obj["anyOf"] = non_null_items
+                    obj["nullable"] = True
+                    for item in non_null_items:
+                        _convert_openapi_31_to_30(item)
+                    return
+
+        # Convert "const" to "enum" (const is 3.1 only)
+        if "const" in obj:
+            const_value = obj.pop("const")
+            if "enum" not in obj:
+                obj["enum"] = [const_value]
+
+        # Convert "examples" to "example" (examples array is 3.1 only for schemas)
+        if "examples" in obj and isinstance(obj["examples"], list):
+            examples = obj.pop("examples")
+            if examples and "example" not in obj:
+                obj["example"] = examples[0]
+
+        # Fix default values that don't match expected types
+        if "default" in obj and "type" in obj:
+            default_val = obj["default"]
+            expected_type = obj["type"]
+            # If type is array but default is not a list, remove the invalid default
+            if expected_type == "array" and not isinstance(default_val, list):
+                del obj["default"]
+
+        for value in obj.values():
+            _convert_openapi_31_to_30(value)
+    elif isinstance(obj, list):
+        for item in obj:
+            _convert_openapi_31_to_30(item)
+
+
+def get_openapi_schema(openapi_30_compatible: bool = False) -> dict:
+    """
+    Generate OpenAPI schema with optional 3.0 compatibility processing.
+
+    Args:
+        openapi_30_compatible: If True, convert OpenAPI 3.1 patterns to 3.0 style
+                               for compatibility with older code generators.
+    """
+    from fastapi.openapi.utils import get_openapi
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        routes=app.routes,
+    )
+    openapi_schema = _rename_openapi_schemas(openapi_schema)
+
+    if openapi_30_compatible:
+        _convert_openapi_31_to_30(openapi_schema)
+        openapi_schema["openapi"] = "3.0.3"
+
     return openapi_schema
 
 
