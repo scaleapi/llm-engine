@@ -64,6 +64,9 @@ from model_engine_server.infra.gateways import (
     CeleryTaskQueueGateway,
     DatadogMonitoringMetricsGateway,
     FakeMonitoringMetricsGateway,
+    GCSFileStorageGateway,
+    GCSFilesystemGateway,
+    GCSLLMArtifactGateway,
     LiveAsyncModelEndpointInferenceGateway,
     LiveBatchJobOrchestrationGateway,
     LiveBatchJobProgressGateway,
@@ -100,6 +103,9 @@ from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delega
 from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
     SQSQueueEndpointResourceDelegate,
 )
+from model_engine_server.infra.gateways.resources.redis_queue_endpoint_resource_delegate import (
+    RedisQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.s3_file_storage_gateway import S3FileStorageGateway
 from model_engine_server.infra.repositories import (
     ABSFileLLMFineTuneEventsRepository,
@@ -112,6 +118,8 @@ from model_engine_server.infra.repositories import (
     DbTriggerRepository,
     ECRDockerRepository,
     FakeDockerRepository,
+    GCSFileLLMFineTuneEventsRepository,
+    GCSFileLLMFineTuneRepository,
     LiveTokenizerRepository,
     LLMFineTuneRepository,
     RedisModelEndpointCacheRepository,
@@ -225,6 +233,9 @@ def _get_external_interfaces(
         queue_delegate = FakeQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "gcp":
+        # GCP uses Redis (Memorystore) for Celery, so use Redis-based queue delegate
+        queue_delegate = RedisQueueEndpointResourceDelegate()
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
@@ -238,7 +249,8 @@ def _get_external_interfaces(
     elif infra_config().cloud_provider == "azure":
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
-    elif infra_config().celery_broker_type_redis:
+    elif infra_config().cloud_provider == "gcp" or infra_config().celery_broker_type_redis:
+        # GCP uses Redis (Memorystore) for Celery broker
         inference_task_queue_gateway = redis_task_queue_gateway
         infra_task_queue_gateway = redis_task_queue_gateway
     else:
@@ -274,16 +286,15 @@ def _get_external_interfaces(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         use_asyncio=(not CIRCLECI),
     )
-    filesystem_gateway = (
-        ABSFilesystemGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3FilesystemGateway()
-    )
-    llm_artifact_gateway = (
-        ABSLLMArtifactGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3LLMArtifactGateway()
-    )
+    if infra_config().cloud_provider == "azure":
+        filesystem_gateway = ABSFilesystemGateway()
+        llm_artifact_gateway = ABSLLMArtifactGateway()
+    elif infra_config().cloud_provider == "gcp":
+        filesystem_gateway = GCSFilesystemGateway()
+        llm_artifact_gateway = GCSLLMArtifactGateway()
+    else:
+        filesystem_gateway = S3FilesystemGateway()
+        llm_artifact_gateway = S3LLMArtifactGateway()
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
@@ -331,15 +342,17 @@ def _get_external_interfaces(
         llm_fine_tune_repository = ABSFileLLMFineTuneRepository(
             file_path=file_path,
         )
+        llm_fine_tune_events_repository = ABSFileLLMFineTuneEventsRepository()
+    elif infra_config().cloud_provider == "gcp":
+        llm_fine_tune_repository = GCSFileLLMFineTuneRepository(
+            file_path=file_path,
+        )
+        llm_fine_tune_events_repository = GCSFileLLMFineTuneEventsRepository()
     else:
         llm_fine_tune_repository = S3FileLLMFineTuneRepository(
             file_path=file_path,
         )
-    llm_fine_tune_events_repository = (
-        ABSFileLLMFineTuneEventsRepository()
-        if infra_config().cloud_provider == "azure"
-        else S3FileLLMFineTuneEventsRepository()
-    )
+        llm_fine_tune_events_repository = S3FileLLMFineTuneEventsRepository()
     llm_fine_tuning_service = DockerImageBatchJobLLMFineTuningService(
         docker_image_batch_job_gateway=docker_image_batch_job_gateway,
         docker_image_batch_job_bundle_repo=docker_image_batch_job_bundle_repository,
@@ -350,11 +363,12 @@ def _get_external_interfaces(
         docker_image_batch_job_gateway=docker_image_batch_job_gateway
     )
 
-    file_storage_gateway = (
-        ABSFileStorageGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3FileStorageGateway()
-    )
+    if infra_config().cloud_provider == "azure":
+        file_storage_gateway = ABSFileStorageGateway()
+    elif infra_config().cloud_provider == "gcp":
+        file_storage_gateway = GCSFileStorageGateway()
+    else:
+        file_storage_gateway = S3FileStorageGateway()
 
     docker_repository: DockerRepository
     if CIRCLECI:
