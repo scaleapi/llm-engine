@@ -590,7 +590,8 @@ async def main():
 
     BROKER_NAME_TO_CLASS = {
         ELASTICACHE_REDIS_BROKER: RedisBroker(use_elasticache=True),
-        GCP_MEMORYSTORE_REDIS_BROKER: RedisBroker(use_elasticache=True),  # GCP Memorystore also doesn't support CONFIG GET
+        # GCP Memorystore also doesn't support CONFIG GET
+        GCP_MEMORYSTORE_REDIS_BROKER: RedisBroker(use_elasticache=True),
         SQS_BROKER: SQSBroker(),
         SERVICEBUS_BROKER: ASBBroker(),
     }
