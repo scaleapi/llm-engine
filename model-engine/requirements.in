@@ -9,6 +9,9 @@ azure-identity~=1.15.0
 azure-keyvault-secrets~=4.7.0
 azure-servicebus~=7.11.4
 azure-storage-blob~=12.19.0
+# GCP dependencies
+google-auth~=2.25.0
+google-cloud-storage~=2.14.0
 boto3-stubs[essential]~=1.26.67
 boto3~=1.21
 botocore~=1.24

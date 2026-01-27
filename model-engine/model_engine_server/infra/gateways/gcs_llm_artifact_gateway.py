@@ -1,0 +1,86 @@
+import json
+import os
+from typing import Any, Dict, List
+
+from google.auth import default
+from google.cloud import storage
+from model_engine_server.common.config import get_model_cache_directory_name, hmi_config
+from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.core.utils.url import parse_attachment_url
+from model_engine_server.domain.gateways import LLMArtifactGateway
+
+logger = make_logger(logger_name())
+
+
+def _get_gcs_client() -> storage.Client:
+    credentials, project = default()
+    return storage.Client(credentials=credentials, project=project)
+
+
+class GCSLLMArtifactGateway(LLMArtifactGateway):
+    """
+    Concrete implementation using Google Cloud Storage.
+    """
+
+    def list_files(self, path: str, **kwargs) -> List[str]:
+        parsed_remote = parse_attachment_url(path, clean_key=False)
+        bucket_name = parsed_remote.bucket
+        prefix = parsed_remote.key
+
+        client = _get_gcs_client()
+        bucket = client.bucket(bucket_name)
+        blobs = bucket.list_blobs(prefix=prefix)
+        return [blob.name for blob in blobs]
+
+    def download_files(self, path: str, target_path: str, overwrite=False, **kwargs) -> List[str]:
+        parsed_remote = parse_attachment_url(path, clean_key=False)
+        bucket_name = parsed_remote.bucket
+        prefix = parsed_remote.key
+
+        client = _get_gcs_client()
+        bucket = client.bucket(bucket_name)
+
+        downloaded_files: List[str] = []
+        for blob in bucket.list_blobs(prefix=prefix):
+            file_path_suffix = blob.name.replace(prefix, "").lstrip("/")
+            local_path = os.path.join(target_path, file_path_suffix).rstrip("/")
+
+            if not overwrite and os.path.exists(local_path):
+                downloaded_files.append(local_path)
+                continue
+
+            local_dir = "/".join(local_path.split("/")[:-1])
+            if not os.path.exists(local_dir):
+                os.makedirs(local_dir)
+
+            logger.info(f"Downloading {blob.name} to {local_path}")
+            blob.download_to_filename(local_path)
+            downloaded_files.append(local_path)
+        return downloaded_files
+
+    def get_model_weights_urls(self, owner: str, model_name: str, **kwargs) -> List[str]:
+        parsed_remote = parse_attachment_url(
+            hmi_config.hf_user_fine_tuned_weights_prefix, clean_key=False
+        )
+        bucket_name = parsed_remote.bucket
+        fine_tuned_weights_prefix = parsed_remote.key
+
+        client = _get_gcs_client()
+        bucket = client.bucket(bucket_name)
+
+        model_files: List[str] = []
+        model_cache_name = get_model_cache_directory_name(model_name)
+        prefix = f"{fine_tuned_weights_prefix}/{owner}/{model_cache_name}"
+        for blob in bucket.list_blobs(prefix=prefix):
+            model_files.append(f"gs://{bucket_name}/{blob.name}")
+        return model_files
+
+    def get_model_config(self, path: str, **kwargs) -> Dict[str, Any]:
+        parsed_remote = parse_attachment_url(path, clean_key=False)
+        bucket_name = parsed_remote.bucket
+        key = os.path.join(parsed_remote.key, "config.json")
+
+        client = _get_gcs_client()
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(key)
+        return json.loads(blob.download_as_text())

@@ -10,6 +10,9 @@ from .celery_task_queue_gateway import CeleryTaskQueueGateway
 from .datadog_monitoring_metrics_gateway import DatadogMonitoringMetricsGateway
 from .fake_model_primitive_gateway import FakeModelPrimitiveGateway
 from .fake_monitoring_metrics_gateway import FakeMonitoringMetricsGateway
+from .gcs_file_storage_gateway import GCSFileStorageGateway
+from .gcs_filesystem_gateway import GCSFilesystemGateway
+from .gcs_llm_artifact_gateway import GCSLLMArtifactGateway
 from .live_async_model_endpoint_inference_gateway import LiveAsyncModelEndpointInferenceGateway
 from .live_batch_job_orchestration_gateway import LiveBatchJobOrchestrationGateway
 from .live_batch_job_progress_gateway import LiveBatchJobProgressGateway
@@ -37,6 +40,9 @@ __all__: Sequence[str] = [
     "DatadogMonitoringMetricsGateway",
     "FakeModelPrimitiveGateway",
     "FakeMonitoringMetricsGateway",
+    "GCSFileStorageGateway",
+    "GCSFilesystemGateway",
+    "GCSLLMArtifactGateway",
     "LiveAsyncModelEndpointInferenceGateway",
     "LiveBatchJobOrchestrationGateway",
     "LiveBatchJobProgressGateway",
