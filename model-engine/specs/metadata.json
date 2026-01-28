@@ -1,0 +1,8 @@
+{
+  "generated_at": "2026-01-25T01:31:47.898832+00:00",
+  "git_tag": "dev",
+  "files": {
+    "openapi.json": "OpenAPI 3.1 (native FastAPI output)",
+    "openapi-3.0.json": "OpenAPI 3.0 compatible (for code generators)"
+  }
+}
