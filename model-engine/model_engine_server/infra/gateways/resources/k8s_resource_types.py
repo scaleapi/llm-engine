@@ -580,12 +580,20 @@ def get_endpoint_resource_arguments_from_request(
     if abs_account_name is not None:
         main_env.append({"name": "ABS_ACCOUNT_NAME", "value": abs_account_name})
 
+    # Support for MinIO/on-prem S3-compatible storage
+    s3_endpoint_url = os.getenv("S3_ENDPOINT_URL")
+    if s3_endpoint_url:
+        main_env.append({"name": "S3_ENDPOINT_URL", "value": s3_endpoint_url})
+
     # LeaderWorkerSet exclusive
     worker_env = None
     if isinstance(flavor, RunnableImageLike) and flavor.worker_env is not None:
         worker_env = [{"name": key, "value": value} for key, value in flavor.worker_env.items()]
         worker_env.append({"name": "AWS_PROFILE", "value": build_endpoint_request.aws_role})
         worker_env.append({"name": "AWS_CONFIG_FILE", "value": "/opt/.aws/config"})
+        # Support for MinIO/on-prem S3-compatible storage
+        if s3_endpoint_url:
+            worker_env.append({"name": "S3_ENDPOINT_URL", "value": s3_endpoint_url})
 
     worker_command = None
     if isinstance(flavor, RunnableImageLike) and flavor.worker_command is not None:
