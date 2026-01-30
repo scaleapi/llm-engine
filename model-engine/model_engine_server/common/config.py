@@ -90,21 +90,29 @@ class HostedModelInferenceServiceConfig:
 
     @property
     def cache_redis_url(self) -> str:
+        cloud_provider = infra_config().cloud_provider
+
+        if cloud_provider == "onprem":
+            if self.cache_redis_aws_url:
+                logger.info("On-prem deployment using cache_redis_aws_url")
+                return self.cache_redis_aws_url
+            redis_host = os.getenv("REDIS_HOST", "redis")
+            redis_port = getattr(infra_config(), "redis_port", 6379)
+            return f"redis://{redis_host}:{redis_port}/0"
+
         if self.cache_redis_aws_url:
-            assert infra_config().cloud_provider == "aws", "cache_redis_aws_url is only for AWS"
+            assert cloud_provider == "aws", "cache_redis_aws_url is only for AWS"
             if self.cache_redis_aws_secret_name:
                 logger.warning(
                     "Both cache_redis_aws_url and cache_redis_aws_secret_name are set. Using cache_redis_aws_url"
                 )
             return self.cache_redis_aws_url
         elif self.cache_redis_aws_secret_name:
-            assert (
-                infra_config().cloud_provider == "aws"
-            ), "cache_redis_aws_secret_name is only for AWS"
-            creds = get_key_file(self.cache_redis_aws_secret_name)  # Use default role
+            assert cloud_provider == "aws", "cache_redis_aws_secret_name is only for AWS"
+            creds = get_key_file(self.cache_redis_aws_secret_name)
             return creds["cache-url"]
 
-        assert self.cache_redis_azure_host and infra_config().cloud_provider == "azure"
+        assert self.cache_redis_azure_host and cloud_provider == "azure"
         username = os.getenv("AZURE_OBJECT_ID")
         token = DefaultAzureCredential().get_token("https://redis.azure.com/.default")
         password = token.token

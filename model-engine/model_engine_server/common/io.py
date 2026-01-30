@@ -3,19 +3,17 @@
 import os
 from typing import Any
 
-import boto3
 import smart_open
 from model_engine_server.core.config import infra_config
 
 
 def open_wrapper(uri: str, mode: str = "rt", **kwargs):
     client: Any
-    cloud_provider: str
-    # This follows the 5.1.0 smart_open API
     try:
         cloud_provider = infra_config().cloud_provider
     except Exception:
         cloud_provider = "aws"
+
     if cloud_provider == "azure":
         from azure.identity import DefaultAzureCredential
         from azure.storage.blob import BlobServiceClient
@@ -25,9 +23,9 @@ def open_wrapper(uri: str, mode: str = "rt", **kwargs):
             DefaultAzureCredential(),
         )
     else:
-        profile_name = kwargs.get("aws_profile", os.getenv("AWS_PROFILE"))
-        session = boto3.Session(profile_name=profile_name)
-        client = session.client("s3")
+        from model_engine_server.infra.gateways.s3_utils import get_s3_client
+
+        client = get_s3_client(kwargs)
 
     transport_params = {"client": client}
     return smart_open.open(uri, mode, transport_params=transport_params)
