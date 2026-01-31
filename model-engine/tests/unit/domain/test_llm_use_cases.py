@@ -63,6 +63,8 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     validate_and_update_completion_params,
     validate_chat_template,
     validate_checkpoint_files,
+    validate_cpu_only_framework,
+    validate_num_shards,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
@@ -3038,3 +3040,37 @@ def test_validate_chat_template():
 
     with pytest.raises(ObjectHasInvalidValueException):
         validate_chat_template(good_chat_template, LLMInferenceFramework.DEEPSPEED)
+
+
+def test_validate_num_shards_cpu_only():
+    # CPU-only (gpus=0) must have num_shards=0
+    validate_num_shards(0, LLMInferenceFramework.VLLM, 0)  # Should pass
+
+    # CPU-only with non-zero num_shards should fail
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_num_shards(1, LLMInferenceFramework.VLLM, 0)
+
+    # GPU endpoint: num_shards must equal gpus
+    validate_num_shards(2, LLMInferenceFramework.VLLM, 2)  # Should pass
+
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_num_shards(2, LLMInferenceFramework.VLLM, 4)  # Mismatch
+
+
+def test_validate_cpu_only_framework():
+    # vLLM supports CPU-only
+    validate_cpu_only_framework(LLMInferenceFramework.VLLM, 0)  # Should pass
+
+    # vLLM with GPUs should also pass (not CPU-only)
+    validate_cpu_only_framework(LLMInferenceFramework.VLLM, 2)  # Should pass
+    validate_cpu_only_framework(LLMInferenceFramework.DEEPSPEED, 4)  # Should pass
+
+    # Non-vLLM frameworks don't support CPU-only
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_cpu_only_framework(LLMInferenceFramework.DEEPSPEED, 0)
+
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_cpu_only_framework(LLMInferenceFramework.TEXT_GENERATION_INFERENCE, 0)
+
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_cpu_only_framework(LLMInferenceFramework.TENSORRT_LLM, 0)
