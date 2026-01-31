@@ -123,6 +123,11 @@ class VLLMModelConfig(BaseModel):
         description="Data type for model weights and activations. The 'auto' option will use FP16 precision for FP32 and FP16 models, and BF16 precision for BF16 models.",
     )
 
+    device: Optional[str] = Field(
+        None,
+        description="Device to run on. Options: 'auto', 'cuda', 'cpu'. Default is 'auto'.",
+    )
+
     seed: Optional[int] = Field(
         None,
         description="Random seed for reproducibility.",
