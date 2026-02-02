@@ -276,14 +276,17 @@ def validate_model_name(_model_name: str, _inference_framework: LLMInferenceFram
 def validate_num_shards(
     num_shards: int, inference_framework: LLMInferenceFramework, gpus: int
 ) -> None:
-    # CPU-only endpoints (gpus=0) must have num_shards=0
-    if gpus == 0:
+    cpu_only = gpus == 0
+
+    # CPU-only endpoints must have num_shards=0
+    if cpu_only:
         if num_shards != 0:
             raise ObjectHasInvalidValueException(
                 f"CPU-only endpoints must have num_shards=0, got {num_shards}."
             )
         return
 
+    # GPU mode: validate num_shards matches gpus
     if inference_framework == LLMInferenceFramework.DEEPSPEED:
         if num_shards <= 1:
             raise ObjectHasInvalidValueException("DeepSpeed requires more than 1 GPU.")
@@ -301,11 +304,11 @@ def validate_num_shards(
 _CPU_SUPPORTED_FRAMEWORKS = {LLMInferenceFramework.VLLM}
 
 
-def validate_cpu_only_framework(inference_framework: LLMInferenceFramework, gpus: int) -> None:
+def validate_cpu_only_framework(inference_framework: LLMInferenceFramework, cpu_only: bool) -> None:
     """Validate that the inference framework supports CPU-only execution."""
-    if gpus == 0 and inference_framework not in _CPU_SUPPORTED_FRAMEWORKS:
+    if cpu_only and inference_framework not in _CPU_SUPPORTED_FRAMEWORKS:
         raise ObjectHasInvalidValueException(
-            f"CPU-only endpoints (gpus=0) are only supported for frameworks: "
+            f"CPU-only endpoints are only supported for frameworks: "
             f"{[f.value for f in _CPU_SUPPORTED_FRAMEWORKS]}. "
             f"Got: {inference_framework.value}"
         )
@@ -959,15 +962,16 @@ class CreateLLMModelBundleV1UseCase:
             subcommands.append(ray_cmd)
 
         if not is_worker:
-            # CPU-only mode: num_shards=0
-            if num_shards == 0:
+            # CPU-only mode is indicated by num_shards=0 (validated upstream)
+            cpu_only = num_shards == 0
+            if cpu_only:
                 vllm_args.device = "cpu"
                 vllm_args.dtype = "float32"  # CPU doesn't support float16 well
                 vllm_args.tensor_parallel_size = 1  # vLLM uses 1 for single device
             else:
                 vllm_args.tensor_parallel_size = num_shards
 
-            if vllm_args.gpu_memory_utilization is not None:
+            if not cpu_only and vllm_args.gpu_memory_utilization is not None:
                 vllm_args.enforce_eager = True
 
             if multinode:
@@ -1320,9 +1324,13 @@ class CreateLLMModelEndpointV1UseCase:
             or request.nodes_per_worker is None
         ):
             raise RuntimeError("Some hardware info is missing unexpectedly.")
+
+        # Derive cpu_only flag for use throughout this method
+        cpu_only = request.gpus == 0
+
         # For GPU endpoints, gpu_type must be provided
-        if request.gpus > 0 and request.gpu_type is None:
-            raise RuntimeError("gpu_type is required when gpus > 0.")
+        if not cpu_only and request.gpu_type is None:
+            raise RuntimeError("gpu_type is required for GPU endpoints.")
         validate_deployment_resources(
             min_workers=request.min_workers,
             max_workers=request.max_workers,
@@ -1341,7 +1349,7 @@ class CreateLLMModelEndpointV1UseCase:
         validate_post_inference_hooks(user, request.post_inference_hooks)
         validate_model_name(request.model_name, request.inference_framework)
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
-        validate_cpu_only_framework(request.inference_framework, request.gpus)
+        validate_cpu_only_framework(request.inference_framework, cpu_only)
         validate_quantization(request.quantize, request.inference_framework)
         validate_chat_template(request.chat_template_override, request.inference_framework)
 
@@ -1618,12 +1626,12 @@ class UpdateLLMModelEndpointV1UseCase:
             quantize = request.quantize or llm_metadata.get("quantize")
             checkpoint_path = request.checkpoint_path or llm_metadata.get("checkpoint_path")
 
+            # Derive effective gpus and cpu_only flag
+            effective_gpus = request.gpus if request.gpus is not None else infra_state.resource_state.gpus
+            cpu_only = effective_gpus == 0  # noqa: F841 - kept for future use
+
             validate_model_name(model_name, inference_framework)
-            validate_num_shards(
-                num_shards,
-                inference_framework,
-                request.gpus or infra_state.resource_state.gpus,
-            )
+            validate_num_shards(num_shards, inference_framework, effective_gpus)
             validate_quantization(quantize, inference_framework)
             validate_chat_template(request.chat_template_override, inference_framework)
             chat_template_override = request.chat_template_override or llm_metadata.get(
