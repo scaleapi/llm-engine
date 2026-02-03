@@ -382,6 +382,7 @@ class VirtualServiceArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into virtual-service templates."""
 
     DNS_HOST_DOMAIN: str
+    MCP_TIMEOUT: str  # "timeout: 30s" (default) or "timeout: 300s" (MCP servers)
 
 
 class LwsServiceEntryArguments(_BaseEndpointArguments):
@@ -1361,6 +1362,22 @@ def get_endpoint_resource_arguments_from_request(
             SERVICE_NAME_OVERRIDE=service_name_override,
         )
     elif endpoint_resource_name == "virtual-service":
+        # Set 5-minute timeout for MCP servers to fix 30-second default timeout issue
+        # MCP servers use passthrough forwarder and have routes containing /mcp
+        is_mcp_server = False
+        if isinstance(flavor, RunnableImageLike) and flavor.forwarder_type == "passthrough":
+            all_routes = []
+            if flavor.predict_route:
+                all_routes.append(flavor.predict_route)
+            if flavor.routes:
+                all_routes.extend(flavor.routes)
+            if flavor.extra_routes:
+                all_routes.extend(flavor.extra_routes)
+            is_mcp_server = any("/mcp" in route.lower() for route in all_routes)
+        # Always set explicit timeout to avoid empty string YAML formatting issues
+        # MCP servers get 5 minutes, others get explicit 30s default
+        timeout = "timeout: 300s" if is_mcp_server else "timeout: 30s"
+
         return VirtualServiceArguments(
             # Base resource arguments
             RESOURCE_NAME=k8s_resource_group_name,
@@ -1373,6 +1390,7 @@ def get_endpoint_resource_arguments_from_request(
             OWNER=owner,
             GIT_TAG=GIT_TAG,
             DNS_HOST_DOMAIN=infra_config().dns_host_domain,
+            MCP_TIMEOUT=timeout,
         )
     elif endpoint_resource_name == "destination-rule":
         return DestinationRuleArguments(

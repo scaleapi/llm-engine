@@ -941,6 +941,7 @@ data:
                 host: "${RESOURCE_NAME}.${NAMESPACE}.svc.cluster.local"
                 port:
                   number: 80
+          ${MCP_TIMEOUT}
   {{- end }}
   {{- if .Values.destinationrule.enabled }}
   destination-rule.yaml: |-
