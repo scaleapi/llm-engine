@@ -167,7 +167,6 @@ class RunnableImageLike(BaseModel, ABC):
     forwarder_type: Optional[str] = ForwarderType.DEFAULT.value
     worker_command: Optional[List[str]] = None
     worker_env: Optional[Dict[str, str]] = None
-    request_timeout_seconds: Optional[int] = None  # Istio VirtualService timeout (None = 30s default)
 
 
 class RunnableImageFlavor(RunnableImageLike):

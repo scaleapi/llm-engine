@@ -16,6 +16,7 @@ __all__: Sequence[str] = (
     "LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
     "LAUNCH_SERVICE_TEMPLATE_FOLDER",
     "LOCAL",
+    "MCP_TIMEOUT_SECONDS",
     "SKIP_AUTH",
     "WORKSPACE",
     "get_boolean_env_var",
@@ -78,3 +79,6 @@ if LOCAL:
 GIT_TAG: str = os.environ.get("GIT_TAG", "GIT_TAG_NOT_FOUND")
 if GIT_TAG == "GIT_TAG_NOT_FOUND" and "pytest" not in sys.modules:
     raise ValueError("GIT_TAG environment variable must be set")
+
+MCP_TIMEOUT_SECONDS: int = int(os.environ.get("MCP_TIMEOUT_SECONDS", "30"))
+"""Timeout in seconds for MCP server Istio VirtualService. Defaults to 30 seconds."""
