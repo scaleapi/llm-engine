@@ -7,12 +7,13 @@ import pytest
 from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
-from model_engine_server.common.env_vars import GIT_TAG
+from model_engine_server.common.env_vars import GIT_TAG, MCP_TIMEOUT_SECONDS
 from model_engine_server.domain.entities import (
     ModelBundle,
     ModelEndpointConfig,
     ModelEndpointType,
     ModelEndpointUserConfigState,
+    RunnableImageFlavor,
 )
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
@@ -30,8 +31,6 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
     ResourceArguments,
     get_endpoint_resource_arguments_from_request,
 )
-from model_engine_server.common.env_vars import MCP_TIMEOUT_SECONDS
-from model_engine_server.domain.entities import RunnableImageFlavor
 from tests.unit.infra.gateways.k8s_fake_objects import FakeK8sDeploymentContainer, FakeK8sEnvVar
 
 MODULE_PATH = "model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate"
