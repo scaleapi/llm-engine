@@ -28,7 +28,10 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
     DictStrInt,
     DictStrStr,
     ResourceArguments,
+    get_endpoint_resource_arguments_from_request,
 )
+from model_engine_server.common.env_vars import MCP_TIMEOUT_SECONDS
+from model_engine_server.domain.entities import RunnableImageFlavor
 from tests.unit.infra.gateways.k8s_fake_objects import FakeK8sDeploymentContainer, FakeK8sEnvVar
 
 MODULE_PATH = "model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate"
@@ -976,3 +979,74 @@ def test_add_pod_metadata_env_to_container():
 
     node_name_env = next(e for e in container["env"] if e["name"] == "NODE_NAME")
     assert node_name_env["valueFrom"]["fieldRef"]["fieldPath"] == "spec.nodeName"
+
+
+def test_virtual_service_mcp_timeout_mcp_server(
+    create_resources_request_sync_runnable_image: CreateOrUpdateResourcesRequest,
+):
+    """Test that MCP servers get timeout set in VirtualService arguments."""
+    # Modify the bundle flavor to be an MCP server (passthrough forwarder with /mcp route)
+    build_endpoint_request = create_resources_request_sync_runnable_image.build_endpoint_request
+    model_bundle = build_endpoint_request.model_endpoint_record.current_model_bundle
+    assert isinstance(model_bundle.flavor, RunnableImageFlavor)
+    
+    # Create a new flavor with passthrough forwarder and /mcp route
+    mcp_flavor = RunnableImageFlavor(
+        flavor="runnable_image",
+        repository=model_bundle.flavor.repository,
+        tag=model_bundle.flavor.tag,
+        command=model_bundle.flavor.command,
+        predict_route="/mcp/predict",  # Contains /mcp
+        healthcheck_route=model_bundle.flavor.healthcheck_route,
+        env=model_bundle.flavor.env,
+        protocol=model_bundle.flavor.protocol,
+        readiness_initial_delay_seconds=model_bundle.flavor.readiness_initial_delay_seconds,
+        forwarder_type="passthrough",  # Required for MCP detection
+    )
+    
+    # Create a new bundle with MCP flavor
+    mcp_bundle = ModelBundle(
+        id=model_bundle.id,
+        name=model_bundle.name,
+        created_by=model_bundle.created_by,
+        owner=model_bundle.owner,
+        created_at=model_bundle.created_at,
+        model_artifact_ids=model_bundle.model_artifact_ids,
+        metadata=model_bundle.metadata,
+        flavor=mcp_flavor,
+        location=model_bundle.location,
+        requirements=model_bundle.requirements,
+        env_params=model_bundle.env_params,
+        packaging_type=model_bundle.packaging_type,
+        app_config=model_bundle.app_config,
+    )
+    
+    # Update the request with MCP bundle
+    build_endpoint_request.model_endpoint_record.current_model_bundle = mcp_bundle
+    
+    # Get virtual service arguments
+    args = get_endpoint_resource_arguments_from_request(
+        k8s_resource_group_name="virtual-service",
+        request=create_resources_request_sync_runnable_image,
+        sqs_queue_name="test_queue",
+        sqs_queue_url="https://test_queue",
+    )
+    
+    # Verify MCP_TIMEOUT is set correctly
+    assert args["MCP_TIMEOUT"] == f"timeout: {MCP_TIMEOUT_SECONDS}s"
+
+
+def test_virtual_service_mcp_timeout_non_mcp_server(
+    create_resources_request_sync_runnable_image: CreateOrUpdateResourcesRequest,
+):
+    """Test that non-MCP servers don't get timeout set (use Istio default)."""
+    # Get virtual service arguments for a regular (non-MCP) server
+    args = get_endpoint_resource_arguments_from_request(
+        k8s_resource_group_name="virtual-service",
+        request=create_resources_request_sync_runnable_image,
+        sqs_queue_name="test_queue",
+        sqs_queue_url="https://test_queue",
+    )
+    
+    # Verify MCP_TIMEOUT is empty (use Istio default)
+    assert args["MCP_TIMEOUT"] == ""
