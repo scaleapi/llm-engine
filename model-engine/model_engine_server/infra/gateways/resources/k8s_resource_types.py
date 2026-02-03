@@ -382,7 +382,7 @@ class VirtualServiceArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into virtual-service templates."""
 
     DNS_HOST_DOMAIN: str
-    MCP_TIMEOUT: str  # "timeout: 30s" (default) or "timeout: 300s" (MCP servers)
+    MCP_TIMEOUT: str  # Istio VirtualService timeout, e.g. "timeout: 30s" (default) or "timeout: 300s"
 
 
 class LwsServiceEntryArguments(_BaseEndpointArguments):
@@ -1362,21 +1362,12 @@ def get_endpoint_resource_arguments_from_request(
             SERVICE_NAME_OVERRIDE=service_name_override,
         )
     elif endpoint_resource_name == "virtual-service":
-        # Set 5-minute timeout for MCP servers to fix 30-second default timeout issue
-        # MCP servers use passthrough forwarder and have routes containing /mcp
-        is_mcp_server = False
-        if isinstance(flavor, RunnableImageLike) and flavor.forwarder_type == "passthrough":
-            all_routes = []
-            if flavor.predict_route:
-                all_routes.append(flavor.predict_route)
-            if flavor.routes:
-                all_routes.extend(flavor.routes)
-            if flavor.extra_routes:
-                all_routes.extend(flavor.extra_routes)
-            is_mcp_server = any("/mcp" in route.lower() for route in all_routes)
+        # Use configurable timeout from flavor, defaulting to 30s (Istio default)
         # Always set explicit timeout to avoid empty string YAML formatting issues
-        # MCP servers get 5 minutes, others get explicit 30s default
-        timeout = "timeout: 300s" if is_mcp_server else "timeout: 30s"
+        timeout_seconds = 30  # Istio default
+        if isinstance(flavor, RunnableImageLike) and flavor.request_timeout_seconds is not None:
+            timeout_seconds = flavor.request_timeout_seconds
+        timeout = f"timeout: {timeout_seconds}s"
 
         return VirtualServiceArguments(
             # Base resource arguments

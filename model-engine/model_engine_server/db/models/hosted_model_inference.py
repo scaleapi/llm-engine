@@ -151,6 +151,7 @@ class Bundle(Base):
     runnable_image_forwarder_type = Column(Text, nullable=True)
     runnable_image_worker_command = Column(ARRAY(Text), nullable=True)
     runnable_image_worker_env = Column(JSON, nullable=True)
+    runnable_image_request_timeout_seconds = Column(Integer, nullable=True)
 
     # Streaming Enhanced Runnable Image fields
     streaming_enhanced_runnable_image_streaming_command = Column(ARRAY(Text), nullable=True)
@@ -215,6 +216,7 @@ class Bundle(Base):
         runnable_image_forwarder_type: Optional[str] = None,
         runnable_image_worker_command: Optional[List[str]] = None,
         runnable_image_worker_env: Optional[Dict[str, Any]] = None,
+        runnable_image_request_timeout_seconds: Optional[int] = None,
         # Streaming Enhanced Runnable Image fields
         streaming_enhanced_runnable_image_streaming_command: Optional[List[str]] = None,
         streaming_enhanced_runnable_image_streaming_predict_route: Optional[str] = None,
@@ -275,6 +277,7 @@ class Bundle(Base):
         self.runnable_image_forwarder_type = runnable_image_forwarder_type
         self.runnable_image_worker_command = runnable_image_worker_command
         self.runnable_image_worker_env = runnable_image_worker_env
+        self.runnable_image_request_timeout_seconds = runnable_image_request_timeout_seconds
         self.runnable_image_readiness_initial_delay_seconds = (
             runnable_image_readiness_initial_delay_seconds
         )

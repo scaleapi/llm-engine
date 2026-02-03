@@ -151,6 +151,7 @@ def translate_model_bundle_orm_to_model_bundle(
             forwarder_type=model_bundle_orm.runnable_image_forwarder_type,
             worker_command=model_bundle_orm.runnable_image_worker_command,
             worker_env=model_bundle_orm.runnable_image_worker_env,
+            request_timeout_seconds=model_bundle_orm.runnable_image_request_timeout_seconds,
             streaming_command=model_bundle_orm.streaming_enhanced_runnable_image_streaming_command,
             streaming_predict_route=model_bundle_orm.streaming_enhanced_runnable_image_streaming_predict_route,
             triton_model_repository=model_bundle_orm.triton_enhanced_runnable_image_model_repository,
@@ -224,6 +225,7 @@ def translate_kwargs_to_model_bundle_orm(
         runnable_image_forwarder_type=flavor_dict.get("forwarder_type"),
         runnable_image_worker_command=flavor_dict.get("worker_command"),
         runnable_image_worker_env=flavor_dict.get("worker_env"),
+        runnable_image_request_timeout_seconds=flavor_dict.get("request_timeout_seconds"),
         streaming_enhanced_runnable_image_streaming_command=flavor_dict.get("streaming_command"),
         streaming_enhanced_runnable_image_streaming_predict_route=flavor_dict.get(
             "streaming_predict_route"
