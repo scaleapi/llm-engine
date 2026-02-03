@@ -382,7 +382,7 @@ class VirtualServiceArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into virtual-service templates."""
 
     DNS_HOST_DOMAIN: str
-    MCP_TIMEOUT: str  # Istio VirtualService timeout, e.g. "timeout: 30s" (default) or "timeout: 300s"
+    MCP_TIMEOUT: str  # "" for non-MCP servers (use Istio default), or "timeout: Xs" for MCP servers
 
 
 class LwsServiceEntryArguments(_BaseEndpointArguments):
@@ -1362,12 +1362,23 @@ def get_endpoint_resource_arguments_from_request(
             SERVICE_NAME_OVERRIDE=service_name_override,
         )
     elif endpoint_resource_name == "virtual-service":
-        # Use configurable timeout from flavor, defaulting to 30s (Istio default)
-        # Always set explicit timeout to avoid empty string YAML formatting issues
-        timeout_seconds = 30  # Istio default
-        if isinstance(flavor, RunnableImageLike) and flavor.request_timeout_seconds is not None:
-            timeout_seconds = flavor.request_timeout_seconds
-        timeout = f"timeout: {timeout_seconds}s"
+        # Set timeout for MCP servers only
+        # MCP servers use passthrough forwarder and have routes containing /mcp
+        timeout = ""  # Default: no timeout set, use Istio default
+        if isinstance(flavor, RunnableImageLike) and flavor.forwarder_type == "passthrough":
+            all_routes = []
+            if flavor.predict_route:
+                all_routes.append(flavor.predict_route)
+            if flavor.routes:
+                all_routes.extend(flavor.routes)
+            if flavor.extra_routes:
+                all_routes.extend(flavor.extra_routes)
+            is_mcp_server = any("/mcp" in route.lower() for route in all_routes)
+            
+            if is_mcp_server:
+                # Use configurable timeout if set, otherwise default to 30s
+                timeout_seconds = flavor.request_timeout_seconds if flavor.request_timeout_seconds is not None else 30
+                timeout = f"timeout: {timeout_seconds}s"
 
         return VirtualServiceArguments(
             # Base resource arguments
