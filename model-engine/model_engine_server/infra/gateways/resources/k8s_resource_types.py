@@ -1373,7 +1373,7 @@ def get_endpoint_resource_arguments_from_request(
             if flavor.extra_routes:
                 all_routes.extend(flavor.extra_routes)
             is_mcp_server = any("/mcp" in route.lower() for route in all_routes)
-            
+
             if is_mcp_server:
                 timeout = f"timeout: {MCP_TIMEOUT_SECONDS}s"
 
