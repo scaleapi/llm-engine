@@ -989,7 +989,7 @@ def test_virtual_service_mcp_timeout_mcp_server(
     build_endpoint_request = create_resources_request_sync_runnable_image.build_endpoint_request
     model_bundle = build_endpoint_request.model_endpoint_record.current_model_bundle
     assert isinstance(model_bundle.flavor, RunnableImageFlavor)
-    
+
     # Create a new flavor with passthrough forwarder and /mcp route
     mcp_flavor = RunnableImageFlavor(
         flavor="runnable_image",
@@ -1003,7 +1003,7 @@ def test_virtual_service_mcp_timeout_mcp_server(
         readiness_initial_delay_seconds=model_bundle.flavor.readiness_initial_delay_seconds,
         forwarder_type="passthrough",  # Required for MCP detection
     )
-    
+
     # Create a new bundle with MCP flavor
     mcp_bundle = ModelBundle(
         id=model_bundle.id,
@@ -1020,10 +1020,10 @@ def test_virtual_service_mcp_timeout_mcp_server(
         packaging_type=model_bundle.packaging_type,
         app_config=model_bundle.app_config,
     )
-    
+
     # Update the request with MCP bundle
     build_endpoint_request.model_endpoint_record.current_model_bundle = mcp_bundle
-    
+
     # Get virtual service arguments
     args = get_endpoint_resource_arguments_from_request(
         k8s_resource_group_name="virtual-service",
@@ -1031,7 +1031,7 @@ def test_virtual_service_mcp_timeout_mcp_server(
         sqs_queue_name="test_queue",
         sqs_queue_url="https://test_queue",
     )
-    
+
     # Verify MCP_TIMEOUT is set correctly
     assert args["MCP_TIMEOUT"] == f"timeout: {MCP_TIMEOUT_SECONDS}s"
 
@@ -1047,6 +1047,6 @@ def test_virtual_service_mcp_timeout_non_mcp_server(
         sqs_queue_name="test_queue",
         sqs_queue_url="https://test_queue",
     )
-    
+
     # Verify MCP_TIMEOUT is empty (use Istio default)
     assert args["MCP_TIMEOUT"] == ""
