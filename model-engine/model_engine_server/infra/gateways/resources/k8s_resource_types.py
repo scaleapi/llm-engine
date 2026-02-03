@@ -1362,9 +1362,8 @@ def get_endpoint_resource_arguments_from_request(
             SERVICE_NAME_OVERRIDE=service_name_override,
         )
     elif endpoint_resource_name == "virtual-service":
-        # Set timeout for MCP servers only
         # MCP servers use passthrough forwarder and have routes containing /mcp
-        timeout = ""  # Default: no timeout set, use Istio default
+        timeout = ""
         if isinstance(flavor, RunnableImageLike) and flavor.forwarder_type == "passthrough":
             all_routes = []
             if flavor.predict_route:
