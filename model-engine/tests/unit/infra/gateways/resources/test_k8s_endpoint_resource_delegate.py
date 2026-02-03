@@ -1023,12 +1023,17 @@ def test_virtual_service_mcp_timeout_mcp_server(
     # Update the request with MCP bundle
     build_endpoint_request.model_endpoint_record.current_model_bundle = mcp_bundle
 
+    # Derive k8s_resource_group_name from endpoint_id
+    endpoint_id = build_endpoint_request.model_endpoint_record.id
+    k8s_resource_group_name = f"launch-endpoint-id-{endpoint_id}".replace("_", "-")
+
     # Get virtual service arguments
     args = get_endpoint_resource_arguments_from_request(
-        k8s_resource_group_name="virtual-service",
+        k8s_resource_group_name=k8s_resource_group_name,
         request=create_resources_request_sync_runnable_image,
         sqs_queue_name="test_queue",
         sqs_queue_url="https://test_queue",
+        endpoint_resource_name="virtual-service",
     )
 
     # Verify MCP_TIMEOUT is set correctly
@@ -1039,12 +1044,18 @@ def test_virtual_service_mcp_timeout_non_mcp_server(
     create_resources_request_sync_runnable_image: CreateOrUpdateResourcesRequest,
 ):
     """Test that non-MCP servers don't get timeout set (use Istio default)."""
+    # Derive k8s_resource_group_name from endpoint_id
+    build_endpoint_request = create_resources_request_sync_runnable_image.build_endpoint_request
+    endpoint_id = build_endpoint_request.model_endpoint_record.id
+    k8s_resource_group_name = f"launch-endpoint-id-{endpoint_id}".replace("_", "-")
+
     # Get virtual service arguments for a regular (non-MCP) server
     args = get_endpoint_resource_arguments_from_request(
-        k8s_resource_group_name="virtual-service",
+        k8s_resource_group_name=k8s_resource_group_name,
         request=create_resources_request_sync_runnable_image,
         sqs_queue_name="test_queue",
         sqs_queue_url="https://test_queue",
+        endpoint_resource_name="virtual-service",
     )
 
     # Verify MCP_TIMEOUT is empty (use Istio default)
