@@ -382,7 +382,7 @@ class VirtualServiceArguments(_BaseEndpointArguments):
     """Keyword-arguments for substituting into virtual-service templates."""
 
     DNS_HOST_DOMAIN: str
-    MCP_TIMEOUT: str  # "" for non-MCP servers (use Istio default), or "timeout: Xs" for MCP servers
+    MCP_TIMEOUT: str  # Defaults to 30s, only applies to MCP servers
 
 
 class LwsServiceEntryArguments(_BaseEndpointArguments):
