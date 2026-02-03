@@ -1,3 +1,7 @@
+from gevent import monkey
+
+monkey.patch_all()
+
 import argparse
 import json
 from datetime import datetime, timedelta
@@ -192,12 +196,7 @@ def start_celery_service(
         concurrency=concurrency,
         loglevel="INFO",
         optimization="fair",
-        # Don't use pool="solo" so we can send multiple concurrent requests over
-        # Historically, pool="solo" argument fixes the known issues of celery and some of the libraries.
-        # Particularly asyncio and torchvision transformers. This isn't relevant since celery-forwarder
-        # is quite lightweight
-        # TODO: we should probably use eventlet or gevent for the pool, since
-        # the forwarder is nearly the most extreme example of IO bound.
+        pool="gevent",
     )
     worker.start()
 
