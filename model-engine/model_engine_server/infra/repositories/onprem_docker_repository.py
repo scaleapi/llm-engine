@@ -8,20 +8,35 @@ from model_engine_server.domain.repositories import DockerRepository
 logger = make_logger(logger_name())
 
 
-class FakeDockerRepository(DockerRepository):
+class OnPremDockerRepository(DockerRepository):
     def image_exists(
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
     ) -> bool:
+        image_ref = image_tag if not repository_name else f"{repository_name}:{image_tag}"
+        logger.debug(
+            f"Image {image_ref} assuming exists. Image validation skipped for on-prem deployments."
+        )
         return True
 
     def get_image_url(self, image_tag: str, repository_name: str) -> str:
+        if not repository_name:
+            return image_tag
+
         # Only prepend prefix for simple repo names, not full image URLs
         if self.is_repo_name(repository_name):
-            return f"{infra_config().docker_repo_prefix}/{repository_name}:{image_tag}"
+            prefix = infra_config().docker_repo_prefix
+            if prefix:
+                return f"{prefix}/{repository_name}:{image_tag}"
         return f"{repository_name}:{image_tag}"
 
     def build_image(self, image_params: BuildImageRequest) -> BuildImageResponse:
-        raise NotImplementedError("FakeDockerRepository build_image() not implemented")
+        raise NotImplementedError(
+            "OnPremDockerRepository does not support building images. "
+            "Images should be built via CI/CD and pushed to the on-prem registry."
+        )
 
     def get_latest_image_tag(self, repository_name: str) -> str:
-        raise NotImplementedError("FakeDockerRepository get_latest_image_tag() not implemented")
+        raise NotImplementedError(
+            "OnPremDockerRepository does not support querying latest image tags. "
+            "Please specify explicit image tags in your deployment configuration."
+        )

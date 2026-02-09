@@ -58,6 +58,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     ModelDownloadV1UseCase,
     UpdateLLMModelEndpointV1UseCase,
     _fill_hardware_info,
+    _get_s3_endpoint_flag,
     _infer_hardware,
     merge_metadata,
     validate_and_update_completion_params,
@@ -584,7 +585,7 @@ def test_load_model_weights_sub_commands(
     )
 
     expected_result = [
-        './s5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
+        f'./s5cmd {_get_s3_endpoint_flag()} --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 
@@ -594,7 +595,7 @@ def test_load_model_weights_sub_commands(
     )
 
     expected_result = [
-        './s5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*" --include "*.py" s3://fake-checkpoint/* test_folder',
+        f'./s5cmd {_get_s3_endpoint_flag()} --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*" --include "*.py" s3://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 
@@ -609,7 +610,7 @@ def test_load_model_weights_sub_commands(
 
     expected_result = [
         "s5cmd > /dev/null || conda install -c conda-forge -y s5cmd",
-        's5cmd --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
+        f's5cmd {_get_s3_endpoint_flag()} --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 

@@ -1,3 +1,4 @@
+import os
 import time
 from typing import IO, Callable, Iterable, Optional, Sequence
 
@@ -20,6 +21,10 @@ __all__: Sequence[str] = (
 
 
 def sync_storage_client(**kwargs) -> BaseClient:
+    # Support for MinIO/on-prem S3-compatible storage
+    endpoint_url = os.getenv("S3_ENDPOINT_URL")
+    if endpoint_url and "endpoint_url" not in kwargs:
+        kwargs["endpoint_url"] = endpoint_url
     return session(infra_config().profile_ml_worker).client("s3", **kwargs)  # type: ignore
 
 
