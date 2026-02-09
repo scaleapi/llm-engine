@@ -1,5 +1,6 @@
 import asyncio
 import os
+from datetime import timedelta
 from typing import List, Optional
 
 from gcloud.aio.storage import Storage
@@ -24,8 +25,6 @@ def _get_gcs_url(owner: str, file_id: str) -> str:
 
 def _generate_signed_url_sync(uri: str, expiration: int = 3600) -> str:
     """Generate a V4 signed URL synchronously (gcloud-aio-storage does not support this)."""
-    from datetime import timedelta
-
     bucket_name, blob_name = parse_gcs_uri(uri)
     client = get_gcs_sync_client()
     bucket = client.bucket(bucket_name)
