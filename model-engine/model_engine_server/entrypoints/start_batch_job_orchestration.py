@@ -35,6 +35,9 @@ from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_d
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
 )
+from model_engine_server.infra.gateways.resources.onprem_queue_endpoint_resource_delegate import (
+    OnPremQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
     QueueEndpointResourceDelegate,
 )
@@ -69,6 +72,9 @@ async def run_batch_job(
     servicebus_task_queue_gateway = CeleryTaskQueueGateway(
         broker_type=BrokerType.SERVICEBUS, tracing_gateway=tracing_gateway
     )
+    redis_task_queue_gateway = CeleryTaskQueueGateway(
+        broker_type=BrokerType.REDIS, tracing_gateway=tracing_gateway
+    )
 
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     model_endpoint_record_repo = DbModelEndpointRecordRepository(
@@ -78,6 +84,8 @@ async def run_batch_job(
     queue_delegate: QueueEndpointResourceDelegate
     if CIRCLECI:
         queue_delegate = FakeQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "onprem":
+        queue_delegate = OnPremQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
     else:
@@ -100,6 +108,10 @@ async def run_batch_job(
     if infra_config().cloud_provider == "azure":
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
+    elif infra_config().cloud_provider == "onprem" or infra_config().celery_broker_type_redis:
+        # On-prem uses Redis-based task queues
+        inference_task_queue_gateway = redis_task_queue_gateway
+        infra_task_queue_gateway = redis_task_queue_gateway
     else:
         inference_task_queue_gateway = sqs_task_queue_gateway
         infra_task_queue_gateway = sqs_task_queue_gateway

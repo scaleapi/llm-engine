@@ -94,6 +94,9 @@ from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_d
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
 )
+from model_engine_server.infra.gateways.resources.onprem_queue_endpoint_resource_delegate import (
+    OnPremQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
     QueueEndpointResourceDelegate,
 )
@@ -114,6 +117,7 @@ from model_engine_server.infra.repositories import (
     FakeDockerRepository,
     LiveTokenizerRepository,
     LLMFineTuneRepository,
+    OnPremDockerRepository,
     RedisModelEndpointCacheRepository,
     S3FileLLMFineTuneEventsRepository,
     S3FileLLMFineTuneRepository,
@@ -223,6 +227,8 @@ def _get_external_interfaces(
     queue_delegate: QueueEndpointResourceDelegate
     if CIRCLECI:
         queue_delegate = FakeQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "onprem":
+        queue_delegate = OnPremQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
     else:
@@ -232,7 +238,8 @@ def _get_external_interfaces(
 
     inference_task_queue_gateway: TaskQueueGateway
     infra_task_queue_gateway: TaskQueueGateway
-    if CIRCLECI:
+    if CIRCLECI or infra_config().cloud_provider == "onprem":
+        # On-prem uses Redis-based task queues
         inference_task_queue_gateway = redis_24h_task_queue_gateway
         infra_task_queue_gateway = redis_task_queue_gateway
     elif infra_config().cloud_provider == "azure":
@@ -274,16 +281,15 @@ def _get_external_interfaces(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
         use_asyncio=(not CIRCLECI),
     )
-    filesystem_gateway = (
-        ABSFilesystemGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3FilesystemGateway()
-    )
-    llm_artifact_gateway = (
-        ABSLLMArtifactGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3LLMArtifactGateway()
-    )
+    filesystem_gateway: FilesystemGateway
+    llm_artifact_gateway: LLMArtifactGateway
+    if infra_config().cloud_provider == "azure":
+        filesystem_gateway = ABSFilesystemGateway()
+        llm_artifact_gateway = ABSLLMArtifactGateway()
+    else:
+        # AWS uses S3, on-prem uses MinIO (S3-compatible)
+        filesystem_gateway = S3FilesystemGateway()
+        llm_artifact_gateway = S3LLMArtifactGateway()
     model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
         filesystem_gateway=filesystem_gateway
     )
@@ -323,23 +329,18 @@ def _get_external_interfaces(
     cron_job_gateway = LiveCronJobGateway()
 
     llm_fine_tune_repository: LLMFineTuneRepository
+    llm_fine_tune_events_repository: LLMFineTuneEventsRepository
     file_path = os.getenv(
         "CLOUD_FILE_LLM_FINE_TUNE_REPOSITORY",
         hmi_config.cloud_file_llm_fine_tune_repository,
     )
     if infra_config().cloud_provider == "azure":
-        llm_fine_tune_repository = ABSFileLLMFineTuneRepository(
-            file_path=file_path,
-        )
+        llm_fine_tune_repository = ABSFileLLMFineTuneRepository(file_path=file_path)
+        llm_fine_tune_events_repository = ABSFileLLMFineTuneEventsRepository()
     else:
-        llm_fine_tune_repository = S3FileLLMFineTuneRepository(
-            file_path=file_path,
-        )
-    llm_fine_tune_events_repository = (
-        ABSFileLLMFineTuneEventsRepository()
-        if infra_config().cloud_provider == "azure"
-        else S3FileLLMFineTuneEventsRepository()
-    )
+        # AWS uses S3, on-prem uses MinIO (S3-compatible)
+        llm_fine_tune_repository = S3FileLLMFineTuneRepository(file_path=file_path)
+        llm_fine_tune_events_repository = S3FileLLMFineTuneEventsRepository()
     llm_fine_tuning_service = DockerImageBatchJobLLMFineTuningService(
         docker_image_batch_job_gateway=docker_image_batch_job_gateway,
         docker_image_batch_job_bundle_repo=docker_image_batch_job_bundle_repository,
@@ -350,16 +351,19 @@ def _get_external_interfaces(
         docker_image_batch_job_gateway=docker_image_batch_job_gateway
     )
 
-    file_storage_gateway = (
-        ABSFileStorageGateway()
-        if infra_config().cloud_provider == "azure"
-        else S3FileStorageGateway()
-    )
+    file_storage_gateway: FileStorageGateway
+    if infra_config().cloud_provider == "azure":
+        file_storage_gateway = ABSFileStorageGateway()
+    else:
+        # AWS uses S3, on-prem uses MinIO (S3-compatible)
+        file_storage_gateway = S3FileStorageGateway()
 
     docker_repository: DockerRepository
     if CIRCLECI:
         docker_repository = FakeDockerRepository()
-    elif infra_config().docker_repo_prefix.endswith("azurecr.io"):
+    elif infra_config().cloud_provider == "onprem":
+        docker_repository = OnPremDockerRepository()
+    elif infra_config().cloud_provider == "azure":
         docker_repository = ACRDockerRepository()
     else:
         docker_repository = ECRDockerRepository()

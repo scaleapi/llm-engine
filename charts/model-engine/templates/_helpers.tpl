@@ -256,6 +256,10 @@ env:
   - name: ABS_CONTAINER_NAME
     value: {{ .Values.azure.abs_container_name }}
   {{- end }}
+  {{- if .Values.s3EndpointUrl }}
+  - name: S3_ENDPOINT_URL
+    value: {{ .Values.s3EndpointUrl | quote }}
+  {{- end }}
 {{- end }}
 
 {{- define "modelEngine.syncForwarderTemplateEnv" -}}
@@ -342,9 +346,27 @@ env:
     value: "/workspace/model-engine/model_engine_server/core/configs/config.yaml"
   {{- end }}
   - name: CELERY_ELASTICACHE_ENABLED
-    value: "true"
+    value: {{ .Values.celeryElasticacheEnabled | default true | quote }}
   - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
     value: "/workspace/model-engine/model_engine_server/infra/gateways/resources/templates"
+  {{- if .Values.s3EndpointUrl }}
+  - name: S3_ENDPOINT_URL
+    value: {{ .Values.s3EndpointUrl | quote }}
+  {{- end }}
+  {{- if .Values.redisHost }}
+  - name: REDIS_HOST
+    value: {{ .Values.redisHost | quote }}
+  - name: REDIS_PORT
+    value: {{ .Values.redisPort | default "6379" | quote }}
+  {{- end }}
+  {{- if .Values.celeryBrokerUrl }}
+  - name: CELERY_BROKER_URL
+    value: {{ .Values.celeryBrokerUrl | quote }}
+  {{- end }}
+  {{- if .Values.celeryResultBackend }}
+  - name: CELERY_RESULT_BACKEND
+    value: {{ .Values.celeryResultBackend | quote }}
+  {{- end }}
   {{- if .Values.redis.auth}}
   - name: REDIS_AUTH_TOKEN
     value: {{ .Values.redis.auth }}
