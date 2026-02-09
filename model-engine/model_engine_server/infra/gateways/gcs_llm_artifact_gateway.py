@@ -2,19 +2,13 @@ import json
 import os
 from typing import Any, Dict, List
 
-from google.auth import default
-from google.cloud import storage
 from model_engine_server.common.config import get_model_cache_directory_name, hmi_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.utils.url import parse_attachment_url
 from model_engine_server.domain.gateways import LLMArtifactGateway
+from model_engine_server.infra.gateways.gcs_storage_client import get_gcs_sync_client
 
 logger = make_logger(logger_name())
-
-
-def _get_gcs_client() -> storage.Client:
-    credentials, project = default()
-    return storage.Client(credentials=credentials, project=project)
 
 
 class GCSLLMArtifactGateway(LLMArtifactGateway):
@@ -27,7 +21,7 @@ class GCSLLMArtifactGateway(LLMArtifactGateway):
         bucket_name = parsed_remote.bucket
         prefix = parsed_remote.key
 
-        client = _get_gcs_client()
+        client = get_gcs_sync_client()
         bucket = client.bucket(bucket_name)
         blobs = bucket.list_blobs(prefix=prefix)
         return [blob.name for blob in blobs]
@@ -37,7 +31,7 @@ class GCSLLMArtifactGateway(LLMArtifactGateway):
         bucket_name = parsed_remote.bucket
         prefix = parsed_remote.key
 
-        client = _get_gcs_client()
+        client = get_gcs_sync_client()
         bucket = client.bucket(bucket_name)
 
         downloaded_files: List[str] = []
@@ -65,7 +59,7 @@ class GCSLLMArtifactGateway(LLMArtifactGateway):
         bucket_name = parsed_remote.bucket
         fine_tuned_weights_prefix = parsed_remote.key
 
-        client = _get_gcs_client()
+        client = get_gcs_sync_client()
         bucket = client.bucket(bucket_name)
 
         model_files: List[str] = []
@@ -80,7 +74,7 @@ class GCSLLMArtifactGateway(LLMArtifactGateway):
         bucket_name = parsed_remote.bucket
         key = os.path.join(parsed_remote.key, "config.json")
 
-        client = _get_gcs_client()
+        client = get_gcs_sync_client()
         bucket = client.bucket(bucket_name)
         blob = bucket.blob(key)
         return json.loads(blob.download_as_text())

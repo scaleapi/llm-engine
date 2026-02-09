@@ -2,9 +2,8 @@ import json
 from typing import IO, Dict, Optional
 
 import smart_open
-from google.auth import default
-from google.cloud import storage
 from model_engine_server.domain.entities.llm_fine_tune_entity import LLMFineTuneTemplate
+from model_engine_server.infra.gateways.gcs_storage_client import get_gcs_sync_client
 from model_engine_server.infra.repositories.llm_fine_tune_repository import LLMFineTuneRepository
 
 
@@ -12,12 +11,8 @@ class GCSFileLLMFineTuneRepository(LLMFineTuneRepository):
     def __init__(self, file_path: str):
         self.file_path = file_path
 
-    def _get_gcs_client(self):
-        credentials, project = default()
-        return storage.Client(credentials=credentials, project=project)
-
     def _open(self, uri: str, mode: str = "rt", **kwargs) -> IO:
-        client = self._get_gcs_client()
+        client = get_gcs_sync_client()
         transport_params = {"client": client}
         return smart_open.open(uri, mode, transport_params=transport_params)
 

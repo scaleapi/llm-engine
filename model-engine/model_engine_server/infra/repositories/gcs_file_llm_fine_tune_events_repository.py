@@ -3,14 +3,13 @@ from json.decoder import JSONDecodeError
 from typing import IO, List
 
 import smart_open
-from google.auth import default
-from google.cloud import storage
 from model_engine_server.core.config import infra_config
 from model_engine_server.domain.entities.llm_fine_tune_entity import LLMFineTuneEvent
 from model_engine_server.domain.exceptions import ObjectNotFoundException
 from model_engine_server.domain.repositories.llm_fine_tune_events_repository import (
     LLMFineTuneEventsRepository,
 )
+from model_engine_server.infra.gateways.gcs_storage_client import get_gcs_sync_client
 
 # Echoes llm/finetune_pipeline/docker_image_fine_tuning_entrypoint.py
 GCS_HF_USER_FINE_TUNED_WEIGHTS_PREFIX = (
@@ -22,12 +21,8 @@ class GCSFileLLMFineTuneEventsRepository(LLMFineTuneEventsRepository):
     def __init__(self):
         pass
 
-    def _get_gcs_client(self):
-        credentials, project = default()
-        return storage.Client(credentials=credentials, project=project)
-
     def _open(self, uri: str, mode: str = "rt", **kwargs) -> IO:
-        client = self._get_gcs_client()
+        client = get_gcs_sync_client()
         transport_params = {"client": client}
         return smart_open.open(uri, mode, transport_params=transport_params)
 
