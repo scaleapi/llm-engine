@@ -9,10 +9,7 @@ from model_engine_server.domain.gateways.file_storage_gateway import (
     FileMetadata,
     FileStorageGateway,
 )
-from model_engine_server.infra.gateways.gcs_storage_client import (
-    get_gcs_sync_client,
-    parse_gcs_uri,
-)
+from model_engine_server.infra.gateways.gcs_storage_client import get_gcs_sync_client, parse_gcs_uri
 
 
 def _get_gcs_key(owner: str, file_id: str) -> str:
@@ -92,9 +89,7 @@ class GCSFileStorageGateway(FileStorageGateway):
     async def list_files(self, owner: str) -> List[FileMetadata]:
         bucket_name = infra_config().s3_bucket
         async with Storage() as storage:
-            response = await storage.list_objects(
-                bucket_name, params={"prefix": owner}
-            )
+            response = await storage.list_objects(bucket_name, params={"prefix": owner})
             items = response.get("items", [])
             files = []
             for item in items:

@@ -1,10 +1,7 @@
 from unittest import mock
 
 import pytest
-from model_engine_server.infra.gateways.gcs_storage_client import (
-    get_gcs_sync_client,
-    parse_gcs_uri,
-)
+from model_engine_server.infra.gateways.gcs_storage_client import get_gcs_sync_client, parse_gcs_uri
 
 
 def test_parse_gcs_uri_gs_scheme():

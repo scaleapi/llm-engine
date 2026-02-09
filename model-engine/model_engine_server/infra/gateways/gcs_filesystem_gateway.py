@@ -5,10 +5,7 @@ from typing import IO
 import smart_open
 from gcloud.aio.storage import Storage
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
-from model_engine_server.infra.gateways.gcs_storage_client import (
-    get_gcs_sync_client,
-    parse_gcs_uri,
-)
+from model_engine_server.infra.gateways.gcs_storage_client import get_gcs_sync_client, parse_gcs_uri
 
 
 class GCSFilesystemGateway(FilesystemGateway):
@@ -48,10 +45,6 @@ class GCSFilesystemGateway(FilesystemGateway):
         async with Storage() as storage:
             await storage.upload(bucket_name, blob_name, content)
 
-    async def async_generate_signed_url(
-        self, uri: str, expiration: int = 3600, **kwargs
-    ) -> str:
+    async def async_generate_signed_url(self, uri: str, expiration: int = 3600, **kwargs) -> str:
         """Async wrapper for signed URL generation (offloaded to a thread)."""
-        return await asyncio.to_thread(
-            self.generate_signed_url, uri, expiration, **kwargs
-        )
+        return await asyncio.to_thread(self.generate_signed_url, uri, expiration, **kwargs)
