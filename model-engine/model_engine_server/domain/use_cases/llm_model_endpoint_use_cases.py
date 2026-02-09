@@ -926,8 +926,7 @@ class CreateLLMModelBundleV1UseCase:
             }
         )
 
-        # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
-        final_weights_folder = "mistral_files" if "mistral" in model_name else "model_files"
+        final_weights_folder = "model_files"
 
         # Get download commands
         download_subcommands = self.load_model_weights_sub_commands(
