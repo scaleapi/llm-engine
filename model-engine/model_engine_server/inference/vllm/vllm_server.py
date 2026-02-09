@@ -82,7 +82,6 @@ def debug(sig, frame):
 
 def parse_args(parser: FlexibleArgumentParser):
     parser = make_arg_parser(parser)
-    parser.add_argument("--attention-backend", type=str, help="The attention backend to use")
     return parser.parse_args()
 
 
