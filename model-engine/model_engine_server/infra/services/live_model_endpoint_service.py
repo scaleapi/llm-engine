@@ -164,6 +164,7 @@ class LiveModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
+        task_expires_seconds: Optional[int] = None,
     ) -> ModelEndpointRecord:
         existing_endpoints = (
             await self.model_endpoint_record_repository.list_model_endpoint_records(
@@ -185,6 +186,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 status=ModelEndpointStatus.UPDATE_PENDING,
                 owner=owner,
                 public_inference=public_inference,
+                task_expires_seconds=task_expires_seconds,
             )
         )
         creation_task_id = self.model_endpoint_infra_gateway.create_model_endpoint_infra(
@@ -290,6 +292,7 @@ class LiveModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
+        task_expires_seconds: Optional[int] = None,
     ) -> ModelEndpointRecord:
         record = await self.model_endpoint_record_repository.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id
@@ -329,6 +332,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 metadata=metadata,
                 status=ModelEndpointStatus.UPDATE_PENDING,
                 public_inference=public_inference,
+                task_expires_seconds=task_expires_seconds,
             )
             if record is None:  # pragma: no cover
                 raise ObjectNotFoundException

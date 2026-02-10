@@ -73,6 +73,7 @@ class CreateModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = Field(default=False)
+    task_expires_seconds: Optional[int] = Field(default=None, gt=0)
 
 
 class CreateModelEndpointV1Response(BaseModel):
@@ -100,6 +101,7 @@ class UpdateModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = None
+    task_expires_seconds: Optional[int] = Field(default=None, gt=0)
 
 
 class UpdateModelEndpointV1Response(BaseModel):
@@ -128,6 +130,7 @@ class GetModelEndpointV1Response(BaseModel):
     resource_state: Optional[ModelEndpointResourceState] = Field(default=None)
     num_queued_items: Optional[int] = Field(default=None)
     public_inference: Optional[bool] = Field(default=None)
+    task_expires_seconds: Optional[int] = Field(default=None)
 
 
 class ListModelEndpointsV1Response(BaseModel):

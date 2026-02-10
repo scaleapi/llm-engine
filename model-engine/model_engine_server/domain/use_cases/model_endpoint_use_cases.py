@@ -91,6 +91,7 @@ def model_endpoint_entity_to_get_model_endpoint_response(
         resource_state=(None if infra_state is None else infra_state.resource_state),
         num_queued_items=(None if infra_state is None else infra_state.num_queued_items),
         public_inference=model_endpoint.record.public_inference,
+        task_expires_seconds=model_endpoint.record.task_expires_seconds,
     )
 
 
@@ -389,6 +390,7 @@ class CreateModelEndpointV1UseCase:
             default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
+            task_expires_seconds=request.task_expires_seconds,
         )
         _handle_post_inference_hooks(
             created_by=user.user_id,
@@ -517,6 +519,7 @@ class UpdateModelEndpointByIdV1UseCase:
             default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
+            task_expires_seconds=request.task_expires_seconds,
         )
         _handle_post_inference_hooks(
             created_by=endpoint_record.created_by,

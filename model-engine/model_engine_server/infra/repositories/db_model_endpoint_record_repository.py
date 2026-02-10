@@ -53,6 +53,7 @@ def translate_model_endpoint_orm_to_model_endpoint_record(
         status=model_endpoint_orm.endpoint_status,
         current_model_bundle=current_model_bundle,
         public_inference=model_endpoint_orm.public_inference,
+        task_expires_seconds=model_endpoint_orm.task_expires_seconds,
     )
 
 
@@ -120,6 +121,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         status: str,
         owner: str,
         public_inference: Optional[bool] = False,
+        task_expires_seconds: Optional[int] = None,
     ) -> ModelEndpointRecord:
         model_endpoint_record = OrmModelEndpoint(
             name=name,
@@ -132,6 +134,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
             endpoint_status=status,
             owner=owner,
             public_inference=public_inference,
+            task_expires_seconds=task_expires_seconds,
         )
         async with self.session() as session:
             await OrmModelEndpoint.create(session, model_endpoint_record)
@@ -305,6 +308,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         destination: Optional[str] = None,
         status: Optional[str] = None,
         public_inference: Optional[bool] = None,
+        task_expires_seconds: Optional[int] = None,
     ) -> Optional[ModelEndpointRecord]:
         async with self.session() as session:
             model_endpoint_orm = await OrmModelEndpoint.select_by_id(
@@ -324,6 +328,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
                 endpoint_status=status,
                 last_updated_at=datetime.utcnow(),
                 public_inference=public_inference,
+                task_expires_seconds=task_expires_seconds,
             )
             await OrmModelEndpoint.update_by_name_owner(
                 session=session,

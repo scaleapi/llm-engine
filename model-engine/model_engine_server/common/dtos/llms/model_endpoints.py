@@ -56,6 +56,11 @@ class LLMModelEndpointCommonArgs(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = True  # LLM endpoints are public by default.
+    task_expires_seconds: Optional[int] = Field(
+        default=None,
+        gt=0,
+        description="For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+    )
     chat_template_override: Optional[str] = Field(
         default=None,
         description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -165,6 +170,10 @@ class GetLLMModelEndpointV1Response(BaseModel):
     chat_template_override: Optional[str] = Field(
         default=None,
         description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
+    )
+    task_expires_seconds: Optional[int] = Field(
+        default=None,
+        description="For async endpoints, how long a task can wait in queue before expiring (in seconds).",
     )
     spec: Optional[GetModelEndpointV1Response] = None
 
