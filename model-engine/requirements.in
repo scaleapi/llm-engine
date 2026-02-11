@@ -12,6 +12,7 @@ azure-storage-blob~=12.19.0
 # GCP dependencies
 gcloud-aio-storage~=9.6
 google-auth~=2.25.0
+google-cloud-artifact-registry~=1.13.0
 google-cloud-storage~=2.14.0
 boto3-stubs[essential]~=1.26.67
 boto3~=1.21

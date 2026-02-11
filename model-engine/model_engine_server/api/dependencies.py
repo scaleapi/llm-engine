@@ -118,6 +118,7 @@ from model_engine_server.infra.repositories import (
     DbTriggerRepository,
     ECRDockerRepository,
     FakeDockerRepository,
+    GARDockerRepository,
     GCSFileLLMFineTuneEventsRepository,
     GCSFileLLMFineTuneRepository,
     LiveTokenizerRepository,
@@ -228,6 +229,8 @@ def _get_external_interfaces(
         read_only=read_only,
     )
 
+    redis_client = aioredis.Redis(connection_pool=get_or_create_aioredis_pool())
+
     queue_delegate: QueueEndpointResourceDelegate
     if CIRCLECI:
         queue_delegate = FakeQueueEndpointResourceDelegate()
@@ -235,7 +238,7 @@ def _get_external_interfaces(
         queue_delegate = ASBQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "gcp":
         # GCP uses Redis (Memorystore) for Celery, so use Redis-based queue delegate
-        queue_delegate = RedisQueueEndpointResourceDelegate()
+        queue_delegate = RedisQueueEndpointResourceDelegate(redis_client=redis_client)
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
@@ -256,7 +259,6 @@ def _get_external_interfaces(
     else:
         inference_task_queue_gateway = sqs_task_queue_gateway
         infra_task_queue_gateway = sqs_task_queue_gateway
-    redis_client = aioredis.Redis(connection_pool=get_or_create_aioredis_pool())
     inference_autoscaling_metrics_gateway = (
         ASBInferenceAutoscalingMetricsGateway()
         if infra_config().cloud_provider == "azure"
@@ -375,6 +377,8 @@ def _get_external_interfaces(
         docker_repository = FakeDockerRepository()
     elif infra_config().docker_repo_prefix.endswith("azurecr.io"):
         docker_repository = ACRDockerRepository()
+    elif infra_config().cloud_provider == "gcp":
+        docker_repository = GARDockerRepository()
     else:
         docker_repository = ECRDockerRepository()
 

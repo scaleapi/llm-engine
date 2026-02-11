@@ -64,12 +64,9 @@ async def test_get_job_template_not_found(mock_client, repository):
 async def test_write_job_template(mock_client, repository):
     existing_data = {"existing-key": SAMPLE_TEMPLATE}
     written = io.StringIO()
-
-    call_count = 0
+    written.close = lambda: None  # Prevent with-block from closing
 
     def mock_open_fn(uri, mode="rt", **kwargs):
-        nonlocal call_count
-        call_count += 1
         if "r" in mode:
             return io.StringIO(json.dumps(existing_data))
         else:
@@ -90,6 +87,7 @@ async def test_write_job_template(mock_client, repository):
 @mock.patch(f"{MODULE}.get_gcs_sync_client")
 async def test_initialize_data(mock_client, repository):
     written = io.StringIO()
+    written.close = lambda: None  # Prevent with-block from closing
     repository._open = mock.Mock(return_value=written)
 
     await repository.initialize_data()

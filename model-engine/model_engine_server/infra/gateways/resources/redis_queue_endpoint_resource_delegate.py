@@ -7,7 +7,7 @@ queue lifecycle for async endpoints using Redis.
 
 from typing import Any, Dict, Sequence
 
-from model_engine_server.core.celery.app import get_redis_instance
+import aioredis
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
     QueueEndpointResourceDelegate,
@@ -26,6 +26,9 @@ class RedisQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
     Redis queues (lists) are created implicitly when messages are pushed,
     so this delegate mainly handles queue name management and metrics retrieval.
     """
+
+    def __init__(self, redis_client: aioredis.Redis):
+        self.redis_client = redis_client
 
     async def create_queue_if_not_exists(
         self,
@@ -49,14 +52,11 @@ class RedisQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         """
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
         try:
-            redis = get_redis_instance()
-            # Delete the queue (Redis list)
-            deleted = redis.delete(queue_name)
+            deleted = await self.redis_client.delete(queue_name)
             if deleted:
                 logger.info(f"Deleted Redis queue: {queue_name}")
             else:
                 logger.info(f"Redis queue already empty or doesn't exist: {queue_name}")
-            redis.close()
         except Exception as e:
             logger.warning(f"Error deleting Redis queue {queue_name}: {e}")
 
@@ -66,12 +66,7 @@ class RedisQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         """
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
         try:
-            redis = get_redis_instance()
-            queue_length = redis.llen(queue_name)
-            redis.close()
-
-            # Return in a format compatible with the existing code
-            # that checks for "Attributes.ApproximateNumberOfMessages"
+            queue_length = await self.redis_client.llen(queue_name)
             return {
                 "name": queue_name,
                 "Attributes": {
