@@ -73,6 +73,12 @@ FORWARDER_PORT = 5000
 USER_CONTAINER_PORT = 5005
 ARTIFACT_LIKE_CONTAINER_PORT = FORWARDER_PORT
 
+# LLM endpoints (vLLM) expose OpenAI-compatible routes on the user container port.
+# Route Services directly to the user port for those routes to avoid dependencies
+# on the http-forwarder container behavior.
+OPENAI_CHAT_COMPLETION_PATH = "/v1/chat/completions"
+OPENAI_COMPLETION_PATH = "/v1/completions"
+
 
 class _BaseResourceArguments(TypedDict):
     """Keyword-arguments for substituting into all resource templates."""
@@ -1325,6 +1331,18 @@ def get_endpoint_resource_arguments_from_request(
             node_port_dict = DictStrInt(f"nodePort: {node_port}")
         else:
             node_port_dict = DictStrInt("")
+
+        all_routes: List[str] = []
+        if isinstance(flavor, RunnableImageLike):
+            all_routes = list(flavor.routes or []) + list(flavor.extra_routes or [])
+
+        # If this endpoint exposes OpenAI-compatible routes, send traffic directly to the
+        # vLLM OpenAI server (5005). Otherwise keep legacy behavior (forwarder on 5000).
+        service_target_port = (
+            USER_CONTAINER_PORT
+            if (OPENAI_CHAT_COMPLETION_PATH in all_routes or OPENAI_COMPLETION_PATH in all_routes)
+            else FORWARDER_PORT
+        )
         return ServiceArguments(
             # Base resource arguments
             RESOURCE_NAME=k8s_resource_group_name,
@@ -1339,7 +1357,7 @@ def get_endpoint_resource_arguments_from_request(
             # Service arguments
             NODE_PORT_DICT=node_port_dict,
             SERVICE_TYPE=service_type,
-            SERVICE_TARGET_PORT=FORWARDER_PORT,
+            SERVICE_TARGET_PORT=service_target_port,
         )
     elif endpoint_resource_name == "lws-service":
         # Use ClusterIP by default for sync endpoint.
@@ -1350,6 +1368,16 @@ def get_endpoint_resource_arguments_from_request(
             node_port_dict = DictStrInt(f"nodePort: {node_port}")
         else:
             node_port_dict = DictStrInt("")
+
+        all_routes: List[str] = []
+        if isinstance(flavor, RunnableImageLike):
+            all_routes = list(flavor.routes or []) + list(flavor.extra_routes or [])
+
+        service_target_port = (
+            USER_CONTAINER_PORT
+            if (OPENAI_CHAT_COMPLETION_PATH in all_routes or OPENAI_COMPLETION_PATH in all_routes)
+            else FORWARDER_PORT
+        )
         return LwsServiceArguments(
             # Base resource arguments
             RESOURCE_NAME=k8s_resource_group_name,
@@ -1364,7 +1392,7 @@ def get_endpoint_resource_arguments_from_request(
             # Service arguments
             NODE_PORT_DICT=node_port_dict,
             SERVICE_TYPE=service_type,
-            SERVICE_TARGET_PORT=FORWARDER_PORT,
+            SERVICE_TARGET_PORT=service_target_port,
             # LWS Service args
             SERVICE_NAME_OVERRIDE=service_name_override,
         )

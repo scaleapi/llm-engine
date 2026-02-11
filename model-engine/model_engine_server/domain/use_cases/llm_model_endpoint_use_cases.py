@@ -201,7 +201,7 @@ if SERVICE_IDENTIFIER:
 
 # Host address for inference servers (vLLM, SGLang, TGI).
 # Defaults to "::" (IPv6 all-interfaces) for clusters with IPv6 pod networking.
-# Set to "0.0.0.0" for clusters using IPv4 pod networking.
+# Set to "0.0.0.0" for clusters using IPv4 pod networking (e.g., AWS EKS).
 INFERENCE_SERVER_HOST = os.getenv("INFERENCE_SERVER_HOST", "::")
 
 
@@ -1005,7 +1005,10 @@ class CreateLLMModelBundleV1UseCase:
 
             # Use wrapper if startup metrics enabled, otherwise use vllm_server directly
             server_module = "vllm_startup_wrapper" if enable_startup_metrics else "vllm_server"
-            vllm_cmd = f'python -m {server_module} --model {final_weights_folder} --served-model-name {model_name} {final_weights_folder} --port 5005 --host "{INFERENCE_SERVER_HOST}"'
+            # NOTE: vLLM's OpenAI server expects model path to be provided via `--model`.
+            # Do not add any extra positional args (it can confuse argparse and lead to
+            # incorrect served model names / startup failures).
+            vllm_cmd = f'python -m {server_module} --model {final_weights_folder} --served-model-name {model_name} --port 5005 --host "{INFERENCE_SERVER_HOST}"'
             for field in VLLMEndpointAdditionalArgs.model_fields.keys():
                 config_value = getattr(vllm_args, field, None)
                 if config_value is not None:
