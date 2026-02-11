@@ -81,7 +81,23 @@ class HostedModelInferenceServiceConfig:
 
     @classmethod
     def from_json(cls, json):
-        return cls(**{k: v for k, v in json.items() if k in inspect.signature(cls).parameters})
+        # NOTE: Our Helm chart historically rendered booleans as strings (e.g. "false")
+        # via a blanket `| quote`. Dataclasses don't enforce runtime types, so a non-empty
+        # string would evaluate truthy and accidentally enable features like Istio.
+        sig = inspect.signature(cls)
+        kwargs = {}
+        for k, v in json.items():
+            if k not in sig.parameters:
+                continue
+            ann = sig.parameters[k].annotation
+            if ann is bool and isinstance(v, str):
+                vv = v.strip().lower()
+                if vv in {"true", "1", "yes", "y"}:
+                    v = True
+                elif vv in {"false", "0", "no", "n", ""}:
+                    v = False
+            kwargs[k] = v
+        return cls(**kwargs)
 
     @classmethod
     def from_yaml(cls, yaml_path):
