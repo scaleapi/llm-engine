@@ -39,7 +39,7 @@ kubernetes-asyncio==25.11.0
 kubernetes~=25.3.0
 orjson==3.9.15
 protobuf~=3.20
-psycopg2-binary==2.9.3
+psycopg2-binary==2.9.10
 py-xid==0.3.0
 pycurl~=7.44  # For celery[sqs]
 pydantic==2.8.2

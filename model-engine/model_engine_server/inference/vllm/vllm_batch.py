@@ -78,12 +78,19 @@ async def download_model(checkpoint_path: str, target_dir: str, trust_remote_cod
 
     print(f"Downloading model from {checkpoint_path} to {target_dir}", flush=True)
     additional_include = "--include '*.py'" if trust_remote_code else ""
-    s5cmd = f"./s5cmd --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --include '*.txt' {additional_include} --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {target_dir}"
+
+    # Support for MinIO/on-prem S3-compatible storage
+    s3_endpoint_url = os.getenv("S3_ENDPOINT_URL", "")
+    endpoint_flag = f"--endpoint-url {s3_endpoint_url}" if s3_endpoint_url else ""
+
+    s5cmd = f"./s5cmd {endpoint_flag} --numworkers 512 sync --concurrency 10 --include '*.model' --include '*.json' --include '*.safetensors' --include '*.txt' {additional_include} --exclude 'optimizer*' --exclude 'train*' {os.path.join(checkpoint_path, '*')} {target_dir}"
     print(s5cmd, flush=True)
     env = os.environ.copy()
     if not SKIP_AWS_PROFILE_SET:
         env["AWS_PROFILE"] = os.getenv("S3_WRITE_AWS_PROFILE", "default")
     print(f"AWS_PROFILE: {env['AWS_PROFILE']}", flush=True)
+    if s3_endpoint_url:
+        print(f"S3_ENDPOINT_URL: {s3_endpoint_url}", flush=True)
     # Need to override these env vars so s5cmd uses AWS_PROFILE
     env["AWS_ROLE_ARN"] = ""
     env["AWS_WEB_IDENTITY_TOKEN_FILE"] = ""

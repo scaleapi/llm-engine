@@ -326,7 +326,7 @@ protobuf==3.20.3
     #   -r model-engine/requirements.in
     #   ddsketch
     #   ddtrace
-psycopg2-binary==2.9.3
+psycopg2-binary==2.9.10
     # via -r model-engine/requirements.in
 py-xid==0.3.0
     # via -r model-engine/requirements.in

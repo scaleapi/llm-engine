@@ -61,6 +61,7 @@ from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
+from model_engine_server.core.config import infra_config
 from model_engine_server.core.configmap import read_config_map
 from model_engine_server.core.loggers import (
     LoggerTagKey,
@@ -137,12 +138,27 @@ from .model_endpoint_use_cases import (
 
 logger = make_logger(logger_name())
 
+
+def _get_s3_endpoint_flag() -> str:
+    """Get S3 endpoint flag for s5cmd, determined at command construction time."""
+    s3_endpoint = getattr(infra_config(), "s3_endpoint_url", None) or os.getenv("S3_ENDPOINT_URL")
+    if s3_endpoint:
+        return f"--endpoint-url {s3_endpoint}"
+    return ""
+
+
 OPENAI_CHAT_COMPLETION_PATH = "/v1/chat/completions"
 CHAT_TEMPLATE_MAX_LENGTH = 10_000
-CHAT_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM, LLMInferenceFramework.SGLANG]
+CHAT_SUPPORTED_INFERENCE_FRAMEWORKS = [
+    LLMInferenceFramework.VLLM,
+    LLMInferenceFramework.SGLANG,
+]
 
 OPENAI_COMPLETION_PATH = "/v1/completions"
-OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS = [LLMInferenceFramework.VLLM, LLMInferenceFramework.SGLANG]
+OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS = [
+    LLMInferenceFramework.VLLM,
+    LLMInferenceFramework.SGLANG,
+]
 
 LLM_METADATA_KEY = "_llm"
 RESERVED_METADATA_KEYS = [LLM_METADATA_KEY, CONVERTED_FROM_ARTIFACT_LIKE_KEY]
@@ -369,6 +385,10 @@ class CreateLLMModelBundleV1UseCase:
     def check_docker_image_exists_for_image_tag(
         self, framework_image_tag: str, repository_name: str
     ):
+        # Skip ECR validation for on-prem deployments - images are in local registry
+        if infra_config().cloud_provider == "onprem":
+            return
+
         if not self.docker_repository.image_exists(
             image_tag=framework_image_tag,
             repository_name=repository_name,
@@ -640,8 +660,10 @@ class CreateLLMModelBundleV1UseCase:
         file_selection_str = '--include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*"'
         if trust_remote_code:
             file_selection_str += ' --include "*.py"'
+
+        s3_endpoint_flag = _get_s3_endpoint_flag()
         subcommands.append(
-            f"{s5cmd} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+            f"{s5cmd} {s3_endpoint_flag} --numworkers 512 cp --concurrency 10 {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
         )
         return subcommands
 
@@ -693,8 +715,9 @@ class CreateLLMModelBundleV1UseCase:
         and llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/postprocessing/config.pbtxt
         """
         if checkpoint_path.startswith("s3://"):
+            s3_endpoint_flag = _get_s3_endpoint_flag()
             subcommands = [
-                f"./s5cmd --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
+                f"./s5cmd {s3_endpoint_flag} --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
             ]
         else:
             subcommands.extend(
@@ -926,8 +949,7 @@ class CreateLLMModelBundleV1UseCase:
             }
         )
 
-        # added as workaround since transformers doesn't support mistral yet, vllm expects "mistral" in model weights folder
-        final_weights_folder = "mistral_files" if "mistral" in model_name else "model_files"
+        final_weights_folder = "model_files"
 
         # Get download commands
         download_subcommands = self.load_model_weights_sub_commands(
@@ -1937,18 +1959,42 @@ class CompletionSyncV1UseCase:
 
         elif model_content.inference_framework == LLMInferenceFramework.VLLM:
             tokens = None
-            if with_token_probs:
-                tokens = [
-                    TokenOutput(
-                        token=model_output["tokens"][index],
-                        log_prob=list(t.values())[0],
-                    )
-                    for index, t in enumerate(model_output["log_probs"])
-                ]
+            # Handle OpenAI-compatible format (vLLM 0.5+) vs legacy format
+            if "choices" in model_output and model_output["choices"]:
+                # OpenAI-compatible format: {"choices": [{"text": "...", ...}], "usage": {...}}
+                choice = model_output["choices"][0]
+                text = choice.get("text", "")
+                usage = model_output.get("usage", {})
+                num_prompt_tokens = usage.get("prompt_tokens", 0)
+                num_completion_tokens = usage.get("completion_tokens", 0)
+                # OpenAI format logprobs are in choice.logprobs
+                if with_token_probs and choice.get("logprobs"):
+                    logprobs = choice["logprobs"]
+                    if logprobs.get("tokens") and logprobs.get("token_logprobs"):
+                        tokens = [
+                            TokenOutput(
+                                token=logprobs["tokens"][i],
+                                log_prob=logprobs["token_logprobs"][i] or 0.0,
+                            )
+                            for i in range(len(logprobs["tokens"]))
+                        ]
+            else:
+                # Legacy format: {"text": "...", "count_prompt_tokens": ..., ...}
+                text = model_output["text"]
+                num_prompt_tokens = model_output["count_prompt_tokens"]
+                num_completion_tokens = model_output["count_output_tokens"]
+                if with_token_probs and model_output.get("log_probs"):
+                    tokens = [
+                        TokenOutput(
+                            token=model_output["tokens"][index],
+                            log_prob=list(t.values())[0],
+                        )
+                        for index, t in enumerate(model_output["log_probs"])
+                    ]
             return CompletionOutput(
-                text=model_output["text"],
-                num_prompt_tokens=model_output["count_prompt_tokens"],
-                num_completion_tokens=model_output["count_output_tokens"],
+                text=text,
+                num_prompt_tokens=num_prompt_tokens,
+                num_completion_tokens=num_completion_tokens,
                 tokens=tokens,
             )
         elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
@@ -2688,20 +2734,43 @@ class CompletionStreamV1UseCase:
                 # VLLM
                 elif model_content.inference_framework == LLMInferenceFramework.VLLM:
                     token = None
-                    if request.return_token_log_probs:
-                        token = TokenOutput(
-                            token=result["result"]["text"],
-                            log_prob=list(result["result"]["log_probs"].values())[0],
-                        )
-                    finished = result["result"]["finished"]
-                    num_prompt_tokens = result["result"]["count_prompt_tokens"]
+                    vllm_output: dict = result["result"]
+                    # Handle OpenAI-compatible streaming format (vLLM 0.5+) vs legacy format
+                    if "choices" in vllm_output and vllm_output["choices"]:
+                        # OpenAI streaming format: {"choices": [{"text": "...", "finish_reason": ...}], ...}
+                        choice = vllm_output["choices"][0]
+                        text = choice.get("text", "")
+                        finished = choice.get("finish_reason") is not None
+                        usage = vllm_output.get("usage", {})
+                        num_prompt_tokens = usage.get("prompt_tokens", 0)
+                        num_completion_tokens = usage.get("completion_tokens", 0)
+                        if request.return_token_log_probs and choice.get("logprobs"):
+                            logprobs = choice["logprobs"]
+                            if logprobs.get("tokens") and logprobs.get("token_logprobs"):
+                                # Get the last token from the logprobs
+                                idx = len(logprobs["tokens"]) - 1
+                                token = TokenOutput(
+                                    token=logprobs["tokens"][idx],
+                                    log_prob=logprobs["token_logprobs"][idx] or 0.0,
+                                )
+                    else:
+                        # Legacy format: {"text": "...", "finished": ..., ...}
+                        text = vllm_output["text"]
+                        finished = vllm_output["finished"]
+                        num_prompt_tokens = vllm_output["count_prompt_tokens"]
+                        num_completion_tokens = vllm_output["count_output_tokens"]
+                        if request.return_token_log_probs and vllm_output.get("log_probs"):
+                            token = TokenOutput(
+                                token=vllm_output["text"],
+                                log_prob=list(vllm_output["log_probs"].values())[0],
+                            )
                     yield CompletionStreamV1Response(
                         request_id=request_id,
                         output=CompletionStreamOutput(
-                            text=result["result"]["text"],
+                            text=text,
                             finished=finished,
                             num_prompt_tokens=num_prompt_tokens if finished else None,
-                            num_completion_tokens=result["result"]["count_output_tokens"],
+                            num_completion_tokens=num_completion_tokens,
                             token=token,
                         ),
                     )
@@ -2750,12 +2819,14 @@ def validate_endpoint_supports_openai_completion(
             f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support openai compatible completion."
         )
 
-    if not isinstance(
-        endpoint.record.current_model_bundle.flavor, RunnableImageLike
-    ) or OPENAI_COMPLETION_PATH not in (
-        endpoint.record.current_model_bundle.flavor.extra_routes
-        + endpoint.record.current_model_bundle.flavor.routes
-    ):
+    if not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike):
+        raise EndpointUnsupportedRequestException(
+            "Endpoint does not support v2 openai compatible completion"
+        )
+
+    flavor = endpoint.record.current_model_bundle.flavor
+    all_routes = flavor.extra_routes + flavor.routes
+    if OPENAI_COMPLETION_PATH not in all_routes:
         raise EndpointUnsupportedRequestException(
             "Endpoint does not support v2 openai compatible completion"
         )
@@ -3042,12 +3113,12 @@ def validate_endpoint_supports_chat_completion(
             f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support chat completion."
         )
 
-    if not isinstance(
-        endpoint.record.current_model_bundle.flavor, RunnableImageLike
-    ) or OPENAI_CHAT_COMPLETION_PATH not in (
-        endpoint.record.current_model_bundle.flavor.extra_routes
-        + endpoint.record.current_model_bundle.flavor.routes
-    ):
+    if not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike):
+        raise EndpointUnsupportedRequestException("Endpoint does not support chat completion")
+
+    flavor = endpoint.record.current_model_bundle.flavor
+    all_routes = flavor.extra_routes + flavor.routes
+    if OPENAI_CHAT_COMPLETION_PATH not in all_routes:
         raise EndpointUnsupportedRequestException("Endpoint does not support chat completion")
 
 

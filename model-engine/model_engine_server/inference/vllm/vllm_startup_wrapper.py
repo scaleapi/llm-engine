@@ -56,7 +56,7 @@ def run_download(download_cmd: str) -> dict:
     duration = time.perf_counter() - start_perf
 
     # Get download size
-    model_dir = "mistral_files" if os.path.exists("mistral_files") else "model_files"
+    model_dir = "model_files"
     size_mb = get_download_size_mb(model_dir)
 
     print(f"[WRAPPER] Download completed: {duration:.2f}s ({size_mb}MB)", flush=True)
