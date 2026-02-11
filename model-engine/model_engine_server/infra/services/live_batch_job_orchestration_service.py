@@ -267,10 +267,10 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
     async def _submit_tasks(
         self, queue_name: str, input_path: str, task_name: str
     ) -> List[BatchEndpointInProgressTask]:
-        def _create_task(
+        async def _create_task(
             predict_request: BatchEndpointInferencePrediction,
         ) -> BatchEndpointInProgressTask:
-            response = self.async_model_endpoint_inference_gateway.create_task(
+            response = await self.async_model_endpoint_inference_gateway.create_task(
                 topic=queue_name,
                 predict_request=predict_request.request,
                 task_timeout_seconds=DEFAULT_TASK_TIMEOUT_SECONDS,
@@ -301,9 +301,8 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
                     BatchEndpointInferencePrediction(request=request, reference_id=reference_id)
                 )
 
-        executor = ThreadPoolExecutor()
-        task_ids = list(executor.map(_create_task, inputs))
-        return task_ids
+        task_ids = await asyncio.gather(*[_create_task(inp) for inp in inputs])
+        return list(task_ids)
 
     def _poll_tasks(
         self,

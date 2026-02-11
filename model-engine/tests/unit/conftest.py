@@ -1638,7 +1638,7 @@ class FakeAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
     def __init__(self):
         self.tasks = []
 
-    def create_task(
+    async def create_task(
         self,
         topic: str,
         predict_request: EndpointPredictV1Request,

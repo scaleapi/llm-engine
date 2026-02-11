@@ -13,11 +13,11 @@ def fake_live_async_model_inference_gateway(fake_task_queue_gateway):
 
 
 @pytest.mark.asyncio
-def test_task_create_get_url(
+async def test_task_create_get_url(
     fake_live_async_model_inference_gateway: LiveAsyncModelEndpointInferenceGateway,
     endpoint_predict_request_1,
 ):
-    create_response = fake_live_async_model_inference_gateway.create_task(
+    create_response = await fake_live_async_model_inference_gateway.create_task(
         "test_topic", endpoint_predict_request_1[0], 60
     )
     task_id = create_response.task_id
@@ -41,11 +41,11 @@ def test_task_create_get_url(
 
 
 @pytest.mark.asyncio
-def test_task_create_get_args_callback(
+async def test_task_create_get_args_callback(
     fake_live_async_model_inference_gateway: LiveAsyncModelEndpointInferenceGateway,
     endpoint_predict_request_2,
 ):
-    create_response = fake_live_async_model_inference_gateway.create_task(
+    create_response = await fake_live_async_model_inference_gateway.create_task(
         "test_topic", endpoint_predict_request_2[0], 60
     )
     task_id = create_response.task_id

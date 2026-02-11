@@ -155,7 +155,7 @@ async def _build_endpoint(
         # Redis connection
         if infra_config().debug_mode:  # pragma: no cover
             logger.info("Connecting to Redis", extra={"redis_url": hmi_config.cache_redis_url})
-        pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
+        pool = aioredis.ConnectionPool.from_url(hmi_config.cache_redis_url, max_connections=50)
         redis = aioredis.Redis(connection_pool=pool)
         if infra_config().debug_mode:  # pragma: no cover
             logger.info("Redis connection established successfully")

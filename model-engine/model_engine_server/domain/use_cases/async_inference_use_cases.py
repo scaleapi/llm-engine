@@ -66,7 +66,7 @@ class CreateAsyncInferenceTaskV1UseCase:
         task_name = model_endpoint.record.current_model_bundle.celery_task_name()
 
         inference_gateway = self.model_endpoint_service.get_async_model_endpoint_inference_gateway()
-        return inference_gateway.create_task(
+        return await inference_gateway.create_task(
             topic=model_endpoint.record.destination,
             predict_request=request,
             task_timeout_seconds=DEFAULT_TASK_TIMEOUT_SECONDS,
