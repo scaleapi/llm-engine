@@ -177,7 +177,10 @@ class Forwarder(ModelEngineSerializationMixin):
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
         try:
-            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
+            request_timeout = aiohttp.ClientTimeout(total=300, sock_read=60, sock_connect=10)
+            async with aiohttp.ClientSession(
+                json_serialize=_serialize_json, timeout=request_timeout
+            ) as aioclient:
                 headers = {"Content-Type": "application/json"}
                 if trace_config and tracing_gateway:
                     headers.update(tracing_gateway.encode_trace_headers())
@@ -437,7 +440,10 @@ class StreamingForwarder(ModelEngineSerializationMixin):
 
         try:
             response: aiohttp.ClientResponse
-            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
+            request_timeout = aiohttp.ClientTimeout(total=300, sock_read=60, sock_connect=10)
+            async with aiohttp.ClientSession(
+                json_serialize=_serialize_json, timeout=request_timeout
+            ) as aioclient:
                 response = await aioclient.post(
                     self.predict_endpoint,
                     json=json_payload,
@@ -656,7 +662,8 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
         )
 
     async def forward_stream(self, request: Any):
-        async with aiohttp.ClientSession() as aioclient:
+        request_timeout = aiohttp.ClientTimeout(total=300, sock_read=60, sock_connect=10)
+        async with aiohttp.ClientSession(timeout=request_timeout) as aioclient:
             response = await self._make_request(request, aioclient)
             response_headers = response.headers
             yield (response_headers, response.status)
@@ -670,7 +677,8 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
             yield await response.read()
 
     async def forward_sync(self, request: Any):
-        async with aiohttp.ClientSession() as aioclient:
+        request_timeout = aiohttp.ClientTimeout(total=300, sock_read=60, sock_connect=10)
+        async with aiohttp.ClientSession(timeout=request_timeout) as aioclient:
             response = await self._make_request(request, aioclient)
             return response
 

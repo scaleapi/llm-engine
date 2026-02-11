@@ -90,10 +90,19 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         self.monitoring_metrics_gateway = monitoring_metrics_gateway
         self.use_asyncio = use_asyncio
 
-    async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
+    async def make_single_request(
+        self, request_url: str, payload_json: Dict[str, Any], timeout_seconds: float = 30
+    ):
         errored = False
         if self.use_asyncio:
-            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
+            request_timeout = aiohttp.ClientTimeout(
+                total=timeout_seconds,
+                sock_read=timeout_seconds,
+                sock_connect=10,
+            )
+            async with aiohttp.ClientSession(
+                json_serialize=_serialize_json, timeout=request_timeout
+            ) as aioclient:
                 aio_resp = await aioclient.post(
                     request_url,
                     json=payload_json,
@@ -113,6 +122,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 json=payload_json,
                 headers={"Content-Type": "application/json"},
                 stream=True,
+                timeout=(10, timeout_seconds),
             )
             client = sseclient.SSEClient(resp)
             status = resp.status_code
@@ -173,7 +183,9 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                         logger.info(
                             f"Retry number {attempt.retry_state.attempt_number}"
                         )  # pragma: no cover
-                    response = self.make_single_request(request_url, payload_json)
+                    response = self.make_single_request(
+                        request_url, payload_json, timeout_seconds=timeout_seconds
+                    )
                     async for item in response:
                         yield orjson.loads(item)
                     return

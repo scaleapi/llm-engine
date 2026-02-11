@@ -19,7 +19,8 @@ def model_endpoint_infra_gateway(
     )
 
 
-def test_create_model_endpoint_infra(
+@pytest.mark.asyncio
+async def test_create_model_endpoint_infra(
     model_endpoint_infra_gateway: LiveModelEndpointInfraGateway,
     model_endpoint_1: ModelEndpoint,
     model_endpoint_2: ModelEndpoint,
@@ -33,7 +34,7 @@ def test_create_model_endpoint_infra(
         if high_priority is None:
             high_priority = False
         endpoint_config = endpoint.infra_state.user_config_state.endpoint_config
-        creation_task_id = model_endpoint_infra_gateway.create_model_endpoint_infra(
+        creation_task_id = await model_endpoint_infra_gateway.create_model_endpoint_infra(
             model_endpoint_record=endpoint.record,
             min_workers=endpoint.infra_state.deployment_state.min_workers,
             max_workers=endpoint.infra_state.deployment_state.max_workers,

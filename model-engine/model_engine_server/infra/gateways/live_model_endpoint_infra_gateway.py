@@ -51,7 +51,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         self.resource_gateway = resource_gateway
         self.task_queue_gateway = task_queue_gateway
 
-    def create_model_endpoint_infra(
+    async def create_model_endpoint_infra(
         self,
         *,
         model_endpoint_record: ModelEndpointRecord,
@@ -105,7 +105,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             default_callback_url=default_callback_url,
             default_callback_auth=default_callback_auth,
         )
-        response = self.task_queue_gateway.send_task(
+        response = await self.task_queue_gateway.send_task_async(
             task_name=BUILD_TASK_NAME,
             queue_name=get_service_builder_queue(SERVICE_IDENTIFIER, SERVICE_BUILDER_QUEUE),
             # celery request is required to be JSON serializables
@@ -225,7 +225,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             default_callback_url=default_callback_url,
             default_callback_auth=default_callback_auth,
         )
-        response = self.task_queue_gateway.send_task(
+        response = await self.task_queue_gateway.send_task_async(
             task_name=BUILD_TASK_NAME,
             queue_name=get_service_builder_queue(SERVICE_IDENTIFIER, SERVICE_BUILDER_QUEUE),
             kwargs=dict(build_endpoint_request_json=build_endpoint_request.dict()),

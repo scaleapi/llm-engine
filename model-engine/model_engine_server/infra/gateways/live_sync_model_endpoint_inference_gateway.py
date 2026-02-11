@@ -90,7 +90,9 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         self.tracing_gateway = tracing_gateway
         self.use_asyncio = use_asyncio
 
-    async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
+    async def make_single_request(
+        self, request_url: str, payload_json: Dict[str, Any], timeout_seconds: float = 30
+    ):
         # DEBUG: Log request details
         if infra_config().debug_mode:  # pragma: no cover
             logger.info(f"DEBUG: Making request to endpoint URL: {request_url}")
@@ -104,7 +106,14 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
 
         if self.use_asyncio:
             try:
-                async with aiohttp.ClientSession(json_serialize=_serialize_json) as client:
+                request_timeout = aiohttp.ClientTimeout(
+                    total=timeout_seconds,
+                    sock_read=timeout_seconds,
+                    sock_connect=10,
+                )
+                async with aiohttp.ClientSession(
+                    json_serialize=_serialize_json, timeout=request_timeout
+                ) as client:
                     aio_resp = await client.post(
                         request_url,
                         json=payload_json,
@@ -136,6 +145,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                     request_url,
                     json=payload_json,
                     headers=headers,
+                    timeout=(10, timeout_seconds),
                 )
                 status = resp.status_code
                 if infra_config().debug_mode:  # pragma: no cover
@@ -203,7 +213,9 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                         logger.info(f"Retry number {attempt.retry_state.attempt_number}")
                     with self.tracing_gateway.create_span("make_request_with_retries") as span:
                         span.input = dict(request_url=request_url, payload_json=payload_json)
-                        response = await self.make_single_request(request_url, payload_json)
+                        response = await self.make_single_request(
+                            request_url, payload_json, timeout_seconds=timeout_seconds
+                        )
                         span.output = response
                         return response
         except RetryError as e:

@@ -187,7 +187,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 public_inference=public_inference,
             )
         )
-        creation_task_id = self.model_endpoint_infra_gateway.create_model_endpoint_infra(
+        creation_task_id = await self.model_endpoint_infra_gateway.create_model_endpoint_infra(
             model_endpoint_record=model_endpoint_record,
             min_workers=min_workers,
             max_workers=max_workers,
