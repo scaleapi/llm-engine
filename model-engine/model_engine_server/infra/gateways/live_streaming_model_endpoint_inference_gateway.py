@@ -45,6 +45,7 @@ SYNC_ENDPOINT_MAX_RETRY_WAIT = 5
 SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
     1.2  # Must be a float > 1.0, lower number means more retries but less time waiting.
 )
+SYNC_ENDPOINT_SOCK_CONNECT_TIMEOUT_SECONDS = 10
 
 
 def _get_streaming_endpoint_url(
@@ -98,7 +99,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
             request_timeout = aiohttp.ClientTimeout(
                 total=timeout_seconds,
                 sock_read=timeout_seconds,
-                sock_connect=10,
+                sock_connect=SYNC_ENDPOINT_SOCK_CONNECT_TIMEOUT_SECONDS,
             )
             async with aiohttp.ClientSession(
                 json_serialize=_serialize_json, timeout=request_timeout
@@ -122,7 +123,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 json=payload_json,
                 headers={"Content-Type": "application/json"},
                 stream=True,
-                timeout=(10, timeout_seconds),
+                timeout=(SYNC_ENDPOINT_SOCK_CONNECT_TIMEOUT_SECONDS, timeout_seconds),
             )
             client = sseclient.SSEClient(resp)
             status = resp.status_code

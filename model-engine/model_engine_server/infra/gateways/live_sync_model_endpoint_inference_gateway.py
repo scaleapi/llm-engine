@@ -43,6 +43,7 @@ SYNC_ENDPOINT_MAX_RETRY_WAIT = 5
 SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
     1.2  # Must be a float > 1.0, lower number means more retries but less time waiting.
 )
+SYNC_ENDPOINT_SOCK_CONNECT_TIMEOUT_SECONDS = 10
 
 
 def _get_sync_endpoint_url(
@@ -109,7 +110,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                 request_timeout = aiohttp.ClientTimeout(
                     total=timeout_seconds,
                     sock_read=timeout_seconds,
-                    sock_connect=10,
+                    sock_connect=SYNC_ENDPOINT_SOCK_CONNECT_TIMEOUT_SECONDS,
                 )
                 async with aiohttp.ClientSession(
                     json_serialize=_serialize_json, timeout=request_timeout
@@ -145,7 +146,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                     request_url,
                     json=payload_json,
                     headers=headers,
-                    timeout=(10, timeout_seconds),
+                    timeout=(SYNC_ENDPOINT_SOCK_CONNECT_TIMEOUT_SECONDS, timeout_seconds),
                 )
                 status = resp.status_code
                 if infra_config().debug_mode:  # pragma: no cover

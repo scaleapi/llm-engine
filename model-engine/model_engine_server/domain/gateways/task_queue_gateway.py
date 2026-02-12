@@ -45,6 +45,11 @@ class TaskQueueGateway(ABC):
         """
         Non-blocking version of send_task that runs in a thread executor
         to avoid blocking the event loop.
+
+        Note: This is a workaround for Celery's synchronous API. Ideally the
+        gateway interface (including get_task) would be natively async, but
+        Celery lacks first-class asyncio support, so we use run_in_executor
+        as a pragmatic bridge.
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(

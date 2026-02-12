@@ -25,6 +25,10 @@ from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gat
 )
 from model_engine_server.inference.post_inference_hooks import PostInferenceHooksHandler
 
+FORWARDER_TOTAL_TIMEOUT_SECONDS = 300
+FORWARDER_SOCK_READ_TIMEOUT_SECONDS = 60
+FORWARDER_SOCK_CONNECT_TIMEOUT_SECONDS = 10
+
 __all__: Sequence[str] = (
     "Forwarder",
     "LoadForwarder",
@@ -177,7 +181,7 @@ class Forwarder(ModelEngineSerializationMixin):
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
         try:
-            request_timeout = aiohttp.ClientTimeout(total=300, sock_read=60, sock_connect=10)
+            request_timeout = aiohttp.ClientTimeout(total=FORWARDER_TOTAL_TIMEOUT_SECONDS, sock_read=FORWARDER_SOCK_READ_TIMEOUT_SECONDS, sock_connect=FORWARDER_SOCK_CONNECT_TIMEOUT_SECONDS)
             async with aiohttp.ClientSession(
                 json_serialize=_serialize_json, timeout=request_timeout
             ) as aioclient:
@@ -440,7 +444,7 @@ class StreamingForwarder(ModelEngineSerializationMixin):
 
         try:
             response: aiohttp.ClientResponse
-            request_timeout = aiohttp.ClientTimeout(total=300, sock_read=60, sock_connect=10)
+            request_timeout = aiohttp.ClientTimeout(total=FORWARDER_TOTAL_TIMEOUT_SECONDS, sock_read=FORWARDER_SOCK_READ_TIMEOUT_SECONDS, sock_connect=FORWARDER_SOCK_CONNECT_TIMEOUT_SECONDS)
             async with aiohttp.ClientSession(
                 json_serialize=_serialize_json, timeout=request_timeout
             ) as aioclient:
@@ -662,7 +666,7 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
         )
 
     async def forward_stream(self, request: Any):
-        request_timeout = aiohttp.ClientTimeout(total=300, sock_read=60, sock_connect=10)
+        request_timeout = aiohttp.ClientTimeout(total=FORWARDER_TOTAL_TIMEOUT_SECONDS, sock_read=FORWARDER_SOCK_READ_TIMEOUT_SECONDS, sock_connect=FORWARDER_SOCK_CONNECT_TIMEOUT_SECONDS)
         async with aiohttp.ClientSession(timeout=request_timeout) as aioclient:
             response = await self._make_request(request, aioclient)
             response_headers = response.headers
@@ -677,7 +681,7 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
             yield await response.read()
 
     async def forward_sync(self, request: Any):
-        request_timeout = aiohttp.ClientTimeout(total=300, sock_read=60, sock_connect=10)
+        request_timeout = aiohttp.ClientTimeout(total=FORWARDER_TOTAL_TIMEOUT_SECONDS, sock_read=FORWARDER_SOCK_READ_TIMEOUT_SECONDS, sock_connect=FORWARDER_SOCK_CONNECT_TIMEOUT_SECONDS)
         async with aiohttp.ClientSession(timeout=request_timeout) as aioclient:
             response = await self._make_request(request, aioclient)
             return response
