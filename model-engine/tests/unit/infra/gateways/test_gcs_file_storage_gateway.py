@@ -160,6 +160,38 @@ async def test_list_files(mock_storage_cls, mock_infra_config, gateway):
 @pytest.mark.asyncio
 @mock.patch("model_engine_server.infra.gateways.gcs_file_storage_gateway.infra_config")
 @mock.patch("model_engine_server.infra.gateways.gcs_file_storage_gateway.Storage")
+async def test_list_files_pagination(mock_storage_cls, mock_infra_config, gateway):
+    mock_infra_config.return_value.s3_bucket = FAKE_BUCKET
+    storage = _mock_storage()
+    storage.list_objects.side_effect = [
+        {
+            "items": [
+                {"name": "owner1/file1.txt", "size": "100", "updated": "2024-01-01T00:00:00Z"},
+            ],
+            "nextPageToken": "token123",
+        },
+        {
+            "items": [
+                {"name": "owner1/file2.txt", "size": "200", "updated": "2024-01-02T00:00:00Z"},
+            ],
+        },
+    ]
+    mock_storage_cls.return_value = storage
+
+    result = await gateway.list_files("owner1")
+    assert len(result) == 2
+    assert result[0].id == "file1.txt"
+    assert result[1].id == "file2.txt"
+    assert storage.list_objects.call_count == 2
+    storage.list_objects.assert_any_call(FAKE_BUCKET, params={"prefix": "owner1"})
+    storage.list_objects.assert_any_call(
+        FAKE_BUCKET, params={"prefix": "owner1", "pageToken": "token123"}
+    )
+
+
+@pytest.mark.asyncio
+@mock.patch("model_engine_server.infra.gateways.gcs_file_storage_gateway.infra_config")
+@mock.patch("model_engine_server.infra.gateways.gcs_file_storage_gateway.Storage")
 async def test_list_files_empty(mock_storage_cls, mock_infra_config, gateway):
     mock_infra_config.return_value.s3_bucket = FAKE_BUCKET
     storage = _mock_storage()
