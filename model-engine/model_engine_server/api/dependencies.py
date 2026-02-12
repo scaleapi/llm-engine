@@ -443,11 +443,13 @@ async def get_external_interfaces():
     try:
         from plugins.dependencies import get_external_interfaces as get_custom_external_interfaces
 
-        yield get_custom_external_interfaces()
+        ei = get_custom_external_interfaces()
     except ModuleNotFoundError:
-        yield get_default_external_interfaces()
+        ei = get_default_external_interfaces()
+    try:
+        yield ei
     finally:
-        pass
+        await ei.file_storage_gateway.close()
 
 
 async def get_external_interfaces_read_only():
@@ -456,11 +458,13 @@ async def get_external_interfaces_read_only():
             get_external_interfaces_read_only as get_custom_external_interfaces_read_only,
         )
 
-        yield get_custom_external_interfaces_read_only()
+        ei = get_custom_external_interfaces_read_only()
     except ModuleNotFoundError:
-        yield get_default_external_interfaces_read_only()
+        ei = get_default_external_interfaces_read_only()
+    try:
+        yield ei
     finally:
-        pass
+        await ei.file_storage_gateway.close()
 
 
 def get_default_auth_repository() -> AuthenticationRepository:
