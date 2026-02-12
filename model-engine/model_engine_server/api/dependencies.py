@@ -64,6 +64,9 @@ from model_engine_server.infra.gateways import (
     CeleryTaskQueueGateway,
     DatadogMonitoringMetricsGateway,
     FakeMonitoringMetricsGateway,
+    GCSFileStorageGateway,
+    GCSFilesystemGateway,
+    GCSLLMArtifactGateway,
     LiveAsyncModelEndpointInferenceGateway,
     LiveBatchJobOrchestrationGateway,
     LiveBatchJobProgressGateway,
@@ -100,6 +103,9 @@ from model_engine_server.infra.gateways.resources.onprem_queue_endpoint_resource
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
     QueueEndpointResourceDelegate,
 )
+from model_engine_server.infra.gateways.resources.redis_queue_endpoint_resource_delegate import (
+    RedisQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
     SQSQueueEndpointResourceDelegate,
 )
@@ -115,6 +121,9 @@ from model_engine_server.infra.repositories import (
     DbTriggerRepository,
     ECRDockerRepository,
     FakeDockerRepository,
+    GARDockerRepository,
+    GCSFileLLMFineTuneEventsRepository,
+    GCSFileLLMFineTuneRepository,
     LiveTokenizerRepository,
     LLMFineTuneRepository,
     OnPremDockerRepository,
@@ -224,6 +233,8 @@ def _get_external_interfaces(
         read_only=read_only,
     )
 
+    redis_client = aioredis.Redis(connection_pool=get_or_create_aioredis_pool())
+
     queue_delegate: QueueEndpointResourceDelegate
     if CIRCLECI:
         queue_delegate = FakeQueueEndpointResourceDelegate()
@@ -231,6 +242,9 @@ def _get_external_interfaces(
         queue_delegate = OnPremQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "gcp":
+        # GCP uses Redis (Memorystore) for Celery, so use Redis-based queue delegate
+        queue_delegate = RedisQueueEndpointResourceDelegate(redis_client=redis_client)
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
@@ -245,13 +259,13 @@ def _get_external_interfaces(
     elif infra_config().cloud_provider == "azure":
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
-    elif infra_config().celery_broker_type_redis:
+    elif infra_config().cloud_provider == "gcp" or infra_config().celery_broker_type_redis:
+        # GCP uses Redis (Memorystore) for Celery broker
         inference_task_queue_gateway = redis_task_queue_gateway
         infra_task_queue_gateway = redis_task_queue_gateway
     else:
         inference_task_queue_gateway = sqs_task_queue_gateway
         infra_task_queue_gateway = sqs_task_queue_gateway
-    redis_client = aioredis.Redis(connection_pool=get_or_create_aioredis_pool())
     inference_autoscaling_metrics_gateway = (
         ASBInferenceAutoscalingMetricsGateway()
         if infra_config().cloud_provider == "azure"
@@ -286,6 +300,9 @@ def _get_external_interfaces(
     if infra_config().cloud_provider == "azure":
         filesystem_gateway = ABSFilesystemGateway()
         llm_artifact_gateway = ABSLLMArtifactGateway()
+    elif infra_config().cloud_provider == "gcp":
+        filesystem_gateway = GCSFilesystemGateway()
+        llm_artifact_gateway = GCSLLMArtifactGateway()
     else:
         # AWS uses S3, on-prem uses MinIO (S3-compatible)
         filesystem_gateway = S3FilesystemGateway()
@@ -337,6 +354,11 @@ def _get_external_interfaces(
     if infra_config().cloud_provider == "azure":
         llm_fine_tune_repository = ABSFileLLMFineTuneRepository(file_path=file_path)
         llm_fine_tune_events_repository = ABSFileLLMFineTuneEventsRepository()
+    elif infra_config().cloud_provider == "gcp":
+        llm_fine_tune_repository = GCSFileLLMFineTuneRepository(
+            file_path=file_path,
+        )
+        llm_fine_tune_events_repository = GCSFileLLMFineTuneEventsRepository()
     else:
         # AWS uses S3, on-prem uses MinIO (S3-compatible)
         llm_fine_tune_repository = S3FileLLMFineTuneRepository(file_path=file_path)
@@ -354,6 +376,8 @@ def _get_external_interfaces(
     file_storage_gateway: FileStorageGateway
     if infra_config().cloud_provider == "azure":
         file_storage_gateway = ABSFileStorageGateway()
+    elif infra_config().cloud_provider == "gcp":
+        file_storage_gateway = GCSFileStorageGateway()
     else:
         # AWS uses S3, on-prem uses MinIO (S3-compatible)
         file_storage_gateway = S3FileStorageGateway()
@@ -365,6 +389,8 @@ def _get_external_interfaces(
         docker_repository = OnPremDockerRepository()
     elif infra_config().cloud_provider == "azure":
         docker_repository = ACRDockerRepository()
+    elif infra_config().cloud_provider == "gcp":
+        docker_repository = GARDockerRepository()
     else:
         docker_repository = ECRDockerRepository()
 
@@ -417,11 +443,13 @@ async def get_external_interfaces():
     try:
         from plugins.dependencies import get_external_interfaces as get_custom_external_interfaces
 
-        yield get_custom_external_interfaces()
+        ei = get_custom_external_interfaces()
     except ModuleNotFoundError:
-        yield get_default_external_interfaces()
+        ei = get_default_external_interfaces()
+    try:
+        yield ei
     finally:
-        pass
+        await ei.file_storage_gateway.close()
 
 
 async def get_external_interfaces_read_only():
@@ -430,11 +458,13 @@ async def get_external_interfaces_read_only():
             get_external_interfaces_read_only as get_custom_external_interfaces_read_only,
         )
 
-        yield get_custom_external_interfaces_read_only()
+        ei = get_custom_external_interfaces_read_only()
     except ModuleNotFoundError:
-        yield get_default_external_interfaces_read_only()
+        ei = get_default_external_interfaces_read_only()
+    try:
+        yield ei
     finally:
-        pass
+        await ei.file_storage_gateway.close()
 
 
 def get_default_auth_repository() -> AuthenticationRepository:

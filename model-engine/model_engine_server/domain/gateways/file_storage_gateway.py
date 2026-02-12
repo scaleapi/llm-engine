@@ -92,3 +92,7 @@ class FileStorageGateway(ABC):
             The content of the file, or None if it does not exist.
         """
         pass
+
+    async def close(self) -> None:
+        """Release any resources held by this gateway. No-op by default."""
+        pass
