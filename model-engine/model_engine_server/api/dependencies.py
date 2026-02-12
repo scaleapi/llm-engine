@@ -546,7 +546,7 @@ async def verify_authentication(
 _pool: Optional[aioredis.BlockingConnectionPool] = None
 
 
-def get_or_create_aioredis_pool() -> aioredis.BlockingConnectionPool:
+def get_or_create_aioredis_pool() -> aioredis.ConnectionPool:
     global _pool
 
     expiration_timestamp = hmi_config.cache_redis_url_expiration_timestamp
