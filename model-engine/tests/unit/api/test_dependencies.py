@@ -1,14 +1,17 @@
 from unittest.mock import MagicMock, patch
 
 from model_engine_server.api.dependencies import _get_external_interfaces
-from model_engine_server.infra.gateways import GCSFileStorageGateway, GCSFilesystemGateway, GCSLLMArtifactGateway
+from model_engine_server.infra.gateways import (
+    GCSFileStorageGateway,
+    GCSFilesystemGateway,
+    GCSLLMArtifactGateway,
+)
 from model_engine_server.infra.gateways.resources.redis_queue_endpoint_resource_delegate import (
     RedisQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.repositories import (
     GARDockerRepository,
     GCSFileLLMFineTuneEventsRepository,
-    GCSFileLLMFineTuneRepository,
 )
 
 

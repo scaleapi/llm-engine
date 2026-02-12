@@ -57,9 +57,7 @@ class GARDockerRepository(DockerRepository):
         try:
             images = client.list_docker_images(parent=parent)
             matching = [
-                img
-                for img in images
-                if f"dockerImages/{repository_name}" in img.name and img.tags
+                img for img in images if f"dockerImages/{repository_name}" in img.name and img.tags
             ]
             if not matching:
                 raise DockerRepositoryNotFoundException
