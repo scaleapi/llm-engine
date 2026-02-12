@@ -160,9 +160,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         # least-outstanding-requests load balancing to our http endpoints
 
         # Cap per-request timeout so a single slow request can't consume the entire retry budget
-        per_request_timeout = min(
-            timeout_seconds, max(timeout_seconds / (num_retries + 1) * 2, 5)
-        )
+        per_request_timeout = min(timeout_seconds, max(timeout_seconds / (num_retries + 1) * 2, 5))
 
         try:
             async for attempt in AsyncRetrying(
