@@ -33,9 +33,11 @@ class GARDockerRepository(DockerRepository):
     ) -> bool:
         client = artifactregistry_v1.ArtifactRegistryClient()
         location, project, repository = _parse_ar_prefix()
-        name = (
-            f"projects/{project}/locations/{location}/repositories/{repository}"
-            f"/dockerImages/{repository_name}:{image_tag}"
+        name = artifactregistry_v1.ArtifactRegistryClient.docker_image_path(
+            project=project,
+            location=location,
+            repository=repository,
+            docker_image=f"{repository_name}:{image_tag}",
         )
         try:
             client.get_docker_image(name=name)
@@ -52,17 +54,16 @@ class GARDockerRepository(DockerRepository):
     def get_latest_image_tag(self, repository_name: str) -> str:
         client = artifactregistry_v1.ArtifactRegistryClient()
         location, project, repository = _parse_ar_prefix()
-        parent = f"projects/{project}/locations/{location}/repositories/{repository}"
-
+        # In AR, each Docker image name is a "package"; scope to it for server-side filtering
+        parent = (
+            f"projects/{project}/locations/{location}"
+            f"/repositories/{repository}/packages/{repository_name}"
+        )
         try:
-            images = client.list_docker_images(parent=parent)
-            matching = [
-                img for img in images if f"dockerImages/{repository_name}" in img.name and img.tags
-            ]
-            if not matching:
+            tags = list(client.list_tags(parent=parent))
+            if not tags:
                 raise DockerRepositoryNotFoundException
-            matching.sort(key=lambda img: img.update_time, reverse=True)
-            return matching[0].tags[0]
+            return tags[-1].name.rsplit("/tags/", 1)[-1]
         except DockerRepositoryNotFoundException:
             raise
         except Exception:

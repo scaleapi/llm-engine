@@ -89,19 +89,24 @@ class GCSFileStorageGateway(FileStorageGateway):
     async def list_files(self, owner: str) -> List[FileMetadata]:
         bucket_name = infra_config().s3_bucket
         async with Storage() as storage:
-            response = await storage.list_objects(bucket_name, params={"prefix": owner})
-            items = response.get("items", [])
-            files = []
-            for item in items:
-                blob_name = item.get("name", "")
-                file_id = blob_name.replace(f"{owner}/", "", 1)
-                files.append(
-                    FileMetadata(
-                        id=file_id,
-                        filename=file_id,
-                        size=int(item.get("size", 0)),
-                        owner=owner,
-                        updated_at=item.get("updated"),
+            files: List[FileMetadata] = []
+            params = {"prefix": owner}
+            while True:
+                response = await storage.list_objects(bucket_name, params=params)
+                for item in response.get("items", []):
+                    blob_name = item.get("name", "")
+                    file_id = blob_name.replace(f"{owner}/", "", 1)
+                    files.append(
+                        FileMetadata(
+                            id=file_id,
+                            filename=file_id,
+                            size=int(item.get("size", 0)),
+                            owner=owner,
+                            updated_at=item.get("updated"),
+                        )
                     )
-                )
+                next_token = response.get("nextPageToken")
+                if not next_token:
+                    break
+                params = {"prefix": owner, "pageToken": next_token}
             return files
