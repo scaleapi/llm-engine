@@ -73,6 +73,7 @@ class CreateModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = Field(default=False)
+    forward_timeout_seconds: Optional[int] = None
 
 
 class CreateModelEndpointV1Response(BaseModel):
@@ -100,6 +101,7 @@ class UpdateModelEndpointV1Request(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = None
+    forward_timeout_seconds: Optional[int] = None
 
 
 class UpdateModelEndpointV1Response(BaseModel):

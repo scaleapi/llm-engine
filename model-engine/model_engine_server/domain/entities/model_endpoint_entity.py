@@ -100,6 +100,7 @@ class ModelEndpointConfig(BaseModel):
     endpoint_type: Optional[ModelEndpointType] = None
     bundle_id: Optional[str] = None
     labels: Optional[Dict[str, str]] = None
+    forward_timeout_seconds: Optional[int] = None
 
     def serialize(self) -> str:
         return python_json_to_b64(dict_not_none(**self.dict()))

@@ -173,6 +173,7 @@ class Forwarder(ModelEngineSerializationMixin):
     # We do this to avoid having to put this data in any sync response and only do it for async responses
     forward_http_status_in_body: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None
+    forward_timeout_seconds: Optional[int] = None
 
     async def forward(self, json_payload: Any, trace_config: Optional[str] = None) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
@@ -181,8 +182,9 @@ class Forwarder(ModelEngineSerializationMixin):
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
         try:
+            total_timeout = self.forward_timeout_seconds or FORWARDER_TOTAL_TIMEOUT_SECONDS
             request_timeout = aiohttp.ClientTimeout(
-                total=FORWARDER_TOTAL_TIMEOUT_SECONDS,
+                total=total_timeout,
                 sock_read=FORWARDER_SOCK_READ_TIMEOUT_SECONDS,
                 sock_connect=FORWARDER_SOCK_CONNECT_TIMEOUT_SECONDS,
             )
@@ -387,8 +389,10 @@ class LoadForwarder:
         else:
             serialize_results_as_string = self.serialize_results_as_string
 
+        forward_timeout_seconds = None
         try:
             endpoint_config = get_endpoint_config()
+            forward_timeout_seconds = endpoint_config.forward_timeout_seconds
             handler = PostInferenceHooksHandler(
                 endpoint_name=endpoint_config.endpoint_name,
                 bundle_name=endpoint_config.bundle_name,
@@ -416,6 +420,7 @@ class LoadForwarder:
             wrap_response=self.wrap_response,
             forward_http_status=self.forward_http_status,
             forward_http_status_in_body=self.forward_http_status_in_body,
+            forward_timeout_seconds=forward_timeout_seconds,
         )
 
 
@@ -439,6 +444,7 @@ class StreamingForwarder(ModelEngineSerializationMixin):
     model_engine_unwrap: bool
     serialize_results_as_string: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None  # unused for now
+    forward_timeout_seconds: Optional[int] = None
 
     async def forward(self, json_payload: Any) -> AsyncGenerator[Any, None]:  # pragma: no cover
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
@@ -448,8 +454,9 @@ class StreamingForwarder(ModelEngineSerializationMixin):
 
         try:
             response: aiohttp.ClientResponse
+            total_timeout = self.forward_timeout_seconds or FORWARDER_TOTAL_TIMEOUT_SECONDS
             request_timeout = aiohttp.ClientTimeout(
-                total=FORWARDER_TOTAL_TIMEOUT_SECONDS,
+                total=total_timeout,
                 sock_read=FORWARDER_SOCK_READ_TIMEOUT_SECONDS,
                 sock_connect=FORWARDER_SOCK_CONNECT_TIMEOUT_SECONDS,
             )
@@ -616,8 +623,10 @@ class LoadStreamingForwarder:
         else:
             serialize_results_as_string = self.serialize_results_as_string
 
+        forward_timeout_seconds = None
         try:
             endpoint_config = get_endpoint_config()
+            forward_timeout_seconds = endpoint_config.forward_timeout_seconds
             handler = PostInferenceHooksHandler(
                 endpoint_name=endpoint_config.endpoint_name,
                 bundle_name=endpoint_config.bundle_name,
@@ -642,12 +651,14 @@ class LoadStreamingForwarder:
             model_engine_unwrap=self.model_engine_unwrap,
             serialize_results_as_string=serialize_results_as_string,
             post_inference_hooks_handler=handler,
+            forward_timeout_seconds=forward_timeout_seconds,
         )
 
 
 @dataclass
 class PassthroughForwarder(ModelEngineSerializationMixin):
     passthrough_endpoint: str
+    forward_timeout_seconds: Optional[int] = None
 
     async def _make_request(
         self, request: Any, aioclient: aiohttp.ClientSession
@@ -674,8 +685,9 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
         )
 
     async def forward_stream(self, request: Any):
+        total_timeout = self.forward_timeout_seconds or FORWARDER_TOTAL_TIMEOUT_SECONDS
         request_timeout = aiohttp.ClientTimeout(
-            total=FORWARDER_TOTAL_TIMEOUT_SECONDS,
+            total=total_timeout,
             sock_read=FORWARDER_SOCK_READ_TIMEOUT_SECONDS,
             sock_connect=FORWARDER_SOCK_CONNECT_TIMEOUT_SECONDS,
         )
@@ -693,8 +705,9 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
             yield await response.read()
 
     async def forward_sync(self, request: Any):
+        total_timeout = self.forward_timeout_seconds or FORWARDER_TOTAL_TIMEOUT_SECONDS
         request_timeout = aiohttp.ClientTimeout(
-            total=FORWARDER_TOTAL_TIMEOUT_SECONDS,
+            total=total_timeout,
             sock_read=FORWARDER_SOCK_READ_TIMEOUT_SECONDS,
             sock_connect=FORWARDER_SOCK_CONNECT_TIMEOUT_SECONDS,
         )
@@ -749,8 +762,18 @@ class LoadPassthroughForwarder:
             logger.info(f"Waiting for user-defined service to be ready at {hc}...")
             time.sleep(1)
 
+        forward_timeout_seconds = None
+        try:
+            endpoint_config = get_endpoint_config()
+            forward_timeout_seconds = endpoint_config.forward_timeout_seconds
+        except Exception:
+            pass
+
         logger.info(f"Creating PassthroughForwarder with endpoint: {passthrough_endpoint}")
-        return PassthroughForwarder(passthrough_endpoint=passthrough_endpoint)
+        return PassthroughForwarder(
+            passthrough_endpoint=passthrough_endpoint,
+            forward_timeout_seconds=forward_timeout_seconds,
+        )
 
 
 def load_named_config(config_uri, config_overrides=None):

@@ -1255,6 +1255,7 @@ def get_endpoint_resource_arguments_from_request(
             endpoint_type=model_endpoint_record.endpoint_type,
             bundle_id=model_bundle.id,
             labels=build_endpoint_request.labels,
+            forward_timeout_seconds=build_endpoint_request.forward_timeout_seconds,
         ).serialize()
         return EndpointConfigArguments(
             # Base resource arguments
