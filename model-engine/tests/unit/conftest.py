@@ -1071,7 +1071,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
     def _get_deployment_name(user_id: str, model_endpoint_name: str) -> str:
         return f"{user_id}-{model_endpoint_name}"
 
-    def create_model_endpoint_infra(
+    async def create_model_endpoint_infra(
         self,
         *,
         model_endpoint_record: ModelEndpointRecord,
@@ -1638,7 +1638,7 @@ class FakeAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
     def __init__(self):
         self.tasks = []
 
-    def create_task(
+    async def create_task(
         self,
         topic: str,
         predict_request: EndpointPredictV1Request,

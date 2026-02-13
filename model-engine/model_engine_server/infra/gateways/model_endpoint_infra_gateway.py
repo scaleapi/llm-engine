@@ -18,7 +18,7 @@ class ModelEndpointInfraGateway(ABC):
     """
 
     @abstractmethod
-    def create_model_endpoint_infra(
+    async def create_model_endpoint_infra(
         self,
         *,
         model_endpoint_record: ModelEndpointRecord,

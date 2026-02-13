@@ -1,4 +1,6 @@
 # This is the abstract class defining putting and retrieving tasks into a queue.
+import asyncio
+import functools
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
@@ -31,6 +33,36 @@ class TaskQueueGateway(ABC):
 
         Returns: The unique identifier for the task.
         """
+
+    async def send_task_async(
+        self,
+        task_name: str,
+        queue_name: str,
+        args: Optional[List[Any]] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
+        expires: Optional[int] = None,
+    ) -> CreateAsyncTaskV1Response:
+        """
+        Non-blocking version of send_task that runs in a thread executor
+        to avoid blocking the event loop.
+
+        Note: This is a workaround for Celery's synchronous API. Ideally the
+        gateway interface (including get_task) would be natively async, but
+        Celery lacks first-class asyncio support, so we use run_in_executor
+        as a pragmatic bridge.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            functools.partial(
+                self.send_task,
+                task_name=task_name,
+                queue_name=queue_name,
+                args=args,
+                kwargs=kwargs,
+                expires=expires,
+            ),
+        )
 
     @abstractmethod
     def get_task(self, task_id: str) -> GetAsyncTaskV1Response:
