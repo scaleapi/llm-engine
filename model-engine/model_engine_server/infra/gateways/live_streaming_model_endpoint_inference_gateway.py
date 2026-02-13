@@ -45,7 +45,6 @@ SYNC_ENDPOINT_MAX_RETRY_WAIT = 5
 SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
     1.2  # Must be a float > 1.0, lower number means more retries but less time waiting.
 )
-SYNC_ENDPOINT_SOCK_CONNECT_TIMEOUT_SECONDS = 10
 
 
 def _get_streaming_endpoint_url(
@@ -91,19 +90,10 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         self.monitoring_metrics_gateway = monitoring_metrics_gateway
         self.use_asyncio = use_asyncio
 
-    async def make_single_request(
-        self, request_url: str, payload_json: Dict[str, Any], timeout_seconds: float = 30
-    ):
+    async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
         errored = False
         if self.use_asyncio:
-            request_timeout = aiohttp.ClientTimeout(
-                total=timeout_seconds,
-                sock_read=timeout_seconds,
-                sock_connect=SYNC_ENDPOINT_SOCK_CONNECT_TIMEOUT_SECONDS,
-            )
-            async with aiohttp.ClientSession(
-                json_serialize=_serialize_json, timeout=request_timeout
-            ) as aioclient:
+            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
                 aio_resp = await aioclient.post(
                     request_url,
                     json=payload_json,
@@ -123,7 +113,6 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                 json=payload_json,
                 headers={"Content-Type": "application/json"},
                 stream=True,
-                timeout=(SYNC_ENDPOINT_SOCK_CONNECT_TIMEOUT_SECONDS, timeout_seconds),
             )
             client = sseclient.SSEClient(resp)
             status = resp.status_code
@@ -184,9 +173,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                         logger.info(
                             f"Retry number {attempt.retry_state.attempt_number}"
                         )  # pragma: no cover
-                    response = self.make_single_request(
-                        request_url, payload_json, timeout_seconds=timeout_seconds
-                    )
+                    response = self.make_single_request(request_url, payload_json)
                     async for item in response:
                         yield orjson.loads(item)
                     return
