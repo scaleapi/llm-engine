@@ -159,9 +159,6 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
         # requests to the same endpoint. This is admittedly a hack until we get proper
         # least-outstanding-requests load balancing to our http endpoints
 
-        # Cap per-request timeout so a single slow request can't consume the entire retry budget
-        per_request_timeout = min(timeout_seconds, max(timeout_seconds / (num_retries + 1) * 2, 5))
-
         try:
             async for attempt in AsyncRetrying(
                 stop=stop_any(
@@ -188,7 +185,7 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
                             f"Retry number {attempt.retry_state.attempt_number}"
                         )  # pragma: no cover
                     response = self.make_single_request(
-                        request_url, payload_json, timeout_seconds=per_request_timeout
+                        request_url, payload_json, timeout_seconds=timeout_seconds
                     )
                     async for item in response:
                         yield orjson.loads(item)

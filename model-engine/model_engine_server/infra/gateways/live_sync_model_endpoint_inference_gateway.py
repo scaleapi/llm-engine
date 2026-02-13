@@ -189,9 +189,6 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         # requests to the same endpoint. This is admittedly a hack until we get proper
         # least-outstanding-requests load balancing to our http endpoints
 
-        # Cap per-request timeout so a single slow request can't consume the entire retry budget
-        per_request_timeout = min(timeout_seconds, max(timeout_seconds / (num_retries + 1) * 2, 5))
-
         try:
             async for attempt in AsyncRetrying(
                 stop=stop_any(
@@ -218,7 +215,7 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
                     with self.tracing_gateway.create_span("make_request_with_retries") as span:
                         span.input = dict(request_url=request_url, payload_json=payload_json)
                         response = await self.make_single_request(
-                            request_url, payload_json, timeout_seconds=per_request_timeout
+                            request_url, payload_json, timeout_seconds=timeout_seconds
                         )
                         span.output = response
                         return response
