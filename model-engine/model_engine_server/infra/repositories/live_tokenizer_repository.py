@@ -107,8 +107,8 @@ def get_default_supported_models_info() -> Dict[str, ModelInfo]:
             "Qwen/Qwen2-72B-Instruct",
             None,
         ),
-        "qwen3-8b-instruct": ModelInfo(
-            "Qwen/Qwen3-8B-Instruct",
+        "qwen3-8b": ModelInfo(
+            "Qwen/Qwen3-8B",
             None,
         ),
     }
