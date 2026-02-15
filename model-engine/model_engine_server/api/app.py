@@ -1,4 +1,4 @@
-import json as json_module
+import json
 import os
 import traceback
 import uuid
@@ -112,7 +112,7 @@ async def _send_json_error(
     body: dict = {"error": error, "timestamp": timestamp}
     if request_id is not None:
         body["request_id"] = request_id
-    body_bytes = json_module.dumps(body).encode("utf-8")
+    body_bytes = json.dumps(body).encode("utf-8")
     await send(
         {
             "type": "http.response.start",
