@@ -184,7 +184,7 @@ class Forwarder(ModelEngineSerializationMixin):
     forward_http_status_in_body: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._session: Optional[aiohttp.ClientSession] = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
@@ -450,7 +450,7 @@ class StreamingForwarder(ModelEngineSerializationMixin):
     serialize_results_as_string: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None  # unused for now
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._session: Optional[aiohttp.ClientSession] = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
@@ -659,7 +659,7 @@ class LoadStreamingForwarder:
 class PassthroughForwarder(ModelEngineSerializationMixin):
     passthrough_endpoint: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._session: Optional[aiohttp.ClientSession] = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
