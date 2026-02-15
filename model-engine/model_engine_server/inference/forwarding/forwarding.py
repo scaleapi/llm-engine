@@ -42,6 +42,20 @@ ENV_SERIALIZE_RESULTS_AS_STRING: str = "SERIALIZE_RESULTS_AS_STRING"
 
 DEFAULT_PORT: int = 5005
 
+TTL_DNS_CACHE: int = 300
+
+
+def _wait_for_service_ready(healthcheck_url: str):
+    """Block until the service at healthcheck_url returns 200."""
+    while True:
+        try:
+            if requests.get(healthcheck_url, timeout=5).status_code == 200:
+                return
+        except requests.exceptions.ConnectionError:
+            pass
+        logger.info(f"Waiting for user-defined service to be ready at {healthcheck_url}...")
+        time.sleep(1)
+
 
 class ModelEngineSerializationMixin:
     """Mixin class for optionally wrapping Model Engine requests."""
@@ -170,6 +184,21 @@ class Forwarder(ModelEngineSerializationMixin):
     forward_http_status_in_body: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None
 
+    def __post_init__(self):
+        self._session: Optional[aiohttp.ClientSession] = None
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        if self._session is None or self._session.closed:
+            connector = aiohttp.TCPConnector(ttl_dns_cache=TTL_DNS_CACHE)
+            self._session = aiohttp.ClientSession(
+                json_serialize=_serialize_json, connector=connector
+            )
+        return self._session
+
+    async def close(self):
+        if self._session and not self._session.closed:
+            await self._session.close()
+
     async def forward(self, json_payload: Any, trace_config: Optional[str] = None) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
@@ -177,18 +206,18 @@ class Forwarder(ModelEngineSerializationMixin):
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
         try:
-            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
-                headers = {"Content-Type": "application/json"}
-                if trace_config and tracing_gateway:
-                    headers.update(tracing_gateway.encode_trace_headers())
-                response_raw = await aioclient.post(
-                    self.predict_endpoint,
-                    json=json_payload,
-                    headers=headers,
-                )
-                response = await response_raw.json(
-                    content_type=None
-                )  # [Bug] upstream service doesn't always have the content type header set which causes aiohttp to error
+            aioclient = await self._get_session()
+            headers = {"Content-Type": "application/json"}
+            if trace_config and tracing_gateway:
+                headers.update(tracing_gateway.encode_trace_headers())
+            response_raw = await aioclient.post(
+                self.predict_endpoint,
+                json=json_payload,
+                headers=headers,
+            )
+            response = await response_raw.json(
+                content_type=None
+            )  # [Bug] upstream service doesn't always have the content type header set which causes aiohttp to error
 
         except Exception:
             logger.exception(
@@ -345,15 +374,7 @@ class LoadForwarder:
         logger.info(f"Prediction endpoint:  {pred}")
         logger.info(f"Healthcheck endpoint: {hc}")
 
-        while True:
-            try:
-                if requests.get(hc).status_code == 200:
-                    break
-            except requests.exceptions.ConnectionError:
-                pass
-
-            logger.info(f"Waiting for user-defined service to be ready at {hc}...")
-            time.sleep(1)
+        _wait_for_service_ready(hc)
 
         logger.info(f"Unwrapping model engine payload formatting?: {self.model_engine_unwrap}")
 
@@ -429,6 +450,21 @@ class StreamingForwarder(ModelEngineSerializationMixin):
     serialize_results_as_string: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None  # unused for now
 
+    def __post_init__(self):
+        self._session: Optional[aiohttp.ClientSession] = None
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        if self._session is None or self._session.closed:
+            connector = aiohttp.TCPConnector(ttl_dns_cache=TTL_DNS_CACHE)
+            self._session = aiohttp.ClientSession(
+                json_serialize=_serialize_json, connector=connector
+            )
+        return self._session
+
+    async def close(self):
+        if self._session and not self._session.closed:
+            await self._session.close()
+
     async def forward(self, json_payload: Any) -> AsyncGenerator[Any, None]:  # pragma: no cover
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
@@ -436,24 +472,24 @@ class StreamingForwarder(ModelEngineSerializationMixin):
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
         try:
-            response: aiohttp.ClientResponse
-            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
-                response = await aioclient.post(
-                    self.predict_endpoint,
-                    json=json_payload,
-                    headers={"Content-Type": "application/json"},
-                )
+            aioclient = await self._get_session()
+            response = await aioclient.post(
+                self.predict_endpoint,
+                json=json_payload,
+                headers={"Content-Type": "application/json"},
+            )
 
-                if response.status != 200:
-                    raise HTTPException(
-                        status_code=response.status, detail=await response.json(content_type=None)
-                    )  # [Bug] upstream service doesn't always have the content type header set which causes aiohttp to error
+            if response.status != 200:
+                raise HTTPException(
+                    status_code=response.status,
+                    detail=await response.json(content_type=None),
+                )  # [Bug] upstream service doesn't always have the content type header set which causes aiohttp to error
 
-                async with EventSource(response=response) as event_source:
-                    async for event in event_source:
-                        yield self.get_response_payload_stream(
-                            using_serialize_results_as_string, event.data
-                        )
+            async with EventSource(response=response) as event_source:
+                async for event in event_source:
+                    yield self.get_response_payload_stream(
+                        using_serialize_results_as_string, event.data
+                    )
 
         except Exception:
             logger.exception(
@@ -567,15 +603,7 @@ class LoadStreamingForwarder:
         logger.info(f"Prediction endpoint:  {pred}")
         logger.info(f"Healthcheck endpoint: {hc}")
 
-        while True:
-            try:
-                if requests.get(hc).status_code == 200:
-                    break
-            except requests.exceptions.ConnectionError:
-                pass
-
-            logger.info(f"Waiting for user-defined service to be ready at {hc}...")
-            time.sleep(1)
+        _wait_for_service_ready(hc)
 
         logger.info(f"Unwrapping model engine payload formatting?: {self.model_engine_unwrap}")
 
@@ -631,6 +659,19 @@ class LoadStreamingForwarder:
 class PassthroughForwarder(ModelEngineSerializationMixin):
     passthrough_endpoint: str
 
+    def __post_init__(self):
+        self._session: Optional[aiohttp.ClientSession] = None
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        if self._session is None or self._session.closed:
+            connector = aiohttp.TCPConnector(ttl_dns_cache=TTL_DNS_CACHE)
+            self._session = aiohttp.ClientSession(connector=connector)
+        return self._session
+
+    async def close(self):
+        if self._session and not self._session.closed:
+            await self._session.close()
+
     async def _make_request(
         self, request: Any, aioclient: aiohttp.ClientSession
     ) -> aiohttp.ClientResponse:
@@ -651,28 +692,28 @@ class PassthroughForwarder(ModelEngineSerializationMixin):
         return await aioclient.request(
             method=request.method,
             url=target_url,
-            data=await request.body() if request.method in ["POST", "PUT", "PATCH"] else None,
+            data=(await request.body() if request.method in ["POST", "PUT", "PATCH"] else None),
             headers=headers,
         )
 
     async def forward_stream(self, request: Any):
-        async with aiohttp.ClientSession() as aioclient:
-            response = await self._make_request(request, aioclient)
-            response_headers = response.headers
-            yield (response_headers, response.status)
+        aioclient = await self._get_session()
+        response = await self._make_request(request, aioclient)
+        response_headers = response.headers
+        yield (response_headers, response.status)
 
-            if response.status != 200:
-                yield await response.read()
-
-            async for chunk in response.content.iter_chunks():
-                yield chunk[0]
-
+        if response.status != 200:
             yield await response.read()
 
+        async for chunk in response.content.iter_chunks():
+            yield chunk[0]
+
+        yield await response.read()
+
     async def forward_sync(self, request: Any):
-        async with aiohttp.ClientSession() as aioclient:
-            response = await self._make_request(request, aioclient)
-            return response
+        aioclient = await self._get_session()
+        response = await self._make_request(request, aioclient)
+        return response
 
 
 @dataclass(frozen=True)
@@ -711,15 +752,7 @@ class LoadPassthroughForwarder:
         logger.info(f"Passthrough endpoint:  {passthrough_endpoint}")
         logger.info(f"Healthcheck endpoint: {hc}")
 
-        while True:
-            try:
-                if requests.get(hc).status_code == 200:
-                    break
-            except requests.exceptions.ConnectionError:
-                pass
-
-            logger.info(f"Waiting for user-defined service to be ready at {hc}...")
-            time.sleep(1)
+        _wait_for_service_ready(hc)
 
         logger.info(f"Creating PassthroughForwarder with endpoint: {passthrough_endpoint}")
         return PassthroughForwarder(passthrough_endpoint=passthrough_endpoint)

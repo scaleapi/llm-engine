@@ -44,9 +44,13 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
     1.2  # Must be a float > 1.0, lower number means more retries but less time waiting.
 )
 
+TTL_DNS_CACHE: int = 300
+
 
 def _get_sync_endpoint_url(
-    service_name: str, destination_path: str = "/predict", manually_resolve_dns: bool = False
+    service_name: str,
+    destination_path: str = "/predict",
+    manually_resolve_dns: bool = False,
 ) -> str:
     if CIRCLECI:
         # Circle CI: a NodePort is used to expose the service
@@ -60,7 +64,8 @@ def _get_sync_endpoint_url(
     elif manually_resolve_dns:
         protocol = "http"
         hostname = resolve_dns(
-            f"{service_name}.{hmi_config.endpoint_namespace}.svc.cluster.local", port=protocol
+            f"{service_name}.{hmi_config.endpoint_namespace}.svc.cluster.local",
+            port=protocol,
         )
     else:
         protocol = "http"
@@ -89,6 +94,19 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
         self.monitoring_metrics_gateway = monitoring_metrics_gateway
         self.tracing_gateway = tracing_gateway
         self.use_asyncio = use_asyncio
+        self._session: Optional[aiohttp.ClientSession] = None
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        if self._session is None or self._session.closed:
+            connector = aiohttp.TCPConnector(ttl_dns_cache=TTL_DNS_CACHE)
+            self._session = aiohttp.ClientSession(
+                json_serialize=_serialize_json, connector=connector
+            )
+        return self._session
+
+    async def close(self):
+        if self._session and not self._session.closed:
+            await self._session.close()
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
         # DEBUG: Log request details
@@ -104,22 +122,22 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
 
         if self.use_asyncio:
             try:
-                async with aiohttp.ClientSession(json_serialize=_serialize_json) as client:
-                    aio_resp = await client.post(
-                        request_url,
-                        json=payload_json,
-                        headers=headers,
+                client = await self._get_session()
+                aio_resp = await client.post(
+                    request_url,
+                    json=payload_json,
+                    headers=headers,
+                )
+                status = aio_resp.status
+                if infra_config().debug_mode:  # pragma: no cover
+                    logger.info(f"DEBUG: Response status: {status}")
+                if status == 200:
+                    return await aio_resp.json()
+                content = await aio_resp.read()
+                if infra_config().debug_mode:  # pragma: no cover
+                    logger.warning(
+                        f"DEBUG: Non-200 response. Status: {status}, Content: {content.decode('utf-8', errors='replace')}"
                     )
-                    status = aio_resp.status
-                    if infra_config().debug_mode:  # pragma: no cover
-                        logger.info(f"DEBUG: Response status: {status}")
-                    if status == 200:
-                        return await aio_resp.json()
-                    content = await aio_resp.read()
-                    if infra_config().debug_mode:  # pragma: no cover
-                        logger.warning(
-                            f"DEBUG: Non-200 response. Status: {status}, Content: {content.decode('utf-8', errors='replace')}"
-                        )
             except Exception as e:
                 if infra_config().debug_mode:  # pragma: no cover
                     logger.error(
