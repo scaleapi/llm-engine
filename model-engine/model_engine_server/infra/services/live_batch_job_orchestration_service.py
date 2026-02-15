@@ -335,7 +335,7 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
             num_tasks_completed=0,
         )
         self.batch_job_progress_gateway.update_progress(owner, job_id, progress)
-        poll_interval = 2  # seconds, will increase with backoff
+        poll_interval = 2.0  # seconds, will increase with backoff
         terminal_task_states = {TaskStatus.SUCCESS, TaskStatus.FAILURE}
         while pending_task_ids_set:
             new_results = await asyncio.gather(
@@ -364,7 +364,7 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
                     num_tasks_completed=len(task_id_to_result),
                 )
                 self.batch_job_progress_gateway.update_progress(owner, job_id, progress)
-                poll_interval = 2  # reset on progress
+                poll_interval = 2.0  # reset on progress
 
             if pending_task_ids_set:
                 await asyncio.sleep(poll_interval)
