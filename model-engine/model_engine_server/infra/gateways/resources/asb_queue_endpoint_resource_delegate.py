@@ -51,9 +51,7 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
                     queue_props.lock_duration = lock_duration
                     client.update_queue(queue_props)
             except Exception as e:
-                logger.warning(
-                    f"Failed to update lock_duration for ASB queue {queue_name}: {e}"
-                )
+                logger.warning(f"Failed to update lock_duration for ASB queue {queue_name}: {e}")
 
             return QueueInfo(queue_name, None)
 
