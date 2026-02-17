@@ -92,6 +92,7 @@ class ModelEndpointService(ABC):
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> ModelEndpointRecord:
         """
         Creates a model endpoint.
@@ -222,6 +223,7 @@ class ModelEndpointService(ABC):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> ModelEndpointRecord:
         """
         Updates a model endpoint.
