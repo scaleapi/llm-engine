@@ -51,7 +51,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         self.resource_gateway = resource_gateway
         self.task_queue_gateway = task_queue_gateway
 
-    def create_model_endpoint_infra(
+    async def create_model_endpoint_infra(
         self,
         *,
         model_endpoint_record: ModelEndpointRecord,
@@ -76,6 +76,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> str:
         deployment_name = generate_deployment_name(
             model_endpoint_record.created_by, model_endpoint_record.name
@@ -104,8 +105,9 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             billing_tags=billing_tags,
             default_callback_url=default_callback_url,
             default_callback_auth=default_callback_auth,
+            queue_message_timeout_duration=queue_message_timeout_duration,
         )
-        response = self.task_queue_gateway.send_task(
+        response = await self.task_queue_gateway.send_task_async(
             task_name=BUILD_TASK_NAME,
             queue_name=get_service_builder_queue(SERVICE_IDENTIFIER, SERVICE_BUILDER_QUEUE),
             # celery request is required to be JSON serializables
@@ -135,6 +137,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> str:
         infra_state = await self.get_model_endpoint_infra(
             model_endpoint_record=model_endpoint_record
@@ -196,7 +199,6 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             default_callback_url = endpoint_config.default_callback_url
         if default_callback_auth is None and endpoint_config is not None:
             default_callback_auth = endpoint_config.default_callback_auth
-
         aws_role = infra_state.aws_role
         results_s3_bucket = infra_state.results_s3_bucket
 
@@ -224,8 +226,9 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             billing_tags=billing_tags,
             default_callback_url=default_callback_url,
             default_callback_auth=default_callback_auth,
+            queue_message_timeout_duration=queue_message_timeout_duration,
         )
-        response = self.task_queue_gateway.send_task(
+        response = await self.task_queue_gateway.send_task_async(
             task_name=BUILD_TASK_NAME,
             queue_name=get_service_builder_queue(SERVICE_IDENTIFIER, SERVICE_BUILDER_QUEUE),
             kwargs=dict(build_endpoint_request_json=build_endpoint_request.dict()),

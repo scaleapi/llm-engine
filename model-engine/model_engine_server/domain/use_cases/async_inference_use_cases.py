@@ -67,7 +67,7 @@ class CreateAsyncInferenceTaskV1UseCase:
 
         inference_gateway = self.model_endpoint_service.get_async_model_endpoint_inference_gateway()
         task_expires = model_endpoint.record.task_expires_seconds or DEFAULT_TASK_EXPIRES_SECONDS
-        return inference_gateway.create_task(
+        return await inference_gateway.create_task(
             topic=model_endpoint.record.destination,
             predict_request=request,
             task_expires_seconds=task_expires,

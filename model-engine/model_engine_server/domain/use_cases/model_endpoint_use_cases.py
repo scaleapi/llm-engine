@@ -390,6 +390,7 @@ class CreateModelEndpointV1UseCase:
             default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
+            queue_message_timeout_duration=request.queue_message_timeout_duration,
             task_expires_seconds=request.task_expires_seconds,
         )
         _handle_post_inference_hooks(
@@ -519,6 +520,7 @@ class UpdateModelEndpointByIdV1UseCase:
             default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
+            queue_message_timeout_duration=request.queue_message_timeout_duration,
             task_expires_seconds=request.task_expires_seconds,
         )
         _handle_post_inference_hooks(

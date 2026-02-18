@@ -18,7 +18,7 @@ class ModelEndpointInfraGateway(ABC):
     """
 
     @abstractmethod
-    def create_model_endpoint_infra(
+    async def create_model_endpoint_infra(
         self,
         *,
         model_endpoint_record: ModelEndpointRecord,
@@ -43,6 +43,7 @@ class ModelEndpointInfraGateway(ABC):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> str:
         """
         Creates the underlying infrastructure for a Model Endpoint.
@@ -100,6 +101,7 @@ class ModelEndpointInfraGateway(ABC):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth],
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> str:
         """
         Updates the underlying infrastructure for a Model Endpoint.

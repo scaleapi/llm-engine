@@ -23,7 +23,7 @@ class LiveAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
     def __init__(self, task_queue_gateway: TaskQueueGateway):
         self.task_queue_gateway = task_queue_gateway
 
-    def create_task(
+    async def create_task(
         self,
         topic: str,
         predict_request: EndpointPredictV1Request,
@@ -35,7 +35,7 @@ class LiveAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
         # key in some fields, and root overriding only reflects in the json() output.
         predict_args = json.loads(predict_request.json())
 
-        send_task_response = self.task_queue_gateway.send_task(
+        send_task_response = await self.task_queue_gateway.send_task_async(
             task_name=task_name,
             queue_name=topic,
             args=[predict_args, datetime.now(), predict_request.return_pickled],
