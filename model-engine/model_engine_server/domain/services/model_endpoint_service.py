@@ -92,7 +92,7 @@ class ModelEndpointService(ABC):
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
-        queue_message_timeout_duration: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
     ) -> ModelEndpointRecord:
         """
@@ -127,7 +127,10 @@ class ModelEndpointService(ABC):
             default_callback_url: The default callback URL to use for the model endpoint.
             default_callback_auth: The default callback auth to use for the model endpoint.
             public_inference: Whether to allow public inference.
-            task_expires_seconds: For async endpoints, how long a task can wait in queue before expiring.
+            queue_message_timeout_seconds: For async endpoints, the queue message visibility/lock
+                timeout in seconds (SQS VisibilityTimeout / ASB lock_duration). Max: 43200.
+            task_expires_seconds: For async endpoints, how long a task can wait in queue before
+                expiring (in seconds). Default: 86400 (24 hours).
         Returns:
             A Model Endpoint Record domain entity object of the created endpoint.
         Raises:
@@ -225,7 +228,7 @@ class ModelEndpointService(ABC):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
-        queue_message_timeout_duration: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
     ) -> ModelEndpointRecord:
         """
@@ -255,7 +258,10 @@ class ModelEndpointService(ABC):
             default_callback_url: The default callback URL to use for the model endpoint.
             default_callback_auth: The default callback auth to use for the model endpoint.
             public_inference: Whether to allow public inference.
-            task_expires_seconds: For async endpoints, how long a task can wait in queue before expiring.
+            queue_message_timeout_seconds: For async endpoints, the queue message visibility/lock
+                timeout in seconds (SQS VisibilityTimeout / ASB lock_duration). Max: 43200.
+            task_expires_seconds: For async endpoints, how long a task can wait in queue before
+                expiring (in seconds). Default: 86400 (24 hours).
         Returns:
             A Model Endpoint Record domain entity object of the updated endpoint.
         Raises:

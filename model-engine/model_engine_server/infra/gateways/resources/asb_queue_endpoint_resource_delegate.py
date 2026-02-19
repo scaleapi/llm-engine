@@ -33,10 +33,10 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
-        queue_message_timeout_duration: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> QueueInfo:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
-        timeout_duration = min(queue_message_timeout_duration or 60, 300)
+        timeout_duration = min(queue_message_timeout_seconds or 60, 300)
         lock_duration = timedelta(seconds=timeout_duration)
 
         with _get_servicebus_administration_client() as client:

@@ -34,7 +34,7 @@ class OnPremQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
-        queue_message_timeout_duration: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> QueueInfo:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
 

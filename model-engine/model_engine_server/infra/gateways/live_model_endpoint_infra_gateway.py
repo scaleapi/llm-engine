@@ -76,7 +76,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
-        queue_message_timeout_duration: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> str:
         deployment_name = generate_deployment_name(
             model_endpoint_record.created_by, model_endpoint_record.name
@@ -105,7 +105,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             billing_tags=billing_tags,
             default_callback_url=default_callback_url,
             default_callback_auth=default_callback_auth,
-            queue_message_timeout_duration=queue_message_timeout_duration,
+            queue_message_timeout_seconds=queue_message_timeout_seconds,
         )
         response = await self.task_queue_gateway.send_task_async(
             task_name=BUILD_TASK_NAME,
@@ -137,7 +137,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
-        queue_message_timeout_duration: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> str:
         infra_state = await self.get_model_endpoint_infra(
             model_endpoint_record=model_endpoint_record
@@ -226,7 +226,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             billing_tags=billing_tags,
             default_callback_url=default_callback_url,
             default_callback_auth=default_callback_auth,
-            queue_message_timeout_duration=queue_message_timeout_duration,
+            queue_message_timeout_seconds=queue_message_timeout_seconds,
         )
         response = await self.task_queue_gateway.send_task_async(
             task_name=BUILD_TASK_NAME,

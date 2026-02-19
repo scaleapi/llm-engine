@@ -69,7 +69,12 @@ class LLMModelEndpointCommonArgs(BaseModel):
         default=False,
         description="Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
     )
-    queue_message_timeout_duration: Optional[int] = Field(default=None, ge=1)
+    queue_message_timeout_seconds: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=43200,
+        description="For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration).",
+    )
 
 
 class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):

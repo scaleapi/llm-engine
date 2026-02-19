@@ -55,7 +55,7 @@ class SQSQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
-        queue_message_timeout_duration: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> QueueInfo:
         async with _create_async_sqs_client(sqs_profile=self.sqs_profile) as sqs_client:
             queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
@@ -63,10 +63,10 @@ class SQSQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
             try:
                 get_queue_url_response = await sqs_client.get_queue_url(QueueName=queue_name)
                 queue_url = get_queue_url_response["QueueUrl"]
-                if queue_message_timeout_duration is not None:
+                if queue_message_timeout_seconds is not None:
                     await sqs_client.set_queue_attributes(
                         QueueUrl=queue_url,
-                        Attributes={"VisibilityTimeout": str(queue_message_timeout_duration)},
+                        Attributes={"VisibilityTimeout": str(queue_message_timeout_seconds)},
                     )
                 return QueueInfo(
                     queue_name=queue_name,
@@ -80,7 +80,7 @@ class SQSQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
                 create_response = await sqs_client.create_queue(
                     QueueName=queue_name,
                     Attributes=dict(
-                        VisibilityTimeout=str(queue_message_timeout_duration or 43200),
+                        VisibilityTimeout=str(queue_message_timeout_seconds or 43200),
                         Policy=_get_queue_policy(queue_name=queue_name),
                     ),
                     tags=_get_queue_tags(

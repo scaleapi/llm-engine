@@ -164,7 +164,7 @@ class LiveModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth],
         public_inference: Optional[bool] = False,
-        queue_message_timeout_duration: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
     ) -> ModelEndpointRecord:
         existing_endpoints = (
@@ -212,7 +212,7 @@ class LiveModelEndpointService(ModelEndpointService):
             high_priority=high_priority,
             default_callback_url=default_callback_url,
             default_callback_auth=default_callback_auth,
-            queue_message_timeout_duration=queue_message_timeout_duration,
+            queue_message_timeout_seconds=queue_message_timeout_seconds,
         )
         await self.model_endpoint_record_repository.update_model_endpoint_record(
             model_endpoint_id=model_endpoint_record.id,
@@ -294,7 +294,7 @@ class LiveModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
-        queue_message_timeout_duration: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
     ) -> ModelEndpointRecord:
         record = await self.model_endpoint_record_repository.get_model_endpoint_record(
@@ -357,7 +357,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 high_priority=high_priority,
                 default_callback_url=default_callback_url,
                 default_callback_auth=default_callback_auth,
-                queue_message_timeout_duration=queue_message_timeout_duration,
+                queue_message_timeout_seconds=queue_message_timeout_seconds,
             )
 
             # Clean up MODEL_BUNDLE_CHANGED_KEY as it is only for internal use
