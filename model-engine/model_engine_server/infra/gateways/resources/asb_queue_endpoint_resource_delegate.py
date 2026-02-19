@@ -2,7 +2,7 @@ import os
 from datetime import timedelta
 from typing import Any, Dict, Optional
 
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import HttpResponseError, ResourceExistsError, ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 from azure.servicebus.management import ServiceBusAdministrationClient
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -50,7 +50,7 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
                 if queue_props.lock_duration != lock_duration:
                     queue_props.lock_duration = lock_duration
                     client.update_queue(queue_props)
-            except Exception as e:
+            except (ResourceNotFoundError, HttpResponseError) as e:
                 logger.warning(f"Failed to update lock_duration for ASB queue {queue_name}: {e}")
 
             return QueueInfo(queue_name, None)

@@ -76,14 +76,15 @@ async def test_task_create_get_args_callback(
     )
 
 
-def test_task_expires_seconds_passed_to_queue(
+@pytest.mark.asyncio
+async def test_task_expires_seconds_passed_to_queue(
     fake_live_async_model_inference_gateway: LiveAsyncModelEndpointInferenceGateway,
     endpoint_predict_request_1,
 ):
     """Test that task_expires_seconds is correctly passed to the task queue gateway."""
     task_expires_seconds = 3600  # 1 hour
 
-    create_response = fake_live_async_model_inference_gateway.create_task(
+    create_response = await fake_live_async_model_inference_gateway.create_task(
         "test_topic", endpoint_predict_request_1[0], task_expires_seconds
     )
     task_id = create_response.task_id
@@ -93,7 +94,8 @@ def test_task_expires_seconds_passed_to_queue(
     assert task_queue_gateway.queue[task_id]["expires"] == task_expires_seconds
 
 
-def test_task_expires_seconds_with_different_values(
+@pytest.mark.asyncio
+async def test_task_expires_seconds_with_different_values(
     fake_live_async_model_inference_gateway: LiveAsyncModelEndpointInferenceGateway,
     endpoint_predict_request_1,
 ):
@@ -102,7 +104,7 @@ def test_task_expires_seconds_with_different_values(
     task_queue_gateway: Any = fake_live_async_model_inference_gateway.task_queue_gateway
 
     for expires_value in test_values:
-        create_response = fake_live_async_model_inference_gateway.create_task(
+        create_response = await fake_live_async_model_inference_gateway.create_task(
             "test_topic", endpoint_predict_request_1[0], expires_value
         )
         task_id = create_response.task_id

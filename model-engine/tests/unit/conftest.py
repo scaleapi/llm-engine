@@ -1102,6 +1102,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> str:
         deployment_name = self._get_deployment_name(
             model_endpoint_record.created_by, model_endpoint_record.name
@@ -1208,6 +1209,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
+        queue_message_timeout_duration: Optional[int] = None,
     ) -> str:
         model_endpoint_infra = await self.get_model_endpoint_infra(
             model_endpoint_record=model_endpoint_record
@@ -1806,6 +1808,7 @@ class FakeModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
+        queue_message_timeout_duration: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
     ) -> ModelEndpointRecord:
         destination = generate_destination(
@@ -1899,6 +1902,7 @@ class FakeModelEndpointService(ModelEndpointService):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
+        queue_message_timeout_duration: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
         public_inference: Optional[bool] = None,
     ) -> ModelEndpointRecord:

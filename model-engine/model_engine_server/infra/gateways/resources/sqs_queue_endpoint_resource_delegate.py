@@ -62,9 +62,15 @@ class SQSQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
 
             try:
                 get_queue_url_response = await sqs_client.get_queue_url(QueueName=queue_name)
+                queue_url = get_queue_url_response["QueueUrl"]
+                if queue_message_timeout_duration is not None:
+                    await sqs_client.set_queue_attributes(
+                        QueueUrl=queue_url,
+                        Attributes={"VisibilityTimeout": str(queue_message_timeout_duration)},
+                    )
                 return QueueInfo(
                     queue_name=queue_name,
-                    queue_url=get_queue_url_response["QueueUrl"],
+                    queue_url=queue_url,
                 )
             except botocore.exceptions.ClientError:
                 logger.info("Queue does not exist, creating it")
