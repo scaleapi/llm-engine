@@ -40,10 +40,14 @@ async def test_cache_hit_skips_download():
     gateway = FakeArtifactGateway(existing_files=["model.safetensors"])
     manager = ModelWeightsManager(llm_artifact_gateway=gateway)
 
-    with patch(
-        "model_engine_server.domain.use_cases.model_weights_manager.snapshot_download"
-    ) as mock_download:
-        result = await manager.ensure_model_weights_available("meta-llama/Meta-Llama-3-8B")
+    mwm_base = "model_engine_server.domain.use_cases.model_weights_manager"
+    with (
+        patch(f"{mwm_base}.snapshot_download") as mock_download,
+        patch(f"{mwm_base}.asyncio.create_task") as mock_create_task,
+    ):
+        result = manager.ensure_model_weights_available("meta-llama/Meta-Llama-3-8B")
+        # Run the background sync task to assert on side-effects
+        await mock_create_task.call_args[0][0]
 
     mock_download.assert_not_called()
     assert len(gateway.uploaded) == 0
@@ -60,8 +64,10 @@ async def test_cache_hit_returns_correct_s3_path(monkeypatch):
     gateway = FakeArtifactGateway(existing_files=["file.bin"])
     manager = ModelWeightsManager(llm_artifact_gateway=gateway)
 
-    with patch("model_engine_server.domain.use_cases.model_weights_manager.snapshot_download"):
-        result = await manager.ensure_model_weights_available("org/model")
+    mwm_base = "model_engine_server.domain.use_cases.model_weights_manager"
+    with patch(f"{mwm_base}.asyncio.create_task") as mock_create_task:
+        result = manager.ensure_model_weights_available("org/model")
+        await mock_create_task.call_args[0][0]
 
     assert result == "s3://my-bucket/weights/org/model"
 
@@ -77,10 +83,14 @@ async def test_cache_miss_calls_snapshot_download_and_upload(tmp_path, monkeypat
     gateway = FakeArtifactGateway(existing_files=[])
     manager = ModelWeightsManager(llm_artifact_gateway=gateway)
 
-    with patch(
-        "model_engine_server.domain.use_cases.model_weights_manager.snapshot_download"
-    ) as mock_download:
-        result = await manager.ensure_model_weights_available("org/model")
+    mwm_base = "model_engine_server.domain.use_cases.model_weights_manager"
+    with (
+        patch(f"{mwm_base}.snapshot_download") as mock_download,
+        patch(f"{mwm_base}.asyncio.create_task") as mock_create_task,
+    ):
+        result = manager.ensure_model_weights_available("org/model")
+        # Run the background sync task so we can assert on its side-effects
+        await mock_create_task.call_args[0][0]
 
     mock_download.assert_called_once()
     call_kwargs = mock_download.call_args
@@ -93,8 +103,7 @@ async def test_cache_miss_calls_snapshot_download_and_upload(tmp_path, monkeypat
     assert result == "s3://my-bucket/weights/org/model"
 
 
-@pytest.mark.asyncio
-async def test_s3_path_construction(monkeypatch):
+def test_s3_path_construction(monkeypatch):
     """Remote path should be {prefix}/{hf_repo} with correct stripping of trailing slash."""
     monkeypatch.setattr(
         "model_engine_server.domain.use_cases.model_weights_manager.hmi_config",
@@ -103,27 +112,27 @@ async def test_s3_path_construction(monkeypatch):
     gateway = FakeArtifactGateway(existing_files=[])
     manager = ModelWeightsManager(llm_artifact_gateway=gateway)
 
-    path = manager._get_remote_path("myorg/mymodel")
+    path = manager.get_remote_path("myorg/mymodel")
     assert path == "s3://bucket/prefix/myorg/mymodel"
 
 
 @pytest.mark.asyncio
 async def test_create_llm_model_endpoint_calls_weights_manager_on_hf_source():
-    """CreateLLMModelEndpointV1UseCase should call model_weights_manager when source is HF and checkpoint_path is None."""
+    """CreateLLMModelEndpointV1UseCase should call ensure_model_weights_available (sync),
+    which returns the expected checkpoint path immediately and fires weight sync in the
+    background. All following actions (bundle, endpoint creation) proceed without blocking."""
     from model_engine_server.domain.entities import LLMSource
     from model_engine_server.domain.use_cases.model_weights_manager import ModelWeightsManager
 
     mock_manager = MagicMock(spec=ModelWeightsManager)
-    mock_manager.ensure_model_weights_available = AsyncMock(
-        return_value="s3://bucket/weights/huggyllama/llama-7b"
+    mock_manager.ensure_model_weights_available.return_value = (
+        "s3://bucket/weights/huggyllama/llama-7b"
     )
 
     # Use a real SUPPORTED_MODELS_INFO entry: "llama-2-7b" -> "huggyllama/llama-7b"
     from tests.unit.conftest import FakeLLMArtifactGateway
 
     fake_gateway = FakeLLMArtifactGateway()
-    # Ensure the resolved checkpoint path is found in the fake bucket
-    fake_gateway.s3_bucket["s3://bucket/weights/huggyllama/llama-7b"] = ["model.safetensors"]
 
     from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
         CreateLLMModelEndpointV1UseCase,
@@ -204,9 +213,8 @@ async def test_create_llm_model_endpoint_calls_weights_manager_on_hf_source():
         mock_authz.return_value.get_s3_bucket_for_user = MagicMock(return_value="test-bucket")
         await use_case.execute(user=user, request=request)
 
-    mock_manager.ensure_model_weights_available.assert_called_once_with(
-        hf_repo="huggyllama/llama-7b"
-    )
+    # ensure_model_weights_available is called synchronously — no await, no blocking
+    mock_manager.ensure_model_weights_available.assert_called_once_with("huggyllama/llama-7b")
     # Verify that the resolved checkpoint path was forwarded to the bundle use case
     bundle_call_kwargs = mock_bundle_use_case.execute.call_args.kwargs
     assert bundle_call_kwargs["checkpoint_path"] == "s3://bucket/weights/huggyllama/llama-7b"

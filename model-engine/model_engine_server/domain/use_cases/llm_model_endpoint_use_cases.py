@@ -652,7 +652,8 @@ class CreateLLMModelBundleV1UseCase:
             s5cmd = "./s5cmd"
 
         checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
-        validate_checkpoint_files(checkpoint_files)
+        if checkpoint_files:
+            validate_checkpoint_files(checkpoint_files)
 
         # filter to configs ('*.model' and '*.json') and weights ('*.safetensors')
         # For models that are not supported by transformers directly, we need to include '*.py' and '*.bin'
@@ -1389,8 +1390,9 @@ class CreateLLMModelEndpointV1UseCase:
                 "Multinode endpoints are only supported for VLLM models."
             )
 
-        # Resolve checkpoint path: auto-download from HF Hub to remote storage if not cached
+        # Resolve checkpoint path: fires background sync and returns expected path immediately
         checkpoint_path = request.checkpoint_path
+        hf_weights_syncing = False
         if (
             checkpoint_path is None
             and request.source == LLMSource.HUGGING_FACE
@@ -1398,9 +1400,10 @@ class CreateLLMModelEndpointV1UseCase:
         ):
             models_info = SUPPORTED_MODELS_INFO.get(request.model_name)
             if models_info and models_info.hf_repo:
-                checkpoint_path = await self.model_weights_manager.ensure_model_weights_available(
-                    hf_repo=models_info.hf_repo
+                checkpoint_path = self.model_weights_manager.ensure_model_weights_available(
+                    models_info.hf_repo
                 )
+                hf_weights_syncing = True
 
         bundle = await self.create_llm_model_bundle_use_case.execute(
             user,
@@ -1447,6 +1450,7 @@ class CreateLLMModelEndpointV1UseCase:
                 quantize=request.quantize,
                 checkpoint_path=checkpoint_path,
                 chat_template_override=request.chat_template_override,
+                hf_weights_syncing=hf_weights_syncing,
             )
         )
 

@@ -62,6 +62,28 @@ HTTP_PORT = 5000
 BASE_PATH_IN_ENDPOINT = "/app"
 
 DATADOG_ENV_VAR = {"DD_TRACE_ENABLED", "DD_SERVICE", "DD_ENV", "DD_VERSION", "DD_AGENT_HOST"}
+
+# Key under which LLM metadata is stored in model_endpoint_record.metadata
+_LLM_METADATA_KEY = "_llm"
+
+# Python script run by the init container to poll storage until HF weights are present.
+_HF_WEIGHTS_POLL_SCRIPT = """\
+import boto3, os, sys, time
+from urllib.parse import urlparse
+
+cp = os.environ["CHECKPOINT_PATH"]
+url = urlparse(cp)
+bucket = url.netloc
+prefix = url.path.lstrip("/")
+s3 = boto3.client("s3")
+while True:
+    resp = s3.list_objects_v2(Bucket=bucket, Prefix=prefix, MaxKeys=1)
+    if resp.get("Contents"):
+        print(f"Model weights ready at {cp}", flush=True)
+        sys.exit(0)
+    print(f"Waiting for model weights at {cp}...", flush=True)
+    time.sleep(30)
+"""
 LWS_DEFAULT_ENV_VAR = {
     "K8S_OWN_POD_NAME",
     "K8S_OWN_NAMESPACE",
@@ -336,6 +358,42 @@ def add_pod_metadata_env_to_container(container: Dict[str, Any]) -> None:
             {"name": "POD_NAME", "valueFrom": {"fieldRef": {"fieldPath": "metadata.name"}}},
             {"name": "NODE_NAME", "valueFrom": {"fieldRef": {"fieldPath": "spec.nodeName"}}},
         ]
+    )
+
+
+def add_hf_weights_init_container(
+    deployment_template: Dict[str, Any],
+    checkpoint_path: str,
+) -> None:
+    """Prepend an init container that polls storage until HF weights are present.
+
+    Uses the forwarder image (model-engine gateway image, which has Python and
+    boto3) so no additional image pull is required.  Authentication relies on
+    the pod's service account (IRSA / workload-identity).
+    """
+    containers = deployment_template["spec"]["template"]["spec"]["containers"]
+    # Prefer the forwarder container image; fall back to the first container.
+    forwarder_image = next(
+        (c["image"] for c in containers if c["name"] in ("http-forwarder", "celery-forwarder")),
+        containers[0]["image"],
+    )
+
+    init_container: Dict[str, Any] = {
+        "name": "wait-for-model-weights",
+        "image": forwarder_image,
+        "env": [{"name": "CHECKPOINT_PATH", "value": checkpoint_path}],
+        "command": ["python3", "-c", _HF_WEIGHTS_POLL_SCRIPT],
+    }
+
+    # Reuse the AWS config volume mount if the volume is present in the pod spec
+    volumes = deployment_template["spec"]["template"]["spec"].get("volumes", [])
+    if any(v["name"] == "config-volume" for v in volumes):
+        init_container["volumeMounts"] = [
+            {"name": "config-volume", "mountPath": "/opt/.aws/config", "subPath": "config"}
+        ]
+
+    deployment_template["spec"]["template"]["spec"].setdefault("initContainers", []).append(
+        init_container
     )
 
 
@@ -1657,6 +1715,9 @@ class K8SEndpointResourceDelegate:
                 user_container = get_main_container_from_deployment_template(deployment_template)
                 add_datadog_env_to_container(deployment_template, user_container)
                 add_pod_metadata_env_to_container(user_container)
+            llm_metadata = (model_endpoint_record.metadata or {}).get(_LLM_METADATA_KEY, {})
+            if llm_metadata.get("hf_weights_syncing") and llm_metadata.get("checkpoint_path"):
+                add_hf_weights_init_container(deployment_template, llm_metadata["checkpoint_path"])
             await self._create_deployment(
                 model_endpoint_record=request.build_endpoint_request.model_endpoint_record,
                 deployment=deployment_template,
