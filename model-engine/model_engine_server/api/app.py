@@ -347,7 +347,7 @@ async def recover_hf_syncs():
             result = await session.execute(
                 text(
                     "SELECT DISTINCT endpoint_metadata->'_llm'->>'model_name' AS model_name "
-                    "FROM endpoints "
+                    "FROM hosted_model_inference.endpoints "
                     "WHERE (endpoint_metadata->'_llm'->>'hf_weights_syncing')::boolean = true"
                 )
             )
