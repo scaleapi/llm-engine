@@ -86,7 +86,6 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     UpdateLLMModelEndpointV1UseCase,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
-from model_engine_server.domain.use_cases.model_weights_manager import ModelWeightsManager
 from pydantic import RootModel
 from sse_starlette.sse import EventSourceResponse
 
@@ -149,14 +148,15 @@ def handle_streaming_exception(
 @llm_router_v1.post("/model-endpoints", response_model=CreateLLMModelEndpointV1Response)
 async def create_model_endpoint(
     wrapped_request: RootModel[CreateLLMModelEndpointV1Request],
+    request: Request,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces),
 ) -> CreateLLMModelEndpointV1Response:
-    request = wrapped_request.root
+    llm_request = wrapped_request.root
     """
     Creates an LLM endpoint for the current user.
     """
-    logger.info(f"POST /llm/model-endpoints with {request} for {auth}")
+    logger.info(f"POST /llm/model-endpoints with {llm_request} for {auth}")
     try:
         create_model_bundle_use_case = CreateModelBundleV2UseCase(
             model_bundle_repository=external_interfaces.model_bundle_repository,
@@ -169,9 +169,7 @@ async def create_model_endpoint(
             llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
             docker_repository=external_interfaces.docker_repository,
         )
-        model_weights_manager = ModelWeightsManager(
-            llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
-        )
+        model_weights_manager = request.app.state.model_weights_manager
         use_case = CreateLLMModelEndpointV1UseCase(
             create_llm_model_bundle_use_case=create_llm_model_bundle_use_case,
             model_endpoint_service=external_interfaces.model_endpoint_service,
@@ -179,7 +177,7 @@ async def create_model_endpoint(
             llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
             model_weights_manager=model_weights_manager,
         )
-        return await use_case.execute(user=auth, request=request)
+        return await use_case.execute(user=auth, request=llm_request)
     except ObjectAlreadyExistsException as exc:
         raise HTTPException(
             status_code=400,

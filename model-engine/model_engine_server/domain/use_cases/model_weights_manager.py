@@ -1,7 +1,7 @@
 import asyncio
 import functools
 import tempfile
-from typing import List
+from typing import Dict, List, Set
 
 from huggingface_hub import snapshot_download
 from model_engine_server.common.config import hmi_config
@@ -24,6 +24,8 @@ HF_IGNORE_PATTERNS: List[str] = [
 class ModelWeightsManager:
     def __init__(self, llm_artifact_gateway: LLMArtifactGateway):
         self.llm_artifact_gateway = llm_artifact_gateway
+        self._background_tasks: Set[asyncio.Task] = set()
+        self._in_progress: Dict[str, asyncio.Task] = {}
 
     def get_remote_path(self, hf_repo: str) -> str:
         prefix = hmi_config.hf_user_fine_tuned_weights_prefix.rstrip("/")
@@ -38,6 +40,10 @@ class ModelWeightsManager:
         Callers receive the checkpoint path right away and can proceed with
         any following actions (e.g. endpoint creation) without blocking.
 
+        A second call for the same ``hf_repo`` while a sync is already in
+        progress is a no-op: the existing task is reused and the same remote
+        path is returned.
+
         Args:
             hf_repo: HuggingFace repository ID, e.g. ``"meta-llama/Meta-Llama-3-8B"``.
 
@@ -45,8 +51,23 @@ class ModelWeightsManager:
             The remote path (s3://, gs://, or https://) where the weights will be stored.
         """
         remote_path = self.get_remote_path(hf_repo)
-        asyncio.create_task(self._sync_weights(hf_repo, remote_path))
+        if hf_repo not in self._in_progress:
+            task = asyncio.create_task(self._sync_weights(hf_repo, remote_path))
+            self._background_tasks.add(task)
+            self._in_progress[hf_repo] = task
+            task.add_done_callback(lambda t: self._on_task_done(t, hf_repo))
         return remote_path
+
+    def _on_task_done(self, task: asyncio.Task, hf_repo: str) -> None:
+        self._background_tasks.discard(task)
+        self._in_progress.pop(hf_repo, None)
+        if not task.cancelled():
+            exc = task.exception()
+            if exc:
+                logger.error(
+                    f"Background weight sync failed for {hf_repo}: {exc}",
+                    exc_info=exc,
+                )
 
     async def _sync_weights(self, hf_repo: str, remote_path: str) -> None:
         """Downloads weights from HuggingFace Hub and uploads to remote storage if not cached."""

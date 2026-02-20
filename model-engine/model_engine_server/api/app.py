@@ -312,6 +312,56 @@ def load_redis():
     get_or_create_aioredis_pool()
 
 
+@app.on_event("startup")
+def init_model_weights_manager():
+    from model_engine_server.core.config import infra_config
+    from model_engine_server.domain.use_cases.model_weights_manager import ModelWeightsManager
+    from model_engine_server.infra.gateways import (
+        ABSLLMArtifactGateway,
+        GCSLLMArtifactGateway,
+        S3LLMArtifactGateway,
+    )
+
+    provider = infra_config().cloud_provider
+    if provider == "azure":
+        gateway = ABSLLMArtifactGateway()
+    elif provider == "gcp":
+        gateway = GCSLLMArtifactGateway()
+    else:
+        gateway = S3LLMArtifactGateway()
+    app.state.model_weights_manager = ModelWeightsManager(llm_artifact_gateway=gateway)
+
+
+@app.on_event("startup")
+async def recover_hf_syncs():
+    """Re-trigger weight syncs for endpoints that were syncing when server last stopped."""
+    from model_engine_server.db.base import get_session_async
+    from model_engine_server.infra.repositories.live_tokenizer_repository import (
+        SUPPORTED_MODELS_INFO,
+    )
+    from sqlalchemy import text
+
+    session_factory = get_session_async()
+    try:
+        async with session_factory() as session:
+            result = await session.execute(
+                text(
+                    "SELECT DISTINCT endpoint_metadata->'_llm'->>'model_name' AS model_name "
+                    "FROM endpoints "
+                    "WHERE (endpoint_metadata->'_llm'->>'hf_weights_syncing')::boolean = true"
+                )
+            )
+            model_names = [row.model_name for row in result if row.model_name]
+    except Exception:
+        logger.warning("Could not query pending HF sync endpoints at startup", exc_info=True)
+        return
+    for model_name in model_names:
+        info = SUPPORTED_MODELS_INFO.get(model_name)
+        if info and info.hf_repo:
+            app.state.model_weights_manager.ensure_model_weights_available(info.hf_repo)
+            logger.info(f"Startup: re-triggered HF weight sync for {model_name}")
+
+
 def healthcheck() -> Response:
     """Returns 200 if the app is healthy."""
     return Response(status_code=200)

@@ -116,6 +116,61 @@ def test_s3_path_construction(monkeypatch):
     assert path == "s3://bucket/prefix/myorg/mymodel"
 
 
+def test_deduplication_same_hf_repo():
+    """Second call for same hf_repo while a sync is in progress should not create a new task."""
+    gateway = FakeArtifactGateway(existing_files=[])
+    manager = ModelWeightsManager(llm_artifact_gateway=gateway)
+
+    mwm_base = "model_engine_server.domain.use_cases.model_weights_manager"
+    with patch(f"{mwm_base}.asyncio.create_task") as mock_create_task:
+        result1 = manager.ensure_model_weights_available("org/model")
+        result2 = manager.ensure_model_weights_available("org/model")
+
+    assert mock_create_task.call_count == 1
+    assert result1 == result2
+
+
+def test_task_reference_held_until_done():
+    """_background_tasks should hold a reference to the task until _on_task_done fires."""
+    gateway = FakeArtifactGateway(existing_files=[])
+    manager = ModelWeightsManager(llm_artifact_gateway=gateway)
+
+    mwm_base = "model_engine_server.domain.use_cases.model_weights_manager"
+    mock_task = MagicMock()
+    with patch(f"{mwm_base}.asyncio.create_task", return_value=mock_task):
+        manager.ensure_model_weights_available("org/model")
+
+    assert mock_task in manager._background_tasks
+    assert "org/model" in manager._in_progress
+
+    # Simulate successful task completion via the done callback
+    mock_task.cancelled.return_value = False
+    mock_task.exception.return_value = None
+    manager._on_task_done(mock_task, "org/model")
+
+    assert mock_task not in manager._background_tasks
+    assert "org/model" not in manager._in_progress
+
+
+def test_error_surfaced_on_task_failure():
+    """When the background task raises, _on_task_done should log the error."""
+    gateway = FakeArtifactGateway(existing_files=[])
+    manager = ModelWeightsManager(llm_artifact_gateway=gateway)
+
+    mock_task = MagicMock()
+    mock_task.cancelled.return_value = False
+    exc = RuntimeError("Download failed")
+    mock_task.exception.return_value = exc
+
+    mwm_base = "model_engine_server.domain.use_cases.model_weights_manager"
+    with patch(f"{mwm_base}.logger") as mock_logger:
+        manager._on_task_done(mock_task, "org/model")
+        mock_logger.error.assert_called_once()
+        call_args = mock_logger.error.call_args
+        assert "org/model" in call_args[0][0]
+        assert call_args[1]["exc_info"] == exc
+
+
 @pytest.mark.asyncio
 async def test_create_llm_model_endpoint_calls_weights_manager_on_hf_source():
     """CreateLLMModelEndpointV1UseCase should call ensure_model_weights_available (sync),
