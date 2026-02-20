@@ -86,6 +86,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     UpdateLLMModelEndpointV1UseCase,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
+from model_engine_server.domain.use_cases.model_weights_manager import ModelWeightsManager
 from pydantic import RootModel
 from sse_starlette.sse import EventSourceResponse
 
@@ -168,11 +169,15 @@ async def create_model_endpoint(
             llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
             docker_repository=external_interfaces.docker_repository,
         )
+        model_weights_manager = ModelWeightsManager(
+            llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
+        )
         use_case = CreateLLMModelEndpointV1UseCase(
             create_llm_model_bundle_use_case=create_llm_model_bundle_use_case,
             model_endpoint_service=external_interfaces.model_endpoint_service,
             docker_repository=external_interfaces.docker_repository,
             llm_artifact_gateway=external_interfaces.llm_artifact_gateway,
+            model_weights_manager=model_weights_manager,
         )
         return await use_case.execute(user=auth, request=request)
     except ObjectAlreadyExistsException as exc:

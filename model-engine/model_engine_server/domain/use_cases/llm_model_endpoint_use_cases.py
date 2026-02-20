@@ -1322,12 +1322,14 @@ class CreateLLMModelEndpointV1UseCase:
         model_endpoint_service: ModelEndpointService,
         docker_repository: DockerRepository,
         llm_artifact_gateway: LLMArtifactGateway,
+        model_weights_manager=None,
     ):
         self.authz_module = LiveAuthorizationModule()
         self.create_llm_model_bundle_use_case = create_llm_model_bundle_use_case
         self.model_endpoint_service = model_endpoint_service
         self.docker_repository = docker_repository
         self.llm_artifact_gateway = llm_artifact_gateway
+        self.model_weights_manager = model_weights_manager
 
     async def execute(
         self, user: User, request: CreateLLMModelEndpointV1Request
@@ -1387,6 +1389,19 @@ class CreateLLMModelEndpointV1UseCase:
                 "Multinode endpoints are only supported for VLLM models."
             )
 
+        # Resolve checkpoint path: auto-download from HF Hub to remote storage if not cached
+        checkpoint_path = request.checkpoint_path
+        if (
+            checkpoint_path is None
+            and request.source == LLMSource.HUGGING_FACE
+            and self.model_weights_manager is not None
+        ):
+            models_info = SUPPORTED_MODELS_INFO.get(request.model_name)
+            if models_info and models_info.hf_repo:
+                checkpoint_path = await self.model_weights_manager.ensure_model_weights_available(
+                    hf_repo=models_info.hf_repo
+                )
+
         bundle = await self.create_llm_model_bundle_use_case.execute(
             user,
             endpoint_name=request.name,
@@ -1397,7 +1412,7 @@ class CreateLLMModelEndpointV1UseCase:
             endpoint_type=request.endpoint_type,
             num_shards=request.num_shards,
             quantize=request.quantize,
-            checkpoint_path=request.checkpoint_path,
+            checkpoint_path=checkpoint_path,
             chat_template_override=request.chat_template_override,
             nodes_per_worker=request.nodes_per_worker,
             additional_args=request.model_dump(exclude_none=True),
@@ -1430,7 +1445,7 @@ class CreateLLMModelEndpointV1UseCase:
                 inference_framework_image_tag=request.inference_framework_image_tag,
                 num_shards=request.num_shards,
                 quantize=request.quantize,
-                checkpoint_path=request.checkpoint_path,
+                checkpoint_path=checkpoint_path,
                 chat_template_override=request.chat_template_override,
             )
         )

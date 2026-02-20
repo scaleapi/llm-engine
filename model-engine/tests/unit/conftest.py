@@ -862,6 +862,9 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 
+    def upload_files(self, local_path: str, remote_path: str, **kwargs) -> None:
+        pass
+
     def get_model_weights_urls(self, owner: str, model_name: str):
         if (owner, model_name) in self.existing_models:
             return self.urls

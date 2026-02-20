@@ -52,6 +52,16 @@ class GCSLLMArtifactGateway(LLMArtifactGateway):
             downloaded_files.append(local_path)
         return downloaded_files
 
+    def upload_files(self, local_path: str, remote_path: str, **kwargs) -> None:
+        parsed = parse_attachment_url(remote_path, clean_key=False)
+        client = get_gcs_sync_client()
+        bucket = client.bucket(parsed.bucket)
+        for root, _, files in os.walk(local_path):
+            for file in files:
+                local_file = os.path.join(root, file)
+                blob_name = os.path.join(parsed.key, os.path.relpath(local_file, local_path))
+                bucket.blob(blob_name).upload_from_filename(local_file)
+
     def get_model_weights_urls(self, owner: str, model_name: str, **kwargs) -> List[str]:
         parsed_remote = parse_attachment_url(
             hmi_config.hf_user_fine_tuned_weights_prefix, clean_key=False
