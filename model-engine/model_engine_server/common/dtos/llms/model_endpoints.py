@@ -58,7 +58,7 @@ class LLMModelEndpointCommonArgs(BaseModel):
     public_inference: Optional[bool] = True  # LLM endpoints are public by default.
     task_expires_seconds: Optional[int] = Field(
         default=None,
-        gt=0,
+        ge=1,
         description="For async endpoints, how long a task can wait in queue before expiring (in seconds).",
     )
     chat_template_override: Optional[str] = Field(
@@ -73,7 +73,7 @@ class LLMModelEndpointCommonArgs(BaseModel):
         default=None,
         ge=1,
         le=43200,
-        description="For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration).",
+        description="For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
     )
 
 
@@ -180,6 +180,10 @@ class GetLLMModelEndpointV1Response(BaseModel):
     task_expires_seconds: Optional[int] = Field(
         default=None,
         description="For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+    )
+    queue_message_timeout_seconds: Optional[int] = Field(
+        default=None,
+        description="For async endpoints, the queue message visibility/lock timeout in seconds (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
     )
     spec: Optional[GetModelEndpointV1Response] = None
 

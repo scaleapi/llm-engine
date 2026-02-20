@@ -274,6 +274,7 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
         checkpoint_path=llm_metadata.get("checkpoint_path"),
         chat_template_override=llm_metadata.get("chat_template_override"),
         task_expires_seconds=model_endpoint.record.task_expires_seconds,
+        queue_message_timeout_seconds=model_endpoint.record.queue_message_timeout_seconds,
         spec=model_endpoint_entity_to_get_model_endpoint_response(model_endpoint),
     )
     return response

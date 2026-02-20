@@ -14,6 +14,8 @@ from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delega
 
 logger = make_logger(logger_name())
 
+ASB_MAXIMUM_LOCK_DURATION = 300  # Azure Service Bus hard limit: 5 minutes
+
 
 def _get_servicebus_administration_client() -> ServiceBusAdministrationClient:
     return ServiceBusAdministrationClient(
@@ -44,7 +46,7 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
                 pass
 
             if queue_message_timeout_seconds is not None:
-                lock_duration = timedelta(seconds=min(queue_message_timeout_seconds, 300))
+                lock_duration = timedelta(seconds=min(queue_message_timeout_seconds, ASB_MAXIMUM_LOCK_DURATION))
                 try:
                     queue_props = client.get_queue(queue_name)
                     if queue_props.lock_duration != lock_duration:

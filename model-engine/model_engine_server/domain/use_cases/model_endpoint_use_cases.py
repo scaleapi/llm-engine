@@ -92,6 +92,7 @@ def model_endpoint_entity_to_get_model_endpoint_response(
         num_queued_items=(None if infra_state is None else infra_state.num_queued_items),
         public_inference=model_endpoint.record.public_inference,
         task_expires_seconds=model_endpoint.record.task_expires_seconds,
+        queue_message_timeout_seconds=model_endpoint.record.queue_message_timeout_seconds,
     )
 
 

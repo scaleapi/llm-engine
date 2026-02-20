@@ -135,6 +135,7 @@ class ModelEndpointRecord(OwnedEntity):
     owner: str
     public_inference: Optional[bool] = None
     task_expires_seconds: Optional[int] = None
+    queue_message_timeout_seconds: Optional[int] = None
 
 
 class ModelEndpointInfraState(BaseModel):

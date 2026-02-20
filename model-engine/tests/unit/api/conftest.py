@@ -850,6 +850,7 @@ def model_endpoint_1(
         "num_queued_items": 1,
         "public_inference": False,
         "task_expires_seconds": None,
+        "queue_message_timeout_seconds": None,
     }
     return model_endpoint, model_endpoint_json
 

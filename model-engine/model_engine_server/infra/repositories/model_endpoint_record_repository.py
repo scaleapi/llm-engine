@@ -51,6 +51,7 @@ class ModelEndpointRecordRepository(ABC):
         owner: str,
         public_inference: Optional[bool] = False,
         task_expires_seconds: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> ModelEndpointRecord:
         """
         Creates an entry for endpoint tracking data, but not the actual compute resources.
@@ -68,6 +69,7 @@ class ModelEndpointRecordRepository(ABC):
             owner: Team who owns endpoint
             public_inference: Whether the endpoint is publicly accessible
             task_expires_seconds: For async endpoints, how long a task can wait in queue before expiring
+            queue_message_timeout_seconds: For async endpoints, queue message visibility/lock timeout
 
         Returns:
             A Model Endpoint Record domain entity.
@@ -85,6 +87,7 @@ class ModelEndpointRecordRepository(ABC):
         status: Optional[str] = None,
         public_inference: Optional[bool] = None,
         task_expires_seconds: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> Optional[ModelEndpointRecord]:
         """
         Updates the entry for endpoint tracking data with the given new values. Only these values are editable.
@@ -98,6 +101,7 @@ class ModelEndpointRecordRepository(ABC):
             status: Status field on the endpoint, used to coordinate endpoint edit operations
             public_inference: Whether the endpoint is publicly accessible
             task_expires_seconds: For async endpoints, how long a task can wait in queue before expiring
+            queue_message_timeout_seconds: For async endpoints, queue message visibility/lock timeout
 
         Returns:
             A Model Endpoint Record domain entity if found, else None.

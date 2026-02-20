@@ -188,6 +188,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 owner=owner,
                 public_inference=public_inference,
                 task_expires_seconds=task_expires_seconds,
+                queue_message_timeout_seconds=queue_message_timeout_seconds,
             )
         )
         creation_task_id = await self.model_endpoint_infra_gateway.create_model_endpoint_infra(
@@ -336,6 +337,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 status=ModelEndpointStatus.UPDATE_PENDING,
                 public_inference=public_inference,
                 task_expires_seconds=task_expires_seconds,
+                queue_message_timeout_seconds=queue_message_timeout_seconds,
             )
             if record is None:  # pragma: no cover
                 raise ObjectNotFoundException

@@ -470,6 +470,8 @@ class Endpoint(Base):
     public_inference = Column(Boolean, default=False)
     # Task expiration time in seconds for async endpoints (how long a task can wait in queue)
     task_expires_seconds = Column(Integer, nullable=True)
+    # Queue message visibility/lock timeout in seconds (SQS VisibilityTimeout / ASB lock_duration)
+    queue_message_timeout_seconds = Column(Integer, nullable=True)
 
     def __init__(
         self,
@@ -485,6 +487,7 @@ class Endpoint(Base):
         owner: Optional[str] = None,
         public_inference: Optional[bool] = False,
         task_expires_seconds: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
     ):
         self.id = f"end_{get_xid()}"
         self.name = name
@@ -498,6 +501,7 @@ class Endpoint(Base):
         self.owner = owner
         self.public_inference = public_inference
         self.task_expires_seconds = task_expires_seconds
+        self.queue_message_timeout_seconds = queue_message_timeout_seconds
 
     @classmethod
     async def create(cls, session: AsyncSession, endpoint: "Endpoint") -> None:
