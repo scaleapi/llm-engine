@@ -44,6 +44,7 @@ spec:
             - --logtostderr=true
             - --v=2
       priorityClassName: system-cluster-critical
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ include "modelEngine.fullname" . }}
 {{- end }}
 {{- end }}

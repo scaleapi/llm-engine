@@ -101,6 +101,7 @@ spec:
           operator: Equal
           value: 'true'
           effect: NoSchedule
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ include "modelEngine.fullname" $ }}
       {{- if .Values.aws }}
       volumes:

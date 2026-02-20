@@ -35,6 +35,7 @@ spec:
             - /workspace/model-engine/model_engine_server/db/migrations/run_database_migration.sh
           {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 10 }}
           {{- include "modelEngine.volumeMounts" . | indent 10 }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ include "modelEngine.fullname" . }}
       {{- include "modelEngine.volumes" . | indent 6 }}
       {{- with .Values.nodeSelector }}

@@ -42,3 +42,26 @@ nodeSelector:
   node-lifecycle: normal
 keda:
   cooldownPeriod: 300
+
+# Extensibility hooks for wrapper charts (e.g. airgapped/on-prem deployments)
+extraEnvVars: []              # Extra env vars for all main containers (gateway, builder, cacher)
+extraVolumes: []              # Extra volumes for all deployments
+extraVolumeMounts: []         # Extra volume mounts for main containers
+
+# Service account token control
+automountServiceAccountToken: true
+
+# Configurable utility images (for airgapped environments)
+utilityImages:
+  busybox:
+    repository: "public.ecr.aws/docker/library/busybox"
+    tag: "latest"
+  curl:
+    repository: "curlimages/curl"
+    tag: "7.72.0"
+  ubuntu:
+    repository: "public.ecr.aws/ubuntu/ubuntu"
+    tag: "latest"
+
+# Additional GPU tolerations for endpoint pods
+gpuTolerations: []

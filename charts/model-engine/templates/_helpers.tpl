@@ -399,6 +399,9 @@ env:
     value: {{ .Values.tag }}
   - name: GIT_TAG
     value: {{ .Values.tag }}
+  {{- with .Values.extraEnvVars }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
 {{- end }}
 
 {{- define "modelEngine.serviceEnvGitTagFromPythonReplace" }}
@@ -455,6 +458,9 @@ volumes:
         - key: infra_service_config
           path: config.yaml
   {{- end }}
+  {{- with .Values.extraVolumes }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
 {{- end }}
 
 {{- define "modelEngine.volumeMounts" }}
@@ -473,6 +479,9 @@ volumeMounts:
     mountPath: /workspace/model-engine/service_configs
   - name: infra-service-config-volume
     mountPath: /workspace/model-engine/model_engine_server/core/configs
+  {{- end }}
+  {{- with .Values.extraVolumeMounts }}
+  {{- toYaml . | nindent 2 }}
   {{- end }}
 {{- end }}
 
