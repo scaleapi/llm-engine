@@ -495,7 +495,9 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         if kwargs.get("task_expires_seconds") is not None:
             model_endpoint_record.task_expires_seconds = kwargs["task_expires_seconds"]
         if kwargs.get("queue_message_timeout_seconds") is not None:
-            model_endpoint_record.queue_message_timeout_seconds = kwargs["queue_message_timeout_seconds"]
+            model_endpoint_record.queue_message_timeout_seconds = kwargs[
+                "queue_message_timeout_seconds"
+            ]
 
     async def update_model_endpoint_record(
         self,
@@ -1051,7 +1053,11 @@ class FakeTaskQueueGateway(TaskQueueGateway):
         else:
             status = TaskStatus.UNDEFINED
         return GetAsyncTaskV1Response(
-            task_id=task_id, status=status, result=result, traceback=None, status_code=status_code
+            task_id=task_id,
+            status=status,
+            result=result,
+            traceback=None,
+            status_code=status_code,
         )
 
     def clear_queue(self, queue_name: str) -> bool:

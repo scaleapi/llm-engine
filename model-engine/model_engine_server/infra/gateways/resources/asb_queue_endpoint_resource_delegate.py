@@ -46,14 +46,18 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
                 pass
 
             if queue_message_timeout_seconds is not None:
-                lock_duration = timedelta(seconds=min(queue_message_timeout_seconds, ASB_MAXIMUM_LOCK_DURATION))
+                lock_duration = timedelta(
+                    seconds=min(queue_message_timeout_seconds, ASB_MAXIMUM_LOCK_DURATION)
+                )
                 try:
                     queue_props = client.get_queue(queue_name)
                     if queue_props.lock_duration != lock_duration:
                         queue_props.lock_duration = lock_duration
                         client.update_queue(queue_props)
                 except (ResourceNotFoundError, HttpResponseError) as e:
-                    logger.warning(f"Failed to update lock_duration for ASB queue {queue_name}: {e}")
+                    logger.warning(
+                        f"Failed to update lock_duration for ASB queue {queue_name}: {e}"
+                    )
 
             return QueueInfo(queue_name, None)
 
