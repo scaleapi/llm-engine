@@ -17,19 +17,21 @@ logger = make_logger(logger_name())
 async def read_config_map(
     config_map_name: str, namespace: str = hmi_config.gateway_namespace
 ) -> Dict[str, str]:
+    configuration = client.Configuration()
     try:
-        kube_config.load_incluster_config()
+        kube_config.load_incluster_config(client_configuration=configuration)
     except ConfigException:
         logger.info("No incluster kubernetes config, falling back to local")
-        await kube_config.load_kube_config()
+        await kube_config.load_kube_config(client_configuration=configuration)
 
-    core_api = client.CoreV1Api()
+    async with client.ApiClient(configuration) as api_client:
+        core_api = client.CoreV1Api(api_client)
 
-    try:
-        config_map = await core_api.read_namespaced_config_map(
-            name=config_map_name, namespace=namespace
-        )
-        return config_map.data
-    except ApiException as e:
-        logger.exception(f"Error reading configmap {config_map_name}")
-        raise e
+        try:
+            config_map = await core_api.read_namespaced_config_map(
+                name=config_map_name, namespace=namespace
+            )
+            return config_map.data
+        except ApiException as e:
+            logger.exception(f"Error reading configmap {config_map_name}")
+            raise e
