@@ -453,9 +453,6 @@ def celery_app(
     if broker_type == "servicebus":
         conf_changes.setdefault("broker_connection_retry_on_startup", True)
         conf_changes.setdefault("broker_connection_retry", True)
-        # Disable connection pool so each send_task creates a fresh connection,
-        # avoiding stale pooled connections that Azure has already closed.
-        conf_changes.setdefault("broker_pool_limit", 0)
 
     if s3_bucket is None:
         s3_bucket = infra_config().s3_bucket
