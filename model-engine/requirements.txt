@@ -55,7 +55,7 @@ azure-identity==1.15.0
     # via -r model-engine/requirements.in
 azure-keyvault-secrets==4.7.0
     # via -r model-engine/requirements.in
-azure-servicebus==7.11.4
+azure-servicebus==7.14.3
     # via -r model-engine/requirements.in
 azure-storage-blob==12.19.0
     # via -r model-engine/requirements.in
