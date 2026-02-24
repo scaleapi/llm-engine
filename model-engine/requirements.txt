@@ -567,7 +567,7 @@ types-awscrt==0.16.23
     #   types-s3transfer
 types-s3transfer==0.6.1
     # via boto3-stubs
-typing-extensions==4.10.0
+typing-extensions==4.13.0
     # via
     #   aioredis
     #   azure-core
