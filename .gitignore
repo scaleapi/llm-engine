@@ -147,3 +147,8 @@ venv.bak/
 node_modules/
 site/
 
+
+# Local backups and archives created during development
+backup_*/
+backup_*.zip
+
