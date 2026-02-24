@@ -183,6 +183,8 @@ def _translate_fake_model_endpoint_orm_to_model_endpoint_record(
         destination="test_destination",
         status=ModelEndpointStatus(model_endpoint_orm.endpoint_status),
         current_model_bundle=current_model_bundle,
+        task_expires_seconds=model_endpoint_orm.task_expires_seconds,
+        queue_message_timeout_seconds=model_endpoint_orm.queue_message_timeout_seconds,
     )
 
 
@@ -450,6 +452,8 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         status: str,
         owner: str,
         public_inference: Optional[bool] = False,
+        task_expires_seconds: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> ModelEndpointRecord:
         orm_model_endpoint = OrmModelEndpoint(
             name=name,
@@ -462,6 +466,8 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
             endpoint_status=status,
             owner=owner,
             public_inference=public_inference,
+            task_expires_seconds=task_expires_seconds,
+            queue_message_timeout_seconds=queue_message_timeout_seconds,
         )
         orm_model_endpoint.created_at = datetime.now()
         orm_model_endpoint.last_updated_at = datetime.now()
@@ -486,6 +492,12 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
             model_endpoint_record.creation_task_id = kwargs["creation_task_id"]
         if kwargs["status"] is not None:
             model_endpoint_record.status = kwargs["status"]
+        if kwargs.get("task_expires_seconds") is not None:
+            model_endpoint_record.task_expires_seconds = kwargs["task_expires_seconds"]
+        if kwargs.get("queue_message_timeout_seconds") is not None:
+            model_endpoint_record.queue_message_timeout_seconds = kwargs[
+                "queue_message_timeout_seconds"
+            ]
 
     async def update_model_endpoint_record(
         self,
@@ -497,6 +509,8 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         destination: Optional[str] = None,
         status: Optional[str] = None,
         public_inference: Optional[bool] = None,
+        task_expires_seconds: Optional[int] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> Optional[ModelEndpointRecord]:
         model_endpoint_record = await self.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id
@@ -1039,7 +1053,11 @@ class FakeTaskQueueGateway(TaskQueueGateway):
         else:
             status = TaskStatus.UNDEFINED
         return GetAsyncTaskV1Response(
-            task_id=task_id, status=status, result=result, traceback=None, status_code=status_code
+            task_id=task_id,
+            status=status,
+            result=result,
+            traceback=None,
+            status_code=status_code,
         )
 
     def clear_queue(self, queue_name: str) -> bool:
@@ -1096,6 +1114,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> str:
         deployment_name = self._get_deployment_name(
             model_endpoint_record.created_by, model_endpoint_record.name
@@ -1202,6 +1221,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> str:
         model_endpoint_infra = await self.get_model_endpoint_infra(
             model_endpoint_record=model_endpoint_record
@@ -1630,7 +1650,7 @@ class FakeFileStorageGateway(FileStorageGateway):
 class FakeAsyncTask:
     topic: str
     predict_request: EndpointPredictV1Request
-    task_timeout_seconds: int
+    task_expires_seconds: int
     task_name: str
 
 
@@ -1642,7 +1662,7 @@ class FakeAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
         self,
         topic: str,
         predict_request: EndpointPredictV1Request,
-        task_timeout_seconds: int,
+        task_expires_seconds: int,
         *,
         task_name: str = DEFAULT_CELERY_TASK_NAME,
     ) -> CreateAsyncTaskV1Response:
@@ -1650,7 +1670,7 @@ class FakeAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
             FakeAsyncTask(
                 topic=topic,
                 predict_request=predict_request,
-                task_timeout_seconds=task_timeout_seconds,
+                task_expires_seconds=task_expires_seconds,
                 task_name=task_name,
             )
         )
@@ -1800,6 +1820,8 @@ class FakeModelEndpointService(ModelEndpointService):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
         public_inference: Optional[bool] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
+        task_expires_seconds: Optional[int] = None,
     ) -> ModelEndpointRecord:
         destination = generate_destination(
             user_id=created_by,
@@ -1823,6 +1845,8 @@ class FakeModelEndpointService(ModelEndpointService):
                 current_model_bundle=current_model_bundle,
                 owner=owner,
                 public_inference=public_inference,
+                task_expires_seconds=task_expires_seconds,
+                queue_message_timeout_seconds=queue_message_timeout_seconds,
             ),
             infra_state=ModelEndpointInfraState(
                 deployment_name=name,
@@ -1891,6 +1915,8 @@ class FakeModelEndpointService(ModelEndpointService):
         billing_tags: Optional[Dict[str, Any]] = None,
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth] = None,
+        queue_message_timeout_seconds: Optional[int] = None,
+        task_expires_seconds: Optional[int] = None,
         public_inference: Optional[bool] = None,
     ) -> ModelEndpointRecord:
         model_endpoint = await self.get_model_endpoint(model_endpoint_id=model_endpoint_id)

@@ -28,7 +28,7 @@ from model_engine_server.domain.exceptions import ObjectNotFoundException
 from model_engine_server.domain.gateways import AsyncModelEndpointInferenceGateway
 from model_engine_server.domain.services import ModelEndpointService
 from model_engine_server.domain.use_cases.async_inference_use_cases import (
-    DEFAULT_TASK_TIMEOUT_SECONDS,
+    DEFAULT_TASK_EXPIRES_SECONDS,
 )
 from model_engine_server.infra.gateways import BatchJobProgressGateway
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
@@ -273,7 +273,7 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
             response = await self.async_model_endpoint_inference_gateway.create_task(
                 topic=queue_name,
                 predict_request=predict_request.request,
-                task_timeout_seconds=DEFAULT_TASK_TIMEOUT_SECONDS,
+                task_expires_seconds=DEFAULT_TASK_EXPIRES_SECONDS,
                 task_name=task_name,
             )
             return BatchEndpointInProgressTask(

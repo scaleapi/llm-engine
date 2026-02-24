@@ -1,7 +1,8 @@
 import os
-from typing import Any, Dict
+from datetime import timedelta
+from typing import Any, Dict, Optional
 
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import HttpResponseError, ResourceExistsError, ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 from azure.servicebus.management import ServiceBusAdministrationClient
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -12,6 +13,8 @@ from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delega
 )
 
 logger = make_logger(logger_name())
+
+ASB_MAXIMUM_LOCK_DURATION = 300  # Azure Service Bus hard limit: 5 minutes
 
 
 def _get_servicebus_administration_client() -> ServiceBusAdministrationClient:
@@ -32,13 +35,29 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> QueueInfo:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
+
         with _get_servicebus_administration_client() as client:
             try:
                 client.create_queue(queue_name=queue_name)
             except ResourceExistsError:
                 pass
+
+            if queue_message_timeout_seconds is not None:
+                lock_duration = timedelta(
+                    seconds=min(queue_message_timeout_seconds, ASB_MAXIMUM_LOCK_DURATION)
+                )
+                try:
+                    queue_props = client.get_queue(queue_name)
+                    if queue_props.lock_duration != lock_duration:
+                        queue_props.lock_duration = lock_duration
+                        client.update_queue(queue_props)
+                except (ResourceNotFoundError, HttpResponseError) as e:
+                    logger.warning(
+                        f"Failed to update lock_duration for ASB queue {queue_name}: {e}"
+                    )
 
             return QueueInfo(queue_name, None)
 

@@ -21,7 +21,7 @@ class AsyncModelEndpointInferenceGateway(ABC):
         self,
         topic: str,
         predict_request: EndpointPredictV1Request,
-        task_timeout_seconds: int,
+        task_expires_seconds: int,
         *,
         task_name: str = DEFAULT_CELERY_TASK_NAME,
     ) -> CreateAsyncTaskV1Response:
