@@ -9,10 +9,10 @@ metadata:
     "helm.sh/hook": pre-install
     "helm.sh/hook-weight": "-2"
 data:
-  deepspeed: "latest"
-  text_generation_inference: "latest"
-  vllm: "latest"
-  vllm_batch: "latest"
-  vllm_batch_v2: "latest"
-  lightllm: "latest"
-  tensorrt_llm: "latest"
+  deepspeed: {{ .Values.inferenceFramework.deepspeed | default "latest" | quote }}
+  text_generation_inference: {{ .Values.inferenceFramework.text_generation_inference | default "latest" | quote }}
+  vllm: {{ .Values.inferenceFramework.vllm | default "latest" | quote }}
+  vllm_batch: {{ .Values.inferenceFramework.vllm_batch | default "latest" | quote }}
+  vllm_batch_v2: {{ .Values.inferenceFramework.vllm_batch_v2 | default "latest" | quote }}
+  lightllm: {{ .Values.inferenceFramework.lightllm | default "latest" | quote }}
+  tensorrt_llm: {{ .Values.inferenceFramework.tensorrt_llm | default "latest" | quote }}

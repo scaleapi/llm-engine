@@ -10,6 +10,8 @@
 {{ $broker_name = "sqs-message-broker-master" }}
 {{- else if eq $message_broker "servicebus" }}
 {{ $broker_name = "servicebus-message-broker-master" }}
+{{- else if and .Values.config .Values.config.values .Values.config.values.infra (eq (.Values.config.values.infra.cloud_provider | default "") "gcp") }}
+{{ $broker_name = "redis-gcp-memorystore-message-broker-master" }}
 {{- end }}
 apiVersion: apps/v1
 kind: StatefulSet

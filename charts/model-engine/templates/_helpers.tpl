@@ -321,6 +321,8 @@ env:
     value: {{ .Values.aws.profileName }}
   - name: S3_WRITE_AWS_PROFILE
     value: {{ .Values.aws.s3WriteProfileName }}
+  {{- else }}
+  {{- /* On-prem: Do NOT set AWS_PROFILE - boto3 uses default credential chain */ -}}
   {{- end }}
   {{- with .Values.secrets }}
   {{- if .kubernetesDatabaseSecretName }}

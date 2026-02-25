@@ -326,6 +326,10 @@ data:
               imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
+              {{- with $.Values.extraPodEnvFrom }}
+              envFrom:
+              {{- toYaml . | nindent 16 }}
+              {{- end }}
               readinessProbe:
                 httpGet:
                   path: ${HEALTHCHECK_ROUTE}
@@ -715,6 +719,10 @@ data:
                 imagePullPolicy: IfNotPresent
                 command: ${COMMAND}
                 env: ${MAIN_ENV}
+                {{- with $.Values.extraPodEnvFrom }}
+                envFrom:
+                {{- toYaml . | nindent 18 }}
+                {{- end }}
                 readinessProbe:
                   httpGet:
                     path: ${HEALTHCHECK_ROUTE}
@@ -1033,7 +1041,7 @@ data:
     apiVersion: batch/v1
     kind: Job
     metadata:
-      name: ${RESOURCE_NAME}
+      name: ${RESOURCE_NAME}-{{ .Release.Revision }}
       labels:
         {{- $job_template_labels | nindent 8 }}
     spec:
