@@ -461,6 +461,7 @@ volumes:
   {{- with .Values.extraVolumes }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
+  {{- include "modelEngine.tokenVolume" . | nindent 2 }}
 {{- end }}
 
 {{- define "modelEngine.volumeMounts" }}
@@ -483,6 +484,7 @@ volumeMounts:
   {{- with .Values.extraVolumeMounts }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
+  {{- include "modelEngine.tokenVolumeMount" . | nindent 2 }}
 {{- end }}
 
 {{- define "modelEngine.forwarderVolumeMounts" }}
@@ -509,5 +511,37 @@ namespaces:
   - {{ .Release.Namespace }}
 {{- range .Values.serviceAccount.namespaces }}
   - {{ . }}
+{{- end }}
+{{- end }}
+
+{{- define "modelEngine.tokenVolume" }}
+{{- if not .Values.automountServiceAccountToken }}
+- name: token-volume
+  projected:
+    defaultMode: 0444
+    sources:
+    - serviceAccountToken:
+        path: token
+        expirationSeconds: 86400
+    # We also need to project the CA cert and namespace files
+    - configMap:
+        name: kube-root-ca.crt
+        items:
+          - key: ca.crt
+            path: ca.crt
+    - downwardAPI:
+        items:
+          - path: namespace
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+{{- end }}
+{{- end }}
+
+{{- define "modelEngine.tokenVolumeMount" }}
+{{- if not .Values.automountServiceAccountToken }}
+- mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+  name: token-volume
+  readOnly: true
 {{- end }}
 {{- end }}

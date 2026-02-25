@@ -86,11 +86,14 @@ spec:
         resources:
           requests:
             cpu: 1000m
-        {{- if .Values.aws }}
         volumeMounts:
+        {{- if .Values.aws }}
         - mountPath: /opt/.aws/config
           name: config-volume
           subPath: config
+        {{- end }}
+        {{- if not $.Values.automountServiceAccountToken }}
+        {{- include "modelEngine.tokenVolumeMount" $ | nindent 8 }}
         {{- end }}
       {{ with .Values.nodeSelector }}
       nodeSelector:
@@ -103,12 +106,15 @@ spec:
           effect: NoSchedule
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ include "modelEngine.fullname" $ }}
-      {{- if .Values.aws }}
       volumes:
+      {{- if .Values.aws }}
       - configMap:
           name: {{ .Values.aws.configMap.name }}
         name: config-volume
-      {{- end}}
+      {{- end }}
+      {{- if not .Values.automountServiceAccountToken }}
+      {{- include "modelEngine.tokenVolume" . | nindent 6 }}
+      {{- end }}
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 20%
