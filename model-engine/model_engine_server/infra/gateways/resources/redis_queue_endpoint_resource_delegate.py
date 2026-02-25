@@ -5,7 +5,7 @@ Redis lists that don't need explicit creation/deletion. This delegate manages
 queue lifecycle for async endpoints using Redis.
 """
 
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 import aioredis
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -36,6 +36,7 @@ class RedisQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_name: str,
         endpoint_created_by: str,
         endpoint_labels: Dict[str, Any],
+        queue_message_timeout_seconds: Optional[int] = None,
     ) -> QueueInfo:
         """
         For Redis, queues are created implicitly. We just return the queue name.

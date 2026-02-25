@@ -15,7 +15,7 @@ from model_engine_server.domain.exceptions import (
 )
 from model_engine_server.domain.services.model_endpoint_service import ModelEndpointService
 
-DEFAULT_TASK_TIMEOUT_SECONDS = 86400
+DEFAULT_TASK_EXPIRES_SECONDS = 86400
 
 
 class CreateAsyncInferenceTaskV1UseCase:
@@ -66,10 +66,11 @@ class CreateAsyncInferenceTaskV1UseCase:
         task_name = model_endpoint.record.current_model_bundle.celery_task_name()
 
         inference_gateway = self.model_endpoint_service.get_async_model_endpoint_inference_gateway()
+        task_expires = model_endpoint.record.task_expires_seconds or DEFAULT_TASK_EXPIRES_SECONDS
         return await inference_gateway.create_task(
             topic=model_endpoint.record.destination,
             predict_request=request,
-            task_timeout_seconds=DEFAULT_TASK_TIMEOUT_SECONDS,
+            task_expires_seconds=task_expires,
             task_name=task_name,
         )
 

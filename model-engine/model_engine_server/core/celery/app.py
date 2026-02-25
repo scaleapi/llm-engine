@@ -447,6 +447,13 @@ def celery_app(
         **extra_changes,
     }
 
+    # Enable broker connection retry for Service Bus. When Azure closes idle
+    # AMQP connections (after 300s), the producer needs to reconnect
+    # transparently instead of raising an error on send_task.
+    if broker_type == "servicebus":
+        conf_changes.setdefault("broker_connection_retry_on_startup", True)
+        conf_changes.setdefault("broker_connection_retry", True)
+
     if s3_bucket is None:
         s3_bucket = infra_config().s3_bucket
 
@@ -505,6 +512,22 @@ def _get_broker_endpoint_and_transport_options(
         # Plain "sqs://" signifies to use instance metadata.
         return "sqs://", out_broker_transport_options
     if broker_type == "servicebus":
+        # Azure Service Bus closes idle AMQP connections after 300s (5 min) of
+        # inactivity with "amqp:connection:forced". This causes 503 errors on
+        # the first request after an idle period.
+        #
+        # uamqp_keep_alive_interval: sends heartbeat frames at this interval
+        # (seconds) on senders/receivers to keep the connection alive.
+        # Kombu defaults to 30s, but we make it explicit and configurable.
+        out_broker_transport_options.setdefault(
+            "uamqp_keep_alive_interval",
+            int(os.getenv("SERVICEBUS_KEEP_ALIVE_INTERVAL", "30")),
+        )
+        # Retry policy for transient Service Bus errors (e.g. token refresh,
+        # brief network blips).
+        out_broker_transport_options.setdefault("retry_total", 3)
+        out_broker_transport_options.setdefault("retry_backoff_factor", 0.8)
+        out_broker_transport_options.setdefault("retry_backoff_max", 120)
         return (
             f"azureservicebus://DefaultAzureCredential@{os.getenv('SERVICEBUS_NAMESPACE')}.servicebus.windows.net",
             out_broker_transport_options,
