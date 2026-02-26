@@ -1,0 +1,2660 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The open source engine for fine-tuning large language models.">
+      
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../helm-values/">
+      
+      
+      <link rel="icon" href="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
+    
+    
+      
+        <title>Architecture - LLM Engine</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"IBM Plex Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/index.css">
+    
+      <link rel="stylesheet" href="../../assets/css/extra.css">
+    
+      <link rel="stylesheet" href="../../assets/css/neoteroi.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-N54ZLW5PGC"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-N54ZLW5PGC",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-N54ZLW5PGC",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#model-engine-architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LLM Engine" class="md-header__button md-logo" aria-label="LLM Engine" data-md-component="logo">
+      
+  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LLM Engine
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/scaleapi/llm-engine" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    llm-engine
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LLM Engine" class="md-nav__button md-logo" aria-label="LLM Engine" data-md-component="logo">
+      
+  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png" alt="logo">
+
+    </a>
+    LLM Engine
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/scaleapi/llm-engine" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    llm-engine
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../model_zoo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Model Zoo
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/completions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Completions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/fine_tuning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fine-tuning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/rate_limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rate limits
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/self_hosting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Self Hosting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/python_client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Type Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/error_handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integrations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pricing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pricing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Operators
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Operators
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-system-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. System Structure
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. System Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 Architecture Overview
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-kubernetes-resource-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 Kubernetes Resource Inventory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-external-dependencies-and-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3 External Dependencies and Prerequisites
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-lifecycle-flows" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Lifecycle Flows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Lifecycle Flows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-generic-endpoint-creation-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 Generic Endpoint Creation Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-inference-flows" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 Inference Flows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.2 Inference Flows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#synchronous-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Synchronous Inference
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asynchronous-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Asynchronous Inference
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#streaming-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Streaming Inference
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-llm-api-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.3 LLM API Layer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-cross-cutting-concerns" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Cross-cutting Concerns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Cross-cutting Concerns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-autoscaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Autoscaling
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1 Autoscaling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sync-and-streaming-endpoints-hpa-min_workers-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sync and Streaming Endpoints: HPA (min_workers &gt; 0)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sync-and-streaming-endpoints-keda-min_workers-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sync and Streaming Endpoints: KEDA (min_workers == 0)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#async-endpoints-celery-autoscaler" class="md-nav__link">
+    <span class="md-ellipsis">
+      Async Endpoints: Celery Autoscaler
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-node-lws-endpoints-no-autoscaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-node (LWS) Endpoints: No Autoscaling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autoscaling-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Autoscaling Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 Observability
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-cloud-backend-abstraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.3 Cloud Backend Abstraction
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.3 Cloud Backend Abstraction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker-message-queue-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker (message queue) selection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storage selection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registry-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Registry selection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inference-autoscaling-metrics-gateway-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inference autoscaling metrics gateway selection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fine-tune-repository-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fine-tune repository selection
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-gpu-and-hardware-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.4 GPU and Hardware Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.4 GPU and Hardware Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node-selectors-and-gpu-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      Node selectors and GPU labels
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#balloon-pods-and-gpu-node-warming" class="md-nav__link">
+    <span class="md-ellipsis">
+      Balloon pods and GPU node warming
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommendedhardware-auto-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      recommendedHardware auto-selection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#imagecache" class="md-nav__link">
+    <span class="md-ellipsis">
+      imageCache
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-component-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Component Reference
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Component Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-k8s-cacher" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 K8s Cacher
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-balloon-pods" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 Balloon Pods
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-multi-node-endpoints-lws" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.3 Multi-node Endpoints (LWS)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-key-configuration-values-quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Appendix: Key Configuration Values Quick Reference
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../helm-values/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Helm Values
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../smoke-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Smoke Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloud Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-system-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. System Structure
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. System Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 Architecture Overview
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-kubernetes-resource-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 Kubernetes Resource Inventory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-external-dependencies-and-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3 External Dependencies and Prerequisites
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-lifecycle-flows" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Lifecycle Flows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Lifecycle Flows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-generic-endpoint-creation-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 Generic Endpoint Creation Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-inference-flows" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 Inference Flows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.2 Inference Flows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#synchronous-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Synchronous Inference
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asynchronous-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Asynchronous Inference
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#streaming-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Streaming Inference
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-llm-api-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.3 LLM API Layer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-cross-cutting-concerns" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Cross-cutting Concerns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Cross-cutting Concerns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-autoscaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Autoscaling
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1 Autoscaling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sync-and-streaming-endpoints-hpa-min_workers-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sync and Streaming Endpoints: HPA (min_workers &gt; 0)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sync-and-streaming-endpoints-keda-min_workers-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sync and Streaming Endpoints: KEDA (min_workers == 0)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#async-endpoints-celery-autoscaler" class="md-nav__link">
+    <span class="md-ellipsis">
+      Async Endpoints: Celery Autoscaler
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-node-lws-endpoints-no-autoscaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-node (LWS) Endpoints: No Autoscaling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autoscaling-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Autoscaling Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 Observability
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-cloud-backend-abstraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.3 Cloud Backend Abstraction
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.3 Cloud Backend Abstraction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker-message-queue-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker (message queue) selection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storage selection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registry-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Registry selection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inference-autoscaling-metrics-gateway-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inference autoscaling metrics gateway selection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fine-tune-repository-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fine-tune repository selection
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-gpu-and-hardware-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.4 GPU and Hardware Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.4 GPU and Hardware Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node-selectors-and-gpu-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      Node selectors and GPU labels
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#balloon-pods-and-gpu-node-warming" class="md-nav__link">
+    <span class="md-ellipsis">
+      Balloon pods and GPU node warming
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommendedhardware-auto-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      recommendedHardware auto-selection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#imagecache" class="md-nav__link">
+    <span class="md-ellipsis">
+      imageCache
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-component-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Component Reference
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Component Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-k8s-cacher" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 K8s Cacher
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-balloon-pods" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 Balloon Pods
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-multi-node-endpoints-lws" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.3 Multi-node Endpoints (LWS)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-key-configuration-values-quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Appendix: Key Configuration Values Quick Reference
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="model-engine-architecture">Model Engine Architecture<a class="headerlink" href="#model-engine-architecture" title="Permanent link">&para;</a></h1>
+<p><strong>Audience:</strong> Service owners and deployment engineers installing, operating, or debugging model engine in a customer environment.</p>
+<p><strong>Scope:</strong> This document covers system structure, lifecycle flows, cross-cutting concerns, and component deep-dives. Configuration reference is in <code>helm-values.md</code>. Per-cloud behavior differences are in <code>cloud-matrix.md</code>.</p>
+<hr />
+<h2 id="1-system-structure">1. System Structure<a class="headerlink" href="#1-system-structure" title="Permanent link">&para;</a></h2>
+<h3 id="11-architecture-overview">1.1 Architecture Overview<a class="headerlink" href="#11-architecture-overview" title="Permanent link">&para;</a></h3>
+<p>Model engine consists of five core pods and a set of external dependencies. The control plane (Gateway, Service Builder, K8s Cacher) runs in the model engine namespace. Inference pods run in a separate endpoint namespace, typically <code>llm-engine</code>.</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌──────────────────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│  Control Plane Namespace (e.g. model-engine)                                     │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│                                                                                  │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  ┌─────────────┐   REST    ┌─────────────────┐                                  │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  │   Gateway   │──────────▶│  Service Builder │                                  │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  │  (FastAPI)  │           │  (Celery worker) │                                  │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│  └──────┬──────┘           └────────┬─────────┘                                 │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│         │  read                     │ write K8s                                  │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│         │  endpoint                 │ resources                                  │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│         ▼  status                   ▼                                            │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│  ┌─────────────┐           ┌─────────────────┐                                  │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│  │  K8s Cacher │──────────▶│     Redis       │                                  │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  │ (Deployment)│  write     │  (cache store)  │                                  │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│  └─────────────┘  TTL 60s  └─────────────────┘                                 │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│                                                                                  │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│  ┌──────────────────┐                                                            │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│  │ Celery Autoscaler│  (scales async endpoint workers by queue depth)            │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│  │  (StatefulSet)   │                                                            │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│  └──────────────────┘                                                            │
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│                                                                                  │
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│  ┌──────────────┐                                                                │
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│  │ Balloon Pods │  (low-priority GPU placeholder pods, one Deployment per GPU)  │
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│  └──────────────┘                                                                │
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>└──────────────────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>External Dependencies
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>┌────────────────┐  ┌──────────────┐  ┌──────────────────────┐  ┌────────────────┐
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>│   PostgreSQL   │  │    Redis     │  │   Message Broker     │  │ Object Storage │
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>│  (endpoint DB) │  │ (K8s cache)  │  │ SQS / ASB / Redis    │  │ S3 / GCS / ABS │
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>└────────────────┘  └──────────────┘  └──────────────────────┘  └────────────────┘
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>┌──────────────────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>│  Endpoint Namespace (e.g. llm-engine)                                            │
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>│                                                                                  │
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>│  ┌─────────────────────────────────────────────────────┐                        │
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>│  │  Sync/Streaming Endpoint (Deployment)               │                        │
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>│  │  ┌──────────────┐  ┌──────────────────────────────┐ │                        │
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>│  │  │ HTTP Forwarder│  │  vLLM / inference process   │ │                        │
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>│  │  └──────────────┘  └──────────────────────────────┘ │                        │
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>│  └─────────────────────────────────────────────────────┘                        │
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>│                                                                                  │
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>│  ┌─────────────────────────────────────────────────────┐                        │
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>│  │  Async Endpoint (Deployment)                        │                        │
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>│  │  ┌──────────────────────────────────────────────┐   │                        │
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>│  │  │  Celery worker (reads from SQS/ASB/Redis)    │   │                        │
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>│  │  └──────────────────────────────────────────────┘   │                        │
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>│  └─────────────────────────────────────────────────────┘                        │
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>│                                                                                  │
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>│  ┌─────────────────────────────────────────────────────┐                        │
+<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>│  │  Multi-node Endpoint (LeaderWorkerSet / LWS)        │                        │
+<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>│  │  ┌──────────────┐  ┌──────────────┐                 │                        │
+<a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a>│  │  │  Leader pod  │  │  Worker pods │  (no HPA/KEDA)  │                        │
+<a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>│  │  └──────────────┘  └──────────────┘                 │                        │
+<a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a>│  └─────────────────────────────────────────────────────┘                        │
+<a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a>└──────────────────────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<p><strong>Data flow summary:</strong></p>
+<ul>
+<li><strong>Endpoint creation:</strong> Client → Gateway REST → broker queue → Service Builder Celery worker → K8s API</li>
+<li><strong>Sync inference:</strong> Client → Gateway → HTTP forward to inference pod → response</li>
+<li><strong>Async inference:</strong> Client → Gateway → broker queue → Celery worker in inference pod → result stored → Client polls</li>
+<li><strong>Streaming inference:</strong> Client → Gateway → SSE stream from inference pod</li>
+<li><strong>Status reads:</strong> Gateway → Redis (written by K8s Cacher, not K8s API directly)</li>
+</ul>
+<h3 id="12-kubernetes-resource-inventory">1.2 Kubernetes Resource Inventory<a class="headerlink" href="#12-kubernetes-resource-inventory" title="Permanent link">&para;</a></h3>
+<p>Resources created and managed by the helm chart (control plane):</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Kind</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model-engine-gateway</code></td>
+<td>Deployment</td>
+<td>FastAPI server; replicas configured via <code>replicaCount.gateway</code></td>
+</tr>
+<tr>
+<td><code>model-engine-builder</code></td>
+<td>Deployment</td>
+<td>Celery worker for endpoint creation; replicas via <code>replicaCount.builder</code></td>
+</tr>
+<tr>
+<td><code>model-engine-cacher</code></td>
+<td>Deployment</td>
+<td>K8s cache loop; typically 1 replica (<code>replicaCount.cacher</code>)</td>
+</tr>
+<tr>
+<td><code>model-engine-celery-autoscaler</code></td>
+<td>StatefulSet</td>
+<td>Scales async endpoint workers; shards via <code>celery_autoscaler.num_shards</code></td>
+</tr>
+<tr>
+<td><code>model-engine-gateway</code></td>
+<td>HPA</td>
+<td>Autoscales gateway replicas based on concurrency</td>
+</tr>
+<tr>
+<td><code>model-engine-config</code></td>
+<td>ConfigMap</td>
+<td>Runtime config mounted into all control plane pods</td>
+</tr>
+<tr>
+<td><code>model-engine</code></td>
+<td>ServiceAccount</td>
+<td>Used by control plane pods</td>
+</tr>
+<tr>
+<td><code>model-engine</code></td>
+<td>ClusterRole + ClusterRoleBinding</td>
+<td>K8s API access for Service Builder and Cacher</td>
+</tr>
+<tr>
+<td>Balloon Deployments</td>
+<td>Deployment (one per GPU type)</td>
+<td>Low-priority placeholder pods; see <code>balloons</code> in values</td>
+</tr>
+</tbody>
+</table>
+<p>Resources created per inference endpoint (in endpoint namespace):</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Kind</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Inference Deployment</td>
+<td>Deployment</td>
+<td>All non-LWS endpoints</td>
+</tr>
+<tr>
+<td>LeaderWorkerSet</td>
+<td>LeaderWorkerSet (CRD)</td>
+<td>Multi-node endpoints only</td>
+</tr>
+<tr>
+<td>K8s Service</td>
+<td>Service</td>
+<td>Sync and streaming endpoints</td>
+</tr>
+<tr>
+<td>HPA</td>
+<td>HorizontalPodAutoscaler</td>
+<td>Sync/streaming, <code>min_workers &gt; 0</code></td>
+</tr>
+<tr>
+<td>KEDA ScaledObject</td>
+<td>ScaledObject (CRD)</td>
+<td>Sync/streaming, <code>min_workers == 0</code></td>
+</tr>
+<tr>
+<td>PodDisruptionBudget</td>
+<td>PodDisruptionBudget</td>
+<td>All endpoints (configurable)</td>
+</tr>
+<tr>
+<td>Istio VirtualService</td>
+<td>VirtualService</td>
+<td>Sync/streaming, <code>istio_enabled: true</code></td>
+</tr>
+<tr>
+<td>Istio DestinationRule</td>
+<td>DestinationRule</td>
+<td>Sync/streaming, <code>istio_enabled: true</code></td>
+</tr>
+<tr>
+<td>Istio ServiceEntry</td>
+<td>ServiceEntry</td>
+<td>Multi-node + <code>istio_enabled: true</code></td>
+</tr>
+<tr>
+<td>SQS Queue / ASB Topic</td>
+<td>Cloud resource</td>
+<td>Async endpoints and all endpoints on async clouds</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">HPA and KEDA are mutually exclusive</p>
+<p>The Service Builder enforces this: when creating or updating an endpoint, it deletes the KEDA ScaledObject before creating an HPA (if <code>min_workers &gt; 0</code>), or deletes the HPA before creating a KEDA ScaledObject (if <code>min_workers == 0</code>). Both never coexist on the same endpoint.</p>
+</div>
+<h3 id="13-external-dependencies-and-prerequisites">1.3 External Dependencies and Prerequisites<a class="headerlink" href="#13-external-dependencies-and-prerequisites" title="Permanent link">&para;</a></h3>
+<p>The following must exist and be reachable from the cluster before <code>helm install</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Dependency</th>
+<th>Required For</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PostgreSQL</td>
+<td>All operations</td>
+<td>Endpoint metadata, bundle records, batch job records</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>Gateway routing, cacher, async metrics</td>
+<td>Two logical roles: K8s cache and inference autoscaling metrics</td>
+</tr>
+<tr>
+<td>Message broker (SQS / ASB / Redis)</td>
+<td>Async endpoints; endpoint creation queue</td>
+<td>Cloud-dependent; see §3.3</td>
+</tr>
+<tr>
+<td>Object storage (S3 / GCS / ABS)</td>
+<td>LLM artifacts, fine-tune repos, batch job progress</td>
+<td>Cloud-dependent</td>
+</tr>
+<tr>
+<td>Image registry (ECR / ACR / GAR)</td>
+<td>All image pulls</td>
+<td>Must be mirrored from <code>public.ecr.aws/b2z8n5q1/</code> in customer envs</td>
+</tr>
+<tr>
+<td>Prometheus</td>
+<td>KEDA scale-to-zero</td>
+<td>Required if any sync endpoint uses <code>min_workers == 0</code>; see §3.1</td>
+</tr>
+<tr>
+<td>KEDA</td>
+<td>Scale-to-zero</td>
+<td>Must be installed in cluster if any endpoint uses <code>min_workers == 0</code></td>
+</tr>
+<tr>
+<td>Istio</td>
+<td>VirtualService routing, mTLS</td>
+<td>Optional but strongly recommended; set <code>istio_enabled: true/false</code> to match actual state</td>
+</tr>
+<tr>
+<td>NVIDIA GPU Operator</td>
+<td>GPU inference</td>
+<td>Required for GPU workloads; nodes must be labeled and driver-ready</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Image registry mirroring</p>
+<p>In customer environments, all model engine images must be mirrored from the public ECR source (<code>public.ecr.aws/b2z8n5q1/</code>) to the customer registry before installation. The <code>vllm_repository</code> value defaults to a relative path that resolves to Scale's internal ECR in many deployment configurations and <strong>must be overridden</strong>. Failing to mirror is the most common silent deployment failure: endpoint creation returns HTTP 200 but the endpoint stays <code>INITIALIZING</code> indefinitely.</p>
+</div>
+<hr />
+<h2 id="2-lifecycle-flows">2. Lifecycle Flows<a class="headerlink" href="#2-lifecycle-flows" title="Permanent link">&para;</a></h2>
+<h3 id="21-generic-endpoint-creation-flow">2.1 Generic Endpoint Creation Flow<a class="headerlink" href="#21-generic-endpoint-creation-flow" title="Permanent link">&para;</a></h3>
+<p>The endpoint creation path is identical for all endpoint types (sync, async, streaming, multi-node). The LLM API layer (§2.3) is a higher-level wrapper that feeds into the same flow.</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Client
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  │  POST /v1/model-endpoints
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  ▼
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Gateway (FastAPI)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  │  Validates request, writes endpoint record to PostgreSQL (status: PENDING)
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  │  Enqueues Celery task to endpoint creation queue (SQS / ASB / Redis)
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  │
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  ▼
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>Message Broker
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  │  Task sits in queue (SQS queue / ASB topic / Redis queue)
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  │
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  ▼
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Service Builder (Celery worker)
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  │  Dequeues task
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  │  Calls K8s API to create/update:
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  │    - Deployment or LeaderWorkerSet
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  │    - HPA or KEDA ScaledObject (sync/streaming, non-LWS only)
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  │    - K8s Service (sync/streaming only)
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  │    - Istio VirtualService + DestinationRule (if istio_enabled, non-LWS)
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>  │    - Istio ServiceEntry (if istio_enabled, LWS only)
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>  │    - PodDisruptionBudget
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>  │  Updates endpoint record in PostgreSQL (status: INITIALIZING → READY)
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>  │
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>  ▼
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>K8s Cacher (background loop, every 15s)
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>  │  Reads endpoint state from K8s API
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>  │  Writes to Redis with 60s TTL
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>  │
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>  ▼
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>Gateway
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>  │  Reads endpoint status from Redis (not K8s API directly)
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>  │  Returns status to client via GET /v1/model-endpoints/{id}
+</code></pre></div>
+<p><strong>Timing constraints:</strong></p>
+<ul>
+<li>The Celery task has a <strong>30-minute hard timeout</strong>. Endpoint creation that exceeds this ceiling (e.g., very large image pulls on cold nodes) will fail with no retry, and the endpoint will be stuck <code>INITIALIZING</code>.</li>
+<li>The K8s Cacher runs on a <strong>15-second poll cycle</strong>. After the Service Builder marks an endpoint <code>READY</code> in PostgreSQL, there is a brief window (up to 15s) before the Gateway's Redis cache reflects the new state. During this window, status reads may lag.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Celery task timeout is a hard ceiling</p>
+<p>The 30-minute Celery task timeout applies to the entire endpoint creation operation, including image pull time. For large model images on cold nodes, image pull alone can approach this limit. Plan capacity accordingly and ensure balloon pods keep GPU nodes warm so image pulls start quickly.</p>
+</div>
+<h3 id="22-inference-flows">2.2 Inference Flows<a class="headerlink" href="#22-inference-flows" title="Permanent link">&para;</a></h3>
+<h4 id="synchronous-inference">Synchronous Inference<a class="headerlink" href="#synchronous-inference" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Client
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  │  POST /v1/model-endpoints/{id}/predict
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  ▼
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Gateway
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  │  Looks up endpoint URL from Redis cache
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  │  HTTP POST directly to inference pod&#39;s HTTP forwarder
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  ▼
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>Inference Pod (HTTP Forwarder + vLLM / model process)
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  │  Processes request, returns response
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  ▼
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>Gateway → Client  (response forwarded synchronously)
+</code></pre></div>
+<p>The Gateway does not queue synchronous requests. The inference pod must be reachable at the time of the request. If the pod is not yet ready or has been evicted, the client receives an error immediately.</p>
+<h4 id="asynchronous-inference">Asynchronous Inference<a class="headerlink" href="#asynchronous-inference" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Client
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  │  POST /v1/model-endpoints/{id}/predict  (async endpoint)
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  ▼
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Gateway
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  │  Enqueues Celery task to inference queue
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  │  (per-endpoint SQS queue / ASB topic / Redis queue)
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  │  Returns task_id immediately (HTTP 200)
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  ▼
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>Message Broker (per-endpoint queue)
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>  │
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>  ▼
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>Celery Worker (inside inference pod)
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>  │  Dequeues task
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>  │  Runs inference
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>  │  Stores result in Celery result backend (Redis / SQS)
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>  ▼
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>Client polls GET /v1/tasks/{task_id}
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>  │
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>  ▼
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>Gateway
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>  │  Reads task result from Celery result backend
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>  │  Returns status: PENDING / SUCCESS / FAILURE
+</code></pre></div>
+<p>Each async endpoint has its own dedicated queue: one SQS queue per endpoint on AWS, one ASB topic per endpoint on Azure. The Celery Autoscaler monitors queue depth and scales the Deployment's replica count accordingly (see §3.1).</p>
+<h4 id="streaming-inference">Streaming Inference<a class="headerlink" href="#streaming-inference" title="Permanent link">&para;</a></h4>
+<p>Streaming follows the same routing path as synchronous inference. The Gateway establishes a Server-Sent Events (SSE) connection to the inference pod and streams response chunks back to the client as they arrive. The inference pod must support streaming — vLLM does natively via its <code>/v1/chat/completions</code> and <code>/v1/completions</code> endpoints with <code>stream=true</code>.</p>
+<h3 id="23-llm-api-layer">2.3 LLM API Layer<a class="headerlink" href="#23-llm-api-layer" title="Permanent link">&para;</a></h3>
+<p>Model engine exposes two API surfaces for LLM inference:</p>
+<table>
+<thead>
+<tr>
+<th>API Surface</th>
+<th>Routes</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Generic endpoint API</td>
+<td><code>GET/POST /v1/model-endpoints</code>, <code>/v1/model-endpoints/{id}/predict</code></td>
+<td>Low-level; caller specifies image, resources, and all parameters explicitly</td>
+</tr>
+<tr>
+<td>LLM endpoint API v1</td>
+<td><code>/v1/llms/...</code></td>
+<td>Higher-level; opinionated defaults, auto-selects vLLM image and hardware</td>
+</tr>
+<tr>
+<td>LLM endpoint API v2</td>
+<td><code>/v2/...</code></td>
+<td>OpenAI-compatible; same infrastructure as v1 LLM API</td>
+</tr>
+</tbody>
+</table>
+<p><strong>v1 vs v2:</strong></p>
+<ul>
+<li><strong>v1</strong> (<code>/v1/llms/...</code>): Model engine's native LLM API. Returns model engine response format.</li>
+<li><strong>v2</strong> (<code>/v2/...</code>): OpenAI-compatible API. Accepts and returns the same request/response format as OpenAI's API, including <code>stream=true</code> for SSE streaming. Pydantic models are generated from OpenAI's official OpenAPI spec. Endpoints: <code>POST /v2/chat/completions</code>, <code>POST /v2/completions</code>.</li>
+</ul>
+<p><strong>How LLM endpoints use Service Builder:</strong></p>
+<p>The LLM endpoint API (<code>LiveLLMModelEndpointService</code>) is a thin wrapper over the generic <code>LiveModelEndpointService</code>. When a client calls <code>POST /v1/llms</code> to create an LLM endpoint, the service translates a <code>CreateLLMModelEndpointV1Request</code> into a <code>CreateModelEndpointV1Request</code> with opinionated defaults — vLLM image from <code>vllm_repository</code>, resource sizing from <code>recommendedHardware</code>, GPU type selection — and then delegates to the same Service Builder queue path described in §2.1. There is no separate infrastructure for LLM endpoints. They are regular model endpoints with a curated configuration. All failure modes from §2.1 apply equally.</p>
+<p><strong><code>recommendedHardware</code> auto-selection:</strong></p>
+<p>The <code>recommendedHardware</code> helm value contains a lookup table keyed by GPU memory requirement (<code>byGpuMemoryGb</code>) and by model name (<code>byModelName</code>). When an LLM endpoint is created without explicit resource specifications, the service queries this table to select GPU type, GPU count, CPU, memory, storage, and <code>nodes_per_worker</code>. When <code>nodes_per_worker &gt; 1</code>, the service creates a multi-node (LWS) endpoint instead of a regular Deployment. See §3.4 for details.</p>
+<hr />
+<h2 id="3-cross-cutting-concerns">3. Cross-cutting Concerns<a class="headerlink" href="#3-cross-cutting-concerns" title="Permanent link">&para;</a></h2>
+<h3 id="31-autoscaling">3.1 Autoscaling<a class="headerlink" href="#31-autoscaling" title="Permanent link">&para;</a></h3>
+<p>Model engine uses three distinct autoscaling mechanisms depending on endpoint type and configuration. They are not interchangeable, and only one mechanism applies to any given endpoint at a time.</p>
+<h4 id="sync-and-streaming-endpoints-hpa-min_workers-0">Sync and Streaming Endpoints: HPA (<code>min_workers &gt; 0</code>)<a class="headerlink" href="#sync-and-streaming-endpoints-hpa-min_workers-0" title="Permanent link">&para;</a></h4>
+<p>When <code>min_workers &gt; 0</code>, the Service Builder creates a <code>HorizontalPodAutoscaler</code> targeting the endpoint's Deployment. The HPA scales based on CPU and memory metrics. The autoscaling API version is selected based on cluster version: <code>autoscaling/v2</code> for Kubernetes &gt;= 1.26, <code>autoscaling/v2beta2</code> for Kubernetes 1.23–1.25.</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>min_workers &gt; 0  →  KEDA ScaledObject deleted (if exists)  →  HPA created
+</code></pre></div>
+<h4 id="sync-and-streaming-endpoints-keda-min_workers-0">Sync and Streaming Endpoints: KEDA (<code>min_workers == 0</code>)<a class="headerlink" href="#sync-and-streaming-endpoints-keda-min_workers-0" title="Permanent link">&para;</a></h4>
+<p>When <code>min_workers == 0</code>, the Service Builder creates a KEDA <code>ScaledObject</code> instead of an HPA. KEDA uses request concurrency metrics sourced from Prometheus to decide when to scale the endpoint from 0 replicas to 1 replica.</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>min_workers == 0  →  HPA deleted (if exists)  →  KEDA ScaledObject created
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">KEDA requires <code>prometheus_server_address</code></p>
+<p>KEDA-based scale-to-zero <strong>requires</strong> <code>config.values.infra.prometheus_server_address</code> to be set in helm values. Without it, the <code>can_scale_http_endpoint_from_zero_flag</code> is <code>False</code> and scale-to-zero will silently not work. This is enforced in <code>dependencies.py</code>:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>can_scale_http_endpoint_from_zero_flag<span style="color: #666">=</span>infra_config()<span style="color: #666">.</span>prometheus_server_address <span style="color: #A2F; font-weight: bold">is</span> <span style="color: #A2F; font-weight: bold">not</span> <span style="color: #008000; font-weight: bold">None</span>
+</code></pre></div>
+<p>This is one of the most non-obvious configuration dependencies in the system. The endpoint creation will succeed and the KEDA ScaledObject will be created, but scaling will not function.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Known limitation: KEDA only scales 0→1, not 1→N</p>
+<p>As of the current codebase, KEDA ScaledObjects only support scaling a sync endpoint from 0 replicas to 1 replica. Scaling from 1 to N is not implemented. This is a documented TODO in <code>k8s_endpoint_resource_delegate.py</code>:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span style="color: #3D7B7B; font-style: italic"># Right now, keda only will support scaling from 0 to 1</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span style="color: #3D7B7B; font-style: italic"># TODO support keda scaling from 1 to N as well</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span style="color: #008000; font-weight: bold">if</span> request<span style="color: #666">.</span>build_endpoint_request<span style="color: #666">.</span>min_workers <span style="color: #666">&gt;</span> <span style="color: #666">0</span>:
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span style="color: #3D7B7B; font-style: italic"># ... create HPA</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span style="color: #008000; font-weight: bold">else</span>:  <span style="color: #3D7B7B; font-style: italic"># min workers == 0, use keda</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span style="color: #3D7B7B; font-style: italic"># ... create KEDA ScaledObject</span>
+</code></pre></div>
+<p>For endpoints that need to scale beyond 1 replica, use <code>min_workers &gt;= 1</code> (which triggers HPA instead of KEDA).</p>
+</div>
+<h4 id="async-endpoints-celery-autoscaler">Async Endpoints: Celery Autoscaler<a class="headerlink" href="#async-endpoints-celery-autoscaler" title="Permanent link">&para;</a></h4>
+<p>Async endpoints are scaled by the Celery Autoscaler StatefulSet, not by HPA or KEDA. The Celery Autoscaler monitors the depth of each endpoint's message queue (SQS queue on AWS, ASB topic on Azure, Redis queue on GCP/on-prem) and adjusts the Deployment's replica count by patching the K8s API directly.</p>
+<p>The number of autoscaler shards is configured via <code>celery_autoscaler.num_shards</code>. Multiple shards distribute the monitoring load across many concurrent endpoints. The Celery Autoscaler is enabled via <code>celery_autoscaler.enabled: true</code>.</p>
+<h4 id="multi-node-lws-endpoints-no-autoscaling">Multi-node (LWS) Endpoints: No Autoscaling<a class="headerlink" href="#multi-node-lws-endpoints-no-autoscaling" title="Permanent link">&para;</a></h4>
+<p>LeaderWorkerSet endpoints do not support autoscaling. <code>min_workers</code> must equal <code>max_workers</code>. No HPA or KEDA ScaledObject is created. Capacity changes require deleting and recreating the endpoint.</p>
+<h4 id="autoscaling-summary">Autoscaling Summary<a class="headerlink" href="#autoscaling-summary" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Endpoint Type</th>
+<th><code>min_workers</code></th>
+<th>Scaler</th>
+<th>Metric Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sync / Streaming</td>
+<td><code>&gt; 0</code></td>
+<td>HPA</td>
+<td>CPU / memory</td>
+</tr>
+<tr>
+<td>Sync / Streaming</td>
+<td><code>== 0</code></td>
+<td>KEDA ScaledObject</td>
+<td>Prometheus (request concurrency)</td>
+</tr>
+<tr>
+<td>Async</td>
+<td>any</td>
+<td>Celery Autoscaler StatefulSet</td>
+<td>Queue depth (SQS / ASB / Redis)</td>
+</tr>
+<tr>
+<td>Multi-node (LWS)</td>
+<td>must equal <code>max_workers</code></td>
+<td>None</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-observability">3.2 Observability<a class="headerlink" href="#32-observability" title="Permanent link">&para;</a></h3>
+<p><strong>Structured logging:</strong>
+All control plane components emit structured JSON logs. Log verbosity is controlled via <code>debug_mode</code> in helm values.</p>
+<p><strong>Datadog APM (optional):</strong>
+Enabled by setting <code>dd_trace_enabled: true</code> in <code>config.values.launch</code> and installing the Datadog agent in the cluster. When enabled, the <code>DatadogMonitoringMetricsGateway</code> is used instead of <code>FakeMonitoringMetricsGateway</code>. This gates distributed tracing and APM metrics. The top-level <code>datadog.enabled</code> helm value controls Datadog agent sidecar injection.</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span style="color: #3D7B7B; font-style: italic"># from dependencies.py</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span style="color: #008000; font-weight: bold">if</span> hmi_config<span style="color: #666">.</span>dd_trace_enabled:
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    monitoring_metrics_gateway <span style="color: #666">=</span> DatadogMonitoringMetricsGateway()
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span style="color: #008000; font-weight: bold">else</span>:
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    monitoring_metrics_gateway <span style="color: #666">=</span> FakeMonitoringMetricsGateway()
+</code></pre></div>
+<p><strong>Prometheus metrics:</strong>
+Request concurrency metrics are exposed and consumed by KEDA for scale-to-zero. The Prometheus server must be reachable at the address configured in <code>prometheus_server_address</code>. See §3.1 for the dependency.</p>
+<p><strong>OpenTelemetry tracing:</strong>
+An OTel-based telemetry design is in progress and not yet in production. Current tracing is provided via the <code>TracingGateway</code> abstraction, with Datadog as the primary production implementation.</p>
+<p><strong>K8s Cacher readiness probe:</strong>
+The K8s Cacher writes a readiness file (<code>READYZ_FPATH</code>) after its first successful loop iteration. This gates the cacher pod's <code>readinessProbe</code>, ensuring the Redis cache has at least one warm cycle before the pod is considered ready.</p>
+<h3 id="33-cloud-backend-abstraction">3.3 Cloud Backend Abstraction<a class="headerlink" href="#33-cloud-backend-abstraction" title="Permanent link">&para;</a></h3>
+<p>The <code>config.values.infra.cloud_provider</code> value is the single switch that drives selection of broker, storage, registry, and auth implementations at runtime. This selection happens in <code>dependencies.py</code> and <code>k8s_cache.py</code> on startup. Changing this value without corresponding infrastructure changes will cause runtime failures.</p>
+<h4 id="broker-message-queue-selection">Broker (message queue) selection<a class="headerlink" href="#broker-message-queue-selection" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th><code>cloud_provider</code></th>
+<th>Endpoint creation queue</th>
+<th>Async inference queue</th>
+<th>Queue delegate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aws</code> (default)</td>
+<td>SQS</td>
+<td>SQS</td>
+<td><code>SQSQueueEndpointResourceDelegate</code></td>
+</tr>
+<tr>
+<td><code>azure</code></td>
+<td>Azure Service Bus</td>
+<td>Azure Service Bus</td>
+<td><code>ASBQueueEndpointResourceDelegate</code></td>
+</tr>
+<tr>
+<td><code>gcp</code></td>
+<td>Redis (Memorystore)</td>
+<td>Redis (Memorystore)</td>
+<td><code>RedisQueueEndpointResourceDelegate</code></td>
+</tr>
+<tr>
+<td><code>onprem</code></td>
+<td>Redis</td>
+<td>Redis</td>
+<td><code>OnPremQueueEndpointResourceDelegate</code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Redis broker is the legacy path</p>
+<p>Redis was the original broker for all clouds. SQS (AWS) and Azure Service Bus (Azure) replaced it due to reliability and scale limitations. GCP and on-prem still use Redis as the broker. Redis-as-broker has known reliability limitations compared to SQS and ASB.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Azure Service Bus idle connection drops</p>
+<p>Azure Service Bus drops idle AMQP connections after approximately 300 seconds. This manifests as random 503 errors on async inference with no obvious configuration cause. The fix is <code>broker_pool_limit=0</code> (disables connection pooling, forcing reconnection on each use). This was resolved in a recent commit — verify your deployment includes the fix before deploying to Azure.</p>
+</div>
+<h4 id="storage-selection">Storage selection<a class="headerlink" href="#storage-selection" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th><code>cloud_provider</code></th>
+<th>Filesystem gateway</th>
+<th>LLM artifact gateway</th>
+<th>File storage gateway</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aws</code> / <code>onprem</code></td>
+<td><code>S3FilesystemGateway</code></td>
+<td><code>S3LLMArtifactGateway</code></td>
+<td><code>S3FileStorageGateway</code></td>
+</tr>
+<tr>
+<td><code>azure</code></td>
+<td><code>ABSFilesystemGateway</code></td>
+<td><code>ABSLLMArtifactGateway</code></td>
+<td><code>ABSFileStorageGateway</code></td>
+</tr>
+<tr>
+<td><code>gcp</code></td>
+<td><code>GCSFilesystemGateway</code></td>
+<td><code>GCSLLMArtifactGateway</code></td>
+<td><code>GCSFileStorageGateway</code></td>
+</tr>
+</tbody>
+</table>
+<p>On-prem uses S3-compatible storage (MinIO or equivalent) via the same S3 gateways as AWS.</p>
+<h4 id="registry-selection">Registry selection<a class="headerlink" href="#registry-selection" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th><code>cloud_provider</code></th>
+<th>Docker repository class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aws</code> (default)</td>
+<td><code>ECRDockerRepository</code></td>
+</tr>
+<tr>
+<td><code>azure</code></td>
+<td><code>ACRDockerRepository</code></td>
+</tr>
+<tr>
+<td><code>gcp</code></td>
+<td><code>GARDockerRepository</code></td>
+</tr>
+<tr>
+<td><code>onprem</code></td>
+<td><code>OnPremDockerRepository</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="inference-autoscaling-metrics-gateway-selection">Inference autoscaling metrics gateway selection<a class="headerlink" href="#inference-autoscaling-metrics-gateway-selection" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th><code>cloud_provider</code></th>
+<th>Autoscaling metrics gateway</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>azure</code></td>
+<td><code>ASBInferenceAutoscalingMetricsGateway</code></td>
+</tr>
+<tr>
+<td>all others</td>
+<td><code>RedisInferenceAutoscalingMetricsGateway</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="fine-tune-repository-selection">Fine-tune repository selection<a class="headerlink" href="#fine-tune-repository-selection" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th><code>cloud_provider</code></th>
+<th>Fine-tune repository</th>
+<th>Fine-tune events repository</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aws</code> / <code>onprem</code></td>
+<td><code>S3FileLLMFineTuneRepository</code></td>
+<td><code>S3FileLLMFineTuneEventsRepository</code></td>
+</tr>
+<tr>
+<td><code>azure</code></td>
+<td><code>ABSFileLLMFineTuneRepository</code></td>
+<td><code>ABSFileLLMFineTuneEventsRepository</code></td>
+</tr>
+<tr>
+<td><code>gcp</code></td>
+<td><code>GCSFileLLMFineTuneRepository</code></td>
+<td><code>GCSFileLLMFineTuneEventsRepository</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="34-gpu-and-hardware-configuration">3.4 GPU and Hardware Configuration<a class="headerlink" href="#34-gpu-and-hardware-configuration" title="Permanent link">&para;</a></h3>
+<h4 id="node-selectors-and-gpu-labels">Node selectors and GPU labels<a class="headerlink" href="#node-selectors-and-gpu-labels" title="Permanent link">&para;</a></h4>
+<p>Inference pods are scheduled to GPU nodes using the <code>k8s.amazonaws.com/accelerator</code> node label. This label must be present on GPU nodes before endpoints can be created. The GPU types referenced across model engine configuration:</p>
+<table>
+<thead>
+<tr>
+<th>Label value</th>
+<th>GPU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nvidia-ampere-a10</code></td>
+<td>NVIDIA A10</td>
+</tr>
+<tr>
+<td><code>nvidia-ampere-a100</code></td>
+<td>NVIDIA A100</td>
+</tr>
+<tr>
+<td><code>nvidia-tesla-t4</code></td>
+<td>NVIDIA T4</td>
+</tr>
+<tr>
+<td><code>nvidia-hopper-h100</code></td>
+<td>NVIDIA H100 (full)</td>
+</tr>
+<tr>
+<td><code>nvidia-hopper-h100-1g20gb</code></td>
+<td>NVIDIA H100 (MIG 1g.20gb)</td>
+</tr>
+<tr>
+<td><code>nvidia-hopper-h100-3g40gb</code></td>
+<td>NVIDIA H100 (MIG 3g.40gb)</td>
+</tr>
+</tbody>
+</table>
+<p>GPU nodes must have the <code>nvidia.com/gpu: NoSchedule</code> taint that GPU inference pods tolerate. The NVIDIA GPU Operator must be installed and the driver must be functional on every GPU node (<code>nvidia-smi</code> must succeed).</p>
+<h4 id="balloon-pods-and-gpu-node-warming">Balloon pods and GPU node warming<a class="headerlink" href="#balloon-pods-and-gpu-node-warming" title="Permanent link">&para;</a></h4>
+<p>The <code>balloons</code> helm value creates one low-priority Deployment per accelerator type. Each balloon Deployment occupies a configurable number of replicas (<code>replicaCount</code>) on the corresponding node type, requesting GPU resources to prevent the cluster autoscaler from scaling down GPU nodes between inference workloads.</p>
+<p>The <code>balloonConfig.reserveHighPriority: true</code> flag restricts eviction to only high-priority pods. When a real inference pod is scheduled, it evicts balloon pods to claim GPU resources. Setting <code>replicaCount: 0</code> for a GPU type disables warming for that node type.</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span style="color: #3D7B7B; font-style: italic"># Example: keep 2 H100 nodes and 1 A10 node warm</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span style="color: #008000; font-weight: bold">balloonConfig</span>:
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">reserveHighPriority</span>:<span style="color: #BBB"> </span>true
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span style="color: #008000; font-weight: bold">balloons</span>:
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span style="color: #BBB">  </span>-<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">acceleratorName</span>:<span style="color: #BBB"> </span>nvidia-hopper-h100
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">replicaCount</span>:<span style="color: #BBB"> </span>2
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">gpuCount</span>:<span style="color: #BBB"> </span>4
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span style="color: #BBB">  </span>-<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">acceleratorName</span>:<span style="color: #BBB"> </span>nvidia-ampere-a10
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">replicaCount</span>:<span style="color: #BBB"> </span>1
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span style="color: #BBB">  </span>-<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">acceleratorName</span>:<span style="color: #BBB"> </span>cpu
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">replicaCount</span>:<span style="color: #BBB"> </span>0<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># disabled</span>
+</code></pre></div>
+<h4 id="recommendedhardware-auto-selection"><code>recommendedHardware</code> auto-selection<a class="headerlink" href="#recommendedhardware-auto-selection" title="Permanent link">&para;</a></h4>
+<p>The <code>recommendedHardware</code> helm value provides two lookup tables used by the LLM endpoint service:</p>
+<ul>
+<li><code>byGpuMemoryGb</code>: Matches on <code>gpu_memory_le</code> (less-than-or-equal GB of model GPU memory). Selects GPU type, GPU count, CPU, memory, storage, and <code>nodes_per_worker</code>.</li>
+<li><code>byModelName</code>: Named overrides that take precedence over the <code>byGpuMemoryGb</code> table for specific models.</li>
+</ul>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span style="color: #008000; font-weight: bold">recommendedHardware</span>:
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">byGpuMemoryGb</span>:
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span style="color: #BBB">    </span>-<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">gpu_memory_le</span>:<span style="color: #BBB"> </span>24
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cpus</span>:<span style="color: #BBB"> </span>10
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">gpus</span>:<span style="color: #BBB"> </span>1
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">memory</span>:<span style="color: #BBB"> </span>24Gi
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">storage</span>:<span style="color: #BBB"> </span>80Gi
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">gpu_type</span>:<span style="color: #BBB"> </span>nvidia-ampere-a10
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">nodes_per_worker</span>:<span style="color: #BBB"> </span>1
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span style="color: #BBB">    </span>-<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">gpu_memory_le</span>:<span style="color: #BBB"> </span>180
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cpus</span>:<span style="color: #BBB"> </span>20
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">gpus</span>:<span style="color: #BBB"> </span>2
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">memory</span>:<span style="color: #BBB"> </span>160Gi
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">storage</span>:<span style="color: #BBB"> </span>160Gi
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">gpu_type</span>:<span style="color: #BBB"> </span>nvidia-hopper-h100
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">nodes_per_worker</span>:<span style="color: #BBB"> </span>1
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span style="color: #BBB">    </span>-<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">gpu_memory_le</span>:<span style="color: #BBB"> </span>640
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cpus</span>:<span style="color: #BBB"> </span>80
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">gpus</span>:<span style="color: #BBB"> </span>8
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">memory</span>:<span style="color: #BBB"> </span>800Gi
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">storage</span>:<span style="color: #BBB"> </span>640Gi
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">gpu_type</span>:<span style="color: #BBB"> </span>nvidia-hopper-h100
+<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">nodes_per_worker</span>:<span style="color: #BBB"> </span>2<span style="color: #BBB">       </span><span style="color: #3D7B7B; font-style: italic"># triggers LWS creation</span>
+<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">byModelName</span>:
+<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span style="color: #BBB">    </span>-<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">name</span>:<span style="color: #BBB"> </span>deepseek-coder-v2
+<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cpus</span>:<span style="color: #BBB"> </span>160
+<a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">gpus</span>:<span style="color: #BBB"> </span>8
+<a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">memory</span>:<span style="color: #BBB"> </span>800Gi
+<a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">storage</span>:<span style="color: #BBB"> </span>640Gi
+<a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">gpu_type</span>:<span style="color: #BBB"> </span>nvidia-hopper-h100
+<a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">nodes_per_worker</span>:<span style="color: #BBB"> </span>1
+</code></pre></div>
+<p>When <code>nodes_per_worker &gt; 1</code>, the LLM endpoint service creates a multi-node (LWS) endpoint instead of a regular Deployment. This is the mechanism by which large models are automatically placed on multi-node configurations without requiring the caller to specify resource details.</p>
+<h4 id="imagecache"><code>imageCache</code><a class="headerlink" href="#imagecache" title="Permanent link">&para;</a></h4>
+<p>The <code>imageCache</code> helm value defines per-node-type image pre-pulling configuration. Each entry specifies a <code>nodeSelector</code> and optional tolerations matching a GPU node pool. Pre-pulling model images onto nodes reduces inference pod startup time. This is distinct from balloon pods: balloon pods keep nodes allocated; <code>imageCache</code> keeps images warm on those nodes.</p>
+<hr />
+<h2 id="4-component-reference">4. Component Reference<a class="headerlink" href="#4-component-reference" title="Permanent link">&para;</a></h2>
+<h3 id="41-k8s-cacher">4.1 K8s Cacher<a class="headerlink" href="#41-k8s-cacher" title="Permanent link">&para;</a></h3>
+<p><strong>What it does:</strong>
+The K8s Cacher is a standalone Deployment (typically 1 replica) that runs a continuous polling loop. Every <code>sleep_interval_seconds</code> (default: <strong>15 seconds</strong>), it:</p>
+<ol>
+<li>Reads the current state of all model endpoint Deployments and LeaderWorkerSets from the K8s API</li>
+<li>Writes endpoint status records to Redis with a TTL of <code>ttl_seconds</code> (default: <strong>60 seconds</strong>)</li>
+<li>Updates the image cache state (for the <code>imageCache</code> feature)</li>
+</ol>
+<p><strong>Why it exists:</strong>
+Direct K8s API calls from Gateway pods were unreliable at scale — requests would time out under load. The Cacher decouples Gateway reads from K8s API polling, with Redis as the intermediary. The Gateway reads exclusively from Redis for endpoint status; it never calls the K8s API for status lookups at request time.</p>
+<p><strong>Code path:</strong>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>k8s_cache.py (main loop, --sleep-interval-seconds)
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  └─ ModelEndpointCacheWriteService.execute()
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>       ├─ LiveEndpointResourceGateway  →  K8s API (reads Deployments / LWS)
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>       └─ RedisModelEndpointCacheRepository.write(ttl=60s)
+</code></pre></div></p>
+<p><strong>Startup behavior:</strong>
+The cacher calls <code>load_incluster_config()</code> first (for in-cluster operation), falling back to <code>load_kube_config()</code> for local development. It writes a readiness file after the first successful loop iteration to gate its <code>readinessProbe</code> — the pod is not considered ready until at least one cache cycle has completed successfully.</p>
+<div class="admonition danger">
+<p class="admonition-title">Failure mode: Redis auth broken → endpoint status <code>unknown</code></p>
+<p>If the cacher cannot write to Redis — due to misconfigured Redis auth, network partition, or expired credentials — it fails silently from the Gateway's perspective. The Gateway reads stale or absent Redis entries and returns endpoint status as <code>"unknown"</code>, not an error and not <code>INITIALIZING</code>.</p>
+<p><strong>This is the most deceptive failure mode in model engine.</strong> An endpoint may be fully <code>READY</code> and serving traffic, but the status API returns <code>"unknown"</code> indefinitely because the cacher-to-Redis path is broken.</p>
+<p>How to diagnose: check cacher pod logs for Redis connection errors. Verify Redis auth credentials and network reachability from the cacher pod. In smoke tests, the signature is: Service Builder logs show the endpoint reached <code>READY</code>, but <code>GET /v1/model-endpoints/{id}</code> returns <code>"unknown"</code> without ever transitioning.</p>
+</div>
+<p><strong>Parameters (configurable via CLI args, set in helm Deployment spec):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--ttl-seconds</code></td>
+<td><code>60</code></td>
+<td>Redis TTL for cache entries</td>
+</tr>
+<tr>
+<td><code>--sleep-interval-seconds</code></td>
+<td><code>15</code></td>
+<td>Poll interval between K8s API reads</td>
+</tr>
+<tr>
+<td><code>--redis-url-override</code></td>
+<td>None</td>
+<td>Override the Redis URL from <code>hmi_config.cache_redis_url</code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">TTL must be greater than sleep interval</p>
+<p>If <code>ttl_seconds &lt; sleep_interval_seconds</code>, cache entries expire between writes, causing cache misses on every Gateway status request. The cacher logs a warning if this condition is detected, but does not fail or exit. The default values (60s TTL, 15s interval) satisfy this requirement with a 4x margin.</p>
+</div>
+<h3 id="42-balloon-pods">4.2 Balloon Pods<a class="headerlink" href="#42-balloon-pods" title="Permanent link">&para;</a></h3>
+<p><strong>What they do:</strong>
+Balloon pods are low-priority Deployments that run an <code>ubuntu</code> container with an infinite sleep command. One Deployment exists per GPU type, configured via the <code>balloons</code> helm value. They request GPU resources, causing the cluster autoscaler to provision GPU nodes and keep them allocated even when no inference pods are running.</p>
+<p><strong>Why they exist:</strong>
+GPU nodes are expensive to run continuously but slow to provision (5–15 minutes for a new node to join and be ready). Without balloon pods, the cluster autoscaler scales GPU nodes down during idle periods. When a new endpoint is created, the cluster must provision a fresh GPU node, and the 30-minute Celery task timeout (§2.1) starts counting during this wait. Balloon pods eliminate this cold-start delay.</p>
+<p><strong>How eviction works:</strong>
+Balloon pods are created with a low PriorityClass. When a real inference pod needs to be scheduled on a node occupied by a balloon pod, Kubernetes evicts the balloon pod (preemption). The <code>balloonConfig.reserveHighPriority: true</code> setting restricts preemption to only high-priority pods, preventing lower-priority workloads from accidentally evicting balloons and defeating the warming strategy.</p>
+<p><strong>Configuration:</strong>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span style="color: #008000; font-weight: bold">balloonConfig</span>:
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">reserveHighPriority</span>:<span style="color: #BBB"> </span>true
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span style="color: #008000; font-weight: bold">balloons</span>:
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span style="color: #BBB">  </span>-<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">acceleratorName</span>:<span style="color: #BBB"> </span>nvidia-ampere-a10
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">replicaCount</span>:<span style="color: #BBB"> </span>1
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span style="color: #BBB">  </span>-<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">acceleratorName</span>:<span style="color: #BBB"> </span>nvidia-ampere-a100
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">replicaCount</span>:<span style="color: #BBB"> </span>0<span style="color: #BBB">       </span><span style="color: #3D7B7B; font-style: italic"># disabled — no A100 node warming</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span style="color: #BBB">  </span>-<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">acceleratorName</span>:<span style="color: #BBB"> </span>nvidia-hopper-h100
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">replicaCount</span>:<span style="color: #BBB"> </span>2
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">gpuCount</span>:<span style="color: #BBB"> </span>4<span style="color: #BBB">           </span><span style="color: #3D7B7B; font-style: italic"># request 4 GPUs per balloon pod</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span style="color: #BBB">  </span>-<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">acceleratorName</span>:<span style="color: #BBB"> </span>cpu
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">replicaCount</span>:<span style="color: #BBB"> </span>0
+</code></pre></div></p>
+<div class="admonition note">
+<p class="admonition-title"><code>replicaCount: 0</code> disables a balloon type</p>
+<p>Setting <code>replicaCount: 0</code> for a GPU type disables node warming for that type. Cold-start delays will occur on the first endpoint creation after a period of inactivity on that GPU type. This is the default for all GPU types in <code>values_sample.yaml</code> — production deployments should set non-zero counts for GPU types in active use.</p>
+</div>
+<h3 id="43-multi-node-endpoints-lws">4.3 Multi-node Endpoints (LWS)<a class="headerlink" href="#43-multi-node-endpoints-lws" title="Permanent link">&para;</a></h3>
+<p><strong>What they are:</strong>
+Multi-node endpoints use <code>LeaderWorkerSet</code> (LWS), a Kubernetes CRD designed for distributed inference workloads that span multiple nodes. LWS is required for models too large to fit on a single node's GPU memory (e.g., 70B+ parameter models requiring more than 8 GPUs).</p>
+<p><strong>How they differ from regular Deployments:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Regular Deployment</th>
+<th>LeaderWorkerSet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>K8s resource kind</td>
+<td><code>Deployment</code></td>
+<td><code>LeaderWorkerSet</code> (CRD)</td>
+</tr>
+<tr>
+<td>Autoscaling</td>
+<td>HPA or KEDA</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>min_workers</code> vs <code>max_workers</code></td>
+<td>Can differ</td>
+<td>Must be equal</td>
+</tr>
+<tr>
+<td>Istio resources created</td>
+<td>VirtualService + DestinationRule</td>
+<td>ServiceEntry only</td>
+</tr>
+<tr>
+<td>K8s Service template</td>
+<td><code>service.yaml</code></td>
+<td><code>lws-service.yaml</code></td>
+</tr>
+<tr>
+<td>Scale-to-zero</td>
+<td>Supported (via KEDA)</td>
+<td>Not supported</td>
+</tr>
+<tr>
+<td>Capacity change</td>
+<td>Update <code>min_workers</code>/<code>max_workers</code></td>
+<td>Delete and recreate</td>
+</tr>
+</tbody>
+</table>
+<p><strong>When LWS is used:</strong>
+The LLM endpoint service selects LWS automatically when <code>nodes_per_worker &gt; 1</code> in the matched <code>recommendedHardware</code> entry. It can also be specified explicitly in a <code>CreateModelEndpointV1Request</code> by setting <code>nodes_per_worker &gt; 1</code>.</p>
+<p><strong>Resource creation differences in Service Builder:</strong>
+For LWS endpoints, the Service Builder takes a different code branch:</p>
+<ul>
+<li>Creates a <code>LeaderWorkerSet</code> resource instead of a <code>Deployment</code></li>
+<li>Creates the K8s Service from <code>lws-service.yaml</code> (not the standard <code>service.yaml</code>)</li>
+<li>If <code>istio_enabled: true</code>, creates a <code>ServiceEntry</code> (not a <code>VirtualService</code> or <code>DestinationRule</code>) — required because LWS routing uses direct IP address resolution rather than Istio's standard hostname-based VirtualService routing</li>
+<li>Does <strong>not</strong> create an HPA or KEDA ScaledObject</li>
+</ul>
+<p><strong>Istio and LWS routing:</strong>
+LWS endpoints require a workaround for Istio. The Gateway manually resolves the K8s Service cluster IP and sends requests directly to that IP, bypassing Istio's standard VirtualService routing. A <code>ServiceEntry</code> is created to allow this direct IP traffic to pass through Istio's policy enforcement. See <code>live_sync_model_endpoint_inference_gateway.py</code> and <code>live_streaming_model_endpoint_inference_gateway.py</code> for the implementation details.</p>
+<div class="admonition warning">
+<p class="admonition-title">No autoscaling for LWS endpoints</p>
+<p>LeaderWorkerSet endpoints cannot be autoscaled. <code>min_workers</code> must equal <code>max_workers</code> at creation time. If you need different capacity, delete the endpoint and recreate it with the desired worker count. This is a known limitation with no current workaround.</p>
+</div>
+<hr />
+<h2 id="appendix-key-configuration-values-quick-reference">Appendix: Key Configuration Values Quick Reference<a class="headerlink" href="#appendix-key-configuration-values-quick-reference" title="Permanent link">&para;</a></h2>
+<p>The values below have the highest operational impact. Full reference is in <code>helm-values.md</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Default</th>
+<th>Risk</th>
+<th>Impact if wrong</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>db.runDbMigrationScript</code></td>
+<td><code>false</code></td>
+<td><strong>HIGH</strong></td>
+<td>Schema errors on first deploy; no clear error surface</td>
+</tr>
+<tr>
+<td><code>config.values.infra.prometheus_server_address</code></td>
+<td>unset</td>
+<td><strong>HIGH</strong></td>
+<td>KEDA scale-to-zero silently broken</td>
+</tr>
+<tr>
+<td><code>config.values.launch.vllm_repository</code></td>
+<td><code>vllm</code> (relative)</td>
+<td><strong>HIGH</strong></td>
+<td>Resolves to Scale's internal ECR in many envs; image pull fails silently</td>
+</tr>
+<tr>
+<td><code>celeryBrokerType</code></td>
+<td><code>sqs</code></td>
+<td><strong>HIGH</strong></td>
+<td>Wrong broker for cloud → async endpoints broken</td>
+</tr>
+<tr>
+<td><code>config.values.infra.cloud_provider</code></td>
+<td><code>aws</code></td>
+<td><strong>HIGH</strong></td>
+<td>Wrong storage, broker, and auth clients loaded for cloud</td>
+</tr>
+<tr>
+<td><code>balloons[*].replicaCount</code></td>
+<td><code>0</code></td>
+<td><strong>MEDIUM</strong></td>
+<td>No GPU node warming → cold-start delays; risks hitting 30-min Celery timeout</td>
+</tr>
+<tr>
+<td><code>celery_autoscaler.enabled</code></td>
+<td><code>true</code></td>
+<td><strong>MEDIUM</strong></td>
+<td>Async endpoints never scale if disabled</td>
+</tr>
+<tr>
+<td><code>config.values.launch.istio_enabled</code></td>
+<td><code>true</code></td>
+<td><strong>MEDIUM</strong></td>
+<td>Must match actual cluster Istio installation state exactly</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title"><code>db.runDbMigrationScript</code> defaults to <code>false</code></p>
+<p>On first install, the database schema must be initialized. The default <code>false</code> means the migration job does not run, resulting in schema errors at runtime that have no clear error surface. Set <code>db.runDbMigrationScript: true</code> on every first install into a new environment. There is an open TODO to change this default to <code>true</code>.</p>
+</div>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  <form class="md-feedback" name="feedback" hidden>
+    <fieldset>
+      <legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+      <div class="md-feedback__inner">
+        <div class="md-feedback__list">
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="This page was helpful" data-md-value="1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m7 0c0 .8-.7 1.5-1.5 1.5S14 10.3 14 9.5 14.7 8 15.5 8s1.5.7 1.5 1.5m-5 7.73c-1.75 0-3.29-.73-4.19-1.81L9.23 14c.45.72 1.52 1.23 2.77 1.23s2.32-.51 2.77-1.23l1.42 1.42c-.9 1.08-2.44 1.81-4.19 1.81"/></svg>
+            </button>
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="This page could be improved" data-md-value="0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10m-6.5-4c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m2 4.5c1.75 0 3.29.72 4.19 1.81l-1.42 1.42C14.32 16.5 13.25 16 12 16s-2.32.5-2.77 1.23l-1.42-1.42C8.71 14.72 10.25 14 12 14"/></svg>
+            </button>
+          
+        </div>
+        <div class="md-feedback__note">
+          
+            <div data-md-value="1" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for your feedback!
+            </div>
+          
+            <div data-md-value="0" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for your feedback! Help us improve this page by using our <a href="..." target="_blank" rel="noopener">feedback form</a>.
+            </div>
+          
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

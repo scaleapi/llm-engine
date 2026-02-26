@@ -1,0 +1,2757 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The open source engine for fine-tuning large language models.">
+      
+      
+      
+      
+        <link rel="prev" href="../smoke-tests/">
+      
+      
+      
+      <link rel="icon" href="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
+    
+    
+      
+        <title>Cloud Support - LLM Engine</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"IBM Plex Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/index.css">
+    
+      <link rel="stylesheet" href="../../assets/css/extra.css">
+    
+      <link rel="stylesheet" href="../../assets/css/neoteroi.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-N54ZLW5PGC"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-N54ZLW5PGC",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-N54ZLW5PGC",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cloud-support-matrix" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LLM Engine" class="md-header__button md-logo" aria-label="LLM Engine" data-md-component="logo">
+      
+  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LLM Engine
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Cloud Support
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/scaleapi/llm-engine" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    llm-engine
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LLM Engine" class="md-nav__button md-logo" aria-label="LLM Engine" data-md-component="logo">
+      
+  <img src="https://raw.githubusercontent.com/scaleapi/llm-engine/main/docs/_static/favicon-32x32.png" alt="logo">
+
+    </a>
+    LLM Engine
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/scaleapi/llm-engine" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    llm-engine
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../model_zoo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Model Zoo
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/completions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Completions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/fine_tuning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fine-tuning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/rate_limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rate limits
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/self_hosting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Self Hosting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/python_client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Type Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/error_handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integrations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pricing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pricing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Operators
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Operators
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../helm-values/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Helm Values
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../smoke-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Smoke Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Cloud Support
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloud Support
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#section-1-support-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 1: Support Status
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-2-per-cloud-configuration-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 2: Per-Cloud Configuration Reference
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 2: Per-Cloud Configuration Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aws-reference-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      AWS (Reference Configuration)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AWS (Reference Configuration)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Object Storage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-account-irsa" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Account (IRSA)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#image-registry-ecr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Image Registry (ECR)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-provider-flag" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cloud Provider Flag
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Azure
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Azure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object-storage-azure-blob-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Object Storage (Azure Blob Storage)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-account-azure-workload-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Account (Azure Workload Identity)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secret-management-azure-key-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      Secret Management (Azure Key Vault)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#image-registry-acr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Image Registry (ACR)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-provider-flag_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cloud Provider Flag
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      GCP
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GCP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object-storage-gcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Object Storage (GCS)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis-gcp-memorystore" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis (GCP Memorystore)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-account-gcp-workload-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Account (GCP Workload Identity)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#image-registry-gar" class="md-nav__link">
+    <span class="md-ellipsis">
+      Image Registry (GAR)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-provider-flag_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cloud Provider Flag
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-prem" class="md-nav__link">
+    <span class="md-ellipsis">
+      On-prem
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="On-prem">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object-storage-s3-compatible-minio" class="md-nav__link">
+    <span class="md-ellipsis">
+      Object Storage (S3-compatible / MinIO)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Account
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secret-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Secret Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#image-registry-custom" class="md-nav__link">
+    <span class="md-ellipsis">
+      Image Registry (Custom)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-provider-flag_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cloud Provider Flag
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-3-key-behavior-differences" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 3: Key Behavior Differences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 3: Key Behavior Differences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#azure-service-bus-idle-connection-drop-critical" class="md-nav__link">
+    <span class="md-ellipsis">
+      Azure Service Bus — Idle Connection Drop (Critical)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcp-and-on-prem-redis-as-broker-legacy-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      GCP and On-prem — Redis as Broker (Legacy Path)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-4-image-mirroring-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 4: Image Mirroring Requirements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 4: Image Mirroring Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-mirroring-is-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Mirroring Is Required
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#images-to-mirror" class="md-nav__link">
+    <span class="md-ellipsis">
+      Images to Mirror
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-by-step-mirroring-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step-by-Step Mirroring Process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step-by-Step Mirroring Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-authenticate-to-the-source-scales-public-ecr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Authenticate to the source (Scale's public ECR)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-pull-the-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Pull the images
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-tag-and-push-to-your-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Tag and push to your registry
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-update-helm-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Update helm values
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verifying-image-accessibility-before-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verifying Image Accessibility Before Install
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diagnosing-image-pull-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Diagnosing Image Pull Failures
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-5-known-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 5: Known Gaps
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 5: Known Gaps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gcp_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      GCP
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-prem_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      On-prem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Azure
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#section-1-support-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 1: Support Status
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-2-per-cloud-configuration-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 2: Per-Cloud Configuration Reference
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 2: Per-Cloud Configuration Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aws-reference-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      AWS (Reference Configuration)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AWS (Reference Configuration)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Object Storage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-account-irsa" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Account (IRSA)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#image-registry-ecr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Image Registry (ECR)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-provider-flag" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cloud Provider Flag
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Azure
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Azure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object-storage-azure-blob-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Object Storage (Azure Blob Storage)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-account-azure-workload-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Account (Azure Workload Identity)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secret-management-azure-key-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      Secret Management (Azure Key Vault)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#image-registry-acr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Image Registry (ACR)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-provider-flag_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cloud Provider Flag
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      GCP
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GCP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object-storage-gcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Object Storage (GCS)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis-gcp-memorystore" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis (GCP Memorystore)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-account-gcp-workload-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Account (GCP Workload Identity)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#image-registry-gar" class="md-nav__link">
+    <span class="md-ellipsis">
+      Image Registry (GAR)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-provider-flag_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cloud Provider Flag
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-prem" class="md-nav__link">
+    <span class="md-ellipsis">
+      On-prem
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="On-prem">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object-storage-s3-compatible-minio" class="md-nav__link">
+    <span class="md-ellipsis">
+      Object Storage (S3-compatible / MinIO)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Account
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secret-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Secret Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#image-registry-custom" class="md-nav__link">
+    <span class="md-ellipsis">
+      Image Registry (Custom)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-provider-flag_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cloud Provider Flag
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-3-key-behavior-differences" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 3: Key Behavior Differences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 3: Key Behavior Differences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#azure-service-bus-idle-connection-drop-critical" class="md-nav__link">
+    <span class="md-ellipsis">
+      Azure Service Bus — Idle Connection Drop (Critical)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcp-and-on-prem-redis-as-broker-legacy-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      GCP and On-prem — Redis as Broker (Legacy Path)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-4-image-mirroring-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 4: Image Mirroring Requirements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 4: Image Mirroring Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-mirroring-is-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Mirroring Is Required
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#images-to-mirror" class="md-nav__link">
+    <span class="md-ellipsis">
+      Images to Mirror
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-by-step-mirroring-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step-by-Step Mirroring Process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step-by-Step Mirroring Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-authenticate-to-the-source-scales-public-ecr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Authenticate to the source (Scale's public ECR)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-pull-the-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Pull the images
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-tag-and-push-to-your-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Tag and push to your registry
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-update-helm-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Update helm values
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verifying-image-accessibility-before-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verifying Image Accessibility Before Install
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diagnosing-image-pull-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Diagnosing Image Pull Failures
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-5-known-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 5: Known Gaps
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 5: Known Gaps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gcp_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      GCP
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-prem_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      On-prem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Azure
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="cloud-support-matrix">Cloud Support Matrix<a class="headerlink" href="#cloud-support-matrix" title="Permanent link">&para;</a></h1>
+<p><strong>Last updated:</strong> 2026-02-26
+<strong>Owner:</strong> Platform / ML Infra</p>
+<p>This is the canonical reference for deploying model-engine into different cloud environments. It answers the question "what do I set for cloud X?" without requiring you to cross-reference other docs. For the installation runbook and step-by-step setup, see Confluence: <em>Installing Model Engine</em>.</p>
+<hr />
+<h2 id="section-1-support-status">Section 1: Support Status<a class="headerlink" href="#section-1-support-status" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>AWS</th>
+<th>Azure</th>
+<th>GCP</th>
+<th>On-prem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Message broker</td>
+<td>SQS ✅</td>
+<td>Azure Service Bus ✅</td>
+<td>Redis / Memorystore ⚠️</td>
+<td>Redis ⚠️</td>
+</tr>
+<tr>
+<td>Object storage</td>
+<td>S3 ✅</td>
+<td>Azure Blob Storage ✅</td>
+<td>GCS ⚠️</td>
+<td>S3-compatible (MinIO) ⚠️</td>
+</tr>
+<tr>
+<td>Image registry</td>
+<td>ECR ✅</td>
+<td>ACR ✅</td>
+<td>GAR ⚠️</td>
+<td>Custom ⚠️</td>
+</tr>
+<tr>
+<td>Redis auth</td>
+<td>URL or Secrets Manager ✅</td>
+<td>RBAC token via <code>DefaultAzureCredential</code> ✅</td>
+<td>Standard URL ⚠️</td>
+<td>Standard URL ⚠️</td>
+</tr>
+<tr>
+<td>Service account auth</td>
+<td>IRSA ✅</td>
+<td>Azure Workload Identity ✅</td>
+<td>GCP Workload Identity ⚠️</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tested end-to-end</td>
+<td>✅</td>
+<td>✅ (partial)</td>
+<td>⚠️</td>
+<td>⚠️</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Legend:</strong>
+- ✅ Tested in production
+- ⚠️ Implemented in code, not yet tested end-to-end in a real deployment
+- ❌ Not implemented</p>
+<hr />
+<h2 id="section-2-per-cloud-configuration-reference">Section 2: Per-Cloud Configuration Reference<a class="headerlink" href="#section-2-per-cloud-configuration-reference" title="Permanent link">&para;</a></h2>
+<p>All configuration enters the service through two mechanisms:</p>
+<ol>
+<li><strong>Helm values</strong> — rendered into the service ConfigMap and environment variables by the chart templates.</li>
+<li><strong>Service config YAML</strong> (<code>service_config.yaml</code>) — mounted into pods at runtime; its path is set via the <code>DEPLOY_SERVICE_CONFIG_PATH</code> environment variable.</li>
+</ol>
+<p>The <code>config.values</code> block in <code>values.yaml</code> is rendered directly into the service ConfigMap and maps to the fields of <code>HostedModelInferenceServiceConfig</code> (<code>model_engine_server/common/config.py</code>). The <code>infra</code> sub-block maps to <code>InfraConfig</code> (<code>model_engine_server/core/config.py</code>).</p>
+<h3 id="aws-reference-configuration">AWS (Reference Configuration)<a class="headerlink" href="#aws-reference-configuration" title="Permanent link">&para;</a></h3>
+<p>AWS is the primary supported environment. The configuration below is the complete reference; all other clouds show only what differs from this.</p>
+<h4 id="broker">Broker<a class="headerlink" href="#broker" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">celeryBrokerType</span>:<span style="color: #BBB"> </span>sqs
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">sqs_profile</span>:<span style="color: #BBB"> </span>default
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">sqs_queue_policy_template</span>:<span style="color: #BBB"> </span>&gt;
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span style="color: #BBB">        </span><span style="color: #800">{</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span style="color: #BBB">          </span><span style="color: #800">&quot;Version&quot;: &quot;2012-10-17&quot;,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span style="color: #BBB">          </span><span style="color: #800">&quot;Id&quot;: &quot;__default_policy_ID&quot;,</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span style="color: #BBB">          </span><span style="color: #800">&quot;Statement&quot;: [</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span style="color: #BBB">            </span><span style="color: #800">{</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span style="color: #BBB">              </span><span style="color: #800">&quot;Sid&quot;: &quot;__owner_statement&quot;,</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span style="color: #BBB">              </span><span style="color: #800">&quot;Effect&quot;: &quot;Allow&quot;,</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span style="color: #BBB">              </span><span style="color: #800">&quot;Principal&quot;: {&quot;AWS&quot;: &quot;arn:aws:iam::000000000000:root&quot;},</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span style="color: #BBB">              </span><span style="color: #800">&quot;Action&quot;: &quot;sqs:*&quot;,</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span style="color: #BBB">              </span><span style="color: #800">&quot;Resource&quot;: &quot;arn:aws:sqs:us-east-1:000000000000:${queue_name}&quot;</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span style="color: #BBB">            </span><span style="color: #800">},</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span style="color: #BBB">            </span><span style="color: #800">{</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span style="color: #BBB">              </span><span style="color: #800">&quot;Effect&quot;: &quot;Allow&quot;,</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span style="color: #BBB">              </span><span style="color: #800">&quot;Principal&quot;: {&quot;AWS&quot;: &quot;arn:aws:iam::000000000000:role/k8s-main-llm-engine&quot;},</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span style="color: #BBB">              </span><span style="color: #800">&quot;Action&quot;: &quot;sqs:*&quot;,</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span style="color: #BBB">              </span><span style="color: #800">&quot;Resource&quot;: &quot;arn:aws:sqs:us-east-1:000000000000:${queue_name}&quot;</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span style="color: #BBB">            </span><span style="color: #800">}</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span style="color: #BBB">          </span><span style="color: #800">]</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span style="color: #BBB">        </span><span style="color: #800">}</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">sqs_queue_tag_template</span>:<span style="color: #BBB"> </span>&gt;
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span style="color: #BBB">        </span><span style="color: #800">{</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span style="color: #BBB">          </span><span style="color: #800">&quot;Spellbook-Serve-Endpoint-Id&quot;: &quot;${endpoint_id}&quot;,</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span style="color: #BBB">          </span><span style="color: #800">&quot;Spellbook-Serve-Endpoint-Name&quot;: &quot;${endpoint_name}&quot;,</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span style="color: #BBB">          </span><span style="color: #800">&quot;Spellbook-Serve-Endpoint-Created-By&quot;: &quot;${endpoint_created_by}&quot;</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span style="color: #BBB">        </span><span style="color: #800">}</span>
+</code></pre></div>
+<p>SQS queues are created automatically per endpoint by <code>SQSQueueEndpointResourceDelegate</code>. No pre-provisioning required.</p>
+<h4 id="object-storage">Object Storage<a class="headerlink" href="#object-storage" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">s3_bucket</span>:<span style="color: #BBB"> </span>llm-engine
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">default_region</span>:<span style="color: #BBB"> </span>us-east-1
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">s3_file_llm_fine_tuning_job_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;s3://llm-engine/llm-ft-job-repository&quot;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">hf_user_fine_tuned_weights_prefix</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;s3://llm-engine/fine_tuned_weights&quot;</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">batch_inference_vllm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;llm-engine/batch-infer-vllm&quot;</span>
+</code></pre></div>
+<p>Auth is handled by IRSA — the IAM role attached to the service account is used transparently by boto3.</p>
+<h4 id="redis">Redis<a class="headerlink" href="#redis" title="Permanent link">&para;</a></h4>
+<p>Exactly one of the following must be set:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic"># Option A — direct URL</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cache_redis_aws_url</span>:<span style="color: #BBB"> </span>redis://llm-engine-prod-cache.use1.cache.amazonaws.com:6379/15
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic"># Option B — Secrets Manager (recommended for production)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic"># Secret must contain a key &quot;cache-url&quot; with the full Redis URL including db number</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cache_redis_aws_secret_name</span>:<span style="color: #BBB"> </span>sample-prod/redis-credentials
+</code></pre></div>
+<p>Also set the matching <code>redis_host</code> under <code>infra</code> for the Celery autoscaler:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">redis_host</span>:<span style="color: #BBB"> </span>llm-engine-prod-cache.use1.cache.amazonaws.com
+</code></pre></div>
+<h4 id="service-account-irsa">Service Account (IRSA)<a class="headerlink" href="#service-account-irsa" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span style="color: #008000; font-weight: bold">serviceAccount</span>:
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">annotations</span>:
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">eks.amazonaws.com/role-arn</span>:<span style="color: #BBB"> </span>arn:aws:iam::000000000000:role/k8s-main-llm-engine
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span style="color: #008000; font-weight: bold">imageBuilderServiceAccount</span>:
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">annotations</span>:
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">eks.amazonaws.com/role-arn</span>:<span style="color: #BBB"> </span>arn:aws:iam::000000000000:role/k8s-main-llm-engine-image-builder
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span style="color: #008000; font-weight: bold">serviceTemplate</span>:
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">createServiceAccount</span>:<span style="color: #BBB"> </span>true
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">serviceAccountName</span>:<span style="color: #BBB"> </span>model-engine
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">serviceAccountAnnotations</span>:
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">eks.amazonaws.com/role-arn</span>:<span style="color: #BBB"> </span>arn:aws:iam::000000000000:role/llm-engine
+</code></pre></div>
+<h4 id="image-registry-ecr">Image Registry (ECR)<a class="headerlink" href="#image-registry-ecr" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span style="color: #008000; font-weight: bold">image</span>:
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">gatewayRepository</span>:<span style="color: #BBB"> </span>000000000000.dkr.ecr.us-east-1.amazonaws.com/model-engine
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">builderRepository</span>:<span style="color: #BBB"> </span>000000000000.dkr.ecr.us-east-1.amazonaws.com/model-engine
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">cacherRepository</span>:<span style="color: #BBB">  </span>000000000000.dkr.ecr.us-east-1.amazonaws.com/model-engine
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">forwarderRepository</span>:<span style="color: #BBB"> </span>000000000000.dkr.ecr.us-east-1.amazonaws.com/model-engine
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">docker_repo_prefix</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;000000000000.dkr.ecr.us-east-1.amazonaws.com&quot;</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">ml_account_id</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;000000000000&quot;</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">vllm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;000000000000.dkr.ecr.us-east-1.amazonaws.com/vllm&quot;</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">tensorrt_llm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;000000000000.dkr.ecr.us-east-1.amazonaws.com/tensorrt-llm&quot;</span>
+</code></pre></div>
+<h4 id="cloud-provider-flag">Cloud Provider Flag<a class="headerlink" href="#cloud-provider-flag" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cloud_provider</span>:<span style="color: #BBB"> </span>aws
+</code></pre></div>
+<p>This is the master switch. It controls which storage client, broker, and image registry class are instantiated at runtime (see <code>model_engine_server/api/dependencies.py</code>).</p>
+<hr />
+<h3 id="azure">Azure<a class="headerlink" href="#azure" title="Permanent link">&para;</a></h3>
+<p>The following values differ from the AWS reference configuration. All other values (autoscaling, balloons, networking, etc.) remain the same.</p>
+<h4 id="broker_1">Broker<a class="headerlink" href="#broker_1" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span style="color: #008000; font-weight: bold">celeryBrokerType</span>:<span style="color: #BBB"> </span>servicebus
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span style="color: #008000; font-weight: bold">azure</span>:
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">servicebus_namespace</span>:<span style="color: #BBB"> </span>my-servicebus-namespace<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic"># the part before .servicebus.windows.net</span>
+</code></pre></div>
+<p>The broker URL is constructed as:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>azureservicebus://DefaultAzureCredential@{servicebus_namespace}.servicebus.windows.net
+</code></pre></div>
+<p>Auth uses <code>DefaultAzureCredential</code>, which picks up the Workload Identity token automatically. No connection string or SAS token is needed.</p>
+<div class="admonition warning">
+<p class="admonition-title">Azure Service Bus drops idle AMQP connections after 300 seconds</p>
+<p>Azure Service Bus force-closes idle AMQP connections with <code>amqp:connection:forced</code> after 300 seconds of inactivity. This manifests as a <strong>503 error on the first inference request following an idle period</strong> — it looks like a random backend failure, not a configuration problem, which makes it very hard to diagnose without knowing about this behavior.</p>
+<p><strong>Fix (applied in commits #765 and #767):</strong> The Celery app now sends AMQP keepalive heartbeats every 30 seconds via <code>uamqp_keep_alive_interval</code>, uses Celery's default connection pool (limit=10) to keep connections alive between requests, and enables <code>broker_connection_retry</code> so producers reconnect transparently on stale connections.</p>
+<p>The keepalive interval is configurable via the <code>SERVICEBUS_KEEP_ALIVE_INTERVAL</code> environment variable (default: <code>30</code>).</p>
+<p><strong>Minimum required version:</strong> <code>azure-servicebus &gt;= 7.14.3</code>. Version 7.11.4 has a known regression (<a href="https://github.com/Azure/azure-sdk-for-python/issues/34212">azure-sdk-for-python#34212</a>) where idle AMQP connections are not properly managed.</p>
+<p>If you are seeing intermittent 503s on Azure after idle periods, verify you are running a version of model-engine that includes commit <code>9deb59f1</code> or later.</p>
+</div>
+<h4 id="object-storage-azure-blob-storage">Object Storage (Azure Blob Storage)<a class="headerlink" href="#object-storage-azure-blob-storage" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span style="color: #008000; font-weight: bold">azure</span>:
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">abs_account_name</span>:<span style="color: #BBB"> </span>mystorageaccount
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">abs_container_name</span>:<span style="color: #BBB"> </span>llm-engine
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">s3_file_llm_fine_tuning_job_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;az://llm-engine/llm-ft-job-repository&quot;</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">hf_user_fine_tuned_weights_prefix</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;az://llm-engine/fine_tuned_weights&quot;</span>
+</code></pre></div>
+<p><code>ABS_ACCOUNT_NAME</code> and <code>ABS_CONTAINER_NAME</code> are injected as environment variables by the chart templates (<code>_helpers.tpl</code>). Storage auth uses <code>DefaultAzureCredential</code> (Workload Identity).</p>
+<p>From <code>model_engine_server/common/io.py</code>, the <code>open_wrapper</code> function switches to <code>BlobServiceClient</code> when <code>cloud_provider == "azure"</code>:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>client <span style="color: #666">=</span> BlobServiceClient(
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span style="color: #BA2121">f&quot;https://</span><span style="color: #A45A77; font-weight: bold">{</span>os<span style="color: #666">.</span>getenv(<span style="color: #BA2121">&#39;ABS_ACCOUNT_NAME&#39;</span>)<span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BA2121">.blob.core.windows.net&quot;</span>,
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    DefaultAzureCredential(),
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>)
+</code></pre></div>
+<h4 id="redis_1">Redis<a class="headerlink" href="#redis_1" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cache_redis_azure_host</span>:<span style="color: #BBB"> </span>my-redis-cache.redis.cache.windows.net:6380
+</code></pre></div>
+<p>Do <strong>not</strong> set <code>cache_redis_aws_url</code> or <code>cache_redis_aws_secret_name</code> for Azure. The <code>cache_redis_url</code> property in <code>HostedModelInferenceServiceConfig</code> detects <code>cache_redis_azure_host</code> and builds a <code>rediss://</code> URL using an RBAC token fetched at runtime via <code>DefaultAzureCredential</code>:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>username <span style="color: #666">=</span> os<span style="color: #666">.</span>getenv(<span style="color: #BA2121">&quot;AZURE_OBJECT_ID&quot;</span>)
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>token <span style="color: #666">=</span> DefaultAzureCredential()<span style="color: #666">.</span>get_token(<span style="color: #BA2121">&quot;https://redis.azure.com/.default&quot;</span>)
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>password <span style="color: #666">=</span> token<span style="color: #666">.</span>token
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span style="color: #008000; font-weight: bold">return</span> <span style="color: #BA2121">f&quot;rediss://</span><span style="color: #A45A77; font-weight: bold">{</span>username<span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BA2121">:</span><span style="color: #A45A77; font-weight: bold">{</span>password<span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BA2121">@</span><span style="color: #A45A77; font-weight: bold">{</span><span style="color: #008000">self</span><span style="color: #666">.</span>cache_redis_azure_host<span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BA2121">&quot;</span>
+</code></pre></div>
+<p>The token expiry timestamp is tracked globally and the aioredis connection pool is recreated automatically when the token expires (<code>get_or_create_aioredis_pool</code> in <code>dependencies.py</code>).</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span style="color: #008000; font-weight: bold">azure</span>:
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">object_id</span>:<span style="color: #BBB"> </span>00000000-0000-0000-0000-000000000000<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># injected as AZURE_OBJECT_ID</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">client_id</span>:<span style="color: #BBB"> </span>00000000-0000-0000-0000-000000000000<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># used for Workload Identity</span>
+</code></pre></div>
+<h4 id="service-account-azure-workload-identity">Service Account (Azure Workload Identity)<a class="headerlink" href="#service-account-azure-workload-identity" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span style="color: #008000; font-weight: bold">azure</span>:
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">identity_name</span>:<span style="color: #BBB"> </span>my-managed-identity
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">client_id</span>:<span style="color: #BBB"> </span>00000000-0000-0000-0000-000000000000
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span style="color: #008000; font-weight: bold">serviceAccount</span>:
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">annotations</span>:
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">azure.workload.identity/client-id</span>:<span style="color: #BBB"> </span>00000000-0000-0000-0000-000000000000
+</code></pre></div>
+<p>The chart injects <code>AZURE_CLIENT_ID</code> and <code>AZURE_OBJECT_ID</code> as environment variables into all pods. KEDA uses a <code>TriggerAuthentication</code> resource with <code>provider: azure-workload</code> and the same <code>client_id</code>.</p>
+<h4 id="secret-management-azure-key-vault">Secret Management (Azure Key Vault)<a class="headerlink" href="#secret-management-azure-key-vault" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span style="color: #008000; font-weight: bold">keyvaultName</span>:<span style="color: #BBB"> </span>my-llm-engine-keyvault
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span style="color: #008000; font-weight: bold">azure</span>:
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">keyvault_name</span>:<span style="color: #BBB"> </span>my-llm-engine-keyvault<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic"># injected as KEYVAULT_NAME env var</span>
+</code></pre></div>
+<p>Key Vault is required for Azure deployments. Database credentials can be pulled from Key Vault via <code>cloudDatabaseSecretName</code>, or supplied as a Kubernetes secret:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span style="color: #008000; font-weight: bold">secrets</span>:
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">cloudDatabaseSecretName</span>:<span style="color: #BBB"> </span>my-db-secret<span style="color: #BBB">          </span><span style="color: #3D7B7B; font-style: italic"># Key Vault secret name</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic"># OR</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">kubernetesDatabaseSecretName</span>:<span style="color: #BBB"> </span>llm-engine-postgres-credentials<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic"># K8s secret (simpler)</span>
+</code></pre></div>
+<h4 id="image-registry-acr">Image Registry (ACR)<a class="headerlink" href="#image-registry-acr" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span style="color: #008000; font-weight: bold">image</span>:
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">gatewayRepository</span>:<span style="color: #BBB"> </span>myregistry.azurecr.io/model-engine
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">builderRepository</span>:<span style="color: #BBB"> </span>myregistry.azurecr.io/model-engine
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">cacherRepository</span>:<span style="color: #BBB">  </span>myregistry.azurecr.io/model-engine
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">forwarderRepository</span>:<span style="color: #BBB"> </span>myregistry.azurecr.io/model-engine
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">docker_repo_prefix</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;myregistry.azurecr.io&quot;</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">vllm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;myregistry.azurecr.io/vllm&quot;</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">tensorrt_llm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;myregistry.azurecr.io/tensorrt-llm&quot;</span>
+</code></pre></div>
+<h4 id="cloud-provider-flag_1">Cloud Provider Flag<a class="headerlink" href="#cloud-provider-flag_1" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cloud_provider</span>:<span style="color: #BBB"> </span>azure
+</code></pre></div>
+<hr />
+<h3 id="gcp">GCP<a class="headerlink" href="#gcp" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">GCP is not tested end-to-end</p>
+<p>GCP support is implemented in code (added in commit #750, <code>f436d25e</code>) but has not been validated in a real deployment. These values are derived from the source code. Treat this section as a starting point; expect to debug and iterate. When you complete a GCP deployment, update this section and write a Confluence runbook.</p>
+</div>
+<p>The following values differ from the AWS reference configuration.</p>
+<h4 id="broker_2">Broker<a class="headerlink" href="#broker_2" title="Permanent link">&para;</a></h4>
+<p>GCP uses Redis (Google Memorystore) as the Celery broker. This is the <strong>legacy broker path</strong> — Redis was replaced by SQS (AWS) and Azure Service Bus (Azure) due to reliability limitations at scale. See Section 3 for known limitations.</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span style="color: #008000; font-weight: bold">celery_broker_type_redis</span>:<span style="color: #BBB"> </span>true<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic"># or celeryBrokerType: elasticache</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span style="color: #008000; font-weight: bold">redisHost</span>:<span style="color: #BBB"> </span>my-memorystore-instance.redis.cache.googleapis.com
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span style="color: #008000; font-weight: bold">redisPort</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;6379&quot;</span>
+</code></pre></div>
+<p>The chart injects <code>REDIS_HOST</code> and <code>REDIS_PORT</code> as environment variables. <code>RedisQueueEndpointResourceDelegate</code> is selected for GCP in <code>dependencies.py</code>:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span style="color: #008000; font-weight: bold">elif</span> infra_config()<span style="color: #666">.</span>cloud_provider <span style="color: #666">==</span> <span style="color: #BA2121">&quot;gcp&quot;</span>:
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    queue_delegate <span style="color: #666">=</span> RedisQueueEndpointResourceDelegate(redis_client<span style="color: #666">=</span>redis_client)
+</code></pre></div>
+<h4 id="object-storage-gcs">Object Storage (GCS)<a class="headerlink" href="#object-storage-gcs" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">s3_file_llm_fine_tuning_job_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;gs://my-bucket/llm-ft-job-repository&quot;</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">hf_user_fine_tuned_weights_prefix</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;gs://my-bucket/fine_tuned_weights&quot;</span>
+</code></pre></div>
+<p>Storage auth uses GCP Workload Identity via Application Default Credentials (ADC). <code>GCSFilesystemGateway</code> uses <code>gcloud-aio-storage</code> and <code>google-cloud-storage</code> — no additional credential configuration is needed if Workload Identity is properly configured on the node pool.</p>
+<h4 id="redis-gcp-memorystore">Redis (GCP Memorystore)<a class="headerlink" href="#redis-gcp-memorystore" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cache_redis_onprem_url</span>:<span style="color: #BBB"> </span>redis://my-memorystore-instance.redis.cache.googleapis.com:6379/0
+</code></pre></div>
+<p>Alternatively, <code>cache_redis_aws_url</code> is also accepted (the on-prem fallback path in <code>config.py</code> accepts it with a log warning). The same Redis instance serves as both the caching layer and the Celery broker.</p>
+<h4 id="service-account-gcp-workload-identity">Service Account (GCP Workload Identity)<a class="headerlink" href="#service-account-gcp-workload-identity" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span style="color: #008000; font-weight: bold">serviceAccount</span>:
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">annotations</span>:
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">iam.gke.io/gcp-service-account</span>:<span style="color: #BBB"> </span>model-engine@my-project.iam.gserviceaccount.com
+</code></pre></div>
+<p>The specific annotation format depends on your GKE setup (standard Workload Identity vs. Workload Identity Federation). ADC picks up the bound service account automatically.</p>
+<h4 id="image-registry-gar">Image Registry (GAR)<a class="headerlink" href="#image-registry-gar" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span style="color: #008000; font-weight: bold">image</span>:
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">gatewayRepository</span>:<span style="color: #BBB"> </span>us-docker.pkg.dev/my-project/my-repo/model-engine
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">builderRepository</span>:<span style="color: #BBB"> </span>us-docker.pkg.dev/my-project/my-repo/model-engine
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">cacherRepository</span>:<span style="color: #BBB">  </span>us-docker.pkg.dev/my-project/my-repo/model-engine
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">forwarderRepository</span>:<span style="color: #BBB"> </span>us-docker.pkg.dev/my-project/my-repo/model-engine
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic"># Must be parseable as {location}-docker.pkg.dev/{project}/{repository}</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">docker_repo_prefix</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;us-docker.pkg.dev/my-project/my-repo&quot;</span>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">vllm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;us-docker.pkg.dev/my-project/my-repo/vllm&quot;</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">tensorrt_llm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;us-docker.pkg.dev/my-project/my-repo/tensorrt-llm&quot;</span>
+</code></pre></div>
+<p><code>GARDockerRepository</code> parses <code>docker_repo_prefix</code> by splitting on <code>/</code> to extract <code>(location, project, repository)</code> and calls the Artifact Registry API using ADC. Image <strong>builds</strong> are not supported via GAR — <code>build_image</code> raises <code>NotImplementedError</code>.</p>
+<h4 id="cloud-provider-flag_2">Cloud Provider Flag<a class="headerlink" href="#cloud-provider-flag_2" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cloud_provider</span>:<span style="color: #BBB"> </span>gcp
+</code></pre></div>
+<hr />
+<h3 id="on-prem">On-prem<a class="headerlink" href="#on-prem" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">On-prem is not tested end-to-end</p>
+<p>On-prem support is implemented in code (added in commit #744, <code>ecc8ff42</code>) but has not been validated in a full production deployment. Known limitations: Redis-only broker (no managed queue service), no managed secret storage, NVIDIA driver setup is not covered here. Treat this section as a starting point.</p>
+</div>
+<p>On-prem uses Redis as both the Celery broker and the caching layer, and S3-compatible object storage (typically MinIO).</p>
+<h4 id="broker_3">Broker<a class="headerlink" href="#broker_3" title="Permanent link">&para;</a></h4>
+<p>On-prem uses <code>OnPremQueueEndpointResourceDelegate</code>, selected in <code>dependencies.py</code> when <code>cloud_provider == "onprem"</code>. This is the <strong>legacy broker path</strong> — see Section 3 for known limitations.</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span style="color: #008000; font-weight: bold">celery_broker_type_redis</span>:<span style="color: #BBB"> </span>true<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic"># or celeryBrokerType: elasticache</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span style="color: #008000; font-weight: bold">redisHost</span>:<span style="color: #BBB"> </span>redis.my-namespace.svc.cluster.local
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span style="color: #008000; font-weight: bold">redisPort</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;6379&quot;</span>
+</code></pre></div>
+<h4 id="object-storage-s3-compatible-minio">Object Storage (S3-compatible / MinIO)<a class="headerlink" href="#object-storage-s3-compatible-minio" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span style="color: #008000; font-weight: bold">s3EndpointUrl</span>:<span style="color: #BBB"> </span>http://minio.my-namespace.svc.cluster.local:9000
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">s3_bucket</span>:<span style="color: #BBB"> </span>llm-engine
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">s3_file_llm_fine_tuning_job_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;s3://llm-engine/llm-ft-job-repository&quot;</span>
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">hf_user_fine_tuned_weights_prefix</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;s3://llm-engine/fine_tuned_weights&quot;</span>
+</code></pre></div>
+<p><code>S3_ENDPOINT_URL</code> is injected as an environment variable when <code>s3EndpointUrl</code> is set in helm values. boto3 and smart_open pick this up automatically, redirecting all S3 calls to the MinIO endpoint.</p>
+<p>The code in <code>dependencies.py</code> falls through to <code>S3FilesystemGateway</code> and <code>S3LLMArtifactGateway</code> for any <code>cloud_provider</code> value that is not <code>azure</code> or <code>gcp</code> — this covers both <code>aws</code> and <code>onprem</code>:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span style="color: #008000; font-weight: bold">else</span>:
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>    <span style="color: #3D7B7B; font-style: italic"># AWS uses S3, on-prem uses MinIO (S3-compatible)</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>    filesystem_gateway <span style="color: #666">=</span> S3FilesystemGateway()
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>    llm_artifact_gateway <span style="color: #666">=</span> S3LLMArtifactGateway()
+</code></pre></div>
+<h4 id="redis_2">Redis<a class="headerlink" href="#redis_2" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cache_redis_onprem_url</span>:<span style="color: #BBB"> </span>redis://redis.my-namespace.svc.cluster.local:6379/0
+</code></pre></div>
+<p>If <code>cache_redis_onprem_url</code> is not set, the code falls back to the <code>REDIS_HOST</code> / <code>REDIS_PORT</code> environment variables, then defaults to <code>redis://redis:6379/0</code>. The same Redis instance serves as both the caching layer and the Celery broker.</p>
+<h4 id="service-account">Service Account<a class="headerlink" href="#service-account" title="Permanent link">&para;</a></h4>
+<p>On-prem has no managed IAM system. No service account annotations are required if your pods access storage via static MinIO credentials or in-cluster service accounts with appropriate RBAC. Configure MinIO credentials via environment variables or a Kubernetes secret as appropriate for your setup.</p>
+<h4 id="secret-management">Secret Management<a class="headerlink" href="#secret-management" title="Permanent link">&para;</a></h4>
+<p>On-prem has no managed secret store. Use Kubernetes secrets directly:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span style="color: #008000; font-weight: bold">secrets</span>:
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">kubernetesDatabaseSecretName</span>:<span style="color: #BBB"> </span>llm-engine-postgres-credentials
+</code></pre></div>
+<h4 id="image-registry-custom">Image Registry (Custom)<a class="headerlink" href="#image-registry-custom" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span style="color: #008000; font-weight: bold">image</span>:
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">gatewayRepository</span>:<span style="color: #BBB"> </span>my-registry.internal/model-engine
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">builderRepository</span>:<span style="color: #BBB"> </span>my-registry.internal/model-engine
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">cacherRepository</span>:<span style="color: #BBB">  </span>my-registry.internal/model-engine
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">forwarderRepository</span>:<span style="color: #BBB"> </span>my-registry.internal/model-engine
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">docker_repo_prefix</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;my-registry.internal&quot;</span>
+<a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-31-12" name="__codelineno-31-12" href="#__codelineno-31-12"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">vllm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;my-registry.internal/vllm&quot;</span>
+<a id="__codelineno-31-13" name="__codelineno-31-13" href="#__codelineno-31-13"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">tensorrt_llm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;my-registry.internal/tensorrt-llm&quot;</span>
+</code></pre></div>
+<p><code>OnPremDockerRepository</code> is selected when <code>cloud_provider == "onprem"</code>. Image pulls use the standard Kubernetes image pull mechanism with whatever credentials are configured in your registry secret.</p>
+<h4 id="cloud-provider-flag_3">Cloud Provider Flag<a class="headerlink" href="#cloud-provider-flag_3" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">cloud_provider</span>:<span style="color: #BBB"> </span>onprem
+</code></pre></div>
+<hr />
+<h2 id="section-3-key-behavior-differences">Section 3: Key Behavior Differences<a class="headerlink" href="#section-3-key-behavior-differences" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>AWS</th>
+<th>Azure</th>
+<th>GCP</th>
+<th>On-prem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Async broker</td>
+<td>SQS — queue per endpoint, auto-created</td>
+<td>Azure Service Bus — topic per endpoint</td>
+<td>Redis / Memorystore</td>
+<td>Redis</td>
+</tr>
+<tr>
+<td>Queue delegate class</td>
+<td><code>SQSQueueEndpointResourceDelegate</code></td>
+<td><code>ASBQueueEndpointResourceDelegate</code></td>
+<td><code>RedisQueueEndpointResourceDelegate</code></td>
+<td><code>OnPremQueueEndpointResourceDelegate</code></td>
+</tr>
+<tr>
+<td>Inference task queue</td>
+<td><code>CeleryTaskQueueGateway(BrokerType.SQS)</code></td>
+<td><code>CeleryTaskQueueGateway(BrokerType.SERVICEBUS)</code></td>
+<td><code>CeleryTaskQueueGateway(BrokerType.REDIS)</code></td>
+<td><code>CeleryTaskQueueGateway(BrokerType.REDIS_24H)</code></td>
+</tr>
+<tr>
+<td>KEDA autoscaling trigger</td>
+<td>Redis list (via <code>redis_host</code>)</td>
+<td>Azure Service Bus queue</td>
+<td>Redis list</td>
+<td>Redis list</td>
+</tr>
+<tr>
+<td>Object storage client</td>
+<td><code>S3FilesystemGateway</code> / <code>S3LLMArtifactGateway</code></td>
+<td><code>ABSFilesystemGateway</code> / <code>ABSLLMArtifactGateway</code></td>
+<td><code>GCSFilesystemGateway</code> / <code>GCSLLMArtifactGateway</code></td>
+<td><code>S3FilesystemGateway</code> (via MinIO)</td>
+</tr>
+<tr>
+<td>Storage auth</td>
+<td>IAM / IRSA (boto3 transparent)</td>
+<td><code>DefaultAzureCredential</code> (Workload Identity)</td>
+<td>ADC (GCP Workload Identity)</td>
+<td>Static credentials / MinIO config</td>
+</tr>
+<tr>
+<td>Redis auth</td>
+<td>Plain URL or Secrets Manager</td>
+<td>RBAC token via <code>DefaultAzureCredential</code>, refreshed on expiry</td>
+<td>Standard URL</td>
+<td>Standard URL</td>
+</tr>
+<tr>
+<td>Secret management</td>
+<td>AWS Secrets Manager</td>
+<td>Azure Key Vault (<code>keyvaultName</code> required)</td>
+<td>— (ADC only)</td>
+<td>K8s secrets only</td>
+</tr>
+<tr>
+<td>Image registry class</td>
+<td><code>ECRDockerRepository</code></td>
+<td><code>ACRDockerRepository</code></td>
+<td><code>GARDockerRepository</code></td>
+<td><code>OnPremDockerRepository</code></td>
+</tr>
+<tr>
+<td>Inference autoscaling metrics</td>
+<td><code>RedisInferenceAutoscalingMetricsGateway</code></td>
+<td><code>ASBInferenceAutoscalingMetricsGateway</code></td>
+<td><code>RedisInferenceAutoscalingMetricsGateway</code></td>
+<td><code>RedisInferenceAutoscalingMetricsGateway</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="azure-service-bus-idle-connection-drop-critical">Azure Service Bus — Idle Connection Drop (Critical)<a class="headerlink" href="#azure-service-bus-idle-connection-drop-critical" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Azure Service Bus idle AMQP connections — root cause of intermittent 503s</p>
+<p>Azure Service Bus force-closes idle AMQP connections after <strong>300 seconds</strong> with an <code>amqp:connection:forced</code> error. The symptom is a <strong>503 on the first inference request after a quiet period</strong>. It looks like a flaky backend failure, not a configuration problem — which makes it very hard to diagnose without knowing about this behavior.</p>
+<p><strong>Timeline of the fix:</strong></p>
+<ul>
+<li><strong>Commit #765 (<code>1fefec11</code>):</strong> Added <code>uamqp_keep_alive_interval=30</code> to send AMQP heartbeats, added retry policy (<code>retry_total=3</code>, <code>retry_backoff_factor=0.8</code>, <code>retry_backoff_max=120</code>), enabled <code>broker_connection_retry</code> and <code>broker_connection_retry_on_startup</code>, and set <code>broker_pool_limit=0</code> to avoid reusing connections Azure had already closed.</li>
+<li><strong>Commit #767 (<code>9deb59f1</code>):</strong> Reverted <code>broker_pool_limit=0</code>. Setting pool limit to 0 destroys pool connections after each request, orphaning kombu's cached <code>ServiceBusClient</code> and sender objects — meaning keepalive heartbeats can never flow. The correct fix is the <strong>default Celery connection pool (limit=10)</strong> combined with <code>uamqp_keep_alive_interval=30</code>. Also bumped <code>azure-servicebus</code> from <code>7.11.4</code> to <code>7.14.3</code> to fix a known SDK regression.</li>
+</ul>
+<p><strong>Current behavior (post #767):</strong> Keepalive heartbeats flow every 30 seconds over pooled connections. Azure never reaches the 300s idle timeout.</p>
+<p><strong>Configuration:</strong> The keepalive interval is overridable via the <code>SERVICEBUS_KEEP_ALIVE_INTERVAL</code> environment variable (default: <code>30</code>).</p>
+<p><strong>Minimum required dependency:</strong> <code>azure-servicebus &gt;= 7.14.3</code>. Version 7.11.4 has a known regression (<a href="https://github.com/Azure/azure-sdk-for-python/issues/34212">azure-sdk-for-python#34212</a>) that prevents idle connection management from working correctly even with the code changes above.</p>
+<p><strong>Diagnosis:</strong> If you see intermittent 503s on Azure after idle periods, check gateway and builder pod logs for <code>amqp:connection:forced</code>. Confirm you are running a model-engine image that includes commit <code>9deb59f1</code>.</p>
+</div>
+<h3 id="gcp-and-on-prem-redis-as-broker-legacy-path">GCP and On-prem — Redis as Broker (Legacy Path)<a class="headerlink" href="#gcp-and-on-prem-redis-as-broker-legacy-path" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Redis broker is the legacy path — known reliability limitations at scale</p>
+<p>Both GCP and on-prem use Redis as the Celery broker. Redis was the <strong>original broker for all clouds</strong>, but was replaced by SQS on AWS and Azure Service Bus on Azure due to reliability and stability issues at scale.</p>
+<p><strong>Known limitations of Redis-as-broker:</strong></p>
+<ul>
+<li>No dead-letter queue — failed tasks are lost unless the worker explicitly retries.</li>
+<li>No per-message visibility timeout — if a worker dies mid-task, the message stays invisible until the Redis key expires or is manually cleared.</li>
+<li>Queue lifecycle management is handled in-process by the queue delegate (not by a managed service), which is less reliable under high load or during pod restarts.</li>
+<li>KEDA autoscaling for async endpoints uses a Redis list trigger rather than a managed queue trigger. This code path is less battle-tested.</li>
+</ul>
+<p>If you are deploying at scale on GCP, evaluate whether a managed broker (Cloud Pub/Sub, or a managed Redis with stronger delivery guarantees) is feasible before committing to the Redis broker path.</p>
+</div>
+<hr />
+<h2 id="section-4-image-mirroring-requirements">Section 4: Image Mirroring Requirements<a class="headerlink" href="#section-4-image-mirroring-requirements" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Image mirroring is the #1 silent deployment failure</p>
+<p>Model-engine defaults to pulling images from Scale's internal ECR (<code>public.ecr.aws/b2z8n5q1/</code>). In any customer or non-Scale environment, these pulls will either fail outright or pull images that do not match your pinned version.</p>
+<p><strong>Failure mode if mirroring is skipped:</strong> Endpoint creation returns HTTP 200. The endpoint stays in <code>INITIALIZING</code> forever. There is no clear error message surfaced by the API — the image pull failure is buried in the pod events of the inference pod, which is created by Service Builder in the endpoint namespace.</p>
+<p><strong>Always mirror images before running <code>helm install</code>.</strong></p>
+</div>
+<h3 id="why-mirroring-is-required">Why Mirroring Is Required<a class="headerlink" href="#why-mirroring-is-required" title="Permanent link">&para;</a></h3>
+<p>The helm chart and service config have several hardcoded or defaulted image references pointing to Scale's ECR:</p>
+<table>
+<thead>
+<tr>
+<th>Config key</th>
+<th>Default value</th>
+<th>What it affects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>image.gatewayRepository</code></td>
+<td><code>public.ecr.aws/b2z8n5q1/model-engine</code></td>
+<td>Gateway pod image pull</td>
+</tr>
+<tr>
+<td><code>image.builderRepository</code></td>
+<td><code>public.ecr.aws/b2z8n5q1/model-engine</code></td>
+<td>Builder pod image pull</td>
+</tr>
+<tr>
+<td><code>image.cacherRepository</code></td>
+<td><code>public.ecr.aws/b2z8n5q1/model-engine</code></td>
+<td>Cacher pod image pull</td>
+</tr>
+<tr>
+<td><code>image.forwarderRepository</code></td>
+<td><code>public.ecr.aws/b2z8n5q1/model-engine</code></td>
+<td>Forwarder container in inference pods</td>
+</tr>
+<tr>
+<td><code>config.values.launch.vllm_repository</code></td>
+<td><code>vllm</code> (relative, resolves against <code>docker_repo_prefix</code>)</td>
+<td>vLLM image for LLM endpoints</td>
+</tr>
+<tr>
+<td><code>config.values.launch.tensorrt_llm_repository</code></td>
+<td><code>tensorrt-llm</code></td>
+<td>TensorRT-LLM image</td>
+</tr>
+<tr>
+<td><code>config.values.launch.batch_inference_vllm_repository</code></td>
+<td><code>llm-engine/batch-infer-vllm</code></td>
+<td>Batch inference image</td>
+</tr>
+</tbody>
+</table>
+<h3 id="images-to-mirror">Images to Mirror<a class="headerlink" href="#images-to-mirror" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Image name</th>
+<th>Source path</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model-engine</code></td>
+<td><code>public.ecr.aws/b2z8n5q1/model-engine</code></td>
+<td>Used for gateway, builder, cacher, and forwarder</td>
+</tr>
+<tr>
+<td><code>vllm</code></td>
+<td><code>public.ecr.aws/b2z8n5q1/vllm</code></td>
+<td>Used for LLM inference endpoints</td>
+</tr>
+<tr>
+<td><code>tensorrt-llm</code></td>
+<td><code>public.ecr.aws/b2z8n5q1/tensorrt-llm</code></td>
+<td>Used for TensorRT-LLM inference endpoints</td>
+</tr>
+<tr>
+<td><code>batch-infer-vllm</code></td>
+<td><code>public.ecr.aws/b2z8n5q1/llm-engine/batch-infer-vllm</code></td>
+<td>Used for batch inference jobs</td>
+</tr>
+</tbody>
+</table>
+<h3 id="step-by-step-mirroring-process">Step-by-Step Mirroring Process<a class="headerlink" href="#step-by-step-mirroring-process" title="Permanent link">&para;</a></h3>
+<h4 id="step-1-authenticate-to-the-source-scales-public-ecr">Step 1: Authenticate to the source (Scale's public ECR)<a class="headerlink" href="#step-1-authenticate-to-the-source-scales-public-ecr" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>aws<span style="color: #BBB"> </span>ecr-public<span style="color: #BBB"> </span>get-login-password<span style="color: #BBB"> </span>--region<span style="color: #BBB"> </span>us-east-1<span style="color: #BBB"> </span><span style="color: #AA5D1F; font-weight: bold">\</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span style="color: #BBB">  </span>|<span style="color: #BBB"> </span>docker<span style="color: #BBB"> </span>login<span style="color: #BBB"> </span>--username<span style="color: #BBB"> </span>AWS<span style="color: #BBB"> </span>--password-stdin<span style="color: #BBB"> </span>public.ecr.aws
+</code></pre></div>
+<h4 id="step-2-pull-the-images">Step 2: Pull the images<a class="headerlink" href="#step-2-pull-the-images" title="Permanent link">&para;</a></h4>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span style="color: #008000">export</span><span style="color: #BBB"> </span><span style="color: #19177C">ME_TAG</span><span style="color: #666">=</span>&lt;model-engine<span style="color: #BBB"> </span>image<span style="color: #BBB"> </span>tag,<span style="color: #BBB"> </span>e.g.<span style="color: #BBB"> </span>60ac144c55aad971cdd7f152f4f7816ce2fb7d2f&gt;
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span style="color: #008000">export</span><span style="color: #BBB"> </span><span style="color: #19177C">VLLM_TAG</span><span style="color: #666">=</span>&lt;vllm<span style="color: #BBB"> </span>image<span style="color: #BBB"> </span>tag&gt;
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span style="color: #008000">export</span><span style="color: #BBB"> </span><span style="color: #19177C">TRT_TAG</span><span style="color: #666">=</span>&lt;tensorrt-llm<span style="color: #BBB"> </span>image<span style="color: #BBB"> </span>tag&gt;
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span style="color: #008000">export</span><span style="color: #BBB"> </span><span style="color: #19177C">BATCH_TAG</span><span style="color: #666">=</span>&lt;batch-infer-vllm<span style="color: #BBB"> </span>image<span style="color: #BBB"> </span>tag&gt;
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>docker<span style="color: #BBB"> </span>pull<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a>docker<span style="color: #BBB"> </span>pull<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a>docker<span style="color: #BBB"> </span>pull<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-34-9" name="__codelineno-34-9" href="#__codelineno-34-9"></a>docker<span style="color: #BBB"> </span>pull<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+</code></pre></div>
+<h4 id="step-3-tag-and-push-to-your-registry">Step 3: Tag and push to your registry<a class="headerlink" href="#step-3-tag-and-push-to-your-registry" title="Permanent link">&para;</a></h4>
+<p><strong>AWS ECR</strong></p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span style="color: #3D7B7B; font-style: italic"># Authenticate</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>aws<span style="color: #BBB"> </span>ecr<span style="color: #BBB"> </span>get-login-password<span style="color: #BBB"> </span>--region<span style="color: #BBB"> </span>us-east-1<span style="color: #BBB"> </span><span style="color: #AA5D1F; font-weight: bold">\</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span style="color: #BBB">  </span>|<span style="color: #BBB"> </span>docker<span style="color: #BBB"> </span>login<span style="color: #BBB"> </span>--username<span style="color: #BBB"> </span>AWS<span style="color: #BBB"> </span>--password-stdin<span style="color: #BBB"> </span><span style="color: #666">000000000000</span>.dkr.ecr.us-east-1.amazonaws.com
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span style="color: #3D7B7B; font-style: italic"># Create repositories if they don&#39;t exist</span>
+<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>aws<span style="color: #BBB"> </span>ecr<span style="color: #BBB"> </span>create-repository<span style="color: #BBB"> </span>--repository-name<span style="color: #BBB"> </span>model-engine<span style="color: #BBB"> </span>--region<span style="color: #BBB"> </span>us-east-1
+<a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a>aws<span style="color: #BBB"> </span>ecr<span style="color: #BBB"> </span>create-repository<span style="color: #BBB"> </span>--repository-name<span style="color: #BBB"> </span>vllm<span style="color: #BBB"> </span>--region<span style="color: #BBB"> </span>us-east-1
+<a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a>aws<span style="color: #BBB"> </span>ecr<span style="color: #BBB"> </span>create-repository<span style="color: #BBB"> </span>--repository-name<span style="color: #BBB"> </span>tensorrt-llm<span style="color: #BBB"> </span>--region<span style="color: #BBB"> </span>us-east-1
+<a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a>aws<span style="color: #BBB"> </span>ecr<span style="color: #BBB"> </span>create-repository<span style="color: #BBB"> </span>--repository-name<span style="color: #BBB"> </span>llm-engine/batch-infer-vllm<span style="color: #BBB"> </span>--region<span style="color: #BBB"> </span>us-east-1
+<a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a>
+<a id="__codelineno-35-11" name="__codelineno-35-11" href="#__codelineno-35-11"></a><span style="color: #008000">export</span><span style="color: #BBB"> </span><span style="color: #19177C">REGISTRY</span><span style="color: #666">=000000000000</span>.dkr.ecr.us-east-1.amazonaws.com
+<a id="__codelineno-35-12" name="__codelineno-35-12" href="#__codelineno-35-12"></a>
+<a id="__codelineno-35-13" name="__codelineno-35-13" href="#__codelineno-35-13"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-35-14" name="__codelineno-35-14" href="#__codelineno-35-14"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-35-15" name="__codelineno-35-15" href="#__codelineno-35-15"></a>
+<a id="__codelineno-35-16" name="__codelineno-35-16" href="#__codelineno-35-16"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-35-17" name="__codelineno-35-17" href="#__codelineno-35-17"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-35-18" name="__codelineno-35-18" href="#__codelineno-35-18"></a>
+<a id="__codelineno-35-19" name="__codelineno-35-19" href="#__codelineno-35-19"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-35-20" name="__codelineno-35-20" href="#__codelineno-35-20"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-35-21" name="__codelineno-35-21" href="#__codelineno-35-21"></a>
+<a id="__codelineno-35-22" name="__codelineno-35-22" href="#__codelineno-35-22"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #AA5D1F; font-weight: bold">\</span>
+<a id="__codelineno-35-23" name="__codelineno-35-23" href="#__codelineno-35-23"></a><span style="color: #BBB">  </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-35-24" name="__codelineno-35-24" href="#__codelineno-35-24"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+</code></pre></div>
+<p><strong>Azure ACR</strong></p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span style="color: #3D7B7B; font-style: italic"># Authenticate</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>az<span style="color: #BBB"> </span>acr<span style="color: #BBB"> </span>login<span style="color: #BBB"> </span>--name<span style="color: #BBB"> </span>myregistry
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span style="color: #008000">export</span><span style="color: #BBB"> </span><span style="color: #19177C">REGISTRY</span><span style="color: #666">=</span>myregistry.azurecr.io
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a>
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a>
+<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-36-10" name="__codelineno-36-10" href="#__codelineno-36-10"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-36-11" name="__codelineno-36-11" href="#__codelineno-36-11"></a>
+<a id="__codelineno-36-12" name="__codelineno-36-12" href="#__codelineno-36-12"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-36-13" name="__codelineno-36-13" href="#__codelineno-36-13"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-36-14" name="__codelineno-36-14" href="#__codelineno-36-14"></a>
+<a id="__codelineno-36-15" name="__codelineno-36-15" href="#__codelineno-36-15"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #AA5D1F; font-weight: bold">\</span>
+<a id="__codelineno-36-16" name="__codelineno-36-16" href="#__codelineno-36-16"></a><span style="color: #BBB">  </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-36-17" name="__codelineno-36-17" href="#__codelineno-36-17"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+</code></pre></div>
+<p><strong>GCP GAR</strong></p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span style="color: #3D7B7B; font-style: italic"># Authenticate</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>gcloud<span style="color: #BBB"> </span>auth<span style="color: #BBB"> </span>configure-docker<span style="color: #BBB"> </span>us-docker.pkg.dev
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span style="color: #008000">export</span><span style="color: #BBB"> </span><span style="color: #19177C">REGISTRY</span><span style="color: #666">=</span>us-docker.pkg.dev/my-project/my-repo
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a>
+<a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-37-7" name="__codelineno-37-7" href="#__codelineno-37-7"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-37-8" name="__codelineno-37-8" href="#__codelineno-37-8"></a>
+<a id="__codelineno-37-9" name="__codelineno-37-9" href="#__codelineno-37-9"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-37-10" name="__codelineno-37-10" href="#__codelineno-37-10"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-37-11" name="__codelineno-37-11" href="#__codelineno-37-11"></a>
+<a id="__codelineno-37-12" name="__codelineno-37-12" href="#__codelineno-37-12"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-37-13" name="__codelineno-37-13" href="#__codelineno-37-13"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-37-14" name="__codelineno-37-14" href="#__codelineno-37-14"></a>
+<a id="__codelineno-37-15" name="__codelineno-37-15" href="#__codelineno-37-15"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #AA5D1F; font-weight: bold">\</span>
+<a id="__codelineno-37-16" name="__codelineno-37-16" href="#__codelineno-37-16"></a><span style="color: #BBB">  </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-37-17" name="__codelineno-37-17" href="#__codelineno-37-17"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+</code></pre></div>
+<p><strong>On-prem / Custom registry</strong></p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span style="color: #008000">export</span><span style="color: #BBB"> </span><span style="color: #19177C">REGISTRY</span><span style="color: #666">=</span>my-registry.internal
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span style="color: #3D7B7B; font-style: italic"># Authenticate using your registry&#39;s mechanism (e.g. docker login my-registry.internal)</span>
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a>
+<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/model-engine:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">ME_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a>
+<a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">VLLM_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a>
+<a id="__codelineno-38-11" name="__codelineno-38-11" href="#__codelineno-38-11"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-38-12" name="__codelineno-38-12" href="#__codelineno-38-12"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/tensorrt-llm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">TRT_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-38-13" name="__codelineno-38-13" href="#__codelineno-38-13"></a>
+<a id="__codelineno-38-14" name="__codelineno-38-14" href="#__codelineno-38-14"></a>docker<span style="color: #BBB"> </span>tag<span style="color: #BBB"> </span>public.ecr.aws/b2z8n5q1/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BBB"> </span><span style="color: #AA5D1F; font-weight: bold">\</span>
+<a id="__codelineno-38-15" name="__codelineno-38-15" href="#__codelineno-38-15"></a><span style="color: #BBB">  </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+<a id="__codelineno-38-16" name="__codelineno-38-16" href="#__codelineno-38-16"></a>docker<span style="color: #BBB"> </span>push<span style="color: #BBB"> </span><span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">REGISTRY</span><span style="color: #A45A77; font-weight: bold">}</span>/llm-engine/batch-infer-vllm:<span style="color: #A45A77; font-weight: bold">${</span><span style="color: #19177C">BATCH_TAG</span><span style="color: #A45A77; font-weight: bold">}</span>
+</code></pre></div>
+<h4 id="step-4-update-helm-values">Step 4: Update helm values<a class="headerlink" href="#step-4-update-helm-values" title="Permanent link">&para;</a></h4>
+<p>After mirroring, set the following in your <code>values.yaml</code> before running <code>helm install</code>:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span style="color: #008000; font-weight: bold">tag</span>:<span style="color: #BBB"> </span>&lt;model-engine-tag&gt;
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a><span style="color: #008000; font-weight: bold">image</span>:
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">gatewayRepository</span>:<span style="color: #BBB"> </span>&lt;your-registry&gt;/model-engine
+<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">builderRepository</span>:<span style="color: #BBB"> </span>&lt;your-registry&gt;/model-engine
+<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">cacherRepository</span>:<span style="color: #BBB">  </span>&lt;your-registry&gt;/model-engine
+<a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">forwarderRepository</span>:<span style="color: #BBB"> </span>&lt;your-registry&gt;/model-engine
+<a id="__codelineno-39-8" name="__codelineno-39-8" href="#__codelineno-39-8"></a>
+<a id="__codelineno-39-9" name="__codelineno-39-9" href="#__codelineno-39-9"></a><span style="color: #008000; font-weight: bold">config</span>:
+<a id="__codelineno-39-10" name="__codelineno-39-10" href="#__codelineno-39-10"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">values</span>:
+<a id="__codelineno-39-11" name="__codelineno-39-11" href="#__codelineno-39-11"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">infra</span>:
+<a id="__codelineno-39-12" name="__codelineno-39-12" href="#__codelineno-39-12"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">docker_repo_prefix</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;&lt;your-registry&gt;&quot;</span>
+<a id="__codelineno-39-13" name="__codelineno-39-13" href="#__codelineno-39-13"></a><span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">launch</span>:
+<a id="__codelineno-39-14" name="__codelineno-39-14" href="#__codelineno-39-14"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">vllm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;&lt;your-registry&gt;/vllm&quot;</span>
+<a id="__codelineno-39-15" name="__codelineno-39-15" href="#__codelineno-39-15"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">tensorrt_llm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;&lt;your-registry&gt;/tensorrt-llm&quot;</span>
+<a id="__codelineno-39-16" name="__codelineno-39-16" href="#__codelineno-39-16"></a><span style="color: #BBB">      </span><span style="color: #008000; font-weight: bold">batch_inference_vllm_repository</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;&lt;your-registry&gt;/llm-engine/batch-infer-vllm&quot;</span>
+</code></pre></div>
+<h3 id="verifying-image-accessibility-before-install">Verifying Image Accessibility Before Install<a class="headerlink" href="#verifying-image-accessibility-before-install" title="Permanent link">&para;</a></h3>
+<p>Confirm that images are pullable from within the cluster before running <code>helm install</code>:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span style="color: #3D7B7B; font-style: italic"># Run a one-shot pod in the endpoint namespace to verify the pull</span>
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>kubectl<span style="color: #BBB"> </span>run<span style="color: #BBB"> </span>image-check<span style="color: #BBB"> </span><span style="color: #AA5D1F; font-weight: bold">\</span>
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span style="color: #BBB">  </span>--image<span style="color: #666">=</span>&lt;your-registry&gt;/model-engine:&lt;tag&gt;<span style="color: #BBB"> </span><span style="color: #AA5D1F; font-weight: bold">\</span>
+<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span style="color: #BBB">  </span>--restart<span style="color: #666">=</span>Never<span style="color: #BBB"> </span><span style="color: #AA5D1F; font-weight: bold">\</span>
+<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a><span style="color: #BBB">  </span>--namespace<span style="color: #666">=</span>llm-engine<span style="color: #BBB"> </span><span style="color: #AA5D1F; font-weight: bold">\</span>
+<a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a><span style="color: #BBB">  </span>--<span style="color: #BBB"> </span><span style="color: #008000">echo</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;image pulled successfully&quot;</span>
+<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a>
+<a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a>kubectl<span style="color: #BBB"> </span>logs<span style="color: #BBB"> </span>image-check<span style="color: #BBB"> </span>--namespace<span style="color: #666">=</span>llm-engine
+<a id="__codelineno-40-9" name="__codelineno-40-9" href="#__codelineno-40-9"></a>kubectl<span style="color: #BBB"> </span>delete<span style="color: #BBB"> </span>pod<span style="color: #BBB"> </span>image-check<span style="color: #BBB"> </span>--namespace<span style="color: #666">=</span>llm-engine
+</code></pre></div>
+<h3 id="diagnosing-image-pull-failures">Diagnosing Image Pull Failures<a class="headerlink" href="#diagnosing-image-pull-failures" title="Permanent link">&para;</a></h3>
+<p>If an endpoint stays <code>INITIALIZING</code> and you suspect a missing image:</p>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span style="color: #3D7B7B; font-style: italic"># List pods in the endpoint namespace</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>kubectl<span style="color: #BBB"> </span>get<span style="color: #BBB"> </span>pods<span style="color: #BBB"> </span>-n<span style="color: #BBB"> </span>llm-engine
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>
+<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span style="color: #3D7B7B; font-style: italic"># Check for image pull errors</span>
+<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>kubectl<span style="color: #BBB"> </span>describe<span style="color: #BBB"> </span>pod<span style="color: #BBB"> </span>&lt;pod-name&gt;<span style="color: #BBB"> </span>-n<span style="color: #BBB"> </span>llm-engine<span style="color: #BBB"> </span>|<span style="color: #BBB"> </span>grep<span style="color: #BBB"> </span>-A<span style="color: #BBB"> </span><span style="color: #666">10</span><span style="color: #BBB"> </span>Events
+</code></pre></div>
+<p>Look for <code>ErrImagePull</code> or <code>ImagePullBackOff</code> in the events. If present, either the image was not mirrored or the registry credentials are not available to the inference pod's service account.</p>
+<blockquote>
+<p><strong>[TODO]</strong> Automate the mirroring process — a script or CI job that pulls from <code>public.ecr.aws/b2z8n5q1/</code> and pushes to the customer registry, parameterized by registry URL and image tags. Tracking in the Artifacts &amp; Versioning Confluence page.</p>
+</blockquote>
+<hr />
+<h2 id="section-5-known-gaps">Section 5: Known Gaps<a class="headerlink" href="#section-5-known-gaps" title="Permanent link">&para;</a></h2>
+<h3 id="gcp_1">GCP<a class="headerlink" href="#gcp_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Not tested end-to-end.</strong> GCP code paths were added in commit #750 (<code>f436d25e</code>) but have not been validated in a real deployment with real infrastructure.</li>
+<li><code>GARDockerRepository.build_image</code> raises <code>NotImplementedError</code> — custom image builds (user-defined model bundles) are not supported on GCP.</li>
+<li>There is no GCP-specific block in the helm chart analogous to the <code>azure:</code> block. GCP currently reuses the <code>redisHost</code> / <code>redisPort</code> / <code>s3EndpointUrl</code> fields that were added for on-prem. A dedicated <code>gcp:</code> values block would improve clarity.</li>
+<li>No GCP-specific Confluence runbook exists. When the first GCP deployment happens, write one and link it here.</li>
+</ul>
+<h3 id="on-prem_1">On-prem<a class="headerlink" href="#on-prem_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Not tested end-to-end.</strong> On-prem support was added in commit #744 (<code>ecc8ff42</code>).</li>
+<li><strong>Redis broker only.</strong> There is no managed message broker option for on-prem. See Section 3 for known reliability limitations of Redis-as-broker at scale.</li>
+<li><strong>No managed secret store.</strong> All secrets must be provided as Kubernetes secrets. There is no Key Vault or Secrets Manager integration path.</li>
+<li><strong>NVIDIA driver setup is not covered here.</strong> GPU nodes must have a working NVIDIA driver and GPU operator installed and configured before <code>helm install</code>. Verify with <code>nvidia-smi</code> on a GPU node before attempting GPU endpoint creation. If driver setup is untested in your environment, do a CPU-only smoke test first.</li>
+<li><code>OnPremDockerRepository</code> does not support image builds — custom image bundles are not supported on-prem.</li>
+</ul>
+<h3 id="azure_1">Azure<a class="headerlink" href="#azure_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Service Bus 300s idle connection drop</strong> — fixed in commits #765 (<code>1fefec11</code>) and #767 (<code>9deb59f1</code>). Requires <code>azure-servicebus &gt;= 7.14.3</code> and a model-engine image that includes <code>9deb59f1</code>. Deployments on older images will see intermittent 503s after idle periods. See Section 3 for the full diagnosis and fix details.</li>
+<li>Tested in production at partial scale. Edge cases involving very long idle periods or concurrent token refresh races may still surface.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  <form class="md-feedback" name="feedback" hidden>
+    <fieldset>
+      <legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+      <div class="md-feedback__inner">
+        <div class="md-feedback__list">
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="This page was helpful" data-md-value="1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m7 0c0 .8-.7 1.5-1.5 1.5S14 10.3 14 9.5 14.7 8 15.5 8s1.5.7 1.5 1.5m-5 7.73c-1.75 0-3.29-.73-4.19-1.81L9.23 14c.45.72 1.52 1.23 2.77 1.23s2.32-.51 2.77-1.23l1.42 1.42c-.9 1.08-2.44 1.81-4.19 1.81"/></svg>
+            </button>
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="This page could be improved" data-md-value="0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10m-6.5-4c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m2 4.5c1.75 0 3.29.72 4.19 1.81l-1.42 1.42C14.32 16.5 13.25 16 12 16s-2.32.5-2.77 1.23l-1.42-1.42C8.71 14.72 10.25 14 12 14"/></svg>
+            </button>
+          
+        </div>
+        <div class="md-feedback__note">
+          
+            <div data-md-value="1" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for your feedback!
+            </div>
+          
+            <div data-md-value="0" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for your feedback! Help us improve this page by using our <a href="..." target="_blank" rel="noopener">feedback form</a>.
+            </div>
+          
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
