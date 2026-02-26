@@ -10,93 +10,21 @@ ENABLE_STARTUP_METRICS = os.environ.get("ENABLE_STARTUP_METRICS", "").lower() ==
 
 # Now do heavy imports (noqa: E402 - intentional late import for startup time measurement)
 import asyncio  # noqa: E402
-import code  # noqa: E402
-import subprocess  # noqa: E402
 import threading  # noqa: E402
-import traceback  # noqa: E402
 from logging import Logger  # noqa: E402
 
-from vllm.engine.protocol import EngineClient  # noqa: E402
 from vllm.entrypoints.openai.api_server import run_server  # noqa: E402
 from vllm.entrypoints.openai.cli_args import make_arg_parser  # noqa: E402
 from vllm.utils.argparse_utils import FlexibleArgumentParser  # noqa: E402
 
+from .utils.resource_debug import check_unknown_startup_memory_usage  # noqa: E402
+
 logger = Logger("vllm_server")
-
-engine_client: EngineClient
-
-TIMEOUT_KEEP_ALIVE = 5  # seconds.
-TIMEOUT_TO_PREVENT_DEADLOCK = 1  # seconds
-
-
-def get_gpu_free_memory():
-    """Get GPU free memory using nvidia-smi."""
-    try:
-        output = subprocess.run(
-            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
-            capture_output=True,
-            text=True,
-        ).stdout
-        gpu_memory = [int(x) for x in output.strip().split("\n")]
-        return gpu_memory
-    except Exception as e:
-        logger.warn(f"Error getting GPU memory: {e}")
-        return None
-
-
-def check_unknown_startup_memory_usage():
-    """Check for unknown memory usage at startup."""
-    gpu_free_memory = get_gpu_free_memory()
-    if gpu_free_memory is not None:
-        min_mem = min(gpu_free_memory)
-        max_mem = max(gpu_free_memory)
-        if max_mem - min_mem > 10:
-            logger.warn(
-                f"WARNING: Unbalanced GPU memory usage at start up. This may cause OOM. Memory usage per GPU in MB: {gpu_free_memory}."
-            )
-            try:
-                # nosemgrep
-                output = subprocess.run(
-                    ["fuser -v /dev/nvidia*"],
-                    shell=False,
-                    capture_output=True,
-                    text=True,
-                ).stdout
-                logger.info(f"Processes using GPU: {output}")
-            except Exception as e:
-                logger.error(f"Error getting processes using GPU: {e}")
-
-
-def debug(sig, frame):
-    """Interrupt running process, and provide a python prompt for
-    interactive debugging."""
-    d = {"_frame": frame}  # Allow access to frame object.
-    d.update(frame.f_globals)  # Unless shadowed by global
-    d.update(frame.f_locals)
-
-    i = code.InteractiveConsole(d)
-    message = "Signal received : entering python shell.\nTraceback:\n"
-    message += "".join(traceback.format_stack(frame))
-    i.interact(message)
 
 
 def parse_args(parser: FlexibleArgumentParser):
     parser = make_arg_parser(parser)
     return parser.parse_args()
-
-
-def get_gpu_type():
-    """Get GPU type from nvidia-smi."""
-    try:
-        output = subprocess.run(
-            ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
-            capture_output=True,
-            text=True,
-        ).stdout
-        return output.strip().split("\n")[0]
-    except Exception as e:
-        logger.warning(f"Error getting GPU type: {e}")
-        return "unknown"
 
 
 def _health_check_loop(metrics, vllm_init_start_ns: int, host: str = "localhost", port: int = 5005):

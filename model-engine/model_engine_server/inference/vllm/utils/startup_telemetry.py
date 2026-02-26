@@ -26,8 +26,10 @@ Usage in vllm_server.py:
 """
 
 import os
+import threading
 import time
-from typing import Optional
+from argparse import Namespace
+from typing import Awaitable, Callable, Optional, TypeVar
 
 # The library can be imported from model_engine_server.common.startup_tracing
 # For now, we'll keep a simpler import path for the container
@@ -199,3 +201,90 @@ def init_metrics(container_start_time_ns: Optional[int] = None) -> VLLMStartupMe
 def get_metrics() -> Optional[VLLMStartupMetrics]:
     """Get global metrics instance."""
     return _metrics
+
+
+def _health_check_loop(metrics, vllm_init_start_ns: int, host: str = "localhost", port: int = 5005):
+    """
+    Background thread that polls /health endpoint to detect when server is ready.
+    Once ready, records the vllm_init span and startup complete metric.
+    """
+    import urllib.error
+    import urllib.request
+
+    url = f"http://{host}:{port}/health"
+    max_attempts = 1200  # 20 minutes max
+    attempt = 0
+
+    while attempt < max_attempts:
+        try:
+            with urllib.request.urlopen(url, timeout=1) as response:
+                if response.status == 200:
+                    # Server is ready - record vllm_init span
+                    end_time_ns = time.time_ns()
+                    metrics.record_vllm_init(vllm_init_start_ns, end_time_ns)
+
+                    # Record startup complete (emits in_container_startup span)
+                    total_duration = metrics.complete()
+                    print(f"[STARTUP METRICS] Server ready after {total_duration:.2f}s total")
+                    return
+        except (urllib.error.URLError, urllib.error.HTTPError, ConnectionRefusedError, OSError):
+            pass
+
+        attempt += 1
+        time.sleep(1)
+
+    print("[STARTUP METRICS] WARNING: Health check timed out, server may not be ready")
+
+
+T = TypeVar("T")
+
+
+async def with_startup_metrics(
+    func: Callable[..., Awaitable[T]], args: Namespace, python_start_time: float
+) -> T:
+    """
+    Wrapper to run a function with startup metrics if enabled
+
+    Emits spans for:
+    - python_init: From module start to vllm_init start
+    - vllm_init: From vllm_init start to server ready (health check passes)
+
+    Download span is emitted by vllm_startup_wrapper.py before exec'ing into this.
+
+    Args:
+        func: The async function to wrap (must return an awaitable).
+
+    Returns:
+        The result of the function.
+    """
+
+    # Startup metrics feature gate (check early to avoid unnecessary imports)
+    ENABLE_STARTUP_METRICS = os.environ.get("ENABLE_STARTUP_METRICS", "").lower() == "true"
+    if ENABLE_STARTUP_METRICS:
+        from .startup_telemetry import VLLMStartupMetrics
+
+        # Initialize metrics (reads CONTAINER_START_TS from env)
+        metrics = VLLMStartupMetrics.init()
+
+        if metrics.enabled:
+            print(f"[STARTUP METRICS] trace_id={metrics.trace_id}")
+
+        # Record Python init time (from module start to now)
+        python_init_duration = time.perf_counter() - python_start_time
+        metrics.record_python_init(python_init_duration)
+        print(f"[STARTUP METRICS] Python init: {python_init_duration:.2f}s")
+
+        # Mark vllm_init start time
+        vllm_init_start_ns = time.time_ns()
+
+        # Start health check thread to detect when server is ready
+        # This will record vllm_init span and call metrics.complete() when /health returns 200
+        port = getattr(args, "port", 5005)
+        health_thread = threading.Thread(
+            target=_health_check_loop,
+            args=(metrics, vllm_init_start_ns, "localhost", port),
+            daemon=True,
+        )
+        health_thread.start()
+
+    return await func(*args)
