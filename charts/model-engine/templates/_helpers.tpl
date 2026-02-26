@@ -369,7 +369,13 @@ env:
   - name: CELERY_RESULT_BACKEND
     value: {{ .Values.celeryResultBackend | quote }}
   {{- end }}
-  {{- if .Values.redis.auth}}
+  {{- if .Values.redis.authSecretName }}
+  - name: REDIS_AUTH_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.redis.authSecretName }}
+        key: {{ .Values.redis.authSecretKey | default "auth_token" }}
+  {{- else if .Values.redis.auth }}
   - name: REDIS_AUTH_TOKEN
     value: {{ .Values.redis.auth }}
   {{- end }}

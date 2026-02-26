@@ -27,6 +27,8 @@ celery_broker_type_redis: null
 
 redis:
   auth:
+  authSecretName: ""
+  authSecretKey: ""
   enableTLS: false
   enableAuth: false
   kedaSecretName: ""
