@@ -321,6 +321,8 @@ env:
     value: {{ .Values.aws.profileName }}
   - name: S3_WRITE_AWS_PROFILE
     value: {{ .Values.aws.s3WriteProfileName }}
+  {{- else }}
+  {{- /* On-prem: Do NOT set AWS_PROFILE - boto3 uses default credential chain */ -}}
   {{- end }}
   {{- with .Values.secrets }}
   {{- if .kubernetesDatabaseSecretName }}
@@ -367,7 +369,13 @@ env:
   - name: CELERY_RESULT_BACKEND
     value: {{ .Values.celeryResultBackend | quote }}
   {{- end }}
-  {{- if .Values.redis.auth}}
+  {{- if .Values.redis.authSecretName }}
+  - name: REDIS_AUTH_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.redis.authSecretName }}
+        key: {{ .Values.redis.authSecretKey | default "auth_token" }}
+  {{- else if .Values.redis.auth }}
   - name: REDIS_AUTH_TOKEN
     value: {{ .Values.redis.auth }}
   {{- end }}
@@ -399,6 +407,9 @@ env:
     value: {{ .Values.tag }}
   - name: GIT_TAG
     value: {{ .Values.tag }}
+  {{- with .Values.extraEnvVars }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
 {{- end }}
 
 {{- define "modelEngine.serviceEnvGitTagFromPythonReplace" }}
@@ -455,6 +466,10 @@ volumes:
         - key: infra_service_config
           path: config.yaml
   {{- end }}
+  {{- with .Values.extraVolumes }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  {{- include "modelEngine.tokenVolume" . | nindent 2 }}
 {{- end }}
 
 {{- define "modelEngine.volumeMounts" }}
@@ -474,6 +489,10 @@ volumeMounts:
   - name: infra-service-config-volume
     mountPath: /workspace/model-engine/model_engine_server/core/configs
   {{- end }}
+  {{- with .Values.extraVolumeMounts }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  {{- include "modelEngine.tokenVolumeMount" . | nindent 2 }}
 {{- end }}
 
 {{- define "modelEngine.forwarderVolumeMounts" }}
@@ -500,5 +519,37 @@ namespaces:
   - {{ .Release.Namespace }}
 {{- range .Values.serviceAccount.namespaces }}
   - {{ . }}
+{{- end }}
+{{- end }}
+
+{{- define "modelEngine.tokenVolume" }}
+{{- if not .Values.automountServiceAccountToken }}
+- name: token-volume
+  projected:
+    defaultMode: 0444
+    sources:
+    - serviceAccountToken:
+        path: token
+        expirationSeconds: 86400
+    # We also need to project the CA cert and namespace files
+    - configMap:
+        name: kube-root-ca.crt
+        items:
+          - key: ca.crt
+            path: ca.crt
+    - downwardAPI:
+        items:
+          - path: namespace
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+{{- end }}
+{{- end }}
+
+{{- define "modelEngine.tokenVolumeMount" }}
+{{- if not .Values.automountServiceAccountToken }}
+- mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+  name: token-volume
+  readOnly: true
 {{- end }}
 {{- end }}

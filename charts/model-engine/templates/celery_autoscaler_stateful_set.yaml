@@ -10,6 +10,8 @@
 {{ $broker_name = "sqs-message-broker-master" }}
 {{- else if eq $message_broker "servicebus" }}
 {{ $broker_name = "servicebus-message-broker-master" }}
+{{- else if and .Values.config .Values.config.values .Values.config.values.infra (eq (.Values.config.values.infra.cloud_provider | default "") "gcp") }}
+{{ $broker_name = "redis-gcp-memorystore-message-broker-master" }}
 {{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
@@ -86,11 +88,14 @@ spec:
         resources:
           requests:
             cpu: 1000m
-        {{- if .Values.aws }}
         volumeMounts:
+        {{- if .Values.aws }}
         - mountPath: /opt/.aws/config
           name: config-volume
           subPath: config
+        {{- end }}
+        {{- if not $.Values.automountServiceAccountToken }}
+        {{- include "modelEngine.tokenVolumeMount" $ | nindent 8 }}
         {{- end }}
       {{ with .Values.nodeSelector }}
       nodeSelector:
@@ -101,13 +106,17 @@ spec:
           operator: Equal
           value: 'true'
           effect: NoSchedule
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ include "modelEngine.fullname" $ }}
-      {{- if .Values.aws }}
       volumes:
+      {{- if .Values.aws }}
       - configMap:
           name: {{ .Values.aws.configMap.name }}
         name: config-volume
-      {{- end}}
+      {{- end }}
+      {{- if not .Values.automountServiceAccountToken }}
+      {{- include "modelEngine.tokenVolume" . | nindent 6 }}
+      {{- end }}
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 20%

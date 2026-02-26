@@ -14,7 +14,11 @@ data:
     gateway_namespace: {{ .Release.Namespace | quote }}
     {{- with .Values.config.values.launch }}
     {{- range $key, $value := . }}
+    {{- if kindIs "bool" $value }}
+    {{ $key }}: {{ $value }}
+    {{- else }}
     {{ $key }}: {{ $value | quote }}
+    {{- end }}
     {{- end }}
     {{- end }}
   infra_service_config: |-
@@ -30,7 +34,11 @@ data:
     {{- end }}
     {{- with .Values.config.values.infra }}
     {{- range $key, $value := . }}
+    {{- if kindIs "bool" $value }}
+    {{ $key }}: {{ $value }}
+    {{- else }}
     {{ $key }}: {{ $value | quote }}
+    {{- end }}
     {{- end }}
     {{- end }}
 
@@ -52,7 +60,11 @@ data:
     gateway_namespace: {{ .Release.Namespace | quote }}
     {{- with .Values.config.values.launch }}
     {{- range $key, $value := . }}
+    {{- if kindIs "bool" $value }}
+    {{ $key }}: {{ $value }}
+    {{- else }}
     {{ $key }}: {{ $value | quote }}
+    {{- end }}
     {{- end }}
     {{- end }}
   infra_service_config: |-
@@ -68,7 +80,11 @@ data:
     {{- end }}
     {{- with .Values.config.values.infra }}
     {{- range $key, $value := . }}
+    {{- if kindIs "bool" $value }}
+    {{ $key }}: {{ $value }}
+    {{- else }}
     {{ $key }}: {{ $value | quote }}
+    {{- end }}
     {{- end }}
     {{- end }}
 {{- end }}
