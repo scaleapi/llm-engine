@@ -589,9 +589,10 @@ async def test_passthrough_forwarder():
     fwd = PassthroughForwarder(passthrough_endpoint="http://localhost:5005/mcp/test")
     mock_request = MockRequest(method="POST", path="/mcp/test", query="param=value")
 
-    with mock.patch("aiohttp.ClientSession") as mock_session:
+    with mock.patch("aiohttp.ClientSession") as mock_session, mock.patch("aiohttp.TCPConnector"):
         mock_client = mocked_aiohttp_client_session()
-        mock_session.return_value.__aenter__.return_value = mock_client
+        mock_client.closed = False
+        mock_session.return_value = mock_client
 
         response_generator = fwd.forward_stream(mock_request)
         await _check_passthrough_response(response_generator)
@@ -614,9 +615,10 @@ async def test_passthrough_forwarder_get_request():
     fwd = PassthroughForwarder(passthrough_endpoint="http://localhost:5005/mcp/status")
     mock_request = MockRequest(method="GET", path="/mcp/status", query="", body_data=b"")
 
-    with mock.patch("aiohttp.ClientSession") as mock_session:
+    with mock.patch("aiohttp.ClientSession") as mock_session, mock.patch("aiohttp.TCPConnector"):
         mock_client = mocked_aiohttp_client_session()
-        mock_session.return_value.__aenter__.return_value = mock_client
+        mock_client.closed = False
+        mock_session.return_value = mock_client
 
         response_generator = fwd.forward_stream(mock_request)
         await _check_passthrough_response(response_generator)
@@ -650,9 +652,10 @@ async def test_passthrough_forwarder_header_filtering():
 
     mock_request = MockRequest(method="POST", path="/mcp/test", headers=headers_with_excluded)
 
-    with mock.patch("aiohttp.ClientSession") as mock_session:
+    with mock.patch("aiohttp.ClientSession") as mock_session, mock.patch("aiohttp.TCPConnector"):
         mock_client = mocked_aiohttp_client_session()
-        mock_session.return_value.__aenter__.return_value = mock_client
+        mock_client.closed = False
+        mock_session.return_value = mock_client
 
         response_generator = fwd.forward_stream(mock_request)
         await _check_passthrough_response(response_generator)

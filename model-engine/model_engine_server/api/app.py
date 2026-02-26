@@ -1,13 +1,14 @@
+import json
 import os
 import traceback
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import pytz
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.openapi.docs import get_redoc_html
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from model_engine_server.api.batch_jobs_v1 import batch_job_router_v1
 from model_engine_server.api.dependencies import get_or_create_aioredis_pool
@@ -31,8 +32,8 @@ from model_engine_server.core.loggers import (
     make_logger,
 )
 from model_engine_server.core.tracing import get_tracing_gateway
-from starlette.middleware import Middleware
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 logger = make_logger(logger_name())
 
@@ -43,32 +44,44 @@ concurrency_limiter = MultiprocessingConcurrencyLimiter(
     concurrency=MAX_CONCURRENCY, fail_on_concurrency_limit=True
 )
 
-healthcheck_routes = ["/healthcheck", "/healthz", "/readyz"]
+healthcheck_routes = {"/healthcheck", "/healthz", "/readyz"}
 
 tracing_gateway = get_tracing_gateway()
 
 
-class CustomMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+class CustomMiddleware:
+    """
+    Pure ASGI middleware for request tracking, tracing, and concurrency limiting.
+    Unlike BaseHTTPMiddleware this does not buffer the entire response body,
+    which is important for streaming inference responses.
+    """
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope, receive)
+
+        LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
+        LoggerTagManager.set(LoggerTagKey.REQUEST_SIZE, request.headers.get("content-length"))
+        if tracing_gateway:
+            tracing_gateway.extract_tracing_headers(request, service="model_engine_server")
+
+        # Healthcheck routes bypass concurrency limiting
+        if request.url.path in healthcheck_routes:
+            await self.app(scope, receive, send)
+            return
+
         try:
-            LoggerTagManager.set(LoggerTagKey.REQUEST_ID, str(uuid.uuid4()))
-            LoggerTagManager.set(LoggerTagKey.REQUEST_SIZE, request.headers.get("content-length"))
-            if tracing_gateway:
-                tracing_gateway.extract_tracing_headers(request, service="model_engine_server")
-            # we intentionally exclude healthcheck routes from the concurrency limiter
-            if request.url.path in healthcheck_routes:
-                return await call_next(request)
             with concurrency_limiter:
-                return await call_next(request)
+                await self.app(scope, receive, send)
         except HTTPException as e:
             timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
-            return JSONResponse(
-                status_code=e.status_code,
-                content={
-                    "error": e.detail,
-                    "timestamp": timestamp,
-                },
-            )
+            await _send_json_error(send, e.status_code, e.detail, timestamp)
         except Exception as e:
             tb_str = traceback.format_exception(e)
             request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
@@ -79,22 +92,46 @@ class CustomMiddleware(BaseHTTPMiddleware):
                 "traceback": "".join(tb_str),
             }
             logger.error("Unhandled exception: %s", structured_log)
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "error": "Internal error occurred. Our team has been notified.",
-                    "timestamp": timestamp,
-                    "request_id": request_id,
-                },
+            await _send_json_error(
+                send,
+                500,
+                "Internal error occurred. Our team has been notified.",
+                timestamp,
+                request_id=request_id,
             )
+
+
+async def _send_json_error(
+    send: Send,
+    status_code: int,
+    error: Any,
+    timestamp: str,
+    request_id: Any = None,
+):
+    """Send a JSON error response directly via ASGI send."""
+    body: dict = {"error": error, "timestamp": timestamp}
+    if request_id is not None:
+        body["request_id"] = request_id
+    body_bytes = json.dumps(body).encode("utf-8")
+    await send(
+        {
+            "type": "http.response.start",
+            "status": status_code,
+            "headers": [
+                [b"content-type", b"application/json"],
+                [b"content-length", str(len(body_bytes)).encode()],
+            ],
+        }
+    )
+    await send({"type": "http.response.body", "body": body_bytes})
 
 
 app = FastAPI(
     title="launch",
     version="1.0.0",
     redoc_url=None,
-    middleware=[Middleware(CustomMiddleware)],
 )
+app.add_middleware(CustomMiddleware)
 
 app.include_router(batch_job_router_v1)
 app.include_router(inference_task_router_v1)

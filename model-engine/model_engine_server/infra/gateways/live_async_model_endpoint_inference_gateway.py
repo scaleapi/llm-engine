@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME
@@ -31,9 +30,10 @@ class LiveAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
         *,
         task_name: str = DEFAULT_CELERY_TASK_NAME,
     ) -> CreateAsyncTaskV1Response:
-        # Use json.loads instead of predict_request.dict() because we have overridden the 'root'
-        # key in some fields, and root overriding only reflects in the json() output.
-        predict_args = json.loads(predict_request.json())
+        # model_dump(mode="json") produces a JSON-compatible dict directly, handling
+        # RootModel fields (like RequestSchema and CallbackAuth) correctly in Pydantic v2
+        # without the overhead of serializing to a JSON string and parsing it back
+        predict_args = predict_request.model_dump(mode="json")
 
         send_task_response = await self.task_queue_gateway.send_task_async(
             task_name=task_name,

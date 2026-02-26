@@ -5,7 +5,6 @@ import dataclasses
 import json
 import pickle
 import sys
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import List, Optional, Union
@@ -165,8 +164,11 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
             status=BatchJobStatus.RUNNING,
         )
 
-        results = self._poll_tasks(
-            owner=owner, job_id=job_id, task_ids=task_ids, timeout_timestamp=timeout_timestamp
+        results = await self._poll_tasks(
+            owner=owner,
+            job_id=job_id,
+            task_ids=task_ids,
+            timeout_timestamp=timeout_timestamp,
         )
 
         result_location = batch_job_record.result_location
@@ -202,7 +204,10 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
         model_endpoint = await self.model_endpoint_service.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id,
         )
-        updating = {ModelEndpointStatus.UPDATE_PENDING, ModelEndpointStatus.UPDATE_IN_PROGRESS}
+        updating = {
+            ModelEndpointStatus.UPDATE_PENDING,
+            ModelEndpointStatus.UPDATE_IN_PROGRESS,
+        }
 
         assert model_endpoint
         while model_endpoint.status in updating:
@@ -240,7 +245,9 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
             pending_task_ids_location = batch_job_record.task_ids_location
             if pending_task_ids_location is not None:
                 with self.filesystem_gateway.open(
-                    pending_task_ids_location, "r", aws_profile=infra_config().profile_ml_worker
+                    pending_task_ids_location,
+                    "r",
+                    aws_profile=infra_config().profile_ml_worker,
                 ) as f:
                     task_ids_serialized = f.read().splitlines()
                     task_ids = [
@@ -254,7 +261,9 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
                 task_ids = await self._submit_tasks(queue_name, input_path, task_name)
                 pending_task_ids_location = self._get_pending_task_ids_location(job_id)
                 with self.filesystem_gateway.open(
-                    pending_task_ids_location, "w", aws_profile=infra_config().profile_ml_worker
+                    pending_task_ids_location,
+                    "w",
+                    aws_profile=infra_config().profile_ml_worker,
                 ) as f:
                     f.write("\n".join([tid.serialize() for tid in task_ids]))
                 await self.batch_job_record_repository.update_batch_job_record(
@@ -304,7 +313,7 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
         task_ids = await asyncio.gather(*[_create_task(inp) for inp in inputs])
         return list(task_ids)
 
-    def _poll_tasks(
+    async def _poll_tasks(
         self,
         owner: str,
         job_id: str,
@@ -312,31 +321,38 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
         timeout_timestamp: datetime,
     ) -> List[BatchEndpointInferencePredictionResponse]:
         # Poll the task queue until all tasks are complete.
-        # Python multithreading works here because retrieving the tasks is I/O bound.
+        # Uses run_in_executor for the blocking get_task calls and asyncio.sleep
+        # between poll rounds to avoid spinning.
         task_ids_only = [in_progress_task.task_id for in_progress_task in task_ids]
         task_id_to_ref_id_map = {
             in_progress_task.task_id: in_progress_task.reference_id for in_progress_task in task_ids
         }
         pending_task_ids_set = set(task_ids_only)
         task_id_to_result = {}
-        executor = ThreadPoolExecutor()
+        loop = asyncio.get_event_loop()
         progress = BatchJobProgress(
             num_tasks_pending=len(pending_task_ids_set),
             num_tasks_completed=0,
         )
         self.batch_job_progress_gateway.update_progress(owner, job_id, progress)
+        poll_interval = 2.0  # seconds, will increase with backoff
+        terminal_task_states = {TaskStatus.SUCCESS, TaskStatus.FAILURE}
         while pending_task_ids_set:
-            new_results = executor.map(
-                self.async_model_endpoint_inference_gateway.get_task, pending_task_ids_set
+            new_results = await asyncio.gather(
+                *[
+                    loop.run_in_executor(
+                        None, self.async_model_endpoint_inference_gateway.get_task, tid
+                    )
+                    for tid in pending_task_ids_set
+                ]
             )
             has_new_ready_tasks = False
             curr_timestamp = datetime.utcnow()
-            terminal_task_states = {TaskStatus.SUCCESS, TaskStatus.FAILURE}
             for r in new_results:
                 if r.status in terminal_task_states or curr_timestamp > timeout_timestamp:
                     has_new_ready_tasks = True
                     task_id_to_result[r.task_id] = r
-                    pending_task_ids_set.remove(r.task_id)
+                    pending_task_ids_set.discard(r.task_id)
 
             if has_new_ready_tasks:
                 logger.info(
@@ -348,10 +364,16 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
                     num_tasks_completed=len(task_id_to_result),
                 )
                 self.batch_job_progress_gateway.update_progress(owner, job_id, progress)
+                poll_interval = 2.0  # reset on progress
+
+            if pending_task_ids_set:
+                await asyncio.sleep(poll_interval)
+                poll_interval = min(poll_interval * 1.5, 30)  # backoff, cap at 30s
 
         results = [
             BatchEndpointInferencePredictionResponse(
-                response=task_id_to_result[task_id], reference_id=task_id_to_ref_id_map[task_id]
+                response=task_id_to_result[task_id],
+                reference_id=task_id_to_ref_id_map[task_id],
             )
             for task_id in task_ids_only
         ]
