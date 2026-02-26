@@ -288,6 +288,17 @@ def validate_model_name(_model_name: str, _inference_framework: LLMInferenceFram
 def validate_num_shards(
     num_shards: int, inference_framework: LLMInferenceFramework, gpus: int
 ) -> None:
+    cpu_only = gpus == 0
+
+    # CPU-only endpoints must have num_shards=0
+    if cpu_only:
+        if num_shards != 0:
+            raise ObjectHasInvalidValueException(
+                f"CPU-only endpoints must have num_shards=0, got {num_shards}."
+            )
+        return
+
+    # GPU mode: validate num_shards matches gpus
     if inference_framework == LLMInferenceFramework.DEEPSPEED:
         if num_shards <= 1:
             raise ObjectHasInvalidValueException("DeepSpeed requires more than 1 GPU.")
@@ -298,6 +309,20 @@ def validate_num_shards(
     if num_shards != gpus:
         raise ObjectHasInvalidValueException(
             f"Num shard {num_shards} must be equal to the number of GPUs {gpus}."
+        )
+
+
+# Inference frameworks that support CPU-only execution
+_CPU_SUPPORTED_FRAMEWORKS = {LLMInferenceFramework.VLLM}
+
+
+def validate_cpu_only_framework(inference_framework: LLMInferenceFramework, cpu_only: bool) -> None:
+    """Validate that the inference framework supports CPU-only execution."""
+    if cpu_only and inference_framework not in _CPU_SUPPORTED_FRAMEWORKS:
+        raise ObjectHasInvalidValueException(
+            f"CPU-only endpoints are only supported for frameworks: "
+            f"{[f.value for f in _CPU_SUPPORTED_FRAMEWORKS]}. "
+            f"Got: {inference_framework.value}"
         )
 
 
@@ -978,9 +1003,16 @@ class CreateLLMModelBundleV1UseCase:
             subcommands.append(ray_cmd)
 
         if not is_worker:
-            vllm_args.tensor_parallel_size = num_shards
+            # CPU-only mode is indicated by num_shards=0 (validated upstream)
+            cpu_only = num_shards == 0
+            if cpu_only:
+                vllm_args.device = "cpu"
+                vllm_args.dtype = "float32"  # CPU doesn't support float16 well
+                vllm_args.tensor_parallel_size = 1  # vLLM uses 1 for single device
+            else:
+                vllm_args.tensor_parallel_size = num_shards
 
-            if vllm_args.gpu_memory_utilization is not None:
+            if not cpu_only and vllm_args.gpu_memory_utilization is not None:
                 vllm_args.enforce_eager = True
 
             if multinode:
@@ -1335,15 +1367,23 @@ class CreateLLMModelEndpointV1UseCase:
         self, user: User, request: CreateLLMModelEndpointV1Request
     ) -> CreateLLMModelEndpointV1Response:
         await _fill_hardware_info(self.llm_artifact_gateway, request)
-        if not (
-            request.gpus
-            and request.gpu_type
-            and request.cpus
-            and request.memory
-            and request.storage
-            and request.nodes_per_worker
+        # Validate hardware info is present
+        # Note: gpus=0 and gpu_type=None are valid for CPU-only endpoints
+        if (
+            request.gpus is None
+            or request.cpus is None
+            or request.memory is None
+            or request.storage is None
+            or request.nodes_per_worker is None
         ):
             raise RuntimeError("Some hardware info is missing unexpectedly.")
+
+        # Derive cpu_only flag for use throughout this method
+        cpu_only = request.gpus == 0
+
+        # For GPU endpoints, gpu_type must be provided
+        if not cpu_only and request.gpu_type is None:
+            raise RuntimeError("gpu_type is required for GPU endpoints.")
         validate_deployment_resources(
             min_workers=request.min_workers,
             max_workers=request.max_workers,
@@ -1362,6 +1402,7 @@ class CreateLLMModelEndpointV1UseCase:
         validate_post_inference_hooks(user, request.post_inference_hooks)
         validate_model_name(request.model_name, request.inference_framework)
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
+        validate_cpu_only_framework(request.inference_framework, cpu_only)
         validate_quantization(request.quantize, request.inference_framework)
         validate_chat_template(request.chat_template_override, request.inference_framework)
 
@@ -1640,12 +1681,12 @@ class UpdateLLMModelEndpointV1UseCase:
             quantize = request.quantize or llm_metadata.get("quantize")
             checkpoint_path = request.checkpoint_path or llm_metadata.get("checkpoint_path")
 
+            # Derive effective gpus and cpu_only flag
+            effective_gpus = request.gpus if request.gpus is not None else infra_state.resource_state.gpus
+            cpu_only = effective_gpus == 0  # noqa: F841 - kept for future use
+
             validate_model_name(model_name, inference_framework)
-            validate_num_shards(
-                num_shards,
-                inference_framework,
-                request.gpus or infra_state.resource_state.gpus,
-            )
+            validate_num_shards(num_shards, inference_framework, effective_gpus)
             validate_quantization(quantize, inference_framework)
             validate_chat_template(request.chat_template_override, inference_framework)
             chat_template_override = request.chat_template_override or llm_metadata.get(
@@ -3436,9 +3477,14 @@ class ModelDownloadV1UseCase:
 async def _fill_hardware_info(
     llm_artifact_gateway: LLMArtifactGateway, request: CreateLLMModelEndpointV1Request
 ):
+    # For CPU-only endpoints (gpus=0), gpu_type should be None
+    # gpu_type is only required when gpus > 0
+    gpu_type_required = request.gpus is not None and request.gpus > 0
+    gpu_type_missing = gpu_type_required and request.gpu_type is None
+
     if (
         request.gpus is None
-        or request.gpu_type is None
+        or gpu_type_missing
         or request.cpus is None
         or request.memory is None
         or request.storage is None
@@ -3453,7 +3499,8 @@ async def _fill_hardware_info(
             and request.nodes_per_worker is None
         ):
             raise ObjectHasInvalidValueException(
-                "All hardware spec fields (gpus, gpu_type, cpus, memory, storage, nodes_per_worker) must be provided if any hardware spec field is missing."
+                "All hardware spec fields (gpus, gpu_type, cpus, memory, storage, nodes_per_worker) must be provided if any hardware spec field is missing. "
+                "For CPU-only endpoints, set gpus=0 and gpu_type=None."
             )
         checkpoint_path = get_checkpoint_path(request.model_name, request.checkpoint_path)
         hardware_info = await _infer_hardware(
