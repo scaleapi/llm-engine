@@ -56,6 +56,17 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         logger.info(f"Downloaded {len(downloaded_files)} files to {target_path}")
         return downloaded_files
 
+    def upload_files(self, local_path: str, remote_path: str, **kwargs) -> None:
+        s3 = get_s3_resource(kwargs)
+        parsed = parse_attachment_url(remote_path, clean_key=False)
+        bucket = s3.Bucket(parsed.bucket)
+        for root, _, files in os.walk(local_path):
+            for file in files:
+                local_file = os.path.join(root, file)
+                s3_key = os.path.join(parsed.key, os.path.relpath(local_file, local_path))
+                logger.info(f"Uploading {local_file} → s3://{parsed.bucket}/{s3_key}")
+                bucket.upload_file(local_file, s3_key)
+
     def get_model_weights_urls(self, owner: str, model_name: str, **kwargs) -> List[str]:
         s3 = get_s3_resource(kwargs)
         parsed_remote = parse_attachment_url(
