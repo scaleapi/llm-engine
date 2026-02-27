@@ -79,7 +79,7 @@ def _hash_any_to_int(data: Any):
 async def list_deployments(apps_api) -> Dict[Tuple[str, str], CeleryAutoscalerParams]:
     from model_engine_server.common.config import hmi_config
 
-    endpoint_namespace = hmi_config().endpoint_namespace
+    endpoint_namespace = hmi_config.endpoint_namespace
     celery_deployments_params = {}
     namespace_start_time = time.time()
     deployments = await apps_api.list_namespaced_deployment(namespace=endpoint_namespace)
