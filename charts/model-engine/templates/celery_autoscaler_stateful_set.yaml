@@ -72,6 +72,8 @@ spec:
               fieldPath: metadata.name
         - name: NUM_SHARDS
           value: '{{ $num_shards }}'
+        - name: DEPLOY_SERVICE_CONFIG_PATH
+          value: "/workspace/model-engine/service_configs/service_config.yaml"
         {{- if .Values.azure }}
         - name: AZURE_CLIENT_ID
           value: {{ .Values.azure.client_id }}
@@ -86,11 +88,15 @@ spec:
         resources:
           requests:
             cpu: 1000m
-        {{- if .Values.aws }}
         volumeMounts:
+        {{- if .Values.aws }}
         - mountPath: /opt/.aws/config
           name: config-volume
           subPath: config
+        {{- end }}
+        {{- if .Values.config.values }}
+        - name: {{ .Chart.Name }}-service-config-volume
+          mountPath: /workspace/model-engine/service_configs
         {{- end }}
       {{ with .Values.nodeSelector }}
       nodeSelector:
@@ -102,12 +108,20 @@ spec:
           value: 'true'
           effect: NoSchedule
       serviceAccountName: {{ include "modelEngine.fullname" $ }}
-      {{- if .Values.aws }}
       volumes:
+      {{- if .Values.aws }}
       - configMap:
           name: {{ .Values.aws.configMap.name }}
         name: config-volume
-      {{- end}}
+      {{- end }}
+      {{- if .Values.config.values }}
+      - name: {{ .Chart.Name }}-service-config-volume
+        configMap:
+          name: {{ include "modelEngine.fullname" . }}-service-config
+          items:
+            - key: launch_service_config
+              path: service_config.yaml
+      {{- end }}
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 20%
