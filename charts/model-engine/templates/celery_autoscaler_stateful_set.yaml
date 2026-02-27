@@ -72,8 +72,13 @@ spec:
               fieldPath: metadata.name
         - name: NUM_SHARDS
           value: '{{ $num_shards }}'
+        {{- if .Values.config.file }}
+        - name: DEPLOY_SERVICE_CONFIG_PATH
+          value: {{ .Values.config.file.launch | quote }}
+        {{- else if .Values.config.values }}
         - name: DEPLOY_SERVICE_CONFIG_PATH
           value: "/workspace/model-engine/service_configs/service_config.yaml"
+        {{- end }}
         {{- if .Values.azure }}
         - name: AZURE_CLIENT_ID
           value: {{ .Values.azure.client_id }}
