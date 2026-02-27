@@ -72,67 +72,65 @@ class CeleryAutoscalerParams:
 def _hash_any_to_int(data: Any):
     # Use MD5 for hashing (non-security purpose) - FIPS compliant with usedforsecurity=False
     return int(
-        hashlib.new("md5", str(data).encode(), usedforsecurity=False).hexdigest(), 16
-    )  # nosemgrep
+        hashlib.new("md5", str(data).encode(), usedforsecurity=False).hexdigest(), 16  # nosemgrep
+    )
 
 
-async def list_deployments(core_api, apps_api) -> Dict[Tuple[str, str], CeleryAutoscalerParams]:
-    namespaces = await core_api.list_namespace()
+async def list_deployments(apps_api) -> Dict[Tuple[str, str], CeleryAutoscalerParams]:
+    from model_engine_server.common.config import hmi_config
+
+    endpoint_namespace = hmi_config().endpoint_namespace
     celery_deployments_params = {}
-    for namespace in namespaces.items:
-        namespace_name = namespace.metadata.name
-        if namespace_name in excluded_namespaces():
+    namespace_start_time = time.time()
+    deployments = await apps_api.list_namespaced_deployment(namespace=endpoint_namespace)
+    logger.info(
+        f"list_namespaced_deployment in {endpoint_namespace} took {time.time() - namespace_start_time} seconds"
+    )
+    for deployment in deployments.items:
+        deployment_name = deployment.metadata.name
+        annotations = deployment.metadata.annotations
+
+        if not annotations:
             continue
-        namespace_start_time = time.time()
-        deployments = await apps_api.list_namespaced_deployment(namespace=namespace_name)
-        logger.info(
-            f"list_namespaced_deployment with {namespace_name} took {time.time() - namespace_start_time} seconds"
-        )
-        for deployment in deployments.items:
-            deployment_name = deployment.metadata.name
-            annotations = deployment.metadata.annotations
 
-            if not annotations:
+        # Parse parameters
+        params = {}
+
+        if "celery.scaleml.autoscaler/broker" in annotations:
+            deployment_broker = annotations["celery.scaleml.autoscaler/broker"]
+        else:
+            deployment_broker = ELASTICACHE_REDIS_BROKER
+
+        if deployment_broker != autoscaler_broker:
+            logger.debug(
+                f"Skipping deployment {deployment_name}; deployment's broker {deployment_broker} is not {autoscaler_broker}"
+            )
+            continue
+
+        for f in dataclasses.fields(CeleryAutoscalerParams):
+            k = f.name
+            v = annotations.get(f"celery.scaleml.autoscaler/{stringcase.camelcase(k)}")
+            if not v:
                 continue
-
-            # Parse parameters
-            params = {}
-
-            if "celery.scaleml.autoscaler/broker" in annotations:
-                deployment_broker = annotations["celery.scaleml.autoscaler/broker"]
-            else:
-                deployment_broker = ELASTICACHE_REDIS_BROKER
-
-            if deployment_broker != autoscaler_broker:
-                logger.debug(
-                    f"Skipping deployment {deployment_name}; deployment's broker {deployment_broker} is not {autoscaler_broker}"
-                )
-                continue
-
-            for f in dataclasses.fields(CeleryAutoscalerParams):
-                k = f.name
-                v = annotations.get(f"celery.scaleml.autoscaler/{stringcase.camelcase(k)}")
-                if not v:
-                    continue
-
-                try:
-                    if k == "task_visibility":
-                        v = TaskVisibility.from_name(v)
-                    v = f.type(v)
-                except (ValueError, KeyError):
-                    logger.exception(f"Unable to convert {f.name}: {v} to {f.type}")
-
-                params[k] = v
 
             try:
-                celery_autoscaler_params = CeleryAutoscalerParams(**params)
-            except TypeError:
-                logger.debug(
-                    f"Missing params, skipping deployment : {deployment_name} in {namespace_name}"
-                )
-                continue
+                if k == "task_visibility":
+                    v = TaskVisibility.from_name(v)
+                v = f.type(v)
+            except (ValueError, KeyError):
+                logger.exception(f"Unable to convert {f.name}: {v} to {f.type}")
 
-            celery_deployments_params[(deployment_name, namespace_name)] = celery_autoscaler_params
+            params[k] = v
+
+        try:
+            celery_autoscaler_params = CeleryAutoscalerParams(**params)
+        except TypeError:
+            logger.debug(
+                f"Missing params, skipping deployment : {deployment_name} in {endpoint_namespace}"
+            )
+            continue
+
+        celery_deployments_params[(deployment_name, endpoint_namespace)] = celery_autoscaler_params
 
     return celery_deployments_params
 
@@ -585,7 +583,6 @@ async def main():
         logger.info("No incluster kubernetes config, falling back to local")
         await kube_config.load_kube_config()
 
-    core_api = client.CoreV1Api()
     apps_api = client.AppsV1Api()
 
     BROKER_NAME_TO_CLASS = {
@@ -632,7 +629,7 @@ async def main():
     while True:
         try:
             loop_start = time.time()
-            deployments = await list_deployments(core_api=core_api, apps_api=apps_api)
+            deployments = await list_deployments(apps_api=apps_api)
             logger.info(f"list_deployments took {time.time() - loop_start} seconds")
             celery_queues = set()
             celery_queues_params = []
