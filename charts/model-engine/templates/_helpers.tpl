@@ -11,7 +11,9 @@ We truncate at 40 chars because some Kubernetes name fields are limited to 63 (b
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "modelEngine.fullname" -}}
-{{- if .Values.serviceIdentifier }}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 40 | trimSuffix "-" }}
+{{- else if .Values.serviceIdentifier }}
 {{- printf "%s-%s" .Chart.Name .Values.serviceIdentifier | trunc 40 | trimSuffix "-" }}
 {{- else }}
 {{- default .Chart.Name | trunc 40 | trimSuffix "-" }}
