@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from kubernetes_asyncio.client.rest import ApiException
 from kubernetes_asyncio.config.config_exception import ConfigException
-
 from model_engine_server.core.configmap import read_config_map
 
 
