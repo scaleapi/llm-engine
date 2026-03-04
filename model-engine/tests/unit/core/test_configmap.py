@@ -20,13 +20,14 @@ async def test_read_config_map_incluster(mock_config_map_data):
     mock_cm = MagicMock()
     mock_cm.data = mock_config_map_data
 
-    with patch("model_engine_server.core.configmap.client.Configuration") as mock_cfg_cls, patch(
-        "model_engine_server.core.configmap.kube_config.load_incluster_config"
-    ) as mock_incluster, patch(
-        "model_engine_server.core.configmap.client.ApiClient"
-    ) as mock_api_client_cls, patch(
-        "model_engine_server.core.configmap.client.CoreV1Api"
-    ) as mock_core_v1:
+    with (
+        patch("model_engine_server.core.configmap.client.Configuration") as mock_cfg_cls,
+        patch(
+            "model_engine_server.core.configmap.kube_config.load_incluster_config"
+        ) as mock_incluster,
+        patch("model_engine_server.core.configmap.client.ApiClient") as mock_api_client_cls,
+        patch("model_engine_server.core.configmap.client.CoreV1Api") as mock_core_v1,
+    ):
         mock_configuration = MagicMock()
         mock_cfg_cls.return_value = mock_configuration
 
@@ -56,16 +57,19 @@ async def test_read_config_map_falls_back_to_kube_config(mock_config_map_data):
     mock_cm = MagicMock()
     mock_cm.data = mock_config_map_data
 
-    with patch("model_engine_server.core.configmap.client.Configuration") as mock_cfg_cls, patch(
-        "model_engine_server.core.configmap.kube_config.load_incluster_config",
-        side_effect=ConfigException("not in cluster"),
-    ), patch(
-        "model_engine_server.core.configmap.kube_config.load_kube_config", new_callable=AsyncMock
-    ) as mock_load_kube, patch(
-        "model_engine_server.core.configmap.client.ApiClient"
-    ) as mock_api_client_cls, patch(
-        "model_engine_server.core.configmap.client.CoreV1Api"
-    ) as mock_core_v1:
+    with (
+        patch("model_engine_server.core.configmap.client.Configuration") as mock_cfg_cls,
+        patch(
+            "model_engine_server.core.configmap.kube_config.load_incluster_config",
+            side_effect=ConfigException("not in cluster"),
+        ),
+        patch(
+            "model_engine_server.core.configmap.kube_config.load_kube_config",
+            new_callable=AsyncMock,
+        ) as mock_load_kube,
+        patch("model_engine_server.core.configmap.client.ApiClient") as mock_api_client_cls,
+        patch("model_engine_server.core.configmap.client.CoreV1Api") as mock_core_v1,
+    ):
         mock_configuration = MagicMock()
         mock_cfg_cls.return_value = mock_configuration
 
@@ -87,13 +91,12 @@ async def test_read_config_map_falls_back_to_kube_config(mock_config_map_data):
 @pytest.mark.asyncio
 async def test_read_config_map_raises_api_exception():
     """Test read_config_map propagates ApiException from the k8s API."""
-    with patch("model_engine_server.core.configmap.client.Configuration"), patch(
-        "model_engine_server.core.configmap.kube_config.load_incluster_config"
-    ), patch(
-        "model_engine_server.core.configmap.client.ApiClient"
-    ) as mock_api_client_cls, patch(
-        "model_engine_server.core.configmap.client.CoreV1Api"
-    ) as mock_core_v1:
+    with (
+        patch("model_engine_server.core.configmap.client.Configuration"),
+        patch("model_engine_server.core.configmap.kube_config.load_incluster_config"),
+        patch("model_engine_server.core.configmap.client.ApiClient") as mock_api_client_cls,
+        patch("model_engine_server.core.configmap.client.CoreV1Api") as mock_core_v1,
+    ):
         mock_api_client = AsyncMock()
         mock_api_client.__aenter__ = AsyncMock(return_value=mock_api_client)
         mock_api_client.__aexit__ = AsyncMock(return_value=False)
