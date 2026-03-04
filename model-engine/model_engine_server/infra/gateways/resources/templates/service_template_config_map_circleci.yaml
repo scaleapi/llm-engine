@@ -45,6 +45,7 @@ data:
         celery.scaleml.autoscaler/perWorker: "${PER_WORKER}"
         celery.scaleml.autoscaler/minWorkers: "${MIN_WORKERS}"
         celery.scaleml.autoscaler/maxWorkers: "${MAX_WORKERS}"
+        celery.scaleml.autoscaler/taskExpiresSeconds: "${TASK_EXPIRES_SECONDS}"
     spec:
       strategy:
         type: RollingUpdate
@@ -318,6 +319,7 @@ data:
         celery.scaleml.autoscaler/perWorker: "${PER_WORKER}"
         celery.scaleml.autoscaler/minWorkers: "${MIN_WORKERS}"
         celery.scaleml.autoscaler/maxWorkers: "${MAX_WORKERS}"
+        celery.scaleml.autoscaler/taskExpiresSeconds: "${TASK_EXPIRES_SECONDS}"
     spec:
       strategy:
         type: RollingUpdate
@@ -1266,6 +1268,7 @@ data:
         celery.scaleml.autoscaler/perWorker: "${PER_WORKER}"
         celery.scaleml.autoscaler/minWorkers: "${MIN_WORKERS}"
         celery.scaleml.autoscaler/maxWorkers: "${MAX_WORKERS}"
+        celery.scaleml.autoscaler/taskExpiresSeconds: "${TASK_EXPIRES_SECONDS}"
     spec:
       strategy:
         type: RollingUpdate
@@ -1547,6 +1550,7 @@ data:
         celery.scaleml.autoscaler/perWorker: "${PER_WORKER}"
         celery.scaleml.autoscaler/minWorkers: "${MIN_WORKERS}"
         celery.scaleml.autoscaler/maxWorkers: "${MAX_WORKERS}"
+        celery.scaleml.autoscaler/taskExpiresSeconds: "${TASK_EXPIRES_SECONDS}"
     spec:
       strategy:
         type: RollingUpdate

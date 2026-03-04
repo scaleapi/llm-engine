@@ -194,6 +194,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     args=args,
                     kwargs=kwargs,
                     queue=queue_name,
+                    expires=expires,
                 )
 
                 if infra_config().debug_mode:  # pragma: no cover

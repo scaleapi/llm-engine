@@ -273,6 +273,8 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
         quantize=llm_metadata.get("quantize"),
         checkpoint_path=llm_metadata.get("checkpoint_path"),
         chat_template_override=llm_metadata.get("chat_template_override"),
+        task_expires_seconds=model_endpoint.record.task_expires_seconds,
+        queue_message_timeout_seconds=model_endpoint.record.queue_message_timeout_seconds,
         spec=model_endpoint_entity_to_get_model_endpoint_response(model_endpoint),
     )
     return response
@@ -1463,6 +1465,8 @@ class CreateLLMModelEndpointV1UseCase:
             default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
+            queue_message_timeout_seconds=request.queue_message_timeout_seconds,
+            task_expires_seconds=request.task_expires_seconds,
         )
         _handle_post_inference_hooks(
             created_by=user.user_id,
@@ -1730,6 +1734,8 @@ class UpdateLLMModelEndpointV1UseCase:
             default_callback_url=request.default_callback_url,
             default_callback_auth=request.default_callback_auth,
             public_inference=request.public_inference,
+            queue_message_timeout_seconds=request.queue_message_timeout_seconds,
+            task_expires_seconds=request.task_expires_seconds,
         )
         _handle_post_inference_hooks(
             created_by=endpoint_record.created_by,

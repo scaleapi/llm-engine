@@ -72,6 +72,7 @@ IMAGE_HASH_MAX_LENGTH = 32
 FORWARDER_PORT = 5000
 USER_CONTAINER_PORT = 5005
 ARTIFACT_LIKE_CONTAINER_PORT = FORWARDER_PORT
+DEFAULT_TASK_EXPIRES_SECONDS = 86400
 
 
 class _BaseResourceArguments(TypedDict):
@@ -127,6 +128,7 @@ class _AsyncDeploymentArguments(TypedDict):
     BROKER_TYPE: str
     SQS_QUEUE_URL: str
     SQS_PROFILE: str
+    TASK_EXPIRES_SECONDS: int
 
 
 class _SyncArtifactDeploymentArguments(TypedDict):
@@ -682,6 +684,8 @@ def get_endpoint_resource_arguments_from_request(
             BROKER_TYPE=broker_type,
             SQS_QUEUE_URL=sqs_queue_url,
             SQS_PROFILE=sqs_profile,
+            TASK_EXPIRES_SECONDS=model_endpoint_record.task_expires_seconds
+            or DEFAULT_TASK_EXPIRES_SECONDS,
         )
     elif endpoint_resource_name == "deployment-runnable-image-async-gpu":
         assert isinstance(flavor, RunnableImageLike)
@@ -732,6 +736,8 @@ def get_endpoint_resource_arguments_from_request(
             BROKER_TYPE=broker_type,
             SQS_QUEUE_URL=sqs_queue_url,
             SQS_PROFILE=sqs_profile,
+            TASK_EXPIRES_SECONDS=model_endpoint_record.task_expires_seconds
+            or DEFAULT_TASK_EXPIRES_SECONDS,
             # GPU Deployment Arguments
             GPU_TYPE=build_endpoint_request.gpu_type.value,
             GPUS=build_endpoint_request.gpus,
@@ -984,6 +990,8 @@ def get_endpoint_resource_arguments_from_request(
             BROKER_TYPE=broker_type,
             SQS_QUEUE_URL=sqs_queue_url,
             SQS_PROFILE=sqs_profile,
+            TASK_EXPIRES_SECONDS=model_endpoint_record.task_expires_seconds
+            or DEFAULT_TASK_EXPIRES_SECONDS,
             # Triton Deployment Arguments
             TRITON_MODEL_REPOSITORY=flavor.triton_model_repository,
             TRITON_CPUS=str(flavor.triton_num_cpu),
@@ -1042,6 +1050,8 @@ def get_endpoint_resource_arguments_from_request(
             BROKER_TYPE=broker_type,
             SQS_QUEUE_URL=sqs_queue_url,
             SQS_PROFILE=sqs_profile,
+            TASK_EXPIRES_SECONDS=model_endpoint_record.task_expires_seconds
+            or DEFAULT_TASK_EXPIRES_SECONDS,
             # GPU Deployment Arguments
             GPU_TYPE=build_endpoint_request.gpu_type.value,
             GPUS=build_endpoint_request.gpus,

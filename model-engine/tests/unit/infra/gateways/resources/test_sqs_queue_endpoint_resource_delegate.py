@@ -505,3 +505,67 @@ async def test_sqs_get_queue_attributes_queue_throws_exception(
     with pytest.raises(EndpointResourceInfraException):
         delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
         await delegate.get_queue_attributes(endpoint_id="model_endpoint_id_1")
+
+
+@pytest.mark.asyncio
+async def test_sqs_create_queue_with_custom_visibility_timeout(
+    build_endpoint_request_async_custom: BuildEndpointRequest,
+    mock_create_async_sqs_client_create_queue,
+):
+    """Test that queue_message_timeout_seconds sets the VisibilityTimeout on new queue creation."""
+    delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
+    endpoint_record: ModelEndpointRecord = build_endpoint_request_async_custom.model_endpoint_record
+    await delegate.create_queue_if_not_exists(
+        endpoint_id=endpoint_record.id,
+        endpoint_name=endpoint_record.name,
+        endpoint_created_by=endpoint_record.created_by,
+        endpoint_labels=build_endpoint_request_async_custom.labels,
+        queue_message_timeout_seconds=7200,
+    )
+
+    actual_create_queue_kwargs = (
+        mock_create_async_sqs_client_create_queue.__aenter__.return_value.create_queue.call_args.kwargs
+    )
+    assert actual_create_queue_kwargs["Attributes"]["VisibilityTimeout"] == "7200"
+
+
+@pytest.mark.asyncio
+async def test_sqs_existing_queue_updates_visibility_timeout(
+    build_endpoint_request_async_custom: BuildEndpointRequest,
+    mock_create_async_sqs_client_get_queue_url,
+):
+    """Test that queue_message_timeout_seconds calls set_queue_attributes on existing queue."""
+    delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
+    endpoint_record: ModelEndpointRecord = build_endpoint_request_async_custom.model_endpoint_record
+    await delegate.create_queue_if_not_exists(
+        endpoint_id=endpoint_record.id,
+        endpoint_name=endpoint_record.name,
+        endpoint_created_by=endpoint_record.created_by,
+        endpoint_labels=build_endpoint_request_async_custom.labels,
+        queue_message_timeout_seconds=3600,
+    )
+
+    mock_client = mock_create_async_sqs_client_get_queue_url.__aenter__.return_value
+    mock_client.set_queue_attributes.assert_called_once_with(
+        QueueUrl="https://us-west-2.queue.amazonaws.com/000000000000/launch-endpoint-id-test_model_endpoint_id_3",
+        Attributes={"VisibilityTimeout": "3600"},
+    )
+
+
+@pytest.mark.asyncio
+async def test_sqs_existing_queue_no_update_when_timeout_is_none(
+    build_endpoint_request_async_custom: BuildEndpointRequest,
+    mock_create_async_sqs_client_get_queue_url,
+):
+    """Test that set_queue_attributes is NOT called when queue_message_timeout_seconds is None."""
+    delegate = SQSQueueEndpointResourceDelegate(sqs_profile="foobar")
+    endpoint_record: ModelEndpointRecord = build_endpoint_request_async_custom.model_endpoint_record
+    await delegate.create_queue_if_not_exists(
+        endpoint_id=endpoint_record.id,
+        endpoint_name=endpoint_record.name,
+        endpoint_created_by=endpoint_record.created_by,
+        endpoint_labels=build_endpoint_request_async_custom.labels,
+    )
+
+    mock_client = mock_create_async_sqs_client_get_queue_url.__aenter__.return_value
+    mock_client.set_queue_attributes.assert_not_called()

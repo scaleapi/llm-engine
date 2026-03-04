@@ -27,7 +27,7 @@ class LiveAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
         self,
         topic: str,
         predict_request: EndpointPredictV1Request,
-        task_timeout_seconds: int,
+        task_expires_seconds: int,
         *,
         task_name: str = DEFAULT_CELERY_TASK_NAME,
     ) -> CreateAsyncTaskV1Response:
@@ -39,7 +39,7 @@ class LiveAsyncModelEndpointInferenceGateway(AsyncModelEndpointInferenceGateway)
             task_name=task_name,
             queue_name=topic,
             args=[predict_args, datetime.now(), predict_request.return_pickled],
-            expires=task_timeout_seconds,
+            expires=task_expires_seconds,
         )
         return CreateAsyncTaskV1Response(task_id=send_task_response.task_id)
 

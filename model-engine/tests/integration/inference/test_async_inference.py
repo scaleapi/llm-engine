@@ -67,7 +67,7 @@ def test_submit_and_get_tasks(
             args=task_args,
             cloudpickle=cloudpickle,
         ),
-        task_timeout_seconds=60,
+        task_expires_seconds=60,
     )
 
     # Wait up to 10 seconds for the task to complete.
@@ -142,7 +142,7 @@ def test_async_callbacks(
             callback_url=callback_url,
             callback_auth=task_callback_auth,
         ),
-        task_timeout_seconds=60,
+        task_expires_seconds=60,
     )
 
     # Wait up to 10 seconds for the task to complete.

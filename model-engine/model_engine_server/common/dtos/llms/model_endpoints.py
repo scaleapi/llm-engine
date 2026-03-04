@@ -56,6 +56,11 @@ class LLMModelEndpointCommonArgs(BaseModel):
     default_callback_url: Optional[HttpUrlStr] = None
     default_callback_auth: Optional[CallbackAuth] = None
     public_inference: Optional[bool] = True  # LLM endpoints are public by default.
+    task_expires_seconds: Optional[int] = Field(
+        default=None,
+        ge=1,
+        description="For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+    )
     chat_template_override: Optional[str] = Field(
         default=None,
         description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -63,6 +68,12 @@ class LLMModelEndpointCommonArgs(BaseModel):
     enable_startup_metrics: Optional[bool] = Field(
         default=False,
         description="Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
+    )
+    queue_message_timeout_seconds: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=43200,
+        description="For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
     )
 
 
@@ -165,6 +176,14 @@ class GetLLMModelEndpointV1Response(BaseModel):
     chat_template_override: Optional[str] = Field(
         default=None,
         description="A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
+    )
+    task_expires_seconds: Optional[int] = Field(
+        default=None,
+        description="For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+    )
+    queue_message_timeout_seconds: Optional[int] = Field(
+        default=None,
+        description="For async endpoints, the queue message visibility/lock timeout in seconds (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
     )
     spec: Optional[GetModelEndpointV1Response] = None
 

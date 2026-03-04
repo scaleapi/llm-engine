@@ -7,7 +7,7 @@ asyncpg==0.27.0
 azure-containerregistry~=1.2.0
 azure-identity~=1.15.0
 azure-keyvault-secrets~=4.7.0
-azure-servicebus~=7.11.4
+azure-servicebus~=7.14.3
 azure-storage-blob~=12.19.0
 # GCP dependencies
 gcloud-aio-storage~=9.6
