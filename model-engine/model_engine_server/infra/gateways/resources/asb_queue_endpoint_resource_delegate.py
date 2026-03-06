@@ -42,27 +42,20 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
 
         with _get_servicebus_administration_client() as client:
             try:
-                client.create_queue(
-                    queue_name=queue_name,
-                    max_message_size_in_kilobytes=ASB_MAX_MESSAGE_SIZE_KB,
-                )
+                client.create_queue(queue_name=queue_name)
             except ResourceExistsError:
                 pass
 
-            if queue_message_timeout_seconds is not None:
-                lock_duration = timedelta(
-                    seconds=min(queue_message_timeout_seconds, ASB_MAXIMUM_LOCK_DURATION)
-                )
-                try:
-                    queue_props = client.get_queue(queue_name)
-                    if queue_props.lock_duration != lock_duration:
-                        queue_props.lock_duration = lock_duration
-                        client.update_queue(queue_props)
-                except (ResourceNotFoundError, HttpResponseError) as e:
-                    logger.warning(
-                        f"Failed to update lock_duration for ASB queue {queue_name}: {e}"
+            try:
+                queue_props = client.get_queue(queue_name)
+                queue_props.max_message_size_in_kilobytes = ASB_MAX_MESSAGE_SIZE_KB
+                if queue_message_timeout_seconds is not None:
+                    queue_props.lock_duration = timedelta(
+                        seconds=min(queue_message_timeout_seconds, ASB_MAXIMUM_LOCK_DURATION)
                     )
-
+                client.update_queue(queue_props)
+            except (ResourceNotFoundError, HttpResponseError) as e:
+                logger.warning(f"Failed to update properties for ASB queue {queue_name}: {e}")
             return QueueInfo(queue_name, None)
 
     async def delete_queue(self, endpoint_id: str) -> None:
