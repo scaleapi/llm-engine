@@ -2,13 +2,13 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "modelEngine.fullname" . }}-populate-fine-tuning-repository
+  name: {{ include "modelEngine.fullname" . }}-populate-fine-tuning-repository-{{ .Release.Revision }}
   labels:
     {{- include "modelEngine.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": post-install
     "helm.sh/hook-weight": "1"
-    "helm.sh/hook-delete-policy": hook-succeeded
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   backoffLimit: 0
   activeDeadlineSeconds: 600

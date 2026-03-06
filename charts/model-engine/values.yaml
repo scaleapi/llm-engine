@@ -27,6 +27,8 @@ celery_broker_type_redis: null
 
 redis:
   auth:
+  authSecretName: ""
+  authSecretKey: ""
   enableTLS: false
   enableAuth: false
   kedaSecretName: ""
@@ -42,3 +44,37 @@ nodeSelector:
   node-lifecycle: normal
 keda:
   cooldownPeriod: 300
+
+# Configurable inference framework image tags
+inferenceFramework:
+  vllm: "latest"
+  deepspeed: "latest"
+  text_generation_inference: "latest"
+  lightllm: "latest"
+  tensorrt_llm: "latest"
+  vllm_batch: "latest"
+  vllm_batch_v2: "latest"
+
+# Extensibility hooks for wrapper charts (e.g. airgapped/on-prem deployments)
+extraEnvVars: []              # Extra env vars for all main containers (gateway, builder, cacher)
+extraVolumes: []              # Extra volumes for all deployments
+extraVolumeMounts: []         # Extra volume mounts for main containers
+extraPodEnvFrom: []           # Extra envFrom for inference pods (e.g., MinIO credentials)
+
+# Service account token control
+automountServiceAccountToken: true
+
+# Configurable utility images (for airgapped environments)
+utilityImages:
+  busybox:
+    repository: "public.ecr.aws/docker/library/busybox"
+    tag: "latest"
+  curl:
+    repository: "curlimages/curl"
+    tag: "7.72.0"
+  ubuntu:
+    repository: "public.ecr.aws/ubuntu/ubuntu"
+    tag: "latest"
+
+# Additional GPU tolerations for endpoint pods
+gpuTolerations: []

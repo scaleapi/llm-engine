@@ -10,6 +10,8 @@
 {{ $broker_name = "sqs-message-broker-master" }}
 {{- else if eq $message_broker "servicebus" }}
 {{ $broker_name = "servicebus-message-broker-master" }}
+{{- else if and .Values.config .Values.config.values .Values.config.values.infra (eq (.Values.config.values.infra.cloud_provider | default "") "gcp") }}
+{{ $broker_name = "redis-gcp-memorystore-message-broker-master" }}
 {{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
@@ -99,6 +101,9 @@ spec:
           name: config-volume
           subPath: config
         {{- end }}
+        {{- if not $.Values.automountServiceAccountToken }}
+        {{- include "modelEngine.tokenVolumeMount" $ | nindent 8 }}
+        {{- end }}
         {{- if .Values.config.values }}
         - name: {{ .Chart.Name }}-service-config-volume
           mountPath: /workspace/model-engine/service_configs
@@ -112,12 +117,16 @@ spec:
           operator: Equal
           value: 'true'
           effect: NoSchedule
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ include "modelEngine.fullname" $ }}
       volumes:
       {{- if .Values.aws }}
       - configMap:
           name: {{ .Values.aws.configMap.name }}
         name: config-volume
+      {{- end }}
+      {{- if not .Values.automountServiceAccountToken }}
+      {{- include "modelEngine.tokenVolume" . | nindent 6 }}
       {{- end }}
       {{- if .Values.config.values }}
       - name: {{ .Chart.Name }}-service-config-volume
