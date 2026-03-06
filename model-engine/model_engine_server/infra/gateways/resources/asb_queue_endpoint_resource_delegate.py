@@ -15,6 +15,7 @@ from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delega
 logger = make_logger(logger_name())
 
 ASB_MAXIMUM_LOCK_DURATION = 300  # Azure Service Bus hard limit: 5 minutes
+ASB_MAX_MESSAGE_SIZE_KB = 20480  # 20 MB
 
 
 def _get_servicebus_administration_client() -> ServiceBusAdministrationClient:
@@ -41,7 +42,10 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
 
         with _get_servicebus_administration_client() as client:
             try:
-                client.create_queue(queue_name=queue_name)
+                client.create_queue(
+                    queue_name=queue_name,
+                    max_message_size_in_kilobytes=ASB_MAX_MESSAGE_SIZE_KB,
+                )
             except ResourceExistsError:
                 pass
 

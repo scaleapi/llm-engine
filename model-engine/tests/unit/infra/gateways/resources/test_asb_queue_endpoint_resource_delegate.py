@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from azure.core.exceptions import ResourceExistsError
 from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
+    ASB_MAX_MESSAGE_SIZE_KB,
     ASB_MAXIMUM_LOCK_DURATION,
     ASBQueueEndpointResourceDelegate,
 )
@@ -112,5 +113,9 @@ async def test_asb_create_queue_handles_existing_queue(mock_servicebus_client):
         endpoint_labels={"team": "test_team"},
     )
 
+    mock_servicebus_client.create_queue.assert_called_once_with(
+        queue_name="launch-endpoint-id-test_endpoint_id",
+        max_message_size_in_kilobytes=ASB_MAX_MESSAGE_SIZE_KB,
+    )
     assert result.queue_name == "launch-endpoint-id-test_endpoint_id"
     assert result.queue_url is None
