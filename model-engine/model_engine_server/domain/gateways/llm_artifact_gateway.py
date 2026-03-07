@@ -41,6 +41,17 @@ class LLMArtifactGateway(ABC):
         pass
 
     @abstractmethod
+    def upload_files(self, local_path: str, remote_path: str, **kwargs) -> None:
+        """
+        Upload all files from a local directory to a remote path.
+
+        Args:
+            local_path (str): local directory containing files to upload
+            remote_path (str): remote destination path (s3://, gs://, or https://)
+        """
+        pass
+
+    @abstractmethod
     def get_model_config(self, path: str, **kwargs) -> Dict[str, Any]:
         """
         Gets the model config from the model files live at given folder.

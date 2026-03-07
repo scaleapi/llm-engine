@@ -31,3 +31,4 @@ class LLMMetadata:
     quantize: Optional[Quantization] = None
     checkpoint_path: Optional[str] = None
     chat_template_override: Optional[str] = None
+    hf_weights_syncing: bool = False
