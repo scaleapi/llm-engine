@@ -92,6 +92,7 @@ CUDA_ARCH=""
 SCCACHE_BUCKET=${SCCACHE_BUCKET:-""}
 SCCACHE_REGION=${SCCACHE_REGION:-"us-west-2"}
 VLLM_WHEEL_INDEX=""
+VLLM_PIP_VERSION=""
 
 VLLM_OMNI_VERSION=${VLLM_OMNI_VERSION:-"0.16.0"}
 VLLM_OMNI_SOURCE_DIR=""
@@ -125,6 +126,7 @@ declare -A FLAG_VARS=(
   ["--vllm-omni-source-dir"]="VLLM_OMNI_SOURCE_DIR"
   ["--vllm-omni-source-ref"]="VLLM_OMNI_SOURCE_REF"
   ["--vllm-wheel-index"]="VLLM_WHEEL_INDEX"
+  ["--vllm-pip-version"]="VLLM_PIP_VERSION"
 )
 
 # Parse keyword arguments
@@ -178,7 +180,6 @@ declare -A VLLM_WHEEL_INDEXES=(
 
 # Required torch version for each vllm version (when base image has a different torch)
 declare -A VLLM_TORCH_VERSIONS=(
-  ["0.16.0"]="2.10.0"
 )
 
 # Auto-resolve wheel index if not explicitly provided
@@ -336,6 +337,11 @@ fi
 # Pre-release wheel index
 if [ -n "$VLLM_WHEEL_INDEX" ]; then
   BUILD_ARGS+=(--build-arg VLLM_WHEEL_INDEX="${VLLM_WHEEL_INDEX}")
+fi
+
+# Separate pip version (e.g. when version contains '+' which is invalid in Docker tags)
+if [ -n "$VLLM_PIP_VERSION" ]; then
+  BUILD_ARGS+=(--build-arg VLLM_PIP_VERSION="${VLLM_PIP_VERSION}")
 fi
 
 # Explicit torch version (needed when base image has incompatible torch)
