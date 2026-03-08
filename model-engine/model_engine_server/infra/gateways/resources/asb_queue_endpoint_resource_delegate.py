@@ -55,7 +55,11 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
                     )
                 client.update_queue(queue_props)
             except (ResourceNotFoundError, HttpResponseError) as e:
-                logger.warning(f"Failed to update properties for ASB queue {queue_name}: {e}")
+                logger.warning(
+                    f"Failed to update properties for ASB queue {queue_name} "
+                    f"(max_message_size_in_kilobytes={ASB_MAX_MESSAGE_SIZE_KB}, "
+                    f"lock_duration={queue_message_timeout_seconds}s): {e}"
+                )
             return QueueInfo(queue_name, None)
 
     async def delete_queue(self, endpoint_id: str) -> None:
