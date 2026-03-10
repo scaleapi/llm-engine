@@ -50,6 +50,12 @@ nav:
   - "Pricing": pricing.md
   - "Contributing": contributing.md
 #  - "FAQ": faq.md
+  - "Operators":
+      - "Overview": internal/README.md
+      - "Architecture": internal/architecture.md
+      - "Helm Values": internal/helm-values.md
+      - "Smoke Tests": internal/smoke-tests.md
+      - "Cloud Support": internal/cloud-matrix.md
 
 markdown_extensions:
   - toc:

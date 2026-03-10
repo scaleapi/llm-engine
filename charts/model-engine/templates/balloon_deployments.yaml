@@ -34,8 +34,13 @@ spec:
         - key: "nvidia.com/gpu"
           operator: "Exists"
           effect: "NoSchedule"
+        {{- range $.Values.gpuTolerations }}
+        - key: {{ .key | quote }}
+          operator: "Exists"
+          effect: "NoSchedule"
+        {{- end }}
       containers:
-        - image: public.ecr.aws/ubuntu/ubuntu:latest
+        - image: {{ $.Values.utilityImages.ubuntu.repository }}:{{ $.Values.utilityImages.ubuntu.tag }}
           imagePullPolicy: IfNotPresent
           name: main
           resources:

@@ -1,7 +1,18 @@
 # syntax=docker/dockerfile:1
-ARG VLLM_VERSION=0.13.0
+
+ARG VLLM_VERSION
 ARG VLLM_BASE_REPO=vllm/vllm-openai
-ARG VLLM_BASE_IMAGE=${VLLM_BASE_REPO}:v${VLLM_VERSION}
+# When using --full-build, VLLM_BASE_IMAGE is overridden to a locally-built image
+ARG VLLM_BASE_VERSION=${VLLM_VERSION}
+ARG VLLM_BASE_IMAGE=${VLLM_BASE_REPO}:v${VLLM_BASE_VERSION}
+
+# Empty default for vllm-omni source. When --build-context vllm-omni-source=<path>
+# is passed to docker build, this is replaced with the local directory contents.
+# This allows COPY --from=vllm-omni-source to work in both cases:
+#   - No flag: copies nothing (empty), falls through to PyPI install
+#   - With flag: copies local source code for pip install
+FROM scratch AS vllm-omni-source
+
 FROM ${VLLM_BASE_IMAGE} AS base
 
 RUN apt-get update \
@@ -12,45 +23,113 @@ RUN apt-get update \
 
 WORKDIR /workspace
 
-ARG VLLM_VERSION
-RUN pip install --no-cache-dir "vllm[audio]==${VLLM_VERSION}"
-
 RUN wget https://github.com/peak/s5cmd/releases/download/v2.2.1/s5cmd_2.2.1_Linux-64bit.tar.gz
 RUN tar -xvzf s5cmd_2.2.1_Linux-64bit.tar.gz
 
 # symlink python to python3
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
-FROM base AS vllm
+# Intermediate stage: installs vllm + post-install fixups.
+# Both vllm and vllm_omni inherit from here; vllm_batch stays on plain base.
+FROM base AS vllm_base
 
+ARG VLLM_VERSION
+ARG VLLM_WHEEL_INDEX=""
+ARG TORCH_VERSION=""
+RUN pip install --no-cache-dir --pre --upgrade \
+    ${VLLM_WHEEL_INDEX:+--extra-index-url "$VLLM_WHEEL_INDEX"} \
+    "vllm[audio]==${VLLM_VERSION}" \
+    ${TORCH_VERSION:+"torch==${TORCH_VERSION}"}
+
+# Post-install fixups: ensure flashinfer and pplx-kernels match the new vllm/torch.
+# IMPORTANT: --no-deps prevents pip from re-resolving torch (which can downgrade it).
+RUN FLASHINFER_CUDA_TAG="$(python3 -c 'import torch; print((torch.version.cuda or "12.4").replace(".", ""))')" && \
+    pip install --no-cache-dir --upgrade --force-reinstall --no-deps \
+      "flashinfer-python==0.6.3" \
+      "flashinfer-cubin==0.6.3" \
+      "flashinfer-jit-cache==0.6.3" \
+      --extra-index-url "https://flashinfer.ai/whl/cu${FLASHINFER_CUDA_TAG}" && \
+    pip uninstall -y pplx-kernels || true
+
+# Ensure pip-installed CUDA libs (matching torch) take priority over the stale
+# system-level 12.9.x libs in the base image at runtime. Write the path into a
+# file at build time, then source it via ENV.
+RUN python3 -c "\
+import os, importlib, pathlib
+dirs = []
+for pkg in ['nvidia.cublas','nvidia.cuda_runtime','nvidia.cuda_nvrtc',\
+'nvidia.curand','nvidia.cufft','nvidia.cusolver','nvidia.cusparse',\
+'nvidia.nvjitlink','nvidia.nvtx','nvidia.cudnn','nvidia.nccl','nvidia.cufile']:
+    try:
+        m = importlib.import_module(pkg)
+        d = str(pathlib.Path(m.__file__).parent / 'lib')
+        if os.path.isdir(d): dirs.append(d)
+    except ImportError: pass
+print(':'.join(dirs))
+" > /tmp/nvidia_lib_path.txt
+ENV NVIDIA_PIP_LIB_PATH_FILE=/tmp/nvidia_lib_path.txt
+
+FROM vllm_base AS vllm
+
+COPY model-engine/model_engine_server/inference/vllm/requirements.txt /workspace/requirements.txt
+RUN pip install -r requirements.txt
+
+# Generic library for deterministic trace correlation
+COPY model-engine/model_engine_server/common/startup_tracing /workspace/startup_tracing
+
+# vLLM-specific utils
+COPY model-engine/model_engine_server/inference/vllm/utils /workspace/utils
+
+# vllm server
 COPY model-engine/model_engine_server/inference/vllm/vllm_server.py /workspace/vllm_server.py
 COPY model-engine/model_engine_server/inference/vllm/init_ray.sh /workspace/init_ray.sh
 
-# Startup metrics support (enabled via ENABLE_STARTUP_METRICS=true)
-# Generic library for deterministic trace correlation
-COPY model-engine/model_engine_server/common/startup_tracing /workspace/startup_tracing
 # vLLM-specific startup instrumentation
 COPY model-engine/model_engine_server/inference/vllm/vllm_startup_wrapper.py /workspace/vllm_startup_wrapper.py
-COPY model-engine/model_engine_server/inference/vllm/startup_telemetry.py /workspace/startup_telemetry.py
-# OTel dependencies for startup metrics (lightweight, only used when enabled)
-RUN pip install --no-cache-dir opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp-proto-grpc
+
+# Need to override entrypoint from parent image
+ENTRYPOINT ["/bin/env"]
+
+FROM vllm_base AS vllm_omni
+
+ARG VLLM_OMNI_VERSION
+ARG VLLM_OMNI_FROM_SOURCE=false
+COPY model-engine/model_engine_server/inference/vllm/requirements-omni.txt /workspace/requirements.txt
+RUN pip uninstall -y vllm-omni || true
+# Install vllm-omni: from local source (via --build-context) or PyPI
+COPY --from=vllm-omni-source . /tmp/vllm-omni-source/
+RUN if [ "$VLLM_OMNI_FROM_SOURCE" = "true" ]; then \
+      echo "==> Installing vllm-omni from local source"; \
+      pip install --no-cache-dir /tmp/vllm-omni-source/; \
+    else \
+      echo "==> Installing vllm-omni ${VLLM_OMNI_VERSION} from PyPI"; \
+      pip install --no-cache-dir vllm-omni==${VLLM_OMNI_VERSION}; \
+    fi && \
+    cp -r /tmp/vllm-omni-source/vllm_omni/model_executor/stage_configs /workspace/stage_configs || true && \
+    rm -rf /tmp/vllm-omni-source/
+RUN pip install -r requirements.txt
+
+# Generic library for deterministic trace correlation
+COPY model-engine/model_engine_server/common/startup_tracing /workspace/startup_tracing
+
+# vLLM-specific utils
+COPY model-engine/model_engine_server/inference/vllm/utils /workspace/utils
+
+# vllm server
+COPY model-engine/model_engine_server/inference/vllm/vllm_omni_server.py /workspace/vllm_server.py
+COPY model-engine/model_engine_server/inference/vllm/init_ray.sh /workspace/init_ray.sh
+
+# vLLM-specific startup instrumentation
+COPY model-engine/model_engine_server/inference/vllm/vllm_startup_wrapper.py /workspace/vllm_startup_wrapper.py
+
+# Temp vllm_omni override for fix
+COPY model-engine/model_engine_server/inference/vllm/vllm_overrides/omni/config/model.py /usr/local/lib/python3.12/dist-packages/vllm_omni/config/model.py
+
 
 # Need to override entrypoint from parent image
 ENTRYPOINT ["/bin/env"]
 
 FROM base AS vllm_batch
-
-COPY model-engine/model_engine_server/inference/batch_inference/requirements.txt /workspace/requirements.txt
-RUN pip install -r requirements.txt
-
-COPY model-engine /workspace/model-engine
-RUN pip install -e /workspace/model-engine
-COPY model-engine/model_engine_server/inference/batch_inference/vllm_batch.py /workspace/vllm_batch.py
-
-# Need to override entrypoint from parent image
-ENTRYPOINT ["/bin/env"]
-
-FROM base AS vllm_batch_v2
 
 COPY model-engine/model_engine_server/inference/vllm/requirements-batch.txt /workspace/requirements.txt
 RUN pip install -r requirements.txt
@@ -63,7 +142,7 @@ COPY model-engine/model_engine_server/inference/vllm/init_ray_batch_inf_v2.py /w
 # Need to override entrypoint from parent image
 ENTRYPOINT ["/bin/env"]
 
-FROM vllm_batch_v2 AS vllm_batch_debug
+FROM vllm_batch AS vllm_batch_debug
 
 COPY model-engine/model_engine_server/inference/vllm/ray_overrides/_version.py /usr/local/lib/python3.12/dist-packages/ray/_version.py
 COPY model-engine/model_engine_server/inference/vllm/ray_overrides/proxier.py /usr/local/lib/python3.12/dist-packages/ray/util/client/server/proxier.py

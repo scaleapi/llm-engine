@@ -43,7 +43,16 @@ spec:
             - --nodelabels=k8s.amazonaws.com/accelerator=nvidia-tesla-t4
             - --logtostderr=true
             - --v=2
+          {{- if not $.Values.automountServiceAccountToken }}
+          volumeMounts:
+            {{- include "modelEngine.tokenVolumeMount" $ | nindent 12 }}
+          {{- end }}
       priorityClassName: system-cluster-critical
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ include "modelEngine.fullname" . }}
+      {{- if not .Values.automountServiceAccountToken }}
+      volumes:
+        {{- include "modelEngine.tokenVolume" . | nindent 8 }}
+      {{- end }}
 {{- end }}
 {{- end }}

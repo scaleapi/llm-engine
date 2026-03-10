@@ -10,6 +10,8 @@
 {{ $broker_name = "sqs-message-broker-master" }}
 {{- else if eq $message_broker "servicebus" }}
 {{ $broker_name = "servicebus-message-broker-master" }}
+{{- else if and .Values.config .Values.config.values .Values.config.values.infra (eq (.Values.config.values.infra.cloud_provider | default "") "gcp") }}
+{{ $broker_name = "redis-gcp-memorystore-message-broker-master" }}
 {{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
@@ -72,6 +74,13 @@ spec:
               fieldPath: metadata.name
         - name: NUM_SHARDS
           value: '{{ $num_shards }}'
+        {{- if .Values.config.file }}
+        - name: DEPLOY_SERVICE_CONFIG_PATH
+          value: {{ .Values.config.file.launch | quote }}
+        {{- else if .Values.config.values }}
+        - name: DEPLOY_SERVICE_CONFIG_PATH
+          value: "/workspace/model-engine/service_configs/service_config.yaml"
+        {{- end }}
         {{- if .Values.azure }}
         - name: AZURE_CLIENT_ID
           value: {{ .Values.azure.client_id }}
@@ -86,11 +95,18 @@ spec:
         resources:
           requests:
             cpu: 1000m
-        {{- if .Values.aws }}
         volumeMounts:
+        {{- if .Values.aws }}
         - mountPath: /opt/.aws/config
           name: config-volume
           subPath: config
+        {{- end }}
+        {{- if not $.Values.automountServiceAccountToken }}
+        {{- include "modelEngine.tokenVolumeMount" $ | nindent 8 }}
+        {{- end }}
+        {{- if .Values.config.values }}
+        - name: {{ .Chart.Name }}-service-config-volume
+          mountPath: /workspace/model-engine/service_configs
         {{- end }}
       {{ with .Values.nodeSelector }}
       nodeSelector:
@@ -101,13 +117,25 @@ spec:
           operator: Equal
           value: 'true'
           effect: NoSchedule
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ include "modelEngine.fullname" $ }}
-      {{- if .Values.aws }}
       volumes:
+      {{- if .Values.aws }}
       - configMap:
           name: {{ .Values.aws.configMap.name }}
         name: config-volume
-      {{- end}}
+      {{- end }}
+      {{- if not .Values.automountServiceAccountToken }}
+      {{- include "modelEngine.tokenVolume" . | nindent 6 }}
+      {{- end }}
+      {{- if .Values.config.values }}
+      - name: {{ .Chart.Name }}-service-config-volume
+        configMap:
+          name: {{ include "modelEngine.fullname" . }}-service-config
+          items:
+            - key: launch_service_config
+              path: service_config.yaml
+      {{- end }}
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 20%
