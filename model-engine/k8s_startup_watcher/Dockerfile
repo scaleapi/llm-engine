@@ -15,7 +15,7 @@ USER root
 ENTRYPOINT []
 WORKDIR /app
 
-RUN pip install --no-cache-dir --prefix=/install \
+RUN pip install --no-cache-dir \
     kubernetes~=29.0.0 \
     opentelemetry-api~=1.27.0 \
     opentelemetry-sdk~=1.27.0 \
@@ -26,8 +26,8 @@ FROM ${ECR_REGISTRY}/golden/chainguard/python:3.11
 
 WORKDIR /app
 
-# Copy installed packages from builder
-COPY --from=builder /install/lib /usr/lib
+# Copy installed site-packages from builder (Chainguard uses /usr/lib/pythonX.Y)
+COPY --from=builder /usr/lib/python3.11/site-packages /usr/lib/python3.11/site-packages
 
 # Copy shared startup_tracing library (for deterministic trace correlation)
 COPY model_engine_server/common/startup_tracing /app/startup_tracing

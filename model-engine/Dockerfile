@@ -13,6 +13,7 @@ WORKDIR /workspace
 
 # Install system dependencies (Wolfi uses apk, not apt-get)
 RUN apk update && apk add --no-cache \
+  dumb-init \
   git \
   openssh \
   curl \
