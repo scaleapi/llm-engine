@@ -23,6 +23,7 @@ __all__: Sequence[str] = (
     "CONFIG_PATH",
     "config_context",
     "get_config_path_for_env_name",
+    "infer_registry_type",
     "infra_config",
     "use_config_context",
 )
