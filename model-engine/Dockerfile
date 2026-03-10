@@ -67,4 +67,7 @@ WORKDIR /workspace
 ENV PYTHONPATH /workspace
 ENV WORKSPACE /workspace
 
+# Drop back to non-root for runtime (Chainguard default UID 65532)
+USER nonroot
+
 EXPOSE 5000

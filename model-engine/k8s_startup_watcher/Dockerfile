@@ -28,4 +28,7 @@ COPY model_engine_server/common/startup_tracing /app/startup_tracing
 COPY k8s_startup_watcher/config.py /app/config.py
 COPY k8s_startup_watcher/watcher.py /app/watcher.py
 
+# Drop back to non-root for runtime (Chainguard default UID 65532)
+USER nonroot
+
 CMD ["python", "/app/watcher.py"]
