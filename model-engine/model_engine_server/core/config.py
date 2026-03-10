@@ -51,6 +51,7 @@ class _InfraConfig:
     prometheus_server_address: Optional[str] = None
     celery_broker_type_redis: Optional[bool] = None
     celery_enable_sha256: Optional[bool] = None
+    docker_registry_type: Optional[str] = None
     debug_mode: Optional[bool] = None
 
 

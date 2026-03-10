@@ -13,6 +13,7 @@ from .ecr_docker_repository import ECRDockerRepository
 from .fake_docker_repository import FakeDockerRepository
 from .feature_flag_repository import FeatureFlagRepository
 from .gar_docker_repository import GARDockerRepository
+from .generic_docker_repository import GenericDockerRepository
 from .gcs_file_llm_fine_tune_events_repository import GCSFileLLMFineTuneEventsRepository
 from .gcs_file_llm_fine_tune_repository import GCSFileLLMFineTuneRepository
 from .live_tokenizer_repository import LiveTokenizerRepository
@@ -38,6 +39,7 @@ __all__: Sequence[str] = [
     "ECRDockerRepository",
     "FakeDockerRepository",
     "GARDockerRepository",
+    "GenericDockerRepository",
     "FeatureFlagRepository",
     "GCSFileLLMFineTuneEventsRepository",
     "GCSFileLLMFineTuneRepository",

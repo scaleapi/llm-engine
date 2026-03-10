@@ -122,6 +122,7 @@ from model_engine_server.infra.repositories import (
     ECRDockerRepository,
     FakeDockerRepository,
     GARDockerRepository,
+    GenericDockerRepository,
     GCSFileLLMFineTuneEventsRepository,
     GCSFileLLMFineTuneRepository,
     LiveTokenizerRepository,
@@ -145,6 +146,18 @@ from model_engine_server.infra.services.live_llm_model_endpoint_service import (
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 
 logger = make_logger(logger_name())
+
+
+def _infer_registry_type(prefix: str) -> str:
+    """Infer docker registry type from docker_repo_prefix."""
+    if ".dkr.ecr." in prefix and ".amazonaws.com" in prefix:
+        return "ecr"
+    if prefix.endswith(".azurecr.io"):
+        return "acr"
+    if "-docker.pkg.dev" in prefix:
+        return "gar"
+    return "generic"
+
 
 basic_auth = HTTPBasic(auto_error=False)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
@@ -383,16 +396,21 @@ def _get_external_interfaces(
         file_storage_gateway = S3FileStorageGateway()
 
     docker_repository: DockerRepository
+    registry_type = infra_config().docker_registry_type or _infer_registry_type(
+        infra_config().docker_repo_prefix
+    )
     if CIRCLECI:
         docker_repository = FakeDockerRepository()
-    elif infra_config().cloud_provider == "onprem":
-        docker_repository = OnPremDockerRepository()
-    elif infra_config().cloud_provider == "azure":
-        docker_repository = ACRDockerRepository()
-    elif infra_config().cloud_provider == "gcp":
-        docker_repository = GARDockerRepository()
-    else:
+    elif registry_type == "ecr":
         docker_repository = ECRDockerRepository()
+    elif registry_type == "acr":
+        docker_repository = ACRDockerRepository()
+    elif registry_type == "gar":
+        docker_repository = GARDockerRepository()
+    elif registry_type == "onprem":
+        docker_repository = OnPremDockerRepository()
+    else:
+        docker_repository = GenericDockerRepository()
 
     tokenizer_repository = LiveTokenizerRepository(llm_artifact_gateway=llm_artifact_gateway)
 

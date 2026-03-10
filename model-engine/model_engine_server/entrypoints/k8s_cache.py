@@ -40,10 +40,12 @@ from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delega
 from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
     SQSQueueEndpointResourceDelegate,
 )
+from model_engine_server.api.dependencies import _infer_registry_type
 from model_engine_server.infra.repositories import (
     ACRDockerRepository,
     ECRDockerRepository,
     FakeDockerRepository,
+    GenericDockerRepository,
 )
 from model_engine_server.infra.repositories.db_model_endpoint_record_repository import (
     DbModelEndpointRecordRepository,
@@ -128,16 +130,19 @@ async def main(args: Any):
     )
     image_cache_gateway = ImageCacheGateway()
     docker_repo: DockerRepository
+    registry_type = infra_config().docker_registry_type or _infer_registry_type(
+        infra_config().docker_repo_prefix
+    )
     if CIRCLECI:
         docker_repo = FakeDockerRepository()
-    elif infra_config().cloud_provider == "onprem":
-        docker_repo = OnPremDockerRepository()
-    elif infra_config().cloud_provider == "azure" or infra_config().docker_repo_prefix.endswith(
-        "azurecr.io"
-    ):
-        docker_repo = ACRDockerRepository()
-    else:
+    elif registry_type == "ecr":
         docker_repo = ECRDockerRepository()
+    elif registry_type == "acr":
+        docker_repo = ACRDockerRepository()
+    elif registry_type == "onprem":
+        docker_repo = OnPremDockerRepository()
+    else:
+        docker_repo = GenericDockerRepository()
     while True:
         loop_start = time.time()
         await loop_iteration(
