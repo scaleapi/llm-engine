@@ -110,6 +110,17 @@ def use_config_context(config_path: str):
     _infra_config = InfraConfig.from_yaml(config_path)
 
 
+def infer_registry_type(prefix: str) -> str:
+    """Infer docker registry type from docker_repo_prefix."""
+    if ".dkr.ecr." in prefix and ".amazonaws.com" in prefix:
+        return "ecr"
+    if prefix.endswith(".azurecr.io"):
+        return "acr"
+    if "-docker.pkg.dev" in prefix:
+        return "gar"
+    return "generic"
+
+
 def get_config_path_for_env_name(env_name: str) -> Path:
     path = DEFAULT_CONFIG_PATH.parent / f"{env_name}.yaml"
     if not path.exists():

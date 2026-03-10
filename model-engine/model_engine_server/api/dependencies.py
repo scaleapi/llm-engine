@@ -14,7 +14,7 @@ from model_engine_server.core.auth.authentication_repository import Authenticati
 from model_engine_server.core.auth.fake_authentication_repository import (
     FakeAuthenticationRepository,
 )
-from model_engine_server.core.config import infra_config
+from model_engine_server.core.config import infer_registry_type, infra_config
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
@@ -146,17 +146,6 @@ from model_engine_server.infra.services.live_llm_model_endpoint_service import (
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 
 logger = make_logger(logger_name())
-
-
-def _infer_registry_type(prefix: str) -> str:
-    """Infer docker registry type from docker_repo_prefix."""
-    if ".dkr.ecr." in prefix and ".amazonaws.com" in prefix:
-        return "ecr"
-    if prefix.endswith(".azurecr.io"):
-        return "acr"
-    if "-docker.pkg.dev" in prefix:
-        return "gar"
-    return "generic"
 
 
 basic_auth = HTTPBasic(auto_error=False)
@@ -396,7 +385,7 @@ def _get_external_interfaces(
         file_storage_gateway = S3FileStorageGateway()
 
     docker_repository: DockerRepository
-    registry_type = infra_config().docker_registry_type or _infer_registry_type(
+    registry_type = infra_config().docker_registry_type or infer_registry_type(
         infra_config().docker_repo_prefix
     )
     if CIRCLECI:

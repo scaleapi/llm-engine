@@ -54,7 +54,7 @@ class TestImageExists:
             assert result is True
             mock_requests.head.assert_called_once()
             call_url = mock_requests.head.call_args[0][0]
-            assert call_url == "https://public.ecr.aws/b2z8n5q1/v2/model-engine/vllm/manifests/v0.4.0"
+            assert call_url == "https://public.ecr.aws/v2/b2z8n5q1/model-engine/vllm/manifests/v0.4.0"
 
     def test_returns_false_on_404(self, generic_docker_repo, mock_infra_config):
         with mock.patch("model_engine_server.infra.repositories.generic_docker_repository.requests") as mock_requests:

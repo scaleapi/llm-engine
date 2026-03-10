@@ -48,9 +48,12 @@ class GenericDockerRepository(DockerRepository):
     def image_exists(
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
     ) -> bool:
-        prefix = infra_config().docker_repo_prefix
-        registry = prefix.rstrip("/")
-        manifest_url = f"https://{registry}/v2/{repository_name}/manifests/{image_tag}"
+        prefix = infra_config().docker_repo_prefix.rstrip("/")
+        parts = prefix.split("/", 1)
+        registry_host = parts[0]
+        path_prefix = parts[1] if len(parts) > 1 else ""
+        full_repo = f"{path_prefix}/{repository_name}" if path_prefix else repository_name
+        manifest_url = f"https://{registry_host}/v2/{full_repo}/manifests/{image_tag}"
         headers = {
             "Accept": ", ".join([
                 "application/vnd.docker.distribution.manifest.v2+json",

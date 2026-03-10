@@ -40,11 +40,12 @@ from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delega
 from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
     SQSQueueEndpointResourceDelegate,
 )
-from model_engine_server.api.dependencies import _infer_registry_type
+from model_engine_server.core.config import infer_registry_type
 from model_engine_server.infra.repositories import (
     ACRDockerRepository,
     ECRDockerRepository,
     FakeDockerRepository,
+    GARDockerRepository,
     GenericDockerRepository,
 )
 from model_engine_server.infra.repositories.db_model_endpoint_record_repository import (
@@ -130,7 +131,7 @@ async def main(args: Any):
     )
     image_cache_gateway = ImageCacheGateway()
     docker_repo: DockerRepository
-    registry_type = infra_config().docker_registry_type or _infer_registry_type(
+    registry_type = infra_config().docker_registry_type or infer_registry_type(
         infra_config().docker_repo_prefix
     )
     if CIRCLECI:
@@ -139,6 +140,8 @@ async def main(args: Any):
         docker_repo = ECRDockerRepository()
     elif registry_type == "acr":
         docker_repo = ACRDockerRepository()
+    elif registry_type == "gar":
+        docker_repo = GARDockerRepository()
     elif registry_type == "onprem":
         docker_repo = OnPremDockerRepository()
     else:
