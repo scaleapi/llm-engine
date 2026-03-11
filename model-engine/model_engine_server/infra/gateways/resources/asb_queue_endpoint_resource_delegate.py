@@ -15,6 +15,7 @@ from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delega
 logger = make_logger(logger_name())
 
 ASB_MAXIMUM_LOCK_DURATION = 300  # Azure Service Bus hard limit: 5 minutes
+ASB_MAX_MESSAGE_SIZE_KB = 20480  # 20 MB
 
 
 def _get_servicebus_administration_client() -> ServiceBusAdministrationClient:
@@ -45,20 +46,20 @@ class ASBQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
             except ResourceExistsError:
                 pass
 
-            if queue_message_timeout_seconds is not None:
-                lock_duration = timedelta(
-                    seconds=min(queue_message_timeout_seconds, ASB_MAXIMUM_LOCK_DURATION)
-                )
-                try:
-                    queue_props = client.get_queue(queue_name)
-                    if queue_props.lock_duration != lock_duration:
-                        queue_props.lock_duration = lock_duration
-                        client.update_queue(queue_props)
-                except (ResourceNotFoundError, HttpResponseError) as e:
-                    logger.warning(
-                        f"Failed to update lock_duration for ASB queue {queue_name}: {e}"
+            try:
+                queue_props = client.get_queue(queue_name)
+                queue_props.max_message_size_in_kilobytes = ASB_MAX_MESSAGE_SIZE_KB
+                if queue_message_timeout_seconds is not None:
+                    queue_props.lock_duration = timedelta(
+                        seconds=min(queue_message_timeout_seconds, ASB_MAXIMUM_LOCK_DURATION)
                     )
-
+                client.update_queue(queue_props)
+            except (ResourceNotFoundError, HttpResponseError) as e:
+                logger.warning(
+                    f"Failed to update properties for ASB queue {queue_name} "
+                    f"(max_message_size_in_kilobytes={ASB_MAX_MESSAGE_SIZE_KB}, "
+                    f"lock_duration={queue_message_timeout_seconds}s): {e}"
+                )
             return QueueInfo(queue_name, None)
 
     async def delete_queue(self, endpoint_id: str) -> None:

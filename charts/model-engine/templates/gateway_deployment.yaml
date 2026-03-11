@@ -75,6 +75,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- include "modelEngine.gatewayEnv" . | indent 10 }}
           {{- include "modelEngine.volumeMounts" . | indent 10 }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ include "modelEngine.fullname" . }}
       {{- include "modelEngine.volumes" . | indent 6 }}
       {{- with .Values.nodeSelector }}

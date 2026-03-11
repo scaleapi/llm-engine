@@ -21,6 +21,7 @@
 {{- $service_template_aws_config_map_name := .Values.serviceTemplate.awsConfigMapName }}
 {{- $celery_broker_type := .Values.celeryBrokerType }}
 {{- $node_selector := .Values.nodeSelector }}
+{{- $gpu_tolerations := .Values.gpuTolerations }}
 {{- $require_aws_config := not (empty .Values.aws) }}
 {{- $enable_datadog := .Values.datadog.enabled }}
 {{- $azure_cloud_provider := not (empty .Values.azure) }}
@@ -106,6 +107,11 @@ data:
             - key: "nvidia.com/gpu"
               operator: "Exists"
               effect: "NoSchedule"
+            {{- range $gpu_tolerations }}
+            - key: {{ .key | quote }}
+              operator: "Exists"
+              effect: "NoSchedule"
+            {{- end }}
           {{- end }}
           priorityClassName: ${PRIORITY}
           containers:
@@ -320,6 +326,10 @@ data:
               imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               env: ${MAIN_ENV}
+              {{- with $.Values.extraPodEnvFrom }}
+              envFrom:
+              {{- toYaml . | nindent 16 }}
+              {{- end }}
               readinessProbe:
                 httpGet:
                   path: ${HEALTHCHECK_ROUTE}
@@ -545,6 +555,11 @@ data:
               - key: "nvidia.com/gpu"
                 operator: "Exists"
                 effect: "NoSchedule"
+              {{- range $gpu_tolerations }}
+              - key: {{ .key | quote }}
+                operator: "Exists"
+                effect: "NoSchedule"
+              {{- end }}
             {{- end }}
             priorityClassName: ${PRIORITY}
             containers:
@@ -704,6 +719,10 @@ data:
                 imagePullPolicy: IfNotPresent
                 command: ${COMMAND}
                 env: ${MAIN_ENV}
+                {{- with $.Values.extraPodEnvFrom }}
+                envFrom:
+                {{- toYaml . | nindent 18 }}
+                {{- end }}
                 readinessProbe:
                   httpGet:
                     path: ${HEALTHCHECK_ROUTE}
@@ -811,6 +830,11 @@ data:
               - key: "nvidia.com/gpu"
                 operator: "Exists"
                 effect: "NoSchedule"
+              {{- range $gpu_tolerations }}
+              - key: {{ .key | quote }}
+                operator: "Exists"
+                effect: "NoSchedule"
+              {{- end }}
             {{- end }}
             priorityClassName: ${PRIORITY}
             containers:
@@ -1017,7 +1041,7 @@ data:
     apiVersion: batch/v1
     kind: Job
     metadata:
-      name: ${RESOURCE_NAME}
+      name: ${RESOURCE_NAME}-{{ .Release.Revision }}
       labels:
         {{- $job_template_labels | nindent 8 }}
     spec:
@@ -1157,6 +1181,11 @@ data:
             - key: "nvidia.com/gpu"
               operator: "Exists"
               effect: "NoSchedule"
+            {{- range $gpu_tolerations }}
+            - key: {{ .key | quote }}
+              operator: "Exists"
+              effect: "NoSchedule"
+            {{- end }}
           {{- end }}
           {{- if $service_template_service_account_name }}
           serviceAccountName: {{ $service_template_service_account_name }}
@@ -1311,7 +1340,7 @@ data:
           {{- end }}
           {{- end }}
           containers:
-            - image: public.ecr.aws/docker/library/busybox:latest
+            - image: {{ $.Values.utilityImages.busybox.repository }}:{{ $.Values.utilityImages.busybox.tag }}
               imagePullPolicy: IfNotPresent
               name: busybox
               command: ["/bin/sh", "-ec", "while : ; do sleep 30 ; done"]
@@ -1351,7 +1380,7 @@ data:
             spec:
               containers:
               - name: ${NAME}
-                image: curlimages/curl:7.72.0
+                image: {{ $.Values.utilityImages.curl.repository }}:{{ $.Values.utilityImages.curl.tag }}
                 imagePullPolicy: IfNotPresent
                 command:
                 - curl
