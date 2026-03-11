@@ -54,25 +54,6 @@ RUN FLASHINFER_CUDA_TAG="$(python3 -c 'import torch; print((torch.version.cuda o
       --extra-index-url "https://flashinfer.ai/whl/cu${FLASHINFER_CUDA_TAG}" && \
     pip uninstall -y pplx-kernels || true
 
-# Ensure pip-installed CUDA libs (matching torch) take priority over the stale
-# system-level 12.9.x libs in the base image at runtime. Write the path into a
-# file at build time, then source it via ENV.
-RUN python3 - > /tmp/nvidia_lib_path.txt <<'PYEOF'
-import os, importlib, pathlib
-dirs = []
-for pkg in ['nvidia.cublas','nvidia.cuda_runtime','nvidia.cuda_nvrtc',
-'nvidia.curand','nvidia.cufft','nvidia.cusolver','nvidia.cusparse',
-'nvidia.nvjitlink','nvidia.nvtx','nvidia.cudnn','nvidia.nccl','nvidia.cufile']:
-    try:
-        m = importlib.import_module(pkg)
-        if m.__file__ is None: continue
-        d = str(pathlib.Path(m.__file__).parent / 'lib')
-        if os.path.isdir(d): dirs.append(d)
-    except ImportError: pass
-print(':'.join(dirs))
-PYEOF
-ENV NVIDIA_PIP_LIB_PATH_FILE=/tmp/nvidia_lib_path.txt
-
 FROM vllm_base AS vllm
 
 COPY model-engine/model_engine_server/inference/vllm/requirements.txt /workspace/requirements.txt
