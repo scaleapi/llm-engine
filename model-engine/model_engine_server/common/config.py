@@ -78,22 +78,10 @@ class HostedModelInferenceServiceConfig:
     )
     cache_redis_onprem_url: Optional[str] = None  # For on-prem Redis (e.g., redis://redis:6379/0)
     sglang_repository: Optional[str] = None
-    default_service_account_name: Optional[str] = None
 
     @classmethod
     def from_json(cls, json):
-        # Coerce string booleans ("true"/"false") to actual bools, since Helm
-        # templates quote all values indiscriminately via | quote.
-        params = inspect.signature(cls).parameters
-        coerced = {}
-        for k, v in json.items():
-            if k not in params:
-                continue
-            if params[k].annotation is bool and isinstance(v, str):
-                coerced[k] = v.lower() in ("true", "1", "yes")
-            else:
-                coerced[k] = v
-        return cls(**coerced)
+        return cls(**{k: v for k, v in json.items() if k in inspect.signature(cls).parameters})
 
     @classmethod
     def from_yaml(cls, yaml_path):

@@ -89,7 +89,11 @@ data:
           {{- else }}
           terminationGracePeriodSeconds: 600
           {{- end }}
-          serviceAccount: ${SERVICE_ACCOUNT}
+          {{- if $service_template_service_account_name }}
+          serviceAccount: {{ $service_template_service_account_name }}
+          {{- else }}
+          serviceAccount: {{ $launch_name }}
+          {{- end }}
           {{- with $node_selector }}
           nodeSelector:
             {{- toYaml . | nindent 12 }}
@@ -533,7 +537,11 @@ data:
             {{- else }}
             terminationGracePeriodSeconds: 600
             {{- end }}
-            serviceAccount: ${SERVICE_ACCOUNT}
+            {{- if $service_template_service_account_name }}
+            serviceAccount: {{ $service_template_service_account_name }}
+            {{- else }}
+            serviceAccount: {{ $launch_name }}
+            {{- end }}
             {{- with $node_selector }}
             nodeSelector:
               {{- toYaml . | nindent 14 }}
@@ -804,7 +812,11 @@ data:
             {{- else }}
             terminationGracePeriodSeconds: 600
             {{- end }}
-            serviceAccount: ${SERVICE_ACCOUNT}
+            {{- if $service_template_service_account_name }}
+            serviceAccount: {{ $service_template_service_account_name }}
+            {{- else }}
+            serviceAccount: {{ $launch_name }}
+            {{- end }}
             {{- with $node_selector }}
             nodeSelector:
               {{- toYaml . | nindent 14 }}
@@ -1175,7 +1187,11 @@ data:
               effect: "NoSchedule"
             {{- end }}
           {{- end }}
-          serviceAccountName: ${SERVICE_ACCOUNT}
+          {{- if $service_template_service_account_name }}
+          serviceAccountName: {{ $service_template_service_account_name }}
+          {{- else }}
+          serviceAccountName: {{ $launch_name }}
+          {{- end }}
           volumes:
             {{- if $require_aws_config }}
             - name: config-volume

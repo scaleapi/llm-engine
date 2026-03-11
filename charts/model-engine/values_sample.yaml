@@ -238,10 +238,6 @@ config:
       dd_trace_enabled: false
       istio_enabled: true
       sensitive_log_mode: false
-      # default_service_account_name [optional] is the default K8s service account for endpoint pods.
-      # If not set, falls back to the Helm chart's serviceTemplate.serviceAccountName.
-      # Per-endpoint service_account_name in the API request takes precedence over this.
-      default_service_account_name: model-engine
 
       # Asynchronous endpoints configs (coming soon)
       sqs_profile: default

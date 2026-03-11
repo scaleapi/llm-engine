@@ -117,7 +117,6 @@ class _BaseDeploymentArguments(_BaseEndpointArguments):
     MAX_WORKERS: int
     CONCURRENT_REQUESTS_PER_WORKER: int
     RESULTS_S3_BUCKET: str
-    SERVICE_ACCOUNT: str
 
 
 class _AsyncDeploymentArguments(TypedDict):
@@ -527,7 +526,6 @@ def get_endpoint_resource_arguments_from_request(
     This method applies only to endpoint resources, not to batch job resources.
     """
     build_endpoint_request = request.build_endpoint_request
-    service_account = build_endpoint_request.service_account_name or hmi_config.default_service_account_name or ""
     model_endpoint_record = build_endpoint_request.model_endpoint_record
     model_bundle = model_endpoint_record.current_model_bundle
     flavor = model_bundle.flavor
@@ -666,7 +664,6 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
             RESULTS_S3_BUCKET=s3_bucket,
-            SERVICE_ACCOUNT=service_account,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -719,7 +716,6 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
             RESULTS_S3_BUCKET=s3_bucket,
-            SERVICE_ACCOUNT=service_account,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -774,7 +770,6 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
-            SERVICE_ACCOUNT=service_account,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.streaming_command,
@@ -826,7 +821,6 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
-            SERVICE_ACCOUNT=service_account,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.streaming_command,
@@ -880,7 +874,6 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
-            SERVICE_ACCOUNT=service_account,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -928,7 +921,6 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
-            SERVICE_ACCOUNT=service_account,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -978,7 +970,6 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
             RESULTS_S3_BUCKET=s3_bucket,
-            SERVICE_ACCOUNT=service_account,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -1039,7 +1030,6 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
             RESULTS_S3_BUCKET=s3_bucket,
-            SERVICE_ACCOUNT=service_account,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -1102,7 +1092,6 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
-            SERVICE_ACCOUNT=service_account,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -1158,7 +1147,6 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
-            SERVICE_ACCOUNT=service_account,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -1219,7 +1207,6 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
-            SERVICE_ACCOUNT=service_account,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.streaming_command,
