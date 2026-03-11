@@ -166,6 +166,7 @@ class LiveModelEndpointService(ModelEndpointService):
         public_inference: Optional[bool] = False,
         queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
+        service_account_name: Optional[str] = None,
     ) -> ModelEndpointRecord:
         existing_endpoints = (
             await self.model_endpoint_record_repository.list_model_endpoint_records(
@@ -214,6 +215,7 @@ class LiveModelEndpointService(ModelEndpointService):
             default_callback_url=default_callback_url,
             default_callback_auth=default_callback_auth,
             queue_message_timeout_seconds=queue_message_timeout_seconds,
+            service_account_name=service_account_name,
         )
         await self.model_endpoint_record_repository.update_model_endpoint_record(
             model_endpoint_id=model_endpoint_record.id,
@@ -297,6 +299,7 @@ class LiveModelEndpointService(ModelEndpointService):
         public_inference: Optional[bool] = None,
         queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
+        service_account_name: Optional[str] = None,
     ) -> ModelEndpointRecord:
         record = await self.model_endpoint_record_repository.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id
@@ -360,6 +363,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 default_callback_url=default_callback_url,
                 default_callback_auth=default_callback_auth,
                 queue_message_timeout_seconds=queue_message_timeout_seconds,
+                service_account_name=service_account_name,
             )
 
             # Clean up MODEL_BUNDLE_CHANGED_KEY as it is only for internal use

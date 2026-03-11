@@ -102,7 +102,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 1800
-          serviceAccount: default
+          serviceAccount: ${SERVICE_ACCOUNT}
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
@@ -376,7 +376,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 1800
-          serviceAccount: default
+          serviceAccount: ${SERVICE_ACCOUNT}
           priorityClassName: ${PRIORITY}
           containers:
             - name: celery-forwarder
@@ -595,7 +595,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: default
+          serviceAccount: ${SERVICE_ACCOUNT}
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
@@ -864,7 +864,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: default
+          serviceAccount: ${SERVICE_ACCOUNT}
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
@@ -1087,7 +1087,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: default
+          serviceAccount: ${SERVICE_ACCOUNT}
           priorityClassName: ${PRIORITY}
           containers:
             - name: http-forwarder
@@ -1325,7 +1325,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 1800
-          serviceAccount: default
+          serviceAccount: ${SERVICE_ACCOUNT}
           nodeSelector:
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
@@ -1607,7 +1607,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 1800
-          serviceAccount: default
+          serviceAccount: ${SERVICE_ACCOUNT}
           nodeSelector:
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
@@ -1834,7 +1834,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: default
+          serviceAccount: ${SERVICE_ACCOUNT}
           nodeSelector:
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
@@ -2111,7 +2111,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: default
+          serviceAccount: ${SERVICE_ACCOUNT}
           nodeSelector:
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
@@ -2342,7 +2342,7 @@ data:
                       - "True"
                   topologyKey: kubernetes.io/hostname
           terminationGracePeriodSeconds: 600
-          serviceAccount: default
+          serviceAccount: ${SERVICE_ACCOUNT}
           nodeSelector:
             k8s.amazonaws.com/accelerator: ${GPU_TYPE}
           tolerations:
@@ -2701,7 +2701,7 @@ data:
                         - "True"
                     topologyKey: kubernetes.io/hostname
             terminationGracePeriodSeconds: 600
-            serviceAccount: default
+            serviceAccount: ${SERVICE_ACCOUNT}
             nodeSelector:
               k8s.amazonaws.com/accelerator: ${GPU_TYPE}
             tolerations:
@@ -2898,7 +2898,7 @@ data:
                         - "True"
                     topologyKey: kubernetes.io/hostname
             terminationGracePeriodSeconds: 600
-            serviceAccount: default
+            serviceAccount: ${SERVICE_ACCOUNT}
             nodeSelector:
               k8s.amazonaws.com/accelerator: ${GPU_TYPE}
             tolerations:
@@ -3358,7 +3358,7 @@ data:
             cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
           restartPolicy: Never
-          serviceAccountName: default
+          serviceAccountName: ${SERVICE_ACCOUNT}
           volumes:
             - name: config-volume
               configMap:
@@ -3527,7 +3527,7 @@ data:
             - key: "nvidia.com/gpu"
               operator: "Exists"
               effect: "NoSchedule"
-          serviceAccountName: default
+          serviceAccountName: ${SERVICE_ACCOUNT}
           volumes:
             - name: config-volume
               configMap:

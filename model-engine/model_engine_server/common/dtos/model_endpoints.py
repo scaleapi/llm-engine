@@ -84,6 +84,11 @@ class CreateModelEndpointV1Request(BaseModel):
         ge=1,
         description="For async endpoints, how long a task can wait in queue before expiring (in seconds). Default: 86400 (24 hours).",
     )
+    service_account_name: Optional[str] = Field(
+        default=None,
+        max_length=253,
+        description="Custom Kubernetes service account name for the endpoint pod. The service account must already exist in the target namespace. If not specified, the cluster default is used.",
+    )
 
 
 class CreateModelEndpointV1Response(BaseModel):
@@ -121,6 +126,11 @@ class UpdateModelEndpointV1Request(BaseModel):
         default=None,
         ge=1,
         description="For async endpoints, how long a task can wait in queue before expiring (in seconds). Default: 86400 (24 hours).",
+    )
+    service_account_name: Optional[str] = Field(
+        default=None,
+        max_length=253,
+        description="Custom Kubernetes service account name for the endpoint pod. The service account must already exist in the target namespace.",
     )
 
 

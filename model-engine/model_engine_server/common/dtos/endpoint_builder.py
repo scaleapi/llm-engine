@@ -36,6 +36,7 @@ class BuildEndpointRequest(BaseModel):
     default_callback_url: Optional[str] = None
     default_callback_auth: Optional[CallbackAuth] = None
     queue_message_timeout_seconds: Optional[int] = None
+    service_account_name: Optional[str] = None
 
 
 class BuildEndpointStatus(str, Enum):

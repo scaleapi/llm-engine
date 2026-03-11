@@ -75,6 +75,11 @@ class LLMModelEndpointCommonArgs(BaseModel):
         le=43200,
         description="For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
     )
+    service_account_name: Optional[str] = Field(
+        default=None,
+        max_length=253,
+        description="Custom Kubernetes service account name for the endpoint pod. Must already exist in the target namespace.",
+    )
 
 
 class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):

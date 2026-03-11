@@ -44,6 +44,7 @@ class ModelEndpointInfraGateway(ABC):
         default_callback_url: Optional[str],
         default_callback_auth: Optional[CallbackAuth],
         queue_message_timeout_seconds: Optional[int] = None,
+        service_account_name: Optional[str] = None,
     ) -> str:
         """
         Creates the underlying infrastructure for a Model Endpoint.
@@ -73,6 +74,7 @@ class ModelEndpointInfraGateway(ABC):
             billing_tags: Arbitrary tags passed to billing
             default_callback_url: The default callback URL to use for the model endpoint.
             default_callback_auth: The default callback auth to use for the model endpoint.
+            service_account_name: Custom Kubernetes service account name for the endpoint pod.
 
         Returns:
             A unique ID for the task to create the infrastructure resources.
@@ -102,6 +104,7 @@ class ModelEndpointInfraGateway(ABC):
         default_callback_url: Optional[str] = None,
         default_callback_auth: Optional[CallbackAuth],
         queue_message_timeout_seconds: Optional[int] = None,
+        service_account_name: Optional[str] = None,
     ) -> str:
         """
         Updates the underlying infrastructure for a Model Endpoint.

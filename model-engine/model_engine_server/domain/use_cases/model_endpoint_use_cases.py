@@ -393,6 +393,7 @@ class CreateModelEndpointV1UseCase:
             public_inference=request.public_inference,
             queue_message_timeout_seconds=request.queue_message_timeout_seconds,
             task_expires_seconds=request.task_expires_seconds,
+            service_account_name=request.service_account_name,
         )
         _handle_post_inference_hooks(
             created_by=user.user_id,
@@ -523,6 +524,7 @@ class UpdateModelEndpointByIdV1UseCase:
             public_inference=request.public_inference,
             queue_message_timeout_seconds=request.queue_message_timeout_seconds,
             task_expires_seconds=request.task_expires_seconds,
+            service_account_name=request.service_account_name,
         )
         _handle_post_inference_hooks(
             created_by=endpoint_record.created_by,

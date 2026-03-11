@@ -94,6 +94,7 @@ class ModelEndpointService(ABC):
         public_inference: Optional[bool] = False,
         queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
+        service_account_name: Optional[str] = None,
     ) -> ModelEndpointRecord:
         """
         Creates a model endpoint.
@@ -131,6 +132,7 @@ class ModelEndpointService(ABC):
                 timeout in seconds (SQS VisibilityTimeout / ASB lock_duration). Max: 43200.
             task_expires_seconds: For async endpoints, how long a task can wait in queue before
                 expiring (in seconds). Default: 86400 (24 hours).
+            service_account_name: Custom Kubernetes service account name for the endpoint pod.
         Returns:
             A Model Endpoint Record domain entity object of the created endpoint.
         Raises:
@@ -230,6 +232,7 @@ class ModelEndpointService(ABC):
         public_inference: Optional[bool] = None,
         queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
+        service_account_name: Optional[str] = None,
     ) -> ModelEndpointRecord:
         """
         Updates a model endpoint.
