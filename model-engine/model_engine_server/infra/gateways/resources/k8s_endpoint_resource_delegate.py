@@ -240,10 +240,8 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
     return yaml_obj
 
 
-def override_service_account(template: Dict[str, Any], service_account_name: Optional[str]) -> None:
-    """Override the service account in a deployment/LWS template if a custom one is specified."""
-    if not service_account_name:
-        return
+def override_service_account(template: Dict[str, Any], service_account_name: str) -> None:
+    """Override the service account in a deployment/LWS template with a custom one."""
     # Deployment spec path
     spec = template.get("spec", {}).get("template", {}).get("spec")
     if spec is not None:
@@ -1646,7 +1644,8 @@ class K8SEndpointResourceDelegate:
                 endpoint_resource_name=lws_resource_name,
             )
             lws_template = load_k8s_yaml(f"{lws_resource_name}.yaml", lws_arguments)
-            override_service_account(lws_template, build_endpoint_request.service_account_name)
+            if build_endpoint_request.service_account_name:
+                override_service_account(lws_template, build_endpoint_request.service_account_name)
             leader_template = get_leader_container_from_lws_template(lws_template)
             worker_template = get_worker_container_from_lws_template(lws_template)
             add_lws_default_env_vars_to_container(leader_template)
@@ -1672,7 +1671,8 @@ class K8SEndpointResourceDelegate:
             deployment_template = load_k8s_yaml(
                 f"{deployment_resource_name}.yaml", deployment_arguments
             )
-            override_service_account(deployment_template, build_endpoint_request.service_account_name)
+            if build_endpoint_request.service_account_name:
+                override_service_account(deployment_template, build_endpoint_request.service_account_name)
             if isinstance(
                 request.build_endpoint_request.model_endpoint_record.current_model_bundle.flavor,
                 RunnableImageLike,
