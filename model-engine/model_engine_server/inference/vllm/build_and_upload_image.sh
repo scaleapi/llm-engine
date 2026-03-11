@@ -31,7 +31,7 @@ set -eo pipefail
 #   SCCACHE_BUCKET, SCCACHE_REGION - S3 sccache config
 #
 # The image tag will be automatically constructed as:
-#   - For vllm_omni: {VLLM_VERSION}-omni-{VLLM_OMNI_VERSION}-{USER_TAG}
+#   - For vllm_omni: {VLLM_VERSION}-omni-{USER_TAG}
 #   - For others: {VLLM_VERSION}-{USER_TAG}
 #
 # Examples:
@@ -256,7 +256,7 @@ fi
 
 # Construct image tag based on vllm version and user tag
 if [ "$BUILD_TARGET" == "vllm_omni" ]; then
-  IMAGE_TAG="${VLLM_VERSION}-omni-${VLLM_OMNI_VERSION}-${USER_TAG}"
+  IMAGE_TAG="${VLLM_VERSION}-omni-${USER_TAG}"
 else
   IMAGE_TAG="${VLLM_VERSION}-${USER_TAG}"
 fi

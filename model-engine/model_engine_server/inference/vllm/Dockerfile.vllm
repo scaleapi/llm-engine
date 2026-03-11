@@ -106,7 +106,7 @@ RUN pip uninstall -y vllm-omni || true
 COPY --from=vllm-omni-source . /tmp/vllm-omni-source/
 RUN if [ "$VLLM_OMNI_FROM_SOURCE" = "true" ]; then \
       echo "==> Installing vllm-omni from local source"; \
-      pip install --no-cache-dir /tmp/vllm-omni-source/; \
+      SETUPTOOLS_SCM_PRETEND_VERSION=${VLLM_OMNI_VERSION} pip install --no-cache-dir /tmp/vllm-omni-source/; \
     else \
       echo "==> Installing vllm-omni ${VLLM_OMNI_VERSION} from PyPI"; \
       pip install --no-cache-dir vllm-omni==${VLLM_OMNI_VERSION}; \

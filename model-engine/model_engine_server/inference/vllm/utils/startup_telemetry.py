@@ -287,4 +287,4 @@ async def with_startup_metrics(
         )
         health_thread.start()
 
-    return await func(*args)
+    return await func(args)
