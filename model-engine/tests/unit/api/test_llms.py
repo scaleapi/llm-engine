@@ -108,11 +108,13 @@ def test_completion_sync_success(
         fake_docker_image_batch_job_bundle_repository_contents={},
         fake_sync_inference_content=SyncEndpointPredictV1Response(
             status=TaskStatus.SUCCESS,
-            result={"result": """{
+            result={
+                "result": """{
                     "text": "output",
                     "count_prompt_tokens": 1,
                     "count_output_tokens": 1
-                }"""},
+                }"""
+            },
             traceback=None,
             status_code=200,
         ),
