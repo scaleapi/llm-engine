@@ -14,8 +14,9 @@ spec:
   activeDeadlineSeconds: 600
   template:
     metadata:
-      labels:
+      annotations:
         sidecar.istio.io/inject: "false"
+      labels:
         {{- include "modelEngine.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
