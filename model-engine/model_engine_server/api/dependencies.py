@@ -14,7 +14,7 @@ from model_engine_server.core.auth.authentication_repository import Authenticati
 from model_engine_server.core.auth.fake_authentication_repository import (
     FakeAuthenticationRepository,
 )
-from model_engine_server.core.config import infra_config
+from model_engine_server.core.config import infer_registry_type, infra_config
 from model_engine_server.core.loggers import (
     LoggerTagKey,
     LoggerTagManager,
@@ -124,6 +124,7 @@ from model_engine_server.infra.repositories import (
     GARDockerRepository,
     GCSFileLLMFineTuneEventsRepository,
     GCSFileLLMFineTuneRepository,
+    GenericDockerRepository,
     LiveTokenizerRepository,
     LLMFineTuneRepository,
     OnPremDockerRepository,
@@ -145,6 +146,7 @@ from model_engine_server.infra.services.live_llm_model_endpoint_service import (
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 
 logger = make_logger(logger_name())
+
 
 basic_auth = HTTPBasic(auto_error=False)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
@@ -383,16 +385,21 @@ def _get_external_interfaces(
         file_storage_gateway = S3FileStorageGateway()
 
     docker_repository: DockerRepository
+    registry_type = infra_config().docker_registry_type or infer_registry_type(
+        infra_config().docker_repo_prefix
+    )
     if CIRCLECI:
         docker_repository = FakeDockerRepository()
-    elif infra_config().cloud_provider == "onprem":
-        docker_repository = OnPremDockerRepository()
-    elif infra_config().cloud_provider == "azure":
-        docker_repository = ACRDockerRepository()
-    elif infra_config().cloud_provider == "gcp":
-        docker_repository = GARDockerRepository()
-    else:
+    elif registry_type == "ecr":
         docker_repository = ECRDockerRepository()
+    elif registry_type == "acr":
+        docker_repository = ACRDockerRepository()
+    elif registry_type == "gar":
+        docker_repository = GARDockerRepository()
+    elif registry_type == "onprem":
+        docker_repository = OnPremDockerRepository()
+    else:
+        docker_repository = GenericDockerRepository()
 
     tokenizer_repository = LiveTokenizerRepository(llm_artifact_gateway=llm_artifact_gateway)
 
