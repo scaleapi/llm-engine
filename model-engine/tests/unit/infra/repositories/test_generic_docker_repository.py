@@ -33,7 +33,7 @@ class TestParseWwwAuthenticate:
         }
 
     def test_returns_none_for_basic_auth(self):
-        assert _parse_www_authenticate("Basic realm=\"registry\"") is None
+        assert _parse_www_authenticate('Basic realm="registry"') is None
 
     def test_returns_none_for_missing_realm(self):
         assert _parse_www_authenticate('Bearer service="foo"') is None
@@ -44,7 +44,9 @@ class TestParseWwwAuthenticate:
 
 class TestImageExists:
     def test_returns_true_on_200(self, generic_docker_repo, mock_infra_config):
-        with mock.patch("model_engine_server.infra.repositories.generic_docker_repository.requests") as mock_requests:
+        with mock.patch(
+            "model_engine_server.infra.repositories.generic_docker_repository.requests"
+        ) as mock_requests:
             mock_resp = mock.Mock()
             mock_resp.status_code = 200
             mock_requests.head.return_value = mock_resp
@@ -54,10 +56,14 @@ class TestImageExists:
             assert result is True
             mock_requests.head.assert_called_once()
             call_url = mock_requests.head.call_args[0][0]
-            assert call_url == "https://public.ecr.aws/v2/b2z8n5q1/model-engine/vllm/manifests/v0.4.0"
+            assert (
+                call_url == "https://public.ecr.aws/v2/b2z8n5q1/model-engine/vllm/manifests/v0.4.0"
+            )
 
     def test_returns_false_on_404(self, generic_docker_repo, mock_infra_config):
-        with mock.patch("model_engine_server.infra.repositories.generic_docker_repository.requests") as mock_requests:
+        with mock.patch(
+            "model_engine_server.infra.repositories.generic_docker_repository.requests"
+        ) as mock_requests:
             mock_resp = mock.Mock()
             mock_resp.status_code = 404
             mock_requests.head.return_value = mock_resp
@@ -67,7 +73,9 @@ class TestImageExists:
             assert result is False
 
     def test_returns_false_on_connection_error(self, generic_docker_repo, mock_infra_config):
-        with mock.patch("model_engine_server.infra.repositories.generic_docker_repository.requests") as mock_requests:
+        with mock.patch(
+            "model_engine_server.infra.repositories.generic_docker_repository.requests"
+        ) as mock_requests:
             mock_requests.head.side_effect = requests.ConnectionError("unreachable")
             mock_requests.ConnectionError = requests.ConnectionError
             mock_requests.RequestException = requests.RequestException
@@ -77,7 +85,9 @@ class TestImageExists:
             assert result is False
 
     def test_token_auth_on_401(self, generic_docker_repo, mock_infra_config):
-        with mock.patch("model_engine_server.infra.repositories.generic_docker_repository.requests") as mock_requests:
+        with mock.patch(
+            "model_engine_server.infra.repositories.generic_docker_repository.requests"
+        ) as mock_requests:
             mock_requests.RequestException = requests.RequestException
 
             # First HEAD returns 401 with Www-Authenticate
@@ -107,8 +117,12 @@ class TestImageExists:
             second_call_headers = mock_requests.head.call_args_list[1][1]["headers"]
             assert second_call_headers["Authorization"] == "Bearer test-token-123"
 
-    def test_returns_false_on_401_without_www_authenticate(self, generic_docker_repo, mock_infra_config):
-        with mock.patch("model_engine_server.infra.repositories.generic_docker_repository.requests") as mock_requests:
+    def test_returns_false_on_401_without_www_authenticate(
+        self, generic_docker_repo, mock_infra_config
+    ):
+        with mock.patch(
+            "model_engine_server.infra.repositories.generic_docker_repository.requests"
+        ) as mock_requests:
             mock_requests.RequestException = requests.RequestException
 
             mock_resp = mock.Mock()

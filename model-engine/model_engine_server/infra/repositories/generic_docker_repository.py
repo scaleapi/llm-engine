@@ -15,7 +15,7 @@ _REQUEST_TIMEOUT = 10
 
 def _parse_www_authenticate(header: str) -> Optional[dict]:
     """Parse a Www-Authenticate Bearer header into realm, service, and scope."""
-    match = re.match(r'Bearer\s+(.*)', header, re.IGNORECASE)
+    match = re.match(r"Bearer\s+(.*)", header, re.IGNORECASE)
     if not match:
         return None
     params = {}
@@ -56,12 +56,14 @@ class GenericDockerRepository(DockerRepository):
         full_repo = f"{path_prefix}/{repository_name}" if path_prefix else repository_name
         manifest_url = f"https://{registry_host}/v2/{full_repo}/manifests/{image_tag}"
         headers = {
-            "Accept": ", ".join([
-                "application/vnd.docker.distribution.manifest.v2+json",
-                "application/vnd.oci.image.manifest.v1+json",
-                "application/vnd.docker.distribution.manifest.list.v2+json",
-                "application/vnd.oci.image.index.v1+json",
-            ])
+            "Accept": ", ".join(
+                [
+                    "application/vnd.docker.distribution.manifest.v2+json",
+                    "application/vnd.oci.image.manifest.v1+json",
+                    "application/vnd.docker.distribution.manifest.list.v2+json",
+                    "application/vnd.oci.image.index.v1+json",
+                ]
+            )
         }
 
         try:
