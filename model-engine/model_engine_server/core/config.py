@@ -115,7 +115,7 @@ def infer_registry_type(prefix: str) -> str:
     """Infer docker registry type from docker_repo_prefix."""
     if ".dkr.ecr." in prefix and ".amazonaws.com" in prefix:
         return "ecr"
-    if prefix.endswith(".azurecr.io"):
+    if ".azurecr.io" in prefix:
         return "acr"
     if "-docker.pkg.dev" in prefix:
         return "gar"

@@ -31,7 +31,8 @@ def _get_token(realm: str, service: Optional[str], scope: Optional[str]) -> Opti
         query["service"] = service
     if scope:
         query["scope"] = scope
-    url = f"{realm}?{urlencode(query)}" if query else realm
+    separator = "&" if "?" in realm else "?"
+    url = f"{realm}{separator}{urlencode(query)}" if query else realm
     try:
         resp = requests.get(url, timeout=_REQUEST_TIMEOUT)
         if resp.status_code == 200:
