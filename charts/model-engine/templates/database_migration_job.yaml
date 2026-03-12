@@ -1,4 +1,4 @@
-{{- if or (.Values.secrets.kubernetesDatabaseSecretName) (.Values.db.runDbMigrationScript) }}
+{{- if .Values.db.runDbMigrationScript }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -14,8 +14,9 @@ spec:
   activeDeadlineSeconds: 600
   template:
     metadata:
-      labels:
+      annotations:
         sidecar.istio.io/inject: "false"
+      labels:
         {{- include "modelEngine.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
