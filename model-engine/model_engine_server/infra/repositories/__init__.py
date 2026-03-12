@@ -13,9 +13,9 @@ from .ecr_docker_repository import ECRDockerRepository
 from .fake_docker_repository import FakeDockerRepository
 from .feature_flag_repository import FeatureFlagRepository
 from .gar_docker_repository import GARDockerRepository
-from .generic_docker_repository import GenericDockerRepository
 from .gcs_file_llm_fine_tune_events_repository import GCSFileLLMFineTuneEventsRepository
 from .gcs_file_llm_fine_tune_repository import GCSFileLLMFineTuneRepository
+from .generic_docker_repository import GenericDockerRepository
 from .live_tokenizer_repository import LiveTokenizerRepository
 from .llm_fine_tune_repository import LLMFineTuneRepository
 from .model_endpoint_cache_repository import ModelEndpointCacheRepository

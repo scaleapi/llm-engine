@@ -14,7 +14,7 @@ from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.env_vars import CIRCLECI
-from model_engine_server.core.config import infra_config
+from model_engine_server.core.config import infer_registry_type, infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.db.base import get_session_async_null_pool
 from model_engine_server.domain.repositories import DockerRepository
@@ -40,7 +40,6 @@ from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delega
 from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
     SQSQueueEndpointResourceDelegate,
 )
-from model_engine_server.core.config import infer_registry_type
 from model_engine_server.infra.repositories import (
     ACRDockerRepository,
     ECRDockerRepository,
