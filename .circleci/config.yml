@@ -105,7 +105,10 @@ jobs:
     executor: ubuntu-large
     steps:
       - checkout
-      - chainguard_login
+      - aws-cli/setup:
+          role-arn: ${CIRCLECI_ROLE_ARN}
+          aws-region: AWS_REGION
+      - ecr_login
       - run:
           name: Build Docker Image
           command: |
@@ -117,7 +120,7 @@ jobs:
       - aws-cli/setup:
           role-arn: ${CIRCLECI_ROLE_ARN}
           aws-region: AWS_REGION
-      - chainguard_login
+      - ecr_login
       - run:
           name: Build Docker Image
           command: |
@@ -215,20 +218,13 @@ executors:
     resource_class: 2xlarge
 
 commands:
-  chainguard_login:
-    description: Authenticate to Chainguard Registry via OIDC
+  ecr_login:
+    description: Authenticate to Scale ECR golden image registry
     steps:
       - run:
-          name: Install chainctl
+          name: Login to ECR
           command: |
-            curl -o chainctl "https://dl.enforce.dev/chainctl/latest/chainctl_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/aarch64/arm64/')"
-            sudo install -o $UID -g $(id -g) -m 0755 chainctl /usr/local/bin/
-      - run:
-          name: Login to Chainguard Registry
-          command: |
-            chainctl auth login --identity-token "${CIRCLE_OIDC_TOKEN}" --identity "${CHAINGUARD_IDENTITY_ID}" --audience cgr.dev
-            CHAINGUARD_TOKEN=$(chainctl auth token --audience cgr.dev)
-            echo "${CHAINGUARD_TOKEN}" | docker login cgr.dev -u "oauth2accesstoken" --password-stdin
+            aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 022465994601.dkr.ecr.us-west-2.amazonaws.com
   environment_setup:
     description: Basic Environment setup
     steps:
