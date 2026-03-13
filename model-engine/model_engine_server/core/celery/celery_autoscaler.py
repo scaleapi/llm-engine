@@ -381,7 +381,7 @@ class RedisBroker(AutoscalerBroker):
                 connection_count = info.get("connected_clients")
                 max_connections = info.get("maxclients")
             else:
-                (info, config) = await aio.gather(
+                info, config = await aio.gather(
                     redis_client.info(),
                     redis_client.config_get("maxclients"),
                 )

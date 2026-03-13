@@ -387,10 +387,6 @@ class CreateLLMModelBundleV1UseCase:
     def check_docker_image_exists_for_image_tag(
         self, framework_image_tag: str, repository_name: str
     ):
-        # Skip ECR validation for on-prem deployments - images are in local registry
-        if infra_config().cloud_provider == "onprem":
-            return
-
         if not self.docker_repository.image_exists(
             image_tag=framework_image_tag,
             repository_name=repository_name,
