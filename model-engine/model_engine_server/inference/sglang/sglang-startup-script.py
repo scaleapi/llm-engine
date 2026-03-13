@@ -107,7 +107,7 @@ def main(
         "--tp",
         str(tp),
         "--host",
-        "::",
+        os.environ.get("INFERENCE_SERVER_HOST", "::"),
         "--port",
         str(worker_port),
         "--dist-init-addr",
