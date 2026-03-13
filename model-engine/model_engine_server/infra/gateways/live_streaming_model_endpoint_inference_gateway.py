@@ -46,6 +46,8 @@ SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
     1.2  # Must be a float > 1.0, lower number means more retries but less time waiting.
 )
 
+TTL_DNS_CACHE: int = 300
+
 
 def _get_streaming_endpoint_url(
     service_name: str, path: str = "/stream", manually_resolve_dns: bool = False
@@ -62,7 +64,8 @@ def _get_streaming_endpoint_url(
     elif manually_resolve_dns:
         protocol = "http"
         hostname = resolve_dns(
-            f"{service_name}.{hmi_config.endpoint_namespace}.svc.cluster.local", port=protocol
+            f"{service_name}.{hmi_config.endpoint_namespace}.svc.cluster.local",
+            port=protocol,
         )
     else:
         protocol = "http"
@@ -89,24 +92,37 @@ class LiveStreamingModelEndpointInferenceGateway(StreamingModelEndpointInference
     def __init__(self, monitoring_metrics_gateway: MonitoringMetricsGateway, use_asyncio: bool):
         self.monitoring_metrics_gateway = monitoring_metrics_gateway
         self.use_asyncio = use_asyncio
+        self._session: Optional[aiohttp.ClientSession] = None
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        if self._session is None or self._session.closed:
+            connector = aiohttp.TCPConnector(ttl_dns_cache=TTL_DNS_CACHE)
+            self._session = aiohttp.ClientSession(
+                json_serialize=_serialize_json, connector=connector
+            )
+        return self._session
+
+    async def close(self):
+        if self._session and not self._session.closed:
+            await self._session.close()
 
     async def make_single_request(self, request_url: str, payload_json: Dict[str, Any]):
         errored = False
         if self.use_asyncio:
-            async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
-                aio_resp = await aioclient.post(
-                    request_url,
-                    json=payload_json,
-                    headers={"Content-Type": "application/json"},
-                )
-                status = aio_resp.status
-                if status == 200:
-                    async with EventSource(response=aio_resp) as event_source:
-                        async for event in event_source:
-                            yield event.data
-                else:
-                    content = await aio_resp.read()
-                    errored = True
+            aioclient = await self._get_session()
+            aio_resp = await aioclient.post(
+                request_url,
+                json=payload_json,
+                headers={"Content-Type": "application/json"},
+            )
+            status = aio_resp.status
+            if status == 200:
+                async with EventSource(response=aio_resp) as event_source:
+                    async for event in event_source:
+                        yield event.data
+            else:
+                content = await aio_resp.read()
+                errored = True
         else:
             resp = requests.post(
                 request_url,
