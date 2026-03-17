@@ -76,7 +76,7 @@ boto3==1.42.69
     #   -r model-engine/requirements.in
     #   celery
     #   kombu
-boto3-stubs==1.35.99
+boto3-stubs==1.26.165
     # via -r model-engine/requirements.in
 botocore==1.42.69
     # via
@@ -334,19 +334,19 @@ multidict==6.0.4
     # via
     #   aiohttp
     #   yarl
-mypy-boto3-cloudformation==1.35.93
+mypy-boto3-cloudformation==1.26.156
     # via boto3-stubs
-mypy-boto3-dynamodb==1.35.94
+mypy-boto3-dynamodb==1.26.164
     # via boto3-stubs
-mypy-boto3-ec2==1.35.98
+mypy-boto3-ec2==1.26.157
     # via boto3-stubs
-mypy-boto3-lambda==1.35.93
+mypy-boto3-lambda==1.26.163
     # via boto3-stubs
-mypy-boto3-rds==1.35.95
+mypy-boto3-rds==1.26.163
     # via boto3-stubs
-mypy-boto3-s3==1.35.93
+mypy-boto3-s3==1.26.163
     # via boto3-stubs
-mypy-boto3-sqs==1.35.93
+mypy-boto3-sqs==1.26.148
     # via boto3-stubs
 mypy-extensions==1.0.0
     # via typing-inspect
@@ -594,20 +594,12 @@ typing-extensions==4.15.0
     #   azure-keyvault-secrets
     #   azure-servicebus
     #   azure-storage-blob
-    #   boto3-stubs
     #   cattrs
     #   cryptography
     #   datadog-api-client
     #   ddtrace
     #   fastapi
     #   huggingface-hub
-    #   mypy-boto3-cloudformation
-    #   mypy-boto3-dynamodb
-    #   mypy-boto3-ec2
-    #   mypy-boto3-lambda
-    #   mypy-boto3-rds
-    #   mypy-boto3-s3
-    #   mypy-boto3-sqs
     #   pydantic
     #   pydantic-core
     #   pyjwt
