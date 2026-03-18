@@ -40,10 +40,17 @@ class GCSFileStorageGateway(FileStorageGateway):
     """
 
     def __init__(self) -> None:
-        self._storage = Storage()
+        self._storage: Optional[Storage] = None
+
+    @property
+    def storage(self) -> Storage:
+        if self._storage is None:
+            self._storage = Storage()
+        return self._storage
 
     async def close(self) -> None:
-        await self._storage.close()
+        if self._storage is not None:
+            await self.storage.close()
 
     async def get_url_from_id(self, owner: str, file_id: str) -> Optional[str]:
         uri = _get_gcs_url(owner, file_id)
@@ -53,7 +60,7 @@ class GCSFileStorageGateway(FileStorageGateway):
         bucket_name = infra_config().s3_bucket
         blob_name = _get_gcs_key(owner, file_id)
         try:
-            metadata = await self._storage.download_metadata(bucket_name, blob_name)
+            metadata = await self.storage.download_metadata(bucket_name, blob_name)
             return FileMetadata(
                 id=file_id,
                 filename=file_id,
@@ -68,7 +75,7 @@ class GCSFileStorageGateway(FileStorageGateway):
         bucket_name = infra_config().s3_bucket
         blob_name = _get_gcs_key(owner, file_id)
         try:
-            content = await self._storage.download(bucket_name, blob_name)
+            content = await self.storage.download(bucket_name, blob_name)
             return content.decode("utf-8")
         except Exception:
             return None
@@ -76,14 +83,14 @@ class GCSFileStorageGateway(FileStorageGateway):
     async def upload_file(self, owner: str, filename: str, content: bytes) -> str:
         bucket_name = infra_config().s3_bucket
         blob_name = _get_gcs_key(owner, filename)
-        await self._storage.upload(bucket_name, blob_name, content)
+        await self.storage.upload(bucket_name, blob_name, content)
         return filename
 
     async def delete_file(self, owner: str, file_id: str) -> bool:
         bucket_name = infra_config().s3_bucket
         blob_name = _get_gcs_key(owner, file_id)
         try:
-            await self._storage.delete(bucket_name, blob_name)
+            await self.storage.delete(bucket_name, blob_name)
             return True
         except Exception:
             return False
@@ -93,7 +100,7 @@ class GCSFileStorageGateway(FileStorageGateway):
         files: List[FileMetadata] = []
         params = {"prefix": owner}
         while True:
-            response = await self._storage.list_objects(bucket_name, params=params)
+            response = await self.storage.list_objects(bucket_name, params=params)
             for item in response.get("items", []):
                 blob_name = item.get("name", "")
                 file_id = blob_name.replace(f"{owner}/", "", 1)
