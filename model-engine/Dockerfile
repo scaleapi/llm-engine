@@ -1,30 +1,23 @@
 # syntax = docker/dockerfile:experimental
 
-# Chainguard public image — 0 OS CVEs
-FROM cgr.dev/chainguard/python:latest-dev as model-engine
-
-# Chainguard images run as non-root (UID 65532) by default.
-# We need root for package installation and build steps.
-USER root
-ENTRYPOINT []
+FROM python:3.12-slim as model-engine
 
 WORKDIR /workspace
 
-# Install system dependencies (Wolfi uses apk, not apt-get)
-RUN apk update && apk add --no-cache \
+# Install system dependencies (vim omitted: multiple unpatched HIGH CVEs in Debian 13.4)
+RUN apt-get update && apt-get install -y --no-install-recommends \
   dumb-init \
   git \
-  openssh \
+  openssh-client \
   curl \
   procps \
-  vim \
   htop \
   gcc \
-  build-base \
-  openssl-dev \
-  curl-dev \
+  build-essential \
+  libssl-dev \
+  libcurl4-openssl-dev \
   python3-dev \
-  busybox
+  && rm -rf /var/lib/apt/lists/*
 
 # Install aws-iam-authenticator (architecture-aware)
 RUN ARCH=$(uname -m) && \
@@ -37,12 +30,12 @@ RUN ARCH=$(uname -m) && \
 
 # Install kubectl (architecture-aware)
 RUN ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/') && \
-    curl -LO "https://dl.k8s.io/release/v1.31.4/bin/linux/${ARCH}/kubectl" && \
+    curl -LO "https://dl.k8s.io/release/v1.35.2/bin/linux/${ARCH}/kubectl" && \
     chmod +x kubectl && \
     mv kubectl /usr/local/bin/kubectl
 
-# Pin pip version
-RUN pip install pip==24.2
+# Pin pip version and install setuptools (needed for legacy packages like ddtrace on Python 3.12)
+RUN pip install pip==24.2 setuptools
 RUN chmod -R 777 /workspace
 
 # Install AWS CLI
@@ -65,8 +58,5 @@ COPY integration_tests /workspace/integration_tests
 WORKDIR /workspace
 ENV PYTHONPATH /workspace
 ENV WORKSPACE /workspace
-
-# Drop back to non-root for runtime (Chainguard default UID 65532)
-USER nonroot
 
 EXPOSE 5000

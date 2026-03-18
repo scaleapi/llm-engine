@@ -1,33 +1,27 @@
-FROM cgr.dev/chainguard/python:latest-dev
+FROM python:3.12-slim
 WORKDIR /workspace
 USER root
 
-RUN apk update && apk add \
+RUN apt-get update && apt-get install -y --no-install-recommends \
             htop \
             dumb-init \
-            libssh \
+            libssh-4 \
             openssh-client \
-            iftop \
             curl \
-            curl-dev \
             procps \
-            libcurl-openssl4 \
-            vim \
-            kubectl \
             jq \
             gcc \
-            glibc-dev \
-            python-3.11-dev \
             libffi-dev \
-            openssl-dev \
-            build-base \
-            postgresql-dev \
-            libpq-16
+            libssl-dev \
+            build-essential \
+            libpq-dev \
+            postgresql-client \
+            && rm -rf /var/lib/apt/lists/*
 
 RUN curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.7.11/aws-iam-authenticator_0.7.11_linux_amd64 && \
     chmod +x /bin/aws-iam-authenticator
 
-RUN pip install pip==24.2
+RUN pip install pip==24.2 setuptools
 RUN chmod -R 777 /workspace
 
 RUN pip install awscli==1.34.28 --no-cache-dir
@@ -48,7 +42,5 @@ COPY integration_tests /workspace/integration_tests
 WORKDIR /workspace
 ENV PYTHONPATH=/workspace
 ENV WORKSPACE=/workspace
-
-USER nonroot
 
 EXPOSE 5000
