@@ -1,8 +1,7 @@
 # syntax = docker/dockerfile:experimental
 
-# Chainguard golden image — 0 OS CVEs, mirrored to ECR by sync-base-images workflow
-ARG ECR_REGISTRY=022465994601.dkr.ecr.us-west-2.amazonaws.com
-FROM ${ECR_REGISTRY}/golden/chainguard/python:3.10-dev as model-engine
+# Chainguard public image — 0 OS CVEs
+FROM cgr.dev/chainguard/python:latest-dev as model-engine
 
 # Chainguard images run as non-root (UID 65532) by default.
 # We need root for package installation and build steps.

@@ -8,10 +8,8 @@
 # Build:
 #   docker build -f k8s_startup_watcher/Dockerfile -t k8s-startup-watcher .
 #
-ARG ECR_REGISTRY=022465994601.dkr.ecr.us-west-2.amazonaws.com
-
 # --- Builder: install pip dependencies ---
-FROM ${ECR_REGISTRY}/golden/chainguard/python:3.11-dev AS builder
+FROM cgr.dev/chainguard/python:latest-dev AS builder
 
 USER root
 ENTRYPOINT []
@@ -24,7 +22,7 @@ RUN pip install --no-cache-dir \
     opentelemetry-exporter-otlp~=1.27.0
 
 # --- Runtime: distroless (no shell, no pip, no build tools) ---
-FROM ${ECR_REGISTRY}/golden/chainguard/python:3.11
+FROM cgr.dev/chainguard/python:latest
 
 # Distroless image defaults: ENTRYPOINT ["/usr/bin/python"], USER nonroot (65532)
 WORKDIR /app

@@ -1,5 +1,4 @@
-ARG ECR_REGISTRY=022465994601.dkr.ecr.us-west-2.amazonaws.com
-FROM ${ECR_REGISTRY}/golden/chainguard/python-fips:3.11-dev
+FROM cgr.dev/chainguard/python:latest-dev
 WORKDIR /workspace
 USER root
 
