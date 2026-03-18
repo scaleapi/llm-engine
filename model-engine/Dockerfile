@@ -36,7 +36,8 @@ RUN ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/') && \
 
 # Pin pip version and install setuptools (needed for legacy packages like ddtrace on Python 3.12)
 RUN pip install pip==24.2 setuptools
-RUN chmod -R 777 /workspace
+RUN useradd --create-home --shell /bin/bash nonroot && \
+    chmod -R 777 /workspace
 
 # Install AWS CLI
 RUN pip install awscli==1.34.28 --no-cache-dir
@@ -59,4 +60,5 @@ WORKDIR /workspace
 ENV PYTHONPATH /workspace
 ENV WORKSPACE /workspace
 
+USER nonroot
 EXPOSE 5000

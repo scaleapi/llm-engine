@@ -22,7 +22,8 @@ RUN curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-i
     chmod +x /bin/aws-iam-authenticator
 
 RUN pip install pip==24.2 setuptools
-RUN chmod -R 777 /workspace
+RUN useradd --create-home --shell /bin/bash nonroot && \
+    chmod -R 777 /workspace
 
 RUN pip install awscli==1.34.28 --no-cache-dir
 
@@ -43,4 +44,5 @@ WORKDIR /workspace
 ENV PYTHONPATH=/workspace
 ENV WORKSPACE=/workspace
 
+USER nonroot
 EXPOSE 5000
