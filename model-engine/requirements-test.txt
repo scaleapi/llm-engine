@@ -11,7 +11,6 @@ pytest==7.2.0
 pytest-asyncio==0.20.1
 pytest-cov==2.10.0
 pytest-mypy==0.9.1
-pytest-mypy-plugins==1.10.1
 pytest-pylint==0.18.0
 requests-mock==1.9.3
 types-cachetools==5.3.0.5

@@ -206,7 +206,6 @@ jobs:
       - run:
           name: Run integration tests
           command: |
-            pip install --force-reinstall setuptools  # Ensure pkg_resources is intact after all installs
             pushd $HOME/project
             kubectl port-forward svc/model-engine 5001:80 &
             export GIT_TAG=$CIRCLE_SHA1
