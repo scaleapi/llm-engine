@@ -1,7 +1,7 @@
 GitPython~=3.1
 Jinja2>=3.1.5   # CVE-2024-56326; 3.1.0 bug was fixed in 3.1.1+
 aiohttp~=3.11
-aioredis~=2.0
+redis>=4.6.0  # replaces aioredis~=2.0; aioredis 2.x broken on Python 3.12 (duplicate base class TimeoutError); asyncio support built-in to redis>=4.2
 alembic==1.8.1
 asyncpg>=0.29.0  # 0.27.0 has no cp312 wheel; Python 3.12 support added in 0.29.0
 azure-containerregistry~=1.2.0

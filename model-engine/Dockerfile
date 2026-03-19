@@ -25,7 +25,7 @@ RUN pip install -r requirements.txt --no-cache-dir
 RUN pip install -r requirements_override.txt --no-cache-dir
 COPY model-engine/setup.py setup.py
 COPY model-engine/model_engine_server model_engine_server
-RUN pip install --no-cache-dir .
+RUN pip install -e .
 
 # --- Runtime: no build tools (eliminates linux-libc-dev and python3.13 CVEs) ---
 FROM python:3.12-slim AS model-engine
@@ -58,9 +58,10 @@ RUN ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/') && \
     chmod +x kubectl && \
     mv kubectl /usr/local/bin/kubectl
 
-# Copy Python packages and entry-point scripts from builder
+# Copy Python packages, entry-point scripts, and source tree from builder
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /workspace/model-engine /workspace/model-engine
 
 RUN useradd --create-home --shell /bin/bash nonroot && \
     chmod -R 777 /workspace

@@ -4,7 +4,7 @@ import time
 import traceback
 from typing import Any, Dict
 
-import aioredis
+import redis.asyncio as aioredis
 from celery.signals import worker_process_init
 from celery.utils.log import get_task_logger
 from model_engine_server.api.dependencies import get_monitoring_metrics_gateway

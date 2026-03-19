@@ -11,8 +11,6 @@ aiohttp==3.13.3
     #   -r requirements.in
     #   gcloud-aio-auth
     #   kubernetes-asyncio
-aioredis==2.0.1
-    # via -r requirements.in
 aiosignal==1.4.0
     # via aiohttp
 alembic==1.8.1
@@ -32,7 +30,6 @@ asn1crypto==1.5.1
 async-timeout==5.0.1
     # via
     #   aiohttp
-    #   aioredis
     #   asyncpg
     #   redis
 asyncpg==0.31.0
@@ -455,7 +452,9 @@ quart==0.19.9
 readme-renderer==40.0
     # via twine
 redis==4.6.0
-    # via celery
+    # via
+    #   -r requirements.in
+    #   celery
 regex==2023.10.3
     # via transformers
 requests==2.31.0
@@ -573,7 +572,6 @@ types-s3transfer==0.6.1
     # via boto3-stubs
 typing-extensions==4.15.0
     # via
-    #   aioredis
     #   aiosignal
     #   azure-core
     #   azure-keyvault-secrets

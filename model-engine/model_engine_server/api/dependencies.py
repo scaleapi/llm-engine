@@ -4,7 +4,7 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-import aioredis
+import redis.asyncio as aioredis
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
 from model_engine_server.common.config import hmi_config

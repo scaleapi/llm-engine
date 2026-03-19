@@ -3,7 +3,7 @@ import asyncio
 import os
 from datetime import timedelta
 
-import aioredis
+import redis.asyncio as aioredis
 from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType

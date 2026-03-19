@@ -3,7 +3,7 @@ import os
 from enum import IntEnum, unique
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
-import aioredis
+import redis.asyncio as aioredis
 import celery
 from celery import Celery
 from celery.app import backends
@@ -230,9 +230,9 @@ def get_redis_instance(db_index: int = 0) -> Union[Redis, StrictRedis]:
     return Redis(host=host, port=port, db=db_index)
 
 
-async def get_async_redis_instance(db_index: int = 0) -> aioredis.client.Redis:
+async def get_async_redis_instance(db_index: int = 0) -> aioredis.Redis:
     host, port = get_redis_host_port()
-    return await aioredis.client.Redis.from_url(f"redis://{host}:{port}/{db_index}")
+    return await aioredis.Redis.from_url(f"redis://{host}:{port}/{db_index}")
 
 
 def celery_app(
@@ -622,7 +622,7 @@ def get_num_unclaimed_tasks(queue_name: str, redis_instance: Optional[Redis] = N
 
 
 async def get_num_unclaimed_tasks_async(
-    queue_name: str, redis_instance: Optional[aioredis.client.Redis] = None
+    queue_name: str, redis_instance: Optional[aioredis.Redis] = None
 ) -> int:
     _redis_instance = redis_instance if redis_instance is not None else get_async_redis_instance()
     num_unclaimed = await _redis_instance.llen(queue_name)  # type: ignore
