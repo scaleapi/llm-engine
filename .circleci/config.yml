@@ -184,9 +184,19 @@ jobs:
           command: |
             pushd $HOME/project/charts
             cat model-engine/values_circleci.yaml | envsubst > model-engine/values_circleci_subst.yaml
-            helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
+            helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug || {
+              echo "=== Helm install failed — capturing pod diagnostics ==="
+              kubectl get pods -A
+              for pod in $(kubectl get pods -o name 2>/dev/null); do
+                echo "--- describe $pod ---"
+                kubectl describe $pod
+                echo "--- logs $pod ---"
+                kubectl logs $pod --previous 2>/dev/null || kubectl logs $pod 2>/dev/null || true
+              done
+              exit 1
+            }
       - run:
-          name: Change python version to 3.10.14
+          name: Change python version to 3.13.2
           command: |
             pyenv install 3.13.2
             pyenv global 3.13.2

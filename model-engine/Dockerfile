@@ -57,7 +57,7 @@ RUN ARCH=$(uname -m) && \
 
 # Install kubectl (architecture-aware)
 RUN ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/') && \
-    curl -fLO "https://dl.k8s.io/release/v1.35.2/bin/linux/${ARCH}/kubectl" && \
+    curl -fLO "https://dl.k8s.io/release/v1.35.3/bin/linux/${ARCH}/kubectl" && \
     chmod +x kubectl && \
     mv kubectl /usr/local/bin/kubectl
 

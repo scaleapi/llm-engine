@@ -19,7 +19,7 @@ boto3-stubs[essential]>=1.40.46,<1.40.62
 boto3>=1.40.46,<1.40.62   # range constrained by aiobotocore 2.25.1 requirement (botocore<1.40.62)
 botocore>=1.40.46,<1.40.62
 build~=1.0.3
-celery[redis,sqs,tblib]~=5.4.0
+celery[redis,sqs,tblib]~=5.5.0  # 5.4.0 broken on Python 3.13 (billiard/multiprocessing fork); 5.5 adds Py3.13 support
 click~=8.1
 cloudpickle==2.1.0
 croniter==1.4.1

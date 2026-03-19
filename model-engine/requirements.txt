@@ -61,7 +61,7 @@ azure-storage-blob==12.19.0
     # via -r requirements.in
 backoff==2.2.1
     # via gcloud-aio-auth
-billiard==4.2.0
+billiard==4.2.4
     # via celery
 bleach==6.0.0
     # via readme-renderer
@@ -91,7 +91,7 @@ bytecode==0.17.0
     # via ddtrace
 cachetools==5.3.1
     # via google-auth
-celery==5.4.0
+celery==5.5.3
     # via -r requirements.in
 certifi==2026.2.25
     # via
@@ -292,7 +292,7 @@ json-log-formatter==0.5.2
     # via -r requirements.in
 keyring==24.2.0
     # via twine
-kombu==5.3.5
+kombu==5.5.4
     # via celery
 kubeconfig==1.1.1
     # via -r requirements.in
@@ -362,6 +362,7 @@ packaging==23.1
     #   deprecation
     #   gunicorn
     #   huggingface-hub
+    #   kombu
     #   marshmallow
     #   msal-extensions
     #   transformers
@@ -411,10 +412,7 @@ pyasn1-modules==0.4.2
 pycparser==2.21
     # via cffi
 pycurl==7.45.2
-    # via
-    #   -r requirements.in
-    #   celery
-    #   kombu
+    # via -r requirements.in
 pydantic==2.8.2
     # via
     #   -r requirements.in
@@ -461,7 +459,7 @@ readme-renderer==40.0
 redis==4.6.0
     # via
     #   -r requirements.in
-    #   celery
+    #   kombu
 regex==2023.10.3
     # via transformers
 requests==2.31.0
@@ -592,8 +590,8 @@ typing-inspect==0.9.0
     # via dataclasses-json
 typing-inspection==0.4.2
     # via fastapi
-tzdata==2023.3
-    # via celery
+tzdata==2025.3
+    # via kombu
 urllib3==2.6.3
     # via
     #   -r requirements.in
