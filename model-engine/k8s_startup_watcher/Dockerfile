@@ -9,7 +9,7 @@
 #   docker build -f k8s_startup_watcher/Dockerfile -t k8s-startup-watcher .
 #
 # --- Builder: install pip dependencies ---
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
 
 WORKDIR /app
 
@@ -20,12 +20,12 @@ RUN pip install --no-cache-dir \
     opentelemetry-exporter-otlp~=1.27.0
 
 # --- Runtime ---
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
 # Copy installed site-packages from builder
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 
 # Copy shared startup_tracing library (for deterministic trace correlation)
 COPY model_engine_server/common/startup_tracing /app/startup_tracing
