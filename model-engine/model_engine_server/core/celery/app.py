@@ -232,7 +232,7 @@ def get_redis_instance(db_index: int = 0) -> Union[Redis, StrictRedis]:
 
 async def get_async_redis_instance(db_index: int = 0) -> aioredis.Redis:
     host, port = get_redis_host_port()
-    return await aioredis.Redis.from_url(f"redis://{host}:{port}/{db_index}")
+    return aioredis.Redis.from_url(f"redis://{host}:{port}/{db_index}")
 
 
 def celery_app(

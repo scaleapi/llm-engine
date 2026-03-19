@@ -34,5 +34,8 @@ COPY model_engine_server/common/startup_tracing /app/startup_tracing
 COPY k8s_startup_watcher/config.py /app/config.py
 COPY k8s_startup_watcher/watcher.py /app/watcher.py
 
+RUN useradd --create-home --shell /bin/bash nonroot && \
+    chmod -R 777 /app
+USER nonroot
 ENTRYPOINT ["python"]
 CMD ["/app/watcher.py"]
