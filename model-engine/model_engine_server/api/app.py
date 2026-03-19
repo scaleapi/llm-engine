@@ -93,7 +93,7 @@ app = FastAPI(
     title="launch",
     version="1.0.0",
     redoc_url=None,
-    middleware=[Middleware(CustomMiddleware)],
+    middleware=[Middleware(CustomMiddleware)],  # type: ignore[arg-type, call-arg]
 )
 
 app.include_router(batch_job_router_v1)

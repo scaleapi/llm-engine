@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 from math import ceil
 from typing import Any, DefaultDict, Dict, List, Set, Tuple
 
-import aioredis
+import redis.asyncio as aioredis
 import stringcase
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
@@ -350,7 +350,7 @@ class RedisBroker(AutoscalerBroker):
             get_redis_host_port()
         )  # Switches the redis instance based on CELERY_ELASTICACHE_ENABLED's value
         self.redis = {
-            db_index: aioredis.client.Redis.from_url(f"redis://{host}:{port}/{db_index}")
+            db_index: aioredis.Redis.from_url(f"redis://{host}:{port}/{db_index}")
             for db_index in get_all_db_indexes()
         }
         self.initialized = True
