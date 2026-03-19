@@ -230,7 +230,7 @@ def get_redis_instance(db_index: int = 0) -> Union[Redis, StrictRedis]:
     return Redis(host=host, port=port, db=db_index)
 
 
-async def get_async_redis_instance(db_index: int = 0) -> aioredis.Redis:
+def get_async_redis_instance(db_index: int = 0) -> aioredis.Redis:
     host, port = get_redis_host_port()
     return aioredis.Redis.from_url(f"redis://{host}:{port}/{db_index}")
 
