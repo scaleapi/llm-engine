@@ -5,9 +5,9 @@ from typing import Any, Callable, Dict, List, Sequence, Set, Type, Union
 import pydantic
 from fastapi import routing
 from fastapi._compat import get_definitions
-from pydantic.json_schema import GenerateJsonSchema
 from fastapi.openapi.constants import REF_TEMPLATE
 from fastapi.openapi.utils import get_fields_from_routes, get_openapi_path
+from pydantic.json_schema import GenerateJsonSchema
 from model_engine_server.common.dtos.tasks import (
     EndpointPredictV1Request,
     GetAsyncTaskV1Response,

@@ -3,8 +3,8 @@ import os
 from enum import IntEnum, unique
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
-import redis.asyncio as aioredis
 import celery
+import redis.asyncio as aioredis
 from celery import Celery
 from celery.app import backends
 from celery.app.control import Inspect
