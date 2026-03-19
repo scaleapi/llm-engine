@@ -22,6 +22,9 @@ COPY model-engine/requirements.txt requirements.txt
 COPY model-engine/requirements_override.txt requirements_override.txt
 RUN pip install -r requirements-test.txt --no-cache-dir
 RUN pip install -r requirements.txt --no-cache-dir
+# NOTE: aioboto3==10.4.0 -> aiobotocore==2.4.2 -> urllib3<1.27, which downgrades urllib3
+# from 2.x back to 1.26.x. CVE-2023-43804, CVE-2023-45803, CVE-2024-37891 remain.
+# Fix: upgrade aioboto3 to >=15.x (separate PR — breaking API changes).
 RUN pip install -r requirements_override.txt --no-cache-dir
 COPY model-engine/setup.py setup.py
 COPY model-engine/model_engine_server model_engine_server
