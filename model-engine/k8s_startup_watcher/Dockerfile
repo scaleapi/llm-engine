@@ -35,7 +35,7 @@ COPY k8s_startup_watcher/config.py /app/config.py
 COPY k8s_startup_watcher/watcher.py /app/watcher.py
 
 RUN useradd --create-home --shell /bin/bash nonroot && \
-    chmod -R 777 /app
+    chown -R nonroot:nonroot /app
 USER nonroot
 ENTRYPOINT ["python"]
 CMD ["/app/watcher.py"]

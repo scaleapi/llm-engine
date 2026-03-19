@@ -2,7 +2,7 @@ import asyncio
 import os
 import time
 import traceback
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import redis.asyncio as aioredis
 from celery.signals import worker_process_init
@@ -141,7 +141,7 @@ async def _build_endpoint(
     )
 
     session = None
-    redis = None
+    redis: Optional[aioredis.Redis[Any]] = None
     pool = None
 
     try:

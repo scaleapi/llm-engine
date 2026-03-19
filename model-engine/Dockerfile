@@ -46,15 +46,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install aws-iam-authenticator (architecture-aware)
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "aarch64" ]; then \
-      curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.7.11/aws-iam-authenticator_0.7.11_linux_arm64; \
+      curl -fLo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.7.11/aws-iam-authenticator_0.7.11_linux_arm64; \
     else \
-      curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.7.11/aws-iam-authenticator_0.7.11_linux_amd64; \
+      curl -fLo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.7.11/aws-iam-authenticator_0.7.11_linux_amd64; \
     fi && \
     chmod +x /bin/aws-iam-authenticator
 
 # Install kubectl (architecture-aware)
 RUN ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/') && \
-    curl -LO "https://dl.k8s.io/release/v1.35.2/bin/linux/${ARCH}/kubectl" && \
+    curl -fLO "https://dl.k8s.io/release/v1.35.2/bin/linux/${ARCH}/kubectl" && \
     chmod +x kubectl && \
     mv kubectl /usr/local/bin/kubectl
 
@@ -64,7 +64,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /workspace/model-engine /workspace/model-engine
 
 RUN useradd --create-home --shell /bin/bash nonroot && \
-    chmod -R 777 /workspace
+    chown -R nonroot:nonroot /workspace
 
 COPY integration_tests /workspace/integration_tests
 
