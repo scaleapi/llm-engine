@@ -53,7 +53,7 @@ rich~=12.6
 sentencepiece>=0.2.0
 sh~=1.13
 smart-open~=5.2
-sqlalchemy[asyncio]~=2.0.21
+sqlalchemy[asyncio]>=2.0.36  # 2.0.36+ required for Python 3.13 (__static_attributes__ / __firstlineno__ compat)
 sse-starlette==1.6.1
 sseclient-py==1.7.2
 starlette[full]>=0.40.0 # not used directly, but needs to be pinned for Microsoft security scan
