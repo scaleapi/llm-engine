@@ -105,10 +105,6 @@ jobs:
     executor: ubuntu-large
     steps:
       - checkout
-      - aws-cli/setup:
-          role-arn: ${CIRCLECI_ROLE_ARN}
-          aws-region: AWS_REGION
-      - ecr_login
       - run:
           name: Build Docker Image
           command: |
@@ -120,7 +116,6 @@ jobs:
       - aws-cli/setup:
           role-arn: ${CIRCLECI_ROLE_ARN}
           aws-region: AWS_REGION
-      - ecr_login
       - run:
           name: Build Docker Image
           command: |
@@ -218,13 +213,6 @@ executors:
     resource_class: 2xlarge
 
 commands:
-  ecr_login:
-    description: Authenticate to Scale ECR golden image registry
-    steps:
-      - run:
-          name: Login to ECR
-          command: |
-            aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 022465994601.dkr.ecr.us-west-2.amazonaws.com
   environment_setup:
     description: Basic Environment setup
     steps:
