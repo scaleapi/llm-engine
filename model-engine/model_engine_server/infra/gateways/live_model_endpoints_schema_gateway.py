@@ -7,7 +7,6 @@ from fastapi import routing
 from fastapi._compat import get_definitions
 from fastapi.openapi.constants import REF_TEMPLATE
 from fastapi.openapi.utils import get_fields_from_routes, get_openapi_path
-from pydantic.json_schema import GenerateJsonSchema
 from model_engine_server.common.dtos.tasks import (
     EndpointPredictV1Request,
     GetAsyncTaskV1Response,
@@ -27,6 +26,7 @@ from model_engine_server.domain.entities import (
 )
 from model_engine_server.domain.gateways import ModelEndpointsSchemaGateway
 from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGateway
+from pydantic.json_schema import GenerateJsonSchema
 from starlette.routing import BaseRoute
 
 # Caches the default model definition so we don't need to recompute every time
