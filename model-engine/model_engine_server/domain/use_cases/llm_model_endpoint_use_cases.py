@@ -998,6 +998,10 @@ class CreateLLMModelBundleV1UseCase:
 
             # Use wrapper if startup metrics enabled, otherwise use vllm_server directly
             server_module = "vllm_startup_wrapper" if enable_startup_metrics else "vllm_server"
+            # Maps DTO field names to their renamed CLI flags in newer vLLM versions
+            VLLM_FLAG_RENAMES = {
+                "disable_log_requests": "no-enable-log-requests",
+            }
             vllm_cmd = f'python -m {server_module} --model {final_weights_folder} --served-model-name {model_name} {final_weights_folder} --port 5005 --host "::"'
             for field in VLLMEndpointAdditionalArgs.model_fields.keys():
                 config_value = getattr(vllm_args, field, None)
@@ -1009,12 +1013,13 @@ class CreateLLMModelBundleV1UseCase:
                         subcommands.append(chat_template_cmd)
                         config_value = '"$CHAT_TEMPLATE"'
 
+                    cli_flag = VLLM_FLAG_RENAMES.get(field, field.replace("_", "-"))
                     # if type of config_value is True, then only need to add the key
                     if isinstance(config_value, bool):
                         if config_value:
-                            vllm_cmd += f" --{field.replace('_', '-')}"
+                            vllm_cmd += f" --{cli_flag}"
                     else:
-                        vllm_cmd += f" --{field.replace('_', '-')} {config_value}"
+                        vllm_cmd += f" --{cli_flag} {config_value}"
 
             subcommands.append(vllm_cmd)
 
