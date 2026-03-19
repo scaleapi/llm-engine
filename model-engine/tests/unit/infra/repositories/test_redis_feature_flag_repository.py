@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 
-import redis.asyncio as aioredis
 import pytest
+import redis.asyncio as aioredis
 from model_engine_server.infra.repositories.redis_feature_flag_repository import (
     RedisFeatureFlagRepository,
 )
