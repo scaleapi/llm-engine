@@ -8,10 +8,11 @@ Provides deterministic trace ID and span ID generation from a unique identifier
 import hashlib
 from typing import Optional
 
-# OTel imports - gracefully handle missing dependencies
+# OTel imports - gracefully handle missing dependencies (requires both api + sdk)
 try:
     from opentelemetry import trace
     from opentelemetry.context import Context
+    from opentelemetry.sdk.trace import TracerProvider  # noqa: F401 - SDK availability check
     from opentelemetry.trace import NonRecordingSpan, SpanContext, TraceFlags
 
     OTEL_AVAILABLE = True

@@ -89,11 +89,11 @@ class StartupTracer:
         self._context = context
         self._service_name = service_name
         self._initialized = False
-        self._tracer = None
-        self._meter = None
-        self._resource = None
+        self._tracer: Optional[Any] = None
+        self._meter: Optional[Any] = None
+        self._resource: Optional[Any] = None
         self._gauges: Dict[str, Any] = {}
-        self._parent_context = None
+        self._parent_context: Optional[Any] = None
 
         # Container start time for root span
         if container_start_time_ns:

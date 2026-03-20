@@ -205,7 +205,7 @@ def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRep
     Count the number of tokens in the input string.
     """
     tokenizer = tokenizer_repository.load_tokenizer(model_name)
-    return len(tokenizer.encode(input))
+    return len(tokenizer.encode(input))  # type: ignore[attr-defined]
 
 
 async def _get_latest_batch_v2_tag(inference_framework: LLMInferenceFramework) -> str:

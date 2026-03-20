@@ -1,2 +1,2 @@
 # Consists of packages that need to be explicitly different from those in requirements.txt
-aioboto3==10.4.0
+# aioboto3 moved to requirements.in (pinned with botocore range for aiobotocore 2.25.1 compat)

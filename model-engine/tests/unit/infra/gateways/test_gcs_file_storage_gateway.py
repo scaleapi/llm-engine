@@ -14,11 +14,9 @@ def mock_storage():
 
 @pytest.fixture
 def gateway(mock_storage):
-    with mock.patch(
-        "model_engine_server.infra.gateways.gcs_file_storage_gateway.Storage",
-        return_value=mock_storage,
-    ):
-        return GCSFileStorageGateway()
+    gw = GCSFileStorageGateway()
+    gw._storage = mock_storage
+    return gw
 
 
 @pytest.mark.asyncio

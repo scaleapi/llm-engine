@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 
-import aioredis
 import pytest
+import redis.asyncio as aioredis
 from model_engine_server.infra.repositories.redis_model_endpoint_cache_repository import (
     RedisModelEndpointCacheRepository,
 )
@@ -9,7 +9,7 @@ from model_engine_server.infra.repositories.redis_model_endpoint_cache_repositor
 
 @pytest.mark.asyncio
 async def test_read_write_cache(entity_model_endpoint_infra_state, fake_redis):
-    aioredis.client.Redis.from_url = Mock(return_value=fake_redis)
+    aioredis.Redis.from_url = Mock(return_value=fake_redis)
     repo = RedisModelEndpointCacheRepository(redis_info="redis://test")
     endpoint_id = "my_endpoint_id"
     assert not await repo.read_endpoint_info(

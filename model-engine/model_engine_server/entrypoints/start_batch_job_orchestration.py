@@ -2,8 +2,9 @@ import argparse
 import asyncio
 import os
 from datetime import timedelta
+from typing import Any
 
-import aioredis
+import redis.asyncio as aioredis
 from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
@@ -65,7 +66,7 @@ async def run_batch_job(
     tracing_gateway = get_tracing_gateway()
     session = get_session_async_null_pool()
     pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
-    redis = aioredis.Redis(connection_pool=pool)
+    redis: aioredis.Redis[Any] = aioredis.Redis(connection_pool=pool)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(
         broker_type=BrokerType.SQS, tracing_gateway=tracing_gateway
     )
