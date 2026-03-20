@@ -23,6 +23,17 @@ logger = Logger("vllm_server")
 
 def parse_args(parser: FlexibleArgumentParser):
     parser = make_arg_parser(parser)
+    # Backward compatibility: older model-engine versions pass --disable-log-requests
+    # which was removed from vLLM's arg parser in v0.17+. Accept it as a no-op.
+    if not any(
+        "--disable-log-requests" in getattr(a, "option_strings", []) for a in parser._actions
+    ):
+        parser.add_argument(
+            "--disable-log-requests",
+            action="store_true",
+            default=False,
+            help="(deprecated, no-op) Kept for backward compatibility with older model-engine versions.",
+        )
     return parser.parse_args()
 
 
