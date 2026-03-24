@@ -52,8 +52,8 @@ inferenceFramework:
   text_generation_inference: "latest"
   lightllm: "latest"
   tensorrt_llm: "latest"
-  vllm_batch: "0.17.0-rc1-batch"
-  vllm_batch_v2: "0.17.0-rc1-batch"
+  vllm_batch: "0.17.1-batch"
+  vllm_batch_v2: "0.17.1-batch"
 
 # Extensibility hooks for wrapper charts (e.g. airgapped/on-prem deployments)
 extraEnvVars: []              # Extra env vars for all main containers (gateway, builder, cacher)
