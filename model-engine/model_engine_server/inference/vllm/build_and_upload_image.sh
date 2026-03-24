@@ -11,11 +11,12 @@ set -eo pipefail
 #   BUILD_TARGET      - Build target: vllm, vllm_omni, vllm_batch, or vllm_batch_v2
 #
 # Optional flags:
-#   --vllm-version=VERSION      - vLLM version (defaults to 0.16.0)
+#   --vllm-version=VERSION      - vLLM version (defaults to 0.17.0)
 #   --vllm-omni-version=VERSION - vLLM Omni version (defaults to 0.16.0)
 #   --aws-account-id=ID         - AWS account ID (defaults to 307185671274)
 #   --vllm-base-repo=REPO       - Base Docker repository (defaults to vllm/vllm-openai)
 #   --vllm-base-version=VERSION - Base image version (defaults to VLLM_VERSION)
+#   --vllm-base-image=IMAGE     - Override full base image URI (bypasses --vllm-base-repo/version)
 #   --full-build                - Build vLLM base image from source using vLLM's own Dockerfile
 #   --vllm-source-dir=PATH      - Path to local vLLM repo (required with --full-build)
 #   --vllm-source-ref=REF       - Branch/tag/commit to checkout before building (e.g. releases/v0.16.0)
@@ -64,8 +65,13 @@ set -eo pipefail
 #   # 9. vllm_omni with newer vllm on older base + local omni source
 #   ./build_and_upload_image.sh my-tag vllm_omni --vllm-version=0.16.0 --vllm-base-version=0.15.1 --vllm-omni-source-dir=/path/to/vllm-omni
 #
-#   # 10. Batch inference target
-#   ./build_and_upload_image.sh my-tag vllm_batch --vllm-version=0.16.0 --vllm-base-version=0.15.1
+#   # 10. Batch inference target (public image with v-prefix)
+#   ./build_and_upload_image.sh my-tag vllm_batch --vllm-version=0.17.0 --vllm-base-version=0.16.0
+#
+#   # 10b. Batch inference using Scale's internal ECR base image (no v-prefix)
+#   ./build_and_upload_image.sh my-tag vllm_batch --vllm-version=0.17.0-rc1 \
+#     --vllm-base-image=692474966980.dkr.ecr.us-west-2.amazonaws.com/vllm:0.17.0-rc1 \
+#     --account=692474966980
 #
 #   # 11. Custom AWS account and base repo
 #   ./build_and_upload_image.sh my-tag vllm --vllm-version=0.16.0 --account=123456789 --vllm-base-repo=my-registry/vllm-openai
@@ -82,9 +88,10 @@ BUILDER=${BUILDER:-"hk_builder"}
 
 # Default values
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-"307185671274"}
-VLLM_VERSION=${VLLM_VERSION:-"0.16.0"}
+VLLM_VERSION=${VLLM_VERSION:-"0.17.0"}
 VLLM_BASE_REPO=${VLLM_BASE_REPO:-"vllm/vllm-openai"}
 VLLM_BASE_VERSION=""  # Will default to VLLM_VERSION if not set
+VLLM_BASE_IMAGE_OVERRIDE=""  # If set, overrides VLLM_BASE_REPO:vVLLM_BASE_VERSION
 FULL_BUILD=false
 VLLM_SOURCE_DIR=""
 VLLM_SOURCE_REF=""
@@ -118,6 +125,7 @@ declare -A FLAG_VARS=(
   ["--account"]="AWS_ACCOUNT_ID"
   ["--vllm-base-repo"]="VLLM_BASE_REPO"
   ["--vllm-base-version"]="VLLM_BASE_VERSION"
+  ["--vllm-base-image"]="VLLM_BASE_IMAGE_OVERRIDE"
   ["--vllm-source-dir"]="VLLM_SOURCE_DIR"
   ["--vllm-source-ref"]="VLLM_SOURCE_REF"
   ["--cuda-arch"]="CUDA_ARCH"
@@ -332,6 +340,11 @@ BUILD_ARGS=(
 # Override the base image if we built one locally
 if [ "$FULL_BUILD" = "true" ]; then
   BUILD_ARGS+=(--build-arg VLLM_BASE_IMAGE=${VLLM_LOCAL_IMAGE})
+fi
+
+# Override the base image if explicitly provided (e.g. for ECR images without v-prefix)
+if [ -n "$VLLM_BASE_IMAGE_OVERRIDE" ]; then
+  BUILD_ARGS+=(--build-arg VLLM_BASE_IMAGE=${VLLM_BASE_IMAGE_OVERRIDE})
 fi
 
 # Pre-release wheel index
