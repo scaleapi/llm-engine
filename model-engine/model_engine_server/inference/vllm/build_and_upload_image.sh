@@ -38,7 +38,8 @@ set -eo pipefail
 # Examples:
 #
 #   # 1. Published versions (base image and pip version match)
-#   ./build_and_upload_image.sh my-tag vllm
+#   ./build_and_upload_image.sh my-tag vllm                          # → tag: 0.17.0-my-tag
+#   ./build_and_upload_image.sh "" vllm                              # → tag: 0.17.0 (version-only)
 #   ./build_and_upload_image.sh my-tag vllm --vllm-version=0.15.1
 #
 #   # 2. Newer pip version on older base image (e.g. 0.16.0 wheel on 0.15.1 base)
@@ -105,8 +106,8 @@ VLLM_OMNI_VERSION=${VLLM_OMNI_VERSION:-"0.16.0"}
 VLLM_OMNI_SOURCE_DIR=""
 VLLM_OMNI_SOURCE_REF=""
 
-if [ -z "$1" ]; then
-  echo "Must supply the user-provided tag"
+if [ "$#" -lt 1 ]; then
+  echo "Must supply the user-provided tag (pass empty string \"\" for a version-only tag)"
   exit 1;
 fi
 
@@ -264,9 +265,9 @@ fi
 
 # Construct image tag based on vllm version and user tag
 if [ "$BUILD_TARGET" == "vllm_omni" ]; then
-  IMAGE_TAG="${VLLM_VERSION}-omni-${USER_TAG}"
+  IMAGE_TAG="${VLLM_VERSION}-omni${USER_TAG:+-$USER_TAG}"
 else
-  IMAGE_TAG="${VLLM_VERSION}-${USER_TAG}"
+  IMAGE_TAG="${VLLM_VERSION}${USER_TAG:+-$USER_TAG}"
 fi
 
 # if build target = vllm use vllm otherwise use vllm_batch

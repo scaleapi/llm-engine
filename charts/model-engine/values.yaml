@@ -47,7 +47,7 @@ keda:
 
 # Configurable inference framework image tags
 inferenceFramework:
-  vllm: "latest"
+  vllm: "0.17.0"
   deepspeed: "latest"
   text_generation_inference: "latest"
   lightllm: "latest"
