@@ -355,10 +355,10 @@ Storage auth uses GCP Workload Identity via Application Default Credentials (ADC
 config:
   values:
     launch:
-      cache_redis_onprem_url: redis://my-memorystore-instance.redis.cache.googleapis.com:6379/0
+      cache_redis_gcp_url: redis://MEMORYSTORE_PRIVATE_IP:6379/0
 ```
 
-Alternatively, `cache_redis_aws_url` is also accepted (the on-prem fallback path in `config.py` accepts it with a log warning). The same Redis instance serves as both the caching layer and the Celery broker.
+`cache_redis_gcp_url` is the preferred field for GCP — it maps directly to GCP Memorystore and triggers the GCP branch in `HostedModelInferenceServiceConfig.cache_redis_url`. The same Redis instance serves as both the caching layer and the Celery broker.
 
 #### Service Account (GCP Workload Identity)
 

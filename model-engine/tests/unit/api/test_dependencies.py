@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
 from model_engine_server.api.dependencies import _get_external_interfaces
+from model_engine_server.common.config import HostedModelInferenceServiceConfig
 from model_engine_server.infra.gateways import (
     GCSFileStorageGateway,
     GCSFilesystemGateway,
@@ -119,3 +121,71 @@ def test_gcp_provider_selects_gcp_implementations():
             external_interfaces.resource_gateway.queue_delegate,
             RedisQueueEndpointResourceDelegate,
         )
+
+
+def test_gcp_cache_redis_url_returns_gcp_url():
+    """Test that cache_redis_url returns cache_redis_gcp_url when cloud_provider is gcp."""
+    with patch("model_engine_server.common.config.infra_config") as mock_infra_config:
+        mock_infra = MagicMock()
+        mock_infra.cloud_provider = "gcp"
+        mock_infra_config.return_value = mock_infra
+
+        config = HostedModelInferenceServiceConfig(
+            gateway_namespace="ns",
+            endpoint_namespace="ns",
+            billing_queue_arn="arn",
+            sqs_profile="default",
+            sqs_queue_policy_template="{}",
+            sqs_queue_tag_template="{}",
+            model_primitive_host="localhost",
+            cloud_file_llm_fine_tune_repository="gs://bucket/ft",
+            hf_user_fine_tuned_weights_prefix="gs://bucket/weights",
+            istio_enabled=False,
+            dd_trace_enabled=False,
+            tgi_repository="repo/tgi",
+            vllm_repository="repo/vllm",
+            lightllm_repository="repo/lightllm",
+            tensorrt_llm_repository="repo/tensorrt",
+            batch_inference_vllm_repository="repo/batch",
+            user_inference_base_repository="repo/base",
+            user_inference_pytorch_repository="repo/pytorch",
+            user_inference_tensorflow_repository="repo/tf",
+            docker_image_layer_cache_repository="repo/cache",
+            sensitive_log_mode=False,
+            cache_redis_gcp_url="redis://10.0.0.1:6379/0",
+        )
+        assert config.cache_redis_url == "redis://10.0.0.1:6379/0"
+
+
+def test_gcp_cache_redis_url_raises_when_not_set():
+    """Test that cache_redis_url raises AssertionError for GCP when cache_redis_gcp_url is not set."""
+    with patch("model_engine_server.common.config.infra_config") as mock_infra_config:
+        mock_infra = MagicMock()
+        mock_infra.cloud_provider = "gcp"
+        mock_infra_config.return_value = mock_infra
+
+        config = HostedModelInferenceServiceConfig(
+            gateway_namespace="ns",
+            endpoint_namespace="ns",
+            billing_queue_arn="arn",
+            sqs_profile="default",
+            sqs_queue_policy_template="{}",
+            sqs_queue_tag_template="{}",
+            model_primitive_host="localhost",
+            cloud_file_llm_fine_tune_repository="gs://bucket/ft",
+            hf_user_fine_tuned_weights_prefix="gs://bucket/weights",
+            istio_enabled=False,
+            dd_trace_enabled=False,
+            tgi_repository="repo/tgi",
+            vllm_repository="repo/vllm",
+            lightllm_repository="repo/lightllm",
+            tensorrt_llm_repository="repo/tensorrt",
+            batch_inference_vllm_repository="repo/batch",
+            user_inference_base_repository="repo/base",
+            user_inference_pytorch_repository="repo/pytorch",
+            user_inference_tensorflow_repository="repo/tf",
+            docker_image_layer_cache_repository="repo/cache",
+            sensitive_log_mode=False,
+        )
+        with pytest.raises(AssertionError, match="cache_redis_gcp_url required for GCP"):
+            _ = config.cache_redis_url
