@@ -69,6 +69,20 @@ def get_engine_url(
 
             engine_url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
 
+        elif infra_config().cloud_provider == "gcp":
+            user = os.environ.get("DB_USER", "postgres")
+            password = os.environ.get("DB_PASSWORD", "postgres")
+            host = (
+                os.environ.get("DB_HOST_RO")
+                if read_only
+                else os.environ.get("DB_HOST", "localhost")
+            )
+            port = os.environ.get("DB_PORT", "5432")
+            dbname = os.environ.get("DB_NAME", "llm_engine")
+            logger.info(f"Connecting to db {host}:{port}, name {dbname}")
+
+            engine_url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
+
         elif infra_config().cloud_provider == "azure":
             client = SecretClient(
                 vault_url=f"https://{os.environ.get('KEYVAULT_NAME')}.vault.azure.net",

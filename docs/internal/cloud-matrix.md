@@ -360,6 +360,17 @@ config:
 
 `cache_redis_gcp_url` is the preferred field for GCP — it maps directly to GCP Memorystore and triggers the GCP branch in `HostedModelInferenceServiceConfig.cache_redis_url`. The same Redis instance serves as both the caching layer and the Celery broker.
 
+#### Database (Cloud SQL)
+
+GCP uses environment variables for DB credentials injected via a Kubernetes secret — the same pattern as on-prem. There is no GCP Secret Manager integration; use `kubernetesDatabaseSecretName` to mount the secret:
+
+```yaml
+secrets:
+  kubernetesDatabaseSecretName: llm-engine-postgres-credentials
+```
+
+The K8s secret must contain keys that the chart injects as env vars: `DB_HOST`, `DB_HOST_RO`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`. `get_engine_url` in `db/base.py` reads these directly when `cloud_provider == "gcp"`.
+
 #### Service Account (GCP Workload Identity)
 
 ```yaml
