@@ -297,6 +297,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             return GetAsyncTaskV1Response(
                 task_id=task_id,
                 status=TaskStatus.FAILURE,
+                result=str(res.result) if res.result is not None else None,
                 traceback=res.traceback,
                 status_code=None,  # probably
             )
