@@ -23,6 +23,7 @@ __all__: Sequence[str] = (
     "CONFIG_PATH",
     "config_context",
     "get_config_path_for_env_name",
+    "infer_registry_type",
     "infra_config",
     "use_config_context",
 )
@@ -51,6 +52,7 @@ class _InfraConfig:
     prometheus_server_address: Optional[str] = None
     celery_broker_type_redis: Optional[bool] = None
     celery_enable_sha256: Optional[bool] = None
+    docker_registry_type: Optional[str] = None
     debug_mode: Optional[bool] = None
 
 
@@ -107,6 +109,17 @@ def use_config_context(config_path: str):
     """Use the config file at the given path."""
     global _infra_config
     _infra_config = InfraConfig.from_yaml(config_path)
+
+
+def infer_registry_type(prefix: str) -> str:
+    """Infer docker registry type from docker_repo_prefix."""
+    if ".dkr.ecr." in prefix and ".amazonaws.com" in prefix:
+        return "ecr"
+    if ".azurecr.io" in prefix:
+        return "acr"
+    if "-docker.pkg.dev" in prefix:
+        return "gar"
+    return "generic"
 
 
 def get_config_path_for_env_name(env_name: str) -> Path:

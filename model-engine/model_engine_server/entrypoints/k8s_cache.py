@@ -14,7 +14,7 @@ from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.env_vars import CIRCLECI
-from model_engine_server.core.config import infra_config
+from model_engine_server.core.config import infer_registry_type, infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.db.base import get_session_async_null_pool
 from model_engine_server.domain.repositories import DockerRepository
@@ -44,6 +44,8 @@ from model_engine_server.infra.repositories import (
     ACRDockerRepository,
     ECRDockerRepository,
     FakeDockerRepository,
+    GARDockerRepository,
+    GenericDockerRepository,
 )
 from model_engine_server.infra.repositories.db_model_endpoint_record_repository import (
     DbModelEndpointRecordRepository,
@@ -128,16 +130,21 @@ async def main(args: Any):
     )
     image_cache_gateway = ImageCacheGateway()
     docker_repo: DockerRepository
+    registry_type = infra_config().docker_registry_type or infer_registry_type(
+        infra_config().docker_repo_prefix
+    )
     if CIRCLECI:
         docker_repo = FakeDockerRepository()
-    elif infra_config().cloud_provider == "onprem":
-        docker_repo = OnPremDockerRepository()
-    elif infra_config().cloud_provider == "azure" or infra_config().docker_repo_prefix.endswith(
-        "azurecr.io"
-    ):
-        docker_repo = ACRDockerRepository()
-    else:
+    elif registry_type == "ecr":
         docker_repo = ECRDockerRepository()
+    elif registry_type == "acr":
+        docker_repo = ACRDockerRepository()
+    elif registry_type == "gar":
+        docker_repo = GARDockerRepository()
+    elif registry_type == "onprem":
+        docker_repo = OnPremDockerRepository()
+    else:
+        docker_repo = GenericDockerRepository()
     while True:
         loop_start = time.time()
         await loop_iteration(

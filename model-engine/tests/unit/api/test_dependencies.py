@@ -101,6 +101,7 @@ def test_gcp_provider_selects_gcp_implementations():
         mock_config_instance.cloud_provider = "gcp"
         mock_config_instance.celery_broker_type_redis = None
         mock_config_instance.docker_repo_prefix = "us-docker.pkg.dev/my-project/my-repo"
+        mock_config_instance.docker_registry_type = None
         mock_config.return_value = mock_config_instance
 
         mock_session = MagicMock()

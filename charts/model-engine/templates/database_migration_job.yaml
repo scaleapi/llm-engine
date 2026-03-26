@@ -1,21 +1,22 @@
-{{- if or (.Values.secrets.kubernetesDatabaseSecretName) (.Values.db.runDbMigrationScript) }}
+{{- if .Values.db.runDbMigrationScript }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "modelEngine.fullname" . }}-database-migration
+  name: {{ include "modelEngine.fullname" . }}-database-migration-{{ .Release.Revision }}
   labels:
     {{- include "modelEngine.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-1"
-    "helm.sh/hook-delete-policy": hook-succeeded
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   backoffLimit: 0
   activeDeadlineSeconds: 600
   template:
     metadata:
-      labels:
+      annotations:
         sidecar.istio.io/inject: "false"
+      labels:
         {{- include "modelEngine.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
@@ -35,6 +36,7 @@ spec:
             - /workspace/model-engine/model_engine_server/db/migrations/run_database_migration.sh
           {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 10 }}
           {{- include "modelEngine.volumeMounts" . | indent 10 }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ include "modelEngine.fullname" . }}
       {{- include "modelEngine.volumes" . | indent 6 }}
       {{- with .Values.nodeSelector }}

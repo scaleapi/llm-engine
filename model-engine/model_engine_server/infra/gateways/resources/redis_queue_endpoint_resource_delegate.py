@@ -7,7 +7,7 @@ queue lifecycle for async endpoints using Redis.
 
 from typing import Any, Dict, Optional, Sequence
 
-import aioredis
+import redis.asyncio as aioredis
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
     QueueEndpointResourceDelegate,

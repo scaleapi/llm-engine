@@ -3,7 +3,7 @@ from functools import lru_cache
 from typing import Dict, NamedTuple, Optional
 
 from huggingface_hub import list_repo_refs
-from huggingface_hub.utils._errors import RepositoryNotFoundError
+from huggingface_hub.errors import RepositoryNotFoundError
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import ObjectNotFoundException
 from model_engine_server.domain.gateways.llm_artifact_gateway import LLMArtifactGateway

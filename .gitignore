@@ -147,3 +147,7 @@ venv.bak/
 node_modules/
 site/
 
+
+# Git worktrees
+.worktrees/
+.worktrees/

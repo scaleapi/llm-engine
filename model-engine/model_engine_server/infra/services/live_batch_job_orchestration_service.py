@@ -246,7 +246,7 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
                     task_ids = [
                         BatchEndpointInProgressTask.deserialize(tid) for tid in task_ids_serialized
                     ]
-                    num_task_ids = len(task_ids)  # type:ignore
+                    num_task_ids = len(task_ids)  # type: ignore
                     logger.info(f"Found {num_task_ids} pending tasks for batch job {job_id}")
         finally:
             if task_ids is None:

@@ -1,0 +1,55 @@
+{{- if .Values.db.runDbInitScript }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "modelEngine.fullname" . }}-database-setup-{{ .Release.Revision }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-2"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        {{- include "modelEngine.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      containers:
+        - name: {{ include "modelEngine.fullname" . }}
+          image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - dumb-init
+            - --
+          args:
+            - python
+            - -m
+            - model_engine_server.entrypoints.init_database
+          {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 10 }}
+          {{- include "modelEngine.volumeMounts" . | indent 10 }}
+      serviceAccountName: {{ include "modelEngine.fullname" . }}
+      {{- include "modelEngine.volumes" . | indent 6 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
