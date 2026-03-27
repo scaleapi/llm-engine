@@ -24,7 +24,7 @@ celery_broker_type_redis: null
 #       - ALL  
 
 # tag [required] is the LLM Engine docker image tag
-tag: 60ac144c55aad971cdd7f152f4f7816ce2fb7d2f
+tag: 4de8ad9966ea6a6f0e438aa83171d921df37e704
 # context is a user-specified deployment tag. Can be used to 
 context: production
 image:
