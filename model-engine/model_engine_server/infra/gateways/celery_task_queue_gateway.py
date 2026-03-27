@@ -18,7 +18,10 @@ from model_engine_server.domain.exceptions import InvalidRequestException
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 
 logger = make_logger(logger_name())
-backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
+_cloud_provider = infra_config().cloud_provider
+backend_protocol = (
+    "abs" if _cloud_provider == "azure" else ("redis" if _cloud_provider == "gcp" else "s3")
+)
 
 celery_redis = celery_app(
     None,
