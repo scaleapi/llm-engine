@@ -77,6 +77,9 @@ class HostedModelInferenceServiceConfig:
         None  # Not an env var because the redis cache info is already here
     )
     cache_redis_onprem_url: Optional[str] = None  # For on-prem Redis (e.g., redis://redis:6379/0)
+    cache_redis_gcp_url: Optional[str] = (
+        None  # For GCP Memorystore (e.g., redis://MEMORYSTORE_HOST:6379/0)
+    )
     sglang_repository: Optional[str] = None
 
     @classmethod
@@ -105,6 +108,10 @@ class HostedModelInferenceServiceConfig:
             redis_host = os.getenv("REDIS_HOST", "redis")
             redis_port = getattr(infra_config(), "redis_port", 6379)
             return f"redis://{redis_host}:{redis_port}/0"
+
+        if cloud_provider == "gcp":
+            assert self.cache_redis_gcp_url, "cache_redis_gcp_url required for GCP"
+            return self.cache_redis_gcp_url
 
         if self.cache_redis_aws_url:
             assert cloud_provider == "aws", "cache_redis_aws_url is only for AWS"
