@@ -196,7 +196,7 @@ def get_redis_host_port():
 
 
 def get_redis_endpoint(db_index: int = 0) -> str:
-    if infra_config().redis_aws_secret_name is not None:
+    if infra_config().redis_aws_secret_name is not None and infra_config().cloud_provider == "aws":
         logger.info("Using infra_config().redis_aws_secret_name for Redis endpoint")
         creds = get_key_file(infra_config().redis_aws_secret_name)  # Use default role
         scheme = creds.get("scheme", "redis://")

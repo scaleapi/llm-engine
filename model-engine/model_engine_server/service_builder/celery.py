@@ -18,7 +18,11 @@ service_builder_service = celery_app(
     ],
     s3_bucket=infra_config().s3_bucket,
     broker_type=service_builder_broker_type,
-    backend_protocol="abs" if infra_config().cloud_provider == "azure" else "s3",
+    backend_protocol=(
+        "abs"
+        if infra_config().cloud_provider == "azure"
+        else ("redis" if infra_config().cloud_provider == "gcp" else "s3")
+    ),
     # Add detailed task tracking for debugging
     task_track_started=True,
     task_remote_tracebacks=True,
