@@ -119,6 +119,32 @@ class TestBrokerHealthTracker:
         tracker.record_success()
         assert tracker.is_healthy
 
+    def test_probe_and_recover_resets_on_success(self):
+        tracker = _BrokerHealthTracker(failure_threshold=1)
+        mock_app = MagicMock()
+        tracker.record_failure(celery_app=mock_app)
+        assert not tracker.is_healthy
+
+        # Simulate a successful connection probe.
+        assert tracker.probe_and_recover() is True
+        assert tracker.is_healthy
+        mock_app.pool.force_close_all.assert_called_once()
+
+    def test_probe_and_recover_stays_unhealthy_on_failure(self):
+        tracker = _BrokerHealthTracker(failure_threshold=1)
+        mock_app = MagicMock()
+        mock_app.connection.return_value.ensure_connection.side_effect = OSError("refused")
+        tracker.record_failure(celery_app=mock_app)
+        assert not tracker.is_healthy
+
+        assert tracker.probe_and_recover() is False
+        assert not tracker.is_healthy
+
+    def test_probe_and_recover_no_app(self):
+        tracker = _BrokerHealthTracker(failure_threshold=1)
+        tracker.record_failure()  # no celery_app passed
+        assert tracker.probe_and_recover() is False
+
 
 class TestIsBrokerConnectionError:
     def test_servicebus_error_detected(self, monkeypatch):
@@ -213,6 +239,8 @@ class TestSendTaskWithRetry:
         # is 3, so we're not yet unhealthy after a single event.
         assert broker_health_tracker._consecutive_failures == 1
         assert broker_health_tracker.is_healthy  # 1 < threshold of 3
+        # The failed celery app is stored for active probing.
+        assert broker_health_tracker._failed_celery_app is mock_dest
 
         # Simulate two more full exhaustion events to cross the threshold.
         broker_health_tracker.record_failure()

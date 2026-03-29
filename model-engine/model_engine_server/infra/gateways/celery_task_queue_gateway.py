@@ -61,30 +61,68 @@ _BROKER_RETRY_WAIT_MULTIPLIER = 1  # seconds
 _BROKER_RETRY_WAIT_MAX = 5  # seconds
 
 
+_BROKER_PROBE_TIMEOUT = 5  # seconds – max time for the active connection check
+
+
 class _BrokerHealthTracker:
     """Thread-safe tracker for consecutive broker send failures.
 
     Used by the readiness probe to determine whether the pod should be
     removed from the K8s service load balancer.
+
+    Once the failure threshold is crossed the pod is marked not-ready.
+    Recovery happens via :meth:`probe_and_recover`, which actively tests
+    the broker connection (resets the pool, opens a fresh connection).
+    If the probe succeeds the counter is reset and the pod becomes ready
+    again.
     """
 
     def __init__(self, failure_threshold: int = 3):
         self._lock = threading.Lock()
         self._consecutive_failures = 0
         self._failure_threshold = failure_threshold
+        self._failed_celery_app = None  # set by record_failure
 
     def record_success(self) -> None:
         with self._lock:
             self._consecutive_failures = 0
+            self._failed_celery_app = None
 
-    def record_failure(self) -> None:
+    def record_failure(self, celery_app=None) -> None:
         with self._lock:
             self._consecutive_failures += 1
+            if celery_app is not None:
+                self._failed_celery_app = celery_app
 
     @property
     def is_healthy(self) -> bool:
         with self._lock:
             return self._consecutive_failures < self._failure_threshold
+
+    def probe_and_recover(self) -> bool:
+        """Actively test the broker connection and recover if possible.
+
+        Called by the readiness probe when :attr:`is_healthy` is False.
+        Resets the connection pool, tries to establish a fresh connection,
+        and marks the tracker healthy on success.
+
+        Returns True if the broker is reachable again.
+        """
+        with self._lock:
+            app = self._failed_celery_app
+        if app is None:
+            return False
+        try:
+            app.pool.force_close_all()
+            conn = app.connection()
+            conn.ensure_connection(max_retries=0, timeout=_BROKER_PROBE_TIMEOUT)
+            conn.close()
+            self.record_success()
+            logger.info("Broker readiness probe succeeded — marking pod ready")
+            return True
+        except Exception as exc:
+            logger.debug("Broker readiness probe failed: %s", exc)
+            return False
 
 
 broker_health_tracker = _BrokerHealthTracker(failure_threshold=3)
@@ -213,7 +251,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     time.sleep(backoff)
 
         # All retries exhausted.
-        broker_health_tracker.record_failure()
+        broker_health_tracker.record_failure(celery_app=celery_dest)
         logger.error(
             "Broker send_task failed after %d attempts",
             _BROKER_RETRY_ATTEMPTS,

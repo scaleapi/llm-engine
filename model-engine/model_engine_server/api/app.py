@@ -322,11 +322,15 @@ def readiness_check() -> Response:
 
     Also checks whether the broker connection is healthy.  If consecutive
     send failures exceed the threshold the pod is marked not-ready so K8s
-    stops routing traffic to it.
+    stops routing traffic to it.  When not-ready, an active connection
+    probe is attempted; if the broker is reachable again the pod
+    self-heals without a restart.
     """
     from model_engine_server.infra.gateways.celery_task_queue_gateway import broker_health_tracker
 
     if not broker_health_tracker.is_healthy:
+        if broker_health_tracker.probe_and_recover():
+            return Response(status_code=200)
         return JSONResponse(
             status_code=503,
             content={"status": "not ready", "reason": "broker connectivity issue"},
