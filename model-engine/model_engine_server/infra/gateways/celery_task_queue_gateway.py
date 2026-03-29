@@ -1,4 +1,5 @@
 import json
+import threading
 import time
 from typing import Any, Dict, List, Optional
 
@@ -14,8 +15,13 @@ from model_engine_server.core.celery.app import get_redis_endpoint, get_redis_in
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.tracing.tracing_gateway import TracingGateway
-from model_engine_server.domain.exceptions import InvalidRequestException
+from model_engine_server.domain.exceptions import BrokerUnavailableException, InvalidRequestException
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
+
+try:
+    from azure.servicebus.exceptions import ServiceBusError
+except ImportError:
+    ServiceBusError = None  # type: ignore[assignment,misc]
 
 logger = make_logger(logger_name())
 _cloud_provider = infra_config().cloud_provider
@@ -45,6 +51,64 @@ celery_sqs = celery_app(
 celery_servicebus = celery_app(
     None, broker_type=str(BrokerType.SERVICEBUS.value), backend_protocol=backend_protocol
 )
+
+# ---------------------------------------------------------------------------
+# Broker health tracking & connection-error detection
+# ---------------------------------------------------------------------------
+
+_BROKER_RETRY_ATTEMPTS = 3
+_BROKER_RETRY_WAIT_MULTIPLIER = 1  # seconds
+_BROKER_RETRY_WAIT_MAX = 5  # seconds
+
+
+class _BrokerHealthTracker:
+    """Thread-safe tracker for consecutive broker send failures.
+
+    Used by the readiness probe to determine whether the pod should be
+    removed from the K8s service load balancer.
+    """
+
+    def __init__(self, failure_threshold: int = 3):
+        self._lock = threading.Lock()
+        self._consecutive_failures = 0
+        self._failure_threshold = failure_threshold
+
+    def record_success(self) -> None:
+        with self._lock:
+            self._consecutive_failures = 0
+
+    def record_failure(self) -> None:
+        with self._lock:
+            self._consecutive_failures += 1
+
+    @property
+    def is_healthy(self) -> bool:
+        with self._lock:
+            return self._consecutive_failures < self._failure_threshold
+
+
+broker_health_tracker = _BrokerHealthTracker(failure_threshold=3)
+
+
+def _is_broker_connection_error(exc: Exception, broker_type: BrokerType) -> bool:
+    """Return True if *exc* is a transient broker connection error that
+    warrants a retry with a fresh connection pool.
+
+    Dispatches per broker type so each transport can define its own set of
+    retryable errors.  Today only ServiceBus is handled; Redis / SQS errors
+    propagate immediately.  Extending to other brokers is a one-line change
+    in this function.
+    """
+    if broker_type == BrokerType.SERVICEBUS:
+        if ServiceBusError is None:
+            return False
+        if isinstance(exc, ServiceBusError):
+            return True
+        # Also match when kombu wraps the real error as a chained cause.
+        cause = getattr(exc, "__cause__", None) or getattr(exc, "__context__", None)
+        return isinstance(cause, ServiceBusError)
+    # Redis / SQS: no retry today.
+    return False
 
 
 class CeleryTaskQueueGateway(TaskQueueGateway):
@@ -82,6 +146,88 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             return celery_redis
         else:
             return celery_servicebus
+
+    # ------------------------------------------------------------------
+    # Retry helpers for transient broker connection errors
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _reset_connection_pool(celery_dest) -> None:
+        """Close all pooled connections so the next send creates a fresh one."""
+        try:
+            celery_dest.pool.force_close_all()
+            logger.info("Reset Celery broker connection pool")
+        except Exception as e:
+            logger.warning(f"Failed to reset Celery connection pool: {e}")
+
+    def _send_task_with_retry(
+        self,
+        celery_dest,
+        task_name: str,
+        args,
+        kwargs,
+        queue_name: str,
+        expires,
+    ):
+        """Publish a task, retrying on transient broker connection errors.
+
+        On each retry the connection pool is reset so stale AMQP senders are
+        evicted. Non-connection errors are re-raised immediately.
+        """
+        last_exc: Optional[Exception] = None
+        for attempt in range(1, _BROKER_RETRY_ATTEMPTS + 1):
+            try:
+                result = celery_dest.send_task(
+                    name=task_name,
+                    args=args,
+                    kwargs=kwargs,
+                    queue=queue_name,
+                    expires=expires,
+                )
+                broker_health_tracker.record_success()
+                return result
+            except Exception as exc:
+                if not _is_broker_connection_error(exc, self.broker_type):
+                    raise  # Not a connection error; let the outer handler deal with it.
+
+                last_exc = exc
+                logger.warning(
+                    "Broker send_task failed (attempt %d/%d): %s",
+                    attempt,
+                    _BROKER_RETRY_ATTEMPTS,
+                    exc,
+                    extra={
+                        "queue_name": queue_name,
+                        "task_name": task_name,
+                        "broker_type": self.broker_type.value,
+                        "error_type": type(exc).__name__,
+                    },
+                )
+                self._reset_connection_pool(celery_dest)
+
+                if attempt < _BROKER_RETRY_ATTEMPTS:
+                    backoff = min(
+                        _BROKER_RETRY_WAIT_MULTIPLIER * (2 ** (attempt - 1)),
+                        _BROKER_RETRY_WAIT_MAX,
+                    )
+                    time.sleep(backoff)
+
+        # All retries exhausted.
+        broker_health_tracker.record_failure()
+        logger.error(
+            "Broker send_task failed after %d attempts",
+            _BROKER_RETRY_ATTEMPTS,
+            extra={
+                "queue_name": queue_name,
+                "task_name": task_name,
+                "broker_type": self.broker_type.value,
+                "error_type": type(last_exc).__name__,
+                "error_message": str(last_exc),
+            },
+        )
+        raise BrokerUnavailableException(
+            f"Failed to send task after {_BROKER_RETRY_ATTEMPTS} attempts: {last_exc}"
+        ) from last_exc
 
     def _log_broker_details(self, celery_dest, queue_name: str):
         """Log detailed broker connection information for debugging"""
@@ -192,12 +338,8 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                         },
                     )
 
-                res = celery_dest.send_task(
-                    name=task_name,
-                    args=args,
-                    kwargs=kwargs,
-                    queue=queue_name,
-                    expires=expires,
+                res = self._send_task_with_retry(
+                    celery_dest, task_name, args, kwargs, queue_name, expires
                 )
 
                 if infra_config().debug_mode:  # pragma: no cover
@@ -222,6 +364,9 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                             "task_state": res.state,
                         },
                     )
+
+            except BrokerUnavailableException:
+                raise
 
             except botocore.exceptions.ClientError as e:
                 send_duration = time.time() - send_start_time

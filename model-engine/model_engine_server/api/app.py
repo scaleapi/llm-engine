@@ -313,9 +313,30 @@ def load_redis():
 
 
 def healthcheck() -> Response:
-    """Returns 200 if the app is healthy."""
+    """Liveness probe -- returns 200 if the process is alive."""
     return Response(status_code=200)
 
 
-for endpoint in healthcheck_routes:
+def readiness_check() -> Response:
+    """Readiness probe -- returns 200 when the pod is ready to serve traffic.
+
+    Also checks whether the broker connection is healthy.  If consecutive
+    send failures exceed the threshold the pod is marked not-ready so K8s
+    stops routing traffic to it.
+    """
+    from model_engine_server.infra.gateways.celery_task_queue_gateway import broker_health_tracker
+
+    if not broker_health_tracker.is_healthy:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not ready", "reason": "broker connectivity issue"},
+        )
+    return Response(status_code=200)
+
+
+# /healthcheck and /healthz are liveness probes -- always return 200.
+for endpoint in ["/healthcheck", "/healthz"]:
     app.get(endpoint)(healthcheck)
+
+# /readyz is the readiness probe -- may return 503 if broker is unhealthy.
+app.get("/readyz")(readiness_check)

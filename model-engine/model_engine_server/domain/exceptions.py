@@ -172,6 +172,13 @@ class InvalidRequestException(DomainException):
     """
 
 
+class BrokerUnavailableException(DomainException):
+    """
+    Thrown when the message broker is temporarily unreachable
+    and all retry attempts have been exhausted.
+    """
+
+
 class CronSyntaxException(DomainException):
     """
     Thrown if the requested cron schedule has invalid syntax.
