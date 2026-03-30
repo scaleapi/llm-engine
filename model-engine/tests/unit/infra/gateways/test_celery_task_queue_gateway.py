@@ -6,9 +6,7 @@ from model_engine_server.common.dtos.tasks import TaskStatus
 from model_engine_server.domain.exceptions import BrokerUnavailableException
 from model_engine_server.infra.gateways.celery_task_queue_gateway import (
     CeleryTaskQueueGateway,
-    _BrokerHealthTracker,
     _is_broker_connection_error,
-    broker_health_tracker,
 )
 
 
@@ -30,10 +28,7 @@ def servicebus_gateway(monkeypatch):
         "model_engine_server.infra.gateways.celery_task_queue_gateway.ServiceBusError",
         _MockServiceBusError,
     )
-    gw = CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS, tracing_gateway=MagicMock())
-    # Reset the global health tracker between tests.
-    broker_health_tracker.record_success()
-    return gw
+    return CeleryTaskQueueGateway(broker_type=BrokerType.SERVICEBUS, tracing_gateway=MagicMock())
 
 
 def _make_async_result(state, result=None, traceback=None):
@@ -99,53 +94,6 @@ def test_get_task_failure_with_none_result(gateway):
 # ---------------------------------------------------------------------------
 
 
-class TestBrokerHealthTracker:
-    def test_starts_healthy(self):
-        tracker = _BrokerHealthTracker(failure_threshold=3)
-        assert tracker.is_healthy
-
-    def test_becomes_unhealthy_after_threshold(self):
-        tracker = _BrokerHealthTracker(failure_threshold=2)
-        tracker.record_failure()
-        assert tracker.is_healthy  # 1 < 2
-        tracker.record_failure()
-        assert not tracker.is_healthy  # 2 >= 2
-
-    def test_success_resets_counter(self):
-        tracker = _BrokerHealthTracker(failure_threshold=2)
-        tracker.record_failure()
-        tracker.record_failure()
-        assert not tracker.is_healthy
-        tracker.record_success()
-        assert tracker.is_healthy
-
-    def test_probe_and_recover_resets_on_success(self):
-        tracker = _BrokerHealthTracker(failure_threshold=1)
-        mock_app = MagicMock()
-        tracker.record_failure(celery_app=mock_app)
-        assert not tracker.is_healthy
-
-        # Simulate a successful connection probe.
-        assert tracker.probe_and_recover() is True
-        assert tracker.is_healthy
-        mock_app.pool.force_close_all.assert_called_once()
-
-    def test_probe_and_recover_stays_unhealthy_on_failure(self):
-        tracker = _BrokerHealthTracker(failure_threshold=1)
-        mock_app = MagicMock()
-        mock_app.connection.return_value.ensure_connection.side_effect = OSError("refused")
-        tracker.record_failure(celery_app=mock_app)
-        assert not tracker.is_healthy
-
-        assert tracker.probe_and_recover() is False
-        assert not tracker.is_healthy
-
-    def test_probe_and_recover_no_app(self):
-        tracker = _BrokerHealthTracker(failure_threshold=1)
-        tracker.record_failure()  # no celery_app passed
-        assert tracker.probe_and_recover() is False
-
-
 class TestIsBrokerConnectionError:
     def test_servicebus_error_detected(self, monkeypatch):
         monkeypatch.setattr(
@@ -192,11 +140,7 @@ class TestIsBrokerConnectionError:
 class TestSendTaskWithRetry:
     """Tests for _send_task_with_retry via the public send_task() method."""
 
-    @patch(
-        "model_engine_server.infra.gateways.celery_task_queue_gateway.time.sleep",
-        return_value=None,
-    )
-    def test_retries_on_connection_error_then_succeeds(self, mock_sleep, servicebus_gateway):
+    def test_retries_once_on_connection_error_then_succeeds(self, servicebus_gateway):
         mock_result = MagicMock()
         mock_result.id = "task-ok"
         mock_result.state = "PENDING"
@@ -215,45 +159,22 @@ class TestSendTaskWithRetry:
         assert response.task_id == "task-ok"
         assert mock_dest.send_task.call_count == 2
         mock_dest.pool.force_close_all.assert_called_once()
-        assert broker_health_tracker.is_healthy
 
-    @patch(
-        "model_engine_server.infra.gateways.celery_task_queue_gateway.time.sleep",
-        return_value=None,
-    )
-    def test_all_retries_exhausted_raises_broker_unavailable(
-        self, mock_sleep, servicebus_gateway
-    ):
+    def test_retry_fails_raises_broker_unavailable(self, servicebus_gateway):
         mock_dest = MagicMock()
         mock_dest.send_task.side_effect = _MockServiceBusError("dead")
 
         with patch.object(servicebus_gateway, "_get_celery_dest", return_value=mock_dest):
-            with pytest.raises(BrokerUnavailableException, match="3 attempts"):
+            with pytest.raises(BrokerUnavailableException, match="after retry"):
                 servicebus_gateway.send_task(
                     task_name="test.task", queue_name="test-queue"
                 )
 
-        assert mock_dest.send_task.call_count == 3
-        assert mock_dest.pool.force_close_all.call_count == 3
-        # One exhaustion event records one failure.  The tracker threshold
-        # is 3, so we're not yet unhealthy after a single event.
-        assert broker_health_tracker._consecutive_failures == 1
-        assert broker_health_tracker.is_healthy  # 1 < threshold of 3
-        # The failed celery app is stored for active probing.
-        assert broker_health_tracker._failed_celery_app is mock_dest
+        # First attempt + one retry = 2 calls.
+        assert mock_dest.send_task.call_count == 2
+        mock_dest.pool.force_close_all.assert_called_once()
 
-        # Simulate two more full exhaustion events to cross the threshold.
-        broker_health_tracker.record_failure()
-        broker_health_tracker.record_failure()
-        assert not broker_health_tracker.is_healthy
-
-    @patch(
-        "model_engine_server.infra.gateways.celery_task_queue_gateway.time.sleep",
-        return_value=None,
-    )
-    def test_non_connection_error_propagates_immediately(
-        self, mock_sleep, servicebus_gateway
-    ):
+    def test_non_connection_error_propagates_immediately(self, servicebus_gateway):
         mock_dest = MagicMock()
         mock_dest.send_task.side_effect = ValueError("bad payload")
 
