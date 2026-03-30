@@ -14,7 +14,10 @@ from model_engine_server.core.celery.app import get_redis_endpoint, get_redis_in
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.tracing.tracing_gateway import TracingGateway
-from model_engine_server.domain.exceptions import BrokerUnavailableException, InvalidRequestException
+from model_engine_server.domain.exceptions import (
+    BrokerUnavailableException,
+    InvalidRequestException,
+)
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 
 try:
@@ -145,7 +148,9 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
 
         Non-connection errors are re-raised immediately.
         """
-        send_kwargs = dict(name=task_name, args=args, kwargs=kwargs, queue=queue_name, expires=expires)
+        send_kwargs = dict(
+            name=task_name, args=args, kwargs=kwargs, queue=queue_name, expires=expires
+        )
         try:
             return celery_dest.send_task(**send_kwargs)
         except Exception as exc:
@@ -179,9 +184,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     "error_message": str(exc),
                 },
             )
-            raise BrokerUnavailableException(
-                f"Failed to send task after retry: {exc}"
-            ) from exc
+            raise BrokerUnavailableException(f"Failed to send task after retry: {exc}") from exc
 
     def _log_broker_details(self, celery_dest, queue_name: str):
         """Log detailed broker connection information for debugging"""

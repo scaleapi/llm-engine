@@ -124,9 +124,7 @@ class TestIsBrokerConnectionError:
             "model_engine_server.infra.gateways.celery_task_queue_gateway.ServiceBusError",
             _MockServiceBusError,
         )
-        assert not _is_broker_connection_error(
-            _MockServiceBusError("oops"), BrokerType.REDIS
-        )
+        assert not _is_broker_connection_error(_MockServiceBusError("oops"), BrokerType.REDIS)
 
     def test_servicebus_error_none_import(self, monkeypatch):
         """When azure-servicebus isn't installed, ServiceBusError is None."""
@@ -152,9 +150,7 @@ class TestSendTaskWithRetry:
         ]
 
         with patch.object(servicebus_gateway, "_get_celery_dest", return_value=mock_dest):
-            response = servicebus_gateway.send_task(
-                task_name="test.task", queue_name="test-queue"
-            )
+            response = servicebus_gateway.send_task(task_name="test.task", queue_name="test-queue")
 
         assert response.task_id == "task-ok"
         assert mock_dest.send_task.call_count == 2
@@ -166,9 +162,7 @@ class TestSendTaskWithRetry:
 
         with patch.object(servicebus_gateway, "_get_celery_dest", return_value=mock_dest):
             with pytest.raises(BrokerUnavailableException, match="after retry"):
-                servicebus_gateway.send_task(
-                    task_name="test.task", queue_name="test-queue"
-                )
+                servicebus_gateway.send_task(task_name="test.task", queue_name="test-queue")
 
         # First attempt + one retry = 2 calls.
         assert mock_dest.send_task.call_count == 2
@@ -180,9 +174,7 @@ class TestSendTaskWithRetry:
 
         with patch.object(servicebus_gateway, "_get_celery_dest", return_value=mock_dest):
             with pytest.raises(ValueError, match="bad payload"):
-                servicebus_gateway.send_task(
-                    task_name="test.task", queue_name="test-queue"
-                )
+                servicebus_gateway.send_task(task_name="test.task", queue_name="test-queue")
 
         # Should NOT have retried.
         assert mock_dest.send_task.call_count == 1
