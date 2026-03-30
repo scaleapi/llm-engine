@@ -112,6 +112,16 @@ class TestIsBrokerConnectionError:
         wrapper.__cause__ = cause
         assert _is_broker_connection_error(wrapper, BrokerType.SERVICEBUS)
 
+    def test_implicit_context_not_matched(self, monkeypatch):
+        """Implicit chaining (__context__) should NOT trigger a retry."""
+        monkeypatch.setattr(
+            "model_engine_server.infra.gateways.celery_task_queue_gateway.ServiceBusError",
+            _MockServiceBusError,
+        )
+        wrapper = RuntimeError("cleanup failed")
+        wrapper.__context__ = _MockServiceBusError("original")
+        assert not _is_broker_connection_error(wrapper, BrokerType.SERVICEBUS)
+
     def test_non_servicebus_error_not_detected(self, monkeypatch):
         monkeypatch.setattr(
             "model_engine_server.infra.gateways.celery_task_queue_gateway.ServiceBusError",

@@ -73,8 +73,8 @@ def _is_broker_connection_error(exc: Exception, broker_type: BrokerType) -> bool
             return False
         if isinstance(exc, ServiceBusError):
             return True
-        # Also match when kombu wraps the real error as a chained cause.
-        cause = getattr(exc, "__cause__", None) or getattr(exc, "__context__", None)
+        # Also match explicit chaining (raise X from ServiceBusError).
+        cause = getattr(exc, "__cause__", None)
         return isinstance(cause, ServiceBusError)
     # Redis / SQS: no retry today.
     return False
