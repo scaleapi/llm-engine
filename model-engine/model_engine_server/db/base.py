@@ -72,11 +72,7 @@ def get_engine_url(
         elif infra_config().cloud_provider == "gcp":
             user = os.environ.get("DB_USER", "postgres")
             password = os.environ.get("DB_PASSWORD", "postgres")
-            host = (
-                os.environ.get("DB_HOST_RO")
-                if read_only
-                else os.environ.get("DB_HOST", "localhost")
-            )
+            host = os.environ.get("DB_HOST_RO") or os.environ.get("DB_HOST", "localhost")
             port = os.environ.get("DB_PORT", "5432")
             dbname = os.environ.get("DB_NAME", "llm_engine")
             logger.info(f"Connecting to db {host}:{port}, name {dbname}")
