@@ -202,10 +202,10 @@ def get_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
         )
 
         return get_custom_monitoring_metrics_gateway()
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as e:
+        if e.name is None or not e.name.startswith("plugins"):
+            raise
         return get_default_monitoring_metrics_gateway()
-    finally:
-        pass
 
 
 def _get_external_interfaces(
@@ -453,7 +453,9 @@ async def get_external_interfaces():
         from plugins.dependencies import get_external_interfaces as get_custom_external_interfaces
 
         ei = get_custom_external_interfaces()
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as e:
+        if e.name is None or not e.name.startswith("plugins"):
+            raise
         ei = get_default_external_interfaces()
     try:
         yield ei
@@ -468,7 +470,9 @@ async def get_external_interfaces_read_only():
         )
 
         ei = get_custom_external_interfaces_read_only()
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as e:
+        if e.name is None or not e.name.startswith("plugins"):
+            raise
         ei = get_default_external_interfaces_read_only()
     try:
         yield ei
@@ -489,10 +493,10 @@ async def get_auth_repository():
         from plugins.dependencies import get_auth_repository as get_custom_auth_repository
 
         yield get_custom_auth_repository()
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as e:
+        if e.name is None or not e.name.startswith("plugins"):
+            raise
         yield get_default_auth_repository()
-    finally:
-        pass
 
 
 async def verify_authentication(
