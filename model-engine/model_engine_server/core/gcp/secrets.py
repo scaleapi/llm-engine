@@ -23,10 +23,5 @@ def get_key_file(secret_name: str, gcp_project: Optional[str] = None):
     if gcp_project is not None:
         secret_name = f"projects/{gcp_project}/secrets/{secret_name}/versions/latest"
     client = secretmanager.SecretManagerServiceClient()
-    try:
-        response = client.access_secret_version(name=secret_name)
-        return json.loads(response.payload.data.decode("utf-8"))
-    except Exception as e:
-        logger.error(e)
-        logger.error(f"Failed to retrieve secret: {secret_name}")
-        return {}
+    response = client.access_secret_version(name=secret_name)
+    return json.loads(response.payload.data.decode("utf-8"))
