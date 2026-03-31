@@ -13,7 +13,6 @@ azure-storage-blob~=12.19.0
 gcloud-aio-storage~=9.6
 google-auth~=2.25.0
 google-cloud-artifact-registry~=1.13.0
-google-cloud-secret-manager~=2.16
 google-cloud-storage~=2.14.0
 aioboto3==15.5.0           # 10.4.0 forced urllib3<1.27 (CVE-2023-43804/45803/2024-37891); 15.x uses aiobotocore 2.25.x (urllib3<3, 2.x compatible)
 boto3-stubs[essential]>=1.40.46,<1.40.62
