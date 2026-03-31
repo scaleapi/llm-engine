@@ -73,7 +73,8 @@ def get_engine_url(
             if key_file:
                 from model_engine_server.core.gcp.secrets import get_key_file as get_gcp_key_file
 
-                creds = get_gcp_key_file(key_file)
+                db_secret_gcp_project = os.environ.get("DB_SECRET_GCP_PROJECT")
+                creds = get_gcp_key_file(key_file, db_secret_gcp_project)
                 user = creds.get("username")
                 password = creds.get("password")
                 host = creds.get("clusterHostRo") if read_only else creds.get("clusterHost")
