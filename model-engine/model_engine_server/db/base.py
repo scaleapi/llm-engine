@@ -70,11 +70,12 @@ def get_engine_url(
             engine_url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
 
         elif infra_config().cloud_provider == "gcp":
-            if key_file:
+            db_secret_name = os.environ.get("DB_SECRET_NAME")
+            if db_secret_name:
                 from model_engine_server.core.gcp.secrets import get_key_file as get_gcp_key_file
 
                 db_secret_gcp_project_id = os.environ.get("DB_SECRET_GCP_PROJECT_ID")
-                creds = get_gcp_key_file(key_file, db_secret_gcp_project_id)
+                creds = get_gcp_key_file(db_secret_name, db_secret_gcp_project_id)
                 user = creds.get("username")
                 password = creds.get("password")
                 host = creds.get("clusterHostRo") if read_only else creds.get("clusterHost")
