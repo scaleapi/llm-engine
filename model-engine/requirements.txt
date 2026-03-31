@@ -185,6 +185,7 @@ google-api-core==2.29.0
     # via
     #   google-cloud-artifact-registry
     #   google-cloud-core
+    #   google-cloud-secret-manager
     #   google-cloud-storage
 google-auth==2.25.2
     # via
@@ -192,12 +193,17 @@ google-auth==2.25.2
     #   google-api-core
     #   google-cloud-artifact-registry
     #   google-cloud-core
+    #   google-cloud-secret-manager
     #   google-cloud-storage
     #   kubernetes
 google-cloud-artifact-registry==1.13.1
     # via -r requirements.in
 google-cloud-core==2.5.0
-    # via google-cloud-storage
+    # via
+    #   google-cloud-secret-manager
+    #   google-cloud-storage
+google-cloud-secret-manager==2.16.4
+    # via -r requirements.in
 google-cloud-storage==2.14.0
     # via -r requirements.in
 google-crc32c==1.8.0
@@ -209,6 +215,7 @@ google-resumable-media==2.8.0
 googleapis-common-protos==1.72.0
     # via
     #   google-api-core
+    #   google-cloud-secret-manager
     #   grpc-google-iam-v1
     #   grpcio-status
 greenlet==3.3.2
@@ -216,7 +223,9 @@ greenlet==3.3.2
     #   -r requirements.in
     #   sqlalchemy
 grpc-google-iam-v1==0.14.3
-    # via google-cloud-artifact-registry
+    # via
+    #   google-cloud-artifact-registry
+    #   google-cloud-secret-manager
 grpcio==1.74.0
     # via
     #   google-api-core
@@ -224,7 +233,9 @@ grpcio==1.74.0
     #   grpc-google-iam-v1
     #   grpcio-status
 grpcio-status==1.71.2
-    # via google-api-core
+    # via
+    #   google-api-core
+    #   google-cloud-secret-manager
 gunicorn==23.0.0
     # via -r requirements.in
 h11==0.16.0
@@ -386,12 +397,14 @@ proto-plus==1.27.1
     # via
     #   google-api-core
     #   google-cloud-artifact-registry
+    #   google-cloud-secret-manager
 protobuf==5.29.6
     # via
     #   -r requirements.in
     #   ddtrace
     #   google-api-core
     #   google-cloud-artifact-registry
+    #   google-cloud-secret-manager
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
