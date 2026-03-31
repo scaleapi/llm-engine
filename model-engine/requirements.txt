@@ -202,7 +202,7 @@ google-cloud-core==2.5.0
     # via
     #   google-cloud-secret-manager
     #   google-cloud-storage
-google-cloud-secret-manager==2.16.4
+google-cloud-secret-manager==2.21.0
     # via -r requirements.in
 google-cloud-storage==2.14.0
     # via -r requirements.in
