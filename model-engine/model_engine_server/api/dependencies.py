@@ -205,6 +205,9 @@ def get_monitoring_metrics_gateway() -> MonitoringMetricsGateway:
     except ModuleNotFoundError as e:
         if e.name is None or not e.name.startswith("plugins"):
             raise
+        logger.warning(
+            "plugins module not found, falling back to default monitoring metrics gateway"
+        )
         return get_default_monitoring_metrics_gateway()
 
 
@@ -456,6 +459,7 @@ async def get_external_interfaces():
     except ModuleNotFoundError as e:
         if e.name is None or not e.name.startswith("plugins"):
             raise
+        logger.warning("plugins module not found, falling back to default external interfaces")
         ei = get_default_external_interfaces()
     try:
         yield ei
@@ -473,6 +477,9 @@ async def get_external_interfaces_read_only():
     except ModuleNotFoundError as e:
         if e.name is None or not e.name.startswith("plugins"):
             raise
+        logger.warning(
+            "plugins module not found, falling back to default external interfaces (read-only)"
+        )
         ei = get_default_external_interfaces_read_only()
     try:
         yield ei
@@ -496,6 +503,7 @@ async def get_auth_repository():
     except ModuleNotFoundError as e:
         if e.name is None or not e.name.startswith("plugins"):
             raise
+        logger.warning("plugins module not found, falling back to default auth repository")
         yield get_default_auth_repository()
 
 
