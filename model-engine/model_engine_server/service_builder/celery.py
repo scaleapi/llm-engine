@@ -8,6 +8,8 @@ if CIRCLECI or infra_config().celery_broker_type_redis:
     service_builder_broker_type = str(BrokerType.REDIS.value)
 elif infra_config().cloud_provider == "azure":
     service_builder_broker_type = str(BrokerType.SERVICEBUS.value)
+elif infra_config().cloud_provider == "gcp":
+    service_builder_broker_type = str(BrokerType.REDIS.value)
 else:
     service_builder_broker_type = str(BrokerType.SQS.value)
 
