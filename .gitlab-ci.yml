@@ -33,6 +33,8 @@ workflow:
 
 variables:
   SERVICE_NAME: "model-engine"
+  # All builds push to apps-dev. Promotion to apps-staging / apps-prod is
+  # handled by the scalegov2-promotion pipeline, not this build pipeline.
   HARBOR_PROJECT: "apps-dev"
   DOCKERFILE_PATH: "model-engine/Dockerfile.fips"
 
