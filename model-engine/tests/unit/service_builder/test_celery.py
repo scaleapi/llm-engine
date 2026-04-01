@@ -1,7 +1,5 @@
 import pytest
 
-from model_engine_server.service_builder.celery import get_broker_type
-
 
 def test_module_imports():
     """Test that the celery module can be imported"""
@@ -38,4 +36,6 @@ def test_broker_type_is_string():
     ],
 )
 def test_get_broker_type(cloud_provider, is_ci, force_redis, expected):
+    from model_engine_server.service_builder.celery import get_broker_type
+
     assert get_broker_type(cloud_provider, is_ci, force_redis) == expected
