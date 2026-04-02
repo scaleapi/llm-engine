@@ -48,7 +48,10 @@ class GARDockerRepository(DockerRepository):
         except (PermissionDenied, Unauthenticated):
             raise
         except GoogleAPICallError as e:
-            logger.warning(f"GAR API error checking tag {tag_name} ({type(e).__name__}), assuming image does not exist")
+            logger.warning(
+                f"GAR API error checking tag {tag_name} ({type(e).__name__}),"
+                " assuming image does not exist"
+            )
             return False
 
     def get_image_url(self, image_tag: str, repository_name: str) -> str:
