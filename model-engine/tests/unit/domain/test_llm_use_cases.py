@@ -64,6 +64,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     validate_and_update_completion_params,
     validate_chat_template,
     validate_checkpoint_files,
+    validate_checkpoint_path_uri,
 )
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
@@ -639,6 +640,69 @@ def test_load_model_weights_sub_commands(
         "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
         "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
         'azcopy copy --recursive --include-pattern "*.model;*.json;*.safetensors;*.py" --exclude-pattern "optimizer*" azure://fake-checkpoint/* test_folder',
+    ]
+    assert expected_result == subcommands
+
+    # GCS
+    framework = LLMInferenceFramework.VLLM
+    framework_image_tag = "0.2.7"
+    checkpoint_path = "gs://fake-bucket/fake-checkpoint"
+    final_weights_folder = "test_folder"
+
+    subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
+        framework, framework_image_tag, checkpoint_path, final_weights_folder
+    )
+
+    expected_result = [
+        "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
+        " | tar -xz -C /opt"
+        " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null",
+        '/opt/google-cloud-sdk/bin/gcloud storage cp -r --include="*.model" --include="*.model.v*" --include="*.json" --include="*.safetensors" --include="*.txt" --exclude="optimizer*" gs://fake-bucket/fake-checkpoint/* test_folder',
+    ]
+    assert expected_result == subcommands
+
+    trust_remote_code = True
+    subcommands = llm_bundle_use_case.load_model_weights_sub_commands(
+        framework, framework_image_tag, checkpoint_path, final_weights_folder, trust_remote_code
+    )
+
+    expected_result = [
+        "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
+        " | tar -xz -C /opt"
+        " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null",
+        '/opt/google-cloud-sdk/bin/gcloud storage cp -r --include="*.model" --include="*.model.v*" --include="*.json" --include="*.safetensors" --include="*.txt" --exclude="optimizer*" --include="*.py" gs://fake-bucket/fake-checkpoint/* test_folder',
+    ]
+    assert expected_result == subcommands
+
+
+def test_load_model_files_sub_commands_trt_llm_gcs(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+
+    checkpoint_path = "gs://fake-bucket/fake-checkpoint"
+    subcommands = llm_bundle_use_case.load_model_files_sub_commands_trt_llm(checkpoint_path)
+
+    expected_result = [
+        "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
+        " | tar -xz -C /opt"
+        " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null",
+        "/opt/google-cloud-sdk/bin/gcloud storage cp -r gs://fake-bucket/fake-checkpoint/* ./",
     ]
     assert expected_result == subcommands
 
@@ -2101,6 +2165,18 @@ async def test_delete_public_inference_model_raises_not_authorized(
         await use_case.execute(
             user=user, model_endpoint_name=llm_model_endpoint_sync[0].record.name
         )
+
+
+def test_validate_checkpoint_path_uri_gcs():
+    # Should not raise for gs:// paths
+    validate_checkpoint_path_uri("gs://my-bucket/models/weights/")
+    validate_checkpoint_path_uri("gs://bucket/path")
+
+    # Should still reject unsupported schemes
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_checkpoint_path_uri("/local/path/to/model")
+    with pytest.raises(ObjectHasInvalidValueException):
+        validate_checkpoint_path_uri("hdfs://cluster/model")
 
 
 @pytest.mark.asyncio
