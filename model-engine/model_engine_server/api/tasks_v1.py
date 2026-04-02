@@ -17,6 +17,7 @@ from model_engine_server.common.dtos.tasks import (
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
+    BrokerUnavailableException,
     EndpointUnsupportedInferenceTypeException,
     InvalidRequestException,
     ObjectNotAuthorizedException,
@@ -71,6 +72,11 @@ async def create_async_inference_task(
         raise HTTPException(
             status_code=400,
             detail=f"Invalid request: {str(exc)}",
+        ) from exc
+    except BrokerUnavailableException as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Message broker temporarily unavailable. Please retry.",
         ) from exc
 
 
@@ -138,6 +144,11 @@ async def create_sync_inference_task(
             status_code=400,
             detail=f"Invalid request: {str(exc)}",
         ) from exc
+    except BrokerUnavailableException as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Message broker temporarily unavailable. Please retry.",
+        ) from exc
 
 
 @inference_task_router_v1.post("/streaming-tasks")
@@ -190,4 +201,9 @@ async def create_streaming_inference_task(
         raise HTTPException(
             status_code=400,
             detail=f"Invalid request: {str(exc)}",
+        ) from exc
+    except BrokerUnavailableException as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Message broker temporarily unavailable. Please retry.",
         ) from exc

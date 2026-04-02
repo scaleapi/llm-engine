@@ -2,7 +2,7 @@ import json
 import os
 from typing import Optional
 
-import aioredis
+import redis.asyncio as aioredis
 from model_engine_server.domain.entities import ModelEndpointInfraState
 from model_engine_server.infra.repositories.model_endpoint_cache_repository import (
     ModelEndpointCacheRepository,

@@ -1,6 +1,6 @@
 from typing import Optional
 
-import aioredis
+import redis.asyncio as aioredis
 from model_engine_server.domain.gateways.inference_autoscaling_metrics_gateway import (
     InferenceAutoscalingMetricsGateway,
 )

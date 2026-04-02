@@ -20,7 +20,7 @@ workflows:
 jobs:
   run_unit_tests_python_client:
     docker:
-      - image: python:3.10-bookworm
+      - image: python:3.13-bookworm
     resource_class: small
     parallelism: 1
     steps:
@@ -34,14 +34,14 @@ jobs:
       - run_unit_tests_python_client
   run_unit_tests_server:
     docker:
-      - image: python:3.10-bookworm
+      - image: python:3.13-bookworm
         environment:
           ML_INFRA_DATABASE_URL: postgresql://postgres@localhost/circle_test
       - image: circleci/postgres:12.9-postgis-ram
         environment:
           POSTGRES_USER: postgres
           POSTGRES_HOST_AUTH_METHOD: trust
-    resource_class: small
+    resource_class: medium
     parallelism: 1
     steps:
       - checkout # checkout source code to working directory
@@ -68,7 +68,7 @@ jobs:
       - run_unit_tests_server
   build_docs:
     docker:
-      - image: python:3.10-bookworm
+      - image: python:3.13-bookworm
     resource_class: small
     parallelism: 1
     steps:
@@ -84,7 +84,7 @@ jobs:
             mkdocs build --strict
   deploy_docs:
     docker:
-      - image: python:3.10-bookworm
+      - image: python:3.13-bookworm
     resource_class: small
     parallelism: 1
     steps:
@@ -105,10 +105,6 @@ jobs:
     executor: ubuntu-large
     steps:
       - checkout
-      - aws-cli/setup:
-          role-arn: ${CIRCLECI_ROLE_ARN}
-          aws-region: AWS_REGION
-      - ecr_login
       - run:
           name: Build Docker Image
           command: |
@@ -120,7 +116,6 @@ jobs:
       - aws-cli/setup:
           role-arn: ${CIRCLECI_ROLE_ARN}
           aws-region: AWS_REGION
-      - ecr_login
       - run:
           name: Build Docker Image
           command: |
@@ -189,12 +184,22 @@ jobs:
           command: |
             pushd $HOME/project/charts
             cat model-engine/values_circleci.yaml | envsubst > model-engine/values_circleci_subst.yaml
-            helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug
+            helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug || {
+              echo "=== Helm install failed — capturing pod diagnostics ==="
+              kubectl get pods -A
+              for pod in $(kubectl get pods -o name 2>/dev/null); do
+                echo "--- describe $pod ---"
+                kubectl describe $pod
+                echo "--- logs $pod ---"
+                kubectl logs $pod --previous 2>/dev/null || kubectl logs $pod 2>/dev/null || true
+              done
+              exit 1
+            }
       - run:
-          name: Change python version to 3.10.14
+          name: Change python version to 3.13.2
           command: |
-            pyenv install 3.10.14
-            pyenv global 3.10.14
+            pyenv install 3.13.2
+            pyenv global 3.13.2
       - run:
           name: Install integration test dependencies
           command: |
@@ -218,13 +223,6 @@ executors:
     resource_class: 2xlarge
 
 commands:
-  ecr_login:
-    description: Authenticate to Scale ECR golden image registry
-    steps:
-      - run:
-          name: Login to ECR
-          command: |
-            aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 022465994601.dkr.ecr.us-west-2.amazonaws.com
   environment_setup:
     description: Basic Environment setup
     steps:

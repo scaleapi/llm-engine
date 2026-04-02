@@ -14,11 +14,22 @@ from model_engine_server.core.celery.app import get_redis_endpoint, get_redis_in
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.tracing.tracing_gateway import TracingGateway
-from model_engine_server.domain.exceptions import InvalidRequestException
+from model_engine_server.domain.exceptions import (
+    BrokerUnavailableException,
+    InvalidRequestException,
+)
 from model_engine_server.domain.gateways.task_queue_gateway import TaskQueueGateway
 
+try:
+    from azure.servicebus.exceptions import ServiceBusError
+except ImportError:
+    ServiceBusError = None  # type: ignore[assignment,misc]
+
 logger = make_logger(logger_name())
-backend_protocol = "abs" if infra_config().cloud_provider == "azure" else "s3"
+_cloud_provider = infra_config().cloud_provider
+backend_protocol = (
+    "abs" if _cloud_provider == "azure" else ("redis" if _cloud_provider == "gcp" else "s3")
+)
 
 celery_redis = celery_app(
     None,
@@ -42,6 +53,31 @@ celery_sqs = celery_app(
 celery_servicebus = celery_app(
     None, broker_type=str(BrokerType.SERVICEBUS.value), backend_protocol=backend_protocol
 )
+
+# ---------------------------------------------------------------------------
+# Broker connection-error detection
+# ---------------------------------------------------------------------------
+
+
+def _is_broker_connection_error(exc: Exception, broker_type: BrokerType) -> bool:
+    """Return True if *exc* is a transient broker connection error that
+    warrants a retry with a fresh connection pool.
+
+    Dispatches per broker type so each transport can define its own set of
+    retryable errors.  Today only ServiceBus is handled; Redis / SQS errors
+    propagate immediately.  Extending to other brokers is a one-line change
+    in this function.
+    """
+    if broker_type == BrokerType.SERVICEBUS:
+        if ServiceBusError is None:
+            return False
+        if isinstance(exc, ServiceBusError):
+            return True
+        # Also match explicit chaining (raise X from ServiceBusError).
+        cause = getattr(exc, "__cause__", None)
+        return isinstance(cause, ServiceBusError)
+    # Redis / SQS: no retry today.
+    return False
 
 
 class CeleryTaskQueueGateway(TaskQueueGateway):
@@ -79,6 +115,76 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             return celery_redis
         else:
             return celery_servicebus
+
+    # ------------------------------------------------------------------
+    # Retry helpers for transient broker connection errors
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _reset_connection_pool(celery_dest) -> None:
+        """Close all pooled connections so the next send creates a fresh one."""
+        try:
+            celery_dest.pool.force_close_all()
+            logger.info("Reset Celery broker connection pool")
+        except Exception as e:
+            logger.warning(f"Failed to reset Celery connection pool: {e}")
+
+    def _send_task_with_retry(
+        self,
+        celery_dest,
+        task_name: str,
+        args,
+        kwargs,
+        queue_name: str,
+        expires,
+    ):
+        """Publish a task, retrying once on broker connection errors.
+
+        If the first attempt fails with a recognised connection error
+        (e.g. stale ServiceBus AMQP sender), the connection pool is
+        reset and one immediate retry is made with a fresh connection.
+        There is no backoff -- either the fresh connection works or the
+        broker is genuinely unreachable and waiting won't help.
+
+        Non-connection errors are re-raised immediately.
+        """
+        send_kwargs = dict(
+            name=task_name, args=args, kwargs=kwargs, queue=queue_name, expires=expires
+        )
+        try:
+            return celery_dest.send_task(**send_kwargs)
+        except Exception as exc:
+            if not _is_broker_connection_error(exc, self.broker_type):
+                raise
+
+            logger.warning(
+                "Broker send_task failed, resetting connection pool and retrying once: %s",
+                exc,
+                extra={
+                    "queue_name": queue_name,
+                    "task_name": task_name,
+                    "broker_type": self.broker_type.value,
+                    "error_type": type(exc).__name__,
+                },
+            )
+            self._reset_connection_pool(celery_dest)
+
+        # Single retry with a fresh connection.
+        try:
+            return celery_dest.send_task(**send_kwargs)
+        except Exception as exc:
+            logger.error(
+                "Broker send_task failed after retry: %s",
+                exc,
+                extra={
+                    "queue_name": queue_name,
+                    "task_name": task_name,
+                    "broker_type": self.broker_type.value,
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
+                },
+            )
+            raise BrokerUnavailableException(f"Failed to send task after retry: {exc}") from exc
 
     def _log_broker_details(self, celery_dest, queue_name: str):
         """Log detailed broker connection information for debugging"""
@@ -189,12 +295,8 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                         },
                     )
 
-                res = celery_dest.send_task(
-                    name=task_name,
-                    args=args,
-                    kwargs=kwargs,
-                    queue=queue_name,
-                    expires=expires,
+                res = self._send_task_with_retry(
+                    celery_dest, task_name, args, kwargs, queue_name, expires
                 )
 
                 if infra_config().debug_mode:  # pragma: no cover
@@ -219,6 +321,9 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                             "task_state": res.state,
                         },
                     )
+
+            except BrokerUnavailableException:
+                raise
 
             except botocore.exceptions.ClientError as e:
                 send_duration = time.time() - send_start_time
@@ -297,6 +402,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             return GetAsyncTaskV1Response(
                 task_id=task_id,
                 status=TaskStatus.FAILURE,
+                result=str(res.result) if res.result is not None else None,
                 traceback=res.traceback,
                 status_code=None,  # probably
             )
