@@ -21,8 +21,13 @@ from uuid import uuid4
 import pytest
 from model_engine_server.api.dependencies import ExternalInterfaces
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME
-from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
-from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
+from model_engine_server.common.dtos.batch_jobs import (
+    CreateDockerImageBatchJobResourceRequests,
+)
+from model_engine_server.common.dtos.docker_repository import (
+    BuildImageRequest,
+    BuildImageResponse,
+)
 from model_engine_server.common.dtos.endpoint_builder import BuildEndpointRequest
 from model_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
 from model_engine_server.common.dtos.model_endpoints import (
@@ -32,7 +37,9 @@ from model_engine_server.common.dtos.model_endpoints import (
     ModelEndpointOrderBy,
     StorageSpecificationType,
 )
-from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
+from model_engine_server.common.dtos.resource_manager import (
+    CreateOrUpdateResourcesRequest,
+)
 from model_engine_server.common.dtos.tasks import (
     CreateAsyncTaskV1Response,
     EndpointPredictV1Request,
@@ -152,7 +159,10 @@ from model_engine_server.infra.repositories.db_model_bundle_repository import (
     translate_kwargs_to_model_bundle_orm,
     translate_model_bundle_orm_to_model_bundle,
 )
-from model_engine_server.infra.services import LiveBatchJobService, LiveModelEndpointService
+from model_engine_server.infra.services import (
+    LiveBatchJobService,
+    LiveModelEndpointService,
+)
 from model_engine_server.infra.services.fake_llm_batch_completions_service import (
     FakeLLMBatchCompletionsService,
 )
@@ -211,7 +221,9 @@ class FakeModelBundleRepository(ModelBundleRepository):
             self.db = contents
             self.unique_owner_name_versions = set()
             for model_bundle in self.db.values():
-                self.unique_owner_name_versions.add((model_bundle.owner, model_bundle.name))
+                self.unique_owner_name_versions.add(
+                    (model_bundle.owner, model_bundle.name)
+                )
         else:
             self.db = {}
             self.unique_owner_name_versions = set()
@@ -260,7 +272,9 @@ class FakeModelBundleRepository(ModelBundleRepository):
         self, owner: str, name: Optional[str], order_by: Optional[ModelBundleOrderBy]
     ) -> Sequence[ModelBundle]:
         model_bundles = [
-            mb for mb in self.db.values() if mb.owner == owner and (not name or mb.name == name)
+            mb
+            for mb in self.db.values()
+            if mb.owner == owner and (not name or mb.name == name)
         ]
 
         if order_by == ModelBundleOrderBy.NEWEST:
@@ -270,8 +284,12 @@ class FakeModelBundleRepository(ModelBundleRepository):
 
         return model_bundles
 
-    async def get_latest_model_bundle_by_name(self, owner: str, name: str) -> Optional[ModelBundle]:
-        model_bundles = await self.list_model_bundles(owner, name, ModelBundleOrderBy.NEWEST)
+    async def get_latest_model_bundle_by_name(
+        self, owner: str, name: str
+    ) -> Optional[ModelBundle]:
+        model_bundles = await self.list_model_bundles(
+            owner, name, ModelBundleOrderBy.NEWEST
+        )
         if not model_bundles:
             return None
         return model_bundles[0]
@@ -316,7 +334,9 @@ class FakeBatchJobRecordRepository(BatchJobRecordRepository):
             model_bundle_id=model_bundle_id,
         )
         orm_batch_job.created_at = datetime.now()
-        model_bundle = await self.model_bundle_repository.get_model_bundle(model_bundle_id)
+        model_bundle = await self.model_bundle_repository.get_model_bundle(
+            model_bundle_id
+        )
         assert model_bundle is not None
         batch_job = _translate_fake_batch_job_orm_to_batch_job_record(
             orm_batch_job, model_bundle=model_bundle
@@ -355,14 +375,18 @@ class FakeBatchJobRecordRepository(BatchJobRecordRepository):
     async def get_batch_job_record(self, batch_job_id: str) -> Optional[BatchJobRecord]:
         return self.db.get(batch_job_id)
 
-    async def list_batch_job_records(self, owner: Optional[str]) -> List[BatchJobRecord]:
+    async def list_batch_job_records(
+        self, owner: Optional[str]
+    ) -> List[BatchJobRecord]:
         def filter_fn(m: BatchJobRecord) -> bool:
             return not owner or m.owner == owner
 
         batch_jobs = list(filter(filter_fn, self.db.values()))
         return batch_jobs
 
-    async def unset_model_endpoint_id(self, batch_job_id: str) -> Optional[BatchJobRecord]:
+    async def unset_model_endpoint_id(
+        self, batch_job_id: str
+    ) -> Optional[BatchJobRecord]:
         batch_job_record = await self.get_batch_job_record(batch_job_id)
         if batch_job_record:
             batch_job_record.model_endpoint_id = None
@@ -382,7 +406,9 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
             self.db = contents
             self.unique_owner_name_versions = set()
             for model_endpoint in self.db.values():
-                self.unique_owner_name_versions.add((model_endpoint.owner, model_endpoint.name))
+                self.unique_owner_name_versions.add(
+                    (model_endpoint.owner, model_endpoint.name)
+                )
         else:
             self.db = {}
             self.unique_owner_name_versions = set()
@@ -471,7 +497,9 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         )
         orm_model_endpoint.created_at = datetime.now()
         orm_model_endpoint.last_updated_at = datetime.now()
-        model_bundle = await self.model_bundle_repository.get_model_bundle(model_bundle_id)
+        model_bundle = await self.model_bundle_repository.get_model_bundle(
+            model_bundle_id
+        )
         assert model_bundle is not None
         model_endpoint = _translate_fake_model_endpoint_orm_to_model_endpoint_record(
             orm_model_endpoint, current_model_bundle=model_bundle
@@ -602,10 +630,14 @@ class FakeDockerImageBatchJobBundleRepository(DockerImageBatchJobBundleRepositor
             self.next_id += 1
         return str(self.next_id)
 
-    def add_docker_image_batch_job_bundle(self, batch_bundle: DockerImageBatchJobBundle):
+    def add_docker_image_batch_job_bundle(
+        self, batch_bundle: DockerImageBatchJobBundle
+    ):
         new_id = batch_bundle.id
         if new_id in {bun.id for bun in self.db.values()}:
-            raise ValueError(f"Error in test set up, batch bundle with {new_id} already present")
+            raise ValueError(
+                f"Error in test set up, batch bundle with {new_id} already present"
+            )
         self.db[new_id] = batch_bundle
 
     async def create_docker_image_batch_job_bundle(
@@ -767,7 +799,9 @@ class FakeLLMFineTuneRepository(LLMFineTuneRepository):
 class FakeLLMFineTuneEventsRepository(LLMFineTuneEventsRepository):
     def __init__(self):
         self.initialized_events = []
-        self.all_events_list = [LLMFineTuneEvent(timestamp=1, message="message", level="info")]
+        self.all_events_list = [
+            LLMFineTuneEvent(timestamp=1, message="message", level="info")
+        ]
 
     async def get_fine_tune_events(self, user_id: str, model_endpoint_name: str):
         if (user_id, model_endpoint_name) in self.initialized_events:
@@ -798,7 +832,9 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
             "llama-3-70b": ["model-fake.safetensors"],
             "llama-3-1-405b-instruct": ["model-fake.safetensors"],
         }
-        self.urls = {"filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"}
+        self.urls = {
+            "filename": "https://test-bucket.s3.amazonaws.com/llm/llm-1.0.0.tar.gz"
+        }
         self.model_config = {
             "_name_or_path": "meta-llama/Llama-2-7b-hf",
             "architectures": ["LlamaForCausalLM"],
@@ -873,7 +909,7 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
     def _strip_cloud_prefix(self, path: str) -> str:
         for prefix in ("s3://", "gs://", "azure://"):
             if path.startswith(prefix):
-                return path[len(prefix):]
+                return path[len(prefix) :]
         return path
 
     def list_files(self, path: str, **kwargs) -> List[str]:
@@ -881,7 +917,9 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 
-    def download_files(self, path: str, target_path: str, overwrite=False, **kwargs) -> List[str]:
+    def download_files(
+        self, path: str, target_path: str, overwrite=False, **kwargs
+    ) -> List[str]:
         path = self._strip_cloud_prefix(path)
         if path in self.s3_bucket:
             return self.s3_bucket[path]
@@ -1084,7 +1122,9 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
     def __init__(
         self,
         contents: Optional[Dict[str, ModelEndpointInfraState]] = None,
-        model_endpoint_record_repository: Optional[ModelEndpointRecordRepository] = None,
+        model_endpoint_record_repository: Optional[
+            ModelEndpointRecordRepository
+        ] = None,
     ):
         self.db = contents if contents else {}
         self.in_flight_infra = {}
@@ -1181,9 +1221,9 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         if kwargs["per_worker"] is not None:
             model_endpoint_infra.deployment_state.per_worker = kwargs["per_worker"]
         if kwargs["concurrent_requests_per_worker"] is not None:
-            model_endpoint_infra.deployment_state.concurrent_requests_per_worker = kwargs[
-                "concurrent_requests_per_worker"
-            ]
+            model_endpoint_infra.deployment_state.concurrent_requests_per_worker = (
+                kwargs["concurrent_requests_per_worker"]
+            )
         if kwargs["cpus"] is not None:
             model_endpoint_infra.resource_state.cpus = kwargs["cpus"]
         if kwargs["gpus"] is not None:
@@ -1239,7 +1279,9 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         assert model_endpoint_infra is not None
         model_endpoint_infra = model_endpoint_infra.copy()
         self.update_model_endpoint_infra_in_place(**locals())
-        self.in_flight_infra[model_endpoint_infra.deployment_name] = model_endpoint_infra
+        self.in_flight_infra[model_endpoint_infra.deployment_name] = (
+            model_endpoint_infra
+        )
         return "test_creation_task_id"
 
     async def get_model_endpoint_infra(
@@ -1265,7 +1307,9 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         model_endpoint_records[0].status = ModelEndpointStatus.READY
         del self.in_flight_infra[deployment_name]
 
-    async def delete_model_endpoint_infra(self, model_endpoint_record: ModelEndpointRecord) -> bool:
+    async def delete_model_endpoint_infra(
+        self, model_endpoint_record: ModelEndpointRecord
+    ) -> bool:
         deployment_name = self._get_deployment_name(
             model_endpoint_record.created_by, model_endpoint_record.name
         )
@@ -1288,7 +1332,9 @@ class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         self.db: Dict[str, ModelEndpointInfraState] = {}  # type: ignore
 
     def add_resource(self, endpoint_id: str, infra_state: ModelEndpointInfraState):
-        infra_state.labels.update({"user_id": "user_id", "endpoint_name": "endpoint_name"})
+        infra_state.labels.update(
+            {"user_id": "user_id", "endpoint_name": "endpoint_name"}
+        )
         self.db[endpoint_id] = infra_state
 
     async def create_queue(
@@ -1307,7 +1353,9 @@ class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         build_endpoint_request = request.build_endpoint_request
         endpoint_id = build_endpoint_request.model_endpoint_record.id
         model_endpoint_record = build_endpoint_request.model_endpoint_record
-        q = await self.create_queue(model_endpoint_record, build_endpoint_request.labels)
+        q = await self.create_queue(
+            model_endpoint_record, build_endpoint_request.labels
+        )
         infra_state = ModelEndpointInfraState(
             deployment_name=build_endpoint_request.deployment_name,
             aws_role=build_endpoint_request.aws_role,
@@ -1344,7 +1392,9 @@ class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         )
         # self.db[build_endpoint_request.deployment_name] = infra_state
         self.db[endpoint_id] = infra_state
-        return EndpointResourceGatewayCreateOrUpdateResourcesResponse(destination=q.queue_name)
+        return EndpointResourceGatewayCreateOrUpdateResourcesResponse(
+            destination=q.queue_name
+        )
 
     async def get_resources(
         self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
@@ -1413,13 +1463,19 @@ class FakeDockerImageBatchJobGateway(DockerImageBatchJobGateway):
 
         return job_id
 
-    async def get_docker_image_batch_job(self, batch_job_id: str) -> Optional[DockerImageBatchJob]:
+    async def get_docker_image_batch_job(
+        self, batch_job_id: str
+    ) -> Optional[DockerImageBatchJob]:
         return self.db.get(batch_job_id)
 
-    async def list_docker_image_batch_jobs(self, owner: str) -> List[DockerImageBatchJob]:
+    async def list_docker_image_batch_jobs(
+        self, owner: str
+    ) -> List[DockerImageBatchJob]:
         return [job for job in self.db.values() if job["owner"] == owner]
 
-    async def update_docker_image_batch_job(self, batch_job_id: str, cancel: bool) -> bool:
+    async def update_docker_image_batch_job(
+        self, batch_job_id: str, cancel: bool
+    ) -> bool:
         if batch_job_id not in self.db:
             return False
 
@@ -1535,7 +1591,9 @@ class FakeLLMFineTuningService(LLMFineTuningService):
 
         return job_id
 
-    async def get_fine_tune(self, owner: str, fine_tune_id: str) -> Optional[DockerImageBatchJob]:
+    async def get_fine_tune(
+        self, owner: str, fine_tune_id: str
+    ) -> Optional[DockerImageBatchJob]:
         di_batch_job = self.db.get(fine_tune_id)
         if di_batch_job is None or di_batch_job.owner != owner:
             return None
@@ -1560,7 +1618,9 @@ class FakeLLMFineTuningService(LLMFineTuningService):
         return None
 
 
-class FakeStreamingModelEndpointInferenceGateway(StreamingModelEndpointInferenceGateway):
+class FakeStreamingModelEndpointInferenceGateway(
+    StreamingModelEndpointInferenceGateway
+):
     def __init__(self):
         self.responses = [
             SyncEndpointPredictV1Response(
@@ -1729,12 +1789,18 @@ class FakeModelEndpointService(ModelEndpointService):
         self,
         contents: Optional[Dict[str, ModelEndpoint]] = None,
         model_bundle_repository: Optional[ModelBundleRepository] = None,
-        async_model_endpoint_inference_gateway: Optional[AsyncModelEndpointInferenceGateway] = None,
+        async_model_endpoint_inference_gateway: Optional[
+            AsyncModelEndpointInferenceGateway
+        ] = None,
         streaming_model_endpoint_inference_gateway: Optional[
             StreamingModelEndpointInferenceGateway
         ] = None,
-        sync_model_endpoint_inference_gateway: Optional[SyncModelEndpointInferenceGateway] = None,
-        inference_autoscaling_metrics_gateway: Optional[InferenceAutoscalingMetricsGateway] = None,
+        sync_model_endpoint_inference_gateway: Optional[
+            SyncModelEndpointInferenceGateway
+        ] = None,
+        inference_autoscaling_metrics_gateway: Optional[
+            InferenceAutoscalingMetricsGateway
+        ] = None,
         can_scale_http_endpoint_from_zero_flag: bool = True,
     ):
         if contents:
@@ -1753,28 +1819,44 @@ class FakeModelEndpointService(ModelEndpointService):
         self.model_bundle_repository = model_bundle_repository
 
         if async_model_endpoint_inference_gateway is None:
-            async_model_endpoint_inference_gateway = FakeAsyncModelEndpointInferenceGateway()
-        self.async_model_endpoint_inference_gateway = async_model_endpoint_inference_gateway
+            async_model_endpoint_inference_gateway = (
+                FakeAsyncModelEndpointInferenceGateway()
+            )
+        self.async_model_endpoint_inference_gateway = (
+            async_model_endpoint_inference_gateway
+        )
 
         if streaming_model_endpoint_inference_gateway is None:
             streaming_model_endpoint_inference_gateway = (
                 FakeStreamingModelEndpointInferenceGateway()
             )
-        self.streaming_model_endpoint_inference_gateway = streaming_model_endpoint_inference_gateway
+        self.streaming_model_endpoint_inference_gateway = (
+            streaming_model_endpoint_inference_gateway
+        )
 
         if sync_model_endpoint_inference_gateway is None:
-            sync_model_endpoint_inference_gateway = FakeSyncModelEndpointInferenceGateway()
-        self.sync_model_endpoint_inference_gateway = sync_model_endpoint_inference_gateway
+            sync_model_endpoint_inference_gateway = (
+                FakeSyncModelEndpointInferenceGateway()
+            )
+        self.sync_model_endpoint_inference_gateway = (
+            sync_model_endpoint_inference_gateway
+        )
 
         if inference_autoscaling_metrics_gateway is None:
-            inference_autoscaling_metrics_gateway = FakeInferenceAutoscalingMetricsGateway()
-        self.inference_autoscaling_metrics_gateway = inference_autoscaling_metrics_gateway
+            inference_autoscaling_metrics_gateway = (
+                FakeInferenceAutoscalingMetricsGateway()
+            )
+        self.inference_autoscaling_metrics_gateway = (
+            inference_autoscaling_metrics_gateway
+        )
 
         self.model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
             filesystem_gateway=FakeFilesystemGateway()
         )
 
-        self.can_scale_http_endpoint_from_zero_flag = can_scale_http_endpoint_from_zero_flag
+        self.can_scale_http_endpoint_from_zero_flag = (
+            can_scale_http_endpoint_from_zero_flag
+        )
 
     def get_async_model_endpoint_inference_gateway(
         self,
@@ -1838,7 +1920,9 @@ class FakeModelEndpointService(ModelEndpointService):
             endpoint_name=name,
             endpoint_type=endpoint_type,
         )
-        current_model_bundle = await self.model_bundle_repository.get_model_bundle(model_bundle_id)
+        current_model_bundle = await self.model_bundle_repository.get_model_bundle(
+            model_bundle_id
+        )
         assert current_model_bundle is not None
         model_endpoint = ModelEndpoint(
             record=ModelEndpointRecord(
@@ -1929,7 +2013,9 @@ class FakeModelEndpointService(ModelEndpointService):
         task_expires_seconds: Optional[int] = None,
         public_inference: Optional[bool] = None,
     ) -> ModelEndpointRecord:
-        model_endpoint = await self.get_model_endpoint(model_endpoint_id=model_endpoint_id)
+        model_endpoint = await self.get_model_endpoint(
+            model_endpoint_id=model_endpoint_id
+        )
         if model_endpoint is None:
             raise ObjectNotFoundException
         current_model_bundle = None
@@ -1957,11 +2043,15 @@ class FakeModelEndpointService(ModelEndpointService):
         )
         return model_endpoint.record
 
-    async def get_model_endpoint(self, model_endpoint_id: str) -> Optional[ModelEndpoint]:
+    async def get_model_endpoint(
+        self, model_endpoint_id: str
+    ) -> Optional[ModelEndpoint]:
         return self.db.get(model_endpoint_id)
 
     async def get_model_endpoints_schema(self, owner: str) -> ModelEndpointsSchema:
-        endpoints = await self.list_model_endpoints(owner=owner, name=None, order_by=None)
+        endpoints = await self.list_model_endpoints(
+            owner=owner, name=None, order_by=None
+        )
         records = [endpoint.record for endpoint in endpoints]
         return self.model_endpoints_schema_gateway.get_model_endpoints_schema(
             model_endpoint_records=records
@@ -1978,7 +2068,9 @@ class FakeModelEndpointService(ModelEndpointService):
     def _filter_by_name_owner(
         record: ModelEndpointRecord, owner: Optional[str], name: Optional[str]
     ):
-        return (not owner or record.owner == owner) and (not name or record.name == name)
+        return (not owner or record.owner == owner) and (
+            not name or record.name == name
+        )
 
     async def list_model_endpoints(
         self,
@@ -2102,7 +2194,9 @@ def fake_docker_repository_image_never_exists() -> FakeDockerRepository:
 
 
 @pytest.fixture
-def fake_docker_repository_image_never_exists_and_builds_dont_work() -> FakeDockerRepository:
+def fake_docker_repository_image_never_exists_and_builds_dont_work() -> (
+    FakeDockerRepository
+):
     repo = FakeDockerRepository(image_always_exists=False, raises_error=True)
     return repo
 
@@ -2132,7 +2226,9 @@ def fake_model_endpoint_record_repository() -> FakeModelEndpointRecordRepository
 
 
 @pytest.fixture
-def fake_docker_image_batch_job_bundle_repository() -> FakeDockerImageBatchJobBundleRepository:
+def fake_docker_image_batch_job_bundle_repository() -> (
+    FakeDockerImageBatchJobBundleRepository
+):
     repo = FakeDockerImageBatchJobBundleRepository()
     return repo
 
@@ -2221,25 +2317,33 @@ def fake_model_primitive_gateway() -> FakeModelPrimitiveGateway:
 
 
 @pytest.fixture
-def fake_async_model_endpoint_inference_gateway() -> FakeAsyncModelEndpointInferenceGateway:
+def fake_async_model_endpoint_inference_gateway() -> (
+    FakeAsyncModelEndpointInferenceGateway
+):
     gateway = FakeAsyncModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_streaming_model_endpoint_inference_gateway() -> FakeStreamingModelEndpointInferenceGateway:
+def fake_streaming_model_endpoint_inference_gateway() -> (
+    FakeStreamingModelEndpointInferenceGateway
+):
     gateway = FakeStreamingModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_sync_model_endpoint_inference_gateway() -> FakeSyncModelEndpointInferenceGateway:
+def fake_sync_model_endpoint_inference_gateway() -> (
+    FakeSyncModelEndpointInferenceGateway
+):
     gateway = FakeSyncModelEndpointInferenceGateway()
     return gateway
 
 
 @pytest.fixture
-def fake_inference_autoscaling_metrics_gateway() -> FakeInferenceAutoscalingMetricsGateway:
+def fake_inference_autoscaling_metrics_gateway() -> (
+    FakeInferenceAutoscalingMetricsGateway
+):
     gateway = FakeInferenceAutoscalingMetricsGateway()
     return gateway
 
@@ -2336,14 +2440,18 @@ def get_repositories_generator_wrapper():
                 model_endpoint_record_repository=fake_model_endpoint_record_repository,
             )
             fake_model_endpoint_cache_repository = FakeModelEndpointCacheRepository()
-            async_model_endpoint_inference_gateway = FakeAsyncModelEndpointInferenceGateway()
+            async_model_endpoint_inference_gateway = (
+                FakeAsyncModelEndpointInferenceGateway()
+            )
             streaming_model_endpoint_inference_gateway = (
                 FakeStreamingModelEndpointInferenceGateway()
             )
-            sync_model_endpoint_inference_gateway = FakeSyncModelEndpointInferenceGateway(
-                fake_sync_inference_content
+            sync_model_endpoint_inference_gateway = (
+                FakeSyncModelEndpointInferenceGateway(fake_sync_inference_content)
             )
-            inference_autoscaling_metrics_gateway = FakeInferenceAutoscalingMetricsGateway()
+            inference_autoscaling_metrics_gateway = (
+                FakeInferenceAutoscalingMetricsGateway()
+            )
             model_endpoints_schema_gateway = LiveModelEndpointsSchemaGateway(
                 filesystem_gateway=FakeFilesystemGateway(),
             )
@@ -2371,8 +2479,10 @@ def get_repositories_generator_wrapper():
                     ),
                 ),
             )
-            fake_docker_image_batch_job_bundle_repository = FakeDockerImageBatchJobBundleRepository(
-                contents=fake_docker_image_batch_job_bundle_repository_contents
+            fake_docker_image_batch_job_bundle_repository = (
+                FakeDockerImageBatchJobBundleRepository(
+                    contents=fake_docker_image_batch_job_bundle_repository_contents
+                )
             )
             fake_trigger_repository = FakeTriggerRepository(
                 contents=fake_trigger_repository_contents
@@ -2393,7 +2503,9 @@ def get_repositories_generator_wrapper():
                 fake_llm_fine_tuning_service_contents
             )
             fake_llm_fine_tuning_events_repository = FakeLLMFineTuneEventsRepository()
-            fake_file_storage_gateway = FakeFileStorageGateway(fake_file_storage_gateway_contents)
+            fake_file_storage_gateway = FakeFileStorageGateway(
+                fake_file_storage_gateway_contents
+            )
             fake_tokenizer_repository = FakeTokenizerRepository()
             fake_streaming_storage_gateway = FakeStreamingStorageGateway()
 
@@ -2973,7 +3085,9 @@ def model_endpoint_4(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEnd
 
 
 @pytest.fixture
-def model_endpoint_public(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEndpoint:
+def model_endpoint_public(
+    test_api_key: str, model_bundle_1: ModelBundle
+) -> ModelEndpoint:
     model_endpoint = ModelEndpoint(
         record=ModelEndpointRecord(
             id="test_model_endpoint_id_1",
@@ -3040,7 +3154,9 @@ def model_endpoint_public(test_api_key: str, model_bundle_1: ModelBundle) -> Mod
 
 
 @pytest.fixture
-def model_endpoint_public_sync(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEndpoint:
+def model_endpoint_public_sync(
+    test_api_key: str, model_bundle_1: ModelBundle
+) -> ModelEndpoint:
     model_endpoint = ModelEndpoint(
         record=ModelEndpointRecord(
             id="test_model_endpoint_id_1",
@@ -3107,7 +3223,9 @@ def model_endpoint_public_sync(test_api_key: str, model_bundle_1: ModelBundle) -
 
 
 @pytest.fixture
-def model_endpoint_runnable(test_api_key: str, model_bundle_4: ModelBundle) -> ModelEndpoint:
+def model_endpoint_runnable(
+    test_api_key: str, model_bundle_4: ModelBundle
+) -> ModelEndpoint:
     # model_bundle_4 is a runnable bundle
     model_endpoint = ModelEndpoint(
         record=ModelEndpointRecord(
@@ -3165,7 +3283,9 @@ def model_endpoint_runnable(test_api_key: str, model_bundle_4: ModelBundle) -> M
 
 
 @pytest.fixture
-def model_endpoint_streaming(test_api_key: str, model_bundle_5: ModelBundle) -> ModelEndpoint:
+def model_endpoint_streaming(
+    test_api_key: str, model_bundle_5: ModelBundle
+) -> ModelEndpoint:
     # model_bundle_5 is a runnable bundle
     model_endpoint = ModelEndpoint(
         record=ModelEndpointRecord(
@@ -3223,7 +3343,9 @@ def model_endpoint_streaming(test_api_key: str, model_bundle_5: ModelBundle) -> 
 
 
 @pytest.fixture
-def model_endpoint_multinode(test_api_key: str, model_bundle_1: ModelBundle) -> ModelEndpoint:
+def model_endpoint_multinode(
+    test_api_key: str, model_bundle_1: ModelBundle
+) -> ModelEndpoint:
     model_endpoint = ModelEndpoint(
         record=ModelEndpointRecord(
             id="test_model_endpoint_id_multinode",
@@ -3289,7 +3411,9 @@ def model_endpoint_multinode(test_api_key: str, model_bundle_1: ModelBundle) -> 
 
 
 @pytest.fixture
-def batch_job_1(model_bundle_1: ModelBundle, model_endpoint_1: ModelEndpoint) -> BatchJob:
+def batch_job_1(
+    model_bundle_1: ModelBundle, model_endpoint_1: ModelEndpoint
+) -> BatchJob:
     batch_job = BatchJob(
         record=BatchJobRecord(
             id="test_batch_job_id_1",
@@ -3444,7 +3568,9 @@ def build_endpoint_request_async_runnable_image(
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
         default_callback_auth=CallbackAuth(
-            root=CallbackBasicAuth(kind="basic", username="username", password="password")
+            root=CallbackBasicAuth(
+                kind="basic", username="username", password="password"
+            )
         ),
     )
     return build_endpoint_request
@@ -3489,7 +3615,9 @@ def build_endpoint_request_streaming_runnable_image(
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
         default_callback_auth=CallbackAuth(
-            root=CallbackBasicAuth(kind="basic", username="username", password="password")
+            root=CallbackBasicAuth(
+                kind="basic", username="username", password="password"
+            )
         ),
     )
     return build_endpoint_request
@@ -3534,7 +3662,9 @@ def build_endpoint_request_sync_runnable_image(
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
         default_callback_auth=CallbackAuth(
-            root=CallbackBasicAuth(kind="basic", username="username", password="password")
+            root=CallbackBasicAuth(
+                kind="basic", username="username", password="password"
+            )
         ),
     )
     return build_endpoint_request
@@ -3579,7 +3709,9 @@ def build_endpoint_request_sync_pytorch(
         broker_type=BrokerType.SQS,
         default_callback_url="https://example.com",
         default_callback_auth=CallbackAuth(
-            root=CallbackBasicAuth(kind="basic", username="username", password="password")
+            root=CallbackBasicAuth(
+                kind="basic", username="username", password="password"
+            )
         ),
     )
     return build_endpoint_request
@@ -3623,7 +3755,9 @@ def build_endpoint_request_async_tensorflow(
         optimize_costs=False,
         default_callback_url="https://example.com/path",
         default_callback_auth=CallbackAuth(
-            root=CallbackBasicAuth(kind="basic", username="username", password="password")
+            root=CallbackBasicAuth(
+                kind="basic", username="username", password="password"
+            )
         ),
     )
     return build_endpoint_request
@@ -3774,7 +3908,9 @@ def endpoint_predict_request_2() -> Tuple[EndpointPredictV1Request, Dict[str, An
         args=["test_arg_1", "test_arg_2"],
         callback_url="http://test_callback_url.xyz",
         callback_auth=CallbackAuth(
-            root=CallbackBasicAuth(kind="basic", username="test_username", password="test_password")
+            root=CallbackBasicAuth(
+                kind="basic", username="test_username", password="test_password"
+            )
         ),
         return_pickled=True,
     )
@@ -3783,7 +3919,9 @@ def endpoint_predict_request_2() -> Tuple[EndpointPredictV1Request, Dict[str, An
 
 
 @pytest.fixture
-def sync_endpoint_predict_request_1() -> Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]:
+def sync_endpoint_predict_request_1() -> (
+    Tuple[SyncEndpointPredictV1Request, Dict[str, Any]]
+):
     request = SyncEndpointPredictV1Request(
         url="test_url",
         return_pickled=False,
@@ -4611,7 +4749,9 @@ def llm_model_endpoint_sync_trt_llm(
 
 
 @pytest.fixture
-def llm_model_endpoint_streaming(test_api_key: str, model_bundle_5: ModelBundle) -> ModelEndpoint:
+def llm_model_endpoint_streaming(
+    test_api_key: str, model_bundle_5: ModelBundle
+) -> ModelEndpoint:
     # model_bundle_5 is a runnable bundle
     model_endpoint = ModelEndpoint(
         record=ModelEndpointRecord(
