@@ -330,9 +330,10 @@ def validate_checkpoint_path_uri(checkpoint_path: str) -> None:
         not checkpoint_path.startswith("s3://")
         and not checkpoint_path.startswith("azure://")
         and "blob.core.windows.net" not in checkpoint_path
+        and not checkpoint_path.startswith("gs://")
     ):
         raise ObjectHasInvalidValueException(
-            f"Only S3 and Azure Blob Storage paths are supported. Given checkpoint path: {checkpoint_path}."
+            f"Only S3, Azure Blob Storage, and GCS paths are supported. Given checkpoint path: {checkpoint_path}."
         )
     if checkpoint_path.endswith(".tar"):
         raise ObjectHasInvalidValueException(
@@ -623,9 +624,15 @@ class CreateLLMModelBundleV1UseCase:
                 final_weights_folder,
                 trust_remote_code,
             )
+        elif checkpoint_path.startswith("gs://"):
+            return self.load_model_weights_sub_commands_gcs(
+                checkpoint_path,
+                final_weights_folder,
+                trust_remote_code,
+            )
         else:
             raise ObjectHasInvalidValueException(
-                f"Only S3 and Azure Blob Storage paths are supported. Given checkpoint path: {checkpoint_path}."
+                f"Only S3, Azure Blob Storage, and GCS paths are supported. Given checkpoint path: {checkpoint_path}."
             )
 
     def load_model_weights_sub_commands_s3(
@@ -701,6 +708,30 @@ class CreateLLMModelBundleV1UseCase:
 
         return subcommands
 
+    def load_model_weights_sub_commands_gcs(
+        self,
+        checkpoint_path,
+        final_weights_folder,
+        trust_remote_code: bool,
+    ):
+        subcommands = []
+
+        checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
+        validate_checkpoint_files(checkpoint_files)
+
+        # Install gcloud CLI on-the-fly for GCS access (similar to azcopy install for Azure)
+        subcommands.append(
+            "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
+            " | tar -xz -C /opt"
+            " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
+        )
+
+        subcommands.append(
+            f"/opt/google-cloud-sdk/bin/gcloud storage cp -r"
+            f" {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+        )
+        return subcommands
+
     def load_model_files_sub_commands_trt_llm(
         self,
         checkpoint_path,
@@ -717,14 +748,19 @@ class CreateLLMModelBundleV1UseCase:
             subcommands = [
                 f"./s5cmd {s3_endpoint_flag} --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
             ]
+        elif checkpoint_path.startswith("gs://"):
+            subcommands = [
+                "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
+                " | tar -xz -C /opt"
+                " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null",
+                f"/opt/google-cloud-sdk/bin/gcloud storage cp -r {os.path.join(checkpoint_path, '*')} ./",
+            ]
         else:
-            subcommands.extend(
-                [
-                    "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
-                    "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
-                    f"azcopy copy --recursive {os.path.join(checkpoint_path, '*')} ./",
-                ]
-            )
+            subcommands = [
+                "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
+                "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
+                f"azcopy copy --recursive {os.path.join(checkpoint_path, '*')} ./",
+            ]
         return subcommands
 
     async def create_deepspeed_bundle(
