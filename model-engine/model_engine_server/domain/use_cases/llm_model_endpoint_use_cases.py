@@ -152,9 +152,7 @@ logger = make_logger(logger_name())
 
 def _get_s3_endpoint_flag() -> str:
     """Get S3 endpoint flag for s5cmd, determined at command construction time."""
-    s3_endpoint = getattr(infra_config(), "s3_endpoint_url", None) or os.getenv(
-        "S3_ENDPOINT_URL"
-    )
+    s3_endpoint = getattr(infra_config(), "s3_endpoint_url", None) or os.getenv("S3_ENDPOINT_URL")
     if s3_endpoint:
         return f"--endpoint-url {s3_endpoint}"
     return ""
@@ -200,26 +198,20 @@ _SUPPORTED_QUANTIZATIONS: Dict[LLMInferenceFramework, List[Quantization]] = {
 }
 
 
-NUM_DOWNSTREAM_REQUEST_RETRIES = (
-    80  # has to be high enough so that the retries take the 5 minutes
-)
+NUM_DOWNSTREAM_REQUEST_RETRIES = 80  # has to be high enough so that the retries take the 5 minutes
 DOWNSTREAM_REQUEST_TIMEOUT_SECONDS = 5 * 60  # 5 minutes
 
 DEFAULT_BATCH_COMPLETIONS_NODES_PER_WORKER = 1
 
 SERVICE_NAME = "model-engine"
-LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = (
-    f"{SERVICE_NAME}-inference-framework-latest-config"
-)
+LATEST_INFERENCE_FRAMEWORK_CONFIG_MAP_NAME = f"{SERVICE_NAME}-inference-framework-latest-config"
 RECOMMENDED_HARDWARE_CONFIG_MAP_NAME = f"{SERVICE_NAME}-recommended-hardware-config"
 SERVICE_IDENTIFIER = os.getenv("SERVICE_IDENTIFIER")
 if SERVICE_IDENTIFIER:
     SERVICE_NAME += f"-{SERVICE_IDENTIFIER}"
 
 
-def count_tokens(
-    input: str, model_name: str, tokenizer_repository: TokenizerRepository
-) -> int:
+def count_tokens(input: str, model_name: str, tokenizer_repository: TokenizerRepository) -> int:
     """
     Count the number of tokens in the input string.
     """
@@ -299,9 +291,7 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
     return response
 
 
-def validate_model_name(
-    _model_name: str, _inference_framework: LLMInferenceFramework
-) -> None:
+def validate_model_name(_model_name: str, _inference_framework: LLMInferenceFramework) -> None:
     # TODO: replace this logic to check if the model architecture is supported instead
     pass
 
@@ -325,10 +315,7 @@ def validate_num_shards(
 def validate_quantization(
     quantize: Optional[Quantization], inference_framework: LLMInferenceFramework
 ) -> None:
-    if (
-        quantize is not None
-        and quantize not in _SUPPORTED_QUANTIZATIONS[inference_framework]
-    ):
+    if quantize is not None and quantize not in _SUPPORTED_QUANTIZATIONS[inference_framework]:
         raise ObjectHasInvalidValueException(
             f"Quantization {quantize} is not supported for inference framework {inference_framework}. Supported quantization types are {_SUPPORTED_QUANTIZATIONS[inference_framework]}."
         )
@@ -365,9 +352,7 @@ def validate_checkpoint_path_uri(checkpoint_path: str) -> None:
         )
 
 
-def get_checkpoint_path(
-    model_name: str, checkpoint_path_override: Optional[str]
-) -> str:
+def get_checkpoint_path(model_name: str, checkpoint_path_override: Optional[str]) -> str:
     checkpoint_path = None
     models_info = SUPPORTED_MODELS_INFO.get(model_name, None)
     if checkpoint_path_override:
@@ -376,9 +361,7 @@ def get_checkpoint_path(
         checkpoint_path = get_models_s3_uri(models_info.s3_repo, "")  # pragma: no cover
 
     if not checkpoint_path:
-        raise InvalidRequestException(
-            f"No checkpoint path found for model {model_name}"
-        )
+        raise InvalidRequestException(f"No checkpoint path found for model {model_name}")
 
     validate_checkpoint_path_uri(checkpoint_path)
     return checkpoint_path
@@ -389,9 +372,7 @@ def validate_checkpoint_files(checkpoint_files: List[str]) -> None:
     model_files = [f for f in checkpoint_files if "model" in f]
     num_safetensors = len([f for f in model_files if f.endswith(".safetensors")])
     if num_safetensors == 0:
-        raise ObjectHasInvalidValueException(
-            "No safetensors found in the checkpoint path."
-        )
+        raise ObjectHasInvalidValueException("No safetensors found in the checkpoint path.")
 
 
 def encode_template(chat_template: str) -> str:
@@ -531,9 +512,7 @@ class CreateLLMModelBundleV1UseCase:
                     )
             case LLMInferenceFramework.SGLANG:  # pragma: no cover
                 if not hmi_config.sglang_repository:
-                    raise ObjectHasInvalidValueException(
-                        "SGLang repository is not set."
-                    )
+                    raise ObjectHasInvalidValueException("SGLang repository is not set.")
 
                 additional_sglang_args = (
                     SGLangEndpointAdditionalArgs.model_validate(additional_args)
@@ -558,9 +537,7 @@ class CreateLLMModelBundleV1UseCase:
 
         model_bundle = await self.model_bundle_repository.get_model_bundle(bundle_id)
         if model_bundle is None:
-            raise ObjectNotFoundException(
-                f"Model bundle {bundle_id} was not found after creation."
-            )
+            raise ObjectNotFoundException(f"Model bundle {bundle_id} was not found after creation.")
         return model_bundle
 
     async def create_text_generation_inference_bundle(
@@ -650,10 +627,7 @@ class CreateLLMModelBundleV1UseCase:
                 final_weights_folder,
                 trust_remote_code,
             )
-        elif (
-            checkpoint_path.startswith("azure://")
-            or "blob.core.windows.net" in checkpoint_path
-        ):
+        elif checkpoint_path.startswith("azure://") or "blob.core.windows.net" in checkpoint_path:
             return self.load_model_weights_sub_commands_abs(
                 framework,
                 framework_image_tag,
@@ -689,9 +663,7 @@ class CreateLLMModelBundleV1UseCase:
             framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
             and framework_image_tag != "0.9.3-launch_s3"
         ):
-            subcommands.append(
-                f"{s5cmd} > /dev/null || conda install -c conda-forge -y {s5cmd}"
-            )
+            subcommands.append(f"{s5cmd} > /dev/null || conda install -c conda-forge -y {s5cmd}")
         else:
             s5cmd = "./s5cmd"
 
@@ -1026,11 +998,7 @@ class CreateLLMModelBundleV1UseCase:
                         exclude_none=True
                     )
                 ),
-                **(
-                    additional_args.model_dump(exclude_none=True)
-                    if additional_args
-                    else {}
-                ),
+                **(additional_args.model_dump(exclude_none=True) if additional_args else {}),
             }
         )
 
@@ -1084,9 +1052,7 @@ class CreateLLMModelBundleV1UseCase:
                 vllm_args.disable_log_requests = True
 
             # Use wrapper if startup metrics enabled, otherwise use vllm_server directly
-            server_module = (
-                "vllm_startup_wrapper" if enable_startup_metrics else "vllm_server"
-            )
+            server_module = "vllm_startup_wrapper" if enable_startup_metrics else "vllm_server"
             vllm_cmd = f'python -m {server_module} --model {final_weights_folder} --served-model-name {model_name} {final_weights_folder} --port 5005 --host "::"'
             for field in VLLMEndpointAdditionalArgs.model_fields.keys():
                 config_value = getattr(vllm_args, field, None)
@@ -1446,13 +1412,9 @@ class CreateLLMModelEndpointV1UseCase:
         validate_billing_tags(request.billing_tags)
         validate_post_inference_hooks(user, request.post_inference_hooks)
         validate_model_name(request.model_name, request.inference_framework)
-        validate_num_shards(
-            request.num_shards, request.inference_framework, request.gpus
-        )
+        validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
         validate_quantization(request.quantize, request.inference_framework)
-        validate_chat_template(
-            request.chat_template_override, request.inference_framework
-        )
+        validate_chat_template(request.chat_template_override, request.inference_framework)
 
         if request.inference_framework in [
             LLMInferenceFramework.TEXT_GENERATION_INFERENCE,
@@ -1595,10 +1557,8 @@ class ListLLMModelEndpointsV1UseCase:
         Returns:
             A response object that contains the model endpoints.
         """
-        model_endpoints = (
-            await self.llm_model_endpoint_service.list_llm_model_endpoints(
-                owner=user.team_id, name=name, order_by=order_by
-            )
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.team_id, name=name, order_by=order_by
         )
         return ListLLMModelEndpointsV1Response(
             model_endpoints=[
@@ -1617,9 +1577,7 @@ class GetLLMModelEndpointByNameV1UseCase:
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
 
-    async def execute(
-        self, user: User, model_endpoint_name: str
-    ) -> GetLLMModelEndpointV1Response:
+    async def execute(self, user: User, model_endpoint_name: str) -> GetLLMModelEndpointV1Response:
         """
         Runs the use case to get the LLM endpoint with the given name.
 
@@ -1688,9 +1646,7 @@ class UpdateLLMModelEndpointV1UseCase:
         )
         if not model_endpoint:
             raise ObjectNotFoundException
-        if not self.authz_module.check_access_write_owned_entity(
-            user, model_endpoint.record
-        ):
+        if not self.authz_module.check_access_write_owned_entity(user, model_endpoint.record):
             raise ObjectNotAuthorizedException
 
         endpoint_record = model_endpoint.record
@@ -1718,15 +1674,11 @@ class UpdateLLMModelEndpointV1UseCase:
             or request.checkpoint_path
             or request.chat_template_override
         ):
-            llm_metadata = (model_endpoint.record.metadata or {}).get(
-                LLM_METADATA_KEY, {}
-            )
+            llm_metadata = (model_endpoint.record.metadata or {}).get(LLM_METADATA_KEY, {})
             inference_framework = llm_metadata["inference_framework"]
 
             if request.inference_framework_image_tag == "latest":
-                inference_framework_image_tag = await _get_latest_tag(
-                    inference_framework
-                )
+                inference_framework_image_tag = await _get_latest_tag(inference_framework)
             else:
                 inference_framework_image_tag = (
                     request.inference_framework_image_tag
@@ -1737,9 +1689,7 @@ class UpdateLLMModelEndpointV1UseCase:
             source = request.source or llm_metadata["source"]
             num_shards = request.num_shards or llm_metadata["num_shards"]
             quantize = request.quantize or llm_metadata.get("quantize")
-            checkpoint_path = request.checkpoint_path or llm_metadata.get(
-                "checkpoint_path"
-            )
+            checkpoint_path = request.checkpoint_path or llm_metadata.get("checkpoint_path")
 
             validate_model_name(model_name, inference_framework)
             validate_num_shards(
@@ -1863,9 +1813,7 @@ class DeleteLLMEndpointByNameUseCase:
         self.llm_model_endpoint_service = llm_model_endpoint_service
         self.authz_module = LiveAuthorizationModule()
 
-    async def execute(
-        self, user: User, model_endpoint_name: str
-    ) -> DeleteLLMEndpointResponse:
+    async def execute(self, user: User, model_endpoint_name: str) -> DeleteLLMEndpointResponse:
         """
         Runs the use case to delete the LLM endpoint owned by the user with the given name.
 
@@ -1880,21 +1828,15 @@ class DeleteLLMEndpointByNameUseCase:
             ObjectNotFoundException: If a model endpoint with the given name could not be found.
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
-        model_endpoints = (
-            await self.llm_model_endpoint_service.list_llm_model_endpoints(
-                owner=user.user_id, name=model_endpoint_name, order_by=None
-            )
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.user_id, name=model_endpoint_name, order_by=None
         )
         if len(model_endpoints) != 1:
             raise ObjectNotFoundException
         model_endpoint = model_endpoints[0]
-        if not self.authz_module.check_access_write_owned_entity(
-            user, model_endpoint.record
-        ):
+        if not self.authz_module.check_access_write_owned_entity(user, model_endpoint.record):
             raise ObjectNotAuthorizedException
-        await self.model_endpoint_service.delete_model_endpoint(
-            model_endpoint.record.id
-        )
+        await self.model_endpoint_service.delete_model_endpoint(model_endpoint.record.id)
         return DeleteLLMEndpointResponse(deleted=True)
 
 
@@ -2005,9 +1947,7 @@ def validate_and_update_completion_params(
         or request.guided_json is not None
         or request.guided_grammar is not None
     ) and not inference_framework == LLMInferenceFramework.VLLM:
-        raise ObjectHasInvalidValueException(
-            "Guided decoding is only supported in vllm."
-        )
+        raise ObjectHasInvalidValueException("Guided decoding is only supported in vllm.")
 
     return request
 
@@ -2035,9 +1975,7 @@ class CompletionSyncV1UseCase:
         prompt: str,
         with_token_probs: Optional[bool],
     ) -> CompletionOutput:
-        model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(
-            model_endpoint
-        )
+        model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
         if model_content.inference_framework == LLMInferenceFramework.DEEPSPEED:
             completion_token_count = len(model_output["token_probs"]["tokens"])
             tokens = None
@@ -2053,10 +1991,7 @@ class CompletionSyncV1UseCase:
                 num_completion_tokens=completion_token_count,
                 tokens=tokens,
             )
-        elif (
-            model_content.inference_framework
-            == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
-        ):
+        elif model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
             try:
                 tokens = None
                 if with_token_probs:
@@ -2071,13 +2006,9 @@ class CompletionSyncV1UseCase:
                     tokens=tokens,
                 )
             except Exception:
-                logger.exception(
-                    f"Error parsing text-generation-inference output {model_output}."
-                )
+                logger.exception(f"Error parsing text-generation-inference output {model_output}.")
                 if model_output.get("error_type") == "validation":
-                    raise InvalidRequestException(
-                        model_output.get("error")
-                    )  # trigger a 400
+                    raise InvalidRequestException(model_output.get("error"))  # trigger a 400
                 else:
                     raise UpstreamServiceError(
                         status_code=500, content=bytes(model_output["error"], "utf-8")
@@ -2146,18 +2077,14 @@ class CompletionSyncV1UseCase:
                     f"Invalid endpoint {model_content.name} has no base model"
                 )
             if not prompt:
-                raise InvalidRequestException(
-                    "Prompt must be provided for TensorRT-LLM models."
-                )
+                raise InvalidRequestException("Prompt must be provided for TensorRT-LLM models.")
             num_prompt_tokens = count_tokens(
                 prompt, model_content.model_name, self.tokenizer_repository
             )
             if "token_ids" in model_output:
                 # TensorRT 23.10 has this field, TensorRT 24.03 does not
                 # For backwards compatibility with pre-2024/05/02
-                num_completion_tokens = (
-                    len(model_output["token_ids"]) - num_prompt_tokens
-                )
+                num_completion_tokens = len(model_output["token_ids"]) - num_prompt_tokens
                 # Output is "<s> prompt output"
                 text = model_output["text_output"][(len(prompt) + 4) :]
             elif "output_log_probs" in model_output:
@@ -2204,10 +2131,8 @@ class CompletionSyncV1UseCase:
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
-        model_endpoints = (
-            await self.llm_model_endpoint_service.list_llm_model_endpoints(
-                owner=user.team_id, name=model_endpoint_name, order_by=None
-            )
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.team_id, name=model_endpoint_name, order_by=None
         )
 
         if len(model_endpoints) == 0:
@@ -2237,18 +2162,14 @@ class CompletionSyncV1UseCase:
                 f"Endpoint {model_endpoint_name} does not serve sync requests."
             )
 
-        inference_gateway = (
-            self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
-        )
+        inference_gateway = self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
         autoscaling_metrics_gateway = (
             self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
         )
         await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
             endpoint_id=model_endpoint.record.id
         )
-        endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(
-            model_endpoint
-        )
+        endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
         manually_resolve_dns = (
             model_endpoint.infra_state is not None
@@ -2291,10 +2212,7 @@ class CompletionSyncV1UseCase:
                 endpoint_name=model_endpoint.record.name,
             )
 
-            if (
-                predict_result.status == TaskStatus.SUCCESS
-                and predict_result.result is not None
-            ):
+            if predict_result.status == TaskStatus.SUCCESS and predict_result.result is not None:
                 return CompletionSyncV1Response(
                     request_id=request_id,
                     output=self.model_output_to_completion_output(
@@ -2314,8 +2232,7 @@ class CompletionSyncV1UseCase:
                     ),
                 )
         elif (
-            endpoint_content.inference_framework
-            == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
+            endpoint_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
         ):
             tgi_args: Any = {
                 "inputs": request.prompt,
@@ -2346,10 +2263,7 @@ class CompletionSyncV1UseCase:
                 endpoint_name=model_endpoint.record.name,
             )
 
-            if (
-                predict_result.status != TaskStatus.SUCCESS
-                or predict_result.result is None
-            ):
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
                     content=(
@@ -2386,9 +2300,7 @@ class CompletionSyncV1UseCase:
             if request.return_token_log_probs:
                 vllm_args["logprobs"] = 1
             if request.include_stop_str_in_output is not None:
-                vllm_args["include_stop_str_in_output"] = (
-                    request.include_stop_str_in_output
-                )
+                vllm_args["include_stop_str_in_output"] = request.include_stop_str_in_output
             if request.guided_choice is not None:
                 vllm_args["guided_choice"] = request.guided_choice
             if request.guided_regex is not None:
@@ -2412,10 +2324,7 @@ class CompletionSyncV1UseCase:
                 endpoint_name=model_endpoint.record.name,
             )
 
-            if (
-                predict_result.status != TaskStatus.SUCCESS
-                or predict_result.result is None
-            ):
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
                     content=(
@@ -2467,10 +2376,7 @@ class CompletionSyncV1UseCase:
                 endpoint_name=model_endpoint.record.name,
             )
 
-            if (
-                predict_result.status != TaskStatus.SUCCESS
-                or predict_result.result is None
-            ):
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
                     content=(
@@ -2515,10 +2421,7 @@ class CompletionSyncV1UseCase:
                 endpoint_name=model_endpoint.record.name,
             )
 
-            if (
-                predict_result.status != TaskStatus.SUCCESS
-                or predict_result.result is None
-            ):
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
                     content=(
@@ -2591,16 +2494,12 @@ class CompletionStreamV1UseCase:
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
-        model_endpoints = (
-            await self.llm_model_endpoint_service.list_llm_model_endpoints(
-                owner=user.team_id, name=model_endpoint_name, order_by=None
-            )
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.team_id, name=model_endpoint_name, order_by=None
         )
 
         if len(model_endpoints) == 0:
-            raise ObjectNotFoundException(
-                f"Model endpoint {model_endpoint_name} not found."
-            )
+            raise ObjectNotFoundException(f"Model endpoint {model_endpoint_name} not found.")
 
         if len(model_endpoints) > 1:
             raise ObjectHasInvalidValueException(
@@ -2633,9 +2532,7 @@ class CompletionStreamV1UseCase:
             endpoint_id=model_endpoint.record.id
         )
 
-        model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(
-            model_endpoint
-        )
+        model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
         validated_request = validate_and_update_completion_params(
             model_content.inference_framework, request
         )
@@ -2672,10 +2569,7 @@ class CompletionStreamV1UseCase:
                 model_content.model_name,
                 self.tokenizer_repository,
             )
-        elif (
-            model_content.inference_framework
-            == LLMInferenceFramework.TEXT_GENERATION_INFERENCE
-        ):
+        elif model_content.inference_framework == LLMInferenceFramework.TEXT_GENERATION_INFERENCE:
             args = {
                 "inputs": request.prompt,
                 "parameters": {
@@ -2818,9 +2712,7 @@ class CompletionStreamV1UseCase:
                     raise UpstreamServiceError(
                         status_code=500,
                         content=(
-                            res.traceback.encode("utf-8")
-                            if res.traceback is not None
-                            else b""
+                            res.traceback.encode("utf-8") if res.traceback is not None else b""
                         ),
                     )
                 # Otherwise, yield empty response chunk for unsuccessful or empty results
@@ -2879,9 +2771,7 @@ class CompletionStreamV1UseCase:
                             output=CompletionStreamOutput(
                                 text=result["result"]["token"]["text"],
                                 finished=finished,
-                                num_prompt_tokens=(
-                                    num_prompt_tokens if finished else None
-                                ),
+                                num_prompt_tokens=(num_prompt_tokens if finished else None),
                                 num_completion_tokens=num_completion_tokens,
                                 token=token,
                             ),
@@ -2913,9 +2803,7 @@ class CompletionStreamV1UseCase:
                         num_completion_tokens = usage.get("completion_tokens", 0)
                         if request.return_token_log_probs and choice.get("logprobs"):
                             logprobs = choice["logprobs"]
-                            if logprobs.get("tokens") and logprobs.get(
-                                "token_logprobs"
-                            ):
+                            if logprobs.get("tokens") and logprobs.get("token_logprobs"):
                                 # Get the last token from the logprobs
                                 idx = len(logprobs["tokens"]) - 1
                                 token = TokenOutput(
@@ -2928,9 +2816,7 @@ class CompletionStreamV1UseCase:
                         finished = vllm_output["finished"]
                         num_prompt_tokens = vllm_output["count_prompt_tokens"]
                         num_completion_tokens = vllm_output["count_output_tokens"]
-                        if request.return_token_log_probs and vllm_output.get(
-                            "log_probs"
-                        ):
+                        if request.return_token_log_probs and vllm_output.get("log_probs"):
                             token = TokenOutput(
                                 token=vllm_output["text"],
                                 log_prob=list(vllm_output["log_probs"].values())[0],
@@ -2946,9 +2832,7 @@ class CompletionStreamV1UseCase:
                         ),
                     )
                 # LIGHTLLM
-                elif (
-                    model_content.inference_framework == LLMInferenceFramework.LIGHTLLM
-                ):
+                elif model_content.inference_framework == LLMInferenceFramework.LIGHTLLM:
                     token = None
                     num_completion_tokens += 1
                     if request.return_token_log_probs:
@@ -2968,10 +2852,7 @@ class CompletionStreamV1UseCase:
                         ),
                     )
                 # TENSORRT_LLM
-                elif (
-                    model_content.inference_framework
-                    == LLMInferenceFramework.TENSORRT_LLM
-                ):
+                elif model_content.inference_framework == LLMInferenceFramework.TENSORRT_LLM:
                     num_completion_tokens += 1
                     yield CompletionStreamV1Response(
                         request_id=request_id,
@@ -2990,10 +2871,7 @@ class CompletionStreamV1UseCase:
 def validate_endpoint_supports_openai_completion(
     endpoint: ModelEndpoint, endpoint_content: GetLLMModelEndpointV1Response
 ):  # pragma: no cover
-    if (
-        endpoint_content.inference_framework
-        not in OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS
-    ):
+    if endpoint_content.inference_framework not in OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS:
         raise EndpointUnsupportedInferenceTypeException(
             f"The endpoint's inference framework ({endpoint_content.inference_framework}) does not support openai compatible completion."
         )
@@ -3049,10 +2927,8 @@ class CompletionSyncV2UseCase:
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
-        model_endpoints = (
-            await self.llm_model_endpoint_service.list_llm_model_endpoints(
-                owner=user.team_id, name=model_endpoint_name, order_by=None
-            )
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.team_id, name=model_endpoint_name, order_by=None
         )
 
         if len(model_endpoints) == 0:
@@ -3090,18 +2966,14 @@ class CompletionSyncV2UseCase:
                 f"Endpoint {model_endpoint_name} does not serve sync requests."
             )
 
-        inference_gateway = (
-            self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
-        )
+        inference_gateway = self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
         autoscaling_metrics_gateway = (
             self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
         )
         await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
             endpoint_id=model_endpoint.record.id
         )
-        endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(
-            model_endpoint
-        )
+        endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
         manually_resolve_dns = (
             model_endpoint.infra_state is not None
@@ -3129,10 +3001,7 @@ class CompletionSyncV2UseCase:
                 endpoint_name=model_endpoint.record.name,
             )
 
-            if (
-                predict_result.status != TaskStatus.SUCCESS
-                or predict_result.result is None
-            ):
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
                     content=(
@@ -3175,16 +3044,12 @@ class CompletionStreamV2UseCase:
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
-        model_endpoints = (
-            await self.llm_model_endpoint_service.list_llm_model_endpoints(
-                owner=user.team_id, name=model_endpoint_name, order_by=None
-            )
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.team_id, name=model_endpoint_name, order_by=None
         )
 
         if len(model_endpoints) == 0:
-            raise ObjectNotFoundException(
-                f"Model endpoint {model_endpoint_name} not found."
-            )
+            raise ObjectNotFoundException(f"Model endpoint {model_endpoint_name} not found.")
 
         if len(model_endpoints) > 1:
             raise ObjectHasInvalidValueException(
@@ -3225,9 +3090,7 @@ class CompletionStreamV2UseCase:
             endpoint_id=model_endpoint.record.id
         )
 
-        model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(
-            model_endpoint
-        )
+        model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
         manually_resolve_dns = (
             model_endpoint.infra_state is not None
@@ -3288,11 +3151,7 @@ class CompletionStreamV2UseCase:
             if not res.status == TaskStatus.SUCCESS or res.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
-                    content=(
-                        res.traceback.encode("utf-8")
-                        if res.traceback is not None
-                        else b""
-                    ),
+                    content=(res.traceback.encode("utf-8") if res.traceback is not None else b""),
                 )
             else:
                 result = res.result["result"]
@@ -3312,16 +3171,12 @@ def validate_endpoint_supports_chat_completion(
         )
 
     if not isinstance(endpoint.record.current_model_bundle.flavor, RunnableImageLike):
-        raise EndpointUnsupportedRequestException(
-            "Endpoint does not support chat completion"
-        )
+        raise EndpointUnsupportedRequestException("Endpoint does not support chat completion")
 
     flavor = endpoint.record.current_model_bundle.flavor
     all_routes = flavor.extra_routes + flavor.routes
     if OPENAI_CHAT_COMPLETION_PATH not in all_routes:
-        raise EndpointUnsupportedRequestException(
-            "Endpoint does not support chat completion"
-        )
+        raise EndpointUnsupportedRequestException("Endpoint does not support chat completion")
 
 
 class ChatCompletionSyncV2UseCase:
@@ -3362,10 +3217,8 @@ class ChatCompletionSyncV2UseCase:
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
-        model_endpoints = (
-            await self.llm_model_endpoint_service.list_llm_model_endpoints(
-                owner=user.team_id, name=model_endpoint_name, order_by=None
-            )
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.team_id, name=model_endpoint_name, order_by=None
         )
 
         if len(model_endpoints) == 0:
@@ -3403,18 +3256,14 @@ class ChatCompletionSyncV2UseCase:
                 f"Endpoint {model_endpoint_name} does not serve sync requests."
             )
 
-        inference_gateway = (
-            self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
-        )
+        inference_gateway = self.model_endpoint_service.get_sync_model_endpoint_inference_gateway()
         autoscaling_metrics_gateway = (
             self.model_endpoint_service.get_inference_autoscaling_metrics_gateway()
         )
         await autoscaling_metrics_gateway.emit_inference_autoscaling_metric(
             endpoint_id=model_endpoint.record.id
         )
-        endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(
-            model_endpoint
-        )
+        endpoint_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
         manually_resolve_dns = (
             model_endpoint.infra_state is not None
@@ -3442,10 +3291,7 @@ class ChatCompletionSyncV2UseCase:
                 endpoint_name=model_endpoint.record.name,
             )
 
-            if (
-                predict_result.status != TaskStatus.SUCCESS
-                or predict_result.result is None
-            ):
+            if predict_result.status != TaskStatus.SUCCESS or predict_result.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
                     content=(
@@ -3488,16 +3334,12 @@ class ChatCompletionStreamV2UseCase:
         request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
         add_trace_request_id(request_id)
 
-        model_endpoints = (
-            await self.llm_model_endpoint_service.list_llm_model_endpoints(
-                owner=user.team_id, name=model_endpoint_name, order_by=None
-            )
+        model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
+            owner=user.team_id, name=model_endpoint_name, order_by=None
         )
 
         if len(model_endpoints) == 0:
-            raise ObjectNotFoundException(
-                f"Model endpoint {model_endpoint_name} not found."
-            )
+            raise ObjectNotFoundException(f"Model endpoint {model_endpoint_name} not found.")
 
         if len(model_endpoints) > 1:
             raise ObjectHasInvalidValueException(
@@ -3538,9 +3380,7 @@ class ChatCompletionStreamV2UseCase:
             endpoint_id=model_endpoint.record.id
         )
 
-        model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(
-            model_endpoint
-        )
+        model_content = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
 
         manually_resolve_dns = (
             model_endpoint.infra_state is not None
@@ -3600,11 +3440,7 @@ class ChatCompletionStreamV2UseCase:
             if not res.status == TaskStatus.SUCCESS or res.result is None:
                 raise UpstreamServiceError(
                     status_code=500,
-                    content=(
-                        res.traceback.encode("utf-8")
-                        if res.traceback is not None
-                        else b""
-                    ),
+                    content=(res.traceback.encode("utf-8") if res.traceback is not None else b""),
                 )
             else:
                 result = res.result["result"]
@@ -3626,9 +3462,7 @@ class ModelDownloadV1UseCase:
         self.model_endpoint_service = model_endpoint_service
         self.llm_artifact_gateway = llm_artifact_gateway
 
-    async def execute(
-        self, user: User, request: ModelDownloadRequest
-    ) -> ModelDownloadResponse:
+    async def execute(self, user: User, request: ModelDownloadRequest) -> ModelDownloadResponse:
         model_endpoints = await self.model_endpoint_service.list_model_endpoints(
             owner=user.team_id, name=request.model_name, order_by=None
         )
@@ -3646,9 +3480,7 @@ class ModelDownloadV1UseCase:
         for model_file in model_files:
             # don't want to make s3 bucket full keys public, so trim to just keep file name
             public_file_name = model_file.rsplit("/", 1)[-1]
-            urls[public_file_name] = self.filesystem_gateway.generate_signed_url(
-                model_file
-            )
+            urls[public_file_name] = self.filesystem_gateway.generate_signed_url(model_file)
         return ModelDownloadResponse(urls=urls)
 
 
@@ -3674,9 +3506,7 @@ async def _fill_hardware_info(
             raise ObjectHasInvalidValueException(
                 "All hardware spec fields (gpus, gpu_type, cpus, memory, storage, nodes_per_worker) must be provided if any hardware spec field is missing."
             )
-        checkpoint_path = get_checkpoint_path(
-            request.model_name, request.checkpoint_path
-        )
+        checkpoint_path = get_checkpoint_path(request.model_name, request.checkpoint_path)
         hardware_info = await _infer_hardware(
             llm_artifact_gateway, request.model_name, checkpoint_path
         )
@@ -3747,18 +3577,14 @@ async def _infer_hardware(
     model_param_count_b = get_model_param_count_b(model_name)
     model_weights_size = dtype_size * model_param_count_b * 1_000_000_000
 
-    min_memory_gb = math.ceil(
-        (min_kv_cache_size + model_weights_size) / 1_000_000_000 / 0.9
-    )
+    min_memory_gb = math.ceil((min_kv_cache_size + model_weights_size) / 1_000_000_000 / 0.9)
 
     logger.info(
         f"Memory calculation result: {min_memory_gb=} for {model_name} context_size: {max_position_embeddings}, min_kv_cache_size: {min_kv_cache_size}, model_weights_size: {model_weights_size}, is_batch_job: {is_batch_job}"
     )
 
     config_map = await _get_recommended_hardware_config_map()
-    by_model_name = {
-        item["name"]: item for item in yaml.safe_load(config_map["byModelName"])
-    }
+    by_model_name = {item["name"]: item for item in yaml.safe_load(config_map["byModelName"])}
     by_gpu_memory_gb = yaml.safe_load(config_map["byGpuMemoryGb"])
     if model_name in by_model_name:
         cpus = by_model_name[model_name]["cpus"]
@@ -3779,9 +3605,7 @@ async def _infer_hardware(
                 nodes_per_worker = recs["nodes_per_worker"]
                 break
         else:
-            raise ObjectHasInvalidValueException(
-                f"Unable to infer hardware for {model_name}."
-            )
+            raise ObjectHasInvalidValueException(f"Unable to infer hardware for {model_name}.")
 
     return CreateDockerImageBatchJobResourceRequests(
         cpus=cpus,
@@ -3843,33 +3667,37 @@ class CreateBatchCompletionsUseCase:
     ) -> DockerImageBatchJobBundle:
         assert hardware.gpu_type is not None
 
-        bundle_name = f"{request.model_cfg.model}_{datetime.datetime.utcnow().strftime('%y%m%d-%H%M%S')}"
+        bundle_name = (
+            f"{request.model_cfg.model}_{datetime.datetime.utcnow().strftime('%y%m%d-%H%M%S')}"
+        )
 
         image_tag = await _get_latest_batch_tag(LLMInferenceFramework.VLLM)
 
         config_file_path = "/opt/config.json"
 
-        batch_bundle = await self.docker_image_batch_job_bundle_repo.create_docker_image_batch_job_bundle(
-            name=bundle_name,
-            created_by=user.user_id,
-            owner=user.team_id,
-            image_repository=hmi_config.batch_inference_vllm_repository,
-            image_tag=image_tag,
-            command=[
-                "dumb-init",
-                "--",
-                "/bin/bash",
-                "-c",
-                "ddtrace-run python vllm_batch.py",
-            ],
-            env={"CONFIG_FILE": config_file_path},
-            mount_location=config_file_path,
-            cpus=str(hardware.cpus),
-            memory=str(hardware.memory),
-            storage=str(hardware.storage),
-            gpus=hardware.gpus,
-            gpu_type=hardware.gpu_type,
-            public=False,
+        batch_bundle = (
+            await self.docker_image_batch_job_bundle_repo.create_docker_image_batch_job_bundle(
+                name=bundle_name,
+                created_by=user.user_id,
+                owner=user.team_id,
+                image_repository=hmi_config.batch_inference_vllm_repository,
+                image_tag=image_tag,
+                command=[
+                    "dumb-init",
+                    "--",
+                    "/bin/bash",
+                    "-c",
+                    "ddtrace-run python vllm_batch.py",
+                ],
+                env={"CONFIG_FILE": config_file_path},
+                mount_location=config_file_path,
+                cpus=str(hardware.cpus),
+                memory=str(hardware.memory),
+                storage=str(hardware.storage),
+                gpus=hardware.gpus,
+                gpu_type=hardware.gpu_type,
+                public=False,
+            )
         )
         return batch_bundle
 
@@ -3897,10 +3725,7 @@ class CreateBatchCompletionsUseCase:
 
         engine_request = CreateBatchCompletionsEngineRequest.from_api_v1(request)
         engine_request.model_cfg.num_shards = hardware.gpus
-        if (
-            engine_request.tool_config
-            and engine_request.tool_config.name != "code_evaluator"
-        ):
+        if engine_request.tool_config and engine_request.tool_config.name != "code_evaluator":
             raise ObjectHasInvalidValueException(
                 "Only code_evaluator tool is supported for batch completions."
             )
@@ -3909,14 +3734,10 @@ class CreateBatchCompletionsUseCase:
             engine_request.model_cfg.model
         )
 
-        engine_request.max_gpu_memory_utilization = (
-            additional_engine_args.gpu_memory_utilization
-        )
+        engine_request.max_gpu_memory_utilization = additional_engine_args.gpu_memory_utilization
         engine_request.attention_backend = additional_engine_args.attention_backend
 
-        batch_bundle = await self.create_batch_job_bundle(
-            user, engine_request, hardware
-        )
+        batch_bundle = await self.create_batch_job_bundle(user, engine_request, hardware)
 
         validate_resource_requests(
             bundle=batch_bundle,
@@ -3930,25 +3751,21 @@ class CreateBatchCompletionsUseCase:
         if (
             engine_request.max_runtime_sec is None or engine_request.max_runtime_sec < 1
         ):  # pragma: no cover
-            raise ObjectHasInvalidValueException(
-                "max_runtime_sec must be a positive integer."
-            )
+            raise ObjectHasInvalidValueException("max_runtime_sec must be a positive integer.")
 
-        job_id = (
-            await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
-                created_by=user.user_id,
-                owner=user.team_id,
-                job_config=engine_request.model_dump(by_alias=True),
-                env=batch_bundle.env,
-                command=batch_bundle.command,
-                repo=batch_bundle.image_repository,
-                tag=batch_bundle.image_tag,
-                resource_requests=hardware,
-                labels=engine_request.labels,
-                mount_location=batch_bundle.mount_location,
-                override_job_max_runtime_s=engine_request.max_runtime_sec,
-                num_workers=engine_request.data_parallelism,
-            )
+        job_id = await self.docker_image_batch_job_gateway.create_docker_image_batch_job(
+            created_by=user.user_id,
+            owner=user.team_id,
+            job_config=engine_request.model_dump(by_alias=True),
+            env=batch_bundle.env,
+            command=batch_bundle.command,
+            repo=batch_bundle.image_repository,
+            tag=batch_bundle.image_tag,
+            resource_requests=hardware,
+            labels=engine_request.labels,
+            mount_location=batch_bundle.mount_location,
+            override_job_max_runtime_s=engine_request.max_runtime_sec,
+            num_workers=engine_request.data_parallelism,
         )
         return CreateBatchCompletionsV1Response(job_id=job_id)
 
@@ -4018,9 +3835,7 @@ class CreateBatchCompletionsV2UseCase:
         )
 
         if engine_request.max_runtime_sec is None or engine_request.max_runtime_sec < 1:
-            raise ObjectHasInvalidValueException(
-                "max_runtime_sec must be a positive integer."
-            )
+            raise ObjectHasInvalidValueException("max_runtime_sec must be a positive integer.")
 
         # Right now we only support VLLM for batch inference. Refactor this if we support more inference frameworks.
         image_repo = hmi_config.batch_inference_vllm_repository
@@ -4065,9 +3880,7 @@ class GetBatchCompletionV2UseCase:
         )
 
         if not job:
-            raise ObjectNotFoundException(
-                f"Batch completion {batch_completion_id} not found."
-            )
+            raise ObjectNotFoundException(f"Batch completion {batch_completion_id} not found.")
 
         return GetBatchCompletionV2Response(job=job)
 
@@ -4088,9 +3901,7 @@ class UpdateBatchCompletionV2UseCase:
             request=request,
         )
         if not result:
-            raise ObjectNotFoundException(
-                f"Batch completion {batch_completion_id} not found."
-            )
+            raise ObjectNotFoundException(f"Batch completion {batch_completion_id} not found.")
 
         return UpdateBatchCompletionsV2Response(
             **result.model_dump(by_alias=True, exclude_none=True),
