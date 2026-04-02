@@ -1,6 +1,6 @@
 from typing import Optional
 
-from google.api_core.exceptions import GoogleAPICallError, NotFound
+from google.api_core.exceptions import GoogleAPICallError, NotFound, PermissionDenied, Unauthenticated
 from google.cloud import artifactregistry_v1
 from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
 from model_engine_server.core.config import infra_config
@@ -45,8 +45,10 @@ class GARDockerRepository(DockerRepository):
             return True
         except NotFound:
             return False
-        except GoogleAPICallError:
-            logger.warning(f"GAR API error checking tag {tag_name}, assuming image does not exist")
+        except (PermissionDenied, Unauthenticated):
+            raise
+        except GoogleAPICallError as e:
+            logger.warning(f"GAR API error checking tag {tag_name} ({type(e).__name__}), assuming image does not exist")
             return False
 
     def get_image_url(self, image_tag: str, repository_name: str) -> str:
