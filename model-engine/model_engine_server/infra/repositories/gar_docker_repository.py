@@ -1,6 +1,11 @@
 from typing import Optional
 
-from google.api_core.exceptions import GoogleAPICallError, NotFound, PermissionDenied, Unauthenticated
+from google.api_core.exceptions import (
+    GoogleAPICallError,
+    NotFound,
+    PermissionDenied,
+    Unauthenticated,
+)
 from google.cloud import artifactregistry_v1
 from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
 from model_engine_server.core.config import infra_config
