@@ -719,6 +719,10 @@ class CreateLLMModelBundleV1UseCase:
         checkpoint_files = self.llm_artifact_gateway.list_files(checkpoint_path)
         validate_checkpoint_files(checkpoint_files)
 
+        # Auth: On GKE with Workload Identity, gcloud automatically obtains credentials
+        # from the node metadata server — no explicit auth step needed (unlike Azure's
+        # AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD). The pod's KSA must be bound to a GSA with
+        # storage.objects.list and storage.objects.get permissions on the checkpoint bucket.
         # Install gcloud CLI on-the-fly for GCS access (similar to azcopy install for Azure)
         subcommands.append(
             "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
@@ -726,9 +730,13 @@ class CreateLLMModelBundleV1UseCase:
             " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
         )
 
+        file_selection_str = '--include="*.model" --include="*.model.v*" --include="*.json" --include="*.safetensors" --include="*.txt" --exclude="optimizer*"'
+        if trust_remote_code:
+            file_selection_str += ' --include="*.py"'
+
         subcommands.append(
             f"/opt/google-cloud-sdk/bin/gcloud storage cp -r"
-            f" {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+            f" {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
         )
         return subcommands
 
