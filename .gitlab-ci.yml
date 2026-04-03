@@ -1,9 +1,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Model Engine (LLM Engine) — SG2.0 Build Pipeline
 #
-# Builds the FIPS model-engine image, scans with Grype, pushes to Harbor.
-# Uses the standard scalegov2-pipelines templates with overrides for
-# Chainguard private registry auth.
+# Flow: build → scan → push
+#   1. Build image in DinD, push to GitLab container registry (staging)
+#   2. Grype scan from GitLab registry (advisory — allow_failure: true)
+#   3. Crane copy from GitLab registry to Harbor apps-dev
 #
 # GFD-444 — https://linear.app/scale-epd/issue/GFD-444
 #
@@ -15,19 +16,11 @@
 #   CHAINGUARD_PASSWORD  — Chainguard registry token (mask this)
 # ─────────────────────────────────────────────────────────────────────────────
 
-include:
-  - project: 'scalegov/scalegov2-pipelines'
-    ref: main
-    file: '/templates/docker-build.yml'
-  - project: 'scalegov/scalegov2-pipelines'
-    ref: main
-    file: '/templates/scan.yml'
-
 stages:
   - .pre
   - build
-  - push
   - scan
+  - push
 
 workflow:
   rules:
@@ -39,17 +32,17 @@ workflow:
 
 variables:
   SERVICE_NAME: "model-engine"
-  # All builds push to apps-dev. Promotion to apps-staging / apps-prod is
-  # handled by the scalegov2-promotion pipeline, not this build pipeline.
+  HARBOR_REGISTRY: "harbor.mgmt.internal.scalegov.com"
   HARBOR_PROJECT: "apps-dev"
   DOCKERFILE_PATH: "model-engine/Dockerfile.fips"
+  BUILD_CONTEXT: "."
+  DOCKER_VERSION: "27.5"
+  GRYPE_FAIL_ON: "critical"
+  CRANE_VERSION: "0.20.2"
+  CRANE_CHECKSUM: "c14340087103ba9dadf61d45acd20675490fd0ccbd56ac7901fc1b502137f44b"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # compute-tag — Semver + datetime + commit SHA tag
-#
-# Reads VERSION file and produces tags like: 1.0.0-20260401-a1b2c3d4
-# Sets IMAGE_TAG_OVERRIDE via dotenv artifact so the template's tag
-# computation picks it up (highest precedence).
 # ─────────────────────────────────────────────────────────────────────────────
 compute-tag:
   stage: .pre
@@ -66,25 +59,167 @@ compute-tag:
       DATETIME="$(date -u +%Y%m%d)"
       SHA_SHORT="${CI_COMMIT_SHORT_SHA:-local}"
       IMAGE_TAG="${SEMVER}-${DATETIME}-${SHA_SHORT}"
-      echo "IMAGE_TAG_OVERRIDE=${IMAGE_TAG}" > tag.env
+      echo "IMAGE_TAG=${IMAGE_TAG}" > tag.env
+      echo "STAGING_IMAGE=${CI_REGISTRY_IMAGE}:${IMAGE_TAG}" >> tag.env
       echo "Computed tag: ${IMAGE_TAG}"
   artifacts:
     reports:
       dotenv: tag.env
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Build job overrides
-#
-# The Dockerfile.fips base image (cgr.dev/scale.com/python-fips) lives in
-# Scale's private Chainguard registry. We extend the template's before_script
-# with a docker login to cgr.dev so the DinD daemon can pull it.
+# Build — Docker build + push to GitLab container registry
 # ─────────────────────────────────────────────────────────────────────────────
 build:
+  stage: build
+  image: docker:${DOCKER_VERSION}
+  services:
+    - name: docker:${DOCKER_VERSION}-dind
+      alias: docker
+      command: ["--tls=false"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  needs:
+    - job: compute-tag
+      artifacts: true
   before_script:
-    - !reference [.docker-build-base, before_script]
+    - |
+      echo "Waiting for Docker daemon..."
+      TRIES=0
+      while ! docker info >/dev/null 2>&1; do
+        TRIES=$((TRIES + 1))
+        if [ "$TRIES" -gt 30 ]; then echo "ERROR: Docker daemon did not start" >&2; exit 1; fi
+        sleep 1
+      done
+      echo "Docker daemon ready"
     - echo "${CHAINGUARD_PASSWORD}" | docker login -u "${CHAINGUARD_USER}" --password-stdin cgr.dev
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - |
+      docker build \
+        --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --build-arg VCS_REF="${CI_COMMIT_SHA:-unknown}" \
+        --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --label "org.opencontainers.image.revision=${CI_COMMIT_SHA:-unknown}" \
+        --label "org.opencontainers.image.source=${CI_PROJECT_URL:-local}" \
+        --label "org.opencontainers.image.title=${SERVICE_NAME}" \
+        --label "com.scalegov.pipeline-id=${CI_PIPELINE_ID:-0}" \
+        -t "${STAGING_IMAGE}" \
+        -f "${DOCKERFILE_PATH}" \
+        "${BUILD_CONTEXT}"
+    - echo "Pushing to GitLab registry..."
+    - docker push "${STAGING_IMAGE}"
+  artifacts:
+    reports:
+      dotenv: tag.env
+    expire_in: 1 week
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+  timeout: 30m
 
 build-mr:
+  stage: build
+  image: docker:${DOCKER_VERSION}
+  services:
+    - name: docker:${DOCKER_VERSION}-dind
+      alias: docker
+      command: ["--tls=false"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  needs:
+    - job: compute-tag
+      artifacts: true
   before_script:
-    - !reference [.docker-build-base, before_script]
+    - |
+      echo "Waiting for Docker daemon..."
+      TRIES=0
+      while ! docker info >/dev/null 2>&1; do
+        TRIES=$((TRIES + 1))
+        if [ "$TRIES" -gt 30 ]; then echo "ERROR: Docker daemon did not start" >&2; exit 1; fi
+        sleep 1
+      done
+      echo "Docker daemon ready"
     - echo "${CHAINGUARD_PASSWORD}" | docker login -u "${CHAINGUARD_USER}" --password-stdin cgr.dev
+  script:
+    - |
+      docker build \
+        -t "${SERVICE_NAME}:${IMAGE_TAG}" \
+        -f "${DOCKERFILE_PATH}" \
+        "${BUILD_CONTEXT}"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  timeout: 30m
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Scan — Grype scan from GitLab registry (advisory, does not block push)
+# ─────────────────────────────────────────────────────────────────────────────
+scan:
+  stage: scan
+  image:
+    name: "${HARBOR_REGISTRY}/mgmt/anchore/grype:v0.79.0"
+    entrypoint: [""]
+  needs:
+    - job: build
+      artifacts: true
+  before_script:
+    - |
+      export GRYPE_REGISTRY_AUTH_AUTHORITY="${CI_REGISTRY}"
+      export GRYPE_REGISTRY_AUTH_USERNAME="${CI_REGISTRY_USER}"
+      export GRYPE_REGISTRY_AUTH_PASSWORD="${CI_REGISTRY_PASSWORD}"
+  script:
+    - echo "Scanning ${STAGING_IMAGE}"
+    - |
+      grype "registry:${STAGING_IMAGE}" \
+        --fail-on "${GRYPE_FAIL_ON}" \
+        --add-cpes-if-none \
+        -o table
+  # Advisory only — push proceeds regardless of scan result.
+  # The scalegov2-promotion pipeline enforces the hard security gate before prod.
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  timeout: 15m
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Push — crane copy from GitLab registry to Harbor apps-dev
+# ─────────────────────────────────────────────────────────────────────────────
+push:
+  stage: push
+  image: 320214268848.dkr.ecr.us-gov-west-1.amazonaws.com/mgmt/alpine:latest
+  needs:
+    - job: build
+      artifacts: true
+    - job: scan
+  before_script:
+    - apk add --no-cache curl bash
+    - echo "Installing crane v${CRANE_VERSION} with checksum verification..."
+    - curl -sSfL "https://github.com/google/go-containerregistry/releases/download/v${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz" -o /tmp/crane.tar.gz
+    - echo "${CRANE_CHECKSUM}  /tmp/crane.tar.gz" | sha256sum -c -
+    - tar -xzf /tmp/crane.tar.gz -C /usr/local/bin crane
+    - rm /tmp/crane.tar.gz
+    - crane auth login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    # --insecure required: Harbor uses a private-CA cert not in the runner trust store
+    - echo "${HARBOR_PASSWORD}" | crane auth login "${HARBOR_REGISTRY}" -u "${HARBOR_USER}" --password-stdin --insecure
+  script:
+    - export FULL_IMAGE="${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${SERVICE_NAME}:${IMAGE_TAG}"
+    - echo "=== Copying to Harbor apps-dev ==="
+    - echo "Source - ${STAGING_IMAGE}"
+    - echo "Target - ${FULL_IMAGE}"
+    # --insecure required: Harbor uses a private-CA cert not in the runner trust store
+    - crane copy "${STAGING_IMAGE}" "${FULL_IMAGE}" --insecure
+    - echo "=== Successfully pushed ${FULL_IMAGE} to Harbor! ==="
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  timeout: 15m
