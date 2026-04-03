@@ -746,8 +746,8 @@ class CreateLLMModelBundleV1UseCase:
             file_selection_str += ' --include="*.py"'
 
         subcommands.append(
-            f"/opt/google-cloud-sdk/bin/gcloud storage cp -r"
-            f" {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
+            f"/opt/google-cloud-sdk/bin/gcloud storage rsync -r"
+            f" {file_selection_str} {checkpoint_path} {final_weights_folder}"
         )
         return subcommands
 
