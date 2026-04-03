@@ -36,8 +36,10 @@ variables:
   HARBOR_PROJECT: "apps-dev"
   DOCKERFILE_PATH: "model-engine/Dockerfile.fips"
   BUILD_CONTEXT: "."
+  DOCKER_VERSION: "27.5"
   GRYPE_FAIL_ON: "critical"
   CRANE_VERSION: "0.20.2"
+  CRANE_CHECKSUM: "c14340087103ba9dadf61d45acd20675490fd0ccbd56ac7901fc1b502137f44b"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # compute-tag — Semver + datetime + commit SHA tag
@@ -69,9 +71,9 @@ compute-tag:
 # ─────────────────────────────────────────────────────────────────────────────
 build:
   stage: build
-  image: docker:latest
+  image: docker:${DOCKER_VERSION}
   services:
-    - name: docker:dind
+    - name: docker:${DOCKER_VERSION}-dind
       alias: docker
       command: ["--tls=false"]
   variables:
@@ -124,9 +126,9 @@ build:
 
 build-mr:
   stage: build
-  image: docker:latest
+  image: docker:${DOCKER_VERSION}
   services:
-    - name: docker:dind
+    - name: docker:${DOCKER_VERSION}-dind
       alias: docker
       command: ["--tls=false"]
   variables:
@@ -179,6 +181,8 @@ scan:
         --fail-on "${GRYPE_FAIL_ON}" \
         --add-cpes-if-none \
         -o table
+  # Advisory only — push proceeds regardless of scan result.
+  # The scalegov2-promotion pipeline enforces the hard security gate before prod.
   allow_failure: true
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
@@ -198,15 +202,20 @@ push:
     - job: scan
   before_script:
     - apk add --no-cache curl bash
-    - echo "Installing crane v${CRANE_VERSION}..."
-    - curl -sSfL "https://github.com/google/go-containerregistry/releases/download/v${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz" | tar -xzf - -C /usr/local/bin crane
+    - echo "Installing crane v${CRANE_VERSION} with checksum verification..."
+    - curl -sSfL "https://github.com/google/go-containerregistry/releases/download/v${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz" -o /tmp/crane.tar.gz
+    - echo "${CRANE_CHECKSUM}  /tmp/crane.tar.gz" | sha256sum -c -
+    - tar -xzf /tmp/crane.tar.gz -C /usr/local/bin crane
+    - rm /tmp/crane.tar.gz
     - crane auth login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    # --insecure required: Harbor uses a private-CA cert not in the runner trust store
     - echo "${HARBOR_PASSWORD}" | crane auth login "${HARBOR_REGISTRY}" -u "${HARBOR_USER}" --password-stdin --insecure
   script:
     - export FULL_IMAGE="${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${SERVICE_NAME}:${IMAGE_TAG}"
     - echo "=== Copying to Harbor apps-dev ==="
     - echo "Source - ${STAGING_IMAGE}"
     - echo "Target - ${FULL_IMAGE}"
+    # --insecure required: Harbor uses a private-CA cert not in the runner trust store
     - crane copy "${STAGING_IMAGE}" "${FULL_IMAGE}" --insecure
     - echo "=== Successfully pushed ${FULL_IMAGE} to Harbor! ==="
   rules:
