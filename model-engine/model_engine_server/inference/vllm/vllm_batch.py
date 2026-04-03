@@ -290,7 +290,7 @@ async def init_engine(
         seed=request.model_cfg.seed or 0,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
     )
-    _serving_only_keys = {"reasoning_parser"}
+    _serving_only_keys = {"reasoning_parser", "tool_call_parser", "enable_auto_tool_choice", "chat_template"}
     engine_args_dict = {
         k: v
         for k, v in {
