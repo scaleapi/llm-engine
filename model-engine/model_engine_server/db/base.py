@@ -76,11 +76,24 @@ def get_engine_url(
 
                 db_secret_gcp_project_id = os.environ.get("DB_SECRET_GCP_PROJECT_ID")
                 creds = get_gcp_key_file(db_secret_name, db_secret_gcp_project_id)
-                user = creds.get("username")
-                password = creds.get("password")
-                host = creds.get("clusterHostRo") if read_only else creds.get("clusterHost")
-                port = str(creds.get("port"))
-                dbname = creds.get("dbname")
+                missing = [
+                    k
+                    for k in ("username", "password", "clusterHost", "port", "dbname")
+                    if not creds.get(k)
+                ]
+                if missing:
+                    raise ValueError(
+                        f"GCP DB secret {db_secret_name!r} is missing required fields: {missing}"
+                    )
+                user = creds["username"]
+                password = creds["password"]
+                host = (
+                    creds.get("clusterHostRo") or creds["clusterHost"]
+                    if read_only
+                    else creds["clusterHost"]
+                )
+                port = str(creds["port"])
+                dbname = creds["dbname"]
             else:
                 user = os.environ.get("DB_USER", "postgres")
                 password = os.environ.get("DB_PASSWORD", "postgres")
