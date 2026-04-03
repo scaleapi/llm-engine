@@ -23,6 +23,12 @@ include:
     ref: main
     file: '/templates/scan.yml'
 
+stages:
+  - .pre
+  - build
+  - push
+  - scan
+
 workflow:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
