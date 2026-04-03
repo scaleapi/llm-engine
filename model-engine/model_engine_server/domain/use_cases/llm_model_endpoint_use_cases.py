@@ -731,8 +731,10 @@ class CreateLLMModelBundleV1UseCase:
         )
 
         # gcloud storage rsync only supports --exclude (Python regex), not --include.
-        # Exclude optimizer files; all other files in the checkpoint path are synced.
-        file_selection_str = '--exclude="optimizer.*"'
+        excludes = ['--exclude="optimizer.*"']
+        if not trust_remote_code:
+            excludes.append('--exclude=".*\\.py$"')
+        file_selection_str = " ".join(excludes)
 
         subcommands.append(
             f"/opt/google-cloud-sdk/bin/gcloud storage rsync -r"
