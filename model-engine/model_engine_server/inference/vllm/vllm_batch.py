@@ -290,7 +290,15 @@ async def init_engine(
         seed=request.model_cfg.seed or 0,
         gpu_memory_utilization=request.max_gpu_memory_utilization or 0.9,
     )
-    engine_args_dict = {**default_engine_args_dict, **parsed_configs.model_dump(exclude_none=True)}
+    _serving_only_keys = {"reasoning_parser"}
+    engine_args_dict = {
+        k: v
+        for k, v in {
+            **default_engine_args_dict,
+            **parsed_configs.model_dump(exclude_none=True),
+        }.items()
+        if k not in _serving_only_keys
+    }
     print("vLLM engine args:", engine_args_dict, flush=True)
 
     engine_args = AsyncEngineArgs(**engine_args_dict)
@@ -319,7 +327,9 @@ async def init_engine(
         return_tokens_as_token_ids=False,
         enable_auto_tool_choice=False,
         tool_call_parser=None,
-        structured_outputs_config=argparse.Namespace(reasoning_parser=None),
+        structured_outputs_config=argparse.Namespace(
+            reasoning_parser=parsed_configs.reasoning_parser
+        ),
         enable_prompt_tokens_details=False,
         enable_force_include_usage=False,
         enable_log_outputs=False,
