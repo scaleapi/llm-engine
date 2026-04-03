@@ -786,6 +786,10 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
                 "model-fake.bin, model-fake2.bin",
                 "model-fake.safetensors",
             ],
+            "fake-bucket/fake-checkpoint": [
+                "model-fake.bin, model-fake2.bin",
+                "model-fake.safetensors",
+            ],
             "llama-7b/tokenizer.json": ["llama-7b/tokenizer.json"],
             "llama-7b/tokenizer_config.json": ["llama-7b/tokenizer_config.json"],
             "llama-7b/special_tokens_map.json": ["llama-7b/special_tokens_map.json"],
@@ -866,13 +870,19 @@ class FakeLLMArtifactGateway(LLMArtifactGateway):
     def _add_model(self, owner: str, model_name: str):
         self.existing_models.append((owner, model_name))
 
+    def _strip_cloud_prefix(self, path: str) -> str:
+        for prefix in ("s3://", "gs://", "azure://"):
+            if path.startswith(prefix):
+                return path[len(prefix) :]
+        return path
+
     def list_files(self, path: str, **kwargs) -> List[str]:
-        path = path.lstrip("s3://")
+        path = self._strip_cloud_prefix(path)
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 
     def download_files(self, path: str, target_path: str, overwrite=False, **kwargs) -> List[str]:
-        path = path.lstrip("s3://")
+        path = self._strip_cloud_prefix(path)
         if path in self.s3_bucket:
             return self.s3_bucket[path]
 
