@@ -1166,7 +1166,8 @@ async def test_completion_sync_text_generation_inference_use_case_success(
     fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_text_generation_inference)
     fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = SyncEndpointPredictV1Response(
         status=TaskStatus.SUCCESS,
-        result={"result": """
+        result={
+            "result": """
   {
     "generated_text": " Deep Learning is a new type of machine learning",
     "details": {
@@ -1234,7 +1235,8 @@ async def test_completion_sync_text_generation_inference_use_case_success(
       ]
     }
   }
-"""},
+"""
+        },
         traceback=None,
         status_code=200,
     )
@@ -1463,12 +1465,14 @@ async def test_completion_sync_use_case_predict_failed_with_errors(
     fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_sync_tgi[0])
     fake_model_endpoint_service.sync_model_endpoint_inference_gateway.response = SyncEndpointPredictV1Response(
         status=TaskStatus.SUCCESS,
-        result={"result": """
+        result={
+            "result": """
   {
     "error": "Request failed during generation: Server error: transport error",
     "error_type": "generation"
   }
-"""},
+"""
+        },
         traceback="failed to predict",
         status_code=500,
     )
