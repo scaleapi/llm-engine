@@ -21,13 +21,8 @@ from uuid import uuid4
 import pytest
 from model_engine_server.api.dependencies import ExternalInterfaces
 from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME
-from model_engine_server.common.dtos.batch_jobs import (
-    CreateDockerImageBatchJobResourceRequests,
-)
-from model_engine_server.common.dtos.docker_repository import (
-    BuildImageRequest,
-    BuildImageResponse,
-)
+from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
+from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
 from model_engine_server.common.dtos.endpoint_builder import BuildEndpointRequest
 from model_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
 from model_engine_server.common.dtos.model_endpoints import (
@@ -37,9 +32,7 @@ from model_engine_server.common.dtos.model_endpoints import (
     ModelEndpointOrderBy,
     StorageSpecificationType,
 )
-from model_engine_server.common.dtos.resource_manager import (
-    CreateOrUpdateResourcesRequest,
-)
+from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from model_engine_server.common.dtos.tasks import (
     CreateAsyncTaskV1Response,
     EndpointPredictV1Request,
@@ -159,10 +152,7 @@ from model_engine_server.infra.repositories.db_model_bundle_repository import (
     translate_kwargs_to_model_bundle_orm,
     translate_model_bundle_orm_to_model_bundle,
 )
-from model_engine_server.infra.services import (
-    LiveBatchJobService,
-    LiveModelEndpointService,
-)
+from model_engine_server.infra.services import LiveBatchJobService, LiveModelEndpointService
 from model_engine_server.infra.services.fake_llm_batch_completions_service import (
     FakeLLMBatchCompletionsService,
 )
