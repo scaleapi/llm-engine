@@ -78,7 +78,10 @@ def get_engine_url(
                 creds = get_gcp_key_file(db_secret_name, db_secret_gcp_project_id)
                 user = creds.get("username")
                 password = creds.get("password")
-                host = creds.get("clusterHostRo") if read_only else creds.get("clusterHost")
+                if read_only:
+                    host = creds.get("clusterHostRo") or creds.get("host")
+                else:
+                    host = creds.get("clusterHost") or creds.get("host")
                 port = str(creds.get("port"))
                 dbname = creds.get("dbname")
             else:
