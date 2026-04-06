@@ -5,6 +5,13 @@
 #   1. Build image in DinD, push directly to Harbor apps-dev
 #   2. Grype scan from Harbor (advisory — allow_failure: true)
 #
+# Security note: The image reaches Harbor before the Grype scan completes.
+# This is intentional — the GitLab container registry is unreachable from
+# the runners, and the image tarball exceeds GitLab's artifact size limit,
+# so there is no viable staging area for a scan-first flow. The Grype scan
+# here serves as an advisory record. The scalegov2-promotion pipeline
+# enforces a hard security gate before any image is promoted to apps-prod.
+#
 # GFD-444 — https://linear.app/scale-epd/issue/GFD-444
 #
 # Required CI/CD Variables (set in GitLab project settings):
@@ -76,6 +83,7 @@ build:
   services:
     - name: docker:${DOCKER_VERSION}-dind
       alias: docker
+      # Hardcoded because variable expansion in DinD command arrays is unreliable across runner versions
       command: ["--tls=false", "--insecure-registry=harbor.mgmt.internal.scalegov.com"]
   variables:
     DOCKER_HOST: tcp://docker:2375
