@@ -666,8 +666,7 @@ def test_load_model_weights_sub_commands(
         " | tar -xz -C /opt"
         " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null",
         "/opt/google-cloud-sdk/bin/gcloud storage rsync -r"
-        ' --include="*.model" --include="*.model.v*" --include="*.json"'
-        ' --include="*.safetensors" --include="*.txt" --exclude="optimizer*"'
+        ' --exclude="optimizer.*" --exclude=".*\\.py$"'
         " gs://fake-bucket/fake-checkpoint test_folder",
     ]
     assert expected_result == subcommands
@@ -686,9 +685,8 @@ def test_load_model_weights_sub_commands(
         " | tar -xz -C /opt"
         " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null",
         "/opt/google-cloud-sdk/bin/gcloud storage rsync -r"
-        ' --include="*.model" --include="*.model.v*" --include="*.json"'
-        ' --include="*.safetensors" --include="*.txt" --exclude="optimizer*"'
-        ' --include="*.py" gs://fake-bucket/fake-checkpoint test_folder',
+        ' --exclude="optimizer.*"'
+        " gs://fake-bucket/fake-checkpoint test_folder",
     ]
     assert expected_result == subcommands
 
