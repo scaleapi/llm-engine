@@ -1,0 +1,203 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Model Engine (LLM Engine) — SG2.0 Build Pipeline
+#
+# Flow: build+push → scan
+#   1. Build image in DinD, push directly to Harbor apps-dev
+#   2. Grype scan from Harbor (advisory — allow_failure: true)
+#
+# Security note: The image reaches Harbor before the Grype scan completes.
+# This is intentional — the GitLab container registry is unreachable from
+# the runners, and the image tarball exceeds GitLab's artifact size limit,
+# so there is no viable staging area for a scan-first flow. The Grype scan
+# here serves as an advisory record. The scalegov2-promotion pipeline
+# enforces a hard security gate before any image is promoted to apps-prod.
+#
+# GFD-444 — https://linear.app/scale-epd/issue/GFD-444
+#
+# Required CI/CD Variables (set in GitLab project settings):
+#   HARBOR_USER          — Harbor robot account username
+#                          IMPORTANT: Uncheck "Expand variable reference" if it contains $
+#   HARBOR_PASSWORD      — Harbor robot account token (mask this)
+#   CHAINGUARD_USER      — Chainguard registry username
+#   CHAINGUARD_PASSWORD  — Chainguard registry token (mask this)
+# ─────────────────────────────────────────────────────────────────────────────
+
+stages:
+  - .pre
+  - build
+  - scan
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - when: never
+
+variables:
+  SERVICE_NAME: "model-engine"
+  HARBOR_REGISTRY: "harbor.mgmt.internal.scalegov.com"
+  HARBOR_PROJECT: "apps-dev"
+  DOCKERFILE_PATH: "model-engine/Dockerfile.fips"
+  BUILD_CONTEXT: "."
+  DOCKER_VERSION: "27.5"
+  GRYPE_FAIL_ON: "critical"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# compute-tag — Semver + datetime + commit SHA tag
+# ─────────────────────────────────────────────────────────────────────────────
+compute-tag:
+  stage: .pre
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git
+  script:
+    - |
+      if [ -f VERSION ]; then
+        SEMVER="$(cat VERSION | tr -d ' \r\n')"
+      else
+        SEMVER="0.0.0"
+      fi
+      DATETIME="$(date -u +%Y%m%d)"
+      SHA_SHORT="${CI_COMMIT_SHORT_SHA:-local}"
+      IMAGE_TAG="${SEMVER}-${DATETIME}-${SHA_SHORT}"
+      FULL_IMAGE="${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${SERVICE_NAME}:${IMAGE_TAG}"
+      echo "IMAGE_TAG=${IMAGE_TAG}" > tag.env
+      echo "FULL_IMAGE=${FULL_IMAGE}" >> tag.env
+      echo "Computed tag: ${IMAGE_TAG}"
+      echo "Full image:   ${FULL_IMAGE}"
+  artifacts:
+    reports:
+      dotenv: tag.env
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Build — Docker build + push to Harbor in a single DinD session
+#
+# Build and push happen in the same job because each stage gets a fresh
+# DinD container — the image would not survive across stages.
+# ─────────────────────────────────────────────────────────────────────────────
+build:
+  stage: build
+  image: docker:${DOCKER_VERSION}
+  services:
+    - name: docker:${DOCKER_VERSION}-dind
+      alias: docker
+      # Hardcoded because variable expansion in DinD command arrays is unreliable across runner versions
+      command: ["--tls=false", "--insecure-registry=harbor.mgmt.internal.scalegov.com"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  needs:
+    - job: compute-tag
+      artifacts: true
+  before_script:
+    - |
+      echo "Waiting for Docker daemon..."
+      TRIES=0
+      while ! docker info >/dev/null 2>&1; do
+        TRIES=$((TRIES + 1))
+        if [ "$TRIES" -gt 30 ]; then echo "ERROR: Docker daemon did not start" >&2; exit 1; fi
+        sleep 1
+      done
+      echo "Docker daemon ready"
+    - echo "${CHAINGUARD_PASSWORD}" | docker login -u "${CHAINGUARD_USER}" --password-stdin cgr.dev
+    - echo "${HARBOR_PASSWORD}" | docker login -u "${HARBOR_USER}" --password-stdin "${HARBOR_REGISTRY}"
+  script:
+    - |
+      docker build \
+        --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --build-arg VCS_REF="${CI_COMMIT_SHA:-unknown}" \
+        --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --label "org.opencontainers.image.revision=${CI_COMMIT_SHA:-unknown}" \
+        --label "org.opencontainers.image.source=${CI_PROJECT_URL:-local}" \
+        --label "org.opencontainers.image.title=${SERVICE_NAME}" \
+        --label "com.scalegov.pipeline-id=${CI_PIPELINE_ID:-0}" \
+        -t "${FULL_IMAGE}" \
+        -f "${DOCKERFILE_PATH}" \
+        "${BUILD_CONTEXT}"
+    - echo "Pushing ${FULL_IMAGE} to Harbor..."
+    - docker push "${FULL_IMAGE}"
+    - echo "=== Successfully pushed ${FULL_IMAGE} to Harbor! ==="
+    - echo "IMAGE_TAG=${IMAGE_TAG}" > build.env
+    - echo "FULL_IMAGE=${FULL_IMAGE}" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+    expire_in: 1 week
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+  timeout: 30m
+
+build-mr:
+  stage: build
+  image: docker:${DOCKER_VERSION}
+  services:
+    - name: docker:${DOCKER_VERSION}-dind
+      alias: docker
+      command: ["--tls=false"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  needs:
+    - job: compute-tag
+      artifacts: true
+  before_script:
+    - |
+      echo "Waiting for Docker daemon..."
+      TRIES=0
+      while ! docker info >/dev/null 2>&1; do
+        TRIES=$((TRIES + 1))
+        if [ "$TRIES" -gt 30 ]; then echo "ERROR: Docker daemon did not start" >&2; exit 1; fi
+        sleep 1
+      done
+      echo "Docker daemon ready"
+    - echo "${CHAINGUARD_PASSWORD}" | docker login -u "${CHAINGUARD_USER}" --password-stdin cgr.dev
+  script:
+    - |
+      docker build \
+        -t "${SERVICE_NAME}:${IMAGE_TAG}" \
+        -f "${DOCKERFILE_PATH}" \
+        "${BUILD_CONTEXT}"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  timeout: 30m
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Scan — Grype scan from Harbor (advisory, does not block deployment)
+# ─────────────────────────────────────────────────────────────────────────────
+scan:
+  stage: scan
+  image:
+    name: "${HARBOR_REGISTRY}/mgmt/anchore/grype:v0.79.0"
+    entrypoint: [""]
+  needs:
+    - job: build
+      artifacts: true
+  before_script:
+    - |
+      export GRYPE_REGISTRY_AUTH_AUTHORITY="${HARBOR_REGISTRY}"
+      export GRYPE_REGISTRY_AUTH_USERNAME="${HARBOR_USER}"
+      export GRYPE_REGISTRY_AUTH_PASSWORD="${HARBOR_PASSWORD}"
+  script:
+    - echo "Scanning ${FULL_IMAGE}"
+    - |
+      grype "registry:${FULL_IMAGE}" \
+        --fail-on "${GRYPE_FAIL_ON}" \
+        --add-cpes-if-none \
+        -o table
+  # Advisory only — image is already in Harbor apps-dev.
+  # The scalegov2-promotion pipeline enforces the hard security gate before prod.
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  timeout: 15m

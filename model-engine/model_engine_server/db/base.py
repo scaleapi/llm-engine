@@ -69,6 +69,31 @@ def get_engine_url(
 
             engine_url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
 
+        elif infra_config().cloud_provider == "gcp":
+            db_secret_name = os.environ.get("DB_SECRET_NAME")
+            if db_secret_name:
+                from model_engine_server.core.gcp.secrets import get_key_file as get_gcp_key_file
+
+                db_secret_gcp_project_id = os.environ.get("DB_SECRET_GCP_PROJECT_ID")
+                creds = get_gcp_key_file(db_secret_name, db_secret_gcp_project_id)
+                user = creds.get("username")
+                password = creds.get("password")
+                if read_only:
+                    host = creds.get("clusterHostRo") or creds.get("host")
+                else:
+                    host = creds.get("clusterHost") or creds.get("host")
+                port = str(creds.get("port"))
+                dbname = creds.get("dbname")
+            else:
+                user = os.environ.get("DB_USER", "postgres")
+                password = os.environ.get("DB_PASSWORD", "postgres")
+                host = os.environ.get("DB_HOST_RO") or os.environ.get("DB_HOST", "localhost")
+                port = os.environ.get("DB_PORT", "5432")
+                dbname = os.environ.get("DB_NAME", "llm_engine")
+            logger.info(f"Connecting to db {host}:{port}, name {dbname}")
+
+            engine_url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
+
         elif infra_config().cloud_provider == "azure":
             client = SecretClient(
                 vault_url=f"https://{os.environ.get('KEYVAULT_NAME')}.vault.azure.net",

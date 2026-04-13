@@ -35,17 +35,15 @@ from typing_extensions import TypeAlias, assert_never
 from vllm import AsyncEngineArgs, RequestOutput, SamplingParams
 from vllm.engine.protocol import EngineClient
 from vllm.entrypoints.openai.api_server import init_app_state
-from vllm.entrypoints.openai.protocol import (
-    ChatCompletionRequest,
-    CompletionRequest,
-    ErrorResponse,
-    ResponsesRequest,
-)
-from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
-from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
-from vllm.entrypoints.openai.serving_responses import OpenAIServingResponses
+from vllm.entrypoints.openai.chat_completion.protocol import ChatCompletionRequest
+from vllm.entrypoints.openai.chat_completion.serving import OpenAIServingChat
+from vllm.entrypoints.openai.completion.protocol import CompletionRequest
+from vllm.entrypoints.openai.completion.serving import OpenAIServingCompletion
+from vllm.entrypoints.openai.engine.protocol import ErrorResponse
+from vllm.entrypoints.openai.responses.protocol import ResponsesRequest
+from vllm.entrypoints.openai.responses.serving import OpenAIServingResponses
 from vllm.usage.usage_lib import UsageContext
-from vllm.utils import merge_async_iterators
+from vllm.utils.async_utils import merge_async_iterators
 from vllm.v1.engine.async_llm import AsyncLLM
 
 CONFIG_FILE = os.getenv("CONFIG_FILE")
@@ -196,9 +194,7 @@ def determine_max_concurrent_requests(
     # For example, with guided decoding, vLLM initializes a guided decoding logit processor per request, and
     # anecdotally, we're seeing the engine able to handle around 7req/s (for outlines), so set to 30 * 7 ~= 200
     if any(
-        request.to_sampling_params(
-            max_tokens=1, logits_processor_pattern=None, default_sampling_params={}
-        ).guided_decoding
+        request.to_sampling_params(max_tokens=1, default_sampling_params={}).structured_outputs
         for request in requests
         if hasattr(request, "to_sampling_params")
     ):
@@ -331,6 +327,9 @@ async def init_engine(
         trust_request_chat_template=False,
         exclude_tools_when_tool_choice_none=False,
         enable_server_load_tracking=False,
+        default_chat_template_kwargs=None,
+        enable_log_deltas=True,
+        tokens_only=False,
         chat_template=parsed_configs.chat_template,
         response_role=request.model_cfg.response_role or "assistant",
         lora_modules=None,
@@ -343,7 +342,7 @@ async def init_engine(
         }
     )
 
-    await init_app_state(engine_client, vllm_config, state, app_state_args)
+    await init_app_state(engine_client, state, app_state_args)
     openai_serving_chat = state.openai_serving_chat
     openai_serving_completion = state.openai_serving_completion
     openai_serving_responses = state.openai_serving_responses

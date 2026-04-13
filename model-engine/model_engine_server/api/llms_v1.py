@@ -49,6 +49,7 @@ from model_engine_server.core.loggers import (
 )
 from model_engine_server.core.utils.timer import timer
 from model_engine_server.domain.exceptions import (
+    BrokerUnavailableException,
     DockerImageNotFoundException,
     EndpointDeleteFailedException,
     EndpointLabelsException,
@@ -207,6 +208,11 @@ async def create_model_endpoint(
             status_code=500,
             detail="Failed to infer hardware exception.",
         ) from exc
+    except BrokerUnavailableException as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Message broker temporarily unavailable. Please retry.",
+        ) from exc
 
 
 @llm_router_v1.get("/model-endpoints", response_model=ListLLMModelEndpointsV1Response)
@@ -313,6 +319,11 @@ async def update_model_endpoint(
         raise HTTPException(
             status_code=404,
             detail="The specified docker image could not be found.",
+        ) from exc
+    except BrokerUnavailableException as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Message broker temporarily unavailable. Please retry.",
         ) from exc
 
 

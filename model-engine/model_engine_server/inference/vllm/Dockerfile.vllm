@@ -27,7 +27,7 @@ RUN wget https://github.com/peak/s5cmd/releases/download/v2.2.1/s5cmd_2.2.1_Linu
 RUN tar -xvzf s5cmd_2.2.1_Linux-64bit.tar.gz
 
 # symlink python to python3
-RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN ln -sf /usr/bin/python3 /usr/bin/python
 
 # Intermediate stage: installs vllm + post-install fixups.
 # Both vllm and vllm_omni inherit from here; vllm_batch stays on plain base.

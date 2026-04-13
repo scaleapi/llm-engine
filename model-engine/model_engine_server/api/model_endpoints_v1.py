@@ -27,6 +27,7 @@ from model_engine_server.common.dtos.model_endpoints import (
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
+    BrokerUnavailableException,
     EndpointDeleteFailedException,
     EndpointInfraStateNotFound,
     EndpointLabelsException,
@@ -85,6 +86,11 @@ async def create_model_endpoint(
         raise HTTPException(
             status_code=404,
             detail="The specified model bundle could not be found.",
+        ) from exc
+    except BrokerUnavailableException as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Message broker temporarily unavailable. Please retry.",
         ) from exc
 
 
@@ -174,6 +180,11 @@ async def update_model_endpoint(
         raise HTTPException(
             status_code=500,
             detail="Endpoint infra state not found, try again later.",
+        ) from exc
+    except BrokerUnavailableException as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Message broker temporarily unavailable. Please retry.",
         ) from exc
 
 
