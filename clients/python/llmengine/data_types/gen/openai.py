@@ -11,9 +11,9 @@ import pydantic
 
 PYDANTIC_V2 = hasattr(pydantic, "VERSION") and pydantic.VERSION.startswith("2.")
 if PYDANTIC_V2:
-    from pydantic.v1 import AnyUrl, BaseModel, Extra, Field  # noqa: F401
+    from pydantic.v1 import AnyUrl, BaseModel, Extra, Field, validator  # noqa: F401
 else:
-    from pydantic import AnyUrl, BaseModel, Extra, Field  # type: ignore # noqa: F401
+    from pydantic import AnyUrl, BaseModel, Extra, Field, validator  # type: ignore # noqa: F401
 from typing_extensions import Annotated
 
 
@@ -1356,6 +1356,12 @@ class Prompt(BaseModel):
 class Prompt1Item(BaseModel):
     __root__: Annotated[List[int], Field()]
 
+    @validator("__root__")
+    def validate_non_empty(cls, value):
+        if not value:
+            raise ValueError("ensure this value has at least 1 item")
+        return value
+
 
 class Prompt1(BaseModel):
     __root__: Annotated[
@@ -1441,6 +1447,12 @@ class Input1(BaseModel):
 
 class Input2Item(BaseModel):
     __root__: Annotated[List[int], Field()]
+
+    @validator("__root__")
+    def validate_non_empty(cls, value):
+        if not value:
+            raise ValueError("ensure this value has at least 1 item")
+        return value
 
 
 class Input2(BaseModel):
@@ -11515,6 +11527,9 @@ class EvalRunList(BaseModel):
 
 
 class InputItem(BaseModel):
+    # `Item` is itself a root-union model, so discriminator-based dispatch on this
+    # outer union is not reliable under Pydantic. Keep plain union matching here
+    # rather than a broken discriminator on `type`.
     __root__: Annotated[Union[EasyInputMessage, Item, ItemReferenceParam], Field()]
 
 
