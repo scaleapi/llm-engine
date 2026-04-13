@@ -1354,7 +1354,7 @@ class Prompt(BaseModel):
 
 
 class Prompt1Item(BaseModel):
-    __root__: Annotated[List[int], Field(min_items=1)]
+    __root__: Annotated[List[int], Field()]
 
 
 class Prompt1(BaseModel):
@@ -1440,7 +1440,7 @@ class Input1(BaseModel):
 
 
 class Input2Item(BaseModel):
-    __root__: Annotated[List[int], Field(min_items=1)]
+    __root__: Annotated[List[int], Field()]
 
 
 class Input2(BaseModel):
@@ -6875,7 +6875,7 @@ class VectorStoreObject(BaseModel):
 
 
 class QueryItem(BaseModel):
-    __root__: Annotated[str, Field(description="A list of queries to search for.", min_items=1)]
+    __root__: Annotated[str, Field(description="A list of queries to search for.")]
 
 
 class RankingOptions(BaseModel):
@@ -6937,7 +6937,7 @@ class VectorStoreSearchResultItem(BaseModel):
 
 
 class SearchQueryItem(BaseModel):
-    __root__: Annotated[str, Field(description="The query used for this search.", min_items=1)]
+    __root__: Annotated[str, Field(description="The query used for this search.")]
 
 
 class VectorStoreSearchResultsPage(BaseModel):
@@ -11515,9 +11515,7 @@ class EvalRunList(BaseModel):
 
 
 class InputItem(BaseModel):
-    __root__: Annotated[
-        Union[EasyInputMessage, Item, ItemReferenceParam], Field(discriminator="type")
-    ]
+    __root__: Annotated[Union[EasyInputMessage, Item, ItemReferenceParam], Field()]
 
 
 class ListAssistantsResponse(BaseModel):

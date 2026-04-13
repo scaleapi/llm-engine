@@ -12,11 +12,11 @@ packages = [{include = "llmengine"}]
 
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.9,<4.0"
 pydantic = ">=1.10.17"
 aiohttp = "^3.8"
 requests = "^2.31.0"
-openai = "^1.30.0"
+openai = "==2.8.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
