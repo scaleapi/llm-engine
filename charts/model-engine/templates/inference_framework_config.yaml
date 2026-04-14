@@ -7,7 +7,7 @@ metadata:
     team: infra
   annotations:
     "helm.sh/hook": pre-install
-    "helm.sh/hook-weight": "-2"
+    "helm.sh/hook-weight": "-3"
 data:
   deepspeed: {{ .Values.inferenceFramework.deepspeed | default "latest" | quote }}
   text_generation_inference: {{ .Values.inferenceFramework.text_generation_inference | default "latest" | quote }}
