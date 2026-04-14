@@ -730,9 +730,11 @@ class CreateLLMModelBundleV1UseCase:
             " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
         )
 
-        file_selection_str = '--include="*.model" --include="*.model.v*" --include="*.json" --include="*.safetensors" --include="*.txt" --exclude="optimizer*"'
-        if trust_remote_code:
-            file_selection_str += ' --include="*.py"'
+        # gcloud storage rsync only supports --exclude (Python regex), not --include.
+        excludes = ['--exclude="optimizer.*"']
+        if not trust_remote_code:
+            excludes.append('--exclude=".*\\.py$"')
+        file_selection_str = " ".join(excludes)
 
         subcommands.append(
             f"/opt/google-cloud-sdk/bin/gcloud storage rsync -r"
