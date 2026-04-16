@@ -12,7 +12,7 @@ azure-storage-blob~=12.19.0
 # GCP dependencies
 gcloud-aio-storage~=9.6
 google-auth~=2.25.0
-google-cloud-artifact-registry~=1.13.0
+google-cloud-artifact-registry~=1.21.0
 google-cloud-secret-manager>=2.20
 google-cloud-storage~=2.14.0
 aioboto3==15.5.0           # 10.4.0 forced urllib3<1.27 (CVE-2023-43804/45803/2024-37891); 15.x uses aiobotocore 2.25.x (urllib3<3, 2.x compatible)
@@ -28,8 +28,8 @@ cryptography>=44.0.0 # not used directly, but needs to be pinned for Microsoft s
 dataclasses-json>=0.5.7
 datadog-api-client==2.11.0
 datadog~=0.47.0
-ddtrace>=2.0,<3.0  # 1.8.3 is incompatible with Python 3.12; 2.x has full Py3.12 support
-numpy>=1.26.4,<2.3  # Python 3.12/3.13 wheels start at 1.26.0; 2.3+ requires Python 3.11+
+ddtrace>=4.7.1,<5.0  # 4.7.1 publishes CPython 3.14 wheels; needed for public Chainguard latest
+numpy>=2.4.4,<2.5  # 2.4.4 publishes CPython 3.14 wheels
 deprecation~=2.1
 docker~=5.0
 fastapi>=0.115.8  # bumped to allow starlette>=0.49.1 (CVE-2025-62727 fix)
@@ -42,10 +42,11 @@ kubernetes-asyncio==25.11.0
 kubernetes~=25.3.0
 orjson>=3.10.15
 protobuf>=4.25.0
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.11
 py-xid==0.3.0
 pycurl~=7.44  # For celery[sqs]
-pydantic==2.8.2
+pytz>=2024.1
+pydantic==2.12.5
 python-multipart>=0.0.18
 quart~=0.19.9
 werkzeug>=3.0.6  # CVE-2024-34069, CVE-2024-49766, CVE-2024-49767

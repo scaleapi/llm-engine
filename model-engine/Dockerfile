@@ -1,79 +1,52 @@
-# syntax = docker/dockerfile:experimental
+# syntax = docker/dockerfile:1
 
-# --- Builder: compile C extensions (pycurl, etc.) and install Python packages ---
-FROM python:3.13-slim AS builder
+FROM cgr.dev/chainguard/python:latest-dev AS builder
 
+USER root
 WORKDIR /workspace
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apk add --no-cache \
+  bash \
+  build-base \
+  cmake \
+  curl \
+  curl-dev \
+  dumb-init \
   git \
-  gcc \
-  build-essential \
-  libssl-dev \
-  libcurl4-openssl-dev \
-  && rm -rf /var/lib/apt/lists/*
+  openssl-dev
 
-RUN pip install pip==24.2 setuptools
-RUN pip install awscli==1.34.28 --no-cache-dir
+RUN python -m venv /workspace/venv
+ENV PATH="/workspace/venv/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-WORKDIR /workspace/model-engine/
-COPY model-engine/requirements-test.txt requirements-test.txt
+WORKDIR /workspace/model-engine
 COPY model-engine/requirements.txt requirements.txt
 COPY model-engine/requirements_override.txt requirements_override.txt
-RUN pip install -r requirements-test.txt --no-cache-dir
-RUN pip install -r requirements.txt --no-cache-dir
-# NOTE: aioboto3==10.4.0 -> aiobotocore==2.4.2 -> urllib3<1.27, which downgrades urllib3
-# from 2.x back to 1.26.x. CVE-2023-43804, CVE-2023-45803, CVE-2024-37891 remain.
-# Fix: upgrade aioboto3 to >=15.x (separate PR — breaking API changes).
+RUN pip install --upgrade pip==24.2 setuptools cmake setuptools-rust
+RUN pip install -r requirements.txt --no-cache-dir --no-build-isolation
 RUN pip install -r requirements_override.txt --no-cache-dir
 COPY model-engine/setup.py setup.py
 COPY model-engine/model_engine_server model_engine_server
+COPY model-engine/service_configs service_configs
 RUN pip install -e .
 
-# --- Runtime: no build tools (eliminates linux-libc-dev and python3.13 CVEs) ---
-FROM python:3.13-slim AS model-engine
+FROM cgr.dev/chainguard/python:latest AS model-engine
 
+USER root
 WORKDIR /workspace
 
-# Runtime-only system deps (vim omitted: multiple unpatched HIGH CVEs in Debian 13.4)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  dumb-init \
-  git \
-  openssh-client \
-  curl \
-  procps \
-  htop \
-  libcurl4 \
-  && rm -rf /var/lib/apt/lists/*
+COPY --from=builder --chown=nonroot:nonroot /workspace/venv /workspace/venv
+COPY --from=builder --chown=nonroot:nonroot /workspace/model-engine /workspace/model-engine
+COPY --from=builder /usr/bin/dumb-init /usr/bin/dumb-init
+COPY --from=builder /usr/bin/git /usr/bin/git
+COPY --from=builder /usr/libexec/git-core /usr/libexec/git-core
+COPY --from=builder /usr/lib/libpcre2-8.so.0 /usr/lib/libpcre2-8.so.0
+COPY --from=builder /usr/lib/libpcre2-8.so.0.15.0 /usr/lib/libpcre2-8.so.0.15.0
+COPY --from=builder /usr/lib/libz.so.1 /usr/lib/libz.so.1
+COPY --from=builder /usr/lib/libz.so.1.3.2 /usr/lib/libz.so.1.3.2
 
-# Install aws-iam-authenticator (architecture-aware)
-RUN ARCH=$(uname -m) && \
-    if [ "$ARCH" = "aarch64" ]; then \
-      curl -fLo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.7.11/aws-iam-authenticator_0.7.11_linux_arm64; \
-    else \
-      curl -fLo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.7.11/aws-iam-authenticator_0.7.11_linux_amd64; \
-    fi && \
-    chmod +x /bin/aws-iam-authenticator
-
-# Install kubectl (architecture-aware)
-RUN ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/') && \
-    curl -fLO "https://dl.k8s.io/release/v1.35.3/bin/linux/${ARCH}/kubectl" && \
-    chmod +x kubectl && \
-    mv kubectl /usr/local/bin/kubectl
-
-# Copy Python packages, entry-point scripts, and source tree from builder
-COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-COPY --from=builder /workspace/model-engine /workspace/model-engine
-
-RUN useradd --create-home --shell /bin/bash nonroot && \
-    chown -R nonroot:nonroot /workspace
-
-COPY integration_tests /workspace/integration_tests
-
-WORKDIR /workspace
-ENV PYTHONPATH /workspace
-ENV WORKSPACE /workspace
+ENV PATH="/workspace/venv/bin:/usr/local/bin:/usr/libexec/git-core:/usr/bin"
+ENV PYTHONPATH=/workspace
+ENV WORKSPACE=/workspace
 
 USER nonroot
 EXPOSE 5000
