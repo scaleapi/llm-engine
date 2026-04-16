@@ -4,6 +4,7 @@ FROM cgr.dev/chainguard/python:latest-dev AS builder
 
 USER root
 WORKDIR /workspace
+ARG TARGETARCH
 
 RUN apk add --no-cache \
   bash \
@@ -29,6 +30,17 @@ COPY model-engine/model_engine_server model_engine_server
 COPY model-engine/service_configs service_configs
 RUN pip install -e .
 
+RUN mkdir -p /tmp/runtime-bin /tmp/runtime-libs && \
+  cp /usr/bin/dumb-init /tmp/runtime-bin/dumb-init && \
+  cp /usr/bin/git /tmp/runtime-bin/git && \
+  cp -R /usr/libexec/git-core /tmp/runtime-bin/git-core && \
+  cp /usr/lib/libpcre2-8.so.0* /tmp/runtime-libs/ && \
+  cp /usr/lib/libz.so.1* /tmp/runtime-libs/ && \
+  curl -fsSL -o /tmp/runtime-bin/kubectl "https://dl.k8s.io/release/v1.35.3/bin/linux/${TARGETARCH}/kubectl" && \
+  chmod +x /tmp/runtime-bin/kubectl && \
+  curl -fsSL -o /tmp/runtime-bin/aws-iam-authenticator "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.7.11/aws-iam-authenticator_0.7.11_linux_${TARGETARCH}" && \
+  chmod +x /tmp/runtime-bin/aws-iam-authenticator
+
 FROM cgr.dev/chainguard/python:latest AS model-engine
 
 USER root
@@ -36,13 +48,12 @@ WORKDIR /workspace
 
 COPY --from=builder --chown=nonroot:nonroot /workspace/venv /workspace/venv
 COPY --from=builder --chown=nonroot:nonroot /workspace/model-engine /workspace/model-engine
-COPY --from=builder /usr/bin/dumb-init /usr/bin/dumb-init
-COPY --from=builder /usr/bin/git /usr/bin/git
-COPY --from=builder /usr/libexec/git-core /usr/libexec/git-core
-COPY --from=builder /usr/lib/libpcre2-8.so.0 /usr/lib/libpcre2-8.so.0
-COPY --from=builder /usr/lib/libpcre2-8.so.0.15.0 /usr/lib/libpcre2-8.so.0.15.0
-COPY --from=builder /usr/lib/libz.so.1 /usr/lib/libz.so.1
-COPY --from=builder /usr/lib/libz.so.1.3.2 /usr/lib/libz.so.1.3.2
+COPY --from=builder /tmp/runtime-bin/dumb-init /usr/bin/dumb-init
+COPY --from=builder /tmp/runtime-bin/git /usr/bin/git
+COPY --from=builder /tmp/runtime-bin/git-core /usr/libexec/git-core
+COPY --from=builder /tmp/runtime-bin/kubectl /usr/local/bin/kubectl
+COPY --from=builder /tmp/runtime-bin/aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
+COPY --from=builder /tmp/runtime-libs/ /usr/lib/
 
 ENV PATH="/workspace/venv/bin:/usr/local/bin:/usr/libexec/git-core:/usr/bin"
 ENV PYTHONPATH=/workspace
