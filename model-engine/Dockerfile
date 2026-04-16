@@ -13,7 +13,9 @@ RUN apk add --no-cache \
   curl-dev \
   dumb-init \
   git \
-  openssl-dev
+  go \
+  openssl-dev \
+  rsync
 
 RUN python -m venv /workspace/venv
 ENV PATH="/workspace/venv/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -36,14 +38,11 @@ RUN mkdir -p /tmp/runtime-bin /tmp/runtime-libs && \
   cp /usr/lib/libpcre2-8.so.0* /tmp/runtime-libs/ && \
   cp /usr/lib/libcurl.so.4* /tmp/runtime-libs/ && \
   cp /usr/lib/libz.so.1* /tmp/runtime-libs/ && \
-  curl -fsSL -o /tmp/runtime-bin/kubectl "https://dl.k8s.io/release/v1.35.3/bin/linux/${TARGETARCH}/kubectl" && \
-  curl -fsSL -o /tmp/runtime-bin/kubectl.sha256 "https://dl.k8s.io/release/v1.35.3/bin/linux/${TARGETARCH}/kubectl.sha256" && \
-  echo "$(cat /tmp/runtime-bin/kubectl.sha256)  /tmp/runtime-bin/kubectl" | sha256sum -c - && \
-  chmod +x /tmp/runtime-bin/kubectl && \
-  curl -fsSL -o /tmp/runtime-bin/aws-iam-authenticator "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.7.11/aws-iam-authenticator_0.7.11_linux_${TARGETARCH}" && \
-  curl -fsSL -o /tmp/runtime-bin/aws-iam-authenticator.checksums "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.7.11/authenticator_0.7.11_checksums.txt" && \
-  grep "aws-iam-authenticator_0.7.11_linux_${TARGETARCH}\$" /tmp/runtime-bin/aws-iam-authenticator.checksums | sed "s|  aws-iam-authenticator_0.7.11_linux_${TARGETARCH}|  /tmp/runtime-bin/aws-iam-authenticator|" | sha256sum -c - && \
-  chmod +x /tmp/runtime-bin/aws-iam-authenticator
+  git clone --depth 1 --branch v1.35.3 https://github.com/kubernetes/kubernetes.git /tmp/k8s && \
+  cd /tmp/k8s && \
+  GOTOOLCHAIN=local make WHAT=cmd/kubectl && \
+  cp _output/bin/kubectl /tmp/runtime-bin/kubectl && \
+  GOBIN=/tmp/runtime-bin go install sigs.k8s.io/aws-iam-authenticator/cmd/aws-iam-authenticator@v0.7.11
 
 FROM cgr.dev/chainguard/python:latest AS model-engine
 
