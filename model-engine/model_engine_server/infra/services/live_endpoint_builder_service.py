@@ -9,19 +9,27 @@ from typing import Dict, List, Optional, Sequence, Set
 
 from datadog import statsd
 from model_engine_server.common.config import hmi_config
-from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
+from model_engine_server.common.dtos.docker_repository import (
+    BuildImageRequest,
+    BuildImageResponse,
+)
 from model_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointRequest,
     BuildEndpointResponse,
     BuildEndpointStatus,
 )
-from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
+from model_engine_server.common.dtos.resource_manager import (
+    CreateOrUpdateResourcesRequest,
+)
 from model_engine_server.common.env_vars import LOCAL
 from model_engine_server.common.io import open_wrapper
 from model_engine_server.common.serialization_utils import bool_to_str
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
-from model_engine_server.core.notification_gateway import NotificationApp, NotificationGateway
+from model_engine_server.core.notification_gateway import (
+    NotificationApp,
+    NotificationGateway,
+)
 from model_engine_server.core.utils.env import environment
 from model_engine_server.domain.entities import (
     ArtifactLike,
@@ -79,6 +87,7 @@ ECR_AWS_PROFILE: str = os.getenv("ECR_READ_AWS_PROFILE", "default")  # type: ign
 GIT_TAG: str = os.getenv("GIT_TAG")  # type: ignore
 ENV: str = os.getenv("DD_ENV")  # type: ignore
 WORKSPACE_PATH = os.getenv("WORKSPACE", ".")
+BUILD_CONTEXT_TEMP_ROOT = os.path.join(WORKSPACE_PATH, "model-engine", ".build-context")
 
 INITIAL_K8S_CACHE_TTL_SECONDS: int = 180
 MAX_IMAGE_TAG_LEN = 128
@@ -151,7 +160,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         self._validate_build_endpoint_request(build_endpoint_request)
 
         async with AsyncExitStack() as stack:
-            lock_ctx = self.model_endpoint_record_repository.get_lock_context(model_endpoint_record)
+            lock_ctx = self.model_endpoint_record_repository.get_lock_context(
+                model_endpoint_record
+            )
             lock = await stack.enter_async_context(lock_ctx)
             # If this can't acquire the lock by the timeout it'll happily keep on going and create
             # the requisite resources. Not sure this makes complete sense?
@@ -204,11 +215,13 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                             )
                             and build_endpoint_request.high_priority
                         ):
-                            inject_bundle_image_params = self._get_inject_bundle_image_params(
-                                image,
-                                user_image_params,
-                                build_endpoint_request,
-                                logger_adapter,
+                            inject_bundle_image_params = (
+                                self._get_inject_bundle_image_params(
+                                    image,
+                                    user_image_params,
+                                    build_endpoint_request,
+                                    logger_adapter,
+                                )
                             )
 
                             image_repo = inject_bundle_image_params.repo
@@ -245,7 +258,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     # CONVERTED_FROM_ARTIFACT_LIKE_KEY will be checked by `get_endpoint_resource_arguments_from_request()` in k8s_resource_types.py
                     if not model_endpoint_record.metadata:
                         model_endpoint_record.metadata = {}
-                    model_endpoint_record.metadata.update({CONVERTED_FROM_ARTIFACT_LIKE_KEY: True})
+                    model_endpoint_record.metadata.update(
+                        {CONVERTED_FROM_ARTIFACT_LIKE_KEY: True}
+                    )
 
                 else:
                     flavor = model_bundle.flavor
@@ -278,9 +293,12 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     # Clean up CONVERTED_FROM_ARTIFACT_LIKE_KEY as it is for internal use only
                     if (
                         model_endpoint_record.metadata is not None
-                        and CONVERTED_FROM_ARTIFACT_LIKE_KEY in model_endpoint_record.metadata
+                        and CONVERTED_FROM_ARTIFACT_LIKE_KEY
+                        in model_endpoint_record.metadata
                     ):
-                        del model_endpoint_record.metadata[CONVERTED_FROM_ARTIFACT_LIKE_KEY]
+                        del model_endpoint_record.metadata[
+                            CONVERTED_FROM_ARTIFACT_LIKE_KEY
+                        ]
 
                 endpoint_info = ModelEndpointInfraState(
                     deployment_name=build_endpoint_request.deployment_name,
@@ -322,7 +340,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
                 endpoint_config = endpoint_info.user_config_state.endpoint_config
                 updated_endpoint_name: Optional[str] = (
-                    endpoint_config.endpoint_name if endpoint_config is not None else None
+                    endpoint_config.endpoint_name
+                    if endpoint_config is not None
+                    else None
                 )
                 logger_adapter.info(
                     f"Created {endpoint_id=}: "
@@ -365,14 +385,18 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         try:
             self.monitoring_metrics_gateway.emit_successful_build_metric()
         except Exception:  # noqa
-            log_error(f"[Continuing] Failed to emit successful build metric for {endpoint_id=}")
+            log_error(
+                f"[Continuing] Failed to emit successful build metric for {endpoint_id=}"
+            )
 
         try:
             self.monitoring_metrics_gateway.emit_build_time_metric(
                 time.time() - time_build_endpoint_start
             )
         except Exception:  # noqa
-            log_error(f"[Continuing] Failed to emit endpoint build time metric for {endpoint_id=}")
+            log_error(
+                f"[Continuing] Failed to emit endpoint build time metric for {endpoint_id=}"
+            )
 
         return BuildEndpointResponse(status=BuildEndpointStatus.OK)
 
@@ -446,7 +470,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         new_model_bundle.flavor = new_flavor
         new_model_bundle.model_artifact_ids = []
 
-        build_endpoint_request.model_endpoint_record.current_model_bundle = new_model_bundle
+        build_endpoint_request.model_endpoint_record.current_model_bundle = (
+            new_model_bundle
+        )
 
     def get_base_image_params(
         self,
@@ -463,7 +489,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         if isinstance(env_params, PytorchFramework):
             image_tag = env_params.pytorch_image_tag
             if image_tag is None:  # pragma: no cover
-                raise ValueError("Pytorch image tag must be specified if the framework is Pytorch.")
+                raise ValueError(
+                    "Pytorch image tag must be specified if the framework is Pytorch."
+                )
             logger_adapter.info(f"Using pytorch image tag: {image_tag}")
             dockerfile = "pytorch_or_tf.base.Dockerfile"
             base_image = f"pytorch/pytorch:{image_tag}"
@@ -476,20 +504,28 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             # We may change this for Tensorflow GPU mages.
             tensorflow_version = env_params.tensorflow_version
             if tensorflow_version is None:  # pragma: no cover
-                raise ValueError("Tensorflow version must be specified if the framework is TF.")
+                raise ValueError(
+                    "Tensorflow version must be specified if the framework is TF."
+                )
             logger_adapter.info(f"Using tensorflow version: {tensorflow_version}")
             dockerfile = "pytorch_or_tf.base.Dockerfile"
             base_image = "continuumio/miniconda3:4.9.2"
             resulting_image_tag = f"tensorflow-{GIT_TAG}"
         elif isinstance(env_params, CustomFramework):
             if env_params.image_tag is None or env_params.image_repository is None:
-                raise ValueError("Base image tag and ECR repo must be specified for custom images.")
+                raise ValueError(
+                    "Base image tag and ECR repo must be specified for custom images."
+                )
             base_image_tag = env_params.image_tag
             ecr_repo = env_params.image_repository
-            logger_adapter.info(f"Using ECR base image tag: {base_image_tag} in repo: {ecr_repo}")
+            logger_adapter.info(
+                f"Using ECR base image tag: {base_image_tag} in repo: {ecr_repo}"
+            )
             dockerfile = "base.Dockerfile"
             base_image = self.docker_repository.get_image_url(base_image_tag, ecr_repo)
-            resulting_image_tag = "-".join([ecr_repo, base_image_tag, GIT_TAG]).replace("/", "-")
+            resulting_image_tag = "-".join([ecr_repo, base_image_tag, GIT_TAG]).replace(
+                "/", "-"
+            )
         else:  # pragma: no cover
             raise ValueError(f"Unsupported framework_type: {env_params.framework_type}")
 
@@ -526,10 +562,14 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         if isinstance(env_params, PytorchFramework):
             base_image_tag = env_params.pytorch_image_tag
             if base_image_tag is None:  # pragma: no cover
-                raise ValueError("Pytorch image tag must be specified if the framework is Pytorch.")
+                raise ValueError(
+                    "Pytorch image tag must be specified if the framework is Pytorch."
+                )
 
             dockerfile = "pytorch_or_tf.user.Dockerfile"
-            service_image_tag = self._get_image_tag(base_image_tag, GIT_TAG, requirements_hash)
+            service_image_tag = self._get_image_tag(
+                base_image_tag, GIT_TAG, requirements_hash
+            )
             ecr_repo = hmi_config.user_inference_pytorch_repository
         elif isinstance(env_params, TensorflowFramework):
             if build_endpoint_request.gpus > 0:
@@ -539,34 +579,42 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             # We may change this for Tensorflow GPU mages.
             tensorflow_version = env_params.tensorflow_version
             if tensorflow_version is None:  # pragma: no cover
-                raise ValueError("Tensorflow version must be specified if the framework is TF.")
+                raise ValueError(
+                    "Tensorflow version must be specified if the framework is TF."
+                )
             dockerfile = "pytorch_or_tf.user.Dockerfile"
-            service_image_tag = self._get_image_tag(tensorflow_version, GIT_TAG, requirements_hash)
+            service_image_tag = self._get_image_tag(
+                tensorflow_version, GIT_TAG, requirements_hash
+            )
             ecr_repo = hmi_config.user_inference_tensorflow_repository
         elif isinstance(env_params, CustomFramework):
             if (
                 env_params.image_tag is None or env_params.image_repository is None
             ):  # pragma: no cover
-                raise ValueError("Base image tag and ECR repo must be specified for custom images.")
+                raise ValueError(
+                    "Base image tag and ECR repo must be specified for custom images."
+                )
             base_image_tag = env_params.image_tag
             dockerfile = "user.Dockerfile"
-            service_image_tag = self._get_image_tag(base_image_tag, GIT_TAG, requirements_hash)
+            service_image_tag = self._get_image_tag(
+                base_image_tag, GIT_TAG, requirements_hash
+            )
             ecr_repo = env_params.image_repository
         else:  # pragma: no cover
             raise ValueError(f"Unsupported framework_type: {env_params.framework_type}")
 
         # The context should be whatever WORKDIR is in the container running the build app itself.
         inference_folder = "model-engine/model_engine_server/inference"
-        requirements_folder = os.path.join(WORKSPACE_PATH, f"requirements_{requirements_hash}")
-        try:
-            os.mkdir(requirements_folder)
-        except FileExistsError:
-            pass
+        requirements_folder = self._create_build_context_dir(
+            prefix=f"requirements_{requirements_hash}_"
+        )
 
         requirements_file = os.path.join(requirements_folder, "requirements.txt")
         with open(requirements_file, "w") as f:
             requirements_contents = "\n".join(model_bundle.requirements or [])
-            logger_adapter.info(f"Will pip install these requirements: {requirements_contents}")
+            logger_adapter.info(
+                f"Will pip install these requirements: {requirements_contents}"
+            )
             f.write(requirements_contents)
 
         substitution_args = {"REQUIREMENTS_FILE": requirements_file}
@@ -610,11 +658,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         # The context should be whatever WORKDIR is in the container running the build app itself.
         dockerfile = "inject_bundle.Dockerfile"
         inference_folder = "model-engine/model_engine_server/inference"
-        bundle_folder = os.path.join(WORKSPACE_PATH, f"bundle_{service_image_hash}")
-        try:
-            os.mkdir(bundle_folder)
-        except FileExistsError:
-            pass
+        bundle_folder = self._create_build_context_dir(
+            prefix=f"bundle_{service_image_hash}_"
+        )
         _, model_bundle_path = tempfile.mkstemp(dir=bundle_folder, suffix=".zip")
         bundle_url = model_bundle.location
         logger_adapter.info(
@@ -669,15 +715,19 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             image_tag=image_params.image_tag,
             aws_profile=ECR_AWS_PROFILE,
         ):
-            self.monitoring_metrics_gateway.emit_image_build_cache_miss_metric(image_type)
+            self.monitoring_metrics_gateway.emit_image_build_cache_miss_metric(
+                image_type
+            )
             tags = [
                 f"kube_deployment:{build_endpoint_request.deployment_name}",
                 f"user_id:{user_id}",
             ]
             with statsd.timed(f"kaniko.{image_type}_build_time", tags=tags):
                 try:
-                    build_result: BuildImageResponse = self.docker_repository.build_image(
-                        image_params,
+                    build_result: BuildImageResponse = (
+                        self.docker_repository.build_image(
+                            image_params,
+                        )
                     )
                     build_result_status = build_result.status
                     build_result_logs: str = build_result.logs
@@ -741,7 +791,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     user_id = build_endpoint_request.model_endpoint_record.created_by
 
                     endpoint_name = build_endpoint_request.model_endpoint_record.name
-                    bundle_id = build_endpoint_request.model_endpoint_record.current_model_bundle.id
+                    bundle_id = (
+                        build_endpoint_request.model_endpoint_record.current_model_bundle.id
+                    )
                     message = (
                         f"Your endpoint '{endpoint_name}' failed to build! "
                         f"Endpoint ID: {endpoint_id}. Bundle ID: {bundle_id}."
@@ -758,15 +810,21 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         users=[user_id],
                     )
 
-                    raise DockerBuildFailedException(f"Image build failed ({endpoint_id=})")
+                    raise DockerBuildFailedException(
+                        f"Image build failed ({endpoint_id=})"
+                    )
 
         else:
-            self.monitoring_metrics_gateway.emit_image_build_cache_hit_metric(image_type)
+            self.monitoring_metrics_gateway.emit_image_build_cache_hit_metric(
+                image_type
+            )
             logger_adapter.info(
                 f"Image already exists, skipping build. Image={image_params.repo}:{image_params.image_tag}, {endpoint_id=}"
             )
 
-        return self.docker_repository.get_image_url(image_params.image_tag, image_params.repo)
+        return self.docker_repository.get_image_url(
+            image_params.image_tag, image_params.repo
+        )
 
     @staticmethod
     def _validate_build_endpoint_request(
@@ -787,7 +845,10 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         model_bundle: ModelBundle = (
             build_endpoint_request.model_endpoint_record.current_model_bundle
         )
-        if isinstance(model_bundle.flavor, RunnableImageLike) and model_bundle.flavor.env:
+        if (
+            isinstance(model_bundle.flavor, RunnableImageLike)
+            and model_bundle.flavor.env
+        ):
             restriced_env_vars = LiveEndpointBuilderService._get_restricted_env_vars(
                 model_bundle.flavor.env
             )
@@ -805,7 +866,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
     @staticmethod
     def _get_restricted_env_vars(env_vars: Dict[str, str]) -> Set[str]:
-        restricted_env_vars = set(key for keys in RESTRICTED_ENV_VARS_KEYS.values() for key in keys)
+        restricted_env_vars = set(
+            key for keys in RESTRICTED_ENV_VARS_KEYS.values() for key in keys
+        )
         return set(env_vars.keys()) & restricted_env_vars
 
     @staticmethod
@@ -820,7 +883,14 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         ).hexdigest()[:6]
 
     @staticmethod
-    def _get_image_tag(base_image_tag: str, git_tag: str, requirements_hash: str) -> str:
+    def _create_build_context_dir(prefix: str) -> str:
+        os.makedirs(BUILD_CONTEXT_TEMP_ROOT, exist_ok=True)
+        return tempfile.mkdtemp(prefix=prefix, dir=BUILD_CONTEXT_TEMP_ROOT)
+
+    @staticmethod
+    def _get_image_tag(
+        base_image_tag: str, git_tag: str, requirements_hash: str
+    ) -> str:
         """An identifier from an endpoint's base Docker image & git tag, plus the identify of its
         pip-installable requirements.
         """

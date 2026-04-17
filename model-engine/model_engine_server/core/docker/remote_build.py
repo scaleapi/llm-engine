@@ -93,10 +93,13 @@ def zip_context(
                         ),
                     )
 
-            with open(archive.name, "rb") as archive_in, storage_client.open(
-                s3_uri,
-                "wb",
-            ) as out_file:
+            with (
+                open(archive.name, "rb") as archive_in,
+                storage_client.open(
+                    s3_uri,
+                    "wb",
+                ) as out_file,
+            ):
                 shutil.copyfileobj(archive_in, out_file)
         print("Done uploading!")
     except (ClientError, ProfileNotFound):

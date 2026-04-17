@@ -103,9 +103,15 @@ def set_env_vars():
     live_endpoint_builder_service.GIT_TAG = "test_tag"
     live_endpoint_builder_service.ENV = "test_env"
     live_endpoint_builder_service.WORKSPACE_PATH = ".."
+    live_endpoint_builder_service.BUILD_CONTEXT_TEMP_ROOT = (
+        "../model-engine/.build-context"
+    )
     live_endpoint_builder_service.open = mock_open()
-    live_endpoint_builder_service.os.mkdir = Mock()
+    live_endpoint_builder_service.os.makedirs = Mock()
     live_endpoint_builder_service.open_wrapper = mock_open()
+    live_endpoint_builder_service.tempfile.mkdtemp = Mock(
+        return_value="../model-engine/.build-context/tmpdir"
+    )
     live_endpoint_builder_service.tempfile.mkstemp = Mock(return_value=["", ""])
 
 
@@ -150,13 +156,35 @@ async def test_build_endpoint(
             assert fake_monitoring_metrics_gateway.docker_failed_build == 0
             assert fake_monitoring_metrics_gateway.successful_build == 1
             assert fake_monitoring_metrics_gateway.build_time_seconds > 0
-            if isinstance(request.model_endpoint_record.current_model_bundle.flavor, ArtifactLike):
+            if isinstance(
+                request.model_endpoint_record.current_model_bundle.flavor, ArtifactLike
+            ):
                 if service == endpoint_builder_service_empty_docker_built:
-                    assert sum(fake_monitoring_metrics_gateway.image_build_cache_hit.values()) > 0
-                    assert sum(fake_monitoring_metrics_gateway.image_build_cache_miss.values()) == 0
+                    assert (
+                        sum(
+                            fake_monitoring_metrics_gateway.image_build_cache_hit.values()
+                        )
+                        > 0
+                    )
+                    assert (
+                        sum(
+                            fake_monitoring_metrics_gateway.image_build_cache_miss.values()
+                        )
+                        == 0
+                    )
                 else:
-                    assert sum(fake_monitoring_metrics_gateway.image_build_cache_hit.values()) == 0
-                    assert sum(fake_monitoring_metrics_gateway.image_build_cache_miss.values()) > 0
+                    assert (
+                        sum(
+                            fake_monitoring_metrics_gateway.image_build_cache_hit.values()
+                        )
+                        == 0
+                    )
+                    assert (
+                        sum(
+                            fake_monitoring_metrics_gateway.image_build_cache_miss.values()
+                        )
+                        > 0
+                    )
 
 
 @pytest.mark.asyncio
@@ -165,8 +193,12 @@ async def test_build_endpoint_update_failed_raises_resource_manager_exception(
     endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
     fake_monitoring_metrics_gateway: FakeMonitoringMetricsGateway,
 ):
-    repo: Any = endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
-    repo.add_model_endpoint_record(build_endpoint_request_sync_pytorch.model_endpoint_record)
+    repo: Any = (
+        endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
+    )
+    repo.add_model_endpoint_record(
+        build_endpoint_request_sync_pytorch.model_endpoint_record
+    )
     endpoint_builder_service_empty_docker_built.resource_gateway.__setattr__(
         "create_or_update_resources", Mock(side_effect=EndpointResourceInfraException)
     )
@@ -184,8 +216,12 @@ async def test_build_endpoint_tensorflow_with_nonzero_gpu_raises_not_implemented
     build_endpoint_request_async_tensorflow: BuildEndpointRequest,
     endpoint_builder_service_empty_docker_not_built: LiveEndpointBuilderService,
 ):
-    repo: Any = endpoint_builder_service_empty_docker_not_built.model_endpoint_record_repository
-    repo.add_model_endpoint_record(build_endpoint_request_async_tensorflow.model_endpoint_record)
+    repo: Any = (
+        endpoint_builder_service_empty_docker_not_built.model_endpoint_record_repository
+    )
+    repo.add_model_endpoint_record(
+        build_endpoint_request_async_tensorflow.model_endpoint_record
+    )
     build_endpoint_request_async_tensorflow.gpus = 1
     with pytest.raises(NotImplementedError):
         await endpoint_builder_service_empty_docker_not_built.build_endpoint(
@@ -198,8 +234,12 @@ async def test_build_endpoint_tensorflow_with_invalid_aws_role_raises_value_erro
     build_endpoint_request_async_tensorflow: BuildEndpointRequest,
     endpoint_builder_service_empty_docker_not_built: LiveEndpointBuilderService,
 ):
-    repo: Any = endpoint_builder_service_empty_docker_not_built.model_endpoint_record_repository
-    repo.add_model_endpoint_record(build_endpoint_request_async_tensorflow.model_endpoint_record)
+    repo: Any = (
+        endpoint_builder_service_empty_docker_not_built.model_endpoint_record_repository
+    )
+    repo.add_model_endpoint_record(
+        build_endpoint_request_async_tensorflow.model_endpoint_record
+    )
     build_endpoint_request_async_tensorflow.aws_role = "invalid_aws_role"
     with pytest.raises(ValueError):
         await endpoint_builder_service_empty_docker_not_built.build_endpoint(
@@ -214,8 +254,12 @@ async def test_build_endpoint_build_result_failed_yields_docker_build_failed_exc
     fake_monitoring_metrics_gateway: FakeMonitoringMetricsGateway,
     fake_notification_gateway: FakeNotificationGateway,
 ):
-    repo: Any = endpoint_builder_service_empty_docker_not_built.model_endpoint_record_repository
-    repo.add_model_endpoint_record(build_endpoint_request_sync_pytorch.model_endpoint_record)
+    repo: Any = (
+        endpoint_builder_service_empty_docker_not_built.model_endpoint_record_repository
+    )
+    repo.add_model_endpoint_record(
+        build_endpoint_request_sync_pytorch.model_endpoint_record
+    )
     endpoint_builder_service_empty_docker_not_built.docker_repository.__setattr__(
         "build_image",
         Mock(return_value=BuildImageResponse(status=False, logs="", job_name="")),
@@ -241,7 +285,9 @@ async def test_build_endpoint_build_result_throws_error_yields_docker_build_fail
     repo: Any = (
         endpoint_builder_service_empty_docker_builds_dont_work.model_endpoint_record_repository
     )
-    repo.add_model_endpoint_record(build_endpoint_request_sync_pytorch.model_endpoint_record)
+    repo.add_model_endpoint_record(
+        build_endpoint_request_sync_pytorch.model_endpoint_record
+    )
     with pytest.raises(DockerBuildFailedException):
         await endpoint_builder_service_empty_docker_builds_dont_work.build_endpoint(
             build_endpoint_request_sync_pytorch
@@ -265,7 +311,9 @@ def test_convert_artifact_like_bundle_to_runnable_image(
         build_endpoint_request_sync_custom, "test_repo", "test_tag"
     )
 
-    new_bundle = build_endpoint_request_sync_custom.model_endpoint_record.current_model_bundle
+    new_bundle = (
+        build_endpoint_request_sync_custom.model_endpoint_record.current_model_bundle
+    )
 
     assert isinstance(new_bundle.flavor, RunnableImageFlavor)
     assert new_bundle.flavor.repository == "test_repo"
