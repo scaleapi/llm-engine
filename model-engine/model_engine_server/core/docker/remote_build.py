@@ -82,7 +82,9 @@ def zip_context(
             print(f"Creating archive:   {archive.name}")
             with tarfile.open(archive.name, mode="w:gz") as tar:
                 for folder in folders_to_include:
-                    resolved_path, archive_root = _normalize_path_for_archive(context_path, folder)
+                    resolved_path, archive_root = _normalize_path_for_archive(
+                        context_path, folder
+                    )
                     tar.add(
                         resolved_path,
                         arcname=archive_root,
@@ -98,7 +100,9 @@ def zip_context(
                 shutil.copyfileobj(archive_in, out_file)
         print("Done uploading!")
     except (ClientError, ProfileNotFound):
-        print("Did you gimme_okta_aws_creds and then export AWS_PROFILE='ml-admin'? Try doing both")
+        print(
+            "Did you gimme_okta_aws_creds and then export AWS_PROFILE='ml-admin'? Try doing both"
+        )
         raise
 
 
@@ -122,7 +126,9 @@ def _read_ignore_patterns(context_path: Path, ignore_file: Optional[str]) -> Lis
     return patterns
 
 
-def _normalize_path_for_archive(context_path: Path, folder_to_include: str) -> tuple[Path, str]:
+def _normalize_path_for_archive(
+    context_path: Path, folder_to_include: str
+) -> tuple[Path, str]:
     include_path = Path(folder_to_include)
     resolved_path = (
         include_path.resolve()
@@ -216,7 +222,9 @@ def start_build_job(
             NAMESPACE=NAMESPACE,
         )
         yml = yaml.safe_load(job)
-        destinations = [destination_template.substitute(REPO_AND_TAG=rt) for rt in repotags]
+        destinations = [
+            destination_template.substitute(REPO_AND_TAG=rt) for rt in repotags
+        ]
         yml["spec"]["template"]["spec"]["containers"][0]["args"].extend(destinations)
 
         if build_args:
@@ -227,7 +235,9 @@ def start_build_job(
         yaml.dump(yml, stream=f, default_flow_style=False)
         f.seek(0)
 
-        container_spec: str = yaml.dump(yml["spec"]["template"]["spec"]["containers"][0]).strip()
+        container_spec: str = yaml.dump(
+            yml["spec"]["template"]["spec"]["containers"][0]
+        ).strip()
 
         print("Maybe update CodeArtifact token secret")
         if not os.path.exists("/tmp"):
@@ -246,18 +256,28 @@ def start_build_job(
             with open(pip_conf_file) as f_conf:
                 pip_conf_data = f_conf.read()
         except (subprocess.CalledProcessError, FileNotFoundError):
-            print("WARNING: Failed to refresh CodeArtifact token secret, using empty secret")
+            print(
+                "WARNING: Failed to refresh CodeArtifact token secret, using empty secret"
+            )
             pip_conf_data = ""
         pip_conf_base64 = b64encode(pip_conf_data.encode("utf-8")).decode("utf-8")
         data = {"data": {"codeartifact_pip_conf": pip_conf_base64}}
         subprocess.check_output(
-            ["kubectl", "patch", "secret", "codeartifact-pip-conf", f"-p={json.dumps(data)}"]
+            [
+                "kubectl",
+                "patch",
+                "secret",
+                "codeartifact-pip-conf",
+                f"-p={json.dumps(data)}",
+            ]
         ).decode("utf-8")
 
         print(f"Executing Kaniko build command:\n{container_spec}")
         print("-" * 80)
 
-        print(subprocess.check_output(["kubectl", "apply", "-f", f.name]).decode("utf-8"))
+        print(
+            subprocess.check_output(["kubectl", "apply", "-f", f.name]).decode("utf-8")
+        )
     return job_name
 
 
@@ -330,7 +350,13 @@ def build_remote(
         ignore_file=ignore_file,
     )
     return start_build_job(
-        s3_file_name, dockerfile, repotags, use_cache, cache_name, build_args, custom_tags
+        s3_file_name,
+        dockerfile,
+        repotags,
+        use_cache,
+        cache_name,
+        build_args,
+        custom_tags,
     )
 
 
@@ -363,16 +389,18 @@ def verify_and_reformat_as_relative_to(context: str, dockerfile: str) -> str:
     try:
         dockerfile_relative_to_context = str(dockerfile_p.relative_to(context_p))
     except ValueError:
-        logger.exception(f"Dockerfile ({dockerfile}) is not contained within context ({context})")
+        logger.exception(
+            f"Dockerfile ({dockerfile}) is not contained within context ({context})"
+        )
         raise
     else:
         return f"./{dockerfile_relative_to_context}"
 
 
 def _read_pod_logs(pod_name):
-    return subprocess.check_output(["kubectl", "logs", pod_name, "-n", NAMESPACE, "kaniko"]).decode(
-        "utf-8"
-    )
+    return subprocess.check_output(
+        ["kubectl", "logs", pod_name, "-n", NAMESPACE, "kaniko"]
+    ).decode("utf-8")
 
 
 def get_pod_status_and_log(job_name: str) -> BuildResult:
@@ -430,7 +458,9 @@ def get_pod_status_and_log(job_name: str) -> BuildResult:
             logs_process.kill()
         else:
             # If we don't ever see a "Running" event print out the logs anyways
-            subprocess.run(["kubectl", "logs", pod_name, "-n", NAMESPACE, "kaniko"], check=True)
+            subprocess.run(
+                ["kubectl", "logs", pod_name, "-n", NAMESPACE, "kaniko"], check=True
+            )
 
     for event in watcher.stream(
         core_api_instance.list_namespaced_pod,
@@ -446,10 +476,14 @@ def get_pod_status_and_log(job_name: str) -> BuildResult:
             )
         elif event["object"].status.phase == "Succeeded":
             cleanup_logs_process()
-            return BuildResult(status=True, logs=_read_pod_logs(pod_name), job_name=job_name)
+            return BuildResult(
+                status=True, logs=_read_pod_logs(pod_name), job_name=job_name
+            )
         elif event["object"].status.phase == "Failed":
             cleanup_logs_process()
-            return BuildResult(status=False, logs=_read_pod_logs(pod_name), job_name=job_name)
+            return BuildResult(
+                status=False, logs=_read_pod_logs(pod_name), job_name=job_name
+            )
     if logs_process is not None:
         logs_process.kill()
     return BuildResult(status=False, logs=_read_pod_logs(pod_name), job_name=job_name)
@@ -569,14 +603,18 @@ def build_remote_wrapper(
     See README for further explanation
     """
     custom_tags = json.loads(custom_tags)
-    folders_to_include: Optional[List[str]] = folders.split(",") if folders is not None else None
+    folders_to_include: Optional[List[str]] = (
+        folders.split(",") if folders is not None else None
+    )
 
     cache_name = "kaniko-cache"
 
     build_args = None
     if build_arg:
         build_arg_kvs = [arg.split("=") for arg in build_arg]
-        build_args = {k: v for k, v in build_arg_kvs}  # pylint:disable=unnecessary-comprehension
+        build_args = {
+            k: v for k, v in build_arg_kvs
+        }  # pylint:disable=unnecessary-comprehension
 
     if no_block:
         build_remote(
