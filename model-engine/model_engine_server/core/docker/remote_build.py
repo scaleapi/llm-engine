@@ -2,16 +2,18 @@ import json
 import os
 import shutil
 import subprocess
+import tarfile
 import tempfile
 import uuid
 from base64 import b64encode
 from contextlib import ExitStack
 from dataclasses import dataclass
+from fnmatch import fnmatch
 from pathlib import Path
 from string import Template
-from subprocess import PIPE
 from typing import Dict, Iterable, List, Optional, Union
 
+import boto3
 import click
 import tenacity
 import yaml
@@ -74,49 +76,83 @@ def zip_context(
     s3_uri = f"s3://{S3_BUCKET}/{s3_file_name}"
     print(f"Uploading to s3 at: {s3_uri}")
     try:
-        # Need to gimme_okta_aws_creds (you can export AWS_PROFILE='ml-admin' right after)
-        tar_command = _build_tar_cmd(context, ignore_file, folders_to_include)
-        print(f"Creating archive:   {' '.join(tar_command)}")
+        context_path = Path(context).resolve()
+        ignore_patterns = _read_ignore_patterns(context_path, ignore_file)
+        with tempfile.NamedTemporaryFile(suffix=".tar.gz") as archive:
+            print(f"Creating archive:   {archive.name}")
+            with tarfile.open(archive.name, mode="w:gz") as tar:
+                for folder in folders_to_include:
+                    resolved_path, archive_root = _normalize_path_for_archive(context_path, folder)
+                    tar.add(
+                        resolved_path,
+                        arcname=archive_root,
+                        filter=lambda tar_info: _filter_archive_member(
+                            tar_info, ignore_patterns
+                        ),
+                    )
 
-        with subprocess.Popen(
-            tar_command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-        ) as proc:
-            assert proc.stdout is not None
-            with storage_client.open(
+            with open(archive.name, "rb") as archive_in, storage_client.open(
                 s3_uri,
                 "wb",
             ) as out_file:
-                shutil.copyfileobj(proc.stdout, out_file)
+                shutil.copyfileobj(archive_in, out_file)
         print("Done uploading!")
     except (ClientError, ProfileNotFound):
         print("Did you gimme_okta_aws_creds and then export AWS_PROFILE='ml-admin'? Try doing both")
         raise
 
 
-def _build_tar_cmd(
-    context: str, ignore_file: Optional[str], folders_to_include: List[str]
-) -> List[str]:
-    assert len(folders_to_include) > 0, "Need at least one folder to create a tar archive from!"
+def _read_ignore_patterns(context_path: Path, ignore_file: Optional[str]) -> List[str]:
+    if ignore_file is None:
+        return []
 
-    tar_command = ["tar", "-C", context]
+    ignore_path = context_path / ignore_file
+    if not ignore_path.is_file():
+        print(
+            f"WARNING: File {ignore_path} does not exist in calling context, not using any file as a .dockerignore"
+        )
+        return []
 
-    if ignore_file is not None:
-        ignore_file = os.path.join(context, ignore_file)
-        if not os.path.isfile(ignore_file):
-            print(
-                f"WARNING: File {ignore_file} does not exist in calling context, not using any file as a .dockerignore"
-            )
-        else:
-            tar_command.append("--exclude-from")
-            tar_command.append(ignore_file)
+    patterns: List[str] = []
+    for raw_line in ignore_path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        patterns.append(line.lstrip("./"))
+    return patterns
 
-    tar_command.append("-cf")
-    tar_command.append("-")
-    tar_command.extend(folders_to_include)
 
-    return tar_command
+def _normalize_path_for_archive(context_path: Path, folder_to_include: str) -> tuple[Path, str]:
+    include_path = Path(folder_to_include)
+    resolved_path = (
+        include_path.resolve()
+        if include_path.is_absolute()
+        else (context_path / include_path).resolve()
+    )
+    try:
+        archive_root = str(resolved_path.relative_to(context_path))
+    except ValueError as exc:
+        raise ValueError(
+            f"{folder_to_include=} is not contained within context {context_path}"
+        ) from exc
+    return resolved_path, archive_root
+
+
+def _filter_archive_member(
+    tar_info: tarfile.TarInfo, ignore_patterns: List[str]
+) -> Optional[tarfile.TarInfo]:
+    normalized_name = tar_info.name.lstrip("./")
+    basename = os.path.basename(normalized_name)
+
+    for pattern in ignore_patterns:
+        normalized_pattern = pattern.rstrip("/")
+        if (
+            fnmatch(normalized_name, normalized_pattern)
+            or fnmatch(basename, normalized_pattern)
+            or normalized_name.startswith(f"{normalized_pattern}/")
+        ):
+            return None
+    return tar_info
 
 
 def start_build_job(
@@ -154,18 +190,18 @@ def start_build_job(
         f = stack.enter_context(tempfile.NamedTemporaryFile("wt", suffix=".yaml"))
         template_f = stack.enter_context(open(TEMPLATE_FILE, "rt"))
 
-        # In Circle CI we need to retrieve the AWS access key to attach to kaniko
+        # Keep these values available for any template using explicit env creds, but do not
+        # shell out to the AWS CLI from the endpoint-builder image.
         aws_access_key_id = ""
         aws_secret_access_key = ""
+        aws_session_token = ""
         if os.getenv("CIRCLECI"):
-            aws_access_key_id_result = subprocess.run(
-                ["aws", "configure", "get", "aws_access_key_id"], check=False, stdout=PIPE
-            )
-            aws_access_key_id = aws_access_key_id_result.stdout.decode().strip()
-            aws_secret_access_key_result = subprocess.run(
-                ["aws", "configure", "get", "aws_secret_access_key"], check=False, stdout=PIPE
-            )
-            aws_secret_access_key = aws_secret_access_key_result.stdout.decode().strip()
+            credentials = boto3.Session().get_credentials()
+            if credentials is not None:
+                frozen_credentials = credentials.get_frozen_credentials()
+                aws_access_key_id = frozen_credentials.access_key or ""
+                aws_secret_access_key = frozen_credentials.secret_key or ""
+                aws_session_token = frozen_credentials.token or ""
         job = Template(template_f.read()).substitute(
             NAME=job_name,
             CUSTOM_TAGS=json.dumps(custom_tags_serialized),
@@ -176,6 +212,7 @@ def start_build_job(
             CACHE_REPO=f"{infra_config().docker_repo_prefix}/{cache_name}",
             AWS_ACCESS_KEY_ID=aws_access_key_id,
             AWS_SECRET_ACCESS_KEY=aws_secret_access_key,
+            AWS_SESSION_TOKEN=aws_session_token,
             NAMESPACE=NAMESPACE,
         )
         yml = yaml.safe_load(job)
