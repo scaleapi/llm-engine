@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from model_engine_server.common.pydantic_types import BaseModel, Field
 from model_engine_server.common.types.gen.openai import (
@@ -275,7 +275,7 @@ class VLLMSamplingParams(BaseModel):
             (canonical beam search algorithm).""",
     )
     stop_token_ids: Optional[List[int]] = Field(
-        default_factory=list,
+        default_factory=lambda: cast(List[int], []),
         description="""List of tokens that stop the generation when they are
             generated. The returned output will contain the stop tokens unless
             the stop tokens are special tokens.""",

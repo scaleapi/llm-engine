@@ -32,11 +32,13 @@ COPY model-engine/service_configs service_configs
 RUN pip install -e .
 
 RUN mkdir -p /tmp/runtime-bin /tmp/runtime-libs && \
+  cp /bin/bash /tmp/runtime-bin/bash && \
   cp /usr/bin/dumb-init /tmp/runtime-bin/dumb-init && \
   cp /usr/bin/git /tmp/runtime-bin/git && \
   cp -R /usr/libexec/git-core /tmp/runtime-bin/git-core && \
   cp /usr/lib/libpcre2-8.so.0* /tmp/runtime-libs/ && \
   cp /usr/lib/libcurl.so.4* /tmp/runtime-libs/ && \
+  cp /usr/lib/libtinfo.so.6* /tmp/runtime-libs/ && \
   cp /usr/lib/libz.so.1* /tmp/runtime-libs/ && \
   git clone --depth 1 --branch v1.35.3 https://github.com/kubernetes/kubernetes.git /tmp/k8s && \
   cd /tmp/k8s && \
@@ -51,6 +53,7 @@ WORKDIR /workspace
 
 COPY --from=builder --chown=nonroot:nonroot /workspace/venv /workspace/venv
 COPY --from=builder --chown=nonroot:nonroot /workspace/model-engine /workspace/model-engine
+COPY --from=builder /tmp/runtime-bin/bash /bin/bash
 COPY --from=builder /tmp/runtime-bin/dumb-init /usr/bin/dumb-init
 COPY --from=builder /tmp/runtime-bin/git /usr/bin/git
 COPY --from=builder /tmp/runtime-bin/git-core /usr/libexec/git-core
@@ -58,7 +61,7 @@ COPY --from=builder /tmp/runtime-bin/kubectl /usr/local/bin/kubectl
 COPY --from=builder /tmp/runtime-bin/aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
 COPY --from=builder /tmp/runtime-libs/ /usr/lib/
 
-ENV PATH="/workspace/venv/bin:/usr/local/bin:/usr/libexec/git-core:/usr/bin"
+ENV PATH="/workspace/venv/bin:/usr/local/bin:/usr/libexec/git-core:/usr/bin:/bin"
 ENV PYTHONPATH=/workspace
 ENV WORKSPACE=/workspace
 
