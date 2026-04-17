@@ -1,7 +1,11 @@
-from typing import Optional
+import os
+from typing import Dict, Optional
 
 from model_engine_server.common.config import hmi_config
-from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
+from model_engine_server.common.dtos.docker_repository import (
+    BuildImageRequest,
+    BuildImageResponse,
+)
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.docker.ecr import get_latest_image_tag
 from model_engine_server.core.docker.ecr import image_exists as ecr_image_exists
@@ -13,6 +17,28 @@ logger = make_logger(logger_name())
 
 
 class ECRDockerRepository(DockerRepository):
+    @staticmethod
+    def _normalize_build_args(
+        base_path: str, build_args: Dict[str, str]
+    ) -> Dict[str, str]:
+        normalized = dict(build_args)
+        base_path_abs = os.path.abspath(base_path)
+
+        for key, value in normalized.items():
+            if not isinstance(value, str) or not os.path.isabs(value):
+                continue
+
+            value_abs = os.path.abspath(value)
+            try:
+                if os.path.commonpath([base_path_abs, value_abs]) != base_path_abs:
+                    continue
+            except ValueError:
+                continue
+
+            normalized[key] = os.path.relpath(value_abs, base_path_abs)
+
+        return normalized
+
     def image_exists(
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
     ) -> bool:
@@ -43,7 +69,11 @@ class ECRDockerRepository(DockerRepository):
         }
 
         if image_params.substitution_args:
-            build_args.update(image_params.substitution_args)
+            build_args.update(
+                self._normalize_build_args(
+                    image_params.base_path, image_params.substitution_args
+                )
+            )
 
         build_result = build_remote_block(
             context=image_params.base_path,
@@ -54,7 +84,9 @@ class ECRDockerRepository(DockerRepository):
             cache_name=hmi_config.docker_image_layer_cache_repository,
         )
         return BuildImageResponse(
-            status=build_result.status, logs=build_result.logs, job_name=build_result.job_name
+            status=build_result.status,
+            logs=build_result.logs,
+            job_name=build_result.job_name,
         )
 
     def get_latest_image_tag(self, repository_name: str) -> str:
