@@ -79,7 +79,7 @@ ECR_AWS_PROFILE: str = os.getenv("ECR_READ_AWS_PROFILE", "default")  # type: ign
 GIT_TAG: str = os.getenv("GIT_TAG")  # type: ignore
 ENV: str = os.getenv("DD_ENV")  # type: ignore
 WORKSPACE_PATH = os.getenv("WORKSPACE", ".")
-BUILD_CONTEXT_TEMP_ROOT = os.path.join(WORKSPACE_PATH, ".build-context")
+BUILD_CONTEXT_TEMP_ROOT = os.path.join(WORKSPACE_PATH, "model-engine", ".build-context")
 
 INITIAL_K8S_CACHE_TTL_SECONDS: int = 180
 MAX_IMAGE_TAG_LEN = 128

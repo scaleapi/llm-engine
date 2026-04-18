@@ -78,15 +78,25 @@ def zip_context(
     try:
         context_path = Path(context).resolve()
         ignore_patterns = _read_ignore_patterns(context_path, ignore_file)
+        archive_roots = [
+            _normalize_path_for_archive(context_path, folder)[1] for folder in folders_to_include
+        ]
         with tempfile.NamedTemporaryFile(suffix=".tar.gz") as archive:
             print(f"Creating archive:   {archive.name}")
             with tarfile.open(archive.name, mode="w:gz") as tar:
-                for folder in folders_to_include:
-                    resolved_path, archive_root = _normalize_path_for_archive(context_path, folder)
+                for folder, archive_root in zip(folders_to_include, archive_roots):
+                    resolved_path, _ = _normalize_path_for_archive(context_path, folder)
+                    nested_archive_roots = [
+                        root
+                        for root in archive_roots
+                        if root != archive_root and root.startswith(f"{archive_root}/")
+                    ]
                     tar.add(
                         resolved_path,
                         arcname=archive_root,
-                        filter=lambda tar_info: _filter_archive_member(tar_info, ignore_patterns),
+                        filter=lambda tar_info, nested_archive_roots=nested_archive_roots: _filter_archive_member(
+                            tar_info, ignore_patterns, nested_archive_roots
+                        ),
                     )
 
             with (
@@ -140,10 +150,17 @@ def _normalize_path_for_archive(context_path: Path, folder_to_include: str) -> t
 
 
 def _filter_archive_member(
-    tar_info: tarfile.TarInfo, ignore_patterns: List[str]
+    tar_info: tarfile.TarInfo,
+    ignore_patterns: List[str],
+    nested_archive_roots: Optional[List[str]] = None,
 ) -> Optional[tarfile.TarInfo]:
     normalized_name = tar_info.name.removeprefix("./")
     basename = os.path.basename(normalized_name)
+    nested_archive_roots = nested_archive_roots or []
+
+    for nested_root in nested_archive_roots:
+        if normalized_name == nested_root or normalized_name.startswith(f"{nested_root}/"):
+            return None
 
     for pattern in ignore_patterns:
         normalized_pattern = pattern.rstrip("/")

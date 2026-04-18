@@ -33,9 +33,9 @@ def test_build_image_includes_requirements_and_dockerfile_root(tmp_path):
     repo = ECRDockerRepository()
     base = tmp_path / "repo"
     base.mkdir()
-    requirements = base / ".build-context" / "reqs"
+    requirements = base / "model-engine" / ".build-context" / "reqs"
     requirements.mkdir(parents=True)
-    abs_build_arg = base / ".build-context" / "reqs" / "requirements.txt"
+    abs_build_arg = base / "model-engine" / ".build-context" / "reqs" / "requirements.txt"
     abs_build_arg.write_text("x")
 
     image_request = BuildImageRequest(
@@ -45,7 +45,7 @@ def test_build_image_includes_requirements_and_dockerfile_root(tmp_path):
         base_path=str(base),
         dockerfile="model-engine/model_engine_server/inference/pytorch_or_tf.user.Dockerfile",
         base_image="python:3.8-slim",
-        requirements_folder=".build-context/reqs",
+        requirements_folder="model-engine/.build-context/reqs",
         substitution_args={"REQUIREMENTS_FILE": str(abs_build_arg)},
     )
 
@@ -65,11 +65,11 @@ def test_build_image_includes_requirements_and_dockerfile_root(tmp_path):
     _, kwargs = mock_build_remote_block.call_args
     assert kwargs["folders_to_include"] == [
         "model-engine",
-        ".build-context/reqs",
+        "model-engine/.build-context/reqs",
     ]
     assert kwargs["build_args"] == {
         "BASE_IMAGE": "python:3.8-slim",
-        "REQUIREMENTS_FILE": ".build-context/reqs/requirements.txt",
+        "REQUIREMENTS_FILE": "model-engine/.build-context/reqs/requirements.txt",
     }
 
 

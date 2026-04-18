@@ -43,18 +43,24 @@ def test_normalize_path_for_archive_rejects_path_outside_context(tmp_path):
 
 
 @pytest.mark.parametrize(
-    ("member_name", "patterns", "should_keep"),
+    ("member_name", "patterns", "nested_archive_roots", "should_keep"),
     [
-        ("pkg/file.py", ["pkg"], False),
-        ("pkg/file.py", ["*.py"], False),
-        ("pkg/file.py", ["other"], True),
+        ("pkg/file.py", ["pkg"], [], False),
+        ("pkg/file.py", ["*.py"], [], False),
+        ("pkg/file.py", ["other"], [], True),
+        (
+            "model-engine/.build-context/reqs/file.txt",
+            [],
+            ["model-engine/.build-context/reqs"],
+            False,
+        ),
     ],
 )
-def test_filter_archive_member(member_name, patterns, should_keep):
+def test_filter_archive_member(member_name, patterns, nested_archive_roots, should_keep):
     tar_info = mock.Mock()
     tar_info.name = member_name
 
-    result = remote_build._filter_archive_member(tar_info, patterns)
+    result = remote_build._filter_archive_member(tar_info, patterns, nested_archive_roots)
 
     assert (result is tar_info) is should_keep
 
@@ -114,6 +120,42 @@ def test_zip_context_reraises_storage_errors(tmp_path):
                 context=str(context),
                 folders_to_include=["pkg"],
             )
+
+
+def test_zip_context_excludes_nested_explicit_roots_from_parent_archive(tmp_path):
+    context = tmp_path / "context"
+    nested_dir = context / "model-engine" / ".build-context" / "reqs"
+    nested_dir.mkdir(parents=True)
+    (nested_dir / "requirements.txt").write_text("pkg==1.0")
+    (context / "model-engine" / "app.py").write_text("print('ok')")
+
+    uploaded = BytesIO()
+
+    class UploadSink:
+        def __enter__(self):
+            return uploaded
+
+        def __exit__(self, exc_type, exc, tb):
+            uploaded.seek(0)
+            return False
+
+    with mock.patch.object(remote_build.storage_client, "open", return_value=UploadSink()):
+        remote_build.zip_context(
+            s3_file_name="bundle.tar.gz",
+            context=str(context),
+            folders_to_include=["model-engine", "model-engine/.build-context/reqs"],
+        )
+
+    archive_path = tmp_path / "uploaded_nested.tar.gz"
+    archive_path.write_bytes(uploaded.getvalue())
+    import tarfile
+
+    with tarfile.open(archive_path, mode="r:gz") as tar:
+        names = tar.getnames()
+
+    assert "model-engine/app.py" in names
+    assert "model-engine/.build-context/reqs/requirements.txt" in names
+    assert names.count("model-engine/.build-context/reqs/requirements.txt") == 1
 
 
 def test_start_build_job_uses_boto_credentials_for_circleci(tmp_path):
