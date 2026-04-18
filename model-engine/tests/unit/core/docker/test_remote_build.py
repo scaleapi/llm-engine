@@ -130,6 +130,13 @@ spec:
       containers:
         - name: kaniko
           args: []
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              value: "$AWS_ACCESS_KEY_ID"
+            - name: AWS_SECRET_ACCESS_KEY
+              value: "$AWS_SECRET_ACCESS_KEY"
+            - name: AWS_SESSION_TOKEN
+              value: "$AWS_SESSION_TOKEN"
 """
     )
     captured = {}
@@ -185,9 +192,12 @@ spec:
     assert captured["patch_args"][:4] == ["kubectl", "patch", "secret", "codeartifact-pip-conf"]
     assert "--destination=repo-prefix/repo/image:tag" in captured["apply_yaml"]
     assert "--build-arg=ARG1=VALUE1" in captured["apply_yaml"]
-    assert "AWS_ACCESS_KEY_ID: access" in captured["apply_yaml"]
-    assert "AWS_SECRET_ACCESS_KEY: secret" in captured["apply_yaml"]
-    assert "AWS_SESSION_TOKEN: token" in captured["apply_yaml"]
+    assert "name: AWS_ACCESS_KEY_ID" in captured["apply_yaml"]
+    assert "value: access" in captured["apply_yaml"]
+    assert "name: AWS_SECRET_ACCESS_KEY" in captured["apply_yaml"]
+    assert "value: secret" in captured["apply_yaml"]
+    assert "name: AWS_SESSION_TOKEN" in captured["apply_yaml"]
+    assert "value: token" in captured["apply_yaml"]
 
 
 def test_build_remote_with_explicit_folders_calls_zip_and_start(tmp_path):
