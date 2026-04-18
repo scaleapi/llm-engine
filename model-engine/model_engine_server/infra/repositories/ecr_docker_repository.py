@@ -18,6 +18,7 @@ class ECRDockerRepository(DockerRepository):
     def _normalize_build_args(base_path: str, build_args: Dict[str, str]) -> Dict[str, str]:
         normalized = dict(build_args)
         base_path_abs = os.path.abspath(base_path)
+        updates: Dict[str, str] = {}
 
         for key, value in normalized.items():
             if not isinstance(value, str) or not os.path.isabs(value):
@@ -30,8 +31,9 @@ class ECRDockerRepository(DockerRepository):
             except ValueError:
                 continue
 
-            normalized[key] = os.path.relpath(value_abs, base_path_abs)
+            updates[key] = os.path.relpath(value_abs, base_path_abs)
 
+        normalized.update(updates)
         return normalized
 
     def image_exists(

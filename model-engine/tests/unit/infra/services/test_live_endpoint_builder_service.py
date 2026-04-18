@@ -103,13 +103,11 @@ def set_env_vars():
     live_endpoint_builder_service.GIT_TAG = "test_tag"
     live_endpoint_builder_service.ENV = "test_env"
     live_endpoint_builder_service.WORKSPACE_PATH = ".."
-    live_endpoint_builder_service.BUILD_CONTEXT_TEMP_ROOT = "../model-engine/.build-context"
+    live_endpoint_builder_service.BUILD_CONTEXT_TEMP_ROOT = "../.build-context"
     live_endpoint_builder_service.open = mock_open()
     live_endpoint_builder_service.os.makedirs = Mock()
     live_endpoint_builder_service.open_wrapper = mock_open()
-    live_endpoint_builder_service.tempfile.mkdtemp = Mock(
-        return_value="../model-engine/.build-context/tmpdir"
-    )
+    live_endpoint_builder_service.tempfile.mkdtemp = Mock(return_value="../.build-context/tmpdir")
     live_endpoint_builder_service.tempfile.mkstemp = Mock(return_value=["", ""])
 
 
