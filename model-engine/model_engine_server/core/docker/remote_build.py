@@ -119,7 +119,7 @@ def _read_ignore_patterns(context_path: Path, ignore_file: Optional[str]) -> Lis
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
-        patterns.append(line.lstrip("./"))
+        patterns.append(line.removeprefix("./"))
     return patterns
 
 
@@ -142,7 +142,7 @@ def _normalize_path_for_archive(context_path: Path, folder_to_include: str) -> t
 def _filter_archive_member(
     tar_info: tarfile.TarInfo, ignore_patterns: List[str]
 ) -> Optional[tarfile.TarInfo]:
-    normalized_name = tar_info.name.lstrip("./")
+    normalized_name = tar_info.name.removeprefix("./")
     basename = os.path.basename(normalized_name)
 
     for pattern in ignore_patterns:
