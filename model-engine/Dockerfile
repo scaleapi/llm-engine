@@ -38,6 +38,7 @@ RUN mkdir -p /tmp/runtime-bin /tmp/runtime-libs && \
   cp -R /usr/libexec/git-core /tmp/runtime-bin/git-core && \
   cp /usr/lib/libpcre2-8.so.0* /tmp/runtime-libs/ && \
   cp /usr/lib/libcurl.so.4* /tmp/runtime-libs/ && \
+  cp /usr/lib/libreadline.so.8* /tmp/runtime-libs/ && \
   cp /usr/lib/libtinfo.so.6* /tmp/runtime-libs/ && \
   cp /usr/lib/libz.so.1* /tmp/runtime-libs/ && \
   git clone --depth 1 --branch v1.35.3 https://github.com/kubernetes/kubernetes.git /tmp/k8s && \

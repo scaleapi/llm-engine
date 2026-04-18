@@ -46,7 +46,8 @@ def test_normalize_path_for_archive_rejects_path_outside_context(tmp_path):
     ("member_name", "patterns", "nested_archive_roots", "should_keep"),
     [
         ("pkg/file.py", ["pkg"], [], False),
-        ("pkg/file.py", ["*.py"], [], False),
+        ("pkg/file.py", ["*.py"], [], True),
+        ("file.py", ["*.py"], [], False),
         ("pkg/file.py", ["other"], [], True),
         (
             "model-engine/.build-context/reqs/file.txt",

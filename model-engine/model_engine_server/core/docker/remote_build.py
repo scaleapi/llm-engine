@@ -8,8 +8,7 @@ import uuid
 from base64 import b64encode
 from contextlib import ExitStack
 from dataclasses import dataclass
-from fnmatch import fnmatch
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from string import Template
 from typing import Dict, Iterable, List, Optional, Union
 
@@ -155,7 +154,6 @@ def _filter_archive_member(
     nested_archive_roots: Optional[List[str]] = None,
 ) -> Optional[tarfile.TarInfo]:
     normalized_name = tar_info.name.removeprefix("./")
-    basename = os.path.basename(normalized_name)
     nested_archive_roots = nested_archive_roots or []
 
     for nested_root in nested_archive_roots:
@@ -164,10 +162,8 @@ def _filter_archive_member(
 
     for pattern in ignore_patterns:
         normalized_pattern = pattern.rstrip("/")
-        if (
-            fnmatch(normalized_name, normalized_pattern)
-            or fnmatch(basename, normalized_pattern)
-            or normalized_name.startswith(f"{normalized_pattern}/")
+        if PurePosixPath(normalized_name).match(normalized_pattern) or normalized_name.startswith(
+            f"{normalized_pattern}/"
         ):
             return None
     return tar_info
