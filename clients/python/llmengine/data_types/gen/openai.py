@@ -11,9 +11,9 @@ import pydantic
 
 PYDANTIC_V2 = hasattr(pydantic, "VERSION") and pydantic.VERSION.startswith("2.")
 if PYDANTIC_V2:
-    from pydantic.v1 import AnyUrl, BaseModel, Extra, Field  # noqa: F401
+    from pydantic.v1 import AnyUrl, BaseModel, Extra, Field, validator  # noqa: F401
 else:
-    from pydantic import AnyUrl, BaseModel, Extra, Field  # type: ignore # noqa: F401
+    from pydantic import AnyUrl, BaseModel, Extra, Field, validator  # type: ignore # noqa: F401
 from typing_extensions import Annotated
 
 
@@ -1354,7 +1354,13 @@ class Prompt(BaseModel):
 
 
 class Prompt1Item(BaseModel):
-    __root__: Annotated[List[int], Field(min_items=1)]
+    __root__: Annotated[List[int], Field()]
+
+    @validator("__root__")
+    def validate_non_empty(cls, value):
+        if not value:
+            raise ValueError("ensure this value has at least 1 item")
+        return value
 
 
 class Prompt1(BaseModel):
@@ -1440,7 +1446,13 @@ class Input1(BaseModel):
 
 
 class Input2Item(BaseModel):
-    __root__: Annotated[List[int], Field(min_items=1)]
+    __root__: Annotated[List[int], Field()]
+
+    @validator("__root__")
+    def validate_non_empty(cls, value):
+        if not value:
+            raise ValueError("ensure this value has at least 1 item")
+        return value
 
 
 class Input2(BaseModel):
@@ -6875,7 +6887,7 @@ class VectorStoreObject(BaseModel):
 
 
 class QueryItem(BaseModel):
-    __root__: Annotated[str, Field(description="A list of queries to search for.", min_items=1)]
+    __root__: Annotated[str, Field(description="A list of queries to search for.")]
 
 
 class RankingOptions(BaseModel):
@@ -6937,7 +6949,7 @@ class VectorStoreSearchResultItem(BaseModel):
 
 
 class SearchQueryItem(BaseModel):
-    __root__: Annotated[str, Field(description="The query used for this search.", min_items=1)]
+    __root__: Annotated[str, Field(description="The query used for this search.")]
 
 
 class VectorStoreSearchResultsPage(BaseModel):
@@ -11515,9 +11527,10 @@ class EvalRunList(BaseModel):
 
 
 class InputItem(BaseModel):
-    __root__: Annotated[
-        Union[EasyInputMessage, Item, ItemReferenceParam], Field(discriminator="type")
-    ]
+    # `Item` is itself a root-union model, so discriminator-based dispatch on this
+    # outer union is not reliable under Pydantic. Keep plain union matching here
+    # rather than a broken discriminator on `type`.
+    __root__: Annotated[Union[EasyInputMessage, Item, ItemReferenceParam], Field()]
 
 
 class ListAssistantsResponse(BaseModel):
