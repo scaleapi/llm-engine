@@ -1,4 +1,6 @@
-from typing import Optional
+import os
+from pathlib import Path
+from typing import Dict, Optional
 
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
@@ -13,6 +15,28 @@ logger = make_logger(logger_name())
 
 
 class ECRDockerRepository(DockerRepository):
+    @staticmethod
+    def _normalize_build_args(base_path: str, build_args: Dict[str, str]) -> Dict[str, str]:
+        normalized = dict(build_args)
+        base_path_abs = Path(base_path).resolve()
+        updates: Dict[str, str] = {}
+
+        for key, value in normalized.items():
+            if not isinstance(value, str) or not os.path.isabs(value):
+                continue
+
+            value_abs = Path(value).resolve()
+            try:
+                if value_abs == base_path_abs or not value_abs.is_relative_to(base_path_abs):
+                    continue
+            except ValueError:
+                continue
+
+            updates[key] = os.path.relpath(str(value_abs), str(base_path_abs))
+
+        normalized.update(updates)
+        return normalized
+
     def image_exists(
         self, image_tag: str, repository_name: str, aws_profile: Optional[str] = None
     ) -> bool:
@@ -43,7 +67,9 @@ class ECRDockerRepository(DockerRepository):
         }
 
         if image_params.substitution_args:
-            build_args.update(image_params.substitution_args)
+            build_args.update(
+                self._normalize_build_args(image_params.base_path, image_params.substitution_args)
+            )
 
         build_result = build_remote_block(
             context=image_params.base_path,
@@ -54,7 +80,9 @@ class ECRDockerRepository(DockerRepository):
             cache_name=hmi_config.docker_image_layer_cache_repository,
         )
         return BuildImageResponse(
-            status=build_result.status, logs=build_result.logs, job_name=build_result.job_name
+            status=build_result.status,
+            logs=build_result.logs,
+            job_name=build_result.job_name,
         )
 
     def get_latest_image_tag(self, repository_name: str) -> str:

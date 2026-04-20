@@ -146,7 +146,7 @@ datadog==0.47.0
     # via -r requirements.in
 datadog-api-client==2.11.0
     # via -r requirements.in
-ddtrace==2.21.12
+ddtrace==4.7.1
     # via -r requirements.in
 deprecation==2.1.0
     # via -r requirements.in
@@ -154,7 +154,7 @@ docker==5.0.3
     # via -r requirements.in
 docutils==0.20.1
     # via readme-renderer
-envier==0.5.2
+envier==0.6.1
     # via ddtrace
 fastapi==0.135.1
     # via -r requirements.in
@@ -196,13 +196,13 @@ google-auth==2.25.2
     #   google-cloud-secret-manager
     #   google-cloud-storage
     #   kubernetes
-google-cloud-artifact-registry==1.13.1
+google-cloud-artifact-registry==1.21.0
     # via -r requirements.in
 google-cloud-core==2.5.0
     # via
     #   google-cloud-secret-manager
     #   google-cloud-storage
-google-cloud-secret-manager==2.21.0
+google-cloud-secret-manager==2.24.0
     # via -r requirements.in
 google-cloud-storage==2.14.0
     # via -r requirements.in
@@ -223,16 +223,15 @@ greenlet==3.3.2
     #   -r requirements.in
     #   sqlalchemy
 grpc-google-iam-v1==0.14.3
-    # via
-    #   google-cloud-artifact-registry
-    #   google-cloud-secret-manager
-grpcio==1.74.0
+    # via google-cloud-artifact-registry
+grpcio==1.75.1
     # via
     #   google-api-core
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
-grpcio-status==1.71.2
+    #   google-cloud-secret-manager
+grpcio-status==1.75.1
     # via
     #   google-api-core
     #   google-cloud-secret-manager
@@ -357,7 +356,7 @@ mypy-boto3-sqs==1.40.61
     # via boto3-stubs
 mypy-extensions==1.0.0
     # via typing-inspect
-numpy==2.2.6
+numpy==2.4.4
     # via
     #   -r requirements.in
     #   transformers
@@ -398,7 +397,7 @@ proto-plus==1.27.1
     #   google-api-core
     #   google-cloud-artifact-registry
     #   google-cloud-secret-manager
-protobuf==5.29.6
+protobuf==6.33.5
     # via
     #   -r requirements.in
     #   ddtrace
@@ -409,7 +408,7 @@ protobuf==5.29.6
     #   grpc-google-iam-v1
     #   grpcio-status
     #   proto-plus
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.11
     # via -r requirements.in
 py-xid==0.3.0
     # via -r requirements.in
@@ -426,11 +425,13 @@ pycparser==2.21
     # via cffi
 pycurl==7.45.2
     # via -r requirements.in
-pydantic==2.8.2
+pytz==2025.2
+    # via -r requirements.in
+pydantic==2.12.5
     # via
     #   -r requirements.in
     #   fastapi
-pydantic-core==2.20.1
+pydantic-core==2.41.5
     # via pydantic
 pygments==2.15.1
     # via

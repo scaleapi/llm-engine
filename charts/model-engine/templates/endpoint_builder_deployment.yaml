@@ -49,8 +49,9 @@ spec:
           readinessProbe:
             exec:
               command:
-                - cat
-                - /tmp/readyz
+                - bash
+                - -c
+                - test -f /tmp/readyz
           command:
             - dumb-init
             - --

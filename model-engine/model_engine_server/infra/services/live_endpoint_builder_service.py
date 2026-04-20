@@ -79,6 +79,7 @@ ECR_AWS_PROFILE: str = os.getenv("ECR_READ_AWS_PROFILE", "default")  # type: ign
 GIT_TAG: str = os.getenv("GIT_TAG")  # type: ignore
 ENV: str = os.getenv("DD_ENV")  # type: ignore
 WORKSPACE_PATH = os.getenv("WORKSPACE", ".")
+BUILD_CONTEXT_TEMP_ROOT = os.path.join(WORKSPACE_PATH, "model-engine", ".build-context")
 
 INITIAL_K8S_CACHE_TTL_SECONDS: int = 180
 MAX_IMAGE_TAG_LEN = 128
@@ -557,11 +558,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
         # The context should be whatever WORKDIR is in the container running the build app itself.
         inference_folder = "model-engine/model_engine_server/inference"
-        requirements_folder = os.path.join(WORKSPACE_PATH, f"requirements_{requirements_hash}")
-        try:
-            os.mkdir(requirements_folder)
-        except FileExistsError:
-            pass
+        requirements_folder = self._create_build_context_dir(
+            prefix=f"requirements_{requirements_hash}_"
+        )
 
         requirements_file = os.path.join(requirements_folder, "requirements.txt")
         with open(requirements_file, "w") as f:
@@ -610,11 +609,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         # The context should be whatever WORKDIR is in the container running the build app itself.
         dockerfile = "inject_bundle.Dockerfile"
         inference_folder = "model-engine/model_engine_server/inference"
-        bundle_folder = os.path.join(WORKSPACE_PATH, f"bundle_{service_image_hash}")
-        try:
-            os.mkdir(bundle_folder)
-        except FileExistsError:
-            pass
+        bundle_folder = self._create_build_context_dir(prefix=f"bundle_{service_image_hash}_")
         _, model_bundle_path = tempfile.mkstemp(dir=bundle_folder, suffix=".zip")
         bundle_url = model_bundle.location
         logger_adapter.info(
@@ -818,6 +813,11 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             "\n".join(sorted(requirements)).encode("utf-8"),
             usedforsecurity=False,
         ).hexdigest()[:6]
+
+    @staticmethod
+    def _create_build_context_dir(prefix: str) -> str:
+        os.makedirs(BUILD_CONTEXT_TEMP_ROOT, exist_ok=True)
+        return tempfile.mkdtemp(prefix=prefix, dir=BUILD_CONTEXT_TEMP_ROOT)
 
     @staticmethod
     def _get_image_tag(base_image_tag: str, git_tag: str, requirements_hash: str) -> str:
