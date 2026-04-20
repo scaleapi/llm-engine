@@ -8,7 +8,8 @@ import uuid
 from base64 import b64encode
 from contextlib import ExitStack
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
+from fnmatch import fnmatchcase
+from pathlib import Path
 from string import Template
 from typing import Dict, Iterable, List, Optional, Union
 
@@ -162,9 +163,13 @@ def _filter_archive_member(
 
     for pattern in ignore_patterns:
         normalized_pattern = pattern.rstrip("/")
-        if PurePosixPath(normalized_name).match(normalized_pattern) or normalized_name.startswith(
-            f"{normalized_pattern}/"
-        ):
+        if "/" in normalized_pattern:
+            pattern_matches = fnmatchcase(normalized_name, normalized_pattern)
+        else:
+            pattern_matches = "/" not in normalized_name and fnmatchcase(
+                normalized_name, normalized_pattern
+            )
+        if pattern_matches or normalized_name.startswith(f"{normalized_pattern}/"):
             return None
     return tar_info
 
