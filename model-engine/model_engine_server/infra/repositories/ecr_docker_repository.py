@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Dict, Optional
 
 from model_engine_server.common.config import hmi_config
@@ -17,21 +18,21 @@ class ECRDockerRepository(DockerRepository):
     @staticmethod
     def _normalize_build_args(base_path: str, build_args: Dict[str, str]) -> Dict[str, str]:
         normalized = dict(build_args)
-        base_path_abs = os.path.abspath(base_path)
+        base_path_abs = Path(base_path).resolve()
         updates: Dict[str, str] = {}
 
         for key, value in normalized.items():
             if not isinstance(value, str) or not os.path.isabs(value):
                 continue
 
-            value_abs = os.path.abspath(value)
+            value_abs = Path(value).resolve()
             try:
-                if os.path.commonpath([base_path_abs, value_abs]) != base_path_abs:
+                if value_abs == base_path_abs or not value_abs.is_relative_to(base_path_abs):
                     continue
             except ValueError:
                 continue
 
-            updates[key] = os.path.relpath(value_abs, base_path_abs)
+            updates[key] = os.path.relpath(str(value_abs), str(base_path_abs))
 
         normalized.update(updates)
         return normalized

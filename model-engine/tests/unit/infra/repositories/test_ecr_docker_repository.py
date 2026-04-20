@@ -29,6 +29,20 @@ def test_normalize_build_args_rewrites_only_paths_inside_base(tmp_path):
     assert normalized["NON_STRING"] == 1
 
 
+def test_normalize_build_args_does_not_rewrite_base_path_itself(tmp_path):
+    base = tmp_path / "repo"
+    base.mkdir()
+
+    normalized = ECRDockerRepository._normalize_build_args(
+        str(base),
+        {
+            "CONTEXT_ROOT": str(base),
+        },
+    )
+
+    assert normalized["CONTEXT_ROOT"] == str(base)
+
+
 def test_build_image_includes_requirements_and_dockerfile_root(tmp_path):
     repo = ECRDockerRepository()
     base = tmp_path / "repo"
