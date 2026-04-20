@@ -70,9 +70,10 @@ def test_zip_context_uploads_filtered_archive(tmp_path):
     context = tmp_path / "context"
     include_dir = context / "pkg"
     include_dir.mkdir(parents=True)
+    (context / "root.log").write_text("root")
     (include_dir / "keep.txt").write_text("keep")
     (include_dir / "drop.log").write_text("drop")
-    (context / ".dockerignore").write_text("*.log\n")
+    (context / ".dockerignore").write_text("*.log\npkg/*.log\n")
 
     uploaded = BytesIO()
 
@@ -100,6 +101,7 @@ def test_zip_context_uploads_filtered_archive(tmp_path):
         names = tar.getnames()
 
     assert "pkg/keep.txt" in names
+    assert "root.log" not in names
     assert "pkg/drop.log" not in names
 
 
