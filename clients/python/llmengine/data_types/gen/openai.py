@@ -6875,7 +6875,7 @@ class VectorStoreObject(BaseModel):
 
 
 class QueryItem(BaseModel):
-    __root__: Annotated[str, Field(description="A list of queries to search for.", min_items=1)]
+    __root__: Annotated[str, Field(description="A list of queries to search for.")]
 
 
 class RankingOptions(BaseModel):
@@ -6937,7 +6937,7 @@ class VectorStoreSearchResultItem(BaseModel):
 
 
 class SearchQueryItem(BaseModel):
-    __root__: Annotated[str, Field(description="The query used for this search.", min_items=1)]
+    __root__: Annotated[str, Field(description="The query used for this search.")]
 
 
 class VectorStoreSearchResultsPage(BaseModel):
