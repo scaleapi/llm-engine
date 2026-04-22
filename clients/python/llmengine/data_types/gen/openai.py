@@ -11516,7 +11516,7 @@ class EvalRunList(BaseModel):
 
 class InputItem(BaseModel):
     __root__: Annotated[
-        Union[EasyInputMessage, Item, ItemReferenceParam], Field(discriminator="type")
+        Union[EasyInputMessage, Item, ItemReferenceParam], Field()
     ]
 
 
