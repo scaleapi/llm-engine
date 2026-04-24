@@ -1,6 +1,7 @@
 from typing import Optional
 
 import redis.asyncio as aioredis
+from model_engine_server.common.aioredis_pool import build_aioredis_client
 from model_engine_server.infra.repositories.feature_flag_repository import FeatureFlagRepository
 
 
@@ -15,7 +16,7 @@ class RedisFeatureFlagRepository(FeatureFlagRepository):
             # If aioredis cannot create a connection pool, reraise that as an error because the
             # default error message is cryptic and not obvious.
             try:
-                self._redis = aioredis.from_url(redis_info, health_check_interval=60)
+                self._redis = build_aioredis_client(redis_info)
             except Exception as exc:
                 raise RuntimeError(
                     "If redis_info is specified, RedisFeatureFlagRepository must be"

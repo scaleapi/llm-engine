@@ -7,6 +7,7 @@ from typing import Any, Callable, Optional
 import redis.asyncio as aioredis
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
+from model_engine_server.common.aioredis_pool import build_aioredis_pool
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.env_vars import CIRCLECI
@@ -560,6 +561,6 @@ def get_or_create_aioredis_pool() -> aioredis.ConnectionPool:
 
     expiration_timestamp = hmi_config.cache_redis_url_expiration_timestamp
     if _pool is None or (expiration_timestamp is not None and time.time() > expiration_timestamp):
-        _pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
+        _pool = build_aioredis_pool(hmi_config.cache_redis_url)
     assert _pool is not None
     return _pool

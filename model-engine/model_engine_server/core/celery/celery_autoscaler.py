@@ -13,6 +13,7 @@ from typing import Any, DefaultDict, Dict, List, Set, Tuple
 
 import redis.asyncio as aioredis
 import stringcase
+from model_engine_server.common.aioredis_pool import build_aioredis_client
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 from azure.servicebus.management import ServiceBusAdministrationClient
@@ -350,7 +351,7 @@ class RedisBroker(AutoscalerBroker):
             get_redis_host_port()
         )  # Switches the redis instance based on CELERY_ELASTICACHE_ENABLED's value
         self.redis = {
-            db_index: aioredis.Redis.from_url(f"redis://{host}:{port}/{db_index}")
+            db_index: build_aioredis_client(f"redis://{host}:{port}/{db_index}")
             for db_index in get_all_db_indexes()
         }
         self.initialized = True
