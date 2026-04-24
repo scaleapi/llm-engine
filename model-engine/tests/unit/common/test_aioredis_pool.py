@@ -1,8 +1,4 @@
 import redis.asyncio as aioredis
-from redis.asyncio.retry import Retry
-from redis.exceptions import ConnectionError as RedisConnectionError
-from redis.exceptions import TimeoutError as RedisTimeoutError
-
 from model_engine_server.common.aioredis_pool import (
     HEALTH_CHECK_INTERVAL_SECONDS,
     RETRY_MAX_ATTEMPTS,
@@ -11,6 +7,9 @@ from model_engine_server.common.aioredis_pool import (
     build_aioredis_pool,
     get_aioredis_connection_kwargs,
 )
+from redis.asyncio.retry import Retry
+from redis.exceptions import ConnectionError as RedisConnectionError
+from redis.exceptions import TimeoutError as RedisTimeoutError
 
 
 def test_kwargs_include_keepalive_health_check_and_retry():

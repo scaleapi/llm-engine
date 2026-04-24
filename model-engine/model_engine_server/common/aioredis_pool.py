@@ -38,18 +38,14 @@ def get_aioredis_connection_kwargs() -> Dict[str, Any]:
         "health_check_interval": HEALTH_CHECK_INTERVAL_SECONDS,
         "retry_on_error": [RedisConnectionError, RedisTimeoutError],
         "retry": Retry(
-            ExponentialBackoff(
-                cap=RETRY_BACKOFF_CAP_SECONDS, base=RETRY_BACKOFF_BASE_SECONDS
-            ),
+            ExponentialBackoff(cap=RETRY_BACKOFF_CAP_SECONDS, base=RETRY_BACKOFF_BASE_SECONDS),
             retries=RETRY_MAX_ATTEMPTS,
         ),
     }
 
 
-def build_aioredis_pool(url: str) -> aioredis.BlockingConnectionPool:
-    return aioredis.BlockingConnectionPool.from_url(
-        url, **get_aioredis_connection_kwargs()
-    )
+def build_aioredis_pool(url: str) -> aioredis.ConnectionPool:
+    return aioredis.BlockingConnectionPool.from_url(url, **get_aioredis_connection_kwargs())
 
 
 def build_aioredis_client(url: str) -> aioredis.Redis:

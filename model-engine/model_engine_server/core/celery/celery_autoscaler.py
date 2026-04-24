@@ -11,9 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 from math import ceil
 from typing import Any, DefaultDict, Dict, List, Set, Tuple
 
-import redis.asyncio as aioredis
 import stringcase
-from model_engine_server.common.aioredis_pool import build_aioredis_client
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 from azure.servicebus.management import ServiceBusAdministrationClient
@@ -23,6 +21,7 @@ from kubernetes_asyncio import client
 from kubernetes_asyncio import config as kube_config
 from kubernetes_asyncio.client.rest import ApiException
 from kubernetes_asyncio.config.config_exception import ConfigException
+from model_engine_server.common.aioredis_pool import build_aioredis_client
 from model_engine_server.core.aws.roles import session
 from model_engine_server.core.celery import (
     TaskVisibility,
