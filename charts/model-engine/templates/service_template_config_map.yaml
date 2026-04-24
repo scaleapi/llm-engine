@@ -408,6 +408,146 @@ data:
   {{- end }}
   {{- end }}
   {{- end }}
+  {{- range $device := tuple "cpu" "gpu" }}
+  deployment-runnable-image-temporal-{{ $device }}.yaml: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+      annotations:
+        temporal.scaleml.io/taskQueue: "${TEMPORAL_TASK_QUEUE}"
+        temporal.scaleml.io/minWorkers: "${MIN_WORKERS}"
+        temporal.scaleml.io/maxWorkers: "${MAX_WORKERS}"
+        temporal.scaleml.io/perWorker: "${PER_WORKER}"
+    spec:
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
+      replicas: ${MAX_WORKERS}
+      selector:
+        matchLabels:
+          app: ${RESOURCE_NAME}
+          version: v1
+      template:
+        metadata:
+          labels:
+            app: ${RESOURCE_NAME}
+            {{- $service_template_labels | nindent 12 }}
+            sidecar.istio.io/inject: "false"
+            version: v1
+          annotations:
+            ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
+            kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+        spec:
+          affinity:
+            {{- include "modelEngine.serviceTemplateAffinity" . | nindent 12 }}
+          terminationGracePeriodSeconds: 1800
+          {{- if $service_template_service_account_name }}
+          serviceAccount: {{ $service_template_service_account_name }}
+          {{- else }}
+          serviceAccount: {{ $launch_name }}
+          {{- end }}
+          {{- with $node_selector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if eq $device "gpu" }}
+          {{- if empty $node_selector }}
+          nodeSelector:
+          {{- end }}
+            k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+          tolerations:
+            - key: "nvidia.com/gpu"
+              operator: "Exists"
+              effect: "NoSchedule"
+            {{- range $gpu_tolerations }}
+            - key: {{ .key | quote }}
+              operator: "Exists"
+              effect: "NoSchedule"
+            {{- end }}
+          {{- end }}
+          priorityClassName: ${PRIORITY}
+          containers:
+            - name: main
+              {{- $security_context | nindent 14 }}
+              image: ${IMAGE}
+              imagePullPolicy: IfNotPresent
+              command: ${COMMAND}
+              env: ${MAIN_ENV}
+              resources:
+                requests:
+                  {{- if eq $device "gpu" }}
+                  nvidia.com/gpu: ${GPUS}
+                  {{- end }}
+                  cpu: ${CPUS}
+                  memory: ${MEMORY}
+                  ${STORAGE_DICT}
+                limits:
+                  {{- if eq $device "gpu" }}
+                  nvidia.com/gpu: ${GPUS}
+                  {{- end }}
+                  cpu: ${CPUS}
+                  memory: ${MEMORY}
+                  ${STORAGE_DICT}
+              volumeMounts:
+                {{- if $require_aws_config }}
+                - name: aws-config-volume
+                  mountPath: /opt/.aws/config
+                  subPath: config
+                {{- end }}
+                {{- if eq $device "gpu" }}
+                - mountPath: /dev/shm
+                  name: dshm
+                {{- end }}
+                - name: user-config
+                  mountPath: /app/user_config
+                  subPath: raw_data
+                - name: endpoint-config
+                  mountPath: /app/endpoint_config
+                  subPath: raw_data
+                {{- if $config_values }}
+                - name: infra-service-config-volume
+                  mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
+                {{- end }}
+          {{- if $security_context }}
+          securityContext:
+            fsGroup: 65534
+          {{- end }}
+          volumes:
+            {{- if $require_aws_config }}
+            - name: aws-config-volume
+              configMap:
+                {{- if $service_template_aws_config_map_name }}
+                name: {{ $service_template_aws_config_map_name }}
+                {{- else }}
+                name: {{ $aws_config_map_name }}
+                {{- end }}
+            {{- end }}
+            - name: user-config
+              configMap:
+                name: ${RESOURCE_NAME}
+            - name: endpoint-config
+              configMap:
+                name: ${RESOURCE_NAME}-endpoint-config
+            {{- if eq $device "gpu" }}
+            - name: dshm
+              emptyDir:
+                medium: Memory
+            {{- end }}
+            {{- if $config_values }}
+            - name: infra-service-config-volume
+              configMap:
+                name: {{ $launch_name }}-service-config
+                items:
+                  - key: infra_service_config
+                    path: config.yaml
+            {{- end }}
+  {{- end }}
   user-config.yaml: |-
     apiVersion: v1
     kind: ConfigMap

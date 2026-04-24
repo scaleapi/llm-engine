@@ -38,6 +38,8 @@ __all__: Sequence[str] = (
     "DeploymentRunnableImageStreamingGpuArguments",
     "DeploymentRunnableImageSyncCpuArguments",
     "DeploymentRunnableImageSyncGpuArguments",
+    "DeploymentRunnableImageTemporalCpuArguments",
+    "DeploymentRunnableImageTemporalGpuArguments",
     "DeploymentTritonEnhancedRunnableImageAsyncCpuArguments",
     "DeploymentTritonEnhancedRunnableImageAsyncGpuArguments",
     "DeploymentTritonEnhancedRunnableImageSyncCpuArguments",
@@ -155,6 +157,22 @@ class _StreamingDeploymentArguments(TypedDict):
     FORWARDER_STREAM_ROUTES: List[str]
 
 
+class _TemporalDeploymentArguments(TypedDict):
+    """Keyword-arguments for substituting into temporal deployment templates."""
+
+    TEMPORAL_TASK_QUEUE: str
+    TEMPORAL_SERVER_HOSTNAME: str
+    TEMPORAL_SERVER_PORT: str
+
+
+class _TemporalRunnableImageDeploymentArguments(_BaseDeploymentArguments):
+    """Keyword-arguments for substituting into temporal runnable image deployment templates."""
+
+    MAIN_ENV: List[Dict[str, Any]]
+    COMMAND: List[str]
+    INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH: str
+
+
 class _RunnableImageDeploymentArguments(_BaseDeploymentArguments):
     """Keyword-arguments for substituting into runnable image deployment templates."""
 
@@ -259,6 +277,18 @@ class DeploymentRunnableImageAsyncGpuArguments(
     _RunnableImageDeploymentArguments, _AsyncDeploymentArguments, _GpuArguments
 ):
     """Keyword-arguments for substituting GPU async deployment templates for runnable images."""
+
+
+class DeploymentRunnableImageTemporalCpuArguments(
+    _TemporalRunnableImageDeploymentArguments, _TemporalDeploymentArguments
+):
+    """Keyword-arguments for CPU temporal deployment templates for runnable images."""
+
+
+class DeploymentRunnableImageTemporalGpuArguments(
+    _TemporalRunnableImageDeploymentArguments, _TemporalDeploymentArguments, _GpuArguments
+):
+    """Keyword-arguments for GPU temporal deployment templates for runnable images."""
 
 
 class DeploymentTritonEnhancedRunnableImageSyncCpuArguments(
@@ -466,6 +496,8 @@ EndpointResourceArguments = Union[
     DeploymentRunnableImageStreamingGpuArguments,
     DeploymentRunnableImageSyncCpuArguments,
     DeploymentRunnableImageSyncGpuArguments,
+    DeploymentRunnableImageTemporalCpuArguments,
+    DeploymentRunnableImageTemporalGpuArguments,
     DeploymentTritonEnhancedRunnableImageAsyncCpuArguments,
     DeploymentTritonEnhancedRunnableImageAsyncGpuArguments,
     DeploymentTritonEnhancedRunnableImageSyncCpuArguments,
@@ -1448,5 +1480,85 @@ def get_endpoint_resource_arguments_from_request(
             OWNER=owner,
             GIT_TAG=GIT_TAG,
         )
+    elif endpoint_resource_name in {
+        "deployment-runnable-image-temporal-cpu",
+        "deployment-runnable-image-temporal-gpu",
+    }:
+        assert isinstance(flavor, RunnableImageLike)
+        temporal_task_queue = model_endpoint_record.temporal_task_queue or ""
+        temporal_hostname = getattr(hmi_config, "temporal_server_hostname", "") or ""
+        temporal_port = getattr(hmi_config, "temporal_server_port", "7233") or "7233"
+        temporal_main_env = list(main_env) + [
+            {"name": "TEMPORAL_TASK_QUEUE", "value": temporal_task_queue},
+            {"name": "TEMPORAL_SERVER_HOSTNAME", "value": temporal_hostname},
+            {"name": "TEMPORAL_SERVER_PORT", "value": temporal_port},
+        ]
+        if endpoint_resource_name == "deployment-runnable-image-temporal-cpu":
+            return DeploymentRunnableImageTemporalCpuArguments(
+                RESOURCE_NAME=k8s_resource_group_name,
+                NAMESPACE=hmi_config.endpoint_namespace,
+                ENDPOINT_ID=model_endpoint_record.id,
+                ENDPOINT_NAME=model_endpoint_record.name,
+                TEAM=team,
+                PRODUCT=product,
+                CREATED_BY=created_by,
+                OWNER=owner,
+                GIT_TAG=GIT_TAG,
+                CHANGE_CAUSE_MESSAGE=change_cause_message,
+                AWS_ROLE=build_endpoint_request.aws_role,
+                PRIORITY=priority,
+                IMAGE=request.image,
+                IMAGE_HASH=image_hash,
+                DD_TRACE_ENABLED=str(dd_trace_enabled),
+                CPUS=str(build_endpoint_request.cpus),
+                MEMORY=str(build_endpoint_request.memory),
+                STORAGE_DICT=storage_dict,
+                PER_WORKER=build_endpoint_request.per_worker,
+                MIN_WORKERS=build_endpoint_request.min_workers,
+                MAX_WORKERS=build_endpoint_request.max_workers,
+                CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
+                RESULTS_S3_BUCKET=s3_bucket,
+                MAIN_ENV=temporal_main_env,
+                COMMAND=flavor.command,
+                INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH=infra_service_config_volume_mount_path,
+                TEMPORAL_TASK_QUEUE=temporal_task_queue,
+                TEMPORAL_SERVER_HOSTNAME=temporal_hostname,
+                TEMPORAL_SERVER_PORT=temporal_port,
+            )
+        else:  # temporal-gpu
+            assert build_endpoint_request.gpu_type is not None
+            return DeploymentRunnableImageTemporalGpuArguments(
+                RESOURCE_NAME=k8s_resource_group_name,
+                NAMESPACE=hmi_config.endpoint_namespace,
+                ENDPOINT_ID=model_endpoint_record.id,
+                ENDPOINT_NAME=model_endpoint_record.name,
+                TEAM=team,
+                PRODUCT=product,
+                CREATED_BY=created_by,
+                OWNER=owner,
+                GIT_TAG=GIT_TAG,
+                CHANGE_CAUSE_MESSAGE=change_cause_message,
+                AWS_ROLE=build_endpoint_request.aws_role,
+                PRIORITY=priority,
+                IMAGE=request.image,
+                IMAGE_HASH=image_hash,
+                DD_TRACE_ENABLED=str(dd_trace_enabled),
+                CPUS=str(build_endpoint_request.cpus),
+                MEMORY=str(build_endpoint_request.memory),
+                STORAGE_DICT=storage_dict,
+                PER_WORKER=build_endpoint_request.per_worker,
+                MIN_WORKERS=build_endpoint_request.min_workers,
+                MAX_WORKERS=build_endpoint_request.max_workers,
+                CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
+                RESULTS_S3_BUCKET=s3_bucket,
+                MAIN_ENV=temporal_main_env,
+                COMMAND=flavor.command,
+                INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH=infra_service_config_volume_mount_path,
+                TEMPORAL_TASK_QUEUE=temporal_task_queue,
+                TEMPORAL_SERVER_HOSTNAME=temporal_hostname,
+                TEMPORAL_SERVER_PORT=temporal_port,
+                GPU_TYPE=build_endpoint_request.gpu_type.value,
+                GPUS=build_endpoint_request.gpus,
+            )
     else:
         raise Exception(f"Unknown resource name: {endpoint_resource_name}")

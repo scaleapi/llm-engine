@@ -420,7 +420,11 @@ class K8SEndpointResourceDelegate:
         self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
     ) -> bool:
         await maybe_load_kube_config()
-        if endpoint_type in {ModelEndpointType.SYNC, ModelEndpointType.STREAMING}:
+        if endpoint_type in {
+            ModelEndpointType.SYNC,
+            ModelEndpointType.STREAMING,
+            ModelEndpointType.TEMPORAL,
+        }:
             return await self._delete_resources_sync(
                 endpoint_id=endpoint_id, deployment_name=deployment_name
             )
@@ -1872,6 +1876,7 @@ class K8SEndpointResourceDelegate:
         if model_endpoint_record.endpoint_type in {
             ModelEndpointType.SYNC,
             ModelEndpointType.STREAMING,
+            ModelEndpointType.TEMPORAL,
         }:
             return k8s_service_name
         elif model_endpoint_record.endpoint_type == ModelEndpointType.ASYNC:
@@ -1896,6 +1901,18 @@ class K8SEndpointResourceDelegate:
             max_cpu=str(policy["maxAllowed"]["cpu"]),
             min_memory=str(policy["minAllowed"]["memory"]),
             max_memory=str(policy["maxAllowed"]["memory"]),
+        )
+
+    @staticmethod
+    def _get_temporal_autoscaling_params(
+        deployment_config,
+    ) -> HorizontalAutoscalingEndpointParams:
+        metadata_annotations = deployment_config.metadata.annotations or {}
+        return dict(
+            min_workers=int(metadata_annotations.get("temporal.scaleml.io/minWorkers", 0)),
+            max_workers=int(metadata_annotations.get("temporal.scaleml.io/maxWorkers", 0)),
+            per_worker=int(metadata_annotations.get("temporal.scaleml.io/perWorker", 1)),
+            concurrent_requests_per_worker=1,
         )
 
     @staticmethod
@@ -2013,6 +2030,8 @@ class K8SEndpointResourceDelegate:
         common_params = self._get_common_endpoint_params(deployment_config)
         if endpoint_type == ModelEndpointType.ASYNC:
             horizontal_autoscaling_params = self._get_async_autoscaling_params(deployment_config)
+        elif endpoint_type == ModelEndpointType.TEMPORAL:
+            horizontal_autoscaling_params = self._get_temporal_autoscaling_params(deployment_config)
         elif endpoint_type in {ModelEndpointType.SYNC, ModelEndpointType.STREAMING}:
             autoscaling_client = get_kubernetes_autoscaling_client()
             custom_object_client = get_kubernetes_custom_objects_client()
