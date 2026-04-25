@@ -474,7 +474,10 @@ data:
           priorityClassName: ${PRIORITY}
           containers:
             - name: main
-              {{- $security_context | nindent 14 }}
+              {{- with $security_context }}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
               image: ${IMAGE}
               imagePullPolicy: IfNotPresent
               command: ${COMMAND}
