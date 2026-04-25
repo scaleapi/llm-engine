@@ -8,6 +8,7 @@ import redis.asyncio as aioredis
 from celery.signals import worker_process_init
 from celery.utils.log import get_task_logger
 from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
+from model_engine_server.common.aioredis_pool import build_aioredis_pool
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.dtos.endpoint_builder import (
@@ -155,7 +156,7 @@ async def _build_endpoint(
         # Redis connection
         if infra_config().debug_mode:  # pragma: no cover
             logger.info("Connecting to Redis", extra={"redis_url": hmi_config.cache_redis_url})
-        pool = aioredis.BlockingConnectionPool.from_url(hmi_config.cache_redis_url)
+        pool = build_aioredis_pool(hmi_config.cache_redis_url)
         redis = aioredis.Redis(connection_pool=pool)
         if infra_config().debug_mode:  # pragma: no cover
             logger.info("Redis connection established successfully")

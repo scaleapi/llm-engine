@@ -9,6 +9,7 @@ from celery import Celery
 from celery.app import backends
 from celery.app.control import Inspect
 from celery.result import AsyncResult
+from model_engine_server.common.aioredis_pool import build_aioredis_client
 from model_engine_server.core.aws.roles import session
 from model_engine_server.core.aws.secrets import get_key_file
 from model_engine_server.core.config import infra_config
@@ -232,7 +233,7 @@ def get_redis_instance(db_index: int = 0) -> Union[Redis, StrictRedis]:
 
 def get_async_redis_instance(db_index: int = 0) -> aioredis.Redis:
     host, port = get_redis_host_port()
-    return aioredis.Redis.from_url(f"redis://{host}:{port}/{db_index}")
+    return build_aioredis_client(f"redis://{host}:{port}/{db_index}")
 
 
 def celery_app(
