@@ -1,8 +1,9 @@
 # Proposal: `temporal` Endpoint Type in Launch
 
 **Author:** lily.zhu@scale.com  
-**Status:** RFC  
-**Ticket:** MLI-6425
+**Status:** Implemented (MVP)  
+**Ticket:** MLI-6425  
+**Branch:** `lilyz-ai/temporal-endpoint-type`
 
 ---
 
@@ -73,56 +74,88 @@ The `model_bundle_id` points to a bundle whose command runs the Temporal activit
 
 ---
 
-## Implementation Plan
+## Implementation — What Was Built
 
-### Phase 1 — MVP (fixed replicas, ~2 weeks)
+### Files Changed
 
-**`domain/entities/model_endpoint_entity.py`**
-```python
-class ModelEndpointType(str, Enum):
-    ASYNC = "async"
-    SYNC = "sync"
-    STREAMING = "streaming"
-    TEMPORAL = "temporal"          # new
+| File | Change |
+|------|--------|
+| `domain/entities/model_endpoint_entity.py` | Add `TEMPORAL = "temporal"` to `ModelEndpointType` enum; add `temporal_task_queue` field to `ModelEndpointRecord` |
+| `common/dtos/model_endpoints.py` | Add `temporal_task_queue` to Create/Update request DTOs with validator requiring it for temporal endpoints |
+| `domain/use_cases/model_endpoint_use_cases.py` | Allow `min_workers=0` for TEMPORAL (same as ASYNC) |
+| `domain/services/model_endpoint_service.py` | Thread `temporal_task_queue` through abstract create/update signatures |
+| `db/models/hosted_model_inference.py` | Add `temporal_task_queue` nullable column to ORM model |
+| `db/migrations/alembic/versions/2026_04_24_0000-b2c3d4e5f6g7_add_temporal_task_queue_column.py` | Alembic migration: `ALTER TABLE hosted_model_inference.endpoints ADD COLUMN temporal_task_queue VARCHAR` |
+| `infra/repositories/model_endpoint_record_repository.py` | Add `temporal_task_queue` to abstract create/update signatures |
+| `infra/repositories/db_model_endpoint_record_repository.py` | Persist and read `temporal_task_queue` from DB |
+| `infra/services/live_model_endpoint_service.py` | Thread `temporal_task_queue` through create/update |
+| `infra/gateways/resources/k8s_resource_types.py` | Add `DeploymentRunnableImageTemporalCpuArguments` and `...GpuArguments` TypedDicts; add temporal branch in `get_endpoint_resource_arguments_from_request` |
+| `infra/gateways/resources/k8s_endpoint_resource_delegate.py` | Route temporal to new templates; add `_get_temporal_autoscaling_params` (reads annotations); skip SQS in delete |
+| `infra/gateways/resources/live_endpoint_resource_gateway.py` | Skip SQS queue creation/deletion for TEMPORAL |
+| `infra/gateways/resources/templates/service_template_config_map_circleci.yaml` | Add `deployment-runnable-image-temporal-{cpu,gpu}.yaml` templates |
+| `charts/model-engine/templates/service_template_config_map.yaml` | Add same templates via Helm `range` loop for prod |
+
+### Key Design Decisions (vs. original proposal)
+
+**Annotations instead of a new HPA resource for autoscaling params:**
+- `temporal.scaleml.io/taskQueue`, `/minWorkers`, `/maxWorkers`, `/perWorker` are stored as Deployment annotations
+- `_get_temporal_autoscaling_params` reads these back in `get_resources` to populate `deployment_state`
+- This matches how `min_workers`/`max_workers` are read for KEDA-scaled endpoints
+
+**`TEMPORAL_SERVER_HOSTNAME` from infra config, not request:**
+- Reads `hmi_config.temporal_server_hostname` (with empty-string fallback) so per-cluster config can override without touching the API
+- `TEMPORAL_SERVER_PORT` defaults to `7233` if not configured
+
+**MVP: `replicas = max_workers` (fixed):**
+- No KEDA scaler created for temporal endpoints
+- `min_workers=0` is allowed (same as async) but has no effect in MVP — the deployment always has `max_workers` replicas
+
+**No readiness probe:**
+- Temporal workers have no HTTP endpoint to probe
+- The template omits the readiness probe entirely; Kubernetes considers the pod ready as soon as the container starts
+
+**No forwarder sidecar:**
+- The `main` container IS the Temporal worker
+- `sidecar.istio.io/inject: "false"` — no Istio sidecar either (workers don't serve HTTP traffic)
+
+---
+
+## Template Structure
+
+### CPU template (`deployment-runnable-image-temporal-cpu.yaml`)
+
+```yaml
+metadata:
+  annotations:
+    temporal.scaleml.io/taskQueue: "${TEMPORAL_TASK_QUEUE}"
+    temporal.scaleml.io/minWorkers: "${MIN_WORKERS}"
+    temporal.scaleml.io/maxWorkers: "${MAX_WORKERS}"
+    temporal.scaleml.io/perWorker: "${PER_WORKER}"
+spec:
+  replicas: ${MAX_WORKERS}          # fixed in MVP
+  template:
+    metadata:
+      labels:
+        sidecar.istio.io/inject: "false"   # no HTTP traffic
+    spec:
+      containers:
+        - name: main
+          env: ${MAIN_ENV}          # includes TEMPORAL_TASK_QUEUE,
+                                    #   TEMPORAL_SERVER_HOSTNAME,
+                                    #   TEMPORAL_SERVER_PORT
+          # no readiness probe
+          # no forwarder sidecar
 ```
 
-**`common/dtos/model_endpoints.py`**
-- Add `temporal_task_queue: Optional[str]` to `CreateModelEndpointV1Request` and `UpdateModelEndpointV1Request`
-- Validation: required when `endpoint_type == "temporal"`
+### GPU template adds:
+- `nodeSelector: k8s.amazonaws.com/accelerator: ${GPU_TYPE}`
+- `tolerations: nvidia.com/gpu`
+- `resources.requests/limits: nvidia.com/gpu: ${GPUS}`
+- `/dev/shm` emptyDir volume (dshm)
 
-**`domain/use_cases/model_endpoint_use_cases.py`**
-- `validate_deployment_resources`: allow `min_workers=0` for `TEMPORAL` (same as `ASYNC`)
-- No `concurrent_requests_per_worker` limit (workers process one activity at a time by default)
+---
 
-**`infra/gateways/resources/k8s_resource_types.py`**
-- Add `_TemporalDeploymentArguments` TypedDict:
-  ```python
-  class _TemporalDeploymentArguments(TypedDict):
-      TEMPORAL_TASK_QUEUE: str
-      TEMPORAL_SERVER_HOSTNAME: str
-      TEMPORAL_SERVER_PORT: str
-      REPLICAS: int   # fixed in MVP; driven by max_workers
-  ```
-- Add `DeploymentRunnableImageTemporalGpuArguments` and `...CpuArguments` composite TypedDicts
-
-**`infra/gateways/resources/templates/service_template_config_map*.yaml`**
-- Add `deployment-runnable-image-temporal-gpu.yaml` and `...-cpu.yaml` templates
-- Key differences from async template:
-  - No `celery-forwarder` sidecar — the user container IS the Temporal worker
-  - No `celery.scaleml.autoscaler/*` annotations
-  - `replicas: ${REPLICAS}` (fixed)
-  - Env vars injected: `TEMPORAL_TASK_QUEUE`, `TEMPORAL_SERVER_HOSTNAME`, `TEMPORAL_SERVER_PORT`, `CONCURRENCY`
-  - Readiness probe: TCP check on Temporal worker port (or omit — workers have no HTTP endpoint)
-
-**`infra/gateways/resources/k8s_endpoint_resource_delegate.py`**
-- `delete_resources`: add `TEMPORAL` branch (reuses sync cleanup — no Celery queue to delete)
-- `create_or_update_resources`: route `TEMPORAL` to new template
-
-**`infra/gateways/resources/live_endpoint_resource_gateway.py`**
-- `create_or_update_resources`: skip Celery queue creation for `TEMPORAL` (add to `else` branch or make explicit)
-- `get_resources`: skip SQS queue depth polling for `TEMPORAL`
-
-### Phase 2 — Temporal-aware autoscaling (follow-up, ~3 weeks)
+## Phase 2 — Temporal-aware autoscaling (follow-up)
 
 Scale worker replicas based on Temporal task queue backlog. Options:
 
@@ -177,6 +210,18 @@ launch create-endpoint \
 
 ---
 
+## Open Questions — Resolved
+
+1. **Readiness probe** — Omitted. Temporal workers have no HTTP endpoint. The pod is considered ready as soon as the container starts. Worker images may optionally add a health check sidecar in the future.
+
+2. **Task submission API** — Out of scope for Phase 1. Launch does not expose a way to start a Temporal workflow. The Temporal workflow is the caller.
+
+3. **Namespace** — Defaults to `"default"` via `hmi_config.temporal_server_namespace` (with empty-string fallback). Not exposed in the API in Phase 1.
+
+4. **Multi-queue workers** — Out of scope. Each endpoint maps to exactly one task queue.
+
+---
+
 ## What This Is Not
 
 - **Not a task submission API.** Launch does not expose `/v1/async-tasks` for `temporal` endpoints. The Temporal workflow is the caller; Launch only manages the worker pods.
@@ -196,9 +241,6 @@ launch create-endpoint \
 
 ---
 
-## Open Questions
+## E2E Test
 
-1. **Readiness probe**: Temporal workers have no HTTP endpoint. Should Launch skip the readiness probe for `temporal` endpoints, or should worker images expose a `/healthz` on a sidecar port?
-2. **Task submission API**: Should Launch eventually expose a way to *start a Temporal workflow* (not just manage workers)? This would be a larger API addition and is out of scope for Phase 1.
-3. **Namespace**: Should `temporal_namespace` be a configurable field, or default to `"default"`?
-4. **Multi-queue workers**: Some use cases may want one pod to pull from multiple task queues. Out of scope for now; each endpoint maps to one task queue.
+See [`docs/temporal-endpoint-e2e-test.md`](temporal-endpoint-e2e-test.md) for the full test procedure and results.
