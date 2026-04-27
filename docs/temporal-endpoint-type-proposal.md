@@ -95,28 +95,6 @@ The `model_bundle_id` points to a bundle whose command runs the Temporal activit
 | `infra/gateways/resources/templates/service_template_config_map_circleci.yaml` | Add `deployment-runnable-image-temporal-{cpu,gpu}.yaml` templates |
 | `charts/model-engine/templates/service_template_config_map.yaml` | Add same templates via Helm `range` loop for prod |
 
-### Key Design Decisions (vs. original proposal)
-
-**Annotations instead of a new HPA resource for autoscaling params:**
-- `temporal.scaleml.io/taskQueue`, `/minWorkers`, `/maxWorkers`, `/perWorker` are stored as Deployment annotations
-- `_get_temporal_autoscaling_params` reads these back in `get_resources` to populate `deployment_state`
-- This matches how `min_workers`/`max_workers` are read for KEDA-scaled endpoints
-
-**`TEMPORAL_SERVER_HOSTNAME` from infra config, not request:**
-- Reads `hmi_config.temporal_server_hostname` (with empty-string fallback) so per-cluster config can override without touching the API
-- `TEMPORAL_SERVER_PORT` defaults to `7233` if not configured
-
-**MVP: `replicas = max_workers` (fixed):**
-- No KEDA scaler created for temporal endpoints
-- `min_workers=0` is allowed (same as async) but has no effect in MVP — the deployment always has `max_workers` replicas
-
-**No readiness probe:**
-- Temporal workers have no HTTP endpoint to probe
-- The template omits the readiness probe entirely; Kubernetes considers the pod ready as soon as the container starts
-
-**No forwarder sidecar:**
-- The `main` container IS the Temporal worker
-- `sidecar.istio.io/inject: "false"` — no Istio sidecar either (workers don't serve HTTP traffic)
 
 ---
 
