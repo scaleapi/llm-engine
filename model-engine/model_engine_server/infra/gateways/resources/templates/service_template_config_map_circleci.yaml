@@ -2504,6 +2504,283 @@ data:
                 items:
                   - key: infra_service_config
                     path: config.yaml
+  deployment-runnable-image-temporal-cpu.yaml: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        env: circleci
+        managed-by: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/version: ${GIT_TAG}
+        tags.datadoghq.com/service: ${ENDPOINT_NAME}
+        endpoint_id: ${ENDPOINT_ID}
+        endpoint_name: ${ENDPOINT_NAME}
+      annotations:
+        temporal.scaleml.io/taskQueue: "${TEMPORAL_TASK_QUEUE}"
+        temporal.scaleml.io/minWorkers: "${MIN_WORKERS}"
+        temporal.scaleml.io/maxWorkers: "${MAX_WORKERS}"
+        temporal.scaleml.io/perWorker: "${PER_WORKER}"
+    spec:
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
+      replicas: ${MAX_WORKERS}
+      selector:
+        matchLabels:
+          app: ${RESOURCE_NAME}
+          version: v1
+      template:
+        metadata:
+          labels:
+            app: ${RESOURCE_NAME}
+            user_id: ${OWNER}
+            team: ${TEAM}
+            product: ${PRODUCT}
+            created_by: ${CREATED_BY}
+            owner: ${OWNER}
+            env: circleci
+            managed-by: model-engine
+            use_scale_launch_endpoint_network_policy: "true"
+            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/version: ${GIT_TAG}
+            tags.datadoghq.com/service: ${ENDPOINT_NAME}
+            endpoint_id: ${ENDPOINT_ID}
+            endpoint_name: ${ENDPOINT_NAME}
+            sidecar.istio.io/inject: "false"
+            version: v1
+          annotations:
+            ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
+            kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+        spec:
+          affinity:
+            podAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 1
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                      - ${RESOURCE_NAME}
+                  topologyKey: kubernetes.io/hostname
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: ${IMAGE_HASH}
+                      operator: In
+                      values:
+                      - "True"
+                  topologyKey: kubernetes.io/hostname
+          terminationGracePeriodSeconds: 1800
+          serviceAccount: default
+          priorityClassName: ${PRIORITY}
+          containers:
+            - name: main
+              securityContext:
+                capabilities:
+                  drop:
+                  - all
+              image: ${IMAGE}
+              imagePullPolicy: IfNotPresent
+              command: ${COMMAND}
+              env: ${MAIN_ENV}
+              resources:
+                requests:
+                  cpu: ${CPUS}
+                  memory: ${MEMORY}
+                  ${STORAGE_DICT}
+                limits:
+                  cpu: ${CPUS}
+                  memory: ${MEMORY}
+                  ${STORAGE_DICT}
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /opt/.aws/config
+                  subPath: config
+                - name: user-config
+                  mountPath: /app/user_config
+                  subPath: raw_data
+                - name: endpoint-config
+                  mountPath: /app/endpoint_config
+                  subPath: raw_data
+                - name: infra-service-config-volume
+                  mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
+          securityContext:
+            fsGroup: 65534
+          volumes:
+            - name: config-volume
+              configMap:
+                name: default-config
+            - name: user-config
+              configMap:
+                name: ${RESOURCE_NAME}
+            - name: endpoint-config
+              configMap:
+                name: ${RESOURCE_NAME}-endpoint-config
+            - name: infra-service-config-volume
+              configMap:
+                name: model-engine-service-config
+                items:
+                  - key: infra_service_config
+                    path: config.yaml
+  deployment-runnable-image-temporal-gpu.yaml: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${RESOURCE_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        env: circleci
+        managed-by: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/version: ${GIT_TAG}
+        tags.datadoghq.com/service: ${ENDPOINT_NAME}
+        endpoint_id: ${ENDPOINT_ID}
+        endpoint_name: ${ENDPOINT_NAME}
+      annotations:
+        temporal.scaleml.io/taskQueue: "${TEMPORAL_TASK_QUEUE}"
+        temporal.scaleml.io/minWorkers: "${MIN_WORKERS}"
+        temporal.scaleml.io/maxWorkers: "${MAX_WORKERS}"
+        temporal.scaleml.io/perWorker: "${PER_WORKER}"
+    spec:
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
+      replicas: ${MAX_WORKERS}
+      selector:
+        matchLabels:
+          app: ${RESOURCE_NAME}
+          version: v1
+      template:
+        metadata:
+          labels:
+            app: ${RESOURCE_NAME}
+            user_id: ${OWNER}
+            team: ${TEAM}
+            product: ${PRODUCT}
+            created_by: ${CREATED_BY}
+            owner: ${OWNER}
+            env: circleci
+            managed-by: model-engine
+            use_scale_launch_endpoint_network_policy: "true"
+            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/version: ${GIT_TAG}
+            tags.datadoghq.com/service: ${ENDPOINT_NAME}
+            endpoint_id: ${ENDPOINT_ID}
+            endpoint_name: ${ENDPOINT_NAME}
+            sidecar.istio.io/inject: "false"
+            version: v1
+          annotations:
+            ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
+            kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+        spec:
+          affinity:
+            podAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 1
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                      - ${RESOURCE_NAME}
+                  topologyKey: kubernetes.io/hostname
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: ${IMAGE_HASH}
+                      operator: In
+                      values:
+                      - "True"
+                  topologyKey: kubernetes.io/hostname
+          terminationGracePeriodSeconds: 1800
+          serviceAccount: default
+          nodeSelector:
+            k8s.amazonaws.com/accelerator: ${GPU_TYPE}
+          tolerations:
+            - key: "nvidia.com/gpu"
+              operator: "Exists"
+              effect: "NoSchedule"
+          priorityClassName: ${PRIORITY}
+          containers:
+            - name: main
+              securityContext:
+                capabilities:
+                  drop:
+                  - all
+              image: ${IMAGE}
+              imagePullPolicy: IfNotPresent
+              command: ${COMMAND}
+              env: ${MAIN_ENV}
+              resources:
+                requests:
+                  nvidia.com/gpu: ${GPUS}
+                  cpu: ${CPUS}
+                  memory: ${MEMORY}
+                  ${STORAGE_DICT}
+                limits:
+                  nvidia.com/gpu: ${GPUS}
+                  cpu: ${CPUS}
+                  memory: ${MEMORY}
+                  ${STORAGE_DICT}
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /opt/.aws/config
+                  subPath: config
+                - mountPath: /dev/shm
+                  name: dshm
+                - name: user-config
+                  mountPath: /app/user_config
+                  subPath: raw_data
+                - name: endpoint-config
+                  mountPath: /app/endpoint_config
+                  subPath: raw_data
+                - name: infra-service-config-volume
+                  mountPath: ${INFRA_SERVICE_CONFIG_VOLUME_MOUNT_PATH}
+          securityContext:
+            fsGroup: 65534
+          volumes:
+            - name: config-volume
+              configMap:
+                name: default-config
+            - name: user-config
+              configMap:
+                name: ${RESOURCE_NAME}
+            - name: endpoint-config
+              configMap:
+                name: ${RESOURCE_NAME}-endpoint-config
+            - name: dshm
+              emptyDir:
+                medium: Memory
+            - name: infra-service-config-volume
+              configMap:
+                name: model-engine-service-config
+                items:
+                  - key: infra_service_config
+                    path: config.yaml
   user-config.yaml: |-
     apiVersion: v1
     kind: ConfigMap

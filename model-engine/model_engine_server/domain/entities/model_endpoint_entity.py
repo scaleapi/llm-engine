@@ -22,6 +22,7 @@ class ModelEndpointType(str, Enum):
     ASYNC = "async"
     SYNC = "sync"
     STREAMING = "streaming"
+    TEMPORAL = "temporal"
 
 
 class ModelEndpointStatus(str, Enum):
@@ -136,6 +137,7 @@ class ModelEndpointRecord(OwnedEntity):
     public_inference: Optional[bool] = None
     task_expires_seconds: Optional[int] = None
     queue_message_timeout_seconds: Optional[int] = None
+    temporal_task_queue: Optional[str] = None
 
 
 class ModelEndpointInfraState(BaseModel):

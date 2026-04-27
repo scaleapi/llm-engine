@@ -472,6 +472,8 @@ class Endpoint(Base):
     task_expires_seconds = Column(Integer, nullable=True)
     # Queue message visibility/lock timeout in seconds (SQS VisibilityTimeout / ASB lock_duration)
     queue_message_timeout_seconds = Column(Integer, nullable=True)
+    # Temporal task queue name for temporal endpoints
+    temporal_task_queue = Column(String, nullable=True)
 
     def __init__(
         self,
@@ -488,6 +490,7 @@ class Endpoint(Base):
         public_inference: Optional[bool] = False,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
+        temporal_task_queue: Optional[str] = None,
     ):
         self.id = f"end_{get_xid()}"
         self.name = name
@@ -502,6 +505,7 @@ class Endpoint(Base):
         self.public_inference = public_inference
         self.task_expires_seconds = task_expires_seconds
         self.queue_message_timeout_seconds = queue_message_timeout_seconds
+        self.temporal_task_queue = temporal_task_queue
 
     @classmethod
     async def create(cls, session: AsyncSession, endpoint: "Endpoint") -> None:
