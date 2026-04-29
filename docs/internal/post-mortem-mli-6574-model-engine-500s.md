@@ -114,7 +114,26 @@ helm upgrade model-engine charts/model-engine \
 
 `--atomic` is the key flag: if the migration job exits non-zero or the pod fails its readiness probe within the timeout, Helm automatically rolls back to the previous release with no manual intervention needed.
 
-If emergency direct `kubectl set image` is ever required (e.g., Helm state is corrupted), require running the migration job manually first:
+**Enforcing the ban — options by strength:**
+
+1. **Kubernetes RBAC (simplest):** Remove `patch`/`update` on `deployments` from developer roles. Only the CI service account (used by `helm upgrade`) retains that permission. Developers keep read and exec access; they just can't mutate deployment specs directly.
+
+2. **GitOps with ArgoCD (most robust):** ArgoCD continuously reconciles cluster state against git. A manual `kubectl set image` is detected as drift and reverted within ~3 minutes. Changes must go through a git commit + PR — there is no persistent path outside the pipeline.
+
+3. **Admission controller (OPA/Kyverno):** Write a policy that rejects any `PATCH` on a deployment's image unless it originates from the CI service account or carries a specific Helm annotation. More surgical than RBAC.
+
+RBAC is the fastest win today; GitOps is the right long-term answer.
+
+**Testing a new image without `kubectl set image`:**
+
+- **Staging:** run `scripts/deploy.sh <sha>` against the staging context — same Helm path as production, with migrations enforced.
+- **Standalone pod (no deployment mutation needed):** to verify an image starts cleanly on the live cluster without touching the `Deployment` resource:
+  ```bash
+  kubectl run test-pod --image=<your-image> --rm -it -- bash
+  ```
+  This doesn't require `deployments/patch`, so RBAC restrictions don't apply. Use it to manually verify DB connectivity, run the schema validator, or inspect logs before cutting a Helm release.
+
+If emergency direct `kubectl set image` is ever required (e.g., Helm state is corrupted), run the migration job manually first:
 ```bash
 kubectl create job db-migration-manual-$(date +%s) \
   --from=job/$(kubectl get jobs -l app=model-engine-database-migration --sort-by=.metadata.creationTimestamp -o name | tail -1)
@@ -122,10 +141,10 @@ kubectl wait --for=condition=complete job/db-migration-manual-... --timeout=600s
 # only then: kubectl set image ...
 ```
 
-**Files to change:** `scripts/deploy.sh` (new), `docs/internal/` runbook, CI pipeline.
+**Files to change:** `scripts/deploy.sh` (new), `docs/internal/` runbook, CI pipeline, RBAC role manifests.
 
 **Owner:** model-engine on-call
-**Effort:** ~0.5 day
+**Effort:** ~1 day
 
 ---
 
