@@ -173,13 +173,14 @@ class LiveTokenizerRepository(TokenizerRepository):
         model_info = SUPPORTED_MODELS_INFO[model_name]
 
         model_location = None
-        try:
-            if not model_info.hf_repo:
-                raise RepositoryNotFoundError("No HF repo specified for model.")
-            list_repo_refs(model_info.hf_repo)  # check if model exists in Hugging Face Hub
-            model_location = model_info.hf_repo
-            # AutoTokenizer handles file downloads for HF repos
-        except RepositoryNotFoundError:
+        if model_info.hf_repo:
+            try:
+                list_repo_refs(model_info.hf_repo)  # check if model exists in Hugging Face Hub
+                model_location = model_info.hf_repo
+                # AutoTokenizer handles file downloads for HF repos
+            except RepositoryNotFoundError:
+                model_location = self._load_tokenizer_from_s3(model_name, model_info.s3_repo)
+        else:
             model_location = self._load_tokenizer_from_s3(model_name, model_info.s3_repo)
 
         if not model_location:
