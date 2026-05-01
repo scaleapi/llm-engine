@@ -23,7 +23,7 @@ ENV PATH="/workspace/venv/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 WORKDIR /workspace/model-engine
 COPY model-engine/requirements.txt requirements.txt
 COPY model-engine/requirements_override.txt requirements_override.txt
-RUN pip install --upgrade pip setuptools cmake setuptools-rust
+RUN pip install --upgrade pip==26.1 setuptools cmake setuptools-rust
 RUN pip install -r requirements.txt --no-cache-dir --no-build-isolation
 RUN pip install -r requirements_override.txt --no-cache-dir
 COPY model-engine/setup.py setup.py
