@@ -11,7 +11,7 @@
 
 ## Summary
 
-At 23:50Z on Apr 24, a direct `kubectl set image` pushed a model-engine image (`04729cef…`) that declared a new ORM column `endpoints.temporal_task_queue` with no corresponding Alembic migration applied to production. Every `list_model_endpoints` and `get_model_endpoint` call immediately returned 500. Five patch images over ~34 minutes failed to resolve the issue before a rollback to `f395ffa6…` cleared errors at 00:48Z. At least one user missed a project delivery deadline.
+At 23:50Z on Apr 24, a direct `kubectl set image` pushed a model-engine image (`04729cef…`) that declared a new ORM column `endpoints.temporal_task_queue` with no corresponding Alembic migration applied to production. Every `list_model_endpoints` and `get_model_endpoint` call immediately returned 500. Five patch images over ~34 minutes failed to resolve the issue before a rollback to `f395ffa6…` cleared errors at 00:48Z.
 
 ---
 
@@ -34,7 +34,11 @@ At 23:50Z on Apr 24, a direct `kubectl set image` pushed a model-engine image (`
 
 ## Root Cause
 
-The `temporal_task_queue` column was added to the `Endpoint` ORM model (`hosted_model_inference.py`) as part of the temporal endpoint type feature (MLI-6425), but **no Alembic migration was written for it**. The column was referenced in every endpoint query via SQLAlchemy's column loading. When PostgreSQL returned `column "temporal_task_queue" does not exist`, SQLAlchemy surfaced a 500 on every call.
+**Background terms:**
+- **ORM column** — a Python class attribute like `temporal_task_queue = Column(Text)` on the `Endpoint` model. SQLAlchemy (our ORM) translates these attributes into SQL; every declared column is included in the `SELECT` it generates when loading `Endpoint` objects.
+- **Alembic migration** — a versioned SQL script (e.g. `ALTER TABLE endpoints ADD COLUMN temporal_task_queue TEXT`) that updates the live database schema to match what the application code expects. Without it, the DB is missing the column the ORM declares.
+
+The `temporal_task_queue` column was added to the `Endpoint` ORM model (`hosted_model_inference.py`) as part of the temporal endpoint type feature (MLI-6425), but **no Alembic migration was written for it**. Because SQLAlchemy includes every ORM-declared column in its generated `SELECT` statement, all endpoint operations — list, get, create, update, delete — issued a query referencing `temporal_task_queue`. PostgreSQL returned `column "temporal_task_queue" does not exist` on every call, causing a 500 across the board.
 
 ### Why the existing migration gate didn't protect us
 
@@ -66,25 +70,24 @@ This pre-upgrade hook runs `alembic upgrade head` before the gateway deployment 
 | Customer-facing 500s | ~47 min (23:50Z → 00:37Z alert; resolved 00:48Z) |
 | Affected operations | All endpoint list, get, create, update, delete |
 | Affected users | All model-engine users |
-| Known downstream impact | At least one user missed a project delivery deadline |
 
 ---
 
 ## Action Items
 
-### P0 — Require Alembic migration before ORM column is added
+### P0 — Add CI check: every new ORM column requires a paired Alembic migration
 
-**What:** Add a CI check that detects when ORM models have columns not covered by any migration. Block merge if a new `Column(...)` in `hosted_model_inference.py` or `model.py` has no corresponding `add_column` in `alembic/versions/`.
+**What:** Add a CI check that blocks merge when the ORM model declares a column that has no corresponding migration. This prevents the "no migration written" contributing factor, though it does not by itself prevent `kubectl set image` from bypassing migration execution (that is addressed in the next item).
 
 **How:**
 
 Option A (preferred) — use `alembic check` in CI:
 ```bash
-# In CI, in the job that already spins up a Postgres container for integration tests
+# In the CI job that already spins up a Postgres container for integration tests
 alembic check   # exits non-zero if autogenerate detects pending schema changes
 ```
 
-Option B — static linter (simpler, imperfect): parse `alembic/versions/` for `add_column("endpoints", …)` and cross-reference against columns declared in the ORM model. Fails the lint job on mismatch.
+Option B — static linter (simpler, imperfect): cross-reference `add_column("endpoints", …)` calls in `alembic/versions/` against columns declared in the ORM model. Fail the lint job on mismatch.
 
 **Files to change:** CI config, `Makefile` (add `make check-migrations` target).
 
@@ -93,13 +96,29 @@ Option B — static linter (simpler, imperfect): parse `alembic/versions/` for `
 
 ---
 
-### P0 — Enforce `helm upgrade` for production image rollouts; ban `kubectl set image`
+### P0 — Prevent `kubectl set image` in production (preventative, not reactive)
 
-**What:** The `kubectl set image` pattern bypasses all Helm pre-upgrade hooks, including the migration job. All production image updates must go through `helm upgrade` so the migration job runs first.
+**What:** `kubectl set image` updates pods directly, bypassing all Helm pre-upgrade hooks including the migration job. The fix must be preventative: `kubectl set image` on the production deployment should be blocked or immediately reverted — not just rolled back after a failure is detected.
 
-**How:**
+**Preferred approach — Kubernetes RBAC:**
 
-Add a deploy wrapper script used by both CI and on-call:
+Remove `patch`/`update` permissions on `Deployment` resources from developer roles in the production namespace. Only the CI service account retains those permissions. A `kubectl set image` attempt from a developer will be rejected by the API server immediately — no deployment occurs, no rollback needed.
+
+```yaml
+# Remove from developer ClusterRole / Role in prod namespace:
+# - apiGroups: ["apps"]
+#   resources: ["deployments"]
+#   verbs: ["patch", "update"]   # <-- remove these
+#   verbs: ["get", "list", "watch"]  # <-- keep read-only
+```
+
+**Alternative — GitOps (ArgoCD):**
+
+ArgoCD continuously reconciles cluster state against git. A manual `kubectl set image` is detected as drift and reverted within ~3 minutes. This is more robust than RBAC alone because it also catches changes made via other paths (e.g. direct `kubectl edit`).
+
+**Sanctioned production deploy path:**
+
+All production image updates go through a deploy script that runs `helm upgrade` with the migration pre-hook:
 ```bash
 #!/bin/bash
 # scripts/deploy.sh
@@ -107,143 +126,42 @@ set -euo pipefail
 TAG=${1:?usage: deploy.sh <image-tag>}
 helm upgrade model-engine charts/model-engine \
   --set tag="$TAG" \
-  --wait \        # block until all hooks and pods are healthy
+  --wait \
   --timeout 10m \
-  --atomic        # auto-rollback if migration job or pod readiness fails
+  --atomic
 ```
 
-`--atomic` is the key flag: if the migration job exits non-zero or the pod fails its readiness probe within the timeout, Helm automatically rolls back to the previous release with no manual intervention needed.
+**Testing a new image before deploying to production:**
 
-**Enforcing the ban — options by strength:**
-
-1. **Kubernetes RBAC (simplest):** Remove `patch`/`update` on `deployments` from developer roles. Only the CI service account (used by `helm upgrade`) retains that permission. Developers keep read and exec access; they just can't mutate deployment specs directly.
-
-2. **GitOps with ArgoCD (most robust):** ArgoCD continuously reconciles cluster state against git. A manual `kubectl set image` is detected as drift and reverted within ~3 minutes. Changes must go through a git commit + PR — there is no persistent path outside the pipeline.
-
-3. **Admission controller (OPA/Kyverno):** Write a policy that rejects any `PATCH` on a deployment's image unless it originates from the CI service account or carries a specific Helm annotation. More surgical than RBAC.
-
-RBAC is the fastest win today; GitOps is the right long-term answer.
-
-**Testing a new image without `kubectl set image`:**
-
-- **Staging:** run `scripts/deploy.sh <sha>` against the staging context — same Helm path as production, with migrations enforced.
-- **Standalone pod (no deployment mutation needed):** to verify an image starts cleanly on the live cluster without touching the `Deployment` resource:
-  ```bash
-  kubectl run test-pod --image=<your-image> --rm -it -- bash
-  ```
-  This doesn't require `deployments/patch`, so RBAC restrictions don't apply. Use it to manually verify DB connectivity, run the schema validator, or inspect logs before cutting a Helm release.
-
-If emergency direct `kubectl set image` is ever required (e.g., Helm state is corrupted), run the migration job manually first:
+Use staging (see Rollout Strategy below) or run a standalone pod against the production cluster without mutating the `Deployment`:
 ```bash
-kubectl create job db-migration-manual-$(date +%s) \
-  --from=job/$(kubectl get jobs -l app=model-engine-database-migration --sort-by=.metadata.creationTimestamp -o name | tail -1)
-kubectl wait --for=condition=complete job/db-migration-manual-... --timeout=600s
-# only then: kubectl set image ...
+kubectl run test-pod --image=<your-image> --rm -it -- bash
 ```
+This requires only `pods/create`, which developer roles retain.
 
-**Files to change:** `scripts/deploy.sh` (new), `docs/internal/` runbook, CI pipeline, RBAC role manifests.
+**Files to change:** RBAC role manifests (production namespace), `scripts/deploy.sh` (new), CI pipeline config.
 
 **Owner:** model-engine on-call
 **Effort:** ~1 day
 
 ---
 
-### P1 — Add startup schema validation so bad images fail fast instead of serving 500s
+### Rollout Strategy
 
-**What:** Add an `@app.on_event("startup")` check in `api/app.py` that compares ORM column declarations against actual DB columns. If any ORM column is missing from the DB, raise an exception before the process begins serving traffic. Kubernetes will keep old pods running and never route traffic to the bad pod.
+**Staging:** No restrictions. Developers can use `kubectl set image`, `helm upgrade`, or any other mechanism to test images against the staging cluster. Staging exists specifically for iteration before production.
 
-**How:**
+**Production:** All image updates must go through `helm upgrade` via `scripts/deploy.sh`. `kubectl set image` is blocked at the RBAC level — developer roles do not have `patch`/`update` on `Deployment` resources in the production namespace. The `helm upgrade` path runs the migration pre-hook automatically before any pod rolls over.
 
-Add to `model-engine/model_engine_server/db/base.py`:
-```python
-from sqlalchemy import inspect as sa_inspect
-from model_engine_server.db.models.hosted_model_inference import Base
-
-def validate_schema_or_raise(engine) -> None:
-    inspector = sa_inspect(engine)
-    for table in Base.metadata.sorted_tables:
-        schema = table.schema
-        db_cols = {c["name"] for c in inspector.get_columns(table.name, schema=schema)}
-        orm_cols = {c.name for c in table.columns}
-        missing = orm_cols - db_cols
-        if missing:
-            raise RuntimeError(
-                f"Schema drift detected: table {schema}.{table.name} "
-                f"is missing columns {missing}. "
-                f"Run 'alembic upgrade head' before deploying this image."
-            )
+The deploy path in both environments:
+```
+staging:   any method (kubectl set image, helm upgrade, etc.)
+           ↓
+           validate: smoke tests pass, no 500s
+           ↓
+production: scripts/deploy.sh <image-tag>   (helm upgrade, migration-first, RBAC-enforced)
 ```
 
-Wire into startup in `api/app.py` (alongside the existing `load_redis` startup event):
-```python
-from model_engine_server.db.base import get_db_manager, validate_schema_or_raise
-
-@app.on_event("startup")
-def validate_db_schema():
-    db = get_db_manager()
-    with db.session_sync() as session:
-        validate_schema_or_raise(session.get_bind())
-```
-
-The existing readiness probe on `/readyz` (checked every 2s, `failureThreshold: 30` → ~60s window) will prevent Kubernetes from routing traffic to the pod while startup events are failing. If startup raises, the process exits and Kubernetes keeps the old replica set running.
-
-**Files to change:**
-- `model-engine/model_engine_server/db/base.py` — add `validate_schema_or_raise()`
-- `model-engine/model_engine_server/api/app.py` — add startup event
-
-**Owner:** model-engine on-call
-**Effort:** ~1 day (including unit tests with a mock inspector)
-
----
-
-### P1 — Write the missing `temporal_task_queue` migration before re-deploying MLI-6425
-
-**What:** PR #815 (`lilyz-ai/temporal-endpoint-type`) adds `temporal_task_queue` to the `Endpoint` ORM. A migration must be written and merged — and applied to production — before this image is deployed again.
-
-**How:**
-```bash
-cd model-engine/model_engine_server/db/migrations
-alembic revision --autogenerate -m "add_temporal_task_queue_column"
-# review generated file, confirm it contains:
-#   op.add_column("endpoints", sa.Column("temporal_task_queue", sa.Text(), nullable=True), schema="hosted_model_inference")
-alembic upgrade head   # validate locally against test DB
-```
-
-**Files to change:** new file in `model-engine/model_engine_server/db/migrations/alembic/versions/`.
-
-**Owner:** MLI-6425 author
-**Effort:** ~1 hour
-
----
-
-### P2 — Define rollback SLA in the on-call runbook
-
-**What:** Codify a clear decision rule: if the active incident is not resolved within **15 minutes of the first 5xx spike**, or after **2 failed forward-patch attempts**, initiate rollback immediately.
-
-```
-Rollback trigger (whichever comes first):
-  - 2 forward-patch attempts failed, OR
-  - 15 minutes elapsed since first 5xx spike
-  → helm rollback model-engine
-```
-
-**Files to change:** `docs/internal/smoke-tests.md` or new `docs/internal/oncall-runbook.md`.
-
-**Owner:** on-call lead
-**Effort:** ~0.5 day
-
----
-
-### P2 — Reduce 5xx alert latency from ~47 min to <5 min
-
-**What:** The PagerDuty alert fired 47 minutes after the bad deploy. The Envoy 5xx monitor evaluation window needs to be tightened to catch a step-function spike within 5 minutes.
-
-**How:** In Datadog, find the monitor for `envoy.cluster.upstream_rq_5xx` (or the Envoy 5xx ratio metric). Set the evaluation window to 2–3 minutes with a threshold of ≥1% error rate sustained for 1 minute.
-
-**Files to change:** Datadog monitor config in Terracode-ML `datadog/` directory for the ml-serving account.
-
-**Owner:** on-call/infra
-**Effort:** ~1 hour
+Any change that requires a DB schema update (new ORM column) must have its Alembic migration merged and applied to production before the new image is deployed.
 
 ---
 
