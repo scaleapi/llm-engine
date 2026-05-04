@@ -75,71 +75,58 @@ This pre-upgrade hook runs `alembic upgrade head` before the gateway deployment 
 
 ## Action Items
 
-### P0 — Add CI check: every new ORM column requires a paired Alembic migration
-
-**What:** Add a CI check that blocks merge when the ORM model declares a column that has no corresponding migration. This prevents the "no migration written" contributing factor, though it does not by itself prevent `kubectl set image` from bypassing migration execution (that is addressed in the next item).
-
-**How:**
-
-Option A (preferred) — use `alembic check` in CI:
-```bash
-# In the CI job that already spins up a Postgres container for integration tests
-alembic check   # exits non-zero if autogenerate detects pending schema changes
-```
-
-Option B — static linter (simpler, imperfect): cross-reference `add_column("endpoints", …)` calls in `alembic/versions/` against columns declared in the ORM model. Fail the lint job on mismatch.
-
-**Files to change:** CI config, `Makefile` (add `make check-migrations` target).
-
-**Owner:** model-engine on-call
-**Effort:** ~1 day
-
----
-
 ### P0 — Prevent `kubectl set image` in production (preventative, not reactive)
 
-**What:** `kubectl set image` updates pods directly, bypassing all Helm pre-upgrade hooks including the migration job. The fix must be preventative: `kubectl set image` on the production deployment should be blocked or immediately reverted — not just rolled back after a failure is detected.
+**What:** `kubectl set image` updates pods directly, bypassing all Helm pre-upgrade hooks including the migration job. The fix must be preventative: a `kubectl set image` attempt against the production deployment is rejected by the API server before it takes effect.
 
-**Preferred approach — Kubernetes RBAC:**
+**How — Kubernetes RBAC:**
 
-Remove `patch`/`update` permissions on `Deployment` resources from developer roles in the production namespace. Only the CI service account retains those permissions. A `kubectl set image` attempt from a developer will be rejected by the API server immediately — no deployment occurs, no rollback needed.
+Developer kubeconfig contexts for the production namespace/cluster must not carry `patch`/`update` on `Deployment` resources. Only the CI service account (the one that runs `helm upgrade`) retains those verbs. When a developer runs `kubectl set image`, the API server returns 403 immediately — no pods are updated, no rollback is needed.
+
+Two files need to change:
+
+**1. Terracode-ML — developer Role in the production namespace**
+
+Find the existing developer `Role` or `ClusterRole` that grants access to the production `model-engine` namespace (likely in `scaleapi-ml-serving/` or similar). Remove `patch` and `update` from the `deployments` rule:
 
 ```yaml
-# Remove from developer ClusterRole / Role in prod namespace:
-# - apiGroups: ["apps"]
-#   resources: ["deployments"]
-#   verbs: ["patch", "update"]   # <-- remove these
-#   verbs: ["get", "list", "watch"]  # <-- keep read-only
+# Before (grants kubectl set image):
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "patch", "update"]
+
+# After (blocks kubectl set image):
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
 ```
 
-**Alternative — GitOps (ArgoCD):**
+Developers retain read access (`get`, `list`, `watch`) and exec access (`pods/exec`), so debugging and log inspection are unaffected.
 
-ArgoCD continuously reconciles cluster state against git. A manual `kubectl set image` is detected as drift and reverted within ~3 minutes. This is more robust than RBAC alone because it also catches changes made via other paths (e.g. direct `kubectl edit`).
+**2. llm-engine — `scripts/deploy.sh` (new file)**
 
-**Sanctioned production deploy path:**
+This becomes the only sanctioned path for production image updates. It runs `helm upgrade`, which triggers the migration pre-hook before any pod rolls:
 
-All production image updates go through a deploy script that runs `helm upgrade` with the migration pre-hook:
 ```bash
 #!/bin/bash
 # scripts/deploy.sh
 set -euo pipefail
 TAG=${1:?usage: deploy.sh <image-tag>}
+VALUES=${2:-charts/model-engine/values_sample.yaml}
 helm upgrade model-engine charts/model-engine \
+  --values "$VALUES" \
   --set tag="$TAG" \
   --wait \
   --timeout 10m \
   --atomic
 ```
 
-**Testing a new image before deploying to production:**
+`--atomic` ensures that if the migration job or any pod fails readiness within the timeout, Helm rolls back to the previous release automatically.
 
-Use staging (see Rollout Strategy below) or run a standalone pod against the production cluster without mutating the `Deployment`:
-```bash
-kubectl run test-pod --image=<your-image> --rm -it -- bash
-```
-This requires only `pods/create`, which developer roles retain.
-
-**Files to change:** RBAC role manifests (production namespace), `scripts/deploy.sh` (new), CI pipeline config.
+**Files to change:**
+- **Terracode-ML:** developer `Role`/`ClusterRole` manifest in the production namespace — remove `patch`/`update` on `apps/deployments`
+- **llm-engine:** `scripts/deploy.sh` (new)
+- **llm-engine `.circleci/config.yml`:** replace any `kubectl set image` calls in CI deploy jobs with `scripts/deploy.sh <tag>`
 
 **Owner:** model-engine on-call
 **Effort:** ~1 day
@@ -148,20 +135,32 @@ This requires only `pods/create`, which developer roles retain.
 
 ### Rollout Strategy
 
-**Staging:** No restrictions. Developers can use `kubectl set image`, `helm upgrade`, or any other mechanism to test images against the staging cluster. Staging exists specifically for iteration before production.
+There is currently no dedicated staging environment for model-engine in this repo — `values_circleci.yaml` is ephemeral (spun up and torn down per CI run) and `values_sample.yaml` targets production. A stable staging environment should be added:
 
-**Production:** All image updates must go through `helm upgrade` via `scripts/deploy.sh`. `kubectl set image` is blocked at the RBAC level — developer roles do not have `patch`/`update` on `Deployment` resources in the production namespace. The `helm upgrade` path runs the migration pre-hook automatically before any pod rolls over.
+**Staging (new):**
+- Add `values_staging.yaml` mirroring `values_sample.yaml` but pointing at the staging cluster and a staging DB.
+- No RBAC restrictions in staging: developers can use `kubectl set image`, `helm upgrade`, or any other mechanism freely.
+- Use staging to validate that a new image starts cleanly, migrations run, and endpoint smoke tests pass before touching production.
 
-The deploy path in both environments:
+**Testing a new image on staging before promoting to production:**
+```bash
+# Any of these are fine in staging:
+kubectl set image deployment/model-engine-gateway gateway=<your-image>   # quick iteration
+scripts/deploy.sh <your-image> charts/model-engine/values_staging.yaml   # full helm path
 ```
-staging:   any method (kubectl set image, helm upgrade, etc.)
+
+**Production:**
+All image updates must go through `scripts/deploy.sh` with the production values file. `kubectl set image` is blocked at the RBAC level — developer roles do not have `patch`/`update` on `Deployment` resources in the production namespace.
+
+```
+staging:   any method — iterate freely
            ↓
-           validate: smoke tests pass, no 500s
+           validate: migrations apply cleanly, smoke tests pass, no 500s
            ↓
 production: scripts/deploy.sh <image-tag>   (helm upgrade, migration-first, RBAC-enforced)
 ```
 
-Any change that requires a DB schema update (new ORM column) must have its Alembic migration merged and applied to production before the new image is deployed.
+Any change that requires a DB schema update (new ORM column) must have its Alembic migration merged and applied to production before the new image is deployed via `scripts/deploy.sh`.
 
 ---
 
