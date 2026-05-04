@@ -85,37 +85,85 @@ Developer access to `ml-serving-new` is granted via the `ml_infra_admin` EKS acc
 
 **Files to change:**
 
-**1. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf` (lines 545–561)**
+**1. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf` (lines 552–561)**
 
-Currently grants cluster-admin to ml-infra admins:
+Kubernetes RBAC is purely additive — a namespace Role cannot deny what a cluster-admin grant allows. The only fix is to remove the cluster-admin grant in `scale-deploy`. Change the `ml_infra_admin` access scope from cluster-wide to all namespaces except `scale-deploy`:
+
 ```hcl
+# Before:
 resource "aws_eks_access_policy_association" "ml_infra_admin" {
-  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  access_scope { type = "cluster" }
+  for_each      = toset(data.aws_iam_roles.ml_infra_admin.arns)
+  cluster_name  = local.cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = each.value
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
+# After:
+resource "aws_eks_access_policy_association" "ml_infra_admin" {
+  for_each      = toset(data.aws_iam_roles.ml_infra_admin.arns)
+  cluster_name  = local.cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = each.value
+
+  access_scope {
+    type       = "namespace"
+    namespaces = [for ns in local.workload_namespaces_default : ns if ns != "scale-deploy"]
+    # ["mlflow", "image-builder", "pyspark", "default", "gpu-operator"]
+  }
 }
 ```
-Change: replace `AmazonEKSClusterAdminPolicy` with a namespace-scoped policy, or keep cluster-admin for infra but add the namespace-scoped Role below to override deployment mutations in `scale-deploy`.
+
+With this change, ml_infra_admin has cluster-admin in all other namespaces but no implicit grant in `scale-deploy`.
 
 **2. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`**
 
-Add a namespace-scoped `Role` + `RoleBinding` in the `scale-deploy` namespace that restricts deployment mutations to the CI service account only. In Kubernetes, RBAC is additive — you cannot deny via a Role — so the correct approach is to ensure developers are not bound to any role that grants `patch`/`update` on `apps/deployments` in `scale-deploy`. Concretely:
+Add a `scale-deploy`-scoped Role that gives developers what they need (read, exec, logs) without deployment mutations, and bind it to the ml_infra_admin group:
 
 ```hcl
-resource "kubernetes_role" "model_engine_deployer" {
+resource "kubernetes_role" "scale_deploy_developer" {
   metadata {
-    name      = "model-engine-deployer"
+    name      = "scale-deploy-developer"
     namespace = "scale-deploy"
   }
   rule {
     api_groups = ["apps"]
-    resources  = ["deployments"]
-    verbs      = ["get", "list", "watch"]   # read-only; no patch/update
+    resources  = ["deployments", "replicasets"]
+    verbs      = ["get", "list", "watch"]   # no patch/update — blocks kubectl set image
   }
-  # ... all other developer-needed verbs on pods, logs, configmaps, etc.
+  rule {
+    api_groups = [""]
+    resources  = ["pods", "pods/log", "pods/exec", "configmaps", "services", "endpoints"]
+    verbs      = ["get", "list", "watch", "create", "delete"]
+  }
+  rule {
+    api_groups = ["batch"]
+    resources  = ["jobs"]
+    verbs      = ["get", "list", "watch", "create", "delete"]
+  }
+}
+
+resource "kubernetes_role_binding" "scale_deploy_developer" {
+  metadata {
+    name      = "scale-deploy-developer-binding"
+    namespace = "scale-deploy"
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = kubernetes_role.scale_deploy_developer.metadata[0].name
+  }
+  subject {
+    kind = "Group"
+    name = "ml-infra-admin"   # matches the k8s group from aws-auth ConfigMap for ml_infra_admin
+  }
 }
 ```
 
-Only the `ml-k8s-admin` service account (already cluster-admin, used by `helm upgrade`) retains deployment mutation rights. A developer running `kubectl set image` against `scale-deploy` gets a 403.
+The `ml-k8s-admin` service account (already cluster-admin, used by `just deploy prod` via `helm upgrade`) is unaffected and retains full deployment mutation rights.
 
 **Deploy path — already exists in model-engine-internal:**
 
@@ -125,8 +173,8 @@ just deploy prod   # helm upgrade --atomic --timeout 120m0s, runs migration pre-
 ```
 
 **Files to change:**
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`** (lines 545–561) — scope or replace the ml_infra_admin cluster-admin policy
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`** — add `model-engine-deployer` Role + RoleBinding for `scale-deploy` namespace, removing `patch`/`update` on `apps/deployments`
+- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`** (lines 552–561) — scope `ml_infra_admin` cluster-admin to all namespaces except `scale-deploy`
+- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`** — add `scale_deploy_developer` Role + RoleBinding for `scale-deploy`
 - **`model-engine-internal/justfile`** — already correct; `just deploy prod` is the right path
 
 **Owner:** model-engine on-call
@@ -147,23 +195,31 @@ just deploy prod   # helm upgrade --atomic --timeout 120m0s, runs migration pre-
 
 There is no staging environment for model-engine. One needs to be created.
 
-**Staging environment — effort estimate (~8–11 days total):**
+**Staging environment — effort estimate:**
 
-Several staging infrastructure components already exist in Terracode-ML `scaleapi-ml-serving/global/`:
+The staging backing infrastructure already exists in Terracode-ML `scaleapi-ml-serving/global/` — it was provisioned but never wired up to a model-engine deployment:
 
-| Component | Status | File | Effort |
-|---|---|---|---|
-| RDS Aurora PostgreSQL | **Already exists** (`ml-infra-staging`) | `global/db.tf` lines 85–164 | 0 days |
-| ElastiCache Redis | **Already exists** (`staging-celery-redis-rg-1`) | `global/celery-elasticache.tf` lines 44–80 | 0 days |
-| VPC / subnets | **Already exists** (reuse ml-serving VPC) | — | 0 days |
-| Route53 DNS (`ml-staging-internal.scale.com`) | **Already exists** | `global/dns.tf` lines 35–49 | 0 days |
-| EKS cluster (`ml-staging-new`) | **Does not exist** | new `clusters/ml-staging-new/` | ~4–5 days |
-| IAM / IRSA roles | Partial (extend from prod) | `global/iam-irsa.tf` | ~1–2 days |
-| K8s namespace + secrets | Does not exist | applied via Helm/kubectl post-cluster | ~0.5 day |
-| `values_staging.yaml` + service/infra configs | Does not exist | `model-engine-internal/resources/values/` | ~1 day |
-| `justfile` staging env wiring | Does not exist | `model-engine-internal/justfile` | ~0.5 day |
+| Component | Status | File |
+|---|---|---|
+| RDS Aurora PostgreSQL (`ml-infra-staging`, secret `staging/ml_infra_pg`) | **Already exists** | `global/db.tf` lines 85–164 |
+| ElastiCache Redis (`staging-celery-redis-rg-1`) | **Already exists** | `global/celery-elasticache.tf` lines 44–80 |
+| VPC / subnets | **Already exists** (shared ml-serving VPC) | — |
+| Route53 DNS (`ml-staging-internal.scale.com`) | **Already exists** | `global/dns.tf` lines 35–49 |
+| EKS cluster | **Does not exist** | — |
 
-The dominant cost is the new EKS cluster (node groups, GPU operators, Istio, autoscaler, IRSA wiring). The DB, Redis, VPC, and DNS are already provisioned.
+Two options for the missing K8s layer:
+
+**Option A — New namespace in ml-serving-new (~3–4 days):** Add a `scale-deploy-staging` namespace in the existing production cluster. DB and Redis already point at staging endpoints. Lower isolation (shares cluster with prod) but fastest path to a working staging deploy.
+- `values_staging.yaml` pointing at `staging/ml_infra_pg` and staging Redis: ~1 day
+- K8s namespace + IRSA service account + secrets: ~0.5 day
+- `justfile` staging env wiring: ~0.5 day
+- Validation / smoke tests: ~1 day
+
+**Option B — New EKS cluster (~8–11 days):** Full isolation. Dominant cost is the new EKS cluster definition (node groups, GPU operators, Istio, autoscaler IRSA). Everything else reuses existing staging infra.
+- New `clusters/ml-staging-new/` Terraform: ~4–5 days
+- IAM / IRSA: ~1–2 days
+- Config files + justfile: ~2 days
+- Validation: ~1–2 days
 
 **Process once staging exists:**
 
