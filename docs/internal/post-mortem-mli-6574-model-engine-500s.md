@@ -79,49 +79,39 @@ This pre-upgrade hook runs `alembic upgrade head` before the gateway deployment 
 
 **What:** `kubectl set image` updates pods directly, bypassing all Helm pre-upgrade hooks including the migration job. The fix must be preventative: a `kubectl set image` attempt against the production deployment is rejected by the API server before it takes effect.
 
-**How — Kubernetes RBAC:**
+Two preventative controls:
 
-Developer access to `ml-serving-new` is granted via the `ml_infra_admin` EKS access entry in Terracode-ML, which binds `AWSReservedSSO_MLInfraAdmin_*` to `AmazonEKSClusterAdminPolicy` — cluster-admin cluster-wide. That is why `kubectl set image` succeeds from a developer context today.
+**a. RBAC — block `kubectl set image` at the API server**
 
-**Important:** scoping away cluster-admin from `scale-deploy` also blocks `just deploy prod` run locally, because it uses the developer's personal kubectl context (`_set_k8s prod` switches to `ml-serving-new`). To make the RBAC change safe, **production deploys must move to CI**, where the CI runner authenticates as a service account that retains cluster-admin (`ml_integration_test_lambda`, already granted `AmazonEKSClusterAdminPolicy` in `eks.tf` lines 529–543). Developers trigger the CI deploy job rather than running `just deploy prod` locally.
+Developer access to `ml-serving-new` is via the `ml_infra_admin` EKS access entry, which grants cluster-admin cluster-wide. That is why `kubectl set image` succeeds today. Scoping it away from `scale-deploy` rejects `kubectl set image` before any pod is updated.
+
+Scoping away cluster-admin from `scale-deploy` would also break `just deploy prod` run locally (it uses the developer's personal kubectl context). The fix: `just deploy prod` mints a short-lived `ml-k8s-admin` SA token for the helm step. That SA already has cluster-admin (via `kubernetes_cluster_role_binding.ml_k8s_admin` in `workloads.tf`), so helm upgrade continues to work. Developers retain read/exec access via the `scale_developer` role below.
+
+**b. justfile guard — block deploying unmerged code**
+
+`just deploy prod` checks that the current commit is merged to `origin/master` before proceeding. Deploying a local branch to production is rejected before any image is built or pushed.
 
 **Files to change:**
 
 **1. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf` (lines 552–561)**
 
-Kubernetes RBAC is purely additive — a namespace Role cannot deny what a cluster-admin grant allows. The only fix is to remove the cluster-admin grant in `scale-deploy`. Change the `ml_infra_admin` access scope from cluster-wide to all namespaces except `scale-deploy`:
-
 ```hcl
 # Before:
-resource "aws_eks_access_policy_association" "ml_infra_admin" {
-  for_each      = toset(data.aws_iam_roles.ml_infra_admin.arns)
-  cluster_name  = local.cluster_name
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = each.value
-
   access_scope {
     type = "cluster"
   }
-}
 
 # After:
-resource "aws_eks_access_policy_association" "ml_infra_admin" {
-  for_each      = toset(data.aws_iam_roles.ml_infra_admin.arns)
-  cluster_name  = local.cluster_name
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = each.value
-
   access_scope {
     type       = "namespace"
     namespaces = [for ns in local.workload_namespaces_default : ns if ns != "scale-deploy"]
     # ["mlflow", "image-builder", "pyspark", "default", "gpu-operator"]
   }
-}
 ```
 
 **2. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`**
 
-Add a `scale-deploy`-scoped Role that gives developers read/exec/log access without deployment mutations:
+Add a `scale-deploy`-scoped Role (read/exec/log, no deployment mutations) and grant `create` on `serviceaccounts/token` so developers can mint the SA token needed by `just deploy prod`:
 
 ```hcl
 resource "kubernetes_role" "scale_developer" {
@@ -144,6 +134,11 @@ resource "kubernetes_role" "scale_developer" {
     resources  = ["jobs"]
     verbs      = ["get", "list", "watch", "create", "delete"]
   }
+  rule {
+    api_groups = [""]
+    resources  = ["serviceaccounts/token"]
+    verbs      = ["create"]   # allows: kubectl create token ml-k8s-admin -n scale-deploy
+  }
 }
 
 resource "kubernetes_role_binding" "scale_developer" {
@@ -163,17 +158,49 @@ resource "kubernetes_role_binding" "scale_developer" {
 }
 ```
 
-**3. `model-engine-internal` — move production deploy to CI**
+**3. `model-engine-internal/justfile`**
 
-Add a CircleCI deploy job (or manual workflow trigger) that runs `just deploy prod` authenticated as `ml_integration_test_lambda` (already has cluster-admin on `ml-serving-new`). Developers merge to main or manually trigger the job rather than running `just deploy prod` locally.
+Add a master branch guard and have the prod deploy step mint a short-lived SA token:
+
+```just
+# New recipe — fails if current commit is not merged to origin/master
+_check_master_branch env:
+    #!/bin/bash
+    if [ "{{ env }}" = "prod" ]; then
+        git fetch origin master --quiet
+        if ! git merge-base --is-ancestor HEAD origin/master; then
+            echo "ERROR: current commit is not merged to origin/master; prod deploy aborted"
+            exit 1
+        fi
+    fi
+
+# Updated _deploy: mint ml-k8s-admin token for prod helm upgrade
+_deploy env use_service_identifier: build-push-model-engine (_check_master_branch env) (_set_k8s env) (_mount_aws env)
+    #!/bin/bash
+    set -euo pipefail
+    SA_TOKEN=""
+    if [ "{{ env }}" = "prod" ]; then
+        SA_TOKEN=$(kubectl create token ml-k8s-admin -n scale-deploy --duration=30m)
+    fi
+    pushd ../llm-engine/charts
+    helm {{ if use_service_identifier == 'true' { 'install model-engine-' + SERVICE_IDENTIFIER } else { 'upgrade model-engine' } }} \
+      model-engine \
+      -f ../../model-engine-internal/model-engine-internal/resources/values/values_{{ env }}.yaml \
+      --description "{{ GIT_MESSAGE }}" \
+      {{ if use_service_identifier == 'true' { '--set serviceIdentifier=' + SERVICE_IDENTIFIER } else { '' } }} \
+      {{ if env == 'prod' { '--timeout 120m0s' } else { '' } }} \
+      --set tag={{ GIT_SHA }} \
+      ${SA_TOKEN:+--kube-token="$SA_TOKEN"} \
+      --atomic
+```
 
 **Files to change:**
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`** (lines 552–561) — scope `ml_infra_admin` cluster-admin to all namespaces except `scale-deploy`
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`** — add `scale_developer` Role + RoleBinding for `scale-deploy`
-- **`model-engine-internal/.circleci/config.yml`** (or equivalent) — add CI deploy job authenticated as `ml_integration_test_lambda`
+- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`** (lines 552–561)
+- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`**
+- **`model-engine-internal/justfile`**
 
 **Owner:** model-engine on-call
-**Effort:** ~3 days (RBAC Terraform + CI deploy job + Atlantis plan/apply + validation)
+**Effort:** ~3 days (Terraform RBAC + Atlantis apply + justfile changes + validation)
 
 ---
 
