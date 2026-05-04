@@ -99,10 +99,6 @@ Two options were considered for preventing unauthorized production deploys:
 
 `just deploy prod` checks that the current commit is merged to `origin/master` before proceeding. Deploying a local branch to production is rejected before any image is built or pushed.
 
-**b. justfile guard — block deploying unmerged code**
-
-`just deploy prod` checks that the current commit is merged to `origin/master` before proceeding. Deploying a local branch to production is rejected before any image is built or pushed.
-
 **Files to change:**
 
 **1. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`**
