@@ -85,7 +85,15 @@ Two preventative controls:
 
 Developer access to `ml-serving-new` is via the `ml_infra_admin` EKS access entry, which grants cluster-admin cluster-wide. That is why `kubectl set image` succeeds today. Scoping it away from `scale-deploy` rejects `kubectl set image` before any pod is updated.
 
-Scoping away cluster-admin from `scale-deploy` would also break `just deploy prod` run locally (it uses the developer's personal kubectl context). The fix: `just deploy prod` mints a short-lived `ml-k8s-admin` SA token for the helm step. That SA already has cluster-admin (via `kubernetes_cluster_role_binding.ml_k8s_admin` in `workloads.tf`), so helm upgrade continues to work. Developers retain read/exec access via the `scale_developer` role below.
+Scoping away cluster-admin from `scale-deploy` would also break `just deploy prod` run locally, because it uses the developer's personal kubectl context for the helm step too. The fix is to have `just deploy prod` authenticate the helm upgrade using a separate identity that retains cluster-admin, rather than the developer's personal context.
+
+**What is a ServiceAccount (SA) token?** A Kubernetes ServiceAccount is an in-cluster identity (distinct from a human user). `ml-k8s-admin` is a ServiceAccount in `scale-deploy` that already has cluster-admin. An SA token is a short-lived credential that authenticates as that SA — helm can use it via `--kube-token`, bypassing the developer's personal RBAC entirely.
+
+**Option A (current proposal) — mint a short-lived SA token at deploy time:**
+`just deploy prod` runs `kubectl create token ml-k8s-admin -n scale-deploy --duration=30m` to get a token, then passes it to `helm upgrade --kube-token`. Works without any new AWS infrastructure; requires adding `serviceaccounts/token create` to the `scale_developer` role so developers can mint it.
+
+**Option B (more elegant) — dedicated `ml-serving-deployer` IAM role:**
+Create a new AWS SSO role `ml-serving-deployer` mapped to a k8s group that has deployment-mutation rights in `scale-deploy` only. Developers run `just deploy prod` with `AWS_PROFILE=ml-serving-deployer`, which updates kubeconfig to use this scoped identity. Cleanly separates "developer read access" (ml_infra_admin) from "deploy access" (ml-serving-deployer) at the IAM level — no token minting, no extra role permissions, easy to audit. Requires adding a new IAM role + EKS access entry + k8s RoleBinding in Terracode-ML (~1 extra day of setup).
 
 **b. justfile guard — block deploying unmerged code**
 
@@ -111,7 +119,7 @@ Scoping away cluster-admin from `scale-deploy` would also break `just deploy pro
 
 **2. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`**
 
-Add a `scale-deploy`-scoped Role (read/exec/log, no deployment mutations) and grant `create` on `serviceaccounts/token` so developers can mint the SA token needed by `just deploy prod`:
+Add a `scale-deploy`-scoped Role (read/exec/log, no deployment mutations). The `serviceaccounts/token create` rule is only needed for Option A (SA token minting); remove it if going with Option B:
 
 ```hcl
 resource "kubernetes_role" "scale_developer" {
