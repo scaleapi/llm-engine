@@ -81,86 +81,83 @@ This pre-upgrade hook runs `alembic upgrade head` before the gateway deployment 
 
 **How — Kubernetes RBAC:**
 
-Developer kubeconfig contexts for the production namespace/cluster must not carry `patch`/`update` on `Deployment` resources. Only the CI service account (the one that runs `helm upgrade`) retains those verbs. When a developer runs `kubectl set image`, the API server returns 403 immediately — no pods are updated, no rollback is needed.
+Developer kubeconfig contexts for the production cluster (`ml-serving-new`) must not carry `patch`/`update` on `Deployment` resources. Only the CI service account retains those verbs. When a developer runs `kubectl set image`, the API server returns 403 immediately — no pods are updated, no rollback is needed. Developers retain read access and `pods/exec`, so debugging and log inspection are unaffected.
 
-Two files need to change:
+**Finding the right file to change:**
 
-**1. Terracode-ML — developer Role in the production namespace**
+There is no existing developer `Role`/`ClusterRole` for the model-engine namespace in Terracode-ML — no such manifest was found in `scaleapi-ml-serving/`. Developer access to `ml-serving-new` is likely granted via AWS EKS access entries or the `aws-auth` ConfigMap, which may give developers a cluster-level role (e.g. `system:masters` or a custom group). Before making this change:
 
-Find the existing developer `Role` or `ClusterRole` that grants access to the production `model-engine` namespace (likely in `scaleapi-ml-serving/` or similar). Remove `patch` and `update` from the `deployments` rule:
+1. Run `kubectl describe clusterrolebinding -n default | grep -A5 <your-username>` on `ml-serving-new` to find which ClusterRole/Role your personal context binds to.
+2. Locate that binding in Terracode-ML `scaleapi-ml-serving/` (or the relevant EKS access entry config).
+3. Remove `patch`/`update` on `apps/deployments` from the developer role, or create a namespace-scoped `Role` that overrides the cluster-level grant for the model-engine namespace.
 
-```yaml
-# Before (grants kubectl set image):
-- apiGroups: ["apps"]
-  resources: ["deployments"]
-  verbs: ["get", "list", "watch", "patch", "update"]
+**Deploy path — already exists in model-engine-internal:**
 
-# After (blocks kubectl set image):
-- apiGroups: ["apps"]
-  resources: ["deployments"]
-  verbs: ["get", "list", "watch"]
-```
-
-Developers retain read access (`get`, `list`, `watch`) and exec access (`pods/exec`), so debugging and log inspection are unaffected.
-
-**2. llm-engine — `scripts/deploy.sh` (new file)**
-
-This becomes the only sanctioned path for production image updates. It runs `helm upgrade`, which triggers the migration pre-hook before any pod rolls:
+No new script is needed. `model-engine-internal/justfile` already provides the sanctioned deploy command:
 
 ```bash
-#!/bin/bash
-# scripts/deploy.sh
-set -euo pipefail
-TAG=${1:?usage: deploy.sh <image-tag>}
-VALUES=${2:-charts/model-engine/values_sample.yaml}
-helm upgrade model-engine charts/model-engine \
-  --values "$VALUES" \
-  --set tag="$TAG" \
-  --wait \
-  --timeout 10m \
-  --atomic
+# From model-engine-internal/
+just deploy prod   # helm upgrade with --atomic and --timeout 120m0s
+just deploy launch # same path, targets ml-launch-new cluster (staging)
 ```
 
-`--atomic` ensures that if the migration job or any pod fails readiness within the timeout, Helm rolls back to the previous release automatically.
+This runs:
+```bash
+helm upgrade model-engine model-engine \
+  -f model-engine-internal/resources/values/values_prod.yaml \
+  --set tag=<GIT_SHA> \
+  --atomic \
+  --timeout 120m0s
+```
+
+The Helm pre-upgrade hook runs the migration job before any pod rolls. `--atomic` rolls back automatically if it fails.
 
 **Files to change:**
-- **Terracode-ML:** developer `Role`/`ClusterRole` manifest in the production namespace — remove `patch`/`update` on `apps/deployments`
-- **llm-engine:** `scripts/deploy.sh` (new)
-- **llm-engine `.circleci/config.yml`:** replace any `kubectl set image` calls in CI deploy jobs with `scripts/deploy.sh <tag>`
+- **Terracode-ML `scaleapi-ml-serving/`:** investigate and restrict developer role — remove `patch`/`update` on `apps/deployments` for the production cluster/namespace (exact file TBD after running the kubectl inspect above)
+- **model-engine-internal `justfile`:** already correct; no changes needed — `just deploy prod` is the right path
 
 **Owner:** model-engine on-call
-**Effort:** ~1 day
+**Effort:** ~1 day (mostly the RBAC investigation + review cycle)
 
 ---
 
 ### Rollout Strategy
 
-There is currently no dedicated staging environment for model-engine in this repo — `values_circleci.yaml` is ephemeral (spun up and torn down per CI run) and `values_sample.yaml` targets production. A stable staging environment should be added:
+**Existing environments in model-engine-internal:**
 
-**Staging (new):**
-- Add `values_staging.yaml` mirroring `values_sample.yaml` but pointing at the staging cluster and a staging DB.
-- No RBAC restrictions in staging: developers can use `kubectl set image`, `helm upgrade`, or any other mechanism freely.
-- Use staging to validate that a new image starts cleanly, migrations run, and endpoint smoke tests pass before touching production.
+| Env | Cluster | Values file | Purpose |
+|---|---|---|---|
+| `training` | `ml-training-new` | `values_training.yaml` | default dev/test target |
+| `launch` | `ml-launch-new` | `values_launch.yaml` | separate launch cluster |
+| `prod` | `ml-serving-new` | `values_prod.yaml` | production |
+| `circleci` | minikube (ephemeral) | `values_circleci.yaml` | CI integration tests only |
+
+The `launch` environment (`ml-launch-new`) may already serve as a staging environment for production deploys — confirm whether it is actively used as production before treating it as staging. If it is available, no new cluster is needed.
+
+**Staging (using `launch` or `training`):**
+- No RBAC restrictions — developers can use `kubectl set image`, `helm upgrade`, or any other mechanism freely.
+- Use staging to validate: new image starts cleanly, migrations apply without error, smoke tests pass.
+- **Effort:** if `launch` is already available and not serving production traffic, this is ~1 hour of process documentation. If a new cluster is needed, effort is significantly higher (new EKS cluster + Terraform + values file).
 
 **Testing a new image on staging before promoting to production:**
 ```bash
-# Any of these are fine in staging:
+# From model-engine-internal/ — anything goes in staging:
+just deploy launch   # full helm path, migration pre-hook runs
 kubectl set image deployment/model-engine-gateway gateway=<your-image>   # quick iteration
-scripts/deploy.sh <your-image> charts/model-engine/values_staging.yaml   # full helm path
 ```
 
 **Production:**
-All image updates must go through `scripts/deploy.sh` with the production values file. `kubectl set image` is blocked at the RBAC level — developer roles do not have `patch`/`update` on `Deployment` resources in the production namespace.
+All image updates go through the existing `just deploy prod` command. `kubectl set image` is blocked at the RBAC level — developer roles do not have `patch`/`update` on `Deployment` resources in the production cluster.
 
 ```
-staging:   any method — iterate freely
-           ↓
-           validate: migrations apply cleanly, smoke tests pass, no 500s
-           ↓
-production: scripts/deploy.sh <image-tag>   (helm upgrade, migration-first, RBAC-enforced)
+staging (launch/training):   any method — iterate freely
+                             ↓
+                             validate: migrations apply, smoke tests pass, no 500s
+                             ↓
+production:                  just deploy prod   (helm upgrade, migration-first, RBAC-enforced)
 ```
 
-Any change that requires a DB schema update (new ORM column) must have its Alembic migration merged and applied to production before the new image is deployed via `scripts/deploy.sh`.
+Any change that requires a DB schema update (new ORM column) must have its Alembic migration merged and applied to production before `just deploy prod` is run.
 
 ---
 
