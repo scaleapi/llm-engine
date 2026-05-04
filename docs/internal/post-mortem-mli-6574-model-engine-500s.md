@@ -81,7 +81,9 @@ This pre-upgrade hook runs `alembic upgrade head` before the gateway deployment 
 
 **How — Kubernetes RBAC:**
 
-Developer access to `ml-serving-new` is granted via the `ml_infra_admin` EKS access entry in Terracode-ML, which binds the `AWSReservedSSO_MLInfraAdmin_*` IAM role to `AmazonEKSClusterAdminPolicy` — effectively cluster-admin. That is why `kubectl set image` currently succeeds from a developer context. The fix requires replacing the blanket cluster-admin grant with a scoped role that excludes `patch`/`update` on `apps/deployments`.
+Developer access to `ml-serving-new` is granted via the `ml_infra_admin` EKS access entry in Terracode-ML, which binds `AWSReservedSSO_MLInfraAdmin_*` to `AmazonEKSClusterAdminPolicy` — cluster-admin cluster-wide. That is why `kubectl set image` succeeds from a developer context today.
+
+**Important:** scoping away cluster-admin from `scale-deploy` also blocks `just deploy prod` run locally, because it uses the developer's personal kubectl context (`_set_k8s prod` switches to `ml-serving-new`). To make the RBAC change safe, **production deploys must move to CI**, where the CI runner authenticates as a service account that retains cluster-admin (`ml_integration_test_lambda`, already granted `AmazonEKSClusterAdminPolicy` in `eks.tf` lines 529–543). Developers trigger the CI deploy job rather than running `just deploy prod` locally.
 
 **Files to change:**
 
@@ -117,16 +119,14 @@ resource "aws_eks_access_policy_association" "ml_infra_admin" {
 }
 ```
 
-With this change, ml_infra_admin has cluster-admin in all other namespaces but no implicit grant in `scale-deploy`.
-
 **2. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`**
 
-Add a `scale-deploy`-scoped Role that gives developers what they need (read, exec, logs) without deployment mutations, and bind it to the ml_infra_admin group:
+Add a `scale-deploy`-scoped Role that gives developers read/exec/log access without deployment mutations:
 
 ```hcl
-resource "kubernetes_role" "scale_deploy_developer" {
+resource "kubernetes_role" "scale_developer" {
   metadata {
-    name      = "scale-deploy-developer"
+    name      = "scale-developer"
     namespace = "scale-deploy"
   }
   rule {
@@ -146,39 +146,34 @@ resource "kubernetes_role" "scale_deploy_developer" {
   }
 }
 
-resource "kubernetes_role_binding" "scale_deploy_developer" {
+resource "kubernetes_role_binding" "scale_developer" {
   metadata {
-    name      = "scale-deploy-developer-binding"
+    name      = "scale-developer-binding"
     namespace = "scale-deploy"
   }
   role_ref {
     api_group = "rbac.authorization.k8s.io"
     kind      = "Role"
-    name      = kubernetes_role.scale_deploy_developer.metadata[0].name
+    name      = kubernetes_role.scale_developer.metadata[0].name
   }
   subject {
     kind = "Group"
-    name = "ml-infra-admin"   # matches the k8s group from aws-auth ConfigMap for ml_infra_admin
+    name = "ml-infra-admin"
   }
 }
 ```
 
-The `ml-k8s-admin` service account (already cluster-admin, used by `just deploy prod` via `helm upgrade`) is unaffected and retains full deployment mutation rights.
+**3. `model-engine-internal` — move production deploy to CI**
 
-**Deploy path — already exists in model-engine-internal:**
-
-No new script is needed. `model-engine-internal/justfile` already provides:
-```bash
-just deploy prod   # helm upgrade --atomic --timeout 120m0s, runs migration pre-hook first
-```
+Add a CircleCI deploy job (or manual workflow trigger) that runs `just deploy prod` authenticated as `ml_integration_test_lambda` (already has cluster-admin on `ml-serving-new`). Developers merge to main or manually trigger the job rather than running `just deploy prod` locally.
 
 **Files to change:**
 - **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`** (lines 552–561) — scope `ml_infra_admin` cluster-admin to all namespaces except `scale-deploy`
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`** — add `scale_deploy_developer` Role + RoleBinding for `scale-deploy`
-- **`model-engine-internal/justfile`** — already correct; `just deploy prod` is the right path
+- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`** — add `scale_developer` Role + RoleBinding for `scale-deploy`
+- **`model-engine-internal/.circleci/config.yml`** (or equivalent) — add CI deploy job authenticated as `ml_integration_test_lambda`
 
 **Owner:** model-engine on-call
-**Effort:** ~2 days (Terraform RBAC changes + Atlantis plan/apply + validation)
+**Effort:** ~3 days (RBAC Terraform + CI deploy job + Atlantis plan/apply + validation)
 
 ---
 
@@ -207,19 +202,11 @@ The staging backing infrastructure already exists in Terracode-ML `scaleapi-ml-s
 | Route53 DNS (`ml-staging-internal.scale.com`) | **Already exists** | `global/dns.tf` lines 35–49 |
 | EKS cluster | **Does not exist** | — |
 
-Two options for the missing K8s layer:
-
-**Option A — New namespace in ml-serving-new (~3–4 days):** Add a `scale-deploy-staging` namespace in the existing production cluster. DB and Redis already point at staging endpoints. Lower isolation (shares cluster with prod) but fastest path to a working staging deploy.
+Add a `scale-deploy-staging` namespace in ml-serving-new. DB, Redis, VPC, and DNS already point at staging endpoints — the namespace is the only missing K8s layer. Estimated ~3–4 days:
 - `values_staging.yaml` pointing at `staging/ml_infra_pg` and staging Redis: ~1 day
 - K8s namespace + IRSA service account + secrets: ~0.5 day
 - `justfile` staging env wiring: ~0.5 day
 - Validation / smoke tests: ~1 day
-
-**Option B — New EKS cluster (~8–11 days):** Full isolation. Dominant cost is the new EKS cluster definition (node groups, GPU operators, Istio, autoscaler IRSA). Everything else reuses existing staging infra.
-- New `clusters/ml-staging-new/` Terraform: ~4–5 days
-- IAM / IRSA: ~1–2 days
-- Config files + justfile: ~2 days
-- Validation: ~1–2 days
 
 **Process once staging exists:**
 
@@ -233,11 +220,3 @@ production: just deploy prod   (helm upgrade, migration-first, RBAC-enforced)
 
 Any change requiring a DB schema update (new ORM column) must have its Alembic migration merged and applied to production before `just deploy prod` is run.
 
----
-
-## Lessons Learned
-
-1. **Migration hooks only protect you if you use Helm.** The project had the right guardrail (pre-upgrade hook at weight -1); it was bypassed by using `kubectl set image` directly. The operational pattern matters as much as the technical control.
-2. **Fail loudly at startup, not silently on every request.** A startup check that raises an exception is strictly better than an app that boots clean and then 500s on every call. The readiness probe would have contained the blast radius to a failed rollout.
-3. **Every ORM column needs a migration.** The ORM model is a lie until the migration runs; treat them as inseparable — the migration file is part of the same diff as the column declaration.
-4. **After two failed patches, go backward.** The cost of 5 failed patches was 34 extra minutes of outage. When the root cause is unclear, rollback is always faster than forward.
