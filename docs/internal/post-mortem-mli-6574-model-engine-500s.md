@@ -81,19 +81,14 @@ This pre-upgrade hook runs `alembic upgrade head` before the gateway deployment 
 
 Two preventative controls:
 
-**a. RBAC — block `kubectl set image` at the API server**
+**a. RBAC — block `kubectl set image`, restrict deploy to a dedicated role**
 
-Developer access to `ml-serving-new` is via the `ml_infra_admin` EKS access entry, which grants cluster-admin cluster-wide. That is why `kubectl set image` succeeds today. Scoping it away from `scale-deploy` rejects `kubectl set image` before any pod is updated.
+Today `ml_infra_admin` has cluster-admin cluster-wide, which is why `kubectl set image` succeeds. The fix splits access into two roles:
 
-Scoping away cluster-admin from `scale-deploy` would also break `just deploy prod` run locally, because it uses the developer's personal kubectl context for the helm step too. The fix is to have `just deploy prod` authenticate the helm upgrade using a separate identity that retains cluster-admin, rather than the developer's personal context.
+- **`ml_infra_admin`** (developers): scoped away from `scale-deploy`; gets read/exec/log only via the `scale_developer` Role. Cannot deploy.
+- **`ml-serving-deployer`** (new, deploy-only IAM role): scoped to `scale-deploy` with deployment-mutation rights. Only this role can run `just deploy prod`.
 
-**What is a ServiceAccount (SA) token?** A Kubernetes ServiceAccount is an in-cluster identity (distinct from a human user). `ml-k8s-admin` is a ServiceAccount in `scale-deploy` that already has cluster-admin. An SA token is a short-lived credential that authenticates as that SA — helm can use it via `--kube-token`, bypassing the developer's personal RBAC entirely.
-
-**Option A (current proposal) — mint a short-lived SA token at deploy time:**
-`just deploy prod` runs `kubectl create token ml-k8s-admin -n scale-deploy --duration=30m` to get a token, then passes it to `helm upgrade --kube-token`. Works without any new AWS infrastructure; requires adding `serviceaccounts/token create` to the `scale_developer` role so developers can mint it.
-
-**Option B (more elegant) — dedicated `ml-serving-deployer` IAM role:**
-Create a new AWS SSO role `ml-serving-deployer` mapped to a k8s group that has deployment-mutation rights in `scale-deploy` only. Developers run `just deploy prod` with `AWS_PROFILE=ml-serving-deployer`, which updates kubeconfig to use this scoped identity. Cleanly separates "developer read access" (ml_infra_admin) from "deploy access" (ml-serving-deployer) at the IAM level — no token minting, no extra role permissions, easy to audit. Requires adding a new IAM role + EKS access entry + k8s RoleBinding in Terracode-ML (~1 extra day of setup).
+Separating "I can read/debug prod" from "I can deploy to prod" at the IAM level — no token minting, no workarounds, easy to audit who has deploy access.
 
 **b. justfile guard — block deploying unmerged code**
 
@@ -101,36 +96,63 @@ Create a new AWS SSO role `ml-serving-deployer` mapped to a k8s group that has d
 
 **Files to change:**
 
-**1. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf` (lines 552–561)**
+**1. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`**
+
+Scope `ml_infra_admin` away from `scale-deploy` (lines 552–561), and add a new EKS access entry for `ml-serving-deployer`:
 
 ```hcl
-# Before:
-  access_scope {
-    type = "cluster"
-  }
+# Existing — scope ml_infra_admin away from scale-deploy:
+resource "aws_eks_access_policy_association" "ml_infra_admin" {
+  for_each      = toset(data.aws_iam_roles.ml_infra_admin.arns)
+  cluster_name  = local.cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = each.value
 
-# After:
   access_scope {
     type       = "namespace"
     namespaces = [for ns in local.workload_namespaces_default : ns if ns != "scale-deploy"]
     # ["mlflow", "image-builder", "pyspark", "default", "gpu-operator"]
   }
+}
+
+# New — deploy-only role for scale-deploy:
+data "aws_iam_roles" "ml_serving_deployer" {
+  name_regex  = "AWSReservedSSO_MLServingDeployer.*"
+  path_prefix = "/aws-reserved/sso.amazonaws.com/"
+}
+
+resource "aws_eks_access_entry" "ml_serving_deployer" {
+  for_each      = toset(data.aws_iam_roles.ml_serving_deployer.arns)
+  cluster_name  = local.cluster_name
+  principal_arn = each.value
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "ml_serving_deployer" {
+  for_each      = toset(data.aws_iam_roles.ml_serving_deployer.arns)
+  cluster_name  = local.cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = each.value
+
+  access_scope {
+    type       = "namespace"
+    namespaces = ["scale-deploy"]
+  }
+}
 ```
 
 **2. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`**
 
-Add a `scale-deploy`-scoped Role (read/exec/log, no deployment mutations). The `serviceaccounts/token create` rule is only needed for Option A (SA token minting); remove it if going with Option B:
+Add `scale_developer` (read/exec/log for `ml_infra_admin`, no deploy) and `scale_deployer` (deployment mutations for `ml-serving-deployer`):
 
 ```hcl
+# Developers: read/exec/log only — cannot kubectl set image or helm upgrade
 resource "kubernetes_role" "scale_developer" {
-  metadata {
-    name      = "scale-developer"
-    namespace = "scale-deploy"
-  }
+  metadata { name = "scale-developer"; namespace = "scale-deploy" }
   rule {
     api_groups = ["apps"]
     resources  = ["deployments", "replicasets"]
-    verbs      = ["get", "list", "watch"]   # no patch/update — blocks kubectl set image
+    verbs      = ["get", "list", "watch"]
   }
   rule {
     api_groups = [""]
@@ -142,36 +164,36 @@ resource "kubernetes_role" "scale_developer" {
     resources  = ["jobs"]
     verbs      = ["get", "list", "watch", "create", "delete"]
   }
-  rule {
-    api_groups = [""]
-    resources  = ["serviceaccounts/token"]
-    verbs      = ["create"]   # allows: kubectl create token ml-k8s-admin -n scale-deploy
-  }
 }
 
 resource "kubernetes_role_binding" "scale_developer" {
-  metadata {
-    name      = "scale-developer-binding"
-    namespace = "scale-deploy"
-  }
+  metadata { name = "scale-developer-binding"; namespace = "scale-deploy" }
   role_ref {
     api_group = "rbac.authorization.k8s.io"
     kind      = "Role"
     name      = kubernetes_role.scale_developer.metadata[0].name
   }
-  subject {
-    kind = "Group"
-    name = "ml-infra-admin"
+  subject { kind = "Group"; name = "ml-infra-admin" }
+}
+
+# Deployers: full deployment mutation rights — only ml-serving-deployer can deploy
+resource "kubernetes_cluster_role_binding" "scale_deployer" {
+  metadata { name = "scale-deployer-cluster-admin" }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = "cluster-admin"
   }
+  subject { kind = "Group"; name = "ml-serving-deployer" }
 }
 ```
 
 **3. `model-engine-internal/justfile`**
 
-Add a master branch guard and have the prod deploy step mint a short-lived SA token:
+Add a master branch guard; update `_mount_aws` to use `ml-serving-deployer` profile for prod:
 
 ```just
-# New recipe — fails if current commit is not merged to origin/master
+# New — fails if current commit is not merged to origin/master
 _check_master_branch env:
     #!/bin/bash
     if [ "{{ env }}" = "prod" ]; then
@@ -182,33 +204,24 @@ _check_master_branch env:
         fi
     fi
 
-# Updated _deploy: mint ml-k8s-admin token for prod helm upgrade
-_deploy env use_service_identifier: build-push-model-engine (_check_master_branch env) (_set_k8s env) (_mount_aws env)
-    #!/bin/bash
-    set -euo pipefail
-    SA_TOKEN=""
-    if [ "{{ env }}" = "prod" ]; then
-        SA_TOKEN=$(kubectl create token ml-k8s-admin -n scale-deploy --duration=30m)
-    fi
-    pushd ../llm-engine/charts
-    helm {{ if use_service_identifier == 'true' { 'install model-engine-' + SERVICE_IDENTIFIER } else { 'upgrade model-engine' } }} \
-      model-engine \
-      -f ../../model-engine-internal/model-engine-internal/resources/values/values_{{ env }}.yaml \
-      --description "{{ GIT_MESSAGE }}" \
-      {{ if use_service_identifier == 'true' { '--set serviceIdentifier=' + SERVICE_IDENTIFIER } else { '' } }} \
-      {{ if env == 'prod' { '--timeout 120m0s' } else { '' } }} \
-      --set tag={{ GIT_SHA }} \
-      ${SA_TOKEN:+--kube-token="$SA_TOKEN"} \
-      --atomic
+# Updated _mount_aws: prod deploys use ml-serving-deployer profile
+_mount_aws env: _aws-mountable_folder
+    {{ if env == 'training' { '...' } else { '' } }}
+    {{ if env == 'prod'     { 'cd .. && python3 scripts_py3/scale_scripts/exe/generate_mountable_aws_credentials.py -p ml-serving-deployer -e ~/.aws-mountable/credentials' } else { '' } }}
+    {{ if env == 'launch'   { '...' } else { '' } }}
+
+# Updated deploy: add master branch check
+deploy env='training': (_check_master_branch env) (_deploy env 'false') (_emit_deploy_event "model-engine" env)
 ```
 
 **Files to change:**
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`** (lines 552–561)
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`**
-- **`model-engine-internal/justfile`**
+- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`** — scope `ml_infra_admin`, add `ml_serving_deployer` access entry
+- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`** — `scale_developer` + `scale_deployer` roles
+- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/iam.tf`** — add `AWSReservedSSO_MLServingDeployer` IAM role data source and aws-auth mapping
+- **`model-engine-internal/justfile`** — `_check_master_branch`, `_mount_aws` prod profile
 
 **Owner:** model-engine on-call
-**Effort:** ~3 days (Terraform RBAC + Atlantis apply + justfile changes + validation)
+**Effort:** ~3–4 days (new IAM SSO role + Terraform RBAC + Atlantis apply + justfile + validation)
 
 ---
 
