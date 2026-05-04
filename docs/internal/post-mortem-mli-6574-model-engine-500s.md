@@ -79,25 +79,13 @@ This pre-upgrade hook runs `alembic upgrade head` before the gateway deployment 
 
 **What:** `kubectl set image` updates pods directly, bypassing all Helm pre-upgrade hooks including the migration job. The fix must be preventative: a `kubectl set image` attempt against the production deployment is rejected by the API server before it takes effect.
 
-Two preventative controls:
+Two preventative controls. All changes are **additive** — `ml_infra_admin` is left completely untouched, so no other teams are affected.
 
-**a. RBAC — block `kubectl set image`, restrict deploy to a dedicated role**
+**a. New `ml-serving-deployer` IAM role — dedicated deploy identity for model-engine**
 
-Today `ml_infra_admin` has cluster-admin cluster-wide, which is why `kubectl set image` succeeds. The fix splits access into two roles:
+Create a new AWS SSO role `ml-serving-deployer` with cluster-admin scoped to `scale-deploy`. Model-engine prod deploys use this role exclusively. `ml_infra_admin` remains unchanged with its existing cluster-admin grant — other teams (e.g. genai's `auto-hillclimb-ui`) continue to work without modification.
 
-- **`ml_infra_admin`** (developers): scoped away from `scale-deploy`; gets read/exec/log only via the `scale_developer` Role. Cannot deploy.
-- **`ml-serving-deployer`** (new, deploy-only IAM role): scoped to `scale-deploy` with deployment-mutation rights. Only this role can run `just deploy prod`.
-
-Separating "I can read/debug prod" from "I can deploy to prod" at the IAM level — no token minting, no workarounds, easy to audit who has deploy access.
-
-**Cross-service impact:** `scale-deploy` is a shared namespace. Running `kubectl get deployments -n scale-deploy` on `ml-serving-new` shows two non-model-engine deployments:
-
-- `k8s-startup-watcher` — part of the llm-engine Helm chart, managed by `just deploy prod`; unaffected.
-- `auto-hillclimb-ui` — a Streamlit app owned by the **genai team** (`genai/genai/applications/auto_hillclimb/`), deployed manually with `ml_infra_admin` credentials, no Terraform backing. **This deploy would break.**
-
-The hundreds of `launch-endpoint-id-*` deployments are model-engine user endpoints created by the celery workers via the `ml-k8s-admin` service account — not by developer kubectl — so those are unaffected.
-
-Before applying the RBAC change: coordinate with the genai team. They either need to be granted `ml-serving-deployer` access, or their `auto-hillclimb-ui` deploy process needs to be moved to a separate namespace or a dedicated deployer role.
+`kubectl set image` can still be run by anyone with `ml_infra_admin` access. The prevention is process-enforced: prod deploys must go through `just deploy prod` (which uses `ml-serving-deployer` and enforces the master branch guard below). Direct `kubectl set image` by a developer is a process violation, not an RBAC rejection.
 
 **b. justfile guard — block deploying unmerged code**
 
@@ -107,24 +95,10 @@ Before applying the RBAC change: coordinate with the genai team. They either nee
 
 **1. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`**
 
-Scope `ml_infra_admin` away from `scale-deploy` (lines 552–561), and add a new EKS access entry for `ml-serving-deployer`:
+Add new EKS access entry for `ml-serving-deployer` (no changes to existing `ml_infra_admin` block):
 
 ```hcl
-# Existing — scope ml_infra_admin away from scale-deploy:
-resource "aws_eks_access_policy_association" "ml_infra_admin" {
-  for_each      = toset(data.aws_iam_roles.ml_infra_admin.arns)
-  cluster_name  = local.cluster_name
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = each.value
-
-  access_scope {
-    type       = "namespace"
-    namespaces = [for ns in local.workload_namespaces_default : ns if ns != "scale-deploy"]
-    # ["mlflow", "image-builder", "pyspark", "default", "gpu-operator"]
-  }
-}
-
-# New — deploy-only role for scale-deploy:
+# New — model-engine deploy role, scoped to scale-deploy only:
 data "aws_iam_roles" "ml_serving_deployer" {
   name_regex  = "AWSReservedSSO_MLServingDeployer.*"
   path_prefix = "/aws-reserved/sso.amazonaws.com/"
@@ -150,56 +124,22 @@ resource "aws_eks_access_policy_association" "ml_serving_deployer" {
 }
 ```
 
-**2. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`**
+**2. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/iam.tf`**
 
-Add `scale_developer` (read/exec/log for `ml_infra_admin`, no deploy) and `scale_deployer` (deployment mutations for `ml-serving-deployer`):
+Add `ml-serving-deployer` to the aws-auth ConfigMap so the IAM role maps to a k8s group:
 
 ```hcl
-# Developers: read/exec/log only — cannot kubectl set image or helm upgrade
-resource "kubernetes_role" "scale_developer" {
-  metadata { name = "scale-developer"; namespace = "scale-deploy" }
-  rule {
-    api_groups = ["apps"]
-    resources  = ["deployments", "replicasets"]
-    verbs      = ["get", "list", "watch"]
-  }
-  rule {
-    api_groups = [""]
-    resources  = ["pods", "pods/log", "pods/exec", "configmaps", "services", "endpoints"]
-    verbs      = ["get", "list", "watch", "create", "delete"]
-  }
-  rule {
-    api_groups = ["batch"]
-    resources  = ["jobs"]
-    verbs      = ["get", "list", "watch", "create", "delete"]
-  }
-}
-
-resource "kubernetes_role_binding" "scale_developer" {
-  metadata { name = "scale-developer-binding"; namespace = "scale-deploy" }
-  role_ref {
-    api_group = "rbac.authorization.k8s.io"
-    kind      = "Role"
-    name      = kubernetes_role.scale_developer.metadata[0].name
-  }
-  subject { kind = "Group"; name = "ml-infra-admin" }
-}
-
-# Deployers: full deployment mutation rights — only ml-serving-deployer can deploy
-resource "kubernetes_cluster_role_binding" "scale_deployer" {
-  metadata { name = "scale-deployer-cluster-admin" }
-  role_ref {
-    api_group = "rbac.authorization.k8s.io"
-    kind      = "ClusterRole"
-    name      = "cluster-admin"
-  }
-  subject { kind = "Group"; name = "ml-serving-deployer" }
+# Add to local.cluster_role_map:
+{
+  rolearn  = one(data.aws_iam_roles.ml_serving_deployer.arns)
+  username = "ml-serving-deployer"
+  groups   = ["ml-serving-deployer"]
 }
 ```
 
 **3. `model-engine-internal/justfile`**
 
-Add a master branch guard; update `_mount_aws` to use `ml-serving-deployer` profile for prod:
+Add a master branch guard and switch the prod deploy to use `ml-serving-deployer`:
 
 ```just
 # New — fails if current commit is not merged to origin/master
@@ -215,22 +155,21 @@ _check_master_branch env:
 
 # Updated _mount_aws: prod deploys use ml-serving-deployer profile
 _mount_aws env: _aws-mountable_folder
-    {{ if env == 'training' { '...' } else { '' } }}
+    {{ if env == 'training' { 'cd .. && python3 scripts_py3/scale_scripts/exe/generate_mountable_aws_credentials.py -p ml-admin -e ~/.aws-mountable/credentials' } else { '' } }}
     {{ if env == 'prod'     { 'cd .. && python3 scripts_py3/scale_scripts/exe/generate_mountable_aws_credentials.py -p ml-serving-deployer -e ~/.aws-mountable/credentials' } else { '' } }}
-    {{ if env == 'launch'   { '...' } else { '' } }}
+    {{ if env == 'launch'   { 'cd .. && python3 scripts_py3/scale_scripts/exe/generate_mountable_aws_credentials.py -p ml-serving-admin -e ~/.aws-mountable/credentials' } else { '' } }}
 
 # Updated deploy: add master branch check
 deploy env='training': (_check_master_branch env) (_deploy env 'false') (_emit_deploy_event "model-engine" env)
 ```
 
 **Files to change:**
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`** — scope `ml_infra_admin`, add `ml_serving_deployer` access entry
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/workloads.tf`** — `scale_developer` + `scale_deployer` roles
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/iam.tf`** — add `AWSReservedSSO_MLServingDeployer` IAM role data source and aws-auth mapping
-- **`model-engine-internal/justfile`** — `_check_master_branch`, `_mount_aws` prod profile
+- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`** — add `ml_serving_deployer` access entry (no changes to `ml_infra_admin`)
+- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/iam.tf`** — add `ml-serving-deployer` aws-auth mapping
+- **`model-engine-internal/justfile`** — `_check_master_branch`, update `_mount_aws` prod profile
 
 **Owner:** model-engine on-call
-**Effort:** ~3–4 days (new IAM SSO role + Terraform RBAC + Atlantis apply + justfile + validation)
+**Effort:** ~2–3 days (new IAM SSO role + Terraform + Atlantis apply + justfile + validation)
 
 ---
 
