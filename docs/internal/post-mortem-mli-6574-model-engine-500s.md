@@ -90,7 +90,14 @@ Today `ml_infra_admin` has cluster-admin cluster-wide, which is why `kubectl set
 
 Separating "I can read/debug prod" from "I can deploy to prod" at the IAM level — no token minting, no workarounds, easy to audit who has deploy access.
 
-**Cross-service impact:** `scale-deploy` is a shared namespace. This RBAC change affects every team that currently deploys to it using `ml_infra_admin` credentials — not just model-engine. Terraform-managed resources (KEDA, Istio configs, audio-redis secret) are deployed via Atlantis and are unaffected. But any other application services deployed manually to `scale-deploy` would also lose deploy access for `ml_infra_admin` users. Before applying: run `kubectl get deployments -n scale-deploy` on `ml-serving-new` to enumerate all services, and confirm with those teams that they are either (a) also migrating to `ml-serving-deployer`, or (b) getting a separate deployer role for their service.
+**Cross-service impact:** `scale-deploy` is a shared namespace. Running `kubectl get deployments -n scale-deploy` on `ml-serving-new` shows two non-model-engine deployments:
+
+- `k8s-startup-watcher` — part of the llm-engine Helm chart, managed by `just deploy prod`; unaffected.
+- `auto-hillclimb-ui` — a Streamlit app owned by the **genai team** (`genai/genai/applications/auto_hillclimb/`), deployed manually with `ml_infra_admin` credentials, no Terraform backing. **This deploy would break.**
+
+The hundreds of `launch-endpoint-id-*` deployments are model-engine user endpoints created by the celery workers via the `ml-k8s-admin` service account — not by developer kubectl — so those are unaffected.
+
+Before applying the RBAC change: coordinate with the genai team. They either need to be granted `ml-serving-deployer` access, or their `auto-hillclimb-ui` deploy process needs to be moved to a separate namespace or a dedicated deployer role.
 
 **b. justfile guard — block deploying unmerged code**
 
