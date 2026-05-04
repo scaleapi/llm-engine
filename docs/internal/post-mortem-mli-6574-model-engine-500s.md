@@ -79,13 +79,25 @@ This pre-upgrade hook runs `alembic upgrade head` before the gateway deployment 
 
 **What:** `kubectl set image` updates pods directly, bypassing all Helm pre-upgrade hooks including the migration job. The fix must be preventative: a `kubectl set image` attempt against the production deployment is rejected by the API server before it takes effect.
 
-Two preventative controls. All changes are **additive** — `ml_infra_admin` is left completely untouched, so no other teams are affected.
+Two preventative controls:
 
-**a. New `ml-serving-deployer` IAM role — dedicated deploy identity for model-engine**
+**a. Dedicated deploy identity for model-engine (chosen approach)**
 
-Create a new AWS SSO role `ml-serving-deployer` with cluster-admin scoped to `scale-deploy`. Model-engine prod deploys use this role exclusively. `ml_infra_admin` remains unchanged with its existing cluster-admin grant — other teams (e.g. genai's `auto-hillclimb-ui`) continue to work without modification.
+Two options were considered for preventing unauthorized production deploys:
 
-`kubectl set image` can still be run by anyone with `ml_infra_admin` access. The prevention is process-enforced: prod deploys must go through `just deploy prod` (which uses `ml-serving-deployer` and enforces the master branch guard below). Direct `kubectl set image` by a developer is a process violation, not an RBAC rejection.
+| | Option A: Scope down `ml_infra_admin` | Option B: New `ml-serving-deployer` role ✓ |
+|---|---|---|
+| **How** | Remove `patch`/`update` on `apps/deployments` in `scale-deploy` from `ml_infra_admin` | Add a new AWS SSO role with cluster-admin scoped to `scale-deploy`; prod deploy uses this role |
+| **`kubectl set image` prevention** | Hard — RBAC rejects it at the API server | Soft — process-enforced; `ml_infra_admin` users can still do it |
+| **Backward compatible** | No — breaks any other team deploying to `scale-deploy` with `ml_infra_admin` | Yes — `ml_infra_admin` unchanged |
+| **Known breakage** | `auto-hillclimb-ui` (genai team, `genai/justfile deploy-auto-hillclimb-ui`) uses `kubectl apply` in `scale-deploy` via `ml_infra_admin`; would immediately break | None |
+| **Coordination required** | Yes — must migrate every team deploying to `scale-deploy` | No |
+
+**Option B is chosen** because `scale-deploy` is a shared namespace and `ml_infra_admin` is used by multiple teams. Scoping it down is a cross-team breaking change. The tradeoff is that `kubectl set image` is no longer RBAC-enforced — it relies on the process (`just deploy prod` + master branch guard) instead.
+
+**b. justfile guard — block deploying unmerged code**
+
+`just deploy prod` checks that the current commit is merged to `origin/master` before proceeding. Deploying a local branch to production is rejected before any image is built or pushed.
 
 **b. justfile guard — block deploying unmerged code**
 
