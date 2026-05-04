@@ -93,7 +93,7 @@ Two options were considered for preventing unauthorized production deploys:
 | **Known breakage** | `auto-hillclimb-ui` (genai team, `genai/justfile deploy-auto-hillclimb-ui`) uses `kubectl apply` in `scale-deploy` via `ml_infra_admin`; would immediately break | None |
 | **Coordination required** | Yes — must migrate every team deploying to `scale-deploy` | No |
 
-**Option B is chosen** because `scale-deploy` is a shared namespace and `ml_infra_admin` is used by multiple teams. Scoping it down is a cross-team breaking change. The tradeoff is that `kubectl set image` is no longer RBAC-enforced — it relies on the process (`just deploy prod` + master branch guard) instead.
+**Open question for discussion:** Option A gives a hard guarantee (RBAC rejects `kubectl set image` at the API server) but requires coordinating a breaking change across every team using `ml_infra_admin` in `scale-deploy`. Option B is backward compatible and unblocks model-engine immediately, but relies on process discipline — a developer can still bypass it with a direct `kubectl set image`. Which guarantee level is acceptable?
 
 **b. justfile guard — block deploying unmerged code**
 
