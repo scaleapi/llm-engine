@@ -90,6 +90,8 @@ Today `ml_infra_admin` has cluster-admin cluster-wide, which is why `kubectl set
 
 Separating "I can read/debug prod" from "I can deploy to prod" at the IAM level — no token minting, no workarounds, easy to audit who has deploy access.
 
+**Cross-service impact:** `scale-deploy` is a shared namespace. This RBAC change affects every team that currently deploys to it using `ml_infra_admin` credentials — not just model-engine. Terraform-managed resources (KEDA, Istio configs, audio-redis secret) are deployed via Atlantis and are unaffected. But any other application services deployed manually to `scale-deploy` would also lose deploy access for `ml_infra_admin` users. Before applying: run `kubectl get deployments -n scale-deploy` on `ml-serving-new` to enumerate all services, and confirm with those teams that they are either (a) also migrating to `ml-serving-deployer`, or (b) getting a separate deployer role for their service.
+
 **b. justfile guard — block deploying unmerged code**
 
 `just deploy prod` checks that the current commit is merged to `origin/master` before proceeding. Deploying a local branch to production is rejected before any image is built or pushed.
