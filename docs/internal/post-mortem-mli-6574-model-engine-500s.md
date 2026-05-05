@@ -85,15 +85,15 @@ Two preventative controls:
 
 Two options were considered for preventing unauthorized production deploys:
 
-| | Option A: Scope down `ml_infra_admin` | Option B: New `ml-serving-deployer` role ✓ |
+| | Option A: Scope down `ml_infra_admin` ✓ | Option B: New `ml-serving-deployer` role |
 |---|---|---|
 | **How** | Remove `patch`/`update` on `apps/deployments` in `scale-deploy` from `ml_infra_admin` | Add a new AWS SSO role scoped to `scale-deploy` on `ml-serving-new`; model-engine's `just deploy prod` (and CircleCI) assumes this role — SMIG and other services use different namespaces and are unaffected |
 | **`kubectl set image` prevention** | Hard — RBAC rejects it at the API server | Soft — process-enforced; `ml_infra_admin` users can still do it |
-| **Backward compatible** | No — breaks any other team deploying to `scale-deploy` on `ml-serving-new` with `ml_infra_admin` | Yes — `ml_infra_admin` unchanged |
-| **Known breakage** | None confirmed on `ml-serving-new` — `auto-hillclimb-ui` (genai team) deploys to `scale-deploy` on `ml-training-new`, not `ml-serving-new`; a full audit is recommended before applying | None |
-| **Coordination required** | Yes — must migrate every team deploying to `scale-deploy` | No |
+| **Backward compatible** | Yes — audit confirmed no other service deploys to `scale-deploy` on `ml-serving-new` via `ml_infra_admin`; services using `ml-admin` on `ml-serving-new` (`dagster`, `scaletrain-ui`, `ml-orchestration-internal`, `research_evals`) all use the `dagster` namespace; genai services (`auto-hillclimb-ui` etc.) target `ml-training-new` | Yes — `ml_infra_admin` unchanged |
+| **Known breakage** | None | None |
+| **Coordination required** | No | No |
 
-**Open question for discussion:** Option A gives a hard guarantee (RBAC rejects `kubectl set image` at the API server) but requires coordinating a breaking change across every team using `ml_infra_admin` in `scale-deploy`. Option B is backward compatible and unblocks model-engine immediately, but relies on process discipline — a developer can still bypass it with a direct `kubectl set image`. Which guarantee level is acceptable?
+**Chosen approach: Option A.** It gives a hard RBAC guarantee (the API server rejects `kubectl set image` outright) and the audit shows no other service deploys to `scale-deploy` on `ml-serving-new` via `ml_infra_admin`, so there is no coordination burden.
 
 **b. justfile guard — block deploying unmerged code**
 
