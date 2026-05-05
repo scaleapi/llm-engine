@@ -135,6 +135,8 @@ data:
                 - "${FORWARDER_PORT}"
                 - --num-workers
                 - "${FORWARDER_WORKER_COUNT}"
+                - --max-concurrency
+                - "${CONCURRENT_REQUESTS_PER_WORKER}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -183,6 +185,8 @@ data:
                 - "${FORWARDER_PORT}"
                 - --num-workers
                 - "${FORWARDER_WORKER_COUNT}"
+                - --max-concurrency
+                - "${CONCURRENT_REQUESTS_PER_WORKER}"
                 - --set
                 - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                 - --set
@@ -582,6 +586,8 @@ data:
                   - "${FORWARDER_PORT}"
                   - --num-workers
                   - "${FORWARDER_WORKER_COUNT}"
+                  - --max-concurrency
+                  - "${CONCURRENT_REQUESTS_PER_WORKER}"
                   - --set
                   - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                   - --set
@@ -630,6 +636,8 @@ data:
                   - "${FORWARDER_PORT}"
                   - --num-workers
                   - "${FORWARDER_WORKER_COUNT}"
+                  - --max-concurrency
+                  - "${CONCURRENT_REQUESTS_PER_WORKER}"
                   - --set
                   - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
                   - --set
