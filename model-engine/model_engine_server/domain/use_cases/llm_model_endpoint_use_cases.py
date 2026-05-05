@@ -724,10 +724,16 @@ class CreateLLMModelBundleV1UseCase:
         # AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD). The pod's KSA must be bound to a GSA with
         # storage.objects.list and storage.objects.get permissions on the checkpoint bucket.
         # Install gcloud CLI on-the-fly for GCS access (similar to azcopy install for Azure)
+        # storage/check_hashes: gcloud storage rsync defaults to check_hashes=always, which
+        # requires the google-crc32c library. That lib is not installed in the inference
+        # container, so the default config causes every download task to fail with
+        # "fast hash calculation tools are not installed". if_fast_else_skip lets the
+        # download proceed without the integrity check when the lib is missing.
         subcommands.append(
             "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
             " | tar -xz -C /opt"
             " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
+            " && /opt/google-cloud-sdk/bin/gcloud config set storage/check_hashes if_fast_else_skip 2>/dev/null"
         )
 
         # gcloud storage rsync only supports --exclude (Python regex), not --include.
@@ -759,10 +765,14 @@ class CreateLLMModelBundleV1UseCase:
                 f"./s5cmd {s3_endpoint_flag} --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
             ]
         elif checkpoint_path.startswith("gs://"):
+            # See load_model_weights_sub_commands_gcs for why storage/check_hashes is set —
+            # gcloud storage cp also defaults to check_hashes=always and would fail per file
+            # without the google-crc32c lib in the inference container.
             subcommands = [
                 "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
                 " | tar -xz -C /opt"
-                " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null",
+                " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
+                " && /opt/google-cloud-sdk/bin/gcloud config set storage/check_hashes if_fast_else_skip 2>/dev/null",
                 f"/opt/google-cloud-sdk/bin/gcloud storage cp -r {os.path.join(checkpoint_path, '*')} ./",
             ]
         else:
