@@ -246,28 +246,35 @@ Any change requiring a DB schema update (new ORM column) must have its Alembic m
 
 ---
 
-### P1 — Tighten 5xx alerting
+### P1 — Add high-severity 5xx outage alert
 
-**What:** PagerDuty did not fire until 00:37Z — 47 min into the incident. The existing monitor (`datadog_monitor.model_engine_error_rate_alert` in `scaleapi-ml-datadog/launch.tf`) evaluates a 15-minute window at a 5% threshold. Add a second, faster-firing entry with a 5-minute window so a sustained 5xx spike pages within minutes of onset.
+**What:** PagerDuty did not fire until 00:37Z — 47 min into the incident. The existing monitor (`datadog_monitor.model_engine_error_rate_alert`) uses a narrow Envoy trace query and a 5% threshold over 15 minutes — too slow to catch a sudden complete outage. Add a dedicated monitor using the broader Istio mesh metrics that fires when >50% of all model-engine requests are 5xx over a 5-minute window. This would have paged within 5 minutes of the incident.
 
 **File to change: `Terracode-ML/scaleapi-ml-datadog/launch.tf`**
 
 ```hcl
-# In locals:
-launch_v1_route_monitor_params = {
-  prod_15m = {
-    severity      = "sev0"
-    cluster_name  = "ml-serving-new"
-    time_window   = "15m"
-    critical_rate = 0.05
+resource "datadog_monitor" "model_engine_high_error_rate_alert" {
+  name    = "[model engine] Model Engine has >50% 5xx error rate on prod"
+  type    = "query alert"
+  query   = "sum(last_5m):sum:istio.mesh.request.count.total{cluster_name:ml-serving-new AND destination_app:model-engine AND response_code:5*}.as_count() / sum:istio.mesh.request.count.total{cluster_name:ml-serving-new AND destination_app:model-engine}.as_count() > 0.5"
+  message = <<EOF
+Model Engine is returning 5xx on >50% of all requests — likely a widespread outage.
+
+Runbook: https://scale.atlassian.net/wiki/spaces/EPD/pages/340230155/Launch+has+an+elevated+error+rate
+
+@slack-ml-alerts @pagerduty-PagerdutyRouting
+EOF
+
+  monitor_thresholds {
+    critical = 0.5
   }
-  # New — fires within ~5 min of a sustained 5xx spike
-  prod_5m = {
-    severity      = "sev0"
-    cluster_name  = "ml-serving-new"
-    time_window   = "5m"
-    critical_rate = 0.05
-  }
+
+  notify_audit        = false
+  require_full_window = false
+  notify_no_data      = false
+  renotify_interval   = 0
+  include_tags        = true
+  tags                = ["env:prod", "service:model-engine", "severity:sev0", "team:ml"]
 }
 ```
 
