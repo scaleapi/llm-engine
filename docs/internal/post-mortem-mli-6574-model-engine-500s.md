@@ -87,10 +87,10 @@ Two options were considered for preventing unauthorized production deploys:
 
 | | Option A: Scope down `ml_infra_admin` | Option B: New `ml-serving-deployer` role ✓ |
 |---|---|---|
-| **How** | Remove `patch`/`update` on `apps/deployments` in `scale-deploy` from `ml_infra_admin` | Add a new AWS SSO role with cluster-admin scoped to `scale-deploy`; prod deploy uses this role |
+| **How** | Remove `patch`/`update` on `apps/deployments` in `scale-deploy` from `ml_infra_admin` | Add a new AWS SSO role scoped to `scale-deploy` on `ml-serving-new`; model-engine's `just deploy prod` (and CircleCI) assumes this role — SMIG and other services use different namespaces and are unaffected |
 | **`kubectl set image` prevention** | Hard — RBAC rejects it at the API server | Soft — process-enforced; `ml_infra_admin` users can still do it |
-| **Backward compatible** | No — breaks any other team deploying to `scale-deploy` with `ml_infra_admin` | Yes — `ml_infra_admin` unchanged |
-| **Known breakage** | `auto-hillclimb-ui` (genai team, `genai/justfile deploy-auto-hillclimb-ui`) uses `kubectl apply` in `scale-deploy` via `ml_infra_admin`; would immediately break | None |
+| **Backward compatible** | No — breaks any other team deploying to `scale-deploy` on `ml-serving-new` with `ml_infra_admin` | Yes — `ml_infra_admin` unchanged |
+| **Known breakage** | None confirmed on `ml-serving-new` — `auto-hillclimb-ui` (genai team) deploys to `scale-deploy` on `ml-training-new`, not `ml-serving-new`; a full audit is recommended before applying | None |
 | **Coordination required** | Yes — must migrate every team deploying to `scale-deploy` | No |
 
 **Open question for discussion:** Option A gives a hard guarantee (RBAC rejects `kubectl set image` at the API server) but requires coordinating a breaking change across every team using `ml_infra_admin` in `scale-deploy`. Option B is backward compatible and unblocks model-engine immediately, but relies on process discipline — a developer can still bypass it with a direct `kubectl set image`. Which guarantee level is acceptable?
@@ -223,4 +223,13 @@ production: just deploy prod   (helm upgrade, migration-first, RBAC-enforced)
 ```
 
 Any change requiring a DB schema update (new ORM column) must have its Alembic migration merged and applied to production before `just deploy prod` is run.
+
+---
+
+### P1 — Tighten 5xx alerting
+
+**What:** PagerDuty did not fire until 00:37Z — 47 min into the incident. Tighten the Envoy 5xx alert by lowering the error ratio threshold or reducing the evaluation window so that an outage of this magnitude pages within minutes of onset.
+
+**Owner:** model-engine on-call
+**Effort:** ~0.5 days (Datadog alert config update)
 
