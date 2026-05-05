@@ -23,13 +23,14 @@ ENV PATH="/workspace/venv/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 WORKDIR /workspace/model-engine
 COPY model-engine/requirements.txt requirements.txt
 COPY model-engine/requirements_override.txt requirements_override.txt
-RUN pip install --upgrade pip==24.2 setuptools cmake setuptools-rust
+RUN pip install --upgrade pip==26.1 setuptools cmake setuptools-rust
 RUN pip install -r requirements.txt --no-cache-dir --no-build-isolation
 RUN pip install -r requirements_override.txt --no-cache-dir
 COPY model-engine/setup.py setup.py
 COPY model-engine/model_engine_server model_engine_server
 COPY model-engine/service_configs service_configs
 RUN pip install -e .
+RUN pip uninstall -y pip
 
 RUN mkdir -p /tmp/runtime-bin /tmp/runtime-libs && \
   cp /bin/bash /tmp/runtime-bin/bash && \
@@ -41,7 +42,7 @@ RUN mkdir -p /tmp/runtime-bin /tmp/runtime-libs && \
   cp /usr/lib/libreadline.so.8* /tmp/runtime-libs/ && \
   cp /usr/lib/libtinfo.so.6* /tmp/runtime-libs/ && \
   cp /usr/lib/libz.so.1* /tmp/runtime-libs/ && \
-  git clone --depth 1 --branch v1.35.3 https://github.com/kubernetes/kubernetes.git /tmp/k8s && \
+  git clone --depth 1 --branch v1.35.4 https://github.com/kubernetes/kubernetes.git /tmp/k8s && \
   cd /tmp/k8s && \
   GOTOOLCHAIN=local KUBE_BUILD_PLATFORMS=linux/${TARGETARCH} make WHAT=cmd/kubectl && \
   cp _output/local/bin/linux/${TARGETARCH}/kubectl /tmp/runtime-bin/kubectl && \
