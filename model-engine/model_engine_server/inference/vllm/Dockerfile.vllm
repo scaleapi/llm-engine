@@ -15,11 +15,16 @@ FROM scratch AS vllm-omni-source
 
 FROM ${VLLM_BASE_IMAGE} AS base
 
-RUN apt-get update \
-    && apt-get install -y wget gdb psmisc dumb-init \
+  RUN apt-get update \
+    && apt-get install -y wget curl ca-certificates gdb psmisc dumb-init \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* \
-    apt-get clean
+    && apt-get clean
+
+RUN curl -fsSL https://aka.ms/downloadazcopy-v10-linux \
+    | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - \
+    && chmod 755 /usr/local/bin/azcopy \
+    && azcopy --version
 
 WORKDIR /workspace
 
