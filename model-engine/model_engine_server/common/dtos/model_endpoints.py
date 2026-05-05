@@ -11,7 +11,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from model_engine_server.common.dtos.core import HttpUrlStr
-from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Field
+from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Field, model_validator
 from model_engine_server.domain.entities import (
     CallbackAuth,
     CpuSpecificationType,
@@ -84,6 +84,16 @@ class CreateModelEndpointV1Request(BaseModel):
         ge=1,
         description="For async endpoints, how long a task can wait in queue before expiring (in seconds). Default: 86400 (24 hours).",
     )
+    temporal_task_queue: Optional[str] = Field(
+        default=None,
+        description="For temporal endpoints, the Temporal task queue that workers will poll.",
+    )
+
+    @model_validator(mode="after")
+    def validate_temporal_task_queue(self) -> "CreateModelEndpointV1Request":
+        if self.endpoint_type == ModelEndpointType.TEMPORAL and not self.temporal_task_queue:
+            raise ValueError("temporal_task_queue is required for temporal endpoints")
+        return self
 
 
 class CreateModelEndpointV1Response(BaseModel):
@@ -121,6 +131,10 @@ class UpdateModelEndpointV1Request(BaseModel):
         default=None,
         ge=1,
         description="For async endpoints, how long a task can wait in queue before expiring (in seconds). Default: 86400 (24 hours).",
+    )
+    temporal_task_queue: Optional[str] = Field(
+        default=None,
+        description="For temporal endpoints, the Temporal task queue that workers will poll.",
     )
 
 

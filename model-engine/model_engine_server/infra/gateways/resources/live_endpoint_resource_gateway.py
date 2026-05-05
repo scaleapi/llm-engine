@@ -118,11 +118,12 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
             endpoint_type=endpoint_type,
         )
         sqs_result = True
-        try:
-            await self.queue_delegate.delete_queue(endpoint_id=endpoint_id)
-        except EndpointResourceInfraException as e:
-            logger.warning("Could not delete SQS resources", exc_info=e)
-            sqs_result = False
+        if endpoint_type != ModelEndpointType.TEMPORAL:
+            try:
+                await self.queue_delegate.delete_queue(endpoint_id=endpoint_id)
+            except EndpointResourceInfraException as e:
+                logger.warning("Could not delete SQS resources", exc_info=e)
+                sqs_result = False
 
         if self.inference_autoscaling_metrics_gateway is not None:
             await self.inference_autoscaling_metrics_gateway.delete_resources(endpoint_id)
