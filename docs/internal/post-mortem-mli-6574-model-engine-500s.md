@@ -95,7 +95,38 @@ Audit confirmed no other service deploys to `scale-deploy` on `ml-serving-new` v
 
 **1. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`**
 
-Narrow the `ml_infra_admin` access policy association so it no longer covers `scale-deploy`, or add a restrictive Kubernetes `Role` in `scale-deploy` that removes `patch`/`update` on `apps/deployments` for the `ml_infra_admin` group.
+Change `ml_infra_admin`'s access scope from cluster-wide to namespace-scoped, listing every namespace except `scale-deploy`. Because Kubernetes RBAC is additive (no deny rules), scoping the access entry is the only way to prevent `kubectl set image` in `scale-deploy`:
+
+```hcl
+resource "aws_eks_access_policy_association" "ml_infra_admin" {
+  for_each      = toset(data.aws_iam_roles.ml_infra_admin.arns)
+  cluster_name  = local.cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = each.value
+
+  access_scope {
+    type = "namespace"
+    namespaces = [
+      "dagster",
+      "default",
+      "gpu-operator",
+      "istio-ingress",
+      "istio-system",
+      "keda",
+      "kube-node-lease",
+      "kube-public",
+      "kube-system",
+      "kubecost",
+      "litellm-rebuild",
+      "local-path-storage",
+      "service",
+      "snowflake-postgres-connector",
+      "workload",
+      # scale-deploy intentionally omitted — ml_infra_admin must not mutate deployments here
+    ]
+  }
+}
+```
 
 **2. `model-engine-internal/justfile`**
 
@@ -169,8 +200,29 @@ Any change requiring a DB schema update (new ORM column) must have its Alembic m
 
 ### P1 — Tighten 5xx alerting
 
-**What:** PagerDuty did not fire until 00:37Z — 47 min into the incident. Tighten the Envoy 5xx alert by lowering the error ratio threshold or reducing the evaluation window so that an outage of this magnitude pages within minutes of onset.
+**What:** PagerDuty did not fire until 00:37Z — 47 min into the incident. The existing monitor (`datadog_monitor.model_engine_error_rate_alert` in `scaleapi-ml-datadog/launch.tf`) evaluates a 15-minute window at a 5% threshold. Add a second, faster-firing entry with a 5-minute window so a sustained 5xx spike pages within minutes of onset.
+
+**File to change: `Terracode-ML/scaleapi-ml-datadog/launch.tf`**
+
+```hcl
+# In locals:
+launch_v1_route_monitor_params = {
+  prod_15m = {
+    severity      = "sev0"
+    cluster_name  = "ml-serving-new"
+    time_window   = "15m"
+    critical_rate = 0.05
+  }
+  # New — fires within ~5 min of a sustained 5xx spike
+  prod_5m = {
+    severity      = "sev0"
+    cluster_name  = "ml-serving-new"
+    time_window   = "5m"
+    critical_rate = 0.05
+  }
+}
+```
 
 **Owner:** model-engine on-call
-**Effort:** ~0.5 days (Datadog alert config update)
+**Effort:** ~0.5 days (Datadog Terraform change + Atlantis apply)
 
