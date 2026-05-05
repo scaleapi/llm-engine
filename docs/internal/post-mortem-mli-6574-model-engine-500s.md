@@ -81,19 +81,11 @@ This pre-upgrade hook runs `alembic upgrade head` before the gateway deployment 
 
 Two preventative controls:
 
-**a. Dedicated deploy identity for model-engine (chosen approach)**
+**a. Scope down `ml_infra_admin` in `scale-deploy` (chosen approach)**
 
-Two options were considered for preventing unauthorized production deploys:
+Remove `patch`/`update` on `apps/deployments` in the `scale-deploy` namespace from `ml_infra_admin`. This gives a hard RBAC guarantee — the API server rejects `kubectl set image` outright, with no reliance on process discipline.
 
-| | Option A: Scope down `ml_infra_admin` ✓ | Option B: New `ml-serving-deployer` role |
-|---|---|---|
-| **How** | Remove `patch`/`update` on `apps/deployments` in `scale-deploy` from `ml_infra_admin` | Add a new AWS SSO role scoped to `scale-deploy` on `ml-serving-new`; model-engine's `just deploy prod` (and CircleCI) assumes this role — SMIG and other services use different namespaces and are unaffected |
-| **`kubectl set image` prevention** | Hard — RBAC rejects it at the API server | Soft — process-enforced; `ml_infra_admin` users can still do it |
-| **Backward compatible** | Yes — audit confirmed no other service deploys to `scale-deploy` on `ml-serving-new` via `ml_infra_admin`; services using `ml-admin` on `ml-serving-new` (`dagster`, `scaletrain-ui`, `ml-orchestration-internal`, `research_evals`) all use the `dagster` namespace; genai services (`auto-hillclimb-ui` etc.) target `ml-training-new` | Yes — `ml_infra_admin` unchanged |
-| **Known breakage** | None | None |
-| **Coordination required** | No | No |
-
-**Chosen approach: Option A.** It gives a hard RBAC guarantee (the API server rejects `kubectl set image` outright) and the audit shows no other service deploys to `scale-deploy` on `ml-serving-new` via `ml_infra_admin`, so there is no coordination burden.
+Audit confirmed no other service deploys to `scale-deploy` on `ml-serving-new` via `ml_infra_admin`: services using `ml-admin` on `ml-serving-new` (`dagster`, `scaletrain-ui`, `ml-orchestration-internal`, `research_evals`) all use the `dagster` namespace; genai services (`auto-hillclimb-ui` etc.) target `ml-training-new`. No coordination required.
 
 **b. justfile guard — block deploying unmerged code**
 
@@ -103,51 +95,11 @@ Two options were considered for preventing unauthorized production deploys:
 
 **1. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`**
 
-Add new EKS access entry for `ml-serving-deployer` (no changes to existing `ml_infra_admin` block):
+Narrow the `ml_infra_admin` access policy association so it no longer covers `scale-deploy`, or add a restrictive Kubernetes `Role` in `scale-deploy` that removes `patch`/`update` on `apps/deployments` for the `ml_infra_admin` group.
 
-```hcl
-# New — model-engine deploy role, scoped to scale-deploy only:
-data "aws_iam_roles" "ml_serving_deployer" {
-  name_regex  = "AWSReservedSSO_MLServingDeployer.*"
-  path_prefix = "/aws-reserved/sso.amazonaws.com/"
-}
+**2. `model-engine-internal/justfile`**
 
-resource "aws_eks_access_entry" "ml_serving_deployer" {
-  for_each      = toset(data.aws_iam_roles.ml_serving_deployer.arns)
-  cluster_name  = local.cluster_name
-  principal_arn = each.value
-  type          = "STANDARD"
-}
-
-resource "aws_eks_access_policy_association" "ml_serving_deployer" {
-  for_each      = toset(data.aws_iam_roles.ml_serving_deployer.arns)
-  cluster_name  = local.cluster_name
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = each.value
-
-  access_scope {
-    type       = "namespace"
-    namespaces = ["scale-deploy"]
-  }
-}
-```
-
-**2. `Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/iam.tf`**
-
-Add `ml-serving-deployer` to the aws-auth ConfigMap so the IAM role maps to a k8s group:
-
-```hcl
-# Add to local.cluster_role_map:
-{
-  rolearn  = one(data.aws_iam_roles.ml_serving_deployer.arns)
-  username = "ml-serving-deployer"
-  groups   = ["ml-serving-deployer"]
-}
-```
-
-**3. `model-engine-internal/justfile`**
-
-Add a master branch guard and switch the prod deploy to use `ml-serving-deployer`:
+Add a master branch guard so `just deploy prod` is rejected if the current commit is not merged to `origin/master`:
 
 ```just
 # New — fails if current commit is not merged to origin/master
@@ -161,23 +113,12 @@ _check_master_branch env:
         fi
     fi
 
-# Updated _mount_aws: prod deploys use ml-serving-deployer profile
-_mount_aws env: _aws-mountable_folder
-    {{ if env == 'training' { 'cd .. && python3 scripts_py3/scale_scripts/exe/generate_mountable_aws_credentials.py -p ml-admin -e ~/.aws-mountable/credentials' } else { '' } }}
-    {{ if env == 'prod'     { 'cd .. && python3 scripts_py3/scale_scripts/exe/generate_mountable_aws_credentials.py -p ml-serving-deployer -e ~/.aws-mountable/credentials' } else { '' } }}
-    {{ if env == 'launch'   { 'cd .. && python3 scripts_py3/scale_scripts/exe/generate_mountable_aws_credentials.py -p ml-serving-admin -e ~/.aws-mountable/credentials' } else { '' } }}
-
 # Updated deploy: add master branch check
 deploy env='training': (_check_master_branch env) (_deploy env 'false') (_emit_deploy_event "model-engine" env)
 ```
 
-**Files to change:**
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/eks.tf`** — add `ml_serving_deployer` access entry (no changes to `ml_infra_admin`)
-- **`Terracode-ML/scaleapi-ml-serving/clusters/ml-serving-new/iam.tf`** — add `ml-serving-deployer` aws-auth mapping
-- **`model-engine-internal/justfile`** — `_check_master_branch`, update `_mount_aws` prod profile
-
 **Owner:** model-engine on-call
-**Effort:** ~2–3 days (new IAM SSO role + Terraform + Atlantis apply + justfile + validation)
+**Effort:** ~1–2 days (Terraform RBAC change + Atlantis apply + justfile + validation)
 
 ---
 
