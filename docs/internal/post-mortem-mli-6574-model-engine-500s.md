@@ -88,7 +88,7 @@ Two preventative controls:
 1. **Create `ml-serving-deployer`** — a new AWS SSO role scoped to `scale-deploy` on `ml-serving-new`; `just deploy prod` switches to it.
 2. **Scope down `ml_infra_admin`** — remove its access to `scale-deploy`. Because Kubernetes RBAC is additive (no deny rules), scoping the EKS access entry is the only way to enforce this at the API server.
 
-Audit confirmed no other service deploys to `scale-deploy` on `ml-serving-new` via `ml_infra_admin`: services on `ml-serving-new` that use `ml_infra_admin` (`dagster`, `scaletrain-ui`, `ml-orchestration-internal`, `research_evals`) all deploy to the `dagster` namespace; genai services (`auto-hillclimb-ui` etc.) deploy to `ml-training-new`, which is a separate AWS account and has no access to `ml-serving-new`.
+Audit confirmed no other service deploys to `scale-deploy` on `ml-serving-new` via `ml_infra_admin`: all other services using `ml_infra_admin` on `ml-serving-new` (`dagster`, `scaletrain-ui`, `ml-orchestration-internal`, `research_evals`) deploy to the `dagster` namespace.
 
 **b. justfile guard — block deploying unmerged code**
 
