@@ -664,7 +664,8 @@ def test_load_model_weights_sub_commands(
     expected_result = [
         "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
         " | tar -xz -C /opt"
-        " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null",
+        " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
+        " && /opt/google-cloud-sdk/bin/gcloud config set storage/check_hashes if_fast_else_skip 2>/dev/null",
         "/opt/google-cloud-sdk/bin/gcloud storage rsync -r"
         ' --exclude="optimizer.*" --exclude=".*\\.py$"'
         " gs://fake-bucket/fake-checkpoint test_folder",
@@ -683,7 +684,8 @@ def test_load_model_weights_sub_commands(
     expected_result = [
         "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
         " | tar -xz -C /opt"
-        " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null",
+        " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
+        " && /opt/google-cloud-sdk/bin/gcloud config set storage/check_hashes if_fast_else_skip 2>/dev/null",
         "/opt/google-cloud-sdk/bin/gcloud storage rsync -r"
         ' --exclude="optimizer.*"'
         " gs://fake-bucket/fake-checkpoint test_folder",
@@ -717,7 +719,8 @@ def test_load_model_files_sub_commands_trt_llm_gcs(
     expected_result = [
         "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
         " | tar -xz -C /opt"
-        " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null",
+        " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
+        " && /opt/google-cloud-sdk/bin/gcloud config set storage/check_hashes if_fast_else_skip 2>/dev/null",
         "/opt/google-cloud-sdk/bin/gcloud storage cp -r gs://fake-bucket/fake-checkpoint/* ./",
     ]
     assert expected_result == subcommands

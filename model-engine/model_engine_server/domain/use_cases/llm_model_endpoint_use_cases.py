@@ -724,10 +724,15 @@ class CreateLLMModelBundleV1UseCase:
         # AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD). The pod's KSA must be bound to a GSA with
         # storage.objects.list and storage.objects.get permissions on the checkpoint bucket.
         # Install gcloud CLI on-the-fly for GCS access (similar to azcopy install for Azure)
+        # storage/check_hashes=if_fast_else_skip lets rsync proceed without the
+        # google-crc32c lib (not present in the inference image). The default
+        # check_hashes=always fails every download with "fast hash calculation
+        # tools are not installed".
         subcommands.append(
             "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
             " | tar -xz -C /opt"
             " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
+            " && /opt/google-cloud-sdk/bin/gcloud config set storage/check_hashes if_fast_else_skip 2>/dev/null"
         )
 
         # gcloud storage rsync only supports --exclude (Python regex), not --include.
@@ -759,10 +764,12 @@ class CreateLLMModelBundleV1UseCase:
                 f"./s5cmd {s3_endpoint_flag} --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
             ]
         elif checkpoint_path.startswith("gs://"):
+            # Same check_hashes rationale as load_model_weights_sub_commands_gcs.
             subcommands = [
                 "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
                 " | tar -xz -C /opt"
-                " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null",
+                " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
+                " && /opt/google-cloud-sdk/bin/gcloud config set storage/check_hashes if_fast_else_skip 2>/dev/null",
                 f"/opt/google-cloud-sdk/bin/gcloud storage cp -r {os.path.join(checkpoint_path, '*')} ./",
             ]
         else:
