@@ -171,9 +171,7 @@ def get_kubernetes_autoscaling_client():  # pragma: no cover
         if version.parse(cluster_version) >= version.parse("1.26"):
             _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2Api()
         else:
-            _kubernetes_autoscaling_api = (
-                kubernetes_asyncio.client.AutoscalingV2beta2Api()
-            )
+            _kubernetes_autoscaling_api = kubernetes_asyncio.client.AutoscalingV2beta2Api()
     return _kubernetes_autoscaling_api
 
 
@@ -302,10 +300,7 @@ def remove_model_cache_from_pod_spec(pod_spec: Dict[str, Any]) -> None:
 
 def add_model_cache_to_container(container: Dict[str, Any]) -> None:
     volume_mounts = container.setdefault("volumeMounts", [])
-    if any(
-        volume_mount.get("name") == MODEL_CACHE_VOLUME_NAME
-        for volume_mount in volume_mounts
-    ):
+    if any(volume_mount.get("name") == MODEL_CACHE_VOLUME_NAME for volume_mount in volume_mounts):
         return
     volume_mounts.append(
         {
@@ -332,9 +327,7 @@ def add_model_cache_to_deployment_template(
     pod_spec = deployment_template["spec"]["template"]["spec"]
     remove_model_cache_from_pod_spec(pod_spec)
     add_model_cache_to_pod_spec(pod_spec, pvc_name)
-    add_model_cache_to_container(
-        get_main_container_from_deployment_template(deployment_template)
-    )
+    add_model_cache_to_container(get_main_container_from_deployment_template(deployment_template))
 
 
 def remove_model_cache_from_deployment_template(
@@ -343,9 +336,7 @@ def remove_model_cache_from_deployment_template(
     remove_model_cache_from_pod_spec(deployment_template["spec"]["template"]["spec"])
 
 
-def add_model_cache_to_lws_template(
-    lws_template: Dict[str, Any], pvc_name: str
-) -> None:
+def add_model_cache_to_lws_template(lws_template: Dict[str, Any], pvc_name: str) -> None:
     leader_worker_template = lws_template["spec"]["leaderWorkerTemplate"]
     for pod_template_key, container_name in (
         ("leaderTemplate", LWS_LEADER_CONTAINER_NAME),
@@ -425,21 +416,15 @@ def add_datadog_env_to_container(
             },
             {
                 "name": "DD_SERVICE",
-                "value": deployment_template["metadata"]["labels"][
-                    "tags.datadoghq.com/service"
-                ],
+                "value": deployment_template["metadata"]["labels"]["tags.datadoghq.com/service"],
             },
             {
                 "name": "DD_ENV",
-                "value": deployment_template["metadata"]["labels"][
-                    "tags.datadoghq.com/env"
-                ],
+                "value": deployment_template["metadata"]["labels"]["tags.datadoghq.com/env"],
             },
             {
                 "name": "DD_VERSION",
-                "value": deployment_template["metadata"]["labels"][
-                    "tags.datadoghq.com/version"
-                ],
+                "value": deployment_template["metadata"]["labels"]["tags.datadoghq.com/version"],
             },
             {
                 "name": "DD_AGENT_HOST",
@@ -486,9 +471,7 @@ def add_lws_default_env_vars_to_container(container: Dict[str, Any]) -> None:
             {
                 "name": "K8S_LWS_NAME",
                 "valueFrom": {
-                    "fieldRef": {
-                        "fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/name']"
-                    }
+                    "fieldRef": {"fieldPath": "metadata.labels['leaderworkerset.sigs.k8s.io/name']"}
                 },
             },
             {
@@ -595,9 +578,7 @@ class K8SEndpointResourceDelegate:
                 return envvar["value"]
         return None
 
-    def _get_common_endpoint_params(
-        self, deployment_config: V1Deployment
-    ) -> CommonEndpointParams:
+    def _get_common_endpoint_params(self, deployment_config: V1Deployment) -> CommonEndpointParams:
         """
         Reads some values from k8s common to both sync and async endpoints
         Args:
@@ -622,9 +603,7 @@ class K8SEndpointResourceDelegate:
         # in LIRA.
         bundle_url = self._get_env_value_from_envlist(envlist, "BUNDLE_URL") or image
         aws_role = self._get_env_value_from_envlist(envlist, "AWS_PROFILE")
-        results_s3_bucket = self._get_env_value_from_envlist(
-            envlist, "RESULTS_S3_BUCKET"
-        )
+        results_s3_bucket = self._get_env_value_from_envlist(envlist, "RESULTS_S3_BUCKET")
 
         # Temporary fix: new LIRA endpoints created should have these env vars
         # but old ones don't, so we can fetch them from the config.
@@ -661,9 +640,7 @@ class K8SEndpointResourceDelegate:
         )
         return common_build_endpoint_request
 
-    def _get_common_endpoint_params_for_lws_type(
-        self, lws_config: Any
-    ) -> CommonEndpointParams:
+    def _get_common_endpoint_params_for_lws_type(self, lws_config: Any) -> CommonEndpointParams:
         main_container = self._get_main_leader_container_from_lws(lws_config)
         launch_container = self._get_launch_container_from_lws(lws_config)
 
@@ -678,12 +655,9 @@ class K8SEndpointResourceDelegate:
         envlist = launch_container["env"]
         # There really isn't a bundle_url for LWS since those use RunnableImages
         bundle_url = (
-            self._get_env_value_from_envlist_for_custom_object(envlist, "BUNDLE_URL")
-            or image
+            self._get_env_value_from_envlist_for_custom_object(envlist, "BUNDLE_URL") or image
         )
-        aws_role = self._get_env_value_from_envlist_for_custom_object(
-            envlist, "AWS_PROFILE"
-        )
+        aws_role = self._get_env_value_from_envlist_for_custom_object(envlist, "AWS_PROFILE")
         results_s3_bucket = self._get_env_value_from_envlist_for_custom_object(
             envlist, "RESULTS_S3_BUCKET"
         )
@@ -699,17 +673,17 @@ class K8SEndpointResourceDelegate:
             raise ValueError("Failed to fetch common endpoint values.")
 
         try:
-            node_selector = lws_config["spec"]["leaderWorkerTemplate"][
-                "leaderTemplate"
-            ]["spec"]["nodeSelector"]
+            node_selector = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+                "nodeSelector"
+            ]
             gpu_type = node_selector.get("k8s.amazonaws.com/accelerator", None)
         except KeyError:
             gpu_type = None
 
         try:
-            labels = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"][
-                "metadata"
-            ]["labels"]
+            labels = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["metadata"][
+                "labels"
+            ]
         except KeyError:
             labels = None
 
@@ -758,24 +732,20 @@ class K8SEndpointResourceDelegate:
         """
         Similar to _get_main_container, this returns a nested dict.
         """
-        leader_containers = lws_config["spec"]["leaderWorkerTemplate"][
-            "leaderTemplate"
-        ]["spec"]["containers"]
-        name_to_container = {
-            container["name"]: container for container in leader_containers
-        }
+        leader_containers = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+            "containers"
+        ]
+        name_to_container = {container["name"]: container for container in leader_containers}
         if LWS_LEADER_CONTAINER_NAME not in name_to_container:
             raise ValueError("No main leader container detected")
         return name_to_container[LWS_LEADER_CONTAINER_NAME]
 
     @staticmethod
     def _get_launch_container_from_lws(lws_config: Any):
-        leader_containers = lws_config["spec"]["leaderWorkerTemplate"][
-            "leaderTemplate"
-        ]["spec"]["containers"]
-        name_to_container = {
-            container["name"]: container for container in leader_containers
-        }
+        leader_containers = lws_config["spec"]["leaderWorkerTemplate"]["leaderTemplate"]["spec"][
+            "containers"
+        ]
+        name_to_container = {container["name"]: container for container in leader_containers}
         # If a celery forwarder is present, use that
         if "celery-forwarder" in name_to_container:
             return name_to_container["celery-forwarder"]
@@ -831,9 +801,7 @@ class K8SEndpointResourceDelegate:
                     body=new_lws,
                 )
             else:
-                logger.exception(
-                    "Got an exception when trying to apply the LeaderWorkerSet"
-                )
+                logger.exception("Got an exception when trying to apply the LeaderWorkerSet")
                 raise
 
     @staticmethod
@@ -951,9 +919,7 @@ class K8SEndpointResourceDelegate:
             if exc.status == 409:
                 logger.info(f"PersistentVolumeClaim {name} already exists")
             else:
-                logger.exception(
-                    "Got an exception when trying to apply the PersistentVolumeClaim"
-                )
+                logger.exception("Got an exception when trying to apply the PersistentVolumeClaim")
                 raise
 
     @staticmethod
@@ -982,10 +948,7 @@ class K8SEndpointResourceDelegate:
                     )
                 except ValueError as exc2:
                     # The k8s api has a bug where a ValueError is thrown. This catches and drops it.
-                    if (
-                        str(exc2)
-                        == "Invalid value for `conditions`, must not be `None`"
-                    ):
+                    if str(exc2) == "Invalid value for `conditions`, must not be `None`":
                         # Workaround from https://github.com/kubernetes-client/python/issues/1098#issuecomment-663031331
                         logger.info("Skipping invalid 'conditions' value...")
                     else:
@@ -1047,9 +1010,7 @@ class K8SEndpointResourceDelegate:
                     body=new_vpa,
                 )
             else:
-                logger.exception(
-                    "Got an exception when trying to apply the VerticalPodAutoscaler"
-                )
+                logger.exception("Got an exception when trying to apply the VerticalPodAutoscaler")
                 raise
 
     @staticmethod
@@ -1080,9 +1041,7 @@ class K8SEndpointResourceDelegate:
                 replace_pdb = pdb.copy()
                 if "metadata" not in replace_pdb:
                     replace_pdb["metadata"] = {}
-                replace_pdb["metadata"][
-                    "resourceVersion"
-                ] = existing_pdb.metadata.resource_version
+                replace_pdb["metadata"]["resourceVersion"] = existing_pdb.metadata.resource_version
 
                 await policy_api.replace_namespaced_pod_disruption_budget(
                     name=name,
@@ -1090,15 +1049,11 @@ class K8SEndpointResourceDelegate:
                     body=replace_pdb,
                 )
             else:
-                logger.exception(
-                    "Got an exception when trying to apply the PodDisruptionBudget"
-                )
+                logger.exception("Got an exception when trying to apply the PodDisruptionBudget")
                 raise
 
     @staticmethod
-    async def _create_keda_scaled_object(
-        scaled_object: Dict[str, Any], name: str
-    ) -> None:
+    async def _create_keda_scaled_object(scaled_object: Dict[str, Any], name: str) -> None:
         custom_objects_api = get_kubernetes_custom_objects_client()
         try:
             await custom_objects_api.create_namespaced_custom_object(
@@ -1117,14 +1072,12 @@ class K8SEndpointResourceDelegate:
                 # one. See _create_vpa for more details.
                 # There is a setting `restoreToOriginalReplicaCount` in the keda ScaledObject that should be set to
                 # false which should make it safe to do this replace (as opposed to a patch)
-                existing_scaled_object = (
-                    await custom_objects_api.get_namespaced_custom_object(
-                        group="keda.sh",
-                        version="v1alpha1",
-                        namespace=hmi_config.endpoint_namespace,
-                        plural="scaledobjects",
-                        name=name,
-                    )
+                existing_scaled_object = await custom_objects_api.get_namespaced_custom_object(
+                    group="keda.sh",
+                    version="v1alpha1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="scaledobjects",
+                    name=name,
                 )
                 new_scaled_object = deep_update(existing_scaled_object, scaled_object)
                 await custom_objects_api.replace_namespaced_custom_object(
@@ -1136,15 +1089,11 @@ class K8SEndpointResourceDelegate:
                     body=new_scaled_object,
                 )
             else:
-                logger.exception(
-                    "Got an exception when trying to apply the ScaledObject"
-                )
+                logger.exception("Got an exception when trying to apply the ScaledObject")
                 raise
 
     @staticmethod
-    async def _create_destination_rule(
-        destination_rule: Dict[str, Any], name: str
-    ) -> None:
+    async def _create_destination_rule(destination_rule: Dict[str, Any], name: str) -> None:
         """
         Lower-level function to create/patch an Istio DestinationRule. This is only created for sync endpoints.
         Args:
@@ -1170,18 +1119,14 @@ class K8SEndpointResourceDelegate:
                 # The async k8s client has a bug with patching custom objects, so we manually
                 # merge the new DestinationRule with the old one and then replace the old one with the merged
                 # one.
-                existing_destination_rule = (
-                    await custom_objects_api.get_namespaced_custom_object(
-                        group="networking.istio.io",
-                        version="v1beta1",
-                        namespace=hmi_config.endpoint_namespace,
-                        plural="destinationrules",
-                        name=name,
-                    )
+                existing_destination_rule = await custom_objects_api.get_namespaced_custom_object(
+                    group="networking.istio.io",
+                    version="v1beta1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="destinationrules",
+                    name=name,
                 )
-                new_destination_rule = deep_update(
-                    existing_destination_rule, destination_rule
-                )
+                new_destination_rule = deep_update(existing_destination_rule, destination_rule)
                 await custom_objects_api.replace_namespaced_custom_object(
                     group="networking.istio.io",
                     version="v1beta1",
@@ -1191,15 +1136,11 @@ class K8SEndpointResourceDelegate:
                     body=new_destination_rule,
                 )
             else:
-                logger.exception(
-                    "Got an exception when trying to apply the DestinationRule"
-                )
+                logger.exception("Got an exception when trying to apply the DestinationRule")
                 raise
 
     @staticmethod
-    async def _create_virtual_service(
-        virtual_service: Dict[str, Any], name: str
-    ) -> None:
+    async def _create_virtual_service(virtual_service: Dict[str, Any], name: str) -> None:
         """
         Lower-level function to create/patch an Istio VirtualService. This is only created for sync endpoints.
         Args:
@@ -1225,18 +1166,14 @@ class K8SEndpointResourceDelegate:
                 # The async k8s client has a bug with patching custom objects, so we manually
                 # merge the new VirtualService with the old one and then replace the old one with the merged
                 # one.
-                existing_virtual_service = (
-                    await custom_objects_api.get_namespaced_custom_object(
-                        group="networking.istio.io",
-                        version="v1alpha3",
-                        namespace=hmi_config.endpoint_namespace,
-                        plural="virtualservices",
-                        name=name,
-                    )
+                existing_virtual_service = await custom_objects_api.get_namespaced_custom_object(
+                    group="networking.istio.io",
+                    version="v1alpha3",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="virtualservices",
+                    name=name,
                 )
-                new_virtual_service = deep_update(
-                    existing_virtual_service, virtual_service
-                )
+                new_virtual_service = deep_update(existing_virtual_service, virtual_service)
                 await custom_objects_api.replace_namespaced_custom_object(
                     group="networking.istio.io",
                     version="v1alpha3",
@@ -1246,15 +1183,11 @@ class K8SEndpointResourceDelegate:
                     body=new_virtual_service,
                 )
             else:
-                logger.exception(
-                    "Got an exception when trying to apply the VirtualService"
-                )
+                logger.exception("Got an exception when trying to apply the VirtualService")
                 raise
 
     @staticmethod
-    async def _create_lws_service_entry(
-        lws_service_entry: Dict[str, Any], name: str
-    ) -> None:
+    async def _create_lws_service_entry(lws_service_entry: Dict[str, Any], name: str) -> None:
         # Note: this istio ServiceEntry is specific to the LWS case,
         # as it is used to enable the "hack" where we manually resolve
         # the IP of a K8s service and route to the IP directly.
@@ -1273,18 +1206,14 @@ class K8SEndpointResourceDelegate:
                 # The async k8s client has a bug with patching custom objects, so we manually
                 # merge the new ServiceEntry with the old one and then replace the old one with the merged
                 # one.
-                existing_service_entry = (
-                    await custom_objects_api.get_namespaced_custom_object(
-                        group="networking.istio.io",
-                        version="v1beta1",
-                        namespace=hmi_config.endpoint_namespace,
-                        plural="serviceentries",
-                        name=name,
-                    )
+                existing_service_entry = await custom_objects_api.get_namespaced_custom_object(
+                    group="networking.istio.io",
+                    version="v1beta1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="serviceentries",
+                    name=name,
                 )
-                new_service_entry = deep_update(
-                    existing_service_entry, lws_service_entry
-                )
+                new_service_entry = deep_update(existing_service_entry, lws_service_entry)
                 await custom_objects_api.replace_namespaced_custom_object(
                     group="networking.istio.io",
                     version="v1beta1",
@@ -1294,9 +1223,7 @@ class K8SEndpointResourceDelegate:
                     body=new_service_entry,
                 )
             else:
-                logger.exception(
-                    "Got an exception when trying to apply the ServiceEntry"
-                )
+                logger.exception("Got an exception when trying to apply the ServiceEntry")
                 raise
 
     @staticmethod
@@ -1416,9 +1343,7 @@ class K8SEndpointResourceDelegate:
     def _translate_k8s_config_maps_to_user_config_data(
         cls,
         deployment_name: str,
-        fetched_config_map_list: List[
-            kubernetes_asyncio.client.models.v1_config_map.V1ConfigMap
-        ],
+        fetched_config_map_list: List[kubernetes_asyncio.client.models.v1_config_map.V1ConfigMap],
     ):
         config_map_map = {cm.metadata.name: cm for cm in fetched_config_map_list}
         app_config_data = cls._read_endpoint_config_map_from_fetched(
@@ -1453,9 +1378,7 @@ class K8SEndpointResourceDelegate:
                     f"Trying to delete nonexistent LeaderWorkerSet {k8s_resource_group_name}"
                 )
             else:
-                logger.exception(
-                    f"Deletion of LeaderWorkerSet {k8s_resource_group_name} failed"
-                )
+                logger.exception(f"Deletion of LeaderWorkerSet {k8s_resource_group_name} failed")
                 return False
         return True
 
@@ -1488,14 +1411,10 @@ class K8SEndpointResourceDelegate:
                             f"Trying to delete nonexistent Deployment {k8s_resource_group_name}"
                         )
                     else:
-                        logger.exception(
-                            f"Deletion of Deployment {k8s_resource_group_name} failed"
-                        )
+                        logger.exception(f"Deletion of Deployment {k8s_resource_group_name} failed")
                         return False
             else:
-                logger.exception(
-                    f"Deletion of Deployment {k8s_resource_group_name} failed"
-                )
+                logger.exception(f"Deletion of Deployment {k8s_resource_group_name} failed")
                 return False
         return True
 
@@ -1514,13 +1433,10 @@ class K8SEndpointResourceDelegate:
                 )
             except ApiException as e:
                 if e.status == 404:
-                    logger.warning(
-                        f"Trying to delete nonexistent ConfigMap {config_map_name}"
-                    )
+                    logger.warning(f"Trying to delete nonexistent ConfigMap {config_map_name}")
                 else:
                     logger.error(
-                        f"Deletion of ConfigMap {config_map_name} failed with error"
-                        f" {e}"
+                        f"Deletion of ConfigMap {config_map_name} failed with error" f" {e}"
                     )
                     return False
         return True
@@ -1537,9 +1453,7 @@ class K8SEndpointResourceDelegate:
             )
         except ApiException as e:
             if e.status == 404:
-                logger.debug(
-                    f"Trying to delete nonexistent PersistentVolumeClaim {pvc_name}"
-                )
+                logger.debug(f"Trying to delete nonexistent PersistentVolumeClaim {pvc_name}")
             else:
                 logger.exception(f"Deletion of PersistentVolumeClaim {pvc_name} failed")
                 return False
@@ -1571,14 +1485,10 @@ class K8SEndpointResourceDelegate:
                             f"Trying to delete nonexistent Service {k8s_resource_group_name}"
                         )
                     else:
-                        logger.exception(
-                            f"Deletion of Service {k8s_resource_group_name} failed"
-                        )
+                        logger.exception(f"Deletion of Service {k8s_resource_group_name} failed")
                         return False
             else:
-                logger.exception(
-                    f"Deletion of Service {k8s_resource_group_name} failed"
-                )
+                logger.exception(f"Deletion of Service {k8s_resource_group_name} failed")
                 return False
         return True
 
@@ -1616,9 +1526,7 @@ class K8SEndpointResourceDelegate:
                     f"Trying to delete nonexistent DestinationRule {k8s_resource_group_name}"
                 )
             else:
-                logger.exception(
-                    f"Deletion of DestinationRule {k8s_resource_group_name} failed"
-                )
+                logger.exception(f"Deletion of DestinationRule {k8s_resource_group_name} failed")
                 return False
         return True
 
@@ -1640,9 +1548,7 @@ class K8SEndpointResourceDelegate:
                     f"Trying to delete nonexistent VirtualService {k8s_resource_group_name}"
                 )
             else:
-                logger.exception(
-                    f"Deletion of VirtualService {k8s_resource_group_name} failed"
-                )
+                logger.exception(f"Deletion of VirtualService {k8s_resource_group_name} failed")
                 return False
         return True
 
@@ -1664,9 +1570,7 @@ class K8SEndpointResourceDelegate:
                     f"Trying to delete nonexistent ServiceEntry {k8s_resource_group_name}"
                 )
             else:
-                logger.exception(
-                    f"Deletion of ServiceEntry {k8s_resource_group_name} failed"
-                )
+                logger.exception(f"Deletion of ServiceEntry {k8s_resource_group_name} failed")
                 return False
         return True
 
@@ -1684,9 +1588,7 @@ class K8SEndpointResourceDelegate:
             )
         except ApiException as e:
             if e.status == 404:
-                logger.warning(
-                    f"Trying to delete nonexistent VPA {k8s_resource_group_name}"
-                )
+                logger.warning(f"Trying to delete nonexistent VPA {k8s_resource_group_name}")
             else:
                 logger.exception(
                     f"Deletion of VerticalPodAutoscaler {k8s_resource_group_name} failed"
@@ -1771,9 +1673,7 @@ class K8SEndpointResourceDelegate:
                     f"Trying to delete nonexistent ScaledObject {k8s_resource_group_name}"
                 )
             else:
-                logger.exception(
-                    f"Deletion of ScaledObject {k8s_resource_group_name} failed"
-                )
+                logger.exception(f"Deletion of ScaledObject {k8s_resource_group_name} failed")
                 return False
         return True
 
@@ -1801,9 +1701,7 @@ class K8SEndpointResourceDelegate:
             )
         except ApiException as e:
             if e.status == 404:
-                logger.warning(
-                    f"Trying to restart nonexistent Deployment {deployment_name}"
-                )
+                logger.warning(f"Trying to restart nonexistent Deployment {deployment_name}")
             else:
                 logger.exception(f"Failed to restart deployment {deployment_name}")
                 raise e
@@ -1929,9 +1827,7 @@ class K8SEndpointResourceDelegate:
                 lws=lws_template,
                 name=k8s_resource_group_name,
             )
-            k8s_service_name = self._get_lws_service_resource_name(
-                k8s_resource_group_name
-            )
+            k8s_service_name = self._get_lws_service_resource_name(k8s_resource_group_name)
         else:
             deployment_resource_name = self._get_deployment_resource_name(request)
             deployment_arguments = get_endpoint_resource_arguments_from_request(
@@ -1945,18 +1841,14 @@ class K8SEndpointResourceDelegate:
                 f"{deployment_resource_name}.yaml", deployment_arguments
             )
             if uses_model_cache:
-                add_model_cache_to_deployment_template(
-                    deployment_template, model_cache_pvc_name
-                )
+                add_model_cache_to_deployment_template(deployment_template, model_cache_pvc_name)
             else:
                 remove_model_cache_from_deployment_template(deployment_template)
             if isinstance(
                 request.build_endpoint_request.model_endpoint_record.current_model_bundle.flavor,
                 RunnableImageLike,
             ):
-                user_container = get_main_container_from_deployment_template(
-                    deployment_template
-                )
+                user_container = get_main_container_from_deployment_template(deployment_template)
                 add_datadog_env_to_container(deployment_template, user_container)
                 add_pod_metadata_env_to_container(user_container)
             await self._create_deployment(
@@ -1987,9 +1879,7 @@ class K8SEndpointResourceDelegate:
             sqs_queue_url=sqs_queue_url_str,
             endpoint_resource_name="endpoint-config",
         )
-        endpoint_config_template = load_k8s_yaml(
-            "endpoint-config.yaml", endpoint_config_arguments
-        )
+        endpoint_config_template = load_k8s_yaml("endpoint-config.yaml", endpoint_config_arguments)
         await self._create_config_map(
             config_map=endpoint_config_template,
             name=f"{k8s_resource_group_name}-endpoint-config",
@@ -2020,9 +1910,7 @@ class K8SEndpointResourceDelegate:
                 sqs_queue_url=sqs_queue_url_str,
                 endpoint_resource_name="pod-disruption-budget",
             )
-            pdb_template = load_k8s_yaml(
-                "pod-disruption-budget.yaml", pdb_config_arguments
-            )
+            pdb_template = load_k8s_yaml("pod-disruption-budget.yaml", pdb_config_arguments)
             await self._create_pdb(
                 pdb=pdb_template,
                 name=k8s_resource_group_name,
@@ -2063,9 +1951,7 @@ class K8SEndpointResourceDelegate:
                     endpoint_resource_name="horizontal-pod-autoscaler",
                     api_version=api_version,
                 )
-                hpa_template = load_k8s_yaml(
-                    "horizontal-pod-autoscaler.yaml", hpa_arguments
-                )
+                hpa_template = load_k8s_yaml("horizontal-pod-autoscaler.yaml", hpa_arguments)
                 await self._create_hpa(
                     hpa=hpa_template,
                     name=k8s_resource_group_name,
@@ -2076,14 +1962,12 @@ class K8SEndpointResourceDelegate:
                     build_endpoint_request.model_endpoint_record.id,
                     k8s_resource_group_name,
                 )
-                keda_scaled_object_arguments = (
-                    get_endpoint_resource_arguments_from_request(
-                        k8s_resource_group_name=k8s_resource_group_name,
-                        request=request,
-                        sqs_queue_name=sqs_queue_name_str,
-                        sqs_queue_url=sqs_queue_url_str,
-                        endpoint_resource_name="keda-scaled-object",
-                    )
+                keda_scaled_object_arguments = get_endpoint_resource_arguments_from_request(
+                    k8s_resource_group_name=k8s_resource_group_name,
+                    request=request,
+                    sqs_queue_name=sqs_queue_name_str,
+                    sqs_queue_url=sqs_queue_url_str,
+                    endpoint_resource_name="keda-scaled-object",
                 )
                 keda_scaled_object_template = load_k8s_yaml(
                     "keda-scaled-object.yaml", keda_scaled_object_arguments
@@ -2108,14 +1992,12 @@ class K8SEndpointResourceDelegate:
 
             # TODO wsong: add flag to use istio and use these arguments
             if hmi_config.istio_enabled:
-                virtual_service_arguments = (
-                    get_endpoint_resource_arguments_from_request(
-                        k8s_resource_group_name=k8s_resource_group_name,
-                        request=request,
-                        sqs_queue_name=sqs_queue_name_str,
-                        sqs_queue_url=sqs_queue_url_str,
-                        endpoint_resource_name="virtual-service",
-                    )
+                virtual_service_arguments = get_endpoint_resource_arguments_from_request(
+                    k8s_resource_group_name=k8s_resource_group_name,
+                    request=request,
+                    sqs_queue_name=sqs_queue_name_str,
+                    sqs_queue_url=sqs_queue_url_str,
+                    endpoint_resource_name="virtual-service",
                 )
                 virtual_service_template = load_k8s_yaml(
                     "virtual-service.yaml", virtual_service_arguments
@@ -2125,14 +2007,12 @@ class K8SEndpointResourceDelegate:
                     name=k8s_resource_group_name,
                 )
 
-                destination_rule_arguments = (
-                    get_endpoint_resource_arguments_from_request(
-                        k8s_resource_group_name=k8s_resource_group_name,
-                        request=request,
-                        sqs_queue_name=sqs_queue_name_str,
-                        sqs_queue_url=sqs_queue_url_str,
-                        endpoint_resource_name="destination-rule",
-                    )
+                destination_rule_arguments = get_endpoint_resource_arguments_from_request(
+                    k8s_resource_group_name=k8s_resource_group_name,
+                    request=request,
+                    sqs_queue_name=sqs_queue_name_str,
+                    sqs_queue_url=sqs_queue_url_str,
+                    endpoint_resource_name="destination-rule",
                 )
                 destination_rule_template = load_k8s_yaml(
                     "destination-rule.yaml", destination_rule_arguments
@@ -2169,15 +2049,13 @@ class K8SEndpointResourceDelegate:
                 # where we manually resolve the IP address of the K8s service created above.
                 # We empirically need to create this in order for the request to the service's IP address
                 # to go through. See live_{sync,streaming}_model_endpoint_inference_gateway.py for more details.
-                lws_service_entry_arguments = (
-                    get_endpoint_resource_arguments_from_request(
-                        k8s_resource_group_name=k8s_resource_group_name,
-                        request=request,
-                        sqs_queue_name=sqs_queue_name_str,
-                        sqs_queue_url=sqs_queue_url_str,
-                        endpoint_resource_name="lws-service-entry",
-                        service_name_override=k8s_service_name,
-                    )
+                lws_service_entry_arguments = get_endpoint_resource_arguments_from_request(
+                    k8s_resource_group_name=k8s_resource_group_name,
+                    request=request,
+                    sqs_queue_name=sqs_queue_name_str,
+                    sqs_queue_url=sqs_queue_url_str,
+                    endpoint_resource_name="lws-service-entry",
+                    service_name_override=k8s_service_name,
                 )
                 lws_service_entry_template = load_k8s_yaml(
                     "lws-service-entry.yaml", lws_service_entry_arguments
@@ -2195,9 +2073,7 @@ class K8SEndpointResourceDelegate:
             return sqs_queue_name_str
         else:
             # We should never get here
-            raise ValueError(
-                f"Unsupported endpoint type {model_endpoint_record.endpoint_type}"
-            )
+            raise ValueError(f"Unsupported endpoint type {model_endpoint_record.endpoint_type}")
 
     @staticmethod
     def _get_vertical_autoscaling_params(
@@ -2335,17 +2211,13 @@ class K8SEndpointResourceDelegate:
 
         common_params = self._get_common_endpoint_params(deployment_config)
         if endpoint_type == ModelEndpointType.ASYNC:
-            horizontal_autoscaling_params = self._get_async_autoscaling_params(
-                deployment_config
-            )
+            horizontal_autoscaling_params = self._get_async_autoscaling_params(deployment_config)
         elif endpoint_type in {ModelEndpointType.SYNC, ModelEndpointType.STREAMING}:
             autoscaling_client = get_kubernetes_autoscaling_client()
             custom_object_client = get_kubernetes_custom_objects_client()
             try:
-                hpa_config = (
-                    await autoscaling_client.read_namespaced_horizontal_pod_autoscaler(
-                        k8s_resource_group_name, hmi_config.endpoint_namespace
-                    )
+                hpa_config = await autoscaling_client.read_namespaced_horizontal_pod_autoscaler(
+                    k8s_resource_group_name, hmi_config.endpoint_namespace
                 )
             except ApiException as e:
                 if e.status == 404:
@@ -2353,26 +2225,20 @@ class K8SEndpointResourceDelegate:
                 else:
                     raise e
             try:
-                keda_scaled_object_config = (
-                    await custom_object_client.get_namespaced_custom_object(
-                        group="keda.sh",
-                        version="v1alpha1",
-                        namespace=hmi_config.endpoint_namespace,
-                        plural="scaledobjects",
-                        name=k8s_resource_group_name,
-                    )
+                keda_scaled_object_config = await custom_object_client.get_namespaced_custom_object(
+                    group="keda.sh",
+                    version="v1alpha1",
+                    namespace=hmi_config.endpoint_namespace,
+                    plural="scaledobjects",
+                    name=k8s_resource_group_name,
                 )
             except ApiException:
                 keda_scaled_object_config = None
             if hpa_config is not None:
-                horizontal_autoscaling_params = self._get_sync_autoscaling_params(
-                    hpa_config
-                )
+                horizontal_autoscaling_params = self._get_sync_autoscaling_params(hpa_config)
             elif keda_scaled_object_config is not None:
-                horizontal_autoscaling_params = (
-                    self._get_sync_autoscaling_params_from_keda(
-                        keda_scaled_object_config
-                    )
+                horizontal_autoscaling_params = self._get_sync_autoscaling_params_from_keda(
+                    keda_scaled_object_config
                 )
             else:
                 raise EndpointResourceInfraException(
@@ -2391,9 +2257,7 @@ class K8SEndpointResourceDelegate:
                 plural="verticalpodautoscalers",
                 name=k8s_resource_group_name,
             )
-            vertical_autoscaling_params = self._get_vertical_autoscaling_params(
-                vpa_config
-            )
+            vertical_autoscaling_params = self._get_vertical_autoscaling_params(vpa_config)
         except ApiException as e:
             if e.status == 404:
                 pass
@@ -2405,8 +2269,7 @@ class K8SEndpointResourceDelegate:
         prewarm = str_to_bool(self._get_env_value_from_envlist(envlist, "PREWARM"))
 
         high_priority = (
-            deployment_config.spec.template.spec.priority_class_name
-            == LAUNCH_HIGH_PRIORITY_CLASS
+            deployment_config.spec.template.spec.priority_class_name == LAUNCH_HIGH_PRIORITY_CLASS
         )
 
         infra_state = ModelEndpointInfraState(
@@ -2509,9 +2372,7 @@ class K8SEndpointResourceDelegate:
         autoscaling_client = get_kubernetes_autoscaling_client()
         custom_objects_client = get_kubernetes_custom_objects_client()
         deployments = (
-            await apps_client.list_namespaced_deployment(
-                namespace=hmi_config.endpoint_namespace
-            )
+            await apps_client.list_namespaced_deployment(namespace=hmi_config.endpoint_namespace)
         ).items
         hpas = (
             await autoscaling_client.list_namespaced_horizontal_pod_autoscaler(
@@ -2562,25 +2423,15 @@ class K8SEndpointResourceDelegate:
             else:
                 raise
 
-        deployments_by_name = {
-            deployment.metadata.name: deployment for deployment in deployments
-        }
+        deployments_by_name = {deployment.metadata.name: deployment for deployment in deployments}
         hpas_by_name = {hpa.metadata.name: hpa for hpa in hpas}
         vpas_by_name = {vpa["metadata"]["name"]: vpa for vpa in vpas}
-        keda_scaled_objects_by_name = {
-            kso["metadata"]["name"]: kso for kso in keda_scaled_objects
-        }
-        leader_worker_sets_by_name = {
-            lws["metadata"]["name"]: lws for lws in leader_worker_sets
-        }
+        keda_scaled_objects_by_name = {kso["metadata"]["name"]: kso for kso in keda_scaled_objects}
+        leader_worker_sets_by_name = {lws["metadata"]["name"]: lws for lws in leader_worker_sets}
         all_config_maps = await self._get_all_config_maps()
         # can safely assume hpa with same name as deployment corresponds to the same Launch Endpoint
-        logger.info(
-            f"Orphaned hpas: {set(hpas_by_name).difference(set(deployments_by_name))}"
-        )
-        logger.info(
-            f"Orphaned vpas: {set(vpas_by_name).difference(set(deployments_by_name))}"
-        )
+        logger.info(f"Orphaned hpas: {set(hpas_by_name).difference(set(deployments_by_name))}")
+        logger.info(f"Orphaned vpas: {set(vpas_by_name).difference(set(deployments_by_name))}")
         infra_states = {}
         logger.info(
             f"Got data for {list(deployments_by_name.keys())} and {list(leader_worker_sets_by_name.keys())}"
@@ -2595,9 +2446,7 @@ class K8SEndpointResourceDelegate:
 
                 envlist = launch_container.env
                 # Convert as early as possible to Optional[bool] to avoid bugs
-                prewarm = str_to_bool(
-                    self._get_env_value_from_envlist(envlist, "PREWARM")
-                )
+                prewarm = str_to_bool(self._get_env_value_from_envlist(envlist, "PREWARM"))
 
                 high_priority = (
                     deployment_config.spec.template.spec.priority_class_name
@@ -2609,15 +2458,11 @@ class K8SEndpointResourceDelegate:
                     # TODO I think this is correct but only barely, it introduces a coupling between
                     #   an HPA (or keda SO) existing and an endpoint being a sync endpoint. The "more correct"
                     #   thing to do is to query the db to get the endpoints, but it doesn't belong here
-                    horizontal_autoscaling_params = self._get_sync_autoscaling_params(
-                        hpa_config
-                    )
+                    horizontal_autoscaling_params = self._get_sync_autoscaling_params(hpa_config)
                 elif keda_scaled_object_config:
                     # Also assume it's a sync endpoint
-                    horizontal_autoscaling_params = (
-                        self._get_sync_autoscaling_params_from_keda(
-                            keda_scaled_object_config
-                        )
+                    horizontal_autoscaling_params = self._get_sync_autoscaling_params_from_keda(
+                        keda_scaled_object_config
                     )
                 else:
                     horizontal_autoscaling_params = self._get_async_autoscaling_params(
@@ -2625,9 +2470,7 @@ class K8SEndpointResourceDelegate:
                     )
                 vertical_autoscaling_params = None
                 if vpa_config:
-                    vertical_autoscaling_params = self._get_vertical_autoscaling_params(
-                        vpa_config
-                    )
+                    vertical_autoscaling_params = self._get_vertical_autoscaling_params(vpa_config)
                 infra_state = ModelEndpointInfraState(
                     deployment_name=name,
                     aws_role=common_params["aws_role"],
@@ -2643,10 +2486,8 @@ class K8SEndpointResourceDelegate:
                         concurrent_requests_per_worker=horizontal_autoscaling_params[
                             "concurrent_requests_per_worker"
                         ],
-                        available_workers=deployment_config.status.available_replicas
-                        or 0,
-                        unavailable_workers=deployment_config.status.unavailable_replicas
-                        or 0,
+                        available_workers=deployment_config.status.available_replicas or 0,
+                        unavailable_workers=deployment_config.status.unavailable_replicas or 0,
                     ),
                     resource_state=ModelEndpointResourceState(
                         cpus=common_params["cpus"],
@@ -2694,9 +2535,7 @@ class K8SEndpointResourceDelegate:
             )
         return infra_states
 
-    async def _delete_resources_async(
-        self, endpoint_id: str, deployment_name: str
-    ) -> bool:
+    async def _delete_resources_async(self, endpoint_id: str, deployment_name: str) -> bool:
 
         # TODO check that this implementation actually works for multinode if/when we decide to support that
         lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
@@ -2709,13 +2548,9 @@ class K8SEndpointResourceDelegate:
         await self._delete_vpa(endpoint_id=endpoint_id)
         await self._delete_pdb(endpoint_id=endpoint_id)
         await self._delete_persistent_volume_claim(endpoint_id=endpoint_id)
-        return (
-            deployment_delete_succeeded or lws_delete_succeeded
-        ) and config_map_delete_succeeded
+        return (deployment_delete_succeeded or lws_delete_succeeded) and config_map_delete_succeeded
 
-    async def _delete_resources_sync(
-        self, endpoint_id: str, deployment_name: str
-    ) -> bool:
+    async def _delete_resources_sync(self, endpoint_id: str, deployment_name: str) -> bool:
         lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
 
         deployment_delete_succeeded = await self._delete_deployment(
@@ -2757,8 +2592,4 @@ class K8SEndpointResourceDelegate:
             and (hpa_delete_succeeded or keda_scaled_object_succeeded)
             and destination_rule_delete_succeeded
             and virtual_service_delete_succeeded
-        ) or (
-            lws_delete_succeeded
-            and config_map_delete_succeeded
-            and lws_service_delete_succeeded
-        )
+        ) or (lws_delete_succeeded and config_map_delete_succeeded and lws_service_delete_succeeded)

@@ -50,9 +50,7 @@ LOCAL: bool = get_boolean_env_var("LOCAL")
 """Indicates that Launch is running in a local development environment. Also used for local testing.
 """
 
-SKIP_AUTH: bool = (
-    get_boolean_env_var("SKIP_AUTH") or infra_config().identity_service_url is None
-)
+SKIP_AUTH: bool = get_boolean_env_var("SKIP_AUTH") or infra_config().identity_service_url is None
 """Indicates that Launch is running in a development environment where authentication is not
 required.
 """
@@ -73,9 +71,7 @@ LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH: str = os.environ.get(
 """
 logger.info(f"{LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH=}")
 
-LAUNCH_SERVICE_TEMPLATE_FOLDER: Optional[str] = os.environ.get(
-    "LAUNCH_SERVICE_TEMPLATE_FOLDER"
-)
+LAUNCH_SERVICE_TEMPLATE_FOLDER: Optional[str] = os.environ.get("LAUNCH_SERVICE_TEMPLATE_FOLDER")
 """The path to the folder containing the Launch service template. If set, this overrides
 LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH.
 """
@@ -83,17 +79,13 @@ LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH.
 MODEL_CACHE_ENABLED: bool = get_boolean_env_var("MODEL_CACHE_ENABLED")
 """Whether endpoint pods should mount a PVC-backed model cache."""
 
-MODEL_CACHE_MOUNT_PATH: str = os.environ.get(
-    "MODEL_CACHE_MOUNT_PATH", "/mnt/model-cache"
-)
+MODEL_CACHE_MOUNT_PATH: str = os.environ.get("MODEL_CACHE_MOUNT_PATH", "/mnt/model-cache")
 """Mount path for endpoint model cache PVCs."""
 
 MODEL_CACHE_PVC_SUFFIX: str = os.environ.get("MODEL_CACHE_PVC_SUFFIX", "model-cache")
 """Suffix appended to the endpoint resource name for the endpoint model cache PVC."""
 
-MODEL_CACHE_LOCK_STALE_SECONDS: int = int(
-    os.environ.get("MODEL_CACHE_LOCK_STALE_SECONDS", "600")
-)
+MODEL_CACHE_LOCK_STALE_SECONDS: int = int(os.environ.get("MODEL_CACHE_LOCK_STALE_SECONDS", "600"))
 """Seconds before a model-cache download lock is considered abandoned."""
 if MODEL_CACHE_LOCK_STALE_SECONDS <= 0:
     raise ValueError("MODEL_CACHE_LOCK_STALE_SECONDS must be a positive integer.")

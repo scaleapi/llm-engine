@@ -163,8 +163,7 @@ def test_zip_context_excludes_nested_explicit_roots_from_parent_archive(tmp_path
 
 def test_start_build_job_uses_boto_credentials_for_circleci(tmp_path):
     template_file = tmp_path / "kaniko_template.yaml"
-    template_file.write_text(
-        """
+    template_file.write_text("""
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -182,8 +181,7 @@ spec:
               value: "$AWS_SECRET_ACCESS_KEY"
             - name: AWS_SESSION_TOKEN
               value: "$AWS_SESSION_TOKEN"
-"""
-    )
+""")
     captured = {}
 
     def fake_check_output(args, cwd=None, shell=False):
