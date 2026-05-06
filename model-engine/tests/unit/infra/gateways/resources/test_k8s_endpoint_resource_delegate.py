@@ -1,14 +1,20 @@
 import json
 import os
+import shutil
+import subprocess
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from unittest.mock import ANY, AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.common.config import hmi_config
-from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
+from model_engine_server.common.dtos.resource_manager import (
+    CreateOrUpdateResourcesRequest,
+)
 from model_engine_server.common.env_vars import GIT_TAG
 from model_engine_server.domain.entities import (
+    LLMInferenceFramework,
     ModelBundle,
     ModelEndpointConfig,
     ModelEndpointType,
@@ -18,6 +24,7 @@ from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     DATADOG_ENV_VAR,
     K8SEndpointResourceDelegate,
+    MODEL_CACHE_VOLUME_NAME,
     add_datadog_env_to_container,
     add_pod_metadata_env_to_container,
     get_main_container_from_deployment_template,
@@ -27,13 +34,22 @@ from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate
 from model_engine_server.infra.gateways.resources.k8s_resource_types import (
     DictStrInt,
     DictStrStr,
+    PersistentVolumeClaimArguments,
     ResourceArguments,
+    get_endpoint_resource_arguments_from_request,
 )
-from tests.unit.infra.gateways.k8s_fake_objects import FakeK8sDeploymentContainer, FakeK8sEnvVar
+from tests.unit.infra.gateways.k8s_fake_objects import (
+    FakeK8sDeploymentContainer,
+    FakeK8sEnvVar,
+)
 
-MODULE_PATH = "model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate"
+MODULE_PATH = (
+    "model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate"
+)
 
-EXAMPLE_LWS_CONFIG_PATH = os.path.abspath(os.path.join(__file__, "..", "example_lws_config.json"))
+EXAMPLE_LWS_CONFIG_PATH = os.path.abspath(
+    os.path.join(__file__, "..", "example_lws_config.json")
+)
 with open(EXAMPLE_LWS_CONFIG_PATH, "r") as f:
     EXAMPLE_LWS_CONFIG = json.load(f)
 
@@ -129,8 +145,12 @@ def k8s_endpoint_resource_delegate(
     common_endpoint_params,
 ) -> K8SEndpointResourceDelegate:
     gateway = K8SEndpointResourceDelegate()
-    gateway.__setattr__("_get_async_autoscaling_params", AsyncMock(return_value=autoscaling_params))
-    gateway.__setattr__("_get_sync_autoscaling_params", AsyncMock(return_value=autoscaling_params))
+    gateway.__setattr__(
+        "_get_async_autoscaling_params", AsyncMock(return_value=autoscaling_params)
+    )
+    gateway.__setattr__(
+        "_get_sync_autoscaling_params", AsyncMock(return_value=autoscaling_params)
+    )
     gateway.__setattr__(
         "_get_common_endpoint_params", AsyncMock(return_value=common_endpoint_params)
     )
@@ -140,21 +160,415 @@ def k8s_endpoint_resource_delegate(
 def test_k8s_yaml_exists():
     # This is tied to
     # llm-engine/model-engine/model_engine_server/infra/gateways/resources/templates/service_template_config_map_circleci.yaml
-    assert k8s_yaml_exists("image-cache-h100.yaml"), "image-cache-h100.yaml should exist"
+    assert k8s_yaml_exists(
+        "image-cache-h100.yaml"
+    ), "image-cache-h100.yaml should exist"
     assert not k8s_yaml_exists(
         "image-cache-abc9001.yaml"
     ), "image-cache-abc9001.yaml should not exist"
 
 
+def _render_service_template_config_map(extra_args: Optional[List[str]] = None) -> str:
+    if shutil.which("helm") is None:
+        pytest.skip("helm is not installed")
+
+    repo_root = Path(__file__).resolve().parents[6]
+    chart_path = repo_root / "charts" / "model-engine"
+    values_path = chart_path / "values_circleci.yaml"
+    command = [
+        "helm",
+        "template",
+        "test-release",
+        str(chart_path),
+        "--show-only",
+        "templates/service_template_config_map.yaml",
+        "-f",
+        str(values_path),
+    ]
+    if extra_args is not None:
+        command.extend(extra_args)
+
+    return subprocess.run(
+        command,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+
+
+def _write_rendered_service_template_config_map(
+    tmp_path: Path,
+    extra_args: Optional[List[str]] = None,
+) -> Path:
+    rendered_config_map_path = tmp_path / "service_template_config_map.yaml"
+    rendered_config_map_path.write_text(_render_service_template_config_map(extra_args))
+    return rendered_config_map_path
+
+
+def _pod_spec_has_model_cache(pod_spec: Dict[str, Any]) -> bool:
+    return any(
+        volume.get("name") == MODEL_CACHE_VOLUME_NAME
+        for volume in pod_spec.get("volumes", [])
+    ) or any(
+        volume_mount.get("name") == MODEL_CACHE_VOLUME_NAME
+        for container in pod_spec.get("containers", [])
+        for volume_mount in container.get("volumeMounts", [])
+    )
+
+
+def _assert_pod_spec_has_injected_model_cache(
+    pod_spec: Dict[str, Any], expected_claim_name: str
+) -> None:
+    volume = next(
+        volume
+        for volume in pod_spec["volumes"]
+        if volume.get("name") == MODEL_CACHE_VOLUME_NAME
+    )
+    assert volume["persistentVolumeClaim"]["claimName"] == expected_claim_name
+    container = next(
+        container for container in pod_spec["containers"] if container["name"] == "main"
+    )
+    volume_mount = next(
+        volume_mount
+        for volume_mount in container["volumeMounts"]
+        if volume_mount.get("name") == MODEL_CACHE_VOLUME_NAME
+    )
+    assert volume_mount["mountPath"] == "/mnt/model-cache"
+
+
+def test_model_cache_enabled_helm_template_renders_pvc_without_base_mounts(tmp_path):
+    rendered_template = _render_service_template_config_map(
+        ["--set", "modelCache.enabled=true"]
+    )
+
+    assert "persistent-volume-claim.yaml" in rendered_template
+    assert '        - "ReadWriteMany"' in rendered_template
+    assert "name: model-cache" not in rendered_template
+    assert "claimName: ${MODEL_CACHE_PVC_NAME}" not in rendered_template
+    assert "mountPath: /mnt/model-cache" not in rendered_template
+
+    rendered_config_map_path = tmp_path / "service_template_config_map.yaml"
+    rendered_config_map_path.write_text(rendered_template)
+    persistent_volume_claim_arguments = PersistentVolumeClaimArguments(
+        RESOURCE_NAME="launch-endpoint-id-test",
+        NAMESPACE="launch-inference",
+        ENDPOINT_ID="end_test",
+        ENDPOINT_NAME="test-endpoint",
+        TEAM="test-team",
+        PRODUCT="test-product",
+        CREATED_BY="test-creator",
+        OWNER="test-owner",
+        GIT_TAG="test-git-tag",
+        MODEL_CACHE_PVC_NAME="launch-endpoint-id-test-model-cache",
+    )
+
+    with patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_FOLDER", None), patch(
+        f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
+        str(rendered_config_map_path),
+    ):
+        assert k8s_yaml_exists("persistent-volume-claim.yaml")
+        persistent_volume_claim = load_k8s_yaml(
+            "persistent-volume-claim.yaml",
+            persistent_volume_claim_arguments,
+        )
+
+    assert persistent_volume_claim["kind"] == "PersistentVolumeClaim"
+    assert (
+        persistent_volume_claim["metadata"]["name"]
+        == "launch-endpoint-id-test-model-cache"
+    )
+    assert persistent_volume_claim["metadata"]["namespace"] == "launch-inference"
+    assert persistent_volume_claim["metadata"]["labels"]["endpoint_id"] == "end_test"
+    assert (
+        persistent_volume_claim["metadata"]["labels"]["endpoint_name"]
+        == "test-endpoint"
+    )
+    assert persistent_volume_claim["metadata"]["labels"]["team"] == "test-team"
+    assert persistent_volume_claim["metadata"]["labels"]["product"] == "test-product"
+    assert persistent_volume_claim["spec"]["accessModes"] == ["ReadWriteMany"]
+    assert (
+        persistent_volume_claim["spec"]["resources"]["requests"]["storage"] == "100Gi"
+    )
+
+
+def test_model_cache_disabled_helm_template_has_no_base_cache_placeholders():
+    rendered_template = _render_service_template_config_map(
+        ["--set", "modelCache.enabled=false"]
+    )
+
+    assert "persistent-volume-claim.yaml" in rendered_template
+    assert "name: model-cache" not in rendered_template
+    assert "claimName: ${MODEL_CACHE_PVC_NAME}" not in rendered_template
+    assert "mountPath: /mnt/model-cache" not in rendered_template
+
+
+def test_model_cache_null_helm_template_has_no_base_cache_placeholders(tmp_path):
+    null_values_path = tmp_path / "modelcache-null.yaml"
+    null_values_path.write_text("modelCache: null\n")
+
+    rendered_template = _render_service_template_config_map(
+        ["-f", str(null_values_path)]
+    )
+
+    assert "persistent-volume-claim.yaml" in rendered_template
+    assert "name: model-cache" not in rendered_template
+    assert "claimName: ${MODEL_CACHE_PVC_NAME}" not in rendered_template
+    assert "mountPath: /mnt/model-cache" not in rendered_template
+
+
+def test_deployment_template_substitution_does_not_require_model_cache_pvc_name(
+    tmp_path,
+    create_resources_request_sync_runnable_image: CreateOrUpdateResourcesRequest,
+):
+    rendered_config_map_path = _write_rendered_service_template_config_map(
+        tmp_path,
+        ["--set", "modelCache.enabled=true"],
+    )
+    resource_arguments = dict(
+        get_endpoint_resource_arguments_from_request(
+            k8s_resource_group_name="launch-endpoint-id-test",
+            request=create_resources_request_sync_runnable_image,
+            sqs_queue_name="my_queue",
+            sqs_queue_url="https://my_queue",
+            endpoint_resource_name="deployment-runnable-image-sync-gpu",
+        )
+    )
+    resource_arguments.pop("MODEL_CACHE_PVC_NAME", None)
+
+    with patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_FOLDER", None), patch(
+        f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
+        str(rendered_config_map_path),
+    ):
+        deployment = load_k8s_yaml(
+            "deployment-runnable-image-sync-gpu.yaml",
+            resource_arguments,
+        )
+
+    assert deployment["kind"] == "Deployment"
+    assert not _pod_spec_has_model_cache(deployment["spec"]["template"]["spec"])
+
+
+@pytest.mark.asyncio
+async def test_model_cache_enabled_non_vllm_endpoint_does_not_create_or_mount_pvc(
+    tmp_path,
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+    mock_get_kubernetes_cluster_version,
+    create_resources_request_sync_runnable_image: CreateOrUpdateResourcesRequest,
+):
+    rendered_config_map_path = _write_rendered_service_template_config_map(
+        tmp_path,
+        ["--set", "modelCache.enabled=true"],
+    )
+
+    with patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_FOLDER", None), patch(
+        f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
+        str(rendered_config_map_path),
+    ):
+        await k8s_endpoint_resource_delegate.create_or_update_resources(
+            create_resources_request_sync_runnable_image,
+            sqs_queue_name="my_queue",
+            sqs_queue_url="https://my_queue",
+        )
+
+    mock_core_client.create_namespaced_persistent_volume_claim.assert_not_called()
+    deployment = mock_apps_client.create_namespaced_deployment.call_args.kwargs["body"]
+    assert not _pod_spec_has_model_cache(deployment["spec"]["template"]["spec"])
+
+
+@pytest.mark.asyncio
+async def test_model_cache_enabled_vllm_endpoint_creates_and_mounts_pvc(
+    tmp_path,
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+    mock_get_kubernetes_cluster_version,
+    create_resources_request_sync_runnable_image: CreateOrUpdateResourcesRequest,
+):
+    create_resources_request_sync_runnable_image.build_endpoint_request.model_endpoint_record.metadata = {
+        "_llm": {
+            "inference_framework": LLMInferenceFramework.VLLM.value,
+            "model_cache_enabled": True,
+        }
+    }
+    rendered_config_map_path = _write_rendered_service_template_config_map(
+        tmp_path,
+        ["--set", "modelCache.enabled=true"],
+    )
+
+    with patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_FOLDER", None), patch(
+        f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
+        str(rendered_config_map_path),
+    ):
+        await k8s_endpoint_resource_delegate.create_or_update_resources(
+            create_resources_request_sync_runnable_image,
+            sqs_queue_name="my_queue",
+            sqs_queue_url="https://my_queue",
+        )
+
+    mock_core_client.create_namespaced_persistent_volume_claim.assert_called_once()
+    deployment = mock_apps_client.create_namespaced_deployment.call_args.kwargs["body"]
+    _assert_pod_spec_has_injected_model_cache(
+        deployment["spec"]["template"]["spec"],
+        f"{deployment['metadata']['name']}-model-cache",
+    )
+
+
+@pytest.mark.asyncio
+async def test_cached_vllm_endpoint_keeps_pvc_mount_when_helm_cache_disabled(
+    tmp_path,
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+    mock_get_kubernetes_cluster_version,
+    create_resources_request_sync_runnable_image: CreateOrUpdateResourcesRequest,
+):
+    create_resources_request_sync_runnable_image.build_endpoint_request.model_endpoint_record.metadata = {
+        "_llm": {
+            "inference_framework": LLMInferenceFramework.VLLM.value,
+            "model_cache_enabled": True,
+        }
+    }
+    rendered_config_map_path = _write_rendered_service_template_config_map(
+        tmp_path,
+        ["--set", "modelCache.enabled=false"],
+    )
+
+    with patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_FOLDER", None), patch(
+        f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
+        str(rendered_config_map_path),
+    ):
+        await k8s_endpoint_resource_delegate.create_or_update_resources(
+            create_resources_request_sync_runnable_image,
+            sqs_queue_name="my_queue",
+            sqs_queue_url="https://my_queue",
+        )
+
+    mock_core_client.create_namespaced_persistent_volume_claim.assert_called_once()
+    deployment = mock_apps_client.create_namespaced_deployment.call_args.kwargs["body"]
+    _assert_pod_spec_has_injected_model_cache(
+        deployment["spec"]["template"]["spec"],
+        f"{deployment['metadata']['name']}-model-cache",
+    )
+
+
+@pytest.mark.asyncio
+async def test_model_cache_enabled_vllm_endpoint_without_cached_bundle_does_not_mount_pvc(
+    tmp_path,
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+    mock_get_kubernetes_cluster_version,
+    create_resources_request_sync_runnable_image: CreateOrUpdateResourcesRequest,
+):
+    create_resources_request_sync_runnable_image.build_endpoint_request.model_endpoint_record.metadata = {
+        "_llm": {"inference_framework": LLMInferenceFramework.VLLM.value}
+    }
+    rendered_config_map_path = _write_rendered_service_template_config_map(
+        tmp_path,
+        ["--set", "modelCache.enabled=true"],
+    )
+
+    with patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_FOLDER", None), patch(
+        f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
+        str(rendered_config_map_path),
+    ):
+        await k8s_endpoint_resource_delegate.create_or_update_resources(
+            create_resources_request_sync_runnable_image,
+            sqs_queue_name="my_queue",
+            sqs_queue_url="https://my_queue",
+        )
+
+    mock_core_client.create_namespaced_persistent_volume_claim.assert_not_called()
+    deployment = mock_apps_client.create_namespaced_deployment.call_args.kwargs["body"]
+    assert not _pod_spec_has_model_cache(deployment["spec"]["template"]["spec"])
+
+
+@pytest.mark.asyncio
+async def test_model_cache_enabled_non_vllm_lws_does_not_create_or_mount_pvc(
+    tmp_path,
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+    mock_get_kubernetes_cluster_version,
+    create_resources_request_streaming_runnable_image: CreateOrUpdateResourcesRequest,
+    model_bundle_5: ModelBundle,
+):
+    model_bundle_5.flavor.worker_env = {"fake_env": "fake_value"}
+    model_bundle_5.flavor.worker_command = ["fake_command"]
+    create_resources_request_streaming_runnable_image.build_endpoint_request.model_endpoint_record.current_model_bundle = (
+        model_bundle_5
+    )
+    create_resources_request_streaming_runnable_image.build_endpoint_request.model_endpoint_record.endpoint_type = (
+        ModelEndpointType.STREAMING
+    )
+    create_resources_request_streaming_runnable_image.build_endpoint_request.nodes_per_worker = (
+        2
+    )
+    rendered_config_map_path = _write_rendered_service_template_config_map(
+        tmp_path,
+        ["--set", "modelCache.enabled=true"],
+    )
+
+    with patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_FOLDER", None), patch(
+        f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
+        str(rendered_config_map_path),
+    ):
+        await k8s_endpoint_resource_delegate.create_or_update_resources(
+            create_resources_request_streaming_runnable_image,
+            sqs_queue_name="my_queue",
+            sqs_queue_url="https://my_queue",
+        )
+
+    mock_core_client.create_namespaced_persistent_volume_claim.assert_not_called()
+    lws = next(
+        call_args.kwargs["body"]
+        for call_args in mock_custom_objects_client.create_namespaced_custom_object.call_args_list
+        if call_args.kwargs["group"] == "leaderworkerset.x-k8s.io"
+    )
+    leader_worker_template = lws["spec"]["leaderWorkerTemplate"]
+    assert not _pod_spec_has_model_cache(
+        leader_worker_template["leaderTemplate"]["spec"]
+    )
+    assert not _pod_spec_has_model_cache(
+        leader_worker_template["workerTemplate"]["spec"]
+    )
+
+
 @pytest.mark.parametrize("resource_arguments_type", ResourceArguments.__args__)
-def test_resource_arguments_type_and_add_datadog_env_to_main_container(resource_arguments_type):
+def test_resource_arguments_type_and_add_datadog_env_to_main_container(
+    resource_arguments_type,
+):
     # Convert the name of the type to a kebab case string
     # e.g. "BatchJobOrchestrationJobArguments" -> "batch-job-orchestration-job-arguments"
     resource_arguments_type_name = resource_arguments_type.__name__
     resource_arguments_type_name = "".join(
         "-" + c.lower() if c.isupper() else c for c in resource_arguments_type_name
     ).lstrip("-")
-    resource_arguments_type_name = resource_arguments_type_name.replace("-arguments", "")
+    resource_arguments_type_name = resource_arguments_type_name.replace(
+        "-arguments", ""
+    )
+    if (
+        resource_arguments_type is PersistentVolumeClaimArguments
+        and not k8s_yaml_exists("persistent-volume-claim.yaml")
+    ):
+        return
 
     # Hack for image cache, which has a special naming system
     if resource_arguments_type_name == "image-cache":
@@ -182,12 +596,18 @@ def test_resource_arguments_type_and_add_datadog_env_to_main_container(resource_
         for key, type_ in resource_arguments_type.__annotations__.items()
     }
 
-    deployment_template = load_k8s_yaml(f"{resource_arguments_type_name}.yaml", resource_arguments)
+    deployment_template = load_k8s_yaml(
+        f"{resource_arguments_type_name}.yaml", resource_arguments
+    )
     if "runnable-image" in resource_arguments_type_name:
-        user_container = get_main_container_from_deployment_template(deployment_template)
+        user_container = get_main_container_from_deployment_template(
+            deployment_template
+        )
         add_datadog_env_to_container(deployment_template, user_container)
 
-        user_container = get_main_container_from_deployment_template(deployment_template)
+        user_container = get_main_container_from_deployment_template(
+            deployment_template
+        )
 
         datadog_env = DATADOG_ENV_VAR.copy()
         for env_var in user_container["env"]:
@@ -207,7 +627,9 @@ def _verify_deployment_labels(
     endpoint_name = model_endpoint_record.name
     env = "circleci"
 
-    k8s_resource_group_name = f"launch-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
+    k8s_resource_group_name = (
+        f"launch-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
+    )
 
     assert body["metadata"]["name"] == k8s_resource_group_name
     assert body["metadata"]["namespace"] == hmi_config.endpoint_namespace
@@ -265,7 +687,9 @@ def _verify_non_deployment_labels(
     endpoint_name = model_endpoint_record.name
     env = "circleci"
 
-    k8s_resource_group_name = f"launch-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
+    k8s_resource_group_name = (
+        f"launch-endpoint-id-{model_endpoint_record.id.replace('_', '-')}"
+    )
 
     assert k8s_resource_group_name in body["metadata"]["name"]
     assert body["metadata"]["namespace"] == hmi_config.endpoint_namespace
@@ -320,7 +744,9 @@ async def test_create_async_endpoint_has_correct_labels_and_dest(
         assert dest == "my_queue"
 
         # Verify deployment labels
-        create_deployment_call_args = mock_apps_client.create_namespaced_deployment.call_args
+        create_deployment_call_args = (
+            mock_apps_client.create_namespaced_deployment.call_args
+        )
         deployment_body = create_deployment_call_args.kwargs["body"]
         _verify_deployment_labels(deployment_body, request)
 
@@ -329,7 +755,9 @@ async def test_create_async_endpoint_has_correct_labels_and_dest(
         assert create_service_call_args is None
 
         # Verify config_map labels
-        create_config_map_call_args = mock_core_client.create_namespaced_config_map.call_args
+        create_config_map_call_args = (
+            mock_core_client.create_namespaced_config_map.call_args
+        )
         config_map_body = create_config_map_call_args.kwargs["body"]
         _verify_non_deployment_labels(config_map_body, request)
 
@@ -356,11 +784,16 @@ async def test_create_async_endpoint_has_correct_labels_and_dest(
             assert delete_custom_object_call_args_list == []
 
         # Verify PDB labels
-        create_pdb_call_args = mock_policy_client.create_namespaced_pod_disruption_budget.call_args
+        create_pdb_call_args = (
+            mock_policy_client.create_namespaced_pod_disruption_budget.call_args
+        )
         pdb_body = create_pdb_call_args.kwargs["body"]
         _verify_non_deployment_labels(pdb_body, request)
 
-        if build_endpoint_request.model_endpoint_record.endpoint_type == ModelEndpointType.SYNC:
+        if (
+            build_endpoint_request.model_endpoint_record.endpoint_type
+            == ModelEndpointType.SYNC
+        ):
             assert create_custom_object_call_args_list == []
             _verify_custom_object_plurals(
                 call_args_list=delete_custom_object_call_args_list,
@@ -387,13 +820,15 @@ async def test_create_streaming_endpoint_has_correct_labels_and_dest(
         sqs_queue_name="my_queue",
         sqs_queue_url="https://my_queue",
     )
-    service_name = mock_core_client.create_namespaced_service.call_args.kwargs["body"]["metadata"][
-        "name"
-    ]
+    service_name = mock_core_client.create_namespaced_service.call_args.kwargs["body"][
+        "metadata"
+    ]["name"]
     assert dest == service_name
 
     # Verify deployment labels
-    create_deployment_call_args = mock_apps_client.create_namespaced_deployment.call_args
+    create_deployment_call_args = (
+        mock_apps_client.create_namespaced_deployment.call_args
+    )
     deployment_body = create_deployment_call_args.kwargs["body"]
     _verify_deployment_labels(deployment_body, request)
 
@@ -403,12 +838,16 @@ async def test_create_streaming_endpoint_has_correct_labels_and_dest(
     _verify_non_deployment_labels(service_body, request)
 
     # Verify config_map labels
-    create_config_map_call_args = mock_core_client.create_namespaced_config_map.call_args
+    create_config_map_call_args = (
+        mock_core_client.create_namespaced_config_map.call_args
+    )
     config_map_body = create_config_map_call_args.kwargs["body"]
     _verify_non_deployment_labels(config_map_body, request)
 
     # Verify PDB labels
-    create_pdb_call_args = mock_policy_client.create_namespaced_pod_disruption_budget.call_args
+    create_pdb_call_args = (
+        mock_policy_client.create_namespaced_pod_disruption_budget.call_args
+    )
     pdb_body = create_pdb_call_args.kwargs["body"]
     _verify_non_deployment_labels(pdb_body, request)
 
@@ -428,9 +867,16 @@ async def test_create_streaming_endpoint_has_correct_labels_and_dest(
     if optimize_costs:
         _verify_custom_object_plurals(
             call_args_list=create_custom_object_call_args_list,
-            expected_plurals=["verticalpodautoscalers", "virtualservices", "destinationrules"],
+            expected_plurals=[
+                "verticalpodautoscalers",
+                "virtualservices",
+                "destinationrules",
+            ],
         )
-    if build_endpoint_request.model_endpoint_record.endpoint_type == ModelEndpointType.SYNC:
+    if (
+        build_endpoint_request.model_endpoint_record.endpoint_type
+        == ModelEndpointType.SYNC
+    ):
         _verify_custom_object_plurals(
             call_args_list=create_custom_object_call_args_list,
             expected_plurals=["virtualservices", "destinationrules"],
@@ -440,7 +886,9 @@ async def test_create_streaming_endpoint_has_correct_labels_and_dest(
 
     # Make sure that an VPA is created if optimize_costs is True.
     optimize_costs = request.build_endpoint_request.optimize_costs
-    create_vpa_call_args = mock_custom_objects_client.create_namespaced_custom_objects.call_args
+    create_vpa_call_args = (
+        mock_custom_objects_client.create_namespaced_custom_objects.call_args
+    )
     if optimize_costs:
         assert create_vpa_call_args is not None
     else:
@@ -466,13 +914,15 @@ async def test_create_sync_endpoint_has_correct_labels_and_dest(
             sqs_queue_name="my_queue",
             sqs_queue_url="https://my_queue,",
         )
-        service_name = mock_core_client.create_namespaced_service.call_args.kwargs["body"][
-            "metadata"
-        ]["name"]
+        service_name = mock_core_client.create_namespaced_service.call_args.kwargs[
+            "body"
+        ]["metadata"]["name"]
         assert dest == service_name
 
         # Verify deployment labels
-        create_deployment_call_args = mock_apps_client.create_namespaced_deployment.call_args
+        create_deployment_call_args = (
+            mock_apps_client.create_namespaced_deployment.call_args
+        )
         deployment_body = create_deployment_call_args.kwargs["body"]
         _verify_deployment_labels(deployment_body, request)
 
@@ -482,7 +932,9 @@ async def test_create_sync_endpoint_has_correct_labels_and_dest(
         _verify_non_deployment_labels(service_body, request)
 
         # Verify config_map labels
-        create_config_map_call_args = mock_core_client.create_namespaced_config_map.call_args
+        create_config_map_call_args = (
+            mock_core_client.create_namespaced_config_map.call_args
+        )
         config_map_body = create_config_map_call_args.kwargs["body"]
         _verify_non_deployment_labels(config_map_body, request)
 
@@ -494,7 +946,9 @@ async def test_create_sync_endpoint_has_correct_labels_and_dest(
         _verify_non_deployment_labels(hpa_body, request)
 
         # Verify PDB labels
-        create_pdb_call_args = mock_policy_client.create_namespaced_pod_disruption_budget.call_args
+        create_pdb_call_args = (
+            mock_policy_client.create_namespaced_pod_disruption_budget.call_args
+        )
         pdb_body = create_pdb_call_args.kwargs["body"]
         _verify_non_deployment_labels(pdb_body, request)
 
@@ -507,9 +961,16 @@ async def test_create_sync_endpoint_has_correct_labels_and_dest(
         if optimize_costs:
             _verify_custom_object_plurals(
                 call_args_list=create_custom_object_call_args_list,
-                expected_plurals=["verticalpodautoscalers", "virtualservices", "destinationrules"],
+                expected_plurals=[
+                    "verticalpodautoscalers",
+                    "virtualservices",
+                    "destinationrules",
+                ],
             )
-        if build_endpoint_request.model_endpoint_record.endpoint_type == ModelEndpointType.SYNC:
+        if (
+            build_endpoint_request.model_endpoint_record.endpoint_type
+            == ModelEndpointType.SYNC
+        ):
             _verify_custom_object_plurals(
                 call_args_list=create_custom_object_call_args_list,
                 expected_plurals=["virtualservices", "destinationrules"],
@@ -521,7 +982,9 @@ async def test_create_sync_endpoint_has_correct_labels_and_dest(
     optimize_costs = (
         create_resources_request_sync_runnable_image.build_endpoint_request.optimize_costs
     )
-    create_vpa_call_args = mock_custom_objects_client.create_namespaced_custom_objects.call_args
+    create_vpa_call_args = (
+        mock_custom_objects_client.create_namespaced_custom_objects.call_args
+    )
     if optimize_costs:
         assert create_vpa_call_args is not None
     else:
@@ -574,15 +1037,17 @@ async def test_create_multinode_endpoint_creates_lws_and_correct_dest(
         ModelEndpointType.STREAMING
     )
 
-    create_resources_request_streaming_runnable_image.build_endpoint_request.nodes_per_worker = 2
+    create_resources_request_streaming_runnable_image.build_endpoint_request.nodes_per_worker = (
+        2
+    )
     dest = await k8s_endpoint_resource_delegate.create_or_update_resources(
         create_resources_request_streaming_runnable_image,
         sqs_queue_name="my_queue",
         sqs_queue_url="https://my_queue",
     )
-    service_name = mock_core_client.create_namespaced_service.call_args.kwargs["body"]["metadata"][
-        "name"
-    ]
+    service_name = mock_core_client.create_namespaced_service.call_args.kwargs["body"][
+        "metadata"
+    ]["name"]
     assert dest == service_name
     # Verify call to custom objects client with LWS is made
     create_custom_objects_call_args_list = (
@@ -635,7 +1100,9 @@ async def test_get_resources_async_success(
     mock_custom_objects_client,
 ):
     # Pretend that LWS get gives an ApiException since it doesn't exist
-    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(side_effect=ApiException)
+    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(
+        side_effect=ApiException
+    )
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_common_endpoint_params",
         Mock(
@@ -656,7 +1123,10 @@ async def test_get_resources_async_success(
         "_get_async_autoscaling_params",
         Mock(
             return_value=dict(
-                min_workers=1, max_workers=3, per_worker=2, concurrent_requests_per_worker=1
+                min_workers=1,
+                max_workers=3,
+                per_worker=2,
+                concurrent_requests_per_worker=1,
             )
         ),
     )
@@ -701,7 +1171,9 @@ async def test_get_resources_sync_success(
     mock_custom_objects_client,
 ):
     # Pretend that LWS get and keda get give an ApiException
-    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(side_effect=ApiException)
+    mock_custom_objects_client.get_namespaced_custom_object = AsyncMock(
+        side_effect=ApiException
+    )
     k8s_endpoint_resource_delegate.__setattr__(
         "_get_common_endpoint_params",
         Mock(
@@ -722,7 +1194,10 @@ async def test_get_resources_sync_success(
         "_get_sync_autoscaling_params",
         Mock(
             return_value=dict(
-                min_workers=1, max_workers=3, per_worker=2, concurrent_requests_per_worker=200
+                min_workers=1,
+                max_workers=3,
+                per_worker=2,
+                concurrent_requests_per_worker=200,
             )
         ),
     )
@@ -828,6 +1303,46 @@ async def test_delete_resources_sync_success(
 
 
 @pytest.mark.asyncio
+async def test_delete_resources_async_ignores_pvc_delete_failure(
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+):
+    mock_core_client.delete_namespaced_persistent_volume_claim.side_effect = (
+        ApiException(status=500)
+    )
+
+    deleted = await k8s_endpoint_resource_delegate.delete_resources(
+        endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.ASYNC
+    )
+
+    assert deleted
+
+
+@pytest.mark.asyncio
+async def test_delete_resources_sync_ignores_pvc_delete_failure(
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+):
+    mock_core_client.delete_namespaced_persistent_volume_claim.side_effect = (
+        ApiException(status=500)
+    )
+
+    deleted = await k8s_endpoint_resource_delegate.delete_resources(
+        endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.SYNC
+    )
+
+    assert deleted
+
+
+@pytest.mark.asyncio
 async def test_delete_resources_multinode_success(
     k8s_endpoint_resource_delegate,
     mock_apps_client,
@@ -845,12 +1360,68 @@ async def test_delete_resources_multinode_success(
     )
     assert deleted
     delete_called_for_lws = False
-    for call_args in mock_custom_objects_client.delete_namespaced_custom_object.call_args_list:
+    for (
+        call_args
+    ) in mock_custom_objects_client.delete_namespaced_custom_object.call_args_list:
         # 'group' is kwargs in delete_namespaced_custom_object
         if call_args[1]["group"] == "leaderworkerset.x-k8s.io":
             delete_called_for_lws = True
             break
     assert delete_called_for_lws
+
+
+@pytest.mark.asyncio
+async def test_create_persistent_volume_claim_409_is_success(
+    k8s_endpoint_resource_delegate,
+    mock_core_client,
+):
+    pvc = {"metadata": {"name": "test-pvc"}}
+
+    mock_core_client.create_namespaced_persistent_volume_claim.side_effect = (
+        ApiException(status=409)
+    )
+
+    await k8s_endpoint_resource_delegate._create_persistent_volume_claim(
+        pvc, "test-pvc"
+    )
+
+    mock_core_client.create_namespaced_persistent_volume_claim.assert_called_once_with(
+        namespace=hmi_config.endpoint_namespace,
+        body=pvc,
+    )
+    mock_core_client.patch_namespaced_persistent_volume_claim.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_delete_persistent_volume_claim_404_is_success(
+    k8s_endpoint_resource_delegate,
+    mock_core_client,
+):
+    mock_core_client.delete_namespaced_persistent_volume_claim.side_effect = (
+        ApiException(status=404)
+    )
+
+    deleted = await k8s_endpoint_resource_delegate._delete_persistent_volume_claim(
+        endpoint_id="end_test"
+    )
+
+    assert deleted
+
+
+@pytest.mark.asyncio
+async def test_delete_persistent_volume_claim_non_404_failure(
+    k8s_endpoint_resource_delegate,
+    mock_core_client,
+):
+    mock_core_client.delete_namespaced_persistent_volume_claim.side_effect = (
+        ApiException(status=500)
+    )
+
+    deleted = await k8s_endpoint_resource_delegate._delete_persistent_volume_claim(
+        endpoint_id="end_test"
+    )
+
+    assert not deleted
 
 
 @pytest.mark.asyncio
@@ -874,8 +1445,8 @@ async def test_create_pdb(
     )
 
     # Test creation when PDB already exists
-    mock_policy_client.create_namespaced_pod_disruption_budget.side_effect = ApiException(
-        status=409
+    mock_policy_client.create_namespaced_pod_disruption_budget.side_effect = (
+        ApiException(status=409)
     )
 
     existing_pdb = Mock()
@@ -898,8 +1469,8 @@ async def test_create_pdb(
     )
 
     # Test creation with other API exception
-    mock_policy_client.create_namespaced_pod_disruption_budget.side_effect = ApiException(
-        status=500
+    mock_policy_client.create_namespaced_pod_disruption_budget.side_effect = (
+        ApiException(status=500)
     )
 
     with pytest.raises(ApiException):
@@ -911,7 +1482,9 @@ async def test_restart_deployment(
     k8s_endpoint_resource_delegate,
     mock_apps_client,
 ):
-    await k8s_endpoint_resource_delegate.restart_deployment(deployment_name="test_deployment")
+    await k8s_endpoint_resource_delegate.restart_deployment(
+        deployment_name="test_deployment"
+    )
     mock_apps_client.patch_namespaced_deployment.assert_called_once_with(
         name="test_deployment",
         namespace=hmi_config.endpoint_namespace,

@@ -28,6 +28,7 @@ class LLMMetadata:
     inference_framework: LLMInferenceFramework
     inference_framework_image_tag: str
     num_shards: int
+    model_cache_enabled: bool = False
     quantize: Optional[Quantization] = None
     checkpoint_path: Optional[str] = None
     chat_template_override: Optional[str] = None
