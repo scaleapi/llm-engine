@@ -220,6 +220,14 @@ serviceTemplate:
   serviceAccountName: default
   awsConfigMapName: default-config
 
+modelCache:
+  enabled: false
+  storage: 100Gi
+  storageClassName: null
+  accessMode: ReadWriteMany
+  mountPath: /mnt/model-cache
+  lockStaleSeconds: 600
+
 imageCache:
   devices:
     - name: cpu

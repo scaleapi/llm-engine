@@ -7,16 +7,16 @@ metadata:
   name: model-engine-service-template-config
   labels:
     team: infra
-    app.kubernetes.io/version: 2eed5f3c60f2b33784877a07b01cbbafee472272
-    tags.datadoghq.com/version: 2eed5f3c60f2b33784877a07b01cbbafee472272
+    app.kubernetes.io/version:
+    tags.datadoghq.com/version:
     tags.datadoghq.com/env: circleci
     env: circleci
     product: model-engine
-    helm.sh/chart: model-engine-0.1.6
+    helm.sh/chart: model-engine-0.2.4
     app.kubernetes.io/managed-by: Helm
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
-    "helm.sh/hook-weight": "-2"
+    "helm.sh/hook-weight": "-3"
 data:
   deployment-triton-enhanced-runnable-image-async-cpu.yaml: |-
     apiVersion: apps/v1
@@ -45,7 +45,6 @@ data:
         celery.scaleml.autoscaler/perWorker: "${PER_WORKER}"
         celery.scaleml.autoscaler/minWorkers: "${MIN_WORKERS}"
         celery.scaleml.autoscaler/maxWorkers: "${MAX_WORKERS}"
-        celery.scaleml.autoscaler/taskExpiresSeconds: "${TASK_EXPIRES_SECONDS}"
     spec:
       strategy:
         type: RollingUpdate
@@ -319,7 +318,6 @@ data:
         celery.scaleml.autoscaler/perWorker: "${PER_WORKER}"
         celery.scaleml.autoscaler/minWorkers: "${MIN_WORKERS}"
         celery.scaleml.autoscaler/maxWorkers: "${MAX_WORKERS}"
-        celery.scaleml.autoscaler/taskExpiresSeconds: "${TASK_EXPIRES_SECONDS}"
     spec:
       strategy:
         type: RollingUpdate
@@ -572,6 +570,7 @@ data:
           annotations:
             ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
             kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+            sidecar.istio.io/holdApplicationUntilProxyStarts: "true"
         spec:
           affinity:
             podAffinity:
@@ -619,6 +618,8 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -841,6 +842,7 @@ data:
           annotations:
             ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
             kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+            sidecar.istio.io/holdApplicationUntilProxyStarts: "true"
         spec:
           affinity:
             podAffinity:
@@ -888,6 +890,8 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -1064,6 +1068,7 @@ data:
           annotations:
             ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
             kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+            sidecar.istio.io/holdApplicationUntilProxyStarts: "true"
         spec:
           affinity:
             podAffinity:
@@ -1106,17 +1111,21 @@ data:
                 - --num-workers
                 - "${FORWARDER_WORKER_COUNT}"
                 - --set
+                - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
+                - --set
+                - "forwarder.stream.predict_route=${STREAMING_PREDICT_ROUTE}"
+                - --set
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
-                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
-                - --set
-                - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
-                - --set
                 - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
                 - --set
                 - "forwarder.stream.forwarder_type=${FORWARDER_TYPE}"
+                - --set
+                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
+                - --set
+                - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -1268,7 +1277,6 @@ data:
         celery.scaleml.autoscaler/perWorker: "${PER_WORKER}"
         celery.scaleml.autoscaler/minWorkers: "${MIN_WORKERS}"
         celery.scaleml.autoscaler/maxWorkers: "${MAX_WORKERS}"
-        celery.scaleml.autoscaler/taskExpiresSeconds: "${TASK_EXPIRES_SECONDS}"
     spec:
       strategy:
         type: RollingUpdate
@@ -1550,7 +1558,6 @@ data:
         celery.scaleml.autoscaler/perWorker: "${PER_WORKER}"
         celery.scaleml.autoscaler/minWorkers: "${MIN_WORKERS}"
         celery.scaleml.autoscaler/maxWorkers: "${MAX_WORKERS}"
-        celery.scaleml.autoscaler/taskExpiresSeconds: "${TASK_EXPIRES_SECONDS}"
     spec:
       strategy:
         type: RollingUpdate
@@ -1811,6 +1818,7 @@ data:
           annotations:
             ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
             kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+            sidecar.istio.io/holdApplicationUntilProxyStarts: "true"
         spec:
           affinity:
             podAffinity:
@@ -1864,6 +1872,8 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -2088,6 +2098,7 @@ data:
           annotations:
             ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
             kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+            sidecar.istio.io/holdApplicationUntilProxyStarts: "true"
         spec:
           affinity:
             podAffinity:
@@ -2141,6 +2152,8 @@ data:
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                - --set
+                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -2319,6 +2332,7 @@ data:
           annotations:
             ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
             kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
+            sidecar.istio.io/holdApplicationUntilProxyStarts: "true"
         spec:
           affinity:
             podAffinity:
@@ -2367,17 +2381,21 @@ data:
                 - --num-workers
                 - "${FORWARDER_WORKER_COUNT}"
                 - --set
+                - "forwarder.sync.predict_route=${PREDICT_ROUTE}"
+                - --set
+                - "forwarder.stream.predict_route=${STREAMING_PREDICT_ROUTE}"
+                - --set
                 - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
-                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
-                - --set
-                - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
-                - --set
                 - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
                 - --set
                 - "forwarder.stream.forwarder_type=${FORWARDER_TYPE}"
+                - --set
+                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
+                - --set
+                - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -2548,6 +2566,32 @@ data:
         endpoint_name: ${ENDPOINT_NAME}
     data:
       raw_data: ${ENDPOINT_CONFIG_SERIALIZED}
+  persistent-volume-claim.yaml: |-
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: ${MODEL_CACHE_PVC_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        user_id: ${OWNER}
+        team: ${TEAM}
+        product: ${PRODUCT}
+        created_by: ${CREATED_BY}
+        owner: ${OWNER}
+        env: circleci
+        managed-by: model-engine
+        use_scale_launch_endpoint_network_policy: "true"
+        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/version: ${GIT_TAG}
+        tags.datadoghq.com/service: ${ENDPOINT_NAME}
+        endpoint_id: ${ENDPOINT_ID}
+        endpoint_name: ${ENDPOINT_NAME}
+    spec:
+      accessModes:
+        - "ReadWriteMany"
+      resources:
+        requests:
+          storage: "100Gi"
   horizontal-pod-autoscaler.yaml: |-
     apiVersion: ${API_VERSION}
     kind: HorizontalPodAutoscaler
@@ -2733,6 +2777,14 @@ data:
                   - "forwarder.sync.healthcheck_route=${HEALTHCHECK_ROUTE}"
                   - --set
                   - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
+                  - --set
+                  - "forwarder.sync.forwarder_type=${FORWARDER_TYPE}"
+                  - --set
+                  - "forwarder.stream.forwarder_type=${FORWARDER_TYPE}"
+                  - --set
+                  - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
+                  - --set
+                  - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
                 env:
                   - name: DD_TRACE_ENABLED
                     value: "${DD_TRACE_ENABLED}"
@@ -3172,7 +3224,7 @@ data:
     apiVersion: batch/v1
     kind: Job
     metadata:
-      name: ${RESOURCE_NAME}
+      name: ${RESOURCE_NAME}-1
       labels:
         user_id: ${OWNER}
         team: ${TEAM}
@@ -3223,6 +3275,18 @@ data:
             - name: config-volume
               configMap:
                 name: default-config
+            - name: service-config-volume
+              configMap:
+                name: model-engine-service-config
+                items:
+                  - key: launch_service_config
+                    path: service_config.yaml
+            - name: infra-service-config-volume
+              configMap:
+                name: model-engine-service-config
+                items:
+                  - key: infra_service_config
+                    path: config.yaml
           containers:
             - name: main
               image: model-engine:${GIT_TAG}
@@ -3242,6 +3306,7 @@ data:
                     fieldRef:
                       fieldPath: status.hostIP
                 - name: SERVICE_IDENTIFIER
+                - name: SERVICE_BUILDER_QUEUE
                 - name: GATEWAY_URL
                   value: http://model-engine.default:80
                 - name: AWS_PROFILE
@@ -3267,6 +3332,12 @@ data:
                   value: "true"
                 - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
                   value: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
+                - name: MODEL_CACHE_ENABLED
+                  value: "false"
+                - name: MODEL_CACHE_MOUNT_PATH
+                  value: /mnt/model-cache
+                - name: MODEL_CACHE_LOCK_STALE_SECONDS
+                  value: "600"
                 - name: CIRCLECI
                   value: "true"
                 - name: DD_VERSION
@@ -3305,6 +3376,10 @@ data:
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
+                - name: service-config-volume
+                  mountPath: /workspace/model-engine/service_configs
+                - name: infra-service-config-volume
+                  mountPath: /workspace/model-engine/model_engine_server/core/configs
   docker-image-batch-job-cpu.yaml: |-
     apiVersion: batch/v1
     kind: Job
@@ -3363,6 +3438,12 @@ data:
             - name: config-volume
               configMap:
                 name: default-config
+            - name: service-config-volume
+              configMap:
+                name: model-engine-service-config
+                items:
+                  - key: launch_service_config
+                    path: service_config.yaml
             - name: workdir
               emptyDir: {}
             - name: dshm
@@ -3387,6 +3468,7 @@ data:
                     fieldRef:
                       fieldPath: status.hostIP
                 - name: SERVICE_IDENTIFIER
+                - name: SERVICE_BUILDER_QUEUE
                 - name: GATEWAY_URL
                   value: http://model-engine.default:80
                 - name: AWS_PROFILE
@@ -3412,6 +3494,12 @@ data:
                   value: "true"
                 - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
                   value: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
+                - name: MODEL_CACHE_ENABLED
+                  value: "false"
+                - name: MODEL_CACHE_MOUNT_PATH
+                  value: /mnt/model-cache
+                - name: MODEL_CACHE_LOCK_STALE_SECONDS
+                  value: "600"
                 - name: CIRCLECI
                   value: "true"
                 - name: DD_VERSION
@@ -3434,6 +3522,8 @@ data:
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
+                - name: service-config-volume
+                  mountPath: /workspace/model-engine/service_configs
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
                 - mountPath: /dev/shm
@@ -3466,6 +3556,8 @@ data:
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
+                - name: service-config-volume
+                  mountPath: /workspace/model-engine/service_configs
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
   docker-image-batch-job-gpu.yaml: |-
@@ -3532,6 +3624,12 @@ data:
             - name: config-volume
               configMap:
                 name: default-config
+            - name: service-config-volume
+              configMap:
+                name: model-engine-service-config
+                items:
+                  - key: launch_service_config
+                    path: service_config.yaml
             - name: workdir
               emptyDir: {}
             - name: dshm
@@ -3556,6 +3654,7 @@ data:
                     fieldRef:
                       fieldPath: status.hostIP
                 - name: SERVICE_IDENTIFIER
+                - name: SERVICE_BUILDER_QUEUE
                 - name: GATEWAY_URL
                   value: http://model-engine.default:80
                 - name: AWS_PROFILE
@@ -3581,6 +3680,12 @@ data:
                   value: "true"
                 - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
                   value: /workspace/model-engine/model_engine_server/infra/gateways/resources/templates
+                - name: MODEL_CACHE_ENABLED
+                  value: "false"
+                - name: MODEL_CACHE_MOUNT_PATH
+                  value: /mnt/model-cache
+                - name: MODEL_CACHE_LOCK_STALE_SECONDS
+                  value: "600"
                 - name: CIRCLECI
                   value: "true"
                 - name: DD_VERSION
@@ -3605,6 +3710,8 @@ data:
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
+                - name: service-config-volume
+                  mountPath: /workspace/model-engine/service_configs
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
                 - mountPath: /dev/shm
@@ -3637,6 +3744,8 @@ data:
                 - name: config-volume
                   mountPath: /opt/.aws/config
                   subPath: config
+                - name: service-config-volume
+                  mountPath: /workspace/model-engine/service_configs
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
   image-cache-cpu.yaml: |-

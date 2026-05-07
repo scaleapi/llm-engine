@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
+LLM_METADATA_KEY = "_llm"
+
 
 class LLMSource(str, Enum):
     HUGGING_FACE = "hugging_face"
@@ -28,6 +30,7 @@ class LLMMetadata:
     inference_framework: LLMInferenceFramework
     inference_framework_image_tag: str
     num_shards: int
+    model_cache_enabled: bool = False
     quantize: Optional[Quantization] = None
     checkpoint_path: Optional[str] = None
     chat_template_override: Optional[str] = None

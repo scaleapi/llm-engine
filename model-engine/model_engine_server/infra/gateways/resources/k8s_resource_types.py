@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Sequence, TypedDict, Union
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerName, BrokerType
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
-from model_engine_server.common.env_vars import CIRCLECI, GIT_TAG
+from model_engine_server.common.env_vars import CIRCLECI, GIT_TAG, MODEL_CACHE_PVC_SUFFIX
 from model_engine_server.common.resource_limits import (
     FORWARDER_CPU_USAGE,
     FORWARDER_MEMORY_USAGE,
@@ -55,6 +55,7 @@ __all__: Sequence[str] = (
     "CronTriggerArguments",
     "LAUNCH_DEFAULT_PRIORITY_CLASS",
     "LAUNCH_HIGH_PRIORITY_CLASS",
+    "PersistentVolumeClaimArguments",
     "ResourceArguments",
     "ServiceArguments",
     "UserConfigArguments",
@@ -117,6 +118,7 @@ class _BaseDeploymentArguments(_BaseEndpointArguments):
     MAX_WORKERS: int
     CONCURRENT_REQUESTS_PER_WORKER: int
     RESULTS_S3_BUCKET: str
+    MODEL_CACHE_PVC_NAME: str
 
 
 class _AsyncDeploymentArguments(TypedDict):
@@ -342,6 +344,12 @@ class EndpointConfigArguments(_BaseEndpointArguments):
     ENDPOINT_CONFIG_SERIALIZED: str
 
 
+class PersistentVolumeClaimArguments(_BaseEndpointArguments):
+    """Keyword-arguments for substituting into endpoint model-cache PVC templates."""
+
+    MODEL_CACHE_PVC_NAME: str
+
+
 class DictStrInt(str):
     """A string that can be converted to a dict of str:int."""
 
@@ -473,6 +481,7 @@ EndpointResourceArguments = Union[
     DestinationRuleArguments,
     EndpointConfigArguments,
     HorizontalPodAutoscalerArguments,
+    PersistentVolumeClaimArguments,
     ServiceArguments,
     UserConfigArguments,
     VerticalPodAutoscalerArguments,
@@ -551,6 +560,7 @@ def get_endpoint_resource_arguments_from_request(
         f"model bundle name {model_bundle.name}, "
         f"endpoint ID {model_endpoint_record.id}"
     )
+    model_cache_pvc_name = f"{k8s_resource_group_name}-{MODEL_CACHE_PVC_SUFFIX}"
 
     priority = LAUNCH_DEFAULT_PRIORITY_CLASS
     if build_endpoint_request.high_priority:
@@ -664,6 +674,7 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
             RESULTS_S3_BUCKET=s3_bucket,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -716,6 +727,7 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
             RESULTS_S3_BUCKET=s3_bucket,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -770,6 +782,7 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.streaming_command,
@@ -821,6 +834,7 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.streaming_command,
@@ -874,6 +888,7 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -921,6 +936,7 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -970,6 +986,7 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
             RESULTS_S3_BUCKET=s3_bucket,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -1030,6 +1047,7 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
             RESULTS_S3_BUCKET=s3_bucket,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -1092,6 +1110,7 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -1147,6 +1166,7 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.command,
@@ -1207,6 +1227,7 @@ def get_endpoint_resource_arguments_from_request(
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
             RESULTS_S3_BUCKET=s3_bucket,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
             MAIN_ENV=main_env,
             COMMAND=flavor.streaming_command,
@@ -1278,6 +1299,19 @@ def get_endpoint_resource_arguments_from_request(
             OWNER=owner,
             GIT_TAG=GIT_TAG,
             ENDPOINT_CONFIG_SERIALIZED=endpoint_config_serialized,
+        )
+    elif endpoint_resource_name == "persistent-volume-claim":
+        return PersistentVolumeClaimArguments(
+            RESOURCE_NAME=k8s_resource_group_name,
+            NAMESPACE=hmi_config.endpoint_namespace,
+            ENDPOINT_ID=model_endpoint_record.id,
+            ENDPOINT_NAME=model_endpoint_record.name,
+            TEAM=team,
+            PRODUCT=product,
+            CREATED_BY=created_by,
+            OWNER=owner,
+            GIT_TAG=GIT_TAG,
+            MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
         )
     elif endpoint_resource_name == "horizontal-pod-autoscaler":
         concurrency = get_target_concurrency_from_per_worker_value(

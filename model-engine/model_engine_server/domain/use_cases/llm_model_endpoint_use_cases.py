@@ -4,15 +4,29 @@ List model endpoint history: GET model-endpoints/<endpoint id>/history
 Read model endpoint creation logs: GET model-endpoints/<endpoint id>/creation-logs
 """
 
+import ast
 import base64
 import datetime
+import hashlib
 import json
 import math
 import os
 import re
+import shlex
 from dataclasses import asdict
+from enum import Enum
 from functools import lru_cache
-from typing import Any, AsyncGenerator, AsyncIterable, Dict, List, Optional, Union
+from typing import (
+    Any,
+    AsyncGenerator,
+    AsyncIterable,
+    Dict,
+    List,
+    Optional,
+    Union,
+    get_args,
+    get_origin,
+)
 
 import yaml
 from model_engine_server.common.config import hmi_config
@@ -59,6 +73,11 @@ from model_engine_server.common.dtos.llms.vllm import VLLMEndpointAdditionalArgs
 from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Request
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
 from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
+from model_engine_server.common.env_vars import (
+    MODEL_CACHE_ENABLED,
+    MODEL_CACHE_LOCK_STALE_SECONDS,
+    MODEL_CACHE_MOUNT_PATH,
+)
 from model_engine_server.common.resource_limits import validate_resource_requests
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.config import infra_config
@@ -70,6 +89,7 @@ from model_engine_server.core.loggers import (
     make_logger,
 )
 from model_engine_server.domain.entities import (
+    LLM_METADATA_KEY,
     GpuType,
     LLMInferenceFramework,
     LLMMetadata,
@@ -160,9 +180,224 @@ OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS = [
     LLMInferenceFramework.SGLANG,
 ]
 
-LLM_METADATA_KEY = "_llm"
 RESERVED_METADATA_KEYS = [LLM_METADATA_KEY, CONVERTED_FROM_ARTIFACT_LIKE_KEY]
 VLLM_MODEL_WEIGHTS_FOLDER = "model_files"
+MODEL_CACHE_COMPLETE_FILE = ".complete"
+MODEL_CACHE_LOCK_DIR = ".download.lock"
+VLLM_ADDITIONAL_ARGS_METADATA_KEY = "vllm_additional_args"
+VLLM_ADDITIONAL_ARGS_FIELDS = frozenset(VLLMEndpointAdditionalArgs.model_fields) | {
+    "enable_startup_metrics",
+}
+VLLM_MANAGED_COMMAND_FIELDS = {
+    "pipeline_parallel_size",
+    "served_model_name",
+    "tensor_parallel_size",
+}
+
+
+def is_vllm_inference_framework(
+    inference_framework: Optional[Union[LLMInferenceFramework, str]],
+) -> bool:
+    return inference_framework in {
+        LLMInferenceFramework.VLLM,
+        LLMInferenceFramework.VLLM.value,
+    }
+
+
+def get_model_cache_enabled_for_framework(
+    inference_framework: Optional[Union[LLMInferenceFramework, str]],
+) -> bool:
+    return MODEL_CACHE_ENABLED and is_vllm_inference_framework(inference_framework)
+
+
+def get_explicit_vllm_additional_args(request: Any) -> Dict[str, Any]:
+    request_args = request.model_dump(exclude_unset=True, exclude_none=True)
+    return {key: value for key, value in request_args.items() if key in VLLM_ADDITIONAL_ARGS_FIELDS}
+
+
+def llm_metadata_to_dict(
+    metadata: LLMMetadata, vllm_additional_args: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    metadata_dict = asdict(metadata)
+    if vllm_additional_args:
+        metadata_dict[VLLM_ADDITIONAL_ARGS_METADATA_KEY] = vllm_additional_args
+    return metadata_dict
+
+
+def format_vllm_cli_value(config_value: Any) -> str:
+    if isinstance(config_value, Enum):
+        return shlex.quote(str(config_value.value))
+    if isinstance(config_value, (dict, list)):
+        return shlex.quote(json.dumps(config_value, separators=(",", ":")))
+    return shlex.quote(str(config_value))
+
+
+def _unquote_legacy_vllm_arg_value(value: str) -> str:
+    try:
+        parsed_values = shlex.split(value)
+    except ValueError:
+        return value
+    if len(parsed_values) == 1:
+        return parsed_values[0]
+    return value
+
+
+def _annotation_contains(annotation: Any, target_type: Any) -> bool:
+    if annotation is target_type:
+        return True
+    origin = get_origin(annotation)
+    if origin is Union:
+        return any(_annotation_contains(arg, target_type) for arg in get_args(annotation))
+    return origin is target_type
+
+
+def _coerce_legacy_vllm_arg_value(field_name: str, value: Optional[str]) -> Any:
+    field = VLLMEndpointAdditionalArgs.model_fields[field_name]
+    annotation = field.annotation
+
+    if _annotation_contains(annotation, bool):
+        if value is None:
+            return True
+        return value.lower() in {"1", "true", "yes"}
+    if value is None:
+        return None
+    normalized_value = _unquote_legacy_vllm_arg_value(value)
+    if _annotation_contains(annotation, int):
+        return int(normalized_value)
+    if _annotation_contains(annotation, float):
+        return float(normalized_value)
+    if _annotation_contains(annotation, dict) or _annotation_contains(annotation, list):
+        try:
+            return json.loads(normalized_value)
+        except json.JSONDecodeError:
+            return ast.literal_eval(normalized_value)
+    if normalized_value != value:
+        return normalized_value
+    return value
+
+
+def _extract_legacy_vllm_raw_arg(command: str, token_index: int) -> Optional[str]:
+    start = token_index
+    while start < len(command) and not command[start].isspace():
+        start += 1
+    while start < len(command) and command[start].isspace():
+        start += 1
+    if start >= len(command) or command.startswith("--", start):
+        return None
+
+    depth = 0
+    quote: Optional[str] = None
+    i = start
+    while i < len(command):
+        char = command[i]
+        if quote:
+            if char == quote:
+                quote = None
+        elif char in {"'", '"'}:
+            quote = char
+        elif char in "{[(":
+            depth += 1
+        elif char in "}])" and depth > 0:
+            depth -= 1
+        elif depth == 0 and char.isspace():
+            next_non_space = i
+            while next_non_space < len(command) and command[next_non_space].isspace():
+                next_non_space += 1
+            if command.startswith("--", next_non_space):
+                break
+        i += 1
+
+    return command[start:i].strip()
+
+
+def _find_legacy_vllm_flag_index(command: str, token: str, start_index: int) -> int:
+    match = re.search(rf"(?<!\S){re.escape(token)}(?=\s|$)", command[start_index:])
+    if match is None:
+        return -1
+    return start_index + match.start()
+
+
+def _get_legacy_vllm_chat_template(command: str) -> Optional[str]:
+    match = re.search(
+        r'export CHAT_TEMPLATE=\$\(echo "([^"]+)" \| base64 --decode\)',
+        command,
+    )
+    if match is None:
+        return None
+    try:
+        return base64.b64decode(match.group(1)).decode("utf-8")
+    except ValueError:
+        logger.warning("Failed to decode legacy vLLM chat template")
+        return None
+
+
+def get_legacy_vllm_additional_args_from_command(command: Any) -> Dict[str, Any]:
+    if not isinstance(command, list) or len(command) < 3 or not isinstance(command[2], str):
+        return {}
+
+    command_match = re.search(
+        r"(?:^|;)(python -m (vllm_server|vllm_startup_wrapper) .*)",
+        command[2],
+    )
+    if command_match is None:
+        return {}
+
+    try:
+        tokens = shlex.split(command_match.group(1))
+    except ValueError:
+        logger.warning("Failed to parse legacy vLLM command for additional args")
+        return {}
+
+    parsed_args: Dict[str, Any] = {}
+    if len(tokens) >= 3 and tokens[2] == "vllm_startup_wrapper":
+        parsed_args["enable_startup_metrics"] = True
+    chat_template = _get_legacy_vllm_chat_template(command[2])
+
+    i = 3
+    raw_search_start = 0
+    while i < len(tokens):
+        token = tokens[i]
+        if not token.startswith("--"):
+            i += 1
+            continue
+
+        field_name = token[2:].replace("-", "_")
+        token_index = _find_legacy_vllm_flag_index(command_match.group(1), token, raw_search_start)
+        if token_index < 0:
+            i += 1
+            continue
+        raw_value = _extract_legacy_vllm_raw_arg(command_match.group(1), token_index)
+        raw_search_start = token_index + len(token)
+        if field_name == "chat_template" and raw_value is not None:
+            try:
+                parsed_raw_values = shlex.split(raw_value)
+            except ValueError:
+                parsed_raw_values = []
+            if parsed_raw_values == ["$CHAT_TEMPLATE"]:
+                raw_value = chat_template
+
+        if (
+            field_name in VLLMEndpointAdditionalArgs.model_fields
+            and field_name not in VLLM_MANAGED_COMMAND_FIELDS
+        ):
+            try:
+                value = _coerce_legacy_vllm_arg_value(field_name, raw_value)
+            except (TypeError, ValueError):
+                logger.warning("Failed to parse legacy vLLM arg %s", field_name)
+            else:
+                if value is not None:
+                    parsed_args[field_name] = value
+
+        i += 2 if raw_value is not None else 1
+
+    return parsed_args
+
+
+def get_legacy_vllm_additional_args_from_bundle(bundle: ModelBundle) -> Dict[str, Any]:
+    flavor = bundle.flavor
+    command = getattr(flavor, "command", None)
+    return get_legacy_vllm_additional_args_from_command(command)
+
 
 LLM_MAX_CONCURRENCY_PER_WORKER = 250
 # TODO as of Dec 2024 sync concurrency settings aren't implemented through the API so this does nothing
@@ -635,6 +870,144 @@ class CreateLLMModelBundleV1UseCase:
                 f"Only S3, Azure Blob Storage, and GCS paths are supported. Given checkpoint path: {checkpoint_path}."
             )
 
+    @staticmethod
+    def get_vllm_model_weights_folder() -> str:
+        if MODEL_CACHE_ENABLED:
+            return os.path.join(MODEL_CACHE_MOUNT_PATH.rstrip("/"), VLLM_MODEL_WEIGHTS_FOLDER)
+        return VLLM_MODEL_WEIGHTS_FOLDER
+
+    @staticmethod
+    def get_model_cache_fingerprint(
+        *,
+        model_name: str,
+        framework_image_tag: str,
+        checkpoint_path: str,
+        num_shards: int,
+        quantize: Optional[Quantization],
+        chat_template_override: Optional[str],
+        trust_remote_code: bool,
+        download_subcommands: List[str],
+    ) -> str:
+        fingerprint_payload = {
+            "cache_version": 1,
+            "model_name": model_name,
+            "framework": LLMInferenceFramework.VLLM.value,
+            "framework_image_tag": framework_image_tag,
+            "checkpoint_path": checkpoint_path,
+            "num_shards": num_shards,
+            "quantize": (quantize.value if isinstance(quantize, Quantization) else quantize),
+            "chat_template_override": chat_template_override,
+            "trust_remote_code": trust_remote_code,
+            "download_subcommands": download_subcommands,
+        }
+        serialized_payload = json.dumps(fingerprint_payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(serialized_payload.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def wrap_download_subcommands_with_model_cache_lock(
+        download_subcommands: List[str],
+        final_weights_folder: str,
+        cache_fingerprint: str,
+    ) -> List[str]:
+        if not MODEL_CACHE_ENABLED:
+            return download_subcommands
+
+        model_dir = shlex.quote(final_weights_folder)
+        complete_file = shlex.quote(os.path.join(final_weights_folder, MODEL_CACHE_COMPLETE_FILE))
+        lock_dir = shlex.quote(os.path.join(final_weights_folder, MODEL_CACHE_LOCK_DIR))
+        lock_dir_name = shlex.quote(MODEL_CACHE_LOCK_DIR)
+        # Endpoint pods run Linux. The stat fallback covers locks created before
+        # the heartbeat file was written.
+        heartbeat_file = shlex.quote(
+            os.path.join(final_weights_folder, MODEL_CACHE_LOCK_DIR, "heartbeat")
+        )
+        owner_file = shlex.quote(os.path.join(final_weights_folder, MODEL_CACHE_LOCK_DIR, "owner"))
+        expected_fingerprint = shlex.quote(cache_fingerprint)
+        download_cmd = shlex.quote(";".join(["set -euo pipefail"] + download_subcommands))
+
+        return [
+            f"mkdir -p {model_dir}",
+            (
+                f"expected_model_cache_fingerprint={expected_fingerprint}; "
+                "model_cache_ready() { "
+                f"[ -f {complete_file} ] || return 1; "
+                f'[ "$(cat {complete_file} 2>/dev/null)" = "$expected_model_cache_fingerprint" ] || return 1; '
+                f"[ -f {model_dir}/config.json ] || return 1; "
+                f"find {model_dir} -maxdepth 1 -type f "
+                r"\( -name '*.safetensors' -o -name '*.bin' \) "
+                "-print -quit | grep -q .; "
+                "}; "
+                "model_cache_lock_stale() { "
+                f"if [ -f {heartbeat_file} ]; then "
+                f"last_heartbeat=$(cat {heartbeat_file} 2>/dev/null || echo 0); "
+                "else "
+                f"last_heartbeat=$(stat -c %Y {lock_dir} 2>/dev/null || echo 0); "
+                "fi; "
+                "case \"$last_heartbeat\" in ''|*[!0-9]*) return 0 ;; esac; "
+                "now=$(date +%s); "
+                f"[ $((now - last_heartbeat)) -gt {MODEL_CACHE_LOCK_STALE_SECONDS} ]; "
+                "}; "
+                "write_model_cache_heartbeat() { "
+                f"heartbeat_tmp_file={heartbeat_file}.$$; "
+                'date +%s > "$heartbeat_tmp_file"; '
+                f'mv "$heartbeat_tmp_file" {heartbeat_file}; '
+                "}; "
+                "cleanup_model_cache_lock() { "
+                'if [ -n "${model_cache_heartbeat_pid:-}" ]; then '
+                'kill "$model_cache_heartbeat_pid" 2>/dev/null || true; '
+                "fi; "
+                'if [ "${model_cache_lock_acquired:-false}" = "true" ]; then '
+                f"rm -rf {lock_dir}; "
+                "fi; "
+                "}; "
+                "if model_cache_ready; then "
+                f"echo 'Model cache already complete at {final_weights_folder}'; "
+                "else "
+                "model_cache_lock_acquired=false; "
+                "model_cache_heartbeat_pid=''; "
+                "while true; do "
+                f"if mkdir {lock_dir} 2>/dev/null; then "
+                "model_cache_lock_acquired=true; "
+                "trap cleanup_model_cache_lock EXIT INT TERM; "
+                "break; "
+                "fi; "
+                "if model_cache_ready; then "
+                "echo 'Model cache completed by another replica'; "
+                "break; "
+                "fi; "
+                "if model_cache_lock_stale; then "
+                f"echo 'Removing stale model cache lock at {final_weights_folder}'; "
+                f"rm -rf {lock_dir}; "
+                "continue; "
+                "fi; "
+                "echo 'Another replica is downloading model files; waiting...'; "
+                "sleep 10; "
+                "done; "
+                'if [ "$model_cache_lock_acquired" = "true" ]; then '
+                "if ! model_cache_ready; then "
+                "write_model_cache_heartbeat; "
+                "(while true; do write_model_cache_heartbeat; sleep 30; done) & "
+                "model_cache_heartbeat_pid=$!; "
+                f"printf '%s\\n' \"pid=$$ host=$(hostname 2>/dev/null || true)\" > {owner_file}; "
+                f"find {model_dir} -mindepth 1 -maxdepth 1 ! -name {lock_dir_name} -exec rm -rf {{}} +; "
+                f"bash -c {download_cmd}; "
+                "model_cache_ready_without_marker() { "
+                f"[ -f {model_dir}/config.json ] || return 1; "
+                f"find {model_dir} -maxdepth 1 -type f "
+                r"\( -name '*.safetensors' -o -name '*.bin' \) "
+                "-print -quit | grep -q .; "
+                "}; "
+                "model_cache_ready_without_marker; "
+                f"printf '%s\\n' \"$expected_model_cache_fingerprint\" > {complete_file}; "
+                "fi; "
+                "cleanup_model_cache_lock; "
+                "model_cache_lock_acquired=false; "
+                "trap - EXIT INT TERM; "
+                "fi; "
+                "fi"
+            ),
+        ]
+
     def load_model_weights_sub_commands_s3(
         self,
         framework,
@@ -662,7 +1035,7 @@ class CreateLLMModelBundleV1UseCase:
         # filter to configs ('*.model' and '*.json') and weights ('*.safetensors')
         # For models that are not supported by transformers directly, we need to include '*.py' and '*.bin'
         # to load the model. Only set this flag if "trust_remote_code" is set to True
-        file_selection_str = '--include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*"'
+        file_selection_str = '--include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --include "*.jinja" --exclude "optimizer*"'
         if trust_remote_code:
             file_selection_str += ' --include "*.py"'
 
@@ -685,9 +1058,12 @@ class CreateLLMModelBundleV1UseCase:
         subcommands.extend(
             [
                 "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
-                "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
             ]
         )
+        if framework != LLMInferenceFramework.VLLM:
+            subcommands.append(
+                "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy"
+            )
 
         base_path = checkpoint_path.split("/")[-1]
         if base_path.endswith(".tar"):
@@ -701,7 +1077,7 @@ class CreateLLMModelBundleV1UseCase:
             )
         else:
             additional_pattern = ";*.py" if trust_remote_code else ""
-            file_selection_str = f'--include-pattern "*.model;*.json;*.safetensors{additional_pattern}" --exclude-pattern "optimizer*"'
+            file_selection_str = f'--include-pattern "*.model;*.model.v*;*.json;*.safetensors;*.txt;*.jinja{additional_pattern}" --exclude-pattern "optimizer*"'
             subcommands.append(
                 f"azcopy copy --recursive {file_selection_str} {os.path.join(checkpoint_path, '*')} {final_weights_folder}"
             )
@@ -983,7 +1359,7 @@ class CreateLLMModelBundleV1UseCase:
                 download timing and emits startup metrics via OTel. Requires setting
                 ENABLE_STARTUP_METRICS=true and DOWNLOAD_CMD env vars in the bundle.
         """
-        subcommands = []
+        subcommands = ["set -euo pipefail"]
 
         checkpoint_path = get_checkpoint_path(model_name, checkpoint_path)
 
@@ -1000,7 +1376,7 @@ class CreateLLMModelBundleV1UseCase:
             }
         )
 
-        final_weights_folder = "model_files"
+        final_weights_folder = self.get_vllm_model_weights_folder()
 
         # Get download commands
         download_subcommands = self.load_model_weights_sub_commands(
@@ -1010,11 +1386,24 @@ class CreateLLMModelBundleV1UseCase:
             final_weights_folder,
             trust_remote_code=vllm_args.trust_remote_code or False,
         )
+        cache_fingerprint = self.get_model_cache_fingerprint(
+            model_name=model_name,
+            framework_image_tag=framework_image_tag,
+            checkpoint_path=checkpoint_path,
+            num_shards=num_shards,
+            quantize=quantize,
+            chat_template_override=chat_template_override,
+            trust_remote_code=vllm_args.trust_remote_code or False,
+            download_subcommands=download_subcommands,
+        )
+        download_subcommands = self.wrap_download_subcommands_with_model_cache_lock(
+            download_subcommands, final_weights_folder, cache_fingerprint
+        )
 
         if enable_startup_metrics:
             # With startup metrics, download is handled by wrapper via DOWNLOAD_CMD env var
             # Store download command for env var (will be set in bundle creation)
-            self._last_download_cmd = ";".join(download_subcommands)
+            self._last_download_cmd = ";".join(["set -euo pipefail"] + download_subcommands)
         else:
             # Without startup metrics, download runs as part of subcommands
             subcommands += download_subcommands
@@ -1044,14 +1433,21 @@ class CreateLLMModelBundleV1UseCase:
                         f"Quantization {quantize} is not supported by vLLM."
                     )
 
-                vllm_args.quantization = quantize
+                vllm_args.quantization = quantize.value
 
             if hmi_config.sensitive_log_mode:
                 vllm_args.disable_log_requests = True
 
             # Use wrapper if startup metrics enabled, otherwise use vllm_server directly
             server_module = "vllm_startup_wrapper" if enable_startup_metrics else "vllm_server"
-            vllm_cmd = f'python -m {server_module} --model {final_weights_folder} --served-model-name {model_name} {final_weights_folder} --port 5005 --host "::"'
+            served_model_names = [model_name, VLLM_MODEL_WEIGHTS_FOLDER]
+            if final_weights_folder not in served_model_names:
+                served_model_names.append(final_weights_folder)
+            served_model_names_str = " ".join(shlex.quote(name) for name in served_model_names)
+            vllm_cmd = (
+                f"python -m {server_module} --model {shlex.quote(final_weights_folder)} "
+                f'--served-model-name {served_model_names_str} --port 5005 --host "::"'
+            )
             for field in VLLMEndpointAdditionalArgs.model_fields.keys():
                 config_value = getattr(vllm_args, field, None)
                 if config_value is not None:
@@ -1060,14 +1456,18 @@ class CreateLLMModelBundleV1UseCase:
                     if field == "chat_template":
                         chat_template_cmd = f'export CHAT_TEMPLATE=$(echo "{encode_template(config_value)}" | base64 --decode)'
                         subcommands.append(chat_template_cmd)
-                        config_value = '"$CHAT_TEMPLATE"'
+                        vllm_cmd += f" --{field.replace('_', '-')} \"$CHAT_TEMPLATE\""
+                        continue
 
                     # if type of config_value is True, then only need to add the key
                     if isinstance(config_value, bool):
                         if config_value:
                             vllm_cmd += f" --{field.replace('_', '-')}"
                     else:
-                        vllm_cmd += f" --{field.replace('_', '-')} {config_value}"
+                        vllm_cmd += (
+                            f" --{field.replace('_', '-')} "
+                            f"{format_vllm_cli_value(config_value)}"
+                        )
 
             subcommands.append(vllm_cmd)
 
@@ -1183,6 +1583,7 @@ class CreateLLMModelBundleV1UseCase:
             multinode=True,
             is_worker=True,
             nodes_per_worker=nodes_per_worker,
+            additional_args=additional_args,
         )
 
         # These env vars e.g. K8S_OWN_POD_NAME, K8S_OWN_POD_NAME, K8S_OWN_NAMESPACE, K8S_LWS_CLUSTER_SIZE will be filled in automatically for all LWS pods through
@@ -1473,17 +1874,25 @@ class CreateLLMModelEndpointV1UseCase:
         aws_role = self.authz_module.get_aws_role_for_user(user)
         results_s3_bucket = self.authz_module.get_s3_bucket_for_user(user)
 
-        request.metadata[LLM_METADATA_KEY] = asdict(
+        request.metadata[LLM_METADATA_KEY] = llm_metadata_to_dict(
             LLMMetadata(
                 model_name=request.model_name,
                 source=request.source,
                 inference_framework=request.inference_framework,
                 inference_framework_image_tag=request.inference_framework_image_tag,
                 num_shards=request.num_shards,
+                model_cache_enabled=get_model_cache_enabled_for_framework(
+                    request.inference_framework
+                ),
                 quantize=request.quantize,
                 checkpoint_path=request.checkpoint_path,
                 chat_template_override=request.chat_template_override,
-            )
+            ),
+            (
+                get_explicit_vllm_additional_args(request)
+                if is_vllm_inference_framework(request.inference_framework)
+                else None
+            ),
         )
 
         model_endpoint_record = await self.model_endpoint_service.create_model_endpoint(
@@ -1661,7 +2070,15 @@ class UpdateLLMModelEndpointV1UseCase:
 
         infra_state = model_endpoint.infra_state
         metadata: Optional[Dict[str, Any]]
+        raw_llm_metadata = (model_endpoint.record.metadata or {}).get(LLM_METADATA_KEY, {})
+        llm_metadata: Dict[str, Any] = (
+            raw_llm_metadata if isinstance(raw_llm_metadata, dict) else {}
+        )
 
+        # Model cache mode is sticky per bundle. Toggling MODEL_CACHE_ENABLED affects
+        # new or explicitly recreated bundles, but resource-only updates must not
+        # rebuild existing vLLM bundles from a partial update request because that
+        # can drop framework-specific server args.
         if (
             request.force_bundle_recreation
             or request.model_name
@@ -1672,7 +2089,6 @@ class UpdateLLMModelEndpointV1UseCase:
             or request.checkpoint_path
             or request.chat_template_override
         ):
-            llm_metadata = (model_endpoint.record.metadata or {}).get(LLM_METADATA_KEY, {})
             inference_framework = llm_metadata["inference_framework"]
 
             if request.inference_framework_image_tag == "latest":
@@ -1700,6 +2116,17 @@ class UpdateLLMModelEndpointV1UseCase:
             chat_template_override = request.chat_template_override or llm_metadata.get(
                 "chat_template_override"
             )
+            stored_vllm_additional_args = llm_metadata.get(VLLM_ADDITIONAL_ARGS_METADATA_KEY)
+            if not isinstance(stored_vllm_additional_args, dict):
+                stored_vllm_additional_args = (
+                    get_legacy_vllm_additional_args_from_bundle(bundle)
+                    if is_vllm_inference_framework(inference_framework)
+                    else {}
+                )
+            merged_vllm_additional_args = {
+                **stored_vllm_additional_args,
+                **get_explicit_vllm_additional_args(request),
+            }
 
             bundle = await self.create_llm_model_bundle_use_case.execute(
                 user,
@@ -1714,21 +2141,31 @@ class UpdateLLMModelEndpointV1UseCase:
                 checkpoint_path=checkpoint_path,
                 chat_template_override=chat_template_override,
                 nodes_per_worker=model_endpoint.infra_state.resource_state.nodes_per_worker,
-                additional_args=request.model_dump(exclude_none=True),
+                additional_args=(
+                    merged_vllm_additional_args
+                    if is_vllm_inference_framework(inference_framework)
+                    else request.model_dump(exclude_none=True)
+                ),
             )
 
             metadata = endpoint_record.metadata or {}
-            metadata[LLM_METADATA_KEY] = asdict(
+            metadata[LLM_METADATA_KEY] = llm_metadata_to_dict(
                 LLMMetadata(
                     model_name=model_name,
                     source=source,
                     inference_framework=inference_framework,
                     inference_framework_image_tag=inference_framework_image_tag,
                     num_shards=num_shards,
+                    model_cache_enabled=get_model_cache_enabled_for_framework(inference_framework),
                     quantize=quantize,
                     checkpoint_path=checkpoint_path,
                     chat_template_override=chat_template_override,
-                )
+                ),
+                (
+                    merged_vllm_additional_args
+                    if is_vllm_inference_framework(inference_framework)
+                    else None
+                ),
             )
             endpoint_record.metadata = metadata
 

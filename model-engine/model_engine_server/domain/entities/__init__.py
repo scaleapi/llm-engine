@@ -11,7 +11,13 @@ from .batch_job_entity import (
 from .common_types import CpuSpecificationType, FineTuneHparamValueType, StorageSpecificationType
 from .file_entity import FileMetadata
 from .gpu_type import GpuType
-from .llm_entity import LLMInferenceFramework, LLMMetadata, LLMSource, Quantization
+from .llm_entity import (
+    LLM_METADATA_KEY,
+    LLMInferenceFramework,
+    LLMMetadata,
+    LLMSource,
+    Quantization,
+)
 from .llm_fine_tune_entity import LLMFineTuneEvent
 from .model_bundle_entity import (
     ArtifactLike,
@@ -67,6 +73,7 @@ __all__: Sequence[str] = [
     "GpuType",
     "FineTuneHparamValueType",
     "LLMFineTuneEvent",
+    "LLM_METADATA_KEY",
     "LLMInferenceFramework",
     "LLMMetadata",
     "LLMSource",
