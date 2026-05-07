@@ -254,44 +254,56 @@ make dev-k8s-cacher
 
 #### Create a test endpoint and watch it spin up
 
+```python
+# Terminal 4 — create a sync CPU endpoint using the echo server (launch-python-client)
+import time
+from launch import LaunchClient, EndpointRequest
+
+# Any token works — LOCAL=true skips auth; the token becomes the user/owner ID
+client = LaunchClient(api_key="test-user", endpoint="http://localhost:5000")
+
+# Create the model bundle (echo server image loaded into kind via `make kind-image`)
+bundle = client.create_model_bundle_from_runnable_image_v2(
+    model_bundle_name="echo-bundle",
+    repository="model-engine",
+    tag="local",
+    command=[
+        "python", "-m",
+        "model_engine_server.inference.forwarding.echo_server",
+        "--port", "5005",
+    ],
+    predict_route="/predict",
+    healthcheck_route="/healthz",
+    readiness_initial_delay_seconds=15,
+)
+
+# Create a sync CPU endpoint
+client.create_model_endpoint(
+    endpoint_name="local-echo",
+    model_bundle=bundle,
+    endpoint_type="sync",
+    cpus=0.25,
+    memory="256Mi",
+    min_workers=1,
+    max_workers=1,
+    per_worker=1,
+)
+
+# Poll until READY — transitions PENDING → UPDATE_PENDING → READY (~30-60 s)
+while True:
+    ep = client.get_model_endpoint("local-echo")
+    print(f"status: {ep.status}")
+    if ep.status == "READY":
+        break
+    time.sleep(5)
+
+# Make a prediction against the echo server
+response = ep.predict(request=EndpointRequest(args={"text": "hello"}))
+print(response)
+```
+
 ```bash
-# Terminal 4 — create a sync CPU endpoint using the echo server
-curl -X POST http://localhost:5000/v1/model-endpoints \
-  -H "Authorization: Bearer test-user" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "local-echo",
-    "bundle_name": "echo-bundle",
-    "endpoint_type": "sync",
-    "cpus": 0.25,
-    "memory": "256Mi",
-    "min_workers": 1,
-    "max_workers": 1,
-    "per_worker": 1,
-    "model_bundle": {
-      "name": "echo-bundle",
-      "metadata": {},
-      "flavor": {
-        "flavor": "runnable_image",
-        "repository": "model-engine",
-        "tag": "local",
-        "command": [
-          "python", "-m",
-          "model_engine_server.inference.forwarding.echo_server",
-          "--port", "5005"
-        ],
-        "predict_route": "/predict",
-        "healthcheck_route": "/healthz",
-        "readiness_initial_delay_seconds": 15
-      }
-    }
-  }'
-
-# Poll status — transitions PENDING → UPDATE_PENDING → READY (30-60 s)
-curl http://localhost:5000/v1/model-endpoints/<endpoint-id> \
-  -H "Authorization: Bearer test-user"
-
-# Watch the pod come up in kind
+# Watch the pod come up in kind (separate terminal)
 kubectl --context kind-llm-engine get pods -n model-engine -w
 ```
 
