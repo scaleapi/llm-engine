@@ -34,6 +34,7 @@ from model_engine_server.common.serialization_utils import (
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
+    LLM_METADATA_KEY,
     LLMInferenceFramework,
     ModelEndpointConfig,
     ModelEndpointDeploymentState,
@@ -90,7 +91,6 @@ LWS_DEFAULT_ENV_VAR = {
 # for the container names in the LWS template.
 LWS_LEADER_CONTAINER_NAME = "lws-leader"
 LWS_WORKER_CONTAINER_NAME = "lws-worker"
-LLM_METADATA_KEY = "_llm"
 MODEL_CACHE_VOLUME_NAME = "model-cache"
 
 # As of Dec 2024 sync/streaming endpoints don't have a concurrent requests per worker

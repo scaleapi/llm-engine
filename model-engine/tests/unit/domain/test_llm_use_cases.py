@@ -71,6 +71,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     _fill_hardware_info,
     _get_s3_endpoint_flag,
     _infer_hardware,
+    get_legacy_vllm_additional_args_from_command,
     merge_metadata,
     validate_and_update_completion_params,
     validate_chat_template,
@@ -1513,6 +1514,23 @@ async def test_update_vllm_force_bundle_recreation_preserves_legacy_vllm_args(
         "disable_log_requests": True,
         "chat_template": "test-template",
         "rope_scaling": {"type": "linear", "factor": 2.0},
+    }
+
+
+def test_get_legacy_vllm_additional_args_does_not_match_prefix_flags():
+    command = [
+        "/bin/bash",
+        "-c",
+        "python -m vllm_server --model model_files --tokenizer-mode slow "
+        "--tokenizer custom-tokenizer --quantization-param-path /tmp/quant.json "
+        "--quantization awq",
+    ]
+
+    assert get_legacy_vllm_additional_args_from_command(command) == {
+        "tokenizer_mode": "slow",
+        "tokenizer": "custom-tokenizer",
+        "quantization_param_path": "/tmp/quant.json",
+        "quantization": "awq",
     }
 
 

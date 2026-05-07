@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
+LLM_METADATA_KEY = "_llm"
+
 
 class LLMSource(str, Enum):
     HUGGING_FACE = "hugging_face"

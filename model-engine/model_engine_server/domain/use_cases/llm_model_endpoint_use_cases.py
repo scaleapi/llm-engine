@@ -98,6 +98,7 @@ from model_engine_server.core.loggers import (
 )
 from model_engine_server.domain.entities import (
     GpuType,
+    LLM_METADATA_KEY,
     LLMInferenceFramework,
     LLMMetadata,
     LLMSource,
@@ -190,7 +191,6 @@ OPENAI_SUPPORTED_INFERENCE_FRAMEWORKS = [
     LLMInferenceFramework.SGLANG,
 ]
 
-LLM_METADATA_KEY = "_llm"
 RESERVED_METADATA_KEYS = [LLM_METADATA_KEY, CONVERTED_FROM_ARTIFACT_LIKE_KEY]
 VLLM_MODEL_WEIGHTS_FOLDER = "model_files"
 MODEL_CACHE_COMPLETE_FILE = ".complete"
@@ -321,6 +321,13 @@ def _extract_legacy_vllm_raw_arg(command: str, token_index: int) -> Optional[str
     return command[start:i].strip()
 
 
+def _find_legacy_vllm_flag_index(command: str, token: str, start_index: int) -> int:
+    match = re.search(rf"(?<!\S){re.escape(token)}(?=\s|$)", command[start_index:])
+    if match is None:
+        return -1
+    return start_index + match.start()
+
+
 def _get_legacy_vllm_chat_template(command: str) -> Optional[str]:
     match = re.search(
         r'export CHAT_TEMPLATE=\$\(echo "([^"]+)" \| base64 --decode\)',
@@ -358,6 +365,7 @@ def get_legacy_vllm_additional_args_from_command(command: Any) -> Dict[str, Any]
     chat_template = _get_legacy_vllm_chat_template(command[2])
 
     i = 3
+    raw_search_start = 0
     while i < len(tokens):
         token = tokens[i]
         if not token.startswith("--"):
@@ -365,8 +373,12 @@ def get_legacy_vllm_additional_args_from_command(command: Any) -> Dict[str, Any]
             continue
 
         field_name = token[2:].replace("-", "_")
-        token_index = command_match.group(1).find(token)
+        token_index = _find_legacy_vllm_flag_index(command_match.group(1), token, raw_search_start)
+        if token_index < 0:
+            i += 1
+            continue
         raw_value = _extract_legacy_vllm_raw_arg(command_match.group(1), token_index)
+        raw_search_start = token_index + len(token)
         if field_name == "chat_template" and raw_value is not None:
             try:
                 parsed_raw_values = shlex.split(raw_value)
