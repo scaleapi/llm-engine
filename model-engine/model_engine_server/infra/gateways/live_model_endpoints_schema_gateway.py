@@ -123,17 +123,14 @@ class LiveModelEndpointsSchemaGateway(ModelEndpointsSchemaGateway):
                 prefix = model_endpoint_name
                 model_name_map = LiveModelEndpointsSchemaGateway.get_model_name_map(prefix)
                 all_fields = get_fields_from_routes([route])
-                schema_generator = GenerateJsonSchema()
                 field_mapping, _ = get_definitions(
                     fields=all_fields,
-                    schema_generator=schema_generator,
                     model_name_map=model_name_map,
                 )
 
                 result = get_openapi_path(
                     route=route,
                     operation_ids=operation_ids,
-                    schema_generator=schema_generator,
                     model_name_map=model_name_map,
                     field_mapping=field_mapping,
                 )
