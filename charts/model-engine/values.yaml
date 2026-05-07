@@ -61,6 +61,22 @@ extraVolumes: []              # Extra volumes for all deployments
 extraVolumeMounts: []         # Extra volume mounts for main containers
 extraPodEnvFrom: []           # Extra envFrom for inference pods (e.g., MinIO credentials)
 
+# PVC-backed model cache for endpoint pods. When enabled, model downloads are cached on
+# one endpoint-scoped PVC instead of the pod's ephemeral storage. The default access
+# mode is ReadWriteMany so replicas and multinode endpoints can share the cache, but
+# storageClassName must point to an RWX-capable storage class unless the cluster default
+# already supports RWX. Cold multinode starts are serialized through one shared download;
+# later restarts reuse the cache.
+modelCache:
+  enabled: false
+  storage: 100Gi
+  storageClassName: null
+  accessMode: ReadWriteMany
+  mountPath: /mnt/model-cache
+  # Seconds before a model-cache download lock is considered abandoned after its
+  # heartbeat stops updating.
+  lockStaleSeconds: 600
+
 # Service account token control
 automountServiceAccountToken: true
 

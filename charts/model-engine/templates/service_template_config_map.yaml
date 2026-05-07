@@ -25,6 +25,10 @@
 {{- $require_aws_config := not (empty .Values.aws) }}
 {{- $enable_datadog := .Values.datadog.enabled }}
 {{- $azure_cloud_provider := not (empty .Values.azure) }}
+{{- $model_cache := default dict .Values.modelCache }}
+{{- $model_cache_storage := get $model_cache "storage" | default "100Gi" }}
+{{- $model_cache_storage_class_name := get $model_cache "storageClassName" | default "" }}
+{{- $model_cache_access_mode := get $model_cache "accessMode" | default "ReadWriteMany" }}
 
 {{- if .Values.message }}
 {{- .Values.message }}
@@ -428,6 +432,23 @@ data:
         {{- $service_template_labels | nindent 8 }}
     data:
       raw_data: ${ENDPOINT_CONFIG_SERIALIZED}
+  persistent-volume-claim.yaml: |-
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: ${MODEL_CACHE_PVC_NAME}
+      namespace: ${NAMESPACE}
+      labels:
+        {{- $service_template_labels | nindent 8 }}
+    spec:
+      accessModes:
+        - {{ $model_cache_access_mode | quote }}
+      {{- if $model_cache_storage_class_name }}
+      storageClassName: {{ $model_cache_storage_class_name | quote }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ $model_cache_storage | quote }}
   horizontal-pod-autoscaler.yaml: |-
     apiVersion: ${API_VERSION}
     kind: HorizontalPodAutoscaler

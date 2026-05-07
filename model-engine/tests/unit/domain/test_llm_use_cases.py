@@ -1,7 +1,11 @@
 import json
+import shlex
+import subprocess
+import time
 from typing import Any, List, Tuple
 from unittest import mock
 
+import model_engine_server.domain.use_cases.llm_model_endpoint_use_cases as llm_use_cases
 import pytest
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import (
@@ -15,6 +19,7 @@ from model_engine_server.common.dtos.llms import (
     ModelDownloadRequest,
     TokenOutput,
     UpdateLLMModelEndpointV1Request,
+    VLLMEndpointAdditionalArgs,
 )
 from model_engine_server.common.dtos.llms.batch_completion import (
     CreateBatchCompletionsEngineRequest,
@@ -26,6 +31,7 @@ from model_engine_server.domain.entities import (
     LLMInferenceFramework,
     ModelEndpoint,
     ModelEndpointType,
+    Quantization,
 )
 from model_engine_server.domain.exceptions import (
     DockerImageNotFoundException,
@@ -60,6 +66,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     _fill_hardware_info,
     _get_s3_endpoint_flag,
     _infer_hardware,
+    get_legacy_vllm_additional_args_from_command,
     merge_metadata,
     validate_and_update_completion_params,
     validate_chat_template,
@@ -69,7 +76,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
 from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
 from ..conftest import mocked__get_recommended_hardware_config_map
-from .conftest import CreateLLMModelEndpointV1Request_gen
+from .conftest import CreateLLMModelEndpointV1Request_gen, UpdateLLMModelEndpointV1Request_gen
 
 
 def mocked__get_latest_batch_v2_tag():
@@ -150,6 +157,7 @@ async def test_create_model_endpoint_use_case_success(
             "inference_framework": create_llm_model_endpoint_request_async.inference_framework,
             "inference_framework_image_tag": "fake_docker_repository_latest_image_tag",
             "num_shards": create_llm_model_endpoint_request_async.num_shards,
+            "model_cache_enabled": False,
             "quantize": None,
             "checkpoint_path": create_llm_model_endpoint_request_async.checkpoint_path,
             "chat_template_override": create_llm_model_endpoint_request_async.chat_template_override,
@@ -174,6 +182,7 @@ async def test_create_model_endpoint_use_case_success(
             "inference_framework": create_llm_model_endpoint_request_sync.inference_framework,
             "inference_framework_image_tag": create_llm_model_endpoint_request_sync.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_request_sync.num_shards,
+            "model_cache_enabled": False,
             "quantize": None,
             "checkpoint_path": create_llm_model_endpoint_request_sync.checkpoint_path,
             "chat_template_override": create_llm_model_endpoint_request_sync.chat_template_override,
@@ -200,6 +209,7 @@ async def test_create_model_endpoint_use_case_success(
             "inference_framework": create_llm_model_endpoint_request_streaming.inference_framework,
             "inference_framework_image_tag": create_llm_model_endpoint_request_streaming.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
+            "model_cache_enabled": False,
             "quantize": None,
             "checkpoint_path": create_llm_model_endpoint_request_streaming.checkpoint_path,
             "chat_template_override": create_llm_model_endpoint_request_streaming.chat_template_override,
@@ -225,6 +235,23 @@ async def test_create_model_endpoint_use_case_success(
         owner=user.team_id, name=create_llm_model_endpoint_request_llama_3_70b.name
     )
     assert " --gpu-memory-utilization 0.95" in bundle.flavor.command[-1]
+
+    quantized_request_data = create_llm_model_endpoint_request_llama_3_70b.model_dump(
+        exclude_unset=True
+    )
+    quantized_request_data.update(
+        name="test_llm_endpoint_name_llama_3_70b_awq",
+        quantize=Quantization.AWQ,
+    )
+    quantized_request = CreateLLMModelEndpointV1Request_gen(**quantized_request_data)
+    quantized_response = await use_case.execute(user=user, request=quantized_request)
+    assert quantized_response.endpoint_creation_task_id
+    assert isinstance(quantized_response, CreateLLMModelEndpointV1Response)
+    bundle = await fake_model_bundle_repository.get_latest_model_bundle_by_name(
+        owner=user.team_id, name=quantized_request.name
+    )
+    assert "--quantization awq" in bundle.flavor.command[-1]
+    assert "Quantization.AWQ" not in bundle.flavor.command[-1]
 
     response_6 = await use_case.execute(
         user=user, request=create_llm_model_endpoint_request_llama_3_1_405b_instruct
@@ -423,6 +450,7 @@ async def test_create_model_endpoint_w_chat_template(
             "inference_framework": create_llm_model_endpoint_request_llama_3_70b_chat.inference_framework,
             "inference_framework_image_tag": create_llm_model_endpoint_request_llama_3_70b_chat.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_request_llama_3_70b_chat.num_shards,
+            "model_cache_enabled": False,
             "quantize": create_llm_model_endpoint_request_llama_3_70b_chat.quantize,
             "checkpoint_path": create_llm_model_endpoint_request_llama_3_70b_chat.checkpoint_path,
             "chat_template_override": create_llm_model_endpoint_request_llama_3_70b_chat.chat_template_override,
@@ -485,9 +513,14 @@ async def test_create_model_endpoint_w_vllm_args(
             "inference_framework": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.inference_framework,
             "inference_framework_image_tag": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.num_shards,
+            "model_cache_enabled": False,
             "quantize": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.quantize,
             "checkpoint_path": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.checkpoint_path,
             "chat_template_override": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.chat_template_override,
+            "vllm_additional_args": {
+                "max_model_len": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.max_model_len,
+                "max_num_seqs": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.max_num_seqs,
+            },
         }
     }
 
@@ -543,6 +576,7 @@ async def test_create_model_endpoint_text_generation_inference_use_case_success(
             "inference_framework": create_llm_model_endpoint_text_generation_inference_request_streaming.inference_framework,
             "inference_framework_image_tag": create_llm_model_endpoint_text_generation_inference_request_streaming.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_text_generation_inference_request_streaming.num_shards,
+            "model_cache_enabled": False,
             "quantize": create_llm_model_endpoint_text_generation_inference_request_streaming.quantize,
             "checkpoint_path": create_llm_model_endpoint_text_generation_inference_request_streaming.checkpoint_path,
             "chat_template_override": create_llm_model_endpoint_text_generation_inference_request_streaming.chat_template_override,
@@ -586,7 +620,7 @@ def test_load_model_weights_sub_commands(
     )
 
     expected_result = [
-        f'./s5cmd {_get_s3_endpoint_flag()} --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
+        f'./s5cmd {_get_s3_endpoint_flag()} --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --include "*.jinja" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 
@@ -600,7 +634,7 @@ def test_load_model_weights_sub_commands(
     )
 
     expected_result = [
-        f'./s5cmd {_get_s3_endpoint_flag()} --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*" --include "*.py" s3://fake-checkpoint/* test_folder',
+        f'./s5cmd {_get_s3_endpoint_flag()} --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --include "*.jinja" --exclude "optimizer*" --include "*.py" s3://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 
@@ -615,7 +649,7 @@ def test_load_model_weights_sub_commands(
 
     expected_result = [
         "s5cmd > /dev/null || conda install -c conda-forge -y s5cmd",
-        f's5cmd {_get_s3_endpoint_flag()} --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
+        f's5cmd {_get_s3_endpoint_flag()} --numworkers 512 cp --concurrency 10 --include "*.model" --include "*.model.v*" --include "*.json" --include "*.safetensors" --include "*.txt" --include "*.jinja" --exclude "optimizer*" s3://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 
@@ -630,8 +664,7 @@ def test_load_model_weights_sub_commands(
 
     expected_result = [
         "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
-        "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
-        'azcopy copy --recursive --include-pattern "*.model;*.json;*.safetensors" --exclude-pattern "optimizer*" azure://fake-checkpoint/* test_folder',
+        'azcopy copy --recursive --include-pattern "*.model;*.model.v*;*.json;*.safetensors;*.txt;*.jinja" --exclude-pattern "optimizer*" azure://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 
@@ -646,8 +679,7 @@ def test_load_model_weights_sub_commands(
 
     expected_result = [
         "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
-        "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
-        'azcopy copy --recursive --include-pattern "*.model;*.json;*.safetensors;*.py" --exclude-pattern "optimizer*" azure://fake-checkpoint/* test_folder',
+        'azcopy copy --recursive --include-pattern "*.model;*.model.v*;*.json;*.safetensors;*.txt;*.jinja;*.py" --exclude-pattern "optimizer*" azure://fake-checkpoint/* test_folder',
     ]
     assert expected_result == subcommands
 
@@ -691,6 +723,298 @@ def test_load_model_weights_sub_commands(
         " gs://fake-bucket/fake-checkpoint test_folder",
     ]
     assert expected_result == subcommands
+
+
+def test_create_vllm_bundle_command_with_model_cache(
+    monkeypatch,
+    fake_model_bundle_repository,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+):
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_ENABLED", True)
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_MOUNT_PATH", "/mnt/model-cache")
+
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+
+    command = llm_bundle_use_case._create_vllm_bundle_command(
+        model_name="fake/model",
+        framework_image_tag="0.17.0-with-azcopy",
+        num_shards=1,
+        quantize=None,
+        checkpoint_path="azure://fake-checkpoint",
+        chat_template_override=None,
+        multinode=False,
+        is_worker=False,
+    )
+
+    command_str = command[2]
+    assert command[:2] == ["/bin/bash", "-c"]
+    assert "set -euo pipefail" in command_str
+    assert "/mnt/model-cache/model_files/.download.lock" in command_str
+    assert "/mnt/model-cache/model_files/.complete" in command_str
+    assert (
+        'azcopy copy --recursive --include-pattern "*.model;*.model.v*;*.json;*.safetensors;*.txt;*.jinja"'
+        in command_str
+    )
+    assert "downloadazcopy-v10-linux" not in command_str
+    assert "--model /mnt/model-cache/model_files" in command_str
+    assert "--served-model-name fake/model model_files /mnt/model-cache/model_files" in command_str
+
+
+def _extract_model_cache_fingerprint(command_str: str) -> str:
+    return command_str.split("expected_model_cache_fingerprint=", 1)[1].split(";", 1)[0]
+
+
+@pytest.mark.asyncio
+async def test_create_vllm_multinode_bundle_worker_uses_additional_args_for_cache(
+    monkeypatch,
+    test_api_key,
+    fake_model_bundle_repository,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+):
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_ENABLED", True)
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_MOUNT_PATH", "/mnt/model-cache")
+
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+
+    bundle_id = await llm_bundle_use_case.create_vllm_multinode_bundle(
+        user=user,
+        model_name="fake/model",
+        framework_image_tag="0.17.0-with-azcopy",
+        endpoint_unique_name="fake-endpoint",
+        num_shards=1,
+        nodes_per_worker=2,
+        quantize=None,
+        checkpoint_path="azure://fake-checkpoint",
+        chat_template_override=None,
+        additional_args=VLLMEndpointAdditionalArgs(trust_remote_code=True),
+    )
+
+    model_bundle = await fake_model_bundle_repository.get_model_bundle(bundle_id)
+    leader_command = model_bundle.flavor.command[2]
+    worker_command = model_bundle.flavor.worker_command[2]
+
+    assert "/workspace/init_ray.sh leader" in leader_command
+    assert "/workspace/init_ray.sh worker" in worker_command
+    assert ';*.py" --exclude-pattern "optimizer*"' in leader_command
+    assert ';*.py" --exclude-pattern "optimizer*"' in worker_command
+    assert _extract_model_cache_fingerprint(leader_command) == _extract_model_cache_fingerprint(
+        worker_command
+    )
+
+
+def test_model_cache_wrapper_returns_original_commands_when_disabled(monkeypatch):
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_ENABLED", False)
+    download_subcommands = ["download model"]
+
+    assert (
+        CreateLLMModelBundleV1UseCase.wrap_download_subcommands_with_model_cache_lock(
+            download_subcommands,
+            "model_files",
+            "fingerprint",
+        )
+        is download_subcommands
+    )
+
+
+def _run_model_cache_subcommands(subcommands: List[str]) -> None:
+    subprocess.run(
+        ["/bin/bash", "-c", ";".join(["set -euo pipefail"] + subcommands)],
+        check=True,
+    )
+
+
+def _extract_model_cache_lock_stale_function(subcommands: List[str]) -> str:
+    command = subcommands[1]
+    start = command.index("model_cache_lock_stale() { ")
+    end = command.index("cleanup_model_cache_lock() { ")
+    return command[start:end]
+
+
+def _model_cache_download_subcommands(model_dir, content: str) -> List[str]:
+    config_path = shlex.quote(str(model_dir / "config.json"))
+    weights_path = shlex.quote(str(model_dir / "model.safetensors"))
+    return [
+        f"printf '{{}}' > {config_path}",
+        f"printf '%s' {shlex.quote(content)} > {weights_path}",
+    ]
+
+
+def test_model_cache_download_skips_when_fingerprint_matches(monkeypatch, tmp_path):
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_ENABLED", True)
+    model_dir = tmp_path / "model_files"
+
+    first_download = _model_cache_download_subcommands(model_dir, "first")
+    first_subcommands = (
+        CreateLLMModelBundleV1UseCase.wrap_download_subcommands_with_model_cache_lock(
+            first_download, str(model_dir), "fingerprint-one"
+        )
+    )
+    _run_model_cache_subcommands(first_subcommands)
+
+    failing_download = ["echo 'cache hit should skip this command'; exit 99"]
+    cache_hit_subcommands = (
+        CreateLLMModelBundleV1UseCase.wrap_download_subcommands_with_model_cache_lock(
+            failing_download, str(model_dir), "fingerprint-one"
+        )
+    )
+    _run_model_cache_subcommands(cache_hit_subcommands)
+
+    assert (model_dir / ".complete").read_text().strip() == "fingerprint-one"
+    assert (model_dir / "model.safetensors").read_text() == "first"
+
+
+def test_model_cache_download_redownloads_when_fingerprint_changes(monkeypatch, tmp_path):
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_ENABLED", True)
+    model_dir = tmp_path / "model_files"
+
+    first_subcommands = (
+        CreateLLMModelBundleV1UseCase.wrap_download_subcommands_with_model_cache_lock(
+            _model_cache_download_subcommands(model_dir, "first"),
+            str(model_dir),
+            "fingerprint-one",
+        )
+    )
+    _run_model_cache_subcommands(first_subcommands)
+    stale_file = model_dir / "stale.txt"
+    stale_file.write_text("stale")
+
+    second_subcommands = (
+        CreateLLMModelBundleV1UseCase.wrap_download_subcommands_with_model_cache_lock(
+            _model_cache_download_subcommands(model_dir, "second"),
+            str(model_dir),
+            "fingerprint-two",
+        )
+    )
+    _run_model_cache_subcommands(second_subcommands)
+
+    assert (model_dir / ".complete").read_text().strip() == "fingerprint-two"
+    assert (model_dir / "model.safetensors").read_text() == "second"
+    assert not stale_file.exists()
+
+
+def test_model_cache_download_recovers_stale_lock(monkeypatch, tmp_path):
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_ENABLED", True)
+    model_dir = tmp_path / "model_files"
+    lock_dir = model_dir / ".download.lock"
+    lock_dir.mkdir(parents=True)
+    (lock_dir / "heartbeat").write_text("1")
+
+    subcommands = CreateLLMModelBundleV1UseCase.wrap_download_subcommands_with_model_cache_lock(
+        _model_cache_download_subcommands(model_dir, "downloaded"),
+        str(model_dir),
+        "fingerprint-one",
+    )
+    _run_model_cache_subcommands(subcommands)
+
+    assert (model_dir / ".complete").read_text().strip() == "fingerprint-one"
+    assert (model_dir / "model.safetensors").read_text() == "downloaded"
+    assert not lock_dir.exists()
+
+
+def test_model_cache_future_heartbeat_is_not_stale(monkeypatch, tmp_path):
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_ENABLED", True)
+    model_dir = tmp_path / "model_files"
+    lock_dir = model_dir / ".download.lock"
+    lock_dir.mkdir(parents=True)
+    (lock_dir / "heartbeat").write_text(str(int(time.time()) + 60))
+
+    subcommands = CreateLLMModelBundleV1UseCase.wrap_download_subcommands_with_model_cache_lock(
+        ["true"],
+        str(model_dir),
+        "fingerprint-one",
+    )
+    stale_function = _extract_model_cache_lock_stale_function(subcommands)
+
+    result = subprocess.run(
+        [
+            "/bin/bash",
+            "-c",
+            f"set -euo pipefail; {stale_function} " "if model_cache_lock_stale; then exit 1; fi",
+        ],
+        check=False,
+    )
+
+    assert result.returncode == 0
+
+
+def test_model_cache_heartbeat_updates_are_atomic(monkeypatch, tmp_path):
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_ENABLED", True)
+    model_dir = tmp_path / "model_files"
+
+    subcommands = CreateLLMModelBundleV1UseCase.wrap_download_subcommands_with_model_cache_lock(
+        ["true"],
+        str(model_dir),
+        "fingerprint-one",
+    )
+
+    command = subcommands[1]
+    heartbeat_path = str(model_dir / ".download.lock" / "heartbeat")
+    assert "write_model_cache_heartbeat() {" in command
+    assert 'date +%s > "$heartbeat_tmp_file"' in command
+    assert 'mv "$heartbeat_tmp_file"' in command
+    assert "(while true; do write_model_cache_heartbeat; sleep 30; done) &" in command
+    assert f"date +%s > {heartbeat_path};" not in command
+
+
+def test_model_cache_lock_stale_seconds_is_configurable(monkeypatch, tmp_path):
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_ENABLED", True)
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_LOCK_STALE_SECONDS", 3600)
+    model_dir = tmp_path / "model_files"
+
+    subcommands = CreateLLMModelBundleV1UseCase.wrap_download_subcommands_with_model_cache_lock(
+        ["true"],
+        str(model_dir),
+        "fingerprint-one",
+    )
+
+    assert "[ $((now - last_heartbeat)) -gt 3600 ]" in subcommands[1]
+
+
+def test_model_cache_fingerprint_changes_with_checkpoint_path():
+    download_subcommands = ["download model"]
+    common_kwargs = dict(
+        model_name="fake/model",
+        framework_image_tag="0.17.0-with-azcopy",
+        num_shards=1,
+        quantize=None,
+        chat_template_override=None,
+        trust_remote_code=False,
+        download_subcommands=download_subcommands,
+    )
+
+    first_fingerprint = CreateLLMModelBundleV1UseCase.get_model_cache_fingerprint(
+        checkpoint_path="azure://first", **common_kwargs
+    )
+    second_fingerprint = CreateLLMModelBundleV1UseCase.get_model_cache_fingerprint(
+        checkpoint_path="azure://second", **common_kwargs
+    )
+
+    assert first_fingerprint != second_fingerprint
 
 
 def test_load_model_files_sub_commands_trt_llm_gcs(
@@ -777,6 +1101,7 @@ async def test_create_model_endpoint_trt_llm_use_case_success(
             "inference_framework": create_llm_model_endpoint_trt_llm_request_streaming.inference_framework,
             "inference_framework_image_tag": create_llm_model_endpoint_trt_llm_request_streaming.inference_framework_image_tag,
             "num_shards": create_llm_model_endpoint_trt_llm_request_streaming.num_shards,
+            "model_cache_enabled": False,
             "quantize": create_llm_model_endpoint_trt_llm_request_streaming.quantize,
             "checkpoint_path": create_llm_model_endpoint_trt_llm_request_streaming.checkpoint_path,
             "chat_template_override": create_llm_model_endpoint_trt_llm_request_streaming.chat_template_override,
@@ -933,6 +1258,7 @@ async def test_update_model_endpoint_use_case_success(
             "inference_framework": create_llm_model_endpoint_request_streaming.inference_framework,
             "inference_framework_image_tag": "fake_docker_repository_latest_image_tag",
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
+            "model_cache_enabled": False,
             "quantize": None,
             "checkpoint_path": update_llm_model_endpoint_request.checkpoint_path,
             "chat_template_override": create_llm_model_endpoint_request_streaming.chat_template_override,
@@ -969,6 +1295,7 @@ async def test_update_model_endpoint_use_case_success(
             "inference_framework": create_llm_model_endpoint_request_streaming.inference_framework,
             "inference_framework_image_tag": "fake_docker_repository_latest_image_tag",
             "num_shards": create_llm_model_endpoint_request_streaming.num_shards,
+            "model_cache_enabled": False,
             "quantize": None,
             "checkpoint_path": update_llm_model_endpoint_request.checkpoint_path,
             "chat_template_override": create_llm_model_endpoint_request_streaming.chat_template_override,
@@ -983,6 +1310,218 @@ async def test_update_model_endpoint_use_case_success(
         endpoint.infra_state.deployment_state.max_workers
         == update_llm_model_endpoint_request_only_workers.max_workers
     )
+
+
+@pytest.mark.asyncio
+async def test_update_vllm_model_endpoint_does_not_migrate_cache_mode_on_resource_update(
+    monkeypatch,
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    fake_llm_model_endpoint_service,
+    llm_model_endpoint_streaming: ModelEndpoint,
+    create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
+    update_llm_model_endpoint_request_only_workers: UpdateLLMModelEndpointV1Request,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    update_use_case = UpdateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    llm_model_endpoint_streaming.record.metadata = {
+        "_llm": {
+            "model_name": create_llm_model_endpoint_request_streaming.model_name,
+            "source": create_llm_model_endpoint_request_streaming.source,
+            "inference_framework": LLMInferenceFramework.VLLM,
+            "inference_framework_image_tag": "0.17.0-with-azcopy",
+            "num_shards": 1,
+            "model_cache_enabled": False,
+            "quantize": None,
+            "checkpoint_path": create_llm_model_endpoint_request_streaming.checkpoint_path,
+            "chat_template_override": None,
+        }
+    }
+    fake_model_endpoint_service.add_model_endpoint(llm_model_endpoint_streaming)
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_streaming)
+    previous_bundle_id = llm_model_endpoint_streaming.record.current_model_bundle.id
+    fake_model_bundle_repository.add_model_bundle(
+        llm_model_endpoint_streaming.record.current_model_bundle
+    )
+
+    monkeypatch.setattr(llm_use_cases, "MODEL_CACHE_ENABLED", True)
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+
+    update_response = await update_use_case.execute(
+        user=user,
+        model_endpoint_name=llm_model_endpoint_streaming.record.name,
+        request=update_llm_model_endpoint_request_only_workers,
+    )
+
+    assert update_response.endpoint_creation_task_id
+    updated_metadata = llm_model_endpoint_streaming.record.metadata["_llm"]
+    assert updated_metadata["model_cache_enabled"] is False
+    assert llm_model_endpoint_streaming.record.current_model_bundle.id == previous_bundle_id
+
+
+@pytest.mark.asyncio
+async def test_update_vllm_force_bundle_recreation_preserves_legacy_vllm_args(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    fake_llm_model_endpoint_service,
+    create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args: CreateLLMModelEndpointV1Request,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    create_use_case = CreateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    update_use_case = UpdateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    create_request_data = create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.model_dump(
+        exclude_unset=True
+    )
+    create_request_data.update(
+        trust_remote_code=True,
+        gpu_memory_utilization=0.75,
+        quantization="awq",
+        disable_log_requests=True,
+        rope_scaling={"type": "linear", "factor": 2.0},
+    )
+    create_request = CreateLLMModelEndpointV1Request_gen(**create_request_data)
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+
+    await create_use_case.execute(user=user, request=create_request)
+    endpoint = (
+        await fake_model_endpoint_service.list_model_endpoints(
+            owner=None,
+            name=create_request.name,
+            order_by=None,
+        )
+    )[0]
+    fake_llm_model_endpoint_service.add_model_endpoint(endpoint)
+    previous_bundle_id = endpoint.record.current_model_bundle.id
+    endpoint.record.metadata["_llm"].pop("vllm_additional_args")
+
+    update_response = await update_use_case.execute(
+        user=user,
+        model_endpoint_name=create_request.name,
+        request=UpdateLLMModelEndpointV1Request_gen(force_bundle_recreation=True),
+    )
+
+    assert update_response.endpoint_creation_task_id
+    assert endpoint.record.current_model_bundle.id != previous_bundle_id
+    bundle_command = endpoint.record.current_model_bundle.flavor.command[2]
+    expected_rope_scaling_arg = "--rope-scaling " + shlex.quote(
+        json.dumps({"type": "linear", "factor": 2.0}, separators=(",", ":"))
+    )
+    assert "--max-model-len 1000" in bundle_command
+    assert "--max-num-seqs 10" in bundle_command
+    assert "--gpu-memory-utilization 0.75" in bundle_command
+    assert "--quantization awq" in bundle_command
+    assert "--disable-log-requests" in bundle_command
+    assert "--chat-template" in bundle_command
+    assert expected_rope_scaling_arg in bundle_command
+    assert "--trust-remote-code" in bundle_command
+    assert '--include "*.py"' in bundle_command
+    assert endpoint.record.metadata["_llm"]["vllm_additional_args"] == {
+        "max_model_len": 1000,
+        "max_num_seqs": 10,
+        "trust_remote_code": True,
+        "gpu_memory_utilization": 0.75,
+        "enforce_eager": True,
+        "quantization": "awq",
+        "disable_log_requests": True,
+        "chat_template": "test-template",
+        "rope_scaling": {"type": "linear", "factor": 2.0},
+    }
+
+    update_response = await update_use_case.execute(
+        user=user,
+        model_endpoint_name=create_request.name,
+        request=UpdateLLMModelEndpointV1Request_gen(
+            force_bundle_recreation=True,
+            max_model_len=2000,
+            trust_remote_code=False,
+        ),
+    )
+
+    assert update_response.endpoint_creation_task_id
+    bundle_command = endpoint.record.current_model_bundle.flavor.command[2]
+    assert "--max-model-len 2000" in bundle_command
+    assert "--max-num-seqs 10" in bundle_command
+    assert "--gpu-memory-utilization 0.75" in bundle_command
+    assert "--enforce-eager" in bundle_command
+    assert "--quantization awq" in bundle_command
+    assert "--disable-log-requests" in bundle_command
+    assert "--chat-template" in bundle_command
+    assert expected_rope_scaling_arg in bundle_command
+    assert "--trust-remote-code" not in bundle_command
+    assert '--include "*.py"' not in bundle_command
+    assert endpoint.record.metadata["_llm"]["vllm_additional_args"] == {
+        "max_model_len": 2000,
+        "max_num_seqs": 10,
+        "trust_remote_code": False,
+        "gpu_memory_utilization": 0.75,
+        "enforce_eager": True,
+        "quantization": "awq",
+        "disable_log_requests": True,
+        "chat_template": "test-template",
+        "rope_scaling": {"type": "linear", "factor": 2.0},
+    }
+
+
+def test_get_legacy_vllm_additional_args_does_not_match_prefix_flags():
+    command = [
+        "/bin/bash",
+        "-c",
+        "python -m vllm_server --model model_files --tokenizer-mode slow "
+        "--tokenizer custom-tokenizer --quantization-param-path /tmp/quant.json "
+        "--quantization awq",
+    ]
+
+    assert get_legacy_vllm_additional_args_from_command(command) == {
+        "tokenizer_mode": "slow",
+        "tokenizer": "custom-tokenizer",
+        "quantization_param_path": "/tmp/quant.json",
+        "quantization": "awq",
+    }
 
 
 @pytest.mark.asyncio

@@ -28,7 +28,9 @@ import json
 
 import numpy as np
 import triton_python_backend_utils as pb_utils
-from transformers import SPIECE_UNDERLINE, AutoTokenizer, LlamaTokenizer, T5Tokenizer
+from transformers import AutoTokenizer, LlamaTokenizer, T5Tokenizer
+
+SPIECE_UNDERLINE = "\u2581"
 
 
 class TritonPythonModel:

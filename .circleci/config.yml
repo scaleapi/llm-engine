@@ -292,6 +292,13 @@ commands:
             mypy . --install-types --non-interactive
             popd
       - run:
+          name: Install Helm
+          command: |
+            curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o get_helm.sh
+            chmod 700 get_helm.sh
+            DESIRED_VERSION=v3.17.3 ./get_helm.sh
+            helm version
+      - run:
           name: Unit Tests
           command: |
             pushd model-engine

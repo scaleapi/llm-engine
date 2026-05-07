@@ -353,6 +353,13 @@ env:
     value: {{ .Values.celeryElasticacheEnabled | default true | quote }}
   - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
     value: "/workspace/model-engine/model_engine_server/infra/gateways/resources/templates"
+  {{- $model_cache := default dict .Values.modelCache }}
+  - name: MODEL_CACHE_ENABLED
+    value: {{ get $model_cache "enabled" | default false | quote }}
+  - name: MODEL_CACHE_MOUNT_PATH
+    value: {{ get $model_cache "mountPath" | default "/mnt/model-cache" | quote }}
+  - name: MODEL_CACHE_LOCK_STALE_SECONDS
+    value: {{ get $model_cache "lockStaleSeconds" | default 600 | quote }}
   {{- if .Values.s3EndpointUrl }}
   - name: S3_ENDPOINT_URL
     value: {{ .Values.s3EndpointUrl | quote }}
