@@ -16,12 +16,7 @@ install:
 	pip install -e .
 
 dev-up:
-	docker compose -f docker-compose.local.yml up -d
-	@echo "Waiting for services to be healthy..."
-	@until docker compose -f docker-compose.local.yml exec postgres pg_isready -U postgres -q; do sleep 1; done
-	@echo "Postgres ready."
-	@until docker compose -f docker-compose.local.yml exec redis redis-cli ping | grep -q PONG; do sleep 1; done
-	@echo "Redis ready."
+	docker compose -f docker-compose.local.yml up -d --wait
 
 dev-down:
 	docker compose -f docker-compose.local.yml down
