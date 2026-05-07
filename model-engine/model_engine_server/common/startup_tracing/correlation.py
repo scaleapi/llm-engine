@@ -12,6 +12,7 @@ from typing import Optional
 try:
     from opentelemetry import trace
     from opentelemetry.context import Context
+    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter  # noqa: F401
     from opentelemetry.sdk.trace import TracerProvider  # noqa: F401 - SDK availability check
     from opentelemetry.trace import NonRecordingSpan, SpanContext, TraceFlags
 
