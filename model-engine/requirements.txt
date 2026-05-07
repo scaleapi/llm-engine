@@ -184,7 +184,7 @@ gitdb==4.0.10
     # via gitpython
 gitdb2==2.0.6
     # via -r requirements.in
-gitpython==3.1.41
+gitpython==3.1.50
     # via -r requirements.in
 google-api-core==2.29.0
     # via

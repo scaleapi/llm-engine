@@ -46,7 +46,9 @@ RUN mkdir -p /tmp/runtime-bin /tmp/runtime-libs && \
   cd /tmp/k8s && \
   GOTOOLCHAIN=local KUBE_BUILD_PLATFORMS=linux/${TARGETARCH} make WHAT=cmd/kubectl && \
   cp _output/local/bin/linux/${TARGETARCH}/kubectl /tmp/runtime-bin/kubectl && \
-  GOBIN=/tmp/runtime-bin GOOS=linux GOARCH=${TARGETARCH} go install sigs.k8s.io/aws-iam-authenticator/cmd/aws-iam-authenticator@v0.7.11
+  git clone --depth 1 --branch v0.7.15 https://github.com/kubernetes-sigs/aws-iam-authenticator.git /tmp/aws-iam-authenticator && \
+  cd /tmp/aws-iam-authenticator && \
+  GOOS=linux GOARCH=${TARGETARCH} go build -o /tmp/runtime-bin/aws-iam-authenticator ./cmd/aws-iam-authenticator
 
 FROM cgr.dev/chainguard/python:latest AS model-engine
 
