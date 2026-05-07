@@ -17,9 +17,7 @@ from kubernetes_asyncio.client.models.v2beta2_horizontal_pod_autoscaler import (
 from kubernetes_asyncio.client.rest import ApiException
 from kubernetes_asyncio.config import ConfigException
 from model_engine_server.common.config import hmi_config
-from model_engine_server.common.dtos.resource_manager import (
-    CreateOrUpdateResourcesRequest,
-)
+from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from model_engine_server.common.env_vars import (
     CIRCLECI,
     LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH,
@@ -27,10 +25,7 @@ from model_engine_server.common.env_vars import (
     MODEL_CACHE_MOUNT_PATH,
     MODEL_CACHE_PVC_SUFFIX,
 )
-from model_engine_server.common.serialization_utils import (
-    b64_to_python_json,
-    str_to_bool,
-)
+from model_engine_server.common.serialization_utils import b64_to_python_json, str_to_bool
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
@@ -47,9 +42,7 @@ from model_engine_server.domain.entities import (
     TritonEnhancedRunnableImageFlavor,
 )
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
-from model_engine_server.domain.use_cases.model_endpoint_use_cases import (
-    MODEL_BUNDLE_CHANGED_KEY,
-)
+from model_engine_server.domain.use_cases.model_endpoint_use_cases import MODEL_BUNDLE_CHANGED_KEY
 from model_engine_server.infra.gateways.k8s_resource_parser import (
     get_per_worker_value_from_target_concurrency,
 )

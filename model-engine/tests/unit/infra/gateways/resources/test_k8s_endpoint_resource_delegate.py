@@ -9,9 +9,7 @@ from unittest.mock import ANY, AsyncMock, MagicMock, Mock, patch
 import pytest
 from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.common.config import hmi_config
-from model_engine_server.common.dtos.resource_manager import (
-    CreateOrUpdateResourcesRequest,
-)
+from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from model_engine_server.common.env_vars import GIT_TAG
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
@@ -23,8 +21,8 @@ from model_engine_server.domain.entities import (
 from model_engine_server.domain.exceptions import EndpointResourceInfraException
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     DATADOG_ENV_VAR,
-    K8SEndpointResourceDelegate,
     MODEL_CACHE_VOLUME_NAME,
+    K8SEndpointResourceDelegate,
     add_datadog_env_to_container,
     add_pod_metadata_env_to_container,
     get_main_container_from_deployment_template,
@@ -38,10 +36,7 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
     ResourceArguments,
     get_endpoint_resource_arguments_from_request,
 )
-from tests.unit.infra.gateways.k8s_fake_objects import (
-    FakeK8sDeploymentContainer,
-    FakeK8sEnvVar,
-)
+from tests.unit.infra.gateways.k8s_fake_objects import FakeK8sDeploymentContainer, FakeK8sEnvVar
 
 MODULE_PATH = "model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate"
 

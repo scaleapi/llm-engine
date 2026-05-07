@@ -5,11 +5,9 @@ import time
 from typing import Any, List, Tuple
 from unittest import mock
 
-import pytest
 import model_engine_server.domain.use_cases.llm_model_endpoint_use_cases as llm_use_cases
-from model_engine_server.common.dtos.batch_jobs import (
-    CreateDockerImageBatchJobResourceRequests,
-)
+import pytest
+from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import (
     CompletionOutput,
     CompletionStreamV1Request,
@@ -27,10 +25,7 @@ from model_engine_server.common.dtos.llms.batch_completion import (
     CreateBatchCompletionsEngineRequest,
     CreateBatchCompletionsV2Request,
 )
-from model_engine_server.common.dtos.tasks import (
-    SyncEndpointPredictV1Response,
-    TaskStatus,
-)
+from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Response, TaskStatus
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
@@ -78,15 +73,10 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     validate_checkpoint_files,
     validate_checkpoint_path_uri,
 )
-from model_engine_server.domain.use_cases.model_bundle_use_cases import (
-    CreateModelBundleV2UseCase,
-)
+from model_engine_server.domain.use_cases.model_bundle_use_cases import CreateModelBundleV2UseCase
 
 from ..conftest import mocked__get_recommended_hardware_config_map
-from .conftest import (
-    CreateLLMModelEndpointV1Request_gen,
-    UpdateLLMModelEndpointV1Request_gen,
-)
+from .conftest import CreateLLMModelEndpointV1Request_gen, UpdateLLMModelEndpointV1Request_gen
 
 
 def mocked__get_latest_batch_v2_tag():

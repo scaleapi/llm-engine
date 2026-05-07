@@ -30,9 +30,7 @@ from typing import (
 
 import yaml
 from model_engine_server.common.config import hmi_config
-from model_engine_server.common.dtos.batch_jobs import (
-    CreateDockerImageBatchJobResourceRequests,
-)
+from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import (
     ChatCompletionV2Request,
     ChatCompletionV2StreamSuccessChunk,
@@ -71,16 +69,10 @@ from model_engine_server.common.dtos.llms.completion import (
     CompletionV2SyncResponse,
 )
 from model_engine_server.common.dtos.llms.sglang import SGLangEndpointAdditionalArgs
-from model_engine_server.common.dtos.llms.vllm import (
-    VLLMEndpointAdditionalArgs,
-    VLLMModelConfig,
-)
+from model_engine_server.common.dtos.llms.vllm import VLLMEndpointAdditionalArgs, VLLMModelConfig
 from model_engine_server.common.dtos.model_bundles import CreateModelBundleV2Request
 from model_engine_server.common.dtos.model_endpoints import ModelEndpointOrderBy
-from model_engine_server.common.dtos.tasks import (
-    SyncEndpointPredictV1Request,
-    TaskStatus,
-)
+from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Request, TaskStatus
 from model_engine_server.common.env_vars import (
     MODEL_CACHE_ENABLED,
     MODEL_CACHE_LOCK_STALE_SECONDS,
@@ -97,8 +89,8 @@ from model_engine_server.core.loggers import (
     make_logger,
 )
 from model_engine_server.domain.entities import (
-    GpuType,
     LLM_METADATA_KEY,
+    GpuType,
     LLMInferenceFramework,
     LLMMetadata,
     LLMSource,
@@ -140,10 +132,7 @@ from model_engine_server.domain.repositories import (
     ModelBundleRepository,
     TokenizerRepository,
 )
-from model_engine_server.domain.services import (
-    LLMModelEndpointService,
-    ModelEndpointService,
-)
+from model_engine_server.domain.services import LLMModelEndpointService, ModelEndpointService
 from model_engine_server.domain.services.llm_batch_completions_service import (
     LLMBatchCompletionsService,
 )

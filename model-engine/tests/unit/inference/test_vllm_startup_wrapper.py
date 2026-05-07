@@ -1,6 +1,4 @@
-from model_engine_server.inference.vllm.vllm_startup_wrapper import (
-    get_model_dir_from_server_args,
-)
+from model_engine_server.inference.vllm.vllm_startup_wrapper import get_model_dir_from_server_args
 
 
 def test_get_model_dir_from_server_args():
