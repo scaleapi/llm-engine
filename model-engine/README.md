@@ -203,6 +203,7 @@ export LOCAL=true
 export GIT_TAG=local
 export ML_INFRA_DATABASE_URL=postgresql://postgres:password@localhost:5432/llm_engine
 export DEPLOY_SERVICE_CONFIG_PATH=$(pwd)/service_configs/service_config_local.yaml
+export ML_INFRA_SERVICES_CONFIG_PATH=$(pwd)/model_engine_server/core/configs/default.yaml
 
 # Gateway
 start-fastapi-server --port 5000 --num-workers 1 --debug
