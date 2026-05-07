@@ -241,7 +241,7 @@ def _get_external_interfaces(
     )
 
     queue_delegate: QueueEndpointResourceDelegate
-    if CIRCLECI or LOCAL:
+    if CIRCLECI or (LOCAL and infra_config().cloud_provider != "onprem"):
         queue_delegate = FakeQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "onprem":
         queue_delegate = OnPremQueueEndpointResourceDelegate()

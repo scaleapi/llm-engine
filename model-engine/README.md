@@ -212,6 +212,108 @@ start-fastapi-server --port 5000 --num-workers 1 --debug
 bash model_engine_server/db/migrations/run_database_migration.sh
 ```
 
+### Full End-to-End Local Flow (control plane + real inference pod)
+
+This setup uses [kind](https://kind.sigs.k8s.io/) (Kubernetes in Docker) to run a real
+local k8s cluster. The Service Builder creates actual Deployments in kind; the K8s Cacher
+polls kind and updates Redis. No GPU required — we use the built-in echo server as the
+inference container.
+
+**Prerequisites:** Python 3.10+, Docker, [`kind`](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+
+#### One-time cluster + image setup
+
+```bash
+cd model-engine/
+
+# Start Postgres + Redis (if not already running)
+make dev-up
+
+# Apply DB migrations (if not already done)
+make dev-migrate
+
+# Create kind cluster and the model-engine namespace
+make kind-up
+
+# Build model-engine:local and load it into kind
+make kind-image        # takes ~2-3 min on first build
+```
+
+#### Run the full stack (4 terminals)
+
+```bash
+# Terminal 1 — Gateway
+make dev-server-full
+
+# Terminal 2 — Service Builder (picks up endpoint creation tasks from Redis)
+make dev-service-builder
+
+# Terminal 3 — K8s Cacher (polls kind, writes endpoint status to Redis)
+make dev-k8s-cacher
+```
+
+#### Create a test endpoint and watch it spin up
+
+```bash
+# Terminal 4 — create a sync CPU endpoint using the echo server
+curl -X POST http://localhost:5000/v1/model-endpoints \
+  -H "Authorization: Bearer test-user" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "local-echo",
+    "bundle_name": "echo-bundle",
+    "endpoint_type": "sync",
+    "cpus": 0.25,
+    "memory": "256Mi",
+    "min_workers": 1,
+    "max_workers": 1,
+    "per_worker": 1,
+    "model_bundle": {
+      "name": "echo-bundle",
+      "metadata": {},
+      "flavor": {
+        "flavor": "runnable_image",
+        "repository": "model-engine",
+        "tag": "local",
+        "command": [
+          "python", "-m",
+          "model_engine_server.inference.forwarding.echo_server",
+          "--port", "5005"
+        ],
+        "predict_route": "/predict",
+        "healthcheck_route": "/healthz",
+        "readiness_initial_delay_seconds": 15
+      }
+    }
+  }'
+
+# Poll status — transitions PENDING → UPDATE_PENDING → READY (30-60 s)
+curl http://localhost:5000/v1/model-endpoints/<endpoint-id> \
+  -H "Authorization: Bearer test-user"
+
+# Watch the pod come up in kind
+kubectl --context kind-llm-engine get pods -n model-engine -w
+```
+
+#### Tear down
+
+```bash
+make kind-down          # delete kind cluster
+make dev-down           # stop Postgres + Redis
+```
+
+#### How the full flow works
+
+| Component | Mode | What it does locally |
+|---|---|---|
+| Gateway (`dev-server-full`) | `cloud_provider=onprem` + `LOCAL=true` | Real Redis queue, fake Docker registry |
+| Service Builder | `cloud_provider=onprem` + Redis broker | Creates real k8s Deployments in kind |
+| K8s Cacher | `cloud_provider=onprem` | Polls kind, writes status to Redis |
+| Inference pod | `model-engine:local` in kind | Runs echo server on port 5005 |
+| Forwarder sidecar | `model-engine:local` in kind | HTTP forwarder proxies requests |
+
+> **Note:** LLM endpoints (vLLM, TGI) require GPU hardware and pulling large images — use the generic sync endpoint with the echo server for local flow testing.
+
 ### Testing the HTTP Forwarder
 
 Start an endpoint on port 5005:
