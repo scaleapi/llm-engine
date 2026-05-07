@@ -8,7 +8,8 @@ LOCAL_ENV := \
 	LOCAL=true \
 	GIT_TAG=local \
 	ML_INFRA_DATABASE_URL=$(DB_URL) \
-	DEPLOY_SERVICE_CONFIG_PATH=$(MODEL_ENGINE_DIR)/service_configs/service_config_local.yaml
+	DEPLOY_SERVICE_CONFIG_PATH=$(MODEL_ENGINE_DIR)/service_configs/service_config_local.yaml \
+	ML_INFRA_SERVICES_CONFIG_PATH=$(MODEL_ENGINE_DIR)/model_engine_server/core/configs/default.yaml
 
 install:
 	pip install -r requirements.txt -r requirements-test.txt -r requirements_override.txt

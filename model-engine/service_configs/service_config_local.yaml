@@ -3,7 +3,8 @@ endpoint_namespace: model-engine
 model_primitive_host: "none"
 
 # Local Redis (started via docker-compose.local.yml)
-cache_redis_aws_url: redis://localhost:6379/15
+# Use onprem_url so it's checked before cloud_provider assertions
+cache_redis_onprem_url: redis://localhost:6379/15
 
 sqs_profile: nonexistent_sqs_profile
 sqs_queue_policy_template: >
