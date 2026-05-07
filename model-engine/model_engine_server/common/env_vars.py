@@ -76,5 +76,5 @@ if LOCAL:
     logger.warning("LOCAL development & testing mode is ON")
 
 GIT_TAG: str = os.environ.get("GIT_TAG", "GIT_TAG_NOT_FOUND")
-if GIT_TAG == "GIT_TAG_NOT_FOUND" and "pytest" not in sys.modules:
+if GIT_TAG == "GIT_TAG_NOT_FOUND" and "pytest" not in sys.modules and not LOCAL:
     raise ValueError("GIT_TAG environment variable must be set")
