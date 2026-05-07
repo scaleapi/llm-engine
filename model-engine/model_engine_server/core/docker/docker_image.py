@@ -144,10 +144,14 @@ def build(
     )
 
     if test_command:
-        logger.info(textwrap.dedent(f"""
+        logger.info(
+            textwrap.dedent(
+                f"""
             Testing with 'docker run' on the built image.
             ARGS: {test_command}
-            (NOTE: Expecting the test command to terminate.  """))
+            (NOTE: Expecting the test command to terminate.  """
+            )
+        )
         home_dir = str(pathlib.Path.home())
         output = docker_client.containers.run(  # pylint:disable=no-member
             image=image,
