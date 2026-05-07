@@ -31,11 +31,7 @@ service_builder_service = celery_app(
     backend_protocol=(
         "abs"
         if infra_config().cloud_provider == "azure"
-        else (
-            "redis"
-            if infra_config().cloud_provider in ("gcp", "onprem")
-            else "s3"
-        )
+        else ("redis" if infra_config().cloud_provider in ("gcp", "onprem") else "s3")
     ),
     # Add detailed task tracking for debugging
     task_track_started=True,
