@@ -34,6 +34,7 @@ RUN pip uninstall -y pip
 
 RUN mkdir -p /tmp/runtime-bin /tmp/runtime-libs && \
   cp /bin/bash /tmp/runtime-bin/bash && \
+  cp /bin/cat /tmp/runtime-bin/cat && \
   cp /usr/bin/dumb-init /tmp/runtime-bin/dumb-init && \
   cp /usr/bin/git /tmp/runtime-bin/git && \
   cp -R /usr/libexec/git-core /tmp/runtime-bin/git-core && \
@@ -58,6 +59,7 @@ WORKDIR /workspace
 COPY --from=builder --chown=nonroot:nonroot /workspace/venv /workspace/venv
 COPY --from=builder --chown=nonroot:nonroot /workspace/model-engine /workspace/model-engine
 COPY --from=builder /tmp/runtime-bin/bash /bin/bash
+COPY --from=builder /tmp/runtime-bin/cat /bin/cat
 COPY --from=builder /tmp/runtime-bin/dumb-init /usr/bin/dumb-init
 COPY --from=builder /tmp/runtime-bin/git /usr/bin/git
 COPY --from=builder /tmp/runtime-bin/git-core /usr/libexec/git-core
