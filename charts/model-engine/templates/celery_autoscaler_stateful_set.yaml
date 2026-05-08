@@ -36,7 +36,7 @@ spec:
         {{- include "modelEngine.selectorLabels.celeryAutoscaler" . | nindent 8 }}
     spec:
       containers:
-      - args:
+      - command:
         {{- if .Values.datadog.enabled }}
         - ddtrace-run
         {{- end }}
