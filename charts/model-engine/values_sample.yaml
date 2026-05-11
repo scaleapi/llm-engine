@@ -438,3 +438,9 @@ recommendedHardware:
       gpu_type: nvidia-hopper-h100
       nodes_per_worker: 1
 #serviceBuilderQueue:
+
+# GCP configuration for GCP-based deployments
+gcp:
+  project_id: "your-gcp-project"
+  pubsub_topic_prefix: "launch-endpoint-id-"
+  pubsub_subscription_prefix: "launch-endpoint-id-"

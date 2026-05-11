@@ -101,6 +101,8 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
                 )
             elif "active_message_count" in sqs_attributes:  # from ASBQueueEndpointResourceDelegate
                 resources.num_queued_items = int(sqs_attributes["active_message_count"])
+            elif "num_undelivered_messages" in sqs_attributes:  # from GcpPubSubQueueEndpointResourceDelegate
+                resources.num_queued_items = int(sqs_attributes["num_undelivered_messages"])
 
         return resources
 

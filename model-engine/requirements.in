@@ -12,6 +12,7 @@ azure-storage-blob~=12.19.0
 # GCP dependencies
 gcloud-aio-storage~=9.6
 google-auth~=2.25.0
+google-cloud-pubsub>=2.18
 google-cloud-artifact-registry~=1.21.0
 google-cloud-secret-manager>=2.24.0
 google-cloud-storage~=2.14.0

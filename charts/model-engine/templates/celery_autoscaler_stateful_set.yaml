@@ -89,6 +89,14 @@ spec:
         - name: SERVICEBUS_NAMESPACE
           value: {{ .Values.azure.servicebus_namespace }}
         {{- end }}
+        {{- if and .Values.config .Values.config.values .Values.config.values.infra (eq (.Values.config.values.infra.cloud_provider | default "") "gcp") }}
+        - name: GCP_PROJECT_ID
+          value: {{ (.Values.gcp).project_id | default "" | quote }}
+        - name: PUBSUB_TOPIC_PREFIX
+          value: {{ (.Values.gcp).pubsub_topic_prefix | default "" | quote }}
+        - name: PUBSUB_SUBSCRIPTION_PREFIX
+          value: {{ (.Values.gcp).pubsub_subscription_prefix | default "" | quote }}
+        {{- end }}
         image: "{{ .Values.image.gatewayRepository }}:{{ $tag }}"
         imagePullPolicy: Always
         name: main

@@ -89,6 +89,9 @@ from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGate
 from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
     ASBQueueEndpointResourceDelegate,
 )
+from model_engine_server.infra.gateways.resources.gcp_pubsub_queue_endpoint_resource_delegate import (
+    GcpPubSubQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.endpoint_resource_gateway import (
     EndpointResourceGateway,
 )
@@ -248,8 +251,9 @@ def _get_external_interfaces(
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "gcp":
-        # GCP uses Redis (Memorystore) for Celery, so use Redis-based queue delegate
-        queue_delegate = RedisQueueEndpointResourceDelegate(redis_client=redis_client)
+        queue_delegate = GcpPubSubQueueEndpointResourceDelegate(
+            project_id=infra_config().gcp_project_id,
+        )
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
