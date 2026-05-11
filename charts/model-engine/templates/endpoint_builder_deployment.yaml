@@ -47,11 +47,15 @@ spec:
               containerPort: 5000
               protocol: TCP
           readinessProbe:
+            {{- with ((.Values.endpointBuilder).readinessProbe) }}
+            {{- toYaml . | nindent 12 }}
+            {{- else }}
             exec:
               command:
                 - bash
                 - -c
                 - test -f /tmp/readyz
+            {{- end }}
           command:
             - dumb-init
             - --
