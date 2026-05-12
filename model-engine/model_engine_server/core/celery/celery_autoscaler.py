@@ -83,11 +83,20 @@ async def list_deployments(apps_api) -> Dict[Tuple[str, str], CeleryAutoscalerPa
     # Also scan "default" so non-launch celery deployments (e.g. nucleus workers) are still
     # autoscaled. Previously the autoscaler scanned every namespace; #770 scoped it to a single
     # namespace for startup speed but inadvertently dropped these.
-    namespaces_to_scan = [endpoint_namespace, "default"]
+    # Dedupe to avoid double-scanning if endpoint_namespace itself is "default".
+    namespaces_to_scan = list(dict.fromkeys([endpoint_namespace, "default"]))
     celery_deployments_params = {}
     for namespace_name in namespaces_to_scan:
         namespace_start_time = time.time()
-        deployments = await apps_api.list_namespaced_deployment(namespace=namespace_name)
+        try:
+            deployments = await apps_api.list_namespaced_deployment(namespace=namespace_name)
+        except ApiException as exc:
+            # Don't let a failure in one namespace (e.g. missing RBAC) wipe out scaling for the
+            # other. Log and move on; the next iteration of the outer loop will retry.
+            logger.error(
+                f"Failed to list deployments in namespace {namespace_name}: {exc}"
+            )
+            continue
         logger.info(
             f"list_namespaced_deployment in {namespace_name} took {time.time() - namespace_start_time} seconds"
         )
