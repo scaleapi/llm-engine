@@ -268,7 +268,9 @@ commands:
           name: Type Check
           command: |
             pushd clients/python
-            mypy . --install-types --non-interactive
+            # PIP_CONSTRAINT makes pip honor the pins from requirements-dev.txt
+            # for any installs spawned by `mypy --install-types`.
+            PIP_CONSTRAINT=$HOME/project/requirements-dev.txt mypy . --install-types --non-interactive
             popd
   run_unit_tests_server:
     description: Unit tests of the server
