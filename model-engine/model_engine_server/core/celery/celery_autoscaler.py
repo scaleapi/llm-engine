@@ -93,9 +93,7 @@ async def list_deployments(apps_api) -> Dict[Tuple[str, str], CeleryAutoscalerPa
         except ApiException as exc:
             # Don't let a failure in one namespace (e.g. missing RBAC) wipe out scaling for the
             # other. Log and move on; the next iteration of the outer loop will retry.
-            logger.error(
-                f"Failed to list deployments in namespace {namespace_name}: {exc}"
-            )
+            logger.error(f"Failed to list deployments in namespace {namespace_name}: {exc}")
             continue
         logger.info(
             f"list_namespaced_deployment in {namespace_name} took {time.time() - namespace_start_time} seconds"
