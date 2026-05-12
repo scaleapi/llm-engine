@@ -5,5 +5,5 @@ setup(
     python_requires=">=3.8",
     version="0.0.0.beta45",
     packages=find_packages(),
-    package_data={"llmengine": ["py.typed"]},
+    package_data={"llmengine": ["py.typed"]},  # type: ignore[arg-type]
 )
