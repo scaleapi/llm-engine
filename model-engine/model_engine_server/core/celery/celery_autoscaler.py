@@ -80,57 +80,62 @@ async def list_deployments(apps_api) -> Dict[Tuple[str, str], CeleryAutoscalerPa
     from model_engine_server.common.config import hmi_config
 
     endpoint_namespace = hmi_config.endpoint_namespace
+    # Also scan "default" so non-launch celery deployments (e.g. nucleus workers) are still
+    # autoscaled. Previously the autoscaler scanned every namespace; #770 scoped it to a single
+    # namespace for startup speed but inadvertently dropped these.
+    namespaces_to_scan = [endpoint_namespace, "default"]
     celery_deployments_params = {}
-    namespace_start_time = time.time()
-    deployments = await apps_api.list_namespaced_deployment(namespace=endpoint_namespace)
-    logger.info(
-        f"list_namespaced_deployment in {endpoint_namespace} took {time.time() - namespace_start_time} seconds"
-    )
-    for deployment in deployments.items:
-        deployment_name = deployment.metadata.name
-        annotations = deployment.metadata.annotations
+    for namespace_name in namespaces_to_scan:
+        namespace_start_time = time.time()
+        deployments = await apps_api.list_namespaced_deployment(namespace=namespace_name)
+        logger.info(
+            f"list_namespaced_deployment in {namespace_name} took {time.time() - namespace_start_time} seconds"
+        )
+        for deployment in deployments.items:
+            deployment_name = deployment.metadata.name
+            annotations = deployment.metadata.annotations
 
-        if not annotations:
-            continue
-
-        # Parse parameters
-        params = {}
-
-        if "celery.scaleml.autoscaler/broker" in annotations:
-            deployment_broker = annotations["celery.scaleml.autoscaler/broker"]
-        else:
-            deployment_broker = ELASTICACHE_REDIS_BROKER
-
-        if deployment_broker != autoscaler_broker:
-            logger.debug(
-                f"Skipping deployment {deployment_name}; deployment's broker {deployment_broker} is not {autoscaler_broker}"
-            )
-            continue
-
-        for f in dataclasses.fields(CeleryAutoscalerParams):
-            k = f.name
-            v = annotations.get(f"celery.scaleml.autoscaler/{stringcase.camelcase(k)}")
-            if not v:
+            if not annotations:
                 continue
 
+            # Parse parameters
+            params = {}
+
+            if "celery.scaleml.autoscaler/broker" in annotations:
+                deployment_broker = annotations["celery.scaleml.autoscaler/broker"]
+            else:
+                deployment_broker = ELASTICACHE_REDIS_BROKER
+
+            if deployment_broker != autoscaler_broker:
+                logger.debug(
+                    f"Skipping deployment {deployment_name}; deployment's broker {deployment_broker} is not {autoscaler_broker}"
+                )
+                continue
+
+            for f in dataclasses.fields(CeleryAutoscalerParams):
+                k = f.name
+                v = annotations.get(f"celery.scaleml.autoscaler/{stringcase.camelcase(k)}")
+                if not v:
+                    continue
+
+                try:
+                    if k == "task_visibility":
+                        v = TaskVisibility.from_name(v)
+                    v = f.type(v)
+                except (ValueError, KeyError):
+                    logger.exception(f"Unable to convert {f.name}: {v} to {f.type}")
+
+                params[k] = v
+
             try:
-                if k == "task_visibility":
-                    v = TaskVisibility.from_name(v)
-                v = f.type(v)
-            except (ValueError, KeyError):
-                logger.exception(f"Unable to convert {f.name}: {v} to {f.type}")
+                celery_autoscaler_params = CeleryAutoscalerParams(**params)
+            except TypeError:
+                logger.debug(
+                    f"Missing params, skipping deployment : {deployment_name} in {namespace_name}"
+                )
+                continue
 
-            params[k] = v
-
-        try:
-            celery_autoscaler_params = CeleryAutoscalerParams(**params)
-        except TypeError:
-            logger.debug(
-                f"Missing params, skipping deployment : {deployment_name} in {endpoint_namespace}"
-            )
-            continue
-
-        celery_deployments_params[(deployment_name, endpoint_namespace)] = celery_autoscaler_params
+            celery_deployments_params[(deployment_name, namespace_name)] = celery_autoscaler_params
 
     return celery_deployments_params
 
