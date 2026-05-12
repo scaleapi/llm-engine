@@ -5,12 +5,13 @@
 {{- $tag := .Values.tag }}
 {{- $message_broker := .Values.celeryBrokerType }}
 {{- $num_shards := .Values.celery_autoscaler.num_shards }}
+{{- $gcp_cloud_provider := and .Values.config .Values.config.values .Values.config.values.infra (eq (.Values.config.values.infra.cloud_provider | default "") "gcp") -}}
 {{- $broker_name := "redis-elasticache-message-broker-master" }}
 {{- if eq $message_broker "sqs" }}
 {{ $broker_name = "sqs-message-broker-master" }}
 {{- else if eq $message_broker "servicebus" }}
 {{ $broker_name = "servicebus-message-broker-master" }}
-{{- else if and .Values.config .Values.config.values .Values.config.values.infra (eq (.Values.config.values.infra.cloud_provider | default "") "gcp") }}
+{{- else if $gcp_cloud_provider }}
 {{ $broker_name = "redis-gcp-memorystore-message-broker-master" }}
 {{- end }}
 apiVersion: apps/v1
@@ -89,7 +90,7 @@ spec:
         - name: SERVICEBUS_NAMESPACE
           value: {{ .Values.azure.servicebus_namespace }}
         {{- end }}
-        {{- if and .Values.config .Values.config.values .Values.config.values.infra (eq (.Values.config.values.infra.cloud_provider | default "") "gcp") }}
+        {{- if $gcp_cloud_provider }}
         - name: GCP_PROJECT_ID
           value: {{ (.Values.gcp).project_id | default "" | quote }}
         - name: PUBSUB_TOPIC_PREFIX

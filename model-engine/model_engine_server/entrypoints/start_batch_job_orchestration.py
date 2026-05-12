@@ -117,6 +117,9 @@ async def run_batch_job(
     if infra_config().cloud_provider == "azure":
         inference_task_queue_gateway = servicebus_task_queue_gateway
         infra_task_queue_gateway = servicebus_task_queue_gateway
+    elif infra_config().cloud_provider == "gcp":
+        inference_task_queue_gateway = redis_task_queue_gateway
+        infra_task_queue_gateway = redis_task_queue_gateway
     elif infra_config().cloud_provider == "onprem" or infra_config().celery_broker_type_redis:
         # On-prem uses Redis-based task queues
         inference_task_queue_gateway = redis_task_queue_gateway
