@@ -56,14 +56,12 @@ class GcpPubSubQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         endpoint_labels: Dict[str, Any],
         queue_message_timeout_seconds: Optional[int] = None,
     ) -> QueueInfo:
-        queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(
-            endpoint_id
-        )
+        queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
         topic_path = f"projects/{self.project_id}/topics/{self._topic_id(endpoint_id)}"
-        subscription_path = f"projects/{self.project_id}/subscriptions/{self._subscription_id(endpoint_id)}"
-        ack_deadline = min(
-            queue_message_timeout_seconds or 60, GCP_PUBSUB_MAX_ACK_DEADLINE_SECONDS
+        subscription_path = (
+            f"projects/{self.project_id}/subscriptions/{self._subscription_id(endpoint_id)}"
         )
+        ack_deadline = min(queue_message_timeout_seconds or 60, GCP_PUBSUB_MAX_ACK_DEADLINE_SECONDS)
 
         try:
             self._publisher.create_topic(name=topic_path)
@@ -83,9 +81,7 @@ class GcpPubSubQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
                         name=subscription_path,
                         ack_deadline_seconds=ack_deadline,
                     ),
-                    update_mask=field_mask_pb2.FieldMask(
-                        paths=["ack_deadline_seconds"]
-                    ),
+                    update_mask=field_mask_pb2.FieldMask(paths=["ack_deadline_seconds"]),
                 )
             except gcp_exceptions.GoogleAPIError as e:
                 logger.warning(
@@ -96,7 +92,9 @@ class GcpPubSubQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         return QueueInfo(queue_name, queue_url=None)
 
     async def delete_queue(self, endpoint_id: str) -> None:
-        subscription_path = f"projects/{self.project_id}/subscriptions/{self._subscription_id(endpoint_id)}"
+        subscription_path = (
+            f"projects/{self.project_id}/subscriptions/{self._subscription_id(endpoint_id)}"
+        )
         topic_path = f"projects/{self.project_id}/topics/{self._topic_id(endpoint_id)}"
 
         try:
@@ -113,18 +111,14 @@ class GcpPubSubQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         try:
             self._publisher.delete_topic(topic=topic_path)
         except gcp_exceptions.NotFound:
-            logger.info(
-                f"Could not find Pub/Sub topic {topic_path} for endpoint {endpoint_id}"
-            )
+            logger.info(f"Could not find Pub/Sub topic {topic_path} for endpoint {endpoint_id}")
         except gcp_exceptions.GoogleAPIError as e:
             raise EndpointResourceInfraException(
                 f"Failed to delete Pub/Sub topic {topic_path} for endpoint {endpoint_id}: {e}"
             ) from e
 
     async def get_queue_attributes(self, endpoint_id: str) -> Dict[str, Any]:
-        queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(
-            endpoint_id
-        )
+        queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
         return {
             "name": queue_name,
             # Pub/Sub does not expose a synchronous undelivered message count;

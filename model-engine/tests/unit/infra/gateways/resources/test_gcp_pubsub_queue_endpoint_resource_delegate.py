@@ -7,7 +7,9 @@ from model_engine_server.infra.gateways.resources.gcp_pubsub_queue_endpoint_reso
     GcpPubSubQueueEndpointResourceDelegate,
 )
 
-MODULE_PATH = "model_engine_server.infra.gateways.resources.gcp_pubsub_queue_endpoint_resource_delegate"
+MODULE_PATH = (
+    "model_engine_server.infra.gateways.resources.gcp_pubsub_queue_endpoint_resource_delegate"
+)
 
 ENDPOINT_ID = "test_endpoint_id"
 PROJECT_ID = "test-project"
@@ -39,9 +41,7 @@ def test_init_empty_project_id_raises():
 
 
 @pytest.mark.asyncio
-async def test_create_queue_if_not_exists_new(
-    mock_publisher, mock_subscriber, delegate
-):
+async def test_create_queue_if_not_exists_new(mock_publisher, mock_subscriber, delegate):
     """Both topic and subscription are created when neither exists."""
     result = await delegate.create_queue_if_not_exists(
         endpoint_id=ENDPOINT_ID,
@@ -51,9 +51,7 @@ async def test_create_queue_if_not_exists_new(
     )
 
     topic_path = f"projects/{PROJECT_ID}/topics/{TOPIC_PREFIX}{ENDPOINT_ID}"
-    subscription_path = (
-        f"projects/{PROJECT_ID}/subscriptions/{SUBSCRIPTION_PREFIX}{ENDPOINT_ID}"
-    )
+    subscription_path = f"projects/{PROJECT_ID}/subscriptions/{SUBSCRIPTION_PREFIX}{ENDPOINT_ID}"
 
     mock_publisher.create_topic.assert_called_once_with(name=topic_path)
     mock_subscriber.create_subscription.assert_called_once_with(
@@ -70,9 +68,7 @@ async def test_create_queue_if_not_exists_topic_already_exists(
     mock_publisher, mock_subscriber, delegate
 ):
     """AlreadyExists on topic creation is silenced; subscription still attempts creation."""
-    mock_publisher.create_topic.side_effect = gcp_exceptions.AlreadyExists(
-        "topic exists"
-    )
+    mock_publisher.create_topic.side_effect = gcp_exceptions.AlreadyExists("topic exists")
 
     result = await delegate.create_queue_if_not_exists(
         endpoint_id=ENDPOINT_ID,
@@ -112,12 +108,8 @@ async def test_create_queue_subscription_already_exists_update_failure_is_warned
     mock_publisher, mock_subscriber, delegate
 ):
     """update_subscription GoogleAPIError is swallowed with a warning (not raised)."""
-    mock_subscriber.create_subscription.side_effect = gcp_exceptions.AlreadyExists(
-        "exists"
-    )
-    mock_subscriber.update_subscription.side_effect = gcp_exceptions.GoogleAPIError(
-        "boom"
-    )
+    mock_subscriber.create_subscription.side_effect = gcp_exceptions.AlreadyExists("exists")
+    mock_subscriber.update_subscription.side_effect = gcp_exceptions.GoogleAPIError("boom")
 
     # Should not raise
     result = await delegate.create_queue_if_not_exists(
@@ -134,9 +126,7 @@ async def test_delete_queue_subscription_not_found_silent(
     mock_publisher, mock_subscriber, delegate
 ):
     """NotFound on subscription deletion is silenced; topic deletion still attempts."""
-    mock_subscriber.delete_subscription.side_effect = gcp_exceptions.NotFound(
-        "sub not found"
-    )
+    mock_subscriber.delete_subscription.side_effect = gcp_exceptions.NotFound("sub not found")
 
     await delegate.delete_queue(endpoint_id=ENDPOINT_ID)
 
@@ -145,9 +135,7 @@ async def test_delete_queue_subscription_not_found_silent(
 
 
 @pytest.mark.asyncio
-async def test_delete_queue_topic_not_found_silent(
-    mock_publisher, mock_subscriber, delegate
-):
+async def test_delete_queue_topic_not_found_silent(mock_publisher, mock_subscriber, delegate):
     """NotFound on topic deletion is silenced."""
     mock_publisher.delete_topic.side_effect = gcp_exceptions.NotFound("topic not found")
 
@@ -162,9 +150,7 @@ async def test_delete_queue_subscription_api_error_raises(
     mock_publisher, mock_subscriber, delegate
 ):
     """Non-NotFound GoogleAPIError on subscription deletion raises EndpointResourceInfraException."""
-    mock_subscriber.delete_subscription.side_effect = gcp_exceptions.GoogleAPIError(
-        "network error"
-    )
+    mock_subscriber.delete_subscription.side_effect = gcp_exceptions.GoogleAPIError("network error")
 
     with pytest.raises(
         EndpointResourceInfraException, match="Failed to delete Pub/Sub subscription"
@@ -173,17 +159,11 @@ async def test_delete_queue_subscription_api_error_raises(
 
 
 @pytest.mark.asyncio
-async def test_delete_queue_topic_api_error_raises(
-    mock_publisher, mock_subscriber, delegate
-):
+async def test_delete_queue_topic_api_error_raises(mock_publisher, mock_subscriber, delegate):
     """Non-NotFound GoogleAPIError on topic deletion raises EndpointResourceInfraException."""
-    mock_publisher.delete_topic.side_effect = gcp_exceptions.GoogleAPIError(
-        "network error"
-    )
+    mock_publisher.delete_topic.side_effect = gcp_exceptions.GoogleAPIError("network error")
 
-    with pytest.raises(
-        EndpointResourceInfraException, match="Failed to delete Pub/Sub topic"
-    ):
+    with pytest.raises(EndpointResourceInfraException, match="Failed to delete Pub/Sub topic"):
         await delegate.delete_queue(endpoint_id=ENDPOINT_ID)
 
 

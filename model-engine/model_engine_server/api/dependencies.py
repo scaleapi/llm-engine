@@ -89,14 +89,14 @@ from model_engine_server.infra.gateways.filesystem_gateway import FilesystemGate
 from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
     ASBQueueEndpointResourceDelegate,
 )
-from model_engine_server.infra.gateways.resources.gcp_pubsub_queue_endpoint_resource_delegate import (
-    GcpPubSubQueueEndpointResourceDelegate,
-)
 from model_engine_server.infra.gateways.resources.endpoint_resource_gateway import (
     EndpointResourceGateway,
 )
 from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_delegate import (
     FakeQueueEndpointResourceDelegate,
+)
+from model_engine_server.infra.gateways.resources.gcp_pubsub_queue_endpoint_resource_delegate import (
+    GcpPubSubQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
@@ -251,8 +251,12 @@ def _get_external_interfaces(
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "gcp":
+        # Mirror the SQS_PROFILE env-first pattern: the Helm chart injects GCP_PROJECT_ID as a
+        # pod env var (from .Values.gcp.project_id), which is a different source than the YAML-
+        # rendered infra_service_config. Read the env first so the chart value reaches the delegate;
+        # fall back to infra_config().gcp_project_id for setups that wire it via the config YAML.
         queue_delegate = GcpPubSubQueueEndpointResourceDelegate(
-            project_id=infra_config().gcp_project_id,
+            project_id=os.getenv("GCP_PROJECT_ID") or infra_config().gcp_project_id,
         )
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(

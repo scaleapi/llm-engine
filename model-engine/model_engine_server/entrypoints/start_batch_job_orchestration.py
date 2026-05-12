@@ -31,11 +31,11 @@ from model_engine_server.infra.gateways import (
 from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
     ASBQueueEndpointResourceDelegate,
 )
-from model_engine_server.infra.gateways.resources.gcp_pubsub_queue_endpoint_resource_delegate import (
-    GcpPubSubQueueEndpointResourceDelegate,
-)
 from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_delegate import (
     FakeQueueEndpointResourceDelegate,
+)
+from model_engine_server.infra.gateways.resources.gcp_pubsub_queue_endpoint_resource_delegate import (
+    GcpPubSubQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
@@ -94,8 +94,10 @@ async def run_batch_job(
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "gcp":
+        # See dependencies.py for rationale: Helm injects GCP_PROJECT_ID as a pod env var;
+        # the infra_service_config YAML is a different source. Read the env first.
         queue_delegate = GcpPubSubQueueEndpointResourceDelegate(
-            project_id=infra_config().gcp_project_id,
+            project_id=os.getenv("GCP_PROJECT_ID") or infra_config().gcp_project_id,
         )
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(

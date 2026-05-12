@@ -1,8 +1,6 @@
 from typing import Dict, Optional, Tuple
 
-from model_engine_server.common.dtos.resource_manager import (
-    CreateOrUpdateResourcesRequest,
-)
+from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import (
     ModelEndpointInfraState,
@@ -30,15 +28,11 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
     def __init__(
         self,
         queue_delegate: QueueEndpointResourceDelegate,
-        inference_autoscaling_metrics_gateway: Optional[
-            InferenceAutoscalingMetricsGateway
-        ],
+        inference_autoscaling_metrics_gateway: Optional[InferenceAutoscalingMetricsGateway],
     ):
         self.k8s_delegate = K8SEndpointResourceDelegate()
         self.queue_delegate = queue_delegate
-        self.inference_autoscaling_metrics_gateway = (
-            inference_autoscaling_metrics_gateway
-        )
+        self.inference_autoscaling_metrics_gateway = inference_autoscaling_metrics_gateway
 
     async def create_queue(
         self,
@@ -85,9 +79,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
             sqs_queue_name=queue_name,
             sqs_queue_url=queue_url,
         )
-        return EndpointResourceGatewayCreateOrUpdateResourcesResponse(
-            destination=destination
-        )
+        return EndpointResourceGatewayCreateOrUpdateResourcesResponse(destination=destination)
 
     async def get_resources(
         self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
@@ -99,9 +91,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         )
 
         if endpoint_type == ModelEndpointType.ASYNC:
-            sqs_attributes = await self.queue_delegate.get_queue_attributes(
-                endpoint_id=endpoint_id
-            )
+            sqs_attributes = await self.queue_delegate.get_queue_attributes(endpoint_id=endpoint_id)
             if (
                 "Attributes" in sqs_attributes
                 and "ApproximateNumberOfMessages" in sqs_attributes["Attributes"]
@@ -109,9 +99,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
                 resources.num_queued_items = int(
                     sqs_attributes["Attributes"]["ApproximateNumberOfMessages"]
                 )
-            elif (
-                "active_message_count" in sqs_attributes
-            ):  # from ASBQueueEndpointResourceDelegate
+            elif "active_message_count" in sqs_attributes:  # from ASBQueueEndpointResourceDelegate
                 resources.num_queued_items = int(sqs_attributes["active_message_count"])
             elif (
                 "num_undelivered_messages" in sqs_attributes
@@ -145,9 +133,7 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
             sqs_result = False
 
         if self.inference_autoscaling_metrics_gateway is not None:
-            await self.inference_autoscaling_metrics_gateway.delete_resources(
-                endpoint_id
-            )
+            await self.inference_autoscaling_metrics_gateway.delete_resources(endpoint_id)
 
         return k8s_result and sqs_result
 
