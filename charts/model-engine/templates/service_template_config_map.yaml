@@ -470,7 +470,7 @@ data:
             metric:
               name: request-concurrency-average
             target:
-              type: Value
+              type: AverageValue
               averageValue: ${CONCURRENCY}
   keda-scaled-object.yaml: |-
     apiVersion: keda.sh/v1alpha1
@@ -966,7 +966,7 @@ data:
           protocol: TCP
           name: http
           ${NODE_PORT_DICT}
-  {{- if .Values.virtualservice.enabled }}
+  {{- if or .Values.virtualservice.enabled (and .Values.config.values .Values.config.values.launch .Values.config.values.launch.istio_enabled) }}
   virtual-service.yaml: |-
     apiVersion: networking.istio.io/v1alpha3
     kind: VirtualService
@@ -987,7 +987,7 @@ data:
                 port:
                   number: 80
   {{- end }}
-  {{- if .Values.destinationrule.enabled }}
+  {{- if or .Values.destinationrule.enabled (and .Values.config.values .Values.config.values.launch .Values.config.values.launch.istio_enabled) }}
   destination-rule.yaml: |-
     apiVersion: networking.istio.io/v1beta1
     kind: DestinationRule
