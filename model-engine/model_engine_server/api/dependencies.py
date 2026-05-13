@@ -107,9 +107,6 @@ from model_engine_server.infra.gateways.resources.onprem_queue_endpoint_resource
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
     QueueEndpointResourceDelegate,
 )
-from model_engine_server.infra.gateways.resources.redis_queue_endpoint_resource_delegate import (
-    RedisQueueEndpointResourceDelegate,
-)
 from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
     SQSQueueEndpointResourceDelegate,
 )

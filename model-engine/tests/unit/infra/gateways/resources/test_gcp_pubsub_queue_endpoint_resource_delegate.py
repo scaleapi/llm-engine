@@ -168,6 +168,20 @@ async def test_delete_queue_topic_api_error_raises(mock_publisher, mock_subscrib
 
 
 @pytest.mark.asyncio
+async def test_delete_queue_subscription_failure_does_not_orphan_topic(
+    mock_publisher, mock_subscriber, delegate
+):
+    """When subscription delete fails, topic delete must still be attempted (no orphan)."""
+    mock_subscriber.delete_subscription.side_effect = gcp_exceptions.GoogleAPIError("transient")
+
+    with pytest.raises(EndpointResourceInfraException):
+        await delegate.delete_queue(endpoint_id=ENDPOINT_ID)
+
+    # The key invariant: topic deletion was attempted even though subscription deletion failed.
+    mock_publisher.delete_topic.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_delete_queue_subscription_deleted_before_topic(
     mock_publisher, mock_subscriber, delegate
 ):

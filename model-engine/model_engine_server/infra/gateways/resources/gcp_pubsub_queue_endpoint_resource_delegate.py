@@ -97,6 +97,11 @@ class GcpPubSubQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         )
         topic_path = f"projects/{self.project_id}/topics/{self._topic_id(endpoint_id)}"
 
+        # Always attempt BOTH deletions so a failure on one doesn't leave the other resource
+        # orphaned (Greptile P1). NotFound is silent. Other GoogleAPIErrors are collected and
+        # surfaced together at the end so callers see every cleanup failure, not just the first.
+        errors: list[tuple[str, str, gcp_exceptions.GoogleAPIError]] = []
+
         try:
             self._subscriber.delete_subscription(subscription=subscription_path)
         except gcp_exceptions.NotFound:
@@ -104,18 +109,22 @@ class GcpPubSubQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
                 f"Could not find Pub/Sub subscription {subscription_path} for endpoint {endpoint_id}"
             )
         except gcp_exceptions.GoogleAPIError as e:
-            raise EndpointResourceInfraException(
-                f"Failed to delete Pub/Sub subscription {subscription_path} for endpoint {endpoint_id}: {e}"
-            ) from e
+            errors.append(("subscription", subscription_path, e))
 
         try:
             self._publisher.delete_topic(topic=topic_path)
         except gcp_exceptions.NotFound:
             logger.info(f"Could not find Pub/Sub topic {topic_path} for endpoint {endpoint_id}")
         except gcp_exceptions.GoogleAPIError as e:
+            errors.append(("topic", topic_path, e))
+
+        if errors:
+            details = "; ".join(
+                f"Failed to delete Pub/Sub {kind} {path}: {err}" for kind, path, err in errors
+            )
             raise EndpointResourceInfraException(
-                f"Failed to delete Pub/Sub topic {topic_path} for endpoint {endpoint_id}: {e}"
-            ) from e
+                f"Cleanup errors for endpoint {endpoint_id}: {details}"
+            ) from errors[0][2]
 
     async def get_queue_attributes(self, endpoint_id: str) -> Dict[str, Any]:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
