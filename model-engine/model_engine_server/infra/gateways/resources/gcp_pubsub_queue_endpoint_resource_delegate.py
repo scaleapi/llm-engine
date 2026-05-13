@@ -39,8 +39,23 @@ class GcpPubSubQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
         self.project_id = project_id
         self.topic_prefix = topic_prefix
         self.subscription_prefix = subscription_prefix
-        self._publisher = pubsub_v1.PublisherClient()
-        self._subscriber = pubsub_v1.SubscriberClient()
+        # Lazily-initialized gRPC clients. Construction calls Google ADC which is
+        # unavailable in unit-test environments, so defer until first real use.
+        # The clients are then cached for the lifetime of the delegate.
+        self._publisher_client: Optional[pubsub_v1.PublisherClient] = None
+        self._subscriber_client: Optional[pubsub_v1.SubscriberClient] = None
+
+    @property
+    def _publisher(self) -> pubsub_v1.PublisherClient:
+        if self._publisher_client is None:
+            self._publisher_client = pubsub_v1.PublisherClient()
+        return self._publisher_client
+
+    @property
+    def _subscriber(self) -> pubsub_v1.SubscriberClient:
+        if self._subscriber_client is None:
+            self._subscriber_client = pubsub_v1.SubscriberClient()
+        return self._subscriber_client
 
     def _topic_id(self, endpoint_id: str) -> str:
         return f"{self.topic_prefix}{endpoint_id}"

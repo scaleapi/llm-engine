@@ -354,7 +354,7 @@ env:
   - name: LAUNCH_SERVICE_TEMPLATE_FOLDER
     value: "/workspace/model-engine/model_engine_server/infra/gateways/resources/templates"
   {{- $model_cache := default dict .Values.modelCache }}
-  {{- $gcp_cloud_provider := and .Values.config .Values.config.values .Values.config.values.infra (eq (.Values.config.values.infra.cloud_provider | default "") "gcp") -}}
+  {{- $gcp_cloud_provider := and .Values.config .Values.config.values .Values.config.values.infra (eq (.Values.config.values.infra.cloud_provider | default "") "gcp") }}
   - name: MODEL_CACHE_ENABLED
     value: {{ get $model_cache "enabled" | default false | quote }}
   - name: MODEL_CACHE_MOUNT_PATH
