@@ -190,6 +190,7 @@ google-api-core==2.29.0
     # via
     #   google-cloud-artifact-registry
     #   google-cloud-core
+    #   google-cloud-pubsub
     #   google-cloud-secret-manager
     #   google-cloud-storage
 google-auth==2.25.2
@@ -198,6 +199,7 @@ google-auth==2.25.2
     #   google-api-core
     #   google-cloud-artifact-registry
     #   google-cloud-core
+    #   google-cloud-pubsub
     #   google-cloud-secret-manager
     #   google-cloud-storage
     #   kubernetes
@@ -205,6 +207,8 @@ google-cloud-artifact-registry==1.21.0
     # via -r requirements.in
 google-cloud-core==2.5.0
     # via google-cloud-storage
+google-cloud-pubsub==2.38.0
+    # via -r requirements.in
 google-cloud-secret-manager==2.24.0
     # via -r requirements.in
 google-cloud-storage==2.14.0
@@ -227,16 +231,20 @@ greenlet==3.3.2
 grpc-google-iam-v1==0.14.3
     # via
     #   google-cloud-artifact-registry
+    #   google-cloud-pubsub
     #   google-cloud-secret-manager
 grpcio==1.75.1
     # via
     #   google-api-core
     #   google-cloud-artifact-registry
+    #   google-cloud-pubsub
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
 grpcio-status==1.75.1
-    # via google-api-core
+    # via
+    #   google-api-core
+    #   google-cloud-pubsub
 gunicorn==23.0.0
     # via -r requirements.in
 h11==0.16.0
@@ -371,7 +379,15 @@ numpy==2.4.4
 oauthlib==3.2.2
     # via requests-oauthlib
 opentelemetry-api==1.40.0
-    # via ddtrace
+    # via
+    #   ddtrace
+    #   google-cloud-pubsub
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-sdk==1.40.0
+    # via google-cloud-pubsub
+opentelemetry-semantic-conventions==0.61b0
+    # via opentelemetry-sdk
 orjson==3.11.7
     # via -r requirements.in
 packaging==23.1
@@ -401,12 +417,14 @@ proto-plus==1.27.1
     # via
     #   google-api-core
     #   google-cloud-artifact-registry
+    #   google-cloud-pubsub
     #   google-cloud-secret-manager
 protobuf==6.33.5
     # via
     #   -r requirements.in
     #   google-api-core
     #   google-cloud-artifact-registry
+    #   google-cloud-pubsub
     #   google-cloud-secret-manager
     #   googleapis-common-protos
     #   grpc-google-iam-v1
@@ -607,6 +625,8 @@ typing-extensions==4.15.0
     #   grpcio
     #   huggingface-hub
     #   opentelemetry-api
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
     #   pydantic
     #   pydantic-core
     #   sqlalchemy
