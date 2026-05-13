@@ -251,10 +251,14 @@ def _get_external_interfaces(
         # Mirror the SQS_PROFILE env-first pattern: the Helm chart injects GCP_PROJECT_ID as a
         # pod env var (from .Values.gcp.project_id), which is a different source than the YAML-
         # rendered infra_service_config. Read the env first so the chart value reaches the delegate;
-        # fall back to infra_config().gcp_project_id for setups that wire it via the config YAML.
-        queue_delegate = GcpPubSubQueueEndpointResourceDelegate(
-            project_id=os.getenv("GCP_PROJECT_ID") or infra_config().gcp_project_id,
-        )
+        # the infra_config.gcp_project_id field handles setups that wire it via the config YAML.
+        gcp_project_id = os.getenv("GCP_PROJECT_ID") or infra_config().gcp_project_id
+        if not gcp_project_id:
+            raise ValueError(
+                "cloud_provider=gcp requires GCP_PROJECT_ID env var "
+                "(via .Values.gcp.project_id) or infra.gcp_project_id in the service config."
+            )
+        queue_delegate = GcpPubSubQueueEndpointResourceDelegate(project_id=gcp_project_id)
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)
