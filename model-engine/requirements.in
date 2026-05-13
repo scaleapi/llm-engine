@@ -13,6 +13,11 @@ azure-storage-blob~=12.19.0
 gcloud-aio-storage~=9.6
 google-auth~=2.25.0
 google-cloud-pubsub>=2.18
+# google-cloud-pubsub transitively pulls opentelemetry-sdk, which flips
+# common/startup_tracing/correlation.py's OTEL_AVAILABLE to True. Once that's
+# True, tracer.py imports from opentelemetry-exporter-otlp-proto-grpc, which
+# isn't otherwise a dependency. Pin it explicitly so the import resolves.
+opentelemetry-exporter-otlp-proto-grpc
 google-cloud-artifact-registry~=1.21.0
 google-cloud-secret-manager>=2.24.0
 google-cloud-storage~=2.14.0

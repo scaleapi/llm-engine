@@ -224,6 +224,7 @@ googleapis-common-protos==1.72.0
     #   google-api-core
     #   grpc-google-iam-v1
     #   grpcio-status
+    #   opentelemetry-exporter-otlp-proto-grpc
 greenlet==3.3.2
     # via
     #   -r requirements.in
@@ -241,6 +242,7 @@ grpcio==1.75.1
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
+    #   opentelemetry-exporter-otlp-proto-grpc
 grpcio-status==1.75.1
     # via
     #   google-api-core
@@ -378,15 +380,26 @@ numpy==2.4.4
     #   transformers
 oauthlib==3.2.2
     # via requests-oauthlib
-opentelemetry-api==1.40.0
+opentelemetry-api==1.41.1
     # via
     #   ddtrace
     #   google-cloud-pubsub
+    #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-sdk==1.40.0
-    # via google-cloud-pubsub
-opentelemetry-semantic-conventions==0.61b0
+opentelemetry-exporter-otlp-proto-common==1.41.1
+    # via opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-exporter-otlp-proto-grpc==1.41.1
+    # via -r requirements.in
+opentelemetry-proto==1.41.1
+    # via
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-sdk==1.41.1
+    # via
+    #   google-cloud-pubsub
+    #   opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-semantic-conventions==0.62b1
     # via opentelemetry-sdk
 orjson==3.11.7
     # via -r requirements.in
@@ -429,6 +442,7 @@ protobuf==6.33.5
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
+    #   opentelemetry-proto
     #   proto-plus
 psycopg2-binary==2.9.11
     # via -r requirements.in
@@ -625,6 +639,7 @@ typing-extensions==4.15.0
     #   grpcio
     #   huggingface-hub
     #   opentelemetry-api
+    #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
     #   pydantic
