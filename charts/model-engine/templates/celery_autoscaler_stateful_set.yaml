@@ -38,9 +38,6 @@ spec:
     spec:
       containers:
       - command:
-        {{- if .Values.datadog.enabled }}
-        - ddtrace-run
-        {{- end }}
         - python
         - -m
         - model_engine_server.core.celery.celery_autoscaler
