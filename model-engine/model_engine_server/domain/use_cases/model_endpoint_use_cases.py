@@ -116,7 +116,10 @@ def validate_deployment_resources(
     # TODO: we should be also validating the update request against the existing state in k8s (e.g.
     #  so min_workers <= max_workers always) maybe this occurs already in update_model_endpoint.
     min_endpoint_size = (
-        0 if endpoint_type == ModelEndpointType.ASYNC or can_scale_http_endpoint_from_zero else 1
+        0
+        if endpoint_type in {ModelEndpointType.ASYNC, ModelEndpointType.TEMPORAL}
+        or can_scale_http_endpoint_from_zero
+        else 1
     )
     if min_workers is not None and min_workers < min_endpoint_size:
         raise EndpointResourceInvalidRequestException(
@@ -393,6 +396,7 @@ class CreateModelEndpointV1UseCase:
             public_inference=request.public_inference,
             queue_message_timeout_seconds=request.queue_message_timeout_seconds,
             task_expires_seconds=request.task_expires_seconds,
+            temporal_task_queue=request.temporal_task_queue,
         )
         _handle_post_inference_hooks(
             created_by=user.user_id,
@@ -523,6 +527,7 @@ class UpdateModelEndpointByIdV1UseCase:
             public_inference=request.public_inference,
             queue_message_timeout_seconds=request.queue_message_timeout_seconds,
             task_expires_seconds=request.task_expires_seconds,
+            temporal_task_queue=request.temporal_task_queue,
         )
         _handle_post_inference_hooks(
             created_by=endpoint_record.created_by,

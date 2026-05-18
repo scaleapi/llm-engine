@@ -94,6 +94,7 @@ class ModelEndpointService(ABC):
         public_inference: Optional[bool] = False,
         queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
+        temporal_task_queue: Optional[str] = None,
     ) -> ModelEndpointRecord:
         """
         Creates a model endpoint.
@@ -230,6 +231,7 @@ class ModelEndpointService(ABC):
         public_inference: Optional[bool] = None,
         queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
+        temporal_task_queue: Optional[str] = None,
     ) -> ModelEndpointRecord:
         """
         Updates a model endpoint.
