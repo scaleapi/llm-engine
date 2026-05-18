@@ -129,6 +129,203 @@ For OpenAI-compatible V2 APIs, we generate Pydantic models from OpenAI's spec:
 
 ## Local Development
 
+### Control Plane Local Setup
+
+The control plane (Gateway API server, Service Builder, K8s Cache) can be run entirely
+locally without GPU hardware or cloud credentials. Endpoint creation calls succeed
+against a fake k8s/SQS/ECR backend, letting you iterate on control plane code quickly.
+
+**Prerequisites:** Python 3.10+, Docker
+
+#### One-time setup
+
+```bash
+cd model-engine/
+
+# Install Python dependencies
+make install
+
+# Start Postgres + Redis
+make dev-up
+
+# Apply database migrations
+make dev-migrate
+```
+
+#### Run the API server
+
+```bash
+make dev-server
+```
+
+The gateway starts at http://localhost:5000 with auto-reload on file changes.
+Authentication is skipped automatically (`SKIP_AUTH=true`) so any token works.
+
+#### Make API calls
+
+```bash
+# List model endpoints
+curl http://localhost:5000/v1/model-endpoints \
+  -H "Authorization: Bearer test-user"
+
+# Create an LLM endpoint (uses fake k8s — no real infra needed)
+curl -X POST http://localhost:5000/v1/llm/model-endpoints \
+  -H "Authorization: Bearer test-user" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"local-test","model_name":"meta-llama/Meta-Llama-3.1-8B-Instruct","inference_framework":"vllm","min_workers":0,"max_workers":1,"gpus":1,"gpu_type":"nvidia-ampere-a10","endpoint_type":"sync"}'
+```
+
+#### Stop backing services
+
+```bash
+make dev-down
+```
+
+#### What `LOCAL=true` does
+
+Running with `LOCAL=true` (set automatically by `make dev-server` and `make dev-migrate`):
+
+- Skips the `GIT_TAG` env var requirement
+- Uses a **fake queue delegate** (no SQS/Azure Service Bus needed)
+- Uses a **fake Docker repository** (no ECR/ACR/GAR needed)
+- Auth is skipped when `identity_service_url` is absent from config (default)
+- Postgres and Redis are real local services (via docker-compose)
+
+This means you can create/update/delete endpoints via the API and see them reflected
+in Postgres, without any Kubernetes cluster or cloud account.
+
+#### Running individual components manually
+
+If you prefer to set env vars yourself rather than use `make`:
+
+```bash
+export LOCAL=true
+export GIT_TAG=local
+export ML_INFRA_DATABASE_URL=postgresql://postgres:password@localhost:5432/llm_engine
+export DEPLOY_SERVICE_CONFIG_PATH=$(pwd)/service_configs/service_config_local.yaml
+export ML_INFRA_SERVICES_CONFIG_PATH=$(pwd)/model_engine_server/core/configs/default.yaml
+
+# Gateway
+start-fastapi-server --port 5000 --num-workers 1 --debug
+
+# Database migration
+bash model_engine_server/db/migrations/run_database_migration.sh
+```
+
+### Full End-to-End Local Flow (control plane + real inference pod)
+
+This setup uses [kind](https://kind.sigs.k8s.io/) (Kubernetes in Docker) to run a real
+local k8s cluster. The Service Builder creates actual Deployments in kind; the K8s Cacher
+polls kind and updates Redis. No GPU required — we use the built-in echo server as the
+inference container.
+
+**Prerequisites:** Python 3.10+, Docker, [`kind`](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+
+#### One-time cluster + image setup
+
+```bash
+cd model-engine/
+
+# Start Postgres + Redis (if not already running)
+make dev-up
+
+# Apply DB migrations (if not already done)
+make dev-migrate
+
+# Create kind cluster and the model-engine namespace
+make kind-up
+
+# Build model-engine:local and load it into kind
+make kind-image        # takes ~2-3 min on first build
+```
+
+#### Run the full stack (4 terminals)
+
+```bash
+# Terminal 1 — Gateway
+make dev-server-full
+
+# Terminal 2 — Service Builder (picks up endpoint creation tasks from Redis)
+make dev-service-builder
+
+# Terminal 3 — K8s Cacher (polls kind, writes endpoint status to Redis)
+make dev-k8s-cacher
+```
+
+#### Create a test endpoint and watch it spin up
+
+```python
+# Terminal 4 — create a sync CPU endpoint using the echo server (launch-python-client)
+import time
+from launch import LaunchClient, EndpointRequest
+
+# Any token works — LOCAL=true skips auth; the token becomes the user/owner ID
+client = LaunchClient(api_key="test-user", endpoint="http://localhost:5000")
+
+# Create the model bundle (echo server image loaded into kind via `make kind-image`)
+bundle = client.create_model_bundle_from_runnable_image_v2(
+    model_bundle_name="echo-bundle",
+    repository="model-engine",
+    tag="local",
+    command=[
+        "python", "-m",
+        "model_engine_server.inference.forwarding.echo_server",
+        "--port", "5005",
+    ],
+    predict_route="/predict",
+    healthcheck_route="/healthz",
+    readiness_initial_delay_seconds=15,
+)
+
+# Create a sync CPU endpoint
+client.create_model_endpoint(
+    endpoint_name="local-echo",
+    model_bundle=bundle,
+    endpoint_type="sync",
+    cpus=0.25,
+    memory="256Mi",
+    min_workers=1,
+    max_workers=1,
+    per_worker=1,
+)
+
+# Poll until READY — transitions PENDING → UPDATE_PENDING → READY (~30-60 s)
+while True:
+    ep = client.get_model_endpoint("local-echo")
+    print(f"status: {ep.status}")
+    if ep.status == "READY":
+        break
+    time.sleep(5)
+
+# Make a prediction against the echo server
+response = ep.predict(request=EndpointRequest(args={"text": "hello"}))
+print(response)
+```
+
+```bash
+# Watch the pod come up in kind (separate terminal)
+kubectl --context kind-llm-engine get pods -n model-engine -w
+```
+
+#### Tear down
+
+```bash
+make kind-down          # delete kind cluster
+make dev-down           # stop Postgres + Redis
+```
+
+#### How the full flow works
+
+| Component | Mode | What it does locally |
+|---|---|---|
+| Gateway (`dev-server-full`) | `cloud_provider=onprem` + `LOCAL=true` | Real Redis queue, fake Docker registry |
+| Service Builder | `cloud_provider=onprem` + Redis broker | Creates real k8s Deployments in kind |
+| K8s Cacher | `cloud_provider=onprem` | Polls kind, writes status to Redis |
+| Inference pod | `model-engine:local` in kind | Runs echo server on port 5005 |
+| Forwarder sidecar | `model-engine:local` in kind | HTTP forwarder proxies requests |
+
+> **Note:** LLM endpoints (vLLM, TGI) require GPU hardware and pulling large images — use the generic sync endpoint with the echo server for local flow testing.
+
 ### Testing the HTTP Forwarder
 
 Start an endpoint on port 5005:
