@@ -27,6 +27,9 @@ from model_engine_server.infra.gateways.resources.endpoint_resource_gateway impo
 from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_delegate import (
     FakeQueueEndpointResourceDelegate,
 )
+from model_engine_server.infra.gateways.resources.gcp_pubsub_queue_endpoint_resource_delegate import (
+    GcpPubSubQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.image_cache_gateway import ImageCacheGateway
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
@@ -119,6 +122,16 @@ async def main(args: Any):
         queue_delegate = OnPremQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
+    elif infra_config().cloud_provider == "gcp":
+        # See dependencies.py for rationale: Helm injects GCP_PROJECT_ID as a pod env var;
+        # the infra_service_config YAML is a different source. Read the env first.
+        gcp_project_id = os.getenv("GCP_PROJECT_ID") or infra_config().gcp_project_id
+        if not gcp_project_id:
+            raise ValueError(
+                "cloud_provider=gcp requires GCP_PROJECT_ID env var "
+                "(via .Values.gcp.project_id) or infra.gcp_project_id in the service config."
+            )
+        queue_delegate = GcpPubSubQueueEndpointResourceDelegate(project_id=gcp_project_id)
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)

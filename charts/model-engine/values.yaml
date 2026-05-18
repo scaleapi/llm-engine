@@ -94,3 +94,9 @@ utilityImages:
 
 # Additional GPU tolerations for endpoint pods
 gpuTolerations: []
+
+# GCP configuration for GCP-based deployments
+gcp:
+  project_id: ""
+  pubsub_topic_prefix: "launch-endpoint-id-"
+  pubsub_subscription_prefix: "launch-endpoint-id-"

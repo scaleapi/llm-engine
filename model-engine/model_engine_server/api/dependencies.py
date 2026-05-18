@@ -95,6 +95,9 @@ from model_engine_server.infra.gateways.resources.endpoint_resource_gateway impo
 from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_delegate import (
     FakeQueueEndpointResourceDelegate,
 )
+from model_engine_server.infra.gateways.resources.gcp_pubsub_queue_endpoint_resource_delegate import (
+    GcpPubSubQueueEndpointResourceDelegate,
+)
 from model_engine_server.infra.gateways.resources.live_endpoint_resource_gateway import (
     LiveEndpointResourceGateway,
 )
@@ -103,9 +106,6 @@ from model_engine_server.infra.gateways.resources.onprem_queue_endpoint_resource
 )
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
     QueueEndpointResourceDelegate,
-)
-from model_engine_server.infra.gateways.resources.redis_queue_endpoint_resource_delegate import (
-    RedisQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.gateways.resources.sqs_queue_endpoint_resource_delegate import (
     SQSQueueEndpointResourceDelegate,
@@ -248,8 +248,17 @@ def _get_external_interfaces(
     elif infra_config().cloud_provider == "azure":
         queue_delegate = ASBQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "gcp":
-        # GCP uses Redis (Memorystore) for Celery, so use Redis-based queue delegate
-        queue_delegate = RedisQueueEndpointResourceDelegate(redis_client=redis_client)
+        # Mirror the SQS_PROFILE env-first pattern: the Helm chart injects GCP_PROJECT_ID as a
+        # pod env var (from .Values.gcp.project_id), which is a different source than the YAML-
+        # rendered infra_service_config. Read the env first so the chart value reaches the delegate;
+        # the infra_config.gcp_project_id field handles setups that wire it via the config YAML.
+        gcp_project_id = os.getenv("GCP_PROJECT_ID") or infra_config().gcp_project_id
+        if not gcp_project_id:
+            raise ValueError(
+                "cloud_provider=gcp requires GCP_PROJECT_ID env var "
+                "(via .Values.gcp.project_id) or infra.gcp_project_id in the service config."
+            )
+        queue_delegate = GcpPubSubQueueEndpointResourceDelegate(project_id=gcp_project_id)
     else:
         queue_delegate = SQSQueueEndpointResourceDelegate(
             sqs_profile=os.getenv("SQS_PROFILE", hmi_config.sqs_profile)

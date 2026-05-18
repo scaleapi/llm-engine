@@ -54,6 +54,7 @@ class _InfraConfig:
     celery_enable_sha256: Optional[bool] = None
     docker_registry_type: Optional[str] = None
     debug_mode: Optional[bool] = None
+    gcp_project_id: Optional[str] = None
 
 
 @dataclass

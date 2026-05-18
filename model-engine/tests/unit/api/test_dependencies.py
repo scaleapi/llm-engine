@@ -8,8 +8,8 @@ from model_engine_server.infra.gateways import (
     GCSFilesystemGateway,
     GCSLLMArtifactGateway,
 )
-from model_engine_server.infra.gateways.resources.redis_queue_endpoint_resource_delegate import (
-    RedisQueueEndpointResourceDelegate,
+from model_engine_server.infra.gateways.resources.gcp_pubsub_queue_endpoint_resource_delegate import (
+    GcpPubSubQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.repositories import (
     GARDockerRepository,
@@ -119,7 +119,7 @@ def test_gcp_provider_selects_gcp_implementations():
         )
         assert isinstance(
             external_interfaces.resource_gateway.queue_delegate,
-            RedisQueueEndpointResourceDelegate,
+            GcpPubSubQueueEndpointResourceDelegate,
         )
 
 

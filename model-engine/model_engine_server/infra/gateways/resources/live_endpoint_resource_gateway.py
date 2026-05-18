@@ -101,6 +101,14 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
                 )
             elif "active_message_count" in sqs_attributes:  # from ASBQueueEndpointResourceDelegate
                 resources.num_queued_items = int(sqs_attributes["active_message_count"])
+            elif (
+                "num_undelivered_messages" in sqs_attributes
+            ):  # from GcpPubSubQueueEndpointResourceDelegate
+                # Pub/Sub returns -1 when num_undelivered_messages is not yet wired to Cloud Monitoring.
+                # Treat -1 as "unknown" and skip; downstream autoscaling expects non-negative counts.
+                gcp_count = int(sqs_attributes["num_undelivered_messages"])
+                if gcp_count >= 0:
+                    resources.num_queued_items = gcp_count
 
         return resources
 
