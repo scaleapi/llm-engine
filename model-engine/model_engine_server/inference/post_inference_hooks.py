@@ -143,7 +143,7 @@ class LoggingHook(PostInferenceHook):
             if matches:  # pragma: no cover
                 logger.info(  # pragma: no cover
                     "The JSON string contains double quotes or escape characters.",
-                    extra={"json_string": json_string, "matches": matches},
+                    extra={"json_length": len(json_string), "match_count": len(matches)},
                 )
             else:
                 logger.info("The JSON string is valid.")  # pragma: no cover

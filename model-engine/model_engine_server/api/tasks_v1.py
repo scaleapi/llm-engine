@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException
 from model_engine_server.api.dependencies import (
@@ -40,6 +41,28 @@ inference_task_router_v1 = APIRouter(prefix="/v1")
 logger = make_logger(logger_name())
 
 
+def _task_request_log_extra(
+    *,
+    model_endpoint_id: str,
+    request: EndpointPredictV1Request,
+    auth: User,
+) -> Dict[str, Any]:
+    args = request.args.root if request.args is not None else None
+    return {
+        "model_endpoint_id": model_endpoint_id,
+        "user_id": auth.user_id,
+        "team_id": auth.team_id,
+        "has_url": request.url is not None,
+        "has_args": args is not None,
+        "args_key_count": len(args) if isinstance(args, dict) else None,
+        "has_cloudpickle": request.cloudpickle is not None,
+        "has_callback_url": request.callback_url is not None,
+        "has_callback_auth": request.callback_auth is not None,
+        "has_destination_path": request.destination_path is not None,
+        "return_pickled": request.return_pickled,
+    }
+
+
 @inference_task_router_v1.post("/async-tasks", response_model=CreateAsyncTaskV1Response)
 async def create_async_inference_task(
     model_endpoint_id: str,
@@ -50,7 +73,14 @@ async def create_async_inference_task(
     """
     Runs an async inference prediction.
     """
-    logger.info(f"POST /async-tasks {request} to endpoint {model_endpoint_id} for {auth}")
+    logger.info(
+        "POST /async-tasks",
+        extra=_task_request_log_extra(
+            model_endpoint_id=model_endpoint_id,
+            request=request,
+            auth=auth,
+        ),
+    )
     try:
         use_case = CreateAsyncInferenceTaskV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,
@@ -112,7 +142,14 @@ async def create_sync_inference_task(
     """
     Runs a sync inference prediction.
     """
-    logger.info(f"POST /sync-tasks with {request} to endpoint {model_endpoint_id} for {auth}")
+    logger.info(
+        "POST /sync-tasks",
+        extra=_task_request_log_extra(
+            model_endpoint_id=model_endpoint_id,
+            request=request,
+            auth=auth,
+        ),
+    )
     try:
         use_case = CreateSyncInferenceTaskV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,
@@ -161,7 +198,14 @@ async def create_streaming_inference_task(
     """
     Runs a streaming inference prediction.
     """
-    logger.info(f"POST /streaming-tasks with {request} to endpoint {model_endpoint_id} for {auth}")
+    logger.info(
+        "POST /streaming-tasks",
+        extra=_task_request_log_extra(
+            model_endpoint_id=model_endpoint_id,
+            request=request,
+            auth=auth,
+        ),
+    )
     try:
         use_case = CreateStreamingInferenceTaskV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,

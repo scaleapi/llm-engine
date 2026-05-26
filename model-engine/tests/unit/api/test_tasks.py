@@ -1,8 +1,11 @@
+import json
 from typing import Any, Dict, Tuple
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from model_engine_server.api.tasks_v1 import _task_request_log_extra
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
+from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.domain.entities import ModelBundle, ModelEndpoint
 from model_engine_server.domain.exceptions import (
     InvalidRequestException,
@@ -10,6 +13,39 @@ from model_engine_server.domain.exceptions import (
     ObjectNotFoundException,
     UpstreamServiceError,
 )
+
+
+def test_task_request_log_extra_does_not_include_secret_payload():
+    fake_secret = "ghp_1234567890abcdefghijklmnopqrstuvwxyz123456"
+    request = EndpointPredictV1Request(
+        url=f"https://example.com/predict?token={fake_secret}",
+        args={"prompt": f"use token {fake_secret}", "count": 1},
+        callback_url=f"https://example.com/callback?token={fake_secret}",
+        cloudpickle=f"serialized-{fake_secret}",
+        return_pickled=True,
+    )
+    auth = User(user_id="test_user_id", team_id="test_team_id")
+
+    extra = _task_request_log_extra(
+        model_endpoint_id="test_model_endpoint_id",
+        request=request,
+        auth=auth,
+    )
+
+    assert extra == {
+        "model_endpoint_id": "test_model_endpoint_id",
+        "user_id": "test_user_id",
+        "team_id": "test_team_id",
+        "has_url": True,
+        "has_args": True,
+        "args_key_count": 2,
+        "has_cloudpickle": True,
+        "has_callback_url": True,
+        "has_callback_auth": False,
+        "has_destination_path": False,
+        "return_pickled": True,
+    }
+    assert fake_secret not in json.dumps(extra)
 
 
 def test_create_async_task_success(

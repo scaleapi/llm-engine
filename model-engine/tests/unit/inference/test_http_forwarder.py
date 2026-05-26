@@ -11,7 +11,10 @@ from fastapi import BackgroundTasks, FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
-from model_engine_server.domain.entities.model_endpoint_entity import ModelEndpointConfig
+from model_engine_server.domain.entities.model_endpoint_entity import (
+    ModelEndpointConfig,
+    ModelEndpointType,
+)
 from model_engine_server.inference.forwarding.forwarding import Forwarder
 from model_engine_server.inference.forwarding.http_forwarder import (
     MultiprocessingConcurrencyLimiter,
@@ -234,6 +237,43 @@ def test_handler_with_logging(post_inference_hooks_handler_with_logging):
         )
     except Exception as e:
         pytest.fail(f"Unexpected exception: {e}")
+
+
+def test_logging_hook_does_not_log_secret_payload(mock_request):
+    fake_secret = "ghp_1234567890abcdefghijklmnopqrstuvwxyz123456"
+    mock_request.args = {"prompt": f"use token {fake_secret}"}
+    streaming_storage_gateway = FakeStreamingStorageGateway()
+    hook_handler = PostInferenceHooksHandler(
+        endpoint_name="test_endpoint_name",
+        bundle_name="test_bundle_name",
+        post_inference_hooks=["logging"],
+        user_id="test_user_id",
+        billing_queue="billing_queue",
+        billing_tags=[],
+        default_callback_url=None,
+        default_callback_auth=None,
+        monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
+        endpoint_id="test_endpoint_id",
+        endpoint_type=ModelEndpointType.SYNC,
+        bundle_id="test_bundle_id",
+        labels={"owner": "test"},
+        streaming_storage_gateway=streaming_storage_gateway,
+    )
+
+    with mock.patch("model_engine_server.inference.post_inference_hooks.logger") as mock_logger:
+        hook_handler.handle(
+            request_payload=mock_request,
+            response=JSONResponse(content={"completion": f"done {fake_secret}"}),
+            task_id="test_task_id",
+        )
+
+    info_call = mock_logger.info.call_args_list[0]
+    log_kwargs = info_call.kwargs
+    assert "json_string" not in log_kwargs["extra"]
+    assert "matches" not in log_kwargs["extra"]
+    assert log_kwargs["extra"]["json_length"] > 0
+    assert log_kwargs["extra"]["match_count"] > 0
+    assert fake_secret not in json.dumps(log_kwargs)
 
 
 # Test the fastapi app
