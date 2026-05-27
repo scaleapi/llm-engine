@@ -569,6 +569,7 @@ def test_resource_arguments_type_and_add_datadog_env_to_main_container(
         float: 1.1,
         int: 1,
         str: "foo",
+        Optional[int]: 1,
         Optional[str]: "foo",
     }
     resource_arguments = {
