@@ -243,7 +243,14 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
             config_map_str = yaml.safe_load(f.read())
         template_str = config_map_str["data"][key]
 
-    yaml_str = Template(template_str).substitute(**substitution_kwargs)
+    # Strip None-valued entries so Template.substitute doesn't stringify them
+    # to the literal "None" in the rendered manifest (a K8s env var with
+    # value "None" is worse than absent). Templates that reference ${KEY}
+    # are responsible for ensuring KEY is non-None at substitution time;
+    # currently-Optional kwargs (e.g. forwarder_max_concurrency) are
+    # intentionally not referenced by any template.
+    filtered_kwargs = {k: v for k, v in substitution_kwargs.items() if v is not None}
+    yaml_str = Template(template_str).substitute(**filtered_kwargs)
     try:
         yaml_obj = yaml.safe_load(yaml_str)
     except:
