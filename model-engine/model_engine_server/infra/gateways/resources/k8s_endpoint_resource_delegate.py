@@ -243,14 +243,13 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
             config_map_str = yaml.safe_load(f.read())
         template_str = config_map_str["data"][key]
 
-    # Strip None-valued entries so Template.substitute doesn't stringify them
-    # to the literal "None" in the rendered manifest (a K8s env var with
-    # value "None" is worse than absent). Templates that reference ${KEY}
-    # are responsible for ensuring KEY is non-None at substitution time;
-    # currently-Optional kwargs (e.g. forwarder_max_concurrency) are
-    # intentionally not referenced by any template.
+    # Strip None-valued entries so they don't stringify to the literal "None"
+    # in the rendered manifest. Use safe_substitute so that a template
+    # referencing ${KEY} with a None-valued kwarg renders ${KEY} literally
+    # and surfaces a loud K8s/container error at deploy time, rather than a
+    # KeyError deep inside the service-builder celery task.
     filtered_kwargs = {k: v for k, v in substitution_kwargs.items() if v is not None}
-    yaml_str = Template(template_str).substitute(**filtered_kwargs)
+    yaml_str = Template(template_str).safe_substitute(**filtered_kwargs)
     try:
         yaml_obj = yaml.safe_load(yaml_str)
     except:
