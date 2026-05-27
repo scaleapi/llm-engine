@@ -117,6 +117,7 @@ class _BaseDeploymentArguments(_BaseEndpointArguments):
     MIN_WORKERS: int
     MAX_WORKERS: int
     CONCURRENT_REQUESTS_PER_WORKER: int
+    FORWARDER_MAX_CONCURRENCY: Optional[int]
     RESULTS_S3_BUCKET: str
     MODEL_CACHE_PVC_NAME: str
 
@@ -673,6 +674,7 @@ def get_endpoint_resource_arguments_from_request(
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
+            FORWARDER_MAX_CONCURRENCY=build_endpoint_request.forwarder_max_concurrency,
             RESULTS_S3_BUCKET=s3_bucket,
             MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
@@ -726,6 +728,7 @@ def get_endpoint_resource_arguments_from_request(
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
+            FORWARDER_MAX_CONCURRENCY=build_endpoint_request.forwarder_max_concurrency,
             RESULTS_S3_BUCKET=s3_bucket,
             MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
@@ -781,6 +784,7 @@ def get_endpoint_resource_arguments_from_request(
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
+            FORWARDER_MAX_CONCURRENCY=build_endpoint_request.forwarder_max_concurrency,
             RESULTS_S3_BUCKET=s3_bucket,
             MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
@@ -833,6 +837,7 @@ def get_endpoint_resource_arguments_from_request(
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
+            FORWARDER_MAX_CONCURRENCY=build_endpoint_request.forwarder_max_concurrency,
             RESULTS_S3_BUCKET=s3_bucket,
             MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
@@ -887,6 +892,7 @@ def get_endpoint_resource_arguments_from_request(
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
+            FORWARDER_MAX_CONCURRENCY=build_endpoint_request.forwarder_max_concurrency,
             RESULTS_S3_BUCKET=s3_bucket,
             MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
@@ -935,6 +941,7 @@ def get_endpoint_resource_arguments_from_request(
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
+            FORWARDER_MAX_CONCURRENCY=build_endpoint_request.forwarder_max_concurrency,
             RESULTS_S3_BUCKET=s3_bucket,
             MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
@@ -985,6 +992,7 @@ def get_endpoint_resource_arguments_from_request(
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
+            FORWARDER_MAX_CONCURRENCY=build_endpoint_request.forwarder_max_concurrency,
             RESULTS_S3_BUCKET=s3_bucket,
             MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
@@ -1046,6 +1054,7 @@ def get_endpoint_resource_arguments_from_request(
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,
+            FORWARDER_MAX_CONCURRENCY=build_endpoint_request.forwarder_max_concurrency,
             RESULTS_S3_BUCKET=s3_bucket,
             MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
@@ -1109,6 +1118,7 @@ def get_endpoint_resource_arguments_from_request(
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
+            FORWARDER_MAX_CONCURRENCY=build_endpoint_request.forwarder_max_concurrency,
             RESULTS_S3_BUCKET=s3_bucket,
             MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
@@ -1165,6 +1175,7 @@ def get_endpoint_resource_arguments_from_request(
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
+            FORWARDER_MAX_CONCURRENCY=build_endpoint_request.forwarder_max_concurrency,
             RESULTS_S3_BUCKET=s3_bucket,
             MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
@@ -1226,6 +1237,7 @@ def get_endpoint_resource_arguments_from_request(
             MIN_WORKERS=build_endpoint_request.min_workers,
             MAX_WORKERS=build_endpoint_request.max_workers,
             CONCURRENT_REQUESTS_PER_WORKER=build_endpoint_request.concurrent_requests_per_worker,  # Currently unused
+            FORWARDER_MAX_CONCURRENCY=build_endpoint_request.forwarder_max_concurrency,
             RESULTS_S3_BUCKET=s3_bucket,
             MODEL_CACHE_PVC_NAME=model_cache_pvc_name,
             # Runnable Image Arguments
