@@ -1143,6 +1143,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
                 max_workers=max_workers,
                 per_worker=per_worker,
                 concurrent_requests_per_worker=concurrent_requests_per_worker,
+                forwarder_max_concurrency=forwarder_max_concurrency,
             ),
             resource_state=ModelEndpointResourceState(
                 cpus=cpus,
@@ -1184,6 +1185,10 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         if kwargs["concurrent_requests_per_worker"] is not None:
             model_endpoint_infra.deployment_state.concurrent_requests_per_worker = kwargs[
                 "concurrent_requests_per_worker"
+            ]
+        if kwargs.get("forwarder_max_concurrency") is not None:
+            model_endpoint_infra.deployment_state.forwarder_max_concurrency = kwargs[
+                "forwarder_max_concurrency"
             ]
         if kwargs["cpus"] is not None:
             model_endpoint_infra.resource_state.cpus = kwargs["cpus"]
@@ -1324,6 +1329,7 @@ class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
                 max_workers=build_endpoint_request.max_workers,
                 per_worker=build_endpoint_request.per_worker,
                 concurrent_requests_per_worker=build_endpoint_request.concurrent_requests_per_worker,
+                forwarder_max_concurrency=build_endpoint_request.forwarder_max_concurrency,
             ),
             resource_state=ModelEndpointResourceState(
                 cpus=build_endpoint_request.cpus,
@@ -1875,6 +1881,7 @@ class FakeModelEndpointService(ModelEndpointService):
                     max_workers=max_workers,
                     per_worker=per_worker,
                     concurrent_requests_per_worker=concurrent_requests_per_worker,
+                    forwarder_max_concurrency=forwarder_max_concurrency,
                 ),
                 resource_state=ModelEndpointResourceState(
                     cpus=cpus,

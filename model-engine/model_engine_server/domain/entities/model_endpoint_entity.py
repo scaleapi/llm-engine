@@ -63,6 +63,7 @@ class ModelEndpointDeploymentState(BaseModel):
     max_workers: int = Field(..., ge=0)
     per_worker: int = Field(..., gt=0)
     concurrent_requests_per_worker: int = Field(..., gt=0)
+    forwarder_max_concurrency: Optional[int] = Field(default=None, gt=0, le=20)
     available_workers: Optional[int] = Field(default=None, ge=0)
     unavailable_workers: Optional[int] = Field(default=None, ge=0)
 

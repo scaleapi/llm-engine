@@ -16005,6 +16005,19 @@
             "exclusiveMinimum": 0.0,
             "title": "Concurrent Requests Per Worker"
           },
+          "forwarder_max_concurrency": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 20.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forwarder Max Concurrency"
+          },
           "available_workers": {
             "anyOf": [
               {
@@ -17934,7 +17947,8 @@
                 "type": "null"
               }
             ],
-            "title": "Forwarder Max Concurrency"
+            "title": "Forwarder Max Concurrency",
+            "description": "Max in-flight requests admitted by the HTTP forwarder container, independent of `per_worker` / autoscaling. When None (default), the forwarder inherits its `--concurrency` flag from `per_worker` (current behavior). Upper bound matches LIRA's FORWARDER_MAX_CONCURRENCY_LIMIT."
           },
           "labels": {
             "anyOf": [

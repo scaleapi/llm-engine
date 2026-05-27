@@ -157,6 +157,8 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             concurrent_requests_per_worker = (
                 infra_state.deployment_state.concurrent_requests_per_worker
             )
+        if forwarder_max_concurrency is None:
+            forwarder_max_concurrency = infra_state.deployment_state.forwarder_max_concurrency
         if cpus is None:
             cpus = infra_state.resource_state.cpus
         if gpus is None:
