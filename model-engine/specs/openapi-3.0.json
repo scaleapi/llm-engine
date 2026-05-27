@@ -3539,7 +3539,7 @@
         "properties": {
           "file": {
             "type": "string",
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File"
           }
         },
@@ -6820,6 +6820,13 @@
             "type": "boolean",
             "nullable": true
           },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+            "type": "integer",
+            "minimum": 1.0,
+            "nullable": true
+          },
           "chat_template_override": {
             "title": "Chat Template Override",
             "description": "A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -6831,6 +6838,14 @@
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false,
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
             "nullable": true
           },
           "name": {
@@ -7286,6 +7301,13 @@
             "type": "boolean",
             "nullable": true
           },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+            "type": "integer",
+            "minimum": 1.0,
+            "nullable": true
+          },
           "chat_template_override": {
             "title": "Chat Template Override",
             "description": "A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -7297,6 +7319,14 @@
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false,
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
             "nullable": true
           },
           "name": {
@@ -7616,6 +7646,14 @@
             "exclusiveMinimum": 0.0,
             "nullable": true
           },
+          "forwarder_max_concurrency": {
+            "title": "Forwarder Max Concurrency",
+            "description": "Max in-flight requests admitted by the HTTP forwarder container, independent of `per_worker` / autoscaling. When None (default), the forwarder inherits its `--concurrency` flag from `per_worker` (current behavior). Upper bound matches LIRA's FORWARDER_MAX_CONCURRENCY_LIMIT.",
+            "type": "integer",
+            "maximum": 20.0,
+            "exclusiveMinimum": 0.0,
+            "nullable": true
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
@@ -7652,6 +7690,21 @@
             "title": "Public Inference",
             "default": false,
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
+            "nullable": true
+          },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds). Default: 86400 (24 hours).",
+            "type": "integer",
+            "minimum": 1.0,
             "nullable": true
           }
         },
@@ -7799,6 +7852,13 @@
             "type": "boolean",
             "nullable": true
           },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+            "type": "integer",
+            "minimum": 1.0,
+            "nullable": true
+          },
           "chat_template_override": {
             "title": "Chat Template Override",
             "description": "A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -7810,6 +7870,14 @@
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false,
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
             "nullable": true
           },
           "name": {
@@ -8532,6 +8600,13 @@
             "type": "boolean",
             "nullable": true
           },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+            "type": "integer",
+            "minimum": 1.0,
+            "nullable": true
+          },
           "chat_template_override": {
             "title": "Chat Template Override",
             "description": "A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -8543,6 +8618,14 @@
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false,
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
             "nullable": true
           },
           "name": {
@@ -8730,6 +8813,13 @@
             "type": "boolean",
             "nullable": true
           },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+            "type": "integer",
+            "minimum": 1.0,
+            "nullable": true
+          },
           "chat_template_override": {
             "title": "Chat Template Override",
             "description": "A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -8741,6 +8831,14 @@
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false,
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
             "nullable": true
           },
           "name": {
@@ -8978,6 +9076,13 @@
             "type": "boolean",
             "nullable": true
           },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+            "type": "integer",
+            "minimum": 1.0,
+            "nullable": true
+          },
           "chat_template_override": {
             "title": "Chat Template Override",
             "description": "A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -8989,6 +9094,14 @@
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false,
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
             "nullable": true
           },
           "name": {
@@ -10649,6 +10762,18 @@
             "type": "string",
             "nullable": true
           },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+            "type": "integer",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "nullable": true
+          },
           "spec": {
             "$ref": "#/components/schemas/GetModelEndpointV1Response",
             "nullable": true
@@ -10765,6 +10890,16 @@
           "public_inference": {
             "title": "Public Inference",
             "type": "boolean",
+            "nullable": true
+          },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "type": "integer",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "type": "integer",
             "nullable": true
           }
         },
@@ -12683,6 +12818,13 @@
             "type": "boolean",
             "nullable": true
           },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+            "type": "integer",
+            "minimum": 1.0,
+            "nullable": true
+          },
           "chat_template_override": {
             "title": "Chat Template Override",
             "description": "A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -12694,6 +12836,14 @@
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false,
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
             "nullable": true
           },
           "model_name": {
@@ -12906,6 +13056,13 @@
             "exclusiveMinimum": 0.0,
             "nullable": true
           },
+          "forwarder_max_concurrency": {
+            "title": "Forwarder Max Concurrency",
+            "type": "integer",
+            "maximum": 20.0,
+            "exclusiveMinimum": 0.0,
+            "nullable": true
+          },
           "labels": {
             "title": "Labels",
             "additionalProperties": {
@@ -12942,6 +13099,21 @@
           "public_inference": {
             "title": "Public Inference",
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
+            "nullable": true
+          },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds). Default: 86400 (24 hours).",
+            "type": "integer",
+            "minimum": 1.0,
             "nullable": true
           }
         },
@@ -13075,6 +13247,13 @@
             "type": "boolean",
             "nullable": true
           },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+            "type": "integer",
+            "minimum": 1.0,
+            "nullable": true
+          },
           "chat_template_override": {
             "title": "Chat Template Override",
             "description": "A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -13086,6 +13265,14 @@
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false,
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
             "nullable": true
           },
           "model_name": {
@@ -13803,6 +13990,13 @@
             "type": "boolean",
             "nullable": true
           },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+            "type": "integer",
+            "minimum": 1.0,
+            "nullable": true
+          },
           "chat_template_override": {
             "title": "Chat Template Override",
             "description": "A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -13814,6 +14008,14 @@
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false,
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
             "nullable": true
           },
           "model_name": {
@@ -14025,6 +14227,13 @@
             "type": "boolean",
             "nullable": true
           },
+          "task_expires_seconds": {
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds).",
+            "type": "integer",
+            "minimum": 1.0,
+            "nullable": true
+          },
           "chat_template_override": {
             "title": "Chat Template Override",
             "description": "A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint",
@@ -14036,6 +14245,14 @@
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false,
             "type": "boolean",
+            "nullable": true
+          },
+          "queue_message_timeout_seconds": {
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped.",
+            "type": "integer",
+            "maximum": 43200.0,
+            "minimum": 1.0,
             "nullable": true
           },
           "model_name": {
@@ -14427,6 +14644,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",
