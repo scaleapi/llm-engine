@@ -18,6 +18,7 @@ class BuildEndpointRequest(BaseModel):
     max_workers: int
     per_worker: int
     concurrent_requests_per_worker: int
+    forwarder_max_concurrency: Optional[int] = None
     cpus: CpuSpecificationType
     gpus: int
     memory: StorageSpecificationType

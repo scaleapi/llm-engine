@@ -1107,6 +1107,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         max_workers: int,
         per_worker: int,
         concurrent_requests_per_worker: int,
+        forwarder_max_concurrency: Optional[int] = None,
         cpus: CpuSpecificationType,
         gpus: int,
         memory: StorageSpecificationType,
@@ -1142,6 +1143,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
                 max_workers=max_workers,
                 per_worker=per_worker,
                 concurrent_requests_per_worker=concurrent_requests_per_worker,
+                forwarder_max_concurrency=forwarder_max_concurrency,
             ),
             resource_state=ModelEndpointResourceState(
                 cpus=cpus,
@@ -1184,6 +1186,10 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
             model_endpoint_infra.deployment_state.concurrent_requests_per_worker = kwargs[
                 "concurrent_requests_per_worker"
             ]
+        if kwargs.get("forwarder_max_concurrency") is not None:
+            model_endpoint_infra.deployment_state.forwarder_max_concurrency = kwargs[
+                "forwarder_max_concurrency"
+            ]
         if kwargs["cpus"] is not None:
             model_endpoint_infra.resource_state.cpus = kwargs["cpus"]
         if kwargs["gpus"] is not None:
@@ -1217,6 +1223,7 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         max_workers: Optional[int] = None,
         per_worker: Optional[int] = None,
         concurrent_requests_per_worker: Optional[int] = None,
+        forwarder_max_concurrency: Optional[int] = None,
         cpus: Optional[CpuSpecificationType] = None,
         gpus: Optional[int] = None,
         memory: Optional[StorageSpecificationType] = None,
@@ -1322,6 +1329,7 @@ class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
                 max_workers=build_endpoint_request.max_workers,
                 per_worker=build_endpoint_request.per_worker,
                 concurrent_requests_per_worker=build_endpoint_request.concurrent_requests_per_worker,
+                forwarder_max_concurrency=build_endpoint_request.forwarder_max_concurrency,
             ),
             resource_state=ModelEndpointResourceState(
                 cpus=build_endpoint_request.cpus,
@@ -1820,6 +1828,7 @@ class FakeModelEndpointService(ModelEndpointService):
         max_workers: int,
         per_worker: int,
         concurrent_requests_per_worker: int,
+        forwarder_max_concurrency: Optional[int] = None,
         labels: Dict[str, str],
         aws_role: str,
         results_s3_bucket: str,
@@ -1872,6 +1881,7 @@ class FakeModelEndpointService(ModelEndpointService):
                     max_workers=max_workers,
                     per_worker=per_worker,
                     concurrent_requests_per_worker=concurrent_requests_per_worker,
+                    forwarder_max_concurrency=forwarder_max_concurrency,
                 ),
                 resource_state=ModelEndpointResourceState(
                     cpus=cpus,
@@ -1918,6 +1928,7 @@ class FakeModelEndpointService(ModelEndpointService):
         max_workers: Optional[int] = None,
         per_worker: Optional[int] = None,
         concurrent_requests_per_worker: Optional[int] = None,
+        forwarder_max_concurrency: Optional[int] = None,
         labels: Optional[Dict[str, str]] = None,
         results_s3_bucket: Optional[str] = None,
         prewarm: Optional[bool] = None,
@@ -3911,6 +3922,7 @@ def llm_model_endpoint_async(
                 "max_workers": 3,
                 "per_worker": 2,
                 "concurrent_requests_per_worker": 1,
+                "forwarder_max_concurrency": None,
                 "available_workers": 1,
                 "unavailable_workers": 1,
             },
@@ -4047,6 +4059,7 @@ def llm_model_endpoint_sync(
                 "max_workers": 3,
                 "per_worker": 2,
                 "concurrent_requests_per_worker": 1,
+                "forwarder_max_concurrency": None,
                 "available_workers": 1,
                 "unavailable_workers": 1,
             },
@@ -4183,6 +4196,7 @@ def llm_model_endpoint_stream(
                 "max_workers": 3,
                 "per_worker": 2,
                 "concurrent_requests_per_worker": 1,
+                "forwarder_max_concurrency": None,
                 "available_workers": 1,
                 "unavailable_workers": 1,
             },
@@ -4319,6 +4333,7 @@ def llm_model_endpoint_sync_tgi(
                 "max_workers": 3,
                 "per_worker": 2,
                 "concurrent_requests_per_worker": 1,
+                "forwarder_max_concurrency": None,
                 "available_workers": 1,
                 "unavailable_workers": 1,
             },
@@ -4455,6 +4470,7 @@ def llm_model_endpoint_sync_lightllm(
                 "max_workers": 3,
                 "per_worker": 2,
                 "concurrent_requests_per_worker": 1,
+                "forwarder_max_concurrency": None,
                 "available_workers": 1,
                 "unavailable_workers": 1,
             },
@@ -4591,6 +4607,7 @@ def llm_model_endpoint_sync_trt_llm(
                 "max_workers": 3,
                 "per_worker": 2,
                 "concurrent_requests_per_worker": 1,
+                "forwarder_max_concurrency": None,
                 "available_workers": 1,
                 "unavailable_workers": 1,
             },

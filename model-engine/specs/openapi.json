@@ -3869,7 +3869,7 @@
         "properties": {
           "file": {
             "type": "string",
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File"
           }
         },
@@ -8668,6 +8668,19 @@
             "title": "Public Inference",
             "default": true
           },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds)."
+          },
           "chat_template_override": {
             "anyOf": [
               {
@@ -8692,6 +8705,20 @@
             "title": "Enable Startup Metrics",
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
           },
           "name": {
             "type": "string",
@@ -9306,6 +9333,19 @@
             "title": "Public Inference",
             "default": true
           },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds)."
+          },
           "chat_template_override": {
             "anyOf": [
               {
@@ -9330,6 +9370,20 @@
             "title": "Enable Startup Metrics",
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
           },
           "name": {
             "type": "string",
@@ -9694,6 +9748,20 @@
             ],
             "title": "Concurrent Requests Per Worker"
           },
+          "forwarder_max_concurrency": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 20.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forwarder Max Concurrency",
+            "description": "Max in-flight requests admitted by the HTTP forwarder container, independent of `per_worker` / autoscaling. When None (default), the forwarder inherits its `--concurrency` flag from `per_worker` (current behavior). Upper bound matches LIRA's FORWARDER_MAX_CONCURRENCY_LIMIT."
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
@@ -9767,6 +9835,33 @@
             ],
             "title": "Public Inference",
             "default": false
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
+          },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds). Default: 86400 (24 hours)."
           }
         },
         "type": "object",
@@ -9997,6 +10092,19 @@
             "title": "Public Inference",
             "default": true
           },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds)."
+          },
           "chat_template_override": {
             "anyOf": [
               {
@@ -10021,6 +10129,20 @@
             "title": "Enable Startup Metrics",
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
           },
           "name": {
             "type": "string",
@@ -11352,6 +11474,19 @@
             "title": "Public Inference",
             "default": true
           },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds)."
+          },
           "chat_template_override": {
             "anyOf": [
               {
@@ -11376,6 +11511,20 @@
             "title": "Enable Startup Metrics",
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
           },
           "name": {
             "type": "string",
@@ -11644,6 +11793,19 @@
             "title": "Public Inference",
             "default": true
           },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds)."
+          },
           "chat_template_override": {
             "anyOf": [
               {
@@ -11668,6 +11830,20 @@
             "title": "Enable Startup Metrics",
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
           },
           "name": {
             "type": "string",
@@ -11998,6 +12174,19 @@
             "title": "Public Inference",
             "default": true
           },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds)."
+          },
           "chat_template_override": {
             "anyOf": [
               {
@@ -12022,6 +12211,20 @@
             "title": "Enable Startup Metrics",
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
           },
           "name": {
             "type": "string",
@@ -14713,6 +14916,30 @@
             "title": "Chat Template Override",
             "description": "A Jinja template to use for this endpoint. If not provided, will use the chat template from the checkpoint"
           },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds)."
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
+          },
           "spec": {
             "anyOf": [
               {
@@ -14908,6 +15135,28 @@
               }
             ],
             "title": "Public Inference"
+          },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds"
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds"
           }
         },
         "type": "object",
@@ -15755,6 +16004,19 @@
             "type": "integer",
             "exclusiveMinimum": 0.0,
             "title": "Concurrent Requests Per Worker"
+          },
+          "forwarder_max_concurrency": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 20.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forwarder Max Concurrency"
           },
           "available_workers": {
             "anyOf": [
@@ -17288,6 +17550,19 @@
             "title": "Public Inference",
             "default": true
           },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds)."
+          },
           "chat_template_override": {
             "anyOf": [
               {
@@ -17312,6 +17587,20 @@
             "title": "Enable Startup Metrics",
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
           },
           "model_name": {
             "anyOf": [
@@ -17647,6 +17936,20 @@
             ],
             "title": "Concurrent Requests Per Worker"
           },
+          "forwarder_max_concurrency": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 20.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forwarder Max Concurrency",
+            "description": "Max in-flight requests admitted by the HTTP forwarder container, independent of `per_worker` / autoscaling. When None (default), the forwarder inherits its `--concurrency` flag from `per_worker` (current behavior). Upper bound matches LIRA's FORWARDER_MAX_CONCURRENCY_LIMIT."
+          },
           "labels": {
             "anyOf": [
               {
@@ -17726,6 +18029,33 @@
               }
             ],
             "title": "Public Inference"
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
+          },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds). Default: 86400 (24 hours)."
           }
         },
         "type": "object",
@@ -17942,6 +18272,19 @@
             "title": "Public Inference",
             "default": true
           },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds)."
+          },
           "chat_template_override": {
             "anyOf": [
               {
@@ -17966,6 +18309,20 @@
             "title": "Enable Startup Metrics",
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
           },
           "model_name": {
             "anyOf": [
@@ -19352,6 +19709,19 @@
             "title": "Public Inference",
             "default": true
           },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds)."
+          },
           "chat_template_override": {
             "anyOf": [
               {
@@ -19376,6 +19746,20 @@
             "title": "Enable Startup Metrics",
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
           },
           "model_name": {
             "anyOf": [
@@ -19740,6 +20124,19 @@
             "title": "Public Inference",
             "default": true
           },
+          "task_expires_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Expires Seconds",
+            "description": "For async endpoints, how long a task can wait in queue before expiring (in seconds)."
+          },
           "chat_template_override": {
             "anyOf": [
               {
@@ -19764,6 +20161,20 @@
             "title": "Enable Startup Metrics",
             "description": "Enable startup metrics collection via OpenTelemetry. When enabled, emits traces and metrics for download, Python init, and vLLM init phases.",
             "default": false
+          },
+          "queue_message_timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 43200.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Message Timeout Seconds",
+            "description": "For async endpoints, the queue message visibility/lock timeout in seconds. Controls how long a worker has to process a message before it becomes visible again (SQS VisibilityTimeout / ASB lock_duration). Note: Azure Service Bus has a maximum of 300 seconds; values above this will be clamped."
           },
           "model_name": {
             "anyOf": [
@@ -20438,6 +20849,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",

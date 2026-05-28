@@ -66,6 +66,17 @@ class CreateModelEndpointV1Request(BaseModel):
     concurrent_requests_per_worker: Optional[int] = Field(
         default=None, gt=0
     )  # will default to per_worker
+    forwarder_max_concurrency: Optional[int] = Field(
+        default=None,
+        gt=0,
+        le=20,
+        description=(
+            "Max in-flight requests admitted by the HTTP forwarder container, "
+            "independent of `per_worker` / autoscaling. When None (default), the "
+            "forwarder inherits its `--concurrency` flag from `per_worker` (current "
+            "behavior). Upper bound matches LIRA's FORWARDER_MAX_CONCURRENCY_LIMIT."
+        ),
+    )
     labels: Dict[str, str]
     prewarm: Optional[bool] = None
     high_priority: Optional[bool] = None
@@ -104,6 +115,17 @@ class UpdateModelEndpointV1Request(BaseModel):
     max_workers: Optional[int] = Field(default=None, ge=0)
     per_worker: Optional[int] = Field(default=None, gt=0)
     concurrent_requests_per_worker: Optional[int] = Field(default=None, gt=0)
+    forwarder_max_concurrency: Optional[int] = Field(
+        default=None,
+        gt=0,
+        le=20,
+        description=(
+            "Max in-flight requests admitted by the HTTP forwarder container, "
+            "independent of `per_worker` / autoscaling. When None (default), the "
+            "forwarder inherits its `--concurrency` flag from `per_worker` (current "
+            "behavior). Upper bound matches LIRA's FORWARDER_MAX_CONCURRENCY_LIMIT."
+        ),
+    )
     labels: Optional[Dict[str, str]] = None
     prewarm: Optional[bool] = None
     high_priority: Optional[bool] = None
