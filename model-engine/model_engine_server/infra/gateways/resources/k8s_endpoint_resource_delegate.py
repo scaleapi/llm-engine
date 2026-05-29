@@ -235,9 +235,7 @@ def k8s_yaml_exists(key: str) -> bool:
         return key in config_map_str["data"]
 
 
-def _strip_optional_set_pairs(
-    template_str: str, substitution_kwargs: ResourceArguments
-) -> str:
+def _strip_optional_set_pairs(template_str: str, substitution_kwargs: ResourceArguments) -> str:
     """Remove conditional `--set "...${KEY}..."` arg-pairs whose KEY is None.
 
     Templates can declare a config override like:

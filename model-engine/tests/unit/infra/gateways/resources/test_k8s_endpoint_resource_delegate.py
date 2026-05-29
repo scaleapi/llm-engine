@@ -177,14 +177,12 @@ def test_strip_optional_set_pairs_keeps_when_set():
     out = _strip_optional_set_pairs(
         _OPTIONAL_SET_TEMPLATE, {"FORWARDER_MAX_CONCURRENCY": 5, "FORWARDER_SYNC_ROUTES": "x"}
     )
-    assert 'max_concurrency=${FORWARDER_MAX_CONCURRENCY}' in out
+    assert "max_concurrency=${FORWARDER_MAX_CONCURRENCY}" in out
 
 
 def test_strip_optional_set_pairs_handles_unknown_key():
     # A kwarg that doesn't appear in the template — no-op, no exceptions.
-    out = _strip_optional_set_pairs(
-        _OPTIONAL_SET_TEMPLATE, {"SOMETHING_NOT_IN_TEMPLATE": None}
-    )
+    out = _strip_optional_set_pairs(_OPTIONAL_SET_TEMPLATE, {"SOMETHING_NOT_IN_TEMPLATE": None})
     assert out == _OPTIONAL_SET_TEMPLATE
 
 
