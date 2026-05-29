@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 from string import Template
 from typing import Any, Dict, List, Optional, Tuple, cast
 
@@ -234,6 +235,28 @@ def k8s_yaml_exists(key: str) -> bool:
         return key in config_map_str["data"]
 
 
+def _strip_optional_set_pairs(
+    template_str: str, substitution_kwargs: ResourceArguments
+) -> str:
+    """Remove conditional `--set "...${KEY}..."` arg-pairs whose KEY is None.
+
+    Templates can declare a config override like:
+        - --set
+        - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
+    and this preprocessor drops the pair entirely when the matching kwarg is
+    None, so the container falls back to its own config-file default.
+    """
+    for kwarg_name, value in substitution_kwargs.items():
+        if value is not None:
+            continue
+        pattern = (
+            r"^[ \t]*- --set\s*\n"
+            r'^[ \t]*- "[^"]*\$\{' + re.escape(kwarg_name) + r"\}[^\"]*\"\s*\n"
+        )
+        template_str = re.sub(pattern, "", template_str, flags=re.MULTILINE)
+    return template_str
+
+
 def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str, Any]:
     if LAUNCH_SERVICE_TEMPLATE_FOLDER is not None:
         with open(os.path.join(LAUNCH_SERVICE_TEMPLATE_FOLDER, key), "r") as f:
@@ -243,11 +266,18 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
             config_map_str = yaml.safe_load(f.read())
         template_str = config_map_str["data"][key]
 
-    # Strip None-valued entries so they don't stringify to the literal "None"
-    # in the rendered manifest. Use safe_substitute so that a template
-    # referencing ${KEY} with a None-valued kwarg renders ${KEY} literally
-    # and surfaces a loud K8s/container error at deploy time, rather than a
-    # KeyError deep inside the service-builder celery task.
+    # For kwargs whose value is None, strip any `--set "...${KEY}..."` arg-pair
+    # from the template so the conditional config override isn't rendered at
+    # all. This lets a forwarder/main container opt-in to a config override
+    # only when the caller actually set the value; otherwise the container
+    # falls back to its own config-file default.
+    template_str = _strip_optional_set_pairs(template_str, substitution_kwargs)
+
+    # Strip remaining None-valued entries so they don't stringify to "None".
+    # Use safe_substitute so that a template referencing ${KEY} with a
+    # None-valued kwarg renders ${KEY} literally and surfaces a loud
+    # K8s/container error at deploy time, rather than a KeyError deep
+    # inside the service-builder celery task.
     filtered_kwargs = {k: v for k, v in substitution_kwargs.items() if v is not None}
     yaml_str = Template(template_str).safe_substitute(**filtered_kwargs)
     try:

@@ -620,6 +620,8 @@ data:
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
+                - --set
+                - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -892,6 +894,8 @@ data:
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
+                - --set
+                - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -1126,6 +1130,8 @@ data:
                 - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                 - --set
                 - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
+                - --set
+                - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -1874,6 +1880,8 @@ data:
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
+                - --set
+                - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -2154,6 +2162,8 @@ data:
                 - "forwarder.stream.healthcheck_route=${HEALTHCHECK_ROUTE}"
                 - --set
                 - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
+                - --set
+                - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
@@ -2396,6 +2406,8 @@ data:
                 - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                 - --set
                 - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
+                - --set
+                - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
               env:
                 - name: DD_TRACE_ENABLED
                   value: "${DD_TRACE_ENABLED}"
