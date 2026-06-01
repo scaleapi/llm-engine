@@ -23,6 +23,7 @@ from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate
     DATADOG_ENV_VAR,
     MODEL_CACHE_VOLUME_NAME,
     K8SEndpointResourceDelegate,
+    _strip_optional_set_pairs,
     add_datadog_env_to_container,
     add_pod_metadata_env_to_container,
     get_main_container_from_deployment_template,
@@ -151,6 +152,38 @@ def test_k8s_yaml_exists():
     assert not k8s_yaml_exists(
         "image-cache-abc9001.yaml"
     ), "image-cache-abc9001.yaml should not exist"
+
+
+_OPTIONAL_SET_TEMPLATE = """\
+                - --set
+                - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
+                - --set
+                - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
+              env:
+"""
+
+
+def test_strip_optional_set_pairs_drops_when_none():
+    out = _strip_optional_set_pairs(
+        _OPTIONAL_SET_TEMPLATE, {"FORWARDER_MAX_CONCURRENCY": None, "FORWARDER_SYNC_ROUTES": "x"}
+    )
+    assert "max_concurrency" not in out
+    # Adjacent kwargs that are set must be untouched
+    assert "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}" in out
+    assert "env:" in out
+
+
+def test_strip_optional_set_pairs_keeps_when_set():
+    out = _strip_optional_set_pairs(
+        _OPTIONAL_SET_TEMPLATE, {"FORWARDER_MAX_CONCURRENCY": 5, "FORWARDER_SYNC_ROUTES": "x"}
+    )
+    assert "max_concurrency=${FORWARDER_MAX_CONCURRENCY}" in out
+
+
+def test_strip_optional_set_pairs_handles_unknown_key():
+    # A kwarg that doesn't appear in the template — no-op, no exceptions.
+    out = _strip_optional_set_pairs(_OPTIONAL_SET_TEMPLATE, {"SOMETHING_NOT_IN_TEMPLATE": None})
+    assert out == _OPTIONAL_SET_TEMPLATE
 
 
 def _render_service_template_config_map(extra_args: Optional[List[str]] = None) -> str:

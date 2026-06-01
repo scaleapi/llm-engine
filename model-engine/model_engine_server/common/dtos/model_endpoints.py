@@ -73,8 +73,8 @@ class CreateModelEndpointV1Request(BaseModel):
         description=(
             "Max in-flight requests admitted by the HTTP forwarder container, "
             "independent of `per_worker` / autoscaling. When None (default), the "
-            "forwarder inherits its `--concurrency` flag from `per_worker` (current "
-            "behavior). Upper bound matches LIRA's FORWARDER_MAX_CONCURRENCY_LIMIT."
+            "forwarder uses its config-file default (100). Upper bound matches "
+            "LIRA's FORWARDER_MAX_CONCURRENCY_LIMIT."
         ),
     )
     labels: Dict[str, str]
@@ -122,8 +122,8 @@ class UpdateModelEndpointV1Request(BaseModel):
         description=(
             "Max in-flight requests admitted by the HTTP forwarder container, "
             "independent of `per_worker` / autoscaling. When None (default), the "
-            "forwarder inherits its `--concurrency` flag from `per_worker` (current "
-            "behavior). Upper bound matches LIRA's FORWARDER_MAX_CONCURRENCY_LIMIT."
+            "forwarder uses its config-file default (100). Upper bound matches "
+            "LIRA's FORWARDER_MAX_CONCURRENCY_LIMIT."
         ),
     )
     labels: Optional[Dict[str, str]] = None
