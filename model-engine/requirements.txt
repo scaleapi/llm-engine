@@ -326,6 +326,8 @@ kubernetes==25.3.0
     # via -r requirements.in
 kubernetes-asyncio==25.11.0
     # via -r requirements.in
+legacy-cgi==2.6.4
+    # via ddtrace
 mako==1.3.12
     # via
     #   -r requirements.in

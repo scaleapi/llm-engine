@@ -1,4 +1,4 @@
-FROM cgr.dev/scale.com/python-fips:3.10.19-dev
+FROM cgr.dev/scale.com/python-fips:3.10-dev
 WORKDIR /workspace
 USER root
 
@@ -24,7 +24,7 @@ RUN apk update && apk add \
             postgresql-dev \
             libpq-16
 
-RUN curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64
+RUN curl -Lo /bin/aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.7.11/aws-iam-authenticator_0.7.11_linux_amd64
 RUN chmod +x /bin/aws-iam-authenticator
 
 RUN pip install pip==24.2
