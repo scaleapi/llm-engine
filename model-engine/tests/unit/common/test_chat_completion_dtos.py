@@ -1,10 +1,12 @@
 import json
 
+import pytest
 from model_engine_server.common.dtos.llms.chat_completion import (
     ChatCompletionV2Request,
     ChatCompletionV2StreamSuccessChunk,
     ChatCompletionV2SyncResponse,
 )
+from model_engine_server.common.pydantic_types import ValidationError
 
 REASONING_TRACE = "The user wants 17 * 23. 17 * 23 = 391."
 
@@ -60,7 +62,7 @@ def test_sync_response_accepts_reasoning_content_key():
     assert response.choices[0].message.reasoning_content == REASONING_TRACE
 
 
-def test_sync_response_without_reasoning_is_unchanged():
+def test_sync_response_without_reasoning_omits_key_with_exclude_none():
     payload = _sync_response_payload({"role": "assistant", "content": "391"})
     response = ChatCompletionV2SyncResponse.model_validate(payload)
 
@@ -68,6 +70,21 @@ def test_sync_response_without_reasoning_is_unchanged():
     dumped = json.loads(response.model_dump_json(exclude_none=True))
     assert "reasoning_content" not in dumped["choices"][0]["message"]
     assert "reasoning" not in dumped["choices"][0]["message"]
+
+
+def test_sync_response_without_reasoning_serializes_stable_null():
+    """The sync route returns the model through FastAPI without exclude_none, so
+    non-reasoning models serialize `reasoning_content: null` alongside the other
+    nullable spec fields (`refusal`, `audio`, ...) the route already emits."""
+    payload = _sync_response_payload({"role": "assistant", "content": "391"})
+    response = ChatCompletionV2SyncResponse.model_validate(payload)
+
+    message = json.loads(response.model_dump_json())["choices"][0]["message"]
+    assert "reasoning_content" in message
+    assert message["reasoning_content"] is None
+    # Pre-existing nullable spec field, serialized the same way.
+    assert "refusal" in message
+    assert message["refusal"] is None
 
 
 def test_stream_chunk_maps_vllm_reasoning_to_reasoning_content():
@@ -145,6 +162,14 @@ def test_request_without_reasoning_is_unchanged():
     for message in dumped["messages"]:
         assert "reasoning" not in message
         assert "reasoning_content" not in message
+
+
+def test_request_requires_at_least_one_message():
+    """The `messages` override re-declares the spec's `min_length=1`: pydantic field
+    overrides replace the parent FieldInfo rather than merging with it, so the
+    constraint must be restated or it is silently lost."""
+    with pytest.raises(ValidationError):
+        ChatCompletionV2Request.model_validate({"model": "gemma-4-31b-it", "messages": []})
 
 
 def test_request_tool_call_round_trip_with_reasoning():

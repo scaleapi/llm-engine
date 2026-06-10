@@ -79,6 +79,8 @@ class ChatCompletionV2Request(CreateChatCompletionRequest, VLLMChatCompletionAdd
         List[ChatCompletionRequestMessageWithReasoning],
         Field(
             description="A list of messages comprising the conversation so far. Depending on the\n[model](/docs/models) you use, different message types (modalities) are\nsupported, like [text](/docs/guides/text-generation),\n[images](/docs/guides/vision), and [audio](/docs/guides/audio).\n",
+            # Restated from the spec: pydantic field overrides replace the parent
+            # FieldInfo rather than merging, so dropping this would lose the constraint.
             min_length=1,
         ),
     ]
