@@ -132,6 +132,7 @@ class ModelEndpointRecord(OwnedEntity):
     endpoint_type: ModelEndpointType
     destination: str
     status: ModelEndpointStatus
+    status_reason: Optional[str] = None
     current_model_bundle: ModelBundle
     owner: str
     public_inference: Optional[bool] = None

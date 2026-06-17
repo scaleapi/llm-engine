@@ -83,6 +83,16 @@ BUILD_CONTEXT_TEMP_ROOT = os.path.join(WORKSPACE_PATH, "model-engine", ".build-c
 
 INITIAL_K8S_CACHE_TTL_SECONDS: int = 180
 MAX_IMAGE_TAG_LEN = 128
+# Cap the persisted failure reason so a verbose traceback/string can't blow up the column.
+MAX_STATUS_REASON_LEN = 500
+
+
+def _sanitize_status_reason(message: str) -> str:
+    """Collapse whitespace and cap length for a status_reason persisted on an endpoint."""
+    collapsed = " ".join(message.split())
+    if len(collapsed) > MAX_STATUS_REASON_LEN:
+        return collapsed[: MAX_STATUS_REASON_LEN - 1].rstrip() + "…"
+    return collapsed
 
 RESTRICTED_ENV_VARS_KEYS = {
     "BASE": [
@@ -342,15 +352,19 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     model_endpoint_id=endpoint_id,
                     destination=create_or_update_response.destination,
                     status=ModelEndpointStatus.READY,
+                    # Clear any reason from a prior failed attempt now that we're healthy.
+                    status_reason="",
                 )
 
             except Exception as error:  # noqa
                 log_error("Failed endpoint build process!")
-                # Update status as failed endpoint creation on unhandled error
+                # Update status as failed endpoint creation on unhandled error, recording
+                # the cause so it can be surfaced to API consumers.
                 try:
                     await self.model_endpoint_record_repository.update_model_endpoint_record(
                         model_endpoint_id=endpoint_id,
                         status=ModelEndpointStatus.UPDATE_FAILED,
+                        status_reason=_sanitize_status_reason(str(error)),
                     )
                 except Exception as error_update:
                     log_error("Failed to update endpoint build status to FAILED")
@@ -717,6 +731,8 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     await self.model_endpoint_record_repository.update_model_endpoint_record(
                         model_endpoint_id=build_endpoint_request.model_endpoint_record.id,
                         status=ModelEndpointStatus.UPDATE_FAILED,
+                        status_reason="Image build failed. Check that the bundle's image "
+                        "and dependencies are valid and accessible.",
                     )
 
                     if s3_logs_location is not None:

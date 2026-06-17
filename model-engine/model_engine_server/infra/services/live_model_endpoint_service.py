@@ -410,6 +410,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 await self.model_endpoint_record_repository.update_model_endpoint_record(
                     model_endpoint_id=model_endpoint_id,
                     status=ModelEndpointStatus.UPDATE_FAILED,
+                    status_reason="Failed to delete the endpoint's infrastructure.",
                 )
                 raise EndpointDeleteFailedException
 

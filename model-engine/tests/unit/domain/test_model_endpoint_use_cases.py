@@ -18,7 +18,11 @@ from model_engine_server.common.resource_limits import (
     STORAGE_LIMIT,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.domain.entities import ModelBundle, ModelEndpoint
+from model_engine_server.domain.entities import (
+    ModelBundle,
+    ModelEndpoint,
+    ModelEndpointStatus,
+)
 from model_engine_server.domain.exceptions import (
     EndpointBillingTagsMalformedException,
     EndpointLabelsException,
@@ -778,6 +782,25 @@ async def test_get_model_endpoint_use_case_success(
     response_2 = await use_case.execute(user=user, model_endpoint_id=model_endpoint_2.record.id)
     assert isinstance(response_2, GetModelEndpointV1Response)
     assert response_2.resource_state.nodes_per_worker == 2
+
+
+@pytest.mark.asyncio
+async def test_get_model_endpoint_use_case_surfaces_status_reason(
+    test_api_key: str,
+    fake_model_endpoint_service,
+    model_endpoint_1: ModelEndpoint,
+):
+    # A failed endpoint's status_reason should flow through to the API response.
+    model_endpoint_1.record.status = ModelEndpointStatus.UPDATE_FAILED
+    model_endpoint_1.record.status_reason = "CUDA out of memory"
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    use_case = GetModelEndpointByIdV1UseCase(model_endpoint_service=fake_model_endpoint_service)
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+
+    response = await use_case.execute(user=user, model_endpoint_id=model_endpoint_1.record.id)
+
+    assert response.status == ModelEndpointStatus.UPDATE_FAILED
+    assert response.status_reason == "CUDA out of memory"
 
 
 @pytest.mark.asyncio

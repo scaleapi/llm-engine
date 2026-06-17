@@ -49,6 +49,7 @@ class ModelEndpointRecordRepository(ABC):
         creation_task_id: str,
         status: str,
         owner: str,
+        status_reason: Optional[str] = None,
         public_inference: Optional[bool] = False,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
@@ -67,6 +68,8 @@ class ModelEndpointRecordRepository(ABC):
             status: A status field on the endpoint, keeps track of endpoint state,
                 used to coordinate edit operations on the endpoint
             owner: Team who owns endpoint
+            status_reason: Human-readable reason for the current status (e.g. the failure
+                cause when status is UPDATE_FAILED)
             public_inference: Whether the endpoint is publicly accessible
             task_expires_seconds: For async endpoints, how long a task can wait in queue before expiring
             queue_message_timeout_seconds: For async endpoints, queue message visibility/lock timeout
@@ -85,6 +88,7 @@ class ModelEndpointRecordRepository(ABC):
         creation_task_id: Optional[str] = None,
         destination: Optional[str] = None,
         status: Optional[str] = None,
+        status_reason: Optional[str] = None,
         public_inference: Optional[bool] = None,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
@@ -99,6 +103,8 @@ class ModelEndpointRecordRepository(ABC):
             creation_task_id: The task id corresponding to endpoint creation
             destination: The destination where async tasks should be sent.
             status: Status field on the endpoint, used to coordinate endpoint edit operations
+            status_reason: Human-readable reason for the current status (e.g. the failure
+                cause when status is UPDATE_FAILED)
             public_inference: Whether the endpoint is publicly accessible
             task_expires_seconds: For async endpoints, how long a task can wait in queue before expiring
             queue_message_timeout_seconds: For async endpoints, queue message visibility/lock timeout

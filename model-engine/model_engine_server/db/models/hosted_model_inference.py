@@ -465,6 +465,9 @@ class Endpoint(Base):
     # Endpoints should eventually end up as READY barring any bugs.
     # EndpointStatus.ready.value
     endpoint_status = Column(Text, default="READY")
+    # Human-readable reason for the current status, set when a build fails (status
+    # UPDATE_FAILED) so the failure cause can be surfaced to API consumers.
+    status_reason = Column(Text, nullable=True)
     current_bundle = relationship("Bundle")
     owner = Column(String(SHORT_STRING))
     public_inference = Column(Boolean, default=False)
@@ -484,6 +487,7 @@ class Endpoint(Base):
         endpoint_type: str = "async",
         destination: Optional[str] = None,
         endpoint_status: Optional[str] = "READY",  # EndpointStatus.ready.value
+        status_reason: Optional[str] = None,
         owner: Optional[str] = None,
         public_inference: Optional[bool] = False,
         task_expires_seconds: Optional[int] = None,
@@ -498,6 +502,7 @@ class Endpoint(Base):
         self.endpoint_type = endpoint_type
         self.destination = destination
         self.endpoint_status = endpoint_status
+        self.status_reason = status_reason
         self.owner = owner
         self.public_inference = public_inference
         self.task_expires_seconds = task_expires_seconds
