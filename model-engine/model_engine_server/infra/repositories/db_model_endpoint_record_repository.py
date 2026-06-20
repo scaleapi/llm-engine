@@ -314,6 +314,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         destination: Optional[str] = None,
         status: Optional[str] = None,
         status_reason: Optional[str] = None,
+        clear_status_reason: bool = False,
         public_inference: Optional[bool] = None,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
@@ -334,16 +335,16 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
                 creation_task_id=creation_task_id,
                 destination=destination,
                 endpoint_status=status,
+                status_reason=status_reason,
                 last_updated_at=datetime.utcnow(),
                 public_inference=public_inference,
                 task_expires_seconds=task_expires_seconds,
                 queue_message_timeout_seconds=queue_message_timeout_seconds,
             )
-            # status_reason is handled separately from dict_not_none so an explicit
-            # clear (empty string -> NULL) is possible when an endpoint recovers to a
-            # healthy state, while omitting it (None) leaves any existing reason intact.
-            if status_reason is not None:
-                update_kwargs["status_reason"] = status_reason or None
+            # `status_reason=None` leaves the value unchanged (like every other field);
+            # callers reset it to NULL via the explicit clear_status_reason flag.
+            if clear_status_reason:
+                update_kwargs["status_reason"] = None
             await OrmModelEndpoint.update_by_name_owner(
                 session=session,
                 name=model_endpoint_orm.name,

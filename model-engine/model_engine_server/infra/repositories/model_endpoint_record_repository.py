@@ -89,6 +89,7 @@ class ModelEndpointRecordRepository(ABC):
         destination: Optional[str] = None,
         status: Optional[str] = None,
         status_reason: Optional[str] = None,
+        clear_status_reason: bool = False,
         public_inference: Optional[bool] = None,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
@@ -104,7 +105,11 @@ class ModelEndpointRecordRepository(ABC):
             destination: The destination where async tasks should be sent.
             status: Status field on the endpoint, used to coordinate endpoint edit operations
             status_reason: Human-readable reason for the current status (e.g. the failure
-                cause when status is UPDATE_FAILED)
+                cause when status is UPDATE_FAILED). None leaves the existing value
+                unchanged, consistent with the other fields here; pass
+                clear_status_reason=True to reset it to NULL.
+            clear_status_reason: When True, reset status_reason to NULL (e.g. once an
+                endpoint recovers to READY).
             public_inference: Whether the endpoint is publicly accessible
             task_expires_seconds: For async endpoints, how long a task can wait in queue before expiring
             queue_message_timeout_seconds: For async endpoints, queue message visibility/lock timeout

@@ -42,6 +42,7 @@ from model_engine_server.domain.entities import (
 )
 from model_engine_server.domain.exceptions import (
     DockerBuildFailedException,
+    DomainException,
     EndpointResourceInfraException,
 )
 from model_engine_server.domain.gateways import MonitoringMetricsGateway
@@ -85,14 +86,28 @@ INITIAL_K8S_CACHE_TTL_SECONDS: int = 180
 MAX_IMAGE_TAG_LEN = 128
 # Cap the persisted failure reason so a verbose traceback/string can't blow up the column.
 MAX_STATUS_REASON_LEN = 500
+# Generic reason used when the failure cause isn't a known user-safe exception, so we
+# don't leak raw infra error text (k8s/AWS/DB internals) into the public API.
+GENERIC_STATUS_REASON = "Endpoint deployment failed due to an internal error."
 
 
-def _sanitize_status_reason(message: str) -> str:
-    """Collapse whitespace and cap length for a status_reason persisted on an endpoint."""
-    collapsed = " ".join(message.split())
-    if len(collapsed) > MAX_STATUS_REASON_LEN:
-        return collapsed[: MAX_STATUS_REASON_LEN - 1].rstrip() + "…"
-    return collapsed
+def _status_reason_from_error(error: BaseException) -> str:
+    """Derive a user-safe status_reason from a build error.
+
+    Only DomainException messages are surfaced — they are the codebase's own,
+    intentionally user-facing errors (e.g. DockerImageNotFound, invalid request,
+    quota). Any other exception (raw Kubernetes/AWS/DB errors) can carry sensitive
+    internals, so we return a generic message instead. Full detail is still logged.
+    """
+    if isinstance(error, DomainException):
+        collapsed = " ".join(str(error).split())
+        if collapsed:
+            return (
+                collapsed[: MAX_STATUS_REASON_LEN - 1].rstrip() + "…"
+                if len(collapsed) > MAX_STATUS_REASON_LEN
+                else collapsed
+            )
+    return GENERIC_STATUS_REASON
 
 RESTRICTED_ENV_VARS_KEYS = {
     "BASE": [
@@ -353,7 +368,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     destination=create_or_update_response.destination,
                     status=ModelEndpointStatus.READY,
                     # Clear any reason from a prior failed attempt now that we're healthy.
-                    status_reason="",
+                    clear_status_reason=True,
                 )
 
             except Exception as error:  # noqa
@@ -364,7 +379,7 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     await self.model_endpoint_record_repository.update_model_endpoint_record(
                         model_endpoint_id=endpoint_id,
                         status=ModelEndpointStatus.UPDATE_FAILED,
-                        status_reason=_sanitize_status_reason(str(error)),
+                        status_reason=_status_reason_from_error(error),
                     )
                 except Exception as error_update:
                     log_error("Failed to update endpoint build status to FAILED")
