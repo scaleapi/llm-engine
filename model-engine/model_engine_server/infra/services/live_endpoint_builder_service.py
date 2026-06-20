@@ -743,12 +743,10 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         f"Image build failed for endpoint {model_endpoint_name}, user {user_id}"
                     )
 
-                    await self.model_endpoint_record_repository.update_model_endpoint_record(
-                        model_endpoint_id=build_endpoint_request.model_endpoint_record.id,
-                        status=ModelEndpointStatus.UPDATE_FAILED,
-                        status_reason="Image build failed. Check that the bundle's image "
-                        "and dependencies are valid and accessible.",
-                    )
+                    # Note: status (and status_reason) is set by the outer except handler
+                    # from the DockerBuildFailedException raised below, so we don't write
+                    # the record here — doing so would be overwritten. The exception message
+                    # is kept user-safe (no internal ids) since it becomes the status_reason.
 
                     if s3_logs_location is not None:
                         help_url = self.filesystem_gateway.generate_signed_url(
@@ -784,7 +782,11 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         users=[user_id],
                     )
 
-                    raise DockerBuildFailedException(f"Image build failed ({endpoint_id=})")
+                    logger_adapter.error(f"Image build failed ({endpoint_id=})")
+                    raise DockerBuildFailedException(
+                        "Image build failed. Check that the bundle's image and "
+                        "dependencies are valid and accessible."
+                    )
 
         else:
             self.monitoring_metrics_gateway.emit_image_build_cache_hit_metric(image_type)
