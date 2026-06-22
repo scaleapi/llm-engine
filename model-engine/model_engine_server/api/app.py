@@ -31,10 +31,63 @@ from model_engine_server.core.loggers import (
     make_logger,
 )
 from model_engine_server.core.tracing import get_tracing_gateway
+from model_engine_server.domain.exceptions import (
+    DomainException,
+    ExistingEndpointOperationInProgressException,
+    ObjectAlreadyExistsException,
+    ObjectHasInvalidValueException,
+    ObjectNoLongerAvailableException,
+    ObjectNotAuthorizedException,
+    ObjectNotFoundException,
+    TooManyRequestsException,
+)
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = make_logger(logger_name())
+
+# Status codes for domain (business-logic) exceptions that reach the middleware without
+# a per-route handler. These are user-facing 4xx errors whose messages are safe to
+# surface (they are authored in-code, not raw infra/AWS/k8s errors). Domain exceptions
+# NOT listed here fall through to the generic 500 — they are treated as internal failures
+# whose messages may carry sensitive detail, so only the exception type is exposed.
+_DOMAIN_EXCEPTION_STATUS_CODES = {
+    ObjectAlreadyExistsException: 400,
+    ObjectNotFoundException: 404,
+    ObjectNotAuthorizedException: 403,
+    ObjectHasInvalidValueException: 400,
+    ObjectNoLongerAvailableException: 410,
+    ExistingEndpointOperationInProgressException: 409,
+    TooManyRequestsException: 429,
+}
+
+
+def _internal_error_response(e: Exception) -> JSONResponse:
+    """Generic 500 for unanticipated/internal errors.
+
+    Logs the full detail (message + traceback) server-side and returns a generic
+    message plus the exception class name — never the message or traceback, which can
+    leak internal details — so callers get a safe hint to pair with the request id.
+    """
+    tb_str = traceback.format_exception(e)
+    request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
+    timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
+    structured_log = {
+        "error": str(e),
+        "request_id": str(request_id),
+        "traceback": "".join(tb_str),
+    }
+    logger.error("Unhandled exception: %s", structured_log)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal error occurred. Our team has been notified.",
+            "error_type": type(e).__name__,
+            "timestamp": timestamp,
+            "request_id": request_id,
+        },
+    )
+
 
 # Allows us to make the Uvicorn worker concurrency in model_engine_server/api/worker.py very high
 MAX_CONCURRENCY = 500
@@ -69,28 +122,33 @@ class CustomMiddleware(BaseHTTPMiddleware):
                     "timestamp": timestamp,
                 },
             )
-        except Exception as e:
-            tb_str = traceback.format_exception(e)
-            request_id = LoggerTagManager.get(LoggerTagKey.REQUEST_ID)
+        except DomainException as e:
+            # A domain exception reached the middleware without a per-route handler.
+            # For known user-facing (4xx) types, surface the message and the right status
+            # so callers get an actionable error instead of an opaque 500. Unknown domain
+            # exceptions are treated as internal and get the generic 500 (their messages
+            # may carry sensitive detail), exposing only the exception type.
+            status_code = next(
+                (
+                    code
+                    for cls, code in _DOMAIN_EXCEPTION_STATUS_CODES.items()
+                    if isinstance(e, cls)
+                ),
+                None,
+            )
+            if status_code is None:
+                return _internal_error_response(e)
             timestamp = datetime.now(pytz.timezone("US/Pacific")).strftime("%Y-%m-%d %H:%M:%S %Z")
-            structured_log = {
-                "error": str(e),
-                "request_id": str(request_id),
-                "traceback": "".join(tb_str),
-            }
-            logger.error("Unhandled exception: %s", structured_log)
             return JSONResponse(
-                status_code=500,
+                status_code=status_code,
                 content={
-                    "error": "Internal error occurred. Our team has been notified.",
-                    # Surface only the exception class name (never the message/traceback,
-                    # which can leak internal details) so callers and support get a hint
-                    # of what failed to pair with the request_id. Full detail is logged.
+                    "error": str(e) or type(e).__name__,
                     "error_type": type(e).__name__,
                     "timestamp": timestamp,
-                    "request_id": request_id,
                 },
             )
+        except Exception as e:
+            return _internal_error_response(e)
 
 
 app = FastAPI(

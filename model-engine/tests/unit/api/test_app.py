@@ -19,9 +19,9 @@ def test_healthcheck(simple_client: TestClient):
 
 
 def test_unhandled_exception_returns_generic_500_with_error_type(simple_client: TestClient):
-    # An unhandled exception that reaches the catch-all middleware should return the
-    # generic message plus the exception class name (not its message/traceback) so
-    # callers get a safe hint to pair with the request id.
+    # A non-domain exception reaching the catch-all should return the generic message
+    # plus the exception class name (not its message/traceback) so callers get a safe
+    # hint to pair with the request id.
     app = simple_client.app
 
     @app.get("/_test_raises")
@@ -37,6 +37,47 @@ def test_unhandled_exception_returns_generic_500_with_error_type(simple_client: 
     assert body["error_type"] == "KeyError"
     # The raw exception message must not leak to the response.
     assert "super-secret-internal-detail" not in response.text
+
+
+def test_unhandled_domain_exception_surfaces_status_and_message(simple_client: TestClient):
+    # A known user-facing domain exception reaching the middleware (no per-route handler)
+    # should surface its message at the mapped status code.
+    from model_engine_server.domain.exceptions import ObjectNotFoundException
+
+    app = simple_client.app
+
+    @app.get("/_test_not_found")
+    async def _not_found():  # pragma: no cover - body is the raise
+        raise ObjectNotFoundException("model 'foo' was not found")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.get("/_test_not_found")
+
+    assert response.status_code == 404
+    body = response.json()
+    assert body["error"] == "model 'foo' was not found"
+    assert body["error_type"] == "ObjectNotFoundException"
+
+
+def test_unmapped_domain_exception_falls_back_to_generic_500(simple_client: TestClient):
+    # A domain exception that isn't in the user-facing status map is treated as internal:
+    # generic 500, message not surfaced.
+    from model_engine_server.domain.exceptions import EndpointDeleteFailedException
+
+    app = simple_client.app
+
+    @app.get("/_test_internal_domain")
+    async def _internal_domain():  # pragma: no cover - body is the raise
+        raise EndpointDeleteFailedException("internal teardown detail")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.get("/_test_internal_domain")
+
+    assert response.status_code == 500
+    body = response.json()
+    assert body["error"] == "Internal error occurred. Our team has been notified."
+    assert body["error_type"] == "EndpointDeleteFailedException"
+    assert "internal teardown detail" not in response.text
 
 
 def test_rename_openapi_schemas_renames_discriminated_unions():
