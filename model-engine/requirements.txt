@@ -558,8 +558,8 @@ setuptools==82.0.1
     #   -r requirements.in
     #   kubernetes
     #   kubernetes-asyncio
-wheel>=0.46.1
-    # via -r requirements.in  # CVE-2026-24049
+wheel==0.46.1
+    # via -r requirements.in  # CVE-2026-24049; >=0.46.2 requires packaging>=24.0 which conflicts with packaging==23.1
 sh==1.14.3
     # via -r requirements.in
 shellingham==1.5.4
