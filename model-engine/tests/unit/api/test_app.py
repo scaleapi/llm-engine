@@ -18,6 +18,27 @@ def test_healthcheck(simple_client: TestClient):
     assert response.status_code == 200
 
 
+def test_unhandled_exception_returns_generic_500_with_error_type(simple_client: TestClient):
+    # An unhandled exception that reaches the catch-all middleware should return the
+    # generic message plus the exception class name (not its message/traceback) so
+    # callers get a safe hint to pair with the request id.
+    app = simple_client.app
+
+    @app.get("/_test_raises")
+    async def _raises():  # pragma: no cover - body is the raise
+        raise KeyError("super-secret-internal-detail")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.get("/_test_raises")
+
+    assert response.status_code == 500
+    body = response.json()
+    assert body["error"] == "Internal error occurred. Our team has been notified."
+    assert body["error_type"] == "KeyError"
+    # The raw exception message must not leak to the response.
+    assert "super-secret-internal-detail" not in response.text
+
+
 def test_rename_openapi_schemas_renames_discriminated_unions():
     """Test that discriminated union schemas are renamed correctly."""
     ugly_name = (

@@ -83,6 +83,10 @@ class CustomMiddleware(BaseHTTPMiddleware):
                 status_code=500,
                 content={
                     "error": "Internal error occurred. Our team has been notified.",
+                    # Surface only the exception class name (never the message/traceback,
+                    # which can leak internal details) so callers and support get a hint
+                    # of what failed to pair with the request_id. Full detail is logged.
+                    "error_type": type(e).__name__,
                     "timestamp": timestamp,
                     "request_id": request_id,
                 },
