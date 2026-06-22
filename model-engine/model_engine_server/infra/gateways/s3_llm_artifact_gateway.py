@@ -36,9 +36,10 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "")
             if error_code in _S3_CHECKPOINT_ACCESS_ERROR_CODES:
-                # Surface the path (not the IAM role ARN, which is in the raw error) so the
-                # failure is actionable. Logged in full for server-side debugging.
-                logger.warning(f"Cannot access checkpoint path {path}: {error_code}")
+                # Log the full S3 error (AWS message, request context, IAM role, traceback)
+                # server-side so operators can diagnose which role/bucket failed, but raise
+                # a sanitized, path-only error to the user (no IAM ARN).
+                logger.warning(f"Cannot access checkpoint path {path}: {error_code}", exc_info=True)
                 raise ObjectHasInvalidValueException(
                     f"Could not read model weights at '{path}'. Check that the path exists "
                     f"and that the deployment has read access to the bucket."
