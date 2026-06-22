@@ -10,6 +10,7 @@ inference to avoid importing stuff in user code that we don't need.)
 """
 
 from abc import ABC, abstractmethod
+from typing import List
 
 
 class InferenceMonitoringMetricsGateway(ABC):
@@ -48,5 +49,18 @@ class InferenceMonitoringMetricsGateway(ABC):
 
         Args:
             queue_name: The name of the Celery queue
+        """
+        pass
+
+    @abstractmethod
+    def emit_timing_metric(self, metric_name: str, value_ms: float, tags: List[str]):
+        """
+        Emit a latency/timing distribution metric (e.g. the per-request overhead the
+        forwarder sidecar adds on top of the vLLM round-trip).
+
+        Args:
+            metric_name: The fully-qualified metric name (e.g. scale_launch.forwarder.overhead_ms)
+            value_ms: The latency value in milliseconds
+            tags: Low-cardinality "key:value" tag strings (request_id is NOT a tag)
         """
         pass

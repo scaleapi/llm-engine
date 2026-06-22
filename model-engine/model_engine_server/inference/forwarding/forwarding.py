@@ -2,8 +2,9 @@ import ast
 import json
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from time import perf_counter
 from typing import Any, AsyncGenerator, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import aiohttp
@@ -17,6 +18,9 @@ from model_engine_server.common.aiohttp_sse_client import EventSource
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.tracing import get_tracing_gateway
 from model_engine_server.inference.common import get_endpoint_config
+from model_engine_server.inference.domain.gateways.inference_monitoring_metrics_gateway import (
+    InferenceMonitoringMetricsGateway,
+)
 from model_engine_server.inference.infra.gateways.datadog_inference_monitoring_metrics_gateway import (
     DatadogInferenceMonitoringMetricsGateway,
 )
@@ -41,6 +45,44 @@ KEY_SERIALIZE_RESULTS_AS_STRING: str = "serialize_results_as_string"
 ENV_SERIALIZE_RESULTS_AS_STRING: str = "SERIALIZE_RESULTS_AS_STRING"
 
 DEFAULT_PORT: int = 5005
+
+# Forwarder timing metrics (milliseconds). The forwarder sidecar sits in front of the
+# vLLM/user process; these quantify the per-request overhead it adds on top of the vLLM
+# round-trip. Correlation is provided by the auto-injected dd.trace_id in logs, not by these
+# metrics (request_id is never a metric tag in this codebase).
+FORWARDER_METRIC_PREFIX: str = "scale_launch.forwarder"
+FORWARDER_OVERHEAD_METRIC: str = f"{FORWARDER_METRIC_PREFIX}.overhead_ms"
+FORWARDER_TOTAL_METRIC: str = f"{FORWARDER_METRIC_PREFIX}.total_ms"
+FORWARDER_VLLM_ROUNDTRIP_METRIC: str = f"{FORWARDER_METRIC_PREFIX}.vllm_roundtrip_ms"
+FORWARDER_TTFT_METRIC: str = f"{FORWARDER_METRIC_PREFIX}.ttft_ms"
+FORWARDER_VLLM_TTFT_METRIC: str = f"{FORWARDER_METRIC_PREFIX}.vllm_ttft_ms"
+
+
+def _build_forwarder_metric_tags(
+    request_type: str, route: str, endpoint_name: Optional[str]
+) -> List[str]:
+    """Low-cardinality metric tags, computed once per forwarder at load time."""
+    tags = [f"request_type:{request_type}", f"route:{route}"]
+    if endpoint_name:
+        tags.append(f"endpoint_name:{endpoint_name}")
+    return tags
+
+
+def _emit_forwarder_timing(
+    monitoring_metrics_gateway: Optional[InferenceMonitoringMetricsGateway],
+    tags: List[str],
+    metrics_ms: Dict[str, float],
+) -> None:
+    """Emit forwarder timing metrics. Never raises into the request hot path."""
+    if monitoring_metrics_gateway is None:
+        return
+    try:
+        for metric_name, value_ms in metrics_ms.items():
+            monitoring_metrics_gateway.emit_timing_metric(
+                metric_name=metric_name, value_ms=value_ms, tags=tags
+            )
+    except Exception:
+        logger.exception("Failed to emit forwarder timing metrics")
 
 
 class ModelEngineSerializationMixin:
@@ -169,8 +211,12 @@ class Forwarder(ModelEngineSerializationMixin):
     # We do this to avoid having to put this data in any sync response and only do it for async responses
     forward_http_status_in_body: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None
+    monitoring_metrics_gateway: Optional[InferenceMonitoringMetricsGateway] = None
+    # Precomputed low-cardinality metric tags (request_type, route, endpoint_name); see load().
+    metric_tags: List[str] = field(default_factory=list)
 
     async def forward(self, json_payload: Any, trace_config: Optional[str] = None) -> Any:
+        t0 = perf_counter()
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
@@ -181,6 +227,7 @@ class Forwarder(ModelEngineSerializationMixin):
                 headers = {"Content-Type": "application/json"}
                 if trace_config and tracing_gateway:
                     headers.update(tracing_gateway.encode_trace_headers())
+                t_vllm_start = perf_counter()
                 response_raw = await aioclient.post(
                     self.predict_endpoint,
                     json=json_payload,
@@ -189,6 +236,7 @@ class Forwarder(ModelEngineSerializationMixin):
                 response = await response_raw.json(
                     content_type=None
                 )  # [Bug] upstream service doesn't always have the content type header set which causes aiohttp to error
+                vllm_roundtrip_ms = (perf_counter() - t_vllm_start) * 1000.0
 
         except Exception:
             logger.exception(
@@ -219,6 +267,28 @@ class Forwarder(ModelEngineSerializationMixin):
                 response,
                 response_raw.status,
             )
+
+        total_ms = (perf_counter() - t0) * 1000.0
+        forwarder_overhead_ms = total_ms - vllm_roundtrip_ms
+        # dd.trace_id is auto-injected into this log record, providing request correlation.
+        logger.info(
+            "forwarder sync request timing",
+            extra={
+                "request_type": "sync",
+                "forwarder_total_ms": total_ms,
+                "vllm_roundtrip_ms": vllm_roundtrip_ms,
+                "forwarder_overhead_ms": forwarder_overhead_ms,
+            },
+        )
+        _emit_forwarder_timing(
+            self.monitoring_metrics_gateway,
+            self.metric_tags,
+            {
+                FORWARDER_TOTAL_METRIC: total_ms,
+                FORWARDER_VLLM_ROUNDTRIP_METRIC: vllm_roundtrip_ms,
+                FORWARDER_OVERHEAD_METRIC: forwarder_overhead_ms,
+            },
+        )
 
         if self.forward_http_status:
             return JSONResponse(content=response, status_code=response_raw.status)
@@ -376,8 +446,11 @@ class LoadForwarder:
         else:
             serialize_results_as_string = self.serialize_results_as_string
 
+        monitoring_metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
+        endpoint_name: Optional[str] = None
         try:
             endpoint_config = get_endpoint_config()
+            endpoint_name = endpoint_config.endpoint_name
             handler = PostInferenceHooksHandler(
                 endpoint_name=endpoint_config.endpoint_name,
                 bundle_name=endpoint_config.bundle_name,
@@ -387,7 +460,7 @@ class LoadForwarder:
                 billing_tags=endpoint_config.billing_tags,
                 default_callback_url=endpoint_config.default_callback_url,
                 default_callback_auth=endpoint_config.default_callback_auth,
-                monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
+                monitoring_metrics_gateway=monitoring_metrics_gateway,
                 endpoint_id=endpoint_config.endpoint_id,
                 endpoint_type=endpoint_config.endpoint_type,
                 bundle_id=endpoint_config.bundle_id,
@@ -405,6 +478,8 @@ class LoadForwarder:
             wrap_response=self.wrap_response,
             forward_http_status=self.forward_http_status,
             forward_http_status_in_body=self.forward_http_status_in_body,
+            monitoring_metrics_gateway=monitoring_metrics_gateway,
+            metric_tags=_build_forwarder_metric_tags("sync", self.predict_route, endpoint_name),
         )
 
 
@@ -428,8 +503,38 @@ class StreamingForwarder(ModelEngineSerializationMixin):
     model_engine_unwrap: bool
     serialize_results_as_string: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None  # unused for now
+    monitoring_metrics_gateway: Optional[InferenceMonitoringMetricsGateway] = None
+    # Precomputed low-cardinality metric tags (request_type, route, endpoint_name); see load().
+    metric_tags: List[str] = field(default_factory=list)
 
-    async def forward(self, json_payload: Any) -> AsyncGenerator[Any, None]:  # pragma: no cover
+    def _emit_ttft_timing(self, t0: float, t_vllm_start: float) -> None:
+        """Emit time-to-first-token timing, called when the first event arrives."""
+        now = perf_counter()
+        forwarder_ttft_ms = (now - t0) * 1000.0
+        vllm_ttft_ms = (now - t_vllm_start) * 1000.0
+        forwarder_overhead_ms = forwarder_ttft_ms - vllm_ttft_ms
+        # dd.trace_id is auto-injected into this log record for correlation.
+        logger.info(
+            "forwarder stream request timing",
+            extra={
+                "request_type": "stream",
+                "forwarder_ttft_ms": forwarder_ttft_ms,
+                "vllm_ttft_ms": vllm_ttft_ms,
+                "forwarder_overhead_ms": forwarder_overhead_ms,
+            },
+        )
+        _emit_forwarder_timing(
+            self.monitoring_metrics_gateway,
+            self.metric_tags,
+            {
+                FORWARDER_TTFT_METRIC: forwarder_ttft_ms,
+                FORWARDER_VLLM_TTFT_METRIC: vllm_ttft_ms,
+                FORWARDER_OVERHEAD_METRIC: forwarder_overhead_ms,
+            },
+        )
+
+    async def forward(self, json_payload: Any) -> AsyncGenerator[Any, None]:
+        t0 = perf_counter()
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
         json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
 
@@ -438,6 +543,7 @@ class StreamingForwarder(ModelEngineSerializationMixin):
         try:
             response: aiohttp.ClientResponse
             async with aiohttp.ClientSession(json_serialize=_serialize_json) as aioclient:
+                t_vllm_start = perf_counter()
                 response = await aioclient.post(
                     self.predict_endpoint,
                     json=json_payload,
@@ -450,7 +556,11 @@ class StreamingForwarder(ModelEngineSerializationMixin):
                     )  # [Bug] upstream service doesn't always have the content type header set which causes aiohttp to error
 
                 async with EventSource(response=response) as event_source:
+                    ttft_recorded = False
                     async for event in event_source:
+                        if not ttft_recorded:
+                            ttft_recorded = True
+                            self._emit_ttft_timing(t0, t_vllm_start)
                         yield self.get_response_payload_stream(
                             using_serialize_results_as_string, event.data
                         )
@@ -598,8 +708,11 @@ class LoadStreamingForwarder:
         else:
             serialize_results_as_string = self.serialize_results_as_string
 
+        monitoring_metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
+        endpoint_name: Optional[str] = None
         try:
             endpoint_config = get_endpoint_config()
+            endpoint_name = endpoint_config.endpoint_name
             handler = PostInferenceHooksHandler(
                 endpoint_name=endpoint_config.endpoint_name,
                 bundle_name=endpoint_config.bundle_name,
@@ -609,7 +722,7 @@ class LoadStreamingForwarder:
                 billing_tags=endpoint_config.billing_tags,
                 default_callback_url=endpoint_config.default_callback_url,
                 default_callback_auth=endpoint_config.default_callback_auth,
-                monitoring_metrics_gateway=DatadogInferenceMonitoringMetricsGateway(),
+                monitoring_metrics_gateway=monitoring_metrics_gateway,
                 endpoint_id=endpoint_config.endpoint_id,
                 endpoint_type=endpoint_config.endpoint_type,
                 bundle_id=endpoint_config.bundle_id,
@@ -624,6 +737,8 @@ class LoadStreamingForwarder:
             model_engine_unwrap=self.model_engine_unwrap,
             serialize_results_as_string=serialize_results_as_string,
             post_inference_hooks_handler=handler,
+            monitoring_metrics_gateway=monitoring_metrics_gateway,
+            metric_tags=_build_forwarder_metric_tags("stream", self.predict_route, endpoint_name),
         )
 
 

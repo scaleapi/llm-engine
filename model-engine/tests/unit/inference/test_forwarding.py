@@ -1,16 +1,25 @@
 import json
 from dataclasses import dataclass
-from typing import Mapping
+from typing import List, Mapping, Tuple
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from aioresponses import aioresponses
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from model_engine_server.core.utils.env import environment
 from model_engine_server.domain.entities import ModelEndpointConfig
+from model_engine_server.inference.domain.gateways.inference_monitoring_metrics_gateway import (
+    InferenceMonitoringMetricsGateway,
+)
 from model_engine_server.inference.forwarding.forwarding import (
     ENV_SERIALIZE_RESULTS_AS_STRING,
+    FORWARDER_OVERHEAD_METRIC,
+    FORWARDER_TOTAL_METRIC,
+    FORWARDER_TTFT_METRIC,
+    FORWARDER_VLLM_ROUNDTRIP_METRIC,
+    FORWARDER_VLLM_TTFT_METRIC,
     KEY_SERIALIZE_RESULTS_AS_STRING,
     Forwarder,
     LoadForwarder,
@@ -582,6 +591,25 @@ def test_streaming_forwarder_loader():
     _check_streaming(response)
 
 
+@pytest.mark.asyncio
+async def test_streaming_forward_relays_chunks():
+    """Async StreamingForwarder.forward() relays each upstream SSE chunk unchanged."""
+    endpoint = "http://localhost:5005/stream"
+    fwd = StreamingForwarder(
+        endpoint,
+        model_engine_unwrap=False,
+        serialize_results_as_string=False,
+        post_inference_hooks_handler=None,
+    )
+    sse_body = f"data: {json.dumps(PAYLOAD)}\n\ndata: {PAYLOAD_END}\n\n"
+    with aioresponses() as aio_mock:
+        aio_mock.post(
+            endpoint, status=200, body=sse_body, headers={"content-type": "text/event-stream"}
+        )
+        chunks = [chunk async for chunk in fwd.forward(dict(PAYLOAD))]
+    assert chunks == [{"result": PAYLOAD}, {"result": PAYLOAD_END}]
+
+
 # Passthrough forwarder tests
 @pytest.mark.asyncio
 async def test_passthrough_forwarder():
@@ -704,3 +732,179 @@ def test_load_passthrough_forwarder_validation():
     # Test empty healthcheck route
     with pytest.raises(ValueError, match="healthcheck route must be non-empty"):
         LoadPassthroughForwarder(healthcheck_route="").load(None, None)  # type: ignore
+
+
+# ---- Forwarder timing instrumentation ----
+
+
+class FakeInferenceMonitoringMetricsGateway(InferenceMonitoringMetricsGateway):
+    """Records emitted timing metrics so tests can assert on them."""
+
+    def __init__(self):
+        self.timing_calls: List[Tuple[str, float, List[str]]] = []
+
+    def emit_attempted_post_inference_hook(self, hook: str):
+        pass
+
+    def emit_successful_post_inference_hook(self, hook: str):
+        pass
+
+    def emit_async_task_received_metric(self, queue_name: str):
+        pass
+
+    def emit_async_task_stuck_metric(self, queue_name: str):
+        pass
+
+    def emit_timing_metric(self, metric_name: str, value_ms: float, tags: List[str]):
+        self.timing_calls.append((metric_name, value_ms, tags))
+
+    def by_name(self) -> Mapping[str, Tuple[float, List[str]]]:
+        return {name: (value_ms, tags) for name, value_ms, tags in self.timing_calls}
+
+
+SYNC_ROUTE = "/v1/chat/completions"
+SYNC_ENDPOINT = f"http://localhost:5005{SYNC_ROUTE}"
+SYNC_TAGS = ["request_type:sync", f"route:{SYNC_ROUTE}", "endpoint_name:test-endpoint"]
+STREAM_TAGS = ["request_type:stream", f"route:{SYNC_ROUTE}", "endpoint_name:test-endpoint"]
+
+
+@pytest.mark.asyncio
+async def test_forward_emits_sync_timing_metrics():
+    metrics_gateway = FakeInferenceMonitoringMetricsGateway()
+    fwd = Forwarder(
+        SYNC_ENDPOINT,
+        model_engine_unwrap=False,
+        serialize_results_as_string=False,
+        post_inference_hooks_handler=None,
+        wrap_response=True,
+        forward_http_status=False,
+        forward_http_status_in_body=False,
+        monitoring_metrics_gateway=metrics_gateway,
+        metric_tags=SYNC_TAGS,
+    )
+
+    # Scripted clock: t0=0, t_vllm_start=1, vllm end=3, total end=5 (seconds).
+    # roundtrip brackets only the post+json (1->3); total brackets entry->exit (0->5).
+    with (
+        aioresponses() as aio_mock,
+        mock.patch(
+            "model_engine_server.inference.forwarding.forwarding.perf_counter",
+            side_effect=[0.0, 1.0, 3.0, 5.0],
+        ),
+    ):
+        aio_mock.post(SYNC_ENDPOINT, status=200, payload=dict(PAYLOAD))
+        response = await fwd.forward(dict(PAYLOAD))
+
+    assert response == {"result": PAYLOAD}  # happy-path response unchanged
+
+    emitted = metrics_gateway.by_name()
+    assert emitted[FORWARDER_TOTAL_METRIC][0] == 5000.0
+    assert emitted[FORWARDER_VLLM_ROUNDTRIP_METRIC][0] == 2000.0
+    assert emitted[FORWARDER_OVERHEAD_METRIC][0] == 3000.0
+    # overhead == total - roundtrip
+    assert (
+        emitted[FORWARDER_OVERHEAD_METRIC][0]
+        == emitted[FORWARDER_TOTAL_METRIC][0] - emitted[FORWARDER_VLLM_ROUNDTRIP_METRIC][0]
+    )
+    assert emitted[FORWARDER_OVERHEAD_METRIC][1] == SYNC_TAGS
+
+
+@pytest.mark.asyncio
+async def test_forward_emits_streaming_ttft_metrics():
+    metrics_gateway = FakeInferenceMonitoringMetricsGateway()
+    fwd = StreamingForwarder(
+        SYNC_ENDPOINT,
+        model_engine_unwrap=False,
+        serialize_results_as_string=False,
+        post_inference_hooks_handler=None,
+        monitoring_metrics_gateway=metrics_gateway,
+        metric_tags=STREAM_TAGS,
+    )
+
+    sse_body = 'data: {"hello": "world"}\n\ndata: [DONE]\n\n'
+    # Scripted clock: t0=0, t_vllm_start=1, first-event=4 (seconds).
+    with (
+        aioresponses() as aio_mock,
+        mock.patch(
+            "model_engine_server.inference.forwarding.forwarding.perf_counter",
+            side_effect=[0.0, 1.0, 4.0],
+        ),
+    ):
+        aio_mock.post(
+            SYNC_ENDPOINT,
+            status=200,
+            body=sse_body,
+            headers={"content-type": "text/event-stream"},
+        )
+        chunks = [chunk async for chunk in fwd.forward(dict(PAYLOAD))]
+
+    assert len(chunks) == 2  # sanity: stream was driven (contents asserted elsewhere)
+
+    emitted = metrics_gateway.by_name()
+    assert emitted[FORWARDER_TTFT_METRIC][0] == 4000.0
+    assert emitted[FORWARDER_VLLM_TTFT_METRIC][0] == 3000.0
+    assert emitted[FORWARDER_OVERHEAD_METRIC][0] == 1000.0
+    # overhead == forwarder_ttft - vllm_ttft
+    assert (
+        emitted[FORWARDER_OVERHEAD_METRIC][0]
+        == emitted[FORWARDER_TTFT_METRIC][0] - emitted[FORWARDER_VLLM_TTFT_METRIC][0]
+    )
+    assert emitted[FORWARDER_OVERHEAD_METRIC][1] == STREAM_TAGS
+
+
+@pytest.mark.asyncio
+async def test_forward_without_metrics_gateway_is_noop():
+    """A forwarder with no metrics gateway must still serve the happy path."""
+    fwd = Forwarder(
+        SYNC_ENDPOINT,
+        model_engine_unwrap=False,
+        serialize_results_as_string=False,
+        post_inference_hooks_handler=None,
+        wrap_response=True,
+        forward_http_status=False,
+        forward_http_status_in_body=False,
+        monitoring_metrics_gateway=None,
+    )
+    with aioresponses() as aio_mock:
+        aio_mock.post(SYNC_ENDPOINT, status=200, payload=dict(PAYLOAD))
+        response = await fwd.forward(dict(PAYLOAD))
+    assert response == {"result": PAYLOAD}
+
+
+@mock.patch("requests.post", mocked_post)
+@mock.patch("requests.get", mocked_get)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+def test_loaders_set_metrics_gateway_and_tags():
+    fwd = LoadForwarder().load(None, None)  # type: ignore
+    assert fwd.monitoring_metrics_gateway is not None
+    assert fwd.metric_tags == [
+        "request_type:sync",
+        "route:/predict",
+        "endpoint_name:test_endpoint_name",
+    ]
+
+    stream_fwd = LoadStreamingForwarder().load(None, None)  # type: ignore
+    assert stream_fwd.monitoring_metrics_gateway is not None
+    assert stream_fwd.metric_tags == [
+        "request_type:stream",
+        "route:/predict",
+        "endpoint_name:test_endpoint_name",
+    ]
+
+
+@mock.patch("requests.post", mocked_post)
+@mock.patch("requests.get", mocked_get)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    side_effect=RuntimeError("no endpoint config"),
+)
+def test_loader_survives_endpoint_config_failure(_mock_config):
+    # Even when endpoint config (and thus the hooks handler) fails, the forwarder still gets a
+    # metrics gateway; tags degrade to omit endpoint_name.
+    fwd = LoadForwarder().load(None, None)  # type: ignore
+    assert fwd.monitoring_metrics_gateway is not None
+    assert fwd.post_inference_hooks_handler is None
+    assert fwd.metric_tags == ["request_type:sync", "route:/predict"]

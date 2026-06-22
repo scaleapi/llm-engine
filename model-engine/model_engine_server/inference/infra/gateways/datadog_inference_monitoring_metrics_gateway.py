@@ -1,3 +1,5 @@
+from typing import List
+
 from datadog import statsd
 from model_engine_server.inference.domain.gateways.inference_monitoring_metrics_gateway import (
     InferenceMonitoringMetricsGateway,
@@ -18,6 +20,9 @@ class DatadogInferenceMonitoringMetricsGateway(InferenceMonitoringMetricsGateway
 
     def emit_async_task_stuck_metric(self, queue_name: str):
         statsd.increment("scale_launch.async_task.stuck.count", tags=[f"queue_name:{queue_name}"])
+
+    def emit_timing_metric(self, metric_name: str, value_ms: float, tags: List[str]):
+        statsd.distribution(metric_name, value_ms, tags=tags)
 
     def emit_batch_completions_metric(
         self,
