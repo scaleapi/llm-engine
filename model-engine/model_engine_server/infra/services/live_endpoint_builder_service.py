@@ -109,6 +109,7 @@ def _status_reason_from_error(error: BaseException) -> str:
             )
     return GENERIC_STATUS_REASON
 
+
 RESTRICTED_ENV_VARS_KEYS = {
     "BASE": [
         "DD_TRACE_ENABLED",
