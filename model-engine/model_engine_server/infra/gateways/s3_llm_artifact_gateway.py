@@ -2,13 +2,21 @@ import json
 import os
 from typing import Any, Dict, List
 
+from botocore.exceptions import ClientError
 from model_engine_server.common.config import get_model_cache_directory_name, hmi_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.utils.url import parse_attachment_url
+from model_engine_server.domain.exceptions import ObjectHasInvalidValueException
 from model_engine_server.domain.gateways import LLMArtifactGateway
 from model_engine_server.infra.gateways.s3_utils import get_s3_resource
 
 logger = make_logger(logger_name())
+
+# S3 client error codes that mean the configured checkpoint path is unusable (bad bucket
+# or the deployment's role can't read it) rather than a transient/internal failure. We map
+# these to a user-facing message so the deploy reports an actionable cause instead of an
+# opaque 500. The bucket/path is surfaced; the IAM role ARN is never exposed.
+_S3_CHECKPOINT_ACCESS_ERROR_CODES = {"AccessDenied", "NoSuchBucket", "403", "404"}
 
 
 class S3LLMArtifactGateway(LLMArtifactGateway):
@@ -23,7 +31,19 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         key = parsed_remote.key
 
         s3_bucket = s3.Bucket(bucket)
-        files = [obj.key for obj in s3_bucket.objects.filter(Prefix=key)]
+        try:
+            files = [obj.key for obj in s3_bucket.objects.filter(Prefix=key)]
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "")
+            if error_code in _S3_CHECKPOINT_ACCESS_ERROR_CODES:
+                # Surface the path (not the IAM role ARN, which is in the raw error) so the
+                # failure is actionable. Logged in full for server-side debugging.
+                logger.warning(f"Cannot access checkpoint path {path}: {error_code}")
+                raise ObjectHasInvalidValueException(
+                    f"Could not read model weights at '{path}'. Check that the path exists "
+                    f"and that the deployment has read access to the bucket."
+                ) from e
+            raise
         logger.debug(f"Listed {len(files)} files from {path}")
         return files
 
