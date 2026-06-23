@@ -1,4 +1,4 @@
-FROM cgr.dev/scale.com/python-fips:3.10.20-r7-dev
+FROM cgr.dev/scale.com/python-fips:3.11-dev
 WORKDIR /workspace
 USER root
 
@@ -17,7 +17,7 @@ RUN apk update && apk add \
             jq \
             gcc \
             glibc-dev \
-            python-3.10-dev \
+            python-3.11-dev \
             libffi-dev \
             openssl-dev \
             build-base \
