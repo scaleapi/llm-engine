@@ -17,6 +17,7 @@ from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.config import infer_registry_type, infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.db.base import get_session_async_null_pool
+from model_engine_server.domain.gateways.monitoring_metrics_gateway import MonitoringMetricsGateway
 from model_engine_server.domain.repositories import DockerRepository
 from model_engine_server.infra.gateways.resources.asb_queue_endpoint_resource_delegate import (
     ASBQueueEndpointResourceDelegate,
@@ -83,6 +84,7 @@ async def loop_iteration(
     endpoint_record_repo: ModelEndpointRecordRepository,
     image_cache_gateway: ImageCacheGateway,
     docker_repository: DockerRepository,
+    monitoring_metrics_gateway: MonitoringMetricsGateway,
     ttl_seconds: float,
 ):
     image_cache_service = ImageCacheService(
@@ -91,7 +93,7 @@ async def loop_iteration(
         docker_repository=docker_repository,
     )
     cache_write_service = ModelEndpointCacheWriteService(
-        cache_repo, k8s_resource_manager, image_cache_service
+        cache_repo, k8s_resource_manager, image_cache_service, monitoring_metrics_gateway
     )
     await cache_write_service.execute(ttl_seconds=ttl_seconds)
 
@@ -166,6 +168,7 @@ async def main(args: Any):
             endpoint_record_repo,
             image_cache_gateway,
             docker_repo,
+            monitoring_metrics_gateway,
             args.ttl_seconds,
         )
         loop_end = time.time()

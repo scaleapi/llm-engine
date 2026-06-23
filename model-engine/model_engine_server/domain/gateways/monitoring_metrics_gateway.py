@@ -90,3 +90,13 @@ class MonitoringMetricsGateway(ABC):
         fast enough, or we're out of capacity, or the upstream svc is unhealthy)
         """
         pass
+
+    @abstractmethod
+    def emit_cache_write_failure_metric(self):
+        """
+        K8s cacher Redis-write failure metric. Emitted when the cacher's periodic
+        write loop fails to write endpoint info to Redis (e.g. bad auth, network
+        partition, expired credentials). An early-warning signal that the cache is
+        going stale before the Gateway starts reporting endpoint status as `unknown`.
+        """
+        pass

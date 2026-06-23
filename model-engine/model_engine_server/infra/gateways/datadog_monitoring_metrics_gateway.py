@@ -90,3 +90,6 @@ class DatadogMonitoringMetricsGateway(MonitoringMetricsGateway):
         tags = self.tags
         tags.extend([f"endpoint_name:{endpoint_name}", f"error_code:{error_code}"])
         statsd.increment(f"{self.prefix}.upstream_sync_error", tags=tags)
+
+    def emit_cache_write_failure_metric(self):
+        statsd.increment("scale_launch.k8s_cache.redis_write_failure", tags=self.tags)

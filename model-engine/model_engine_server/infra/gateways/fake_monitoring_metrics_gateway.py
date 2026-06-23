@@ -23,6 +23,7 @@ class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
         self.token_count = 0
         self.total_tokens_per_second = 0
         self.sync_call_timeout = defaultdict(int)
+        self.cache_write_failure = 0
 
     def reset(self):
         self.attempted_build = 0
@@ -39,6 +40,7 @@ class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
         self.token_count = 0
         self.total_tokens_per_second = 0
         self.sync_call_timeout = defaultdict(int)
+        self.cache_write_failure = 0
 
     def emit_attempted_build_metric(self):
         self.attempted_build += 1
@@ -79,3 +81,6 @@ class FakeMonitoringMetricsGateway(MonitoringMetricsGateway):
 
     def emit_http_call_error_metrics(self, endpoint_name: str, error_code: int):
         self.sync_call_timeout[(endpoint_name, error_code)] += 1
+
+    def emit_cache_write_failure_metric(self):
+        self.cache_write_failure += 1
