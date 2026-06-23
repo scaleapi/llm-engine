@@ -18,11 +18,7 @@ from model_engine_server.common.resource_limits import (
     STORAGE_LIMIT,
 )
 from model_engine_server.core.auth.authentication_repository import User
-from model_engine_server.domain.entities import (
-    ModelBundle,
-    ModelEndpoint,
-    ModelEndpointStatus,
-)
+from model_engine_server.domain.entities import ModelBundle, ModelEndpoint, ModelEndpointStatus
 from model_engine_server.domain.exceptions import (
     EndpointBillingTagsMalformedException,
     EndpointLabelsException,
