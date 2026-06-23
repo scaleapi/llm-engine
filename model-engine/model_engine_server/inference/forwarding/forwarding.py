@@ -507,11 +507,10 @@ class StreamingForwarder(ModelEngineSerializationMixin):
     # Precomputed low-cardinality metric tags (request_type, route, endpoint_name); see load().
     metric_tags: List[str] = field(default_factory=list)
 
-    def _emit_ttft_timing(self, t0: float, t_vllm_start: float) -> None:
+    def _emit_ttft_timing(self, t0: float, t_vllm_start: float, t_first_event: float) -> None:
         """Emit time-to-first-token timing, called when the first event arrives."""
-        now = perf_counter()
-        forwarder_ttft_ms = (now - t0) * 1000.0
-        vllm_ttft_ms = (now - t_vllm_start) * 1000.0
+        forwarder_ttft_ms = (t_first_event - t0) * 1000.0
+        vllm_ttft_ms = (t_first_event - t_vllm_start) * 1000.0
         forwarder_overhead_ms = forwarder_ttft_ms - vllm_ttft_ms
         # dd.trace_id is auto-injected into this log record for correlation.
         logger.info(
@@ -560,7 +559,7 @@ class StreamingForwarder(ModelEngineSerializationMixin):
                     async for event in event_source:
                         if not ttft_recorded:
                             ttft_recorded = True
-                            self._emit_ttft_timing(t0, t_vllm_start)
+                            self._emit_ttft_timing(t0, t_vllm_start, perf_counter())
                         yield self.get_response_payload_stream(
                             using_serialize_results_as_string, event.data
                         )
