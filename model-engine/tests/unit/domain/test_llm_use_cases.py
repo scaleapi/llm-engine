@@ -1377,6 +1377,80 @@ async def test_update_model_endpoint_use_case_clears_checkpoint_path(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "field, stored_value",
+    [
+        ("quantize", Quantization.AWQ),
+        ("chat_template_override", "{{ messages }}"),
+    ],
+)
+async def test_update_model_endpoint_use_case_clears_optional_field(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    fake_llm_model_endpoint_service,
+    llm_model_endpoint_streaming: ModelEndpoint,
+    create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
+    field: str,
+    stored_value,
+):
+    # Explicitly clearing an optional field (=None) must actually clear it, not fall back to
+    # the stored value. quantize and chat_template_override are vllm-only and share the
+    # _resolve_optional_update path with checkpoint_path; cover them too.
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    update_use_case = UpdateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+
+    # Seed a vllm endpoint with the field already set to a non-None stored value.
+    llm_model_endpoint_streaming.record.metadata = {
+        "_llm": {
+            "model_name": create_llm_model_endpoint_request_streaming.model_name,
+            "source": create_llm_model_endpoint_request_streaming.source,
+            "inference_framework": LLMInferenceFramework.VLLM,
+            "inference_framework_image_tag": "0.17.0-with-azcopy",
+            "num_shards": 1,
+            "quantize": None,
+            "checkpoint_path": create_llm_model_endpoint_request_streaming.checkpoint_path,
+            "chat_template_override": None,
+            field: stored_value,
+        }
+    }
+    fake_model_endpoint_service.add_model_endpoint(llm_model_endpoint_streaming)
+    fake_llm_model_endpoint_service.add_model_endpoint(llm_model_endpoint_streaming)
+    fake_model_bundle_repository.add_model_bundle(
+        llm_model_endpoint_streaming.record.current_model_bundle
+    )
+    assert llm_model_endpoint_streaming.record.metadata["_llm"][field] == stored_value
+
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    await update_use_case.execute(
+        user=user,
+        model_endpoint_name=llm_model_endpoint_streaming.record.name,
+        request=UpdateLLMModelEndpointV1Request_gen(**{field: None}),
+    )
+
+    assert llm_model_endpoint_streaming.record.metadata["_llm"][field] is None
+
+
+@pytest.mark.asyncio
 async def test_update_vllm_model_endpoint_does_not_migrate_cache_mode_on_resource_update(
     monkeypatch,
     test_api_key: str,
