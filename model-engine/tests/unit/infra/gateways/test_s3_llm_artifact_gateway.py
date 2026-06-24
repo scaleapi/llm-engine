@@ -2,7 +2,9 @@ from typing import List
 from unittest import mock
 
 import pytest
+from botocore.exceptions import ClientError
 from model_engine_server.common.config import hmi_config
+from model_engine_server.domain.exceptions import ObjectHasInvalidValueException
 from model_engine_server.infra.gateways.s3_llm_artifact_gateway import S3LLMArtifactGateway
 
 
@@ -67,6 +69,100 @@ def test_s3_llm_artifact_gateway_download_file(llm_artifact_gateway, fake_files)
         return_value=mock_s3_resource(fake_files),
     ):
         assert llm_artifact_gateway.download_files(uri, target) == [target]
+
+
+def test_s3_llm_artifact_gateway_list_files(llm_artifact_gateway, fake_files):
+    prefix = "fake-prefix"
+    with mock.patch(
+        "model_engine_server.infra.gateways.s3_llm_artifact_gateway.get_s3_resource",
+        return_value=mock_s3_resource(fake_files),
+    ):
+        files = llm_artifact_gateway.list_files(f"s3://fake-bucket/{prefix}")
+    assert files == [f for f in fake_files if f.startswith(prefix)]
+
+
+def test_s3_llm_artifact_gateway_list_files_access_denied_raises_invalid_value(
+    llm_artifact_gateway,
+):
+    # An S3 AccessDenied (e.g. the deployment role can't read the bucket) should surface
+    # as an actionable invalid-value error mentioning the path, not the IAM role ARN.
+    path = "s3://scale-ml/models/checkpoint"
+    role_arn = "arn:aws:sts::123:assumed-role/secret-role/session"
+    client_error = ClientError(
+        error_response={
+            "Error": {
+                "Code": "AccessDenied",
+                "Message": f"User: {role_arn} is not authorized to perform: s3:ListBucket",
+            }
+        },
+        operation_name="ListObjects",
+    )
+
+    mock_resource = mock.Mock()
+    mock_bucket = mock.Mock()
+    mock_bucket.objects.filter.side_effect = client_error
+    mock_resource.Bucket.return_value = mock_bucket
+
+    with mock.patch(
+        "model_engine_server.infra.gateways.s3_llm_artifact_gateway.get_s3_resource",
+        return_value=mock_resource,
+    ):
+        with pytest.raises(ObjectHasInvalidValueException) as exc_info:
+            llm_artifact_gateway.list_files(path)
+
+    message = str(exc_info.value)
+    assert path in message
+    # The IAM role ARN must never leak into the user-facing message.
+    assert role_arn not in message
+    assert "arn:aws:sts" not in message
+
+
+def test_s3_llm_artifact_gateway_get_model_config_inaccessible_raises_invalid_value(
+    llm_artifact_gateway,
+):
+    # A missing/unreadable config.json (NoSuchKey/AccessDenied) should surface as an
+    # actionable invalid-value error mentioning the path, not the raw S3 detail.
+    path = "s3://scale-ml/models/checkpoint"
+    client_error = ClientError(
+        error_response={
+            "Error": {"Code": "NoSuchKey", "Message": "The specified key does not exist."}
+        },
+        operation_name="HeadObject",
+    )
+
+    mock_resource = mock.Mock()
+    mock_bucket = mock.Mock()
+    mock_bucket.download_file.side_effect = client_error
+    mock_resource.Bucket.return_value = mock_bucket
+
+    with mock.patch(
+        "model_engine_server.infra.gateways.s3_llm_artifact_gateway.get_s3_resource",
+        return_value=mock_resource,
+    ):
+        with pytest.raises(ObjectHasInvalidValueException) as exc_info:
+            llm_artifact_gateway.get_model_config(path)
+
+    assert path in str(exc_info.value)
+
+
+def test_s3_llm_artifact_gateway_list_files_non_access_error_reraised(llm_artifact_gateway):
+    # A non-access ClientError (e.g. throttling) should propagate unchanged, not be
+    # turned into an invalid-value error.
+    client_error = ClientError(
+        error_response={"Error": {"Code": "SlowDown", "Message": "Reduce your request rate."}},
+        operation_name="ListObjects",
+    )
+    mock_resource = mock.Mock()
+    mock_bucket = mock.Mock()
+    mock_bucket.objects.filter.side_effect = client_error
+    mock_resource.Bucket.return_value = mock_bucket
+
+    with mock.patch(
+        "model_engine_server.infra.gateways.s3_llm_artifact_gateway.get_s3_resource",
+        return_value=mock_resource,
+    ):
+        with pytest.raises(ClientError):
+            llm_artifact_gateway.list_files("s3://fake-bucket/prefix")
 
 
 def test_s3_llm_artifact_gateway_get_model_weights(llm_artifact_gateway):

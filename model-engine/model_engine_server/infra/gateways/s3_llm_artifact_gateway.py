@@ -1,14 +1,46 @@
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, NoReturn
 
+from botocore.exceptions import ClientError
 from model_engine_server.common.config import get_model_cache_directory_name, hmi_config
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.core.utils.url import parse_attachment_url
+from model_engine_server.domain.exceptions import ObjectHasInvalidValueException
 from model_engine_server.domain.gateways import LLMArtifactGateway
 from model_engine_server.infra.gateways.s3_utils import get_s3_resource
 
 logger = make_logger(logger_name())
+
+# S3 client error codes that mean the configured checkpoint path is unusable (missing
+# object/bucket or the deployment's role can't read it) rather than a transient/internal
+# failure. We map these to a user-facing message so the deploy reports an actionable cause
+# instead of an opaque 500. The bucket/path is surfaced; the IAM role ARN is never exposed.
+_S3_CHECKPOINT_ACCESS_ERROR_CODES = {
+    "AccessDenied",
+    "NoSuchBucket",
+    "NoSuchKey",
+    "403",
+    "404",
+}
+
+
+def _raise_if_checkpoint_inaccessible(error: ClientError, path: str) -> NoReturn:
+    """Translate an S3 access/not-found error into an actionable user-facing error.
+
+    Logs the full S3 error (AWS message, request context, IAM role, traceback) server-side
+    for operators, then raises a sanitized, path-only ObjectHasInvalidValueException (which
+    the route handlers map to a 400) — never exposing the IAM role ARN. Other client errors
+    (e.g. throttling) are re-raised unchanged.
+    """
+    error_code = error.response.get("Error", {}).get("Code", "")
+    if error_code not in _S3_CHECKPOINT_ACCESS_ERROR_CODES:
+        raise error
+    logger.warning(f"Cannot access checkpoint path {path}: {error_code}", exc_info=True)
+    raise ObjectHasInvalidValueException(
+        f"Could not read model weights at '{path}'. Check that the path exists "
+        f"and that the deployment has read access to the bucket."
+    ) from error
 
 
 class S3LLMArtifactGateway(LLMArtifactGateway):
@@ -23,7 +55,10 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         key = parsed_remote.key
 
         s3_bucket = s3.Bucket(bucket)
-        files = [obj.key for obj in s3_bucket.objects.filter(Prefix=key)]
+        try:
+            files = [obj.key for obj in s3_bucket.objects.filter(Prefix=key)]
+        except ClientError as e:
+            _raise_if_checkpoint_inaccessible(e, path)
         logger.debug(f"Listed {len(files)} files from {path}")
         return files
 
@@ -85,7 +120,10 @@ class S3LLMArtifactGateway(LLMArtifactGateway):
         filepath = os.path.join("/tmp", key.replace("/", "_"))
 
         logger.debug(f"Downloading config from {bucket}/{key} to {filepath}")
-        s3_bucket.download_file(key, filepath)
+        try:
+            s3_bucket.download_file(key, filepath)
+        except ClientError as e:
+            _raise_if_checkpoint_inaccessible(e, path)
 
         with open(filepath, "r") as f:
             config = json.load(f)
