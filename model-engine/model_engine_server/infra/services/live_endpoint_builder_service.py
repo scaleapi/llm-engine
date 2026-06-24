@@ -42,6 +42,7 @@ from model_engine_server.domain.entities import (
 )
 from model_engine_server.domain.exceptions import (
     DockerBuildFailedException,
+    DomainException,
     EndpointResourceInfraException,
 )
 from model_engine_server.domain.gateways import MonitoringMetricsGateway
@@ -83,6 +84,31 @@ BUILD_CONTEXT_TEMP_ROOT = os.path.join(WORKSPACE_PATH, "model-engine", ".build-c
 
 INITIAL_K8S_CACHE_TTL_SECONDS: int = 180
 MAX_IMAGE_TAG_LEN = 128
+# Cap the persisted failure reason so a verbose traceback/string can't blow up the column.
+MAX_STATUS_REASON_LEN = 500
+# Generic reason used when the failure cause isn't a known user-safe exception, so we
+# don't leak raw infra error text (k8s/AWS/DB internals) into the public API.
+GENERIC_STATUS_REASON = "Endpoint deployment failed due to an internal error."
+
+
+def _status_reason_from_error(error: BaseException) -> str:
+    """Derive a user-safe status_reason from a build error.
+
+    Only DomainException messages are surfaced — they are the codebase's own,
+    intentionally user-facing errors (e.g. DockerImageNotFound, invalid request,
+    quota). Any other exception (raw Kubernetes/AWS/DB errors) can carry sensitive
+    internals, so we return a generic message instead. Full detail is still logged.
+    """
+    if isinstance(error, DomainException):
+        collapsed = " ".join(str(error).split())
+        if collapsed:
+            return (
+                collapsed[: MAX_STATUS_REASON_LEN - 1].rstrip() + "…"
+                if len(collapsed) > MAX_STATUS_REASON_LEN
+                else collapsed
+            )
+    return GENERIC_STATUS_REASON
+
 
 RESTRICTED_ENV_VARS_KEYS = {
     "BASE": [
@@ -342,15 +368,19 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                     model_endpoint_id=endpoint_id,
                     destination=create_or_update_response.destination,
                     status=ModelEndpointStatus.READY,
+                    # Clear any reason from a prior failed attempt now that we're healthy.
+                    clear_status_reason=True,
                 )
 
             except Exception as error:  # noqa
                 log_error("Failed endpoint build process!")
-                # Update status as failed endpoint creation on unhandled error
+                # Update status as failed endpoint creation on unhandled error, recording
+                # the cause so it can be surfaced to API consumers.
                 try:
                     await self.model_endpoint_record_repository.update_model_endpoint_record(
                         model_endpoint_id=endpoint_id,
                         status=ModelEndpointStatus.UPDATE_FAILED,
+                        status_reason=_status_reason_from_error(error),
                     )
                 except Exception as error_update:
                     log_error("Failed to update endpoint build status to FAILED")
@@ -714,10 +744,10 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         f"Image build failed for endpoint {model_endpoint_name}, user {user_id}"
                     )
 
-                    await self.model_endpoint_record_repository.update_model_endpoint_record(
-                        model_endpoint_id=build_endpoint_request.model_endpoint_record.id,
-                        status=ModelEndpointStatus.UPDATE_FAILED,
-                    )
+                    # Note: status (and status_reason) is set by the outer except handler
+                    # from the DockerBuildFailedException raised below, so we don't write
+                    # the record here — doing so would be overwritten. The exception message
+                    # is kept user-safe (no internal ids) since it becomes the status_reason.
 
                     if s3_logs_location is not None:
                         help_url = self.filesystem_gateway.generate_signed_url(
@@ -753,7 +783,11 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                         users=[user_id],
                     )
 
-                    raise DockerBuildFailedException(f"Image build failed ({endpoint_id=})")
+                    logger_adapter.error(f"Image build failed ({endpoint_id=})")
+                    raise DockerBuildFailedException(
+                        "Image build failed. Check that the bundle's image and "
+                        "dependencies are valid and accessible."
+                    )
 
         else:
             self.monitoring_metrics_gateway.emit_image_build_cache_hit_metric(image_type)

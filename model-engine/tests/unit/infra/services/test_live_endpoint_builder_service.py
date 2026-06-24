@@ -14,6 +14,7 @@ from model_engine_server.domain.entities.model_bundle_entity import (
     ArtifactLike,
     RunnableImageFlavor,
 )
+from model_engine_server.domain.entities.model_endpoint_entity import ModelEndpointStatus
 from model_engine_server.domain.exceptions import (
     DockerBuildFailedException,
     EndpointResourceInfraException,
@@ -181,6 +182,51 @@ async def test_build_endpoint_update_failed_raises_resource_manager_exception(
         assert fake_monitoring_metrics_gateway.attempted_build == 1
         assert fake_monitoring_metrics_gateway.docker_failed_build == 0
         assert fake_monitoring_metrics_gateway.successful_build == 0
+
+
+@pytest.mark.asyncio
+async def test_build_endpoint_failure_persists_generic_status_reason(
+    build_endpoint_request_sync_pytorch: BuildEndpointRequest,
+    endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
+):
+    # A failed build records a status_reason; a non-DomainException (raw infra error) maps to
+    # the generic message so internals aren't leaked.
+    repo: Any = endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
+    record = build_endpoint_request_sync_pytorch.model_endpoint_record
+    repo.add_model_endpoint_record(record)
+    endpoint_builder_service_empty_docker_built.resource_gateway.__setattr__(
+        "create_or_update_resources", Mock(side_effect=RuntimeError("raw k8s detail"))
+    )
+
+    with pytest.raises(RuntimeError):
+        await endpoint_builder_service_empty_docker_built.build_endpoint(
+            build_endpoint_request_sync_pytorch
+        )
+
+    persisted = await repo.get_model_endpoint_record(model_endpoint_id=record.id)
+    assert persisted.status == ModelEndpointStatus.UPDATE_FAILED
+    assert persisted.status_reason == live_endpoint_builder_service.GENERIC_STATUS_REASON
+
+
+@pytest.mark.asyncio
+async def test_build_endpoint_recovery_clears_prior_status_reason(
+    build_endpoint_request_sync_pytorch: BuildEndpointRequest,
+    endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
+):
+    # A successful build clears any status_reason left over from a prior failed attempt.
+    repo: Any = endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
+    record = build_endpoint_request_sync_pytorch.model_endpoint_record
+    record.status_reason = "Stale reason from a previous failed build."
+    repo.add_model_endpoint_record(record)
+
+    response = await endpoint_builder_service_empty_docker_built.build_endpoint(
+        build_endpoint_request_sync_pytorch.copy(deep=True)
+    )
+
+    assert response == BuildEndpointResponse(status=BuildEndpointStatus.OK)
+    persisted = await repo.get_model_endpoint_record(model_endpoint_id=record.id)
+    assert persisted.status == ModelEndpointStatus.READY
+    assert persisted.status_reason is None
 
 
 @pytest.mark.asyncio

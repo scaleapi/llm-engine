@@ -51,6 +51,7 @@ def translate_model_endpoint_orm_to_model_endpoint_record(
         endpoint_type=model_endpoint_orm.endpoint_type,
         destination=model_endpoint_orm.destination,
         status=model_endpoint_orm.endpoint_status,
+        status_reason=model_endpoint_orm.status_reason,
         current_model_bundle=current_model_bundle,
         public_inference=model_endpoint_orm.public_inference,
         task_expires_seconds=model_endpoint_orm.task_expires_seconds,
@@ -121,6 +122,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         creation_task_id: str,
         status: str,
         owner: str,
+        status_reason: Optional[str] = None,
         public_inference: Optional[bool] = False,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
@@ -134,6 +136,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
             destination=destination,
             creation_task_id=creation_task_id,
             endpoint_status=status,
+            status_reason=status_reason,
             owner=owner,
             public_inference=public_inference,
             task_expires_seconds=task_expires_seconds,
@@ -310,6 +313,8 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         creation_task_id: Optional[str] = None,
         destination: Optional[str] = None,
         status: Optional[str] = None,
+        status_reason: Optional[str] = None,
+        clear_status_reason: bool = False,
         public_inference: Optional[bool] = None,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
@@ -330,11 +335,16 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
                 creation_task_id=creation_task_id,
                 destination=destination,
                 endpoint_status=status,
+                status_reason=status_reason,
                 last_updated_at=datetime.utcnow(),
                 public_inference=public_inference,
                 task_expires_seconds=task_expires_seconds,
                 queue_message_timeout_seconds=queue_message_timeout_seconds,
             )
+            # `status_reason=None` leaves the value unchanged (like every other field);
+            # callers reset it to NULL via the explicit clear_status_reason flag.
+            if clear_status_reason:
+                update_kwargs["status_reason"] = None
             await OrmModelEndpoint.update_by_name_owner(
                 session=session,
                 name=model_endpoint_orm.name,

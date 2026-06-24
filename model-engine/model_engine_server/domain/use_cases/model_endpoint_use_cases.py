@@ -78,6 +78,7 @@ def model_endpoint_entity_to_get_model_endpoint_response(
         metadata=model_endpoint.record.metadata,
         bundle_name=model_endpoint.record.current_model_bundle.name,
         status=model_endpoint.record.status,
+        status_reason=model_endpoint.record.status_reason,
         post_inference_hooks=post_inference_hooks,
         default_callback_url=default_callback_url,  # type: ignore
         default_callback_auth=default_callback_auth,

@@ -182,6 +182,7 @@ def _translate_fake_model_endpoint_orm_to_model_endpoint_record(
         endpoint_type=ModelEndpointType(model_endpoint_orm.endpoint_type),
         destination="test_destination",
         status=ModelEndpointStatus(model_endpoint_orm.endpoint_status),
+        status_reason=getattr(model_endpoint_orm, "status_reason", None),
         current_model_bundle=current_model_bundle,
         task_expires_seconds=model_endpoint_orm.task_expires_seconds,
         queue_message_timeout_seconds=model_endpoint_orm.queue_message_timeout_seconds,
@@ -451,6 +452,7 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         creation_task_id: str,
         status: str,
         owner: str,
+        status_reason: Optional[str] = None,
         public_inference: Optional[bool] = False,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
@@ -492,6 +494,10 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
             model_endpoint_record.creation_task_id = kwargs["creation_task_id"]
         if kwargs["status"] is not None:
             model_endpoint_record.status = kwargs["status"]
+        if kwargs.get("clear_status_reason"):
+            model_endpoint_record.status_reason = None
+        elif kwargs.get("status_reason") is not None:
+            model_endpoint_record.status_reason = kwargs["status_reason"]
         if kwargs.get("task_expires_seconds") is not None:
             model_endpoint_record.task_expires_seconds = kwargs["task_expires_seconds"]
         if kwargs.get("queue_message_timeout_seconds") is not None:
@@ -508,6 +514,8 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         creation_task_id: Optional[str] = None,
         destination: Optional[str] = None,
         status: Optional[str] = None,
+        status_reason: Optional[str] = None,
+        clear_status_reason: bool = False,
         public_inference: Optional[bool] = None,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
@@ -3904,6 +3912,7 @@ def llm_model_endpoint_async(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {
@@ -4041,6 +4050,7 @@ def llm_model_endpoint_sync(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {
@@ -4178,6 +4188,7 @@ def llm_model_endpoint_stream(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {
@@ -4315,6 +4326,7 @@ def llm_model_endpoint_sync_tgi(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {
@@ -4452,6 +4464,7 @@ def llm_model_endpoint_sync_lightllm(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {
@@ -4589,6 +4602,7 @@ def llm_model_endpoint_sync_trt_llm(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {

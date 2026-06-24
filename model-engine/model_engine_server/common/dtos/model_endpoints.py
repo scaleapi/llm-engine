@@ -159,6 +159,10 @@ class GetModelEndpointV1Response(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default=None)  # TODO: JSON type
     bundle_name: str
     status: ModelEndpointStatus
+    status_reason: Optional[str] = Field(
+        default=None,
+        description="Human-readable reason for the current status, e.g. the failure cause when status is UPDATE_FAILED.",
+    )
     post_inference_hooks: Optional[List[str]] = Field(default=None)
     default_callback_url: Optional[HttpUrlStr] = Field(default=None)
     default_callback_auth: Optional[CallbackAuth] = Field(default=None)
