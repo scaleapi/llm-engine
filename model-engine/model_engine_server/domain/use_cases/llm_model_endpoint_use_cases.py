@@ -599,6 +599,19 @@ def validate_checkpoint_files(checkpoint_files: List[str]) -> None:
         raise ObjectHasInvalidValueException("No safetensors found in the checkpoint path.")
 
 
+def _resolve_optional_update(request: Any, field: str, stored: Any) -> Any:
+    """Resolve an optional update field, honoring an explicit clear.
+
+    `request.X or stored` can't clear a field: an explicitly cleared value (None/empty)
+    is falsy and falls back to the stored value. For genuinely optional fields, treat the
+    field as explicitly set when it's in the request's `model_fields_set` (the caller sent
+    it, even as None) and use that value; otherwise keep the stored value.
+    """
+    if field in request.model_fields_set:
+        return getattr(request, field)
+    return stored
+
+
 def encode_template(chat_template: str) -> str:
     """Base64 encode the chat template to safely pass it to bash."""
 
@@ -2079,15 +2092,17 @@ class UpdateLLMModelEndpointV1UseCase:
         # new or explicitly recreated bundles, but resource-only updates must not
         # rebuild existing vLLM bundles from a partial update request because that
         # can drop framework-specific server args.
+        # Optional fields are checked via model_fields_set so an explicit clear (sent as
+        # None) still triggers bundle recreation — `or request.X` would miss it.
         if (
             request.force_bundle_recreation
             or request.model_name
             or request.source
             or request.inference_framework_image_tag
             or request.num_shards
-            or request.quantize
-            or request.checkpoint_path
-            or request.chat_template_override
+            or "quantize" in request.model_fields_set
+            or "checkpoint_path" in request.model_fields_set
+            or "chat_template_override" in request.model_fields_set
         ):
             inference_framework = llm_metadata["inference_framework"]
 
@@ -2102,8 +2117,12 @@ class UpdateLLMModelEndpointV1UseCase:
             model_name = request.model_name or llm_metadata["model_name"]
             source = request.source or llm_metadata["source"]
             num_shards = request.num_shards or llm_metadata["num_shards"]
-            quantize = request.quantize or llm_metadata.get("quantize")
-            checkpoint_path = request.checkpoint_path or llm_metadata.get("checkpoint_path")
+            # Optional fields: honor an explicit clear (sent as None) rather than always
+            # falling back to the stored value, which `request.X or stored` would do.
+            quantize = _resolve_optional_update(request, "quantize", llm_metadata.get("quantize"))
+            checkpoint_path = _resolve_optional_update(
+                request, "checkpoint_path", llm_metadata.get("checkpoint_path")
+            )
 
             validate_model_name(model_name, inference_framework)
             validate_num_shards(
@@ -2113,8 +2132,8 @@ class UpdateLLMModelEndpointV1UseCase:
             )
             validate_quantization(quantize, inference_framework)
             validate_chat_template(request.chat_template_override, inference_framework)
-            chat_template_override = request.chat_template_override or llm_metadata.get(
-                "chat_template_override"
+            chat_template_override = _resolve_optional_update(
+                request, "chat_template_override", llm_metadata.get("chat_template_override")
             )
             stored_vllm_additional_args = llm_metadata.get(VLLM_ADDITIONAL_ARGS_METADATA_KEY)
             if not isinstance(stored_vllm_additional_args, dict):
