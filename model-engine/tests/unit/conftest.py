@@ -3912,6 +3912,7 @@ def llm_model_endpoint_async(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {
@@ -4049,6 +4050,7 @@ def llm_model_endpoint_sync(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {
@@ -4186,6 +4188,7 @@ def llm_model_endpoint_stream(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {
@@ -4323,6 +4326,7 @@ def llm_model_endpoint_sync_tgi(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {
@@ -4460,6 +4464,7 @@ def llm_model_endpoint_sync_lightllm(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {
@@ -4597,6 +4602,7 @@ def llm_model_endpoint_sync_trt_llm(
             },
             "bundle_name": "test_model_bundle_name_1",
             "status": "READY",
+            "status_reason": None,
             "post_inference_hooks": ["callback"],
             "default_callback_url": "http://www.example.com",
             "default_callback_auth": {

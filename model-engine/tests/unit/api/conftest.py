@@ -817,6 +817,7 @@ def model_endpoint_1(
         "metadata": {},
         "bundle_name": "test_model_bundle_name_1",
         "status": "READY",
+        "status_reason": None,
         "post_inference_hooks": ["callback"],
         "default_callback_url": "http://www.example.com",
         "default_callback_auth": {
@@ -934,6 +935,7 @@ def model_endpoint_2(
         "metadata": {},
         "bundle_name": "test_model_bundle_name_1",
         "status": "READY",
+        "status_reason": None,
         "post_inference_hooks": None,
         "default_callback_url": None,
         "default_callback_auth": None,
