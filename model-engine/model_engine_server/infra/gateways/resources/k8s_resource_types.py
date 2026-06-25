@@ -6,7 +6,12 @@ from typing import Any, Dict, List, Optional, Sequence, TypedDict, Union
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerName, BrokerType
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
-from model_engine_server.common.env_vars import CIRCLECI, GIT_TAG, MODEL_CACHE_PVC_SUFFIX
+from model_engine_server.common.env_vars import (
+    CIRCLECI,
+    DD_ENV,
+    GIT_TAG,
+    MODEL_CACHE_PVC_SUFFIX,
+)
 from model_engine_server.common.resource_limits import (
     FORWARDER_CPU_USAGE,
     FORWARDER_MEMORY_USAGE,
@@ -110,6 +115,7 @@ class _BaseDeploymentArguments(_BaseEndpointArguments):
     IMAGE: str
     IMAGE_HASH: str
     DD_TRACE_ENABLED: str
+    DD_ENV: str
     CPUS: str
     MEMORY: str
     STORAGE_DICT: DictStrStr
@@ -667,6 +673,7 @@ def get_endpoint_resource_arguments_from_request(
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
             DD_TRACE_ENABLED=str(dd_trace_enabled),
+            DD_ENV=DD_ENV,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -721,6 +728,7 @@ def get_endpoint_resource_arguments_from_request(
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
             DD_TRACE_ENABLED=str(dd_trace_enabled),
+            DD_ENV=DD_ENV,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -777,6 +785,7 @@ def get_endpoint_resource_arguments_from_request(
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
             DD_TRACE_ENABLED=str(dd_trace_enabled),
+            DD_ENV=DD_ENV,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -830,6 +839,7 @@ def get_endpoint_resource_arguments_from_request(
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
             DD_TRACE_ENABLED=str(dd_trace_enabled),
+            DD_ENV=DD_ENV,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -885,6 +895,7 @@ def get_endpoint_resource_arguments_from_request(
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
             DD_TRACE_ENABLED=str(dd_trace_enabled),
+            DD_ENV=DD_ENV,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -934,6 +945,7 @@ def get_endpoint_resource_arguments_from_request(
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
             DD_TRACE_ENABLED=str(dd_trace_enabled),
+            DD_ENV=DD_ENV,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -985,6 +997,7 @@ def get_endpoint_resource_arguments_from_request(
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
             DD_TRACE_ENABLED=str(dd_trace_enabled),
+            DD_ENV=DD_ENV,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -1047,6 +1060,7 @@ def get_endpoint_resource_arguments_from_request(
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
             DD_TRACE_ENABLED=str(dd_trace_enabled),
+            DD_ENV=DD_ENV,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -1111,6 +1125,7 @@ def get_endpoint_resource_arguments_from_request(
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
             DD_TRACE_ENABLED=str(dd_trace_enabled),
+            DD_ENV=DD_ENV,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -1168,6 +1183,7 @@ def get_endpoint_resource_arguments_from_request(
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
             DD_TRACE_ENABLED=str(dd_trace_enabled),
+            DD_ENV=DD_ENV,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,
@@ -1230,6 +1246,7 @@ def get_endpoint_resource_arguments_from_request(
             IMAGE=request.image,
             IMAGE_HASH=image_hash,
             DD_TRACE_ENABLED=str(dd_trace_enabled),
+            DD_ENV=DD_ENV,
             CPUS=str(build_endpoint_request.cpus),
             MEMORY=str(build_endpoint_request.memory),
             STORAGE_DICT=storage_dict,

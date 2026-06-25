@@ -1,4 +1,12 @@
 dd_trace_enabled: true
+
+# datadog [optional] configures Datadog tagging for model-engine pods.
+datadog:
+  # env [optional] sets the Datadog `env` tag (DD_ENV + tags.datadoghq.com/env) on both
+  # control-plane pods and launched inference endpoints. Falls back to `context` when empty.
+  # Set per-cluster (e.g. "sgp-dev") so pods report the cluster's real environment.
+  env: ""
+
 spellbook:
   enabled: false
 

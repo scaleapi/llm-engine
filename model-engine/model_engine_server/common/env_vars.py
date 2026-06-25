@@ -12,6 +12,7 @@ from model_engine_server.core.loggers import logger_name, make_logger
 
 __all__: Sequence[str] = (
     "CIRCLECI",
+    "DD_ENV",
     "GIT_TAG",
     "LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
     "LAUNCH_SERVICE_TEMPLATE_FOLDER",
@@ -96,3 +97,9 @@ if LOCAL:
 GIT_TAG: str = os.environ.get("GIT_TAG", "GIT_TAG_NOT_FOUND")
 if GIT_TAG == "GIT_TAG_NOT_FOUND" and "pytest" not in sys.modules:
     raise ValueError("GIT_TAG environment variable must be set")
+
+# DD_ENV is the Datadog `env` tag. It is propagated to launched inference endpoints (via the
+# ${DD_ENV} template substitution) so they report the same per-cluster environment as the
+# gateway, instead of the build-time `context`. Defaults to infra_config().env when the
+# DD_ENV environment variable is not set on the gateway (e.g. local/CI).
+DD_ENV: str = os.environ.get("DD_ENV") or infra_config().env

@@ -1,7 +1,7 @@
 {{- if .Values.celery_autoscaler.enabled }}
 {{- if not .Values.serviceIdentifier }}
 {{- $app := include "modelEngine.celeryautoscalername" . }}
-{{- $env := .Values.context }}
+{{- $env := .Values.datadog.env | default .Values.context }}
 {{- $tag := .Values.tag }}
 {{- $message_broker := .Values.celeryBrokerType }}
 {{- $num_shards := .Values.celery_autoscaler.num_shards }}

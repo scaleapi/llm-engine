@@ -51,7 +51,7 @@ Create chart name and version as used by the chart label.
 team: infra
 app.kubernetes.io/version: {{ .Values.tag }}
 tags.datadoghq.com/version: {{ .Values.tag }}
-tags.datadoghq.com/env: {{ .Values.context }}
+tags.datadoghq.com/env: {{ .Values.datadog.env | default .Values.context }}
 env: {{ .Values.context }}
 {{- if .Values.azure }}
 azure.workload.identity/use: "true"
@@ -159,7 +159,7 @@ env:
   - name: DD_SERVICE
     value: "${ENDPOINT_NAME}"
   - name: DD_ENV
-    value: {{ .Values.context }}
+    value: "${DD_ENV}"
   - name: DD_VERSION
     value: "${GIT_TAG}"
   - name: DD_AGENT_HOST
@@ -223,7 +223,7 @@ env:
   - name: DD_SERVICE
     value: "${ENDPOINT_NAME}"
   - name: DD_ENV
-    value: {{ .Values.context }}
+    value: "${DD_ENV}"
   - name: DD_VERSION
     value: "${GIT_TAG}"
   - name: DD_AGENT_HOST
@@ -296,8 +296,8 @@ env:
     value: "{{ .Values.dd_trace_enabled }}"
   - name: DD_REMOTE_CONFIGURATION_ENABLED
     value: "false"
-  - name: DD_ENV
-    value: {{ .Values.context }}
+  {{- /* DD_ENV is set in the serviceEnvGitTag* wrappers: a Helm value for control-plane
+         pods, and the ${DD_ENV} runtime substitution for python-rendered endpoints. */}}
   - name: DD_AGENT_HOST
     valueFrom:
       fieldRef:
@@ -421,6 +421,8 @@ env:
 
 {{- define "modelEngine.serviceEnvGitTagFromHelmVar" }}
 {{- include "modelEngine.serviceEnvBase" . }}
+  - name: DD_ENV
+    value: {{ .Values.datadog.env | default .Values.context }}
   - name: DD_VERSION
     value: {{ .Values.tag }}
   - name: GIT_TAG
@@ -432,6 +434,8 @@ env:
 
 {{- define "modelEngine.serviceEnvGitTagFromPythonReplace" }}
 {{- include "modelEngine.serviceEnvBase" . }}
+  - name: DD_ENV
+    value: "${DD_ENV}"
   - name: DD_VERSION
     value: "${GIT_TAG}"
   - name: GIT_TAG
