@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from datadog import statsd
 from model_engine_server.common.dtos.llms import TokenUsage
-from model_engine_server.core.config import infra_config
+from model_engine_server.common.env_vars import DD_ENV
 from model_engine_server.domain.gateways.monitoring_metrics_gateway import (
     MetricMetadata,
     MonitoringMetricsGateway,
@@ -23,7 +23,7 @@ def get_model_tags(model_name: Optional[str]) -> List[str]:
 class DatadogMonitoringMetricsGateway(MonitoringMetricsGateway):
     def __init__(self, prefix: str = "model_engine"):
         self.prefix = prefix
-        self.tags = [f"env:{infra_config().env}"]
+        self.tags = [f"env:{DD_ENV}"]
 
     def emit_attempted_build_metric(self):
         statsd.increment("scale_launch.service_builder.attempt", tags=self.tags)
