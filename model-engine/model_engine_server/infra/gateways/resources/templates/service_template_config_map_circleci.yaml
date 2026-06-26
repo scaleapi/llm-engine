@@ -12,7 +12,7 @@ metadata:
     tags.datadoghq.com/env: circleci
     env: circleci
     product: model-engine
-    helm.sh/chart: model-engine-0.2.4
+    helm.sh/chart: model-engine-0.2.7
     app.kubernetes.io/managed-by: Helm
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
@@ -33,7 +33,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -68,7 +68,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             tags.datadoghq.com/service: ${ENDPOINT_NAME}
             endpoint_id: ${ENDPOINT_ID}
@@ -135,7 +135,7 @@ data:
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
-                  value: circleci
+                  value: "${DD_ENV}"
                 - name: DD_VERSION
                   value: "${GIT_TAG}"
                 - name: DD_AGENT_HOST
@@ -306,7 +306,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -341,7 +341,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             tags.datadoghq.com/service: ${ENDPOINT_NAME}
             endpoint_id: ${ENDPOINT_ID}
@@ -408,7 +408,7 @@ data:
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
-                  value: circleci
+                  value: "${DD_ENV}"
                 - name: DD_VERSION
                   value: "${GIT_TAG}"
                 - name: DD_AGENT_HOST
@@ -533,7 +533,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -561,7 +561,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             tags.datadoghq.com/service: ${ENDPOINT_NAME}
             endpoint_id: ${ENDPOINT_ID}
@@ -630,7 +630,7 @@ data:
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
-                  value: circleci
+                  value: "${DD_ENV}"
                 - name: DD_VERSION
                   value: "${GIT_TAG}"
                 - name: DD_AGENT_HOST
@@ -807,7 +807,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -835,7 +835,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             tags.datadoghq.com/service: ${ENDPOINT_NAME}
             endpoint_id: ${ENDPOINT_ID}
@@ -904,7 +904,7 @@ data:
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
-                  value: circleci
+                  value: "${DD_ENV}"
                 - name: DD_VERSION
                   value: "${GIT_TAG}"
                 - name: DD_AGENT_HOST
@@ -1035,7 +1035,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -1063,7 +1063,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             tags.datadoghq.com/service: ${ENDPOINT_NAME}
             endpoint_id: ${ENDPOINT_ID}
@@ -1140,7 +1140,7 @@ data:
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
-                  value: circleci
+                  value: "${DD_ENV}"
                 - name: DD_VERSION
                   value: "${GIT_TAG}"
                 - name: DD_AGENT_HOST
@@ -1271,7 +1271,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -1306,7 +1306,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             tags.datadoghq.com/service: ${ENDPOINT_NAME}
             endpoint_id: ${ENDPOINT_ID}
@@ -1379,7 +1379,7 @@ data:
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
-                  value: circleci
+                  value: "${DD_ENV}"
                 - name: DD_VERSION
                   value: "${GIT_TAG}"
                 - name: DD_AGENT_HOST
@@ -1552,7 +1552,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -1587,7 +1587,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             tags.datadoghq.com/service: ${ENDPOINT_NAME}
             endpoint_id: ${ENDPOINT_ID}
@@ -1660,7 +1660,7 @@ data:
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
-                  value: circleci
+                  value: "${DD_ENV}"
                 - name: DD_VERSION
                   value: "${GIT_TAG}"
                 - name: DD_AGENT_HOST
@@ -1787,7 +1787,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -1815,7 +1815,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             tags.datadoghq.com/service: ${ENDPOINT_NAME}
             endpoint_id: ${ENDPOINT_ID}
@@ -1890,7 +1890,7 @@ data:
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
-                  value: circleci
+                  value: "${DD_ENV}"
                 - name: DD_VERSION
                   value: "${GIT_TAG}"
                 - name: DD_AGENT_HOST
@@ -2069,7 +2069,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -2097,7 +2097,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             tags.datadoghq.com/service: ${ENDPOINT_NAME}
             endpoint_id: ${ENDPOINT_ID}
@@ -2172,7 +2172,7 @@ data:
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
-                  value: circleci
+                  value: "${DD_ENV}"
                 - name: DD_VERSION
                   value: "${GIT_TAG}"
                 - name: DD_AGENT_HOST
@@ -2305,7 +2305,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -2333,7 +2333,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             tags.datadoghq.com/service: ${ENDPOINT_NAME}
             endpoint_id: ${ENDPOINT_ID}
@@ -2416,7 +2416,7 @@ data:
                 - name: DD_SERVICE
                   value: "${ENDPOINT_NAME}"
                 - name: DD_ENV
-                  value: circleci
+                  value: "${DD_ENV}"
                 - name: DD_VERSION
                   value: "${GIT_TAG}"
                 - name: DD_AGENT_HOST
@@ -2549,7 +2549,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -2571,7 +2571,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -2593,7 +2593,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -2619,7 +2619,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -2637,7 +2637,7 @@ data:
             metric:
               name: request-concurrency-average
             target:
-              type: Value
+              type: AverageValue
               averageValue: ${CONCURRENCY}
   keda-scaled-object.yaml: |-
     apiVersion: keda.sh/v1alpha1
@@ -2654,7 +2654,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -2701,7 +2701,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -2724,7 +2724,7 @@ data:
               env: circleci
               managed-by: model-engine
               use_scale_launch_endpoint_network_policy: "true"
-              tags.datadoghq.com/env: circleci
+              tags.datadoghq.com/env: ${DD_ENV}
               tags.datadoghq.com/version: ${GIT_TAG}
               tags.datadoghq.com/service: ${ENDPOINT_NAME}
               endpoint_id: ${ENDPOINT_ID}
@@ -2797,6 +2797,8 @@ data:
                   - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                   - --set
                   - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
+                  - --set
+                  - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
                 env:
                   - name: DD_TRACE_ENABLED
                     value: "${DD_TRACE_ENABLED}"
@@ -2805,7 +2807,7 @@ data:
                   - name: DD_SERVICE
                     value: "${ENDPOINT_NAME}"
                   - name: DD_ENV
-                    value: circleci
+                    value: "${DD_ENV}"
                   - name: DD_VERSION
                     value: "${GIT_TAG}"
                   - name: DD_AGENT_HOST
@@ -2929,7 +2931,7 @@ data:
               env: circleci
               managed-by: model-engine
               use_scale_launch_endpoint_network_policy: "true"
-              tags.datadoghq.com/env: circleci
+              tags.datadoghq.com/env: ${DD_ENV}
               tags.datadoghq.com/version: ${GIT_TAG}
               tags.datadoghq.com/service: ${ENDPOINT_NAME}
               endpoint_id: ${ENDPOINT_ID}
@@ -3038,7 +3040,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -3068,7 +3070,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -3099,7 +3101,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -3130,7 +3132,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -3155,7 +3157,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -3183,7 +3185,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -3222,7 +3224,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         tags.datadoghq.com/service: ${ENDPOINT_NAME}
         endpoint_id: ${ENDPOINT_ID}
@@ -3246,7 +3248,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         launch_job_id: ${JOB_ID}
         tags.datadoghq.com/request_id: ${REQUEST_ID}
@@ -3268,7 +3270,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             launch_job_id: ${JOB_ID}
             tags.datadoghq.com/request_id: ${REQUEST_ID}
@@ -3278,7 +3280,7 @@ data:
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
-            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:circleci", "launch_job_id:${JOB_ID}"]}]'
+            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:${DD_ENV}", "launch_job_id:${JOB_ID}"]}]'
             cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
           restartPolicy: Never
@@ -3311,8 +3313,6 @@ data:
                   value: "true"
                 - name: DD_REMOTE_CONFIGURATION_ENABLED
                   value: "false"
-                - name: DD_ENV
-                  value: circleci
                 - name: DD_AGENT_HOST
                   valueFrom:
                     fieldRef:
@@ -3352,6 +3352,8 @@ data:
                   value: "600"
                 - name: CIRCLECI
                   value: "true"
+                - name: DD_ENV
+                  value: ${DD_ENV}
                 - name: DD_VERSION
                   value: ${GIT_TAG}
                 - name: GIT_TAG
@@ -3406,7 +3408,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         launch_job_id: ${JOB_ID}
         tags.datadoghq.com/request_id: ${REQUEST_ID}
@@ -3431,7 +3433,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             launch_job_id: ${JOB_ID}
             tags.datadoghq.com/request_id: ${REQUEST_ID}
@@ -3441,7 +3443,7 @@ data:
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
-            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:circleci", "launch_job_id:${JOB_ID}"]}]'
+            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:${DD_ENV}", "launch_job_id:${JOB_ID}"]}]'
             cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
           restartPolicy: Never
@@ -3473,8 +3475,6 @@ data:
                   value: "true"
                 - name: DD_REMOTE_CONFIGURATION_ENABLED
                   value: "false"
-                - name: DD_ENV
-                  value: circleci
                 - name: DD_AGENT_HOST
                   valueFrom:
                     fieldRef:
@@ -3514,6 +3514,8 @@ data:
                   value: "600"
                 - name: CIRCLECI
                   value: "true"
+                - name: DD_ENV
+                  value: ${DD_ENV}
                 - name: DD_VERSION
                   value: ${GIT_TAG}
                 - name: GIT_TAG
@@ -3586,7 +3588,7 @@ data:
         env: circleci
         managed-by: model-engine
         use_scale_launch_endpoint_network_policy: "true"
-        tags.datadoghq.com/env: circleci
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/version: ${GIT_TAG}
         launch_job_id: ${JOB_ID}
         tags.datadoghq.com/request_id: ${REQUEST_ID}
@@ -3611,7 +3613,7 @@ data:
             env: circleci
             managed-by: model-engine
             use_scale_launch_endpoint_network_policy: "true"
-            tags.datadoghq.com/env: circleci
+            tags.datadoghq.com/env: ${DD_ENV}
             tags.datadoghq.com/version: ${GIT_TAG}
             launch_job_id: ${JOB_ID}
             tags.datadoghq.com/request_id: ${REQUEST_ID}
@@ -3621,7 +3623,7 @@ data:
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
-            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:circleci", "launch_job_id:${JOB_ID}"]}]'
+            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:${DD_ENV}", "launch_job_id:${JOB_ID}"]}]'
             cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
           restartPolicy: Never
@@ -3659,8 +3661,6 @@ data:
                   value: "true"
                 - name: DD_REMOTE_CONFIGURATION_ENABLED
                   value: "false"
-                - name: DD_ENV
-                  value: circleci
                 - name: DD_AGENT_HOST
                   valueFrom:
                     fieldRef:
@@ -3700,6 +3700,8 @@ data:
                   value: "600"
                 - name: CIRCLECI
                   value: "true"
+                - name: DD_ENV
+                  value: ${DD_ENV}
                 - name: DD_VERSION
                   value: ${GIT_TAG}
                 - name: GIT_TAG
