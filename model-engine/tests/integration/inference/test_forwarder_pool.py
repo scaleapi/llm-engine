@@ -10,6 +10,7 @@ server, covering:
 Local only: needs redis on localhost (USE_REDIS_LOCALHOST=1); the SQS case also needs a
 localstack SQS endpoint (AWS_ENDPOINT_URL). Skipped in CI, like test_async_inference.py.
 """
+
 import os
 import signal
 import subprocess
@@ -105,7 +106,9 @@ def stub_main() -> Iterator[int]:
         reraise=True,
     ):
         with attempt:
-            assert requests.get(f"http://localhost:{MAIN_PORT}/readyz", timeout=1).status_code == 200
+            assert (
+                requests.get(f"http://localhost:{MAIN_PORT}/readyz", timeout=1).status_code == 200
+            )
     yield MAIN_PORT
     proc.terminate()
 
@@ -149,15 +152,24 @@ def _start_forwarder(
         sys.executable,
         "-m",
         "model_engine_server.inference.forwarding.celery_forwarder",
-        "--config", CONFIG_PATH,
-        "--queue", queue,
-        "--task-visibility", "VISIBILITY_24H",
-        "--num-workers", str(concurrency),
-        "--broker-type", broker,
-        "--backend-protocol", "redis",
-        "--set", f"forwarder.async.user_port={MAIN_PORT}",
-        "--set", "forwarder.async.predict_route=/predict",
-        "--set", "forwarder.async.healthcheck_route=/readyz",
+        "--config",
+        CONFIG_PATH,
+        "--queue",
+        queue,
+        "--task-visibility",
+        "VISIBILITY_24H",
+        "--num-workers",
+        str(concurrency),
+        "--broker-type",
+        broker,
+        "--backend-protocol",
+        "redis",
+        "--set",
+        f"forwarder.async.user_port={MAIN_PORT}",
+        "--set",
+        "forwarder.async.predict_route=/predict",
+        "--set",
+        "forwarder.async.healthcheck_route=/readyz",
     ]
     if broker == "sqs":
         cmd += ["--sqs-url", sqs_url]
@@ -166,7 +178,10 @@ def _start_forwarder(
 
 def _redis_producer():
     return celery_app(
-        None, task_visibility=TaskVisibility.VISIBILITY_24H, broker_type="redis", backend_protocol="redis"
+        None,
+        task_visibility=TaskVisibility.VISIBILITY_24H,
+        broker_type="redis",
+        backend_protocol="redis",
     )
 
 
@@ -203,7 +218,9 @@ def test_gevent_handles_concurrent_tasks_in_one_process(stub_main, endpoint_conf
         payload = {"url": None, "args": {"sleep_s": 0.5}, "return_pickled": False}
         start = time.monotonic()
         results = [
-            producer.send_task(LIRA_CELERY_TASK_NAME, args=[payload, datetime.utcnow()], queue=queue)
+            producer.send_task(
+                LIRA_CELERY_TASK_NAME, args=[payload, datetime.utcnow()], queue=queue
+            )
             for _ in range(25)
         ]
         for r in results:
@@ -237,7 +254,9 @@ def test_gevent_warm_shutdown_drains_inflight_task(stub_main, endpoint_config_lo
         _drain(worker)
 
 
-@pytest.mark.skipif(not _localstack_sqs_available(), reason="needs localstack SQS at AWS_ENDPOINT_URL")
+@pytest.mark.skipif(
+    not _localstack_sqs_available(), reason="needs localstack SQS at AWS_ENDPOINT_URL"
+)
 def test_forwarder_processes_task_over_sqs_gevent(stub_main, endpoint_config_location):
     # Prod's broker is SQS. Validate the kombu/boto SQS transport under gevent end to end.
     import boto3
@@ -257,7 +276,11 @@ def test_forwarder_processes_task_over_sqs_gevent(stub_main, endpoint_config_loc
     }
     producer.conf.result_backend = "redis://localhost:6379/0"
     try:
-        payload = {"url": None, "args": {"x": 1}, "return_pickled": False}  # keep < 256KB (SQS limit)
+        payload = {
+            "url": None,
+            "args": {"x": 1},
+            "return_pickled": False,
+        }  # keep < 256KB (SQS limit)
         result = producer.send_task(
             LIRA_CELERY_TASK_NAME, args=[payload, datetime.utcnow()], queue=queue
         )

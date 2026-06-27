@@ -1,3 +1,4 @@
+# ruff: noqa: E402  (gevent monkey-patch must run before imports; see CELERY_WORKER_POOL block)
 # gevent worker pool (MLI-7328): IO-bound forwarder runs greenlets in one process instead of N
 # prefork processes (much less memory). Must monkey-patch BEFORE importing celery/boto3/requests
 # or they bind un-patched sockets and greenlets never yield. Import gevent before patch_all() so

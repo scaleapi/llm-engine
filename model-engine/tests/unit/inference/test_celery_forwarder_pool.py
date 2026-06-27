@@ -6,6 +6,7 @@ run in a subprocess (monkey-patching is process-global) and assert:
   - CELERY_WORKER_POOL=gevent  -> importing the module patches sockets
   - default (prefork)          -> nothing is patched (prefork is byte-for-byte unaffected)
 """
+
 import os
 import subprocess
 import sys
