@@ -6,92 +6,115 @@ from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gat
     FirehoseStreamingStorageGateway,
 )
 
+GW = "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway"
 stream_name = "fake-stream"
-
-return_value = {
-    "RecordId": "fake-record-id",
-    "Encrypted": False,
-    "ResponseMetadata": {"HTTPStatusCode": 200},
-}
+fake_record = {"RESPONSE_BODY": {"task_id": "fake-task-id"}}
+ok_response = {"RecordId": "fake-record-id", "ResponseMetadata": {"HTTPStatusCode": 200}}
+err_response = {"RecordId": "fake-record-id", "ResponseMetadata": {"HTTPStatusCode": 500}}
 
 
 @pytest.fixture
-def streaming_storage_gateway():
-    gateway = FirehoseStreamingStorageGateway()
-    return gateway
+def gateway():
+    return FirehoseStreamingStorageGateway()
 
 
-@pytest.fixture
-def fake_record():
-    return {"RESPONSE_BODY": {"task_id": "fake-task-id"}}
+def _fake_client(put_return):
+    client = mock.Mock()
+    client.put_record.return_value = put_return
+    return client
 
 
-def mock_sts_client(*args, **kwargs):
-    mock_client = mock.Mock()
-    mock_client.assume_role.return_value = {
-        "Credentials": {
-            "AccessKeyId": "fake-access-key-id",
-            "SecretAccessKey": "fake-secret-access-key",
-            "SessionToken": "fake-session-token",
-        }
-    }
-    return mock_client
-
-
-def mock_firehose_client(*args, **kwargs):
-    mock_client = mock.Mock()
-    mock_client.put_record.return_value = return_value
-    return mock_client
-
-
-def mock_firehose_client_with_exception(*args, **kwargs):
-    mock_client = mock.Mock()
-    mock_client.put_record.return_value = {
-        "RecordId": "fake-record-id",
-        "Encrypted": False,
-        "ResponseMetadata": {"HTTPStatusCode": 500},
-    }
-    return mock_client
-
-
-mock_sts_session = mock.Mock()
-mock_sts_session.client.return_value = mock_sts_client()
-
-
-mock_firehose_session = mock.Mock()
-mock_firehose_session.client.return_value = mock_firehose_client()
-
-
-mock_session_with_exception = mock.Mock()
-mock_session_with_exception.client.return_value = mock_firehose_client_with_exception()
-
-
-def test_firehose_streaming_storage_gateway_put_record(streaming_storage_gateway, fake_record):
-    with (
-        mock.patch(
-            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.client",
-            mock_sts_client,
-        ),
-        mock.patch(
-            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.Session",
-            side_effect=[mock_sts_session, mock_firehose_session],
-        ),
+def test_put_record_success(gateway):
+    with mock.patch.object(
+        FirehoseStreamingStorageGateway,
+        "_make_refreshable_client",
+        return_value=_fake_client(ok_response),
     ):
-        assert streaming_storage_gateway.put_record(stream_name, fake_record) is return_value
+        assert gateway.put_record(stream_name, fake_record) is ok_response
 
 
-def test_firehose_streaming_storage_gateway_put_record_with_exception(
-    streaming_storage_gateway, fake_record
-):
-    with (
-        mock.patch(
-            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.client",
-            mock_sts_client,
-        ),
-        mock.patch(
-            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.Session",
-            side_effect=[mock_sts_session, mock_session_with_exception],
-        ),
+def test_put_record_raises_on_non_200(gateway):
+    with mock.patch.object(
+        FirehoseStreamingStorageGateway,
+        "_make_refreshable_client",
+        return_value=_fake_client(err_response),
     ):
         with pytest.raises(StreamPutException):
-            streaming_storage_gateway.put_record(stream_name, fake_record)
+            gateway.put_record(stream_name, fake_record)
+
+
+def test_client_built_once_across_calls(gateway):
+    # MLI-7328 regression: client must be cached, not rebuilt per put_record. Per-call
+    # construction leaked memory and OOM-killed the forwarder. Fails if that is reintroduced.
+    client = _fake_client(ok_response)
+    with mock.patch.object(
+        FirehoseStreamingStorageGateway, "_make_refreshable_client", return_value=client
+    ) as make_client:
+        for _ in range(25):
+            gateway.put_record(stream_name, fake_record)
+    assert make_client.call_count == 1
+    assert client.put_record.call_count == 25
+
+
+def test_uses_refreshable_assumed_role_credentials(gateway):
+    # Cached client must be backed by RefreshableCredentials so it survives the temporary STS
+    # token expiry without a rebuild.
+    sts = mock.Mock()
+    sts.assume_role.return_value = {
+        "Credentials": {
+            "AccessKeyId": "ak",
+            "SecretAccessKey": "sk",
+            "SessionToken": "tok",
+            "Expiration": mock.Mock(isoformat=lambda: "2099-01-01T00:00:00Z"),
+        }
+    }
+    firehose = _fake_client(ok_response)
+    sts_session = mock.Mock()
+    sts_session.client.return_value = sts
+    firehose_session = mock.Mock()
+    firehose_session.client.return_value = firehose
+    with (
+        mock.patch(f"{GW}.boto3.Session", side_effect=[sts_session, firehose_session]),
+        mock.patch(f"{GW}.RefreshableCredentials.create_from_metadata") as create_creds,
+        mock.patch(f"{GW}.get_session"),
+    ):
+        gateway.put_record(stream_name, fake_record)
+        gateway.put_record(stream_name, fake_record)
+    sts.assume_role.assert_called()
+    assert create_creds.call_count == 1  # creds/client built once, then reused
+    assert firehose.put_record.call_count == 2
+
+
+def test_refresh_callback_reassumes_role(gateway):
+    # Guards the refresh path deterministically (no 1h wait): botocore calls the refresh_using
+    # callback near expiry; it must re-run assume_role and return fresh creds, so the cached
+    # client keeps working past the temporary token's expiry.
+    sts = mock.Mock()
+    sts.assume_role.return_value = {
+        "Credentials": {
+            "AccessKeyId": "ak",
+            "SecretAccessKey": "sk",
+            "SessionToken": "tok",
+            "Expiration": mock.Mock(isoformat=lambda: "2099-01-01T00:00:00Z"),
+        }
+    }
+    firehose = _fake_client(ok_response)
+    session = mock.Mock()
+    session.client.side_effect = lambda service, **kw: sts if service == "sts" else firehose
+    captured = {}
+
+    def capture_create(metadata, refresh_using, method):
+        captured["refresh_using"] = refresh_using
+        return mock.Mock()
+
+    with (
+        mock.patch(f"{GW}.boto3.Session", return_value=session),
+        mock.patch(f"{GW}.RefreshableCredentials.create_from_metadata", side_effect=capture_create),
+        mock.patch(f"{GW}.get_session"),
+    ):
+        gateway._get_firehose_client()
+        assert sts.assume_role.call_count == 1  # initial assume on build
+
+        refreshed = captured["refresh_using"]()  # what botocore calls near expiry
+        assert sts.assume_role.call_count == 2  # re-assumed, no client rebuild
+        assert refreshed["access_key"] == "ak" and "expiry_time" in refreshed

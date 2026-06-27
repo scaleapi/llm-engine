@@ -1,3 +1,21 @@
+# gevent worker pool (MLI-7328): IO-bound forwarder runs greenlets in one process instead of N
+# prefork processes (much less memory). Must monkey-patch BEFORE importing celery/boto3/requests
+# or they bind un-patched sockets and greenlets never yield. Import gevent before patch_all() so
+# ddtrace installs TracedGreenlet (per-greenlet trace context). Run under ddtrace-run; its 4.x
+# module-cloning keeps this ordering safe. Guarded, so prefork is unaffected.
+import os
+
+CELERY_WORKER_POOL = os.getenv("CELERY_WORKER_POOL", "prefork")
+if CELERY_WORKER_POOL == "gevent":
+    import gevent  # noqa: F401  (import before patch_all so ddtrace patches gevent)
+    from gevent import monkey
+
+    monkey.patch_all()
+elif CELERY_WORKER_POOL == "eventlet":
+    import eventlet
+
+    eventlet.monkey_patch()
+
 import argparse
 import json
 from datetime import datetime, timedelta
@@ -187,18 +205,18 @@ def start_celery_service(
     queue: str,
     concurrency: int,
 ) -> None:
-    worker = app.Worker(
+    # Pool: prefork by default; CELERY_WORKER_POOL=gevent runs greenlets in one process
+    # (monkey-patched at module top). Under gevent there is no worker_max_tasks_per_child, so the
+    # firehose client-cache fix is what bounds per-task memory. Not pool="solo" (one task at a time).
+    worker_kwargs: Dict[str, Any] = dict(
         queues=[queue],
         concurrency=concurrency,
         loglevel="INFO",
         optimization="fair",
-        # Don't use pool="solo" so we can send multiple concurrent requests over
-        # Historically, pool="solo" argument fixes the known issues of celery and some of the libraries.
-        # Particularly asyncio and torchvision transformers. This isn't relevant since celery-forwarder
-        # is quite lightweight
-        # TODO: we should probably use eventlet or gevent for the pool, since
-        # the forwarder is nearly the most extreme example of IO bound.
     )
+    if CELERY_WORKER_POOL != "prefork":
+        worker_kwargs["pool"] = CELERY_WORKER_POOL
+    worker = app.Worker(**worker_kwargs)
     worker.start()
 
 
