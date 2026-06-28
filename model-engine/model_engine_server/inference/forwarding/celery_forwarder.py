@@ -12,10 +12,6 @@ if CELERY_WORKER_POOL == "gevent":
     from gevent import monkey
 
     monkey.patch_all()
-elif CELERY_WORKER_POOL == "eventlet":
-    import eventlet
-
-    eventlet.monkey_patch()
 
 import argparse
 import json
