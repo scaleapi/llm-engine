@@ -2,8 +2,9 @@
 # gevent worker pool (MLI-7328): IO-bound forwarder runs greenlets in one process instead of N
 # prefork processes (much less memory). Must monkey-patch BEFORE importing celery/boto3/requests
 # or they bind un-patched sockets and greenlets never yield. Import gevent before patch_all() so
-# ddtrace installs TracedGreenlet (per-greenlet trace context). Run under ddtrace-run; its 4.x
-# module-cloning keeps this ordering safe. Guarded, so prefork is unaffected.
+# ddtrace installs TracedGreenlet (per-greenlet trace context). Launch as __main__ via python -m
+# (prod: ddtrace-run python -m ...); patching during a plain import under ddtrace-run deadlocks
+# the import lock. Guarded, so prefork is unaffected.
 import os
 
 CELERY_WORKER_POOL = os.getenv("CELERY_WORKER_POOL", "prefork")
