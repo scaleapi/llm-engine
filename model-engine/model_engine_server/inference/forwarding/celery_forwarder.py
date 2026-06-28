@@ -207,8 +207,10 @@ def start_celery_service(
     concurrency: int,
 ) -> None:
     # Pool: prefork by default; CELERY_WORKER_POOL=gevent runs greenlets in one process
-    # (monkey-patched at module top). Under gevent there is no worker_max_tasks_per_child, so the
-    # firehose client-cache fix is what bounds per-task memory. Not pool="solo" (one task at a time).
+    # (monkey-patched at module top). The firehose client-cache fix bounds per-task memory on both
+    # pools. Prefork additionally honors CELERY_WORKER_MAX_TASKS_PER_CHILD (off unless set) to
+    # recycle each child after N tasks as defense-in-depth; gevent has no per-child recycling.
+    # Not pool="solo" (one task at a time).
     worker_kwargs: Dict[str, Any] = dict(
         queues=[queue],
         concurrency=concurrency,
@@ -217,6 +219,10 @@ def start_celery_service(
     )
     if CELERY_WORKER_POOL != "prefork":
         worker_kwargs["pool"] = CELERY_WORKER_POOL
+    else:
+        max_tasks_per_child = os.getenv("CELERY_WORKER_MAX_TASKS_PER_CHILD")
+        if max_tasks_per_child:
+            worker_kwargs["max_tasks_per_child"] = int(max_tasks_per_child)
     worker = app.Worker(**worker_kwargs)
     worker.start()
 
