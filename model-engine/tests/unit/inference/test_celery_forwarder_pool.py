@@ -24,12 +24,14 @@ _IMPORT = "import model_engine_server.inference.forwarding.celery_forwarder"
 
 def _run(check: str, pool: str) -> subprocess.CompletedProcess:
     # Subprocess because gevent monkey-patching is process-global; the child asserts and exits, so
-    # we read the exit code instead of string-matching its output.
+    # we read the exit code instead of string-matching its output. timeout so a regression that
+    # deadlocks (e.g. the import-lock hazard) fails the test instead of hanging the run.
     return subprocess.run(
         [sys.executable, "-c", check],
         env={**os.environ, "CELERY_WORKER_POOL": pool},
         capture_output=True,
         text=True,
+        timeout=60,
     )
 
 
@@ -80,5 +82,6 @@ def test_gevent_boots_under_ddtrace_run():
         env={**os.environ, "CELERY_WORKER_POOL": "gevent"},
         capture_output=True,
         text=True,
+        timeout=60,  # a deadlock regression must fail here, not hang the run
     )
     assert proc.returncode == 0, proc.stderr

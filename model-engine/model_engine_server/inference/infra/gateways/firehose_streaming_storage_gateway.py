@@ -21,15 +21,18 @@ def _firehose_max_pool_connections() -> int:
     # Shared client reused across greenlets under gevent. Default is static; set
     # FIREHOSE_CLIENT_MAX_POOL_CONNECTIONS >= worker concurrency to avoid pool contention.
     # Bad / non-positive values fall back to the default rather than crash-loop the forwarder.
-    raw = os.getenv("FIREHOSE_CLIENT_MAX_POOL_CONNECTIONS", "50")
+    default = 50
+    raw = os.getenv("FIREHOSE_CLIENT_MAX_POOL_CONNECTIONS", str(default))
     try:
         value = int(raw)
         if value >= 1:
             return value
     except ValueError:
         pass
-    logger.warning("Invalid FIREHOSE_CLIENT_MAX_POOL_CONNECTIONS=%r; using default 50", raw)
-    return 50
+    logger.warning(
+        "Invalid FIREHOSE_CLIENT_MAX_POOL_CONNECTIONS=%r; using default %d", raw, default
+    )
+    return default
 
 
 _FIREHOSE_MAX_POOL_CONNECTIONS = _firehose_max_pool_connections()

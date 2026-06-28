@@ -36,10 +36,6 @@ MAIN_PORT = 5005  # forwarder.async.user_port (overridden via --set below)
 CONFIG_PATH = "model_engine_server/inference/configs/service--forwarder.yaml"
 AWS_ENDPOINT_URL = os.getenv("AWS_ENDPOINT_URL", "http://localhost:4566")
 
-# The in-process producer resolves redis via get_redis_host_port(), which honors this env (the
-# worker subprocess sets it too). Set it so the producer and the localhost skip-guard agree.
-os.environ.setdefault("USE_REDIS_LOCALHOST", "1")
-
 
 def _redis_available() -> bool:
     try:
@@ -64,6 +60,13 @@ pytestmark = [
         bool(os.getenv("CIRCLECI")), reason="forwarder integration infra not wired in CI yet"
     ),
 ]
+
+
+@pytest.fixture(autouse=True)
+def _use_localhost_redis(monkeypatch):
+    # The in-process producer resolves redis via get_redis_host_port(), which honors this env. Set
+    # it per-test (auto-restored) instead of mutating global env at collection time.
+    monkeypatch.setenv("USE_REDIS_LOCALHOST", "1")
 
 
 @pytest.fixture(scope="module")
@@ -116,6 +119,8 @@ def stub_main() -> Iterator[int]:
     yield MAIN_PORT
     proc.terminate()
     proc.join(timeout=10)
+    if proc.is_alive():  # don't leave port 5005 bound for the next run
+        proc.kill()
 
 
 @pytest.fixture
@@ -252,6 +257,15 @@ def test_gevent_warm_shutdown_drains_inflight_task(stub_main, endpoint_config_lo
     producer = _redis_producer()
     worker = _start_forwarder(queue, "gevent", endpoint_config_location)
     try:
+        # Warm up so the worker is booted and consuming; otherwise boot can eat the window where
+        # the real task is observably STARTED.
+        warmup = {"url": None, "args": {"x": 1}, "return_pickled": False}
+        assert (
+            producer.send_task(
+                LIRA_CELERY_TASK_NAME, args=[warmup, datetime.utcnow()], queue=queue
+            ).get(timeout=60)
+            is not None
+        )
         payload = {"url": None, "args": {"sleep_s": 5.0}, "return_pickled": False}
         result = producer.send_task(
             LIRA_CELERY_TASK_NAME, args=[payload, datetime.utcnow()], queue=queue
