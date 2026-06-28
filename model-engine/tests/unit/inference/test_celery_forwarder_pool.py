@@ -40,3 +40,15 @@ def test_gevent_pool_monkeypatches_sockets():
 def test_prefork_pool_does_not_monkeypatch():
     # default/prefork must not import or patch gevent, so existing behaviour is unchanged.
     assert "socket_patched False" in _import_with_pool("prefork")
+
+
+def test_unsupported_pool_fails_fast():
+    # A typo'd / unsupported pool must fail fast at import, not start a misconfigured worker.
+    proc = subprocess.run(
+        [sys.executable, "-c", "import model_engine_server.inference.forwarding.celery_forwarder"],
+        env={**os.environ, "CELERY_WORKER_POOL": "bogus"},
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode != 0
+    assert "Unsupported CELERY_WORKER_POOL" in proc.stderr

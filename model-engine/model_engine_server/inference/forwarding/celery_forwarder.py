@@ -7,6 +7,10 @@
 import os
 
 CELERY_WORKER_POOL = os.getenv("CELERY_WORKER_POOL", "prefork")
+if CELERY_WORKER_POOL not in ("prefork", "gevent"):
+    raise ValueError(
+        f"Unsupported CELERY_WORKER_POOL={CELERY_WORKER_POOL!r}; supported values: 'prefork', 'gevent'"
+    )
 if CELERY_WORKER_POOL == "gevent":
     import gevent  # noqa: F401  (import before patch_all so ddtrace patches gevent)
     from gevent import monkey
