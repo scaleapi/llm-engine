@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 from model_engine_server.domain.exceptions import StreamPutException
 from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway import (
+    _FIREHOSE_MAX_POOL_CONNECTIONS,
     FirehoseStreamingStorageGateway,
 )
 
@@ -83,9 +84,9 @@ def test_uses_refreshable_assumed_role_credentials(gateway):
     sts.assume_role.assert_called()
     assert create_creds.call_count == 1  # creds/client built once, then reused
     assert firehose.put_record.call_count == 2
-    # built with the sized connection pool (default 50); guards a silent Config drop -> ~10 conns.
+    # built with the sized connection pool; guards a silent Config drop -> ~10 conns.
     _, client_kwargs = firehose_session.client.call_args
-    assert client_kwargs["config"].max_pool_connections == 50
+    assert client_kwargs["config"].max_pool_connections == _FIREHOSE_MAX_POOL_CONNECTIONS
 
 
 def test_refresh_callback_reassumes_role(gateway):

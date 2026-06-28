@@ -121,6 +121,7 @@ def stub_main() -> Iterator[int]:
     proc.join(timeout=10)
     if proc.is_alive():  # don't leave port 5005 bound for the next run
         proc.kill()
+        proc.join(timeout=5)  # reap the SIGKILL'd child so the socket is released
 
 
 @pytest.fixture
