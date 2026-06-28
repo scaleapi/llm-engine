@@ -16,8 +16,23 @@ from model_engine_server.inference.domain.gateways.streaming_storage_gateway imp
 
 logger = make_logger(logger_name())
 
-# Shared client is reused across greenlets under the gevent pool; size the pool to concurrency.
-_FIREHOSE_MAX_POOL_CONNECTIONS = int(os.getenv("FIREHOSE_CLIENT_MAX_POOL_CONNECTIONS", "50"))
+
+def _firehose_max_pool_connections() -> int:
+    # Shared client reused across greenlets under gevent. Default is static; set
+    # FIREHOSE_CLIENT_MAX_POOL_CONNECTIONS >= worker concurrency to avoid pool contention.
+    # Bad / non-positive values fall back to the default rather than crash-loop the forwarder.
+    raw = os.getenv("FIREHOSE_CLIENT_MAX_POOL_CONNECTIONS", "50")
+    try:
+        value = int(raw)
+        if value >= 1:
+            return value
+    except ValueError:
+        pass
+    logger.warning("Invalid FIREHOSE_CLIENT_MAX_POOL_CONNECTIONS=%r; using default 50", raw)
+    return 50
+
+
+_FIREHOSE_MAX_POOL_CONNECTIONS = _firehose_max_pool_connections()
 
 
 class FirehoseStreamingStorageGateway(StreamingStorageGateway):
@@ -60,6 +75,9 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
             method="sts-assume-role",
         )
         botocore_session = get_session()
+        # Private attr honored by Session.get_credentials() on the pinned botocore. If a botocore
+        # upgrade stops honoring it, creds silently fall back to the un-assumed task role and
+        # cross-account PutRecord gets AccessDenied. Re-verify this on boto upgrades.
         botocore_session._credentials = creds
         return boto3.Session(botocore_session=botocore_session).client(
             "firehose",

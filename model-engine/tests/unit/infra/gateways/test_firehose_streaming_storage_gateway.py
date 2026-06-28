@@ -118,3 +118,18 @@ def test_refresh_callback_reassumes_role(gateway):
         refreshed = captured["refresh_using"]()  # what botocore calls near expiry
         assert sts.assume_role.call_count == 2  # re-assumed, no client rebuild
         assert refreshed["access_key"] == "ak" and "expiry_time" in refreshed
+
+
+def test_failed_build_leaves_client_unset_and_retries(gateway):
+    # If building the client fails, the cache must stay empty so the next call retries instead of
+    # caching a broken client (the build is the load-bearing step of the MLI-7328 fix).
+    good = _fake_client(ok_response)
+    with mock.patch.object(
+        FirehoseStreamingStorageGateway,
+        "_make_refreshable_client",
+        side_effect=[RuntimeError("assume_role failed"), good],
+    ):
+        with pytest.raises(RuntimeError):
+            gateway.put_record(stream_name, fake_record)
+        assert gateway._client is None  # not cached after a failed build
+        assert gateway.put_record(stream_name, fake_record) is ok_response  # retried and succeeded

@@ -217,12 +217,23 @@ def start_celery_service(
         loglevel="INFO",
         optimization="fair",
     )
-    if CELERY_WORKER_POOL != "prefork":
+    if CELERY_WORKER_POOL == "gevent":
         worker_kwargs["pool"] = CELERY_WORKER_POOL
     else:
-        max_tasks_per_child = os.getenv("CELERY_WORKER_MAX_TASKS_PER_CHILD")
-        if max_tasks_per_child:
-            worker_kwargs["max_tasks_per_child"] = int(max_tasks_per_child)
+        # prefork-only recycling knob; ignore junk / non-positive values instead of crashing.
+        max_tasks_raw = os.getenv("CELERY_WORKER_MAX_TASKS_PER_CHILD")
+        if max_tasks_raw:
+            try:
+                max_tasks = int(max_tasks_raw)
+            except ValueError:
+                max_tasks = 0
+            if max_tasks > 0:
+                worker_kwargs["max_tasks_per_child"] = max_tasks
+            else:
+                logger.warning(
+                    "Ignoring invalid CELERY_WORKER_MAX_TASKS_PER_CHILD=%r (need a positive int)",
+                    max_tasks_raw,
+                )
     worker = app.Worker(**worker_kwargs)
     worker.start()
 

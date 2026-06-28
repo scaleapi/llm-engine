@@ -36,6 +36,10 @@ MAIN_PORT = 5005  # forwarder.async.user_port (overridden via --set below)
 CONFIG_PATH = "model_engine_server/inference/configs/service--forwarder.yaml"
 AWS_ENDPOINT_URL = os.getenv("AWS_ENDPOINT_URL", "http://localhost:4566")
 
+# The in-process producer resolves redis via get_redis_host_port(), which honors this env (the
+# worker subprocess sets it too). Set it so the producer and the localhost skip-guard agree.
+os.environ.setdefault("USE_REDIS_LOCALHOST", "1")
+
 
 def _redis_available() -> bool:
     try:
@@ -111,6 +115,7 @@ def stub_main() -> Iterator[int]:
             )
     yield MAIN_PORT
     proc.terminate()
+    proc.join(timeout=10)
 
 
 @pytest.fixture
@@ -215,6 +220,15 @@ def test_gevent_handles_concurrent_tasks_in_one_process(stub_main, endpoint_conf
     producer = _redis_producer()
     worker = _start_forwarder(queue, "gevent", endpoint_config_location, concurrency=20)
     try:
+        # Warm up: wait until the worker is booted and consuming before timing, so boot time is
+        # not charged against the concurrency budget.
+        warmup = {"url": None, "args": {"x": 1}, "return_pickled": False}
+        assert (
+            producer.send_task(
+                LIRA_CELERY_TASK_NAME, args=[warmup, datetime.utcnow()], queue=queue
+            ).get(timeout=60)
+            is not None
+        )
         payload = {"url": None, "args": {"sleep_s": 0.5}, "return_pickled": False}
         start = time.monotonic()
         results = [
@@ -245,9 +259,11 @@ def test_gevent_warm_shutdown_drains_inflight_task(stub_main, endpoint_config_lo
         # Wait until the task is actually running (track_started=True) before signalling, so we
         # test draining an in-flight task, not one still queued during worker boot.
         deadline = time.monotonic() + 30
-        while time.monotonic() < deadline and result.state not in ("STARTED", "SUCCESS"):
-            time.sleep(0.5)
-        assert result.state in ("STARTED", "SUCCESS"), f"task never started (state={result.state})"
+        while time.monotonic() < deadline and result.state != "STARTED":
+            time.sleep(0.2)
+        assert (
+            result.state == "STARTED"
+        ), f"task not in-flight (state={result.state}); cannot test drain"
         worker.send_signal(signal.SIGTERM)  # warm shutdown
         assert result.get(timeout=30) is not None  # in-flight task still completed
     finally:
@@ -274,7 +290,9 @@ def test_forwarder_processes_task_over_sqs_gevent(stub_main, endpoint_config_loc
         "predefined_queues": {queue: {"url": sqs_url}},
         "region": "us-west-2",
     }
-    producer.conf.result_backend = "redis://localhost:6379/0"
+    producer.conf.result_backend = (
+        "redis://localhost:6379/1"  # worker writes db 1 (get_redis_endpoint(1))
+    )
     try:
         payload = {
             "url": None,

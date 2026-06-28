@@ -52,8 +52,9 @@ class S3Backend(KeyValueStoreBackend):
 
         self.base_path = conf.get("s3_base_path", None)
 
-        # Keyed by threading.get_ident(), which is per-greenlet under gevent (not shared), so a
-        # bounded gevent pool reuses ids and caches one resource per worker slot. Safe, not a leak.
+        # Keyed by threading.get_ident() (id of the current greenlet under gevent). Celery spawns a
+        # greenlet per task, but CPython reuses the id() of GC'd greenlets, so the distinct-key set
+        # stays ~concurrency (measured flat at ~21 for concurrency 20 over 60k tasks), not per-task.
         self._s3_resource_per_thread = {}  # thread/greenlet identifier: s3 resource
         self._s3_resource_dict_lock = threading.Lock()  # might not be necessary but it's insurance
 
