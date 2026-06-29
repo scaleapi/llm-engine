@@ -59,14 +59,15 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
 
     def _build_client(self):
         # Cross-account: assume the firehose role, then build a client with those temporary creds.
+        # Pure: returns (client, expiry) and does not touch self, so the caller swaps both in
+        # atomically and a failed (re)build never advances _expiry past a client we did not install.
         # Public boto3 API only (no botocore-internal credential injection).
         region = infra_config().default_region
         creds = boto3.client("sts", region_name=region).assume_role(
             RoleArn=infra_config().firehose_role_arn,
             RoleSessionName="AssumeMlLoggingRoleSession",
         )["Credentials"]
-        self._expiry = creds["Expiration"]  # botocore returns a tz-aware datetime
-        return boto3.client(
+        client = boto3.client(
             "firehose",
             region_name=region,
             aws_access_key_id=creds["AccessKeyId"],
@@ -74,6 +75,7 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
             aws_session_token=creds["SessionToken"],
             config=Config(max_pool_connections=_FIREHOSE_MAX_POOL_CONNECTIONS),
         )
+        return client, creds["Expiration"]  # botocore returns a tz-aware datetime
 
     def _needs_rebuild(self) -> bool:
         if self._expiry is None:
@@ -82,11 +84,12 @@ class FirehoseStreamingStorageGateway(StreamingStorageGateway):
 
     def _get_firehose_client(self):
         # Rebuild only when the assumed-role token is near expiry (~once per token lifetime), never
-        # per task. Double-checked lock: the hot path is lock-free once built and unexpired.
+        # per task. Assign client + expiry together so a failed (re)build leaves the prior client
+        # and expiry intact and the next call retries. Double-checked lock guards the build.
         if self._client is None or self._needs_rebuild():
             with self._lock:
                 if self._client is None or self._needs_rebuild():
-                    self._client = self._build_client()
+                    self._client, self._expiry = self._build_client()
         return self._client
 
     def put_record(self, stream_name: str, record: Dict[str, Any]) -> Dict[str, Any]:

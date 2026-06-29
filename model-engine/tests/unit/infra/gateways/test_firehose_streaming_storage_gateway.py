@@ -97,9 +97,20 @@ def test_failed_build_leaves_client_unset_and_retries(gateway):
     with mock.patch.object(
         FirehoseStreamingStorageGateway,
         "_build_client",
-        side_effect=[RuntimeError("assume_role failed"), _firehose(OK)],
+        side_effect=[RuntimeError("assume_role failed"), (_firehose(OK), _valid())],
     ):
         with pytest.raises(RuntimeError):
             gateway.put_record(STREAM, RECORD)
         assert gateway._client is None  # not cached after a failed build
         assert gateway.put_record(STREAM, RECORD) is OK  # retried and succeeded
+
+
+def test_build_client_is_pure(gateway):
+    # _build_client must not mutate self; the caller assigns client + expiry atomically. This is
+    # what stops a failed (re)build from advancing _expiry past a client we never installed (which
+    # would skip future rebuilds and pin a stale/expiring client).
+    _, patch = _patch_boto(_firehose(OK), _valid())
+    with patch:
+        client, expiry = gateway._build_client()
+    assert gateway._client is None and gateway._expiry is None  # untouched
+    assert client is not None and expiry is not None  # returned, not stored
