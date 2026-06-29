@@ -69,6 +69,16 @@ def _use_localhost_redis(monkeypatch):
     monkeypatch.setenv("USE_REDIS_LOCALHOST", "1")
 
 
+@pytest.fixture(autouse=True)
+def _use_localstack_aws(monkeypatch):
+    # The SQS test's worker subprocess and in-process producer build kombu/botocore SQS clients with
+    # no explicit endpoint; botocore only routes them to localstack when AWS_ENDPOINT_URL is in the
+    # process env. The skip-gate checks localstack with an explicit endpoint_url, so without this it
+    # green-lights the test while those clients hit real AWS. Export it per-test (auto-restored),
+    # like the redis one. The worker subprocess inherits it via os.environ in _start_forwarder.
+    monkeypatch.setenv("AWS_ENDPOINT_URL", AWS_ENDPOINT_URL)
+
+
 @pytest.fixture(scope="module")
 def stub_main() -> Iterator[int]:
     """Stand-in for the model container. /predict sleeps for an optional `sleep_s` found anywhere
