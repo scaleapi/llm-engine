@@ -20,9 +20,8 @@ _CLIENT_REFRESH_LEEWAY = timedelta(minutes=10)
 
 
 def _firehose_max_pool_connections() -> int:
-    # Shared client reused across greenlets under gevent. Default is static; set
-    # FIREHOSE_CLIENT_MAX_POOL_CONNECTIONS >= worker concurrency to avoid pool contention.
-    # Bad / non-positive values fall back to the default rather than crash-loop the forwarder.
+    # Shared client pool size under gevent; set >= worker concurrency. Bad/non-positive values
+    # fall back to the default instead of crash-looping the forwarder.
     default = 50
     raw = os.getenv("FIREHOSE_CLIENT_MAX_POOL_CONNECTIONS", str(default))
     try:

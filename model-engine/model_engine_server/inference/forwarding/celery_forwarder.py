@@ -1,10 +1,8 @@
 # ruff: noqa: E402  (gevent monkey-patch must run before imports; see CELERY_WORKER_POOL block)
-# gevent worker pool (MLI-7328): IO-bound forwarder runs greenlets in one process instead of N
-# prefork processes (much less memory). Must monkey-patch BEFORE importing celery/boto3/requests
-# or they bind un-patched sockets and greenlets never yield. Import gevent before patch_all() so
-# ddtrace installs TracedGreenlet (per-greenlet trace context). Launch as __main__ via python -m
-# (prod: ddtrace-run python -m ...); patching during a plain import under ddtrace-run deadlocks
-# the import lock. Guarded, so prefork is unaffected.
+# Opt-in gevent pool (MLI-7328): patch_all() must run before celery/boto3/requests are imported,
+# or their sockets bind un-patched and greenlets never yield. Import gevent first so ddtrace can
+# patch it. Launch as __main__ (prod: ddtrace-run python -m ...); a plain import under ddtrace-run
+# deadlocks the import lock. Guarded, so prefork is unaffected.
 import os
 
 CELERY_WORKER_POOL = os.getenv("CELERY_WORKER_POOL", "prefork")
@@ -207,11 +205,9 @@ def start_celery_service(
     queue: str,
     concurrency: int,
 ) -> None:
-    # Pool: prefork by default; CELERY_WORKER_POOL=gevent runs greenlets in one process
-    # (monkey-patched at module top). The firehose client-cache fix bounds per-task memory on both
-    # pools. Prefork additionally honors CELERY_WORKER_MAX_TASKS_PER_CHILD (off unless set) to
-    # recycle each child after N tasks as defense-in-depth; gevent has no per-child recycling.
-    # Not pool="solo" (one task at a time).
+    # Pool: prefork by default; CELERY_WORKER_POOL=gevent runs greenlets in one process.
+    # CELERY_WORKER_MAX_TASKS_PER_CHILD (prefork-only, off unless set) recycles each child after N
+    # tasks as defense-in-depth; gevent has no per-child recycling.
     worker_kwargs: Dict[str, Any] = dict(
         queues=[queue],
         concurrency=concurrency,
@@ -221,19 +217,17 @@ def start_celery_service(
     if CELERY_WORKER_POOL == "gevent":
         worker_kwargs["pool"] = CELERY_WORKER_POOL
     else:
-        # prefork-only recycling knob; ignore junk / non-positive values instead of crashing.
-        max_tasks_raw = os.getenv("CELERY_WORKER_MAX_TASKS_PER_CHILD")
-        if max_tasks_raw:
+        raw = os.getenv("CELERY_WORKER_MAX_TASKS_PER_CHILD")
+        if raw:
             try:
-                max_tasks = int(max_tasks_raw)
+                max_tasks = int(raw)
             except ValueError:
-                max_tasks = 0
-            if max_tasks > 0:
+                max_tasks = None
+            if max_tasks is not None and max_tasks > 0:
                 worker_kwargs["max_tasks_per_child"] = max_tasks
             else:
                 logger.warning(
-                    "Ignoring invalid CELERY_WORKER_MAX_TASKS_PER_CHILD=%r (need a positive int)",
-                    max_tasks_raw,
+                    "Ignoring CELERY_WORKER_MAX_TASKS_PER_CHILD=%r (need a positive int)", raw
                 )
     worker = app.Worker(**worker_kwargs)
     worker.start()
