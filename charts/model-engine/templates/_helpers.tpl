@@ -95,7 +95,7 @@ owner: ${OWNER}
 env: {{- .Values.context | printf " %s" }}
 managed-by: {{- include "modelEngine.fullname" . | printf " %s\n" -}}
 use_scale_launch_endpoint_network_policy: "true"
-tags.datadoghq.com/env: ${DD_ENV}
+tags.datadoghq.com/env: "${DD_ENV}"
 tags.datadoghq.com/version: ${GIT_TAG}
 {{- if .Values.azure }}
 azure.workload.identity/use: "true"
