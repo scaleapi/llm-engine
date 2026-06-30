@@ -1603,7 +1603,6 @@ async def test_update_vllm_force_bundle_recreation_preserves_legacy_vllm_args(
         "max_num_seqs": 10,
         "trust_remote_code": True,
         "gpu_memory_utilization": 0.75,
-        "enforce_eager": True,
         "quantization": "awq",
         "disable_log_requests": True,
         "chat_template": "test-template",
@@ -1625,7 +1624,7 @@ async def test_update_vllm_force_bundle_recreation_preserves_legacy_vllm_args(
     assert "--max-model-len 2000" in bundle_command
     assert "--max-num-seqs 10" in bundle_command
     assert "--gpu-memory-utilization 0.75" in bundle_command
-    assert "--enforce-eager" in bundle_command
+    assert "--enforce-eager" not in bundle_command
     assert "--quantization awq" in bundle_command
     assert "--disable-log-requests" in bundle_command
     assert "--chat-template" in bundle_command
@@ -1637,7 +1636,6 @@ async def test_update_vllm_force_bundle_recreation_preserves_legacy_vllm_args(
         "max_num_seqs": 10,
         "trust_remote_code": False,
         "gpu_memory_utilization": 0.75,
-        "enforce_eager": True,
         "quantization": "awq",
         "disable_log_requests": True,
         "chat_template": "test-template",
