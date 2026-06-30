@@ -1,97 +1,116 @@
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 import pytest
 from model_engine_server.domain.exceptions import StreamPutException
 from model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway import (
+    _FIREHOSE_MAX_POOL_CONNECTIONS,
     FirehoseStreamingStorageGateway,
 )
 
-stream_name = "fake-stream"
-
-return_value = {
-    "RecordId": "fake-record-id",
-    "Encrypted": False,
-    "ResponseMetadata": {"HTTPStatusCode": 200},
-}
+GW = "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway"
+STREAM = "fake-stream"
+RECORD = {"RESPONSE_BODY": {"task_id": "fake-task-id"}}
+OK = {"RecordId": "rid", "ResponseMetadata": {"HTTPStatusCode": 200}}
+ERR = {"RecordId": "rid", "ResponseMetadata": {"HTTPStatusCode": 500}}
 
 
 @pytest.fixture
-def streaming_storage_gateway():
-    gateway = FirehoseStreamingStorageGateway()
-    return gateway
+def gateway():
+    return FirehoseStreamingStorageGateway()
 
 
-@pytest.fixture
-def fake_record():
-    return {"RESPONSE_BODY": {"task_id": "fake-task-id"}}
+def _firehose(put_return):
+    client = mock.Mock()
+    client.put_record.return_value = put_return
+    return client
 
 
-def mock_sts_client(*args, **kwargs):
-    mock_client = mock.Mock()
-    mock_client.assume_role.return_value = {
+def _patch_boto(firehose, expiry):
+    # Route boto3.client by service: "sts" returns a stub whose assume_role yields creds expiring
+    # at `expiry`; anything else ("firehose") returns the given firehose stub. The real
+    # _build_client runs, so the assume_role -> client wiring is exercised, not stubbed out.
+    sts = mock.Mock()
+    sts.assume_role.return_value = {
         "Credentials": {
-            "AccessKeyId": "fake-access-key-id",
-            "SecretAccessKey": "fake-secret-access-key",
-            "SessionToken": "fake-session-token",
+            "AccessKeyId": "ak",
+            "SecretAccessKey": "sk",
+            "SessionToken": "tok",
+            "Expiration": expiry,
         }
     }
-    return mock_client
+    return sts, mock.patch(
+        f"{GW}.boto3.client", side_effect=lambda svc, **_: sts if svc == "sts" else firehose
+    )
 
 
-def mock_firehose_client(*args, **kwargs):
-    mock_client = mock.Mock()
-    mock_client.put_record.return_value = return_value
-    return mock_client
+def _valid():
+    return datetime.now(timezone.utc) + timedelta(hours=1)
 
 
-def mock_firehose_client_with_exception(*args, **kwargs):
-    mock_client = mock.Mock()
-    mock_client.put_record.return_value = {
-        "RecordId": "fake-record-id",
-        "Encrypted": False,
-        "ResponseMetadata": {"HTTPStatusCode": 500},
-    }
-    return mock_client
+def test_put_record_success(gateway):
+    _, patch = _patch_boto(_firehose(OK), _valid())
+    with patch:
+        assert gateway.put_record(STREAM, RECORD) is OK
 
 
-mock_sts_session = mock.Mock()
-mock_sts_session.client.return_value = mock_sts_client()
-
-
-mock_firehose_session = mock.Mock()
-mock_firehose_session.client.return_value = mock_firehose_client()
-
-
-mock_session_with_exception = mock.Mock()
-mock_session_with_exception.client.return_value = mock_firehose_client_with_exception()
-
-
-def test_firehose_streaming_storage_gateway_put_record(streaming_storage_gateway, fake_record):
-    with (
-        mock.patch(
-            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.client",
-            mock_sts_client,
-        ),
-        mock.patch(
-            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.Session",
-            side_effect=[mock_sts_session, mock_firehose_session],
-        ),
-    ):
-        assert streaming_storage_gateway.put_record(stream_name, fake_record) is return_value
-
-
-def test_firehose_streaming_storage_gateway_put_record_with_exception(
-    streaming_storage_gateway, fake_record
-):
-    with (
-        mock.patch(
-            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.client",
-            mock_sts_client,
-        ),
-        mock.patch(
-            "model_engine_server.inference.infra.gateways.firehose_streaming_storage_gateway.boto3.Session",
-            side_effect=[mock_sts_session, mock_session_with_exception],
-        ),
-    ):
+def test_put_record_raises_on_non_200(gateway):
+    _, patch = _patch_boto(_firehose(ERR), _valid())
+    with patch:
         with pytest.raises(StreamPutException):
-            streaming_storage_gateway.put_record(stream_name, fake_record)
+            gateway.put_record(STREAM, RECORD)
+
+
+def test_client_built_once_while_token_valid(gateway):
+    # MLI-7328 regression: while the token is valid the client is built once, not per call.
+    sts, patch = _patch_boto(_firehose(OK), _valid())
+    with patch:
+        for _ in range(25):
+            gateway.put_record(STREAM, RECORD)
+    assert sts.assume_role.call_count == 1
+
+
+def test_client_built_with_assumed_role_creds_and_pool(gateway):
+    # Wiring guard: the client uses the assumed-role session token and the sized connection pool
+    # (a silent Config drop would revert to ~10 connections under gevent).
+    _, patch = _patch_boto(_firehose(OK), _valid())
+    with patch as boto_client:
+        gateway.put_record(STREAM, RECORD)
+    fh = next(c for c in boto_client.call_args_list if c.args and c.args[0] == "firehose")
+    assert fh.kwargs["aws_session_token"] == "tok"
+    assert fh.kwargs["config"].max_pool_connections == _FIREHOSE_MAX_POOL_CONNECTIONS
+
+
+def test_rebuilds_when_token_near_expiry(gateway):
+    # Token within the refresh leeway -> the next call re-assumes and rebuilds, rather than reusing
+    # an about-to-expire client. (assume_role goes 1 -> 2.)
+    sts, patch = _patch_boto(_firehose(OK), datetime.now(timezone.utc) + timedelta(minutes=1))
+    with patch:
+        gateway.put_record(STREAM, RECORD)
+        assert sts.assume_role.call_count == 1
+        gateway.put_record(STREAM, RECORD)
+        assert sts.assume_role.call_count == 2
+
+
+def test_failed_build_leaves_client_unset_and_retries(gateway):
+    # A failed build must not cache a broken client; the next call retries (and can succeed).
+    with mock.patch.object(
+        FirehoseStreamingStorageGateway,
+        "_build_client",
+        side_effect=[RuntimeError("assume_role failed"), (_firehose(OK), _valid())],
+    ):
+        with pytest.raises(RuntimeError):
+            gateway.put_record(STREAM, RECORD)
+        assert gateway._client is None  # not cached after a failed build
+        assert gateway.put_record(STREAM, RECORD) is OK  # retried and succeeded
+
+
+def test_build_client_is_pure(gateway):
+    # _build_client must not mutate self; the caller assigns client + expiry atomically. This is
+    # what stops a failed (re)build from advancing _expiry past a client we never installed (which
+    # would skip future rebuilds and pin a stale/expiring client).
+    _, patch = _patch_boto(_firehose(OK), _valid())
+    with patch:
+        client, expiry = gateway._build_client()
+    assert gateway._client is None and gateway._expiry is None  # untouched
+    assert client is not None and expiry is not None  # returned, not stored

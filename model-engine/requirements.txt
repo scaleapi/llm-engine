@@ -225,9 +225,12 @@ googleapis-common-protos==1.72.0
     #   grpc-google-iam-v1
     #   grpcio-status
     #   opentelemetry-exporter-otlp-proto-grpc
+gevent==26.5.0
+    # via -r requirements.in
 greenlet==3.3.2
     # via
     #   -r requirements.in
+    #   gevent
     #   sqlalchemy
 grpc-google-iam-v1==0.14.3
     # via
@@ -706,3 +709,7 @@ zipp==3.23.1
     # via
     #   -r requirements.in
     #   importlib-metadata
+zope-event==6.2
+    # via gevent
+zope-interface==8.5
+    # via gevent

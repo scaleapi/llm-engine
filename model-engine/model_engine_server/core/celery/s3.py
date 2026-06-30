@@ -52,7 +52,10 @@ class S3Backend(KeyValueStoreBackend):
 
         self.base_path = conf.get("s3_base_path", None)
 
-        self._s3_resource_per_thread = {}  # thread identifier: s3 resource
+        # Keyed by threading.get_ident() (id of the current greenlet under gevent). Celery spawns a
+        # greenlet per task, but CPython reuses the id() of GC'd greenlets, so the number of
+        # distinct keys tracks live concurrency, not total tasks (bounded, not a per-task leak).
+        self._s3_resource_per_thread = {}  # thread/greenlet identifier: s3 resource
         self._s3_resource_dict_lock = threading.Lock()  # might not be necessary but it's insurance
 
     def _get_s3_object(self, key):
