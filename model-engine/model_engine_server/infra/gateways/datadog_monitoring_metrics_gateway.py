@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from datadog import statsd
 from model_engine_server.common.dtos.llms import TokenUsage
-from model_engine_server.core.config import infra_config
+from model_engine_server.common.env_vars import DD_ENV
 from model_engine_server.domain.gateways.monitoring_metrics_gateway import (
     MetricMetadata,
     MonitoringMetricsGateway,
@@ -23,7 +23,7 @@ def get_model_tags(model_name: Optional[str]) -> List[str]:
 class DatadogMonitoringMetricsGateway(MonitoringMetricsGateway):
     def __init__(self, prefix: str = "model_engine"):
         self.prefix = prefix
-        self.tags = [f"env:{infra_config().env}"]
+        self.tags = [f"env:{DD_ENV}"]
 
     def emit_attempted_build_metric(self):
         statsd.increment("scale_launch.service_builder.attempt", tags=self.tags)
@@ -56,9 +56,8 @@ class DatadogMonitoringMetricsGateway(MonitoringMetricsGateway):
         statsd.increment("scale_launch.database_cache.miss", tags=self.tags)
 
     def _format_call_tags(self, metadata: MetricMetadata) -> List[str]:
-        tags = self.tags
-        tags.extend(get_model_tags(metadata.model_name))
-        return tags
+        # Copy self.tags; extending it in place would leak per-call tags across emissions.
+        return [*self.tags, *get_model_tags(metadata.model_name)]
 
     def emit_route_call_metric(self, route: str, metadata: MetricMetadata):
         statsd.increment(f"{self.prefix}.{route}.call", tags=self._format_call_tags(metadata))
@@ -87,6 +86,6 @@ class DatadogMonitoringMetricsGateway(MonitoringMetricsGateway):
             statsd.distribution(inter_token_latency, token_usage.inter_token_latency, tags=tags)
 
     def emit_http_call_error_metrics(self, endpoint_name: str, error_code: int):
-        tags = self.tags
-        tags.extend([f"endpoint_name:{endpoint_name}", f"error_code:{error_code}"])
+        # Copy self.tags; extending it in place would leak per-call tags across emissions.
+        tags = [*self.tags, f"endpoint_name:{endpoint_name}", f"error_code:{error_code}"]
         statsd.increment(f"{self.prefix}.upstream_sync_error", tags=tags)

@@ -363,6 +363,7 @@ celeryBrokerType: sqs
 
 datadog:
   enabled: false
+  # env: ""  # Datadog `env` tag (DD_ENV + tags.datadoghq.com/env); set per-cluster (e.g. "sgp-dev"). Falls back to `context` when empty.
 
 recommendedHardware:
   byGpuMemoryGb:
