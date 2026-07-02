@@ -1,14 +1,18 @@
 # flake8: noqa
 import os
+import subprocess
+from pathlib import Path
 
 import psycopg2
 from model_engine_server.db.base import Base, get_engine_url
 from model_engine_server.db.models import *
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, make_url
 from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 SCHEMAS = ["hosted_model_inference", "model"]
+
+MIGRATIONS_DIR = Path(__file__).resolve().parents[1] / "db" / "migrations"
 
 
 def init_database(database_url: str, psycopg_connection):
@@ -36,6 +40,17 @@ def init_database_and_engine(database_url) -> Engine:
     return engine
 
 
+def stamp_alembic_head() -> None:
+    # Mark the database as being at the latest alembic revision, so that a
+    # database initialized via create_all is not left unstamped (which would
+    # cause a subsequent `alembic upgrade head` to replay migrations from the
+    # very beginning). This mirrors run_database_migration.sh, which invokes
+    # alembic from the migrations directory; env.py resolves the database URL
+    # itself (from ML_INFRA_DATABASE_URL if set, otherwise from cloud secrets),
+    # and the subprocess inherits our environment.
+    subprocess.run(["alembic", "stamp", "head"], cwd=MIGRATIONS_DIR, check=True)
+
+
 if __name__ == "__main__":
     url = os.getenv("ML_INFRA_DATABASE_URL")
     # If we are at this point, we want to init the db.
@@ -50,4 +65,7 @@ if __name__ == "__main__":
         with attempt:
             init_database_and_engine(url)
 
-    print(f"Successfully initialized database at {url}")
+    stamp_alembic_head()
+
+    safe_url = make_url(url)
+    print(f"Successfully initialized database {safe_url.database} at {safe_url.host}")

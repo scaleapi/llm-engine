@@ -19,6 +19,23 @@ alembic revision -m “initial”
 alembic stamp fa3267c80731
 ```
 
+# Idempotency and adoption of pre-alembic databases
+
+Migrations are self-adopting and safe to re-run:
+
+1. The initial revision (fa3267c80731) checks whether
+   hosted_model_inference.endpoints already exists. If it does (e.g. the
+   database was initialized via the init_database entrypoint's create_all
+   before alembic was ever run), it skips initial.sql and just records the
+   revision instead of failing on CREATE SCHEMA.
+2. Subsequent add-column revisions check for column existence before
+   adding/dropping, so they no-op on schemas that already have the columns.
+3. The init_database entrypoint stamps `alembic head` after a successful
+   create_all, so freshly initialized databases are never left unstamped.
+
+Manual stamping (stamp_initial_schema.sh) is therefore only needed for
+databases created before this behavior existed.
+
 # Steps to make generic database schema changes
 
 Steps can be found here: https://alembic.sqlalchemy.org/en/latest/tutorial.html#running-our-second-migration

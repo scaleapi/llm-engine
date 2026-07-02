@@ -15,17 +15,24 @@ branch_labels = None
 depends_on = None
 
 
+def _has_column(table: str, column: str, schema: str) -> bool:
+    inspector = sa.inspect(op.get_bind())
+    return any(col['name'] == column for col in inspector.get_columns(table, schema=schema))
+
+
 def upgrade() -> None:
-    op.add_column(
-        'endpoints',
-        sa.Column('status_reason', sa.Text, nullable=True),
-        schema='hosted_model_inference',
-    )
+    if not _has_column('endpoints', 'status_reason', 'hosted_model_inference'):
+        op.add_column(
+            'endpoints',
+            sa.Column('status_reason', sa.Text, nullable=True),
+            schema='hosted_model_inference',
+        )
 
 
 def downgrade() -> None:
-    op.drop_column(
-        'endpoints',
-        'status_reason',
-        schema='hosted_model_inference',
-    )
+    if _has_column('endpoints', 'status_reason', 'hosted_model_inference'):
+        op.drop_column(
+            'endpoints',
+            'status_reason',
+            schema='hosted_model_inference',
+        )
