@@ -31,7 +31,16 @@ Migrations are self-adopting and safe to re-run:
 2. Subsequent add-column revisions check for column existence before
    adding/dropping, so they no-op on schemas that already have the columns.
 3. The init_database entrypoint stamps `alembic head` after a successful
-   create_all, so freshly initialized databases are never left unstamped.
+   create_all, but ONLY when this run created the schema from scratch:
+   it skips stamping if the database already has an alembic revision
+   recorded (public.alembic_version_model_engine has a row), or if
+   hosted_model_inference.endpoints existed before create_all ran.
+   Stamping an already-stamped database would fast-forward the version
+   table past unapplied migrations and silently skip them; stamping a
+   pre-existing unstamped schema would over-claim, since create_all only
+   creates missing tables and never adds columns to existing ones. In both
+   cases the migration job's `alembic upgrade head` does the right thing
+   (applies pending revisions / adopts the schema via the guards above).
 
 Manual stamping (stamp_initial_schema.sh) is therefore only needed for
 databases created before this behavior existed.
