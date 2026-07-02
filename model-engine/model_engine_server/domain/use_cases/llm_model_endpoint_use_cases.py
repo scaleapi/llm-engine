@@ -1431,7 +1431,15 @@ class CreateLLMModelBundleV1UseCase:
         if not is_worker:
             vllm_args.tensor_parallel_size = num_shards
 
-            if vllm_args.gpu_memory_utilization is not None:
+            # At very high GPU memory utilization there is little headroom left for
+            # CUDA graph capture, which can OOM on startup. Default to eager mode in
+            # that regime; below it, leave CUDA graphs enabled for faster decode.
+            # Respect an explicit enforce_eager from the caller (True or False).
+            if (
+                vllm_args.enforce_eager is None
+                and vllm_args.gpu_memory_utilization is not None
+                and vllm_args.gpu_memory_utilization >= 0.95
+            ):
                 vllm_args.enforce_eager = True
 
             if multinode:
