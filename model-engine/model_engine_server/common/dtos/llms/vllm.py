@@ -73,6 +73,11 @@ class VLLMModelConfig(BaseModel):
         description="Enable auto tool choice",
     )
 
+    reasoning_parser: Optional[str] = Field(
+        None,
+        description="Reasoning parser (e.g. 'nemotron_v3', 'deepseek_r1')",
+    )
+
     load_format: Optional[str] = Field(
         None,
         description="The format of the model weights to load.\n\n"
