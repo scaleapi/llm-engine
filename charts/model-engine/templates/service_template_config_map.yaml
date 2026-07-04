@@ -3,7 +3,6 @@
 {{- $forwarder_repository := .Values.image.forwarderRepository -}}
 {{- $triton_repository := .Values.triton.image.repository -}}
 {{- $triton_tag := .Values.triton.image.tag -}}
-{{- $env := .Values.context -}}
 {{- $service_template_labels := include "modelEngine.serviceTemplateLabels" . }}
 {{- $job_template_labels := include "modelEngine.jobTemplateLabels" . }}
 {{- $service_env := include "modelEngine.serviceEnvGitTagFromPythonReplace" . }}
@@ -1084,7 +1083,7 @@ data:
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
-            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "launch_job_id:${JOB_ID}"]}]'
+            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:${DD_ENV}", "launch_job_id:${JOB_ID}"]}]'
             cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
           restartPolicy: Never
@@ -1193,7 +1192,7 @@ data:
             sidecar.istio.io/inject: "false"
             version: v1
           annotations:
-            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:{{ $env }}", "launch_job_id:${JOB_ID}"]}]'
+            ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:${DD_ENV}", "launch_job_id:${JOB_ID}"]}]'
             cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
           restartPolicy: Never

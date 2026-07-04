@@ -1,3 +1,21 @@
+# ruff: noqa: E402  (gevent monkey-patch must run before imports; see CELERY_WORKER_POOL block)
+# Opt-in gevent pool (MLI-7328): patch_all() must run before celery/boto3/requests are imported,
+# or their sockets bind un-patched and greenlets never yield. Import gevent first so ddtrace can
+# patch it. Launch as __main__ (prod: ddtrace-run python -m ...); a plain import under ddtrace-run
+# deadlocks the import lock. Guarded, so prefork is unaffected.
+import os
+
+CELERY_WORKER_POOL = os.getenv("CELERY_WORKER_POOL", "prefork")
+if CELERY_WORKER_POOL not in ("prefork", "gevent"):
+    raise ValueError(
+        f"Unsupported CELERY_WORKER_POOL={CELERY_WORKER_POOL!r}; supported values: 'prefork', 'gevent'"
+    )
+if CELERY_WORKER_POOL == "gevent":
+    import gevent  # noqa: F401  (import before patch_all so ddtrace patches gevent)
+    from gevent import monkey
+
+    monkey.patch_all()
+
 import argparse
 import json
 from datetime import datetime, timedelta
@@ -187,18 +205,31 @@ def start_celery_service(
     queue: str,
     concurrency: int,
 ) -> None:
-    worker = app.Worker(
+    # Pool: prefork by default; CELERY_WORKER_POOL=gevent runs greenlets in one process.
+    # CELERY_WORKER_MAX_TASKS_PER_CHILD (prefork-only, off unless set) recycles each child after N
+    # tasks as defense-in-depth; gevent has no per-child recycling.
+    worker_kwargs: Dict[str, Any] = dict(
         queues=[queue],
         concurrency=concurrency,
         loglevel="INFO",
         optimization="fair",
-        # Don't use pool="solo" so we can send multiple concurrent requests over
-        # Historically, pool="solo" argument fixes the known issues of celery and some of the libraries.
-        # Particularly asyncio and torchvision transformers. This isn't relevant since celery-forwarder
-        # is quite lightweight
-        # TODO: we should probably use eventlet or gevent for the pool, since
-        # the forwarder is nearly the most extreme example of IO bound.
     )
+    if CELERY_WORKER_POOL == "gevent":
+        worker_kwargs["pool"] = CELERY_WORKER_POOL
+    else:
+        raw = os.getenv("CELERY_WORKER_MAX_TASKS_PER_CHILD")
+        if raw:
+            try:
+                max_tasks = int(raw)
+            except ValueError:
+                max_tasks = None
+            if max_tasks is not None and max_tasks > 0:
+                worker_kwargs["max_tasks_per_child"] = max_tasks
+            else:
+                logger.warning(
+                    "Ignoring CELERY_WORKER_MAX_TASKS_PER_CHILD=%r (need a positive int)", raw
+                )
+    worker = app.Worker(**worker_kwargs)
     worker.start()
 
 
