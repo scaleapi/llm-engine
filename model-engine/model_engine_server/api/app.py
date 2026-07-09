@@ -82,7 +82,8 @@ class CustomMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=500,
                 content={
-                    "error": "Internal error occurred. Our team has been notified.",
+                    "error": "Internal error occurred in service model-engine. Our team has been notified.",
+                    "error_details": " ".join((str(e) or "").split())[:200],
                     "timestamp": timestamp,
                     "request_id": request_id,
                 },
