@@ -22,16 +22,20 @@ def test_healthcheck(simple_client: TestClient):
     assert response.status_code == 200
 
 
-def test_unhandled_exception_response_includes_error_details():
+def _get_unhandled_exception_response(error_details: str):
     test_app = FastAPI(middleware=[Middleware(CustomMiddleware)])
-    error_details = "No checkpoint path found for model Qwen/Qwen3-8B"
 
     @test_app.get("/raises")
     async def raises():
         raise RuntimeError(error_details)
 
     client = TestClient(test_app, raise_server_exceptions=False)
-    response = client.get("/raises")
+    return client.get("/raises")
+
+
+def test_unhandled_exception_response_includes_error_details():
+    error_details = "No checkpoint path found for model Qwen/Qwen3-8B"
+    response = _get_unhandled_exception_response(error_details)
 
     assert response.status_code == 500
     assert (
@@ -39,6 +43,22 @@ def test_unhandled_exception_response_includes_error_details():
         == "Internal error occurred in service model-engine. Our team has been notified."
     )
     assert response.json()["error_details"] == error_details
+
+
+def test_unhandled_exception_error_details_are_truncated():
+    error_details = "x" * 250
+    response = _get_unhandled_exception_response(error_details)
+
+    assert response.status_code == 500
+    assert response.json()["error_details"] == "x" * 200
+
+
+def test_unhandled_exception_error_details_are_whitespace_normalized():
+    error_details = "first line\n\t second   line"
+    response = _get_unhandled_exception_response(error_details)
+
+    assert response.status_code == 500
+    assert response.json()["error_details"] == "first line second line"
 
 
 def test_rename_openapi_schemas_renames_discriminated_unions():
