@@ -1,14 +1,13 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from starlette.middleware import Middleware
-
 from model_engine_server.api.app import (
-    CustomMiddleware,
     OPENAPI_SCHEMA_RENAME_PATTERNS,
+    CustomMiddleware,
     _convert_openapi_31_to_30,
     _rename_openapi_schemas,
     get_openapi_schema,
 )
+from starlette.middleware import Middleware
 
 
 def test_healthcheck(simple_client: TestClient):
