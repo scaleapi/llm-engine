@@ -6,6 +6,7 @@ from unittest import mock
 
 import pytest
 import requests_mock
+from aiohttp import ClientResponse
 from aioresponses import aioresponses
 from fastapi import BackgroundTasks, FastAPI
 from fastapi.responses import JSONResponse
@@ -30,6 +31,19 @@ from model_engine_server.inference.post_inference_hooks import PostInferenceHook
 from tests.unit.conftest import FakeStreamingStorageGateway
 
 PAYLOAD: Mapping[str, str] = {"hello": "world"}
+
+
+@pytest.fixture(autouse=True)
+def aioresponses_aiohttp_314_compat(monkeypatch):
+    """Allow aioresponses 0.7.9 to construct aiohttp 3.14 responses."""
+    original_init = ClientResponse.__init__
+
+    def compatible_init(self, *args, stream_writer=None, **kwargs):
+        if stream_writer is None:
+            stream_writer = mock.Mock(output_size=0)
+        original_init(self, *args, stream_writer=stream_writer, **kwargs)
+
+    monkeypatch.setattr(ClientResponse, "__init__", compatible_init)
 
 
 class ExceptionCapturedThread(threading.Thread):
