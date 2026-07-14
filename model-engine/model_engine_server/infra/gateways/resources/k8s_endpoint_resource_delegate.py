@@ -21,6 +21,7 @@ from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from model_engine_server.common.env_vars import (
     CIRCLECI,
+    DD_ENV,
     LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH,
     LAUNCH_SERVICE_TEMPLATE_FOLDER,
     MODEL_CACHE_MOUNT_PATH,
@@ -277,6 +278,10 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
     # K8s/container error at deploy time, rather than a KeyError deep
     # inside the service-builder celery task.
     filtered_kwargs = {k: v for k, v in substitution_kwargs.items() if v is not None}
+    # Inject the Datadog env tag for every launched resource (endpoints, batch jobs, etc.)
+    # so any ${DD_ENV} in labels / env vars / log configs resolves to the gateway's
+    # per-cluster env (set via the chart's datadog.env). setdefault lets a caller override.
+    filtered_kwargs.setdefault("DD_ENV", DD_ENV)
     yaml_str = Template(template_str).safe_substitute(**filtered_kwargs)
     try:
         yaml_obj = yaml.safe_load(yaml_str)

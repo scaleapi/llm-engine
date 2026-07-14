@@ -1,10 +1,13 @@
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from model_engine_server.api.app import (
     OPENAPI_SCHEMA_RENAME_PATTERNS,
+    CustomMiddleware,
     _convert_openapi_31_to_30,
     _rename_openapi_schemas,
     get_openapi_schema,
 )
+from starlette.middleware import Middleware
 
 
 def test_healthcheck(simple_client: TestClient):
@@ -16,6 +19,45 @@ def test_healthcheck(simple_client: TestClient):
 
     response = simple_client.get("/readyz")
     assert response.status_code == 200
+
+
+def _get_unhandled_exception_response(error_details: str):
+    test_app = FastAPI(middleware=[Middleware(CustomMiddleware)])
+
+    @test_app.get("/raises")
+    async def raises():
+        raise RuntimeError(error_details)
+
+    client = TestClient(test_app, raise_server_exceptions=False)
+    return client.get("/raises")
+
+
+def test_unhandled_exception_response_includes_error_details():
+    error_details = "No checkpoint path found for model Qwen/Qwen3-8B"
+    response = _get_unhandled_exception_response(error_details)
+
+    assert response.status_code == 500
+    assert (
+        response.json()["error"]
+        == "Internal error occurred in service model-engine. Our team has been notified."
+    )
+    assert response.json()["error_details"] == error_details
+
+
+def test_unhandled_exception_error_details_are_truncated():
+    error_details = "x" * 250
+    response = _get_unhandled_exception_response(error_details)
+
+    assert response.status_code == 500
+    assert response.json()["error_details"] == "x" * 200
+
+
+def test_unhandled_exception_error_details_are_whitespace_normalized():
+    error_details = "first line\n\t second   line"
+    response = _get_unhandled_exception_response(error_details)
+
+    assert response.status_code == 500
+    assert response.json()["error_details"] == "first line second line"
 
 
 def test_rename_openapi_schemas_renames_discriminated_unions():
