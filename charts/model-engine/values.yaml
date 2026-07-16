@@ -7,6 +7,12 @@ datadog:
   # Set per-cluster (e.g. "sgp-dev") so pods report the cluster's real environment.
   env: ""
 
+# wasmPlugin controls the Istio attributegen plugin used only to enrich request
+# metrics. Disable it in airgapped or TLS-intercepted clusters where the remote
+# WASM binary cannot be fetched safely.
+wasmPlugin:
+  enabled: true
+
 spellbook:
   enabled: false
 

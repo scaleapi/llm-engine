@@ -1,4 +1,4 @@
-{{- if empty .Values.azure }}
+{{- if and (empty .Values.azure) .Values.wasmPlugin.enabled }}
 apiVersion: telemetry.istio.io/v1alpha1
 kind: Telemetry
 metadata:
