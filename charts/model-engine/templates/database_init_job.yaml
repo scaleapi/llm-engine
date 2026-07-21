@@ -20,6 +20,10 @@ spec:
         {{- include "modelEngine.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -27,6 +31,10 @@ spec:
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       containers:
         - name: {{ include "modelEngine.fullname" . }}
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
