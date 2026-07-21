@@ -16,17 +16,24 @@ branch_labels = None
 depends_on = None
 
 
+def _has_column(table: str, column: str, schema: str) -> bool:
+    inspector = sa.inspect(op.get_bind())
+    return any(col["name"] == column for col in inspector.get_columns(table, schema=schema))
+
+
 def upgrade() -> None:
-    op.add_column(
-        "bundles",
-        sa.Column("runnable_image_extra_routes", ARRAY(sa.Text), nullable=True),
-        schema="hosted_model_inference",
-    )
+    if not _has_column("bundles", "runnable_image_extra_routes", "hosted_model_inference"):
+        op.add_column(
+            "bundles",
+            sa.Column("runnable_image_extra_routes", ARRAY(sa.Text), nullable=True),
+            schema="hosted_model_inference",
+        )
 
 
 def downgrade():
-    op.drop_column(
-        "bundles",
-        "runnable_image_extra_routes",
-        schema="hosted_model_inference",
-    )
+    if _has_column("bundles", "runnable_image_extra_routes", "hosted_model_inference"):
+        op.drop_column(
+            "bundles",
+            "runnable_image_extra_routes",
+            schema="hosted_model_inference",
+        )
