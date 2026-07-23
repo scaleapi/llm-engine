@@ -147,7 +147,7 @@ data:
                 - --set
                 - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                 - --set
-                - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
+                - "forwarder.max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
               {{- $sync_forwarder_template_env | nindent 14 }}
               readinessProbe:
                 httpGet:
@@ -205,7 +205,7 @@ data:
                 - --set
                 - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
                 - --set
-                - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
+                - "forwarder.max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
               {{- $sync_forwarder_template_env | nindent 14 }}
               readinessProbe:
                 httpGet:
@@ -615,7 +615,7 @@ data:
                   - --set
                   - "forwarder.sync.routes=${FORWARDER_SYNC_ROUTES}"
                   - --set
-                  - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
+                  - "forwarder.max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
                 {{- $sync_forwarder_template_env | nindent 16 }}
                 readinessProbe:
                   httpGet:
@@ -673,7 +673,7 @@ data:
                   - --set
                   - "forwarder.stream.routes=${FORWARDER_STREAM_ROUTES}"
                   - --set
-                  - "max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
+                  - "forwarder.max_concurrency=${FORWARDER_MAX_CONCURRENCY}"
                 {{- $sync_forwarder_template_env | nindent 16 }}
                 readinessProbe:
                   httpGet:
