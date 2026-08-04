@@ -47,7 +47,7 @@ class CreateAsyncInferenceTaskV1UseCase:
         """
         # Task submission only needs the endpoint record; fetching the full endpoint would
         # also read infra state, whose k8s fallback on cache miss is too expensive for this
-        # hot path (fleet-wide apiserver throttling, 2026-08-04).
+        # hot path.
         record = await self.model_endpoint_service.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id
         )

@@ -176,6 +176,10 @@ async def main(args: Any):
         except Exception:
             loop_succeeded = False
             logger.exception("Cache write loop iteration failed; retrying after sleep")
+            # Drop readiness so persistent failures stay visible to k8s now that the
+            # process no longer exits on them.
+            if os.path.exists(READYZ_FPATH):
+                os.remove(READYZ_FPATH)
         loop_end = time.time()
         loop_duration = loop_end - loop_start
         logger.info(f"Loop took {loop_duration} seconds")

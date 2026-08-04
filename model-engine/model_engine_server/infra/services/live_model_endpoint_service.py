@@ -134,7 +134,18 @@ class LiveModelEndpointService(ModelEndpointService):
             if inflight is None:
                 inflight = asyncio.create_task(self._read_and_cache_infra_state(record=record))
                 _infra_state_inflight[record.id] = inflight
-                inflight.add_done_callback(lambda _task: _infra_state_inflight.pop(record.id, None))
+
+                def _cleanup(task: "asyncio.Task", endpoint_id: str = record.id) -> None:
+                    _infra_state_inflight.pop(endpoint_id, None)
+                    # Retrieve the exception in case every awaiter was cancelled before
+                    # consuming it, so the shared task never logs as unretrieved.
+                    if not task.cancelled() and task.exception() is not None:
+                        logger.warning(
+                            f"Coalesced infra state read for {endpoint_id} failed: "
+                            f"{task.exception()!r}"
+                        )
+
+                inflight.add_done_callback(_cleanup)
             # shield so one awaiter's cancellation (e.g. client disconnect) doesn't cancel
             # the shared fetch for the others
             state = await asyncio.shield(inflight)
