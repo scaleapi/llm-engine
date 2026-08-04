@@ -1351,7 +1351,7 @@ class K8SEndpointResourceDelegate:
     ):
         k8s_core_api = get_kubernetes_core_client()
         config_maps = await k8s_core_api.list_namespaced_config_map(
-            namespace=hmi_config.endpoint_namespace
+            namespace=hmi_config.endpoint_namespace, resource_version="0"
         )
         return config_maps.items
 
@@ -2403,12 +2403,17 @@ class K8SEndpointResourceDelegate:
         apps_client = get_kubernetes_apps_client()
         autoscaling_client = get_kubernetes_autoscaling_client()
         custom_objects_client = get_kubernetes_custom_objects_client()
+        # resource_version="0" serves these full-namespace LISTs from the apiserver watch
+        # cache instead of quorum-reading etcd; freshness within one poll interval is enough
+        # for a cache that is rebuilt every loop.
         deployments = (
-            await apps_client.list_namespaced_deployment(namespace=hmi_config.endpoint_namespace)
+            await apps_client.list_namespaced_deployment(
+                namespace=hmi_config.endpoint_namespace, resource_version="0"
+            )
         ).items
         hpas = (
             await autoscaling_client.list_namespaced_horizontal_pod_autoscaler(
-                namespace=hmi_config.endpoint_namespace
+                namespace=hmi_config.endpoint_namespace, resource_version="0"
             )
         ).items
         try:
@@ -2418,6 +2423,7 @@ class K8SEndpointResourceDelegate:
                     version="v1",
                     namespace=hmi_config.endpoint_namespace,
                     plural="verticalpodautoscalers",
+                    resource_version="0",
                 )
             )["items"]
         except ApiException as e:
@@ -2432,6 +2438,7 @@ class K8SEndpointResourceDelegate:
                     version="v1alpha1",
                     namespace=hmi_config.endpoint_namespace,
                     plural="scaledobjects",
+                    resource_version="0",
                 )
             )["items"]
         except ApiException as e:
@@ -2447,6 +2454,7 @@ class K8SEndpointResourceDelegate:
                     version="v1",
                     namespace=hmi_config.endpoint_namespace,
                     plural="leaderworkersets",
+                    resource_version="0",
                 )
             )["items"]
         except ApiException as e:

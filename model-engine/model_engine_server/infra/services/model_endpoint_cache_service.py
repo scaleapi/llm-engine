@@ -1,5 +1,6 @@
 from typing import Dict, Tuple
 
+from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.entities import ModelEndpointInfraState
 from model_engine_server.infra.gateways.resources.endpoint_resource_gateway import (
     EndpointResourceGateway,
@@ -8,6 +9,8 @@ from model_engine_server.infra.repositories.model_endpoint_cache_repository impo
     ModelEndpointCacheRepository,
 )
 from model_engine_server.infra.services.image_cache_service import ImageCacheService
+
+logger = make_logger(logger_name())
 
 
 class ModelEndpointCacheWriteService:
@@ -43,4 +46,10 @@ class ModelEndpointCacheWriteService:
                     endpoint_id="", endpoint_info=state, ttl_seconds=ttl_seconds
                 )
 
-        await self.image_cache_service.execute(endpoint_infra_states=endpoint_infra_states)
+        # Image caching is a spinup optimization; its k8s writes (daemonset create/update)
+        # must not fail the endpoint cache refresh above, which readers depend on to stay
+        # off the apiserver.
+        try:
+            await self.image_cache_service.execute(endpoint_infra_states=endpoint_infra_states)
+        except Exception:
+            logger.exception("Image cache update failed; endpoint cache was still refreshed")

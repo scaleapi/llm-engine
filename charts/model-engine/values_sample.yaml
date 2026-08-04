@@ -89,6 +89,13 @@ destinationrule:
   enabled: true
   annotations: { }
 
+# cacher configures the kubernetes state caching deployment
+cacher:
+  # ttlSeconds is the redis TTL for cached endpoint infra state. It must comfortably exceed
+  # the cacher's worst-case refresh loop duration; entries expiring between refreshes push
+  # every reader to direct k8s reads.
+  ttlSeconds: 600
+
 # replicaCount specifies the amount of replica pods for each deployment
 replicaCount:
   # gateway is the main LLM Engine server deployment
