@@ -61,6 +61,8 @@ spec:
             - python
             - -m
             - model_engine_server.entrypoints.k8s_cache
+            - --ttl-seconds
+            - {{ ((.Values.cacher).ttlSeconds | default 600) | quote }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- include "modelEngine.cacherEnv" . | indent 10 }}

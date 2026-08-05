@@ -64,3 +64,30 @@ async def test_model_endpoint_write_success(
         deployment_name=model_endpoint_1.infra_state.deployment_name,
     )
     assert infra_state is None
+
+
+@pytest.mark.asyncio
+async def test_model_endpoint_write_survives_image_cache_failure(
+    fake_model_endpoint_cache_repository,
+    fake_resource_gateway,
+    fake_image_cache_service,
+    model_endpoint_1,
+):
+    fake_resource_gateway.add_resource(
+        endpoint_id=model_endpoint_1.record.id, infra_state=model_endpoint_1.infra_state
+    )
+
+    async def raise_api_error(endpoint_infra_states):
+        raise RuntimeError("simulated k8s failure (e.g. 429)")
+
+    fake_image_cache_service.execute = raise_api_error
+
+    cache_write_service = ModelEndpointCacheWriteService(
+        fake_model_endpoint_cache_repository, fake_resource_gateway, fake_image_cache_service
+    )
+    await cache_write_service.execute(42)
+    infra_state = await fake_model_endpoint_cache_repository.read_endpoint_info(
+        endpoint_id=model_endpoint_1.record.id,
+        deployment_name=model_endpoint_1.infra_state.deployment_name,
+    )
+    assert infra_state == model_endpoint_1.infra_state

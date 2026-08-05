@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Dict, List, Optional
 
 from datadog import statsd
@@ -42,6 +43,11 @@ logger = make_logger(logger_name())
 
 STATSD_CACHE_HIT_NAME = "launch.get_infra_state.cache_hit"
 STATSD_CACHE_MISS_NAME = "launch.get_infra_state.cache_miss"
+
+# Coalesces concurrent cache-miss reads of the same endpoint's infra state into a single
+# k8s fetch per process. The service is constructed per-request, so this must live at
+# module scope to be shared across requests.
+_infra_state_inflight: Dict[str, "asyncio.Task[Optional[ModelEndpointInfraState]]"] = {}
 
 
 class LiveModelEndpointService(ModelEndpointService):
@@ -124,13 +130,37 @@ class LiveModelEndpointService(ModelEndpointService):
             else:
                 statsd.increment(STATSD_CACHE_HIT_NAME, 1, tags=tags)
         if state is None:
-            state = await self.model_endpoint_infra_gateway.get_model_endpoint_infra(
-                model_endpoint_record=record
+            inflight = _infra_state_inflight.get(record.id)
+            if inflight is None:
+                inflight = asyncio.create_task(self._read_and_cache_infra_state(record=record))
+                _infra_state_inflight[record.id] = inflight
+
+                def _cleanup(task: "asyncio.Task", endpoint_id: str = record.id) -> None:
+                    _infra_state_inflight.pop(endpoint_id, None)
+                    # Retrieve the exception in case every awaiter was cancelled before
+                    # consuming it, so the shared task never logs as unretrieved.
+                    if not task.cancelled() and task.exception() is not None:
+                        logger.warning(
+                            f"Coalesced infra state read for {endpoint_id} failed: "
+                            f"{task.exception()!r}"
+                        )
+
+                inflight.add_done_callback(_cleanup)
+            # shield so one awaiter's cancellation (e.g. client disconnect) doesn't cancel
+            # the shared fetch for the others
+            state = await asyncio.shield(inflight)
+        return state
+
+    async def _read_and_cache_infra_state(
+        self, record: ModelEndpointRecord
+    ) -> Optional[ModelEndpointInfraState]:
+        state = await self.model_endpoint_infra_gateway.get_model_endpoint_infra(
+            model_endpoint_record=record
+        )
+        if state is not None:
+            await self.model_endpoint_cache_repository.write_endpoint_info(
+                endpoint_id=record.id, endpoint_info=state, ttl_seconds=180
             )
-            if state is not None:
-                await self.model_endpoint_cache_repository.write_endpoint_info(
-                    endpoint_id=record.id, endpoint_info=state, ttl_seconds=180
-                )
         return state
 
     async def create_model_endpoint(

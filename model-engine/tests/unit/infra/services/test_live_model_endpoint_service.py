@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 from unittest.mock import AsyncMock
 
@@ -181,6 +182,40 @@ async def test_get_model_endpoint_returns_none(
         model_endpoint_id="invalid_model_endpoint_id"
     )
     assert model_endpoint is None
+
+
+@pytest.mark.asyncio
+async def test_get_model_endpoint_coalesces_concurrent_infra_reads(
+    fake_live_model_endpoint_service: LiveModelEndpointService,
+    model_endpoint_1: ModelEndpoint,
+):
+    model_endpoint_record = await _create_model_endpoint_helper(
+        model_endpoint=model_endpoint_1, service=fake_live_model_endpoint_service
+    )
+
+    infra_gateway = fake_live_model_endpoint_service.model_endpoint_infra_gateway
+    real_get_model_endpoint_infra = infra_gateway.get_model_endpoint_infra
+    call_count = 0
+
+    async def slow_get_model_endpoint_infra(model_endpoint_record):
+        nonlocal call_count
+        call_count += 1
+        # Keep the fetch in flight long enough for the concurrent readers to pile up on it.
+        await asyncio.sleep(0.05)
+        return await real_get_model_endpoint_infra(model_endpoint_record=model_endpoint_record)
+
+    infra_gateway.get_model_endpoint_infra = slow_get_model_endpoint_infra
+
+    model_endpoints = await asyncio.gather(
+        *(
+            fake_live_model_endpoint_service.get_model_endpoint(
+                model_endpoint_id=model_endpoint_record.id
+            )
+            for _ in range(5)
+        )
+    )
+    assert all(model_endpoint is not None for model_endpoint in model_endpoints)
+    assert call_count == 1
 
 
 @pytest.mark.asyncio

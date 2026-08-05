@@ -160,14 +160,26 @@ async def main(args: Any):
         docker_repo = GenericDockerRepository()
     while True:
         loop_start = time.time()
-        await loop_iteration(
-            cache_repo,
-            k8s_resource_manager,
-            endpoint_record_repo,
-            image_cache_gateway,
-            docker_repo,
-            args.ttl_seconds,
-        )
+        # A failed iteration (e.g. the apiserver throttling with 429s) must not kill the
+        # process: a restart loses the in-flight refresh and lets cache entries expire,
+        # which pushes readers to direct k8s reads and adds more apiserver load.
+        loop_succeeded = True
+        try:
+            await loop_iteration(
+                cache_repo,
+                k8s_resource_manager,
+                endpoint_record_repo,
+                image_cache_gateway,
+                docker_repo,
+                args.ttl_seconds,
+            )
+        except Exception:
+            loop_succeeded = False
+            logger.exception("Cache write loop iteration failed; retrying after sleep")
+            # Drop readiness so persistent failures stay visible to k8s now that the
+            # process no longer exits on them.
+            if os.path.exists(READYZ_FPATH):
+                os.remove(READYZ_FPATH)
         loop_end = time.time()
         loop_duration = loop_end - loop_start
         logger.info(f"Loop took {loop_duration} seconds")
@@ -179,14 +191,14 @@ async def main(args: Any):
             await asyncio.sleep(args.sleep_interval_seconds - loop_duration)
 
         # k8s health check
-        if not os.path.exists(READYZ_FPATH):
+        if loop_succeeded and not os.path.exists(READYZ_FPATH):
             with open(READYZ_FPATH, "w") as f:
                 f.write("READY")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ttl-seconds", type=int, default=60)
+    parser.add_argument("--ttl-seconds", type=int, default=600)
     parser.add_argument("--sleep-interval-seconds", type=int, default=15)
     parser.add_argument("--redis-url-override", type=str, default=None)
     main_args = parser.parse_args()

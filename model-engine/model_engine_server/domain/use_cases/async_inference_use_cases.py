@@ -45,30 +45,31 @@ class CreateAsyncInferenceTaskV1UseCase:
             ObjectNotFoundException: If a model endpoint with the given ID could not be found.
             ObjectNotAuthorizedException: If the owner does not own the model endpoint.
         """
-        model_endpoint = await self.model_endpoint_service.get_model_endpoint(
+        # Task submission only needs the endpoint record; fetching the full endpoint would
+        # also read infra state, whose k8s fallback on cache miss is too expensive for this
+        # hot path.
+        record = await self.model_endpoint_service.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id
         )
-        if model_endpoint is None:
+        if record is None:
             raise ObjectNotFoundException
 
         if not self.authz_module.check_access_read_owned_entity(
-            user, model_endpoint.record
-        ) and not self.authz_module.check_endpoint_public_inference_for_user(
-            user, model_endpoint.record
-        ):
+            user, record
+        ) and not self.authz_module.check_endpoint_public_inference_for_user(user, record):
             raise ObjectNotAuthorizedException
 
-        if model_endpoint.record.endpoint_type != ModelEndpointType.ASYNC:
+        if record.endpoint_type != ModelEndpointType.ASYNC:
             raise EndpointUnsupportedInferenceTypeException(
                 f"Endpoint {model_endpoint_id} is not an async endpoint."
             )
 
-        task_name = model_endpoint.record.current_model_bundle.celery_task_name()
+        task_name = record.current_model_bundle.celery_task_name()
 
         inference_gateway = self.model_endpoint_service.get_async_model_endpoint_inference_gateway()
-        task_expires = model_endpoint.record.task_expires_seconds or DEFAULT_TASK_EXPIRES_SECONDS
+        task_expires = record.task_expires_seconds or DEFAULT_TASK_EXPIRES_SECONDS
         return await inference_gateway.create_task(
-            topic=model_endpoint.record.destination,
+            topic=record.destination,
             predict_request=request,
             task_expires_seconds=task_expires,
             task_name=task_name,
