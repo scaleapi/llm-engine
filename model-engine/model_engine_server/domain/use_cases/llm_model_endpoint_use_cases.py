@@ -195,6 +195,11 @@ VLLM_MANAGED_COMMAND_FIELDS = {
 }
 
 
+def _dump_chat_completion_request(request: ChatCompletionV2Request) -> Dict[str, Any]:
+    """Serialize a chat request using the OpenAI wire-format field names."""
+    return request.model_dump(exclude_none=True, by_alias=True)
+
+
 def is_vllm_inference_framework(
     inference_framework: Optional[Union[LLMInferenceFramework, str]],
 ) -> bool:
@@ -3740,7 +3745,7 @@ class ChatCompletionSyncV2UseCase:
             request.model = VLLM_MODEL_WEIGHTS_FOLDER
 
         inference_request = SyncEndpointPredictV1Request(
-            args=request.model_dump(exclude_none=True),
+            args=_dump_chat_completion_request(request),
             destination_path=OPENAI_CHAT_COMPLETION_PATH,
             num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
             timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,
@@ -3856,7 +3861,7 @@ class ChatCompletionStreamV2UseCase:
             request.model = VLLM_MODEL_WEIGHTS_FOLDER
 
         inference_request = SyncEndpointPredictV1Request(
-            args=request.model_dump(exclude_none=True),
+            args=_dump_chat_completion_request(request),
             destination_path=OPENAI_CHAT_COMPLETION_PATH,
             num_retries=NUM_DOWNSTREAM_REQUEST_RETRIES,
             timeout_seconds=DOWNSTREAM_REQUEST_TIMEOUT_SECONDS,

@@ -9,6 +9,7 @@ import model_engine_server.domain.use_cases.llm_model_endpoint_use_cases as llm_
 import pytest
 from model_engine_server.common.dtos.batch_jobs import CreateDockerImageBatchJobResourceRequests
 from model_engine_server.common.dtos.llms import (
+    ChatCompletionV2Request,
     CompletionOutput,
     CompletionStreamV1Request,
     CompletionSyncV1Request,
@@ -98,6 +99,34 @@ def mocked__get_latest_tag():
         return "fake_docker_repository_latest_image_tag"
 
     return mock.AsyncMock(side_effect=async_mock)
+
+
+def test_dump_chat_completion_request_preserves_json_schema_wire_format():
+    schema = {
+        "type": "object",
+        "properties": {"value": {"type": "string"}},
+        "required": ["value"],
+        "additionalProperties": False,
+    }
+    request = ChatCompletionV2Request.model_validate(
+        {
+            "model": "structured-output-model",
+            "messages": [{"role": "user", "content": "Return a value"}],
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "structured_response",
+                    "schema": schema,
+                    "strict": True,
+                },
+            },
+        }
+    )
+
+    dumped = llm_use_cases._dump_chat_completion_request(request)
+
+    assert dumped["response_format"]["json_schema"]["schema"] == schema
+    assert "schema_" not in dumped["response_format"]["json_schema"]
 
 
 @pytest.mark.asyncio
