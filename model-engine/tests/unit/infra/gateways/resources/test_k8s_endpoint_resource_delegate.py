@@ -3,7 +3,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from unittest.mock import ANY, AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -1510,3 +1510,26 @@ def test_add_pod_metadata_env_to_container():
 
     node_name_env = next(e for e in container["env"] if e["name"] == "NODE_NAME")
     assert node_name_env["valueFrom"]["fieldRef"]["fieldPath"] == "spec.nodeName"
+
+
+def test_load_k8s_yaml_command_with_mixed_quotes_renders_valid_yaml(tmp_path):
+    # Regression: a command mixing single-quoted (model-cache `find '*.safetensors'`)
+    # and double-quoted (vLLM `--host "::"`) tokens must round-trip through
+    # load_k8s_yaml instead of raising ScannerError from str()-coerced YAML.
+    command = [
+        "/bin/bash",
+        "-c",
+        "find /mnt/model-cache/model_files -maxdepth 1 -type f "
+        r"\( -name '*.safetensors' -o -name '*.bin' \) | head; "
+        'python -m vllm_server --model /mnt/model-cache/model_files --host "::"',
+    ]
+    config_map_path = tmp_path / "config_map.yaml"
+    config_map_path.write_text(json.dumps({"data": {"command-only.yaml": "command: ${COMMAND}\n"}}))
+
+    with (
+        patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_FOLDER", None),
+        patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH", str(config_map_path)),
+    ):
+        rendered = load_k8s_yaml("command-only.yaml", cast(ResourceArguments, {"COMMAND": command}))
+
+    assert rendered["command"] == command

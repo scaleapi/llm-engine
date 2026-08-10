@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 import re
 from string import Template
@@ -282,6 +283,11 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
     # so any ${DD_ENV} in labels / env vars / log configs resolves to the gateway's
     # per-cluster env (set via the chart's datadog.env). setdefault lets a caller override.
     filtered_kwargs.setdefault("DD_ENV", DD_ENV)
+    # These render bare into the template (`command: ${COMMAND}`, `env: ${MAIN_ENV}`), where
+    # str()'s Python repr escapes quotes as \' and breaks YAML; JSON is a valid YAML subset.
+    for structured_key in ("COMMAND", "WORKER_COMMAND", "MAIN_ENV", "WORKER_ENV"):
+        if isinstance(filtered_kwargs.get(structured_key), list):
+            filtered_kwargs[structured_key] = json.dumps(filtered_kwargs[structured_key])
     yaml_str = Template(template_str).safe_substitute(**filtered_kwargs)
     try:
         yaml_obj = yaml.safe_load(yaml_str)
