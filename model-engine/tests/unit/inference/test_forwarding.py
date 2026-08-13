@@ -499,6 +499,22 @@ def test_forwarder_loader_timeout(loader_kwargs, expected_timeout):
     assert fwd.timeout_seconds == expected_timeout
 
 
+@pytest.mark.parametrize(
+    "invalid_timeout",
+    [
+        pytest.param(0, id="zero"),
+        pytest.param(-1, id="negative"),
+        pytest.param(None, id="null"),
+        pytest.param(float("inf"), id="non-finite"),
+        pytest.param("60", id="string"),
+        pytest.param(True, id="bool"),
+    ],
+)
+def test_forwarder_loader_invalid_timeout(invalid_timeout):
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        LoadForwarder(timeout_seconds=invalid_timeout).load(None, None)  # type: ignore
+
+
 @mock.patch("requests.post", mocked_post)
 @mock.patch("requests.get", mocked_get)
 @mock.patch(
