@@ -1,5 +1,6 @@
 import ast
 import json
+import math
 import os
 import time
 from dataclasses import dataclass
@@ -307,6 +308,14 @@ class LoadForwarder:
     timeout_seconds: float = DEFAULT_SYNC_TIMEOUT_SECONDS
 
     def load(self, resources: Optional[Path], cache: Any) -> Forwarder:
+        if (
+            not isinstance(self.timeout_seconds, (int, float))
+            or isinstance(self.timeout_seconds, bool)
+            or not math.isfinite(self.timeout_seconds)
+            or self.timeout_seconds <= 0
+        ):
+            raise ValueError(f"timeout_seconds must be a positive number: {self.timeout_seconds=}")
+
         if self.use_grpc:
             raise NotImplementedError(
                 "User-defined service **MUST** use HTTP at the moment. "
