@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from model_engine_server.core.utils.env import environment
 from model_engine_server.domain.entities import ModelEndpointConfig
 from model_engine_server.inference.forwarding.forwarding import (
+    DEFAULT_SYNC_TIMEOUT_SECONDS,
     ENV_SERIALIZE_RESULTS_AS_STRING,
     KEY_SERIALIZE_RESULTS_AS_STRING,
     Forwarder,
@@ -478,6 +479,24 @@ def test_forwarder_loader():
     fwd = LoadForwarder(wrap_response=False).load(None, None)  # type: ignore
     json_response = fwd({"ignore": "me"})
     _check_responses_not_wrapped(json_response)
+
+
+@mock.patch("requests.post", mocked_post)
+@mock.patch("requests.get", mocked_get)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+@pytest.mark.parametrize(
+    "loader_kwargs, expected_timeout",
+    [
+        pytest.param({}, DEFAULT_SYNC_TIMEOUT_SECONDS, id="default"),
+        pytest.param({"timeout_seconds": 123.0}, 123.0, id="override"),
+    ],
+)
+def test_forwarder_loader_timeout(loader_kwargs, expected_timeout):
+    fwd = LoadForwarder(**loader_kwargs).load(None, None)  # type: ignore
+    assert fwd.timeout_seconds == expected_timeout
 
 
 @mock.patch("requests.post", mocked_post)
