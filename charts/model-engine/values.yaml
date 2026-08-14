@@ -38,6 +38,9 @@ gateway:
   # readinessProbeTimeoutSeconds sets the /readyz probe timeout. The k8s default of 1s
   # ejects saturated-but-healthy pods and concentrates load on the survivors.
   readinessProbeTimeoutSeconds: 5
+  # sidecarCPURequest sets the istio-proxy CPU request (no limit). Without it the
+  # sidecar is starved on nodes at full CPU request capacity and pods never go Ready.
+  sidecarCPURequest: 250m
 
 redis:
   auth:
