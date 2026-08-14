@@ -20,11 +20,32 @@ logger = make_logger(logger_name())
 # The limiter must stay cheap when the pod is saturated; a slow Redis answer is
 # treated as an outage and fails open.
 _REDIS_TIMEOUT_SECONDS = 0.1
-_FAIL_OPEN_LOG_INTERVAL_SECONDS = 60.0
+_LOG_INTERVAL_SECONDS = 60.0
+
+# Atomic so a partial failure cannot leave a counter key without a TTL.
+_INCR_WITH_TTL_LUA = """
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+  redis.call('EXPIRE', KEYS[1], 2)
+end
+return count
+"""
 
 _client: Optional[aioredis.Redis] = None
 _client_pool: Optional[aioredis.ConnectionPool] = None
-_last_fail_open_log: float = 0.0
+_last_log_times: dict = {}
+
+
+def _should_log(log_key: str) -> bool:
+    # Both limiter logs fire per request when things go wrong (Redis outage, or a
+    # noisy tenant in log-only mode), so they are sampled per key.
+    now = time.monotonic()
+    if now - _last_log_times.get(log_key, 0.0) < _LOG_INTERVAL_SECONDS:
+        return False
+    if len(_last_log_times) > 1000:
+        _last_log_times.clear()
+    _last_log_times[log_key] = now
+    return True
 
 
 def _get_client() -> aioredis.Redis:
@@ -39,11 +60,7 @@ def _get_client() -> aioredis.Redis:
 
 
 async def _count_request(key: str) -> int:
-    redis = _get_client()
-    count = int(await redis.incr(key))
-    if count == 1:
-        await redis.expire(key, 2)
-    return count
+    return int(await _get_client().eval(_INCR_WITH_TTL_LUA, 1, key))
 
 
 async def enforce_user_rate_limit(route_class: str, user: User) -> None:
@@ -61,11 +78,7 @@ async def enforce_user_rate_limit(route_class: str, user: User) -> None:
     try:
         count = await asyncio.wait_for(_count_request(key), timeout=_REDIS_TIMEOUT_SECONDS)
     except Exception:
-        # Sampled: during a Redis outage this fires on every authenticated request.
-        global _last_fail_open_log
-        now = time.monotonic()
-        if now - _last_fail_open_log >= _FAIL_OPEN_LOG_INTERVAL_SECONDS:
-            _last_fail_open_log = now
+        if _should_log("fail-open"):
             logger.warning(
                 f"Rate limiter failing open for route_class={route_class}", exc_info=True
             )
@@ -73,10 +86,11 @@ async def enforce_user_rate_limit(route_class: str, user: User) -> None:
     if count <= limit:
         return
     if not config.get("enforce"):
-        logger.warning(
-            f"Rate limit exceeded (log-only): user_id={user.user_id} "
-            f"route_class={route_class} count={count} limit={limit}"
-        )
+        if _should_log(f"over-limit:{user.user_id}:{route_class}"):
+            logger.warning(
+                f"Rate limit exceeded (log-only): user_id={user.user_id} "
+                f"route_class={route_class} count={count} limit={limit}"
+            )
         return
     raise HTTPException(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,

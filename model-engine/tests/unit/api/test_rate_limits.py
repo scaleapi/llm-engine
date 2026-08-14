@@ -7,22 +7,19 @@ from model_engine_server.core.auth.authentication_repository import User
 
 
 class FakeRateLimitRedis:
-    """Counter-only fake for the limiter's incr/expire calls."""
+    """Counter-only fake for the limiter's eval call."""
 
     def __init__(self, count=1, error=None, delay=0.0):
         self.count = count
         self.error = error
         self.delay = delay
 
-    async def incr(self, key):
+    async def eval(self, script, numkeys, *keys):
         if self.delay:
             await asyncio.sleep(self.delay)
         if self.error:
             raise self.error
         return self.count
-
-    async def expire(self, key, seconds):
-        pass
 
 
 USER = User(user_id="test-user", team_id="test-team", is_privileged_user=False)
