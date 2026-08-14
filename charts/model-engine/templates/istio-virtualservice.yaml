@@ -26,6 +26,12 @@ spec:
             port:
               number: 80
       retries:
-        attempts: 3
-        retryOn: connect-failure,unavailable,gateway-error
+        attempts: {{ ((.Values.virtualservice).retries).attempts | default 3 }}
+        {{- /* 503 is deliberately not retried: it is the overload signal, and retrying
+             it multiplies offered load exactly when the fleet is saturated. Numeric
+             codes in retryOn map to Envoy retriable-status-codes. */}}
+        retryOn: {{ ((.Values.virtualservice).retries).retryOn | default "connect-failure,unavailable,502,504" | quote }}
+        {{- with ((.Values.virtualservice).retries).perTryTimeout }}
+        perTryTimeout: {{ . }}
+        {{- end }}
 {{- end }}

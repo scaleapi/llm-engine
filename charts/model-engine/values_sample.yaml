@@ -80,6 +80,14 @@ virtualservice:
     - llm-engine.domain.com
   gateways:
     - default/internal-gateway
+  # retries [optional] Envoy retry policy for the gateway route. 503 is excluded from
+  # the default retryOn because retrying the overload signal amplifies offered load.
+  # perTryTimeout is unset by default: the route also carries streaming and other
+  # long-lived requests, which a per-try timeout would abort mid-flight.
+  retries:
+    attempts: 3
+    retryOn: connect-failure,unavailable,502,504
+    perTryTimeout: null
 
 hostDomain:
   prefix: http://
