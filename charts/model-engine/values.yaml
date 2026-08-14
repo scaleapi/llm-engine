@@ -33,6 +33,12 @@ celery_broker_type_redis: null
 #     drop:
 #       - ALL
 
+# gateway [optional] tuning for the gateway deployment.
+gateway:
+  # sidecarCPURequest sets the istio-proxy CPU request (no limit). Without it the
+  # sidecar is starved on nodes at full CPU request capacity and pods never go Ready.
+  sidecarCPURequest: 250m
+
 redis:
   auth:
   authSecretName: ""
