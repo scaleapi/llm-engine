@@ -1,5 +1,7 @@
 import asyncio
+import functools
 
+import anyio
 from fastapi import APIRouter, Depends, HTTPException
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
@@ -38,6 +40,11 @@ from sse_starlette.sse import EventSourceResponse
 
 inference_task_router_v1 = APIRouter(prefix="/v1")
 logger = make_logger(logger_name())
+
+# Task-status polls do a blocking result-backend read (S3 on AWS). They must not share
+# the default anyio threadpool: poll volume scales with the number of outstanding tasks,
+# and when polls fill the shared pool every other sync route queues behind them.
+_get_async_task_limiter = anyio.CapacityLimiter(40)
 
 
 @inference_task_router_v1.post("/async-tasks", response_model=CreateAsyncTaskV1Response)
@@ -81,7 +88,7 @@ async def create_async_inference_task(
 
 
 @inference_task_router_v1.get("/async-tasks/{task_id}", response_model=GetAsyncTaskV1Response)
-def get_async_inference_task(
+async def get_async_inference_task(
     task_id: str,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
@@ -94,7 +101,10 @@ def get_async_inference_task(
         use_case = GetAsyncInferenceTaskV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,
         )
-        return use_case.execute(user=auth, task_id=task_id)
+        return await anyio.to_thread.run_sync(
+            functools.partial(use_case.execute, user=auth, task_id=task_id),
+            limiter=_get_async_task_limiter,
+        )
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(
             status_code=404,
