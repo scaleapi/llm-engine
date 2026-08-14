@@ -81,6 +81,14 @@ class HostedModelInferenceServiceConfig:
         None  # For GCP Memorystore (e.g., redis://MEMORYSTORE_HOST:6379/0)
     )
     sglang_repository: Optional[str] = None
+    # Per-user request rate limits, e.g.
+    # user_rate_limits:
+    #   enforce: false          # false = log-only mode
+    #   routes:
+    #     get_async_task: 200   # requests/second per user
+    #     post_async_tasks: 25
+    #     default: null         # unset/null = unlimited
+    user_rate_limits: Optional[dict] = None
 
     @classmethod
     def from_json(cls, json):

@@ -5,8 +5,9 @@ from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
 import redis.asyncio as aioredis
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
+from model_engine_server.api.rate_limits import enforce_user_rate_limit
 from model_engine_server.common.aioredis_pool import build_aioredis_pool
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
@@ -505,7 +506,13 @@ async def get_auth_repository():
         pass
 
 
+async def _rate_limit_resolved_user(request: Request, auth: User) -> None:
+    redis = aioredis.Redis(connection_pool=get_or_create_aioredis_pool())
+    await enforce_user_rate_limit(request.method, request.url.path, auth, redis)
+
+
 async def verify_authentication(
+    request: Request,
     credentials: Optional[HTTPBasicCredentials] = Depends(basic_auth),
     tokens: Optional[str] = Depends(oauth2_scheme),
     auth_repo: AuthenticationRepository = Depends(get_auth_repository),
@@ -537,6 +544,7 @@ async def verify_authentication(
         LoggerTagManager.set(LoggerTagKey.USER_ID, auth.user_id)
         LoggerTagManager.set(LoggerTagKey.TEAM_ID, auth.team_id)
 
+        await _rate_limit_resolved_user(request, auth)
         return auth
 
     # bearer token
@@ -553,6 +561,7 @@ async def verify_authentication(
         LoggerTagManager.set(LoggerTagKey.USER_ID, auth.user_id)
         LoggerTagManager.set(LoggerTagKey.TEAM_ID, auth.team_id)
 
+        await _rate_limit_resolved_user(request, auth)
         return auth
 
     raise HTTPException(

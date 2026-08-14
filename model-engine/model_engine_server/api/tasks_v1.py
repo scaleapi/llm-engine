@@ -1,5 +1,6 @@
 import asyncio
 import functools
+from typing import Optional
 
 import anyio
 from fastapi import APIRouter, Depends, HTTPException
@@ -44,7 +45,16 @@ logger = make_logger(logger_name())
 # Task-status polls do a blocking result-backend read (S3 on AWS). They must not share
 # the default anyio threadpool: poll volume scales with the number of outstanding tasks,
 # and when polls fill the shared pool every other sync route queues behind them.
-_get_async_task_limiter = anyio.CapacityLimiter(40)
+# Created lazily because anyio.CapacityLimiter requires a running event loop.
+_GET_ASYNC_TASK_THREAD_LIMIT = 40
+_get_async_task_limiter: Optional[anyio.CapacityLimiter] = None
+
+
+def _get_task_limiter() -> anyio.CapacityLimiter:
+    global _get_async_task_limiter
+    if _get_async_task_limiter is None:
+        _get_async_task_limiter = anyio.CapacityLimiter(_GET_ASYNC_TASK_THREAD_LIMIT)
+    return _get_async_task_limiter
 
 
 @inference_task_router_v1.post("/async-tasks", response_model=CreateAsyncTaskV1Response)
@@ -103,7 +113,7 @@ async def get_async_inference_task(
         )
         return await anyio.to_thread.run_sync(
             functools.partial(use_case.execute, user=auth, task_id=task_id),
-            limiter=_get_async_task_limiter,
+            limiter=_get_task_limiter(),
         )
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
         raise HTTPException(
