@@ -2,6 +2,14 @@
 {{- $fullName := include "modelEngine.fullname" . -}}
 {{- $routes := .Values.rateLimits.routes -}}
 {{- $tenants := .Values.rateLimits.throttledTenants | default list -}}
+{{- range $tenants }}
+{{- /* The Basic clamp matches on the unpadded base64 of the raw user id, which is
+     only a prefix of base64("userId:password") when len(userId) is divisible by 3
+     (a 24-char id). Anything else would half-work (Bearer only), silently. */}}
+{{- if ne (mod (len .userId) 3) 0 }}
+{{- fail (printf "rateLimits.throttledTenants userId %q length must be divisible by 3 for the Basic-auth prefix match" .userId) }}
+{{- end }}
+{{- end }}
 # Envoy local_ratelimit on the gateway sidecars (inbound), giving per-pod token
 # buckets. Buckets are per Envoy process, so the fleet-wide ceiling is
 # (limit x Ready pods) and scales with the HPA. Overflow is rejected at the proxy
@@ -36,12 +44,14 @@ spec:
             stat_prefix: model_engine_ratelimit
             status:
               code: TooManyRequests
-            # Default bucket for traffic matching no descriptor: effectively unlimited.
+            # Default bucket, effectively unlimited. It is consumed by every request
+            # (descriptor-matched or not): always_consume_default_token_bucket is not
+            # settable here because the field does not exist before Envoy 1.24 and an
+            # unknown field makes istiod skip the whole patch silently.
             token_bucket:
               max_tokens: 100000
               tokens_per_fill: 100000
               fill_interval: 1s
-            always_consume_default_token_bucket: false
             filter_enabled:
               default_value:
                 numerator: 100
@@ -79,7 +89,7 @@ spec:
         context: SIDECAR_INBOUND
         routeConfiguration:
           vhost:
-            name: "inbound|http|80"
+            name: {{ printf "inbound|http|%v" .Values.service.port | quote }}
       patch:
         operation: MERGE
         value:

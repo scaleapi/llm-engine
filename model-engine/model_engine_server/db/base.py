@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, Optional, Union, cast
@@ -175,6 +176,9 @@ class DBManager:
         # multiplies idle connection pools by processes x pods even for engines the
         # process never uses (the API gateway only ever touches the async pair).
         self._sessions: Dict[str, Union[SyncDBSession, AsyncDBSession]] = {}
+        # Sessions are fetched from both the event loop and threadpool threads; the
+        # lock keeps a cold kind from being built (and its loser leaked) twice.
+        self._build_lock = threading.Lock()
 
     def _pooled_engine_kwargs(self) -> Dict[str, Any]:
         return dict(
@@ -248,15 +252,16 @@ class DBManager:
         )
 
     def _get_session(self, kind: str) -> Union[SyncDBSession, AsyncDBSession]:
-        if self._is_credentials_expired():
-            old_sessions = list(self._sessions.values())
-            self._sessions = {}
-            self.credential_expiration_timestamp = None
-            for old_session in old_sessions:
-                old_session.engine.dispose()
-        if kind not in self._sessions:
-            self._sessions[kind] = self._build_session(kind)
-        return self._sessions[kind]
+        with self._build_lock:
+            if self._is_credentials_expired():
+                old_sessions = list(self._sessions.values())
+                self._sessions = {}
+                self.credential_expiration_timestamp = None
+                for old_session in old_sessions:
+                    old_session.engine.dispose()
+            if kind not in self._sessions:
+                self._sessions[kind] = self._build_session(kind)
+            return self._sessions[kind]
 
     def get_session_sync(self) -> sessionmaker:
         return cast(SyncDBSession, self._get_session("sync")).session

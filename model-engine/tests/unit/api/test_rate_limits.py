@@ -13,13 +13,22 @@ class FakeRateLimitRedis:
         self.count = count
         self.error = error
         self.delay = delay
+        self.calls = 0
 
     async def eval(self, script, numkeys, *keys):
+        self.calls += 1
         if self.delay:
             await asyncio.sleep(self.delay)
         if self.error:
             raise self.error
         return self.count
+
+
+@pytest.fixture(autouse=True)
+def _reset_limiter_state(monkeypatch):
+    monkeypatch.setattr(rate_limits, "_consecutive_failures", 0)
+    monkeypatch.setattr(rate_limits, "_breaker_open_until", 0.0)
+    monkeypatch.setattr(rate_limits, "_last_log_times", {})
 
 
 USER = User(user_id="test-user", team_id="test-team", is_privileged_user=False)
@@ -64,3 +73,14 @@ async def test_fail_open(monkeypatch, redis):
     monkeypatch.setattr(rate_limits, "_get_client", lambda: redis)
     # Over-limit counts must still be allowed when Redis errors or times out.
     await rate_limits.enforce_user_rate_limit("get_async_task", USER)
+
+
+@pytest.mark.asyncio
+async def test_circuit_breaker_stops_touching_redis(monkeypatch):
+    monkeypatch.setattr(rate_limits.hmi_config, "user_rate_limits", LIMITS, raising=False)
+    redis = FakeRateLimitRedis(error=ConnectionError("redis down"))
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: redis)
+    for _ in range(rate_limits._BREAKER_FAILURE_THRESHOLD + 5):
+        await rate_limits.enforce_user_rate_limit("get_async_task", USER)
+    # After the threshold trips, the cooldown window must not touch Redis at all.
+    assert redis.calls == rate_limits._BREAKER_FAILURE_THRESHOLD

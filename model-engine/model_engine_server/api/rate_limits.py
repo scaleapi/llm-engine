@@ -21,6 +21,12 @@ logger = make_logger(logger_name())
 # treated as an outage and fails open.
 _REDIS_TIMEOUT_SECONDS = 0.1
 _LOG_INTERVAL_SECONDS = 60.0
+# Circuit breaker: each timed-out call abandons its pooled connection, so during a
+# Redis brownout per-request checks become a reconnect storm against the slow Redis
+# (and churn the shared cache pool). After enough consecutive failures, fail open
+# without touching Redis for a cooldown period.
+_BREAKER_FAILURE_THRESHOLD = 5
+_BREAKER_COOLDOWN_SECONDS = 10.0
 
 # Atomic so a partial failure cannot leave a counter key without a TTL.
 _INCR_WITH_TTL_LUA = """
@@ -34,6 +40,8 @@ return count
 _client: Optional[aioredis.Redis] = None
 _client_pool: Optional[aioredis.ConnectionPool] = None
 _last_log_times: dict = {}
+_consecutive_failures: int = 0
+_breaker_open_until: float = 0.0
 
 
 def _should_log(log_key: str) -> bool:
@@ -74,10 +82,18 @@ async def enforce_user_rate_limit(route_class: str, user: User) -> None:
     if not limit:
         return
     limit = int(limit)
+    global _consecutive_failures, _breaker_open_until
+    if time.monotonic() < _breaker_open_until:
+        return
     key = f"user-rate-limit:{route_class}:{user.user_id}:{int(time.time())}"
     try:
         count = await asyncio.wait_for(_count_request(key), timeout=_REDIS_TIMEOUT_SECONDS)
+        _consecutive_failures = 0
     except Exception:
+        _consecutive_failures += 1
+        if _consecutive_failures >= _BREAKER_FAILURE_THRESHOLD:
+            _breaker_open_until = time.monotonic() + _BREAKER_COOLDOWN_SECONDS
+            _consecutive_failures = 0
         if _should_log("fail-open"):
             logger.warning(
                 f"Rate limiter failing open for route_class={route_class}", exc_info=True
