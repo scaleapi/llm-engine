@@ -81,13 +81,13 @@ class HostedModelInferenceServiceConfig:
         None  # For GCP Memorystore (e.g., redis://MEMORYSTORE_HOST:6379/0)
     )
     sglang_repository: Optional[str] = None
-    # Per-user request rate limits, e.g.
+    # Per-user request rate limits; route classes are the names passed to
+    # api.rate_limits.user_rate_limit on each route. E.g.
     # user_rate_limits:
     #   enforce: false          # false = log-only mode
     #   routes:
-    #     get_async_task: 200   # requests/second per user
+    #     get_async_task: 200   # requests/second per user; unset = unlimited
     #     post_async_tasks: 25
-    #     default: null         # unset/null = unlimited
     user_rate_limits: Optional[dict] = None
 
     @classmethod

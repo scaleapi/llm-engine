@@ -41,21 +41,35 @@ gateway:
   # sidecarCPURequest sets the istio-proxy CPU request (no limit). Without it the
   # sidecar is starved on nodes at full CPU request capacity and pods never go Ready.
   sidecarCPURequest: 250m
+  # retries is the Envoy retry policy on the gateway VirtualService. perTryTimeout
+  # stays unset by default: the route carries streaming and long-lived requests,
+  # which a per-try timeout would abort mid-flight.
+  retries:
+    attempts: 3
+    retryOn: connect-failure,unavailable,502,504
+    perTryTimeout: null
 
 # rateLimits [optional] per-pod Envoy local_ratelimit token buckets on the gateway
 # sidecars (inbound). Overflow returns 429 at the proxy without reaching a gateway
 # worker. Buckets are per pod: the fleet ceiling is limit x Ready pods.
 rateLimits:
   enabled: false
+  # Route matching is on Envoy :path, which includes the query string, so prefixes
+  # (not exact paths) are required. The trailing slash on the poll route keeps
+  # POST /v1/async-tasks out of the GET bucket.
   routes:
     # Task-status polls. Sized between the healthy band and the degradation point
     # measured per pod, so the fleet sheds before latency collapse.
-    getAsyncTask:
+    - name: get_async_task
+      method: GET
+      pathPrefix: /v1/async-tasks/
       requestsPerSecondPerPod: 15
       burst: 30
     # Task submissions. Also bounds the Postgres reader connection churn the
     # submission path generates.
-    postAsyncTasks:
+    - name: post_async_tasks
+      method: POST
+      pathPrefix: /v1/async-tasks
       requestsPerSecondPerPod: 5
       burst: 10
   # throttledTenants clamps named callers on the async-task routes without Helm

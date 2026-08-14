@@ -16,7 +16,7 @@ metadata:
 spec:
   workloadSelector:
     labels:
-      app: {{ $fullName }}
+      {{- include "modelEngine.selectorLabels.gateway" . | nindent 6 }}
   configPatches:
     - applyTo: HTTP_FILTER
       match:
@@ -56,20 +56,15 @@ spec:
                   key: x-local-rate-limited
                   value: "true"
             descriptors:
+              {{- range $routes }}
               - entries:
                   - key: route
-                    value: get_async_task
+                    value: {{ .name }}
                 token_bucket:
-                  max_tokens: {{ $routes.getAsyncTask.burst }}
-                  tokens_per_fill: {{ $routes.getAsyncTask.requestsPerSecondPerPod }}
+                  max_tokens: {{ .burst }}
+                  tokens_per_fill: {{ .requestsPerSecondPerPod }}
                   fill_interval: 1s
-              - entries:
-                  - key: route
-                    value: post_async_tasks
-                token_bucket:
-                  max_tokens: {{ $routes.postAsyncTasks.burst }}
-                  tokens_per_fill: {{ $routes.postAsyncTasks.requestsPerSecondPerPod }}
-                  fill_interval: 1s
+              {{- end }}
               {{- range $tenants }}
               - entries:
                   - key: tenant
@@ -89,50 +84,37 @@ spec:
         operation: MERGE
         value:
           rate_limits:
-            # :path includes the query string, so async-task submission (which carries
-            # ?model_endpoint_id=...) must be matched by prefix, and the trailing slash
-            # on the poll prefix keeps POST /v1/async-tasks out of the GET bucket.
+            {{- range $routes }}
             - actions:
                 - header_value_match:
                     descriptor_key: route
-                    descriptor_value: get_async_task
+                    descriptor_value: {{ .name }}
                     headers:
                       - name: ":method"
                         string_match:
-                          exact: GET
+                          exact: {{ .method }}
                       - name: ":path"
                         string_match:
-                          prefix: /v1/async-tasks/
+                          prefix: {{ .pathPrefix }}
+            {{- end }}
+            {{- range $tenants }}
+            {{- $tenant := . }}
+            {{- /* Callers authenticate with HTTP Basic (base64 of "userId:password")
+                 or Bearer (raw userId). A 24-char user id encodes to exactly 32
+                 base64 chars, so that prefix matches any password. The :path match
+                 scopes the clamp to the async-task routes only. */}}
+            {{- range list (printf "Basic %s" (b64enc $tenant.userId)) (printf "Bearer %s" $tenant.userId) }}
             - actions:
                 - header_value_match:
-                    descriptor_key: route
-                    descriptor_value: post_async_tasks
+                    descriptor_key: tenant
+                    descriptor_value: {{ printf "clamp_%s" $tenant.userId | quote }}
                     headers:
-                      - name: ":method"
+                      - name: authorization
                         string_match:
-                          exact: POST
+                          prefix: {{ . | quote }}
                       - name: ":path"
                         string_match:
                           prefix: /v1/async-tasks
-            {{- range $tenants }}
-            {{- /* Callers authenticate with HTTP Basic (base64 of "userId:password")
-                 or Bearer (raw userId). A 24-char user id encodes to exactly 32
-                 base64 chars, so that prefix matches any password. */}}
-            - actions:
-                - header_value_match:
-                    descriptor_key: tenant
-                    descriptor_value: {{ printf "clamp_%s" .userId | quote }}
-                    headers:
-                      - name: authorization
-                        string_match:
-                          prefix: {{ printf "Basic %s" (b64enc .userId) | quote }}
-            - actions:
-                - header_value_match:
-                    descriptor_key: tenant
-                    descriptor_value: {{ printf "clamp_%s" .userId | quote }}
-                    headers:
-                      - name: authorization
-                        string_match:
-                          prefix: {{ printf "Bearer %s" .userId | quote }}
+            {{- end }}
             {{- end }}
 {{- end }}
