@@ -60,6 +60,7 @@ spec:
               path: /readyz
               port: 5000
             periodSeconds: 2
+            timeoutSeconds: {{ ((.Values.gateway).readinessProbeTimeoutSeconds | default 5) }}
             failureThreshold: 30
           command: 
             - dumb-init
