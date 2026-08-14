@@ -42,6 +42,29 @@ gateway:
   # sidecar is starved on nodes at full CPU request capacity and pods never go Ready.
   sidecarCPURequest: 250m
 
+# rateLimits [optional] per-pod Envoy local_ratelimit token buckets on the gateway
+# sidecars (inbound). Overflow returns 429 at the proxy without reaching a gateway
+# worker. Buckets are per pod: the fleet ceiling is limit x Ready pods.
+rateLimits:
+  enabled: false
+  routes:
+    # Task-status polls. Sized between the healthy band and the degradation point
+    # measured per pod, so the fleet sheds before latency collapse.
+    getAsyncTask:
+      requestsPerSecondPerPod: 15
+      burst: 30
+    # Task submissions. Also bounds the Postgres reader connection churn the
+    # submission path generates.
+    postAsyncTasks:
+      requestsPerSecondPerPod: 5
+      burst: 10
+  # throttledTenants clamps named callers on the async-task routes without Helm
+  # drift. userId is the caller's user id as logged by the gateway; both accepted
+  # Authorization forms (Basic and Bearer) are matched.
+  throttledTenants: []
+  # - userId: "000000000000000000000000"
+  #   requestsPerSecondPerPod: 1
+
 redis:
   auth:
   authSecretName: ""
