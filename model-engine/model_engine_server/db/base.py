@@ -180,7 +180,6 @@ class DBManager:
         # Sessions are fetched from both the event loop and threadpool threads; the
         # lock keeps a cold kind from being built (and its loser leaked) twice.
         self._build_lock = threading.Lock()
-        self._dispose_tasks: set[asyncio.Task[None]] = set()
 
     def _pooled_engine_kwargs(self) -> Dict[str, Any]:
         return dict(
@@ -253,31 +252,39 @@ class DBManager:
             > self.credential_expiration_timestamp - self.credential_expiration_buffer_sec
         )
 
-    def _dispose_session(self, session: Union[SyncDBSession, AsyncDBSession]) -> None:
-        if isinstance(session, SyncDBSession):
-            session.engine.dispose()
-            return
-
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            asyncio.run(session.engine.dispose())
-        else:
-            task = loop.create_task(session.engine.dispose())
-            self._dispose_tasks.add(task)
-            task.add_done_callback(self._dispose_tasks.discard)
+    def _take_expired_sessions(self) -> list[Union[SyncDBSession, AsyncDBSession]]:
+        if not self._is_credentials_expired():
+            return []
+        old_sessions = list(self._sessions.values())
+        self._sessions = {}
+        self.credential_expiration_timestamp = None
+        return old_sessions
 
     def _get_session(self, kind: str) -> Union[SyncDBSession, AsyncDBSession]:
         with self._build_lock:
-            if self._is_credentials_expired():
-                old_sessions = list(self._sessions.values())
-                self._sessions = {}
-                self.credential_expiration_timestamp = None
-                for old_session in old_sessions:
-                    self._dispose_session(old_session)
+            old_sessions = self._take_expired_sessions()
+        for old_session in old_sessions:
+            if isinstance(old_session, AsyncDBSession):
+                asyncio.run(old_session.engine.dispose())
+            else:
+                old_session.engine.dispose()
+        with self._build_lock:
             if kind not in self._sessions:
                 self._sessions[kind] = self._build_session(kind)
             return self._sessions[kind]
+
+    async def _get_async_session(self, kind: str) -> AsyncDBSession:
+        with self._build_lock:
+            old_sessions = self._take_expired_sessions()
+        for old_session in old_sessions:
+            if isinstance(old_session, AsyncDBSession):
+                await old_session.engine.dispose()
+            else:
+                old_session.engine.dispose()
+        with self._build_lock:
+            if kind not in self._sessions:
+                self._sessions[kind] = self._build_session(kind)
+            return cast(AsyncDBSession, self._sessions[kind])
 
     def get_session_sync(self) -> sessionmaker:
         return cast(SyncDBSession, self._get_session("sync")).session
@@ -285,14 +292,14 @@ class DBManager:
     def get_session_sync_ro(self) -> sessionmaker:
         return cast(SyncDBSession, self._get_session("sync_ro")).session
 
-    def get_session_async(self) -> async_sessionmaker:
-        return cast(AsyncDBSession, self._get_session("async")).session
+    async def get_session_async(self) -> async_sessionmaker:
+        return (await self._get_async_session("async")).session
 
-    def get_session_async_ro(self) -> async_sessionmaker:
-        return cast(AsyncDBSession, self._get_session("async_ro")).session
+    async def get_session_async_ro(self) -> async_sessionmaker:
+        return (await self._get_async_session("async_ro")).session
 
-    def get_session_async_null_pool(self) -> async_sessionmaker:
-        return cast(AsyncDBSession, self._get_session("async_null_pool")).session
+    async def get_session_async_null_pool(self) -> async_sessionmaker:
+        return (await self._get_async_session("async_null_pool")).session
 
 
 db_manager: Optional[DBManager] = None
@@ -313,16 +320,16 @@ def get_session_read_only():
     return get_db_manager().get_session_sync_ro()
 
 
-def get_session_async():
-    return get_db_manager().get_session_async()
+async def get_session_async():
+    return await get_db_manager().get_session_async()
 
 
-def get_session_async_null_pool():
-    return get_db_manager().get_session_async_null_pool()
+async def get_session_async_null_pool():
+    return await get_db_manager().get_session_async_null_pool()
 
 
-def get_session_read_only_async():
-    return get_db_manager().get_session_async_ro()
+async def get_session_read_only_async():
+    return await get_db_manager().get_session_async_ro()
 
 
 Base = declarative_base()

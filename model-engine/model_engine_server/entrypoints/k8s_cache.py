@@ -111,7 +111,7 @@ async def main(args: Any):
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
     endpoint_record_repo = DbModelEndpointRecordRepository(
         monitoring_metrics_gateway=monitoring_metrics_gateway,
-        session=get_session_async_null_pool(),
+        session=await get_session_async_null_pool(),
         read_only=True,
     )
 

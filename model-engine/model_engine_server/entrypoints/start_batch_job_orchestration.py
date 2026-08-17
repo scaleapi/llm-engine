@@ -68,7 +68,7 @@ async def run_batch_job(
     timeout_seconds: float,
 ):
     tracing_gateway = get_tracing_gateway()
-    session = get_session_async_null_pool()
+    session = await get_session_async_null_pool()
     pool = build_aioredis_pool(hmi_config.cache_redis_url)
     redis: aioredis.Redis[Any] = aioredis.Redis(connection_pool=pool)
     sqs_task_queue_gateway = CeleryTaskQueueGateway(

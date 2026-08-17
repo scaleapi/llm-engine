@@ -36,15 +36,16 @@ def make_manager(build_delay=0.0, expiry=None):
     return manager, calls
 
 
-def test_engines_built_lazily_per_kind():
+@pytest.mark.asyncio
+async def test_engines_built_lazily_per_kind():
     manager, calls = make_manager()
     assert calls == []
 
-    manager.get_session_async_ro()
+    await manager.get_session_async_ro()
     assert calls == [(True, False)]
 
     # Same kind again: no rebuild. Different kind: one more build only.
-    manager.get_session_async_ro()
+    await manager.get_session_async_ro()
     assert len(calls) == 1
     manager.get_session_sync()
     assert calls == [(True, False), (False, True)]
@@ -61,29 +62,26 @@ def test_credential_expiry_rebuilds_in_use_kinds():
     assert len(calls) == 2
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "dispose_in_thread",
-    [
-        pytest.param(False, id="event-loop"),
-        pytest.param(True, id="thread"),
-    ],
-)
-async def test_credential_expiry_awaits_async_engine_disposal(dispose_in_thread):
+def test_credential_expiry_awaits_async_engine_disposal_before_loop_closes():
     manager, _ = make_manager(expiry=int(time.time()) + 10_000)
-    manager.get_session_async()
+    asyncio.run(manager.get_session_async())
+    disposal_completed = False
+
+    async def dispose_engine():
+        nonlocal disposal_completed
+        await asyncio.sleep(0)
+        disposal_completed = True
 
     with mock.patch(
-        "model_engine_server.db.base.AsyncEngine.dispose", new_callable=AsyncMock
+        "model_engine_server.db.base.AsyncEngine.dispose",
+        new_callable=AsyncMock,
+        side_effect=dispose_engine,
     ) as dispose:
         manager.credential_expiration_timestamp = time.time() - 1
-        if dispose_in_thread:
-            await asyncio.to_thread(manager.get_session_async)
-        else:
-            manager.get_session_async()
-            await asyncio.sleep(0)
+        asyncio.run(manager.get_session_async())
 
     dispose.assert_awaited_once_with()
+    assert disposal_completed
 
 
 @pytest.mark.parametrize("kind_getter", ["get_session_sync", "get_session_sync_ro"])
