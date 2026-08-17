@@ -89,8 +89,11 @@ spec:
         context: SIDECAR_INBOUND
         routeConfiguration:
           vhost:
-            # Istio names inbound virtual hosts from the workload port, not the Service port.
-            name: "inbound|http|5000"
+            # Istio names inbound virtual hosts from the Service port. Verified empirically
+            # on both Istio 1.15 (Envoy config_dump on ml-training-new: inbound|http|80
+            # exists, inbound|http|5000 does not) and Istio 1.30; a wrong name here makes
+            # the patch skip silently and disables all route/tenant buckets.
+            name: {{ printf "inbound|http|%v" .Values.service.port | quote }}
       patch:
         operation: MERGE
         value:
