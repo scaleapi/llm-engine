@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import threading
@@ -179,6 +180,7 @@ class DBManager:
         # Sessions are fetched from both the event loop and threadpool threads; the
         # lock keeps a cold kind from being built (and its loser leaked) twice.
         self._build_lock = threading.Lock()
+        self._dispose_tasks: set[asyncio.Task[None]] = set()
 
     def _pooled_engine_kwargs(self) -> Dict[str, Any]:
         return dict(
@@ -251,6 +253,20 @@ class DBManager:
             > self.credential_expiration_timestamp - self.credential_expiration_buffer_sec
         )
 
+    def _dispose_session(self, session: Union[SyncDBSession, AsyncDBSession]) -> None:
+        if isinstance(session, SyncDBSession):
+            session.engine.dispose()
+            return
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            asyncio.run(session.engine.dispose())
+        else:
+            task = loop.create_task(session.engine.dispose())
+            self._dispose_tasks.add(task)
+            task.add_done_callback(self._dispose_tasks.discard)
+
     def _get_session(self, kind: str) -> Union[SyncDBSession, AsyncDBSession]:
         with self._build_lock:
             if self._is_credentials_expired():
@@ -258,7 +274,7 @@ class DBManager:
                 self._sessions = {}
                 self.credential_expiration_timestamp = None
                 for old_session in old_sessions:
-                    old_session.engine.dispose()
+                    self._dispose_session(old_session)
             if kind not in self._sessions:
                 self._sessions[kind] = self._build_session(kind)
             return self._sessions[kind]

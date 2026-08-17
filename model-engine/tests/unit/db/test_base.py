@@ -1,7 +1,9 @@
+import asyncio
 import threading
 import time
 from types import SimpleNamespace
 from unittest import mock
+from unittest.mock import AsyncMock
 
 import pytest
 from model_engine_server.db.base import DBConnection, DBManager
@@ -57,6 +59,31 @@ def test_credential_expiry_rebuilds_in_use_kinds():
     rebuilt = manager.get_session_sync()
     assert rebuilt is not session
     assert len(calls) == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "dispose_in_thread",
+    [
+        pytest.param(False, id="event-loop"),
+        pytest.param(True, id="thread"),
+    ],
+)
+async def test_credential_expiry_awaits_async_engine_disposal(dispose_in_thread):
+    manager, _ = make_manager(expiry=int(time.time()) + 10_000)
+    manager.get_session_async()
+
+    with mock.patch(
+        "model_engine_server.db.base.AsyncEngine.dispose", new_callable=AsyncMock
+    ) as dispose:
+        manager.credential_expiration_timestamp = time.time() - 1
+        if dispose_in_thread:
+            await asyncio.to_thread(manager.get_session_async)
+        else:
+            manager.get_session_async()
+            await asyncio.sleep(0)
+
+    dispose.assert_awaited_once_with()
 
 
 @pytest.mark.parametrize("kind_getter", ["get_session_sync", "get_session_sync_ro"])

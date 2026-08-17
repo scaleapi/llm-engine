@@ -262,6 +262,31 @@ def test_forwarders(post_inference_hooks_handler):
     _check(json_response)
 
 
+@mock.patch("requests.post")
+def test_sync_forwarder_uses_configured_timeout(mock_post, post_inference_hooks_handler):
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = PAYLOAD
+    fwd = Forwarder(
+        "http://user-service/predict",
+        model_engine_unwrap=True,
+        serialize_results_as_string=False,
+        post_inference_hooks_handler=post_inference_hooks_handler,
+        wrap_response=False,
+        forward_http_status=False,
+        forward_http_status_in_body=False,
+        timeout_seconds=123,
+    )
+
+    fwd({"ignore": "me"})
+
+    mock_post.assert_called_once_with(
+        "http://user-service/predict",
+        json={"ignore": "me"},
+        headers={"Content-Type": "application/json"},
+        timeout=123,
+    )
+
+
 def _check(json_response) -> None:
     json_response = (
         json.loads(json_response.body.decode("utf-8"))

@@ -44,10 +44,10 @@ spec:
             stat_prefix: model_engine_ratelimit
             status:
               code: TooManyRequests
-            # Default bucket, effectively unlimited. It is consumed by every request
-            # (descriptor-matched or not): always_consume_default_token_bucket is not
-            # settable here because the field does not exist before Envoy 1.24 and an
-            # unknown field makes istiod skip the whole patch silently.
+            # Envoy 1.23 applies stage-0 virtual-host rate limits automatically. It has
+            # neither vh_rate_limits nor always_consume_default_token_bucket, and an
+            # unknown field makes istiod skip the whole patch silently. The default
+            # bucket is therefore effectively unlimited because every request consumes it.
             token_bucket:
               max_tokens: 100000
               tokens_per_fill: 100000

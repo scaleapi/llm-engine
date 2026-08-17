@@ -247,6 +247,7 @@ class Forwarder(ModelEngineSerializationMixin):
                 self.predict_endpoint,
                 json=json_payload,
                 headers=headers,
+                timeout=self.timeout_seconds,
             )
             response = response_raw.json()
         except Exception:
