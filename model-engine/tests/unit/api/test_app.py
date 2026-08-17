@@ -1,10 +1,17 @@
+import asyncio
+import threading
+
+import anyio.to_thread
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from model_engine_server.api.app import (
     OPENAPI_SCHEMA_RENAME_PATTERNS,
     CustomMiddleware,
     _convert_openapi_31_to_30,
     _rename_openapi_schemas,
+    app,
     get_openapi_schema,
 )
 from starlette.middleware import Middleware
@@ -19,6 +26,30 @@ def test_healthcheck(simple_client: TestClient):
 
     response = simple_client.get("/readyz")
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_readyz_answers_while_default_threadpool_blocked():
+    release = threading.Event()
+    limiter = anyio.to_thread.current_default_thread_limiter()
+    blockers = [
+        asyncio.create_task(anyio.to_thread.run_sync(release.wait, 10))
+        for _ in range(int(limiter.total_tokens))
+    ]
+    try:
+        deadline = asyncio.get_event_loop().time() + 5
+        while limiter.borrowed_tokens < limiter.total_tokens and (
+            asyncio.get_event_loop().time() < deadline
+        ):
+            await asyncio.sleep(0.01)
+        assert limiter.borrowed_tokens == limiter.total_tokens
+        # The probe must not ride the (saturated) threadpool.
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            response = await asyncio.wait_for(client.get("/readyz"), 1)
+        assert response.status_code == 200
+    finally:
+        release.set()
+        await asyncio.gather(*blockers)
 
 
 def _get_unhandled_exception_response(error_details: str):

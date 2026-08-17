@@ -4,6 +4,7 @@ from typing import Mapping
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
+import aiohttp
 import pytest
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
@@ -285,6 +286,49 @@ def test_sync_forwarder_uses_configured_timeout(mock_post, post_inference_hooks_
         headers={"Content-Type": "application/json"},
         timeout=123,
     )
+
+
+@pytest.mark.asyncio
+async def test_async_forwarder_uses_configured_timeout(post_inference_hooks_handler):
+    post_calls = []
+
+    class FakeAiohttpResponse:
+        status = 200
+
+        async def json(self, content_type=None):
+            return PAYLOAD
+
+    class FakeAiohttpSession:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def post(self, url, **kwargs):
+            post_calls.append((url, kwargs))
+            return FakeAiohttpResponse()
+
+    fwd = Forwarder(
+        "http://user-service/predict",
+        model_engine_unwrap=True,
+        serialize_results_as_string=False,
+        post_inference_hooks_handler=post_inference_hooks_handler,
+        wrap_response=False,
+        forward_http_status=False,
+        forward_http_status_in_body=False,
+        timeout_seconds=123,
+    )
+    with mock.patch("aiohttp.ClientSession", FakeAiohttpSession):
+        response = await fwd.forward({"ignore": "me"})
+
+    assert response == PAYLOAD
+    ((url, kwargs),) = post_calls
+    assert url == "http://user-service/predict"
+    assert kwargs["timeout"] == aiohttp.ClientTimeout(total=123)
 
 
 def _check(json_response) -> None:

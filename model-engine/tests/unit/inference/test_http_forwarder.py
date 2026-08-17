@@ -12,7 +12,10 @@ from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 from model_engine_server.common.dtos.tasks import EndpointPredictV1Request
 from model_engine_server.domain.entities.model_endpoint_entity import ModelEndpointConfig
-from model_engine_server.inference.forwarding.forwarding import Forwarder
+from model_engine_server.inference.forwarding.forwarding import (
+    DEFAULT_SYNC_TIMEOUT_SECONDS,
+    Forwarder,
+)
 from model_engine_server.inference.forwarding.http_forwarder import (
     MultiprocessingConcurrencyLimiter,
     get_concurrency_limiter,
@@ -155,6 +158,26 @@ def test_get_forwarder_loader():
 
     loader = get_forwarder_loader("/v1/chat/completions")
     assert loader.predict_route == "/v1/chat/completions"
+
+
+@pytest.mark.parametrize(
+    "sync_config_overrides, expected_timeout",
+    [
+        pytest.param({}, DEFAULT_SYNC_TIMEOUT_SECONDS, id="default"),
+        pytest.param({"timeout_seconds": 123.0}, 123.0, id="override"),
+    ],
+)
+def test_get_forwarder_loader_plumbs_timeout_from_config(sync_config_overrides, expected_timeout):
+    def get_config_with_overrides():
+        config = mocked_get_config()
+        config["sync"].update(sync_config_overrides)
+        return config
+
+    with mock.patch(
+        "model_engine_server.inference.forwarding.http_forwarder.get_config",
+        get_config_with_overrides,
+    ):
+        assert get_forwarder_loader().timeout_seconds == expected_timeout
 
 
 @mock.patch(
