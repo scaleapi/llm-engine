@@ -89,7 +89,8 @@ spec:
         context: SIDECAR_INBOUND
         routeConfiguration:
           vhost:
-            name: {{ printf "inbound|http|%v" .Values.service.port | quote }}
+            # Istio names inbound virtual hosts from the workload port, not the Service port.
+            name: "inbound|http|5000"
       patch:
         operation: MERGE
         value:
