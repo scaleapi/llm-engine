@@ -84,7 +84,7 @@ spec:
                   tokens_per_fill: {{ .requestsPerSecondPerPod }}
                   fill_interval: 1s
               {{- end }}
-    - applyTo: VIRTUAL_HOST
+    - applyTo: HTTP_ROUTE
       match:
         context: SIDECAR_INBOUND
         routeConfiguration:
@@ -96,8 +96,12 @@ spec:
             name: {{ printf "inbound|http|%v" .Values.service.port | quote }}
       patch:
         operation: MERGE
+        # Rate-limit actions must live on the ROUTE, not the virtual host: Envoy 1.23's
+        # local_ratelimit only reads route-level policies (vh_rate_limits arrived in
+        # 1.24+), so a VIRTUAL_HOST patch is silently inert on prod sidecars.
         value:
-          rate_limits:
+          route:
+            rate_limits:
             {{- range $routes }}
             - actions:
                 - header_value_match:
