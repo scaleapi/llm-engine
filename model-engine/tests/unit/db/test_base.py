@@ -197,3 +197,31 @@ def test_credential_expiration_timestamp_lifecycle():
 
     manager.get_session_sync()
     assert manager.credential_expiration_timestamp == reseed
+
+
+@pytest.mark.parametrize(
+    "call_context",
+    [
+        pytest.param("plain-thread", id="no-running-loop-uses-asyncio-run"),
+        pytest.param("inside-loop", id="running-loop-disposes-sync-engine"),
+    ],
+)
+def test_sync_getter_disposes_expired_async_engine(call_context):
+    # DB-7: the sync getter must dispose an expired ASYNC engine without raising,
+    # both from a plain thread and from a thread whose event loop is running.
+    manager, _ = make_manager(expiry=int(time.time()) + 10_000)
+    asyncio.run(manager.get_session_async())
+    manager.credential_expiration_timestamp = time.time() - 1
+
+    if call_context == "plain-thread":
+        session = manager.get_session_sync()
+    else:
+
+        async def call_sync_getter_in_loop():
+            return manager.get_session_sync()
+
+        session = asyncio.run(call_sync_getter_in_loop())
+
+    assert session is not None
+    # The expired async kind was evicted; only the freshly built sync kind remains.
+    assert list(manager._sessions) == ["sync"]

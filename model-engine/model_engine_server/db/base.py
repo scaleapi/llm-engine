@@ -265,7 +265,14 @@ class DBManager:
             old_sessions = self._take_expired_sessions()
         for old_session in old_sessions:
             if isinstance(old_session, AsyncDBSession):
-                asyncio.run(old_session.engine.dispose())
+                try:
+                    asyncio.get_running_loop()
+                except RuntimeError:
+                    asyncio.run(old_session.engine.dispose())
+                else:
+                    # Sync getter called on a thread that already runs an event loop:
+                    # asyncio.run() would raise. Dispose the underlying pool directly.
+                    old_session.engine.sync_engine.dispose()
             else:
                 old_session.engine.dispose()
         with self._build_lock:
