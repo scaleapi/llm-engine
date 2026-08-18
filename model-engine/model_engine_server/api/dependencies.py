@@ -446,16 +446,14 @@ def _get_external_interfaces(
     return external_interfaces
 
 
-async def get_default_external_interfaces() -> ExternalInterfaces:
-    session = async_scoped_session(
-        await get_session_async(), scopefunc=asyncio.current_task  # type: ignore
-    )
+def get_default_external_interfaces() -> ExternalInterfaces:
+    session = async_scoped_session(get_session_async(), scopefunc=asyncio.current_task)  # type: ignore
     return _get_external_interfaces(read_only=False, session=session)
 
 
-async def get_default_external_interfaces_read_only() -> ExternalInterfaces:
+def get_default_external_interfaces_read_only() -> ExternalInterfaces:
     session = async_scoped_session(
-        await get_session_read_only_async(), scopefunc=asyncio.current_task  # type: ignore
+        get_session_read_only_async(), scopefunc=asyncio.current_task  # type: ignore
     )
     return _get_external_interfaces(read_only=True, session=session)
 
@@ -466,7 +464,7 @@ async def get_external_interfaces():
 
         ei = get_custom_external_interfaces()
     except ModuleNotFoundError:
-        ei = await get_default_external_interfaces()
+        ei = get_default_external_interfaces()
     try:
         yield ei
     finally:
@@ -481,7 +479,7 @@ async def get_external_interfaces_read_only():
 
         ei = get_custom_external_interfaces_read_only()
     except ModuleNotFoundError:
-        ei = await get_default_external_interfaces_read_only()
+        ei = get_default_external_interfaces_read_only()
     try:
         yield ei
     finally:

@@ -149,7 +149,7 @@ async def _build_endpoint(
         # Database connection
         if infra_config().debug_mode:  # pragma: no cover
             logger.info("Establishing database session")
-        session = await get_session_async_null_pool()
+        session = get_session_async_null_pool()
         if infra_config().debug_mode:  # pragma: no cover
             logger.info("Database session established successfully")
 

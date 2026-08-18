@@ -1,10 +1,8 @@
-import asyncio
 import os
 import sys
-import threading
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, Optional, Union, cast
+from typing import Iterator, Optional
 
 import sqlalchemy
 from azure.identity import DefaultAzureCredential
@@ -149,6 +147,15 @@ class AsyncDBSession:
 
 
 @dataclass
+class DBSessions:
+    session_sync: SyncDBSession
+    session_sync_ro: SyncDBSession
+    session_async: AsyncDBSession
+    session_async_ro: AsyncDBSession
+    session_async_null_pool: AsyncDBSession
+
+
+@dataclass
 class DBEngineConfig:
     pool_pre_ping: bool
     pool_size: int
@@ -158,6 +165,7 @@ class DBEngineConfig:
 
 
 class DBManager:
+    sessions: DBSessions
     config: DBEngineConfig
 
     credential_expiration_timestamp: Optional[float] = None
@@ -172,78 +180,108 @@ class DBManager:
         self.max_overflow = infra_config.db_engine_max_overflow
         self.echo = infra_config.db_engine_echo
         self.echo_pool = infra_config.db_engine_echo_pool
-        # Engines are built lazily, one per session kind on first use. Every worker
-        # process gets its own DBManager, so eagerly building all five engines
-        # multiplies idle connection pools by processes x pods even for engines the
-        # process never uses (the API gateway only ever touches the async pair).
-        self._sessions: Dict[str, Union[SyncDBSession, AsyncDBSession]] = {}
-        # Sessions are fetched from both the event loop and threadpool threads; the
-        # lock keeps a cold kind from being built (and its loser leaked) twice.
-        self._build_lock = threading.Lock()
+        self.sessions = self.refresh_sessions()
 
-    def _pooled_engine_kwargs(self) -> Dict[str, Any]:
-        return dict(
+    def refresh_sessions(self) -> DBSessions:
+        db_connection = get_engine_url(read_only=False, sync=True)
+        # use sync engine as proxy for credential expiration
+        self.credential_expiration_timestamp = db_connection.expiry_in_sec
+        pg_engine = create_engine(
+            db_connection.url,
             echo=self.echo,
             echo_pool=self.echo_pool,
             pool_pre_ping=self.pool_pre_ping,
             pool_size=self.pool_size,
             max_overflow=self.max_overflow,
             future=True,
+            logging_name="sync",
+        )
+        session_sync = SyncDBSession(
+            engine=pg_engine,
+            session=sessionmaker(autocommit=False, autoflush=False, bind=pg_engine),
         )
 
-    def _build_session(self, kind: str) -> Union[SyncDBSession, AsyncDBSession]:
-        built: Union[SyncDBSession, AsyncDBSession]
-        if kind in ("sync", "sync_ro"):
-            db_connection = self._get_engine_url(read_only=kind == "sync_ro", sync=True)
-            engine = create_engine(
-                url=db_connection.url,
-                logging_name=kind,
-                **self._pooled_engine_kwargs(),
-            )
-            built = SyncDBSession(
-                engine=engine,
-                session=sessionmaker(autocommit=False, autoflush=False, bind=engine),
-            )
-        elif kind in ("async", "async_ro"):
-            db_connection = self._get_engine_url(read_only=kind == "async_ro", sync=False)
-            async_engine = create_async_engine(
-                url=db_connection.url,
-                logging_name=kind,
-                **self._pooled_engine_kwargs(),
-            )
-            built = AsyncDBSession(
-                engine=async_engine,
-                session=async_sessionmaker(
-                    autocommit=False,
-                    autoflush=False,
-                    bind=async_engine,
-                    expire_on_commit=False,
-                ),
-            )
-        else:
-            assert kind == "async_null_pool", f"Unknown DB session kind: {kind}"
-            db_connection = self._get_engine_url(read_only=False, sync=False)
-            null_pool_engine = create_async_engine(
-                url=db_connection.url,
-                echo=self.echo,
-                echo_pool=self.echo_pool,
-                future=True,
-                poolclass=NullPool,
-                logging_name="async_null",
-            )
-            built = AsyncDBSession(
-                engine=null_pool_engine,
-                session=async_sessionmaker(
-                    autocommit=False,
-                    autoflush=False,
-                    bind=null_pool_engine,
-                    expire_on_commit=False,
-                ),
-            )
-        if self.credential_expiration_timestamp is None:
-            # use the first built engine's credentials as proxy for expiration
-            self.credential_expiration_timestamp = db_connection.expiry_in_sec
-        return built
+        pg_engine_ro = create_engine(
+            url=get_engine_url(read_only=True, sync=True).url,
+            echo=self.echo,
+            echo_pool=self.echo_pool,
+            pool_pre_ping=self.pool_pre_ping,
+            pool_size=self.pool_size,
+            max_overflow=self.max_overflow,
+            future=True,
+            logging_name="sync_ro",
+        )
+        session_sync_ro = SyncDBSession(
+            engine=pg_engine_ro,
+            session=sessionmaker(autocommit=False, autoflush=False, bind=pg_engine_ro),
+        )
+
+        pg_engine_async = create_async_engine(
+            url=get_engine_url(read_only=False, sync=False).url,
+            echo=self.echo,
+            echo_pool=self.echo_pool,
+            pool_pre_ping=self.pool_pre_ping,
+            pool_size=self.pool_size,
+            max_overflow=self.max_overflow,
+            future=True,
+            logging_name="async",
+        )
+        session_async = AsyncDBSession(
+            engine=pg_engine_async,
+            session=async_sessionmaker(
+                autocommit=False,
+                autoflush=False,
+                bind=pg_engine_async,
+                expire_on_commit=False,
+            ),
+        )
+
+        pg_engine_async_ro = create_async_engine(
+            url=get_engine_url(read_only=True, sync=False).url,
+            echo=self.echo,
+            echo_pool=self.echo_pool,
+            pool_pre_ping=self.pool_pre_ping,
+            pool_size=self.pool_size,
+            max_overflow=self.max_overflow,
+            future=True,
+            logging_name="async_ro",
+        )
+        session_async_ro = AsyncDBSession(
+            engine=pg_engine_async_ro,
+            session=async_sessionmaker(
+                autocommit=False,
+                autoflush=False,
+                bind=pg_engine_async_ro,
+                expire_on_commit=False,
+            ),
+        )
+
+        pg_engine_async_null_pool = create_async_engine(
+            url=get_engine_url(read_only=False, sync=False).url,
+            echo=self.echo,
+            echo_pool=self.echo_pool,
+            future=True,
+            poolclass=NullPool,
+            logging_name="async_null",
+        )
+
+        session_async_null_pool = AsyncDBSession(
+            engine=pg_engine_async_null_pool,
+            session=async_sessionmaker(
+                autocommit=False,
+                autoflush=False,
+                bind=pg_engine_async_null_pool,
+                expire_on_commit=False,
+            ),
+        )
+
+        return DBSessions(
+            session_sync=session_sync,
+            session_sync_ro=session_sync_ro,
+            session_async=session_async,
+            session_async_ro=session_async_ro,
+            session_async_null_pool=session_async_null_pool,
+        )
 
     def _is_credentials_expired(self):
         return (
@@ -252,61 +290,35 @@ class DBManager:
             > self.credential_expiration_timestamp - self.credential_expiration_buffer_sec
         )
 
-    def _take_expired_sessions(self) -> list[Union[SyncDBSession, AsyncDBSession]]:
-        if not self._is_credentials_expired():
-            return []
-        old_sessions = list(self._sessions.values())
-        self._sessions = {}
-        self.credential_expiration_timestamp = None
-        return old_sessions
-
-    def _get_session(self, kind: str) -> Union[SyncDBSession, AsyncDBSession]:
-        with self._build_lock:
-            old_sessions = self._take_expired_sessions()
-        for old_session in old_sessions:
-            if isinstance(old_session, AsyncDBSession):
-                try:
-                    asyncio.get_running_loop()
-                except RuntimeError:
-                    asyncio.run(old_session.engine.dispose())
-                else:
-                    # Sync getter called on a thread that already runs an event loop:
-                    # asyncio.run() would raise. Dispose the underlying pool directly.
-                    old_session.engine.sync_engine.dispose()
-            else:
-                old_session.engine.dispose()
-        with self._build_lock:
-            if kind not in self._sessions:
-                self._sessions[kind] = self._build_session(kind)
-            return self._sessions[kind]
-
-    async def _get_async_session(self, kind: str) -> AsyncDBSession:
-        with self._build_lock:
-            old_sessions = self._take_expired_sessions()
-        for old_session in old_sessions:
-            if isinstance(old_session, AsyncDBSession):
-                await old_session.engine.dispose()
-            else:
-                old_session.engine.dispose()
-        with self._build_lock:
-            if kind not in self._sessions:
-                self._sessions[kind] = self._build_session(kind)
-            return cast(AsyncDBSession, self._sessions[kind])
+    def _maybe_refresh_sessions(self):
+        if self._is_credentials_expired():
+            old_sessions = self.sessions
+            self.sessions = self.refresh_sessions()
+            old_sessions.session_sync.engine.dispose()
+            old_sessions.session_sync_ro.engine.dispose()
+            old_sessions.session_async.engine.dispose()
+            old_sessions.session_async_ro.engine.dispose()
+            old_sessions.session_async_null_pool.engine.dispose()
 
     def get_session_sync(self) -> sessionmaker:
-        return cast(SyncDBSession, self._get_session("sync")).session
+        self._maybe_refresh_sessions()
+        return self.sessions.session_sync.session
 
     def get_session_sync_ro(self) -> sessionmaker:
-        return cast(SyncDBSession, self._get_session("sync_ro")).session
+        self._maybe_refresh_sessions()
+        return self.sessions.session_sync_ro.session
 
-    async def get_session_async(self) -> async_sessionmaker:
-        return (await self._get_async_session("async")).session
+    def get_session_async(self) -> async_sessionmaker:
+        self._maybe_refresh_sessions()
+        return self.sessions.session_async.session
 
-    async def get_session_async_ro(self) -> async_sessionmaker:
-        return (await self._get_async_session("async_ro")).session
+    def get_session_async_ro(self) -> async_sessionmaker:
+        self._maybe_refresh_sessions()
+        return self.sessions.session_async_ro.session
 
-    async def get_session_async_null_pool(self) -> async_sessionmaker:
-        return (await self._get_async_session("async_null_pool")).session
+    def get_session_async_null_pool(self) -> async_sessionmaker:
+        self._maybe_refresh_sessions()
+        return self.sessions.session_async_null_pool.session
 
 
 db_manager: Optional[DBManager] = None
@@ -327,16 +339,16 @@ def get_session_read_only():
     return get_db_manager().get_session_sync_ro()
 
 
-async def get_session_async():
-    return await get_db_manager().get_session_async()
+def get_session_async():
+    return get_db_manager().get_session_async()
 
 
-async def get_session_async_null_pool():
-    return await get_db_manager().get_session_async_null_pool()
+def get_session_async_null_pool():
+    return get_db_manager().get_session_async_null_pool()
 
 
-async def get_session_read_only_async():
-    return await get_db_manager().get_session_async_ro()
+def get_session_read_only_async():
+    return get_db_manager().get_session_async_ro()
 
 
 Base = declarative_base()
