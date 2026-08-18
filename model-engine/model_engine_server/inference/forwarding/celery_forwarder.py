@@ -101,6 +101,9 @@ def create_celery_service(
     )
 
     monitoring_metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
+    # requests treats its timeout as socket inactivity. The Celery limit supplies
+    # the wall-clock bound when an upstream response keeps trickling bytes.
+    task_time_limit = forwarder.timeout_seconds
 
     class ErrorHandlingTask(Task):
         """Sets a 'custom' field with error in the Task response for FAILURE.
@@ -154,6 +157,7 @@ def create_celery_service(
         name=LIRA_CELERY_TASK_NAME,
         track_started=True,
         autoretry_for=(ConnectionError,),
+        time_limit=task_time_limit,
     )
     def exec_func(
         payload,
@@ -193,6 +197,7 @@ def create_celery_service(
         base=ErrorHandlingTask,
         name=DEFAULT_CELERY_TASK_NAME,
         track_started=True,
+        time_limit=task_time_limit,
     )
     def exec_func_pre_lira(payload, arrival_timestamp, *ignored_args, **ignored_kwargs):
         return exec_func(payload, arrival_timestamp, *ignored_args, **ignored_kwargs)
